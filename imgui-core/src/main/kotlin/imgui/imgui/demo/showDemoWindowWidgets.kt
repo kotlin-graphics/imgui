@@ -178,7 +178,9 @@ object showDemoWindowWidgets {
     var f4 = 0.123f
     var f5 = 0f
     var angle = 0f
+
     enum class Element { Fire, Earth, Air, Water }
+
     var currentElement = Element.Fire.ordinal
     val col1 = floatArrayOf(1f, 0f, 0.2f)
     val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
@@ -186,6 +188,7 @@ object showDemoWindowWidgets {
 
 
     /* Trees */
+    var baseFlags: TreeNodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or Tnf.SpanAvailWidth
     var alignLabelWithCurrentXposition = false
     /** Dumb representation of what may be user-side selection state. You may carry selection state inside or
      *  outside your objects in whatever format you see fit.    */
@@ -488,6 +491,10 @@ object showDemoWindowWidgets {
             treeNode("Advanced, with Selectable nodes") {
 
                 helpMarker("This is a more typical looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
+                checkboxFlags("ImGuiTreeNodeFlags_OpenOnArrow", ::baseFlags, Tnf.OpenOnArrow.i)
+                checkboxFlags("ImGuiTreeNodeFlags_OpenOnDoubleClick", ::baseFlags, Tnf.OpenOnDoubleClick.i)
+                checkboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth", ::baseFlags, Tnf.SpanAvailWidth.i)
+                checkboxFlags("ImGuiTreeNodeFlags_SpanFullWidth", ::baseFlags, Tnf.SpanFullWidth.i)
                 checkbox("Align label with current X position)", ::alignLabelWithCurrentXposition)
                 text("Hello!")
                 if (alignLabelWithCurrentXposition) unindent(treeNodeToLabelSpacing)
@@ -496,40 +503,38 @@ object showDemoWindowWidgets {
                     May be a pointer to your own node type, etc.                     */
                 var nodeClicked = -1
                 // Increase spacing to differentiate leaves from expanded contents.
-                withStyleVar(StyleVar.IndentSpacing, fontSize * 3) {
-                    for (i in 0..5) {
-                        /*  Disable the default open on single-click behavior and pass in Selected flag according
-                            to our selection state.                             */
-                        var nodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick
-                        if (selectionMask has (1 shl i))
-                            nodeFlags = nodeFlags or Tnf.Selected
-                        if (i < 3) {
-                            // Items 0..2 are Tree Node
-                            val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
-                            if (isItemClicked()) nodeClicked = i
-                            if (nodeOpen) {
-                                text("Blah blah\nBlah Blah")
-                                treePop()
-                            }
-                        } else {
-                            /*  Items 3..5 are Tree Leaves
-                                The only reason we use TreeNode at all is to allow selection of the leaf.
-                                Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
-                            nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
-                            treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
-                            if (isItemClicked()) nodeClicked = i
+                for (i in 0..5) {
+                    // Disable the default open on single-click behavior and pass in Selected flag according to our selection state.
+                    var nodeFlags = baseFlags
+                    val isSelected = selectionMask has (1 shl i)
+                    if (isSelected)
+                        nodeFlags = nodeFlags or Tnf.Selected
+                    if (i < 3) {
+                        // Items 0..2 are Tree Node
+                        val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
+                        if (isItemClicked()) nodeClicked = i
+                        if (nodeOpen) {
+                            bulletText("Blah blah\nBlah Blah")
+                            treePop()
                         }
+                    } else {
+                        /*  Items 3..5 are Tree Leaves
+                            The only reason we use TreeNode at all is to allow selection of the leaf.
+                            Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
+                        nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
+                        treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
+                        if (isItemClicked()) nodeClicked = i
                     }
-                    if (nodeClicked != -1) {
-                        /*  Update selection state. Process outside of tree loop to avoid visual inconsistencies during
-                            the clicking-frame.                         */
-                        if (io.keyCtrl)
-                            selectionMask = selectionMask xor (1 shl nodeClicked)   // CTRL+click to toggle
-                        /*  Depending on selection behavior you want, this commented bit preserve selection when
-                            clicking on item that is part of the selection                         */
-                        else //if (!(selectionMask & (1 << nodeClicked)))
-                            selectionMask = (1 shl nodeClicked) // Click to single-select
-                    }
+                }
+                if (nodeClicked != -1) {
+                    /*  Update selection state. Process outside of tree loop to avoid visual inconsistencies during
+                        the clicking-frame.                         */
+                    if (io.keyCtrl)
+                        selectionMask = selectionMask xor (1 shl nodeClicked)   // CTRL+click to toggle
+                    /*  Depending on selection behavior you want, this commented bit preserve selection when
+                        clicking on item that is part of the selection                         */
+                    else //if (!(selectionMask & (1 << nodeClicked)))
+                        selectionMask = (1 shl nodeClicked) // Click to single-select
                 }
                 if (alignLabelWithCurrentXposition) indent(treeNodeToLabelSpacing)
             }
@@ -1265,7 +1270,7 @@ object showDemoWindowWidgets {
                 1 -> button("ITEM: Button")   // Testing button
                 2 -> withButtonRepeat(true) { button("ITEM: Button") } // Testing button (with repeater)
                 3 -> checkbox("ITEM: Checkbox", ::b0) // Testing checkbox
-                4 -> sliderFloat("ITEM: SliderFloat", col, 0,0f, 1f)   // Testing basic item
+                4 -> sliderFloat("ITEM: SliderFloat", col, 0, 0f, 1f)   // Testing basic item
                 5 -> inputText("ITEM: InputText", str) // Testing input text (which handles tabbing)
                 6 -> inputFloat("ITEM: InputFloat", col, 1f)  // Testing +/- buttons on scalar input
                 7 -> inputFloat3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
