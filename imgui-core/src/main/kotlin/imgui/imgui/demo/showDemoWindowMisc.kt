@@ -54,6 +54,8 @@ object showDemoWindowMisc {
     operator fun invoke() {
 
         collapsingHeader("Filtering") {
+            // Helper class to easy setup a text filter.
+            // You may want to implement a more feature-full filtering scheme in your own application.
             val filter = TextFilter()
             text("Filter usage:\n" +
                     "  \"\"         display all lines\n" +
@@ -67,6 +69,7 @@ object showDemoWindowMisc {
 
         collapsingHeader("Inputs, Navigation & Focus") {
 
+            // Display ImGuiIO output flags
             text("WantCaptureMouse: ${io.wantCaptureMouse}")
             text("WantCaptureKeyboard: ${io.wantCaptureKeyboard}")
             text("WantTextInput: ${io.wantTextInput}")
