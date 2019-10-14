@@ -29,6 +29,7 @@ import imgui.ImGui.mouseCursor
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.renderFrame
+import imgui.ImGui.renderMouseCursor
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.scrollbar
@@ -449,22 +450,8 @@ interface imgui_main {
         g.drawDataBuilder.flattenIntoSingleLayer()
 
         // Draw software mouse cursor if requested
-        val offset = Vec2()
-        val size = Vec2()
-        val uv = Array(4) { Vec2() }
-        if (io.mouseDrawCursor && io.fonts.getMouseCursorTexData(g.mouseCursor, offset, size, uv)) {
-            val pos = io.mousePos - offset
-            val texId = io.fonts.texId
-            val sc = style.mouseCursorScale
-            g.foregroundDrawList.apply {
-                pushTextureId(texId)
-                addImage(texId, pos + Vec2(1, 0) * sc, pos + Vec2(1, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                addImage(texId, pos + Vec2(2, 0) * sc, pos + Vec2(2, 0) * sc + size * sc, uv[2], uv[3], COL32(0, 0, 0, 48))        // Shadow
-                addImage(texId, pos, pos + size * sc, uv[2], uv[3], COL32(0, 0, 0, 255))       // Black border
-                addImage(texId, pos, pos + size * sc, uv[0], uv[1], COL32(255, 255, 255, 255)) // White fill
-                popTextureId()
-            }
-        }
+        if (io.mouseDrawCursor)
+            renderMouseCursor(g.foregroundDrawList, Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
         if (g.foregroundDrawList.vtxBuffer.hasRemaining())
             g.foregroundDrawList addTo g.drawDataBuilder.layers[0]
 
