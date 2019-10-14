@@ -5,15 +5,11 @@ import imgui.*
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
-import imgui.internal.*
+import imgui.internal.NextWindowDataFlag
+import imgui.internal.focus
+import imgui.internal.or
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
-import imgui.WindowFlag as Wf
-import imgui.internal.ButtonFlag as Bf
-import imgui.internal.DrawCornerFlag as Dcf
-import imgui.internal.DrawListFlag as Dlf
-import imgui.internal.ItemFlag as If
-import imgui.internal.LayoutType as Lt
 
 
 /** Windows Utilities

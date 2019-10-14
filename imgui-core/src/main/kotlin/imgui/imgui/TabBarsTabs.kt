@@ -41,9 +41,9 @@ interface imgui_tabBarsTabs {
         // Restore the last visible height if no tab is visible, this reduce vertical flicker/movement when a tabs gets removed without calling SetTabItemClosed().
         val tabBarAppearing = tabBar.prevFrameVisible + 1 < g.frameCount
         if (tabBar.visibleTabWasSubmitted || tabBar.visibleTabId == 0 || tabBarAppearing)
-            tabBar.contentsHeight = (window.dc.cursorPos.y - tabBar.barRect.max.y) max 0f
+            tabBar.lastTabContentHeight = (window.dc.cursorPos.y - tabBar.barRect.max.y) max 0f
         else
-            window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.contentsHeight
+            window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.lastTabContentHeight
 
         if (tabBar.flags hasnt TabBarFlag.DockNode)
             popId()

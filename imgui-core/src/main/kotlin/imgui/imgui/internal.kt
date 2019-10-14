@@ -69,7 +69,6 @@ import unsigned.Ushort
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.regex.Pattern
-import kotlin.Comparator
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -485,17 +484,30 @@ interface imgui_internal {
         var countSameWidth = 1
         var widthExcess = widthExcess_
         while (widthExcess > 0f && countSameWidth < count) {
-            while (countSameWidth < count && items[0].width == items[countSameWidth].width)
+            while (countSameWidth < count && items[0].width <= items[countSameWidth].width)
                 countSameWidth++
-            val widthToRemovePerItemMax = when {
+            val maxWidthToRemovePerItem = when {
                 countSameWidth < count -> items[0].width - items[countSameWidth].width
                 else -> items[0].width - 1f
             }
-            val widthToRemovePerItem = (widthExcess / countSameWidth) min widthToRemovePerItemMax
+            val widthToRemovePerItem = (widthExcess / countSameWidth) min maxWidthToRemovePerItem
             for (itemN in 0 until countSameWidth)
                 items[itemN].width -= widthToRemovePerItem
             widthExcess -= widthToRemovePerItem * countSameWidth
         }
+
+        // Round width and redistribute remainder left-to-right (could make it an option of the function?)
+        // Ensure that e.g. the right-most tab of a shrunk tab-bar always reaches exactly at the same distance from the right-most edge of the tab bar separator.
+        widthExcess = 0f
+        repeat(count) {
+            val widthRounded = floor(items[it].width)
+            widthExcess += items[it].width - widthRounded
+            items[it].width = widthRounded
+        }
+        if (widthExcess > 0f)
+            for (n in 0 until count)
+                if (items[n].index < (widthExcess + 0.01f).i)
+                    items[n].width += 1f
     }
 
     // Logging/Capture
@@ -1078,7 +1090,7 @@ interface imgui_internal {
         // Hide anything after a '##' string
         val textDisplayEnd = when {
             hideTextAfterHash -> findRenderedTextEnd(text, textEnd)
-            textEnd == 0 -> text.length
+            textEnd == -1 -> text.length
             else -> textEnd
         }
 
@@ -2206,7 +2218,7 @@ interface imgui_internal {
         else -> throw Error()
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd: Int = -1): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd_: Int = -1): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -2214,6 +2226,7 @@ interface imgui_internal {
         val displayFrame = flags has Tnf.Framed
         val padding = if (displayFrame || flags has Tnf.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
 
+        val labelEnd = if (labelEnd_ == -1) findRenderedTextEnd(label) else labelEnd_
         val labelSize = calcTextSize(label, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
@@ -2662,9 +2675,8 @@ interface imgui_internal {
             beginGroup()
         val id = window.getId(label)
         val labelSize = calcTextSize(label, -1, true)
-        val size = calcItemSize(sizeArg, calcItemWidth(),
-                // Arbitrary default of 8 lines high for multi-line
-                (if (isMultiline) textLineHeight * 8f else labelSize.y) + style.framePadding.y * 2f)
+        val h = if (isMultiline) textLineHeight * 8f else labelSize.y
+        val size = calcItemSize(sizeArg, g.fontSize, h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 

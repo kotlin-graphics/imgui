@@ -112,6 +112,7 @@ interface imgui_windows {
         if (firstBeginOfTheFrame) {
             window.flags = flags
             window.lastFrameActive = currentFrame
+            window.lastTimeActive = g.time.f
             window.beginOrderWithinParent = 0
             window.beginOrderWithinContext = g.windowsActiveCount++
         } else
@@ -124,6 +125,10 @@ interface imgui_windows {
             else -> window.parentWindow
         }
         assert(parentWindow != null || flags hasnt Wf.ChildWindow)
+
+        // We allow window memory to be compacted so recreate the base stack when needed.
+        if (window.idStack.isEmpty())
+            window.idStack += window.id
 
         // Add to stack
         // We intentionally set g.CurrentWindow to NULL to prevent usage until when the viewport is set, then will call SetCurrentWindow()
@@ -181,6 +186,10 @@ interface imgui_windows {
             window.hasCloseButton = pOpen != null
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
             for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
+
+            // Restore buffer capacity when woken from a compacted state, to avoid
+            if (window.memoryCompacted)
+                window.gcAwakeTransientBuffers()
 
             // Update stored window name when it changes (which can _only_ happen with the "###" operator, so the ID would stay unchanged).
             // The title bar always display the 'name' parameter, so we only update the string storage if it needs to be visible to the end-user elsewhere.
