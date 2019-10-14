@@ -74,7 +74,6 @@ import imgui.imgui.widgets.imgui_widgets_text.Companion.renderArrowsForVerticalB
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
-import imgui.WindowFlag as Wf
 import imgui.internal.DrawCornerFlag as Dcf
 
 
@@ -146,9 +145,9 @@ interface imgui_widgets_colorEditorPicker {
         if (flags has Cef.InputHSV && flags has Cef.DisplayRGB)
             f.hsvToRGB()
         else if (flags has Cef.InputRGB && flags has Cef.DisplayHSV) {
-            f.rgbToHSV()
             // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
-            if (f[1] == 0f && g.colorEditLastActiveColor[0] == col[0] && g.colorEditLastActiveColor[1] == col[1] && g.colorEditLastActiveColor[2] == col[2])
+            f.rgbToHSV()
+            if (f[1] == 0f && g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2])
                 f[0] = g.colorEditLastHue
         }
 
@@ -254,9 +253,9 @@ interface imgui_widgets_colorEditorPicker {
             if (flags has Cef.DisplayHSV && flags has Cef.InputRGB) {
                 g.colorEditLastHue = f[0]
                 f.hsvToRGB()
-                g.colorEditLastActiveColor[0] = f[0]
-                g.colorEditLastActiveColor[1] = f[1]
-                g.colorEditLastActiveColor[2] = f[2]
+                g.colorEditLastColor[0] = f[0]
+                g.colorEditLastColor[1] = f[1]
+                g.colorEditLastColor[2] = f[2]
             }
             if (flags has Cef.DisplayRGB && flags has Cef.InputHSV)
                 f.rgbToHSV()
@@ -395,9 +394,9 @@ interface imgui_widgets_colorEditorPicker {
         val hsv = FloatArray(3) { col[it] }
         val rgb = FloatArray(3) { col[it] }
         if (flags has Cef.InputRGB) {
-            colorConvertRGBtoHSV(rgb, hsv)
             // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
-            if (hsv[1] == 0f && g.colorEditLastActiveColor[0] == col[0] && g.colorEditLastActiveColor[1] == col[1] && g.colorEditLastActiveColor[2] == col[2])
+            colorConvertRGBtoHSV(rgb, hsv)
+            if (hsv[1] == 0f && g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2])
                 hsv[0] = g.colorEditLastHue
         }
         else if (flags has Cef.InputHSV)
@@ -510,9 +509,9 @@ interface imgui_widgets_colorEditorPicker {
             if (flags has Cef.InputRGB) {
                 colorConvertHSVtoRGB(if (H >= 1f) H - 10 * 1e-6f else H, if (S > 0f) S else 10 * 1e-6f, if (V > 0f) V else 1e-6f, col)
                 g.colorEditLastHue = H
-                g.colorEditLastActiveColor [0] = col[0]
-                g.colorEditLastActiveColor [1] = col[1]
-                g.colorEditLastActiveColor [2] = col[2]
+                g.colorEditLastColor [0] = col[0]
+                g.colorEditLastColor [1] = col[1]
+                g.colorEditLastColor [2] = col[2]
             }
             else if (flags has Cef.InputHSV) {
                 col[0] = H
@@ -558,13 +557,13 @@ interface imgui_widgets_colorEditorPicker {
                 R = col[0]
                 G = col[1]
                 B = col[2]
-                val preserveHue = H
                 colorConvertRGBtoHSV(R, G, B).let {
                     H = it[0]
                     S = it[1]
                     V = it[2]
                 }
-                H = preserveHue     // Avoids picker losing hue value for 1 frame glitch.
+                if (S == 0f && g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) // Fix local Hue as display below will use it immediately.
+                    H = g.colorEditLastHue
             } else if (flags has Cef.InputHSV) {
                 H = col[0]
                 S = col[1]
