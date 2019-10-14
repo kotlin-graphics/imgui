@@ -1237,6 +1237,8 @@ object showDemoWindowWidgets {
                     They are using standardized payload strings IMGUI_PAYLOAD_TYPE_COLOR_3F and IMGUI_PAYLOAD_TYPE_COLOR_4F to allow your own widgets
                     to use colors in their drag and drop interaction. Also see the demo in Color Picker -> Palette demo. */
                 bulletText("Drag and drop in standard widgets")
+                sameLine()
+                helpMarker("You can drag from the colored squares.")
                 indent()
                 colorEdit3("color 1", col3)
                 colorEdit4("color 2", col4)
@@ -1296,9 +1298,7 @@ object showDemoWindowWidgets {
         }
 
         treeNode("Querying Status (Active/Focused/Hovered etc.)") {
-            /*  Display the value of IsItemHovered() and other common item state functions. Note that the flags can be combined.
-                (because BulletText is an item itself and that would affect the output of ::isItemHovered
-                we pass all state in a single call to simplify the code).   */
+            // Submit an item (various types available) so we can query their status in the following block.
             combo("Item Type", ::itemType, "Text\u0000Button\u0000Button (w/ repeat)\u0000Checkbox\u0000SliderFloat\u0000InputText\u0000InputFloat\u0000InputFloat3\u0000ColorEdit4\u0000MenuItem\u0000TreeNode (w/ double-click)\u0000ListBox\u0000")
             sameLine()
             helpMarker("Testing how various types of items are interacting with the IsItemXXX functions.")
@@ -1317,6 +1317,11 @@ object showDemoWindowWidgets {
                 11 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                 else -> false
             }
+
+            // Display the value of IsItemHovered() and other common item state functions.
+            // Note that the ImGuiHoveredFlags_XXX flags can be combined.
+            // Because BulletText is an item itself and that would affect the output of IsItemXXX functions,
+            // we query every state in a single call to avoid storing them and to simplify the code
             bulletText("Return value = $ret\n" +
                     "isItemFocused = $isItemFocused\n" +
                     "isItemHovered() = ${isItemHovered()}\n" +
@@ -1339,7 +1344,8 @@ object showDemoWindowWidgets {
             if (embedAllInsideAChildWindow)
                 beginChild("outer_child", Vec2(0, fontSize * 20), true)
 
-            // Testing IsWindowFocused() function with its various flags. Note that the flags can be combined.
+            // Testing IsWindowFocused() function with its various flags.
+            // Note that the ImGuiFocusedFlags_XXX flags can be combined.
             bulletText(
                     "isWindowFocused() = ${isWindowFocused()}\n" +
                             "isWindowFocused(ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows)}\n" +
@@ -1347,7 +1353,8 @@ object showDemoWindowWidgets {
                             "isWindowFocused(RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow)}\n" +
                             "isWindowFocused(AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow)}\n")
 
-            // Testing IsWindowHovered() function with its various flags. Note that the flags can be combined.
+            // Testing IsWindowHovered() function with its various flags.
+            // Note that the ImGuiHoveredFlags_XXX flags can be combined.
             bulletText(
                     "isWindowHovered() = ${isWindowHovered()}\n" +
                             "isWindowHovered(AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
