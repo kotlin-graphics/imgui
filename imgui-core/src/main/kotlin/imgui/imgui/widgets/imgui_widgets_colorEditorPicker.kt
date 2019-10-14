@@ -167,15 +167,25 @@ interface imgui_widgets_colorEditorPicker {
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.DisplayHSV) 2 else 1
 
             for (n in 0 until components) {
-                if (n > 0) sameLine(0f, style.itemInnerSpacing.x)
+                if (n > 0)
+                    sameLine(0f, style.itemInnerSpacing.x)
                 setNextItemWidth(if (n + 1 < components) wItemOne else wItemLast)
+
+                // Disable Hue edit when Saturation is zero
+                val disableHueEdit = n == 0 && flags has Cef.DisplayHSV && i[1] == 0
                 valueChanged = when {
                     flags has Cef.Float -> {
+                        val vMin = if(disableHueEdit) Float.MAX_VALUE else 0f
+                        val vMax = if(disableHueEdit) -Float.MAX_VALUE else if(hdr) 0f else 1f
                         // operands inverted to have dragScalar always executed, no matter valueChanged
-                        valueChangedAsFloat = dragScalar(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChanged
+                        valueChangedAsFloat = dragScalar(ids[n], f, n, 1f / 255f, vMin, vMax, fmtTableFloat[fmtIdx][n]) || valueChanged
                         valueChangedAsFloat
                     }
-                    else -> dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
+                    else -> {
+                        val vMin = if(disableHueEdit) Int.MAX_VALUE else 0
+                        val vMax = if(disableHueEdit) Int.MIN_VALUE else if (hdr) 0 else 255
+                        dragInt(ids[n], i, n, 1f, vMin, vMax, fmtTableInt[fmtIdx][n]) || valueChanged
+                    }
                 }
                 if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             }

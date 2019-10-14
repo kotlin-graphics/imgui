@@ -69,6 +69,7 @@ import imgui.dsl.indent
 import imgui.dsl.menu
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.demo.showExampleApp.StyleEditor
+import imgui.imgui.imgui_miscellaneousUtilities.Companion.getForegroundDrawList
 import imgui.internal.*
 import kool.lim
 import java.nio.ByteBuffer
@@ -162,6 +163,7 @@ interface imgui_demoDebugInformations {
             if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
             if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
+            if (io.configWindowsMemoryCompactTimer >= 0f) text("io.ConfigWindowsMemoryCompactTimer = %.1ff", io.configWindowsMemoryCompactTimer)
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")

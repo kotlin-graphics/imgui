@@ -292,7 +292,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Draw commands. Typically 1 command = 1 GPU draw call, unless the command is a callback.    */
     var cmdBuffer = Stack<DrawCmd>()
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
-    var idxBuffer = IntBuffer(0)
+    var  idxBuffer = IntBuffer(0)
     /** Vertex buffer.  */
     var vtxBuffer = DrawVert_Buffer(0)
 

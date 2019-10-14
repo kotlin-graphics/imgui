@@ -43,6 +43,7 @@ import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.imgui.Context
 import imgui.imgui.g
 import imgui.imgui.imgui_tabBarsTabs.Companion.tabBarRef
+import kool.cap
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -696,10 +697,10 @@ class Window(var context: Context, var name: String) {
     var setWindowPosPivot = Vec2(Float.MAX_VALUE)
 
 
+    /** ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this should be in the TempData structure)   */
+    val idStack = Stack<ID>()
     /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
     var dc = WindowTempData()
-    /** ID stack. ID are hashes seeded with the value at the top of the stack   */
-    val idStack = Stack<ID>()
 
     init {
         idStack += id
@@ -727,6 +728,8 @@ class Window(var context: Context, var name: String) {
 
     /** Last frame number the window was Active. */
     var lastFrameActive = -1
+
+    var lastTimeActive = -1f
 
     var itemWidthDefault = 0f
 
@@ -762,6 +765,10 @@ class Window(var context: Context, var name: String) {
     /** Reference rectangle, in window relative space   */
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
+
+    var memoryCompacted = false
+    var memoryDrawListIdxCapacity = 0
+    var memoryDrawListVtxCapacity = 0
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getId(str: String, end: Int = 0): ID {
@@ -1289,6 +1296,42 @@ class Window(var context: Context, var name: String) {
         scrollTarget.y = (localY + scroll.y).i.f
         scrollTargetCenterRatio.y = centerYRatio
     }
+
+    /** Free up/compact internal window buffers, we can use this when a window becomes unused.
+     *  This is currently unused by the library, but you may call this yourself for easy GC.
+     *  Not freed:
+     *  - ImGuiWindow, ImGuiWindowSettings, Name
+     *  - StateStorage, ColumnsStorage (may hold useful data)
+     *  This should have no noticeable visual effect. When the window reappear however, expect new allocation/buffer growth/copy cost.
+     *
+     *  ~gcCompactTransientWindowBuffers */
+    fun gcCompactTransientWindowBuffers() {
+        memoryCompacted = true
+        memoryDrawListIdxCapacity = drawList.idxBuffer.cap
+        memoryDrawListVtxCapacity = drawList.vtxBuffer.cap
+        idStack.clear()
+        drawList.clearFreeMemory()
+        dc.apply {
+            childWindows.clear()
+            itemFlagsStack.clear()
+            itemWidthStack.clear()
+            textWrapPosStack.clear()
+            groupStack.clear()
+        }
+    }
+
+    /** ~GcAwakeTransientWindowBuffers */
+    fun gcAwakeTransientBuffers() {
+        // We stored capacity of the ImDrawList buffer to reduce growth-caused allocation/copy when awakening.
+        // The other buffers tends to amortize much faster.
+        memoryCompacted = false
+        drawList.apply {
+            idxBuffer = idxBuffer reserve memoryDrawListIdxCapacity
+            vtxBuffer = vtxBuffer reserve memoryDrawListVtxCapacity
+        }
+        memoryDrawListIdxCapacity = 0
+        memoryDrawListVtxCapacity = 0
+    }
 }
 
 fun Window?.setCurrent() {
@@ -1368,9 +1411,12 @@ class TabBar {
     var currFrameVisible = -1
     var prevFrameVisible = -1
     var barRect = Rect()
-    var contentsHeight = 0f
+    /** Record the height of contents submitted below the tab bar */
+    var lastTabContentHeight = 0f
     /** Distance from BarRect.Min.x, locked during layout */
     var offsetMax = 0f
+    /** Ideal offset if all tabs were visible and not clipped */
+    var offsetMaxIdeal = 0f
     /** Distance from BarRect.Min.x, incremented with each BeginTabItem() call, not used if ImGuiTabBarFlags_Reorderable if set. */
     var offsetNextTab = 0f
     var scrollingAnim = 0f
@@ -1434,7 +1480,7 @@ class TabBar {
         currFrameVisible = g.frameCount
 
         // Layout
-        itemSize(Vec2(0f /*offsetMax*/, barRect.height)) // Don't feed width back
+        itemSize(Vec2(offsetMaxIdeal, barRect.height))
         window.dc.cursorPos.x = barRect.min.x
 
         // Draw separator
@@ -1737,14 +1783,17 @@ class TabBar {
 
         // Layout all active tabs
         var offsetX = initialOffsetX
+        var offsetXideal = offsetX
         offsetNextTab = offsetX // This is used by non-reorderable tab bar where the submission order is always honored.
         for (tab in tabs) {
             tab.offset = offsetX
             if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id)
                 scrollTrackSelectedTabID = tab.id
             offsetX += tab.width + style.itemInnerSpacing.x
+            offsetXideal += tab.widthContents + style.itemInnerSpacing.x
         }
         offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
+        offsetMaxIdeal = (offsetXideal - style.itemInnerSpacing.x) max 0f
 
         // Horizontal scrolling buttons
         val scrollingButtons = offsetMax > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
