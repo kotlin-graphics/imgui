@@ -542,19 +542,25 @@ object showDemoWindowWidgets {
 
         treeNode("Collapsing Headers") {
             checkbox("Show 2nd header", ::closableGroup)
-            collapsingHeader("Header") {
+            collapsingHeader("Header", Tnf.None.i) {
                 text("IsItemHovered: ${isItemHovered()}")
                 for (i in 0..4) text("Some content $i")
             }
             collapsingHeader("Header with a close button", ::closableGroup) {
                 text("IsItemHovered: ${isItemHovered()}")
-                for (i in 0..4) text("More content $i")
+                for (i in 0..4)
+                    text("More content $i")
             }
+            /*
+            if (ImGui::CollapsingHeader("Header with a bullet", ImGuiTreeNodeFlags_Bullet))
+                ImGui::Text("IsItemHovered: %d", ImGui::IsItemHovered());
+            */
         }
 
         treeNode("Bullets") {
             bulletText("Bullet point 1")
             bulletText("Bullet point 2\nOn multiple lines")
+            treeNode("Tree node") { bulletText("Another bullet point") }
             bullet(); text("Bullet point 3 (two calls)")
             bullet(); smallButton("Button")
         }

@@ -2327,14 +2327,19 @@ interface imgui_internal {
             window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
 
         // Render
-        val textCol = Col.Text
+        val textCol = Col.Text.u32
         val navHighlightFlags: NavHighlightFlags = NavHighlightFlag.TypeThin.i
         if (displayFrame) {
             // Framed type
             val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(frameBb.min, frameBb.max, bgCol.u32, true, style.frameRounding)
             renderNavHighlight(frameBb, id, navHighlightFlags)
-            renderArrow(window.drawList,  Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 1f)
+            if (flags has Tnf.Bullet)
+                renderBullet(window.drawList, Vec2(textPos.x - textOffsetX * 0.6f, textPos.y + g.fontSize * 0.5f), textCol)
+            else if (!isLeaf)
+                renderArrow(window.drawList, Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, if(isOpen) Dir.Down else Dir.Right, 1f)
+            else // Leaf without bullet, left-adjusted text
+                textPos.x -= textOffsetX
             if (flags has Tnf._ClipLabelForTrailingButton)
                 frameBb.max.x -= g.fontSize + style.framePadding.x
             if (g.logEnabled) {
@@ -2353,9 +2358,9 @@ interface imgui_internal {
                 renderNavHighlight(frameBb, id, navHighlightFlags)
             }
             if (flags has Tnf.Bullet)
-                renderBullet(window.drawList, Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol.u32)
+                renderBullet(window.drawList, Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf)
-                renderArrow(window.drawList, Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol.u32, if (isOpen) Dir.Down else Dir.Right, 0.7f)
+                renderArrow(window.drawList, Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol, if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
             renderText(textPos, label, labelEnd, false)
