@@ -362,7 +362,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var colorEditOptions: ColorEditFlags = ColorEditFlag._OptionsDefault.i
 
     var colorEditLastHue = 0f
-    var colorEditLastActiveColor = FloatArray(3)
+
+    var colorEditLastColor = FloatArray(3) { Float.MAX_VALUE }
 
     val colorPickerRef = Vec4()
 
