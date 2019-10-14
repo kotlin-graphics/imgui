@@ -361,6 +361,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Store user options for color edit widgets   */
     var colorEditOptions: ColorEditFlags = ColorEditFlag._OptionsDefault.i
 
+    var colorEditLastHue = 0f
+    var colorEditLastActiveColor = FloatArray(3)
+
     val colorPickerRef = Vec4()
 
     var dragCurrentAccumDirty = false
