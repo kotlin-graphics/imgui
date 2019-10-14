@@ -274,13 +274,18 @@ interface imgui_main {
 
         g.navIdTabCounter = Int.MAX_VALUE
 
-        // Mark all windows as not visible
+        // Mark all windows as not visible and compact unused memory.
         assert(g.windowsFocusOrder.size == g.windows.size)
+        val memoryCompactStartTime = if(io.configWindowsMemoryCompactTimer >= 0f) g.time.f - io.configWindowsMemoryCompactTimer else Float.MAX_VALUE
         g.windows.forEach {
             it.wasActive = it.active
             it.beginCount = 0
             it.active = false
             it.writeAccessed = false
+
+            // Garbage collect (this is totally functional but we may need decide if the side-effects are desirable)
+            if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
+                it.gcCompactTransientWindowBuffers()
         }
 
         // Closing the focused window restore focus to the first active root window in descending z-order

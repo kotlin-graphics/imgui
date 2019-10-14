@@ -837,6 +837,8 @@ object showDemoWindowWidgets {
             }*/
         }
 
+        // Plot/Graph widgets are currently fairly limited.
+        // Consider writing your own plotting widget, or using a third-party one (see "Wiki->Useful Widgets", or github.com/ocornut/imgui/issues/2747)
         treeNode("Plots Widgets") {
 
             checkbox("Animate", ::animate)
@@ -855,7 +857,12 @@ object showDemoWindowWidgets {
                 phase += 0.1f * valuesOffset
                 refreshTime += 1f / 60f
             }
-            plotLines("Lines", values0, valuesOffset, "avg 0.0", -1f, 1f, Vec2(0, 80))
+            // Plots can display overlay texts
+            // (in this example, we will display an average value)
+            run {
+                val overlay = "avg ${values0.average()}"
+                plotLines("Lines", values0, valuesOffset, overlay, -1f, 1f, Vec2(0f, 80f))
+            }
             plotHistogram("Histogram", arr, 0, "", 0f, 1f, Vec2(0, 80))
 
             // Use functions to generate output
@@ -1040,31 +1047,61 @@ object showDemoWindowWidgets {
             // Limits (as helper variables that we can take the address of)
             // Note that the SliderScalar function has a maximum usable range of half the natural type maximum, hence the /2 below.
             // @formatter:off
-            val s8_zero : Byte   = 0.b;      val s8_one : Byte   = 1.b;      val s8_fifty : Byte  = 50.b;      val s8_min : Byte  = (-128).b;           val s8_max : Byte  = 127.b
-            val u8_zero : Ubyte  = Ubyte(0); val u8_one : Ubyte  = Ubyte(1); val u8_fifty : Ubyte = Ubyte(50); val u8_min : Ubyte = Ubyte(0);           val u8_max : Ubyte = Ubyte(255)
-            val s16_zero: Short  = 0.s;      val s16_one: Short  = 1.s;      val s16_fifty: Short = 50.s;      val s16_min: Short = (-32768).s;         val s16_max: Short = 32767.s
+            val s8_zero: Byte = 0.b;
+            val s8_one: Byte = 1.b;
+            val s8_fifty: Byte = 50.b;
+            val s8_min: Byte = (-128).b;
+            val s8_max: Byte = 127.b
+            val u8_zero: Ubyte = Ubyte(0);
+            val u8_one: Ubyte = Ubyte(1);
+            val u8_fifty: Ubyte = Ubyte(50);
+            val u8_min: Ubyte = Ubyte(0);
+            val u8_max: Ubyte = Ubyte(255)
+            val s16_zero: Short = 0.s;
+            val s16_one: Short = 1.s;
+            val s16_fifty: Short = 50.s;
+            val s16_min: Short = (-32768).s;
+            val s16_max: Short = 32767.s
 //            const ImU16   u16_zero = 0,   u16_one = 1,   u16_fifty = 50, u16_min = 0,           u16_max = 65535;
-            val s32_zero: Int    = 0;        val s32_one: Int    = 1;        val s32_fifty: Int   = 50;        val s32_min: Int   = Int.MIN_VALUE / 2;  val s32_max: Int   = Int.MAX_VALUE / 2;  val s32_hi_a = Int.MAX_VALUE / 2 - 100;  val s32_hi_b = Int.MAX_VALUE / 2
+            val s32_zero: Int = 0;
+            val s32_one: Int = 1;
+            val s32_fifty: Int = 50;
+            val s32_min: Int = Int.MIN_VALUE / 2;
+            val s32_max: Int = Int.MAX_VALUE / 2;
+            val s32_hi_a = Int.MAX_VALUE / 2 - 100;
+            val s32_hi_b = Int.MAX_VALUE / 2
 //            const ImU32   u32_zero = 0,   u32_one = 1,   u32_fifty = 50, u32_min = 0,           u32_max = UINT_MAX/2,   u32_hi_a = UINT_MAX/2 - 100,   u32_hi_b = UINT_MAX/2;
-            val s64_zero: Long   = 0L;       val s64_one: Long   = 1L;       val s64_fifty: Long  = 50L;       val s64_min: Long  = Long.MIN_VALUE / 2; val s64_max: Long  = Long.MAX_VALUE / 2; val s64_hi_a = Long.MAX_VALUE / 2 - 100; val s64_hi_b = Long.MAX_VALUE / 2
+            val s64_zero: Long = 0L;
+            val s64_one: Long = 1L;
+            val s64_fifty: Long = 50L;
+            val s64_min: Long = Long.MIN_VALUE / 2;
+            val s64_max: Long = Long.MAX_VALUE / 2;
+            val s64_hi_a = Long.MAX_VALUE / 2 - 100;
+            val s64_hi_b = Long.MAX_VALUE / 2
 //            const ImU64   u64_zero = 0,   u64_one = 1,   u64_fifty = 50, u64_min = 0,           u64_max = ULLONG_MAX/2, u64_hi_a = ULLONG_MAX/2 - 100, u64_hi_b = ULLONG_MAX/2;
-            val f32_zero: Float  = 0f;       val f32_one: Float  = 1f;       val f32_lo_a: Float  = -10_000_000_000f;         val f32_hi_a: Float = +10_000_000_000f
-            val f64_zero: Double = 0.0;      val f64_one: Double = 1.0;      val f64_lo_a: Double = -1_000_000_000_000_000.0; val f64_hi_a: Double = +1_000_000_000_000_000.0
+            val f32_zero: Float = 0f;
+            val f32_one: Float = 1f;
+            val f32_lo_a: Float = -10_000_000_000f;
+            val f32_hi_a: Float = +10_000_000_000f
+            val f64_zero: Double = 0.0;
+            val f64_one: Double = 1.0;
+            val f64_lo_a: Double = -1_000_000_000_000_000.0;
+            val f64_hi_a: Double = +1_000_000_000_000_000.0
 
             val dragSpeed = 0.2f
             text("Drags:")
             checkbox("Clamp integers to 0..50", ::dragClamp); sameLine(); helpMarker("As with every widgets in dear imgui, we never modify values unless there is a user interaction.\nYou can override the clamping limits by using CTRL+Click to input a value.")
-            dragScalar("drag s8",        DataType.Byte,   ::s8_v, dragSpeed,        s8_zero.takeIf { dragClamp },  s8_fifty.takeIf { dragClamp })
+            dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, s8_zero.takeIf { dragClamp }, s8_fifty.takeIf { dragClamp })
 //            dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
-            dragScalar("drag s16",       DataType.Short,  ::s16_v, dragSpeed,       s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
+            dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
 //            ImGui::DragScalar("drag u16",       ImGuiDataType_U16,    &u16_v, drag_speed, drag_clamp ? &u16_zero : NULL, drag_clamp ? &u16_fifty : NULL, "%u ms");
-            dragScalar("drag s32",       DataType.Int,    ::s32_v, dragSpeed,       s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
+            dragScalar("drag s32", DataType.Int, ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
 //            ImGui::DragScalar("drag u32",       ImGuiDataType_U32,    &u32_v, drag_speed, drag_clamp ? &u32_zero : NULL, drag_clamp ? &u32_fifty : NULL, "%u ms");
-            dragScalar("drag s64",       DataType.Long,   ::s64_v, dragSpeed,       s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
+            dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
 //            ImGui::DragScalar("drag u64",       ImGuiDataType_U64,    &u64_v, drag_speed, drag_clamp ? &u64_zero : NULL, drag_clamp ? &u64_fifty : NULL);
-            dragScalar("drag float",     DataType.Float,  ::f32_v, 0.005f,  f32_zero, f32_one, "%f", 1f)
-            dragScalar("drag float ^2",  DataType.Float,  ::f32_v, 0.005f,  f32_zero, f32_one, "%f", 2f); sameLine(); helpMarker("You can use the 'power' parameter to increase tweaking precision on one side of the range.")
-            dragScalar("drag double",    DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams", 1f)
+            dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", 1f)
+            dragScalar("drag float ^2", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", 2f); sameLine(); helpMarker("You can use the 'power' parameter to increase tweaking precision on one side of the range.")
+            dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams", 1f)
             dragScalar("drag double ^2", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", 2f)
 
             text("Sliders")
@@ -1084,16 +1121,16 @@ object showDemoWindowWidgets {
 //            ImGui::SliderScalar("slider u64 low",     ImGuiDataType_U64,    &u64_v, &u64_zero, &u64_fifty,"%I64u ms");
 //            ImGui::SliderScalar("slider u64 high",    ImGuiDataType_U64,    &u64_v, &u64_hi_a, &u64_hi_b, "%I64u ms");
 //            ImGui::SliderScalar("slider u64 full",    ImGuiDataType_U64,    &u64_v, &u64_min,  &u64_max,  "%I64u ms");
-            sliderScalar("slider float low",    DataType.Float,  ::f32_v, f32_zero, f32_one)
-            sliderScalar("slider float low^2",  DataType.Float,  ::f32_v, f32_zero, f32_one,  "%.10f", 2f)
-            sliderScalar("slider float high",   DataType.Float,  ::f32_v, f32_lo_a, f32_hi_a, "%e")
-            sliderScalar("slider double low",   DataType.Double, ::f64_v, f64_zero, f64_one,  "%.10f grams", 1f)
-            sliderScalar("slider double low^2", DataType.Double, ::f64_v, f64_zero, f64_one,  "%.10f", 2f)
-            sliderScalar("slider double high",  DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams", 1f)
+            sliderScalar("slider float low", DataType.Float, ::f32_v, f32_zero, f32_one)
+            sliderScalar("slider float low^2", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", 2f)
+            sliderScalar("slider float high", DataType.Float, ::f32_v, f32_lo_a, f32_hi_a, "%e")
+            sliderScalar("slider double low", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f grams", 1f)
+            sliderScalar("slider double low^2", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", 2f)
+            sliderScalar("slider double high", DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams", 1f)
 
             text("Inputs")
             checkbox("Show step buttons", ::inputsStep)
-            inputScalar("input s8",  DataType.Byte,  ::s8_v,  s8_one.takeIf { inputsStep },  null, "%d")
+            inputScalar("input s8", DataType.Byte, ::s8_v, s8_one.takeIf { inputsStep }, null, "%d")
 //            inputScalar("input u8",  DataType.Ubyte, ::u8_v,  u8_one.takeIf { inputsStep },  null, "%d")
             inputScalar("input s16", DataType.Short, ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
 //            ImGui::InputScalar("input u16",     ImGuiDataType_U16,    &u16_v, inputs_step ? &u16_one : NULL, NULL, "%u");

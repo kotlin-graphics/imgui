@@ -56,7 +56,9 @@ import kotlin.reflect.KMutableProperty0
  *  - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
  *      e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
  *  - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
- *      For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision). */
+ *      For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
+ *  - Use v_min < v_max to clamp edits to given limits. Note that CTRL+Click manual input can override those limits.
+ *  - Use v_min > v_max to lock edits.  */
 interface imgui_widgets_drags {
 
     /** If v_min >= v_max we have no bound */
