@@ -2,6 +2,7 @@ package imgui.imgui.demo.showExampleApp
 
 import glm_.f
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.checkbox
@@ -58,7 +59,7 @@ object ConstrainedResize {
 
     /** Helper functions to demonstrate programmatic constraints    */
     object CustomConstraints {
-        val square: SizeCallback = { it.desiredSize put max(it.desiredSize.x, it.desiredSize.y) }
+        val square: SizeCallback = { it.desiredSize put (it.desiredSize.x max it.desiredSize.y) }
         val step: SizeCallback = {
             val step = (it.userData as Int).f
             it.desiredSize.x = (it.desiredSize.x / step + 0.5f).i * step

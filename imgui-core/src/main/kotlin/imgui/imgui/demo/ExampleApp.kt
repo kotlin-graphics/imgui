@@ -59,7 +59,7 @@ object ExampleApp {
         var windowTitles = false
         var customRendering = false
 
-        // Dear ImGui Apps (accessible from the "Help" menu)
+        // Dear ImGui Apps (accessible from the "Tools" menu)
         var metrics = false
         var styleEditor = false
         var about = false
@@ -151,7 +151,7 @@ object ExampleApp {
                 menuItem("Custom rendering", "", show::customRendering)
                 menuItem("Documents", "", show::documents)
             }
-            menu("Help") {
+            menu("Tools") {
                 menuItem("Metrics", "", show::metrics)
                 menuItem("Style Editor", "", show::styleEditor)
                 menuItem("About Dear ImGui", "", show::about)
@@ -165,7 +165,7 @@ object ExampleApp {
             text("PROGRAMMER GUIDE:")
             bulletText("Please see the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!")
             bulletText("Please see the comments in imgui.cpp.")
-            bulletText("Please see the examples/ in application.")
+            bulletText("Please see the examples/ application.")
             bulletText("Enable 'io.ConfigFlags |= NavEnableKeyboard' for keyboard controls.")
             bulletText("Enable 'io.ConfigFlags |= NavEnableGamepad' for gamepad controls.")
             separator()

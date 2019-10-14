@@ -115,7 +115,7 @@ interface imgui_demoDebugInformations {
 
     //-----------------------------------------------------------------------------
     // [SECTION] About Window / ShowAboutWindow()
-    // Access from Dear ImGui Demo -> Help -> About
+    // Access from Dear ImGui Demo -> Tools -> About
     //-----------------------------------------------------------------------------
 
     /** create About window. display Dear ImGui version, credits and build/system information. */
@@ -129,7 +129,7 @@ interface imgui_demoDebugInformations {
         // Basic info
         text("Dear ImGui $version")
         separator()
-        text("By Omar Cornut and all dear imgui contributors.")
+        text("By Omar Cornut and all Dear Imgui contributors.")
         text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
 
         checkbox("Config/Build Information", ::showConfigInfo)
@@ -342,8 +342,11 @@ interface imgui_demoDebugInformations {
     /** Helper to display basic user controls. */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
-        bulletText("Click and drag on lower right corner to resize window\n(double-click to auto fit window to its contents).")
-        bulletText("Click and drag on any empty space to move window.")
+        bulletText("Click and drag on lower corner to resize window\n(double-click to auto fit window to its contents).")
+        if (io.configWindowsMoveFromTitleBarOnly)
+            bulletText("Click and drag on title bar to move window.")
+        else
+            bulletText("Click and drag on any empty space to move window.")
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
         if (io.fontAllowUserScaling)

@@ -508,9 +508,9 @@ class PtrOrIndex(
 class WindowTempData {
 
     var cursorPos = Vec2()
-
+    /** Current emitting position, in absolute coordinates. */
     var cursorPosPrevLine = Vec2()
-
+    /** Initial position after Begin(), generally ~ window position + WindowPadding. */
     var cursorStartPos = Vec2()
     /** Used to implicitly calculate the size of our contents, always growing during the frame. Used to calculate window->ContentSize at the beginning of next frame */
     var cursorMaxPos = Vec2()
@@ -518,21 +518,21 @@ class WindowTempData {
     var currLineSize = Vec2()
 
     var prevLineSize = Vec2()
-
+    /** Baseline offset (0.0f by default on a new line, generally == style.FramePadding.y when a framed item has been added). */
     var currLineTextBaseOffset = 0f
 
     var prevLineTextBaseOffset = 0f
-
+    /** Current tree depth. */
     var treeDepth = 0
     /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary. */
     var treeMayJumpToParentOnPopMask = 0
-
+    /** ID for last item */
     var lastItemId: ID = 0
-    /** ItemStatusFlag */
+    /** Status flags for last item (see ImGuiItemStatusFlags_) */
     var lastItemStatusFlags: ItemStatusFlags = 0
-    /** Interaction rect    */
+    /** Interaction rect for last item    */
     var lastItemRect = Rect()
-    /** End-user display rect (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
+    /** End-user display rect for last item (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
     var lastItemDisplayRect = Rect()
     /** Current layer, 0..31 (we currently only use 0..1)   */
     var navLayerCurrent = NavLayer.Main
@@ -553,7 +553,7 @@ class WindowTempData {
     var menuBarOffset = Vec2()
 
     val childWindows = ArrayList<Window>()
-
+    /** Current persistent per-window storage (store e.g. tree node open/close state) */
     var stateStorage = Storage()
 
     var layoutType = LayoutType.Vertical
@@ -618,11 +618,11 @@ class Window(var context: Context, var name: String) {
     var contentSize = Vec2()
     /** Size of contents/scrollable client area explicitly request by the user via SetNextWindowContentSize(). */
     var contentSizeExplicit = Vec2()
-    /** Window padding at the time of begin. */
+    /** Window padding at the time of Begin(). */
     var windowPadding = Vec2()
-    /** Window rounding at the time of begin.   */
+    /** Window rounding at the time of Begin().   */
     var windowRounding = 0f
-    /** Window border size at the time of begin.    */
+    /** Window border size at the time of Begin().    */
     var windowBorderSize = 1f
     /** Size of buffer storing Name. May be larger than strlen(Name)! */
     var nameBufLen = name.length
@@ -641,7 +641,7 @@ class Window(var context: Context, var name: String) {
     var scrollTargetCenterRatio = Vec2(.5f)
     /** Size taken by scrollbars on each axis */
     var scrollbarSizes = Vec2()
-
+    /** Are scrollbars visible? */
     var scrollbar = Vec2bool()
 
     /** Set to true on Begin(), unless Collapsed  */
@@ -675,9 +675,9 @@ class Window(var context: Context, var name: String) {
 
     var autoFitFrames = Vec2i(-1)
 
-    var autoFitOnlyGrows = false
-
     var autoFitChildAxes = 0x00
+
+    var autoFitOnlyGrows = false
 
     var autoPosLastDirection = Dir.None
     /** Hide the window for N frames */
@@ -728,7 +728,7 @@ class Window(var context: Context, var name: String) {
 
     /** Last frame number the window was Active. */
     var lastFrameActive = -1
-
+    /** Last timestamp the window was Active (using float as we don't need high precision there) */
     var lastTimeActive = -1f
 
     var itemWidthDefault = 0f
@@ -1130,7 +1130,7 @@ class Window(var context: Context, var name: String) {
         val windowRect = Rect(innerRect.min - 1, innerRect.max + 1)
         //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
         val deltaScroll = Vec2()
-        if (!windowRect.contains(itemRect))        {
+        if (!windowRect.contains(itemRect)) {
             if (scrollbar.x && itemRect.min.x < windowRect.min.x)
                 setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
             else if (scrollbar.x && itemRect.max.x >= windowRect.max.x)
@@ -1863,7 +1863,7 @@ class TabBar {
         val tabX1 = tab.offset + if (order > 0) -margin else 0f
         val tabX2 = tab.offset + tab.width + if (order + 1 < tabs.size) margin else 1f
         scrollingTargetDistToVisibility = 0f
-        if (scrollingTarget > tabX1  || (tabX2 - tabX1 >= barRect.width)) {
+        if (scrollingTarget > tabX1 || (tabX2 - tabX1 >= barRect.width)) {
             scrollingTargetDistToVisibility = (scrollingAnim - tabX2) max 0f
             scrollingTarget = tabX1
         } else if (scrollingTarget < tabX2 - barRect.width) {
