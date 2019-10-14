@@ -598,7 +598,7 @@ interface imgui_windows {
                 dc.textWrapPosStack.clear()
                 dc.currentColumns = null
                 dc.treeDepth = 0
-                dc.treeStoreMayJumpToParentOnPop = 0
+                dc.treeMayJumpToParentOnPopMask = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
                 menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
