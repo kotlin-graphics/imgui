@@ -215,6 +215,8 @@ enum class SelectableFlag(@JvmField val i: Int) {
     AllowDoubleClick(1 shl 2),
     /** Cannot be selected, display grayed out text */
     Disabled(1 shl 3),
+    /** (WIP) Hit testing to allow subsequent widgets to overlap this one */
+    AllowItemOverlap(1 shl 4),
     /** private  */
     NoHoldingActiveID(1 shl 20),
     /** private  */
@@ -224,11 +226,10 @@ enum class SelectableFlag(@JvmField val i: Int) {
     /** private  */
     DrawFillAvailWidth(1 shl 23),
 
-    AllowItemOverlap(1 shl 24),
     /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
-    DrawHoveredWhenHeld(1 shl 25),
+    DrawHoveredWhenHeld(1 shl 24),
 
-    SetNavIdOnHover(1 shl 26);
+    SetNavIdOnHover(1 shl 25);
 
     infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
 }
