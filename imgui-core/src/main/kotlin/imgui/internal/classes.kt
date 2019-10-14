@@ -1777,8 +1777,10 @@ class TabBar {
                 tabs[g.shrinkWidthBuffer[tabN].index].width = g.shrinkWidthBuffer[tabN].width.i.f
         } else {
             val tabMaxWidth = calcMaxTabWidth()
-            for (tab in tabs)
+            for (tab in tabs) {
                 tab.width = tab.widthContents min tabMaxWidth
+                assert(tab.width > 0f)
+            }
         }
 
         // Layout all active tabs
