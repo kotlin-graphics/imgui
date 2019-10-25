@@ -83,8 +83,8 @@ private class ImGuiOpenGL3 {
 
         // Setup Dear ImGui context
         ctx = Context()
-        io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
-        io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
+//        io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
+//        io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 
         // Setup Dear ImGui style
         ImGui.styleColorsDark()
