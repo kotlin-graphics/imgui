@@ -3,7 +3,7 @@ import static org.gradle.internal.os.OperatingSystem.*
 plugins {
     id 'maven'
     id 'java'
-    id "org.jetbrains.kotlin.jvm" version "1.3.41"
+    id "org.jetbrains.kotlin.jvm" version "1.3.50"
     id "com.github.johnrengelman.shadow" version '5.1.0'
     id 'idea'
 }
@@ -14,17 +14,17 @@ group = 'com.github.kotlin_graphics'
 ext{
     moduleName = "${group}.imgui"
     kot = 'org.jetbrains.kotlin:kotlin'
-    kotlin_version = '1.3.41'
-    kotlintest_version = '3.3.3'
+    kotlin_version = '1.3.50'
+    kotlintest_version = '3.4.0'
     kx = "com.github.kotlin-graphics"
-    uno_version = 'b966a1c744457057348fc6195ab779fa49a83d9f'
-    vkk_version = '3854c790d9ff3579e6025426c477b7ee65e560ea'
-    gln_version = '4ec09b72e22431a2921791c082a0e66bf858e6b6'
-    gli_version = 'c8cb88947b77232beed84599fb7a01b5ce158f25'
-    glm_version = '6048c31425ae6110258e4b42165f1e636f8b5603'
-    unsigned_version = 'ba1b5c2ab0231aabbef753df5fa0d0de98142360'
-    kool_version = 'd052c5e18a06642fcdf9f5942198ee9c4cee1a3f'
-    lwjgl_version = "3.2.2"
+    uno_version = '3275c3ce3045be19c84288609d9f1631d631a743'
+    vkk_version = 'facab9bcb08bce4494c0e0dcf8c90e50dc324949'
+    gln_version = '2f36e649bb3037981a625a3a2a1c0316adb05fd6'
+    gli_version = '336a02f5acd5db7f5c34cb673512714f1856577e'
+    glm_version = '3d3aea6d420bace96ced057cddeca023129d7c41'
+    unsigned_version = 'c81c2e39fb9e10403650c1b371b8573fc745bfb4'
+    kool_version = '1e564cfb7ab72523d0f748a235e21cf33d0c73bc'
+    lwjgl_version = "3.2.3"
     lwjgl_natives = current() == WINDOWS ? "windows" : current() == LINUX ? "linux" : "macos"
 }
 
