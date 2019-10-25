@@ -11,7 +11,7 @@ import gln.glf.semantic
 import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
 import gln.uniform.glUniform
-import gln.vertexArray.GlVertexArray
+import gln.identifiers.GlVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import imgui.*
 import imgui.ImGui.io
