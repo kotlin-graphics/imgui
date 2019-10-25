@@ -2866,7 +2866,7 @@ interface imgui_internal {
                     state.click(mouseX, mouseY)
                     state.cursorAnimReset()
                 }
-            } else if (io.mouseDown[0] && !state.selectedAllMouseLock && io.mouseDelta anyNotEqual 0f) {
+            } else if (io.mouseDown[0] && !state.selectedAllMouseLock && io.mouseDelta.anyNotEqual(0f)) {
                 state.stb.selectStart = state.stb.cursor
                 state.stb.selectEnd = state.locateCoord(mouseX, mouseY)
                 state.cursorFollow = true
