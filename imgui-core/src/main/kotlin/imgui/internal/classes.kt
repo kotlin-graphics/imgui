@@ -715,7 +715,7 @@ class Window(var context: Context, var name: String) {
     /** == Window->Rect() just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
     /** Inner rectangle (omit title bar, menu bar, scroll bar) */
-    var innerRect = Rect()
+    var innerRect = Rect(0f, 0f, 0f, 0f) // Clear so the InnerRect.GetSize() code in Begin() doesn't lead to overflow even if the result isn't used.
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()
     /** Cover the whole scrolling region, shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentsRegionRect over time (from 1.71+ onward). */
