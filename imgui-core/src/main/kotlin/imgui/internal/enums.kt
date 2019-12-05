@@ -133,6 +133,7 @@ infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough. */
 enum class ItemFlag(@JvmField val i: Int) {
+    None(0),
     NoTabStop(1 shl 0),  // false
     /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
     ButtonRepeat(1 shl 1),  // false

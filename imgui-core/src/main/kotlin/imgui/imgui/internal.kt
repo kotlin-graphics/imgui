@@ -238,35 +238,33 @@ interface imgui_internal {
 
 
     /** Advance cursor given item size for layout.  */
-    fun itemSize(size: Vec2, textOffsetY: Float = 0f) {
+    fun itemSize(size: Vec2, textBaselineY: Float = 0f) {
 
         val window = currentWindow
         if (window.skipItems) return
 
         // Always align ourselves on pixel boundaries
         val lineHeight = glm.max(window.dc.currLineSize.y, size.y)
-        val textBaseOffset = glm.max(window.dc.currLineTextBaseOffset, textOffsetY)
         window.dc.apply {
             //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
-            cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)
-            cursorPos.x = (window.pos.x + indent + columnsOffset).i.f
+            cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)    // Next line
+            cursorPos.x = (window.pos.x + indent + columnsOffset).i.f      // Next line
             cursorPos.y = (cursorPos.y + lineHeight + style.itemSpacing.y).i.f
             cursorMaxPos.x = cursorMaxPos.x max cursorPosPrevLine.x
             cursorMaxPos.y = cursorMaxPos.y max (cursorPos.y - style.itemSpacing.y)
-
             //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
 
             prevLineSize.y = lineHeight
-            prevLineTextBaseOffset = textBaseOffset
-            currLineTextBaseOffset = 0f
             currLineSize.y = 0f
+            prevLineTextBaseOffset = currLineTextBaseOffset max textBaselineY
+            currLineTextBaseOffset = 0f
 
             // Horizontal layout mode
             if (layoutType == Lt.Horizontal) sameLine()
         }
     }
 
-    fun itemSize(bb: Rect, textOffsetY: Float = 0f) = itemSize(bb.size, textOffsetY)
+    fun itemSize(bb: Rect, textBaselineY: Float = 0f) = itemSize(bb.size, textBaselineY)
 
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over
@@ -936,6 +934,7 @@ interface imgui_internal {
     // Inputs
     // FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions.
     infix fun isActiveIdUsingNavDir(dir: Dir): Boolean = g.activeIdUsingNavDirMask has (1 shl dir)
+
     infix fun isActiveIdUsingNavInput(input: NavInput): Boolean = g.activeIdUsingNavInputMask has (1 shl input)
     infix fun isActiveIdUsingKey(key: Key): Boolean {
         assert(key.i < 64)
@@ -3902,6 +3901,11 @@ interface imgui_internal {
     }
 
     // Debug Tools
+
+    fun debugDrawItemRect(col: Int = COL32(255, 0, 0, 255)) {
+        val window = g.currentWindow!!
+        getForegroundDrawList(window).addRect(window.dc.lastItemRect.min, window.dc.lastItemRect.max, col)
+    }
 
     fun debugStartItemPicker() {
         g.debugItemPickerActive = true
