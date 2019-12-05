@@ -20,6 +20,9 @@ import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
+import imgui.ImGui.isActiveIdUsingKey
+import imgui.ImGui.isActiveIdUsingNavDir
+import imgui.ImGui.isActiveIdUsingNavInput
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
@@ -434,7 +437,6 @@ fun navUpdate() {
         navMapKey(Key.RightArrow, NavInput.KeyRight)
         navMapKey(Key.UpArrow, NavInput.KeyUp)
         navMapKey(Key.DownArrow, NavInput.KeyDown)
-        navMapKey(Key.Tab, NavInput.KeyTab)
         if (io.keyCtrl)
             io.navInputs[NavInput.TweakSlow] = 1f
         if (io.keyShift)
@@ -511,7 +513,7 @@ fun navUpdate() {
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
     if (NavInput.Cancel.isPressed(InputReadMode.Pressed)) {
         if (g.activeId != 0) {
-            if (g.activeIdBlockNavInputFlags hasnt (1 shl NavInput.Cancel))
+            if (!isActiveIdUsingNavInput(NavInput.Cancel))
                 clearActiveId()
         } else if (g.navWindow != null && g.navWindow!!.flags has Wf.ChildWindow && g.navWindow!!.flags hasnt Wf.Popup && g.navWindow!!.parentWindow != null) {
             // Exit child window
@@ -569,19 +571,18 @@ fun navUpdate() {
     g.navNextActivateId = 0
 
     // Initiate directional inputs request
-    val allowedDirFlags = if (g.activeId == 0) 0.inv() else g.activeIdAllowNavDirFlags
     if (g.navMoveRequestForward == NavForward.None) {
         g.navMoveDir = Dir.None
         g.navMoveRequestFlags = NavMoveFlag.None.i
         g.navWindow?.let {
-            if (g.navWindowingTarget == null && allowedDirFlags != 0 && it.flags hasnt Wf.NoNavInputs) {
-                if (allowedDirFlags has (1 shl Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput.KeyLeft, InputReadMode.Repeat))
+            if (g.navWindowingTarget == null && it.flags hasnt Wf.NoNavInputs) {
+                if (!isActiveIdUsingNavDir(Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput.KeyLeft, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Left
-                if (allowedDirFlags has (1 shl Dir.Right) && isNavInputPressedAnyOfTwo(NavInput.DpadRight, NavInput.KeyRight, InputReadMode.Repeat))
+                if (!isActiveIdUsingNavDir(Dir.Right) && isNavInputPressedAnyOfTwo(NavInput.DpadRight, NavInput.KeyRight, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Right
-                if (allowedDirFlags has (1 shl Dir.Up) && isNavInputPressedAnyOfTwo(NavInput.DpadUp, NavInput.KeyUp, InputReadMode.Repeat))
+                if (!isActiveIdUsingNavDir(Dir.Up) && isNavInputPressedAnyOfTwo(NavInput.DpadUp, NavInput.KeyUp, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Up
-                if (allowedDirFlags has (1 shl Dir.Down) && isNavInputPressedAnyOfTwo(NavInput.DpadDown, NavInput.KeyDown, InputReadMode.Repeat))
+                if (!isActiveIdUsingNavDir(Dir.Down) && isNavInputPressedAnyOfTwo(NavInput.DpadDown, NavInput.KeyDown, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Down
             }
         }
@@ -598,7 +599,7 @@ fun navUpdate() {
     // Update PageUp/PageDown/Home/End scroll
     // FIXME-NAV: Consider enabling those keys even without the master ImGuiConfigFlags_NavEnableKeyboard flag?
     val navScoringRectOffsetY = when {
-        navKeyboardActive -> navUpdatePageUpPageDown(allowedDirFlags)
+        navKeyboardActive -> navUpdatePageUpPageDown()
         else -> 0f
     }
 
@@ -910,7 +911,7 @@ fun navUpdateMoveResult() {
 }
 
 /** Handle PageUp/PageDown/Home/End keys */
-fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
+fun navUpdatePageUpPageDown(): Float {
 
     val window = g.navWindow
     if (g.navMoveDir != Dir.None || window == null)
@@ -918,10 +919,10 @@ fun navUpdatePageUpPageDown(allowedDirFlags: Int): Float {
     if (window.flags has Wf.NoNavInputs || g.navWindowingTarget != null || g.navLayer != NavLayer.Main)
         return 0f
 
-    val pageUpHeld = Key.PageUp.isDown && allowedDirFlags has (1 shl Dir.Up)
-    val pageDownHeld = Key.PageDown.isDown && allowedDirFlags has (1 shl Dir.Down)
-    val homePressed = Key.Home.isPressed && allowedDirFlags has (1 shl Dir.Up)
-    val endPressed = Key.End.isPressed && allowedDirFlags has (1 shl Dir.Down)
+    val pageUpHeld = Key.PageUp.isDown && !isActiveIdUsingKey(Key.PageUp)
+    val pageDownHeld = Key.PageDown.isDown && !isActiveIdUsingKey(Key.PageDown)
+    val homePressed = Key.Home.isPressed && !isActiveIdUsingKey(Key.Home)
+    val endPressed = Key.End.isPressed && !isActiveIdUsingKey(Key.End)
     if (pageUpHeld != pageDownHeld || homePressed != endPressed) { // If either (not both) are pressed
 
         if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {

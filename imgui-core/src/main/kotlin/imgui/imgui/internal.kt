@@ -154,8 +154,6 @@ interface imgui_internal {
             }
         }
         g.activeId = id
-        g.activeIdAllowNavDirFlags = 0
-        g.activeIdBlockNavInputFlags = 0
         g.activeIdAllowOverlap = false
         g.activeIdWindow = window
         g.activeIdHasBeenEditedThisFrame = false
@@ -166,6 +164,12 @@ interface imgui_internal {
                 else -> InputSource.Mouse
             }
         }
+
+        // Clear declaration of inputs claimed by the widget
+        // (Please note that this is WIP and not all keys/inputs are thoroughly declared by all widgets yet)
+        g.activeIdUsingNavDirMask = 0x00
+        g.activeIdUsingNavInputMask = 0x00
+        g.activeIdUsingKeyInputMask = 0x00
     }
 
     /** FIXME-NAV: The existence of SetNavID/SetNavIDWithRectRel/SetFocusID is incredibly messy and confusing and needs some explanation or refactoring. */
@@ -368,7 +372,7 @@ interface imgui_internal {
 
         // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
         // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
-        if (g.activeId == id && g.focusTabPressed && g.activeIdBlockNavInputFlags hasnt (1 shl NavInput.KeyTab.i) && g.focusRequestNextWindow == null) {
+        if (g.activeId == id && g.focusTabPressed && !isActiveIdUsingKey(Key.Tab) && g.focusRequestNextWindow == null) {
             g.focusRequestNextWindow = window
             g.focusRequestNextCounterTab = window.dc.focusCounterTab + when {
                 // Modulo on index will be applied at the end of frame once we've got the total counter of items.
@@ -927,6 +931,15 @@ interface imgui_internal {
         g.navMousePosDirty = true
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
+    }
+
+    // Inputs
+    // FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions.
+    infix fun isActiveIdUsingNavDir(dir: Dir): Boolean = g.activeIdUsingNavDirMask has (1 shl dir)
+    infix fun isActiveIdUsingNavInput(input: NavInput): Boolean = g.activeIdUsingNavInputMask has (1 shl input)
+    infix fun isActiveIdUsingKey(key: Key): Boolean {
+        assert(key.i < 64)
+        return g.activeIdUsingKeyInputMask.and(1L shl key.i) != 0L // TODO Long.has
     }
 
     /** [Internal] This doesn't test if the button is pressed */
@@ -2042,7 +2055,6 @@ interface imgui_internal {
                 setActiveId(id, window)
                 if ((navActivatedByCode || navActivatedByInputs) && flags hasnt Bf.NoNavFocus)
                     setFocusId(id, window)
-                g.activeIdAllowNavDirFlags = (1 shl Dir.Left) or (1 shl Dir.Right) or (1 shl Dir.Up) or (1 shl Dir.Down)
             }
         }
         var held = false
@@ -2337,7 +2349,7 @@ interface imgui_internal {
             if (flags has Tnf.Bullet)
                 renderBullet(window.drawList, Vec2(textPos.x - textOffsetX * 0.6f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf)
-                renderArrow(window.drawList, Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, if(isOpen) Dir.Down else Dir.Right, 1f)
+                renderArrow(window.drawList, Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, if (isOpen) Dir.Down else Dir.Right, 1f)
             else // Leaf without bullet, left-adjusted text
                 textPos.x -= textOffsetX
             if (flags has Tnf._ClipLabelForTrailingButton)
@@ -2774,12 +2786,17 @@ interface imgui_internal {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
+
+            // Declare our inputs
             assert(NavInput.values().size < 32)
-            g.activeIdBlockNavInputFlags = 1 shl NavInput.Cancel
+            if (isMultiline || flags has Itf.CallbackHistory)
+                g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
+            g.activeIdUsingNavInputMask = g.activeIdUsingNavInputMask or (1 shl NavInput.Cancel)
+            g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or ((1L shl Key.Home) or (1L shl Key.End))
+            if (isMultiline)
+                g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or ((1L shl Key.PageUp) or (1L shl Key.PageDown)) // FIXME-NAV: Page up/down actually not supported yet by widget, but claim them ahead.
             if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
-                g.activeIdBlockNavInputFlags = g.activeIdBlockNavInputFlags or (1 shl NavInput.KeyTab.i)
-            if (!isMultiline && flags hasnt Itf.CallbackHistory)
-                g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+                g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or (1L shl Key.Tab)
         }
 
         // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped), clear id immediately (don't wait until the end of the function)

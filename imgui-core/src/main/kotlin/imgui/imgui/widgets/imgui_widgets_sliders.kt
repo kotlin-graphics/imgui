@@ -179,7 +179,7 @@ interface imgui_widgets_sliders {
                 setActiveId(id, window)
                 setFocusId(id, window)
                 window.focus()
-                g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+                g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
                 if (focusRequested || (clicked && io.keyCtrl) || g.navInputId == id) {
                     tempInputStart = true
                     focusableItemUnregister(window)
@@ -287,7 +287,7 @@ interface imgui_widgets_sliders {
             setActiveId(id, window)
             setFocusId(id, window)
             window.focus()
-            g.activeIdAllowNavDirFlags = (1 shl Dir.Left) or (1 shl Dir.Right)
+            g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
         }
 
         // Draw frame

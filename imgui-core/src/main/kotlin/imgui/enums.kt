@@ -1,5 +1,6 @@
 package imgui
 
+import glm_.i
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
@@ -436,6 +437,8 @@ enum class Dir {
     @JvmField
     val i = ordinal - 1
 
+
+
     companion object {
         infix fun of(i: Int) = values().first { it.i == i }
         val COUNT = Down.i + 1
@@ -483,6 +486,8 @@ enum class Key {
     /** map ImGuiKey_* values into user's key index. == io.KeyMap[key]   */
     val index get() = i
 }
+
+infix fun Long.shl(key: Key) = shl(key.i)
 
 /** Gamepad/Keyboard directional navigation
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
@@ -534,8 +539,6 @@ enum class NavInput {
 
     /** toggle menu = io.keyAlt */
     KeyMenu,
-    /** tab = Tab key */
-    KeyTab,
     /** move left = Arrow keys  */
     KeyLeft,
     /** move right = Arrow keys  */

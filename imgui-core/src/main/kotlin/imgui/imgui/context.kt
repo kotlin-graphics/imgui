@@ -137,10 +137,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdHasBeenEditedBefore = false
 
     var activeIdHasBeenEditedThisFrame = false
-    /** Active widget allows using directional navigation (e.g. can activate a button and move away from it)    */
-    var activeIdAllowNavDirFlags = 0
-
-    var activeIdBlockNavInputFlags = 0
+    /** Active widget will want to read those directional navigation requests (e.g. can activate a button and move away from it) */
+    var activeIdUsingNavDirMask = 0
+    /** Active widget will want to read those nav inputs. */
+    var activeIdUsingNavInputMask = 0
+    /** Active widget will want to read those key inputs. When we grow the ImGuiKey enum we'll need to either to order the enum to make useful keys come first, either redesign this into e.g. a small array. */
+    var activeIdUsingKeyInputMask = 0L
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
     var activeIdClickOffset = Vec2(-1)
 
