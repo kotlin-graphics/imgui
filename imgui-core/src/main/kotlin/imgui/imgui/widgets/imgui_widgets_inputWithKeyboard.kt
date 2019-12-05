@@ -138,16 +138,16 @@ interface imgui_widgets_inputWithKeyboard {
     }
 
     fun <N> inputScalar(label: String, dataType: DataType,
-                        data: IntArray, step: Int?, stepFast: Int?,
+                        pData: IntArray, step: Int?, stepFast: Int?,
                         format: String? = null, flags: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> =
-            withInt(data, 0) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
+            withInt(pData, 0) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
 
     fun <N> inputScalar(label: String, dataType: DataType,
-                        dataPtr: KMutableProperty0<N>,
+                        pData: KMutableProperty0<N>,
                         step: N? = null, stepFast: N? = null,
                         format_: String? = null, flags_: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> {
 
-        var data by dataPtr
+        var data by pData
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -159,7 +159,7 @@ interface imgui_widgets_inputWithKeyboard {
             else -> format_
         }
 
-        val buf = dataPtr.format(dataType, format, 64)
+        val buf = pData.format(dataType, format, 64)
 
         var valueChanged = false
         var flags = flags_
@@ -175,7 +175,7 @@ interface imgui_widgets_inputWithKeyboard {
             pushId(label)
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
+                valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, pData, format)
 
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)
@@ -204,7 +204,7 @@ interface imgui_widgets_inputWithKeyboard {
             popId()
             endGroup()
         } else if (inputText(label, buf, flags))
-            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, dataPtr, format)
+            valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, pData, format)
 
         if (valueChanged)
             markItemEdited(window.dc.lastItemId)

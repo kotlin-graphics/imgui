@@ -190,24 +190,24 @@ interface imgui_widgets_drags {
      *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun dragScalar(label: String, v: FloatArray, vSpeed: Float, vMin: Float? = null, vMax: Float? = null, format: String? = null,
-                   power: Float = 1f): Boolean = dragScalar(label, v, 0, vSpeed, vMin, vMax, format, power)
+    fun dragScalar(label: String, pData: FloatArray, vSpeed: Float, pMin: Float? = null, pMax: Float? = null, format: String? = null,
+                   power: Float = 1f): Boolean = dragScalar(label, pData, 0, vSpeed, pMin, pMax, format, power)
 
     /** If vMin >= vMax we have no bound  */
-    fun dragScalar(label: String, v: FloatArray, ptr: Int = 0, vSpeed: Float, vMin: Float? = null, vMax: Float? = null,
-                   format: String? = null, power: Float = 1f): Boolean =
-            withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
+    fun dragScalar(label: String, pData: FloatArray, ptr: Int = 0, vSpeed: Float, pMin: Float? = null,
+                   pMax: Float? = null, format: String? = null, power: Float = 1f): Boolean =
+            withFloat(pData, ptr) { dragScalar(label, DataType.Float, it, vSpeed, pMin, pMax, format, power) }
 
     fun <N> dragScalar(label: String, dataType: DataType,
-                       v: KMutableProperty0<N>, vSpeed: Float,
-                       vMin: N? = null, vMax: N? = null,
+                       pData: KMutableProperty0<N>, vSpeed: Float,
+                       pMin: N? = null, pMax: N? = null,
                        format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
         if (window.skipItems) return false
 
         if (power != 1f)
-            assert(vMin != null && vMax != null) { "When using a power curve the drag needs to have known bounds" }
+            assert(pMin != null && pMax != null) { "When using a power curve the drag needs to have known bounds" }
 
         val id = window.getId(label)
         val w = calcItemWidth()
@@ -249,7 +249,7 @@ interface imgui_widgets_drags {
             }
         }
         if (tempInputIsActive || tempInputStart)
-            return tempInputTextScalar(frameBb, id, label, dataType, v, format)
+            return tempInputTextScalar(frameBb, id, label, dataType, pData, format)
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
@@ -257,12 +257,12 @@ interface imgui_widgets_drags {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         // Drag behavior
-        val valueChanged = dragBehavior(id, dataType, v, vSpeed, vMin, vMax, format, power, DragFlag.None.i)
+        val valueChanged = dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, power, DragFlag.None.i)
         if (valueChanged)
             markItemEdited(id)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = String(v.format(dataType, format))
+        val value = String(pData.format(dataType, format))
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
