@@ -49,6 +49,7 @@ import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endPopup
 import imgui.ImGui.fontSize
+import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.image
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
@@ -97,6 +98,7 @@ import imgui.ImGui.pushButtonRepeat
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.radioButton
+import imgui.ImGui.resetMouseDragDelta
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -135,6 +137,7 @@ import imgui.ImGui.windowDrawList
 import imgui.dsl.collapsingHeader
 import imgui.dsl.group
 import imgui.dsl.popup
+import imgui.dsl.radioButton
 import imgui.dsl.smallButton
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
@@ -333,6 +336,7 @@ object showDemoWindowWidgets {
     var mode = Mode.Copy
 
     val names = arrayOf("Bobby", "Beatrice", "Betty", "Brianna", "Barry", "Bernard", "Bibi", "Blaine", "Bryn")
+    val itemNames = arrayOf("Item One", "Item Two", "Item Three", "Item Four", "Item Five")
 
 
     /* Vertical Sliders */
@@ -1239,30 +1243,21 @@ object showDemoWindowWidgets {
         }
 
         treeNode("Drag and Drop") {
-            run {
+
+            treeNode("Drag and drop in standard widgets") {
                 /*  ColorEdit widgets automatically act as drag source and drag target.
                     They are using standardized payload strings IMGUI_PAYLOAD_TYPE_COLOR_3F and IMGUI_PAYLOAD_TYPE_COLOR_4F to allow your own widgets
                     to use colors in their drag and drop interaction. Also see the demo in Color Picker -> Palette demo. */
-                bulletText("Drag and drop in standard widgets")
-                sameLine()
                 helpMarker("You can drag from the colored squares.")
-                indent()
                 colorEdit3("color 1", col3)
                 colorEdit4("color 2", col4)
-                unindent()
             }
 
-            run {
-                bulletText("Drag and drop to copy/swap items")
-                indent()
-                if (radioButton("Copy", mode == Mode.Copy))
-                    mode = Mode.Copy
-                sameLine()
-                if (radioButton("Move", mode == Mode.Move))
-                    mode = Mode.Move
-                sameLine()
-                if (radioButton("Swap", mode == Mode.Swap))
-                    mode = Mode.Swap
+            treeNode("Drag and drop to copy/swap items") {
+
+                radioButton("Copy", mode == Mode.Copy) { mode = Mode.Copy }; sameLine()
+                radioButton("Move", mode == Mode.Move) { mode = Mode.Move }; sameLine()
+                radioButton("Swap", mode == Mode.Swap) { mode = Mode.Swap }
                 names.forEachIndexed { n, name ->
                     pushId(n)
                     if ((n % 3) != 0) sameLine()
@@ -1300,7 +1295,23 @@ object showDemoWindowWidgets {
                     }
                     popId()
                 }
-                unindent()
+            }
+
+            treeNode("Drag to reorder items (simple)") {
+                // Simple reordering
+                helpMarker("We don't use the drag and drop api at all here! Instead we query when the item is held but not hovered, and order items accordingly.")
+                itemNames.forEachIndexed { n, item ->
+                    selectable(item)
+
+                    if (isItemActive && !isItemHovered())                    {
+                        val nNext = n + if(getMouseDragDelta(0).y < 0f) -1 else 1
+                        if (nNext in itemNames.indices)                        {
+                            itemNames[n] = itemNames[nNext]
+                            itemNames[nNext] = item
+                            resetMouseDragDelta()
+                        }
+                    }
+                }
             }
         }
 
