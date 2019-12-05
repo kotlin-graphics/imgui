@@ -266,7 +266,7 @@ interface imgui_parametersStacks {
             val regionMaxX = contentRegionMaxAbs.x
             w = 1f max (regionMaxX - window.dc.cursorPos.x + w)
         }
-        return w.i.f
+        return floor(w)
     }
 
     /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the right of window

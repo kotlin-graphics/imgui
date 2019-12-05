@@ -247,9 +247,9 @@ interface imgui_internal {
         val lineHeight = glm.max(window.dc.currLineSize.y, size.y)
         window.dc.apply {
             //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
-            cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)    // Next line
-            cursorPos.x = (window.pos.x + indent + columnsOffset).i.f      // Next line
-            cursorPos.y = (cursorPos.y + lineHeight + style.itemSpacing.y).i.f
+            cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)
+            cursorPos.x = floor(window.pos.x + indent + columnsOffset)           // Next line
+            cursorPos.y = floor(cursorPos.y + lineHeight + style.itemSpacing.y)  // Next line
             cursorMaxPos.x = cursorMaxPos.x max cursorPosPrevLine.x
             cursorMaxPos.y = cursorMaxPos.y max (cursorPos.y - style.itemSpacing.y)
             //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
@@ -439,8 +439,8 @@ interface imgui_internal {
     fun pushMultiItemsWidths(components: Int, wFull: Float) {
 
         val window = ImGui.currentWindow
-        val wItemOne = glm.max(1f, ((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f).i.f)
-        val wItemLast = glm.max(1f, (wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
+        val wItemOne = 1f max floor((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f)
+        val wItemLast = 1f max floor(wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1))
         window.dc.itemWidthStack.push(wItemLast)
         for (i in 0 until components - 1)
             window.dc.itemWidthStack.push(wItemOne)
@@ -502,7 +502,7 @@ interface imgui_internal {
         // Ensure that e.g. the right-most tab of a shrunk tab-bar always reaches exactly at the same distance from the right-most edge of the tab bar separator.
         widthExcess = 0f
         repeat(count) {
-            val widthRounded = floor(items[it].width)
+            val widthRounded = imgui.internal.floor(items[it].width)
             widthExcess += items[it].width - widthRounded
             items[it].width = widthRounded
         }
@@ -1060,7 +1060,7 @@ interface imgui_internal {
         val textPixelClipBb = Rect(bb.min.x + framePadding.x, bb.min.y + framePadding.y, bb.max.x - framePadding.x, bb.max.y)
         if (flags has TabItemFlag.UnsavedDocument) {
             textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, -1, false).x
-            val unsavedMarkerPos = Vec2(min(bb.min.x + framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + framePadding.y + (-g.fontSize * 0.25f).i.f)
+            val unsavedMarkerPos = Vec2(min(bb.min.x + framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + framePadding.y + floor(-g.fontSize * 0.25f))
             renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - framePadding, TAB_UNSAVED_MARKER, 0, null)
         }
         val textEllipsisClipBb = Rect(textPixelClipBb)
@@ -1817,7 +1817,7 @@ interface imgui_internal {
         val horizontal = axis == Axis.X
 
         val bb = Rect(bbFrame)
-        bb.expand(Vec2(-clamp(((bbFrameWidth - 2f) * 0.5f).i.f, 0f, 3f), -clamp(((bbFrameHeight - 2f) * 0.5f).i.f, 0f, 3f)))
+        bb.expand(Vec2(-clamp(floor((bbFrameWidth - 2f) * 0.5f), 0f, 3f), -clamp(floor((bbFrameHeight - 2f) * 0.5f), 0f, 3f)))
 
         // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
         val scrollbarSizeV = if (horizontal) bb.width else bb.height
@@ -1856,7 +1856,7 @@ interface imgui_internal {
             // Apply scroll
             // It is ok to modify Scroll here because we are being called in Begin() after the calculation of ContentSize and before setting up our starting position
             val scrollVNorm = saturate((clickedVNorm - g.scrollbarClickDeltaToGrabCenter - grabHNorm * 0.5f) / (1f - grabHNorm))
-            scrollV = (0.5f + scrollVNorm * scrollMax).i.f//(win_size_contents_v - win_size_v));
+            scrollV = floor(0.5f + scrollVNorm * scrollMax) //(win_size_contents_v - win_size_v));
 
             // Update values for rendering
             scrollRatio = saturate(scrollV / scrollMax)
@@ -2259,8 +2259,8 @@ interface imgui_internal {
         if (displayFrame) {
             // Framed header expand a little outside the default padding, to the edge of InnerClipRect
             // (FIXME: May remove this at some point and make InnerClipRect align with WindowPadding.x instead of WindowPadding.x*0.5f)
-            frameBb.min.x -= (window.windowPadding.x * 0.5f - 1f).i.f
-            frameBb.max.x += (window.windowPadding.x * 0.5f).i.f
+            frameBb.min.x -= floor(window.windowPadding.x * 0.5f - 1f)
+            frameBb.max.x += floor(window.windowPadding.x * 0.5f)
         }
 
         val textOffsetX = g.fontSize + padding.x * if (displayFrame) 3 else 2                   // Collapser arrow width + Spacing
@@ -3283,9 +3283,9 @@ interface imgui_internal {
                 if (flags hasnt Itf.NoHorizontalScroll) {
                     val scrollIncrementX = innerSize.x * 0.25f
                     if (cursorOffset.x < state.scrollX)
-                        state.scrollX = (glm.max(0f, cursorOffset.x - scrollIncrementX)).i.f
+                        state.scrollX = floor(glm.max(0f, cursorOffset.x - scrollIncrementX))
                     else if (cursorOffset.x - innerSize.x >= state.scrollX)
-                        state.scrollX = (cursorOffset.x - innerSize.x + scrollIncrementX).i.f
+                        state.scrollX = floor(cursorOffset.x - innerSize.x + scrollIncrementX)
                 } else
                     state.scrollX = 0f
 
@@ -3326,7 +3326,7 @@ interface imgui_internal {
                             inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
-                        if (rectSize.x <= 0f) rectSize.x = (g.font.getCharAdvance(' ') * 0.5f).i.f
+                        if (rectSize.x <= 0f) rectSize.x = floor(g.font.getCharAdvance(' ') * 0.5f)
                         val rect = Rect(rectPos + Vec2(0f, bgOffYUp - g.fontSize), rectPos + Vec2(rectSize.x, bgOffYDn))
                         val clipRect_ = Rect(clipRect)
                         rect clipWith clipRect_

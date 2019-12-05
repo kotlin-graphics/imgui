@@ -838,7 +838,7 @@ class FontAtlas {
             val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
             val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
             buildSetupFont(dstFont, cfg, ascent, descent)
-            val fontOff = Vec2(cfg.glyphOffset).apply { y += (dstFont.ascent + 0.5f).i.f }
+            val fontOff = Vec2(cfg.glyphOffset).apply { y += floor(dstFont.ascent + 0.5f) }
 
             for (glyphIdx in 0 until srcTmp.glyphsCount) {
                 val codepoint = srcTmp.glyphsList[glyphIdx]
@@ -849,7 +849,7 @@ class FontAtlas {
                 var charOffX = fontOff.x
                 if (charAdvanceXorg != charAdvanceXmod)
                     charOffX += when {
-                        cfg.pixelSnapH -> ((charAdvanceXmod - charAdvanceXorg) * 0.5f).i.f
+                        cfg.pixelSnapH -> floor((charAdvanceXmod - charAdvanceXorg) * 0.5f)
                         else -> (charAdvanceXmod - charAdvanceXorg) * 0.5f
                     }
 
@@ -1303,8 +1303,8 @@ class Font {
             return
         findGlyph(c)?.let {
             val scale = if (size >= 0f) size / fontSize else 1f
-            val x = pos.x.i.f + displayOffset.x
-            val y = pos.y.i.f + displayOffset.y
+            val x = floor(pos.x) + displayOffset.x
+            val y = floor(pos.y) + displayOffset.y
             drawList.primReserve(6, 4)
             val a = Vec2(x + it.x0 * scale, y + it.y0 * scale)
             val c_ = Vec2(x + it.x1 * scale, y + it.y1 * scale)
@@ -1319,8 +1319,8 @@ class Font {
         var textEnd = textEnd_
 
         // Align to be pixel perfect
-        pos.x = pos.x.i.f + displayOffset.x
-        pos.y = pos.y.i.f + displayOffset.y
+        pos.x = floor(pos.x) + displayOffset.x
+        pos.y = floor(pos.y) + displayOffset.y
         var (x, y) = pos
         if (y > clipRect.w) return
 
@@ -1582,7 +1582,7 @@ class Font {
         glyph.advanceX = advanceX + configData[0].glyphExtraSpacing.x  // Bake spacing into xAdvance
 
         if (configData[0].pixelSnapH)
-            glyph.advanceX = (glyph.advanceX + 0.5f).i.f
+            glyph.advanceX = floor(glyph.advanceX + 0.5f)
         // Compute rough surface usage metrics (+1 to account for average padding, +0.99 to round)
         dirtyLookupTables = true
         metricsTotalSurface += ((glyph.u1 - glyph.u0) * containerAtlas.texSize.x + 1.99f).i *
