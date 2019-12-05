@@ -70,6 +70,7 @@ import imgui.dsl.menu
 import imgui.imgui.demo.ExampleApp
 import imgui.imgui.demo.showExampleApp.StyleEditor
 import imgui.internal.*
+import kool.BYTES
 import kool.lim
 import java.nio.ByteBuffer
 import java.util.*

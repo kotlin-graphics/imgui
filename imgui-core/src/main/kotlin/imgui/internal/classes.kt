@@ -43,6 +43,7 @@ import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.imgui.Context
 import imgui.imgui.g
 import imgui.imgui.imgui_tabBarsTabs.Companion.tabBarRef
+import kool.BYTES
 import kool.cap
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
