@@ -1,9 +1,7 @@
 package imgui.imgui
 
 import gli_.has
-import glm_.f
 import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
@@ -109,8 +107,8 @@ interface imgui_widgets_menus {
             We remove 1 worth of rounding to max.x to that text in long menus and small windows don't tend to display
             over the lower-right rounded area, which looks particularly glitchy. */
         val barRect = window.menuBarRect()
-        val clipRect = Rect(floor(barRect.min.x + 0.5f), floor(barRect.min.y + window.windowBorderSize + 0.5f),
-                floor(max(barRect.min.x, barRect.max.x - window.windowRounding) + 0.5f), floor(barRect.max.y + 0.5f))
+        val clipRect = Rect(imgui.internal.floor(barRect.min.x + 0.5f), imgui.internal.floor(barRect.min.y + window.windowBorderSize + 0.5f),
+                imgui.internal.floor(max(barRect.min.x, barRect.max.x - window.windowRounding) + 0.5f), imgui.internal.floor(barRect.max.y + 0.5f))
         clipRect clipWith window.outerRectClipped
         pushClipRect(clipRect.min, clipRect.max, false)
 
@@ -199,8 +197,8 @@ interface imgui_widgets_menus {
             /*  Menu inside an horizontal menu bar
                 Selectable extend their highlight by half ItemSpacing in each direction.
                 For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in begin() */
-            popupPos.put(pos.x - 1.0f - (style.itemSpacing.x * 0.5f).i.f, pos.y - style.framePadding.y + window.menuBarHeight)
-            window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
+            popupPos.put(pos.x - 1f - floor(style.itemSpacing.x * 0.5f), pos.y - style.framePadding.y + window.menuBarHeight)
+            window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
             val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
@@ -208,11 +206,11 @@ interface imgui_widgets_menus {
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
                 to call sameLine() ourselves after the popStyleVar().   */
-            window.dc.cursorPos.x += (style.itemSpacing.x * (-1f + 0.5f)).i.f
+            window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
         } else {
             // Menu inside a menu
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
-            val w = window.menuColumns.declColumns(labelSize.x, 0f, (g.fontSize * 1.2f).i.f) // Feedback to next frame
+            val w = window.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or Sf.DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
@@ -342,16 +340,16 @@ interface imgui_widgets_menus {
                 misleading but may be useful 
                 Note that in this situation we render neither the shortcut neither the selected tick mark   */
             val w = labelSize.x
-            window.dc.cursorPos.x += (style.itemSpacing.x * 0.5f).i.f
+            window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             pressed = selectable(label, false, flags, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
                 to call sameLine() ourselves after the popStyleVar().             */
-            window.dc.cursorPos.x += (style.itemSpacing.x * (-1f + 0.5f)).i.f
+            window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
         } else {
             val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut) else Vec2()
-            val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, (g.fontSize * 1.2f)).i.f // Feedback for next frame
+            val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, floor(g.fontSize * 1.2f)) // Feedback for next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             pressed = selectable(label, false, flags or Sf.DrawFillAvailWidth, Vec2(w, 0f))
             if (shortcutSize.x > 0f) {

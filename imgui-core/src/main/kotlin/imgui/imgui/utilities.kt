@@ -1,6 +1,7 @@
 package imgui.imgui
 
 import gli_.hasnt
+import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4

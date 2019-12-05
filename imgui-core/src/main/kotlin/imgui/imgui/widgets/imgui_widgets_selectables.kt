@@ -1,7 +1,5 @@
 package imgui.imgui.widgets
 
-import glm_.f
-import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
@@ -79,8 +77,8 @@ interface imgui_widgets_selectables {
 
         // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
         val spacing = style.itemSpacing
-        val spacingL = (spacing.x * 0.5f).i.f
-        val spacingU = (spacing.y * 0.5f).i.f
+        val spacingL = floor(spacing.x * 0.5f)
+        val spacingU = floor(spacing.y * 0.5f)
         bb.min.x -= spacingL
         bb.min.y -= spacingU
         bb.max.x += spacing.x - spacingL

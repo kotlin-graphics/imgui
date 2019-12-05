@@ -602,7 +602,7 @@ interface imgui_main {
                 window = g.hoveredWindow!!.getParent()
                 if (window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs) {
                     val maxStep = window.innerRect.height * 0.67f
-                    val scrollStep = floor((5 * window.calcFontSize()) min maxStep)
+                    val scrollStep = imgui.internal.floor((5 * window.calcFontSize()) min maxStep)
                     window.setScrollY(window.scroll.y - wheelY * scrollStep)
                 }
             }
@@ -622,7 +622,7 @@ interface imgui_main {
                 window = g.hoveredWindow!!.getParent()
                 if (window.flags hasnt Wf.NoScrollWithMouse && window.flags hasnt Wf.NoMouseInputs) {
                     val maxStep = window.innerRect.width * 0.67f
-                    val scrollStep = floor((2 * window.calcFontSize()) min maxStep)
+                    val scrollStep = imgui.internal.floor((2 * window.calcFontSize()) min maxStep)
                     window.setScrollX(window.scroll.x - wheelX * scrollStep)
                 }
             }
@@ -643,8 +643,8 @@ interface imgui_main {
 
             var retAutoFit = false
             val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
-            val gripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
-            val gripHoverInnerSize = (gripDrawSize * 0.75f).i.f
+            val gripDrawSize = floor(max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f))
+            val gripHoverInnerSize = floor(gripDrawSize * 0.75f)
             val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS else 0f
 
             val posTarget = Vec2(Float.MAX_VALUE)
@@ -731,7 +731,7 @@ interface imgui_main {
                     navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
                 if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
                     val NAV_RESIZE_SPEED = 600f
-                    navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
+                    navResizeDelta *= imgui.internal.floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
                     g.navWindowingToggleLayer = false
                     g.navDisableMouseHover = true
                     resizeGripCol[0] = Col.ResizeGripActive.u32
@@ -931,7 +931,7 @@ interface imgui_main {
 
             if (flags has Wf.UnsavedDocument) {
                 val markerPos = Vec2(max(layoutR.min.x, layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
-                val off = Vec2(0f, (-g.fontSize * 0.25f).i.f)
+                val off = Vec2(0f, floor(-g.fontSize * 0.25f))
                 renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipR)
             }
         }

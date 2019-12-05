@@ -1,8 +1,6 @@
 package imgui.imgui.widgets
 
-import glm_.f
 import glm_.glm
-import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -185,10 +183,10 @@ interface imgui_widgets_main {
         val checkCol = Col.CheckMark.u32
         if (window.dc.itemFlags has ItemFlag.MixedValue) {
             // Undocumented tristate/mixed/indeterminate checkbox (#2644)
-            val pad = Vec2(1f max (squareSz / 3.6f).i.f, 1f max (squareSz / 3.6f).i.f)
+            val pad = Vec2(1f max floor(squareSz / 3.6f))
             window.drawList.addRectFilled(checkBb.min + pad, checkBb.max - pad, checkCol, style.frameRounding)
         } else if (v) {
-            val pad = 1f max (squareSz / 6f).i.f
+            val pad = 1f max floor(squareSz / 6f)
             renderCheckMark(checkBb.min + pad, checkCol, squareSz - pad * 2f)
         }
 
@@ -243,8 +241,8 @@ interface imgui_widgets_main {
             return false
 
         val center = Vec2(checkBb.center)
-        center.x = (center.x + 0.5f).i.f
-        center.y = (center.y + 0.5f).i.f
+        center.x = floor(center.x + 0.5f)
+        center.y = floor(center.y + 0.5f)
         val radius = (squareSz - 1f) * 0.5f
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
@@ -255,7 +253,7 @@ interface imgui_widgets_main {
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         window.drawList.addCircleFilled(center, radius, col.u32, 16)
         if (active) {
-            val pad = 1f max (squareSz / 6f).i.f
+            val pad = 1f max floor(squareSz / 6f)
             window.drawList.addCircleFilled(center, radius - pad, Col.CheckMark.u32, 16)
         }
 

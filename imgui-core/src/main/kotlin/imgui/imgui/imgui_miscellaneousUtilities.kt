@@ -1,6 +1,5 @@
 package imgui.imgui
 
-import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -16,9 +15,7 @@ import imgui.ImGui.pushStyleVar
 import imgui.ImGui.style
 import imgui.internal.DrawListSharedData
 import imgui.internal.Rect
-import imgui.internal.Window
-import imgui.FocusedFlag as Ff
-import imgui.HoveredFlag as Hf
+import imgui.internal.floor
 import imgui.WindowFlag as Wf
 
 /** Miscellaneous Utilities */
@@ -78,7 +75,7 @@ interface imgui_miscellaneousUtilities {
         val textSize = font.calcTextSizeA(fontSize, Float.MAX_VALUE, wrapWidth, text, textDisplayEnd)
 
         // Round
-        textSize.x = (textSize.x + 0.95f).i.f
+        textSize.x = floor(textSize.x + 0.95f)
 
         return textSize
     }
