@@ -50,6 +50,18 @@ interface imgui_popupsModals {
         return beginPopupEx(g.currentWindow!!.getId(strId), flags)
     }
 
+    /** Helper to open popup when clicked on last item.  (note: actually triggers on the mouse _released_ event to be
+     *  consistent with popup behaviors). return true when just opened.   */
+    fun openPopupOnItemClick(strId: String = "", mouseButton: Int = 1) = with(g.currentWindow!!) {
+        if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
+            // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
+            val id = if (strId.isNotEmpty()) getId(strId) else dc.lastItemId
+            assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
+            openPopupEx(id)
+            true
+        } else false
+    }
+
     /** This is a helper to handle the simplest case of associating one named popup to one given widget.
      *  You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
      *  You can pass a NULL str_id to use the identifier of the last item.
@@ -130,18 +142,6 @@ interface imgui_popupsModals {
         navMoveRequestTryWrapping(g.currentWindow!!, NavMoveFlag.LoopY.i)
 
         end()
-    }
-
-    /** Helper to open popup when clicked on last item.  (note: actually triggers on the mouse _released_ event to be
-     *  consistent with popup behaviors). return true when just opened.   */
-    fun openPopupOnItemClick(strId: String = "", mouseButton: Int = 1) = with(g.currentWindow!!) {
-        if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
-            // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
-            val id = if (strId.isNotEmpty()) getId(strId) else dc.lastItemId
-            assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
-            openPopupEx(id)
-            true
-        } else false
     }
 
     fun isPopupOpen(strId: String) = g.openPopupStack.size > g.beginPopupStack.size &&

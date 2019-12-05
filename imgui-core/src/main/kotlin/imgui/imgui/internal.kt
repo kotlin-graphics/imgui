@@ -786,6 +786,7 @@ interface imgui_internal {
         if (window.flags hasnt Wf.NoNavInputs)
             if (window.flags hasnt Wf.ChildWindow || window.flags has Wf.Popup || window.navLastIds[0] == 0 || forceReinit)
                 initForNav = true
+        //IMGUI_DEBUG_LOG("[Nav] NavInitWindow() init_for_nav=%d, window=\"%s\", layer=%d\n", init_for_nav, window->Name, g.NavLayer)
         if (initForNav) {
             setNavId(0, g.navLayer)
             g.navInitRequest = true

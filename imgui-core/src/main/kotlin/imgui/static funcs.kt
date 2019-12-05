@@ -462,6 +462,7 @@ fun navUpdate() {
         g.navWindow?.let { nav ->
             /*  Apply result from previous navigation init request (will typically select the first item,
                 unless setItemDefaultFocus() has been called)         */
+            //IMGUI_DEBUG_LOG("[Nav] Apply NavInitRequest result: 0x%08X Layer %d in \"%s\"\n", g.NavInitResultId, g.NavLayer, g.NavWindow->Name);
             if (g.navInitRequestFromMove)
                 setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
             else
@@ -614,6 +615,7 @@ fun navUpdate() {
         g.navMoveDirLast = g.navMoveDir
     }
     if (g.navMoveRequest && g.navId == 0) {
+        //IMGUI_DEBUG_LOG("[Nav] NavInitRequest from move, window \"%s\", layer=%d\n", g.NavWindow->Name, g.NavLayer);
         g.navInitRequest = true
         g.navInitRequestFromMove = true
         g.navInitResultId = 0
