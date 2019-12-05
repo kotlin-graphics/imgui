@@ -875,10 +875,9 @@ interface imgui_internal {
             else -> when (mode) {
                 // Return 1.0f when just pressed, no repeat, ignore analog input.
                 InputReadMode.Pressed -> if (t == 0f) 1 else 0
-                InputReadMode.Repeat -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 0.8f,
-                        io.keyRepeatRate * 0.8f)
-                InputReadMode.RepeatSlow -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 1f, io.keyRepeatRate * 2f)
-                InputReadMode.RepeatFast -> calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay * 0.8f, io.keyRepeatRate * 0.3f)
+                InputReadMode.Repeat -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.8f)
+                InputReadMode.RepeatSlow -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 1.25f, io.keyRepeatRate * 2f)
+                InputReadMode.RepeatFast -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.3f)
                 else -> 0
             }.f
         }
@@ -903,12 +902,20 @@ interface imgui_internal {
         return delta
     }
 
-    fun calcTypematicPressedRepeatAmount(t: Float, tPrev: Float, repeatDelay: Float, repeatRate: Float) = when {
-        t == 0f -> 1
-        t <= repeatDelay || repeatRate <= 0f -> 0
-        else -> {
-            val count = ((t - repeatDelay) / repeatRate).i - ((tPrev - repeatDelay) / repeatRate).i
-            if (count > 0) count else 0
+    /** t0 = previous time (e.g.: g.Time - g.IO.DeltaTime)
+     *  t1 = current time (e.g.: g.Time)
+     *  An event is triggered at:
+     *  t = 0.0f     t = repeat_delay,    t = repeat_delay + repeat_rate*N */
+    fun calcTypematicRepeatAmount(t0: Float, t1: Float, repeatDelay: Float, repeatRate: Float) = when {
+        t1 == 0f -> 1
+        t0 >= t1 -> 0
+        else -> when {
+            repeatRate <= 0f -> (t0 < repeatDelay && t1 >= repeatDelay).i
+            else -> {
+                val countT0 = if (t0 < repeatDelay) -1 else ((t0 - repeatDelay) / repeatRate).i
+                val countT1 = if (t1 < repeatDelay) -1 else ((t1 - repeatDelay) / repeatRate).i
+                countT1 - countT0 // count
+            }
         }
     }
 
@@ -1987,8 +1994,7 @@ interface imgui_internal {
             if (isItemHovered(Hf.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 hoveredId = id
-                if (calcTypematicPressedRepeatAmount(g.hoveredIdTimer + 0.0001f, g.hoveredIdTimer + 0.0001f - io.deltaTime,
-                                0.01f, 0.7f) != 0) { // FIXME: Our formula for CalcTypematicPressedRepeatAmount() is fishy
+                if (calcTypematicRepeatAmount(g.hoveredIdTimer + 0.0001f - io.deltaTime, g.hoveredIdTimer + 0.0001f - io.deltaTime, 0.7f, 0f) != 0) {
                     pressed = true
                     window.focus()
                 }
