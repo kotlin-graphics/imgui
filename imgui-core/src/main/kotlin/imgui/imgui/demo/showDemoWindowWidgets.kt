@@ -152,6 +152,7 @@ import imgui.or
 import kool.BYTES
 import unsigned.Ubyte
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -1209,7 +1210,7 @@ object showDemoWindowWidgets {
                 sameLine()
                 withId("set2") {
                     val rows = 3
-                    val smallSliderSize = Vec2(18, ((160f - (rows - 1) * spacing) / rows).i.f)
+                    val smallSliderSize = Vec2(18, floor((160f - (rows - 1) * spacing) / rows))
                     for (nx in 0..3) {
                         if (nx > 0) sameLine()
                         group {

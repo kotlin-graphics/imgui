@@ -3,7 +3,6 @@ package imgui.imgui
 import gli_.has
 import gli_.hasnt
 import glm_.f
-import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.currentWindow
@@ -375,7 +374,7 @@ interface imgui_windows {
             var borderHeld = -1
             val resizeGripCol = IntArray(4)
             val resizeGripCount = if (io.configWindowsResizeFromEdges) 2 else 1 // 4
-            val resizeGripDrawSize = max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f).i.f
+            val resizeGripDrawSize = floor(max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f))
             if (!window.collapsed) {
                 val (borderHeld_, ret) = updateManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
                 if (ret) {
@@ -447,17 +446,17 @@ interface imgui_windows {
                 // - Begin() initial clip rect
                 val topBorderSize = if (flags has Wf.MenuBar || flags hasnt Wf.NoTitleBar) style.frameBorderSize else window.windowBorderSize
                 innerClipRect.put(
-                        minX = floor(0.5f + innerRect.min.x + max(floor(windowPadding.x * 0.5f), windowBorderSize)),
-                        minY = floor(0.5f + innerRect.min.y + topBorderSize),
-                        maxX = floor(0.5f + innerRect.max.x - max(floor(windowPadding.x * 0.5f), windowBorderSize)),
-                        maxY = floor(0.5f + innerRect.max.y - windowBorderSize))
+                        minX = imgui.internal.floor(0.5f + innerRect.min.x + max(imgui.internal.floor(windowPadding.x * 0.5f), windowBorderSize)),
+                        minY = imgui.internal.floor(0.5f + innerRect.min.y + topBorderSize),
+                        maxX = imgui.internal.floor(0.5f + innerRect.max.x - max(imgui.internal.floor(windowPadding.x * 0.5f), windowBorderSize)),
+                        maxY = imgui.internal.floor(0.5f + innerRect.max.y - windowBorderSize))
                 innerClipRect clipWithFull hostRect
             }
 
             // Default item width. Make it proportional to window size if window manually resizes
             window.itemWidthDefault = when {
-                window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize -> (window.size.x * 0.65f).i.f
-                else -> (g.fontSize * 16f).i.f
+                window.size.x > 0f && flags hasnt Wf.Tooltip && flags hasnt Wf.AlwaysAutoResize -> floor(window.size.x * 0.65f)
+                else -> floor(g.fontSize * 16f)
             }
 
             // SCROLLING
@@ -542,8 +541,8 @@ interface imgui_windows {
                 val workRectSizeX = if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f, size.x - windowPadding.x * 2f - scrollbarSizes.x)
                 val workRectSizeY = if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f, size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y)
                 workRect.min.put(
-                        floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
-                        floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
+                        imgui.internal.floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
+                        imgui.internal.floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
 
 

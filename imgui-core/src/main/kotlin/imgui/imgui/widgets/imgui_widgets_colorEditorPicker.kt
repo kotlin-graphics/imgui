@@ -1,11 +1,11 @@
 package imgui.imgui.widgets
 
 import gli_.has
-import glm_.f
 import glm_.func.cos
 import glm_.func.sin
 import glm_.glm
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import glm_.vec4.Vec4
@@ -163,8 +163,8 @@ interface imgui_widgets_colorEditorPicker {
         if (flags has (Cef.DisplayRGB or Cef.DisplayHSV) && flags hasnt Cef.NoInputs) {
 
             // RGB/HSV 0..255 Sliders
-            val wItemOne = glm.max(1f, ((wInputs - style.itemInnerSpacing.x * (components - 1)) / components).i.f)
-            val wItemLast = glm.max(1f, (wInputs - (wItemOne + style.itemInnerSpacing.x) * (components - 1)).i.f)
+            val wItemOne = 1f max floor((wInputs - style.itemInnerSpacing.x * (components - 1)) / components)
+            val wItemLast = 1f max floor(wInputs - (wItemOne + style.itemInnerSpacing.x) * (components - 1))
 
             val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.DisplayHSV) 2 else 1
@@ -376,7 +376,7 @@ interface imgui_widgets_colorEditorPicker {
         val svPickerSize = glm.max(barsWidth * 1, width - (if (alphaBar) 2 else 1) * (barsWidth + style.itemInnerSpacing.x))
         val bar0PosX = pickerPos.x + svPickerSize + style.itemInnerSpacing.x
         val bar1PosX = bar0PosX + barsWidth + style.itemInnerSpacing.x
-        val barsTrianglesHalfSz = (barsWidth * 0.2f).i.f
+        val barsTrianglesHalfSz = floor(barsWidth * 0.2f)
 
         val backupInitialCol = FloatArray(4) { col.getOrElse(it) { 0f } }
 
@@ -637,8 +637,8 @@ interface imgui_widgets_colorEditorPicker {
             drawList.addRectFilledMultiColor(pickerPos, pickerPos + svPickerSize, 0, 0, colBlack, colBlack)
             renderFrameBorder(pickerPos, pickerPos + svPickerSize, 0f)
             // Sneakily prevent the circle to stick out too much
-            svCursorPos.x = glm.clamp((pickerPos.x + saturate(S) * svPickerSize + 0.5f).i.f, pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
-            svCursorPos.y = glm.clamp((pickerPos.y + saturate(1 - V) * svPickerSize + 0.5f).i.f, pickerPos.y + 2, pickerPos.y + svPickerSize - 2)
+            svCursorPos.x = glm.clamp(floor(pickerPos.x + saturate(S) * svPickerSize + 0.5f), pickerPos.x + 2, pickerPos.x + svPickerSize - 2)
+            svCursorPos.y = glm.clamp(floor(pickerPos.y + saturate(1 - V) * svPickerSize + 0.5f), pickerPos.y + 2, pickerPos.y + svPickerSize - 2)
 
             // Render Hue Bar
             for (i in 0..5) {
@@ -646,7 +646,7 @@ interface imgui_widgets_colorEditorPicker {
                 val c = Vec2(bar0PosX + barsWidth, pickerPos.y + (i + 1) * (svPickerSize / 6))
                 drawList.addRectFilledMultiColor(a, c, colHues[i], colHues[i], colHues[i + 1], colHues[i + 1])
             }
-            val bar0LineY = (pickerPos.y + H * svPickerSize + 0.5f).i.f
+            val bar0LineY = floor(pickerPos.y + H * svPickerSize + 0.5f)
             renderFrameBorder(Vec2(bar0PosX, pickerPos.y), Vec2(bar0PosX + barsWidth, pickerPos.y + svPickerSize), 0f)
             renderArrowsForVerticalBar(drawList, Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f, style.alpha)
         }
@@ -720,7 +720,7 @@ interface imgui_widgets_colorEditorPicker {
         val off = -0.75f
         bbInner expand off
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
-            val midX = ((bbInner.min.x + bbInner.max.x) * 0.5f + 0.5f).i.f
+            val midX = floor((bbInner.min.x + bbInner.max.x) * 0.5f + 0.5f)
             renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
                     gridStep, Vec2(-gridStep + off, off), rounding, Dcf.TopRight or Dcf.BotRight)
             window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding,

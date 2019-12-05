@@ -398,7 +398,7 @@ fun swap(a: KMutableProperty0<Float>, b: KMutableProperty0<Float>) {
 }
 
 fun floor(a: Float) = a.i.f
-fun floor(a: Vec2) = Vec2(a.x.i.f, a.y.i.f)
+fun floor(a: Vec2) = Vec2(floor(a.x), floor(a.y))
 fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
 fun lerp(a: Double, b: Double, t: Float) = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i

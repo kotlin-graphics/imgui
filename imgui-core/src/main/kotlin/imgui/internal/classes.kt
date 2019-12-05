@@ -174,10 +174,10 @@ class Rect {
     }
 
     fun floor() {
-        min.x = min.x.i.f
-        min.y = min.y.i.f
-        max.x = max.x.i.f
-        max.y = max.y.i.f
+        min.x = floor(min.x)
+        min.y = floor(min.y)
+        max.x = floor(max.x)
+        max.y = floor(max.y)
     }
 
     val isInverted get() = min.x > max.x || min.y > max.y
@@ -259,7 +259,7 @@ class MenuColumns {
         for (i in pos.indices) {
             if (i > 0 && nextWidths[i] > 0f)
                 width += spacing
-            pos[i] = width.i.f
+            pos[i] = floor(width)
             width += nextWidths[i]
             nextWidths[i] = 0f
         }
@@ -267,12 +267,12 @@ class MenuColumns {
 
     fun declColumns(w0: Float, w1: Float, w2: Float): Float {
         nextWidth = 0f
-        nextWidths[0] = glm.max(nextWidths[0], w0)
-        nextWidths[1] = glm.max(nextWidths[1], w1)
-        nextWidths[2] = glm.max(nextWidths[2], w2)
+        nextWidths[0] = nextWidths[0] max w0
+        nextWidths[1] = nextWidths[1] max w1
+        nextWidths[2] = nextWidths[2] max w2
         for (i in pos.indices)
             nextWidth += nextWidths[i] + (if (i > 0 && nextWidths[i] > 0f) spacing else 0f)
-        return width max nextWidth.i.f // JVM only
+        return width max nextWidth.i.f // JVM only TODO why?
     }
 
 
@@ -895,14 +895,14 @@ class Window(var context: Context, var name: String) {
         // Set
         if (size.x > 0f) {
             autoFitFrames.x = 0
-            sizeFull.x = floor(size.x)
+            sizeFull.x = imgui.internal.floor(size.x)
         } else {
             autoFitFrames.x = 2
             autoFitOnlyGrows = false
         }
         if (size.y > 0f) {
             autoFitFrames.y = 0
-            sizeFull.y = floor(size.y)
+            sizeFull.y = imgui.internal.floor(size.y)
         } else {
             autoFitFrames.y = 2
             autoFitOnlyGrows = false
@@ -948,8 +948,8 @@ class Window(var context: Context, var name: String) {
                     pos = Vec2(this@Window.pos),
                     currentSize = sizeFull,
                     desiredSize = newSize))
-            newSize.x = floor(newSize.x)
-            newSize.y = floor(newSize.y)
+            newSize.x = imgui.internal.floor(newSize.x)
+            newSize.y = imgui.internal.floor(newSize.y)
         }
 
         // Minimum size
@@ -1186,8 +1186,8 @@ class Window(var context: Context, var name: String) {
         collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(contentSize)
         hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(contentSize)
         else -> Vec2(
-                (if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x).i.f,
-                (if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y).i.f)
+                floor(if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x),
+                floor(if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y))
     }
 
     fun findOrCreateColumns(id: ID): Columns {
@@ -1283,7 +1283,7 @@ class Window(var context: Context, var name: String) {
     fun setScrollFromPosX(localX: Float, centerXratio: Float) {
         // We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
         assert(centerXratio in 0f..1f)
-        scrollTarget.x = (localX + scroll.x).i.f
+        scrollTarget.x = floor(localX + scroll.x)
         scrollTargetCenterRatio.x = centerXratio
     }
 
@@ -1294,7 +1294,7 @@ class Window(var context: Context, var name: String) {
         assert(centerYRatio in 0f..1f)
         val decorationUpHeight = titleBarHeight + menuBarHeight
         val localY = localY_ - decorationUpHeight
-        scrollTarget.y = (localY + scroll.y).i.f
+        scrollTarget.y = floor(localY + scroll.y)
         scrollTargetCenterRatio.y = centerYRatio
     }
 
@@ -1488,8 +1488,8 @@ class TabBar {
         val col = if (flags has TabBarFlag.IsFocused) Col.TabActive else Col.TabUnfocusedActive
         val y = barRect.max.y - 1f
         run {
-            val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
-            val separatorMaxX = barRect.max.x + floor(window.windowPadding.x * 0.5f)
+            val separatorMinX = barRect.min.x - imgui.internal.floor(window.windowPadding.x * 0.5f)
+            val separatorMaxX = barRect.max.x + imgui.internal.floor(window.windowPadding.x * 0.5f)
             window.drawList.addLine(Vec2(separatorMinX, y), Vec2(separatorMaxX, y), col.u32, 1f)
         }
         return true
@@ -1581,7 +1581,7 @@ class TabBar {
 
         // Layout
         size.x = tab.width
-        window.dc.cursorPos = barRect.min + Vec2(tab.offset.i.f - scrollingAnim, 0f)
+        window.dc.cursorPos = barRect.min + Vec2(floor(tab.offset) - scrollingAnim, 0f)
         val pos = Vec2(window.dc.cursorPos)
         val bb = Rect(pos, pos + size)
 
@@ -1775,7 +1775,7 @@ class TabBar {
             // If we don't have enough room, resize down the largest tabs first
             shrinkWidths(g.shrinkWidthBuffer, widthExcess)
             for (tabN in tabs.indices)
-                tabs[g.shrinkWidthBuffer[tabN].index].width = g.shrinkWidthBuffer[tabN].width.i.f
+                tabs[g.shrinkWidthBuffer[tabN].index].width = floor(g.shrinkWidthBuffer[tabN].width)
         } else {
             val tabMaxWidth = calcMaxTabWidth()
             for (tab in tabs) {

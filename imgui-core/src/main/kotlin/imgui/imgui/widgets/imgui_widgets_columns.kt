@@ -159,7 +159,7 @@ interface imgui_widgets_columns {
         window.dc.currentColumns = columns
 
         val columnPadding = style.itemSpacing.x
-        val halfClipExtendX = floor((window.windowPadding.x * 0.5f) max window.windowBorderSize)
+        val halfClipExtendX = imgui.internal.floor((window.windowPadding.x * 0.5f) max window.windowBorderSize)
         val max1 = window.workRect.max.x + columnPadding - max(columnPadding - window.windowPadding.x, 0f)
         val max2 = window.workRect.max.x + halfClipExtendX
         columns.apply {
@@ -190,8 +190,8 @@ interface imgui_widgets_columns {
         for (n in 0 until columnsCount) {
             // Compute clipping rectangle
             val column = columns.columns[n]
-            val clipX1 = floor(0.5f + window.pos.x + getColumnOffset(n))
-            val clipX2 = floor(0.5f + window.pos.x + getColumnOffset(n + 1) - 1f)
+            val clipX1 = imgui.internal.floor(0.5f + window.pos.x + getColumnOffset(n))
+            val clipX2 = imgui.internal.floor(0.5f + window.pos.x + getColumnOffset(n + 1) - 1f)
             column.clipRect = Rect(clipX1, -Float.MAX_VALUE, clipX2, +Float.MAX_VALUE)
             column.clipRect clipWith window.clipRect
         }
@@ -208,7 +208,7 @@ interface imgui_widgets_columns {
         val width = offset1 - offset0
         pushItemWidth(width * 0.65f)
         window.dc.columnsOffset = (columnPadding - window.windowPadding.x) max 0f
-        window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
+        window.dc.cursorPos.x = floor(window.pos.x + window.dc.indent + window.dc.columnsOffset)
         window.workRect.max.x = window.pos.x + offset1 - columnPadding
     }
 
@@ -221,7 +221,7 @@ interface imgui_widgets_columns {
         val columns = window.dc.currentColumns!!
 
         if (columns.count == 1) {
-            window.dc.cursorPos.x = (window.pos.x + window.dc.indent + window.dc.columnsOffset).i.f
+            window.dc.cursorPos.x = floor(window.pos.x + window.dc.indent + window.dc.columnsOffset)
             assert(columns.current == 0)
             return
         }
@@ -245,7 +245,7 @@ interface imgui_widgets_columns {
                 columns.current = 0
                 columns.lineMinY = columns.lineMaxY
             }
-            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
+            dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)
             dc.cursorPos.y = columns.lineMinY
             dc.currLineSize.y = 0f
             dc.currLineTextBaseOffset = 0f
@@ -309,7 +309,7 @@ interface imgui_widgets_columns {
 
                 // Draw column
                 val col = if (held) Col.SeparatorActive else if (hovered) Col.SeparatorHovered else Col.Separator
-                val xi = x.i.f
+                val xi = floor(x)
                 window.drawList.addLine(Vec2(xi, y1 + 1f), Vec2(xi, y2), col.u32)
             }
 
@@ -330,7 +330,7 @@ interface imgui_widgets_columns {
             workRect put columns.hostWorkRect
             dc.currentColumns = null
             dc.columnsOffset = 0f
-            dc.cursorPos.x = (pos.x + dc.indent + dc.columnsOffset).i.f
+            dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)
         }
     }
 
