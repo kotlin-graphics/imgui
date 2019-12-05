@@ -61,7 +61,7 @@ interface imgui_miscellaneousUtilities {
         }
 
     /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
-     *  CalcTextSize("") should return ImVec2(0.0f, GImGui->FontSize)   */
+     *  CalcTextSize("") should return ImVec2(0.0f, g.FontSize)   */
     fun calcTextSize(text: String, hideTextAfterDoubleHash: Boolean) = calcTextSize(text, -1, hideTextAfterDoubleHash)
 
     fun calcTextSize(text: String, textEnd: Int = -1, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
