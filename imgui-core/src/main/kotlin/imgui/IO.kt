@@ -54,7 +54,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Map of indices into the KeysDown[512] entries array which represent your "native" keyboard state.   */
     var keyMap = IntArray(Key.COUNT) { -1 }
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
-    var keyRepeatDelay = 0.25f
+    var keyRepeatDelay = 0.275f
     /** When holding a key/button, rate at which it repeats, in seconds.    */
     var keyRepeatRate = 0.05f
 
