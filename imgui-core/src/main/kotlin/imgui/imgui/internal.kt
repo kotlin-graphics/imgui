@@ -2083,12 +2083,12 @@ interface imgui_internal {
         return booleanArrayOf(pressed, hovered, held)
     }
 
-    fun dragBehavior(id: ID, dataType: DataType, v: FloatArray, ptr: Int, vSpeed: Float, vMin: Float?, vMax: Float?, format: String,
-                     power: Float, flags: DragFlags): Boolean =
-            withFloat(v, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, vMin, vMax, format, power, flags) }
+    fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
+                     format: String, power: Float, flags: DragFlags): Boolean =
+            withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, power, flags) }
 
-    fun <N : Number> dragBehavior(id: ID, dataType: DataType, v_: KMutableProperty0<N>, vSpeed: Float, vMin: Number?, vMax: Number?,
-                                  format: String, power: Float, flags: DragFlags): Boolean {
+    fun <N : Number> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
+                                  pMax: Number?, format: String, power: Float, flags: DragFlags): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -2096,14 +2096,14 @@ interface imgui_internal {
             else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                 clearActiveId()
 
-        var v by v_
+        var v by pV
 
         return when {
             g.activeId == id -> when (dataType) {
                 DataType.Byte -> {
                     _i = (v as Byte).i
-                    val min = vMin?.let { it as Byte } ?: Byte.MIN_VALUE
-                    val max = vMax?.let { it as Byte } ?: Byte.MAX_VALUE
+                    val min = pMin?.let { it as Byte } ?: Byte.MIN_VALUE
+                    val max = pMax?.let { it as Byte } ?: Byte.MAX_VALUE
                     dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
                             .also { v = _i.b as N }
                 }
@@ -2116,8 +2116,8 @@ interface imgui_internal {
 //                }
                 DataType.Short -> {
                     _i = (v as Short).i
-                    val min = vMin?.let { it as Short } ?: Short.MIN_VALUE
-                    val max = vMax?.let { it as Short } ?: Short.MAX_VALUE
+                    val min = pMin?.let { it as Short } ?: Short.MIN_VALUE
+                    val max = pMax?.let { it as Short } ?: Short.MAX_VALUE
                     dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
                             .also { v = _i.s as N }
                 }
@@ -2130,8 +2130,8 @@ interface imgui_internal {
 //                }
                 DataType.Int -> {
                     _i = v as Int
-                    val min = vMin?.let { it as Int } ?: Int.MIN_VALUE
-                    val max = vMax?.let { it as Int } ?: Int.MAX_VALUE
+                    val min = pMin?.let { it as Int } ?: Int.MIN_VALUE
+                    val max = pMax?.let { it as Int } ?: Int.MAX_VALUE
                     dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
                             .also { v = _i as N }
                 }
@@ -2144,8 +2144,8 @@ interface imgui_internal {
 //                }
                 DataType.Long -> {
                     _L = v as Long
-                    val min = vMin?.let { it as Long } ?: Long.MIN_VALUE
-                    val max = vMax?.let { it as Long } ?: Long.MAX_VALUE
+                    val min = pMin?.let { it as Long } ?: Long.MIN_VALUE
+                    val max = pMax?.let { it as Long } ?: Long.MAX_VALUE
                     dragBehaviorT(dataType, ::_L, vSpeed, min.L, max.L, format, power, flags)
                             .also { v = _L as N }
                 }
@@ -2158,15 +2158,15 @@ interface imgui_internal {
 //                }
                 DataType.Float -> {
                     _f0 = v as Float
-                    val min = vMin?.let { it as Float } ?: Float.MIN_VALUE
-                    val max = vMax?.let { it as Float } ?: Float.MAX_VALUE
+                    val min = pMin?.let { it as Float } ?: Float.MIN_VALUE
+                    val max = pMax?.let { it as Float } ?: Float.MAX_VALUE
                     dragBehaviorT(dataType, ::_f0, vSpeed, min.f, max.f, format, power, flags)
                             .also { v = _f0 as N }
                 }
                 DataType.Double -> {
                     _d = v as Double
-                    val min = vMin?.let { it as Double } ?: Double.MIN_VALUE
-                    val max = vMax?.let { it as Double } ?: Double.MAX_VALUE
+                    val min = pMin?.let { it as Double } ?: Double.MIN_VALUE
+                    val max = pMax?.let { it as Double } ?: Double.MAX_VALUE
                     dragBehaviorT(dataType, ::_d, vSpeed, min.d, max.d, format, power, flags)
                             .also { v = _d as N }
                 }
@@ -2179,13 +2179,15 @@ interface imgui_internal {
     /** For 32-bits and larger types, slider bounds are limited to half the natural type range.
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
-    fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags, outGrabBb: Rect) = sliderBehavior(bb, id, v, 0, vMin, vMax, format, power, flags, outGrabBb)
+    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, power: Float,
+                       flags: SliderFlags, outGrabBb: Rect) =
+            sliderBehavior(bb, id, pV, 0, pMin, pMax, format, power, flags, outGrabBb)
 
-    fun sliderBehavior(bb: Rect, id: ID, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String, power: Float,
-                       flags: SliderFlags, outGrabBb: Rect): Boolean = withFloat(v, ptr) {
-        sliderBehavior(bb, id, DataType.Float, it, vMin, vMax, format, power, flags, outGrabBb)
-    }
+    fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, pMin: Float, pMax: Float, format: String,
+                       power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean =
+            withFloat(pV, ptr) {
+                sliderBehavior(bb, id, DataType.Float, it, pMin, pMax, format, power, flags, outGrabBb)
+            }
 
 //    fun <N> sliderBehavior(bb: Rect, id: ID,
 //                           v: KMutableProperty0<N>,
@@ -2195,36 +2197,36 @@ interface imgui_internal {
 //            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
 
     fun <N> sliderBehavior(bb: Rect, id: ID,
-                           dataType: DataType, v: KMutableProperty0<N>,
-                           vMin: N, vMax: N,
+                           dataType: DataType, pV: KMutableProperty0<N>,
+                           pMin: N, pMax: N,
                            format: String, power: Float,
                            flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = when (dataType) {
 
         DataType.Byte -> {
-            _i = (v() as Byte).i
-            sliderBehaviorT(bb, id, dataType, ::_i, vMin.i, vMax.i, format, power, flags, outGrabBb)
-                    .also { v.set(_i.b as N) }
+            _i = (pV() as Byte).i
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flags, outGrabBb)
+                    .also { pV.set(_i.b as N) }
         }
         DataType.Short -> {
-            _i = (v() as Short).i
-            sliderBehaviorT(bb, id, dataType, ::_i, vMin.i, vMax.i, format, power, flags, outGrabBb)
-                    .also { v.set(_i.s as N) }
+            _i = (pV() as Short).i
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flags, outGrabBb)
+                    .also { pV.set(_i.s as N) }
         }
         DataType.Int -> {
-            assert(vMin as Int >= Int.MIN_VALUE / 2 && vMax as Int <= Int.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
+            assert(pMin as Int >= Int.MIN_VALUE / 2 && pMax as Int <= Int.MAX_VALUE / 2)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
         }
         DataType.Long -> {
-            assert(vMin as Long >= Long.MIN_VALUE / 2 && vMax as Long <= Long.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
+            assert(pMin as Long >= Long.MIN_VALUE / 2 && pMax as Long <= Long.MAX_VALUE / 2)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
         }
         DataType.Float -> {
-            assert(vMin as Float >= -Float.MAX_VALUE / 2f && vMax as Float <= Float.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
+            assert(pMin as Float >= -Float.MAX_VALUE / 2f && pMax as Float <= Float.MAX_VALUE / 2f)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
         }
         DataType.Double -> {
-            assert(vMin as Double >= -Double.MAX_VALUE / 2f && vMax as Double <= Double.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, v, vMin as N, vMax, format, power, flags, outGrabBb)
+            assert(pMin as Double >= -Double.MAX_VALUE / 2f && pMax as Double <= Double.MAX_VALUE / 2f)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
         }
         else -> throw Error()
     }
@@ -2516,14 +2518,15 @@ interface imgui_internal {
 
     /** User can input math operators (e.g. +100) to edit a numerical values.
      *  NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess.. */
-    fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, data: IntArray, format: String? = null): Boolean {
-        _i = data[0]
+    fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, pData: IntArray,
+                                format: String? = null): Boolean {
+        _i = pData[0]
         return dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::_i, format)
-                .also { data[0] = _i }
+                .also { pData[0] = _i }
     }
 
-    fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataType: DataType, dataPtr: KMutableProperty0<*>,
-                                format: String? = null): Boolean {
+    fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataType: DataType,
+                                dataPtr: KMutableProperty0<*>, format: String? = null): Boolean {
 
         val buf = String(buf_)
                 .replace(Regex("\\s+"), "")
@@ -2692,8 +2695,8 @@ interface imgui_internal {
         val id = window.getId(label)
         val labelSize = calcTextSize(label, -1, true)
         val h = if (isMultiline) textLineHeight * 8f else labelSize.y
-        val frameSize = calcItemSize(sizeArg, calcItemWidth(), (if(isMultiline) g.fontSize * 8f else labelSize.y) + style.framePadding.y*2f) // Arbitrary default of 8 lines high for multi-line
-        val totalSize = Vec2(frameSize.x + if(labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
+        val frameSize = calcItemSize(sizeArg, calcItemWidth(), (if (isMultiline) g.fontSize * 8f else labelSize.y) + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
+        val totalSize = Vec2(frameSize.x + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
 
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
         val totalBb = Rect(frameBb.min, frameBb.min + totalSize)
@@ -3391,7 +3394,7 @@ interface imgui_internal {
 
     /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
      *  FIXME: Facilitate using this in variety of other situations. */
-    fun tempInputTextScalar(bb: Rect, id: ID, label: String, dataType: DataType, data: KMutableProperty0<*>,
+    fun tempInputTextScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<*>,
                             format_: String): Boolean {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
@@ -3402,7 +3405,7 @@ interface imgui_internal {
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)
-        var dataBuf = data.format(dataType, format, 32)
+        var dataBuf = pData.format(dataType, format, 32)
         dataBuf = trimBlanks(dataBuf)
         g.currentWindow!!.dc.cursorPos put bb.min
         val flags: InputTextFlags = Itf.AutoSelectAll or Itf.NoMarkEdited or when (dataType) {
@@ -3415,7 +3418,7 @@ interface imgui_internal {
             g.tempInputTextId = g.activeId
         }
         if (valueChanged) {
-            valueChanged = dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, data)
+            valueChanged = dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
             if (valueChanged)
                 markItemEdited(id)
         }
