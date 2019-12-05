@@ -128,8 +128,10 @@ interface imgui_widgets_comboBox {
             }
         }
 
+        // We don't use BeginPopupEx() solely because we have a custom name string, which we could make an argument to BeginPopupEx()
+        val windowFlags: WindowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf.NoMove
+
         // Horizontally align ourselves with the framed text
-        val windowFlags = Wf.AlwaysAutoResize or Wf.Popup or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings
         pushStyleVar(StyleVar.WindowPadding, Vec2(style.framePadding.x, style.windowPadding.y))
         val ret = begin(name, null, windowFlags)
         popStyleVar()
