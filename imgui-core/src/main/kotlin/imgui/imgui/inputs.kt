@@ -1,9 +1,8 @@
 package imgui.imgui
 
-import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
-import imgui.ImGui.calcTypematicPressedRepeatAmount
+import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.style
@@ -42,7 +41,7 @@ interface imgui_inputsUtilities {
         if (keyIndex < 0) return 0
         assert(keyIndex in 0 until io.keysDown.size)
         val t = io.keysDownDuration[keyIndex]
-        return calcTypematicPressedRepeatAmount(t, t - io.deltaTime, repeatDelay, repeatRate)
+        return calcTypematicRepeatAmount(t - io.deltaTime, t, repeatDelay, repeatRate)
     }
 
     /** is mouse button held  (0=left, 1=right, 2=middle) */
@@ -65,7 +64,7 @@ interface imgui_inputsUtilities {
 
         if (repeat && t > io.keyRepeatDelay) {
             // FIXME: 2019/05/03: Our old repeat code was wrong here and led to doubling the repeat rate, which made it an ok rate for repeat on mouse hold.
-            val amount = calcTypematicPressedRepeatAmount(t, t - io.deltaTime, io.keyRepeatDelay, io.keyRepeatRate * 0.5f)
+            val amount = calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay, io.keyRepeatRate * 0.5f)
             if (amount > 0)
                 return true
         }
