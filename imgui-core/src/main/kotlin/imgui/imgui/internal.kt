@@ -2795,6 +2795,7 @@ interface imgui_internal {
 
             // Declare our inputs
             assert(NavInput.values().size < 32)
+            g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
             if (isMultiline || flags has Itf.CallbackHistory)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
             g.activeIdUsingNavInputMask = g.activeIdUsingNavInputMask or (1 shl NavInput.Cancel)
