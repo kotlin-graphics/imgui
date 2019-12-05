@@ -15,6 +15,7 @@ import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.setActiveId
 import imgui.internal.*
+import kool.BYTES
 import kool.lib.fill
 import kool.rem
 import kool.set

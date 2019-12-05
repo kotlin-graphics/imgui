@@ -6,6 +6,7 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.Dir
 import imgui.NUL
+import kool.BYTES
 import kool.rem
 import org.lwjgl.system.Platform
 import unsigned.toBigInt

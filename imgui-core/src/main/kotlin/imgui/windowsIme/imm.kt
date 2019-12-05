@@ -3,6 +3,7 @@ package imgui.windowsIme
 import glm_.BYTES
 import glm_.L
 import imgui.MINECRAFT_BEHAVIORS
+import kool.BYTES
 import org.lwjgl.system.*
 import org.lwjgl.system.MemoryUtil.memGetLong
 import org.lwjgl.system.MemoryUtil.memPutLong
