@@ -141,7 +141,7 @@ interface imgui_widgets_sliders {
      *  "Gold: %.0f"   Gold: 1
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
-    fun <N> sliderScalar(label: String, dataType: DataType, v: KMutableProperty0<N>, vMin: N, vMax: N,
+    fun <N> sliderScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N,
                          format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
@@ -188,7 +188,7 @@ interface imgui_widgets_sliders {
         }
 
         if (tempInputIsActive || tempInputStart)
-            return tempInputTextScalar(frameBb, id, label, DataType.Float, v, format)
+            return tempInputTextScalar(frameBb, id, label, DataType.Float, pData, format)
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
@@ -197,7 +197,7 @@ interface imgui_widgets_sliders {
 
         // Slider behavior
         val grabBb = Rect()
-        val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.None.i, grabBb)
+        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.None.i, grabBb)
         if (valueChanged)
             markItemEdited(id)
 
@@ -206,7 +206,7 @@ interface imgui_widgets_sliders {
             window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = format.format(style.locale, v())
+        val value = format.format(style.locale, pData())
         renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
@@ -217,7 +217,7 @@ interface imgui_widgets_sliders {
     }
 
     /** Add multiple sliders on 1 line for compact edition of multiple components */
-    fun <N> sliderScalarN(label: String, dataType: DataType, v: Any, components: Int, vMin: N, vMax: N,
+    fun <N> sliderScalarN(label: String, dataType: DataType, pData: Any, components: Int, pMin: N, pMax: N,
                           format: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
@@ -232,8 +232,8 @@ interface imgui_widgets_sliders {
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {
-                DataType.Int -> withInt(v as IntArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, vMin, vMax, format, power) }
-                DataType.Float -> withFloat(v as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, vMin, vMax, format, power) }
+                DataType.Int -> withInt(pData as IntArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
+                DataType.Float -> withFloat(pData as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
                 else -> error("invalid")
             } || valueChanged
             popId()
@@ -258,7 +258,7 @@ interface imgui_widgets_sliders {
                        format: String = "%d"): Boolean where N : Number, N : Comparable<N> =
             vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format)
 
-    fun <N> vSliderScalar(label: String, size: Vec2, dataType: DataType, v: KMutableProperty0<N>, vMin: N, vMax: N,
+    fun <N> vSliderScalar(label: String, size: Vec2, dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N,
                           format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
 
         val window = currentWindow
@@ -296,7 +296,7 @@ interface imgui_widgets_sliders {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
         // Slider behavior
         val grabBb = Rect()
-        val valueChanged = sliderBehavior(frameBb, id, dataType, v, vMin, vMax, format, power, SliderFlag.Vertical.i, grabBb)
+        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.Vertical.i, grabBb)
 
         if (valueChanged)
             markItemEdited(id)
@@ -307,7 +307,7 @@ interface imgui_widgets_sliders {
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */
-        val value = String(v.format(dataType, format))
+        val value = String(pData.format(dataType, format))
         val posMin = Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y)
         renderTextClipped(posMin, frameBb.max, value, value.length, null, Vec2(0.5f, 0f))
         if (labelSize.x > 0f)
