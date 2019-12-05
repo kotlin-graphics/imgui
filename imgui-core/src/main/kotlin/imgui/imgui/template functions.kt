@@ -328,7 +328,7 @@ fun <N> sliderBehaviorT(bb: Rect, id: Int,
                             }
                             else -> error("Invalid")
                         }
-                        if (!isDecimal && vNewOffFloor < vNewOffRound)
+                        if (vNewOffFloor < vNewOffRound)
                             vMin + vNewOffRound
                         else
                             vMin + vNewOffFloor
