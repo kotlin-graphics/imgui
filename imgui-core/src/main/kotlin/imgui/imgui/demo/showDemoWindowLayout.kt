@@ -86,6 +86,7 @@ import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.ImGui.unindent
 import imgui.ImGui.windowContentRegionMax
 import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
@@ -93,6 +94,7 @@ import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
 import imgui.dsl.child
 import imgui.dsl.group
+import imgui.dsl.indent
 import imgui.dsl.menuBar
 import imgui.dsl.treeNode
 import imgui.dsl.withId
@@ -134,6 +136,10 @@ object showDemoWindowLayout {
     var tabBarFlags: TabBarFlags = TabBarFlag.Reorderable.i
     val names0 = arrayOf("Artichoke", "Beetroot", "Celery", "Daikon")
     val opened = BooleanArray(4) { true } // Persistent user state
+
+    /** Text Baseline Alignment */
+    var spacing = style.itemInnerSpacing.x
+
 
     /* Scrolling */
     var enableTrack = true
@@ -451,59 +457,101 @@ object showDemoWindowLayout {
 
         treeNode("Text Baseline Alignment") {
 
-            helpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
+            run {
+                bulletText("Text baseline:")
+                sameLine()
+                helpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
+                indent {
 
-            text("One\nTwo\nThree"); sameLine()
-            text("Hello\nWorld"); sameLine()
-            text("Banana")
+                    text("KO Blahblah"); sameLine()
+                    button("Some framed item"); sameLine()
+                    helpMarker("Baseline of button will look misaligned with text..")
 
-            text("Banana"); sameLine()
-            text("Hello\nWorld"); sameLine()
-            text("One\nTwo\nThree")
+                    // If your line starts with text, call AlignTextToFramePadding() to align text to upcoming widgets.
+                    // Because we don't know what's coming after the Text() statement, we need to move the text baseline down by FramePadding.y
+                    alignTextToFramePadding()
+                    text("OK Blahblah"); sameLine()
+                    button("Some framed item"); sameLine()
+                    helpMarker("We call AlignTextToFramePadding() to vertically align the text baseline by +FramePadding.y")
 
-            button("HOP##1"); sameLine()
-            text("Banana"); sameLine()
-            text("Hello\nWorld"); sameLine()
-            text("Banana")
+                    // SmallButton() uses the same vertical padding as Text
+                    button("TEST##1"); sameLine()
+                    text("TEST"); sameLine()
+                    smallButton("TEST##2")
 
-            button("HOP##2"); sameLine()
-            text("Hello\nWorld"); sameLine()
-            text("Banana")
-
-            button("TEST##1"); sameLine()
-            text("TEST"); sameLine()
-            smallButton("TEST##2")
-
-            alignTextToFramePadding() // If your line starts with text, call this to align it to upcoming widgets.
-            text("Text aligned to Widget"); sameLine()
-            button("Widget##1"); sameLine()
-            text("Widget"); sameLine()
-            smallButton("Widget##2"); sameLine()
-            button("Widget##3")
-
-            // Tree
-            val spacing = style.itemInnerSpacing.x
-            button("Button##1")
-            sameLine(0f, spacing)
-            treeNode("Node##1") { for (i in 0..5) bulletText("Item $i..") } // Dummy tree data
-            /*  Vertically align text node a bit lower so it'll be vertically centered with upcoming widget.
-                Otherwise you can use SmallButton (smaller fit).                 */
-            alignTextToFramePadding()
-            // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
-            val nodeOpen = treeNode("Node##2")
-            sameLine(0f, spacing); button("Button##2")
-            if (nodeOpen) { // Dummy tree data
-                for (i in 0..5) bulletText("Item $i..")
-                treePop()
+                    // If your line starts with text, call AlignTextToFramePadding() to align text to upcoming widgets.
+                    alignTextToFramePadding()
+                    text("Text aligned to framed item"); sameLine()
+                    button("Item##1"); sameLine()
+                    text("Item"); sameLine()
+                    smallButton("Item##2"); sameLine()
+                    button("Item##3")
+                }
             }
-            // Bullet
-            button("Button##3")
-            sameLine(0f, spacing)
-            bulletText("Bullet text")
 
-            alignTextToFramePadding()
-            bulletText("Node")
-            sameLine(0f, spacing); button("Button##4")
+            spacing()
+
+            run {
+                bulletText("Multi-line text:")
+                indent {
+                    text("One\nTwo\nThree"); sameLine()
+                    text("Hello\nWorld"); sameLine()
+                    text("Banana")
+
+                    text("Banana"); sameLine()
+                    text("Hello\nWorld"); sameLine()
+                    text("One\nTwo\nThree")
+
+                    button("HOP##1"); sameLine()
+                    text("Banana"); sameLine()
+                    text("Hello\nWorld"); sameLine()
+                    text("Banana")
+
+                    button("HOP##2"); sameLine()
+                    text("Hello\nWorld"); sameLine()
+                    text("Banana")
+                }
+            }
+
+            spacing()
+
+            run {
+                bulletText("Misc items:")
+                indent {
+
+                    // SmallButton() sets FramePadding to zero. Text baseline is aligned to match baseline of previous Button
+                    button("80x80", Vec2(80))
+                    sameLine()
+                    button("50x50", Vec2(50))
+                    sameLine()
+                    button("Button()")
+                    sameLine()
+                    smallButton("SmallButton()")
+
+                    // Tree
+                    button("Button##1")
+                    sameLine(0f, spacing)
+                    treeNode("Node##1") { for (i in 0..5) bulletText("Item $i..") } // Dummy tree data
+
+                    alignTextToFramePadding() // Vertically align text node a bit lower so it'll be vertically centered with upcoming widget. Otherwise you can use SmallButton (smaller fit).
+                    var nodeOpen = treeNode("Node##2") // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
+                    sameLine(0f, spacing); button("Button##2")
+                    if (nodeOpen) {
+                        for (i in 0..5)
+                            bulletText("Item $i..")
+                        treePop()
+                    } // Dummy tree data
+
+                    // Bullet
+                    button("Button##3")
+                    sameLine(0f, spacing)
+                    bulletText("Bullet text")
+
+                    alignTextToFramePadding()
+                    bulletText("Node")
+                    sameLine(0f, spacing); button("Button##4")
+                }
+            }
         }
 
         treeNode("Scrolling") {
@@ -538,7 +586,7 @@ object showDemoWindowLayout {
                 group {
                     textUnformatted(names1[i])
 
-                    val childFlags = if(enableExtraDecorations) Wf.MenuBar else Wf.None
+                    val childFlags = if (enableExtraDecorations) Wf.MenuBar else Wf.None
                     beginChild(getId(i), Vec2(childW, 200f), true, childFlags.i)
                     menuBar { textUnformatted("abc") }
                     if (scrollToOff)
@@ -565,7 +613,7 @@ object showDemoWindowLayout {
             pushId("##HorizontalScrolling")
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
-                val childFlags = Wf.HorizontalScrollbar or if(enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
+                val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
                 beginChild(getId(i), Vec2(-100f, childHeight), true, childFlags)
                 if (scrollToOff)
                     scrollX = scrollToOffPx
