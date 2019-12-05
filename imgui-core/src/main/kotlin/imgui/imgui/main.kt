@@ -192,6 +192,11 @@ interface imgui_main {
         g.activeIdIsJustActivated = false
         if (g.tempInputTextId != 0 && g.activeId != g.tempInputTextId)
             g.tempInputTextId = 0
+        if (g.activeId == 0)        {
+            g.activeIdUsingNavInputMask = 0
+            g.activeIdUsingNavDirMask = 0
+            g.activeIdUsingKeyInputMask = 0
+        }
 
         // Drag and drop
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
