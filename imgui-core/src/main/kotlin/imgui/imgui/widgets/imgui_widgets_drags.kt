@@ -241,7 +241,7 @@ interface imgui_widgets_drags {
                 setActiveId(id, window)
                 setFocusId(id, window)
                 window.focus()
-                g.activeIdAllowNavDirFlags = (1 shl Dir.Up) or (1 shl Dir.Down)
+                g.activeIdUsingNavDirMask  = (1 shl Dir.Left) or (1 shl Dir.Right)
                 if (focusRequested || (clicked && io.keyCtrl) || doubleClicked || g.navInputId == id) {
                     tempInputStart = true
                     focusableItemUnregister(window)
