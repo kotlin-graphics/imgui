@@ -2692,11 +2692,14 @@ interface imgui_internal {
         val id = window.getId(label)
         val labelSize = calcTextSize(label, -1, true)
         val h = if (isMultiline) textLineHeight * 8f else labelSize.y
-        val size = calcItemSize(sizeArg, g.fontSize, h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
-        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+        val frameSize = calcItemSize(sizeArg, calcItemWidth(), (if(isMultiline) g.fontSize * 8f else labelSize.y) + style.framePadding.y*2f) // Arbitrary default of 8 lines high for multi-line
+        val totalSize = Vec2(frameSize.x + if(labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
+
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
+        val totalBb = Rect(frameBb.min, frameBb.min + totalSize)
 
         var drawWindow = window
+        val innerSize = Vec2(frameSize)
         if (isMultiline) {
             if (!itemAdd(totalBb, id, frameBb)) {
                 itemSize(totalBb, style.framePadding.y)
@@ -2708,10 +2711,10 @@ interface imgui_internal {
                 endGroup()
                 return false
             }
-            drawWindow = currentWindow
+            drawWindow = g.currentWindow!!  // Child window
             // This is to ensure that EndChild() will display a navigation highlight
             drawWindow.dc.navLayerActiveMaskNext = drawWindow.dc.navLayerActiveMaskNext or drawWindow.dc.navLayerCurrentMask
-            size.x -= drawWindow.scrollbarSizes.x
+            innerSize.x -= drawWindow.scrollbarSizes.x
         } else {
             itemSize(totalBb, style.framePadding.y)
             if (!itemAdd(totalBb, id, frameBb)) return false
@@ -3172,7 +3175,7 @@ interface imgui_internal {
             renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
         }
 
-        val clipRect = Vec4(frameBb.min, frameBb.min + size) // Not using frameBb.Max because we have adjusted size
+        val clipRect = Vec4(frameBb.min, frameBb.min + innerSize) // Not using frameBb.Max because we have adjusted size
         val drawPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
         val textSize = Vec2()
 
@@ -3260,18 +3263,18 @@ interface imgui_internal {
 
                 // Store text height (note that we haven't calculated text width at all, see GitHub issues #383, #1224)
                 if (isMultiline)
-                    textSize.put(size.x, lineCount * g.fontSize)
+                    textSize.put(innerSize.x, lineCount * g.fontSize)
             }
 
             // Scroll
             if (renderCursor && state.cursorFollow) {
                 // Horizontal scroll in chunks of quarter width
                 if (flags hasnt Itf.NoHorizontalScroll) {
-                    val scrollIncrementX = size.x * 0.25f
+                    val scrollIncrementX = innerSize.x * 0.25f
                     if (cursorOffset.x < state.scrollX)
                         state.scrollX = (glm.max(0f, cursorOffset.x - scrollIncrementX)).i.f
-                    else if (cursorOffset.x - size.x >= state.scrollX)
-                        state.scrollX = (cursorOffset.x - size.x + scrollIncrementX).i.f
+                    else if (cursorOffset.x - innerSize.x >= state.scrollX)
+                        state.scrollX = (cursorOffset.x - innerSize.x + scrollIncrementX).i.f
                 } else
                     state.scrollX = 0f
 
@@ -3280,8 +3283,8 @@ interface imgui_internal {
                     var scrollY = drawWindow.scroll.y
                     if (cursorOffset.y - g.fontSize < scrollY)
                         scrollY = glm.max(0f, cursorOffset.y - g.fontSize)
-                    else if (cursorOffset.y - size.y >= scrollY)
-                        scrollY = cursorOffset.y - size.y
+                    else if (cursorOffset.y - innerSize.y >= scrollY)
+                        scrollY = cursorOffset.y - innerSize.y
                     drawPos.y += drawWindow.scroll.y - scrollY   // Manipulate cursor pos immediately avoid a frame of lag
                     drawWindow.scroll.y = scrollY
                 }
@@ -3347,7 +3350,7 @@ interface imgui_internal {
             // Render text only (no selection, no cursor)
             if (isMultiline) {
                 _i = bufDisplayEnd
-                textSize.put(size.x, inputTextCalcTextLenAndLineCount(bufDisplay, ::_i) * g.fontSize) // We don't need width
+                textSize.put(innerSize.x, inputTextCalcTextLenAndLineCount(bufDisplay, ::_i) * g.fontSize) // We don't need width
                 bufDisplayEnd = _i
             } else if (!isDisplayingHint && g.activeId == id)
                 bufDisplayEnd = state_!!.curLenA
