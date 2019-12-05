@@ -2304,11 +2304,11 @@ interface imgui_internal {
         var toggled = false
         if (!isLeaf) {
             if (pressed) {
+                val arrowX1 = textPos.x - textOffsetX
+                val arrowX2 = arrowX1 + g.fontSize + padding.x * 2f
                 toggled = !(flags has (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick)) || g.navActivateId == id
-                if (flags has Tnf.OpenOnArrow) {
-                    val max = Vec2(interactBb.min.x + textOffsetX, interactBb.max.y)
-                    toggled = isMouseHoveringRect(interactBb.min, max) && !g.navDisableMouseHover || toggled
-                }
+                if (flags has Tnf.OpenOnArrow)
+                    toggled = isMouseHoveringRect(Vec2(arrowX1, interactBb.min.y), Vec2(arrowX2, interactBb.max.y)) && !g.navDisableMouseHover || toggled
                 if (flags has Tnf.OpenOnDoubleClick)
                     toggled = io.mouseDoubleClicked[0] || toggled
                 // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
