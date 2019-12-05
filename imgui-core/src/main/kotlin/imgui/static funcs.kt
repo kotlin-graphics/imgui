@@ -216,6 +216,10 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
         if (!pass) return false
     }
 
+    // We ignore Ascii representation of delete (emitted from Backspace on OSX, see #2578, #2817)
+    if (c.i == 127)
+        return false
+
     // Filter private Unicode range. GLFW on OSX seems to send private characters for special keys like arrow keys (FIXME)
     if (c >= 0xE000 && c <= 0xF8FF) return false
 
