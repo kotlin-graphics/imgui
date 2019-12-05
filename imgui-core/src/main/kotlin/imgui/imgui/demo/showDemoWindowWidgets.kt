@@ -146,6 +146,7 @@ import imgui.dsl.withStyleVar
 import imgui.dsl.withTextWrapPos
 import imgui.imgui.imgui_demoDebugInformations.Companion.helpMarker
 import imgui.or
+import kool.BYTES
 import unsigned.Ubyte
 import kotlin.math.cos
 import kotlin.reflect.KMutableProperty0
