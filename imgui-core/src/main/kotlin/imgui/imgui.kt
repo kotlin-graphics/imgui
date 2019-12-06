@@ -1,13 +1,13 @@
 package imgui
 
 import glm_.i
-import imgui.imgui.*
-import imgui.imgui.widgets.*
+import imgui.api.*
+import imgui.api.dragAndDrop
+import imgui.api.loggingCapture
 import imgui.internal.ItemStatusFlags
-import imgui.internal.Rect
+import imgui.classes.Rect
+import imgui.internalApi.*
 import kool.Stack
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty
 
 
 // Version
@@ -93,73 +93,77 @@ var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { g,
 var MINECRAFT_BEHAVIORS = false
 
 object ImGui :
-
-// imgui_context doesnt exist, only Context class
-        imgui_main,
-
-        imgui_demoDebugInformations,
-
-        imgui_styles,
-
-        imgui_windows,
-
-        imgui_childWindows,
-
-        imgui_windowsUtilities,
-
-        imgui_contentRegion,
-
-        imgui_windowScrolling,
-
-        imgui_parametersStacks,
-
-        imgui_cursorLayout,
-
-        imgui_idScopes,
-
-        imgui_widgets_text,
-        imgui_widgets_main,
-        imgui_widgets_comboBox,
-        imgui_widgets_drags,
-        imgui_widgets_sliders,
-        imgui_widgets_inputWithKeyboard,
-        imgui_widgets_colorEditorPicker,
-        imgui_widgets_trees,
-        imgui_widgets_selectables,
-        imgui_widgets_listBoxes,
-        imgui_widgets_dataPlotting,
-        imgui_widgets_menus,
-        imgui_widgets_columns,
-
-        imgui_tooltips,
-
-        imgui_popupsModals,
-
-        imgui_tabBarsTabs,
-
-        imgui_logging,
-
-        imgui_dragAndDrop,
-
-        imgui_clipping,
-
-        imgui_focusActivation,
-
-        imgui_itemWidgetsUtilities,
-
-        imgui_miscellaneousUtilities,
-
-        imgui_colorUtilities,
-
-        imgui_inputsUtilities,
-
-        imgui_clipboardUtilities,
-
+//-----------------------------------------------------------------------------
+// ImGui: Dear ImGui end-user API
+// (Inside a namespace so you can add extra functions in your own separate file. Please don't modify imgui source files!)
+//-----------------------------------------------------------------------------
+// context doesnt exist, only Context class
+        main,
+        demoDebugInformations,
+        styles,
+        windows,
+        childWindows,
+        windowsUtilities,
+        contentRegion,
+        windowScrolling,
+        parametersStacks,
+        cursorLayout,
+        idStackScopes,
+        widgetsText,
+        widgetsMain,
+        widgetsComboBox,
+        widgetsDrags,
+        widgetsSliders,
+        widgetsInputWithKeyboard,
+        widgetsColorEditorPicker,
+        widgetsTrees,
+        widgetsSelectables,
+        widgetsListBoxes,
+        widgetsDataPlotting,
+        // value
+        widgetsMenus,
+        tooltips,
+        popupsModals,
+        columns,
+        tabBarsTabs,
+        loggingCapture,
+        dragAndDrop,
+        clipping,
+        focusActivation,
+        itemWidgetsUtilities,
+        miscellaneousUtilities,
+        colorUtilities,
+        inputsUtilities,
+        clipboardUtilities,
         settingsIniUtilities,
 
-        lowLevelLayoutHelpers,
-
-        imgui_internal
+//-----------------------------------------------------------------------------
+// Internal API
+// No guarantee of forward compatibility here.
+//-----------------------------------------------------------------------------
+        internal,
+        // init in Context class
+        newFrame,
+        settings,
+        basicAccessors,
+        basicHelpersForWidgetCode,
+        imgui.internalApi.loggingCapture,
+        PopupsModalsTooltips,
+        navigation,
+        inputs,
+        imgui.internalApi.dragAndDrop,
+        newColumnsAPI,
+        tabBars,
+        renderHelpers,
+        widgets,
+        widgetsLowLevelBehaviors,
+        templateFunctions,
+        dataTypeHelpers,
+        inputText,
+        color,
+        plot,
+        // shade functions in DrawList class
+        debugTools
 
 internal var ptrIndices = 0
 internal var ptrId = Array(512) { it } // it was: java.lang.Byte.valueOf(it.b)

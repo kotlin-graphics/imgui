@@ -7,7 +7,7 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.imgui.Context
+import imgui.api.Context
 import imgui.impl.gl.ImplGL2_mac
 import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.glfw.GLFW

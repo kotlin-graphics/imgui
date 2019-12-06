@@ -5,8 +5,7 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.ImGui.io
-import imgui.imgui.Context
+import imgui.api.Context
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw

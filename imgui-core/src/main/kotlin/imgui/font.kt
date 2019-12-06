@@ -10,7 +10,8 @@ import glm_.vec2.operators.times
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
-import imgui.imgui.g
+import imgui.api.g
+import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.stb.*
 import kool.*
@@ -183,7 +184,7 @@ class FontAtlas {
                            glyphRanges: Array<IntRange> = arrayOf()): Font? {
 
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
-        val chars = fileLoadToCharArray(filename) ?: return null
+        val chars = fileLoadToMemory(filename) ?: return null
         if (fontCfg.name.isEmpty())
         // Store a short copy of filename into into the font name for convenience
             fontCfg.name = "${filename.substringAfterLast('/')}, %.0fpx".format(style.locale, sizePixels)
@@ -1497,6 +1498,13 @@ class Font {
         drawList._vtxWritePtr = vtxWrite
         drawList._idxWritePtr = idxWrite
         drawList._vtxCurrentIdx = vtxCurrentIdx
+    }
+
+    fun CharArray.memchr(startIdx: Int, c: Char): Int? {
+        for (index in startIdx until size)
+            if (c == this[index])
+                return index
+        return null
     }
 
     // [Internal] Don't use!

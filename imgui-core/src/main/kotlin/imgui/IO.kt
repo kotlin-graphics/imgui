@@ -1,16 +1,17 @@
 package imgui
 
-import com.sun.jdi.Bootstrap
 import com.sun.jdi.VirtualMachine
-import com.sun.jdi.connect.AttachingConnector
-import com.sun.jdi.connect.Connector
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import imgui.imgui.g
+import imgui.ImGui.styleColorsClassic
+import imgui.api.g
 import imgui.internal.*
+import imgui.static.getClipboardTextFn_DefaultImpl
+import imgui.static.imeSetInputScreenPosFn_Win32
+import imgui.static.setClipboardTextFn_DefaultImpl
 import kool.Ptr
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
@@ -524,7 +525,7 @@ class Style {
 //    val locale = Locale.getDefault()
 
     init {
-        ImGui.styleColorsClassic(this)
+        styleColorsClassic(this)
     }
 
     constructor()

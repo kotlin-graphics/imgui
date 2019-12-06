@@ -10,7 +10,7 @@ import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import imgui.Key
-import imgui.imgui.g
+import imgui.api.g
 import imgui.impl.*
 import imgui.windowsIme.imeListener
 import kool.cap

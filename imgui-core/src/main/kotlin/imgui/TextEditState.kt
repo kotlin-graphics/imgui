@@ -3,8 +3,7 @@ package imgui
 import gli_.has
 import glm_.c
 import glm_.glm
-import imgui.imgui.g
-import imgui.internal.isBlankW
+import imgui.api.g
 import kotlin.math.max
 
 /** Internal state of the currently focused/edited text input box   */
