@@ -1,45 +1,48 @@
 package imgui.internal
 
-import imgui.ColumnsFlags
 import imgui.DrawCornerFlags
 import imgui.DrawListFlags
+import imgui.SelectableFlags
 
-//-----------------------------------------------------------------------------
-// Types
-//-----------------------------------------------------------------------------
-
-// Internal Drag and Drop payload types. String starting with '_' are reserved for Dear ImGui.
-val PAYLOAD_TYPE_DOCKABLE = "_IMDOCK"   // ImGuiWindow* // [Internal] Docking/tabs
-
-/** flags: for ButtonEx(), ButtonBehavior()  // enum ButtonFlag */
+/** -> enum ImGuiButtonFlags_        // Flags: for ButtonEx(), ButtonBehavior() */
 typealias ButtonFlags = Int
 
-/** Flags: for DragBehavior()                // enum ImGuiDragFlags */
+/** -> enum ImGuiColumnsFlags_       // Flags: BeginColumns() */
+typealias ColumnsFlags = Int
+
+/** -> enum ImGuiDragFlags_          // Flags: for DragBehavior() */
 typealias DragFlags = Int
 
-/** flags: for PushItemFlag()                // enum ItemFlag */
+/** -> enum ImGuiItemFlags_          // Flags: for PushItemFlag() */
 typealias ItemFlags = Int
 
-/** flags: storage for DC.LastItemXXX        // enum ItemStatusFlag */
+/** -> enum ImGuiItemStatusFlags_    // Flags: for DC.LastItemStatusFlags */
 typealias ItemStatusFlags = Int
 
-/** flags: for RenderNavHighlight()          // enum NavHighlightFlag */
+/** -> enum ImGuiNavHighlightFlags_  // Flags: for RenderNavHighlight() */
 typealias NavHighlightFlags = Int
 
-/** flags: for GetNavInputAmount2d()         // enum NavDirSourceFlag */
+/** -> enum ImGuiNavDirSourceFlags_  // Flags: for GetNavInputAmount2d() */
 typealias NavDirSourceFlags = Int
 
-/** flags: for navigation requests           // enum ImGuiNavMoveFlags */
+/** -> enum ImGuiNavMoveFlags_       // Flags: for navigation requests */
 typealias NavMoveFlags = Int
 
-/** flags: for Separator() - internal        // enum SeparatorFlag */
+/** -> enum ImGuiNextItemDataFlags_  // Flags: for SetNextItemXXX() functions */
+typealias NextItemDataFlags = Int
+
+/** -> enum ImGuiNextWindowDataFlags_// Flags: for SetNextWindowXXX() functions */
+typealias NextWindowDataFlags = Int
+
+/** -> enum ImGuiSeparatorFlags_     // Flags: for SeparatorEx() */
 typealias SeparatorFlags = Int
 
-/** flags: for SliderBehavior()              // enum SliderFlag */
+/** -> enum ImGuiSliderFlags_        // Flags: for SliderBehavior() */
 typealias SliderFlags = Int
 
-/** flags: for TextEx()                      // enum ImGuiTextFlags */
+/** -> enum ImGuiTextFlags_          // Flags: for TextEx() */
 typealias TextFlags = Int
+
 
 enum class ButtonFlag {
 
@@ -76,44 +79,81 @@ enum class ButtonFlag {
     /** don't report as hovered when navigated on */
     NoHoveredOnNav;
 
-    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    val i: ButtonFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
     infix fun or(b: ButtonFlag): ButtonFlags = i or b.i
 }
 
 infix fun Int.or(b: ButtonFlag): ButtonFlags = this or b.i
-infix fun Int.has(b: ButtonFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: ButtonFlag) = (this and b.i) == 0
+infix fun Int.has(b: ButtonFlag): Boolean = (this and b.i) != 0
+infix fun Int.hasnt(b: ButtonFlag): Boolean = (this and b.i) == 0
 
 enum class SliderFlag(val i: Int) { None(0), Vertical(1 shl 0) }
 
-infix fun Int.has(b: SliderFlag) = and(b.i) != 0
-infix fun Int.hasnt(b: SliderFlag) = and(b.i) == 0
+infix fun Int.has(b: SliderFlag): Boolean = and(b.i) != 0
+infix fun Int.hasnt(b: SliderFlag): Boolean = and(b.i) == 0
 
 enum class DragFlag(val i: Int) { None(0), Vertical(1 shl 0) }
 
-infix fun Int.has(b: DragFlag) = and(b.i) != 0
-infix fun Int.hasnt(b: DragFlag) = and(b.i) == 0
+infix fun Int.has(b: DragFlag): Boolean = and(b.i) != 0
+infix fun Int.hasnt(b: DragFlag): Boolean = and(b.i) == 0
 
 /** Flags: for Columns(), BeginColumns() */
-enum class ColumnsFlag(val i: ColumnsFlags) {
+enum class ColumnsFlag {
 
-    None(0),
+    None,
     /** Disable column dividers */
-    NoBorder(1 shl 0),
+    NoBorder,
     /** Disable resizing columns when clicking on the dividers  */
-    NoResize(1 shl 1),
+    NoResize,
     /** Disable column width preservation when adjusting columns    */
-    NoPreserveWidths(1 shl 2),
+    NoPreserveWidths,
     /** Disable forcing columns to fit within window    */
-    NoForceWithinWindow(1 shl 3),
+    NoForceWithinWindow,
     /** (WIP) Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns
      *  width at all_. Will eventually remove.  */
-    GrowParentContentsSize(1 shl 4)
+    GrowParentContentsSize;
+
+    val i: ColumnsFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }
 
-infix fun Int.has(b: ColumnsFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: ColumnsFlag) = (this and b.i) == 0
+infix fun Int.has(b: ColumnsFlag): Boolean = (this and b.i) != 0
+infix fun Int.hasnt(b: ColumnsFlag): Boolean = (this and b.i) == 0
+
+/** Flags for ImGui::Selectable()   */
+enum class SelectableFlag(@JvmField val i: Int) {
+
+    None(0),
+    /** Clicking this don't close parent popup window   */
+    DontClosePopups(1 shl 0),
+    /** Selectable frame can span all columns (text will still fit in current column)   */
+    SpanAllColumns(1 shl 1),
+    /** Generate press events on double clicks too  */
+    AllowDoubleClick(1 shl 2),
+    /** Cannot be selected, display grayed out text */
+    Disabled(1 shl 3),
+    /** (WIP) Hit testing to allow subsequent widgets to overlap this one */
+    AllowItemOverlap(1 shl 4),
+    /** private  */
+    NoHoldingActiveID(1 shl 20),
+    /** private  */
+    PressedOnClick(1 shl 21),
+    /** private  */
+    PressedOnRelease(1 shl 22),
+    /** private  */
+    DrawFillAvailWidth(1 shl 23),
+
+    /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
+    DrawHoveredWhenHeld(1 shl 24),
+
+    SetNavIdOnHover(1 shl 25);
+
+    infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
+}
+
+infix fun Int.or(other: SelectableFlag): SelectableFlags = this or other.i
+infix fun Int.has(b: SelectableFlag) = (this and b.i) != 0
+infix fun Int.hasnt(b: SelectableFlag) = (this and b.i) == 0
 
 enum class SeparatorFlag {
     None,
