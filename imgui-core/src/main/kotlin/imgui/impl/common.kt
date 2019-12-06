@@ -1,10 +1,7 @@
 package imgui.impl
 
-import glm_.BYTES
 import glm_.mat4x4.Mat4
 import imgui.MouseCursor
-import kool.ByteBuffer
-import kool.IntBuffer
 
 val mat = Mat4()
 

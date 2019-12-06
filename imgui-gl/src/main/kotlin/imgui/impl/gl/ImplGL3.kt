@@ -15,7 +15,7 @@ import gln.identifiers.GlVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import imgui.*
 import imgui.ImGui.io
-import imgui.imgui.g
+import imgui.api.g
 import imgui.impl.mat
 import kool.*
 import org.lwjgl.opengl.GL
