@@ -250,17 +250,17 @@ final class BgfxDemoUtil {
     }
 
     static void lookAt(Vec3 at, Vec3 eye, Mat4 dest) {
-        glm.INSTANCE.lookAtLh(dest, eye, at, new Vec3(0, 1, 0));
+        glm.INSTANCE.lookAtLh(eye, at, new Vec3(0, 1, 0), dest);
     }
 
     static void perspective(float fov, int width, int height, float near, float far, Mat4 dest) {
         float fovRadians = fov * (float) Math.PI / 180.0f;
         float aspect = width / (float) height;
-        glm.INSTANCE.perspectiveLh(dest, fovRadians, aspect, near, far);
+        glm.INSTANCE.perspectiveLh(fovRadians, aspect, near, far, dest);
     }
 
     static void ortho(float left, float right, float bottom, float top, float zNear, float zFar, Mat4 dest) {
-        glm.INSTANCE.orthoLh(dest, left, right, bottom, top, zNear, zFar);
+        glm.INSTANCE.orthoLh(left, right, bottom, top, zNear, zFar, dest);
     }
 
 }
