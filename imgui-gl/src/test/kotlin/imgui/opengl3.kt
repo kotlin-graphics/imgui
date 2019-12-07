@@ -5,8 +5,7 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.ImGui.io
-import imgui.imgui.Context
+import imgui.api.Context
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
@@ -83,8 +82,8 @@ private class ImGuiOpenGL3 {
 
         // Setup Dear ImGui context
         ctx = Context()
-        io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
-        io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
+//        io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
+//        io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
 
         // Setup Dear ImGui style
         ImGui.styleColorsDark()

@@ -11,11 +11,11 @@ import gln.glf.semantic
 import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
 import gln.uniform.glUniform
-import gln.vertexArray.GlVertexArray
+import gln.identifiers.GlVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import imgui.*
 import imgui.ImGui.io
-import imgui.imgui.g
+import imgui.api.g
 import imgui.impl.mat
 import kool.*
 import org.lwjgl.opengl.GL
@@ -53,7 +53,7 @@ class ImplGL3 : GLInterface {
     override fun shutdown() = destroyDeviceObjects()
 
     override fun newFrame() {
-        if (fontTexture[0] == 0)
+        if (program.isInvalid)
             createDeviceObjects()
     }
 
@@ -73,7 +73,7 @@ class ImplGL3 : GLInterface {
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
         // DisplayPos is (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
-        val orthoProjection = glm.ortho(mat, 0f, io.displaySize.x.f, io.displaySize.y.f, 0f)
+        val orthoProjection = glm.ortho(0f, io.displaySize.x.f, io.displaySize.y.f, 0f, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
         if (SAMPLER_BINDING)

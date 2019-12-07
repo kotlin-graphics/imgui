@@ -3,6 +3,73 @@ package imgui
 import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
+import imgui.ImGui.arrowButton
+import imgui.ImGui.begin
+import imgui.ImGui.beginChild
+import imgui.ImGui.beginChildFrame
+import imgui.ImGui.beginCombo
+import imgui.ImGui.beginDragDropSource
+import imgui.ImGui.beginDragDropTarget
+import imgui.ImGui.beginGroup
+import imgui.ImGui.beginMainMenuBar
+import imgui.ImGui.beginMenu
+import imgui.ImGui.beginMenuBar
+import imgui.ImGui.beginPopup
+import imgui.ImGui.beginPopupContextItem
+import imgui.ImGui.beginPopupContextVoid
+import imgui.ImGui.beginPopupContextWindow
+import imgui.ImGui.beginPopupModal
+import imgui.ImGui.beginTabBar
+import imgui.ImGui.beginTabItem
+import imgui.ImGui.beginTooltip
+import imgui.ImGui.button
+import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
+import imgui.ImGui.collapsingHeader
+import imgui.ImGui.combo
+import imgui.ImGui.end
+import imgui.ImGui.endChild
+import imgui.ImGui.endChildFrame
+import imgui.ImGui.endCombo
+import imgui.ImGui.endDragDropSource
+import imgui.ImGui.endDragDropTarget
+import imgui.ImGui.endGroup
+import imgui.ImGui.endMainMenuBar
+import imgui.ImGui.endMenu
+import imgui.ImGui.endMenuBar
+import imgui.ImGui.endPopup
+import imgui.ImGui.endTabBar
+import imgui.ImGui.endTabItem
+import imgui.ImGui.endTooltip
+import imgui.ImGui.imageButton
+import imgui.ImGui.indent
+import imgui.ImGui.invisibleButton
+import imgui.ImGui.menuItem
+import imgui.ImGui.popAllowKeyboardFocus
+import imgui.ImGui.popButtonRepeat
+import imgui.ImGui.popClipRect
+import imgui.ImGui.popFont
+import imgui.ImGui.popId
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleColor
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.pushAllowKeyboardFocus
+import imgui.ImGui.pushButtonRepeat
+import imgui.ImGui.pushClipRect
+import imgui.ImGui.pushFont
+import imgui.ImGui.pushId
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleColor
+import imgui.ImGui.pushStyleVar
+import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.radioButton
+import imgui.ImGui.selectable
+import imgui.ImGui.smallButton
+import imgui.ImGui.treeNode
+import imgui.ImGui.treePop
+import imgui.ImGui.treePush
+import imgui.ImGui.unindent
 import kotlin.reflect.KMutableProperty0
 
 /** twin brother of dsl_ */
@@ -11,38 +78,38 @@ object dsl {
     // Windows
 
     inline fun window(name: String, open: KMutableProperty0<Boolean>? = null, flags: WindowFlags = 0, block: () -> Unit) {
-        if (ImGui.begin(name, open, flags)) // ~open
+        if (begin(name, open, flags)) // ~open
             block()
-        ImGui.end()
+        end()
     }
 
     // Child Windows
 
     inline fun child(strId: String, size: Vec2 = Vec2(), border: Boolean = false, extraFlags: WindowFlags = 0, block: () -> Unit) {
-        if (ImGui.beginChild(strId, size, border, extraFlags)) // ~open
+        if (beginChild(strId, size, border, extraFlags)) // ~open
             block()
-        ImGui.endChild()
+        endChild()
     }
 
     // Parameters stacks (shared)
 
     inline fun withFont(font: Font = ImGui.defaultFont, block: () -> Unit) {
-        ImGui.pushFont(font)
+        pushFont(font)
         block()
-        ImGui.popFont()
+        popFont()
     }
 
     fun _push(idx: Col, col: Any) {
         if (col is Int)
-            ImGui.pushStyleColor(idx, col)
+            pushStyleColor(idx, col)
         else
-            ImGui.pushStyleColor(idx, col as Vec4)
+            pushStyleColor(idx, col as Vec4)
     }
 
     inline fun withStyleColor(idx: Col, col: Any, block: () -> Unit) {
         _push(idx, col)
         block()
-        ImGui.popStyleColor()
+        popStyleColor()
     }
 
     inline fun withStyleColor(idx0: Col, col0: Any,
@@ -50,7 +117,7 @@ object dsl {
         _push(idx0, col0)
         _push(idx1, col1)
         block()
-        ImGui.popStyleColor(2)
+        popStyleColor(2)
     }
 
     inline fun withStyleColor(idx0: Col, col0: Any,
@@ -60,7 +127,7 @@ object dsl {
         _push(idx1, col1)
         _push(idx2, col2)
         block()
-        ImGui.popStyleColor(3)
+        popStyleColor(3)
     }
 
     inline fun withStyleColor(idx0: Col, col0: Any,
@@ -73,7 +140,7 @@ object dsl {
         _push(idx2, col2)
         _push(idx3, col3)
         block()
-        ImGui.popStyleColor(4)
+        popStyleColor(4)
     }
 
     inline fun withStyleColor(idx0: Col, col0: Any,
@@ -87,117 +154,117 @@ object dsl {
         _push(idx3, col3)
         _push(idx4, col4)
         block()
-        ImGui.popStyleColor(5)
+        popStyleColor(5)
     }
 
     inline fun withStyleVar(idx: StyleVar, value: Any, block: () -> Unit) {
-        ImGui.pushStyleVar(idx, value)
+        pushStyleVar(idx, value)
         block()
-        ImGui.popStyleVar()
+        popStyleVar()
     }
 
     // Parameters stacks (current window)
 
     inline fun withItemWidth(itemWidth: Int, block: () -> Unit) = withItemWidth(itemWidth.f, block)
     inline fun withItemWidth(itemWidth: Float, block: () -> Unit) {
-        ImGui.pushItemWidth(itemWidth)
+        pushItemWidth(itemWidth)
         block()
-        ImGui.popItemWidth()
+        popItemWidth()
     }
 
     inline fun withTextWrapPos(wrapPosX: Float = 0f, block: () -> Unit) {
-        ImGui.pushTextWrapPos(wrapPosX)
+        pushTextWrapPos(wrapPosX)
         block()
-        ImGui.popTextWrapPos()
+        popTextWrapPos()
     }
 
     inline fun withAllowKeyboardFocus(allowKeyboardFocus: Boolean, block: () -> Unit) {
-        ImGui.pushAllowKeyboardFocus(allowKeyboardFocus)
+        pushAllowKeyboardFocus(allowKeyboardFocus)
         block()
-        ImGui.popAllowKeyboardFocus()
+        popAllowKeyboardFocus()
     }
 
     inline fun <R> withButtonRepeat(repeat: Boolean, block: () -> R): R {
-        ImGui.pushButtonRepeat(repeat)
-        return block().also { ImGui.popButtonRepeat() }
+        pushButtonRepeat(repeat)
+        return block().also { popButtonRepeat() }
     }
 
 
     // Cursor / Layout
 
     inline fun indent(indentW: Float = 0f, block: () -> Unit) {
-        ImGui.indent(indentW)
+        indent(indentW)
         block()
-        ImGui.unindent(indentW)
+        unindent(indentW)
     }
 
     inline fun group(block: () -> Unit) {
-        ImGui.beginGroup()
+        beginGroup()
         block()
-        ImGui.endGroup()
+        endGroup()
     }
 
 
     // ID stack/scopes
 
     inline fun withId(id: Int, block: () -> Unit) {
-        ImGui.pushId(id)
+        pushId(id)
         block()
-        ImGui.popId()
+        popId()
     }
 
     inline fun withId(id: String, block: () -> Unit) {
-        ImGui.pushId(id)
+        pushId(id)
         block()
-        ImGui.popId()
+        popId()
     }
 
 
     // Widgets: Main
 
     inline fun button(label: String, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
-        if (ImGui.button(label, sizeArg))
+        if (button(label, sizeArg))
             block()
     }
 
     inline fun smallButton(label: String, block: () -> Unit) {
-        if (ImGui.smallButton(label))
+        if (smallButton(label))
             block()
     }
 
     inline fun invisibleButton(strId: String, sizeArg: Vec2, block: () -> Unit) {
-        if (ImGui.invisibleButton(strId, sizeArg))
+        if (invisibleButton(strId, sizeArg))
             block()
     }
 
     inline fun arrowButton(id: String, dir: Dir, block: () -> Unit) {
-        if (ImGui.arrowButton(id, dir))
+        if (arrowButton(id, dir))
             block()
     }
 
     inline fun imageButton(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(),
                            framePadding: Int = -1, bgCol: Vec4 = Vec4(), tintCol: Vec4 = Vec4(1), block: () -> Unit) {
-        if (ImGui.imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, tintCol))
+        if (imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, tintCol))
             block()
     }
 
     inline fun checkbox(label: String, vPtr: KMutableProperty0<Boolean>, block: () -> Unit) {
-        if (ImGui.checkbox(label, vPtr))
+        if (checkbox(label, vPtr))
             block()
     }
 
     inline fun checkboxFlags(label: String, vPtr: KMutableProperty0<Int>, flagsValue: Int, block: () -> Unit) {
-        if (ImGui.checkboxFlags(label, vPtr, flagsValue))
+        if (checkboxFlags(label, vPtr, flagsValue))
             block()
     }
 
     inline fun radioButton(label: String, active: Boolean, block: () -> Unit) {
-        if (ImGui.radioButton(label, active))
+        if (radioButton(label, active))
             block()
     }
 
     inline fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int, block: () -> Unit) {
-        if (ImGui.radioButton(label, v, vButton))
+        if (radioButton(label, v, vButton))
             block()
     }
 
@@ -206,14 +273,14 @@ object dsl {
 
 
     inline fun useCombo(label: String, previewValue: String?, flags: ComboFlags = 0, block: () -> Unit) {
-        if (ImGui.beginCombo(label, previewValue, flags))
+        if (beginCombo(label, previewValue, flags))
             block()
-        ImGui.endCombo()
+        endCombo()
     }
 
     inline fun combo(label: String, currentItem: KMutableProperty0<Int>, itemsSeparatedByZeros: String, heightInItems: Int = -1,
                      block: () -> Unit) {
-        if (ImGui.combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
+        if (combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
             block()
     }
 
@@ -221,38 +288,38 @@ object dsl {
     // Widgets: Trees
 
     inline fun treeNode(label: String, block: () -> Unit) {
-        if (ImGui.treeNode(label)) {
+        if (treeNode(label)) {
             block()
-            ImGui.treePop()
+            treePop()
         }
     }
 
     inline fun treeNode(strId: String, fmt: String, block: () -> Unit) {
-        if (ImGui.treeNode(strId, fmt)) {
+        if (treeNode(strId, fmt)) {
             block()
-            ImGui.treePop()
+            treePop()
         }
     }
 
     inline fun treeNode(ptrId: Any, fmt: String, block: () -> Unit) {
-        if (ImGui.treeNode(ptrId, fmt)) {
+        if (treeNode(ptrId, fmt)) {
             block()
-            ImGui.treePop()
+            treePop()
         }
     }
 
     inline fun treePushed(ptrId: Any?, block: () -> Unit) {
-        ImGui.treePush(ptrId)
-        ImGui.treePop()
+        treePush(ptrId)
+        treePop()
     }
 
     inline fun collapsingHeader(label: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
-        if (ImGui.collapsingHeader(label, flags))
+        if (collapsingHeader(label, flags))
             block()
     }
 
     inline fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>, flags: TreeNodeFlags = 0, block: () -> Unit) {
-        if (ImGui.collapsingHeader(label, open, flags))
+        if (collapsingHeader(label, open, flags))
             block()
     }
 
@@ -260,7 +327,7 @@ object dsl {
     // Widgets: Selectables
 
     inline fun selectable(label: String, selected: Boolean = false, flags: Int = 0, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
-        if (ImGui.selectable(label, selected, flags, sizeArg))
+        if (selectable(label, selected, flags, sizeArg))
             block()
     }
 
@@ -268,28 +335,28 @@ object dsl {
     // Widgets: Menus
 
     inline fun mainMenuBar(block: () -> Unit) {
-        if (ImGui.beginMainMenuBar()) {
+        if (beginMainMenuBar()) {
             block()
-            ImGui.endMainMenuBar()
+            endMainMenuBar()
         }
     }
 
     inline fun menuBar(block: () -> Unit) {
-        if (ImGui.beginMenuBar()) {
+        if (beginMenuBar()) {
             block()
-            ImGui.endMenuBar()
+            endMenuBar()
         }
     }
 
     inline fun menu(label: String, enabled: Boolean = true, block: () -> Unit) {
-        if (ImGui.beginMenu(label, enabled)) {
+        if (beginMenu(label, enabled)) {
             block()
-            ImGui.endMenu()
+            endMenu()
         }
     }
 
     inline fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true, block: () -> Unit) {
-        if (ImGui.menuItem(label, shortcut, selected, enabled))
+        if (menuItem(label, shortcut, selected, enabled))
             block()
     }
 
@@ -297,46 +364,46 @@ object dsl {
     // Tooltips
 
     inline fun tooltip(block: () -> Unit) {
-        ImGui.beginTooltip()
+        beginTooltip()
         block()
-        ImGui.endTooltip()
+        endTooltip()
     }
 
 
     // Popups, Modals
 
     inline fun popup(strId: String, flags: WindowFlags = 0, block: () -> Unit) {
-        if (ImGui.beginPopup(strId, flags)) {
+        if (beginPopup(strId, flags)) {
             block()
-            ImGui.endPopup()
+            endPopup()
         }
     }
 
     inline fun popupContextItem(strId: String = "", mouseButton: Int = 1, block: () -> Unit) {
-        if (ImGui.beginPopupContextItem(strId, mouseButton)) {
+        if (beginPopupContextItem(strId, mouseButton)) {
             block()
-            ImGui.endPopup()
+            endPopup()
         }
     }
 
     inline fun popupContextWindow(strId: String = "", mouseButton: Int = 1, alsoOverItems: Boolean = true, block: () -> Unit) {
-        if (ImGui.beginPopupContextWindow(strId, mouseButton, alsoOverItems)) {
+        if (beginPopupContextWindow(strId, mouseButton, alsoOverItems)) {
             block()
-            ImGui.endPopup()
+            endPopup()
         }
     }
 
     inline fun popupContextVoid(strId: String = "", mouseButton: Int = 1, block: () -> Unit) {
-        if (ImGui.beginPopupContextVoid(strId, mouseButton)) {
+        if (beginPopupContextVoid(strId, mouseButton)) {
             block()
-            ImGui.endPopup()
+            endPopup()
         }
     }
 
     inline fun popupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, extraFlags: WindowFlags = 0, block: () -> Unit) {
-        if (ImGui.beginPopupModal(name, pOpen, extraFlags)) {
+        if (beginPopupModal(name, pOpen, extraFlags)) {
             block()
-            ImGui.endPopup()
+            endPopup()
         }
     }
 
@@ -344,31 +411,31 @@ object dsl {
     // Tab Bars, Tabs
 
     inline fun tabBar(strId: String, flags: TabBarFlags = 0, block: () -> Unit) {
-        if (ImGui.beginTabBar(strId, flags))
+        if (beginTabBar(strId, flags))
             block()
-        ImGui.endTabBar()
+        endTabBar()
     }
 
     inline fun tabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0, block: () -> Unit) {
-        if (ImGui.beginTabItem(label, pOpen, flags))
+        if (beginTabItem(label, pOpen, flags))
             block()
-        ImGui.endTabItem()
+        endTabItem()
     }
 
 
     // Drag and Drop
 
     inline fun dragDropSource(flags: DragDropFlags = 0, block: () -> Unit) {
-        if (ImGui.beginDragDropSource(flags)) {
+        if (beginDragDropSource(flags)) {
             block()
-            ImGui.endDragDropSource()
+            endDragDropSource()
         }
     }
 
     inline fun dragDropTarget(block: () -> Unit) {
-        if (ImGui.beginDragDropTarget()) {
+        if (beginDragDropTarget()) {
             block()
-            ImGui.endDragDropTarget()
+            endDragDropTarget()
         }
     }
 
@@ -376,17 +443,17 @@ object dsl {
     // Clipping
 
     inline fun withClipRect(clipRectMin: Vec2, clipRectMax: Vec2, intersectWithCurrentClipRect: Boolean, block: () -> Unit) {
-        ImGui.pushClipRect(clipRectMin, clipRectMax, intersectWithCurrentClipRect)
+        pushClipRect(clipRectMin, clipRectMax, intersectWithCurrentClipRect)
         block()
-        ImGui.popClipRect()
+        popClipRect()
     }
 
 
     // Miscellaneous Utilities
 
     inline fun childFrame(id: ID, size: Vec2, extraFlags: WindowFlags = 0, block: () -> Unit) {
-        ImGui.beginChildFrame(id, size, extraFlags)
+        beginChildFrame(id, size, extraFlags)
         block()
-        ImGui.endChildFrame()
+        endChildFrame()
     }
 }
