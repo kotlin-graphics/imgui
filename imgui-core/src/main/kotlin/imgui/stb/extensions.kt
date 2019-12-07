@@ -4,6 +4,7 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.stak
+import kool.BYTES
 import kool.adr
 import kool.free
 import org.lwjgl.stb.*

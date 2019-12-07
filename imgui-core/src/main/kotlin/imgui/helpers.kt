@@ -7,11 +7,11 @@ import glm_.max
 import glm_.vec4.Vec4
 import imgui.ImGui.calcListClipping
 import imgui.ImGui.colorConvertHSVtoRGB
+import imgui.ImGui.frameCount
 import imgui.ImGui.inputText
 import imgui.ImGui.setNextItemWidth
-import imgui.imgui.g
-import imgui.internal.TabBar
-import imgui.internal.strlen
+import imgui.api.g
+import imgui.classes.TabBar
 import java.util.stream.Collectors
 import kotlin.collections.set
 
@@ -25,7 +25,7 @@ import kotlin.collections.set
 class OnceUponAFrame {
     private var refFrame = -1
     operator fun invoke(): Boolean {
-        val currentFrame = ImGui.frameCount
+        val currentFrame = frameCount
         if (refFrame == currentFrame)
             return false
         refFrame = currentFrame

@@ -10,7 +10,8 @@ import glm_.vec2.operators.times
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.ImGui.style
-import imgui.imgui.g
+import imgui.api.g
+import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.stb.*
 import kool.*
@@ -24,7 +25,6 @@ import unsigned.toULong
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.sqrt
-import imgui.plusAssign
 import uno.kotlin.plusAssign
 
 
@@ -72,6 +72,8 @@ class FontConfig {
     /** Brighten (>1.0f) or darken (<1.0f) font output. Brightening small fonts may be a good workaround to make them
      *  more readable.  */
     var rasterizerMultiply = 1f
+    /** Explicitly specify unicode codepoint of ellipsis character. When fonts are being merged first specified ellipsis will be used. */
+    var ellipsisChar = '\uffff'
 
     // [Internal]
     /** Name (strictly to ease debugging)   */
@@ -150,6 +152,9 @@ class FontAtlas {
             fontCfg.fontDataOwnedByAtlas = true
 //            memcpy(new_font_cfg.FontData, font_cfg->FontData, (size_t)new_font_cfg.FontDataSize) TODO check, same object?
 
+        if (fontCfg.dstFont!!.ellipsisChar == '\uffff')
+            fontCfg.dstFont!!.ellipsisChar = fontCfg.ellipsisChar
+
         // Invalidate texture
         clearTexData()
         return fontCfg.dstFont!!
@@ -167,6 +172,7 @@ class FontAtlas {
 
         if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13f
         if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, ${fontCfg.sizePixels.i}px"
+        fontCfg.ellipsisChar = '\u0085'
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         val glyphRanges = fontCfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
@@ -178,7 +184,7 @@ class FontAtlas {
                            glyphRanges: Array<IntRange> = arrayOf()): Font? {
 
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
-        val chars = fileLoadToCharArray(filename) ?: return null
+        val chars = fileLoadToMemory(filename) ?: return null
         if (fontCfg.name.isEmpty())
         // Store a short copy of filename into into the font name for convenience
             fontCfg.name = "${filename.substringAfterLast('/')}, %.0fpx".format(style.locale, sizePixels)
@@ -833,7 +839,7 @@ class FontAtlas {
             val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
             val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
             buildSetupFont(dstFont, cfg, ascent, descent)
-            val fontOff = Vec2(cfg.glyphOffset).apply { y += (dstFont.ascent + 0.5f).i.f }
+            val fontOff = Vec2(cfg.glyphOffset).apply { y += floor(dstFont.ascent + 0.5f) }
 
             for (glyphIdx in 0 until srcTmp.glyphsCount) {
                 val codepoint = srcTmp.glyphsList[glyphIdx]
@@ -844,7 +850,7 @@ class FontAtlas {
                 var charOffX = fontOff.x
                 if (charAdvanceXorg != charAdvanceXmod)
                     charOffX += when {
-                        cfg.pixelSnapH -> ((charAdvanceXmod - charAdvanceXorg) * 0.5f).i.f
+                        cfg.pixelSnapH -> floor((charAdvanceXmod - charAdvanceXorg) * 0.5f)
                         else -> (charAdvanceXmod - charAdvanceXorg) * 0.5f
                     }
 
@@ -926,6 +932,18 @@ class FontAtlas {
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
+
+        // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
+        // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
+        // FIXME: Also note that 0x2026 is currently seldomly included in our font ranges. Because of this we are more likely to use three individual dots.
+        fonts.filter { it.ellipsisChar == '\uffff' }.forEach { font ->
+            for (ellipsisVariant in charArrayOf('\u2026', '\u0085')) {
+                if(font.findGlyphNoFallback(ellipsisVariant) != null) { // Verify glyph exists
+                    font.ellipsisChar = ellipsisVariant
+                    break
+                }
+            }
+        }
     }
 
     fun buildRenderDefaultTexData() {
@@ -1064,13 +1082,15 @@ class Font {
     val configData = ArrayList<FontConfig>()    // 4-8   // in  //
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0                     // 2     // in  // ~ 1
-    /** Replacement glyph if one isn't found. Only set via SetFallbackChar()    */
+    /** Replacement character if a glyph isn't found. Only set via SetFallbackChar()    */
     var fallbackChar = '?'                      // 2     // in  // = '?'
         /** ~SetFallbackChar */
         set(value) {
             field = value
             buildLookupTable()
         }
+    /** Override a codepoint used for ellipsis rendering. */
+    var ellipsisChar = '\uffff'                 // out //
     /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
     var scale = 1f                              // 4     // in  // = 1.f
     /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
@@ -1103,7 +1123,7 @@ class Font {
     fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: String, textEnd_: Int = text.length,
                       remaining: IntArray? = null): Vec2 { // utf8
 
-        val textEnd = if(textEnd_ == -1) text.length else textEnd_
+        val textEnd = if (textEnd_ == -1) text.length else textEnd_
 
         val lineHeight = size
         val scale = size / fontSize
@@ -1284,8 +1304,8 @@ class Font {
             return
         findGlyph(c)?.let {
             val scale = if (size >= 0f) size / fontSize else 1f
-            val x = pos.x.i.f + displayOffset.x
-            val y = pos.y.i.f + displayOffset.y
+            val x = floor(pos.x) + displayOffset.x
+            val y = floor(pos.y) + displayOffset.y
             drawList.primReserve(6, 4)
             val a = Vec2(x + it.x0 * scale, y + it.y0 * scale)
             val c_ = Vec2(x + it.x1 * scale, y + it.y1 * scale)
@@ -1300,8 +1320,8 @@ class Font {
         var textEnd = textEnd_
 
         // Align to be pixel perfect
-        pos.x = pos.x.i.f + displayOffset.x
-        pos.y = pos.y.i.f + displayOffset.y
+        pos.x = floor(pos.x) + displayOffset.x
+        pos.y = floor(pos.y) + displayOffset.y
         var (x, y) = pos
         if (y > clipRect.w) return
 
@@ -1480,6 +1500,13 @@ class Font {
         drawList._vtxCurrentIdx = vtxCurrentIdx
     }
 
+    fun CharArray.memchr(startIdx: Int, c: Char): Int? {
+        for (index in startIdx until size)
+            if (c == this[index])
+                return index
+        return null
+    }
+
     // [Internal] Don't use!
 
     val TABSIZE = 4
@@ -1563,7 +1590,7 @@ class Font {
         glyph.advanceX = advanceX + configData[0].glyphExtraSpacing.x  // Bake spacing into xAdvance
 
         if (configData[0].pixelSnapH)
-            glyph.advanceX = (glyph.advanceX + 0.5f).i.f
+            glyph.advanceX = floor(glyph.advanceX + 0.5f)
         // Compute rough surface usage metrics (+1 to account for average padding, +0.99 to round)
         dirtyLookupTables = true
         metricsTotalSurface += ((glyph.u1 - glyph.u0) * containerAtlas.texSize.x + 1.99f).i *

@@ -1,16 +1,17 @@
 package imgui
 
-import com.sun.jdi.Bootstrap
 import com.sun.jdi.VirtualMachine
-import com.sun.jdi.connect.AttachingConnector
-import com.sun.jdi.connect.Connector
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import imgui.imgui.g
+import imgui.ImGui.styleColorsClassic
+import imgui.api.g
 import imgui.internal.*
+import imgui.static.getClipboardTextFn_DefaultImpl
+import imgui.static.imeSetInputScreenPosFn_Win32
+import imgui.static.setClipboardTextFn_DefaultImpl
 import kool.Ptr
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
@@ -54,7 +55,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Map of indices into the KeysDown[512] entries array which represent your "native" keyboard state.   */
     var keyMap = IntArray(Key.COUNT) { -1 }
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
-    var keyRepeatDelay = 0.25f
+    var keyRepeatDelay = 0.275f
     /** When holding a key/button, rate at which it repeats, in seconds.    */
     var keyRepeatRate = 0.05f
 
@@ -91,6 +92,8 @@ class IO(sharedFontAtlas: FontAtlas?) {
     var configWindowsResizeFromEdges = true
     /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
     var configWindowsMoveFromTitleBarOnly = false
+    /** [BETA] Compact window memory usage when unused. Set to -1.0f to disable. */
+    var configWindowsMemoryCompactTimer = 60f
 
     //------------------------------------------------------------------
     // User Functions
@@ -452,7 +455,7 @@ class Style {
     var windowMinSize = Vec2i(32)
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)
-    /** Side of the collapsing/docking button in the title bar (left/right). Defaults to ImGuiDir_Left. */
+    /** Side of the collapsing/docking button in the title bar (None/Left/Right). Defaults to ImGuiDir_Left. */
     var windowMenuButtonPosition = Dir.Left
     /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows.  */
     var childRounding = 0f
@@ -522,7 +525,7 @@ class Style {
 //    val locale = Locale.getDefault()
 
     init {
-        ImGui.styleColorsClassic(this)
+        styleColorsClassic(this)
     }
 
     constructor()

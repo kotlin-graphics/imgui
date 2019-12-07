@@ -3,8 +3,7 @@ package imgui
 import gli_.has
 import glm_.c
 import glm_.glm
-import imgui.imgui.g
-import imgui.internal.isBlankW
+import imgui.api.g
 import kotlin.math.max
 
 /** Internal state of the currently focused/edited text input box   */
@@ -202,35 +201,35 @@ class TextEditState {
         STB_TEXTEDIT_K_* symbols)     */
     object K {
         /** keyboard input to move cursor left  */
-        val LEFT = 0x10000
+        val LEFT = 0x20000
         /** keyboard input to move cursor right */
-        val RIGHT = 0x10001
+        val RIGHT = 0x20001
         /** keyboard input to move cursor up    */
-        val UP = 0x10002
+        val UP = 0x20002
         /** keyboard input to move cursor down  */
-        val DOWN = 0x10003
+        val DOWN = 0x20003
         /** keyboard input to move cursor to start of line  */
-        val LINESTART = 0x10004
+        val LINESTART = 0x20004
         /** keyboard input to move cursor to end of line    */
-        val LINEEND = 0x10005
+        val LINEEND = 0x20005
         /** keyboard input to move cursor to start of text  */
-        val TEXTSTART = 0x10006
+        val TEXTSTART = 0x20006
         /** keyboard input to move cursor to end of text    */
-        val TEXTEND = 0x10007
+        val TEXTEND = 0x20007
         /** keyboard input to delete selection or character under cursor    */
-        val DELETE = 0x10008
+        val DELETE = 0x20008
         /** keyboard input to delete selection or character left of cursor  */
-        val BACKSPACE = 0x10009
+        val BACKSPACE = 0x20009
         /** keyboard input to perform undo  */
-        val UNDO = 0x1000A
+        val UNDO = 0x2000A
         /** keyboard input to perform redo  */
-        val REDO = 0x1000B
+        val REDO = 0x2000B
         /** keyboard input to move cursor left one word */
-        val WORDLEFT = 0x1000C
+        val WORDLEFT = 0x2000C
         /** keyboard input to move cursor right one word    */
-        val WORDRIGHT = 0x1000D
+        val WORDRIGHT = 0x2000D
 
-        val SHIFT = 0x20000
+        val SHIFT = 0x40000
     }
 
     /*
