@@ -172,6 +172,6 @@ interface popupsModals {
         /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.
             To improve this usage pattern, we avoid nav highlight for a single frame in the parent window.
             Similarly, we could avoid mouse hover highlight in this window but it is less visually problematic. */
-        g.navWindow?.dc!!.navHideHighlightOneFrame = true
+        g.navWindow?.dc?.navHideHighlightOneFrame = true
     }
 }
