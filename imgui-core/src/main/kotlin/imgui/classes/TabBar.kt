@@ -35,7 +35,9 @@ import imgui.ImGui.tabItemBackground
 import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.api.g
-import imgui.internal.*
+import imgui.internal.ButtonFlag
+import imgui.internal.ItemFlag
+import imgui.internal.or
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
@@ -178,9 +180,9 @@ class TabBar {
         reorderRequestDir = dir
     }
 
-    fun tabItemEx(label: String, pOpen: KMutableProperty0<Boolean>?, flags__: TabItemFlags): Boolean {
+    fun tabItemEx(label: String, pOpen: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
 
-        var flags_ = flags__
+        var flags = flags_
         // Layout whole tab bar if not already done
         if (wantLayout)
             layout()
@@ -213,13 +215,13 @@ class TabBar {
         tab.widthContents = size.x
 
         if (pOpen == null)
-            flags_ = flags_ or TabItemFlag.NoCloseButton
+            flags = flags or TabItemFlag.NoCloseButton
 
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
-        val tabBarFocused = flags has TabBarFlag.IsFocused
+        val tabBarFocused = this.flags has TabBarFlag.IsFocused
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
         tab.lastFrameVisible = g.frameCount
-        tab.flags = flags__
+        tab.flags = flags
 
         // Append name with zero-terminator
         tab.nameOffset = tabsNames.size
@@ -227,16 +229,16 @@ class TabBar {
 
         // If we are not reorderable, always reset offset based on submission order.
         // (We already handled layout and sizing using the previous known order, but sizing is not affected by order!)
-        if (!tabAppearing && flags hasnt TabBarFlag.Reorderable) {
+        if (!tabAppearing && this.flags hasnt TabBarFlag.Reorderable) {
             tab.offset = offsetNextTab
             offsetNextTab += tab.width + style.itemInnerSpacing.x
         }
 
         // Update selected tab
-        if (tabAppearing && flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
+        if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
             if (!tabBarAppearing || selectedTabId == 0)
                 nextSelectedTabId = id  // New tabs gets activated
-        if (flags_ has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
+        if (flags has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
             nextSelectedTabId = id
 
         // Lock visibility
@@ -246,7 +248,7 @@ class TabBar {
 
         // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
         if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing)
-            if (tabs.size == 1 && flags hasnt TabBarFlag.AutoSelectNewTabs)
+            if (tabs.size == 1 && this.flags hasnt TabBarFlag.AutoSelectNewTabs)
                 tabContentsVisible = true
 
         if (tabAppearing && !tabBarAppearing || tabIsNew) {
@@ -299,21 +301,21 @@ class TabBar {
 
         // Drag and drop: re-order tabs
         if (held && !tabAppearing && isMouseDragging(0))
-            if (!g.dragDropActive && flags has TabBarFlag.Reorderable)
+            if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable)
             // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
                 if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
-//                    if (flags_ has TabBarFlag.Reorderable)
-                    queueChangeTabOrder(tab, -1)
+                    if (this.flags has TabBarFlag.Reorderable)
+                        queueChangeTabOrder(tab, -1)
                 } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x)
-//                    if (flags_ has TabBarFlag.Reorderable)
-                    queueChangeTabOrder(tab, +1)
+                    if (this.flags has TabBarFlag.Reorderable)
+                        queueChangeTabOrder(tab, +1)
 
 //        if (false)
 //            if (hovered && g.hoveredIdNotActiveTimer > 0.5f && bb.width < tab.widthContents)        {
 //                // Enlarge tab display when hovering
 //                bb.max.x = bb.min.x + lerp (bb.width, tab.widthContents, saturate((g.hoveredIdNotActiveTimer-0.4f) * 6f)).i.f
 //                displayDrawList = GetOverlayDrawList(window)
-//                TabItemBackground(display_draw_list, bb, flags_, GetColorU32(ImGuiCol_TitleBgActive))
+//                TabItemBackground(display_draw_list, bb, flags, GetColorU32(ImGuiCol_TitleBgActive))
 //            }
 
         // Render tab shape
@@ -331,7 +333,7 @@ class TabBar {
                 }
             }
         }
-        tabItemBackground(displayDrawList, bb, flags_, tabCol.u32)
+        tabItemBackground(displayDrawList, bb, flags, tabCol.u32)
         renderNavHighlight(bb, id)
 
         // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
@@ -339,12 +341,12 @@ class TabBar {
         if (hoveredUnblocked && (isMouseClicked(1) || isMouseReleased(1)))
             nextSelectedTabId = id
 
-        if (flags has TabBarFlag.NoCloseWithMiddleMouseButton)
-            flags_ = flags_ or TabItemFlag.NoCloseWithMiddleMouseButton
+        if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton)
+            flags = flags or TabItemFlag.NoCloseWithMiddleMouseButton
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags_, framePadding, label, id, closeButtonId)
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label, id, closeButtonId)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
@@ -357,8 +359,8 @@ class TabBar {
 
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
-        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.50f && isItemHovered())
-            if (flags hasnt TabBarFlag.NoTooltip)
+        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered())
+            if (this.flags hasnt TabBarFlag.NoTooltip)
                 setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
         return tabContentsVisible
@@ -639,10 +641,6 @@ class TabBar {
         window.dc.cursorPos = backupCursorPos
         return tabToSelect
     }
-
-
-
-
 
 
     companion object {
