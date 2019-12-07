@@ -13,13 +13,16 @@ module com.github.kotlin_graphics.imgui_core {
 
     requires org.lwjgl;
     requires org.lwjgl.stb;
+    requires annotations;
 
-    exports imgui.imgui.demo.showExampleApp;
-    exports imgui.imgui.demo;
-    exports imgui.imgui.widgets;
+    exports imgui.api;
+    exports imgui.classes;
     exports imgui.imgui;
     exports imgui.impl;
     exports imgui.internal;
+    exports imgui.internalApi;
+    exports imgui.demo.showExampleApp;
+    exports imgui.demo;
     exports imgui.stb;
     exports imgui.windowsIme;
     exports imgui;

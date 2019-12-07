@@ -2,7 +2,7 @@ package imgui;
 
 import glm_.mat4x4.Mat4;
 import glm_.vec3.Vec3;
-import org.lwjgl.bgfx.BGFXVertexDecl;
+import org.lwjgl.bgfx.BGFXVertexLayout;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class Cubes extends Demo {
             6, 3, 7
     };
 
-    private BGFXVertexDecl decl;
+    private BGFXVertexLayout layout;
     private ByteBuffer vertices;
     private short vbh;
     private ByteBuffer indices;
@@ -63,11 +63,11 @@ public class Cubes extends Demo {
 
     @Override
     protected void create() throws IOException {
-        decl = BgfxDemoUtil.createVertexDecl(false, true, 0);
+        layout = BgfxDemoUtil.createVertexLayout(false, true, 0);
 
         vertices = MemoryUtil.memAlloc(8 * (3 * 4 + 4));
 
-        vbh = BgfxDemoUtil.createVertexBuffer(vertices, decl, cubeVertices);
+        vbh = BgfxDemoUtil.createVertexBuffer(vertices, layout, cubeVertices);
 
         indices = MemoryUtil.memAlloc(cubeIndices.length * 2);
 
@@ -141,7 +141,7 @@ public class Cubes extends Demo {
         bgfx_destroy_vertex_buffer(vbh);
         MemoryUtil.memFree(vertices);
 
-        decl.free();
+        layout.free();
     }
 
 }

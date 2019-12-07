@@ -3,16 +3,18 @@ package imgui.windowsIme
 import glm_.BYTES
 import glm_.L
 import imgui.MINECRAFT_BEHAVIORS
+import kool.BYTES
 import org.lwjgl.system.*
 import org.lwjgl.system.MemoryUtil.memGetLong
 import org.lwjgl.system.MemoryUtil.memPutLong
+import org.lwjgl.system.windows.WindowsLibrary
 import uno.glfw.HWND
 import java.nio.ByteBuffer
 
 
 object imm {
 
-    val lib: SharedLibrary = Library.loadNative("Imm32")
+    val lib: SharedLibrary = WindowsLibrary("Imm32")
 
     val ImmCreateContext = lib.getFunctionAddress("ImmCreateContext")
     val ImmGetContext = lib.getFunctionAddress("ImmGetContext")

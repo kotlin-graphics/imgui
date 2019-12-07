@@ -10,7 +10,7 @@ import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import imgui.Key
-import imgui.imgui.g
+import imgui.api.g
 import imgui.impl.*
 import imgui.windowsIme.imeListener
 import kool.cap
@@ -42,7 +42,7 @@ class ImplGlfw @JvmOverloads constructor(
             backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
             backendPlatformName = "imgui_impl_glfw"
 
-            // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
+            // Keyboard mapping. Dear ImGui will use those indices to peek into the io.KeysDown[] array.
             keyMap[Key.Tab] = GLFW_KEY_TAB
             keyMap[Key.LeftArrow] = GLFW_KEY_LEFT
             keyMap[Key.RightArrow] = GLFW_KEY_RIGHT

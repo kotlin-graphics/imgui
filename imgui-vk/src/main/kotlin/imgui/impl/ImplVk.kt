@@ -25,6 +25,7 @@ object VkInitInfo {
     var pipelineCache = VkPipelineCache()
     var descriptorPool = VkDescriptorPool()
     var minImageCount = 0 // >= 2
+    var msaaSamples: VkSampleCount = VkSampleCount(0)   // >= VK_SAMPLE_COUNT_1_BIT
     var imageCount = 0 // >= MinImageCount
 }
 
@@ -250,7 +251,9 @@ fun ImplVk_CreateDeviceObjects(): Boolean {
         frontFace = VkFrontFace.CLOCKWISE
         lineWidth = 1f
     }
-    val msInfo = vk.PipelineMultisampleStateCreateInfo(VkSampleCount._1_BIT)
+    val msInfo = vk.PipelineMultisampleStateCreateInfo{
+        rasterizationSamples = if (v.msaaSamples.i != 0) v.msaaSamples else VkSampleCount._1_BIT
+    }
 
     val colorAttachment = vk.PipelineColorBlendAttachmentState {
         blendEnable = true

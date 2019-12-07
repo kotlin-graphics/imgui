@@ -39,13 +39,13 @@ final class BgfxDemoUtil {
         releaseMemoryCb.free();
     }
 
-    static BGFXVertexDecl createVertexDecl(boolean withNormals, boolean withColor, int numUVs) {
+    static BGFXVertexLayout createVertexLayout(boolean withNormals, boolean withColor, int numUVs) {
 
-        BGFXVertexDecl decl = BGFXVertexDecl.calloc();
+        BGFXVertexLayout layout = BGFXVertexLayout.calloc();
 
-        bgfx_vertex_decl_begin(decl, renderer);
+        bgfx_vertex_layout_begin(layout, renderer);
 
-        bgfx_vertex_decl_add(decl,
+        bgfx_vertex_layout_add(layout,
                 BGFX_ATTRIB_POSITION,
                 3,
                 BGFX_ATTRIB_TYPE_FLOAT,
@@ -53,7 +53,7 @@ final class BgfxDemoUtil {
                 false);
 
         if (withNormals) {
-            bgfx_vertex_decl_add(decl,
+            bgfx_vertex_layout_add(layout,
                     BGFX_ATTRIB_NORMAL,
                     3,
                     BGFX_ATTRIB_TYPE_FLOAT,
@@ -62,7 +62,7 @@ final class BgfxDemoUtil {
         }
 
         if (withColor) {
-            bgfx_vertex_decl_add(decl,
+            bgfx_vertex_layout_add(layout,
                     BGFX_ATTRIB_COLOR0,
                     4,
                     BGFX_ATTRIB_TYPE_UINT8,
@@ -71,7 +71,7 @@ final class BgfxDemoUtil {
         }
 
         if (numUVs > 0) {
-            bgfx_vertex_decl_add(decl,
+            bgfx_vertex_layout_add(layout,
                     BGFX_ATTRIB_TEXCOORD0,
                     2,
                     BGFX_ATTRIB_TYPE_FLOAT,
@@ -79,12 +79,12 @@ final class BgfxDemoUtil {
                     false);
         }
 
-        bgfx_vertex_decl_end(decl);
+        bgfx_vertex_layout_end(layout);
 
-        return decl;
+        return layout;
     }
 
-    static short createVertexBuffer(ByteBuffer buffer, BGFXVertexDecl decl, Object[][] vertices) {
+    static short createVertexBuffer(ByteBuffer buffer, BGFXVertexLayout layout, Object[][] vertices) {
 
         for (Object[] vtx : vertices) {
             for (Object attr : vtx) {
@@ -104,14 +104,14 @@ final class BgfxDemoUtil {
 
         buffer.flip();
 
-        return createVertexBuffer(buffer, decl);
+        return createVertexBuffer(buffer, layout);
     }
 
-    static short createVertexBuffer(ByteBuffer buffer, BGFXVertexDecl decl) {
+    static short createVertexBuffer(ByteBuffer buffer, BGFXVertexLayout layout) {
 
         BGFXMemory vbhMem = bgfx_make_ref(buffer);
 
-        return bgfx_create_vertex_buffer(vbhMem, decl, BGFX_BUFFER_NONE);
+        return bgfx_create_vertex_buffer(vbhMem, layout, BGFX_BUFFER_NONE);
     }
 
     static short createIndexBuffer(ByteBuffer buffer, int[] indices) {

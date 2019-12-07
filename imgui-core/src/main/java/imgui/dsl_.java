@@ -9,6 +9,7 @@ import glm_.vec4.Vec4;
 public class dsl_ {
 
     // Windows
+    private static ImGui imgui = ImGui.INSTANCE;
 
     public static void window(String name, Runnable block) {
         window(name, null, 0, block);
@@ -19,9 +20,9 @@ public class dsl_ {
     }
 
     public static void window(String name, MutableProperty0<Boolean> open, int windowFlags, Runnable block) {
-        if (ImGui.INSTANCE.begin(name, open, windowFlags)) // ~open
+        if (imgui.begin(name, open, windowFlags)) // ~open
             block.run();
-        ImGui.INSTANCE.end();
+        imgui.end();
     }
 
     // Child Windows
@@ -39,34 +40,34 @@ public class dsl_ {
     }
 
     public static void child(String strId, Vec2 size, boolean border, int windowFlags, Runnable block) {
-        if (ImGui.INSTANCE.beginChild(strId, size, border, windowFlags)) // ~open
+        if (imgui.beginChild(strId, size, border, windowFlags)) // ~open
             block.run();
-        ImGui.INSTANCE.endChild();
+        imgui.endChild();
     }
 
     // Parameters stacks (shared)
 
     public static void withFont(Runnable block) {
-        withFont(ImGui.INSTANCE.getDefaultFont(), block);
+        withFont(imgui.getDefaultFont(), block);
     }
 
     public static void withFont(Font font, Runnable block) {
-        ImGui.INSTANCE.pushFont(font);
+        imgui.pushFont(font);
         block.run();
-        ImGui.INSTANCE.popFont();
+        imgui.popFont();
     }
 
     private static void _push(Col idx, Object col) {
         if (col instanceof Integer)
-            ImGui.INSTANCE.pushStyleColor(idx, (int) col);
+            imgui.pushStyleColor(idx, (int) col);
         else
-            ImGui.INSTANCE.pushStyleColor(idx, (Vec4) col);
+            imgui.pushStyleColor(idx, (Vec4) col);
     }
 
     public static void withStyleColor(Col idx, Object col, Runnable block) {
         _push(idx, col);
         block.run();
-        ImGui.INSTANCE.popStyleColor(1);
+        imgui.popStyleColor(1);
     }
 
     public static void withStyleColor(Col idx0, Object col0,
@@ -74,7 +75,7 @@ public class dsl_ {
         _push(idx0, col0);
         _push(idx1, col1);
         block.run();
-        ImGui.INSTANCE.popStyleColor(2);
+        imgui.popStyleColor(2);
     }
 
     public static void withStyleColor(Col idx0, Object col0,
@@ -84,7 +85,7 @@ public class dsl_ {
         _push(idx1, col1);
         _push(idx2, col2);
         block.run();
-        ImGui.INSTANCE.popStyleColor(3);
+        imgui.popStyleColor(3);
     }
 
     public static void withStyleColor(Col idx0, Object col0,
@@ -96,7 +97,7 @@ public class dsl_ {
         _push(idx2, col2);
         _push(idx3, col3);
         block.run();
-        ImGui.INSTANCE.popStyleColor(4);
+        imgui.popStyleColor(4);
     }
 
     public static void withStyleColor(Col idx0, Object col0,
@@ -110,13 +111,13 @@ public class dsl_ {
         _push(idx3, col3);
         _push(idx4, col4);
         block.run();
-        ImGui.INSTANCE.popStyleColor(5);
+        imgui.popStyleColor(5);
     }
 
     public static void withStyleVar(StyleVar idx, Object value, Runnable block) {
-        ImGui.INSTANCE.pushStyleVar(idx, value);
+        imgui.pushStyleVar(idx, value);
         block.run();
-        ImGui.INSTANCE.popStyleVar(1);
+        imgui.popStyleVar(1);
     }
 
     // Parameters stacks (current window)
@@ -126,9 +127,9 @@ public class dsl_ {
     }
 
     public static void withItemWidth(float itemWidth, Runnable block) {
-        ImGui.INSTANCE.pushItemWidth(itemWidth);
+        imgui.pushItemWidth(itemWidth);
         block.run();
-        ImGui.INSTANCE.popItemWidth();
+        imgui.popItemWidth();
     }
 
     public static void withTextWrapPos(Runnable block) {
@@ -136,21 +137,21 @@ public class dsl_ {
     }
 
     public static void withTextWrapPos(float wrapPosX, Runnable block) {
-        ImGui.INSTANCE.pushTextWrapPos(wrapPosX);
+        imgui.pushTextWrapPos(wrapPosX);
         block.run();
-        ImGui.INSTANCE.popTextWrapPos();
+        imgui.popTextWrapPos();
     }
 
     public static void withAllowKeyboardFocus(boolean allowKeyboardFocus, Runnable block) {
-        ImGui.INSTANCE.pushAllowKeyboardFocus(allowKeyboardFocus);
+        imgui.pushAllowKeyboardFocus(allowKeyboardFocus);
         block.run();
-        ImGui.INSTANCE.popAllowKeyboardFocus();
+        imgui.popAllowKeyboardFocus();
     }
 
     public static void withButtonRepeat(boolean repeat, Runnable block) {
-        ImGui.INSTANCE.pushButtonRepeat(repeat);
+        imgui.pushButtonRepeat(repeat);
         block.run();
-        ImGui.INSTANCE.popButtonRepeat();
+        imgui.popButtonRepeat();
     }
 
 
@@ -161,30 +162,30 @@ public class dsl_ {
     }
 
     public static void indent(float indentW, Runnable block) {
-        ImGui.INSTANCE.indent(indentW);
+        imgui.indent(indentW);
         block.run();
-        ImGui.INSTANCE.unindent(indentW);
+        imgui.unindent(indentW);
     }
 
     public static void group(Runnable block) {
-        ImGui.INSTANCE.beginGroup();
+        imgui.beginGroup();
         block.run();
-        ImGui.INSTANCE.endGroup();
+        imgui.endGroup();
     }
 
 
     // ID stack/scopes
 
     public static void withId(int id, Runnable block) {
-        ImGui.INSTANCE.pushId(id);
+        imgui.pushId(id);
         block.run();
-        ImGui.INSTANCE.popId();
+        imgui.popId();
     }
 
     public static void withId(String id, Runnable block) {
-        ImGui.INSTANCE.pushId(id);
+        imgui.pushId(id);
         block.run();
-        ImGui.INSTANCE.popId();
+        imgui.popId();
     }
 
 
@@ -195,22 +196,22 @@ public class dsl_ {
     }
 
     public static void button(String label, Vec2 sizeArg, Runnable block) {
-        if (ImGui.INSTANCE.button(label, sizeArg))
+        if (imgui.button(label, sizeArg))
             block.run();
     }
 
     public static void smallButton(String label, Runnable block) {
-        if (ImGui.INSTANCE.smallButton(label))
+        if (imgui.smallButton(label))
             block.run();
     }
 
     public static void invisibleButton(String strId, Vec2 sizeArg, Runnable block) {
-        if (ImGui.INSTANCE.invisibleButton(strId, sizeArg))
+        if (imgui.invisibleButton(strId, sizeArg))
             block.run();
     }
 
     public static void arrowButton(String id, Dir dir, Runnable block) {
-        if (ImGui.INSTANCE.arrowButton(id, dir))
+        if (imgui.arrowButton(id, dir))
             block.run();
     }
 
@@ -227,27 +228,27 @@ public class dsl_ {
     }
 
     public static void imageButton(int userTextureId, Vec2 size, Vec2 uv0, Vec2 uv1, int framePadding, Vec4 bgCol, Vec4 tintCol, Runnable block) {
-        if (ImGui.INSTANCE.imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, tintCol))
+        if (imgui.imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, tintCol))
             block.run();
     }
 
     public static void checkbox(String label, MutableProperty0<Boolean> vPtr, Runnable block) {
-        if (ImGui.INSTANCE.checkbox(label, vPtr))
+        if (imgui.checkbox(label, vPtr))
             block.run();
     }
 
     public static void checkboxFlags(String label, MutableProperty0<Integer> vPtr, int flagsValue, Runnable block) {
-        if (ImGui.INSTANCE.checkboxFlags(label, vPtr, flagsValue))
+        if (imgui.checkboxFlags(label, vPtr, flagsValue))
             block.run();
     }
 
     public static void radioButton(String label, boolean active, Runnable block) {
-        if (ImGui.INSTANCE.radioButton(label, active))
+        if (imgui.radioButton(label, active))
             block.run();
     }
 
     public static void radioButton(String label, MutableProperty0<Integer> v, int vButton, Runnable block) {
-        if (ImGui.INSTANCE.radioButton(label, v, vButton))
+        if (imgui.radioButton(label, v, vButton))
             block.run();
     }
 
@@ -260,9 +261,9 @@ public class dsl_ {
     }
 
     public static void useCombo(String label, String previewValue, int comboFlags, Runnable block) {
-        if (ImGui.INSTANCE.beginCombo(label, previewValue, comboFlags))
+        if (imgui.beginCombo(label, previewValue, comboFlags))
             block.run();
-        ImGui.INSTANCE.endCombo();
+        imgui.endCombo();
     }
 
     public static void combo(String label, MutableProperty0<Integer> currentItem, String itemsSeparatedByZeros, Runnable block) {
@@ -270,7 +271,7 @@ public class dsl_ {
     }
 
     public static void combo(String label, MutableProperty0<Integer> currentItem, String itemsSeparatedByZeros, int heightInItems, Runnable block) {
-        if (ImGui.INSTANCE.combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
+        if (imgui.combo(label, currentItem, itemsSeparatedByZeros, heightInItems))
             block.run();
     }
 
@@ -278,29 +279,29 @@ public class dsl_ {
     // Widgets: Trees
 
     public static void treeNode(String label, Runnable block) {
-        if (ImGui.INSTANCE.treeNode(label)) {
+        if (imgui.treeNode(label)) {
             block.run();
-            ImGui.INSTANCE.treePop();
+            imgui.treePop();
         }
     }
 
     public static void treeNode(String strId, String fmt, Runnable block) {
-        if (ImGui.INSTANCE.treeNode(strId, fmt)) {
+        if (imgui.treeNode(strId, fmt)) {
             block.run();
-            ImGui.INSTANCE.treePop();
+            imgui.treePop();
         }
     }
 
     public static void treeNode(Object ptrId, String fmt, Runnable block) {
-        if (ImGui.INSTANCE.treeNode(ptrId, fmt)) {
+        if (imgui.treeNode(ptrId, fmt)) {
             block.run();
-            ImGui.INSTANCE.treePop();
+            imgui.treePop();
         }
     }
 
     public static void treePushed(Object ptrId, Runnable block) {
-        ImGui.INSTANCE.treePush(ptrId);
-        ImGui.INSTANCE.treePop();
+        imgui.treePush(ptrId);
+        imgui.treePop();
     }
 
     public static void collapsingHeader(String label, Runnable block) {
@@ -308,7 +309,7 @@ public class dsl_ {
     }
 
     public static void collapsingHeader(String label, int treeNodeFlags, Runnable block) {
-        if (ImGui.INSTANCE.collapsingHeader(label, treeNodeFlags))
+        if (imgui.collapsingHeader(label, treeNodeFlags))
             block.run();
     }
 
@@ -317,7 +318,7 @@ public class dsl_ {
     }
 
     public static void collapsingHeader(String label, MutableProperty0<Boolean> open, int treeNodeFlags, Runnable block) {
-        if (ImGui.INSTANCE.collapsingHeader(label, open, treeNodeFlags))
+        if (imgui.collapsingHeader(label, open, treeNodeFlags))
             block.run();
     }
 
@@ -337,7 +338,7 @@ public class dsl_ {
     }
 
     public static void selectable(String label, boolean selected, int flags, Vec2 sizeArg, Runnable block) {
-        if (ImGui.INSTANCE.selectable(label, selected, flags, sizeArg))
+        if (imgui.selectable(label, selected, flags, sizeArg))
             block.run();
     }
 
@@ -345,16 +346,16 @@ public class dsl_ {
     // Widgets: Menus
 
     public static void mainMenuBar(Runnable block) {
-        if (ImGui.INSTANCE.beginMainMenuBar()) {
+        if (imgui.beginMainMenuBar()) {
             block.run();
-            ImGui.INSTANCE.endMainMenuBar();
+            imgui.endMainMenuBar();
         }
     }
 
     public static void menuBar(Runnable block) {
-        if (ImGui.INSTANCE.beginMenuBar()) {
+        if (imgui.beginMenuBar()) {
             block.run();
-            ImGui.INSTANCE.endMenuBar();
+            imgui.endMenuBar();
         }
     }
 
@@ -363,9 +364,9 @@ public class dsl_ {
     }
 
     public static void menu(String label, boolean enabled, Runnable block) {
-        if (ImGui.INSTANCE.beginMenu(label, enabled)) {
+        if (imgui.beginMenu(label, enabled)) {
             block.run();
-            ImGui.INSTANCE.endMenu();
+            imgui.endMenu();
         }
     }
 
@@ -382,7 +383,7 @@ public class dsl_ {
     }
 
     public static void menuItem(String label, String shortcut, boolean selected, boolean enabled, Runnable block) {
-        if (ImGui.INSTANCE.menuItem(label, shortcut, selected, enabled))
+        if (imgui.menuItem(label, shortcut, selected, enabled))
             block.run();
     }
 
@@ -390,9 +391,9 @@ public class dsl_ {
     // Tooltips
 
     public static void tooltip(Runnable block) {
-        ImGui.INSTANCE.beginTooltip();
+        imgui.beginTooltip();
         block.run();
-        ImGui.INSTANCE.endTooltip();
+        imgui.endTooltip();
     }
 
 
@@ -403,9 +404,9 @@ public class dsl_ {
     }
 
     public static void popup(String strId, int windowFlags, Runnable block) {
-        if (ImGui.INSTANCE.beginPopup(strId, windowFlags)) {
+        if (imgui.beginPopup(strId, windowFlags)) {
             block.run();
-            ImGui.INSTANCE.endPopup();
+            imgui.endPopup();
         }
     }
 
@@ -414,9 +415,9 @@ public class dsl_ {
     }
 
     public static void popupContextItem(String strId, int mouseButton, Runnable block) {
-        if (ImGui.INSTANCE.beginPopupContextItem(strId, mouseButton)) {
+        if (imgui.beginPopupContextItem(strId, mouseButton)) {
             block.run();
-            ImGui.INSTANCE.endPopup();
+            imgui.endPopup();
         }
     }
 
@@ -429,9 +430,9 @@ public class dsl_ {
     }
 
     public static void popupContextWindow(String strId, int mouseButton, boolean alsoOverItems, Runnable block) {
-        if (ImGui.INSTANCE.beginPopupContextWindow(strId, mouseButton, alsoOverItems)) {
+        if (imgui.beginPopupContextWindow(strId, mouseButton, alsoOverItems)) {
             block.run();
-            ImGui.INSTANCE.endPopup();
+            imgui.endPopup();
         }
     }
 
@@ -440,9 +441,9 @@ public class dsl_ {
     }
 
     public static void popupContextVoid(String strId, int mouseButton, Runnable block) {
-        if (ImGui.INSTANCE.beginPopupContextVoid(strId, mouseButton)) {
+        if (imgui.beginPopupContextVoid(strId, mouseButton)) {
             block.run();
-            ImGui.INSTANCE.endPopup();
+            imgui.endPopup();
         }
     }
 
@@ -455,9 +456,9 @@ public class dsl_ {
     }
 
     public static void popupModal(String name, MutableProperty0<Boolean> pOpen, int windowFlags, Runnable block) {
-        if (ImGui.INSTANCE.beginPopupModal(name, pOpen, windowFlags)) {
+        if (imgui.beginPopupModal(name, pOpen, windowFlags)) {
             block.run();
-            ImGui.INSTANCE.endPopup();
+            imgui.endPopup();
         }
     }
 
@@ -469,9 +470,9 @@ public class dsl_ {
     }
 
     public static void tabBar(String strId, int tabBarFlags, Runnable block) {
-        if (ImGui.INSTANCE.beginTabBar(strId, tabBarFlags))
+        if (imgui.beginTabBar(strId, tabBarFlags))
             block.run();
-        ImGui.INSTANCE.endTabBar();
+        imgui.endTabBar();
     }
 
     public static void tabItem(String label, Runnable block) {
@@ -483,9 +484,9 @@ public class dsl_ {
     }
 
     public static void tabItem(String label, MutableProperty0<Boolean> pOpen, int tabItemFlags, Runnable block) {
-        if (ImGui.INSTANCE.beginTabItem(label, pOpen, tabItemFlags))
+        if (imgui.beginTabItem(label, pOpen, tabItemFlags))
             block.run();
-        ImGui.INSTANCE.endTabItem();
+        imgui.endTabItem();
     }
 
 
@@ -496,16 +497,16 @@ public class dsl_ {
     }
 
     public static void dragDropSource(int dragDropFlags, Runnable block) {
-        if (ImGui.INSTANCE.beginDragDropSource(dragDropFlags)) {
+        if (imgui.beginDragDropSource(dragDropFlags)) {
             block.run();
-            ImGui.INSTANCE.endDragDropSource();
+            imgui.endDragDropSource();
         }
     }
 
     public static void dragDropTarget(Runnable block) {
-        if (ImGui.INSTANCE.beginDragDropTarget()) {
+        if (imgui.beginDragDropTarget()) {
             block.run();
-            ImGui.INSTANCE.endDragDropTarget();
+            imgui.endDragDropTarget();
         }
     }
 
@@ -513,9 +514,9 @@ public class dsl_ {
     // Clipping
 
     public static void withClipRect(Vec2 clipRectMin, Vec2 clipRectMax, boolean intersectWithCurrentClipRect, Runnable block) {
-        ImGui.INSTANCE.pushClipRect(clipRectMin, clipRectMax, intersectWithCurrentClipRect);
+        imgui.pushClipRect(clipRectMin, clipRectMax, intersectWithCurrentClipRect);
         block.run();
-        ImGui.INSTANCE.popClipRect();
+        imgui.popClipRect();
     }
 
 
@@ -526,8 +527,8 @@ public class dsl_ {
     }
 
     public static void childFrame(int id, Vec2 size, int windowFlags, Runnable block) {
-        ImGui.INSTANCE.beginChildFrame(id, size, windowFlags);
+        imgui.beginChildFrame(id, size, windowFlags);
         block.run();
-        ImGui.INSTANCE.endChildFrame();
+        imgui.endChildFrame();
     }
 }
