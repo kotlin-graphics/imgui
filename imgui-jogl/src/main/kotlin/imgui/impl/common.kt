@@ -5,6 +5,7 @@ import com.jogamp.opengl.GL3
 import glm_.BYTES
 import glm_.mat4x4.Mat4
 import gln.glf.semantic
+import kool.BYTES
 import kool.ByteBuffer
 import kool.IntBuffer
 import kool.lib.toByteArray
