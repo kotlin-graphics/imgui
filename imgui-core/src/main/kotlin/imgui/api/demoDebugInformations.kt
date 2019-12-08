@@ -539,7 +539,16 @@ interface demoDebugInformations {
                     window.columnsStorage.forEach(Funcs::nodeColumns)
                     treePop()
                 }
-                bulletText("Storage: %d bytes", window.stateStorage.data.size * Int.BYTES * 2)
+                nodeStorage(window.stateStorage, "Storage")
+                treePop()
+            }
+
+            fun nodeStorage(storage: Storage, label: String)            {
+                if (!treeNode(label, "$label: ${storage.data.size} entries, ${storage.data.size * 2 * Int.BYTES} bytes"))
+                    return
+                storage.data.forEach { (key, value) ->
+                    bulletText("Key 0x%08X Value { i: $value }".format(key)) // Important: we currently don't store a type, real value may not be integer.
+                }
                 treePop()
             }
 
