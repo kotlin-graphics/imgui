@@ -29,7 +29,7 @@ fun F32_TO_INT8_UNBOUND(_val: Float) = (_val * 255f + if (_val >= 0) 0.5f else -
 /** Saturated, always output 0..255 */
 fun F32_TO_INT8_SAT(_val: Float) = (saturate(_val) * 255f + 0.5f).i
 
-fun floor(a: Float) = a.i.f
+fun round(f: Float): Float = (f + 0.5f).i.f
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar
@@ -229,6 +229,7 @@ fun CharArray.strncpy(src: CharArray, count: Int) {
         this[i] = src[i]
     }
 }
+
 //IMGUI_API char*         ImStrdup(const char* str);
 //IMGUI_API char*         ImStrdupcpy(char* dst, size_t* p_dst_size, const char* str);
 //IMGUI_API const char*   ImStrchrRange(const char* str_begin, const char* str_end, char c);
@@ -262,7 +263,6 @@ fun trimBlanks(buf: CharArray): CharArray {
 //IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
 //IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
 //IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
-
 
 
 /** Find beginning-of-line
@@ -330,17 +330,18 @@ fun subClampOverflow(a: BigInteger, b: BigInteger, mn: BigInteger, mx: BigIntege
 // Misc maths helpers
 // -----------------------------------------------------------------------------------------------------------------
 
-fun floor(a: Vec2) = Vec2(floor(a.x), floor(a.y))
-fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
-fun lerp(a: Double, b: Double, t: Float) = a + (b - a) * t
-fun lerp(a: Int, b: Int, t: Float) = (a + (b - a) * t).i
-fun lerp(a: Long, b: Long, t: Float) = (a + (b - a) * t).L
-fun modPositive(a: Int, b: Int) = (a + b) % b
-fun Vec2.lerp(b: Vec2, t: Float) = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
-fun Vec2.lerp(b: Vec2, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
-fun Vec2.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
-fun Vec2i.lerp(b: Vec2i, t: Vec2) = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
-fun Vec4.lerp(b: Vec4, t: Float) = Vec4(x + (b.x - x) * t, y + (b.y - y) * t, z + (b.z - z) * t, w + (b.w - w) * t)
+fun floor(a: Float): Float = a.i.f
+fun floor(a: Vec2): Vec2 = Vec2(floor(a.x), floor(a.y))
+fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t
+fun lerp(a: Double, b: Double, t: Float): Double = a + (b - a) * t
+fun lerp(a: Int, b: Int, t: Float): Int = (a + (b - a) * t).i
+fun lerp(a: Long, b: Long, t: Float): Long = (a + (b - a) * t).L
+fun modPositive(a: Int, b: Int): Int = (a + b) % b
+fun Vec2.lerp(b: Vec2, t: Float): Vec2 = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
+fun Vec2.lerp(b: Vec2, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
+fun Vec2.lerp(b: Vec2i, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
+fun Vec2i.lerp(b: Vec2i, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
+fun Vec4.lerp(b: Vec4, t: Float): Vec4 = Vec4(x + (b.x - x) * t, y + (b.y - y) * t, z + (b.z - z) * t, w + (b.w - w) * t)
 fun saturate(f: Float): Float = if (f < 0f) 0f else if (f > 1f) 1f else f
 infix fun Vec2.invLength(failValue: Float): Float {
     val d = x * x + y * y

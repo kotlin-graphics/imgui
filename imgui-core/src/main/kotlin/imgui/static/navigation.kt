@@ -266,7 +266,7 @@ fun navUpdate() {
 
         if (it.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null) {
             // *Fallback* manual-scroll with Nav directional keys when window has no navigable item
-            val scrollSpeed = floor(it.calcFontSize() * 100 * io.deltaTime + 0.5f) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
+            val scrollSpeed = round(it.calcFontSize() * 100 * io.deltaTime) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
             if (it.dc.navLayerActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
                 if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
                     it.setScrollX(floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed))
