@@ -64,8 +64,8 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.classes.DrawList
-import imgui.classes.Rect
-import imgui.classes.Window
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.internal.*
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf

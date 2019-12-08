@@ -1,9 +1,11 @@
-package imgui
+package imgui.internal
 
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
+import imgui.TextureID
 import imgui.classes.DrawList
+import imgui.resize
 import kool.*
 import kool.lib.indices
 import java.nio.ByteBuffer
@@ -245,13 +247,13 @@ class DrawListSplitter {
         for (cmd in drawList.cmdBuffer)
             _channels[_current]._cmdBuffer.push(cmd)
         _channels[_current]._idxBuffer.free()
-        _channels[_current]._idxBuffer = IntBuffer(drawList.idxBuffer)
+        _channels[_current]._idxBuffer = imgui.IntBuffer(drawList.idxBuffer)
         _current = idx
         drawList.cmdBuffer.clear()
         for (cmd in _channels[idx]._cmdBuffer)
             drawList.cmdBuffer.push(cmd)
         drawList.idxBuffer.free()
-        drawList.idxBuffer = IntBuffer(_channels[idx]._idxBuffer)
+        drawList.idxBuffer = imgui.IntBuffer(_channels[idx]._idxBuffer)
         drawList._idxWritePtr = drawList.idxBuffer.lim
     }
 }

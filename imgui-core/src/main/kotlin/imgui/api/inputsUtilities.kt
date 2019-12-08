@@ -8,7 +8,7 @@ import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.style
 import imgui.MOUSE_INVALID
 import imgui.MouseCursor
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 
 
 /** Inputs Utilities */

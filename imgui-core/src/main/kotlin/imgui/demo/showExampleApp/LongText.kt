@@ -2,7 +2,6 @@ package imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
 import imgui.Cond
-import imgui.ImGui
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.button
@@ -15,7 +14,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.text
 import imgui.ImGui.textEx
-import imgui.ListClipper
+import imgui.classes.ListClipper
 import imgui.StyleVar
 import kotlin.reflect.KMutableProperty0
 

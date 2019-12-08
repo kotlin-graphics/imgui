@@ -5,7 +5,7 @@ import imgui.ImGui.getForegroundDrawList
 import imgui.api.g
 
 /** Debug Tools */
-interface debugTools {
+internal interface debugTools {
 
     fun debugDrawItemRect(col: Int = COL32(255, 0, 0, 255)) {
         val window = g.currentWindow!!

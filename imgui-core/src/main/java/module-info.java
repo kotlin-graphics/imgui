@@ -19,8 +19,8 @@ module com.github.kotlin_graphics.imgui_core {
     exports imgui.classes;
     exports imgui.demo.showExampleApp;
     exports imgui.demo;
+    exports imgui.font;
     exports imgui.impl;
-    exports imgui.internal.api;
     exports imgui.internal;
     exports imgui;
     exports imgui.stb;

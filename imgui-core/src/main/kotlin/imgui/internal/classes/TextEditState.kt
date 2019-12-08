@@ -1,9 +1,12 @@
-package imgui
+package imgui.internal.classes
 
 import gli_.has
 import glm_.c
 import glm_.glm
+import imgui.*
 import imgui.api.g
+import imgui.internal.api.inputText.Companion.inputTextCalcTextSizeW
+import imgui.internal.isBlankW
 import kotlin.math.max
 
 /** Internal state of the currently focused/edited text input box   */
@@ -118,15 +121,14 @@ class TextEditState {
     var textRemaining = 0
 
     fun layout(r: Row, lineStartIdx: Int) {
-
         val size = inputTextCalcTextSizeW(textW, lineStartIdx, curLenW, ::textRemaining, null, true)
-        with(r) {
-            r.x0 = 0f
-            r.x1 = size.x
-            r.baselineYDelta = size.y
-            r.yMin = 0f
-            r.yMax = size.y
-            r.numChars = textRemaining - lineStartIdx
+        r.apply {
+            x0 = 0f
+            x1 = size.x
+            baselineYDelta = size.y
+            yMin = 0f
+            yMax = size.y
+            numChars = textRemaining - lineStartIdx
         }
     }
 

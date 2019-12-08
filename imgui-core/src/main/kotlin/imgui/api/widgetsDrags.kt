@@ -41,7 +41,8 @@ import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
 import imgui.internal.DragFlag
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
+import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 
@@ -254,7 +255,7 @@ interface widgetsDrags {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         // Drag behavior
-        val valueChanged = dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, power, DragFlag.None.i)
+        val valueChanged = dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, power, DragFlag.None)
         if (valueChanged)
             markItemEdited(id)
 

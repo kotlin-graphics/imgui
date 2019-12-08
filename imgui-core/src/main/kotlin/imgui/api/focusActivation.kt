@@ -3,7 +3,7 @@ package imgui.api
 import imgui.ImGui.currentWindow
 import imgui.ImGui.isItemVisible
 import imgui.ImGui.setScrollHereY
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.static.navUpdateAnyRequestFlag
 
 

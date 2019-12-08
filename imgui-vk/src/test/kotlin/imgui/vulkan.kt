@@ -2,7 +2,7 @@ package imgui
 //
 //import glm_.vec2.Vec2i
 //import glm_.vec4.Vec4
-//import imgui.api.Context
+//import imgui.classes.Context
 //import imgui.impl.*
 //import imgui.impl.glfw.ImplGlfw
 //import org.lwjgl.glfw.GLFWErrorCallback

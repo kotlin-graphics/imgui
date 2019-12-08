@@ -11,7 +11,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.renderNavHighlight
 import imgui.internal.Axis
 import imgui.internal.NavHighlightFlag
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.internal.shl
 import imgui.static.beginChildEx
 import imgui.WindowFlag as Wf

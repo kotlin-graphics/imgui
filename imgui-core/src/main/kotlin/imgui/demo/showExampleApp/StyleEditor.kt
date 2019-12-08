@@ -56,6 +56,9 @@ import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.api.g
+import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.classes.Style
+import imgui.classes.TextFilter
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
 import imgui.WindowFlag as Wf

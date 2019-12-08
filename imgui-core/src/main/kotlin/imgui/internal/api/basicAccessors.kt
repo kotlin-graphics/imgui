@@ -2,13 +2,15 @@ package imgui.internal.api
 
 import imgui.ID
 import imgui.api.g
-import imgui.classes.Window
+import imgui.internal.classes.Window
 import imgui.internal.InputSource
 import imgui.internal.ItemStatusFlag
+import imgui.internal.get
+import imgui.internal.set
 import imgui.internal.or
 
 /** Basic Accessors */
-interface basicAccessors {
+internal interface basicAccessors {
 
     /** ~GetItemID */
     val itemID: ID
@@ -65,9 +67,9 @@ interface basicAccessors {
         g.navId = id
         g.navWindow = window
         g.navLayer = navLayer
-        window.navLastIds[navLayer.i] = id
+        window.navLastIds[navLayer] = id
         if (window.dc.lastItemId == id)
-            window.navRectRel[navLayer.i].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
+            window.navRectRel[navLayer].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
 
         if (g.activeIdSource == InputSource.Nav)
             g.navDisableMouseHover = true

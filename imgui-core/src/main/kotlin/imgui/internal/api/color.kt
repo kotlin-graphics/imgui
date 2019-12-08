@@ -29,9 +29,10 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.api.g
+import imgui.internal.F32_TO_INT8_SAT
 
 /** Color */
-interface color {
+internal interface color {
 
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
     fun colorTooltip(text: String, col: FloatArray, flags: ColorEditFlags) {

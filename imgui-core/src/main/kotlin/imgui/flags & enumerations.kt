@@ -1,5 +1,6 @@
 package imgui
 
+import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
@@ -12,6 +13,8 @@ import imgui.internal.InputReadMode
 // Flags & Enumerations
 //-----------------------------------------------------------------------------
 
+
+typealias WindowFlags = Int
 
 /** Flags: for Begin(), BeginChild()    */
 enum class WindowFlag(@JvmField val i: WindowFlags) {
@@ -105,6 +108,9 @@ infix fun WindowFlags.hasnt(b: WindowFlag): Boolean = and(b.i) == 0
 infix fun WindowFlags.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
 
 
+
+typealias InputTextFlags = Int
+
 /** Flags for ImGui::InputText(), InputTextMultiline()    */
 enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flags the others enum
 
@@ -178,6 +184,8 @@ infix fun InputTextFlags.hasnt(b: InputTextFlag): Boolean = and(b.i) == 0
 infix fun InputTextFlags.wo(b: InputTextFlag): InputTextFlags = and(b.i.inv())
 
 
+typealias TreeNodeFlags = Int
+
 /** Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()   */
 enum class TreeNodeFlag(@JvmField val i: TreeNodeFlags) {
 
@@ -236,6 +244,8 @@ infix fun TreeNodeFlags.hasnt(b: TreeNodeFlag): Boolean = and(b.i) == 0
 infix fun TreeNodeFlags.wo(b: TreeNodeFlag): TreeNodeFlags = and(b.i.inv())
 
 
+typealias SelectableFlags = Int
+
 /** Flags for ImGui::Selectable()   */
 enum class SelectableFlag(@JvmField val i: SelectableFlags) {
 
@@ -284,6 +294,8 @@ infix fun SelectableFlags.hasnt(b: SelectableFlag): Boolean = and(b.i) == 0
 infix fun SelectableFlags.wo(b: SelectableFlag): SelectableFlags = and(b.i.inv())
 
 
+typealias ComboFlags = Int
+
 /** Flags: for BeginCombo() */
 enum class ComboFlag(@JvmField val i: ComboFlags) {
     None(0),
@@ -319,6 +331,8 @@ infix fun ComboFlags.has(b: ComboFlag): Boolean = and(b.i) != 0
 infix fun ComboFlags.hasnt(b: ComboFlag): Boolean = and(b.i) == 0
 infix fun ComboFlags.wo(b: ComboFlag): ComboFlags = and(b.i.inv())
 
+
+typealias TabBarFlags = Int
 
 /** Flags for ImGui::BeginTabBar() */
 enum class TabBarFlag(@JvmField val i: TabBarFlags) {
@@ -368,6 +382,8 @@ infix fun TabBarFlags.hasnt(b: TabBarFlag): Boolean = and(b.i) == 0
 infix fun TabBarFlags.wo(b: TabBarFlag): TabBarFlags = and(b.i.inv())
 
 
+typealias TabItemFlags = Int
+
 /** Flags for ImGui::BeginTabItem() */
 enum class TabItemFlag(@JvmField val i: TabItemFlags) {
     None(0),
@@ -402,6 +418,8 @@ infix fun TabItemFlags.hasnt(b: TabItemFlag): Boolean = and(b.i) == 0
 infix fun TabItemFlags.wo(b: TabItemFlag): TabItemFlags = and(b.i.inv())
 
 
+typealias FocusedFlags = Int
+
 /** Flags for ImGui::IsWindowFocused() */
 enum class FocusedFlag(@JvmField val i: FocusedFlags) {
     None(0),
@@ -430,6 +448,8 @@ infix fun FocusedFlags.has(b: FocusedFlag): Boolean = and(b.i) != 0
 infix fun FocusedFlags.hasnt(b: FocusedFlag): Boolean = and(b.i) == 0
 infix fun FocusedFlags.wo(b: FocusedFlag): FocusedFlags = and(b.i.inv())
 
+
+typealias HoveredFlags = Int
 
 /** Flags: for IsItemHovered(), IsWindowHovered() etc.
  *  Note: if you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use the 'io.WantCaptureMouse' boolean for that. Please read the FAQ!
@@ -472,6 +492,8 @@ infix fun HoveredFlags.has(b: HoveredFlag): Boolean = and(b.i) != 0
 infix fun HoveredFlags.hasnt(b: HoveredFlag): Boolean = and(b.i) == 0
 infix fun HoveredFlags.wo(b: HoveredFlag): HoveredFlags = and(b.i.inv())
 
+
+typealias DragDropFlags = Int
 
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
 enum class DragDropFlag(@JvmField val i: DragDropFlags) {
@@ -595,6 +617,14 @@ enum class Key {
 
 infix fun Long.shl(key: Key) = shl(key.i)
 
+// for IO.keyMap
+
+operator fun IntArray.set(index: Key, value: Int) {
+    this[index.i] = value
+}
+
+operator fun IntArray.get(index: Key): Int = get(index.i)
+
 /** Gamepad/Keyboard directional navigation
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
  *  based on your io.keysDown[] + io.keyMap[] arrays.
@@ -664,18 +694,28 @@ enum class NavInput {
 
     /** Equivalent of isKeyDown() for NavInputs[]
      *  ~IsNavInputDown */ // JVM TODO check for semantic Key.isPressed/Down
-    fun isDown() = io.navInputs[i] > 0f
+    fun isDown(): Boolean = io.navInputs[i] > 0f
 
     /** Equivalent of isKeyPressed() for NavInputs[]
      *  ~IsNavInputPressed  */
-    fun isPressed(mode: InputReadMode) = getNavInputAmount(this, mode) > 0f
+    fun isPressed(mode: InputReadMode): Boolean = getNavInputAmount(this, mode) > 0f
 
     /** ~IsNavInputPressedAnyOfTwo  */
-    fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode) = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
+    fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode): Boolean = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
 infix fun Int.shl(f: NavInput) = shl(f.i)
 
+// for IO.navInputs
+
+operator fun FloatArray.set(index: NavInput, value: Float) {
+    this[index.i] = value
+}
+
+operator fun FloatArray.get(index: NavInput): Float = get(index.i)
+
+
+typealias ConfigFlags = Int
 /** Configuration flags stored in io.configFlags
  *
  *  Flags: for io.ConfigFlags   */
@@ -728,7 +768,8 @@ infix fun ConfigFlags.has(b: ConfigFlag): Boolean = and(b.i) != 0
 infix fun ConfigFlags.hasnt(b: ConfigFlag): Boolean = and(b.i) == 0
 infix fun ConfigFlags.wo(b: ConfigFlag): ConfigFlags = and(b.i.inv())
 
-typealias BackendFlags = Int // TODO move
+
+typealias BackendFlags = Int
 
 /** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end.
  *
@@ -833,6 +874,10 @@ enum class Col {
     }
 }
 
+/** for style.colors    */
+operator fun ArrayList<Vec4>.get(idx: Col): Vec4 = this[idx.i]
+operator fun ArrayList<Vec4>.set(idx: Col, vec: Vec4) = this[idx.i] put vec
+
 /** Enumeration for PushStyleVar() / PopStyleVar() to temporarily modify the ImGuiStyle structure.
  *  NB: the enum only refers to fields of ImGuiStyle which makes sense to be pushed/poped inside UI code.
  *  During initialization, feel free to just poke into ImGuiStyle directly.
@@ -891,6 +936,9 @@ enum class StyleVar {
     @JvmField
     val i = ordinal
 }
+
+
+typealias ColorEditFlags = Int
 
 /** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()
  *

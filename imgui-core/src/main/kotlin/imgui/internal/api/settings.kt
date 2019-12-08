@@ -4,11 +4,11 @@ import imgui.ID
 import imgui.IMGUI_DEBUG_INI_SETTINGS
 import imgui.ImGui.io
 import imgui.api.g
-import imgui.classes.WindowSettings
-import imgui.hash
+import imgui.internal.classes.WindowSettings
+import imgui.internal.hash
 
 /** Settings */
-interface settings {
+internal interface settings {
 
     fun markIniSettingsDirty() {
         if (g.settingsDirtyTimer <= 0f)

@@ -41,8 +41,9 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.internal.SliderFlag
+import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -191,7 +192,7 @@ interface widgetsSliders {
 
         // Slider behavior
         val grabBb = Rect()
-        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.None.i, grabBb)
+        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.None, grabBb)
         if (valueChanged)
             markItemEdited(id)
 
@@ -290,7 +291,7 @@ interface widgetsSliders {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
         // Slider behavior
         val grabBb = Rect()
-        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.Vertical.i, grabBb)
+        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.Vertical, grabBb)
 
         if (valueChanged)
             markItemEdited(id)

@@ -19,15 +19,15 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setTooltip
 import imgui.ImGui.style
-import imgui.PlotArray
+import imgui.api.widgetsDataPlotting.Companion.PlotArray
 import imgui.internal.PlotType
-import imgui.classes.Rect
-import imgui.lerp
-import imgui.saturate
+import imgui.internal.classes.Rect
+import imgui.internal.lerp
+import imgui.internal.saturate
 import kotlin.math.min
 
 /** Plot */
-interface plot {
+internal interface plot {
 
     fun plotEx(plotType: PlotType, label: String, data: PlotArray, valuesOffset: Int, overlayText: String,
                scaleMin_: Float, scaleMax_: Float, frameSize: Vec2) {

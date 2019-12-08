@@ -1,5 +1,95 @@
-package imgui
+package imgui.font
 
+import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
+import imgui.NUL
+import java.nio.ByteBuffer
+
+
+//-----------------------------------------------------------------------------
+// Font API (FontConfig, FontGlyph, FontAtlasFlags, FontAtlas, Font)
+//-----------------------------------------------------------------------------
+
+
+class FontConfig {
+
+    /** TTF/OTF data    */
+    var fontData = charArrayOf()
+    /** TTF/OTF data size   */
+    var fontDataSize = 0
+
+    lateinit var fontDataBuffer: ByteBuffer
+    /** TTF/OTF data ownership taken by the container ImFontAtlas (will delete memory itself).  */
+    var fontDataOwnedByAtlas = true
+    /** Index of font within TTF/OTF file   */
+    var fontNo = 0
+    /** Size in pixels for rasterizer (more or less maps to the resulting font height).  */
+    var sizePixels = 0f
+    /** Rasterize at higher quality for sub-pixel positioning.
+     *  Read https://github.com/nothings/stb/blob/master/tests/oversample/README.md for details. */
+    var oversample = Vec2i(3, 1) // FIXME: 2 may be a better x default?
+    /** Align every glyph to pixel boundary. Useful e.g. if you are merging a non-pixel aligned font with the default
+     *  font. If enabled, you can set OversampleH/V to 1.   */
+    var pixelSnapH = false
+    /** Extra spacing (in pixels) between glyphs. Only X axis is supported for now.    */
+    var glyphExtraSpacing = Vec2()
+    /** Offset all glyphs from this font input. */
+    var glyphOffset = Vec2()
+    /** Pointer to a user-provided list of Unicode range (2 value per range, values are inclusive, zero-terminated
+     *  list). THE ARRAY DATA NEEDS TO PERSIST AS LONG AS THE FONT IS ALIVE.    */
+    var glyphRanges = arrayOf<IntRange>()
+    /** Minimum AdvanceX for glyphs, set Min to align font icons, set both Min/Max to enforce mono-space font */
+    var glyphMinAdvanceX = 0f
+    /** Maximum AdvanceX for glyphs */
+    var glyphMaxAdvanceX = Float.MAX_VALUE
+    /** Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons +
+     *  Japanese glyphs). You may want to use GlyphOffset.y when merge font of different heights.   */
+    var mergeMode = false
+    /** Settings for custom font rasterizer (e.g. ImGuiFreeType). Leave as zero if you aren't using one.    */
+    var rasterizerFlags = 0x00
+    /** Brighten (>1.0f) or darken (<1.0f) font output. Brightening small fonts may be a good workaround to make them
+     *  more readable.  */
+    var rasterizerMultiply = 1f
+    /** Explicitly specify unicode codepoint of ellipsis character. When fonts are being merged first specified ellipsis will be used. */
+    var ellipsisChar = '\uffff'
+
+    // [Internal]
+    /** Name (strictly to ease debugging)   */
+    var name = ""
+
+    var dstFont: Font? = null
+}
+
+/** A single font glyph (code point + coordinates within in ImFontAtlas + offset) */
+class FontGlyph {
+    /** 0x0000..0xFFFF  */
+    var codepoint = NUL
+    /** Distance to next character (= data from font + FontConfig.glyphExtraSpacing.x baked in)  */
+    var advanceX = 0f
+    // Glyph corners
+    var x0 = 0f
+    var y0 = 0f
+    var x1 = 0f
+    var y1 = 0f
+    // Texture coordinates
+    var u0 = 0f
+    var v0 = 0f
+    var u1 = 0f
+    var v1 = 0f
+
+    infix fun put(other: FontGlyph) {
+        codepoint = other.codepoint
+        advanceX = other.advanceX
+        x0 = other.x0
+        y0 = other.y0
+        x1 = other.x1
+        y1 = other.y1
+        u0 = other.u0
+        v0 = other.v0
+        u1 = other.u1
+        v1 = other.v1
+    }
+}
 
 /** Helpers to retrieve list of common Unicode ranges (2 value per range, values are inclusive)
  *  NB: Make sure that your string are UTF-8 and NOT in your local code page. In C++11, you can create a UTF-8 string
@@ -191,7 +281,6 @@ object glyphRanges {
         outRanges[ptr] = IntRange.EMPTY // useless, it's already empty
     }
 }
-
 
 val proggyCleanTtfCompressedDataBase85 by lazy {
     "7])#######hV0qs'/###[),##/l:\$#Q6>##5[n42>c-TH`->>#/e>11NNV=Bv(*:.F?uu#(gRU.o0XGH`\$vhLG1hxt9?W`#,5LsCp#-i>.r\$<\$6pD>Lb';9Crc6tgXmKVeU2cD4Eo3R/" +

@@ -39,8 +39,8 @@ import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
-import imgui.classes.Rect
-import imgui.classes.Window
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.min
 import imgui.internal.*
 import imgui.internal.LayoutType
@@ -117,7 +117,7 @@ interface widgetsMenus {
                 val layer = NavLayer.Menu
                 assert(window.dc.navLayerActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 focusWindow(window)
-                setNavIDWithRectRel(window.navLastIds[layer.i], layer, window.navRectRel[layer.i])
+                setNavIDWithRectRel(window.navLastIds[layer], layer, window.navRectRel[layer])
                 g.navLayer = layer
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
