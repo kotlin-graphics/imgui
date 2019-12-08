@@ -452,7 +452,10 @@ internal interface widgetsLowLevelBehaviors {
         if (window.skipItems) return false
 
         val displayFrame = flags has TreeNodeFlag.Framed
-        val padding = if (displayFrame || flags has TreeNodeFlag.FramePadding) Vec2(style.framePadding) else Vec2(style.framePadding.x, 0f)
+        val padding = when {
+            displayFrame || flags has TreeNodeFlag.FramePadding -> Vec2(style.framePadding)
+            else -> Vec2(style.framePadding.x, window.dc.currLineTextBaseOffset min style.framePadding.y)
+        }
 
         val labelEnd = if (labelEnd_ == -1) findRenderedTextEnd(label) else labelEnd_
         val labelSize = calcTextSize(label, labelEnd, false)
@@ -475,7 +478,7 @@ internal interface widgetsLowLevelBehaviors {
         val textOffsetY = padding.y max window.dc.currLineTextBaseOffset                        // Latch before ItemSize changes it
         val textWidth = g.fontSize + if (labelSize.x > 0f) labelSize.x + padding.x * 2 else 0f  // Include collapser
         val textPos = Vec2(window.dc.cursorPos.x + textOffsetX, window.dc.cursorPos.y + textOffsetY)
-        itemSize(Vec2(textWidth, frameHeight), textOffsetY)
+        itemSize(Vec2(textWidth, frameHeight), padding.y)
 
         // For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
         val interactBb = Rect(frameBb)
