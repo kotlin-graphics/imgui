@@ -648,7 +648,7 @@ interface widgetsColorEditorPicker {
                 val c = Vec2(bar0PosX + barsWidth, pickerPos.y + (i + 1) * (svPickerSize / 6))
                 drawList.addRectFilledMultiColor(a, c, colHues[i], colHues[i], colHues[i + 1], colHues[i + 1])
             }
-            val bar0LineY = floor(pickerPos.y + H * svPickerSize + 0.5f)
+            val bar0LineY = round(pickerPos.y + H * svPickerSize)
             renderFrameBorder(Vec2(bar0PosX, pickerPos.y), Vec2(bar0PosX + barsWidth, pickerPos.y + svPickerSize), 0f)
             drawList.renderArrowsForVerticalBar(Vec2(bar0PosX - 1, bar0LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f, style.alpha)
         }
@@ -665,7 +665,7 @@ interface widgetsColorEditorPicker {
             val bar1Bb = Rect(bar1PosX, pickerPos.y, bar1PosX + barsWidth, pickerPos.y + svPickerSize)
             renderColorRectWithAlphaCheckerboard(bar1Bb.min, bar1Bb.max, 0, bar1Bb.width / 2f, Vec2())
             drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, userCol32StripedOfAlpha, userCol32StripedOfAlpha, userCol32StripedOfAlpha wo COL32_A_MASK, userCol32StripedOfAlpha wo COL32_A_MASK)
-            val bar1LineY = (pickerPos.y + (1f - alpha) * svPickerSize + 0.5f)
+            val bar1LineY = round(pickerPos.y + (1f - alpha) * svPickerSize)
             renderFrameBorder(bar1Bb.min, bar1Bb.max, 0f)
             drawList.renderArrowsForVerticalBar(Vec2(bar1PosX - 1, bar1LineY), Vec2(barsTrianglesHalfSz + 1, barsTrianglesHalfSz), barsWidth + 2f, style.alpha)
         }
@@ -722,7 +722,7 @@ interface widgetsColorEditorPicker {
         val off = -0.75f
         bbInner expand off
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
-            val midX = floor((bbInner.min.x + bbInner.max.x) * 0.5f + 0.5f)
+            val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
                     gridStep, Vec2(-gridStep + off, off), rounding, Dcf.TopRight or Dcf.BotRight)
             window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding,

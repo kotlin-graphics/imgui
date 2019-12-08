@@ -240,8 +240,8 @@ interface widgetsMain {
             return false
 
         val center = Vec2(checkBb.center)
-        center.x = floor(center.x + 0.5f)
-        center.y = floor(center.y + 0.5f)
+        center.x = round(center.x)
+        center.y = round(center.y)
         val radius = (squareSz - 1f) * 0.5f
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)

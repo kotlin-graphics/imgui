@@ -10,6 +10,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.internal.isBlankA
 import imgui.internal.isBlankW
+import imgui.internal.round
 import imgui.resize
 import kool.*
 import org.lwjgl.system.Platform
@@ -561,7 +562,7 @@ class Font {
         glyph.advanceX = advanceX + configData[0].glyphExtraSpacing.x  // Bake spacing into xAdvance
 
         if (configData[0].pixelSnapH)
-            glyph.advanceX = floor(glyph.advanceX + 0.5f)
+            glyph.advanceX = round(glyph.advanceX)
         // Compute rough surface usage metrics (+1 to account for average padding, +0.99 to round)
         dirtyLookupTables = true
         metricsTotalSurface += ((glyph.u1 - glyph.u0) * containerAtlas.texSize.x + 1.99f).i *

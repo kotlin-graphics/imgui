@@ -361,7 +361,7 @@ internal interface widgets {
             // Apply scroll
             // It is ok to modify Scroll here because we are being called in Begin() after the calculation of ContentSize and before setting up our starting position
             val scrollVNorm = saturate((clickedVNorm - g.scrollbarClickDeltaToGrabCenter - grabHNorm * 0.5f) / (1f - grabHNorm))
-            scrollV = floor(0.5f + scrollVNorm * scrollMax) //(win_size_contents_v - win_size_v));
+            scrollV = round(scrollVNorm * scrollMax) //(win_size_contents_v - win_size_v));
 
             // Update values for rendering
             scrollRatio = saturate(scrollV / scrollMax)
