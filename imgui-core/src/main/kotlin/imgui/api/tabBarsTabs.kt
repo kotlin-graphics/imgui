@@ -10,9 +10,7 @@ import imgui.internal.classes.TabBar
 import imgui.internal.classes.PtrOrIndex
 import kotlin.reflect.KMutableProperty0
 
-/** Tab Bars, Tabs
- *  [BETA API] API may evolve!
- */
+/** Tab Bars, Tabs */
 interface tabBarsTabs {
 
     /** create and append into a TabBar */
