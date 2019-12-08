@@ -91,6 +91,8 @@ import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
+import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.classes.Color
 import imgui.dsl.child
 import imgui.dsl.group
 import imgui.dsl.indent
@@ -102,7 +104,6 @@ import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
 import imgui.demo.showExampleApp.MenuFile
 import kotlin.math.sin
-import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 
@@ -758,14 +759,4 @@ object showDemoWindowLayout {
                     COL32(255, 255, 255, 255), "Line 1 hello\nLine 2 clip me!".toCharArray(), 0, 0f, clipRect)
         }
     }
-}
-
-private inline fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
-    Ref.iPtr++
-    val i = Ref::int
-    i.set(ints[ptr])
-    val res = block(i)
-    ints[ptr] = i()
-    Ref.iPtr--
-    return res
 }

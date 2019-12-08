@@ -17,12 +17,12 @@ module com.github.kotlin_graphics.imgui_core {
 
     exports imgui.api;
     exports imgui.classes;
-    exports imgui.impl;
-    exports imgui.internal;
-    exports imgui.internalApi;
     exports imgui.demo.showExampleApp;
     exports imgui.demo;
+    exports imgui.font;
+    exports imgui.impl;
+    exports imgui.internal;
+    exports imgui;
     exports imgui.stb;
     exports imgui.windowsIme;
-    exports imgui;
 }

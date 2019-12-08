@@ -27,7 +27,7 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.internal.*
 import kool.getValue
 import kool.setValue
@@ -294,7 +294,7 @@ interface widgetsMain {
         val fraction = saturate(fraction_)
         renderFrame(bb.min, bb.max, Col.FrameBg.u32, true, style.frameRounding)
         bb expand Vec2(-style.frameBorderSize)
-        val fillBr = Vec2(imgui.lerp(bb.min.x, bb.max.x, fraction), bb.max.y)
+        val fillBr = Vec2(lerp(bb.min.x, bb.max.x, fraction), bb.max.y)
         window.drawList.renderRectFilledRangeH(bb, Col.PlotHistogram.u32, 0f, fraction, style.frameRounding)
         // Default displaying the fraction as percentage string, but user can override it
         val overlay = if (overlay_.isEmpty()) "%.0f%%".format(style.locale, fraction * 100 + 0.01f) else overlay_

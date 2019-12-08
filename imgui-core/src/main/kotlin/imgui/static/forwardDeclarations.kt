@@ -10,8 +10,9 @@ import imgui.ImGui.findWindowSettings
 import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.classes.Window
-import imgui.classes.Rect
+import imgui.internal.classes.Window
+import imgui.internal.classes.Rect
+import imgui.internal.floor
 import imgui.windowsIme.COMPOSITIONFORM
 import imgui.windowsIme.DWORD
 import imgui.windowsIme.HIMC

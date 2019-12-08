@@ -38,3 +38,8 @@ compileJava {
     }
     destinationDir = compileKotlin.destinationDir
 }
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-XXLanguage:+InlineClasses"]
+    }
+}

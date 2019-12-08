@@ -14,8 +14,10 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.style
 import imgui.classes.DrawList
-import imgui.classes.DrawListSharedData
-import imgui.classes.Rect
+import imgui.classes.Storage
+import imgui.internal.classes.DrawListSharedData
+import imgui.internal.classes.Rect
+import imgui.internal.floor
 import imgui.WindowFlag as Wf
 
 /** Miscellaneous Utilities */

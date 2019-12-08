@@ -1,6 +1,6 @@
 package imgui.impl.gl
 
-import imgui.DrawData
+import imgui.internal.DrawData
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.Platform
 

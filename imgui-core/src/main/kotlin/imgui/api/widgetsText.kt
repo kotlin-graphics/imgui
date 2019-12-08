@@ -17,7 +17,7 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.style
 import imgui.ImGui.textEx
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.internal.TextFlag
 
 
@@ -27,7 +27,8 @@ interface widgetsText {
     /** raw text without formatting. Roughly equivalent to Text("%s", text) but:
      *  A) doesn't require null terminated string if 'text_end' is specified,
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textUnformatted(text: String, textEnd: Int = -1) = textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText.i)
+    fun textUnformatted(text: String, textEnd: Int = -1) =
+            textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText)
 
     /** formatted text */
     fun text(fmt: String, vararg args: Any) = textV(fmt, args)
@@ -40,7 +41,7 @@ interface widgetsText {
         val fmt = if (args.isEmpty()) fmt_ else fmt_.format(style.locale, *args)
 
         val textEnd = fmt.length
-        textEx(fmt, textEnd, TextFlag.NoWidthForLargeClippedText.i)
+        textEx(fmt, textEnd, TextFlag.NoWidthForLargeClippedText)
     }
 
     /** shortcut for

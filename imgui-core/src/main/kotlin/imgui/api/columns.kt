@@ -2,7 +2,6 @@ package imgui.api
 
 import glm_.glm
 import glm_.max
-import imgui.ColumnsFlags
 import imgui.ImGui.beginColumns
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
@@ -15,11 +14,8 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
-import imgui.classes.Columns
-import imgui.floor
-import imgui.internal.has
-import imgui.internal.hasnt
-import imgui.lerp
+import imgui.internal.*
+import imgui.internal.classes.Columns
 import kotlin.math.max
 import kotlin.math.min
 import imgui.internal.ColumnsFlag as Cf
@@ -36,7 +32,7 @@ interface columns {
         val window = currentWindow
         assert(columnsCount >= 1)
 
-        val flags: ColumnsFlags = if (border) 0 else Cf.NoBorder.i
+        val flags: ColumnsFlags = if (border) Cf.None.i else Cf.NoBorder.i
         //flags |= ImGuiColumnsFlags_NoPreserveWidths; // NB: Legacy behavior
         window.dc.currentColumns?.let {
             if (it.count == columnsCount && it.flags == flags)

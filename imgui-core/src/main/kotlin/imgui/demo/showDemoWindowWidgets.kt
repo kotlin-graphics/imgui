@@ -134,6 +134,9 @@ import imgui.ImGui.unindent
 import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
 import imgui.ImGui.windowDrawList
+import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.classes.Color
+import imgui.classes.InputTextCallbackData
 import imgui.dsl.collapsingHeader
 import imgui.dsl.group
 import imgui.dsl.popup
@@ -152,10 +155,9 @@ import kool.BYTES
 import unsigned.Ubyte
 import kotlin.math.cos
 import kotlin.math.floor
-import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
-import imgui.internal.SelectableFlag as Sf
+import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
 
 object showDemoWindowWidgets {
@@ -1408,19 +1410,4 @@ object showDemoWindowWidgets {
             }
         }
     }
-}
-
-inline fun <R> withFloat(block: (KMutableProperty0<Float>) -> R): R {
-    Ref.fPtr++
-    return block(Ref::float).also { Ref.fPtr-- }
-}
-
-inline fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R {
-    Ref.fPtr++
-    val f = Ref::float
-    f.set(floats[ptr])
-    val res = block(f)
-    floats[ptr] = f()
-    Ref.fPtr--
-    return res
 }

@@ -10,8 +10,8 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.separatorEx
 import imgui.ImGui.style
-import imgui.classes.GroupData
-import imgui.classes.Rect
+import imgui.internal.classes.GroupData
+import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.internal.LayoutType as Lt
 

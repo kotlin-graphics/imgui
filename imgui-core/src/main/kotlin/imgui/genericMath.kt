@@ -3,7 +3,7 @@ package imgui
 import glm_.*
 import kotlin.math.min as kmin
 import kotlin.math.max as kmax
-import imgui.lerp as ilerp
+import imgui.internal.lerp as ilerp
 
 infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
     this is Byte && other is Byte -> (this + other).b
