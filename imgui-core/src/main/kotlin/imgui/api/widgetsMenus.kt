@@ -2,6 +2,7 @@ package imgui.api
 
 import gli_.has
 import glm_.glm
+import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
@@ -78,8 +79,8 @@ interface widgetsMenus {
             We remove 1 worth of rounding to max.x to that text in long menus and small windows don't tend to display
             over the lower-right rounded area, which looks particularly glitchy. */
         val barRect = window.menuBarRect()
-        val clipRect = Rect(floor(barRect.min.x + 0.5f), floor(barRect.min.y + window.windowBorderSize + 0.5f),
-                floor(max(barRect.min.x, barRect.max.x - window.windowRounding) + 0.5f), floor(barRect.max.y + 0.5f))
+        val clipRect = Rect(round(barRect.min.x), round(barRect.min.y + window.windowBorderSize),
+                round(barRect.min.x max (barRect.max.x - window.windowRounding)), round(barRect.max.y))
         clipRect clipWith window.outerRectClipped
         pushClipRect(clipRect.min, clipRect.max, false)
 

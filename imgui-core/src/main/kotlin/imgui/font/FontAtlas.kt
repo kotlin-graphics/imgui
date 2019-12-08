@@ -9,6 +9,7 @@ import glm_.vec2.operators.times
 import imgui.*
 import imgui.ImGui.style
 import imgui.internal.fileLoadToMemory
+import imgui.internal.round
 import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
 import kool.*
@@ -748,7 +749,7 @@ class FontAtlas {
             val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
             val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
             buildSetupFont(dstFont, cfg, ascent, descent)
-            val fontOff = Vec2(cfg.glyphOffset).apply { y += floor(dstFont.ascent + 0.5f) }
+            val fontOff = Vec2(cfg.glyphOffset).apply { y += round(dstFont.ascent) }
 
             for (glyphIdx in 0 until srcTmp.glyphsCount) {
                 val codepoint = srcTmp.glyphsList[glyphIdx]
