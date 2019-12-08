@@ -31,13 +31,18 @@ import java.util.ArrayList
 internal interface basicHelpersForWidgetCode {
 
     /** Advance cursor given item size for layout.  */
-    fun itemSize(size: Vec2, textBaselineY: Float = 0f) {
+    fun itemSize(size: Vec2, textBaselineY: Float = -1f) {
 
         val window = currentWindow
         if (window.skipItems) return
 
+        // We increase the height in this function to accommodate for baseline offset.
+        // In theory we should be offsetting the starting position (window->DC.CursorPos), that will be the topic of a larger refactor,
+        // but since ItemSize() is not yet an API that moves the cursor (to handle e.g. wrapping) enlarging the height has the same effect.
+        val offsetToMatchBaselineY = if(textBaselineY >= 0f) 0f max (window.dc.currLineTextBaseOffset - textBaselineY) else 0f
+        val lineHeight = window.dc.currLineSize.y max (size.y + offsetToMatchBaselineY)
+
         // Always align ourselves on pixel boundaries
-        val lineHeight = glm.max(window.dc.currLineSize.y, size.y)
         window.dc.apply {
             //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
             cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)
@@ -57,7 +62,7 @@ internal interface basicHelpersForWidgetCode {
         }
     }
 
-    fun itemSize(bb: Rect, textBaselineY: Float = 0f) = itemSize(bb.size, textBaselineY)
+    fun itemSize(bb: Rect, textBaselineY: Float = -1f) = itemSize(bb.size, textBaselineY)
 
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over

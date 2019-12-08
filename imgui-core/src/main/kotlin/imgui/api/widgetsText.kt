@@ -117,17 +117,16 @@ interface widgetsText {
         val text = fmt.format(style.locale, *args)
         val textEnd = text.length
         val labelSize = calcTextSize(text, textEnd, false)
-        val textBaseOffsetY = glm.max(0f, window.dc.currLineTextBaseOffset) // Latch before ItemSize changes it
-        val lineHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), g.fontSize)
-        val x = g.fontSize + if (labelSize.x > 0f) labelSize.x + style.framePadding.x * 2 else 0f
-        // Empty text doesn't add padding
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(x, glm.max(lineHeight, labelSize.y)))
-        itemSize(bb)
+        val totalSize = Vec2(g.fontSize + if(labelSize.x > 0f) (labelSize.x + style.framePadding.x * 2) else 0f, labelSize.y)  // Empty text doesn't add padding
+        val pos = Vec2(window.dc.cursorPos)
+        pos.y += window.dc.currLineTextBaseOffset
+        itemSize(totalSize, 0f)
+        val bb = Rect(pos, pos + totalSize)
         if (!itemAdd(bb, 0)) return
 
         // Render
         val textCol = Col.Text.u32
-        window.drawList.renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, lineHeight * 0.5f), textCol)
-        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, textBaseOffsetY), text, text.length, false)
+        window.drawList.renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, g.fontSize * 0.5f), textCol)
+        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, 0f), text, text.length, false)
     }
 }

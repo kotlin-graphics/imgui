@@ -121,7 +121,7 @@ class TabBar {
         currFrameVisible = g.frameCount
 
         // Layout
-        itemSize(Vec2(offsetMaxIdeal, barRect.height))
+        itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
         window.dc.cursorPos.x = barRect.min.x
 
         // Draw separator
