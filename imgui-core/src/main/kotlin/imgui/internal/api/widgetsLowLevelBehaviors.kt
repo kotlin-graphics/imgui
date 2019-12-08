@@ -441,7 +441,7 @@ internal interface widgetsLowLevelBehaviors {
             hovered && g.hoveredIdTimer >= hoverVisibilityDelay -> Col.SeparatorHovered
             else -> Col.Separator
         }
-        window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, style.frameRounding)
+        window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, 0f)
 
         return held
     }
