@@ -1,8 +1,6 @@
-package imgui.internalApi
+package imgui.internal.api
 
-import glm_.f
 import glm_.func.common.max
-import glm_.glm
 import glm_.parseInt
 import imgui.*
 import imgui.ImGui.clearActiveId
@@ -10,15 +8,14 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.DrawList
+import imgui.classes.ShrinkWidthItem
 import imgui.classes.Window
 import imgui.internal.NavLayer
-import imgui.classes.ShrinkWidthItem
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
 import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.min
-import kotlin.math.pow
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -205,23 +202,6 @@ interface internal {
             val g = lerp((colA ushr COL32_G_SHIFT) and 0xFF, (colB ushr COL32_G_SHIFT) and 0xFF, t)
             val b = lerp((colA ushr COL32_B_SHIFT) and 0xFF, (colB ushr COL32_B_SHIFT) and 0xFF, t)
             return COL32(r, g, b, 0xFF)
-        }
-
-        fun getMinimumStepAtDecimalPrecision(decimalPrecision: Int): Float {
-            val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
-            return when {
-                decimalPrecision < 0 -> Float.MIN_VALUE
-                else -> minSteps.getOrElse(decimalPrecision) {
-                    10f.pow(-decimalPrecision.f)
-                }
-            }
-        }
-
-        fun acos01(x: Float) = when {
-            x <= 0f -> glm.PIf * 0.5f
-            x >= 1f -> 0f
-            else -> glm.acos(x)
-            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
 
         val shrinkWidthItemComparer: Comparator<ShrinkWidthItem> = compareBy(ShrinkWidthItem::width, ShrinkWidthItem::index)

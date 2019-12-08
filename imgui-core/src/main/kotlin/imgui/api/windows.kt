@@ -20,7 +20,7 @@ import imgui.ImGui.style
 import imgui.classes.NextWindowDataFlag
 import imgui.classes.Rect
 import imgui.classes.has
-import imgui.internalApi.withBoolean
+import imgui.internal.api.withBoolean
 import imgui.internal.*
 import imgui.static.createNewWindow
 import imgui.static.setCurrentWindow

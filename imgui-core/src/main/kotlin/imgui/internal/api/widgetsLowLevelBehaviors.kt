@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import gli_.has
 import gli_.hasnt
@@ -613,7 +613,7 @@ interface widgetsLowLevelBehaviors {
 
         var isOpen: Boolean
         if (g.nextItemData.flags has NextItemDataFlag.HasOpen) {
-            if (g.nextItemData.openCond has Cond.Always) {
+            if (g.nextItemData.openCond == Cond.Always) {
                 isOpen = g.nextItemData.openVal
                 storage[id] = isOpen
             } else {

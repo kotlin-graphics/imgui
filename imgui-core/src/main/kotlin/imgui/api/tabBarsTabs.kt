@@ -5,7 +5,7 @@ import imgui.*
 import imgui.ImGui.popId
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
-import imgui.internalApi.withBoolean
+import imgui.internal.api.withBoolean
 import imgui.classes.Rect
 import imgui.classes.TabBar
 import imgui.classes.PtrOrIndex
@@ -26,7 +26,7 @@ interface tabBarsTabs {
         val tabBar = g.tabBars.getOrAddByKey(id)
         val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerClipRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
-        return tabBar.beginEx(tabBarBb, flags or TabBarFlag.IsFocused)
+        return tabBar.beginEx(tabBarBb, flags or TabBarFlag._IsFocused)
     }
 
     /**  only call EndTabBar() if BeginTabBar() returns true! */
@@ -46,7 +46,7 @@ interface tabBarsTabs {
         else
             window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.lastTabContentHeight
 
-        if (tabBar.flags hasnt TabBarFlag.DockNode)
+        if (tabBar.flags hasnt TabBarFlag._DockNode)
             popId()
 
         g.currentTabBarStack.pop()
@@ -93,7 +93,7 @@ interface tabBarsTabs {
      *  To use it to need to call the function SetTabItemClosed() after BeginTabBar() and before any call to BeginTabItem() */
     fun setTabItemClosed(tabOrDockedWindowLabel: String) {
 
-        val isWithinManualTabBar = g.currentTabBar?.flags?.hasnt(TabBarFlag.DockNode) == true
+        val isWithinManualTabBar = g.currentTabBar?.flags?.hasnt(TabBarFlag._DockNode) == true
         if (isWithinManualTabBar) {
             val tabBar = g.currentTabBar!!
             assert(tabBar.wantLayout) { "Needs to be called AFTER BeginTabBar() and BEFORE the first call to BeginTabItem()" }

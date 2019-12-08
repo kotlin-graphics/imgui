@@ -61,7 +61,7 @@ interface widgetsSliders {
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float, format: String = "%.3f", power: Float = 1f): Boolean =
-            imgui.internalApi.withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
+            withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, power) }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -103,7 +103,7 @@ interface widgetsSliders {
     }
 
     fun sliderInt(label: String, v: IntArray, ptr: Int, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
-            imgui.internalApi.withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format) }
+            withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format) }
 
     fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int, format: String = "%d"): Boolean =
             sliderScalar(label, DataType.Int, v, vMin, vMax, format)
@@ -226,8 +226,8 @@ interface widgetsSliders {
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {
-                DataType.Int -> imgui.internalApi.withInt(pData as IntArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
-                DataType.Float -> imgui.internalApi.withFloat(pData as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
+                DataType.Int -> withInt(pData as IntArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
+                DataType.Float -> withFloat(pData as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
                 else -> error("invalid")
             } || valueChanged
             popId()

@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import imgui.COL32
 import imgui.ImGui.getForegroundDrawList

@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import imgui.ID
 import imgui.IMGUI_DEBUG_INI_SETTINGS

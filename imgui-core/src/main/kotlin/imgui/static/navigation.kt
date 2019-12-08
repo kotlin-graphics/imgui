@@ -74,16 +74,16 @@ fun navUpdate() {
         navMapKey(Key.Space, NavInput.Activate)
         navMapKey(Key.Enter, NavInput.Input)
         navMapKey(Key.Escape, NavInput.Cancel)
-        navMapKey(Key.LeftArrow, NavInput.KeyLeft)
-        navMapKey(Key.RightArrow, NavInput.KeyRight)
-        navMapKey(Key.UpArrow, NavInput.KeyUp)
-        navMapKey(Key.DownArrow, NavInput.KeyDown)
+        navMapKey(Key.LeftArrow, NavInput._KeyLeft)
+        navMapKey(Key.RightArrow, NavInput._KeyRight)
+        navMapKey(Key.UpArrow, NavInput._KeyUp)
+        navMapKey(Key.DownArrow, NavInput._KeyDown)
         if (io.keyCtrl)
             io.navInputs[NavInput.TweakSlow] = 1f
         if (io.keyShift)
             io.navInputs[NavInput.TweakFast] = 1f
         if (io.keyAlt && !io.keyCtrl) // AltGR is Alt+Ctrl, also even on keyboards without AltGR we don't want Alt+Ctrl to open menu.
-            io.navInputs[NavInput.KeyMenu] = 1f
+            io.navInputs[NavInput._KeyMenu] = 1f
     }
     for (i in io.navInputsDownDuration.indices)
         io.navInputsDownDurationPrev[i] = io.navInputsDownDuration[i]
@@ -218,13 +218,13 @@ fun navUpdate() {
         g.navMoveRequestFlags = NavMoveFlag.None.i
         g.navWindow?.let {
             if (g.navWindowingTarget == null && it.flags hasnt Wf.NoNavInputs) {
-                if (!isActiveIdUsingNavDir(Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput.KeyLeft, InputReadMode.Repeat))
+                if (!isActiveIdUsingNavDir(Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput._KeyLeft, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Left
-                if (!isActiveIdUsingNavDir(Dir.Right) && isNavInputPressedAnyOfTwo(NavInput.DpadRight, NavInput.KeyRight, InputReadMode.Repeat))
+                if (!isActiveIdUsingNavDir(Dir.Right) && isNavInputPressedAnyOfTwo(NavInput.DpadRight, NavInput._KeyRight, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Right
-                if (!isActiveIdUsingNavDir(Dir.Up) && isNavInputPressedAnyOfTwo(NavInput.DpadUp, NavInput.KeyUp, InputReadMode.Repeat))
+                if (!isActiveIdUsingNavDir(Dir.Up) && isNavInputPressedAnyOfTwo(NavInput.DpadUp, NavInput._KeyUp, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Up
-                if (!isActiveIdUsingNavDir(Dir.Down) && isNavInputPressedAnyOfTwo(NavInput.DpadDown, NavInput.KeyDown, InputReadMode.Repeat))
+                if (!isActiveIdUsingNavDir(Dir.Down) && isNavInputPressedAnyOfTwo(NavInput.DpadDown, NavInput._KeyDown, InputReadMode.Repeat))
                     g.navMoveDir = Dir.Down
             }
         }
@@ -405,9 +405,9 @@ fun navUpdateWindowing() {
 
     // Keyboard: Press and Release ALT to toggle menu layer
     // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
-    if (NavInput.KeyMenu.isPressed(InputReadMode.Pressed))
+    if (NavInput._KeyMenu.isPressed(InputReadMode.Pressed))
         g.navWindowingToggleLayer = true
-    if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput.KeyMenu.isPressed(InputReadMode.Released))
+    if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isPressed(InputReadMode.Released))
         if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
             applyToggleLayer = true
 

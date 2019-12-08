@@ -41,7 +41,7 @@ fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlag
     // Filter non-printable (NB: isprint is unreliable! see #2467) [JVM we can rely on custom ::isPrintable]
     if (c < 0x20 && !c.isPrintable) {
         var pass = false
-        pass = pass or (c == '\n' && flags has Itf.Multiline)
+        pass = pass or (c == '\n' && flags has Itf._Multiline)
         pass = pass or (c == '\t' && flags has Itf.AllowTabInput)
         if (!pass) return false
     }

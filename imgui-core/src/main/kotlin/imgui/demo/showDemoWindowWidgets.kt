@@ -155,7 +155,7 @@ import kotlin.math.floor
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
-import imgui.internal.SelectableFlag as Sf
+import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
 
 object showDemoWindowWidgets {

@@ -24,7 +24,7 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ListClipper
-import imgui.internalApi.withInt
+import imgui.internal.api.withInt
 import imgui.classes.Rect
 import imgui.floor
 import imgui.withBool

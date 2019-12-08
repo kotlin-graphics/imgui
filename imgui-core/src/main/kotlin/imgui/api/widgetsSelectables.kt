@@ -23,13 +23,13 @@ import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax
 import imgui.classes.Rect
-import imgui.internalApi.withBoolean
+import imgui.internal.api.withBoolean
 import imgui.internal.*
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.internal.ItemFlag as If
-import imgui.internal.SelectableFlag as Sf
+import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
@@ -70,10 +70,10 @@ interface widgetsSelectables {
         val maxX = if (flags has Sf.SpanAllColumns) windowContentRegionMax.x else contentRegionMax.x
         val wDraw = labelSize.x max (window.pos.x + maxX - windowPadding.x - pos.x)
         val sizeDraw = Vec2(
-                if (sizeArg.x != 0f && flags hasnt Sf.DrawFillAvailWidth) sizeArg.x else wDraw,
+                if (sizeArg.x != 0f && flags hasnt Sf._DrawFillAvailWidth) sizeArg.x else wDraw,
                 if (sizeArg.y != 0f) sizeArg.y else size.y)
         val bb = Rect(pos, pos + sizeDraw)
-        if (sizeArg.x == 0f || flags has Sf.DrawFillAvailWidth)
+        if (sizeArg.x == 0f || flags has Sf._DrawFillAvailWidth)
             bb.max.x += windowPadding.x
 
         // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
@@ -103,9 +103,9 @@ interface widgetsSelectables {
 
         // We use NoHoldingActiveID on menus so user can click and _hold_ on a menu then drag to browse child entries
         var buttonFlags = 0
-        if (flags has Sf.NoHoldingActiveID) buttonFlags = buttonFlags or Bf.NoHoldingActiveID
-        if (flags has Sf.PressedOnClick) buttonFlags = buttonFlags or Bf.PressedOnClick
-        if (flags has Sf.PressedOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
+        if (flags has Sf._NoHoldingActiveID) buttonFlags = buttonFlags or Bf.NoHoldingActiveID
+        if (flags has Sf._PressedOnClick) buttonFlags = buttonFlags or Bf.PressedOnClick
+        if (flags has Sf._PressedOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
         if (flags has Sf.AllowItemOverlap) buttonFlags = buttonFlags or Bf.AllowItemOverlap
@@ -118,7 +118,7 @@ interface widgetsSelectables {
         var hovered = h
 
         // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
-        if (pressed || (hovered && flags has Sf.SetNavIdOnHover))
+        if (pressed || (hovered && flags has Sf._SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
                 g.navDisableHighlight = true
                 setNavId(id, window.dc.navLayerCurrent)
@@ -134,7 +134,7 @@ interface widgetsSelectables {
             window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
 
         // Render
-        if (held && flags has Sf.DrawHoveredWhenHeld)
+        if (held && flags has Sf._DrawHoveredWhenHeld)
             hovered = true
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header

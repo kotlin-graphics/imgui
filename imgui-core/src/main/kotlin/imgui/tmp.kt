@@ -1,6 +1,5 @@
 package imgui
 
-import glm_.BYTES
 import glm_.L
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -14,8 +13,6 @@ import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
-import imgui.api.g
-import imgui.internal.*
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
@@ -273,3 +270,5 @@ val Vec4.u32: Int
         out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
         return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
     }
+
+infix fun Int.wo(i: Int) = and(i.inv())
