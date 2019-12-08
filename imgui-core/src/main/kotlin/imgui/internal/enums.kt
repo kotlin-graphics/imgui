@@ -2,7 +2,6 @@ package imgui.internal
 
 import imgui.DrawCornerFlags
 import imgui.DrawListFlags
-import imgui.SelectableFlags
 
 /** -> enum ImGuiButtonFlags_        // Flags: for ButtonEx(), ButtonBehavior() */
 typealias ButtonFlags = Int
@@ -120,40 +119,7 @@ enum class ColumnsFlag {
 infix fun Int.has(b: ColumnsFlag): Boolean = (this and b.i) != 0
 infix fun Int.hasnt(b: ColumnsFlag): Boolean = (this and b.i) == 0
 
-/** Flags for ImGui::Selectable()   */
-enum class SelectableFlag(@JvmField val i: Int) {
 
-    None(0),
-    /** Clicking this don't close parent popup window   */
-    DontClosePopups(1 shl 0),
-    /** Selectable frame can span all columns (text will still fit in current column)   */
-    SpanAllColumns(1 shl 1),
-    /** Generate press events on double clicks too  */
-    AllowDoubleClick(1 shl 2),
-    /** Cannot be selected, display grayed out text */
-    Disabled(1 shl 3),
-    /** (WIP) Hit testing to allow subsequent widgets to overlap this one */
-    AllowItemOverlap(1 shl 4),
-    /** private  */
-    NoHoldingActiveID(1 shl 20),
-    /** private  */
-    PressedOnClick(1 shl 21),
-    /** private  */
-    PressedOnRelease(1 shl 22),
-    /** private  */
-    DrawFillAvailWidth(1 shl 23),
-
-    /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
-    DrawHoveredWhenHeld(1 shl 24),
-
-    SetNavIdOnHover(1 shl 25);
-
-    infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
-}
-
-infix fun Int.or(other: SelectableFlag): SelectableFlags = this or other.i
-infix fun Int.has(b: SelectableFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: SelectableFlag) = (this and b.i) == 0
 
 enum class SeparatorFlag {
     None,

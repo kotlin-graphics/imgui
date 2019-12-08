@@ -1,11 +1,9 @@
 package imgui.api
 
 import glm_.vec2.Vec2
-import imgui.ImGui
 import imgui.ImGui.plotEx
 import imgui.PlotArrayData
 import imgui.PlotArrayFunc
-import imgui.api.widgetsMain
 import imgui.internal.PlotType
 
 interface widgetsDataPlotting {

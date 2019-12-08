@@ -30,11 +30,10 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
+import imgui.dsl.child
 import imgui.dsl.collapsingHeader
 import imgui.dsl.selectable
 import imgui.dsl.treeNode
-import imgui.dsl.child
-import imgui.internal.SelectableFlag
 
 object showDemoWindowColumns {
 

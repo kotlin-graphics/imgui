@@ -12,7 +12,6 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.*
-import imgui.internalApi.internal.Companion.acos01
 import kool.*
 import uno.kotlin.plusAssign
 import java.util.Stack
@@ -1201,5 +1200,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                 val vertexUV = uvA + (vertexPos - a) * scale
                 vertexUV.to(vtxBuffer.data, i * DrawVert.size + Vec2.size)
             }
+    }
+
+    companion object {
+        private fun acos01(x: Float) = when {
+            x <= 0f -> glm.PIf * 0.5f
+            x >= 1f -> 0f
+            else -> glm.acos(x)
+            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
+        }
     }
 }

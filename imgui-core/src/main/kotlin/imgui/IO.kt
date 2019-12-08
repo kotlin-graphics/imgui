@@ -8,7 +8,6 @@ import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.ImGui.styleColorsClassic
 import imgui.api.g
-import imgui.internal.*
 import imgui.static.getClipboardTextFn_DefaultImpl
 import imgui.static.imeSetInputScreenPosFn_Win32
 import imgui.static.setClipboardTextFn_DefaultImpl

@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import imgui.api.g
 import imgui.internal.LogType

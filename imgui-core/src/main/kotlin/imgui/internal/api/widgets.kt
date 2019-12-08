@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import glm_.func.common.max
 import glm_.i

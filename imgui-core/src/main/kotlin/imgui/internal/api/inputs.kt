@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import gli_.has
 import imgui.*

@@ -1,6 +1,6 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package imgui.internalApi
+package imgui.internal.api
 
 import glm_.*
 import imgui.*
@@ -14,11 +14,11 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Rect
 import imgui.internal.*
-import imgui.internalApi.internal.Companion.getMinimumStepAtDecimalPrecision
 import imgui.lerp
 import kool.getValue
 import kool.setValue
 import java.util.*
+import kotlin.math.pow
 import kotlin.reflect.KMutableProperty0
 
 /** Template functions are instantiated in imgui_widgets.cpp for a finite number of types.
@@ -399,6 +399,20 @@ interface templateFunctions {
             is Float -> formattedValue.parseFloat as N
             is Double -> formattedValue.parseDouble as N
             else -> throw Error("not supported")
+        }
+    }
+
+    companion object {
+
+        val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
+
+        fun getMinimumStepAtDecimalPrecision(decimalPrecision: Int): Float {
+            return when {
+                decimalPrecision < 0 -> Float.MIN_VALUE
+                else -> minSteps.getOrElse(decimalPrecision) {
+                    10f.pow(-decimalPrecision.f)
+                }
+            }
         }
     }
 }
