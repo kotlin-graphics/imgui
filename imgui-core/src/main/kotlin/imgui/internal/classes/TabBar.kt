@@ -210,7 +210,7 @@ class TabBar {
             tabIsNew = true
         }
         lastTabItemIdx = tabs.indexOf(tab)
-        tab.widthContents = size.x
+        tab.contentWidth = size.x
 
         if (pOpen == null)
             flags = flags or TabItemFlag._NoCloseButton
@@ -442,12 +442,12 @@ class TabBar {
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
-            tab.widthContents = tabItemCalcSize(tab.name, hasCloseButton).x
+            tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
 
-            widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.widthContents
+            widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.contentWidth
 
             // Store data so we can build an array sorted by width if we need to shrink tabs down
-            g.shrinkWidthBuffer += ShrinkWidthItem(tabN, tab.widthContents)
+            g.shrinkWidthBuffer += ShrinkWidthItem(tabN, tab.contentWidth)
         }
 
         // Compute width
@@ -462,7 +462,7 @@ class TabBar {
         } else {
             val tabMaxWidth = calcMaxTabWidth()
             for (tab in tabs) {
-                tab.width = tab.widthContents min tabMaxWidth
+                tab.width = tab.contentWidth min tabMaxWidth
                 assert(tab.width > 0f)
             }
         }
@@ -476,7 +476,7 @@ class TabBar {
             if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id)
                 scrollTrackSelectedTabID = tab.id
             offsetX += tab.width + style.itemInnerSpacing.x
-            offsetXideal += tab.widthContents + style.itemInnerSpacing.x
+            offsetXideal += tab.contentWidth + style.itemInnerSpacing.x
         }
         offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
         offsetMaxIdeal = (offsetXideal - style.itemInnerSpacing.x) max 0f

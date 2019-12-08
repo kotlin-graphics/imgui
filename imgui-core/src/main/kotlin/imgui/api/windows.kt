@@ -547,20 +547,20 @@ interface windows {
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
 
 
-                // [LEGACY] Contents Region
-                // FIXME-OBSOLETE: window->ContentsRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
+                // [LEGACY] Content Region
+                // FIXME-OBSOLETE: window->ContentRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
                 // NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out when we have both.
                 // Used by:
                 // - Mouse wheel scrolling + many other things
-                contentsRegionRect.min.put(
+                contentRegionRect.min.put( // need to split min max, because max relies on min
                         x = pos.x - scroll.x + windowPadding.x,
                         y = pos.y - scroll.y + windowPadding.y + decorationUpHeight)
-                contentsRegionRect.max.put(
-                        x = contentsRegionRect.min.x + when (contentSizeExplicit.x) {
+                contentRegionRect.max.put(
+                        x = contentRegionRect.min.x + when (contentSizeExplicit.x) {
                             0f -> size.x - windowPadding.x * 2f - scrollbarSizes.x
                             else -> contentSizeExplicit.x
                         },
-                        y = contentsRegionRect.min.y + when (contentSizeExplicit.y) {
+                        y = contentRegionRect.min.y + when (contentSizeExplicit.y) {
                             0f -> size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y
                             else -> contentSizeExplicit.y
                         })

@@ -306,7 +306,7 @@ class TabItem {
     /** Width currently displayed */
     var width = 0f
     /** Width of actual contents, stored during BeginTabItem() call */
-    var widthContents = 0f
+    var contentWidth = 0f
 }
 
 /** Storage for window settings stored in .ini file (we keep one of those even if the actual window wasn't instanced during this session)
