@@ -4,6 +4,8 @@ import glm_.*
 import imgui.*
 import imgui.ImGui.style
 import imgui.api.*
+import imgui.internal.addClampOverflow
+import imgui.internal.subClampOverflow
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import unsigned.Ubyte
@@ -13,7 +15,7 @@ import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
 /** Data type helpers */
-interface dataTypeHelpers {
+internal interface dataTypeHelpers {
 
     //    IMGUI_API const ImGuiDataTypeInfo*  DataTypeGetInfo(ImGuiDataType data_type);
 

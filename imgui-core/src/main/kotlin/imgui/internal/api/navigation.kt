@@ -7,14 +7,14 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.io
 import imgui.api.g
-import imgui.classes.Rect
-import imgui.classes.Window
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.internal.*
 import imgui.static.navUpdateAnyRequestFlag
 import kotlin.math.max
 
 /** Navigation */
-interface navigation {
+internal interface navigation {
 
     fun navInitWindow(window: Window, forceReinit: Boolean) {
 
@@ -50,7 +50,7 @@ interface navigation {
         g.navMoveDir = clipDir
         g.navMoveRequestForward = NavForward.ForwardQueued
         g.navMoveRequestFlags = moveFlags
-        g.navWindow!!.navRectRel[g.navLayer.i] = bbRel
+        g.navWindow!!.navRectRel[g.navLayer] = bbRel
     }
 
     fun navMoveRequestTryWrapping(window: Window, moveFlags: NavMoveFlags) {
@@ -165,12 +165,12 @@ interface navigation {
     fun setNavId(id: ID, navLayer: NavLayer) {
         // assert(navLayer == 0 || navLayer == 1) useless on jvm
         g.navId = id
-        g.navWindow!!.navLastIds[navLayer.i] = id
+        g.navWindow!!.navLastIds[navLayer] = id
     }
 
     fun setNavIDWithRectRel(id: ID, navLayer: NavLayer, rectRel: Rect) {
         setNavId(id, navLayer)
-        g.navWindow!!.navRectRel[navLayer.i] put rectRel
+        g.navWindow!!.navRectRel[navLayer] put rectRel
         g.navMousePosDirty = true
         g.navDisableHighlight = false
         g.navDisableMouseHover = true

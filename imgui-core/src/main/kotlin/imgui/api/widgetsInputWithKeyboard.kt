@@ -135,7 +135,7 @@ interface widgetsInputWithKeyboard {
     fun <N> inputScalar(label: String, dataType: DataType,
                         pData: IntArray, step: Int?, stepFast: Int?,
                         format: String? = null, flags: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> =
-            withInt(pData, 0) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
+            withInt(pData) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
 
     fun <N> inputScalar(label: String, dataType: DataType,
                         pData: KMutableProperty0<N>,

@@ -5,10 +5,9 @@ import imgui.*
 import imgui.ImGui.popId
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
-import imgui.internal.api.withBoolean
-import imgui.classes.Rect
-import imgui.classes.TabBar
-import imgui.classes.PtrOrIndex
+import imgui.internal.classes.Rect
+import imgui.internal.classes.TabBar
+import imgui.internal.classes.PtrOrIndex
 import kotlin.reflect.KMutableProperty0
 
 /** Tab Bars, Tabs

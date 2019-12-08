@@ -8,6 +8,7 @@ import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
+import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -16,6 +17,7 @@ import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
+import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameCount
@@ -28,7 +30,9 @@ import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.popId
+import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
+import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -40,6 +44,8 @@ import imgui.ImGui.styleColorsDark
 import imgui.ImGui.styleColorsLight
 import imgui.ImGui.text
 import imgui.ImGui.textColored
+import imgui.ImGui.textDisabled
+import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
@@ -50,6 +56,10 @@ import imgui.dsl.indent
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.internal.*
+import imgui.internal.classes.Columns
+import imgui.internal.classes.Rect
+import imgui.internal.classes.TabBar
+import imgui.internal.classes.Window
 import kool.BYTES
 import kool.lim
 import java.util.*
@@ -558,5 +568,18 @@ interface demoDebugInformations {
         val selected = BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
 
         var styleIdx = -1
+
+        /** Helper to display a little (?) mark which shows a tooltip when hovered.
+         *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see misc/fonts/README.txt)    */
+        fun helpMarker(desc: String) {
+            textDisabled("(?)")
+            if (isItemHovered()) {
+                beginTooltip()
+                pushTextWrapPos(fontSize * 35f)
+                textEx(desc)
+                popTextWrapPos()
+                endTooltip()
+            }
+        }
     }
 }

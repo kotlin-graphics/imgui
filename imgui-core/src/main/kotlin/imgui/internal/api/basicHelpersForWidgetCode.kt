@@ -21,11 +21,14 @@ import imgui.api.g
 import imgui.classes.*
 import imgui.internal.*
 import imgui.internal.api.internal.Companion.shrinkWidthItemComparer
+import imgui.internal.classes.Rect
+import imgui.internal.classes.ShrinkWidthItem
+import imgui.internal.classes.Window
 import imgui.static.navProcessItem
 import java.util.ArrayList
 
 /** Basic Helpers for widget code */
-interface basicHelpersForWidgetCode {
+internal interface basicHelpersForWidgetCode {
 
     /** Advance cursor given item size for layout.  */
     fun itemSize(size: Vec2, textBaselineY: Float = 0f) {

@@ -254,6 +254,6 @@ class ImplGlfw @JvmOverloads constructor(
             }
         }
 
-        val charCallback: CharCallbackT = { c: Int -> if (!g.imeInProgress) io.addInputCharacter(c.c) }
+        val charCallback: CharCallbackT = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
     }
 }

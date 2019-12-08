@@ -1,4 +1,4 @@
-package imgui.classes
+package imgui.internal.classes
 
 import gli_.has
 import gli_.hasnt
@@ -23,8 +23,8 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveId
 import imgui.ImGui.style
-import imgui.api.Context
 import imgui.api.g
+import imgui.classes.*
 import imgui.internal.*
 import imgui.static.viewportRect
 import kool.BYTES

@@ -8,9 +8,11 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.DrawList
-import imgui.classes.ShrinkWidthItem
-import imgui.classes.Window
+import imgui.font.Font
+import imgui.internal.classes.ShrinkWidthItem
+import imgui.internal.classes.Window
 import imgui.internal.NavLayer
+import imgui.internal.hash
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
 import java.util.*
@@ -26,7 +28,7 @@ import imgui.WindowFlag as Wf
  *  If this ever crash because g.CurrentWindow is NULL it means that either
  *  - ImGui::NewFrame() has never been called, which is illegal.
  *  - You are calling ImGui functions after ImGui::EndFrame()/ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal. */
-interface internal {
+internal interface internal {
 
     /** ~GetCurrentWindowRead */
     val currentWindowRead: Window?
@@ -123,9 +125,6 @@ interface internal {
     }
 
 
-
-
-
     val formatArgPattern: Pattern
         get() = Pattern.compile("%(\\d+\\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])")
 
@@ -198,59 +197,12 @@ interface internal {
 
         fun alphaBlendColor(colA: Int, colB: Int): Int {
             val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255f
-            val r = lerp((colA ushr COL32_R_SHIFT) and 0xFF, (colB ushr COL32_R_SHIFT) and 0xFF, t)
-            val g = lerp((colA ushr COL32_G_SHIFT) and 0xFF, (colB ushr COL32_G_SHIFT) and 0xFF, t)
-            val b = lerp((colA ushr COL32_B_SHIFT) and 0xFF, (colB ushr COL32_B_SHIFT) and 0xFF, t)
+            val r = imgui.internal.lerp((colA ushr COL32_R_SHIFT) and 0xFF, (colB ushr COL32_R_SHIFT) and 0xFF, t)
+            val g = imgui.internal.lerp((colA ushr COL32_G_SHIFT) and 0xFF, (colB ushr COL32_G_SHIFT) and 0xFF, t)
+            val b = imgui.internal.lerp((colA ushr COL32_B_SHIFT) and 0xFF, (colB ushr COL32_B_SHIFT) and 0xFF, t)
             return COL32(r, g, b, 0xFF)
         }
 
         val shrinkWidthItemComparer: Comparator<ShrinkWidthItem> = compareBy(ShrinkWidthItem::width, ShrinkWidthItem::index)
     }
-}
-
-// TODO move in a more appropriate place
-fun <R> withBoolean(bools: BooleanArray, ptr: Int = 0, block: (KMutableProperty0<Boolean>) -> R): R {
-    Ref.bPtr++
-    val bool = Ref::bool
-    bool.set(bools[ptr])
-    val res = block(bool)
-    bools[ptr] = bool()
-    Ref.bPtr--
-    return res
-}
-
-fun <R> withFloat(floats: FloatArray, ptr: Int, block: (KMutableProperty0<Float>) -> R): R { // TODO inline
-    Ref.fPtr++
-    val f = Ref::float
-    f.set(floats[ptr])
-    val res = block(f)
-    floats[ptr] = f()
-    Ref.fPtr--
-    return res
-}
-
-fun <R> withInt(ints: IntArray, ptr: Int, block: (KMutableProperty0<Int>) -> R): R {
-    Ref.iPtr++
-    val i = Ref::int
-    i.set(ints[ptr])
-    val res = block(i)
-    ints[ptr] = i()
-    Ref.iPtr--
-    return res
-}
-
-inline fun <R> withInt(block: (KMutableProperty0<Int>) -> R): R {
-    Ref.iPtr++
-    return block(Ref::int).also { Ref.iPtr-- }
-}
-
-inline fun <R> withChar(block: (KMutableProperty0<Char>) -> R): R {
-    Ref.cPtr++
-    return block(Ref::char).also { Ref.cPtr-- }
-}
-
-inline fun <R> withChar(char: Char, block: (KMutableProperty0<Char>) -> R): R {
-    Ref.cPtr++
-    Ref.char = char
-    return block(Ref::char).also { Ref.cPtr-- }
 }

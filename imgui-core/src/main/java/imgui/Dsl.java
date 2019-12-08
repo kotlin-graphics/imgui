@@ -2,11 +2,12 @@ package imgui;
 
 import glm_.vec2.Vec2;
 import glm_.vec4.Vec4;
+import imgui.font.Font;
 
 /**
  * twin brother of dsl, manual overloads
  */
-public class dsl_ {
+public class Dsl {
 
     // Windows
     private static ImGui imgui = ImGui.INSTANCE;

@@ -26,6 +26,8 @@ import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
+import imgui.classes.IO
+import imgui.classes.Style
 import imgui.internal.*
 import imgui.static.*
 import org.lwjgl.system.Platform

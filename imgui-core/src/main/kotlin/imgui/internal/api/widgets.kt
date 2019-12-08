@@ -31,10 +31,10 @@ import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
 import imgui.api.g
-import imgui.classes.Window
+import imgui.internal.classes.Window
 import imgui.clamp
-import imgui.classes.Rect
-import imgui.lerp
+import imgui.internal.classes.Rect
+import imgui.internal.lerp
 import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
@@ -42,12 +42,12 @@ import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets */
-interface widgets {
+internal interface widgets {
 
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textEx(text: String, textEnd: Int = text.length, flags: TextFlags = 0) {
+    fun textEx(text: String, textEnd: Int = text.length, flag: TextFlag = TextFlag.None) {
 
         val window = currentWindow
         if (window.skipItems) return
@@ -78,7 +78,7 @@ interface widgets {
                     var linesSkipped = 0
                     while (line < textEnd && linesSkipped < linesSkippable) {
                         val lineEnd = text.memchr(line, '\n') ?: textEnd
-                        if (flags hasnt TextFlag.NoWidthForLargeClippedText)
+                        if (flag != TextFlag.NoWidthForLargeClippedText)
                             textSize.x = textSize.x max calcTextSize(text.substring(line), lineEnd).x
                         line = lineEnd + 1
                         linesSkipped++
@@ -106,7 +106,7 @@ interface widgets {
                 var linesSkipped = 0
                 while (line < textEnd) {
                     val lineEnd = text.memchr(line, '\n') ?: textEnd
-                    if (flags hasnt TextFlag.NoWidthForLargeClippedText)
+                    if (flag != TextFlag.NoWidthForLargeClippedText)
                         textSize.x = textSize.x max calcTextSize(text.substring(line), lineEnd).x
                     line = lineEnd + 1
                     linesSkipped++
@@ -272,9 +272,9 @@ interface widgets {
         val outerRect = window.rect()
         val innerRect = window.innerRect
         val borderSize = window.windowBorderSize
-        val scrollbarSize = window.scrollbarSizes[axis.i xor 1]
+        val scrollbarSize = window.scrollbarSizes[axis xor 1]
         assert(scrollbarSize > 0f)
-        val otherScrollbarSize = window.scrollbarSizes[axis.i]
+        val otherScrollbarSize = window.scrollbarSizes[axis]
         var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) DrawCornerFlag.BotRight.i else 0
         val bb = Rect()
         if (axis == Axis.X) {
@@ -289,7 +289,7 @@ interface widgets {
                 else -> 0
             }
         }
-        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, innerRect.max[axis.i] - innerRect.min[axis.i], window.contentSize[axis.i] + window.windowPadding[axis.i] * 2f, roundingCorners)
+        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, innerRect.max[axis] - innerRect.min[axis], window.contentSize[axis] + window.windowPadding[axis] * 2f, roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar

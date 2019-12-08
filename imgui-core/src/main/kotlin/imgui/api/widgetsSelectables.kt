@@ -22,8 +22,7 @@ import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax
-import imgui.classes.Rect
-import imgui.internal.api.withBoolean
+import imgui.internal.classes.Rect
 import imgui.internal.*
 import kool.getValue
 import kool.setValue

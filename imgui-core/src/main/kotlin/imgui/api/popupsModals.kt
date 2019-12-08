@@ -16,10 +16,9 @@ import imgui.ImGui.isWindowHovered
 import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
-import imgui.classes.NextWindowDataFlag
-import imgui.classes.hasnt
 import imgui.internal.NavMoveFlag
-import imgui.internal.api.withBoolean
+import imgui.internal.NextWindowDataFlag
+import imgui.internal.hasnt
 import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf

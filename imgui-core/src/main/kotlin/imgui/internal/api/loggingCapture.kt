@@ -4,7 +4,7 @@ import imgui.api.g
 import imgui.internal.LogType
 
 /** Logging/Capture */
-interface loggingCapture {
+internal interface loggingCapture {
 
     /** -> BeginCapture() when we design v2 api, for now stay under the radar by using the old name. */
     /** Start logging/capturing text output */

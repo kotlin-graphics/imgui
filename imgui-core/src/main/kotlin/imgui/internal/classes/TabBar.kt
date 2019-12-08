@@ -1,4 +1,4 @@
-package imgui.classes
+package imgui.internal.classes
 
 import glm_.max
 import glm_.min
@@ -35,9 +35,7 @@ import imgui.ImGui.tabItemBackground
 import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.api.g
-import imgui.internal.ButtonFlag
-import imgui.internal.ItemFlag
-import imgui.internal.or
+import imgui.internal.*
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 

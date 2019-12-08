@@ -5,7 +5,6 @@ import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ColumnsFlags
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
@@ -21,13 +20,13 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.classes.ColumnData
-import imgui.classes.Rect
+import imgui.internal.classes.ColumnData
+import imgui.internal.classes.Rect
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
 
-interface newColumnsAPI {
+internal interface newColumnsAPI {
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
     fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {

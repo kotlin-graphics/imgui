@@ -4,11 +4,11 @@ import imgui.DragDropFlag
 import imgui.ID
 import imgui.ImGui.isMouseHoveringRect
 import imgui.api.g
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import kool.lib.fill
 import java.nio.ByteBuffer
 
-interface dragAndDrop {
+internal interface dragAndDrop {
 
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false

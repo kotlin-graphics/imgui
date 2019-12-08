@@ -2,12 +2,14 @@ package imgui.internal.api
 
 import gli_.has
 import imgui.*
+import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.api.g
+import imgui.internal.InputReadMode
 
 /** Inputs
  *  FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions. */
-interface inputs {
+internal interface inputs {
 
     infix fun isActiveIdUsingNavDir(dir: Dir): Boolean = g.activeIdUsingNavDirMask has (1 shl dir)
 
@@ -30,4 +32,7 @@ interface inputs {
     }
 
     // the rest of inputs functions are in the NavInput enum
+
+    fun isNavInputPressedAnyOfTwo(n1: NavInput, n2: NavInput, mode: InputReadMode): Boolean =
+            getNavInputAmount(n1, mode) + getNavInputAmount(n2, mode) > 0f
 }
