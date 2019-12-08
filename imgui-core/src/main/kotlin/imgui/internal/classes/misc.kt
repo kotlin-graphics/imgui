@@ -311,6 +311,10 @@ class TabItem {
 
 /** Storage for window settings stored in .ini file (we keep one of those even if the actual window wasn't instanced during this session)
  *  Windows data saved in imgui.ini file
+ *
+ *  Because we never destroy or rename ImGuiWindowSettings, we can store the names in a separate buffer easily.
+ *  [JVM] We prefer keeping the `name` variable
+ *
  *  ~ CreateNewWindowSettings */
 class WindowSettings(val name: String = "") {
     var id: ID = hash(name)
