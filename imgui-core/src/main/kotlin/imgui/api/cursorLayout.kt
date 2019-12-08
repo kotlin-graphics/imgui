@@ -154,7 +154,7 @@ interface cursorLayout {
         }
 
         window.dc.currLineTextBaseOffset = window.dc.prevLineTextBaseOffset max groupData.backupCurrLineTextBaseOffset      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
-        itemSize(groupBb.size, 0f)
+        itemSize(groupBb.size)
         itemAdd(groupBb, 0)
 
         /*  If the current ActiveId was declared within the boundary of our group, we copy it to ::lastItemId so ::isItemActive,

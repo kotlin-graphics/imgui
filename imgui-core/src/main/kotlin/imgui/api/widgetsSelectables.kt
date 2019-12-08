@@ -62,7 +62,7 @@ interface widgetsSelectables {
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currLineTextBaseOffset
         val bbInner = Rect(pos, pos + size)
-        itemSize(size)
+        itemSize(size, 0f)
 
         // Fill horizontal space.
         val windowPadding = Vec2(window.windowPadding)

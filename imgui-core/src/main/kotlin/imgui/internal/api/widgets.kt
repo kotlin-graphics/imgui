@@ -116,14 +116,14 @@ internal interface widgets {
             textSize.y += (pos - textPos).y
 
             val bb = Rect(textPos, textPos + textSize)
-            itemSize(textSize)
+            itemSize(textSize, 0f)
             itemAdd(bb, 0)
         } else {
             val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
             val textSize = calcTextSize(text, textEnd, false, wrapWidth)
 
             val bb = Rect(textPos, textPos + textSize)
-            itemSize(textSize)
+            itemSize(textSize, 0f)
             if (!itemAdd(bb, 0)) return
 
             // Render (we don't hide text after ## in this end-user function)
@@ -236,7 +236,7 @@ internal interface widgets {
         val id = window.getId(strId)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         val defaultSize = frameHeight
-        itemSize(size, if (size.y >= defaultSize) style.framePadding.y else 0f)
+        itemSize(size, if (size.y >= defaultSize) style.framePadding.y else -1f)
         if (!itemAdd(bb, id)) return false
 
         if (window.dc.itemFlags has ItemFlag.ButtonRepeat)
