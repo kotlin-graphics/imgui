@@ -21,6 +21,8 @@ import java.nio.IntBuffer
  * Note: GLSL version is NOT the same as GL version. Leave this to default if unsure. */
 var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
 
+var glVersion = 0
+
 val vertexShader_glsl_120: String by lazy {
     """
     #version $glslVersion

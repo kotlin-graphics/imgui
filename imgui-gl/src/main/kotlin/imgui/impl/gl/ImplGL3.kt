@@ -1,6 +1,9 @@
 package imgui.impl.gl
 
-import glm_.*
+import glm_.L
+import glm_.f
+import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4ub
 import gln.checkError
@@ -10,15 +13,17 @@ import gln.glViewport
 import gln.glf.semantic
 import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
-import gln.uniform.glUniform
 import gln.identifiers.GlVertexArray
+import gln.uniform.glUniform
 import gln.vertexArray.glVertexAttribPointer
-import imgui.*
+import imgui.BackendFlag
+import imgui.DEBUG
 import imgui.ImGui.io
 import imgui.impl.mat
 import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
+import imgui.or
 import kool.*
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL20C
@@ -37,13 +42,20 @@ class ImplGL3 : GLInterface {
     val buffers = GlBuffers<Buffer>()
     var vao = GlVertexArray()
 
-    var currentVtxSize = 0
-    var currentIdxSize = 0
+    init {
 
-    init { // Setup back-end capabilities flags
+        // query for GL version
+        glVersion = when {
+            !OPENGL_ES2 -> glGetInteger(GL_MAJOR_VERSION) * 1000 + glGetInteger(GL_MINOR_VERSION)
+            else -> 2000 // GLES 2
+        }
+
+        // Setup back-end capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
-        if(HAS_DRAW_WITH_BASE_VERTEX)
-            io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+
+        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX)
+            if (glVersion >= 3200)
+                io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     }
 
     override fun shutdown() = destroyDeviceObjects()
@@ -180,7 +192,7 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        if (HAS_DRAW_WITH_BASE_VERTEX)
+                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && glVersion >= 3200)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
                             glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
@@ -295,6 +307,8 @@ class ImplGL3 : GLInterface {
 
     companion object {
 
+        var OPENGL_ES2 = false
+
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
         var POLYGON_MODE = true
@@ -305,7 +319,8 @@ class ImplGL3 : GLInterface {
             }
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
-        var HAS_DRAW_WITH_BASE_VERTEX = true
+        // #if defined(IMGUI_IMPL_OPENGL_ES2) || defined(IMGUI_IMPL_OPENGL_ES3) || !defined(GL_VERSION_3_2) -> false
+        var MAY_HAVE_DRAW_WITH_BASE_VERTEX = true
     }
 
     /*private fun debugSave(fbWidth: Int, fbHeight: Int) {
