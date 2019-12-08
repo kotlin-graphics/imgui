@@ -28,6 +28,8 @@ import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
+import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.menu
 import imgui.dsl.menuBar

@@ -17,10 +17,7 @@ import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.style
-import imgui.classes.NextWindowDataFlag
-import imgui.classes.Rect
-import imgui.classes.has
-import imgui.internalApi.withBoolean
+import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.static.createNewWindow
 import imgui.static.setCurrentWindow

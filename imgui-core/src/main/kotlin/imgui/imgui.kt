@@ -4,9 +4,12 @@ import glm_.i
 import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
+import imgui.classes.Context
+import imgui.classes.InputTextCallbackData
+import imgui.classes.SizeCallbackData
 import imgui.internal.ItemStatusFlags
-import imgui.classes.Rect
-import imgui.internalApi.*
+import imgui.internal.api.*
+import imgui.internal.classes.Rect
 import kool.Stack
 
 
@@ -147,11 +150,11 @@ object ImGui :
         settings,
         basicAccessors,
         basicHelpersForWidgetCode,
-        imgui.internalApi.loggingCapture,
+        imgui.internal.api.loggingCapture,
         PopupsModalsTooltips,
         navigation,
         inputs,
-        imgui.internalApi.dragAndDrop,
+        imgui.internal.api.dragAndDrop,
         newColumnsAPI,
         tabBars,
         renderHelpers,
@@ -165,103 +168,10 @@ object ImGui :
         // shade functions in DrawList class
         debugTools
 
-internal var ptrIndices = 0
-internal var ptrId = Array(512) { it } // it was: java.lang.Byte.valueOf(it.b)
-
-// TODO get rid of local top value KMutableProperty in favor of the better with*{} solution
-
-
-const val NUL = '\u0000'
 
 @JvmField
-var DEBUG = true
-
-operator fun StringBuilder.plusAssign(string: String) {
-    append(string)
-}
-
-// Typedefs and Enumerations (declared as int for compatibility and to not pollute the top of this file)
-
-/** Unique ID used by widgets (typically hashed from a stack of string) */
-typealias ID = Int
-
-/** User data to identify a texture */
-typealias TextureID = Int
-
-/** flags: for DrawList::addRect*() etc.   // enum DrawCornerFlag */
-typealias DrawCornerFlags = Int
-
-/** flags: for DrawList                    // enum DrawListFlag */
-typealias DrawListFlags = Int
-
-/** flags: for FontAtlas                   // enum FontAtlasFlags */
-typealias FontAtlasFlags = Int
-//typedef int ImGuiBackendFlags;      // flags: for io.BackendFlag               // enum ImGuiBackendFlags_
-/** flags: for ColorEdit*(), ColorPicker*()  // enum ColorEditFlag */
-typealias ColorEditFlags = Int
-
-/** flags: for *Columns*()                   // enum ColumnsFlag */
-typealias ColumnsFlags = Int
-
-/** flags: for io.ConfigFlags                // enum ConfigFlag */
-typealias ConfigFlags = Int
-
-/** flags: for *DragDrop*()                  // enum DragDropFlag */
-typealias DragDropFlags = Int
-
-/** flags: for BeginCombo()                  // enum ComboFlag */
-typealias ComboFlags = Int
-
-/** flags: for ::isWindowFocused()             // enum FocusedFlag */
-typealias FocusedFlags = Int
-
-/** flags: for ::isItemHovered() etc.          // enum HoveredFlag */
-typealias HoveredFlags = Int
-
-/** flags: for ::inputText*()                  // enum InputTextFlag */
-typealias InputTextFlags = Int
-
-/** flags: for Selectable()                  // enum SelectableFlag */
-typealias SelectableFlags = Int
-
-/** Flags: for BeginTabBar() */
-typealias TabBarFlags = Int                 // enum ImGuiTabBarFlags_
-
-/** Flags: for BeginTabItem() */
-typealias TabItemFlags = Int                // enum ImGuiTabItemFlags_
-
-/** flags: for TreeNode*(),CollapsingHeader()// enum TreeNodeFlag */
-typealias TreeNodeFlags = Int
-
-/** flags: for Begin*()                      // enum WindowFlag */
-typealias WindowFlags = Int
-
-typealias InputTextCallback = (InputTextCallbackData) -> Boolean
-typealias SizeCallback = (SizeCallbackData) -> Unit
-
-typealias TextEditCallbackData = InputTextCallbackData
-
-infix fun String.cmp(charArray: CharArray): Boolean {
-    for (i in indices)
-        if (get(i) != charArray[i])
-            return false
-    return true
-}
-
-infix fun CharArray.cmp(other: CharArray): Boolean {
-    for (i in indices) {
-        val a = get(i)
-        val b = other.getOrElse(i) { return false }
-        if (a == NUL)
-            return b == NUL
-        if (a != b)
-            return false
-    }
-    return true
-}
+var DEBUG = false
 
 internal typealias stak = Stack
 
-fun IM_DEBUG_BREAK() {
-
-}
+fun IM_DEBUG_BREAK() {}

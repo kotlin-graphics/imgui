@@ -2,8 +2,8 @@ package imgui.api
 
 import glm_.vec4.Vec4
 import imgui.Col
-import imgui.Style
-import imgui.lerp
+import imgui.classes.Style
+import imgui.internal.lerp
 
 /** Styles  */
 interface styles {

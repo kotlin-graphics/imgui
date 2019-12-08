@@ -1,6 +1,5 @@
 package imgui.impl.gl
 
-import glm_.BYTES
 import glm_.d
 import glm_.i
 import glm_.vec2.Vec2
@@ -10,6 +9,9 @@ import gln.glf.semantic
 import gln.texture.glBindTexture
 import imgui.*
 import imgui.ImGui.io
+import imgui.internal.DrawData
+import imgui.internal.DrawIdx
+import imgui.internal.DrawVert
 import kool.*
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13C.GL_TEXTURE_2D

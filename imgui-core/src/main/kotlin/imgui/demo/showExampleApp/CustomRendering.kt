@@ -3,7 +3,6 @@ package imgui.demo.showExampleApp
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.COL32
-import imgui.DrawCornerFlags
 import imgui.ImGui.backgroundDrawList
 import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
@@ -30,9 +29,9 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
 import imgui.dsl.button
-import imgui.helpMarker
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.internal.DrawCornerFlag
-import imgui.internal.or
+import imgui.internal.DrawCornerFlags
 import kotlin.reflect.KMutableProperty0
 
 object CustomRendering {

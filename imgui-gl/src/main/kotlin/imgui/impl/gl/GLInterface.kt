@@ -1,6 +1,6 @@
 package imgui.impl.gl
 
-import imgui.DrawData
+import imgui.internal.DrawData
 
 interface GLInterface {
 

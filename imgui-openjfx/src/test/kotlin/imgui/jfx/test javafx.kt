@@ -4,7 +4,7 @@ import glm_.f
 import glm_.i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.api.Context
+import imgui.classes.Context
 import imgui.impl.ImplJFX
 import imgui.impl.toJFXColor
 import javafx.application.Platform

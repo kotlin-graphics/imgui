@@ -39,15 +39,15 @@ import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
-import imgui.classes.Rect
-import imgui.classes.Window
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.min
 import imgui.internal.*
 import imgui.internal.LayoutType
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import imgui.internal.SelectableFlag as Sf
+import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.LayoutType as Lt
 
@@ -117,7 +117,7 @@ interface widgetsMenus {
                 val layer = NavLayer.Menu
                 assert(window.dc.navLayerActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 focusWindow(window)
-                setNavIDWithRectRel(window.navLastIds[layer.i], layer, window.navRectRel[layer.i])
+                setNavIDWithRectRel(window.navLastIds[layer], layer, window.navRectRel[layer])
                 g.navLayer = layer
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
@@ -206,7 +206,7 @@ interface widgetsMenus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
-            val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
+            val flags = Sf._NoHoldingActiveID or Sf._PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
@@ -217,7 +217,7 @@ interface widgetsMenus {
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
             val w = window.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
-            val flags = Sf.NoHoldingActiveID or Sf.PressedOnClick or Sf.DontClosePopups or Sf.DrawFillAvailWidth
+            val flags = Sf._NoHoldingActiveID or Sf._PressedOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
             val textCol = if(enabled) Col.Text else Col.TextDisabled
             window.drawList.renderArrow(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
@@ -338,7 +338,7 @@ interface widgetsMenus {
 
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
-        val flags = Sf.PressedOnRelease or Sf.SetNavIdOnHover or if(enabled) Sf.None else Sf.Disabled
+        val flags = Sf._PressedOnRelease or Sf._SetNavIdOnHover or if(enabled) Sf.None else Sf.Disabled
         val pressed: Boolean
         if (window.dc.layoutType == Lt.Horizontal) {
             /*  Mimic the exact layout spacing of beginMenu() to allow menuItem() inside a menu bar, which is a little 
@@ -356,7 +356,7 @@ interface widgetsMenus {
             val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut) else Vec2()
             val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, floor(g.fontSize * 1.2f)) // Feedback for next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
-            pressed = selectable(label, false, flags or Sf.DrawFillAvailWidth, Vec2(w, 0f))
+            pressed = selectable(label, false, flags or Sf._DrawFillAvailWidth, Vec2(w, 0f))
             if (shortcutSize.x > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
                 renderText(pos + Vec2(window.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)

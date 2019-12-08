@@ -7,7 +7,7 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.api.Context
+import imgui.classes.Context
 import imgui.impl.gl.ImplGL2_mac
 import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.glfw.GLFW
@@ -98,7 +98,7 @@ private class ImGuiOpenGL2_Mac {
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-//        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 16f, glyphRanges = imgui.glyphRanges.japanese)!!
+//        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 16f, glyphRanges = imgui.font.glyphRanges.japanese)!!
 //        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
 //        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
 
