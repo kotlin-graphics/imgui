@@ -23,6 +23,7 @@ import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
 import imgui.ImGui.textEx
 import imgui.api.g
+import imgui.classes.TextFilter
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs

@@ -1,47 +1,7 @@
 package imgui.internal
 
-import imgui.DrawCornerFlags
-import imgui.DrawListFlags
-import imgui.SelectableFlags
-
-/** -> enum ImGuiButtonFlags_        // Flags: for ButtonEx(), ButtonBehavior() */
-typealias ButtonFlags = Int
-
-/** -> enum ImGuiColumnsFlags_       // Flags: BeginColumns() */
-typealias ColumnsFlags = Int
-
-/** -> enum ImGuiDragFlags_          // Flags: for DragBehavior() */
-typealias DragFlags = Int
-
-/** -> enum ImGuiItemFlags_          // Flags: for PushItemFlag() */
-typealias ItemFlags = Int
-
-/** -> enum ImGuiItemStatusFlags_    // Flags: for DC.LastItemStatusFlags */
-typealias ItemStatusFlags = Int
-
-/** -> enum ImGuiNavHighlightFlags_  // Flags: for RenderNavHighlight() */
-typealias NavHighlightFlags = Int
-
-/** -> enum ImGuiNavDirSourceFlags_  // Flags: for GetNavInputAmount2d() */
-typealias NavDirSourceFlags = Int
-
-/** -> enum ImGuiNavMoveFlags_       // Flags: for navigation requests */
-typealias NavMoveFlags = Int
-
-/** -> enum ImGuiNextItemDataFlags_  // Flags: for SetNextItemXXX() functions */
-typealias NextItemDataFlags = Int
-
-/** -> enum ImGuiNextWindowDataFlags_// Flags: for SetNextWindowXXX() functions */
-typealias NextWindowDataFlags = Int
-
-/** -> enum ImGuiSeparatorFlags_     // Flags: for SeparatorEx() */
-typealias SeparatorFlags = Int
-
-/** -> enum ImGuiSliderFlags_        // Flags: for SliderBehavior() */
-typealias SliderFlags = Int
-
-/** -> enum ImGuiTextFlags_          // Flags: for TextEx() */
-typealias TextFlags = Int
+import glm_.vec2.Vec2
+import imgui.internal.classes.Rect
 
 
 enum class ButtonFlag {
@@ -81,22 +41,32 @@ enum class ButtonFlag {
 
     val i: ButtonFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
+    infix fun and(b: ButtonFlag): ButtonFlags = i and b.i
+    infix fun and(b: ButtonFlags): ButtonFlags = i and b
     infix fun or(b: ButtonFlag): ButtonFlags = i or b.i
+    infix fun or(b: ButtonFlags): ButtonFlags = i or b
+    infix fun xor(b: ButtonFlag): ButtonFlags = i xor b.i
+    infix fun xor(b: ButtonFlags): ButtonFlags = i xor b
+    infix fun wo(b: ButtonFlags): ButtonFlags = and(b.inv())
 }
 
-infix fun Int.or(b: ButtonFlag): ButtonFlags = this or b.i
-infix fun Int.has(b: ButtonFlag): Boolean = (this and b.i) != 0
-infix fun Int.hasnt(b: ButtonFlag): Boolean = (this and b.i) == 0
+infix fun ButtonFlags.and(b: ButtonFlag): ButtonFlags = and(b.i)
+infix fun ButtonFlags.or(b: ButtonFlag): ButtonFlags = or(b.i)
+infix fun ButtonFlags.xor(b: ButtonFlag): ButtonFlags = xor(b.i)
+infix fun ButtonFlags.has(b: ButtonFlag): Boolean = and(b.i) != 0
+infix fun ButtonFlags.hasnt(b: ButtonFlag): Boolean = and(b.i) == 0
+infix fun ButtonFlags.wo(b: ButtonFlag): ButtonFlags = and(b.i.inv())
 
-enum class SliderFlag(val i: Int) { None(0), Vertical(1 shl 0) }
+typealias ButtonFlags = Int
 
-infix fun Int.has(b: SliderFlag): Boolean = and(b.i) != 0
-infix fun Int.hasnt(b: SliderFlag): Boolean = and(b.i) == 0
 
-enum class DragFlag(val i: Int) { None(0), Vertical(1 shl 0) }
+enum class SliderFlag { None, Vertical }
 
-infix fun Int.has(b: DragFlag): Boolean = and(b.i) != 0
-infix fun Int.hasnt(b: DragFlag): Boolean = and(b.i) == 0
+
+enum class DragFlag { None, Vertical }
+
+
+typealias ColumnsFlags = Int
 
 /** Flags: for Columns(), BeginColumns() */
 enum class ColumnsFlag {
@@ -115,45 +85,25 @@ enum class ColumnsFlag {
     GrowParentContentsSize;
 
     val i: ColumnsFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+
+    infix fun and(b: ColumnsFlag): ColumnsFlags = i and b.i
+    infix fun and(b: ColumnsFlags): ColumnsFlags = i and b
+    infix fun or(b: ColumnsFlag): ColumnsFlags = i or b.i
+    infix fun or(b: ColumnsFlags): ColumnsFlags = i or b
+    infix fun xor(b: ColumnsFlag): ColumnsFlags = i xor b.i
+    infix fun xor(b: ColumnsFlags): ColumnsFlags = i xor b
+    infix fun wo(b: ColumnsFlags): ColumnsFlags = and(b.inv())
 }
 
-infix fun Int.has(b: ColumnsFlag): Boolean = (this and b.i) != 0
-infix fun Int.hasnt(b: ColumnsFlag): Boolean = (this and b.i) == 0
+infix fun ColumnsFlags.and(b: ColumnsFlag): ColumnsFlags = and(b.i)
+infix fun ColumnsFlags.or(b: ColumnsFlag): ColumnsFlags = or(b.i)
+infix fun ColumnsFlags.xor(b: ColumnsFlag): ColumnsFlags = xor(b.i)
+infix fun ColumnsFlags.has(b: ColumnsFlag): Boolean = and(b.i) != 0
+infix fun ColumnsFlags.hasnt(b: ColumnsFlag): Boolean = and(b.i) == 0
+infix fun ColumnsFlags.wo(b: ColumnsFlag): ColumnsFlags = and(b.i.inv())
 
-/** Flags for ImGui::Selectable()   */
-enum class SelectableFlag(@JvmField val i: Int) {
 
-    None(0),
-    /** Clicking this don't close parent popup window   */
-    DontClosePopups(1 shl 0),
-    /** Selectable frame can span all columns (text will still fit in current column)   */
-    SpanAllColumns(1 shl 1),
-    /** Generate press events on double clicks too  */
-    AllowDoubleClick(1 shl 2),
-    /** Cannot be selected, display grayed out text */
-    Disabled(1 shl 3),
-    /** (WIP) Hit testing to allow subsequent widgets to overlap this one */
-    AllowItemOverlap(1 shl 4),
-    /** private  */
-    NoHoldingActiveID(1 shl 20),
-    /** private  */
-    PressedOnClick(1 shl 21),
-    /** private  */
-    PressedOnRelease(1 shl 22),
-    /** private  */
-    DrawFillAvailWidth(1 shl 23),
-
-    /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
-    DrawHoveredWhenHeld(1 shl 24),
-
-    SetNavIdOnHover(1 shl 25);
-
-    infix fun or(other: SelectableFlag): SelectableFlags = i or other.i
-}
-
-infix fun Int.or(other: SelectableFlag): SelectableFlags = this or other.i
-infix fun Int.has(b: SelectableFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: SelectableFlag) = (this and b.i) == 0
+typealias SeparatorFlags = Int
 
 enum class SeparatorFlag {
     None,
@@ -162,17 +112,30 @@ enum class SeparatorFlag {
     Vertical,
     SpanAllColumns;
 
-    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    val i: SeparatorFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+
+    infix fun and(b: SeparatorFlag): SeparatorFlags = i and b.i
+    infix fun and(b: SeparatorFlags): SeparatorFlags = i and b
+    infix fun or(b: SeparatorFlag): SeparatorFlags = i or b.i
+    infix fun or(b: SeparatorFlags): SeparatorFlags = i or b
+    infix fun xor(b: SeparatorFlag): SeparatorFlags = i xor b.i
+    infix fun xor(b: SeparatorFlags): SeparatorFlags = i xor b
+    infix fun wo(b: SeparatorFlags): SeparatorFlags = and(b.inv())
 }
 
-infix fun SeparatorFlag.or(b: SeparatorFlag): SeparatorFlags = i or b.i
-infix fun Int.or(b: SeparatorFlag): SeparatorFlags = this or b.i
-infix fun Int.has(b: SeparatorFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: SeparatorFlag) = (this and b.i) == 0
+infix fun SeparatorFlags.and(b: SeparatorFlag): SeparatorFlags = and(b.i)
+infix fun SeparatorFlags.or(b: SeparatorFlag): SeparatorFlags = or(b.i)
+infix fun SeparatorFlags.xor(b: SeparatorFlag): SeparatorFlags = xor(b.i)
+infix fun SeparatorFlags.has(b: SeparatorFlag): Boolean = and(b.i) != 0
+infix fun SeparatorFlags.hasnt(b: SeparatorFlag): Boolean = and(b.i) == 0
+infix fun SeparatorFlags.wo(b: SeparatorFlag): SeparatorFlags = and(b.i.inv())
+
+
+typealias ItemFlags = Int
 
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough. */
-enum class ItemFlag(@JvmField val i: Int) {
+enum class ItemFlag(@JvmField val i: ItemFlags) {
     None(0),
     NoTabStop(1 shl 0),  // false
     /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
@@ -186,17 +149,29 @@ enum class ItemFlag(@JvmField val i: Int) {
     /** [BETA] Represent a mixed/indeterminate value, generally multi-selection where values differ. Currently only supported by Checkbox() (later should support all sorts of widgets) */
     MixedValue(1 shl 6),  // false
 
-    Default_(0)
+    Default_(0);
+
+    infix fun and(b: ItemFlag): ItemFlags = i and b.i
+    infix fun and(b: ItemFlags): ItemFlags = i and b
+    infix fun or(b: ItemFlag): ItemFlags = i or b.i
+    infix fun or(b: ItemFlags): ItemFlags = i or b
+    infix fun xor(b: ItemFlag): ItemFlags = i xor b.i
+    infix fun xor(b: ItemFlags): ItemFlags = i xor b
+    infix fun wo(b: ItemFlags): ItemFlags = and(b.inv())
 }
 
-infix fun ItemFlag.or(other: ItemFlag) = i or other.i
-infix fun Int.or(other: ItemFlag) = or(other.i)
-infix fun Int.has(b: ItemFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: ItemFlag) = (this and b.i) == 0
-infix fun Int.wo(b: ItemFlag) = and(b.i.inv())
+infix fun ItemFlags.and(b: ItemFlag): ItemFlags = and(b.i)
+infix fun ItemFlags.or(b: ItemFlag): ItemFlags = or(b.i)
+infix fun ItemFlags.xor(b: ItemFlag): ItemFlags = xor(b.i)
+infix fun ItemFlags.has(b: ItemFlag): Boolean = and(b.i) != 0
+infix fun ItemFlags.hasnt(b: ItemFlag): Boolean = and(b.i) == 0
+infix fun ItemFlags.wo(b: ItemFlag): ItemFlags = and(b.i.inv())
+
+
+typealias ItemStatusFlags = Int
 
 /** Storage for LastItem data   */
-enum class ItemStatusFlag(@JvmField val i: Int) {
+enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     None(0),
     HoveredRect(1 shl 0),
     HasDisplayRect(1 shl 1),
@@ -216,69 +191,68 @@ enum class ItemStatusFlag(@JvmField val i: Int) {
     Opened(1 shl 11),
     Checkable(1 shl 12),
     Checked(1 shl 13);
+
+    infix fun and(b: ItemStatusFlag): ItemStatusFlags = i and b.i
+    infix fun and(b: ItemStatusFlags): ItemStatusFlags = i and b
+    infix fun or(b: ItemStatusFlag): ItemStatusFlags = i or b.i
+    infix fun or(b: ItemStatusFlags): ItemStatusFlags = i or b
+    infix fun xor(b: ItemStatusFlag): ItemStatusFlags = i xor b.i
+    infix fun xor(b: ItemStatusFlags): ItemStatusFlags = i xor b
+    infix fun wo(b: ItemStatusFlags): ItemStatusFlags = and(b.inv())
 }
 
-infix fun Int.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
-infix fun Int.or(b: ItemStatusFlag): ItemStatusFlags = or(b.i)
-infix fun Int.has(b: ItemStatusFlag) = and(b.i) != 0
-infix fun Int.hasnt(b: ItemStatusFlag) = and(b.i) == 0
+infix fun ItemStatusFlags.and(b: ItemStatusFlag): ItemStatusFlags = and(b.i)
+infix fun ItemStatusFlags.or(b: ItemStatusFlag): ItemStatusFlags = or(b.i)
+infix fun ItemStatusFlags.xor(b: ItemStatusFlag): ItemStatusFlags = xor(b.i)
+infix fun ItemStatusFlags.has(b: ItemStatusFlag): Boolean = and(b.i) != 0
+infix fun ItemStatusFlags.hasnt(b: ItemStatusFlag): Boolean = and(b.i) == 0
+infix fun ItemStatusFlags.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
 
-enum class TextFlag(val i: Int) { None(0), NoWidthForLargeClippedText(1 shl 0) }
 
-infix fun Int.wo(b: TextFlag): TextFlags = and(b.i.inv())
-infix fun Int.or(b: TextFlag): TextFlags = or(b.i)
-infix fun Int.has(b: TextFlag) = and(b.i) != 0
-infix fun Int.hasnt(b: TextFlag) = and(b.i) == 0
+enum class TextFlag { None, NoWidthForLargeClippedText }
+
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet.
  *  Horizontal/Vertical enums are fixed to 0/1 so they may be used to index ImVec2 */
-enum class LayoutType {
-    Horizontal, Vertical;
+enum class LayoutType { Horizontal, Vertical }
 
-    val i = ordinal
-}
 
-enum class LogType {
-    None, TTY, File, Buffer, Clipboard;
+enum class LogType { None, TTY, File, Buffer, Clipboard }
 
-    val i = ordinal
-}
 
 /** X/Y enums are fixed to 0/1 so they may be used to index ImVec2 */
 enum class Axis {
     None, X, Y;
 
-    val i = ordinal - 1
+    infix fun xor(i: Int) = (ordinal - 1) xor i
 }
 
-infix fun Int.shl(b: Axis) = shl(b.i)
-
-enum class PlotType {
-    Lines, Histogram;
-
-    val i = ordinal
+operator fun Vec2.get(axis: Axis): Float = when (axis) {
+    Axis.X -> x
+    Axis.Y -> y
+    else -> throw Error()
 }
+
+infix fun Int.shl(b: Axis) = shl(b.ordinal - 1)
+
+
+enum class PlotType { Lines, Histogram }
+
 
 enum class InputSource {
     None, Mouse, Nav,
     /** Only used occasionally for storage, not tested/handled by most code */
     NavKeyboard,
     /** Only used occasionally for storage, not tested/handled by most code */
-    NavGamepad;
-
-    val i = ordinal
-
-    companion object {
-        val COUNT = values().size
-    }
+    NavGamepad
 }
+
 
 // FIXME-NAV: Clarify/expose various repeat delay/rate
-enum class InputReadMode {
-    Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast;
+enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast }
 
-    val i = ordinal
-}
+
+typealias NavHighlightFlags = Int
 
 enum class NavHighlightFlag {
     None, TypeDefault, TypeThin,
@@ -286,21 +260,51 @@ enum class NavHighlightFlag {
     AlwaysDraw,
     NoRounding;
 
-    val i = if (ordinal == 0) 0 else 1 shl ordinal
+    val i: NavHighlightFlags = if (ordinal == 0) 0 else 1 shl ordinal
+
+    infix fun and(b: NavHighlightFlag): NavHighlightFlags = i and b.i
+    infix fun and(b: NavHighlightFlags): NavHighlightFlags = i and b
+    infix fun or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
+    infix fun or(b: NavHighlightFlags): NavHighlightFlags = i or b
+    infix fun xor(b: NavHighlightFlag): NavHighlightFlags = i xor b.i
+    infix fun xor(b: NavHighlightFlags): NavHighlightFlags = i xor b
+    infix fun wo(b: NavHighlightFlags): NavHighlightFlags = and(b.inv())
 }
 
-infix fun Int.has(b: NavHighlightFlag) = and(b.i) != 0
-infix fun Int.hasnt(b: NavHighlightFlag) = and(b.i) == 0
-infix fun NavHighlightFlag.or(b: NavHighlightFlag): NavHighlightFlags = i or b.i
+infix fun NavHighlightFlags.and(b: NavHighlightFlag): NavHighlightFlags = and(b.i)
+infix fun NavHighlightFlags.or(b: NavHighlightFlag): NavHighlightFlags = or(b.i)
+infix fun NavHighlightFlags.xor(b: NavHighlightFlag): NavHighlightFlags = xor(b.i)
+infix fun NavHighlightFlags.has(b: NavHighlightFlag): Boolean = and(b.i) != 0
+infix fun NavHighlightFlags.hasnt(b: NavHighlightFlag): Boolean = and(b.i) == 0
+infix fun NavHighlightFlags.wo(b: NavHighlightFlag): NavHighlightFlags = and(b.i.inv())
+
+
+
+typealias NavDirSourceFlags = Int
 
 enum class NavDirSourceFlag {
     None, Keyboard, PadDPad, PadLStick;
 
-    val i = if (ordinal == 0) 0 else 1 shl ordinal
+    val i: NavDirSourceFlags = if (ordinal == 0) 0 else 1 shl ordinal
+
+    infix fun and(b: NavDirSourceFlag): NavDirSourceFlags = i and b.i
+    infix fun and(b: NavDirSourceFlags): NavDirSourceFlags = i and b
+    infix fun or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
+    infix fun or(b: NavDirSourceFlags): NavDirSourceFlags = i or b
+    infix fun xor(b: NavDirSourceFlag): NavDirSourceFlags = i xor b.i
+    infix fun xor(b: NavDirSourceFlags): NavDirSourceFlags = i xor b
+    infix fun wo(b: NavDirSourceFlags): NavDirSourceFlags = and(b.inv())
 }
 
-infix fun NavDirSourceFlag.or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
-infix fun Int.has(b: NavDirSourceFlag) = and(b.i) != 0
+infix fun NavDirSourceFlags.and(b: NavDirSourceFlag): NavDirSourceFlags = and(b.i)
+infix fun NavDirSourceFlags.or(b: NavDirSourceFlag): NavDirSourceFlags = or(b.i)
+infix fun NavDirSourceFlags.xor(b: NavDirSourceFlag): NavDirSourceFlags = xor(b.i)
+infix fun NavDirSourceFlags.has(b: NavDirSourceFlag): Boolean = and(b.i) != 0
+infix fun NavDirSourceFlags.hasnt(b: NavDirSourceFlag): Boolean = and(b.i) == 0
+infix fun NavDirSourceFlags.wo(b: NavDirSourceFlag): NavDirSourceFlags = and(b.i.inv())
+
+
+typealias NavMoveFlags = Int
 
 enum class NavMoveFlag {
     None,
@@ -319,18 +323,26 @@ enum class NavMoveFlag {
     AlsoScoreVisibleSet,
     ScrollToEdge;
 
-    val i = if (ordinal == 0) 0 else 1 shl ordinal
+    val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl ordinal
 
+    infix fun and(b: NavMoveFlag): NavMoveFlags = i and b.i
+    infix fun and(b: NavMoveFlags): NavMoveFlags = i and b
     infix fun or(b: NavMoveFlag): NavMoveFlags = i or b.i
+    infix fun or(b: NavMoveFlags): NavMoveFlags = i or b
+    infix fun xor(b: NavMoveFlag): NavMoveFlags = i xor b.i
+    infix fun xor(b: NavMoveFlags): NavMoveFlags = i xor b
+    infix fun wo(b: NavMoveFlags): NavMoveFlags = and(b.inv())
 }
 
-infix fun Int.has(b: NavMoveFlag) = and(b.i) != 0
+infix fun NavMoveFlags.and(b: NavMoveFlag): NavMoveFlags = and(b.i)
+infix fun NavMoveFlags.or(b: NavMoveFlag): NavMoveFlags = or(b.i)
+infix fun NavMoveFlags.xor(b: NavMoveFlag): NavMoveFlags = xor(b.i)
+infix fun NavMoveFlags.has(b: NavMoveFlag): Boolean = and(b.i) != 0
+infix fun NavMoveFlags.hasnt(b: NavMoveFlag): Boolean = and(b.i) == 0
+infix fun NavMoveFlags.wo(b: NavMoveFlag): NavMoveFlags = and(b.i.inv())
 
-enum class NavForward {
-    None, ForwardQueued, ForwardActive;
 
-    val i = ordinal
-}
+enum class NavForward { None, ForwardQueued, ForwardActive }
 
 enum class NavLayer {
     /** Main scrolling layer */
@@ -338,17 +350,25 @@ enum class NavLayer {
     /** Menu layer (access with Alt/ImGuiNavInput_Menu) */
     Menu;
 
-    val i = ordinal
+    infix fun xor(int: Int): Int = ordinal xor int
 
     companion object {
         val COUNT = values().size
-        infix fun of(i: Int) = values().first { it.i == i }
+        infix fun of(i: Int) = values().first { it.ordinal == i }
     }
 }
 
-infix fun Int.shl(layer: NavLayer) = shl(layer.i)
+operator fun Array<Rect>.get(index: NavLayer): Rect = get(index.ordinal)
+operator fun Array<Rect>.set(index: NavLayer, rect: Rect) = set(index.ordinal, rect)
+operator fun IntArray.get(index: NavLayer): Int = get(index.ordinal)
+operator fun IntArray.set(index: NavLayer, int: Int) = set(index.ordinal, int)
+infix fun Int.shl(layer: NavLayer): Int = shl(layer.ordinal)
+
 
 enum class PopupPositionPolicy { Default, ComboBox }
+
+
+typealias DrawCornerFlags = Int
 
 /** Flags: for ImDrawList::AddRect(), AddRectFilled() etc. */
 enum class DrawCornerFlag(val i: DrawCornerFlags) {
@@ -362,28 +382,98 @@ enum class DrawCornerFlag(val i: DrawCornerFlags) {
     Left(TopLeft or BotLeft),    // 0x5
     Right(TopRight or BotRight),  // 0xA
     /** In your function calls you may use ~0 (= all bits sets) instead of DrawCornerFlags.All, as a convenience  */
-    All(0xF)
+    All(0xF);
+
+    infix fun and(b: DrawCornerFlag): DrawCornerFlags = i and b.i
+    infix fun and(b: DrawCornerFlags): DrawCornerFlags = i and b
+    infix fun or(b: DrawCornerFlag): DrawCornerFlags = i or b.i
+    infix fun or(b: DrawCornerFlags): DrawCornerFlags = i or b
+    infix fun xor(b: DrawCornerFlag): DrawCornerFlags = i xor b.i
+    infix fun xor(b: DrawCornerFlags): DrawCornerFlags = i xor b
+    infix fun wo(b: DrawCornerFlags): DrawCornerFlags = and(b.inv())
 }
 
-infix fun DrawCornerFlag.or(b: DrawCornerFlag): DrawCornerFlags = i or b.i
-infix fun Int.or(b: DrawCornerFlag): DrawCornerFlags = or(b.i)
-infix fun Int.and(b: DrawCornerFlag): DrawCornerFlags = and(b.i)
-infix fun Int.has(b: DrawCornerFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: DrawCornerFlag) = (this and b.i) == 0
+infix fun DrawCornerFlags.and(b: DrawCornerFlag): DrawCornerFlags = and(b.i)
+infix fun DrawCornerFlags.or(b: DrawCornerFlag): DrawCornerFlags = or(b.i)
+infix fun DrawCornerFlags.xor(b: DrawCornerFlag): DrawCornerFlags = xor(b.i)
+infix fun DrawCornerFlags.has(b: DrawCornerFlag): Boolean = and(b.i) != 0
+infix fun DrawCornerFlags.hasnt(b: DrawCornerFlag): Boolean = and(b.i) == 0
+infix fun DrawCornerFlags.wo(b: DrawCornerFlag): DrawCornerFlags = and(b.i.inv())
+
+
+typealias DrawListFlags = Int
 
 /** Flags: for ImDrawList */
-enum class DrawListFlag(val i: Int) {
+enum class DrawListFlag(val i: DrawListFlags) {
     None(0),
     /** Lines are anti-aliased (*2 the number of triangles for 1.0f wide line, otherwise *3 the number of triangles) */
     AntiAliasedLines(1 shl 0),
     /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
     AntiAliasedFill(1 shl 1),
     /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
-    AllowVtxOffset(1 shl 2)
+    AllowVtxOffset(1 shl 2);
+
+    infix fun and(b: DrawListFlag): DrawListFlags = i and b.i
+    infix fun and(b: DrawListFlags): DrawListFlags = i and b
+    infix fun or(b: DrawListFlag): DrawListFlags = i or b.i
+    infix fun or(b: DrawListFlags): DrawListFlags = i or b
+    infix fun xor(b: DrawListFlag): DrawListFlags = i xor b.i
+    infix fun xor(b: DrawListFlags): DrawListFlags = i xor b
+    infix fun wo(b: DrawListFlags): DrawListFlags = and(b.inv())
 }
 
-infix fun DrawListFlag.or(b: DrawListFlag): DrawListFlags = i or b.i
-infix fun Int.or(b: DrawListFlag): DrawListFlags = or(b.i)
-infix fun Int.and(b: DrawListFlag): DrawListFlags = and(b.i)
-infix fun Int.has(b: DrawListFlag) = (this and b.i) != 0
-infix fun Int.hasnt(b: DrawListFlag) = (this and b.i) == 0
+infix fun DrawListFlags.and(b: DrawListFlag): DrawListFlags = and(b.i)
+infix fun DrawListFlags.or(b: DrawListFlag): DrawListFlags = or(b.i)
+infix fun DrawListFlags.xor(b: DrawListFlag): DrawListFlags = xor(b.i)
+infix fun DrawListFlags.has(b: DrawListFlag): Boolean = and(b.i) != 0
+infix fun DrawListFlags.hasnt(b: DrawListFlag): Boolean = and(b.i) == 0
+infix fun DrawListFlags.wo(b: DrawListFlag): DrawListFlags = and(b.i.inv())
+
+
+
+typealias NextWindowDataFlags = Int
+
+enum class NextWindowDataFlag {
+    None, HasPos, HasSize, HasContentSize, HasCollapsed, HasSizeConstraint, HasFocus, HasBgAlpha;
+
+    val i: NextWindowDataFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+
+    infix fun and(b: NextWindowDataFlag): NextWindowDataFlags = i and b.i
+    infix fun and(b: NextWindowDataFlags): NextWindowDataFlags = i and b
+    infix fun or(b: NextWindowDataFlag): NextWindowDataFlags = i or b.i
+    infix fun or(b: NextWindowDataFlags): NextWindowDataFlags = i or b
+    infix fun xor(b: NextWindowDataFlag): NextWindowDataFlags = i xor b.i
+    infix fun xor(b: NextWindowDataFlags): NextWindowDataFlags = i xor b
+    infix fun wo(b: NextWindowDataFlags): NextWindowDataFlags = and(b.inv())
+}
+
+infix fun NextWindowDataFlags.and(b: NextWindowDataFlag): NextWindowDataFlags = and(b.i)
+infix fun NextWindowDataFlags.or(b: NextWindowDataFlag): NextWindowDataFlags = or(b.i)
+infix fun NextWindowDataFlags.xor(b: NextWindowDataFlag): NextWindowDataFlags = xor(b.i)
+infix fun NextWindowDataFlags.has(b: NextWindowDataFlag): Boolean = and(b.i) != 0
+infix fun NextWindowDataFlags.hasnt(b: NextWindowDataFlag): Boolean = and(b.i) == 0
+infix fun NextWindowDataFlags.wo(b: NextWindowDataFlag): NextWindowDataFlags = and(b.i.inv())
+
+
+typealias NextItemDataFlags = Int
+
+enum class NextItemDataFlag(val i: NextItemDataFlags) {
+    None(0),
+    HasWidth(1 shl 0),
+    HasOpen(1 shl 1);
+
+    infix fun and(b: NextItemDataFlag): NextItemDataFlags = i and b.i
+    infix fun and(b: NextItemDataFlags): NextItemDataFlags = i and b
+    infix fun or(b: NextItemDataFlag): NextItemDataFlags = i or b.i
+    infix fun or(b: NextItemDataFlags): NextItemDataFlags = i or b
+    infix fun xor(b: NextItemDataFlag): NextItemDataFlags = i xor b.i
+    infix fun xor(b: NextItemDataFlags): NextItemDataFlags = i xor b
+    infix fun wo(b: NextItemDataFlags): NextItemDataFlags = and(b.inv())
+}
+
+infix fun NextItemDataFlags.and(b: NextItemDataFlag): NextItemDataFlags = and(b.i)
+infix fun NextItemDataFlags.or(b: NextItemDataFlag): NextItemDataFlags = or(b.i)
+infix fun NextItemDataFlags.xor(b: NextItemDataFlag): NextItemDataFlags = xor(b.i)
+infix fun NextItemDataFlags.has(b: NextItemDataFlag): Boolean = and(b.i) != 0
+infix fun NextItemDataFlags.hasnt(b: NextItemDataFlag): Boolean = and(b.i) == 0
+infix fun NextItemDataFlags.wo(b: NextItemDataFlag): NextItemDataFlags = and(b.i.inv())

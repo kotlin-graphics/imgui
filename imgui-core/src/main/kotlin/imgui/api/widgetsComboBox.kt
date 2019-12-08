@@ -31,6 +31,7 @@ import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.classes.*
 import imgui.internal.*
+import imgui.internal.classes.Rect
 import imgui.internal.DrawCornerFlag as Dcf
 import uno.kotlin.getValue
 import uno.kotlin.setValue

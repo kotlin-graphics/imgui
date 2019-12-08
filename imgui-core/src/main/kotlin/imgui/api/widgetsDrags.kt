@@ -41,7 +41,8 @@ import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
 import imgui.ImGui.textEx
 import imgui.internal.DragFlag
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
+import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 
@@ -66,7 +67,7 @@ interface widgetsDrags {
     /** If v_min >= v_max we have no bound */
     fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                   format: String = "%.3f", power: Float = 1f): Boolean =
-            imgui.internalApi.withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
+            withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, power) }
 
     fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f", power: Float = 1f) =
             dragScalarN(label, DataType.Float, v, 2, vSpeed, vMin, vMax, format, power)
@@ -125,7 +126,7 @@ interface widgetsDrags {
      *
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
     fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d"): Boolean =
-            imgui.internalApi.withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
+            withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format) }
 
     fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
                 format: String = "%d"): Boolean = dragScalar(label, DataType.Int, v, vSpeed, vMin, vMax, format)
@@ -193,7 +194,7 @@ interface widgetsDrags {
     /** If vMin >= vMax we have no bound  */
     fun dragScalar(label: String, pData: FloatArray, ptr: Int = 0, vSpeed: Float, pMin: Float? = null,
                    pMax: Float? = null, format: String? = null, power: Float = 1f): Boolean =
-            imgui.internalApi.withFloat(pData, ptr) { dragScalar(label, DataType.Float, it, vSpeed, pMin, pMax, format, power) }
+            withFloat(pData, ptr) { dragScalar(label, DataType.Float, it, vSpeed, pMin, pMax, format, power) }
 
     fun <N> dragScalar(label: String, dataType: DataType,
                        pData: KMutableProperty0<N>, vSpeed: Float,
@@ -254,7 +255,7 @@ interface widgetsDrags {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         // Drag behavior
-        val valueChanged = dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, power, DragFlag.None.i)
+        val valueChanged = dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, power, DragFlag.None)
         if (valueChanged)
             markItemEdited(id)
 
@@ -284,10 +285,10 @@ interface widgetsDrags {
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             when (dataType) {
-                DataType.Int -> imgui.internalApi.withInt(v as IntArray, i) {
+                DataType.Int -> withInt(v as IntArray, i) {
                     valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, power) or valueChanged
                 }
-                DataType.Float -> imgui.internalApi.withFloat(v as FloatArray, i) {
+                DataType.Float -> withFloat(v as FloatArray, i) {
                     valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, power) or valueChanged
                 }
                 else -> error("invalid")

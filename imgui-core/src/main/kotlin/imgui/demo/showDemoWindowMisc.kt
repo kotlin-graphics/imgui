@@ -30,10 +30,10 @@ import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.MouseCursor
-import imgui.TextFilter
+import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
-import imgui.helpMarker
+import imgui.api.demoDebugInformations.Companion.helpMarker
 
 object showDemoWindowMisc {
 

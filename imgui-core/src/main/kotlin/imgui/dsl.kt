@@ -70,6 +70,7 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.treePush
 import imgui.ImGui.unindent
+import imgui.font.Font
 import kotlin.reflect.KMutableProperty0
 
 /** twin brother of dsl_ */

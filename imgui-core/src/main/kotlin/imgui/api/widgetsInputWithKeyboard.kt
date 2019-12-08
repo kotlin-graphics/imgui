@@ -47,17 +47,17 @@ interface widgetsInputWithKeyboard {
                   callback: InputTextCallback? = null, userData: Any? = null): Boolean {
 
         // TODO, enable callback and userData, related: https://github.com/kotlin-graphics/imgui/commit/082d94e359b2c262cd67c429bfff7fe3900d74cc
-        assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
+        assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
     }
 
     fun inputTextMultiline(label: String, buf: CharArray, size: Vec2 = Vec2(), flags: InputTextFlags = 0
             /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean =
-            inputTextEx(label, null, buf, size, flags or Itf.Multiline/*, callback, user_data*/)
+            inputTextEx(label, null, buf, size, flags or Itf._Multiline/*, callback, user_data*/)
 
     fun inputTextWithHint(label: String, hint: String, buf: CharArray, flags: InputTextFlags = 0
             /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean {
-        assert(flags hasnt Itf.Multiline) { "call InputTextMultiline()" }
+        assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, hint, buf, Vec2(), flags/*, callback, user_data*/)
     }
 
@@ -65,11 +65,12 @@ interface widgetsInputWithKeyboard {
                    flags: InputTextFlags = 0): Boolean =
             inputFloat(label, v, 0, step, stepFast, format, flags)
 
-    fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
-                   flags: InputTextFlags = 0): Boolean = imgui.internalApi.withFloat(v, ptr) { inputFloat(label, it, step, stepFast, format, flags) }
+    fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f,
+                   format: String = "%.3f", flags: InputTextFlags = 0): Boolean =
+            withFloat(v, ptr) { inputFloat(label, it, step, stepFast, format, flags) }
 
-    fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
-                   flags_: InputTextFlags = 0): Boolean {
+    fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
+                   format: String = "%.3f", flags_: InputTextFlags = 0): Boolean {
         val flags = flags_ or Itf.CharsScientific
         return inputScalar(label, DataType.Float, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
     }
@@ -134,7 +135,7 @@ interface widgetsInputWithKeyboard {
     fun <N> inputScalar(label: String, dataType: DataType,
                         pData: IntArray, step: Int?, stepFast: Int?,
                         format: String? = null, flags: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> =
-            imgui.internalApi.withInt(pData, 0) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
+            withInt(pData) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
 
     fun <N> inputScalar(label: String, dataType: DataType,
                         pData: KMutableProperty0<N>,
@@ -160,7 +161,7 @@ interface widgetsInputWithKeyboard {
         if (flags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
             flags = flags or Itf.CharsDecimal
         flags = flags or Itf.AutoSelectAll
-        flags = flags or Itf.NoMarkEdited  // We call MarkItemEdited() ourselve by comparing the actual data rather than the string.
+        flags = flags or Itf._NoMarkEdited  // We call MarkItemEdited() ourselve by comparing the actual data rather than the string.
 
         if (step != null) {
             val buttonSize = frameHeight
@@ -168,6 +169,7 @@ interface widgetsInputWithKeyboard {
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
             pushId(label)
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
+
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
                 valueChanged = dataTypeApplyOpFromText(buf, g.inputTextState.initialTextA, dataType, pData, format)
 
@@ -221,8 +223,8 @@ interface widgetsInputWithKeyboard {
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {
-                DataType.Float -> imgui.internalApi.withFloat(v as FloatArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
-                DataType.Int -> imgui.internalApi.withInt(v as IntArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
+                DataType.Float -> withFloat(v as FloatArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
+                DataType.Int -> withInt(v as IntArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
                 else -> error("invalid")
             } || valueChanged
             sameLine(0f, style.itemInnerSpacing.x)

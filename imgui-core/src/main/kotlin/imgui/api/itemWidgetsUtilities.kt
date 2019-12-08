@@ -1,9 +1,7 @@
 package imgui.api
 
 import gli_.hasnt
-import glm_.i
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.isMouseClicked

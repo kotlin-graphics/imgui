@@ -13,8 +13,9 @@ import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.setActiveId
-import imgui.classes.Rect
-import imgui.classes.Window
+import imgui.classes.Payload
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.internal.*
 import kool.BYTES
 import kool.lib.fill

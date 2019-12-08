@@ -4,8 +4,8 @@ import glm_.i
 import imgui.ImGui.createNewWindowSettings
 import imgui.ImGui.findWindowSettings
 import imgui.has
-import imgui.classes.WindowSettings
-import imgui.hash
+import imgui.internal.classes.WindowSettings
+import imgui.internal.hash
 import java.io.File
 import java.nio.file.Paths
 import imgui.WindowFlag as Wf

@@ -35,8 +35,10 @@ import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
+import imgui.classes.InputTextCallbackData
+import imgui.classes.TextFilter
 import imgui.dsl.popupContextItem
-import imgui.textStr
+import imgui.internal.textStr
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import java.util.*

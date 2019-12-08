@@ -23,11 +23,11 @@ import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
-import imgui.ListClipper
-import imgui.internalApi.withInt
-import imgui.classes.Rect
-import imgui.floor
+import imgui.classes.ListClipper
+import imgui.internal.classes.Rect
+import imgui.internal.floor
 import imgui.withBool
+import imgui.withInt
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -39,7 +39,7 @@ import kotlin.reflect.KMutableProperty0
 interface widgetsListBoxes {
 
     fun listBox(label: String, currentItemPtr: IntArray, items: Array<String>, heightInItems: Int = -1): Boolean =
-            withInt(currentItemPtr, 0) { listBox(label, it, items, heightInItems) }
+            withInt(currentItemPtr) { listBox(label, it, items, heightInItems) }
 
     fun listBox(label: String, currentItemPtr: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean {
 
