@@ -13,7 +13,7 @@ import imgui.ImGui.logText
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.internal.api.internal.Companion.alphaBlendColor
 import kotlin.math.max
@@ -21,7 +21,7 @@ import kotlin.math.max
 /** Render helpers
  *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
  *  NB: All position are in absolute pixels coordinates (we are never using window coordinates internally) */
-interface renderHelpers {
+internal interface renderHelpers {
 
     fun renderText(pos: Vec2, text: String, textEnd: Int = text.length, hideTextAfterHash: Boolean = true) {
 

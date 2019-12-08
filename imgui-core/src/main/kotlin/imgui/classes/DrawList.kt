@@ -1,6 +1,7 @@
 package imgui.classes
 
 import gli_.hasnt
+import glm_.L
 import glm_.f
 import glm_.func.common.max
 import glm_.glm
@@ -11,9 +12,14 @@ import imgui.ImGui.drawData
 import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
+import imgui.font.Font
 import imgui.internal.*
+import imgui.internal.classes.DrawListSharedData
+import imgui.internal.classes.Rect
 import kool.*
+import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
+import java.nio.ByteBuffer
 import java.util.Stack
 import kotlin.collections.ArrayList
 import kotlin.collections.lastIndex
@@ -44,7 +50,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Draw commands. Typically 1 command = 1 GPU draw call, unless the command is a callback.    */
     var cmdBuffer = Stack<DrawCmd>()
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
-    var idxBuffer = kool.IntBuffer(0)
+    var idxBuffer = IntBuffer(0)
     /** Vertex buffer.  */
     var vtxBuffer = DrawVert_Buffer(0)
 
@@ -1209,5 +1215,74 @@ class DrawList(sharedData: DrawListSharedData?) {
             else -> glm.acos(x)
             //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
+    }
+}
+
+private val DRAW_VERT_FLOAT_OFFSET = (DrawVert.size / Float.BYTES)
+private val DRAW_VERT_PER_UV_OFFSET = (DrawVert.ofsUv / Float.BYTES)
+
+private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
+inline class DrawVert_Buffer(val data: ByteBuffer) {
+
+    operator fun get(index: Int) = DrawVert().apply {
+        pos.put(data.asFloatBuffer(), index * DRAW_VERT_FLOAT_OFFSET)
+        uv.put(data.asFloatBuffer(), index * DRAW_VERT_FLOAT_OFFSET + DRAW_VERT_PER_UV_OFFSET)
+        col = data.getInt(index * DrawVert.size + DrawVert.ofsCol)
+    }
+
+    operator fun plusAssign(v: Vec2) {
+        data.putFloat(v.x)
+        data.putFloat(v.y)
+    }
+
+    operator fun plusAssign(i: Int) {
+        data.putInt(i)
+    }
+
+    operator fun plusAssign(f: Float) {
+        data.putFloat(f)
+    }
+
+    inline val cap: Int
+        get() = data.cap / DrawVert.size
+
+    inline var lim: Int
+        get() = data.lim / DrawVert.size
+        set(value) {
+            data.lim = value * DrawVert.size
+        }
+
+    inline var pos: Int
+        get() = data.pos / DrawVert.size
+        set(value) {
+            data.pos = value * DrawVert.size
+        }
+
+    inline val rem: Int
+        get() = data.rem / DrawVert.size
+
+    inline val size: Int
+        get() = rem
+
+    fun hasRemaining(): Boolean = rem > 0
+
+    infix fun resize(newSize: Int): DrawVert_Buffer = when {
+        newSize > cap -> reserve(growCapacity(newSize))
+        else -> this
+    }.apply { lim = newSize }
+
+    infix fun growCapacity(sz: Int): Int {
+        val newCapacity = if (cap > 0) cap + cap / 2 else 8
+        return if (newCapacity > sz) newCapacity else sz
+    }
+
+    infix fun reserve(newCapacity: Int): DrawVert_Buffer {
+        if (newCapacity <= cap)
+            return this
+        val newData = ByteBuffer(newCapacity * DrawVert.size)
+        if (lim > 0)
+            MemoryUtil.memCopy(data.adr, newData.adr, data.lim.L)
+        data.free()
+        return DrawVert_Buffer(newData)
     }
 }

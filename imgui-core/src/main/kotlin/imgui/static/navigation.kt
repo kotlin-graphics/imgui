@@ -25,6 +25,7 @@ import imgui.ImGui.isActiveIdUsingNavInput
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.isNavInputPressedAnyOfTwo
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
@@ -36,9 +37,9 @@ import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
-import imgui.classes.NavMoveResult
-import imgui.classes.Rect
-import imgui.classes.Window
+import imgui.internal.classes.NavMoveResult
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.WindowFlag as Wf
 import imgui.internal.ItemFlag as If
 import imgui.internal.*
@@ -104,7 +105,7 @@ fun navUpdate() {
                 setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
             else
                 setNavId(g.navInitResultId, g.navLayer)
-            nav.navRectRel[g.navLayer.i] = g.navInitResultRectRel
+            nav.navRectRel[g.navLayer] = g.navInitResultRectRel
         }
     g.navInitRequest = false
     g.navInitRequestFromMove = false
@@ -296,10 +297,10 @@ fun navUpdate() {
     if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == NavLayer.Main) {
         val window = g.navWindow!!
         val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
-        if (window.navRectRel[g.navLayer.i] !in windowRectRel) {
+        if (window.navRectRel[g.navLayer] !in windowRectRel) {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
-            window.navRectRel[g.navLayer.i] clipWith windowRectRel
+            window.navRectRel[g.navLayer] clipWith windowRectRel
             g.navId = 0
         }
         g.navMoveFromClampedRefRect = false
@@ -308,7 +309,7 @@ fun navUpdate() {
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
     g.navWindow.let {
         if (it != null) {
-            val navRectRel = if (!it.navRectRel[g.navLayer.i].isInverted) Rect(it.navRectRel[g.navLayer.i]) else Rect(0f, 0f, 0f, 0f)
+            val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
             g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
         } else g.navScoringRectScreen put viewportRect
     }
@@ -469,7 +470,7 @@ fun navUpdateWindowing() {
             g.navDisableMouseHover = true
             // When entering a regular menu bar with the Alt key, we always reinitialize the navigation ID.
             val newNavLayer = when {
-                it.dc.navLayerActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer.i xor 1)
+                it.dc.navLayerActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
                 else -> NavLayer.Main
             }
             navRestoreLayer(newNavLayer)
@@ -577,7 +578,7 @@ fun navUpdatePageUpPageDown(): Float {
                 endPressed -> window.setScrollY(window.scrollMax.y)
             }
         } else {
-            val navRectRel = window.navRectRel[g.navLayer.i]
+            val navRectRel = window.navRectRel[g.navLayer]
             val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() * 1f + navRectRel.height)
             var navScoringRectOffsetY = 0f
             if (Key.PageUp.isPressed(true)) {
@@ -651,8 +652,8 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     // FIXME-NAV: Introducing biases for vertical navigation, needs to be removed.
     var dbX = navScoreItemDistInterval(cand.min.x, cand.max.x, curr.min.x, curr.max.x)
     // Scale down on Y to keep using box-distance for vertically touching items
-    val dbY = navScoreItemDistInterval(imgui.lerp(cand.min.y, cand.max.y, 0.2f), imgui.lerp(cand.min.y, cand.max.y, 0.8f),
-            imgui.lerp(curr.min.y, curr.max.y, 0.2f), imgui.lerp(curr.min.y, curr.max.y, 0.8f))
+    val dbY = navScoreItemDistInterval(lerp(cand.min.y, cand.max.y, 0.2f), lerp(cand.min.y, cand.max.y, 0.8f),
+            lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f))
     if (dbY != 0f && dbX != 0f)
         dbX = dbX / 1000f + if (dbX > 0f) 1f else -1f
     val distBox = abs(dbX) + abs(dbY)
@@ -816,7 +817,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         g.navLayer = window.dc.navLayerCurrent
         g.navIdIsAlive = true
         g.navIdTabCounter = window.dc.focusCounterTab
-        window.navRectRel[window.dc.navLayerCurrent.i] = navBbRel    // Store item bounding box (relative to window position)
+        window.navRectRel[window.dc.navLayerCurrent] = navBbRel    // Store item bounding box (relative to window position)
     }
 }
 
@@ -828,7 +829,7 @@ fun navCalcPreferredRefPos(): Vec2 {
         return Vec2(g.lastValidMousePos)
     } else {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
-        val rectRel = g.navWindow!!.navRectRel[g.navLayer.i]
+        val rectRel = g.navWindow!!.navRectRel[g.navLayer]
         val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width), rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val visibleRect = viewportRect
         return glm.floor(glm.clamp(pos, visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.

@@ -14,7 +14,10 @@ import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.style
 import imgui.classes.*
+import imgui.font.Font
 import imgui.internal.*
+import imgui.internal.classes.ColorMod
+import imgui.internal.classes.StyleMod
 import imgui.internal.ItemFlag as If
 
 /** Parameters stacks */

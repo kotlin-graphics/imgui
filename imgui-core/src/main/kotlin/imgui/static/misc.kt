@@ -14,15 +14,17 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mouseCursor
+import imgui.ImGui.parseFormatFindEnd
+import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.popId
 import imgui.ImGui.pushId
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g
-import imgui.classes.Rect
-import imgui.classes.Window
-import imgui.classes.Window.Companion.resizeGripDef
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
+import imgui.internal.classes.Window.Companion.resizeGripDef
 import imgui.dsl.tooltip
 import imgui.internal.*
 import kotlin.math.max
@@ -331,4 +333,53 @@ fun updateDebugToolItemPicker() {
             textColored(getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
         }
     }
+}
+
+// truly miscellaneous
+
+// FIXME-OPT O(N)
+fun findWindowNavFocusable(iStart: Int, iStop: Int, dir: Int): Window? {
+    var i = iStart
+    while (i in g.windowsFocusOrder.indices && i != iStop) {
+        if (g.windowsFocusOrder[i].isNavFocusable)
+            return g.windowsFocusOrder[i]
+        i += dir
+    }
+    return null
+}
+
+fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
+
+    val target = g.navWindowingTarget!!
+    if (target.flags has WindowFlag._Modal) return
+
+    val iCurrent = findWindowFocusIndex(target)
+    val windowTarget = findWindowNavFocusable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
+            ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windowsFocusOrder.lastIndex else 0, iCurrent, focusChangeDir)
+    // Don't reset windowing target if there's a single window in the list
+    windowTarget?.let {
+        g.navWindowingTarget = it
+        g.navWindowingTargetAnim = it
+    }
+    g.navWindowingToggleLayer = false
+}
+
+/** FIXME-LEGACY: Prior to 1.61 our DragInt() function internally used floats and because of this the compile-time default value
+ *  for format was "%.0f".
+ *  Even though we changed the compile-time default, we expect users to have carried %f around, which would break
+ *  the display of DragInt() calls.
+ *  To honor backward compatibility we are rewriting the format string, unless IMGUI_DISABLE_OBSOLETE_FUNCTIONS is enabled.
+ *  What could possibly go wrong?! */
+fun patchFormatStringFloatToInt(fmt: String): String {
+    if (fmt == "%.0f") // Fast legacy path for "%.0f" which is expected to be the most common case.
+        return "%d"
+    val fmtStart = parseFormatFindStart(fmt)    // Find % (if any, and ignore %%)
+    // Find end of format specifier, which itself is an exercise of confidence/recklessness (because snprintf is dependent on libc or user).
+    val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+    if (fmtEnd > fmtStart && fmt[fmtEnd - 1] == 'f') {
+        if (fmtStart == 0 && fmtEnd == fmt.length)
+            return "%d"
+        return fmt.substring(0, fmtStart) + "%d" + fmt.substring(fmtEnd, fmt.length)
+    }
+    return fmt
 }

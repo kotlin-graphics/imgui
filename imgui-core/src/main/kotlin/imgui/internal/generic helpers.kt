@@ -1,9 +1,13 @@
-package imgui
+package imgui.internal
 
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
+import imgui.Dir
+import imgui.NUL
+import imgui.minus
+import imgui.plus
 import kool.BYTES
 import kool.rem
 import unsigned.toBigInt

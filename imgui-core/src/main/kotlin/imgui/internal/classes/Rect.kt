@@ -1,10 +1,10 @@
-package imgui.classes
+package imgui.internal.classes
 
 import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import imgui.floor
+import imgui.internal.floor
 
 /** An axis-aligned rectangle (2 points)
  *  2D axis aligned bounding-box

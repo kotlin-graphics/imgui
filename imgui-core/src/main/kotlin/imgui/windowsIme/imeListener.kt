@@ -5,6 +5,7 @@ import glm_.bool
 import glm_.i
 import imgui.DEBUG
 import imgui.api.g
+import imgui.imeInProgress
 import kool.adr
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
@@ -93,13 +94,13 @@ object imeListener : WindowProc() {
                         WM_IME_ENDCOMPOSITION -> "IME endComposition"
                         IMN_CHANGECANDIDATE -> "IME is about to change the content of the candidate window $l"
                         IMN_CLOSECANDIDATE -> {
-                            g.imeInProgress = false
+                            imeInProgress = false
                             "IME is about to close the candidates window $l"
                         }
                         IMN_CLOSESTATUSWINDOW -> "IME is about to close the status window"
                         IMN_GUIDELINE -> "IME is about to show an error message or other information"
                         IMN_OPENCANDIDATE -> {
-                            g.imeInProgress = true
+                            imeInProgress = true
                             "IME is about to open the candidate window $l"
                         }
                         IMN_OPENSTATUSWINDOW -> "IME is about to create the status window"

@@ -13,13 +13,14 @@ import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
-import imgui.classes.Rect
-import imgui.classes.TabBar
-import imgui.classes.itemHoveredDataBackup
+import imgui.internal.classes.Rect
+import imgui.internal.classes.TabBar
+import imgui.internal.classes.itemHoveredDataBackup
+import imgui.internal.floor
 import kotlin.math.max
 import kotlin.math.min
 
-interface tabBars {
+internal interface tabBars {
 
     // the rest of the function is inside the TabBar class
 

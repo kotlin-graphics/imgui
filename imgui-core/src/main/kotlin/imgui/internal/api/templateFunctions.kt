@@ -12,9 +12,9 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.internal.*
-import imgui.lerp
+import imgui.internal.lerp
 import kool.getValue
 import kool.setValue
 import java.util.*
@@ -24,16 +24,16 @@ import kotlin.reflect.KMutableProperty0
 /** Template functions are instantiated in imgui_widgets.cpp for a finite number of types.
  *  To use them externally (for custom widget) you may need an "extern template" statement in your code in order to link to existing instances and silence Clang warnings (see #2036).
  *  e.g. " extern template IMGUI_API float RoundScalarWithFormatT<float, float>(const char* format, ImGuiDataType data_type, float v); " */
-interface templateFunctions {
+internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls) */
     fun <N> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>,
                           vSpeed_: Float, vMin: N, vMax: N,
-                          format: String, power: Float, flags: DragFlags): Boolean where N : Number, N : Comparable<N> {
+                          format: String, power: Float, flag: DragFlag): Boolean where N : Number, N : Comparable<N> {
 
         var v by vPtr
 
-        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flag == DragFlag.Vertical) Axis.Y else Axis.X
 
         val isDecimal: Boolean
         val maxDecimal:Any = when(dataType){
@@ -65,14 +65,14 @@ interface templateFunctions {
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
         if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
-            adjustDelta = io.mouseDelta[axis.i]
+            adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
             if (io.keyShift)
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis.i]
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -168,25 +168,25 @@ interface templateFunctions {
     fun <N> sliderBehaviorT(bb: Rect, id: Int,
                             dataType: DataType, vPtr: KMutableProperty0<N>,
                             vMin: N, vMax: N, format: String,
-                            power: Float, flags: SliderFlags = 0,
+                            power: Float, flag: SliderFlag = SliderFlag.None,
                             outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> {
 
         var v by vPtr
 
-        val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flag == SliderFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isPower = power != 1f && isDecimal
 
         val grabPadding = 2f
-        val sliderSz = (bb.max[axis.i] - bb.min[axis.i]) - grabPadding * 2f
+        val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
         val vRange = (if (vMin < vMax) vMax - vMin else vMin - vMax).asSigned
         if (!isDecimal && vRange >= 0)  // vRange < 0 may happen on integer overflows
             grabSz = kotlin.math.max(sliderSz / (vRange + 1).f, style.grabMinSize)  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
-        val sliderUsablePosMin = bb.min[axis.i] + grabPadding + grabSz * 0.5f
-        val sliderUsablePosMax = bb.max[axis.i] - grabPadding - grabSz * 0.5f
+        val sliderUsablePosMin = bb.min[axis] + grabPadding + grabSz * 0.5f
+        val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
 
         // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0f
         val linearZeroPos = when (dataType) {   // 0.0->1.0f
@@ -222,7 +222,7 @@ interface templateFunctions {
                 if (!io.mouseDown[0])
                     clearActiveId()
                 else {
-                    val mouseAbsPos = io.mousePos[axis.i]
+                    val mouseAbsPos = io.mousePos[axis]
                     clickedT = when {
                         sliderUsableSz > 0f -> glm.clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f)
                         else -> 0f

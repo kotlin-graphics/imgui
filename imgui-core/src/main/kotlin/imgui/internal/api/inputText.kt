@@ -43,15 +43,20 @@ import imgui.ImGui.setFocusId
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
 import imgui.api.g
-import imgui.classes.Rect
+import imgui.classes.InputTextCallbackData
+import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.classes.TextEditState
+import uno.kotlin.getValue
+import uno.kotlin.isPrintable
+import uno.kotlin.setValue
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 
 /** InputText */
-interface inputText {
+internal interface inputText {
 
     /** InputTextEx
      *  - bufSize account for the zero-terminator, so a buf_size of 6 can hold "Hello" but not "Hello!".
@@ -60,7 +65,7 @@ interface inputText {
      *  - When active, hold on a privately held copy of the text (and apply back to 'buf'). So changing 'buf' while the InputText is active has no effect.
      *  - If you want to use ImGui::InputText() with std::string, see misc/cpp/imgui_stl.h
      *  (FIXME: Rather confusing and messy function, among the worse part of our codebase, expecting to rewrite a V2 at some point.. Partly because we are
-     *  doing UTF8 > U16 > UTF8 conversions on the go to easily interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
+     *  doing UTF8 > U16 > UTF8 conversions on the go to easily internal interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
     fun inputTextEx(label: String, hint: String?, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags,
                     callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
@@ -821,4 +826,123 @@ interface inputText {
     }
 
     fun tempInputTextIsActive(id: ID): Boolean = g.activeId == id && g.tempInputTextId == id
+
+    companion object {
+        /** Return false to discard a character.    */
+        fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?, userData: Any?): Boolean {
+
+            var c by char
+
+            // Filter non-printable (NB: isprint is unreliable! see #2467) [JVM we can rely on custom ::isPrintable]
+            if (c < 0x20 && !c.isPrintable) {
+                var pass = false
+                pass = pass or (c == '\n' && flags has InputTextFlag._Multiline)
+                pass = pass or (c == '\t' && flags has InputTextFlag.AllowTabInput)
+                if (!pass) return false
+            }
+
+            // We ignore Ascii representation of delete (emitted from Backspace on OSX, see #2578, #2817)
+            if (c.i == 127)
+                return false
+
+            // Filter private Unicode range. GLFW on OSX seems to send private characters for special keys like arrow keys (FIXME)
+            if (c >= 0xE000 && c <= 0xF8FF) return false
+
+            // Generic named filters
+            if (flags has (InputTextFlag.CharsDecimal or InputTextFlag.CharsHexadecimal or InputTextFlag.CharsUppercase or InputTextFlag.CharsNoBlank or InputTextFlag.CharsScientific)) {
+
+                if (flags has InputTextFlag.CharsDecimal)
+                    if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/')
+                        return false
+
+                if (flags has InputTextFlag.CharsScientific)
+                    if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/' && c != 'e' && c != 'E')
+                        return false
+
+                if (flags has InputTextFlag.CharsHexadecimal)
+                    if (c !in '0'..'9' && c !in 'a'..'f' && c !in 'A'..'F')
+                        return false
+
+                if (flags has InputTextFlag.CharsUppercase && c in 'a'..'z')
+                    c = c + ('A' - 'a') // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
+
+                if (flags has InputTextFlag.CharsNoBlank && c.isBlankW)
+                    return false
+            }
+
+            // Custom callback filter
+            if (flags has InputTextFlag.CallbackCharFilter) {
+                callback!! //callback is non-null from all calling functions
+                val itcd = InputTextCallbackData()
+                itcd.eventFlag = imgui.InputTextFlag.CallbackCharFilter.i
+                itcd.eventChar = c
+                itcd.flags = flags
+                itcd.userData = userData
+
+                if (callback(itcd))
+                    return false
+                if (itcd.eventChar == NUL)
+                    return false
+            }
+            return true
+        }
+
+        fun inputTextCalcTextLenAndLineCount(text: CharArray, outTextEnd: KMutableProperty0<Int>): Int {
+
+            var lineCount = 0
+            var s = 0
+            while (text.getOrElse(s++) { NUL } != NUL) // We are only matching for \n so we can ignore UTF-8 decoding
+                if (text.getOrElse(s) { NUL } == '\n')
+                    lineCount++
+            s--
+            if (text[s] != '\n' && text[s] != '\r')
+                lineCount++
+            outTextEnd.set(s)
+            return lineCount
+        }
+
+        fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remaining: KMutableProperty0<Int>? = null,
+                                   outOffset: Vec2? = null, stopOnNewLine: Boolean = false): Vec2 {
+
+            val font = g.font
+            val lineHeight = g.fontSize
+            val scale = lineHeight / font.fontSize
+
+            val textSize = Vec2()
+            var lineWidth = 0f
+
+            var s = textBegin
+            while (s < textEnd) {
+                val c = text[s++]
+                if (c == '\n') {
+                    textSize.x = glm.max(textSize.x, lineWidth)
+                    textSize.y += lineHeight
+                    lineWidth = 0f
+                    if (stopOnNewLine)
+                        break
+                    continue
+                }
+                if (c == '\r') continue
+                // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
+                val charWidth = font.getCharAdvance(c) * scale
+                lineWidth += charWidth
+            }
+
+            if (textSize.x < lineWidth)
+                textSize.x = lineWidth
+
+            // offset allow for the possibility of sitting after a trailing \n
+            outOffset?.let {
+                it.x = lineWidth
+                it.y = textSize.y + lineHeight
+            }
+
+            if (lineWidth > 0 || textSize.y == 0f)  // whereas size.y will ignore the trailing \n
+                textSize.y += lineHeight
+
+            remaining?.set(s)
+
+            return textSize
+        }
+    }
 }

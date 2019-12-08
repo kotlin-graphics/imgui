@@ -15,11 +15,12 @@ import gln.identifiers.GlVertexArray
 import gln.vertexArray.glVertexAttribPointer
 import imgui.*
 import imgui.ImGui.io
-import imgui.api.g
 import imgui.impl.mat
+import imgui.internal.DrawData
+import imgui.internal.DrawIdx
+import imgui.internal.DrawVert
 import kool.*
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11C
 import org.lwjgl.opengl.GL20C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
@@ -27,11 +28,6 @@ import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
 import org.lwjgl.system.Platform
-import unsigned.toUInt
-import java.awt.Color
-import java.awt.image.BufferedImage
-import java.io.File
-import javax.imageio.ImageIO
 
 class ImplGL3 : GLInterface {
 
@@ -312,7 +308,7 @@ class ImplGL3 : GLInterface {
         var HAS_DRAW_WITH_BASE_VERTEX = true
     }
 
-    private fun debugSave(fbWidth: Int, fbHeight: Int) {
+    /*private fun debugSave(fbWidth: Int, fbHeight: Int) {
         if (g.frameCount % 60 == 0) {
 
             glReadBuffer(GL11C.GL_BACK)
@@ -346,5 +342,5 @@ class ImplGL3 : GLInterface {
             graphicsColor.dispose()
             buffer.free()
         }
-    }
+    }*/
 }

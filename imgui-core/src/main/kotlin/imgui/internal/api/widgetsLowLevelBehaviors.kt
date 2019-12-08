@@ -35,9 +35,7 @@ import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.classes.NextItemDataFlag
-import imgui.classes.Rect
-import imgui.classes.has
+import imgui.internal.classes.Rect
 import imgui.internal.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -45,7 +43,7 @@ import kool.getValue
 import kool.setValue
 
 /** Widgets low-level behaviors */
-interface widgetsLowLevelBehaviors {
+internal interface widgetsLowLevelBehaviors {
 
     /** @return []pressed, hovered, held] */
     fun buttonBehavior(bb: Rect, id: ID, flag: ButtonFlag) = buttonBehavior(bb, id, flag.i)
@@ -236,11 +234,11 @@ interface widgetsLowLevelBehaviors {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
-                     format: String, power: Float, flags: DragFlags): Boolean =
-            withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, power, flags) }
+                     format: String, power: Float, flag: DragFlag): Boolean =
+            withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, power, flag) }
 
     fun <N : Number> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
-                                  pMax: Number?, format: String, power: Float, flags: DragFlags): Boolean {
+                                  pMax: Number?, format: String, power: Float, flag: DragFlag): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -256,7 +254,7 @@ interface widgetsLowLevelBehaviors {
                     _i = (v as Byte).i
                     val min = pMin?.let { it as Byte } ?: Byte.MIN_VALUE
                     val max = pMax?.let { it as Byte } ?: Byte.MAX_VALUE
-                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flag)
                             .also { v = _i.b as N }
                 }
 //                DataType.Ubyte -> {
@@ -270,7 +268,7 @@ interface widgetsLowLevelBehaviors {
                     _i = (v as Short).i
                     val min = pMin?.let { it as Short } ?: Short.MIN_VALUE
                     val max = pMax?.let { it as Short } ?: Short.MAX_VALUE
-                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flag)
                             .also { v = _i.s as N }
                 }
 //                is Ubyte -> {
@@ -284,7 +282,7 @@ interface widgetsLowLevelBehaviors {
                     _i = v as Int
                     val min = pMin?.let { it as Int } ?: Int.MIN_VALUE
                     val max = pMax?.let { it as Int } ?: Int.MAX_VALUE
-                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
+                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flag)
                             .also { v = _i as N }
                 }
 //                is Ubyte -> {
@@ -298,7 +296,7 @@ interface widgetsLowLevelBehaviors {
                     _L = v as Long
                     val min = pMin?.let { it as Long } ?: Long.MIN_VALUE
                     val max = pMax?.let { it as Long } ?: Long.MAX_VALUE
-                    dragBehaviorT(dataType, ::_L, vSpeed, min.L, max.L, format, power, flags)
+                    dragBehaviorT(dataType, ::_L, vSpeed, min.L, max.L, format, power, flag)
                             .also { v = _L as N }
                 }
 //                is Ubyte -> {
@@ -312,14 +310,14 @@ interface widgetsLowLevelBehaviors {
                     _f = v as Float
                     val min = pMin?.let { it as Float } ?: Float.MIN_VALUE
                     val max = pMax?.let { it as Float } ?: Float.MAX_VALUE
-                    dragBehaviorT(dataType, ::_f, vSpeed, min.f, max.f, format, power, flags)
+                    dragBehaviorT(dataType, ::_f, vSpeed, min.f, max.f, format, power, flag)
                             .also { v = _f as N }
                 }
                 DataType.Double -> {
                     _d = v as Double
                     val min = pMin?.let { it as Double } ?: Double.MIN_VALUE
                     val max = pMax?.let { it as Double } ?: Double.MAX_VALUE
-                    dragBehaviorT(dataType, ::_d, vSpeed, min.d, max.d, format, power, flags)
+                    dragBehaviorT(dataType, ::_d, vSpeed, min.d, max.d, format, power, flag)
                             .also { v = _d as N }
                 }
                 else -> error("Invalid")
@@ -332,13 +330,13 @@ interface widgetsLowLevelBehaviors {
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, power: Float,
-                       flags: SliderFlags, outGrabBb: Rect) =
-            sliderBehavior(bb, id, pV, 0, pMin, pMax, format, power, flags, outGrabBb)
+                       flag: SliderFlag, outGrabBb: Rect) =
+            sliderBehavior(bb, id, pV, 0, pMin, pMax, format, power, flag, outGrabBb)
 
     fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, pMin: Float, pMax: Float, format: String,
-                       power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean =
+                       power: Float, flag: SliderFlag, outGrabBb: Rect): Boolean =
             withFloat(pV, ptr) {
-                sliderBehavior(bb, id, DataType.Float, it, pMin, pMax, format, power, flags, outGrabBb)
+                sliderBehavior(bb, id, DataType.Float, it, pMin, pMax, format, power, flag, outGrabBb)
             }
 
 //    fun <N> sliderBehavior(bb: Rect, id: ID,
@@ -352,33 +350,33 @@ interface widgetsLowLevelBehaviors {
                            dataType: DataType, pV: KMutableProperty0<N>,
                            pMin: N, pMax: N,
                            format: String, power: Float,
-                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = when (dataType) {
+                           flag: SliderFlag, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> = when (dataType) {
 
         DataType.Byte -> {
             _i = (pV() as Byte).i
-            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
                     .also { pV.set(_i.b as N) }
         }
         DataType.Short -> {
             _i = (pV() as Short).i
-            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
                     .also { pV.set(_i.s as N) }
         }
         DataType.Int -> {
             assert(pMin as Int >= Int.MIN_VALUE / 2 && pMax as Int <= Int.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
         }
         DataType.Long -> {
             assert(pMin as Long >= Long.MIN_VALUE / 2 && pMax as Long <= Long.MAX_VALUE / 2)
-            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
         }
         DataType.Float -> {
             assert(pMin as Float >= -Float.MAX_VALUE / 2f && pMax as Float <= Float.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
         }
         DataType.Double -> {
             assert(pMin as Double >= -Double.MAX_VALUE / 2f && pMax as Double <= Double.MAX_VALUE / 2f)
-            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flags, outGrabBb)
+            sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
         }
         else -> throw Error()
     }

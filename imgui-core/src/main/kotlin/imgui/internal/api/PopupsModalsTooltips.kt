@@ -12,11 +12,11 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.classes.Window
+import imgui.internal.classes.Window
 import imgui.internal.NavLayer
-import imgui.classes.PopupData
+import imgui.internal.classes.PopupData
 import imgui.internal.PopupPositionPolicy
-import imgui.classes.Rect
+import imgui.internal.classes.Rect
 import imgui.static.navCalcPreferredRefPos
 import imgui.static.navRestoreLastChildNavWindow
 import uno.kotlin.getValue
@@ -24,7 +24,7 @@ import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 
 /** Popups, Modals, Tooltips */
-interface PopupsModalsTooltips {
+internal interface PopupsModalsTooltips {
 
     /** Mark popup as open (toggle toward open state).
      *  Popups are closed when user click outside, or activate a pressable item, or CloseCurrentPopup() is called within

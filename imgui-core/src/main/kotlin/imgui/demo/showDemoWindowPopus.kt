@@ -100,7 +100,7 @@ object showDemoWindowPopups {
             // Showing a menu with toggles
             if (button("Toggle..")) openPopup("my_toggle_popup")
             popup("my_toggle_popup") {
-                names.forEachIndexed { i, n -> withBool(toggles, i) { b -> menuItem(n, "", b) } }
+                names.forEachIndexed { i, n -> withBoolean(toggles, i) { b -> menuItem(n, "", b) } }
 
                 menu("Sub-menu") { menuItem("Click me") }
 
@@ -110,7 +110,7 @@ object showDemoWindowPopups {
 
                 if (button("Stacked Popup")) openPopup("another popup")
                 popup("another popup") {
-                    names.forEachIndexed { i, n -> withBool(toggles, i) { b -> menuItem(n, "", b) } }
+                    names.forEachIndexed { i, n -> withBoolean(toggles, i) { b -> menuItem(n, "", b) } }
                     menu("Sub-menu") {
                         menuItem("Click me")
                         button("Stacked Popup") { openPopup("another popup") }
@@ -228,14 +228,4 @@ object showDemoWindowPopups {
             separator()
         }
     }
-}
-
-private inline fun <R> withBool(bools: BooleanArray, index: Int, block: (KMutableProperty0<Boolean>) -> R): R {
-    Ref.bPtr++
-    val b = Ref::bool
-    b.set(bools[index])
-    val res = block(b)
-    bools[index] = b()
-    Ref.bPtr--
-    return res
 }
