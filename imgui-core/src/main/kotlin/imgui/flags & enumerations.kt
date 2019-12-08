@@ -398,7 +398,7 @@ enum class TabItemFlag(@JvmField val i: TabItemFlags) {
 
     // [Internal]
 
-    /** Store whether p_open is set or not, which we need to recompute WidthContents during layout. */
+    /** Store whether p_open is set or not, which we need to recompute ContentWidth during layout. */
     _NoCloseButton(1 shl 20);
 
     infix fun and(b: TabItemFlag): TabItemFlags = i and b.i
