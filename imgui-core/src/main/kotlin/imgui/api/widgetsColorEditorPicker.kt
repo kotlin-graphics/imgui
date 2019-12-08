@@ -629,9 +629,9 @@ interface widgetsColorEditorPicker {
             drawList.primVtx(trb, uvWhite, hueColor32)
             drawList.primVtx(trc, uvWhite, colWhite)
             drawList.primVtx(tra, uvWhite, 0)
-            drawList.primVtx(trb, uvWhite, colWhite)
+            drawList.primVtx(trb, uvWhite, colBlack)
             drawList.primVtx(trc, uvWhite, 0)
-            drawList.addTriangle(tra, trb, trc, COL32(128, 128, 128, 255), 1.5f)
+            drawList.addTriangle(tra, trb, trc, colMidgrey, 1.5f)
             svCursorPos put trc.lerp(tra, saturate(S)).lerp(trb, saturate(1 - V))
         } else if (flags has Cef.PickerHueBar) {
             // Render SV Square
