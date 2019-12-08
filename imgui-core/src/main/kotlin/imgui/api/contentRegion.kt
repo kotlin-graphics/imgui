@@ -14,7 +14,7 @@ interface contentRegion {
     val contentRegionMax: Vec2
         /** ~GetContentRegionMax */
         get() = g.currentWindow!!.run {
-            val mx = contentsRegionRect.max - pos
+            val mx = contentRegionRect.max - pos
             dc.currentColumns?.let { mx.x = workRect.max.x - pos.x }
             mx
         }
@@ -28,15 +28,15 @@ interface contentRegion {
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates
      *  ~GetWindowContentRegionMin  */
     val windowContentRegionMin: Vec2
-        get() = g.currentWindow!!.run { contentsRegionRect.min - pos }
+        get() = g.currentWindow!!.run { contentRegionRect.min - pos }
 
     /** content boundaries max (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(),
      * in window coordinates
      * ~GetWindowContentRegionMax   */
     val windowContentRegionMax: Vec2
-        get() = g.currentWindow!!.run { contentsRegionRect.max - pos }
+        get() = g.currentWindow!!.run { contentRegionRect.max - pos }
 
     /** ~GetWindowContentRegionWidth */
     val windowContentRegionWidth: Float
-        get() = g.currentWindow!!.contentsRegionRect.width
+        get() = g.currentWindow!!.contentRegionRect.width
 }

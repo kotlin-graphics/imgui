@@ -362,7 +362,7 @@ interface demoDebugInformations {
 
         /** Windows Rect Type */
         enum class WRT {
-            OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Contents, ContentsRegionRect;
+            OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Content, ContentRegionRect;
 
             companion object {
                 val names = values().map { it.name }
@@ -393,11 +393,11 @@ interface demoDebugInformations {
                 WRT.InnerRect -> window.innerRect
                 WRT.InnerClipRect -> window.innerClipRect
                 WRT.WorkRect -> window.workRect
-                WRT.Contents -> {
+                WRT.Content -> {
                     val min = window.innerRect.min - window.scroll + window.windowPadding
                     Rect(min, min + window.contentSize)
                 }
-                WRT.ContentsRegionRect -> window.contentsRegionRect
+                WRT.ContentRegionRect -> window.contentRegionRect
                 else -> error("invalid")
             }
 

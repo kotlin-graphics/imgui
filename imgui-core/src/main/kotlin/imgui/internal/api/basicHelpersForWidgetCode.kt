@@ -18,7 +18,6 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.classes.*
 import imgui.internal.*
 import imgui.internal.api.internal.Companion.shrinkWidthItemComparer
 import imgui.internal.classes.Rect
@@ -267,7 +266,7 @@ internal interface basicHelpersForWidgetCode {
      *  ~GetContentRegionMaxAbs */
     val contentRegionMaxAbs: Vec2
         get() = g.currentWindow!!.run {
-            val mx = Vec2(contentsRegionRect.max)
+            val mx = Vec2(contentRegionRect.max)
             dc.currentColumns?.let { mx.x = workRect.max.x }
             mx
         }
