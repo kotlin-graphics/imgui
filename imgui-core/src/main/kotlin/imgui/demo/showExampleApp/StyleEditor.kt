@@ -121,7 +121,7 @@ object StyleEditor {
         sameLine()
         if (button("Revert Ref")) g.style = ref!!
         sameLine()
-        helpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export Colors\" below to save them somewhere.")
+        helpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export\" below to save them somewhere.")
 
         separator()
 
@@ -172,7 +172,7 @@ object StyleEditor {
 
             if (beginTabItem("Colors")) {
 
-                button("Export Unsaved") {
+                button("Export") {
                     if (outputDest == 0)
                         logToClipboard()
                     else
