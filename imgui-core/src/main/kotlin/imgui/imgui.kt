@@ -4,9 +4,9 @@ import glm_.i
 import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
-import imgui.internal.ItemStatusFlags
 import imgui.classes.Rect
-import imgui.internalApi.*
+import imgui.internal.ItemStatusFlags
+import imgui.internal.api.*
 import kool.Stack
 
 
@@ -147,11 +147,11 @@ object ImGui :
         settings,
         basicAccessors,
         basicHelpersForWidgetCode,
-        imgui.internalApi.loggingCapture,
+        imgui.internal.api.loggingCapture,
         PopupsModalsTooltips,
         navigation,
         inputs,
-        imgui.internalApi.dragAndDrop,
+        imgui.internal.api.dragAndDrop,
         newColumnsAPI,
         tabBars,
         renderHelpers,

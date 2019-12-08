@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import gli_.has
 import glm_.f
@@ -124,8 +124,8 @@ interface navigation {
     fun getNavInputAmount2d(dirSources: NavDirSourceFlags, mode: InputReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
         val delta = Vec2()
         if (dirSources has NavDirSourceFlag.Keyboard)
-            delta += Vec2(getNavInputAmount(NavInput.KeyRight, mode) - getNavInputAmount(NavInput.KeyLeft, mode),
-                    getNavInputAmount(NavInput.KeyDown, mode) - getNavInputAmount(NavInput.KeyUp, mode))
+            delta += Vec2(getNavInputAmount(NavInput._KeyRight, mode) - getNavInputAmount(NavInput._KeyLeft, mode),
+                    getNavInputAmount(NavInput._KeyDown, mode) - getNavInputAmount(NavInput._KeyUp, mode))
         if (dirSources has NavDirSourceFlag.PadDPad)
             delta += Vec2(getNavInputAmount(NavInput.DpadRight, mode) - getNavInputAmount(NavInput.DpadLeft, mode),
                     getNavInputAmount(NavInput.DpadDown, mode) - getNavInputAmount(NavInput.DpadUp, mode))

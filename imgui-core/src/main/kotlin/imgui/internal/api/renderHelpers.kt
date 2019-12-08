@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import glm_.f
 import glm_.func.common.max
@@ -15,7 +15,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.classes.Rect
 import imgui.internal.*
-import imgui.internalApi.internal.Companion.alphaBlendColor
+import imgui.internal.api.internal.Companion.alphaBlendColor
 import kotlin.math.max
 
 /** Render helpers

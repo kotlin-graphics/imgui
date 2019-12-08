@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import gli_.has
 import glm_.compareTo
@@ -69,12 +69,12 @@ interface inputText {
         if (window.skipItems) return false
 
         // Can't use both together (they both use up/down keys)
-        assert(!(flags has InputTextFlag.CallbackHistory && flags has InputTextFlag.Multiline))
+        assert(!(flags has InputTextFlag.CallbackHistory && flags has InputTextFlag._Multiline))
         // Can't use both together (they both use tab key)
         assert(!(flags has InputTextFlag.CallbackCompletion && flags has InputTextFlag.AllowTabInput))
 
         val RENDER_SELECTION_WHEN_INACTIVE = false
-        val isMultiline = flags has InputTextFlag.Multiline
+        val isMultiline = flags has InputTextFlag._Multiline
         val isReadOnly = flags has InputTextFlag.ReadOnly
         val isPassword = flags has InputTextFlag.Password
         val isUndoable = flags hasnt InputTextFlag.NoUndoRedo
@@ -777,7 +777,7 @@ interface inputText {
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        if (valueChanged && flags hasnt InputTextFlag.NoMarkEdited)
+        if (valueChanged && flags hasnt InputTextFlag._NoMarkEdited)
             markItemEdited(id)
 
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
@@ -803,7 +803,7 @@ interface inputText {
         var dataBuf = pData.format(dataType, format, 32)
         dataBuf = trimBlanks(dataBuf)
         g.currentWindow!!.dc.cursorPos put bb.min
-        val flags: InputTextFlags = InputTextFlag.AutoSelectAll or InputTextFlag.NoMarkEdited or when (dataType) {
+        val flags: InputTextFlags = InputTextFlag.AutoSelectAll or InputTextFlag._NoMarkEdited or when (dataType) {
             DataType.Float, DataType.Double -> InputTextFlag.CharsScientific
             else -> InputTextFlag.CharsDecimal
         }

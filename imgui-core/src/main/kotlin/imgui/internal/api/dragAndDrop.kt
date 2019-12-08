@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import imgui.DragDropFlag
 import imgui.ID

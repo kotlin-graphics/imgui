@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import gli_.hasnt
 import glm_.f
@@ -20,7 +20,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.*
 import imgui.internal.*
-import imgui.internalApi.internal.Companion.shrinkWidthItemComparer
+import imgui.internal.api.internal.Companion.shrinkWidthItemComparer
 import imgui.static.navProcessItem
 import java.util.ArrayList
 

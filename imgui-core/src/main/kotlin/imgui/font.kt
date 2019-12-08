@@ -12,7 +12,6 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
-import imgui.internal.*
 import imgui.stb.*
 import kool.*
 import kool.lib.isNotEmpty

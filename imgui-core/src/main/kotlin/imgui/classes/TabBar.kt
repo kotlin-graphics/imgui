@@ -95,7 +95,7 @@ class TabBar {
         if (window.skipItems) return false
 
         var flags_ = flags__
-        if (flags_ hasnt TabBarFlag.DockNode)
+        if (flags_ hasnt TabBarFlag._DockNode)
             window.idStack += id
 
         // Add to stack
@@ -127,7 +127,7 @@ class TabBar {
         window.dc.cursorPos.x = barRect.min.x
 
         // Draw separator
-        val col = if (flags has TabBarFlag.IsFocused) Col.TabActive else Col.TabUnfocusedActive
+        val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
         val y = barRect.max.y - 1f
         run {
             val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
@@ -215,10 +215,10 @@ class TabBar {
         tab.widthContents = size.x
 
         if (pOpen == null)
-            flags = flags or TabItemFlag.NoCloseButton
+            flags = flags or TabItemFlag._NoCloseButton
 
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
-        val tabBarFocused = this.flags has TabBarFlag.IsFocused
+        val tabBarFocused = this.flags has TabBarFlag._IsFocused
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
         tab.lastFrameVisible = g.frameCount
         tab.flags = flags
@@ -411,7 +411,7 @@ class TabBar {
                     if (tab2.id == selectedTabId)
                         scrollTrackSelectedTabID = tab2.id
                 }
-                if (flags has TabBarFlag.SaveSettings)
+                if (flags has TabBarFlag._SaveSettings)
                     markIniSettingsDirty()
             }
             reorderRequestTabId = 0
@@ -443,7 +443,7 @@ class TabBar {
             // Refresh tab width immediately, otherwise changes of style e.g. style.FramePadding.x would noticeably lag in the tab bar.
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
-            val hasCloseButton = tab.flags hasnt TabItemFlag.NoCloseButton
+            val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
             tab.widthContents = tabItemCalcSize(tab.name, hasCloseButton).x
 
             widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.widthContents
@@ -520,7 +520,7 @@ class TabBar {
         } else scrollingSpeed = 0f
 
         // Clear name buffers
-        if (flags hasnt TabBarFlag.DockNode)
+        if (flags hasnt TabBarFlag._DockNode)
             tabsNames.clear()
     }
 
@@ -528,7 +528,7 @@ class TabBar {
      *  ~ TabBarCalcTabID   */
     infix fun calcTabID(label: String): Int {
         return when {
-            flags has TabBarFlag.DockNode -> {
+            flags has TabBarFlag._DockNode -> {
                 val id = hash(label)
                 keepAliveID(id)
                 id

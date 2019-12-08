@@ -1,4 +1,4 @@
-package imgui.internalApi
+package imgui.internal.api
 
 import glm_.glm
 import glm_.vec2.Vec2
