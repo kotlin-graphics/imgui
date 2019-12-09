@@ -51,11 +51,16 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.ImGui.windowDrawList
-import imgui.classes.*
-import imgui.dsl.indent
+import imgui.classes.DrawList
+import imgui.classes.ListClipper
+import imgui.classes.Storage
+import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
-import imgui.internal.*
+import imgui.dsl.indent
+import imgui.internal.DrawIdx
+import imgui.internal.DrawListFlag
+import imgui.internal.DrawVert
 import imgui.internal.classes.Columns
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
@@ -157,7 +162,7 @@ interface demoDebugInformations {
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
             if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
-            if (io.backendFlags has BackendFlag.RendererHasVtxOffset)           text(" RendererHasVtxOffset")
+            if (io.backendFlags has BackendFlag.RendererHasVtxOffset) text(" RendererHasVtxOffset")
             // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
@@ -218,6 +223,14 @@ interface demoDebugInformations {
                 Funcs.nodeTabBar(g.tabBars[n]!!)
             treePop()
         }
+
+        if (false)
+            if (treeNode("Docking"))
+                treePop()
+
+//        if(false)
+//        if (treeNode("Tables", "Tables ($g.tabl)", g.Tables.GetSize()))
+//            ImGui::TreePop();
 
         if (treeNode("Internal state")) {
             text("HoveredWindow: '${g.hoveredWindow?.name}'")
@@ -543,7 +556,7 @@ interface demoDebugInformations {
                 treePop()
             }
 
-            fun nodeStorage(storage: Storage, label: String)            {
+            fun nodeStorage(storage: Storage, label: String) {
                 if (!treeNode(label, "$label: ${storage.data.size} entries, ${storage.data.size * 2 * Int.BYTES} bytes"))
                     return
                 storage.data.forEach { (key, value) ->
