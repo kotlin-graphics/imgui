@@ -922,47 +922,6 @@ class Window(var context: Context, var name: String) {
     // [SECTION] FORWARD DECLARATIONS
     //-------------------------------------------------------------------------
 
-    /** Save and compare stack sizes on Begin()/End() to detect usage errors    */
-    fun checkStacksSize(write: Boolean) {
-        /*  NOT checking: DC.ItemWidth, DC.AllowKeyboardFocus, DC.ButtonRepeat, DC.TextWrapPos (per window) to allow user to
-            conveniently push once and not pop (they are cleared on Begin)  */
-        val backup = dc.stackSizesBackup
-        var ptr = 0
-
-        idStack.size.let {
-            // Too few or too many PopID()/TreePop()
-            if (write) backup[ptr++] = it
-            else assert(backup[ptr++] == it) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
-        }
-        dc.groupStack.size.let {
-            // Too few or too many EndGroup()
-            if (write) backup[ptr++] = it
-            else assert(backup[ptr++] == it) { "BeginGroup/EndGroup Mismatch!" }
-        }
-        g.beginPopupStack.size.let {
-            // Too few or too many EndMenu()/EndPopup()
-            if (write) backup[ptr++] = it
-            else assert(backup[ptr++] == it) { "BeginMenu/EndMenu or BeginPopup/EndPopup Mismatch" }
-        }
-        // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
-        g.colorModifiers.size.let {
-            // Too few or too many PopStyleColor()
-            if (write) backup[ptr++] = it
-            else assert(backup[ptr++] >= it) { "PushStyleColor/PopStyleColor Mismatch!" }
-        }
-        g.styleModifiers.size.let {
-            // Too few or too many PopStyleVar()
-            if (write) backup[ptr++] = it
-            else assert(backup[ptr++] >= it) { "PushStyleVar/PopStyleVar Mismatch!" }
-        }
-        g.fontStack.size.let {
-            // Too few or too many PopFont()
-            if (write) backup[ptr++] = it
-            else assert(backup[ptr++] >= it) { "PushFont/PopFont Mismatch!" }
-        }
-        assert(ptr == dc.stackSizesBackup.size)
-    }
-
     fun calcNextScrollFromScrollTargetAndClamp(snapOnEdges: Boolean): Vec2 {
         val scroll = Vec2(scroll)
         if (scrollTarget.x < Float.MAX_VALUE) {

@@ -9,20 +9,18 @@ import imgui.ImGui.endColumns
 import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
-import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.getColorU32
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.logFinish
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.style
-import imgui.internal.classes.Rect
+import imgui.ImGui.topMostPopupModal
 import imgui.internal.*
-import imgui.static.createNewWindow
-import imgui.static.setCurrentWindow
-import imgui.static.updateManualResize
-import imgui.static.viewportRect
+import imgui.internal.classes.Rect
+import imgui.static.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -68,7 +66,7 @@ interface windows {
     fun begin(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
         assert(name.isNotEmpty()) { "Window name required" }
-        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()" }
+        assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()" }
         assert(g.frameCountEnded != g.frameCount) { "Called ImGui::render() or ImGui::rndFrame() and haven't called ImGui::newFrame() again yet" }
 
         var flags = flags_
@@ -134,7 +132,7 @@ interface windows {
         // We intentionally set g.CurrentWindow to NULL to prevent usage until when the viewport is set, then will call SetCurrentWindow()
         g.currentWindowStack += window
         g.currentWindow = null
-        window.checkStacksSize(true)
+        errorCheckBeginEndCompareStacksSize(window, true)
         if (flags has Wf._Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
@@ -686,27 +684,34 @@ interface windows {
      *  pop it off the window stack.    */
     fun end() {
 
-        if (g.currentWindowStack.size <= 1 && g.frameScopePushedImplicitWindow) {
+        val window = g.currentWindow!!
+
+        // Error checking: verify that user hasn't called End() too many times!
+        // FIXME-ERRORHANDLING
+        if (g.currentWindowStack.size <= 1 && g.withinFrameScopeWithImplicitWindow) {
             assert(g.currentWindowStack.size > 1) { "Calling End() too many times!" }
-            return // FIXME-ERRORHANDLING
+            return
         }
         assert(g.currentWindowStack.isNotEmpty())
 
-        val window = g.currentWindow!!
+        // Error checking: verify that user doesn't directly call End() on a child window.
+        if (window.flags has Wf._ChildWindow)
+            assert(g.withinEndChild) { "Must call EndChild() and not End()!" }
 
-        if (window.dc.currentColumns != null) // close columns set if any is open
+        // Close anything that is open
+        if (window.dc.currentColumns != null)
             endColumns()
         popClipRect()   // Inner window clip rectangle
 
         // Stop logging
-//TODO            if (flags hasnt WindowFlag.ChildWindow)    // FIXME: add more options for scope of logging
-//                logFinish()
+        if (window.flags hasnt Wf._ChildWindow)    // FIXME: add more options for scope of logging
+            logFinish()
 
         // Pop from window stack
         g.currentWindowStack.pop()
         if (window.flags has Wf._Popup)
             g.beginPopupStack.pop()
-        window.checkStacksSize(false)
+        errorCheckBeginEndCompareStacksSize(window, false)
         setCurrentWindow(g.currentWindowStack.lastOrNull())
     }
 }

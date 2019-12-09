@@ -45,8 +45,12 @@ interface childWindows {
 
         val window = currentWindow
 
+        assert(!g.withinEndChild)
         assert(window.flags has Wf._ChildWindow) { "Mismatched BeginChild()/EndChild() callss" }
-        if (window.beginCount > 1) end()
+
+        g.withinEndChild = true
+        if (window.beginCount > 1)
+            end()
         else {
             /*  When using auto-filling child window, we don't provide full width/height to ItemSize so that it doesn't
                 feed back into automatic size-fitting.             */
@@ -71,5 +75,6 @@ interface childWindows {
             } else // Not navigable into
                 itemAdd(bb, 0)
         }
+        g.withinEndChild = true
     }
 }
