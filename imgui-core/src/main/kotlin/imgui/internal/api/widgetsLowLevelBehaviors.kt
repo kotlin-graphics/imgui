@@ -37,6 +37,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.TreeNodeFlag as Tnf
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import kool.getValue
@@ -451,9 +452,9 @@ internal interface widgetsLowLevelBehaviors {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val displayFrame = flags has TreeNodeFlag.Framed
+        val displayFrame = flags has Tnf.Framed
         val padding = when {
-            displayFrame || flags has TreeNodeFlag.FramePadding -> Vec2(style.framePadding)
+            displayFrame || flags has Tnf.FramePadding -> Vec2(style.framePadding)
             else -> Vec2(style.framePadding.x, window.dc.currLineTextBaseOffset min style.framePadding.y)
         }
 
@@ -463,7 +464,7 @@ internal interface widgetsLowLevelBehaviors {
         // We vertically grow up to current line height up the typical widget height.
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(
-                x1 = if (flags has TreeNodeFlag.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
+                x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
                 y1 = window.dc.cursorPos.y,
                 x2 = window.workRect.max.x,
                 y2 = window.dc.cursorPos.y + frameHeight)
@@ -482,15 +483,15 @@ internal interface widgetsLowLevelBehaviors {
 
         // For regular tree nodes, we arbitrary allow to click past 2 worth of ItemSpacing
         val interactBb = Rect(frameBb)
-        if (!displayFrame && flags hasnt (TreeNodeFlag.SpanAvailWidth or TreeNodeFlag.SpanFullWidth))
+        if (!displayFrame && flags hasnt (Tnf.SpanAvailWidth or Tnf.SpanFullWidth))
             interactBb.max.x = frameBb.min.x + textWidth + style.itemSpacing.x * 2f
 
         /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
             For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
             This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
-        val isLeaf = flags has TreeNodeFlag.Leaf
+        val isLeaf = flags has Tnf.Leaf
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
-        if (isOpen && !g.navIdIsAlive && flags has TreeNodeFlag.NavLeftJumpsBackHere && flags hasnt TreeNodeFlag.NoTreePushOnOpen)
+        if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
             window.dc.treeMayJumpToParentOnPopMask = window.dc.treeMayJumpToParentOnPopMask or (1 shl window.dc.treeDepth)
 
         val itemAdd = itemAdd(interactBb, id)
@@ -498,7 +499,7 @@ internal interface widgetsLowLevelBehaviors {
         window.dc.lastItemDisplayRect put frameBb
 
         if (!itemAdd) {
-            if (isOpen && flags hasnt TreeNodeFlag.NoTreePushOnOpen)
+            if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
             ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
@@ -510,27 +511,29 @@ internal interface widgetsLowLevelBehaviors {
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
         var buttonFlags: ButtonFlags = ButtonFlag.NoKeyModifiers.i
-        if (flags has TreeNodeFlag.AllowItemOverlap)
+        if (flags has Tnf.AllowItemOverlap)
             buttonFlags = buttonFlags or ButtonFlag.AllowItemOverlap
-        if (flags has TreeNodeFlag.OpenOnDoubleClick)
-            buttonFlags = buttonFlags or ButtonFlag.PressedOnDoubleClick or (if (flags has TreeNodeFlag.OpenOnArrow) ButtonFlag.PressedOnClickRelease else ButtonFlag.None)
+        if (flags has Tnf.OpenOnDoubleClick)
+            buttonFlags = buttonFlags or ButtonFlag.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) ButtonFlag.PressedOnClickRelease else ButtonFlag.None)
         if (!isLeaf)
             buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
 
-        val selected = flags has TreeNodeFlag.Selected
+        val selected = flags has Tnf.Selected
         val wasSelected = selected
 
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
         var toggled = false
         if (!isLeaf) {
             if (pressed) {
-                val arrowX1 = textPos.x - textOffsetX
-                val arrowX2 = arrowX1 + g.fontSize + padding.x * 2f
-                toggled = !(flags has (TreeNodeFlag.OpenOnArrow or TreeNodeFlag.OpenOnDoubleClick)) || g.navActivateId == id
-                if (flags has TreeNodeFlag.OpenOnArrow)
-                    toggled = isMouseHoveringRect(Vec2(arrowX1, interactBb.min.y), Vec2(arrowX2, interactBb.max.y)) && !g.navDisableMouseHover || toggled
-                if (flags has TreeNodeFlag.OpenOnDoubleClick)
-                    toggled = io.mouseDoubleClicked[0] || toggled
+                val hitPaddingX = style.touchExtraPadding.x
+                val arrowHitX1 = (textPos.x - textOffsetX) - hitPaddingX
+                val arrowHitX2 = (textPos.x - textOffsetX) + (g.fontSize + padding.x * 2f) + hitPaddingX
+                if (flags has Tnf.OpenOnArrow)
+                    toggled = ((io.mousePos.x >= arrowHitX1 && io.mousePos.x < arrowHitX2) && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
+                if (flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick) || g.navActivateId == id)
+                    toggled = true
+                if (flags has Tnf.OpenOnDoubleClick && io.mouseDoubleClicked[0])
+                    toggled = true
                 // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
                 if (g.dragDropActive && isOpen)
                     toggled = false
@@ -550,7 +553,7 @@ internal interface widgetsLowLevelBehaviors {
                 window.dc.stateStorage[id] = isOpen
             }
         }
-        if (flags has TreeNodeFlag.AllowItemOverlap)
+        if (flags has Tnf.AllowItemOverlap)
             setItemAllowOverlap()
 
         // In this branch, TreeNodeBehavior() cannot toggle the selection so this will never trigger.
@@ -565,13 +568,13 @@ internal interface widgetsLowLevelBehaviors {
             val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(frameBb.min, frameBb.max, bgCol.u32, true, style.frameRounding)
             renderNavHighlight(frameBb, id, navHighlightFlags)
-            if (flags has TreeNodeFlag.Bullet)
+            if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.6f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf)
                 window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y), textCol, if (isOpen) Dir.Down else Dir.Right, 1f)
             else // Leaf without bullet, left-adjusted text
                 textPos.x -= textOffsetX
-            if (flags has TreeNodeFlag._ClipLabelForTrailingButton)
+            if (flags has Tnf._ClipLabelForTrailingButton)
                 frameBb.max.x -= g.fontSize + style.framePadding.x
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
@@ -588,7 +591,7 @@ internal interface widgetsLowLevelBehaviors {
                 renderFrame(frameBb.min, frameBb.max, bgCol.u32, false)
                 renderNavHighlight(frameBb, id, navHighlightFlags)
             }
-            if (flags has TreeNodeFlag.Bullet)
+            if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf)
                 window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol, if (isOpen) Dir.Down else Dir.Right, 0.7f)
@@ -597,16 +600,16 @@ internal interface widgetsLowLevelBehaviors {
             renderText(textPos, label, labelEnd, false)
         }
 
-        if (isOpen && flags hasnt TreeNodeFlag.NoTreePushOnOpen)
+        if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
         ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
 
     /** Consume previous SetNextItemOpen() data, if any. May return true when logging */
-    fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = 0): Boolean {
+    fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = Tnf.None.i): Boolean {
 
-        if (flags has TreeNodeFlag.Leaf) return true
+        if (flags has Tnf.Leaf) return true
 
         // We only write to the tree storage if the user clicks (or explicitly use the SetNextItemOpen function)
         val window = g.currentWindow!!
@@ -628,12 +631,12 @@ internal interface widgetsLowLevelBehaviors {
                     isOpen = storedValue != 0
             }
         } else
-            isOpen = storage.int(id, if (flags has TreeNodeFlag.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
             NB- If we are above max depth we still allow manually opened nodes to be logged.    */
-        if (g.logEnabled && flags hasnt TreeNodeFlag.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand)
+        if (g.logEnabled && flags hasnt Tnf.NoAutoOpenOnLog && (window.dc.treeDepth - g.logDepthRef) < g.logDepthToExpand)
             isOpen = true
 
         return isOpen
