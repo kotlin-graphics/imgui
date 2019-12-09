@@ -1,6 +1,5 @@
 package imgui.internal.api
 
-import gli_.has
 import gli_.hasnt
 import glm_.*
 import glm_.func.common.max
@@ -17,7 +16,6 @@ import imgui.ImGui.hoveredId
 import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
@@ -197,7 +195,7 @@ internal interface widgetsLowLevelBehaviors {
 
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
-            val navActivatedByInputs = NavInput.Activate.isPressed(if (flags has Bf.Repeat) InputReadMode.Repeat else InputReadMode.Pressed)
+            val navActivatedByInputs = NavInput.Activate.isTest(if (flags has Bf.Repeat) InputReadMode.Repeat else InputReadMode.Pressed)
             if (navActivatedByCode || navActivatedByInputs)
                 pressed = true
             if (navActivatedByCode || navActivatedByInputs || g.activeId == id) {
