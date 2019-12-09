@@ -339,7 +339,8 @@ class PtrOrIndex(
     constructor(index: PoolIdx) : this(null, index)
 }
 
-/** Helper: ImPool<>. Basic keyed storage for contiguous instances, slow/amortized insertion, O(1) indexable, O(Log N) queries by ID over a dense/hot buffer,
+/** Helper: ImPool<>
+ *  Basic keyed storage for contiguous instances, slow/amortized insertion, O(1) indexable, O(Log N) queries by ID over a dense/hot buffer,
  *  Honor constructor/destructor. Add/remove invalidate all pointers. Indexes have the same lifetime as the associated object. */
 inline class PoolIdx(val i: Int)
 
