@@ -174,10 +174,10 @@ class Window(var context: Context, var name: String) {
     var stateStorage = Storage()
 
     val columnsStorage = ArrayList<Columns>()
-    /** Index into SettingsWindow[] (indices are always valid as we only grow the array from the back) */
-    var settingsIdx = -1
     /** User scale multiplier per-window, via SetWindowFontScale() */
     var fontWindowScale = 1f
+    /** Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back) */
+    var settingsOffset = -1
 
     var drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
