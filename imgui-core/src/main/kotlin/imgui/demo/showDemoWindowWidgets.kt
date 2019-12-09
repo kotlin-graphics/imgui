@@ -1,7 +1,10 @@
 package imgui.demo
 
 import gli_.has
-import glm_.*
+import glm_.b
+import glm_.glm
+import glm_.i
+import glm_.s
 import glm_.vec2.Vec2
 import glm_.vec2.operators.div
 import glm_.vec4.Vec4
@@ -75,6 +78,7 @@ import imgui.ImGui.isItemDeactivatedAfterEdit
 import imgui.ImGui.isItemEdited
 import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isItemToggledOpen
 import imgui.ImGui.isItemVisible
 import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isWindowFocused
@@ -126,6 +130,7 @@ import imgui.ImGui.textDisabled
 import imgui.ImGui.textLineHeight
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
+import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treeNodeExV
 import imgui.ImGui.treeNodeToLabelSpacing
@@ -1305,9 +1310,9 @@ object showDemoWindowWidgets {
                 itemNames.forEachIndexed { n, item ->
                     selectable(item)
 
-                    if (isItemActive && !isItemHovered())                    {
-                        val nNext = n + if(getMouseDragDelta(0).y < 0f) -1 else 1
-                        if (nNext in itemNames.indices)                        {
+                    if (isItemActive && !isItemHovered()) {
+                        val nNext = n + if (getMouseDragDelta(0).y < 0f) -1 else 1
+                        if (nNext in itemNames.indices) {
                             itemNames[n] = itemNames[nNext]
                             itemNames[nNext] = item
                             resetMouseDragDelta()
@@ -1319,7 +1324,7 @@ object showDemoWindowWidgets {
 
         treeNode("Querying Status (Active/Focused/Hovered etc.)") {
             // Submit an item (various types available) so we can query their status in the following block.
-            combo("Item Type", ::itemType, "Text\u0000Button\u0000Button (w/ repeat)\u0000Checkbox\u0000SliderFloat\u0000InputText\u0000InputFloat\u0000InputFloat3\u0000ColorEdit4\u0000MenuItem\u0000TreeNode (w/ double-click)\u0000ListBox\u0000")
+            combo("Item Type", ::itemType, "Text${NUL}Button${NUL}Button (w/ repeat)${NUL}Checkbox${NUL}SliderFloat${NUL}InputText${NUL}InputFloat${NUL}InputFloat3${NUL}ColorEdit4${NUL}MenuItem${NUL}TreeNode${NUL}TreeNode (w/ double-click)${NUL}ListBox${NUL}", 20)
             sameLine()
             helpMarker("Testing how various types of items are interacting with the IsItemXXX functions.")
             val ret = when (itemType) {
@@ -1333,8 +1338,9 @@ object showDemoWindowWidgets {
                 7 -> inputFloat3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
                 8 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
                 9 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
-                10 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
-                11 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                10 -> treeNode("ITEM: TreeNode").also { if (it) treePop() } // Testing tree node
+                11 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
+                12 -> listBox("ITEM: ListBox", ::currentItem1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                 else -> false
             }
 
@@ -1356,6 +1362,7 @@ object showDemoWindowWidgets {
                     "isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit\n" +
                     "isItemVisible = $isItemVisible\n" +
                     "isItemClicked = ${isItemClicked()}\n" +
+                    "IsItemToggledOpen = $isItemToggledOpen" +
                     "GetItemRectMin() = (%.1f, %.1f)\n" +
                     "GetItemRectMax() = (%.1f, %.1f)\n" +
                     "GetItemRectSize() = (%.1f, %.1f)", itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
