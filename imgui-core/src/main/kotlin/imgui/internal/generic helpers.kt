@@ -31,29 +31,16 @@ fun F32_TO_INT8_SAT(_val: Float) = (saturate(_val) * 255f + 0.5f).i
 
 fun round(f: Float): Float = (f + 0.5f).i.f
 
-// -----------------------------------------------------------------------------------------------------------------
-// Helpers: UTF-8 <> wchar
-// -----------------------------------------------------------------------------------------------------------------
-
-//IMGUI_API int           ImTextStrToUtf8(char* buf, int buf_size, const ImWchar* in_text, const ImWchar* in_text_end);      // return output UTF-8 bytes count
-//IMGUI_API int           ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* in_text_end);          // read one character. return input UTF-8 bytes count
-/** ~ImTextStrFromUtf8 */
-fun CharArray.textStr(src: CharArray): Int {
-    var i = 0
-    while (i < size) {
-        if (src[i] == NUL) break
-        this[i] = src[i++]
-    }
-    return i
-}
-//IMGUI_API int           ImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);                            // return number of UTF-8 code-points (NOT bytes count)
-/** return number of bytes to express one char in UTF-8 */
-fun String.countUtf8BytesFromChar(textEnd: Int) = kotlin.math.min(length, textEnd)
-//IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string in UTF-8
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Misc
 // -----------------------------------------------------------------------------------------------------------------
+fun fileLoadToMemory(filename: String): CharArray? =
+        ClassLoader.getSystemResourceAsStream(filename)?.use { s ->
+            val bytes = s.readBytes()
+            CharArray(bytes.size) { bytes[it].c }
+        }
+
 fun hash(data: IntArray, seed: Int = 0): Int {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
@@ -82,7 +69,6 @@ val GCrc32LookupTable = longArrayOf(
         0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2, 0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB, 0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0, 0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
         0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF, 0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D)
         .map { it.i }.toIntArray()
-
 
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
@@ -132,15 +118,11 @@ fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): Int {
     return crc.inv()
 }
 
-fun fileLoadToMemory(filename: String): CharArray? =
-        ClassLoader.getSystemResourceAsStream(filename)?.use { s ->
-            val bytes = s.readBytes()
-            CharArray(bytes.size) { bytes[it].c }
-        }
-
-val Char.isBlankA get() = this == ' ' || this == '\t'
-val Char.isBlankW get() = this == ' ' || this == '\t' || i == 0x3000
-val Int.isPowerOfTwo get() = this != 0 && (this and (this - 1)) == 0
+// -----------------------------------------------------------------------------------------------------------------
+// Helpers: Bit manipulation
+// -----------------------------------------------------------------------------------------------------------------
+val Int.isPowerOfTwo: Boolean
+    get() = this != 0 && (this and (this - 1)) == 0
 val Int.upperPowerOfTwo: Int
     get() {
         var v = this - 1
@@ -152,6 +134,8 @@ val Int.upperPowerOfTwo: Int
         v++
         return v
     }
+
+
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Geometry
@@ -217,7 +201,7 @@ fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
 }
 
 // -----------------------------------------------------------------------------------------------------------------
-// Helpers: String
+// Helpers: String, Formatting
 // -----------------------------------------------------------------------------------------------------------------
 
 //IMGUI_API int           ImStricmp(const char* str1, const char* str2);
@@ -263,6 +247,32 @@ fun trimBlanks(buf: CharArray): CharArray {
 //IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
 //IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
 //IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
+val Char.isBlankA: Boolean
+    get() = this == ' ' || this == '\t'
+val Char.isBlankW: Boolean
+    get() = this == ' ' || this == '\t' || i == 0x3000
+
+
+// -----------------------------------------------------------------------------------------------------------------
+// Helpers: UTF-8 <> wchar
+// -----------------------------------------------------------------------------------------------------------------
+
+//IMGUI_API int           ImTextStrToUtf8(char* buf, int buf_size, const ImWchar* in_text, const ImWchar* in_text_end);      // return output UTF-8 bytes count
+//IMGUI_API int           ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* in_text_end);          // read one character. return input UTF-8 bytes count
+/** ~ImTextStrFromUtf8 */
+fun CharArray.textStr(src: CharArray): Int {
+    var i = 0
+    while (i < size) {
+        if (src[i] == NUL) break
+        this[i] = src[i++]
+    }
+    return i
+}
+//IMGUI_API int           ImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);                            // return number of UTF-8 code-points (NOT bytes count)
+/** return number of bytes to express one char in UTF-8 */
+fun String.countUtf8BytesFromChar(textEnd: Int) = kotlin.math.min(length, textEnd)
+//IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string in UTF-8
+
 
 
 /** Find beginning-of-line
