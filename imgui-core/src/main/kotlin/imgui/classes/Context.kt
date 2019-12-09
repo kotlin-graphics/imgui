@@ -315,7 +315,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** We don't expose the ImVector<> directly */
     var dragDropPayloadBufHeap = ByteBuffer.allocate(0)
     /** Local buffer for small payloads */
-    var dragDropPayloadBufLocal = ByteBuffer.allocate(8)
+    var dragDropPayloadBufLocal = ByteBuffer.allocate(16)
 
 
     // Tab bars
