@@ -309,8 +309,7 @@ class TabItem {
     var contentWidth = 0f
 }
 
-/** Storage for window settings stored in .ini file (we keep one of those even if the actual window wasn't instanced during this session)
- *  Windows data saved in imgui.ini file
+/** Storage for a window .ini settings (we keep one of those even if the actual window wasn't instanced during this session)
  *
  *  Because we never destroy or rename ImGuiWindowSettings, we can store the names in a separate buffer easily.
  *  [JVM] We prefer keeping the `name` variable
