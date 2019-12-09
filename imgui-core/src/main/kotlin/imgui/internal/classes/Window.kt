@@ -769,6 +769,9 @@ class Window(var context: Context, var name: String) {
 
     fun renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
 
+        // Ensure that ScrollBar doesn't read last frame's SkipItems
+        skipItems = false
+
         // Draw window + handle manual resize
         // As we highlight the title bar when want_focus is set, multiple reappearing windows will have have their title bar highlighted on their reappearing frame.
         if (collapsed) {
