@@ -32,7 +32,4 @@ internal interface inputs {
     }
 
     // the rest of inputs functions are in the NavInput enum
-
-    fun isNavInputPressedAnyOfTwo(n1: NavInput, n2: NavInput, mode: InputReadMode): Boolean =
-            getNavInputAmount(n1, mode) + getNavInputAmount(n2, mode) > 0f
 }
