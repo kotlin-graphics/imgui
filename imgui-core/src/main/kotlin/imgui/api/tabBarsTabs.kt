@@ -32,7 +32,7 @@ interface tabBarsTabs {
         val window = g.currentWindow!!
         if (window.skipItems) return
 
-        val tabBar = g.currentTabBar ?: error("Mismatched BeginTabBar()/EndTabBar()!") // FIXME-ERRORHANDLING
+        val tabBar = g.currentTabBar ?: error("Mismatched BeginTabBar()/EndTabBar()!")
         if (tabBar.wantLayout)
             tabBar.layout()
 
@@ -61,7 +61,7 @@ interface tabBarsTabs {
         if (window.skipItems) return false
 
         val tabBar = g.currentTabBar
-                ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
+                ?: error("BeginTabItem() Needs to be called between BeginTabBar() and EndTabBar()!")
         return tabBar.tabItemEx(label, pOpen, flags).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]

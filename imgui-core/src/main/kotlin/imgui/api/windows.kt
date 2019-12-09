@@ -687,7 +687,6 @@ interface windows {
         val window = g.currentWindow!!
 
         // Error checking: verify that user hasn't called End() too many times!
-        // FIXME-ERRORHANDLING
         if (g.currentWindowStack.size <= 1 && g.withinFrameScopeWithImplicitWindow) {
             assert(g.currentWindowStack.size > 1) { "Calling End() too many times!" }
             return
