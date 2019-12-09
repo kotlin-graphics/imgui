@@ -121,13 +121,19 @@ interface popupsModals {
 
     /** Only call EndPopup() if BeginPopupXXX() returns true!   */
     fun endPopup() {
-        assert(currentWindow.flags has Wf._Popup) { "Mismatched BeginPopup()/EndPopup() calls" }
+        val window = g.currentWindow!!
+        assert(window.flags has Wf._Popup) { "Mismatched BeginPopup()/EndPopup() calls" }
         assert(g.beginPopupStack.isNotEmpty())
 
         // Make all menus and popups wrap around for now, may need to expose that policy.
-        navMoveRequestTryWrapping(g.currentWindow!!, NavMoveFlag.LoopY.i)
+        navMoveRequestTryWrapping(window, NavMoveFlag.LoopY.i)
 
+        // Child-popups don't need to be layed out
+        assert(!g.withinEndChild)
+        if (window.flags has Wf._ChildWindow)
+            g.withinEndChild = true
         end()
+        g.withinEndChild = false
     }
 
     /** Helper to open popup when clicked on last item.  (note: actually triggers on the mouse _released_ event to be
