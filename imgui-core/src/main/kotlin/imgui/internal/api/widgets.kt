@@ -265,7 +265,7 @@ internal interface widgets {
 
         val window = g.currentWindow!!
 
-        val id = getScrollbarID(window, axis)
+        val id = window getScrollbarID axis
         keepAliveID(id)
 
         // Calculate scrollbar bounding box
@@ -388,8 +388,7 @@ internal interface widgets {
         return held
     }
 
-    fun getScrollbarID(window: Window, axis: Axis): ID =
-            window.getIdNoKeepAlive(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
+    // GetWindowScrollbarID -> Window class
 
     /** Horizontal/vertical separating line
      *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */

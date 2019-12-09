@@ -367,11 +367,11 @@ interface main {
                 g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
-                .forEach { it.addRootWindowToDrawData() }
+                .forEach { it.addToDrawData() }
         windowsToRenderTopMost
                 .filterNotNull()
                 .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
-                .forEach { it.addRootWindowToDrawData() }
+                .forEach { it.addToDrawData() }
         g.drawDataBuilder.flattenIntoSingleLayer()
 
         // Draw software mouse cursor if requested
