@@ -83,7 +83,7 @@ interface main {
         }
 
         g.time += io.deltaTime
-        g.frameScopeActive = true
+        g.withinFrameScope = true
         g.frameCount += 1
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
@@ -263,7 +263,7 @@ interface main {
         // This fallback is particularly important as it avoid ImGui:: calls from crashing.
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
-        g.frameScopePushedImplicitWindow = true
+        g.withinFrameScopeWithImplicitWindow = true
 
         if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PostNewFrame()
@@ -276,7 +276,7 @@ interface main {
 
         assert(g.initialized)
         if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
-        assert(g.frameScopeActive) { "Forgot to call ImGui::newFrame()?" }
+        assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()?" }
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
@@ -287,18 +287,10 @@ interface main {
             g.platformImeLastPos put g.platformImePos
         }
 
-        // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you
-        // to always call End/EndChild even if Begin/BeginChild returns false! (this is unfortunately inconsistent with most other Begin* API).
-        if (g.currentWindowStack.size != 1)
-            if (g.currentWindowStack.size > 1) {
-                assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?" }
-                while (g.currentWindowStack.size > 1) // FIXME-ERRORHANDLING
-                    end()
-            } else
-                assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
+        errorCheckEndFrame()
 
         // Hide implicit/fallback "Debug" window if it hasn't been used
-        g.frameScopePushedImplicitWindow = false
+        g.withinFrameScopeWithImplicitWindow = false
         g.currentWindow?.let {
             if (!it.writeAccessed) it.active = false
         }
@@ -326,7 +318,7 @@ interface main {
         }
 
         // End frame
-        g.frameScopeActive = false
+        g.withinFrameScope = false
         g.frameCountEnded = g.frameCount
 
         // Initiate moving window + handle left-click and right-click focus
