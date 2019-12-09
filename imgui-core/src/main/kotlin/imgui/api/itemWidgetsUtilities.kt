@@ -99,6 +99,10 @@ interface itemWidgetsUtilities {
     val isItemDeactivatedAfterEdit: Boolean
         get() = isItemDeactivated && (g.activeIdPreviousFrameHasBeenEdited || (g.activeId == 0 && g.activeIdHasBeenEditedBefore))
 
+    /** was the last item open state toggled? set by TreeNode(). */
+    val isItemToggledOpen: Boolean
+        get() = g.currentWindow!!.dc.lastItemStatusFlags has ItemStatusFlag.ToggledOpen
+
     /** is any item hovered? */
     val isAnyItemHovered: Boolean
         get() = g.hoveredId != 0 || g.hoveredIdPreviousFrame != 0

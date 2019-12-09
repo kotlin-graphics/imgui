@@ -532,8 +532,8 @@ internal interface widgetsLowLevelBehaviors {
         val wasSelected = selected
 
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
-        var toggled = false
         if (!isLeaf) {
+            var toggled = false
             if (pressed) {
                 if (flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick) || g.navActivateId == id)
                     toggled = true
@@ -558,6 +558,7 @@ internal interface widgetsLowLevelBehaviors {
             if (toggled) {
                 isOpen = !isOpen
                 window.dc.stateStorage[id] = isOpen
+                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledOpen
             }
         }
         if (flags has Tnf.AllowItemOverlap)
