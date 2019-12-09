@@ -23,10 +23,6 @@ import kotlin.collections.ArrayList
 class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
-    /** Set by NewFrame(), cleared by EndFrame() */
-    var frameScopeActive = false
-    /** Set by NewFrame(), cleared by EndFrame() */
-    var frameScopePushedImplicitWindow = false
     /** Io.Fonts-> is owned by the ImGuiContext and will be destructed along with it.   */
     var fontAtlasOwnedByContext = sharedFontAtlas != null
 
@@ -49,6 +45,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var frameCountEnded = -1
 
     var frameCountRendered = -1
+    /** Set by NewFrame(), cleared by EndFrame() */
+    var withinFrameScope = false
+    /** Set by NewFrame(), cleared by EndFrame() when the implicit debug window has been pushed */
+    var withinFrameScopeWithImplicitWindow = false
+    /** Set within EndChild() */
+    var withinEndChild = false
 
 
     // Windows state
@@ -61,11 +63,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val windowsSortBuffer = ArrayList<Window>()
 
     val currentWindowStack = Stack<Window>()
-
+    /** Map window's ImGuiID to ImGuiWindow* */
     val windowsById = mutableMapOf<Int, Window>()
-
+    /** Number of unique windows submitted by frame */
     var windowsActiveCount = 0
-    /** Being drawn into    */
+    /** Window being drawn into    */
     var currentWindow: Window? = null
     /** Will catch mouse inputs */
     var hoveredWindow: Window? = null
@@ -73,7 +75,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var hoveredRootWindow: Window? = null
     /** Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow. */
     var movingWindow: Window? = null
-
+    /** Track the window we started mouse-wheeling on. Until a timer elapse or mouse has moved, generally keep scrolling the same window even if during the course of scrolling the mouse ends up hovering a child window. */
     var wheelingWindow: Window? = null
 
     var wheelingWindowRefMousePos: Vec2 = Vec2()
@@ -335,11 +337,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tempInputTextId: ID = 0
     /** Store user options for color edit widgets   */
     var colorEditOptions: ColorEditFlags = ColorEditFlag._OptionsDefault.i
-
+    /** Backup of last Hue associated to LastColor[3], so we can restore Hue in lossy RGB<>HSV round trips */
     var colorEditLastHue = 0f
 
     var colorEditLastColor = FloatArray(3) { Float.MAX_VALUE }
-
+    /** Initial/reference color at the time of opening the color picker. */
     val colorPickerRef = Vec4()
 
     var dragCurrentAccumDirty = false
@@ -379,7 +381,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val settingsWindows = ArrayList<WindowSettings>()
 
     //------------------------------------------------------------------
-    // Logging
+    // Capture/Logging
     //------------------------------------------------------------------
 
     var logEnabled = false
