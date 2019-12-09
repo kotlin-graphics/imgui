@@ -27,18 +27,14 @@ interface settingsIniUtilities {
                     /*  Parse "[Type][Name]". Note that 'Name' can itself contains [] characters, which is acceptable with
                             the current format and parsing code.                 */
                     val firstCloseBracket = s.indexOf(']')
-                    val name: String
-                    val type: String
-                    if (firstCloseBracket != s.length - 1) { // Import legacy entries that have no type
-                        type = s.substring(1, firstCloseBracket)
-                        name = s.substring(firstCloseBracket + 2, s.length - 1)
-                    } else {
-                        type = "Window"
-                        name = s.substring(1, firstCloseBracket)
+                    if(firstCloseBracket != -1 && s[firstCloseBracket + 1] == '[') {
+                        val type = s.substring(1, firstCloseBracket)
+                        val name = s.substring(firstCloseBracket + 2, s.length - 1)
+                        val typeHash = hash(type)
+                        settings = findWindowSettings(typeHash) ?: createNewWindowSettings(name)
                     }
-                    val typeHash = hash(type)
-                    settings = findWindowSettings(typeHash) ?: createNewWindowSettings(name)
-                } else settings?.apply {
+                }
+                settings?.apply {
                     when {
                         s.startsWith("Pos") -> pos put s.substring(4).split(",")
                         s.startsWith("Size") -> size put s.substring(5).split(",")
