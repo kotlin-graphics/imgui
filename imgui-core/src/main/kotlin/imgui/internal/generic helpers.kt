@@ -241,6 +241,7 @@ fun trimBlanks(buf: CharArray): CharArray {
         else -> CharArray(p - start) { buf[start + it] }
     }
 }
+//IMGUI_API const char*   ImStrSkipBlank(const char* str);
 //IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
 //IMGUI_API int           ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_list args) IM_FMTLIST(3);
 //IMGUI_API const char*   ImParseFormatFindStart(const char* format);
