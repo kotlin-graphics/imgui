@@ -87,7 +87,7 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
     if (flags hasnt WindowFlag.NoSavedSettings) {
         findWindowSettings(id)?.let { settings ->
             //  Retrieve settings from .ini file
-            settingsIdx = g.settingsWindows.indexOf(settings)
+            settingsOffset = g.settingsWindows.indexOf(settings)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
             pos put settings.pos
             collapsed = settings.collapsed

@@ -62,8 +62,8 @@ interface settingsIniUtilities {
             /** This will only return NULL in the rare instance where the window was first created with
              *  WindowFlag.NoSavedSettings then had the flag disabled later on.
              *  We don't bind settings in this case (bug #1000).    */
-            val settings = g.settingsWindows.getOrNull(window.settingsIdx) ?: findWindowSettings(window.id)
-            ?: createNewWindowSettings(window.name).also { window.settingsIdx = g.settingsWindows.indexOf(it) }
+            val settings = g.settingsWindows.getOrNull(window.settingsOffset) ?: findWindowSettings(window.id)
+            ?: createNewWindowSettings(window.name).also { window.settingsOffset = g.settingsWindows.indexOf(it) }
             assert(settings.id == window.id)
             settings.pos put window.pos
             settings.size put window.sizeFull
