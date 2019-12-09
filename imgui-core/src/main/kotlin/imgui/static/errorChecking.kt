@@ -12,7 +12,7 @@ fun errorCheckEndFrame() {
     if (g.currentWindowStack.size != 1)
         if (g.currentWindowStack.size > 1) {
             assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you forget to call End/EndChild?" }
-            while (g.currentWindowStack.size > 1) // FIXME-ERRORHANDLING
+            while (g.currentWindowStack.size > 1)
                 end()
         } else
             assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
