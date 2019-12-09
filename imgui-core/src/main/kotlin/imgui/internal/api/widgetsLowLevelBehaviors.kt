@@ -37,6 +37,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.ButtonFlag as Bf
 import imgui.TreeNodeFlag as Tnf
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -47,7 +48,7 @@ import kool.setValue
 internal interface widgetsLowLevelBehaviors {
 
     /** @return []pressed, hovered, held] */
-    fun buttonBehavior(bb: Rect, id: ID, flag: ButtonFlag) = buttonBehavior(bb, id, flag.i)
+    fun buttonBehavior(bb: Rect, id: ID, flag: Bf) = buttonBehavior(bb, id, flag.i)
 
     /** @return []pressed, hovered, held]
      *
@@ -109,17 +110,17 @@ internal interface widgetsLowLevelBehaviors {
         val window = currentWindow
         var flags = flags_
 
-        if (flags has ButtonFlag.Disabled) {
+        if (flags has Bf.Disabled) {
             if (g.activeId == id) clearActiveId()
             return BooleanArray(3)
         }
 
         // Default behavior requires click+release on same spot
-        if (flags hasnt (ButtonFlag.PressedOnClickRelease or ButtonFlag.PressedOnClick or ButtonFlag.PressedOnRelease or ButtonFlag.PressedOnDoubleClick))
-            flags = flags or ButtonFlag.PressedOnClickRelease
+        if (flags hasnt (Bf.PressedOnClickRelease or Bf.PressedOnClick or Bf.PressedOnRelease or Bf.PressedOnDoubleClick))
+            flags = flags or Bf.PressedOnClickRelease
 
         val backupHoveredWindow = g.hoveredWindow
-        val flattenHoveredChildren = flags has ButtonFlag.FlattenChildren && g.hoveredRootWindow === window
+        val flattenHoveredChildren = flags has Bf.FlattenChildren && g.hoveredRootWindow === window
         if (flattenHoveredChildren)
             g.hoveredWindow = window
 
@@ -134,7 +135,7 @@ internal interface widgetsLowLevelBehaviors {
             hovered = false
 
         // Special mode for Drag and Drop where holding button pressed for a long time while dragging another item triggers the button
-        if (g.dragDropActive && flags has ButtonFlag.PressedOnDragDropHold && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoHoldToOpenOthers)
+        if (g.dragDropActive && flags has Bf.PressedOnDragDropHold && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoHoldToOpenOthers)
             if (isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 hoveredId = id
@@ -149,30 +150,30 @@ internal interface widgetsLowLevelBehaviors {
 
         /*  AllowOverlap mode (rarely used) requires previous frame hoveredId to be null or to match. This allows using
             patterns where a later submitted widget overlaps a previous one.         */
-        if (hovered && flags has ButtonFlag.AllowItemOverlap && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
+        if (hovered && flags has Bf.AllowItemOverlap && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
             hovered = false
 
         // Mouse
         if (hovered) {
-            if (flags hasnt ButtonFlag.NoKeyModifiers || (!io.keyCtrl && !io.keyShift && !io.keyAlt)) {
+            if (flags hasnt Bf.NoKeyModifiers || (!io.keyCtrl && !io.keyShift && !io.keyAlt)) {
 
-                if (flags has ButtonFlag.PressedOnClickRelease && io.mouseClicked[0]) {
+                if (flags has Bf.PressedOnClickRelease && io.mouseClicked[0]) {
                     setActiveId(id, window)
-                    if (flags hasnt ButtonFlag.NoNavFocus)
+                    if (flags hasnt Bf.NoNavFocus)
                         setFocusId(id, window)
                     focusWindow(window)
                 }
-                if ((flags has ButtonFlag.PressedOnClick && io.mouseClicked[0]) || (flags has ButtonFlag.PressedOnDoubleClick && io.mouseDoubleClicked[0])) {
+                if ((flags has Bf.PressedOnClick && io.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && io.mouseDoubleClicked[0])) {
                     pressed = true
-                    if (flags has ButtonFlag.NoHoldingActiveID)
+                    if (flags has Bf.NoHoldingActiveID)
                         clearActiveId()
                     else
                         setActiveId(id, window) // Hold on ID
                     focusWindow(window)
                 }
-                if (flags has ButtonFlag.PressedOnRelease && io.mouseReleased[0]) {
+                if (flags has Bf.PressedOnRelease && io.mouseReleased[0]) {
                     // Repeat mode trumps <on release>
-                    if (!(flags has ButtonFlag.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay))
+                    if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay))
                         pressed = true
                     clearActiveId()
                 }
@@ -180,7 +181,7 @@ internal interface widgetsLowLevelBehaviors {
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
-                if (flags has ButtonFlag.Repeat && g.activeId == id && io.mouseDownDuration[0] > 0f && ImGui.isMouseClicked(0, true))
+                if (flags has Bf.Repeat && g.activeId == id && io.mouseDownDuration[0] > 0f && ImGui.isMouseClicked(0, true))
                     pressed = true
             }
 
@@ -191,19 +192,19 @@ internal interface widgetsLowLevelBehaviors {
         /*  Gamepad/Keyboard navigation
             We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.         */
         if (g.navId == id && !g.navDisableHighlight && g.navDisableMouseHover && (g.activeId == 0 || g.activeId == id || g.activeId == window.moveId))
-            if (flags hasnt ButtonFlag.NoHoveredOnNav)
+            if (flags hasnt Bf.NoHoveredOnNav)
                 hovered = true
 
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
-            val navActivatedByInputs = NavInput.Activate.isPressed(if (flags has ButtonFlag.Repeat) InputReadMode.Repeat else InputReadMode.Pressed)
+            val navActivatedByInputs = NavInput.Activate.isPressed(if (flags has Bf.Repeat) InputReadMode.Repeat else InputReadMode.Pressed)
             if (navActivatedByCode || navActivatedByInputs)
                 pressed = true
             if (navActivatedByCode || navActivatedByInputs || g.activeId == id) {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 g.navActivateId = id // This is so SetActiveId assign a Nav source
                 setActiveId(id, window)
-                if ((navActivatedByCode || navActivatedByInputs) && flags hasnt ButtonFlag.NoNavFocus)
+                if ((navActivatedByCode || navActivatedByInputs) && flags hasnt Bf.NoNavFocus)
                     setFocusId(id, window)
             }
         }
@@ -217,15 +218,15 @@ internal interface widgetsLowLevelBehaviors {
                 if (io.mouseDown[0])
                     held = true
                 else {
-                    if (hovered && flags has ButtonFlag.PressedOnClickRelease && !g.dragDropActive) {
-                        val isDoubleClickRelease = flags has ButtonFlag.PressedOnDoubleClick && io.mouseDownWasDoubleClick[0]
-                        val isRepeatingAlready = flags has ButtonFlag.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay // Repeat mode trumps <on release>
+                    if (hovered && flags has Bf.PressedOnClickRelease && !g.dragDropActive) {
+                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownWasDoubleClick[0]
+                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay // Repeat mode trumps <on release>
                         if (!isDoubleClickRelease && !isRepeatingAlready)
                             pressed = true
                     }
                     clearActiveId()
                 }
-                if (flags hasnt ButtonFlag.NoNavFocus)
+                if (flags hasnt Bf.NoNavFocus)
                     g.navDisableHighlight = true
             } else if (g.activeIdSource == InputSource.Nav)
                 if (g.navActivateDownId != id)
@@ -400,7 +401,7 @@ internal interface widgetsLowLevelBehaviors {
 
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
-        val (_, hovered, held) = ImGui.buttonBehavior(bbInteract, id, ButtonFlag.FlattenChildren or ButtonFlag.AllowItemOverlap)
+        val (_, hovered, held) = ImGui.buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
         if (g.activeId != id) setItemAllowOverlap()
 
         if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
@@ -510,13 +511,22 @@ internal interface widgetsLowLevelBehaviors {
                 - OpenOnDoubleClick .............. double-click anywhere to open
                 - OpenOnArrow .................... single-click on arrow to open
                 - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
-        var buttonFlags: ButtonFlags = ButtonFlag.NoKeyModifiers.i
+        var buttonFlags: ButtonFlags = Bf.None.i
         if (flags has Tnf.AllowItemOverlap)
-            buttonFlags = buttonFlags or ButtonFlag.AllowItemOverlap
+            buttonFlags = buttonFlags or Bf.AllowItemOverlap
         if (flags has Tnf.OpenOnDoubleClick)
-            buttonFlags = buttonFlags or ButtonFlag.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) ButtonFlag.PressedOnClickRelease else ButtonFlag.None)
+            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
         if (!isLeaf)
-            buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
+            buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
+
+        // We allow clicking on the arrow section with keyboard modifiers held, in order to easily
+        // allow browsing a tree while preserving selection with code implementing multi-selection patterns.
+        // When clicking on the rest of the tree node we always disallow keyboard modifiers.
+        val hitPaddingX = style.touchExtraPadding.x
+        val arrowHitX1 = (textPos.x - textOffsetX) - hitPaddingX
+        val arrowHitX2 = (textPos.x - textOffsetX) + (g.fontSize + padding.x * 2f) + hitPaddingX
+        if (window !== g.hoveredWindow || !(io.mousePos.x >= arrowHitX1 && io.mousePos.x < arrowHitX2))
+            buttonFlags = buttonFlags or Bf.NoKeyModifiers
 
         val selected = flags has Tnf.Selected
         val wasSelected = selected
@@ -525,13 +535,10 @@ internal interface widgetsLowLevelBehaviors {
         var toggled = false
         if (!isLeaf) {
             if (pressed) {
-                val hitPaddingX = style.touchExtraPadding.x
-                val arrowHitX1 = (textPos.x - textOffsetX) - hitPaddingX
-                val arrowHitX2 = (textPos.x - textOffsetX) + (g.fontSize + padding.x * 2f) + hitPaddingX
-                if (flags has Tnf.OpenOnArrow)
-                    toggled = ((io.mousePos.x >= arrowHitX1 && io.mousePos.x < arrowHitX2) && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
                 if (flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick) || g.navActivateId == id)
                     toggled = true
+                if (flags has Tnf.OpenOnArrow)
+                    toggled = ((io.mousePos.x >= arrowHitX1 && io.mousePos.x < arrowHitX2) && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
                 if (flags has Tnf.OpenOnDoubleClick && io.mouseDoubleClicked[0])
                     toggled = true
                 // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
