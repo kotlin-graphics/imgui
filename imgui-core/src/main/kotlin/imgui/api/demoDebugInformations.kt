@@ -20,6 +20,7 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
+import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameCount
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getId
@@ -203,7 +204,7 @@ interface demoDebugInformations {
         separator()
 
         Funcs.nodeWindows(g.windows, "Windows")
-        if (treeNode("DrawList", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
+        if (treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
             g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs.nodeDrawList(null, it, "DrawList") } }
             treePop()
         }
@@ -518,7 +519,10 @@ interface demoDebugInformations {
                     bulletText("$label: NULL")
                     return
                 }
-                if (!treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x${window.hashCode().asHexString}"))
+                val open = treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x${window.hashCode().asHexString}")
+                if (isItemHovered() && window.wasActive)
+                    foregroundDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
+                if (!open)
                     return
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
@@ -535,7 +539,8 @@ interface demoDebugInformations {
                 if (flags has Wf.NoNavInputs) builder += "NoNavInputs"
                 if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
-                bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f)", window.scroll.x, window.scrollMax.x, window.scroll.y, window.scrollMax.y)
+                val xy = (if(window.scrollbar.x) "X" else "") + if(window.scrollbar.y) "Y" else ""
+                bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy", window.scroll.x, window.scrollMax.x, window.scroll.y, window.scrollMax.y)
                 val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
                 bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
                 bulletText("Appearing: ${window.appearing}, Hidden: ${window.hidden} (CanSkip ${window.hiddenFramesCanSkipItems} Cannot ${window.hiddenFramesCannotSkipItems}), SkipItems: ${window.skipItems}")

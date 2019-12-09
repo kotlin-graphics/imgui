@@ -93,6 +93,7 @@ import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
+import imgui.demo.showExampleApp.MenuFile
 import imgui.dsl.child
 import imgui.dsl.group
 import imgui.dsl.indent
@@ -102,7 +103,6 @@ import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
-import imgui.demo.showExampleApp.MenuFile
 import kotlin.math.sin
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
@@ -586,18 +586,20 @@ object showDemoWindowLayout {
                     textUnformatted(names1[i])
 
                     val childFlags = if (enableExtraDecorations) Wf.MenuBar else Wf.None
-                    beginChild(getId(i), Vec2(childW, 200f), true, childFlags.i)
+                    val windowVisible = beginChild(getId(i), Vec2(childW, 200f), true, childFlags.i)
                     menuBar { textUnformatted("abc") }
                     if (scrollToOff)
                         scrollY = scrollToOffPx
                     if (scrollToPos)
                         setScrollFromPosY(cursorStartPos.y + scrollToPosPx, i * 0.25f)
-                    for (item in 0..99)
-                        if (enableTrack && item == trackItem) {
-                            textColored(Vec4(1, 1, 0, 1), "Item %d", item)
-                            setScrollHereY(i * 0.25f) // 0.0f:top, 0.5f:center, 1.0f:bottom
-                        } else
-                            text("Item $item")
+                    // Avoid calling SetScrollHereY when running with culled items
+                    if (windowVisible)
+                        for (item in 0..99)
+                            if (enableTrack && item == trackItem) {
+                                textColored(Vec4(1, 1, 0, 1), "Item %d", item)
+                                setScrollHereY(i * 0.25f) // 0.0f:top, 0.5f:center, 1.0f:bottom
+                            } else
+                                text("Item $item")
                     val scrollY = scrollY
                     val scrollMaxY = scrollMaxY
                     endChild()
@@ -613,19 +615,20 @@ object showDemoWindowLayout {
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
                 val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
-                beginChild(getId(i), Vec2(-100f, childHeight), true, childFlags)
+                val windowVisible = beginChild(getId(i), Vec2(-100f, childHeight), true, childFlags)
                 if (scrollToOff)
                     scrollX = scrollToOffPx
                 if (scrollToPos)
                     setScrollFromPosX(cursorStartPos.x + scrollToPosPx, i * 0.25f)
-                for (item in 0..99) {
-                    if (enableTrack && item == trackItem) {
-                        textColored(Vec4(1, 1, 0, 1), "Item $item")
-                        setScrollHereX(i * 0.25f) // 0.0f:left, 0.5f:center, 1.0f:right
-                    } else
-                        text("Item $item")
-                    sameLine()
-                }
+                if (windowVisible) // Avoid calling SetScrollHereY when running with culled items
+                    for (item in 0..99) {
+                        if (enableTrack && item == trackItem) {
+                            textColored(Vec4(1, 1, 0, 1), "Item $item")
+                            setScrollHereX(i * 0.25f) // 0.0f:left, 0.5f:center, 1.0f:right
+                        } else
+                            text("Item $item")
+                        sameLine()
+                    }
                 endChild()
                 sameLine()
                 text("${names2[i]}\n%.0f/%.0f", scrollX, scrollMaxX)
