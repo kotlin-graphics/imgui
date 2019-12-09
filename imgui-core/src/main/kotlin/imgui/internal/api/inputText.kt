@@ -24,7 +24,6 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.format
 import imgui.ImGui.getColorU32
-import imgui.ImGui.getScrollbarID
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
@@ -133,8 +132,8 @@ internal interface inputText {
 
         val userClicked = hovered && io.mouseClicked[0]
         val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
-        val userScrollFinish = isMultiline && state_ != null && g.activeId == 0 && g.activeIdPreviousFrame == getScrollbarID(drawWindow, Axis.Y)
-        val userScrollActive = isMultiline && state_ != null && g.activeId == getScrollbarID(drawWindow, Axis.Y)
+        val userScrollFinish = isMultiline && state_ != null && g.activeId == 0 && g.activeIdPreviousFrame == drawWindow getScrollbarID Axis.Y
+        val userScrollActive = isMultiline && state_ != null && g.activeId == drawWindow getScrollbarID Axis.Y
 
         var clearActiveId = false
         var selectAll = g.activeId != id && (flags has InputTextFlag.AutoSelectAll || userNavInputStart) && !isMultiline
