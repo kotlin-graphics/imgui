@@ -25,7 +25,6 @@ import imgui.ImGui.isActiveIdUsingNavInput
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.isNavInputPressedAnyOfTwo
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
@@ -37,17 +36,17 @@ import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
+import imgui.internal.*
 import imgui.internal.classes.NavMoveResult
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.WindowFlag as Wf
-import imgui.internal.ItemFlag as If
-import imgui.internal.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import imgui.WindowFlag as Wf
+import imgui.internal.ItemFlag as If
 
 fun navUpdate() {
 
@@ -154,7 +153,7 @@ fun navUpdate() {
     io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
-    if (NavInput.Cancel.isPressed(InputReadMode.Pressed)) {
+    if (NavInput.Cancel.isTest(InputReadMode.Pressed)) {
         if (g.activeId != 0) {
             if (!isActiveIdUsingNavInput(NavInput.Cancel))
                 clearActiveId()
@@ -189,14 +188,14 @@ fun navUpdate() {
     g.navInputId = 0
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
         val activateDown = NavInput.Activate.isDown()
-        val activatePressed = activateDown && NavInput.Activate.isPressed(InputReadMode.Pressed)
+        val activatePressed = activateDown && NavInput.Activate.isTest(InputReadMode.Pressed)
         if (g.activeId == 0 && activatePressed)
             g.navActivateId = g.navId
         if ((g.activeId == 0 || g.activeId == g.navId) && activateDown)
             g.navActivateDownId = g.navId
         if ((g.activeId == 0 || g.activeId == g.navId) && activatePressed)
             g.navActivatePressedId = g.navId
-        if ((g.activeId == 0 || g.activeId == g.navId) && NavInput.Input.isPressed(InputReadMode.Pressed))
+        if ((g.activeId == 0 || g.activeId == g.navId) && NavInput.Input.isTest(InputReadMode.Pressed))
             g.navInputId = g.navId
     }
     g.navWindow?.let { if (it.flags has Wf.NoNavInputs) g.navDisableHighlight = true }
@@ -219,14 +218,11 @@ fun navUpdate() {
         g.navMoveRequestFlags = NavMoveFlag.None.i
         g.navWindow?.let {
             if (g.navWindowingTarget == null && it.flags hasnt Wf.NoNavInputs) {
-                if (!isActiveIdUsingNavDir(Dir.Left) && isNavInputPressedAnyOfTwo(NavInput.DpadLeft, NavInput._KeyLeft, InputReadMode.Repeat))
-                    g.navMoveDir = Dir.Left
-                if (!isActiveIdUsingNavDir(Dir.Right) && isNavInputPressedAnyOfTwo(NavInput.DpadRight, NavInput._KeyRight, InputReadMode.Repeat))
-                    g.navMoveDir = Dir.Right
-                if (!isActiveIdUsingNavDir(Dir.Up) && isNavInputPressedAnyOfTwo(NavInput.DpadUp, NavInput._KeyUp, InputReadMode.Repeat))
-                    g.navMoveDir = Dir.Up
-                if (!isActiveIdUsingNavDir(Dir.Down) && isNavInputPressedAnyOfTwo(NavInput.DpadDown, NavInput._KeyDown, InputReadMode.Repeat))
-                    g.navMoveDir = Dir.Down
+                val readMode = InputReadMode.Repeat
+                if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft.isTest(readMode) || NavInput._KeyLeft.isTest(readMode))) g.navMoveDir = Dir.Left
+                if (!isActiveIdUsingNavDir(Dir.Right) && (NavInput.DpadRight.isTest(readMode) || NavInput._KeyRight.isTest(readMode))) g.navMoveDir = Dir.Right
+                if (!isActiveIdUsingNavDir(Dir.Up) && (NavInput.DpadUp.isTest(readMode) || NavInput._KeyUp.isTest(readMode))) g.navMoveDir = Dir.Up
+                if (!isActiveIdUsingNavDir(Dir.Down) && (NavInput.DpadDown.isTest(readMode) || NavInput._KeyDown.isTest(readMode))) g.navMoveDir = Dir.Down
             }
         }
         g.navMoveDir = g.navMoveDir
@@ -353,7 +349,7 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL-TAB or Square+L/R window selection
-    val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isPressed(InputReadMode.Pressed)
+    val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isTest(InputReadMode.Pressed)
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
@@ -374,7 +370,7 @@ fun navUpdateWindowing() {
             g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f))
 
             // Select window to focus
-            val focusChangeDir = NavInput.FocusPrev.isPressed(InputReadMode.RepeatSlow).i - NavInput.FocusNext.isPressed(InputReadMode.RepeatSlow).i
+            val focusChangeDir = NavInput.FocusPrev.isTest(InputReadMode.RepeatSlow).i - NavInput.FocusNext.isTest(InputReadMode.RepeatSlow).i
             if (focusChangeDir != 0) {
                 navUpdateWindowingHighlightWindow(focusChangeDir)
                 g.navWindowingHighlightAlpha = 1f
@@ -406,9 +402,9 @@ fun navUpdateWindowing() {
 
     // Keyboard: Press and Release ALT to toggle menu layer
     // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
-    if (NavInput._KeyMenu.isPressed(InputReadMode.Pressed))
+    if (NavInput._KeyMenu.isTest(InputReadMode.Pressed))
         g.navWindowingToggleLayer = true
-    if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isPressed(InputReadMode.Released))
+    if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isTest(InputReadMode.Released))
         if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
             applyToggleLayer = true
 

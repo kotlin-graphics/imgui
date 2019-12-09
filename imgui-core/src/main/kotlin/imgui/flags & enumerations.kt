@@ -697,8 +697,8 @@ enum class NavInput {
     fun isDown(): Boolean = io.navInputs[i] > 0f
 
     /** Equivalent of isKeyPressed() for NavInputs[]
-     *  ~IsNavInputPressed  */
-    fun isPressed(mode: InputReadMode): Boolean = getNavInputAmount(this, mode) > 0f
+     *  ~IsNavInputTest  */
+    fun isTest(mode: InputReadMode): Boolean = getNavInputAmount(this, mode) > 0f
 
     /** ~IsNavInputPressedAnyOfTwo  */
     fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode): Boolean = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
