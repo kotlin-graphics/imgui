@@ -28,7 +28,7 @@ enum class ButtonFlag {
     /** vertically align button to match text baseline - ButtonEx() only
      *  FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
     AlignTextBaseLine,
-    /** disable interaction if a key modifier is held */
+    /** disable mouse interaction if a key modifier is held */
     NoKeyModifiers,
     /** don't set ActiveId while holding the mouse (ButtonFlag.PressedOnClick only) */
     NoHoldingActiveID,
