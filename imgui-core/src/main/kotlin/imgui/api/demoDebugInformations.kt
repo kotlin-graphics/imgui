@@ -259,6 +259,8 @@ interface demoDebugInformations {
             // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
             if (button("Item Picker.."))
                 debugStartItemPicker()
+            sameLine()
+            helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
 
             checkbox("Show windows begin order", Companion::showWindowsBeginOrder)
             checkbox("Show windows rectangles", Companion::showWindowsRects)
