@@ -782,7 +782,7 @@ enum class BackendFlag(@JvmField val i: BackendFlags) {
     HasMouseCursors(1 shl 1),
     /** Back-end Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
     HasSetMousePos(1 shl 2),
-    /** Back-end Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bits indices. */
+    /** Back-end Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
     RendererHasVtxOffset(1 shl 3);
 
     infix fun and(b: BackendFlag): BackendFlags = i and b.i
