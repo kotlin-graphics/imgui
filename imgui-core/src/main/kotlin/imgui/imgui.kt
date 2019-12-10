@@ -92,6 +92,11 @@ var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags
         /** Custom log entry from user land into test log */
 var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { g, fmt -> }
 
+/** Last Unicode code point supported by this build. */
+const val UNICODE_CODEPOINT_MAX = 0xFFFF
+/** Standard invalid Unicode code point. */
+const val UNICODE_CODEPOINT_INVALID = 0xFFFD
+
 @JvmField
 var MINECRAFT_BEHAVIORS = false
 
