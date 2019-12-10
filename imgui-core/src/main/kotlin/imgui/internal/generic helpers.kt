@@ -34,6 +34,7 @@ fun round(f: Float): Float = (f + 0.5f).i.f
 
 // -----------------------------------------------------------------------------------------------------------------
 // Error handling
+// Down the line in some frameworks/languages we would like to have a way to redirect those to the programmer and recover from more faults.
 // -----------------------------------------------------------------------------------------------------------------
 //#ifndef IMGUI_USER_ERROR
 //#define IMGUI_USER_ERROR(_EXPR, _MSG)   IM_ASSERT((_EXPR) && (_MSG))    // Recoverable User Error
