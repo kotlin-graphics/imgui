@@ -663,7 +663,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Note: Anti-aliased filling requires points to be in clockwise order. */
     fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
-    /** rounding_corners_flags: 4-bits corresponding to which corner to round   */
+    /** rounding_corners_flags: 4 bits corresponding to which corner to round   */
     fun pathStroke(col: Int, closed: Boolean, thickness: Float = 1.0f) = addPolyline(_path, col, closed, thickness).also { pathClear() }
 
     fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {

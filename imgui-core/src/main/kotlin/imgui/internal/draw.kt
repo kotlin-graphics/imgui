@@ -25,7 +25,7 @@ typealias DrawCallback = (DrawList, DrawCmd) -> Unit
  *  Typically, 1 command = 1 gpu draw call (unless command is a callback)
  *
  *  Pre 1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields. When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset'
- *  is enabled, those fields allow us to render meshes larger than 64K vertices while keeping 16-bits indices.*/
+ *  is enabled, those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.*/
 class DrawCmd {
 
     constructor()
@@ -43,7 +43,7 @@ class DrawCmd {
     Ignore if never using images or multiple fonts atlas.   */
     var textureId: TextureID? = null
     /** Start offset in vertex buffer. Pre-1.71 or without ImGuiBackendFlags_RendererHasVtxOffset: always 0.
-     *  With ImGuiBackendFlags_RendererHasVtxOffset: may be >0 to support meshes larger than 64K vertices with 16-bits indices. */
+     *  With ImGuiBackendFlags_RendererHasVtxOffset: may be >0 to support meshes larger than 64K vertices with 16-bit indices. */
     var vtxOffset = 0
     /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
     var idxOffset = 0
@@ -73,7 +73,7 @@ class DrawCmd {
 }
 
 /** Vertex index
- *  (to allow large meshes with 16-bits indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end)
+ *  (to allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end)
  *  (to use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h) */
 typealias DrawIdx = Int
 
