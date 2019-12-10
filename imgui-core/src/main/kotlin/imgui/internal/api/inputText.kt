@@ -428,7 +428,7 @@ internal interface inputText {
                         if (c == NUL)
                             break
                         _c = c
-                        if (_c >= 0x10000 || !inputTextFilterCharacter(::_c, flags, callback, callbackUserData))
+                        if (!inputTextFilterCharacter(::_c, flags, callback, callbackUserData))
                             continue
                         clipboardFiltered[clipboardFilteredLen++] = _c
                     }
@@ -846,6 +846,10 @@ internal interface inputText {
 
             // Filter private Unicode range. GLFW on OSX seems to send private characters for special keys like arrow keys (FIXME)
             if (c >= 0xE000 && c <= 0xF8FF) return false
+
+            // Filter Unicode ranges we are not handling in this build.
+            if (c > UNICODE_CODEPOINT_MAX)
+                return false
 
             // Generic named filters
             if (flags has (InputTextFlag.CharsDecimal or InputTextFlag.CharsHexadecimal or InputTextFlag.CharsUppercase or InputTextFlag.CharsNoBlank or InputTextFlag.CharsScientific)) {

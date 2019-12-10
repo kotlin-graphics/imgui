@@ -239,7 +239,7 @@ class FontAtlas {
 //        ImVector<ImU32> UsedChars;            // Store 1-bit per Unicode code point (0=unused, 1=used)
 //
 //    ImFontGlyphRangesBuilder()          { Clear(); }
-//    inline void     Clear()             { int size_in_bytes = 0x10000 / 8; UsedChars.resize(size_in_bytes / (int)sizeof(ImU32)); memset(UsedChars.Data, 0, (size_t)size_in_bytes); }
+//    inline void     Clear()             { int size_in_bytes = UNICODE_CODEPOINT_MAX / 8; UsedChars.resize(size_in_bytes / (int)sizeof(ImU32)); memset(UsedChars.Data, 0, (size_t)size_in_bytes); }
 //    inline bool     GetBit(int n) const { int off = (n >> 5); ImU32 mask = 1u << (n & 31); return (UsedChars[off] & mask) != 0; }  // Get bit n in the array
 //    inline void     SetBit(int n)       { int off = (n >> 5); ImU32 mask = 1u << (n & 31); UsedChars[off] |= mask; }               // Set bit n in the array
 //    inline void     AddChar(ImWchar c)  { SetBit(c); }                          // Add character
@@ -277,11 +277,11 @@ class FontAtlas {
 //    +void ImFontAtlas::GlyphRangesBuilder::BuildRanges(ImVector<ImWchar>* out_ranges)
 //    +{
 //          int max_codepoint = 0x10000;
-//          for (int n = 0; n < max_codepoint; n++)
+//          for (int n = 0; n <= UNICODE_CODEPOINT_MAX; n++)
 //            if (GetBit(n))
 //                {
 //                        out_ranges->push_back((ImWchar)n);
-//                        while (n < max_codepoint - 1 && GetBit(n + 1))
+//                        while (n < max_codepoint && GetBit(n + 1))
 //                                n++;
 //                        out_ranges->push_back((ImWchar)n);
 //                    }
@@ -300,7 +300,7 @@ class FontAtlas {
      *  Read misc/fonts/README.txt for more details about using colorful icons.    */
     class CustomRect {
 
-        /** Input, User ID. Use <0x10000 to map into a font glyph, >=0x10000 for other/internal/custom texture data.   */
+        /** Input, User ID. Use < 0x110000 to map into a font glyph, >= 0x110000 for other/internal/custom texture data.   */
         var id = 0xFFFFFFFF.i
         /** Input, Desired rectangle width */
         var width = 0
@@ -310,20 +310,21 @@ class FontAtlas {
         var x = 0xFFFF
         /** Output, Packed height position in Atlas  */
         var y = 0xFFFF
-        /** Input, For custom font glyphs only (ID<0x10000): glyph xadvance */
+        /** Input, For custom font glyphs only (ID < 0x110000): glyph xadvance */
         var glyphAdvanceX = 0f
-        /** Input, For custom font glyphs only (ID<0x10000): glyph display offset   */
+        /** Input, For custom font glyphs only (ID < 0x110000): glyph display offset   */
         var glyphOffset = Vec2()
-        /** Input, For custom font glyphs only (ID<0x10000): target font    */
+        /** Input, For custom font glyphs only (ID < 0x110000): target font    */
         var font: Font? = null
 
         val isPacked: Boolean
             get() = x != 0xFFFF
     }
 
-    /** Id needs to be >= 0x10000. Id >= 0x80000000 are reserved for ImGui and DrawList   */
+    /** Id needs to be >= 0x110000. Id >= 0x80000000 are reserved for ImGui and DrawList   */
     fun addCustomRectRegular(id: Int, width: Int, height: Int): Int {
-        assert(id.toULong() >= 0x10000 && width in 0..0xFFFF && height in 0..0xFFFF)
+        // Breaking change on 2019/11/21 (1.74): ImFontAtlas::AddCustomRectRegular() now requires an ID >= 0x110000 (instead of >= 0x10000)
+        assert(id.toULong() >= 0x110000 && width in 0..0xFFFF && height in 0..0xFFFF)
         val r = CustomRect()
         r.id = id
         r.width = width
@@ -332,7 +333,7 @@ class FontAtlas {
         return customRects.lastIndex
     }
 
-    /** Id needs to be < 0x10000 to register a rectangle to map into a specific font.   */
+    /** Id needs to be < 0x110000 to register a rectangle to map into a specific font.   */
     fun addCustomRectFontGlyph(font: Font, id: Int, width: Int, height: Int, advanceX: Float, offset: Vec2 = Vec2()): Int {
         assert(width in 1..0xFFFF && height in 1..0xFFFF)
         val r = CustomRect()
@@ -831,7 +832,7 @@ class FontAtlas {
         // Register custom rectangle glyphs
         for (r in customRects) {
             val font = r.font
-            if (font == null || r.id > 0x10000) continue
+            if (font == null || r.id >= 0x110000) continue
 
             assert(font.containerAtlas === this)
             val uv0 = Vec2()
