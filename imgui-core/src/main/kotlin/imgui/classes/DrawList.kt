@@ -1218,17 +1218,13 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 }
 
-private val DRAW_VERT_FLOAT_OFFSET = (DrawVert.size / Float.BYTES)
-private val DRAW_VERT_PER_UV_OFFSET = (DrawVert.ofsUv / Float.BYTES)
-
 private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
 inline class DrawVert_Buffer(val data: ByteBuffer) {
 
-    operator fun get(index: Int) = DrawVert().apply {
-        pos.put(data.asFloatBuffer(), index * DRAW_VERT_FLOAT_OFFSET)
-        uv.put(data.asFloatBuffer(), index * DRAW_VERT_FLOAT_OFFSET + DRAW_VERT_PER_UV_OFFSET)
-        col = data.getInt(index * DrawVert.size + DrawVert.ofsCol)
-    }
+    operator fun get(index: Int) = DrawVert(
+        Vec2(data, index * DrawVert.size),
+        Vec2(data, index * DrawVert.size + DrawVert.ofsUv),
+        data.getInt(index * DrawVert.size + DrawVert.ofsCol))
 
     operator fun plusAssign(v: Vec2) {
         data.putFloat(v.x)
@@ -1270,6 +1266,8 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
         newSize > cap -> reserve(growCapacity(newSize))
         else -> this
     }.apply { lim = newSize }
+
+//    inline void         shrink(int new_size)                { IM_ASSERT(new_size <= Size); Size = new_size; }
 
     infix fun growCapacity(sz: Int): Int {
         val newCapacity = if (cap > 0) cap + cap / 2 else 8

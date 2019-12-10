@@ -8,6 +8,7 @@ import imgui.ImGui.io
 import imgui.NUL
 import imgui.api.g
 import imgui.classes.DrawList
+import imgui.internal.DrawVert
 import imgui.internal.isBlankA
 import imgui.internal.isBlankW
 import imgui.internal.round
@@ -444,7 +445,7 @@ class Font {
                         /*  We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a
                             debug builds. Inlined here:   */
 
-                        with(drawList) {
+                        drawList.apply {
                             idxBuffer += vtxCurrentIdx; idxBuffer += vtxCurrentIdx + 1; idxBuffer += vtxCurrentIdx + 2
                             idxBuffer += vtxCurrentIdx; idxBuffer += vtxCurrentIdx + 2; idxBuffer += vtxCurrentIdx + 3
                             vtxBuffer += x1; vtxBuffer += y1; vtxBuffer += u1; vtxBuffer += v1; vtxBuffer += col
@@ -463,9 +464,9 @@ class Font {
         drawList.vtxBuffer.pos = 0
         drawList.idxBuffer.pos = 0
 
-        // Give back unused vertices
-        drawList.vtxBuffer = drawList.vtxBuffer.resize(vtxWrite)
-        drawList.idxBuffer = drawList.idxBuffer.resize(idxWrite)
+        // Give back unused vertices (clipped ones, blanks) ~ this is essentially a PrimUnreserve() action.
+        drawList.vtxBuffer.lim = vtxWrite    // Same as calling shrink()
+        drawList.idxBuffer.lim = idxWrite
         drawList.cmdBuffer.last().elemCount -= (idxExpectedSize - drawList.idxBuffer.lim)
         drawList._vtxWritePtr = vtxWrite
         drawList._idxWritePtr = idxWrite
