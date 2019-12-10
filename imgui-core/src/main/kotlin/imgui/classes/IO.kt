@@ -149,7 +149,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
     /** Queue new character input */
     fun addInputCharacter(c: Char) {
-        if (c.i in 1..65535)
+        if (c.i in 1..UNICODE_CODEPOINT_MAX)
             inputQueueCharacters.add(c)
     }
 

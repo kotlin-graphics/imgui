@@ -115,7 +115,7 @@ class TextEditState {
         return if (c == '\n') -1f else g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
     }
 
-    fun keyToText(key: Int) = if (key >= 0x10000) 0 else key
+    fun keyToText(key: Int) = if (key >= 0x200000) 0 else key
     val newLine get() = '\n'
 
     var textRemaining = 0
