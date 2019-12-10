@@ -76,7 +76,10 @@ class TabBar {
     /** For non-docking tab bar we re-append names in a contiguous buffer. */
     val tabsNames = ArrayList<String>()
 
-    val TabItem.order get() = tabs.indexOf(this)
+    val TabItem.order: Int
+        get() = tabs.indexOf(this)
+
+    fun getTabName(tab: TabItem): String = tab.name
 
     val TabItem.name: String
         get() {

@@ -585,7 +585,9 @@ interface demoDebugInformations {
                         if (smallButton(">")) {
                             tabBar.queueChangeTabOrder(tab, +1)
                             sameLine()
-                            text("%02d${if (tab.id == tabBar.selectedTabId) '*' else ' '} Tab 0x%08X", tabN, tab.id)
+                            val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
+                            val s =  if(tab.nameOffset != -1) tabBar.getTabName(tab) else ""
+                            text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
                             popId()
                         }
                     }
