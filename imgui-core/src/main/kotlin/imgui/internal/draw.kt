@@ -80,11 +80,10 @@ typealias DrawIdx = Int
 /** Vertex layout
  *
  *  A single vertex (pos + uv + col = 20 bytes by default. Override layout with IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT) */
-class DrawVert {
-
-    var pos = Vec2()
-    var uv = Vec2()
-    var col = 0
+class DrawVert(
+    var pos: Vec2 = Vec2(),
+    var uv: Vec2 = Vec2(),
+    var col: Int = 0) {
 
     companion object {
         val size = 2 * Vec2.size + Int.BYTES
