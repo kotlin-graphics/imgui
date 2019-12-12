@@ -66,9 +66,7 @@ import imgui.internal.classes.TabBar
 import imgui.internal.classes.Window
 import kool.BYTES
 import kool.lim
-import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -279,7 +277,7 @@ interface demoDebugInformations {
                     }
                     unindent()
                 }
-            checkbox("Show clipping rectangle when hovering ImDrawCmd node", Companion::showDrawcmdClipRects)
+            checkbox("Show details when hovering ImDrawCmd node", ::showDrawcmdDetails)
             treePop()
         }
 
@@ -390,7 +388,7 @@ interface demoDebugInformations {
         var showWindowsRects = false
         var showWindowsRectType = WRT.InnerClipRect
         var showWindowsBeginOrder = false
-        var showDrawcmdClipRects = true
+        var showDrawcmdDetails = true
 
         var showWindow = false
 
@@ -437,7 +435,7 @@ interface demoDebugInformations {
                     return
 
                 if (window?.wasActive == false)
-                    text("(Note: owning Window is inactive: DrawList is not being rendered!)")
+                    textDisabled("Warning: owning Window is inactive. This DrawList is not being rendered!")
 
                 var elemOffset = 0
                 for (cmd in drawList.cmdBuffer) {
@@ -451,59 +449,46 @@ interface demoDebugInformations {
 
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
 
-                    // Calculate approximate coverage area (touched pixel count)
-                    // This will be in pixels squared as long there's no post-scaling happening to the ImGui output
-                    // Optionally also draw all the polys in the list in wireframe when hovering over
-
-                    var totalArea = 0f
-
-                    for (baseIdx in elemOffset until (elemOffset + cmd.elemCount) step 3) {
-                        val trianglesPos = Array(3) {
-                            val vtx_i = idxBuffer?.get(baseIdx + it) ?: baseIdx + it
-                            drawList.vtxBuffer[vtx_i].pos
-                        }
-
-                        // Calculate triangle area and accumulate
-
-                        val area = abs((trianglesPos[0].x * (trianglesPos[1].y - trianglesPos[2].y)) +
-                                (trianglesPos[1].x * (trianglesPos[2].y - trianglesPos[0].y)) +
-                                (trianglesPos[2].x * (trianglesPos[0].y - trianglesPos[1].y))) * 0.5f
-
-                        totalArea += area
-                    }
-
-                    var string = ("Draw %4d triangles, tex 0x${cmd.textureId!!.asHexString}, " +
-                            "area %.0fpx^2, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)")
-                            .format(cmd.elemCount / 3, totalArea,
-                                    cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    var string = ("DrawCmd: %4d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
+                            .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
-                    if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
+                    if (showDrawcmdDetails && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
                         for (i in elemOffset until elemOffset + cmd.elemCount)
                             vtxsRect add drawList.vtxBuffer[idxBuffer?.get(i) ?: i].pos
-                        clipRect.floor(); fgDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 0, 255, 255))
-                        vtxsRect.floor(); fgDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 255, 0, 255))
+                        fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255))
+                        fgDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(255, 255, 0, 255))
                     }
                     if (!cmdNodeOpen) continue
 
-                    // Display vertex information summary. Hover to get all triangles drawn in wireframe
-                    string = "ElemCount: ${cmd.elemCount}, ElemCount/3: ${cmd.elemCount / 3}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}"
-                    selectable(string, false)
+                    // Calculate approximate coverage area (touched pixel count)
+                    // This will be in pixels squared as long there's no post-scaling happening to the renderer output.
+                    var totalArea = 0f
+                    for (baseIdx in elemOffset until (elemOffset + cmd.elemCount) step 3) {
+                        val triangle = Array(3) {
+                            drawList.vtxBuffer[idxBuffer?.get(baseIdx + it) ?: baseIdx + it].pos
+                        }
+                        totalArea += triangleArea(triangle[0], triangle[1], triangle[2])
+                    }
 
-                    if (fgDrawList != null && isItemHovered()) {
-                        // Draw wireframe version of everything
-
+                    // Display vertex information summary. Hover to get all triangles drawn in wire-frame
+                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%0.f px".format(totalArea)
+                    selectable(string)
+                    if (fgDrawList != null && isItemHovered() && showDrawcmdDetails) {
+                        // Draw wire-frame version of everything
                         val backupFlags: DrawListFlags = fgDrawList.flags
-                        fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines at is more readable for very large and thin triangles.
-
+                        fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                        val clipRect = Rect(cmd.clipRect)
+                        fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255))
                         for (baseIdx in elemOffset until (elemOffset + cmd.elemCount) step 3) {
-                            val trianglesPos = Array(3) {
-                                val vtx_i = idxBuffer?.get(baseIdx + it) ?: (baseIdx + it)
-                                Vec2(drawList.vtxBuffer[vtx_i].pos)
+                            val triangles = Array(3) {
+                                Vec2(drawList.vtxBuffer[idxBuffer?.get(baseIdx + it) ?: (baseIdx + it)].pos)
                             }
-                            fgDrawList.addPolyline(trianglesPos.toCollection(ArrayList()), COL32(255, 255, 0, 255), true, 1f)
+                            // TODO crap solution .toCollection, if confined only here in debug we can still accept it,
+                            // otherwise consider overloading ::addPolyline with array input
+                            fgDrawList.addPolyline(triangles.toCollection(ArrayList()), COL32(255, 255, 0, 255), true, 1f)
                         }
                         fgDrawList.flags = backupFlags
                     }
@@ -512,17 +497,16 @@ interface demoDebugInformations {
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper(cmd.elemCount / 3)
                     while (clipper.step()) {
-                        var idxI = elemOffset + clipper.display.start * 3
+                        var idx_i = elemOffset + clipper.display.start * 3
                         for (prim in clipper.display.start until clipper.display.last) {
                             var bufP = 0
-                            val trianglesPos = arrayListOf(Vec2(), Vec2(), Vec2())
+                            val triangles = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
-                                val vtxI = idxBuffer?.get(idxI) ?: idxI
-                                val v = drawList.vtxBuffer[vtxI]
-                                trianglesPos[n] = v.pos
-                                val name = if (n == 0) "elem" else "    "
+                                val v = drawList.vtxBuffer[idxBuffer?.get(idx_i) ?: idx_i]
+                                triangles[n] put v.pos
+                                val name = if (n == 0) "Vert:" else "     "
                                 val s = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                                        .format(style.locale, idxI++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                                        .format(style.locale, idx_i++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                                 s.toCharArray(buf, bufP)
                                 bufP += s.length
                             }
@@ -530,12 +514,11 @@ interface demoDebugInformations {
                             selectable(String(buf), false)
                             if (fgDrawList != null && isItemHovered()) {
                                 val backupFlags = fgDrawList.flags
-                                // Disable AA on triangle outlines at is more readable for very large and thin triangles.
+                                // Disable AA on triangle outlines is more readable for very large and thin triangles.
                                 fgDrawList.flags = fgDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
-                                fgDrawList.addPolyline(trianglesPos, COL32(255, 255, 0, 255), true, 1f)
+                                fgDrawList.addPolyline(triangles, COL32(255, 255, 0, 255), true, 1f)
                                 fgDrawList.flags = backupFlags
                             }
-
                         }
                     }
                     treePop()

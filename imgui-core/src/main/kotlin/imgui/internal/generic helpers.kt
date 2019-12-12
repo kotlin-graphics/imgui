@@ -145,73 +145,10 @@ val Int.upperPowerOfTwo: Int
     }
 
 
-
-// -----------------------------------------------------------------------------------------------------------------
-// Helpers: Geometry
-// -----------------------------------------------------------------------------------------------------------------
-fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
-    val ap = p - a
-    val abDir = b - a
-    val dot = ap.x * abDir.x + ap.y * abDir.y
-    return when {
-        dot < 0f -> a
-        else -> {
-            val abLenSqr = abDir.x * abDir.x + abDir.y * abDir.y
-            return when {
-                dot > abLenSqr -> b
-                else -> a + abDir * dot / abLenSqr
-            }
-        }
-    }
-}
-
-fun triangleContainsPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Boolean {
-    val b1 = ((p.x - b.x) * (a.y - b.y) - (p.y - b.y) * (a.x - b.x)) < 0f
-    val b2 = ((p.x - c.x) * (b.y - c.y) - (p.y - c.y) * (b.x - c.x)) < 0f
-    val b3 = ((p.x - a.x) * (c.y - a.y) - (p.y - a.y) * (c.x - a.x)) < 0f
-    return b1 == b2 && b2 == b3
-}
-
-fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
-    val projAB = lineClosestPoint(a, b, p)
-    val projBC = lineClosestPoint(b, c, p)
-    val projCA = lineClosestPoint(c, a, p)
-    val dist2AB = (p - projAB).lengthSqr
-    val dist2BC = (p - projBC).lengthSqr
-    val dist2CA = (p - projCA).lengthSqr
-    val m = glm.min(dist2AB, glm.min(dist2BC, dist2CA))
-    return when (m) {
-        dist2AB -> projAB
-        dist2BC -> projBC
-        else -> projCA
-    }
-}
-
-fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
-    val v0 = b - a
-    val v1 = c - a
-    val v2 = p - a
-    val denom = v0.x * v1.y - v1.x * v0.y
-    val outV = (v2.x * v1.y - v1.x * v2.y) / denom
-    val outW = (v0.x * v2.y - v2.x * v0.y) / denom
-    val outU = 1f - outV - outW
-    return floatArrayOf(outU, outV, outW)
-}
-
-fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
-    abs(dx) > abs(dy) -> when {
-        dx > 0f -> Dir.Right
-        else -> Dir.Left
-    }
-    else -> when {
-        dy > 0f -> Dir.Down
-        else -> Dir.Up
-    }
-}
-
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: String, Formatting
 // -----------------------------------------------------------------------------------------------------------------
+
 
 //IMGUI_API int           ImStricmp(const char* str1, const char* str2);
 //IMGUI_API int           ImStrnicmp(const char* str1, const char* str2, size_t count);
@@ -250,6 +187,7 @@ fun trimBlanks(buf: CharArray): CharArray {
         else -> CharArray(p - start) { buf[start + it] }
     }
 }
+
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
 //IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
 //IMGUI_API int           ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_list args) IM_FMTLIST(3);
@@ -282,7 +220,6 @@ fun CharArray.textStr(src: CharArray): Int {
 /** return number of bytes to express one char in UTF-8 */
 fun String.countUtf8BytesFromChar(textEnd: Int) = kotlin.math.min(length, textEnd)
 //IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string in UTF-8
-
 
 
 /** Find beginning-of-line
@@ -375,4 +312,71 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
     current < target -> glm.min(current + speed, target)
     current > target -> glm.max(current - speed, target)
     else -> current
+}
+
+// -----------------------------------------------------------------------------------------------------------------
+// Helpers: Geometry
+// -----------------------------------------------------------------------------------------------------------------
+
+fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
+    val ap = p - a
+    val abDir = b - a
+    val dot = ap.x * abDir.x + ap.y * abDir.y
+    return when {
+        dot < 0f -> a
+        else -> {
+            val abLenSqr = abDir.x * abDir.x + abDir.y * abDir.y
+            return when {
+                dot > abLenSqr -> b
+                else -> a + abDir * dot / abLenSqr
+            }
+        }
+    }
+}
+
+fun triangleContainsPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Boolean {
+    val b1 = ((p.x - b.x) * (a.y - b.y) - (p.y - b.y) * (a.x - b.x)) < 0f
+    val b2 = ((p.x - c.x) * (b.y - c.y) - (p.y - c.y) * (b.x - c.x)) < 0f
+    val b3 = ((p.x - a.x) * (c.y - a.y) - (p.y - a.y) * (c.x - a.x)) < 0f
+    return b1 == b2 && b2 == b3
+}
+
+fun triangleClosestPoint(a: Vec2, b: Vec2, c: Vec2, p: Vec2): Vec2 {
+    val projAB = lineClosestPoint(a, b, p)
+    val projBC = lineClosestPoint(b, c, p)
+    val projCA = lineClosestPoint(c, a, p)
+    val dist2AB = (p - projAB).lengthSqr
+    val dist2BC = (p - projBC).lengthSqr
+    val dist2CA = (p - projCA).lengthSqr
+    val m = glm.min(dist2AB, glm.min(dist2BC, dist2CA))
+    return when (m) {
+        dist2AB -> projAB
+        dist2BC -> projBC
+        else -> projCA
+    }
+}
+
+fun triangleBarycentricCoords(a: Vec2, b: Vec2, c: Vec2, p: Vec2): FloatArray {
+    val v0 = b - a
+    val v1 = c - a
+    val v2 = p - a
+    val denom = v0.x * v1.y - v1.x * v0.y
+    val outV = (v2.x * v1.y - v1.x * v2.y) / denom
+    val outW = (v0.x * v2.y - v2.x * v0.y) / denom
+    val outU = 1f - outV - outW
+    return floatArrayOf(outU, outV, outW)
+}
+
+fun triangleArea(a: Vec2, b: Vec2, c: Vec2): Float =
+        abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y))) * 0.5f
+
+fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
+    abs(dx) > abs(dy) -> when {
+        dx > 0f -> Dir.Right
+        else -> Dir.Left
+    }
+    else -> when {
+        dy > 0f -> Dir.Down
+        else -> Dir.Up
+    }
 }
