@@ -465,7 +465,7 @@ interface demoDebugInformations {
 
                         // Calculate triangle area and accumulate
 
-                        val area = ((trianglesPos[0].x * (trianglesPos[1].y - trianglesPos[2].y)) +
+                        val area = abs((trianglesPos[0].x * (trianglesPos[1].y - trianglesPos[2].y)) +
                                 (trianglesPos[1].x * (trianglesPos[2].y - trianglesPos[0].y)) +
                                 (trianglesPos[2].x * (trianglesPos[0].y - trianglesPos[1].y))) * 0.5f
 
@@ -503,10 +503,8 @@ interface demoDebugInformations {
                                 val vtx_i = idxBuffer?.get(baseIdx + it) ?: (baseIdx + it)
                                 Vec2(drawList.vtxBuffer[vtx_i].pos)
                             }
-
                             fgDrawList.addPolyline(trianglesPos.toCollection(ArrayList()), COL32(255, 255, 0, 255), true, 1f)
                         }
-
                         fgDrawList.flags = backupFlags
                     }
 
