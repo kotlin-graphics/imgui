@@ -254,7 +254,7 @@ object StyleEditor {
                         text("Fallback character: '${font.fallbackChar}' (U+%04X)", font.fallbackChar)
                         text("Ellipsis character: '${font.ellipsisChar}' (U+%04X)", font.ellipsisChar)
                         val side = sqrt(font.metricsTotalSurface.f).i
-                        text("Texture surface: ${font.metricsTotalSurface} pixels (approx) ~ ${side}x$side")
+                        text("Texture Area: about ${font.metricsTotalSurface} px ~${side}x$side px")
                         for (c in 0 until font.configDataCount)
                             font.configData.getOrNull(c)?.let {
                                 bulletText("Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}")
