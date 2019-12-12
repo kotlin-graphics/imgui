@@ -5,8 +5,6 @@ import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
 import imgui.classes.Context
-import imgui.classes.InputTextCallbackData
-import imgui.classes.SizeCallbackData
 import imgui.internal.ItemStatusFlags
 import imgui.internal.api.*
 import imgui.internal.classes.Rect
