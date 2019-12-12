@@ -250,7 +250,7 @@ final class BgfxDemoUtil {
     }
 
     static void lookAt(Vec3 at, Vec3 eye, Mat4 dest) {
-        glm.INSTANCE.lookAtLh(eye, at, new Vec3(0, 1, 0), dest);
+        glm.INSTANCE.lookAtLH(eye, at, new Vec3(0, 1, 0), dest);
     }
 
     static void perspective(float fov, int width, int height, float near, float far, Mat4 dest) {
