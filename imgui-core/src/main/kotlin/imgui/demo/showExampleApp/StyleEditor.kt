@@ -211,7 +211,7 @@ object StyleEditor {
                                 if (style.colors[i] != ref!!.colors[i]) {
                                     /*  Tips: in a real user application, you may want to merge and use an icon font into
                                         the main font, so instead of "Save"/"Revert" you'd use icons.
-                                        Read the FAQ and misc/fonts/README.txt about using icon fonts. It's really easy
+                                        Read the FAQ and docs/FONTS.txt about using icon fonts. It's really easy
                                         and super convenient!  */
                                     sameLine(0f, style.itemInnerSpacing.x)
                                     if (button("Save")) ref!!.colors[i] = Vec4(style.colors[i])
@@ -230,7 +230,7 @@ object StyleEditor {
 
             if (beginTabItem("Fonts")) {
                 val atlas = io.fonts
-                helpMarker("Read FAQ and misc/fonts/README.txt for details on font loading.")
+                helpMarker("Read FAQ and docs/FONTS.txt for details on font loading.")
                 pushItemWidth(120)
                 atlas.fonts.forEachIndexed { i, font ->
                     pushId(font)

@@ -615,7 +615,7 @@ object showDemoWindowWidgets {
             }
             treeNode("JVM UTF-16 Unicode with surrogate characters") {
                 /*  UTF-8 test with Japanese characters
-                    (Needs a suitable font, try Noto, or Arial Unicode, or M+ fonts. Read misc/fonts/README.txt for details.)
+                    (Needs a suitable font, try Noto, or Arial Unicode, or M+ fonts. Read docs/FONTS.txt for details.)
                     - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
                     - For earlier compiler, you may be able to encode your sources as UTF-8 (e.g. Visual Studio save your file
                         as 'UTF-8 without signature')
@@ -624,7 +624,7 @@ object showDemoWindowWidgets {
                         Please use u8"text in any language" in your application!
                     Note that characters values are preserved even by inputText() if the font cannot be displayed,
                     so you can safely copy & paste garbled characters into another application. */
-                textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.AddFontFromFileTTF() manually to load extra character ranges. Read misc/fonts/README.txt for details.")
+                textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.AddFontFromFileTTF() manually to load extra character ranges. Read docs/FONTS.txt for details.")
                 // Normally we would use u8"blah blah" with the proper characters directly in the string.
                 text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                 text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
