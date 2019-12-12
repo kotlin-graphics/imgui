@@ -80,7 +80,7 @@ object ExampleApp {
 
         var open = open_
 
-        if (show.documents) Documents(show::documents);
+        if (show.documents) Documents(show::documents)
         if (show.mainMenuBar) MainMenuBar()
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
@@ -159,12 +159,21 @@ object ExampleApp {
         spacing()
 
         collapsingHeader("Help") {
+
+            text("ABOUT THIS DEMO:")
+            bulletText("Sections below are demonstrating many aspects of the library.")
+            bulletText("The \"Examples\" menu above leads to more demo contents.")
+            bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
+                    "and Metrics (general purpose Dear ImGui debugging tool).")
+            separator()
+
             text("PROGRAMMER GUIDE:")
-            bulletText("Please see the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!")
-            bulletText("Please see the comments in imgui.cpp.")
-            bulletText("Please see the examples/ application.")
-            bulletText("Enable 'io.ConfigFlags |= NavEnableKeyboard' for keyboard controls.")
-            bulletText("Enable 'io.ConfigFlags |= NavEnableGamepad' for gamepad controls.")
+            bulletText("See the ShowDemoWindow() code in imgui_demo.cpp. <- you are here!")
+            bulletText("See comments in imgui.cpp.")
+            bulletText("See example applications in the examples/ folder.")
+            bulletText("Read the FAQ at http://www.dearimgui.org/faq/")
+            bulletText("Set 'io.ConfigFlags |= NavEnableKeyboard' for keyboard controls.")
+            bulletText("Set 'io.ConfigFlags |= NavEnableGamepad' for gamepad controls.")
             separator()
 
             text("USER GUIDE:")
@@ -202,7 +211,7 @@ object ExampleApp {
                 separator()
             }
             treeNode("Backend Flags") {
-                helpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.")
+                helpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.\nHere we expose then as read-only fields to avoid breaking interactions with your back-end.")
                 val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying actual back-end flags.
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
@@ -212,6 +221,7 @@ object ExampleApp {
             }
 
             treeNode("Style") {
+                helpMarker("The same contents can be accessed in 'Tools->Style Editor' or by calling the ShowStyleEditor() function.")
                 StyleEditor()
                 separator()
             }
