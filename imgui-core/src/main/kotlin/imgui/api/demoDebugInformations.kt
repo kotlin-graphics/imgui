@@ -59,9 +59,7 @@ import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
-import imgui.internal.DrawIdx
-import imgui.internal.DrawListFlag
-import imgui.internal.DrawVert
+import imgui.internal.*
 import imgui.internal.classes.Columns
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
@@ -69,6 +67,8 @@ import imgui.internal.classes.Window
 import kool.BYTES
 import kool.lim
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -416,7 +416,6 @@ interface demoDebugInformations {
                     Rect(min, min + window.contentSize)
                 }
                 WRT.ContentRegionRect -> window.contentRegionRect
-                else -> error("invalid")
             }
 
             fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
@@ -441,31 +440,77 @@ interface demoDebugInformations {
                     text("(Note: owning Window is inactive: DrawList is not being rendered!)")
 
                 var elemOffset = 0
-                for (i in drawList.cmdBuffer.indices) {
-                    val cmd = drawList.cmdBuffer[i]
+                for (cmd in drawList.cmdBuffer) {
                     val cb = cmd.userCallback
-                    if (cb == null && cmd.elemCount == 0) continue
+                    if (cb == null && cmd.elemCount == 0)
+                        continue
                     if (cb != null) {
                         bulletText("Callback %s, UserData %s", cb.toString(), String(cmd.userCallbackData!!.array()))
                         continue
                     }
+
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
-                    val string = "Draw %4d triangles, tex 0x${cmd.textureId!!.asHexString}, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)"
-                            .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+
+                    // Calculate approximate coverage area (touched pixel count)
+                    // This will be in pixels squared as long there's no post-scaling happening to the ImGui output
+                    // Optionally also draw all the polys in the list in wireframe when hovering over
+
+                    var totalArea = 0f
+
+                    for (baseIdx in elemOffset until (elemOffset + cmd.elemCount) step 3) {
+                        val trianglesPos = Array(3) {
+                            val vtx_i = idxBuffer?.get(baseIdx + it) ?: baseIdx + it
+                            drawList.vtxBuffer[vtx_i].pos
+                        }
+
+                        // Calculate triangle area and accumulate
+
+                        val area = ((trianglesPos[0].x * (trianglesPos[1].y - trianglesPos[2].y)) +
+                                (trianglesPos[1].x * (trianglesPos[2].y - trianglesPos[0].y)) +
+                                (trianglesPos[2].x * (trianglesPos[0].y - trianglesPos[1].y))) * 0.5f
+
+                        totalArea += area
+                    }
+
+                    var string = ("Draw %4d triangles, tex 0x${cmd.textureId!!.asHexString}, " +
+                            "area %.0fpx^2, clip_rect (%4.0f,%4.0f)-(%4.0f,%4.0f)")
+                            .format(cmd.elemCount / 3, totalArea,
+                                    cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (showDrawcmdClipRects && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
                         val vtxsRect = Rect()
-                        for (e in elemOffset until elemOffset + cmd.elemCount)
-                            vtxsRect.add(Vec2(drawList.vtxBuffer.data, idxBuffer?.get(e) ?: e))
+                        for (i in elemOffset until elemOffset + cmd.elemCount)
+                            vtxsRect add drawList.vtxBuffer[idxBuffer?.get(i) ?: i].pos
                         clipRect.floor(); fgDrawList.addRect(clipRect.min, clipRect.max, COL32(255, 0, 255, 255))
                         vtxsRect.floor(); fgDrawList.addRect(vtxsRect.min, vtxsRect.max, COL32(255, 255, 0, 255))
                     }
                     if (!cmdNodeOpen) continue
 
+                    // Display vertex information summary. Hover to get all triangles drawn in wireframe
+                    string = "ElemCount: ${cmd.elemCount}, ElemCount/3: ${cmd.elemCount / 3}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}"
+                    selectable(string, false)
+
+                    if (fgDrawList != null && isItemHovered()) {
+                        // Draw wireframe version of everything
+
+                        val backupFlags: DrawListFlags = fgDrawList.flags
+                        fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines at is more readable for very large and thin triangles.
+
+                        for (baseIdx in elemOffset until (elemOffset + cmd.elemCount) step 3) {
+                            val trianglesPos = Array(3) {
+                                val vtx_i = idxBuffer?.get(baseIdx + it) ?: (baseIdx + it)
+                                Vec2(drawList.vtxBuffer[vtx_i].pos)
+                            }
+
+                            fgDrawList.addPolyline(trianglesPos.toCollection(ArrayList()), COL32(255, 255, 0, 255), true, 1f)
+                        }
+
+                        fgDrawList.flags = backupFlags
+                    }
+
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
-                    text("ElemCount: ${cmd.elemCount}, ElemCount/3: ${cmd.elemCount / 3}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}")
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper(cmd.elemCount / 3)
                     while (clipper.step()) {
@@ -483,6 +528,7 @@ interface demoDebugInformations {
                                 s.toCharArray(buf, bufP)
                                 bufP += s.length
                             }
+
                             selectable(String(buf), false)
                             if (fgDrawList != null && isItemHovered()) {
                                 val backupFlags = fgDrawList.flags
@@ -543,7 +589,7 @@ interface demoDebugInformations {
                 if (flags has Wf.NoNavInputs) builder += "NoNavInputs"
                 if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
-                val xy = (if(window.scrollbar.x) "X" else "") + if(window.scrollbar.y) "Y" else ""
+                val xy = (if (window.scrollbar.x) "X" else "") + if (window.scrollbar.y) "Y" else ""
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy", window.scroll.x, window.scrollMax.x, window.scroll.y, window.scrollMax.y)
                 val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
                 bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
@@ -588,7 +634,7 @@ interface demoDebugInformations {
                             tabBar.queueChangeTabOrder(tab, +1)
                             sameLine()
                             val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
-                            val s =  if(tab.nameOffset != -1) tabBar.getTabName(tab) else ""
+                            val s = if (tab.nameOffset != -1) tabBar.getTabName(tab) else ""
                             text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
                             popId()
                         }
