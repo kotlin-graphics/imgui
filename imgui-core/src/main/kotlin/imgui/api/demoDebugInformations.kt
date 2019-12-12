@@ -349,24 +349,26 @@ interface demoDebugInformations {
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
         bulletText("Click and drag on lower corner to resize window\n(double-click to auto fit window to its contents).")
-        if (io.configWindowsMoveFromTitleBarOnly)
-            bulletText("Click and drag on title bar to move window.")
-        else
-            bulletText("Click and drag on any empty space to move window.")
-        bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
+        bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         if (io.fontAllowUserScaling)
             bulletText("CTRL+Mouse Wheel to zoom window contents.")
-        bulletText("Mouse Wheel to scroll.")
-        bulletText("While editing text:\n")
         indent {
-            bulletText("Hold SHIFT or use mouse to select text.")
             bulletText("CTRL+Left/Right to word jump.")
             bulletText("CTRL+A or double-click to select all.")
-            bulletText("CTRL+X,CTRL+C,CTRL+V to use clipboard.")
+            bulletText("CTRL+X/C/V to use clipboard cut/copy/paste.")
             bulletText("CTRL+Z,CTRL+Y to undo/redo.")
             bulletText("ESCAPE to revert.")
             bulletText("You can apply arithmetic operators +,*,/ on numerical values.\nUse +- to subtract.")
+        }
+        bulletText("With keyboard navigation enabled:")
+        indent {
+            bulletText("Arrow keys to navigate.")
+            bulletText("Space to activate a widget.")
+            bulletText("Return to input text into a widget.")
+            bulletText("Escape to deactivate a widget, close popup, exit child window.")
+            bulletText("Alt to jump to the menu layer of a window.")
+            bulletText("CTRL+Tab to select a window.")
         }
     }
 
