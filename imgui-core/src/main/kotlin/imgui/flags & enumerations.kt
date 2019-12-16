@@ -716,6 +716,7 @@ operator fun FloatArray.get(index: NavInput): Float = get(index.i)
 
 
 typealias ConfigFlags = Int
+
 /** Configuration flags stored in io.configFlags
  *
  *  Flags: for io.ConfigFlags   */
@@ -876,6 +877,7 @@ enum class Col {
 
 /** for style.colors    */
 operator fun ArrayList<Vec4>.get(idx: Col): Vec4 = this[idx.i]
+
 operator fun ArrayList<Vec4>.set(idx: Col, vec: Vec4) = this[idx.i] put vec
 
 /** Enumeration for PushStyleVar() / PopStyleVar() to temporarily modify the ImGuiStyle structure.
@@ -1022,6 +1024,21 @@ infix fun ColorEditFlags.has(b: ColorEditFlag): Boolean = and(b.i) != 0
 infix fun ColorEditFlags.hasnt(b: ColorEditFlag): Boolean = and(b.i) == 0
 infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
 
+
+/** Identify a mouse button.
+ *  Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for convenience. */
+enum class MouseButton {
+    None, Left, Right, Middle;
+
+    val i = ordinal - 1 // starts at -1
+
+    companion object {
+        val COUNT = 5
+        infix fun of(i: Int): MouseButton = values().find { it.i == i } ?: None
+    }
+}
+
+
 /** Enumeration for GetMouseCursor()
  *  User code may request binding to display given cursor by calling SetMouseCursor(),
  *  which is why we have some cursors that are marked unused here
@@ -1053,7 +1070,7 @@ enum class MouseCursor {
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
-        val COUNT = values().size
+        val COUNT = values().size - 1
     }
 }
 

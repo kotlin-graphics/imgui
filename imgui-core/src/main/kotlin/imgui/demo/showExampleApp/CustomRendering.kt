@@ -28,6 +28,7 @@ import imgui.ImGui.text
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
+import imgui.MouseButton
 import imgui.dsl.button
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.internal.DrawCornerFlag
@@ -143,17 +144,17 @@ object CustomRendering {
                 if (addingLine) {
                     addingPreview = true
                     points += mousePosInCanvas
-                    if (!isMouseDown(0)) {
+                    if (!isMouseDown(MouseButton.Left)) {
                         addingLine = false
                         addingPreview = false
                     }
                 }
                 if (isItemHovered()) {
-                    if (!addingLine and isMouseClicked(0)) {
+                    if (!addingLine and isMouseClicked(MouseButton.Left)) {
                         points += mousePosInCanvas
                         addingLine = true
                     }
-                    if (isMouseClicked(1) and points.isNotEmpty()) {
+                    if (isMouseClicked(MouseButton.Right) and points.isNotEmpty()) {
                         addingLine = false
                         addingPreview = false
                         points.removeAt(points.lastIndex)

@@ -412,10 +412,10 @@ public class Jdsl {
     }
 
     public static void popupContextItem(String strId, Runnable block) {
-        popupContextItem(strId, 1, block);
+        popupContextItem(strId, MouseButton.Left, block);
     }
 
-    public static void popupContextItem(String strId, int mouseButton, Runnable block) {
+    public static void popupContextItem(String strId, MouseButton mouseButton, Runnable block) {
         if (imgui.beginPopupContextItem(strId, mouseButton)) {
             block.run();
             imgui.endPopup();
@@ -423,14 +423,14 @@ public class Jdsl {
     }
 
     public static void popupContextWindow(String strId, Runnable block) {
-        popupContextWindow(strId, 1, true, block);
+        popupContextWindow(strId, MouseButton.Left, true, block);
     }
 
-    public static void popupContextWindow(String strId, int mouseButton, Runnable block) {
+    public static void popupContextWindow(String strId, MouseButton mouseButton, Runnable block) {
         popupContextWindow(strId, mouseButton, true, block);
     }
 
-    public static void popupContextWindow(String strId, int mouseButton, boolean alsoOverItems, Runnable block) {
+    public static void popupContextWindow(String strId, MouseButton mouseButton, boolean alsoOverItems, Runnable block) {
         if (imgui.beginPopupContextWindow(strId, mouseButton, alsoOverItems)) {
             block.run();
             imgui.endPopup();
@@ -438,10 +438,10 @@ public class Jdsl {
     }
 
     public static void popupContextVoid(String strId, Runnable block) {
-        popupContextVoid(strId, 1, block);
+        popupContextVoid(strId, MouseButton.Left, block);
     }
 
-    public static void popupContextVoid(String strId, int mouseButton, Runnable block) {
+    public static void popupContextVoid(String strId, MouseButton mouseButton, Runnable block) {
         if (imgui.beginPopupContextVoid(strId, mouseButton)) {
             block.run();
             imgui.endPopup();

@@ -219,7 +219,7 @@ internal interface widgets {
         window.drawList.renderArrow(bb.min + style.framePadding, textCol.u32, if (window.collapsed) Dir.Right else Dir.Down, 1f)
 
         // Switch to moving the window after mouse is moved beyond the initial drag threshold
-        if (isItemActive && isMouseDragging(0))
+        if (isItemActive && isMouseDragging(MouseButton.Left))
             window.startMouseMoving()
 
         return pressed

@@ -728,7 +728,7 @@ object showDemoWindowWidgets {
                 text("3. I am not selectable")
                 selectable("4. I am selectable", selection0, 2)
                 if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick.i))
-                    if (isMouseDoubleClicked(0)) selection0[3] = !selection0[3]
+                    if (isMouseDoubleClicked(MouseButton.Left)) selection0[3] = !selection0[3]
             }
             treeNode("Selection State: Single Selection") {
                 for (n in 0..4)
@@ -1311,7 +1311,7 @@ object showDemoWindowWidgets {
                     selectable(item)
 
                     if (isItemActive && !isItemHovered()) {
-                        val nNext = n + if (getMouseDragDelta(0).y < 0f) -1 else 1
+                        val nNext = n + if (getMouseDragDelta(MouseButton.Left).y < 0f) -1 else 1
                         if (nNext in itemNames.indices) {
                             itemNames[n] = itemNames[nNext]
                             itemNames[nNext] = item

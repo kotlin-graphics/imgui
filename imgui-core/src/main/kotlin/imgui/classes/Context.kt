@@ -295,7 +295,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var dragDropSourceFrameCount = -1
 
-    var dragDropMouseButton = -1
+    var dragDropMouseButton = MouseButton.None // -1 at start
 
     var dragDropPayload = Payload()
 

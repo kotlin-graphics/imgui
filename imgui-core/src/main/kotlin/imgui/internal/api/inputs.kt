@@ -20,15 +20,15 @@ internal interface inputs {
     }
 
     /** [Internal] This doesn't test if the button is pressed */
-    fun isMouseDragPastThreshold(button: Int, lockThreshold_: Float): Boolean {
+    fun isMouseDragPastThreshold(button: MouseButton, lockThreshold_: Float): Boolean {
 
-        assert(button in io.mouseDown.indices)
-        if (!io.mouseDown[button])
+        assert(button.i in io.mouseDown.indices)
+        if (!io.mouseDown[button.i])
             return false
         var lockThreshold = lockThreshold_
         if (lockThreshold < 0f)
             lockThreshold = io.mouseDragThreshold
-        return io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold
+        return io.mouseDragMaxDistanceSqr[button.i] >= lockThreshold * lockThreshold
     }
 
     // the rest of inputs functions are in the NavInput enum

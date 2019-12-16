@@ -7,24 +7,27 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.style
 import imgui.MOUSE_INVALID
+import imgui.MouseButton
 import imgui.MouseCursor
 import imgui.internal.classes.Rect
 
 /** Inputs Utilities: Mouse
- *  - Mouse buttons are referred to as simple integer, and it is guaranteed that 0=Left, 1=Right, 2=Middle. */
+ *  - To refer to a mouse button, you may use named enums in your code e.g. ImGuiMouseButton_Left, ImGuiMouseButton_Right.
+ *  - You can also use regular integer: it is forever guaranteed that 0=Left, 1=Right, 2=Middle.
+ *  - Dragging operations are only reported after mouse has moved a certain distance away from the initial clicking position (see 'lock_threshold' and 'io.MouseDraggingThreshold') */
 interface inputUtilitiesMouse {
 
     /** is mouse button held?   */
-    fun isMouseDown(button: Int): Boolean {
-        assert(button in io.mouseDown.indices)
-        return io.mouseDown[button]
+    fun isMouseDown(button: MouseButton): Boolean {
+        assert(button.i in io.mouseDown.indices)
+        return io.mouseDown[button.i]
     }
 
     /** did mouse button clicked? (went from !Down to Down) */
-    fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {
+    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean {
 
-        assert(button >= 0 && button < io.mouseDown.size)
-        val t = io.mouseDownDuration[button]
+        assert(button.i in io.mouseDown.indices)
+        val t = io.mouseDownDuration[button.i]
         if (t == 0f)
             return true
 
@@ -38,20 +41,12 @@ interface inputUtilitiesMouse {
     }
 
     /** did mouse button released? (went from Down to !Down) */
-    fun isMouseReleased(button: Int): Boolean =
-            io.mouseReleased[button]
+    fun isMouseReleased(button: MouseButton): Boolean =
+            io.mouseReleased[button.i]
 
     /** did mouse button double-clicked? A double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
-    fun isMouseDoubleClicked(button: Int): Boolean =
-            io.mouseDoubleClicked[button]
-
-    /** is mouse dragging? if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
-    fun isMouseDragging(button: Int, lockThreshold: Float = -1f): Boolean {
-        assert(button in io.mouseDown.indices)
-        if (!io.mouseDown[button])
-            return false
-        return isMouseDragPastThreshold(button, lockThreshold)
-    }
+    fun isMouseDoubleClicked(button: MouseButton): Boolean =
+            io.mouseDoubleClicked[button.i]
 
     /** Test if mouse cursor is hovering given rectangle
      *  NB- Rectangle is clipped by our current clip setting
@@ -59,9 +54,9 @@ interface inputUtilitiesMouse {
      *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding
      *  of other consideration of focus/window ordering/popup-block.
      *
-     *  is mouse hovering given bounding rect (in screen space)? clipped by current clipping settings if 'clip=true', but disregarding of other consideration of focus/window ordering/popup-block. */
+     *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding of other consideration of focus/window ordering/popup-block. */
     fun isMouseHoveringRect(r: Rect, clip: Boolean = true): Boolean =
-            isMouseHoveringRect(r, clip)
+            isMouseHoveringRect(r.min, r.max, clip)
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 
@@ -88,33 +83,41 @@ interface inputUtilitiesMouse {
     val mousePos: Vec2
         get() = io.mousePos
 
-    /** retrieve backup of mouse position at the time of opening popup we have BeginPopup() into
+    /** retrieve mouse position at the time of opening popup we have BeginPopup() into (helper to avoid user backing that value themselves)
      *  ~GetMousePosOnOpeningCurrentPopup   */
     val mousePosOnOpeningCurrentPopup: Vec2
         get() = Vec2(g.beginPopupStack.lastOrNull()?.openMousePos ?: io.mousePos)
+
+    /** is mouse dragging? (if lock_threshold < -1.0f, uses io.MouseDraggingThreshold) */
+    fun isMouseDragging(button: MouseButton, lockThreshold: Float = -1f): Boolean {
+        assert(button.i in io.mouseDown.indices)
+        if (!io.mouseDown[button.i])
+            return false
+        return isMouseDragPastThreshold(button, lockThreshold)
+    }
 
     /** return the delta from the initial clicking position while the mouse button is clicked or was just released.
      *  This is locked and return 0.0f until the mouse moves past a distance threshold at least once.
      *  If lock_threshold < -1.0f uses io.MouseDraggingThreshold
      *
-     *  Back-ends in theory should always keep mouse position valid when dragging even outside the client window. */
-    fun getMouseDragDelta(button: Int = 0, lockThreshold_: Float = -1f): Vec2 {
+     *  return the delta from the initial clicking position while the mouse button is pressed or was just released. This is locked and return 0.0f until the mouse moves past a distance threshold at least once (if lock_threshold < -1.0f, uses io.MouseDraggingThreshold) */
+    fun getMouseDragDelta(button: MouseButton = MouseButton.Left, lockThreshold_: Float = -1f): Vec2 {
 
-        assert(button >= 0 && button < io.mouseDown.size)
+        assert(button.i in io.mouseDown.indices)
         var lockThreshold = lockThreshold_
         if (lockThreshold < 0f)
             lockThreshold = io.mouseDragThreshold
-        if (io.mouseDown[button] || io.mouseReleased[button])
-            if (io.mouseDragMaxDistanceSqr[button] >= lockThreshold * lockThreshold)
-                if (isMousePosValid(io.mousePos) && isMousePosValid(io.mouseClickedPos[button]))
-                    return io.mousePos - io.mouseClickedPos[button]
+        if (io.mouseDown[button.i] || io.mouseReleased[button.i])
+            if (io.mouseDragMaxDistanceSqr[button.i] >= lockThreshold * lockThreshold)
+                if (isMousePosValid(io.mousePos) && isMousePosValid(io.mouseClickedPos[button.i]))
+                    return io.mousePos - io.mouseClickedPos[button.i]
         return Vec2()
     }
 
-    fun resetMouseDragDelta(button: Int = 0) {
-        assert(button in io.mouseDown.indices)
+    fun resetMouseDragDelta(button: MouseButton = MouseButton.Left) {
+        assert(button.i in io.mouseDown.indices)
         // NB: We don't need to reset g.IO.MouseDragMaxDistanceSqr
-        io.mouseClickedPos[button] = io.mousePos
+        io.mouseClickedPos[button.i] = io.mousePos
     }
 
     var mouseCursor: MouseCursor
