@@ -683,7 +683,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         quadrant = if (window.dc.lastItemId < g.navId) Dir.Left else Dir.Right
 
     if (IMGUI_DEBUG_NAV_SCORING)
-        if (isMouseHoveringRect(cand.min, cand.max)) {
+        if (isMouseHoveringRect(cand)) {
             val buf = "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
                     .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial)
             getForegroundDrawList(window).apply {

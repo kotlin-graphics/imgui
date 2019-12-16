@@ -139,7 +139,8 @@ object ImGui :
         itemWidgetsUtilities,
         miscellaneousUtilities,
         colorUtilities,
-        inputsUtilities,
+        inputUtilitiesKeyboard,
+        inputUtilitiesMouse,
         clipboardUtilities,
         settingsIniUtilities,
 
