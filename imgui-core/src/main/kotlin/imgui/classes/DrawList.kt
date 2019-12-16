@@ -825,10 +825,13 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.free()
     }
 
-    /** NB: this can be called with negative count for removing primitives (as long as the result does not underflow)    */
+    /** Reserve space for a number of vertices and indices.
+     *  You must finish filling your reserved data before calling PrimReserve() again, as it may reallocate or
+     *  submit the intermediate results. PrimUnreserve() can be used to release unused allocations.    */
     fun primReserve(idxCount: Int, vtxCount: Int) {
 
         // Large mesh support (when enabled)
+        ASSERT_PARANOID(idxCount >= 0 && vtxCount >= 0)
         if (DrawIdx.BYTES == 2 && _vtxCurrentIdx + vtxCount >= (1 shl 16) && flags has DrawListFlag.AllowVtxOffset) {
             _vtxCurrentOffset = vtxBuffer.rem
             _vtxCurrentIdx = 0
@@ -844,6 +847,17 @@ class DrawList(sharedData: DrawListSharedData?) {
         val idxBufferOldSize = idxBuffer.lim
         idxBuffer = idxBuffer.resize(idxBufferOldSize + idxCount)
         _idxWritePtr = idxBufferOldSize
+    }
+
+    /** Release the a number of reserved vertices/indices from the end of the last reservation made with PrimReserve(). */
+    fun primUnreserve(idxCount: Int, vtxCount: Int)    {
+
+        ASSERT_PARANOID(idxCount >= 0 && vtxCount >= 0)
+
+        val drawCmd = cmdBuffer.last()
+        drawCmd.elemCount -= idxCount
+        vtxBuffer shrink (vtxBuffer.size - vtxCount)
+        idxBuffer shrink (idxBuffer.size - idxCount)
     }
 
     /** Fully unrolled with inline call to keep our debug builds decently fast.
@@ -1222,9 +1236,9 @@ private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
 inline class DrawVert_Buffer(val data: ByteBuffer) {
 
     operator fun get(index: Int) = DrawVert(
-        Vec2(data, index * DrawVert.size),
-        Vec2(data, index * DrawVert.size + DrawVert.ofsUv),
-        data.getInt(index * DrawVert.size + DrawVert.ofsCol))
+            Vec2(data, index * DrawVert.size),
+            Vec2(data, index * DrawVert.size + DrawVert.ofsUv),
+            data.getInt(index * DrawVert.size + DrawVert.ofsCol))
 
     operator fun plusAssign(v: Vec2) {
         data.putFloat(v.x)
@@ -1267,7 +1281,11 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
         else -> this
     }.apply { lim = newSize }
 
-//    inline void         shrink(int new_size)                { IM_ASSERT(new_size <= Size); Size = new_size; }
+    /** Resize a vector to a smaller size, guaranteed not to cause a reallocation */
+    infix fun shrink(newSize: Int) {
+        assert(newSize <= cap)
+        lim = newSize
+    }
 
     infix fun growCapacity(sz: Int): Int {
         val newCapacity = if (cap > 0) cap + cap / 2 else 8
