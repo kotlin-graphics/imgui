@@ -78,7 +78,7 @@ interface inputsUtilities {
     fun isMouseReleased(button: Int): Boolean = io.mouseReleased[button]
 
     /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
-    fun isMouseDragging(button: Int = 0, lockThreshold: Float = -1f): Boolean {
+    fun isMouseDragging(button: Int, lockThreshold: Float = -1f): Boolean {
         assert(button in io.mouseDown.indices)
         if (!io.mouseDown[button])
             return false

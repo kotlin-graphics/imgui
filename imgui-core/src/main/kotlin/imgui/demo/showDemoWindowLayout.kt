@@ -756,7 +756,7 @@ object showDemoWindowLayout {
             val pos = Vec2(cursorScreenPos)
             val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
             invisibleButton("##dummy", size)
-            if (isItemActive && isMouseDragging()) offset += io.mouseDelta
+            if (isItemActive && isMouseDragging(0)) offset += io.mouseDelta
             windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), COL32(90, 90, 120, 255))
             windowDrawList.addText(font, fontSize * 2f, Vec2(pos.x + offset.x, pos.y + offset.y),
                     COL32(255, 255, 255, 255), "Line 1 hello\nLine 2 clip me!".toCharArray(), 0, 0f, clipRect)
