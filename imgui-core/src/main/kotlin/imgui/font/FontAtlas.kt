@@ -94,7 +94,10 @@ class FontAtlas {
                            glyphRanges: Array<IntRange> = arrayOf()): Font? {
 
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
-        val chars = fileLoadToMemory(filename) ?: return null
+        val chars = fileLoadToMemory(filename) ?: run {
+            System.err.println("Could not load font file.")
+            return null
+        }
         if (fontCfg.name.isEmpty())
         // Store a short copy of filename into into the font name for convenience
             fontCfg.name = "${filename.substringAfterLast('/')}, %.0fpx".format(style.locale, sizePixels)
