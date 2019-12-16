@@ -567,10 +567,10 @@ object showDemoWindowLayout {
             sameLine(140); enableTrack = dragInt("##item", ::trackItem, 0.25f, 0, 99, "Item = %d") or enableTrack
 
             var scrollToOff = button("Scroll Offset")
-            sameLine(140); scrollToOff = dragFloat("##off", ::scrollToOffPx, 1f, 0f, 9999f, "+%.0f px") or scrollToOff
+            sameLine(140); scrollToOff = dragFloat("##off", ::scrollToOffPx, 1f, 0f, Float.MAX_VALUE, "+%.0f px") or scrollToOff
 
             var scrollToPos = button("Scroll To Pos")
-            sameLine(140); scrollToPos = dragFloat("##pos", ::scrollToPosPx, 1f, -10f, 9999f, "X/Y = %.0f px") or scrollToPos
+            sameLine(140); scrollToPos = dragFloat("##pos", ::scrollToPosPx, 1f, -10f, Float.MAX_VALUE, "X/Y = %.0f px") or scrollToPos
 
             popItemWidth()
             if (scrollToOff || scrollToPos)
