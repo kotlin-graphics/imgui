@@ -94,6 +94,12 @@ infix fun IntBuffer.resize(newSize: Int): IntBuffer = when {
     else -> this
 }.apply { lim = newSize }
 
+/** Resize a vector to a smaller size, guaranteed not to cause a reallocation */
+infix fun IntBuffer.shrink(newSize: Int) {
+    assert(newSize <= cap)
+    lim = newSize
+}
+
 infix fun IntBuffer.growCapacity(sz: Int): Int {
     val newCapacity = if (cap > 0) cap + cap / 2 else 8
     return if (newCapacity > sz) newCapacity else sz
@@ -112,7 +118,7 @@ infix fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
 fun IntBuffer(from: IntBuffer): IntBuffer {
     val res = IntBuffer(from.cap)
     res.lim = from.lim
-    for(i in 0 until from.lim)
+    for (i in 0 until from.lim)
         res[i] = from[i]
     return res
 }
@@ -135,7 +141,7 @@ val Int.vec4: Vec4
     }
 
 val Vec4.u32: Int
-    get () {
+    get() {
         var out = F32_TO_INT8_SAT(x) shl COL32_R_SHIFT
         out = out or (F32_TO_INT8_SAT(y) shl COL32_G_SHIFT)
         out = out or (F32_TO_INT8_SAT(z) shl COL32_B_SHIFT)
