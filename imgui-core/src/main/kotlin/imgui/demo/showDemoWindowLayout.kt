@@ -403,7 +403,7 @@ object showDemoWindowLayout {
                 // Passing a bool* to BeginTabItem() is similar to passing one to Begin(): the underlying bool will be set to false when the tab is closed.
                 if (beginTabBar("MyTabBar", tabBarFlags)) {
                     for (n in opened.indices)
-                        if (opened[n] && beginTabItem(names0[n], opened, n)) {
+                        if (opened[n] && beginTabItem(names0[n], opened, n, TabItemFlag.None.i)) {
                             text("This is the ${names0[n]} tab!")
                             if (n has 1)
                                 text("I am an odd tab.")
