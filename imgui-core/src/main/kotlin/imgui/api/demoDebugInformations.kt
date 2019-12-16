@@ -455,7 +455,7 @@ interface demoDebugInformations {
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (showDrawcmdDetails && fgDrawList != null && isItemHovered()) {
                         val clipRect = Rect(cmd.clipRect)
-                        val vtxsRect = Rect()
+                        val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
                         for (i in elemOffset until elemOffset + cmd.elemCount)
                             vtxsRect add drawList.vtxBuffer[idxBuffer?.get(i) ?: i].pos
                         fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255))

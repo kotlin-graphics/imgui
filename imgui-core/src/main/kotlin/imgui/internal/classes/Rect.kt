@@ -11,9 +11,9 @@ import imgui.internal.floor
  *  NB: we can't rely on ImVec2 math operators being available here */
 class Rect {
     /** Upper-left  */
-    var min = Vec2(Float.MAX_VALUE, Float.MAX_VALUE)
+    var min = Vec2()
     /** Lower-right */
-    var max = Vec2(-Float.MAX_VALUE, -Float.MAX_VALUE)
+    var max = Vec2()
 
     constructor()
 

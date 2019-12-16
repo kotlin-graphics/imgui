@@ -879,7 +879,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val drawCmd = cmdBuffer.last()
         drawCmd.elemCount -= idxCount
         vtxBuffer shrink (vtxBuffer.size - vtxCount)
-        idxBuffer shrink (idxBuffer.size - idxCount)
+        idxBuffer shrink (idxBuffer.rem - idxCount)
     }
 
     /** Fully unrolled with inline call to keep our debug builds decently fast.
