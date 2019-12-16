@@ -1044,14 +1044,16 @@ enum class MouseCursor {
     /** When hovering over the bottom-right corner of a window  */
     ResizeNWSE,
     /** (Unused by Dear ImGui functions. Use for e.g. hyperlinks) */
-    Hand;
+    Hand,
+    /** When hovering something with disallowed interaction. Usually a crossed circle. */
+    NotAllowed;
 
     @JvmField
     val i = ordinal - 1
 
     companion object {
         fun of(i: Int) = values().first { it.i == i }
-        val COUNT = Hand.i + 1
+        val COUNT = values().size
     }
 }
 
