@@ -257,7 +257,7 @@ interface windows {
                     so verify that we don't have items over the title bar.                 */
                 val titleBarRect = window.titleBarRect()
                 if (g.hoveredWindow === window && g.hoveredId == 0 && g.hoveredIdPreviousFrame == 0 &&
-                        isMouseHoveringRect(titleBarRect.min, titleBarRect.max) && io.mouseDoubleClicked[0])
+                        isMouseHoveringRect(titleBarRect) && io.mouseDoubleClicked[0])
                     window.wantCollapseToggle = true
                 if (window.wantCollapseToggle) {
                     window.collapsed = !window.collapsed
@@ -632,7 +632,7 @@ interface windows {
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
             window.dc.lastItemId = window.moveId
-            window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max)) ItemStatusFlag.HoveredRect.i else 0
+            window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect)) ItemStatusFlag.HoveredRect.i else 0
             window.dc.lastItemRect = titleBarRect
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)

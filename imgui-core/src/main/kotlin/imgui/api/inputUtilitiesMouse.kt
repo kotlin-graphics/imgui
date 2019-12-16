@@ -10,51 +10,17 @@ import imgui.MOUSE_INVALID
 import imgui.MouseCursor
 import imgui.internal.classes.Rect
 
+/** Inputs Utilities: Mouse
+ *  - Mouse buttons are referred to as simple integer, and it is guaranteed that 0=Left, 1=Right, 2=Middle. */
+interface inputUtilitiesMouse {
 
-/** Inputs Utilities */
-interface inputsUtilities {
-
-    fun getKeyIndex(imguiKey: Int): Int = io.keyMap[imguiKey]
-
-    /** is key being held. == io.KeysDown[user_key_index]. note that imgui doesn't know the semantic of each entry of io.KeysDown[].
-     *  Use your own indices/enums according to how your back-end/engine stored them into io.KeysDown[]! */
-    fun isKeyDown(userKeyIndex: Int): Boolean = if (userKeyIndex < 0) false else io.keysDown[userKeyIndex]
-
-    /** uses user's key indices as stored in the keys_down[] array. if repeat=true.
-     *  uses io.KeyRepeatDelay / KeyRepeatRate  */
-    fun isKeyPressed(userKeyIndex: Int, repeat: Boolean = true): Boolean = if (userKeyIndex < 0) false
-    else {
-        val t = io.keysDownDuration[userKeyIndex]
-        when {
-            t == 0f -> true
-            repeat && t > io.keyRepeatDelay -> getKeyPressedAmount(userKeyIndex, io.keyRepeatDelay, io.keyRepeatRate) > 0
-            else -> false
-        }
-    }
-
-    /** was key released (went from Down to !Down)..    */
-    fun isKeyReleased(userKeyIndex: Int): Boolean = if (userKeyIndex < 0) false else io.keysDownDurationPrev[userKeyIndex] >= 0f && !io.keysDown[userKeyIndex]
-
-    /** Uses provided repeat rate/delay. return a count, most often 0 or 1 but might be >1 if RepeatRate is small enough
-     *  that DeltaTime > RepeatRate */
-    fun getKeyPressedAmount(keyIndex: Int, repeatDelay: Float, repeatRate: Float): Int {
-        if (keyIndex < 0) return 0
-        assert(keyIndex in 0 until io.keysDown.size)
-        val t = io.keysDownDuration[keyIndex]
-        return calcTypematicRepeatAmount(t - io.deltaTime, t, repeatDelay, repeatRate)
-    }
-
-    /** is mouse button held  (0=left, 1=right, 2=middle) */
+    /** is mouse button held?   */
     fun isMouseDown(button: Int): Boolean {
         assert(button in io.mouseDown.indices)
         return io.mouseDown[button]
     }
 
-    /** is any mouse button held    */
-    val isAnyMouseDown: Boolean
-        get() = io.mouseDown.any()
-
-    /** did mouse button clicked (went from !Down to Down)  (0=left, 1=right, 2=middle) */
+    /** did mouse button clicked? (went from !Down to Down) */
     fun isMouseClicked(button: Int, repeat: Boolean = false): Boolean {
 
         assert(button >= 0 && button < io.mouseDown.size)
@@ -71,13 +37,15 @@ interface inputsUtilities {
         return false
     }
 
-    /** did mouse button double-clicked. a double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
-    fun isMouseDoubleClicked(button: Int): Boolean = io.mouseDoubleClicked[button]
+    /** did mouse button released? (went from Down to !Down) */
+    fun isMouseReleased(button: Int): Boolean =
+            io.mouseReleased[button]
 
-    /** did mouse button released (went from Down to !Down) */
-    fun isMouseReleased(button: Int): Boolean = io.mouseReleased[button]
+    /** did mouse button double-clicked? A double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
+    fun isMouseDoubleClicked(button: Int): Boolean =
+            io.mouseDoubleClicked[button]
 
-    /** is mouse dragging. if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
+    /** is mouse dragging? if lock_threshold < -1.0f uses io.MouseDraggingThreshold */
     fun isMouseDragging(button: Int, lockThreshold: Float = -1f): Boolean {
         assert(button in io.mouseDown.indices)
         if (!io.mouseDown[button])
@@ -89,8 +57,11 @@ interface inputsUtilities {
      *  NB- Rectangle is clipped by our current clip setting
      *  NB- Expand the rectangle to be generous on imprecise inputs systems (g.style.TouchExtraPadding)
      *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding
-     *  of other consideration of focus/window ordering/popup-block.  */
-    fun isMouseHoveringRect(r: Rect, clip: Boolean = true): Boolean = isMouseHoveringRect(r.min, r.max, clip)
+     *  of other consideration of focus/window ordering/popup-block.
+     *
+     *  is mouse hovering given bounding rect (in screen space)? clipped by current clipping settings if 'clip=true', but disregarding of other consideration of focus/window ordering/popup-block. */
+    fun isMouseHoveringRect(r: Rect, clip: Boolean = true): Boolean =
+            isMouseHoveringRect(r, clip)
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 
@@ -104,8 +75,13 @@ interface inputsUtilities {
         return io.mousePos in rectForTouch
     }
 
-    /** We typically use ImVec2(-FLT_MAX,-FLT_MAX) to denote an invalid mouse position.  */
-    fun isMousePosValid(mousePos: Vec2? = null): Boolean = (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
+    /** by convention we use (-FLT_MAX,-FLT_MAX) to denote that there is no mouse available  */
+    fun isMousePosValid(mousePos: Vec2? = null): Boolean =
+            (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
+
+    /** is any mouse button held?    */
+    val isAnyMouseDown: Boolean
+        get() = io.mouseDown.any()
 
     /** shortcut to io.mousePos provided by user, to be consistent with other calls
      *  ~GetMousePos    */
@@ -153,12 +129,6 @@ interface inputsUtilities {
         set(value) {
             g.mouseCursor = value
         }
-
-    /** Manually override io.wantCaptureKeyboard flag next frame (said flag is entirely left for your application to handle).
-     *  e.g. force capture keyboard when your widget is being hovered.  */
-    fun captureKeyboardFromApp(capture: Boolean = true) {
-        g.wantCaptureKeyboardNextFrame = capture.i
-    }
 
     /** Manually override io.WantCaptureMouse flag next frame (said flag is entirely left for your application to handle). */
     fun captureMouseFromApp(capture: Boolean = true) {
