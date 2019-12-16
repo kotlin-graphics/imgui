@@ -238,6 +238,28 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathFillConvex(col)
     }
 
+    /** Guaranteed to honor 'num_segments' */
+    fun addNgon(center: Vec2, radius: Float, col: Int, numSegments: Int, thickness: Float) {
+        if (col hasnt COL32_A_MASK || numSegments <= 2)
+            return
+
+        // Because we are filling a closed shape we remove 1 from the count of segments/points
+        val aMax = (glm.πf * 2f) * (numSegments.f - 1f) / numSegments.f
+        pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
+        pathStroke(col, true, thickness)
+    }
+
+    /** Guaranteed to honor 'num_segments' */
+    fun addNgonFilled(center: Vec2, radius: Float, col: Int, numSegments: Int) {
+        if (col hasnt COL32_A_MASK || numSegments <= 2)
+            return
+
+        // Because we are filling a closed shape we remove 1 from the count of segments/points
+        val aMax = (glm.πf * 2f) * (numSegments.f - 1f) / numSegments.f
+        pathArcTo(center, radius, 0f, aMax, numSegments - 1)
+        pathFillConvex(col)
+    }
+
     fun addText(pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size) = addText(g.font, g.fontSize, pos, col, text, textEnd)
 
     fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: CharArray, textEnd_: Int = text.size, wrapWidth: Float = 0f,
@@ -807,7 +829,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.clear()
         idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
         vtxBuffer.resize(0)
-        flags = _data?.initialFlags ?: DrawListFlag.None.i
+        flags = _data.initialFlags
         _vtxCurrentOffset = 0
         _vtxCurrentIdx = 0
         _vtxWritePtr = 0
@@ -850,7 +872,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     /** Release the a number of reserved vertices/indices from the end of the last reservation made with PrimReserve(). */
-    fun primUnreserve(idxCount: Int, vtxCount: Int)    {
+    fun primUnreserve(idxCount: Int, vtxCount: Int) {
 
         ASSERT_PARANOID(idxCount >= 0 && vtxCount >= 0)
 
