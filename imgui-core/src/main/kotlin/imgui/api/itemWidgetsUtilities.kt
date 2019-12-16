@@ -66,7 +66,8 @@ interface itemWidgetsUtilities {
         get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
 
     /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
-    fun isItemClicked(mouseButton: Int = 0): Boolean = isMouseClicked(mouseButton) && isItemHovered(Hf.None)
+    fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =
+            isMouseClicked(mouseButton) && isItemHovered(Hf.None)
 
     /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
     val isItemVisible: Boolean

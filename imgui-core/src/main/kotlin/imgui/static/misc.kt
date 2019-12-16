@@ -322,7 +322,7 @@ fun updateDebugToolItemPicker() {
         mouseCursor = MouseCursor.Hand
         if (Key.Escape.isPressed)
             g.debugItemPickerActive = false
-        if (isMouseClicked(0) && hoveredId != 0) {
+        if (isMouseClicked(MouseButton.Left) && hoveredId != 0) {
             g.debugItemPickerBreakId = hoveredId
             g.debugItemPickerActive = false
         }

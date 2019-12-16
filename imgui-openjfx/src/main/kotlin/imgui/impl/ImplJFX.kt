@@ -16,6 +16,7 @@ import javafx.scene.effect.BlendMode
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
 import javafx.scene.input.*
+import javafx.scene.input.MouseButton
 import javafx.scene.robot.Robot
 import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap

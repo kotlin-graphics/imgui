@@ -5,6 +5,7 @@ import glm_.*
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveId
@@ -16,6 +17,7 @@ import imgui.ImGui.hoveredId
 import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseClicked
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
@@ -179,7 +181,7 @@ internal interface widgetsLowLevelBehaviors {
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
-                if (flags has Bf.Repeat && g.activeId == id && io.mouseDownDuration[0] > 0f && ImGui.isMouseClicked(0, true))
+                if (flags has Bf.Repeat && g.activeId == id && io.mouseDownDuration[0] > 0f && isMouseClicked(MouseButton.Left, true))
                     pressed = true
             }
 
@@ -399,7 +401,7 @@ internal interface widgetsLowLevelBehaviors {
 
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
-        val (_, hovered, held) = ImGui.buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
+        val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
         if (g.activeId != id) setItemAllowOverlap()
 
         if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
