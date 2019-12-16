@@ -355,18 +355,19 @@ object dsl {
             try { block() } finally { endPopup() }
     }
 
-    inline fun popupContextItem(strId: String = "", mouseButton: Int = 1, block: () -> Unit) {
+    inline fun popupContextItem(strId: String = "", mouseButton: MouseButton = MouseButton.Right, block: () -> Unit) {
         if (beginPopupContextItem(strId, mouseButton)) {
             try { block() } finally { endPopup() }
         }
     }
 
-    inline fun popupContextWindow(strId: String = "", mouseButton: Int = 1, alsoOverItems: Boolean = true, block: () -> Unit) {
+    inline fun popupContextWindow(strId: String = "", mouseButton: MouseButton = MouseButton.Right,
+                                  alsoOverItems: Boolean = true, block: () -> Unit) {
         if (beginPopupContextWindow(strId, mouseButton, alsoOverItems))
             try { block() } finally { endPopup() }
     }
 
-    inline fun popupContextVoid(strId: String = "", mouseButton: Int = 1, block: () -> Unit) {
+    inline fun popupContextVoid(strId: String = "", mouseButton: MouseButton = MouseButton.Right, block: () -> Unit) {
         if (beginPopupContextVoid(strId, mouseButton))
             try { block() } finally { endPopup() }
     }

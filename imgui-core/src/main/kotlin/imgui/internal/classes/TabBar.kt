@@ -301,7 +301,7 @@ class TabBar {
             setItemAllowOverlap()
 
         // Drag and drop: re-order tabs
-        if (held && !tabAppearing && isMouseDragging(0))
+        if (held && !tabAppearing && isMouseDragging(MouseButton.Left))
             if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable)
             // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
                 if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
@@ -339,7 +339,7 @@ class TabBar {
 
         // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
         val hoveredUnblocked = isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)
-        if (hoveredUnblocked && (isMouseClicked(1) || isMouseReleased(1)))
+        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || isMouseReleased(MouseButton.Right)))
             nextSelectedTabId = id
 
         if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton)

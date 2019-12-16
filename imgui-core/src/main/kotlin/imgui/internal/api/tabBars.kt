@@ -97,7 +97,7 @@ internal interface tabBars {
             popStyleVar()
 
             // Close with middle mouse button
-            if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(2))
+            if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(MouseButton.Middle))
                 closeButtonPressed = true
 
             textPixelClipBb.max.x -= closeButtonSz

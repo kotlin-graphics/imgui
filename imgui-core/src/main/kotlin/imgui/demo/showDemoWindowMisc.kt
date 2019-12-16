@@ -29,6 +29,7 @@ import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
+import imgui.MouseButton
 import imgui.MouseCursor
 import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
@@ -85,20 +86,20 @@ object showDemoWindowMisc {
                         text("b$i (%.02f secs)", io.mouseDownDuration[i])
                     }
                 text("Mouse clicked:")
-                for (i in 0 until io.mouseDown.size)
-                    if (isMouseClicked(i)) {
+                for (i in io.mouseDown.indices)
+                    if (isMouseClicked(MouseButton of i)) {
                         sameLine()
                         text("b$i")
                     }
                 text("Mouse dbl-clicked:")
-                for (i in 0 until io.mouseDown.size)
-                    if (isMouseDoubleClicked(i)) {
+                for (i in io.mouseDown.indices)
+                    if (isMouseDoubleClicked(MouseButton of i)) {
                         sameLine()
                         text("b$i")
                     }
                 text("Mouse released:")
-                for (i in 0 until io.mouseDown.size)
-                    if (isMouseReleased(i)) {
+                for (i in io.mouseDown.indices)
+                    if (isMouseReleased(MouseButton of i)) {
                         sameLine()
                         text("b$i")
                     }
@@ -193,18 +194,18 @@ object showDemoWindowMisc {
 
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
-                for (button in 0..2)
+                MouseButton.values().filter { it != MouseButton.None }.forEach { button ->
                     text("isMouseDragging($button):  w/ default threshold: ${isMouseDragging(button)},  w/ zero threshold: " +
                             "${isMouseDragging(button, 0f)}\n  w/ large threshold: ${isMouseDragging(button, 20f)}")
-
+                }
                 button("Drag Me")
                 if (isItemActive)
                     foregroundDrawList.addLine(io.mouseClickedPos[0], io.mousePos, Col.Button.u32, 4f) // Draw a line between the button and the mouse cursor
 
                 // Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
                 // You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
-                val valueRaw = getMouseDragDelta(0, 0f)
-                val valueWithLockThreshold = getMouseDragDelta(0)
+                val valueRaw = getMouseDragDelta(MouseButton.Left, 0f)
+                val valueWithLockThreshold = getMouseDragDelta(MouseButton.Left)
                 val mouseDelta = io.mouseDelta
                 text("GetMouseDragDelta(0):\n  w/ default threshold: (%.1f, %.1f),\n  w/ zero threshold: (%.1f, %.1f)\nMouseDelta: (%.1f, %.1f)", valueWithLockThreshold.x, valueWithLockThreshold.y, valueRaw.x, valueRaw.y, mouseDelta.x, mouseDelta.y)
             }

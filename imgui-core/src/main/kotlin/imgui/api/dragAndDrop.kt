@@ -49,13 +49,13 @@ interface dragAndDrop {
         val sourceDragActive: Boolean
         var sourceId: ID
         var sourceParentId: ID = 0
-        val mouseButton = 0
+        val mouseButton = MouseButton.Left
         if (flags hasnt Ddf.SourceExtern) {
             sourceId = window!!.dc.lastItemId
             if (sourceId != 0 && g.activeId != sourceId) // Early out for most common case
                 return false
 
-            if (!io.mouseDown[mouseButton]) return false
+            if (!io.mouseDown[mouseButton.i]) return false
             if (sourceId == 0) {
                 /*  If you want to use beginDragDropSource() on an item with no unique identifier for interaction,
                     such as text() or image(), you need to:
@@ -77,7 +77,7 @@ interface dragAndDrop {
                 window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
                 sourceId = window.dc.lastItemId
                 val isHovered = itemHoverable(window.dc.lastItemRect, sourceId)
-                if (isHovered && io.mouseClicked[mouseButton]) {
+                if (isHovered && io.mouseClicked[mouseButton.i]) {
                     setActiveId(sourceId, window)
                     focusWindow(window)
                 }
