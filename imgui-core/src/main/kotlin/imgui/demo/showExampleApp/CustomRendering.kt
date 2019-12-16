@@ -24,6 +24,7 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.sameLine
+import imgui.ImGui.sliderInt
 import imgui.ImGui.text
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
@@ -39,6 +40,7 @@ object CustomRendering {
 
     var sz = 36f
     var thickness = 3f
+    var ngonSides = 6
     val colf = Vec4(1.0f, 1.0f, 0.4f, 1.0f)
 
     var addingLine = false
@@ -71,6 +73,7 @@ object CustomRendering {
 
                 dragFloat("Size", ::sz, 0.2f, 2.0f, 72.0f, "%.0f")
                 dragFloat("Thickness", ::thickness, 0.05f, 1.0f, 8.0f, "%.02f")
+                sliderInt("n-gon sides", ::ngonSides, 3, 12)
                 colorEdit4("Color", colf)
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
@@ -84,7 +87,7 @@ object CustomRendering {
                     // First line uses a thickness of 1.0f, second line uses the configurable thickness
                     val th = if (n == 0) 1.0f else thickness
                     drawList.apply {
-                        addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 6, th); x += sz + spacing  // Hexagon
+                        addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // n-gon
                         addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 20, th); x += sz + spacing  // Circle
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0.0f, corners_none, th); x += sz + spacing  // Square
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, corners_all, th); x += sz + spacing  // Square with all rounded corners
@@ -100,7 +103,7 @@ object CustomRendering {
                     y += sz + spacing
                 }
                 drawList.apply {
-                    addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 6); x += sz + spacing  // Hexagon
+                    addNgonFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides); x += sz + spacing  // n-gon
                     addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 32); x += sz + spacing  // Circle
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col); x += sz + spacing  // Square
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f); x += sz + spacing  // Square with all rounded corners
