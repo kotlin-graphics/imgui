@@ -266,6 +266,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                 MouseCursor.ResizeNESW -> Cursor.SW_RESIZE
                 MouseCursor.ResizeNWSE -> Cursor.SE_RESIZE
                 MouseCursor.Hand -> Cursor.HAND
+                MouseCursor.NotAllowed -> Cursor.NONE // TODO right?
             }
         }
     }
