@@ -96,8 +96,11 @@ class IO(sharedFontAtlas: FontAtlas?) {
     // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window) + User data for back-end/wrappers to store their own stuff.
     var backendPlatformName: String? = null
     var backendRendererName: String? = null
+    /** User data for platform back-end */
     var backendPlatformUserData: Any? = null
+    /** User data for renderer back-end */
     var backendRendererUserData: Any? = null
+    /** User data for non C++ programming language back-end */
     var backendLanguageUserData: Any? = null
 
     // Optional: Access OS clipboard
