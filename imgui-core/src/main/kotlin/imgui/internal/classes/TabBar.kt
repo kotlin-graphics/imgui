@@ -181,8 +181,9 @@ class TabBar {
         reorderRequestDir = dir
     }
 
-    fun tabItemEx(label: String, pOpen: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
+    fun tabItemEx(label: String, pOpen_: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
 
+        var pOpen = pOpen_
         var flags = flags_
         // Layout whole tab bar if not already done
         if (wantLayout)
@@ -201,6 +202,12 @@ class TabBar {
             return false
         }
 
+        // Store into ImGuiTabItemFlags_NoCloseButton, also honor ImGuiTabItemFlags_NoCloseButton passed by user (although not documented)
+        if (flags has TabItemFlag._NoCloseButton)
+            pOpen = null
+        else if (pOpen == null)
+            flags = flags or TabItemFlag._NoCloseButton
+
         // Calculate tab contents size
         val size = tabItemCalcSize(label, pOpen != null)
 
@@ -214,9 +221,6 @@ class TabBar {
         }
         lastTabItemIdx = tabs.indexOf(tab)
         tab.contentWidth = size.x
-
-        if (pOpen == null)
-            flags = flags or TabItemFlag._NoCloseButton
 
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
         val tabBarFocused = this.flags has TabBarFlag._IsFocused
