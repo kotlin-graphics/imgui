@@ -193,18 +193,22 @@ interface parametersStacks {
 
     /** get current font
      *  ~GetFont    */
-    val font get() = g.font
+    val font: Font
+        get() = g.font
 
     /** get current font size (= height in pixels) of current font with current scale applied
      *  ~GetFontSize    */
-    val fontSize get() = g.fontSize
+    val fontSize: Float
+        get() = g.fontSize
 
     /** get UV coordinate for a while pixel, useful to draw custom shapes via the ImDrawList API
      *  ~GetFontTexUvWhitePixel */
-    val fontTexUvWhitePixel get() = g.drawListSharedData.texUvWhitePixel
+    val fontTexUvWhitePixel: Vec2
+        get() = g.drawListSharedData.texUvWhitePixel
 
     /** retrieve given style color with style alpha applied and optional extra alpha multiplier */
-    fun getColorU32(idx: Col, alphaMul: Float = 1f) = getColorU32(idx.i, alphaMul)
+    fun getColorU32(idx: Col, alphaMul: Float = 1f): Int =
+            getColorU32(idx.i, alphaMul)
 
     fun getColorU32(idx: Int, alphaMul: Float = 1f): Int {
         val c = Vec4(style.colors[idx])

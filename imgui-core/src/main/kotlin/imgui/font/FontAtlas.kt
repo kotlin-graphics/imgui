@@ -485,6 +485,7 @@ class FontAtlas {
     /** Temporary data for one source font (multiple source fonts can be merged into one destination ImFont)
      *  (C++03 doesn't allow instancing ImVector<> with function-local types so we declare the type here.) */
     class FontBuildSrcData {
+
         val fontInfo = STBTTFontinfo.calloc()
         /** Hold the list of codepoints to pack (essentially points to Codepoints.Data) */
         val packRange = STBTTPackRange.calloc()
