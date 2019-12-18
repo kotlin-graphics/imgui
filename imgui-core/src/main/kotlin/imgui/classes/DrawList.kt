@@ -717,20 +717,12 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathBezierCurveTo(p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int = 0) {
 
         val p1 = _path.last()
-        if (numSegments == 0)
-        // Auto-tessellated
+        if (numSegments == 0) // Auto-tessellated
             pathBezierToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, style.curveTessellationTol, 0)
         else {
-            val t_step = 1.0f / numSegments.f
-            for (i_step in 1 until numSegments + 1) {
-                val t = t_step * i_step
-                val u = 1.0f - t
-                val w1 = u * u * u
-                val w2 = 3 * u * u * t
-                val w3 = 3 * u * t * t
-                val w4 = t * t * t
-                _path.add(Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y))
-            }
+            val tStep = 1f / numSegments
+            for (iStep in 1..numSegments)
+                _path += bezierCalc(p1, p2, p3, p4, tStep * iStep)
         }
     }
 

@@ -320,6 +320,88 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
 // Helpers: Geometry
 // -----------------------------------------------------------------------------------------------------------------
 
+fun bezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
+    val u = 1.0f - t
+    val w1 = u * u * u
+    val w2 = 3 * u * u * t
+    val w3 = 3 * u * t * t
+    val w4 = t * t * t
+    return Vec2(
+            w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x,
+            w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y)
+}
+
+/** For curves with explicit number of segments */
+fun bezierClosestPoint(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int): Vec2 {
+    assert(numSegments > 0)
+    val pLast = Vec2(p1)
+    val pClosest = Vec2()
+    var pClosestDist2 = Float.MAX_VALUE
+    val tStep = 1f / numSegments
+    for (iStep in 1..numSegments) {
+        val pCurrent = bezierCalc(p1, p2, p3, p4, tStep * iStep)
+        val pLine = lineClosestPoint(pLast, pCurrent, p)
+        val dist2 = (p - pLine).lengthSqr
+        if (dist2 < pClosestDist2) {
+            pClosest put pLine
+            pClosestDist2 = dist2
+        }
+        pLast put pCurrent
+    }
+    return pClosest
+}
+
+/** For auto-tesselated curves, tess_tol = style.CurveTessellationTol */
+fun bezierClosestPointCasteljau(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, tessTol: Float): Vec2 {
+    assert(tessTol > 0f)
+    val pLast = Vec2(p1)
+    val pClosest = Vec2()
+    val pClosestDist2 = Float.MAX_VALUE
+    closestPointBezierCasteljau(p, pClosest, pLast, pClosestDist2, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, tessTol, 0)
+    return pClosest
+}
+
+/** Closely mimics PathBezierToCasteljau() in imgui_draw.cpp
+ *  [JVM] pClosestDist2 in return */
+fun closestPointBezierCasteljau(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2_: Float,
+                                x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float,
+                                tessTol: Float, level: Int): Float {
+    var pClosestDist2 = pClosestDist2_
+    val dx = x4 - x1
+    val dy = y4 - y1
+    var d2 = ((x2 - x4) * dy - (y2 - y4) * dx)
+    var d3 = ((x3 - x4) * dy - (y3 - y4) * dx)
+    d2 = if (d2 >= 0f) d2 else -d2
+    d3 = if (d3 >= 0f) d3 else -d3
+    if ((d2 + d3) * (d2 + d3) < tessTol * (dx * dx + dy * dy)) {
+        val pCurrent = Vec2(x4, y4)
+        val pLine = lineClosestPoint(pLast, pCurrent, p)
+        val dist2 = (p - pLine).lengthSqr
+        if (dist2 < pClosestDist2) {
+            pClosest put pLine
+            pClosestDist2 = dist2
+        }
+        pLast put pCurrent
+    } else if (level < 10) {
+        val x12 = (x1 + x2) * 0.5f
+        val y12 = (y1 + y2) * 0.5f
+        val x23 = (x2 + x3) * 0.5f
+        val y23 = (y2 + y3) * 0.5f
+        val x34 = (x3 + x4) * 0.5f
+        val y34 = (y3 + y4) * 0.5f
+        val x123 = (x12 + x23) * 0.5f
+        val y123 = (y12 + y23) * 0.5f
+        val x234 = (x23 + x34) * 0.5f
+        val y234 = (y23 + y34) * 0.5f
+        val x1234 = (x123 + x234) * 0.5f
+        val y1234 = (y123 + y234) * 0.5f
+        pClosestDist2 = closestPointBezierCasteljau(p, pClosest, pLast, pClosestDist2, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
+        pClosestDist2 = closestPointBezierCasteljau(p, pClosest, pLast, pClosestDist2, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
+    }
+    return pClosestDist2
+}
+
+
 fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
     val ap = p - a
     val abDir = b - a
