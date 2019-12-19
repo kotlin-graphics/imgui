@@ -474,7 +474,7 @@ interface demoDebugInformations {
                     }
 
                     // Display vertex information summary. Hover to get all triangles drawn in wire-frame
-                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%0.f px".format(totalArea)
+                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
                     selectable(string)
                     if (fgDrawList != null && isItemHovered() && showDrawcmdDetails) {
                         // Draw wire-frame version of everything
