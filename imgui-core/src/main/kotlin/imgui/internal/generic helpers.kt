@@ -148,7 +148,7 @@ val Int.upperPowerOfTwo: Int
 
 
 // -----------------------------------------------------------------------------------------------------------------
-// Helpers: String, Formatting
+// [SECTION] MISC HELPERS/UTILITIES (String, Format, Hash functions)
 // -----------------------------------------------------------------------------------------------------------------
 
 
@@ -316,10 +316,11 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
     else -> current
 }
 
-// -----------------------------------------------------------------------------------------------------------------
-// Helpers: Geometry
-// -----------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// [SECTION] MISC HELPERS/UTILITIES (Geometry functions)
+//-----------------------------------------------------------------------------
 
+/** Cubic Bezier */
 fun bezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
     val u = 1.0f - t
     val w1 = u * u * u
@@ -332,8 +333,8 @@ fun bezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
 }
 
 /** For curves with explicit number of segments */
-fun bezierClosestPoint(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int): Vec2 {
-    assert(numSegments > 0)
+fun bezierClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegments: Int): Vec2 {
+    assert(numSegments > 0) { "Use ImBezierClosestPointCasteljau()" }
     val pLast = Vec2(p1)
     val pClosest = Vec2()
     var pClosestDist2 = Float.MAX_VALUE
@@ -351,21 +352,24 @@ fun bezierClosestPoint(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, numSegme
     return pClosest
 }
 
-/** For auto-tesselated curves, tess_tol = style.CurveTessellationTol */
+/** For auto-tessellated curves you can use tess_tol = style.CurveTessellationTol
+ *
+ *  tess_tol is generally the same value you would find in ImGui::GetStyle().CurveTessellationTol
+ *  Because those ImXXX functions are lower-level than ImGui:: we cannot access this value automatically.   */
 fun bezierClosestPointCasteljau(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, tessTol: Float): Vec2 {
     assert(tessTol > 0f)
     val pLast = Vec2(p1)
     val pClosest = Vec2()
     val pClosestDist2 = Float.MAX_VALUE
-    closestPointBezierCasteljau(p, pClosest, pLast, pClosestDist2, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, tessTol, 0)
+    bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, tessTol, 0)
     return pClosest
 }
 
 /** Closely mimics PathBezierToCasteljau() in imgui_draw.cpp
  *  [JVM] pClosestDist2 in return */
-fun closestPointBezierCasteljau(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2_: Float,
-                                x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float,
-                                tessTol: Float, level: Int): Float {
+fun bezierClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2_: Float,
+                                    x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float,
+                                    tessTol: Float, level: Int): Float {
     var pClosestDist2 = pClosestDist2_
     val dx = x4 - x1
     val dy = y4 - y1
@@ -395,8 +399,8 @@ fun closestPointBezierCasteljau(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDi
         val y234 = (y23 + y34) * 0.5f
         val x1234 = (x123 + x234) * 0.5f
         val y1234 = (y123 + y234) * 0.5f
-        pClosestDist2 = closestPointBezierCasteljau(p, pClosest, pLast, pClosestDist2, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
-        pClosestDist2 = closestPointBezierCasteljau(p, pClosest, pLast, pClosestDist2, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
+        pClosestDist2 = bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
+        pClosestDist2 = bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
     }
     return pClosestDist2
 }
