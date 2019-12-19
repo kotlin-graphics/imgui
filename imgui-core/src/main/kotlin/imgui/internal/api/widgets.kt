@@ -428,19 +428,13 @@ internal interface widgets {
             // We don't provide our width to the layout so that it doesn't get feed back into AutoFit
             val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + thicknessDraw))
             itemSize(Vec2(0f, thicknessLayout))
-            if (!itemAdd(bb, 0)) {
-                columns?.let {
-                    popColumnsBackground()
-                    it.lineMinY = window.dc.cursorPos.y
-                }
-                return
+            val itemVisible = itemAdd(bb, 0)
+            if (itemVisible){
+                // Draw
+                window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
+                if (g.logEnabled)
+                    logRenderedText(bb.min, "--------------------------------")
             }
-
-            // Draw
-            window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
-            if (g.logEnabled)
-                logRenderedText(bb.min, "--------------------------------")
-
             columns?.let {
                 popColumnsBackground()
                 it.lineMinY = window.dc.cursorPos.y
