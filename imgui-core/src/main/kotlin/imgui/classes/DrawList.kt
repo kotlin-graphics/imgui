@@ -602,11 +602,12 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-    fun addBezierCurve(pos0: Vec2, cp0: Vec2, cp1: Vec2, pos1: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
+    /** Cubic Bezier takes 4 controls points */
+    fun addBezierCurve(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
         if (col hasnt COL32_A_MASK) return
 
-        pathLineTo(pos0)
-        pathBezierCurveTo(cp0, cp1, pos1, numSegments)
+        pathLineTo(p1)
+        pathBezierCurveTo(p2, p3, p4, numSegments)
         pathStroke(col, false, thickness)
     }
 
@@ -726,6 +727,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
+    /** Closely mimics BezierClosestPointCasteljauStep() in imgui.cpp */
     private fun pathBezierToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float, tess_tol: Float, level: Int) {
         val dx = x4 - x1
         val dy = y4 - y1
@@ -748,7 +750,6 @@ class DrawList(sharedData: DrawListSharedData?) {
             val y234 = (y23 + y34) * 0.5f
             val x1234 = (x123 + x234) * 0.5f
             val y1234 = (y123 + y234) * 0.5f
-
             pathBezierToCasteljau(path, x1, y1, x12, y12, x123, y123, x1234, y1234, tess_tol, level + 1)
             pathBezierToCasteljau(path, x1234, y1234, x234, y234, x34, y34, x4, y4, tess_tol, level + 1)
         }
