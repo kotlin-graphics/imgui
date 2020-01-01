@@ -1116,7 +1116,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val fontAtlas = _data.font!!.containerAtlas
         val offset = Vec2()
         val size = Vec2()
-        val uv = Array(2) { Vec2() }
+        val uv = Array(4) { Vec2() }
         if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
             pos -= offset
             val texId: TextureID = fontAtlas.texId
