@@ -233,7 +233,7 @@ internal interface inputText {
         val isDisplayingHint = hint != null && (if (bufDisplayFromState) state_!!.textA else buf)[0] == NUL
 
         // Password pushes a temporary font with only a fallback glyph
-        if (isPassword)
+        if (isPassword && !isDisplayingHint)
             g.inputTextPasswordFont.apply {
                 val glyph = g.font.findGlyph('*')!!
                 fontSize = g.font.fontSize
