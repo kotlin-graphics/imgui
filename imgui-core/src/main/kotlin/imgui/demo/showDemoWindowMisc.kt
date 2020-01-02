@@ -132,7 +132,7 @@ object showDemoWindowMisc {
                 io.inputQueueCharacters.forEach { c ->
                     // UTF-8 will represent some characters using multiple bytes, so we join them here
                     // example: 'ç' becomes "0xC3, 0xA7"
-                    val bytes = c.toString().toByteArray(Charsets.UTF_8).map { String.format("0x%X", it) }.joinToString()
+                    val bytes = c.toString().toByteArray().joinToString { "0x%X".format(it) }
                     sameLine();  text("\'%c\' (%s)", if(c > ' ' && c.i <= 255) c else '?', bytes)
                 }
 
