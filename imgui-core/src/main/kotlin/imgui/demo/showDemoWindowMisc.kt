@@ -130,8 +130,11 @@ object showDemoWindowMisc {
                 text("Keys mods: $ctrl$shift$alt$super_")
                 text("Chars queue:")
                 io.inputQueueCharacters.forEach { c ->
-                    sameLine();  text("\'%c\' (0x%04X)", if(c > ' ' && c.i <= 255) c else '?', c)
-                } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
+                    // UTF-8 will represent some characters using multiple bytes, so we join them here
+                    // example: 'ç' becomes "0xC3, 0xA7"
+                    val bytes = c.toString().toByteArray().joinToString { "0x%X".format(it) }
+                    sameLine();  text("\'%c\' (%s)", if(c > ' ' && c.i <= 255) c else '?', bytes)
+                }
 
                 text("NavInputs down:")
                 io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
