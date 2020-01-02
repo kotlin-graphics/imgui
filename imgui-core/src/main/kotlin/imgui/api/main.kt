@@ -311,11 +311,11 @@ interface main {
         }
 
         // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
-        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount) {
-            g.dragDropWithinSourceOrTarget = true
-            setTooltip("...")
-            g.dragDropWithinSourceOrTarget = false
-        }
+//        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount) {
+//            g.dragDropWithinSourceOrTarget = true
+//            setTooltip("...")
+//            g.dragDropWithinSourceOrTarget = false
+//        }
 
         // End frame
         g.withinFrameScope = false
