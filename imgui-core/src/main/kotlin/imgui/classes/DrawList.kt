@@ -784,7 +784,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
     /** Your rendering function must check for 'UserCallback' in ImDrawCmd and call the function instead of rendering
     triangles.  */
-    fun addCallback(callback: DrawCallback, callbackData: ByteBuffer?) {
+    fun addCallback(callback: DrawCallback, callbackData: ByteBuffer? = null) {
         var currentCmd = cmdBuffer.peek()
         if (currentCmd == null || currentCmd.elemCount != 0 || currentCmd.userCallback != null) {
             addDrawCmd()
@@ -793,7 +793,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         currentCmd.userCallback = callback
         currentCmd.userCallbackData = callbackData
-        addDrawCmd()
+        addDrawCmd() // Force a new command after us (see comment below)
     }
 
     /** This is useful if you need to forcefully create a new draw call (to allow for dependent rendering / blending).
