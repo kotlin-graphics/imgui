@@ -200,11 +200,15 @@ object dsl {
 
     inline fun withId(id: Int, block: () -> Unit) {
         pushId(id)
-        block()
-        popId()
+        try { block() } finally { popId() }
     }
 
     inline fun withId(id: String, block: () -> Unit) {
+        pushId(id)
+        try { block() } finally { popId() }
+    }
+
+    inline fun withId(id: Any, block: () -> Unit) {
         pushId(id)
         try { block() } finally { popId() }
     }

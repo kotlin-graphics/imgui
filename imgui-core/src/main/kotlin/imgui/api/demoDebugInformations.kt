@@ -59,6 +59,7 @@ import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
+import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.Columns
 import imgui.internal.classes.Rect
@@ -66,7 +67,6 @@ import imgui.internal.classes.TabBar
 import imgui.internal.classes.Window
 import kool.BYTES
 import kool.lim
-import kotlin.collections.ArrayList
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -234,7 +234,7 @@ interface demoDebugInformations {
 //                }
 //        #endif // #define IMGUI_HAS_TABLE
 //
-         // Details for Docking
+        // Details for Docking
 //        #ifdef IMGUI_HAS_DOCK
 //                if (ImGui::TreeNode("Docking"))
 //                {
@@ -417,8 +417,10 @@ interface demoDebugInformations {
                 val names = values().map { it.name }
             }
         }
+
         /** Tables Rect Type */
-        enum class TRT { OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect, ColumnsContentHeadersUsed, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
+        enum class TRT {
+            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect, ColumnsContentHeadersUsed, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
 
             companion object {
                 val names = WRT.values().map { it.name }
@@ -583,8 +585,9 @@ interface demoDebugInformations {
             fun nodeWindows(windows: ArrayList<Window>, label: String) {
                 if (!treeNode(label, "$label (${windows.size})"))
                     return
-                for (i in 0 until windows.size)
-                    nodeWindow(windows[i], "Window")
+                windows.forEach {
+                    withId(it) { nodeWindow(it, "Window") }
+                }
                 treePop()
             }
 
@@ -593,7 +596,7 @@ interface demoDebugInformations {
                     bulletText("$label: NULL")
                     return
                 }
-                val open = treeNode(window, "$label '${window.name}', ${window.active || window.wasActive} @ 0x${window.hashCode().asHexString}")
+                val open = treeNode(label, "$label '${window.name}', ${window.active || window.wasActive} @ 0x${window.hashCode().asHexString}")
                 if (isItemHovered() && window.wasActive)
                     foregroundDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
                 if (!open)
