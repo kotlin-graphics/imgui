@@ -207,6 +207,7 @@ interface demoDebugInformations {
             treePop()
         }
 
+        // Details for Popups
         if (treeNode("Popups", "Popups (${g.openPopupStack.size})")) {
             for (popup in g.openPopupStack) {
                 val window = popup.window
@@ -217,20 +218,31 @@ interface demoDebugInformations {
             treePop()
         }
 
+        // Details for TabBars
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
             for (n in 0 until g.tabBars.size)
                 Funcs.nodeTabBar(g.tabBars[n]!!)
             treePop()
         }
 
-        if (false)
-            if (treeNode("Docking"))
-                treePop()
+//        #if 0
+//        if (ImGui::TreeNode("Docking"))
+//            if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
+//            {
+//                ImGui::TreePop();
+//            }
+//        #endif
+//
+//        // Details for Docking
+//        #if 0
+//        if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
+//            if (ImGui::TreeNode("Docking"))
+//            {
+//                ImGui::TreePop();
+//            }
+//        #endif
 
-//        if(false)
-//        if (treeNode("Tables", "Tables ($g.tabl)", g.Tables.GetSize()))
-//            ImGui::TreePop();
-
+        // Misc Details
         if (treeNode("Internal state")) {
             text("HoveredWindow: '${g.hoveredWindow?.name}'")
             text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
@@ -252,6 +264,7 @@ interface demoDebugInformations {
             treePop()
         }
 
+        // Tools
         if (treeNode("Tools")) {
 
             // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
@@ -265,7 +278,7 @@ interface demoDebugInformations {
             sameLine()
             setNextItemWidth(fontSize * 12)
             _i = showWindowsRectType.ordinal
-            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i, WRT.names)
+            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i, WRT.names.toTypedArray(), WRT.names.size, WRT.names.size)
             showWindowsRectType = WRT.values()[_i]
             if (showWindowsRects)
                 g.navWindow?.let { nav ->
@@ -281,7 +294,7 @@ interface demoDebugInformations {
             treePop()
         }
 
-        // Tool: Display windows Rectangles and Begin Order
+        // Overlay: Display windows Rectangles and Begin Order
         if (showWindowsRects || showWindowsBeginOrder)
             for (window in g.windows) {
                 if (!window.wasActive)
@@ -297,6 +310,26 @@ interface demoDebugInformations {
                     drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
                 }
             }
+
+//        // FIXME-WIP: This is a placeholder to facilitate merging of Tables branch into multiple branches.
+//        #if 0
+//        // Overlay: Display Tables Rectangles
+//        if (show_tables_rects)
+//        {
+//            for (int table_n = 0; table_n < g.Tables.GetSize(); table_n++)
+//            {
+//                ImGuiTable* table = g.Tables.GetByIndex(table_n);
+//            }
+//        }
+//        #endif
+//
+//        // FIXME-WIP: This is a placeholder to facilitate merging of Docking branch into multiple branches.
+//        #if 0
+//        // Overlay: Display Docking info
+//        if (show_docking_nodes && g.IO.KeyCtrl)
+//        {
+//        }
+//        #endif
 
         end()
     }
@@ -376,6 +409,8 @@ interface demoDebugInformations {
 
     companion object {
 
+        // Debugging enums
+
         /** Windows Rect Type */
         enum class WRT {
             OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Content, ContentRegionRect;
@@ -384,10 +419,19 @@ interface demoDebugInformations {
                 val names = values().map { it.name }
             }
         }
+        /** Tables Rect Type */
+        enum class TRT { OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect, ColumnsContentHeadersUsed, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
+
+            companion object {
+                val names = WRT.values().map { it.name }
+            }
+        }
 
         var showWindowsRects = false
         var showWindowsRectType = WRT.InnerClipRect
         var showWindowsBeginOrder = false
+        var showTablesRects = false
+        var showTablesRectType = TRT.WorkRect
         var showDrawcmdDetails = true
 
         var showWindow = false
@@ -396,11 +440,12 @@ interface demoDebugInformations {
 
 
         // Helper functions to display common structures:
-        // - NodeDrawList
-        // - NodeColumns
-        // - NodeWindow
-        // - NodeWindows
-        // - NodeTabBar
+        // - NodeDrawList()
+        // - NodeColumns()
+        // - NodeWindow()
+        // - NodeWindows()
+        // - NodeTabBar()
+        // - NodeStorage()
         object Funcs {
 
             fun getWindowRect(window: Window, rectType: WRT): Rect = when (rectType) {

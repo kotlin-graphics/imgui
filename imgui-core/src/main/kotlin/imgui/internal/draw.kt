@@ -207,7 +207,7 @@ class DrawListSplitter {
                 lastCmd.elemCount += ch._cmdBuffer[0].elemCount
                 idxOffset += ch._cmdBuffer[0].elemCount
                 TODO()
-//                ch.cmdBuffer.erase(ch.CmdBuffer.Data);
+//                ch.cmdBuffer.erase(ch.CmdBuffer.Data); // FIXME-OPT: Improve for multiple merges.
             }
             if (ch._cmdBuffer.isNotEmpty())
                 lastCmd = ch._cmdBuffer.last()
