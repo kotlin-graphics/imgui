@@ -4,6 +4,7 @@ import gli_.has
 import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.beginChildEx
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.itemAdd
@@ -13,7 +14,6 @@ import imgui.internal.Axis
 import imgui.internal.NavHighlightFlag
 import imgui.internal.classes.Rect
 import imgui.internal.shl
-import imgui.static.beginChildEx
 import imgui.WindowFlag as Wf
 
 
