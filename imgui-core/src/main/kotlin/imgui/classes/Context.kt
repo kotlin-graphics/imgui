@@ -340,7 +340,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Backup of last Hue associated to LastColor[3], so we can restore Hue in lossy RGB<>HSV round trips */
     var colorEditLastHue = 0f
     /** Backup of last Saturation associated to LastColor[3], so we can restore Saturation in lossy RGB<>HSV round trips */
-    var colorEditLastSaturation = 0f
+    var colorEditLastSat = 0f
 
     var colorEditLastColor = FloatArray(3) { Float.MAX_VALUE }
     /** Initial/reference color at the time of opening the color picker. */
