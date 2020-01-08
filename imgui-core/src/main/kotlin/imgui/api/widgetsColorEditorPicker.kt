@@ -146,7 +146,7 @@ interface widgetsColorEditorPicker {
                 if (f[1] == 0f)
                     f[0] = g.colorEditLastHue
                 if (f[2] == 0f)
-                    f[1] = g.colorEditLastSaturation
+                    f[1] = g.colorEditLastSat
             }
         }
 
@@ -243,7 +243,7 @@ interface widgetsColorEditorPicker {
             if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
             if (flags has Cef.DisplayHSV && flags has Cef.InputRGB) {
                 g.colorEditLastHue = f[0]
-                g.colorEditLastSaturation = f[1]
+                g.colorEditLastSat = f[1]
                 f.hsvToRGB()
                 g.colorEditLastColor[0] = f[0]
                 g.colorEditLastColor[1] = f[1]
@@ -401,7 +401,7 @@ interface widgetsColorEditorPicker {
                 if (hsv[1] == 0f)
                     hsv[0] = g.colorEditLastHue
                 if (hsv[2] == 0f)
-                    hsv[1] = g.colorEditLastSaturation
+                    hsv[1] = g.colorEditLastSat
             }
         } else if (flags has Cef.InputHSV)
             colorConvertHSVtoRGB(hsv, rgb)
@@ -513,7 +513,7 @@ interface widgetsColorEditorPicker {
             if (flags has Cef.InputRGB) {
                 colorConvertHSVtoRGB(if (H >= 1f) H - 10 * 1e-6f else H, if (S > 0f) S else 10 * 1e-6f, if (V > 0f) V else 1e-6f, col)
                 g.colorEditLastHue = H
-                g.colorEditLastSaturation = S
+                g.colorEditLastSat = S
                 g.colorEditLastColor[0] = col[0]
                 g.colorEditLastColor[1] = col[1]
                 g.colorEditLastColor[2] = col[2]
@@ -570,7 +570,7 @@ interface widgetsColorEditorPicker {
                     if (S == 0f)
                         H = g.colorEditLastHue
                     if (V == 0f)
-                        S = g.colorEditLastSaturation
+                        S = g.colorEditLastSat
                 }
             } else if (flags has Cef.InputHSV) {
                 H = col[0]
