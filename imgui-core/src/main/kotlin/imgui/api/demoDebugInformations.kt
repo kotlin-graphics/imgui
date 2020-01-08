@@ -225,22 +225,22 @@ interface demoDebugInformations {
             treePop()
         }
 
-//        #if 0
-//        if (ImGui::TreeNode("Docking"))
-//            if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
-//            {
-//                ImGui::TreePop();
-//            }
-//        #endif
+//        #ifdef IMGUI_HAS_TABLE
+//                if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
+//                {
+//                    for (int n = 0; n < g.Tables.GetSize(); n++)
+//                    Funcs::NodeTable(g.Tables.GetByIndex(n));
+//                    ImGui::TreePop();
+//                }
+//        #endif // #define IMGUI_HAS_TABLE
 //
-//        // Details for Docking
-//        #if 0
-//        if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
-//            if (ImGui::TreeNode("Docking"))
-//            {
-//                ImGui::TreePop();
-//            }
-//        #endif
+         // Details for Docking
+//        #ifdef IMGUI_HAS_DOCK
+//                if (ImGui::TreeNode("Docking"))
+//                {
+//                    ImGui::TreePop();
+//                }
+//        #endif // #define IMGUI_HAS_DOCK
 
         // Misc Details
         if (treeNode("Internal state")) {
@@ -311,8 +311,7 @@ interface demoDebugInformations {
                 }
             }
 
-//        // FIXME-WIP: This is a placeholder to facilitate merging of Tables branch into multiple branches.
-//        #if 0
+//        #ifdef IMGUI_HAS_TABLE
 //        // Overlay: Display Tables Rectangles
 //        if (show_tables_rects)
 //        {
@@ -321,15 +320,14 @@ interface demoDebugInformations {
 //                ImGuiTable* table = g.Tables.GetByIndex(table_n);
 //            }
 //        }
-//        #endif
+//        #endif // #define IMGUI_HAS_TABLE
 //
-//        // FIXME-WIP: This is a placeholder to facilitate merging of Docking branch into multiple branches.
-//        #if 0
+//        #ifdef IMGUI_HAS_DOCK
 //        // Overlay: Display Docking info
 //        if (show_docking_nodes && g.IO.KeyCtrl)
 //        {
 //        }
-//        #endif
+//        #endif // #define IMGUI_HAS_DOCK
 
         end()
     }
