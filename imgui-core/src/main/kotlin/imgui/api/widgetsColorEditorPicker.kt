@@ -64,9 +64,9 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.classes.DrawList
+import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.*
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.internal.DrawCornerFlag as Dcf
@@ -142,8 +142,12 @@ interface widgetsColorEditorPicker {
         else if (flags has Cef.InputRGB && flags has Cef.DisplayHSV) {
             // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
             f.rgbToHSV()
-            if (f[1] == 0f && g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2])
-                f[0] = g.colorEditLastHue
+            if (g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) {
+                if (f[1] == 0f)
+                    f[0] = g.colorEditLastHue
+                if (f[2] == 0f)
+                    f[1] = g.colorEditLastSaturation
+            }
         }
 
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
@@ -170,20 +174,11 @@ interface widgetsColorEditorPicker {
                 setNextItemWidth(if (n + 1 < components) wItemOne else wItemLast)
 
                 // Disable Hue edit when Saturation is zero
-                val disableHueEdit = n == 0 && flags has Cef.DisplayHSV && i[1] == 0
+                // FIXME: When ImGuiColorEditFlags_HDR flag is passed HS values snap in weird ways when SV values go below 0.
                 valueChanged = when {
-                    flags has Cef.Float -> {
-                        val vMin = if (disableHueEdit) Float.MAX_VALUE else 0f
-                        val vMax = if (disableHueEdit) -Float.MAX_VALUE else if (hdr) 0f else 1f
-                        // operands inverted to have dragScalar always executed, no matter valueChanged
-                        valueChangedAsFloat = dragScalar(ids[n], f, n, 1f / 255f, vMin, vMax, fmtTableFloat[fmtIdx][n]) || valueChanged
-                        valueChangedAsFloat
-                    }
-                    else -> {
-                        val vMin = if (disableHueEdit) Int.MAX_VALUE else 0
-                        val vMax = if (disableHueEdit) Int.MIN_VALUE else if (hdr) 0 else 255
-                        dragInt(ids[n], i, n, 1f, vMin, vMax, fmtTableInt[fmtIdx][n]) || valueChanged
-                    }
+                    flags has Cef.Float -> // operands inverted to have dragScalar always executed, no matter valueChanged
+                        dragScalar(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChanged // ~ valueChangedAsFloat
+                    else -> dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
                 }
                 if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             }
@@ -238,7 +233,7 @@ interface widgetsColorEditorPicker {
         }
 
         if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
-            val textOffsetX = if(flags has Cef.NoInputs) wButton else wFull + style.itemInnerSpacing.x
+            val textOffsetX = if (flags has Cef.NoInputs) wButton else wFull + style.itemInnerSpacing.x
             window.dc.cursorPos.put(pos.x + textOffsetX, pos.y + style.framePadding.y)
             textEx(label, labelDisplayEnd)
         }
@@ -248,6 +243,7 @@ interface widgetsColorEditorPicker {
             if (!valueChangedAsFloat) for (n in 0..3) f[n] = i[n] / 255f
             if (flags has Cef.DisplayHSV && flags has Cef.InputRGB) {
                 g.colorEditLastHue = f[0]
+                g.colorEditLastSaturation = f[1]
                 f.hsvToRGB()
                 g.colorEditLastColor[0] = f[0]
                 g.colorEditLastColor[1] = f[1]
@@ -401,8 +397,12 @@ interface widgetsColorEditorPicker {
         if (flags has Cef.InputRGB) {
             // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
             colorConvertRGBtoHSV(rgb, hsv)
-            if (hsv[1] == 0f && g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2])
-                hsv[0] = g.colorEditLastHue
+            if (g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) {
+                if (hsv[1] == 0f)
+                    hsv[0] = g.colorEditLastHue
+                if (hsv[2] == 0f)
+                    hsv[1] = g.colorEditLastSaturation
+            }
         } else if (flags has Cef.InputHSV)
             colorConvertHSVtoRGB(hsv, rgb)
         var (H, S, V) = hsv
@@ -513,6 +513,7 @@ interface widgetsColorEditorPicker {
             if (flags has Cef.InputRGB) {
                 colorConvertHSVtoRGB(if (H >= 1f) H - 10 * 1e-6f else H, if (S > 0f) S else 10 * 1e-6f, if (V > 0f) V else 1e-6f, col)
                 g.colorEditLastHue = H
+                g.colorEditLastSaturation = S
                 g.colorEditLastColor[0] = col[0]
                 g.colorEditLastColor[1] = col[1]
                 g.colorEditLastColor[2] = col[2]
@@ -565,8 +566,12 @@ interface widgetsColorEditorPicker {
                     S = it[1]
                     V = it[2]
                 }
-                if (S == 0f && g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) // Fix local Hue as display below will use it immediately.
-                    H = g.colorEditLastHue
+                if (g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) { // Fix local Hue as display below will use it immediately.
+                    if (S == 0f)
+                        H = g.colorEditLastHue
+                    if (V == 0f)
+                        S = g.colorEditLastSaturation
+                }
             } else if (flags has Cef.InputHSV) {
                 H = col[0]
                 S = col[1]
@@ -799,10 +804,10 @@ interface widgetsColorEditorPicker {
         fun DrawList.renderArrowsForVerticalBar(pos: Vec2, halfSz: Vec2, barW: Float, alpha: Float) {
             val alpha8 = F32_TO_INT8_SAT(alpha)
             // @formatter:off
-            renderArrowPointingAt(Vec2(pos.x + halfSz.x + 1,        pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Right, COL32(0, 0, 0, alpha8))
-            renderArrowPointingAt(Vec2(pos.x + halfSz.x,            pos.y), halfSz,                           Dir.Right, COL32(255, 255, 255, alpha8))
-            renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left,  COL32(0, 0, 0, alpha8))
-            renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x,     pos.y), halfSz,                           Dir.Left,  COL32(255, 255,255, alpha8))
+            renderArrowPointingAt(Vec2(pos.x + halfSz.x + 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Right, COL32(0, 0, 0, alpha8))
+            renderArrowPointingAt(Vec2(pos.x + halfSz.x, pos.y), halfSz, Dir.Right, COL32(255, 255, 255, alpha8))
+            renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32(0, 0, 0, alpha8))
+            renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32(255, 255, 255, alpha8))
             // @formatter:on
         }
     }
