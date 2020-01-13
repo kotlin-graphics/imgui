@@ -4,6 +4,7 @@ import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ColorEditFlag as Cef
 import imgui.ImGui.beginPopup
 import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.button
@@ -44,20 +45,20 @@ internal interface color {
             separator()
         }
         val sz = Vec2(g.fontSize * 3 + style.framePadding.y * 2)
-        val cf = Vec4(col[0], col[1], col[2], if (flags has ColorEditFlag.NoAlpha) 1f else col[3])
+        val cf = Vec4(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
         val cr = F32_TO_INT8_SAT(col[0])
         val cg = F32_TO_INT8_SAT(col[1])
         val cb = F32_TO_INT8_SAT(col[2])
-        val ca = if (flags has ColorEditFlag.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
-        colorButton("##preview", cf, (flags and (ColorEditFlag._InputMask or ColorEditFlag.NoAlpha or ColorEditFlag.AlphaPreview or ColorEditFlag.AlphaPreviewHalf)) or ColorEditFlag.NoTooltip, sz)
+        val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+        colorButton("##preview", cf, (flags and (Cef._InputMask or Cef.NoAlpha or Cef.AlphaPreview or Cef.AlphaPreviewHalf)) or Cef.NoTooltip, sz)
         sameLine()
-        if (flags has ColorEditFlag.InputRGB || flags hasnt ColorEditFlag._InputMask)
-            if (flags has ColorEditFlag.NoAlpha)
+        if (flags has Cef.InputRGB || flags hasnt Cef._InputMask)
+            if (flags has Cef.NoAlpha)
                 text("#%02X%02X%02X\nR: $cr, G: $cg, B: $cb\n(%.3f, %.3f, %.3f)", cr, cg, cb, col[0], col[1], col[2])
             else
                 text("#%02X%02X%02X%02X\nR:$cr, G:$cg, B:$cb, A:$ca\n(%.3f, %.3f, %.3f, %.3f)", cr, cg, cb, ca, col[0], col[1], col[2], col[3])
-        else if (flags has ColorEditFlag.InputHSV)
-            if (flags has ColorEditFlag.NoAlpha)
+        else if (flags has Cef.InputHSV)
+            if (flags has Cef.NoAlpha)
                 text("H: %.3f, S: %.3f, V: %.3f", col[0], col[1], col[2])
             else
                 text("H: %.3f, S: %.3f, V: %.3f, A: %.3f", col[0], col[1], col[2], col[3])
@@ -67,24 +68,24 @@ internal interface color {
 
     /** @param flags ColorEditFlags */
     fun colorEditOptionsPopup(col: FloatArray, flags: ColorEditFlags) {
-        val allowOptInputs = flags hasnt ColorEditFlag._DisplayMask
-        val allowOptDatatype = flags hasnt ColorEditFlag._DataTypeMask
+        val allowOptInputs = flags hasnt Cef._DisplayMask
+        val allowOptDatatype = flags hasnt Cef._DataTypeMask
         if ((!allowOptInputs && !allowOptDatatype) || !beginPopup("context")) return
         var opts = g.colorEditOptions
         if (allowOptInputs) {
-            if (radioButton("RGB", opts has ColorEditFlag.DisplayRGB))
-                opts = (opts wo ColorEditFlag._DisplayMask) or ColorEditFlag.DisplayRGB
-            if (radioButton("HSV", opts has ColorEditFlag.DisplayHSV))
-                opts = (opts wo ColorEditFlag._DisplayMask) or ColorEditFlag.DisplayHSV
-            if (radioButton("HEX", opts has ColorEditFlag.DisplayHEX))
-                opts = (opts wo ColorEditFlag._DisplayMask) or ColorEditFlag.DisplayHEX
+            if (radioButton("RGB", opts has Cef.DisplayRGB))
+                opts = (opts wo Cef._DisplayMask) or Cef.DisplayRGB
+            if (radioButton("HSV", opts has Cef.DisplayHSV))
+                opts = (opts wo Cef._DisplayMask) or Cef.DisplayHSV
+            if (radioButton("HEX", opts has Cef.DisplayHEX))
+                opts = (opts wo Cef._DisplayMask) or Cef.DisplayHEX
         }
         if (allowOptDatatype) {
             if (allowOptInputs) separator()
-            if (radioButton("0..255", opts has ColorEditFlag.Uint8))
-                opts = (opts wo ColorEditFlag._DataTypeMask) or ColorEditFlag.Uint8
-            if (radioButton("0.00..1.00", opts has ColorEditFlag.Float))
-                opts = (opts wo ColorEditFlag._DataTypeMask) or ColorEditFlag.Float
+            if (radioButton("0..255", opts has Cef.Uint8))
+                opts = (opts wo Cef._DataTypeMask) or Cef.Uint8
+            if (radioButton("0.00..1.00", opts has Cef.Float))
+                opts = (opts wo Cef._DataTypeMask) or Cef.Float
         }
 
         if (allowOptInputs || allowOptDatatype) separator()
@@ -94,19 +95,21 @@ internal interface color {
             val cr = F32_TO_INT8_SAT(col[0])
             val cg = F32_TO_INT8_SAT(col[1])
             val cb = F32_TO_INT8_SAT(col[2])
-            val ca = if (flags has ColorEditFlag.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
-            var buf = "(%.3ff, %.3ff, %.3ff, %.3ff)".format(col[0], col[1], col[2], if (flags has ColorEditFlag.NoAlpha) 1f else col[3])
+            val ca = if (flags has Cef.NoAlpha) 255 else F32_TO_INT8_SAT(col[3])
+            var buf = "(%.3ff, %.3ff, %.3ff, %.3ff)".format(col[0], col[1], col[2], if (flags has Cef.NoAlpha) 1f else col[3])
             if (selectable(buf))
                 clipboardText = buf
             buf = "(%d,%d,%d,%d)".format(cr, cg, cb, ca)
             if (selectable(buf))
                 clipboardText = buf
-            buf = when {
-                flags has ColorEditFlag.NoAlpha -> "0x%02X%02X%02X".format(cr, cg, cb)
-                else -> "0x%02X%02X%02X%02X".format(cr, cg, cb, ca)
-            }
+            buf = "#%02X%02X%02X".format(cr, cg, cb)
             if (selectable(buf))
                 clipboardText = buf
+            if (flags hasnt Cef.NoAlpha)            {
+                buf = "#%02X%02X%02X%02X".format(cr, cg, cb, ca)
+                if (selectable(buf))
+                    clipboardText = buf
+            }
             endPopup()
         }
 
@@ -115,8 +118,8 @@ internal interface color {
     }
 
     fun colorPickerOptionsPopup(refCol: FloatArray, flags: ColorEditFlags) {
-        val allowOptPicker = flags hasnt ColorEditFlag._PickerMask
-        val allowOptAlphaBar = flags hasnt ColorEditFlag.NoAlpha && flags hasnt ColorEditFlag.AlphaBar
+        val allowOptPicker = flags hasnt Cef._PickerMask
+        val allowOptAlphaBar = flags hasnt Cef.NoAlpha && flags hasnt Cef.AlphaBar
         if ((!allowOptPicker && !allowOptAlphaBar) || !beginPopup("context")) return
         if (allowOptPicker) {
             // FIXME: Picker size copied from main picker function
@@ -126,17 +129,17 @@ internal interface color {
                 // Draw small/thumbnail version of each picker type (over an invisible button for selection)
                 if (pickerType > 0) separator()
                 pushId(pickerType)
-                var pickerFlags: ColorEditFlags = ColorEditFlag.NoInputs or ColorEditFlag.NoOptions or ColorEditFlag.NoLabel or
-                        ColorEditFlag.NoSidePreview or (flags and ColorEditFlag.NoAlpha)
-                if (pickerType == 0) pickerFlags = pickerFlags or ColorEditFlag.PickerHueBar
-                if (pickerType == 1) pickerFlags = pickerFlags or ColorEditFlag.PickerHueWheel
+                var pickerFlags: ColorEditFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
+                        Cef.NoSidePreview or (flags and Cef.NoAlpha)
+                if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar
+                if (pickerType == 1) pickerFlags = pickerFlags or Cef.PickerHueWheel
                 val backupPos = Vec2(cursorScreenPos)
                 if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
-                    g.colorEditOptions = (g.colorEditOptions wo ColorEditFlag._PickerMask) or (pickerFlags and ColorEditFlag._PickerMask)
+                    g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
                 cursorScreenPos = backupPos
                 val dummyRefCol = Vec4()
                 for (i in 0..2) dummyRefCol[i] = refCol[i]
-                if (pickerFlags hasnt ColorEditFlag.NoAlpha) dummyRefCol[3] = refCol[3]
+                if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
                 colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
                 popId()
             }
@@ -145,7 +148,7 @@ internal interface color {
         if (allowOptAlphaBar) {
             if (allowOptPicker) separator()
             val pI = intArrayOf(g.colorEditOptions)
-            checkboxFlags("Alpha Bar", pI, ColorEditFlag.AlphaBar.i)
+            checkboxFlags("Alpha Bar", pI, Cef.AlphaBar.i)
             g.colorEditOptions = pI[0]
         }
         endPopup()
