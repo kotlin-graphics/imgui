@@ -95,11 +95,11 @@ interface widgetsTrees {
 
         // Handle Left arrow to move to parent tree node (when ImGuiTreeNodeFlags_NavLeftJumpsBackHere is enabled)
         if (g.navMoveDir == Dir.Left && g.navWindow === window && navMoveRequestButNoResultYet())
-            if (g.navIdIsAlive && window.dc.treeMayJumpToParentOnPopMask has treeDepthMask) {
+            if (g.navIdIsAlive && window.dc.treeJumpToParentOnPopMask has treeDepthMask) {
                 setNavId(window.idStack.last(), g.navLayer)
                 navMoveRequestCancel()
             }
-        window.dc.treeMayJumpToParentOnPopMask = window.dc.treeMayJumpToParentOnPopMask and treeDepthMask - 1
+        window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask and treeDepthMask - 1
 
         assert(window.idStack.size > 1) { "There should always be 1 element in the idStack (pushed during window creation). If this triggers you called ::treePop/popId() too much." }
         popId()
