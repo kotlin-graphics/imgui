@@ -164,7 +164,8 @@ fun navUpdate() {
             assert(childWindow.childId != 0)
             focusWindow(parentWindow)
             setNavId(childWindow.childId, NavLayer.Main)
-            g.navIdIsAlive = false  // -V1048: Reassigning with same value, we're being explicit here.
+            // Reassigning with same value, we're being explicit here.
+            g.navIdIsAlive = false  // -V1048
             if (g.navDisableMouseHover)
                 g.navMousePosDirty = true
         } else if (g.openPopupStack.isNotEmpty()) {
@@ -252,7 +253,8 @@ fun navUpdate() {
         //IMGUI_DEBUG_LOG("[Nav] NavInitRequest from move, window \"%s\", layer=%d\n", g.NavWindow->Name, g.NavLayer);
         g.navInitRequest = true
         g.navInitRequestFromMove = true
-        g.navInitResultId = 0    // -V1048: Reassigning with same value, we're being explicit here.
+        // Reassigning with same value, we're being explicit here.
+        g.navInitResultId = 0    // -V1048
         g.navDisableHighlight = false
     }
     navUpdateAnyRequestFlag()
