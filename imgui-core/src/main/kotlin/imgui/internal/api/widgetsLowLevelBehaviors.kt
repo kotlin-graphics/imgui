@@ -495,7 +495,7 @@ internal interface widgetsLowLevelBehaviors {
         val isLeaf = flags has Tnf.Leaf
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
         if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
-            window.dc.treeMayJumpToParentOnPopMask = window.dc.treeMayJumpToParentOnPopMask or (1 shl window.dc.treeDepth)
+            window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask or (1 shl window.dc.treeDepth)
 
         val itemAdd = itemAdd(interactBb, id)
         window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDisplayRect

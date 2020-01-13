@@ -596,7 +596,7 @@ interface windows {
                 dc.textWrapPosStack.clear()
                 dc.currentColumns = null
                 dc.treeDepth = 0
-                dc.treeMayJumpToParentOnPopMask = 0
+                dc.treeJumpToParentOnPopMask = 0
                 dc.stateStorage = stateStorage
                 dc.groupStack.clear()
                 menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
