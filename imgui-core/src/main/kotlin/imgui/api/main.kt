@@ -354,10 +354,8 @@ interface main {
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
 
-        // Gather DrawList to render (for each active window)
+        // Gather ImDrawList to render (for each active window)
         io.metricsRenderWindows = 0
-        io.metricsRenderIndices = 0
-        io.metricsRenderVertices = 0
         g.drawDataBuilder.clear()
         if (g.backgroundDrawList.vtxBuffer.hasRemaining())
             g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
