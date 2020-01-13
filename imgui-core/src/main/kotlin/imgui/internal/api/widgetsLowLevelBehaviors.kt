@@ -1,11 +1,11 @@
 package imgui.internal.api
 
+import gli_.has
 import gli_.hasnt
 import glm_.*
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveId
@@ -116,7 +116,7 @@ internal interface widgetsLowLevelBehaviors {
         }
 
         // Default behavior requires click+release on same spot
-        if (flags hasnt (Bf.PressedOnClickRelease or Bf.PressedOnClick or Bf.PressedOnRelease or Bf.PressedOnDoubleClick))
+        if (flags hasnt (Bf.PressedOnMask_ wo Bf.PressedOnDragDropHold.i))
             flags = flags or Bf.PressedOnClickRelease
 
         val backupHoveredWindow = g.hoveredWindow
@@ -157,7 +157,7 @@ internal interface widgetsLowLevelBehaviors {
         if (hovered) {
             if (flags hasnt Bf.NoKeyModifiers || (!io.keyCtrl && !io.keyShift && !io.keyAlt)) {
 
-                if (flags has Bf.PressedOnClickRelease && io.mouseClicked[0]) {
+                if (flags has (Bf.PressedOnClickRelease or Bf.PressedOnClickReleaseAnywhere) && io.mouseClicked[0]) {
                     setActiveId(id, window)
                     if (flags hasnt Bf.NoNavFocus)
                         setFocusId(id, window)
@@ -218,7 +218,9 @@ internal interface widgetsLowLevelBehaviors {
                 if (io.mouseDown[0])
                     held = true
                 else {
-                    if (hovered && flags has Bf.PressedOnClickRelease && !g.dragDropActive) {
+                    val releaseIn = hovered && flags has Bf.PressedOnClickRelease
+                    val releaseAnywhere = flags has Bf.PressedOnClickReleaseAnywhere
+                    if ((releaseIn || releaseAnywhere) && !g.dragDropActive) {
                         val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownWasDoubleClick[0]
                         val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay // Repeat mode trumps <on release>
                         if (!isDoubleClickRelease && !isRepeatingAlready)
