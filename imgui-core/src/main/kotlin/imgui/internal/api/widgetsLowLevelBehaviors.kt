@@ -116,7 +116,7 @@ internal interface widgetsLowLevelBehaviors {
         }
 
         // Default behavior requires click+release on same spot
-        if (flags hasnt (Bf.PressedOnMask_ wo Bf.PressedOnDragDropHold.i))
+        if (flags hasnt Bf.PressedOnMask_)
             flags = flags or Bf.PressedOnClickRelease
 
         val backupHoveredWindow = g.hoveredWindow
@@ -516,8 +516,10 @@ internal interface widgetsLowLevelBehaviors {
         var buttonFlags: ButtonFlags = Bf.None.i
         if (flags has Tnf.AllowItemOverlap)
             buttonFlags = buttonFlags or Bf.AllowItemOverlap
-        if (flags has Tnf.OpenOnDoubleClick)
-            buttonFlags = buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
+        buttonFlags = when {
+            flags has Tnf.OpenOnDoubleClick -> buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
+            else -> buttonFlags or Bf.PressedOnClickRelease
+        }
         if (!isLeaf)
             buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
 
