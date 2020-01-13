@@ -249,6 +249,7 @@ class NextWindowData {
     /** *Always on* This is not exposed publicly, so we don't clear it. */
     var menuBarOffsetMinVal = Vec2()
 
+    /** Also cleared by ItemAdd() */
     fun clearFlags() {
         flags = NextWindowDataFlag.None.i
     }

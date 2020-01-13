@@ -159,7 +159,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 
     //------------------------------------------------------------------
-    // Navigation data (for gamepad/keyboard)
+    // Gamepad/keyboard Navigation
     //------------------------------------------------------------------
 
     /** Focused window for navigation. Could be called 'FocusWindow'    */
@@ -245,7 +245,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
 
-    // Tabbing system (older than Nav, active even if Nav is disabled. FIXME-NAV: This needs a redesign!)
+    // Legacy Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
 
     var focusRequestCurrWindow: Window? = null
 
@@ -260,6 +260,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var focusRequestNextCounterTab = Int.MAX_VALUE
 
     var focusTabPressed = false
+
+    // Range-Select/Multi-Select
+    // [This is unused in this branch, but left here to facilitate merging/syncing multiple branches]
+    var multiSelectScopeId: ID = 0
 
 
     // ------------------------------------------------------------------
@@ -357,9 +361,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
 
-    // Range-Select/Multi-Select
-    // [This is unused in this branch, but left here to facilitate merging/syncing multiple branches]
-    var multiSelectScopeId: ID = 0
 
     // Platform support
 
