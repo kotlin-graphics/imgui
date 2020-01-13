@@ -12,6 +12,8 @@ import kotlin.collections.ArrayList
  *  FIXME: That's theory, in practice the delimitation between Window and WindowTempData is quite tenuous and could be reconsidered.  */
 class WindowTempData {
 
+    // Layout
+
     var cursorPos = Vec2()
     /** Current emitting position, in absolute coordinates. */
     var cursorPosPrevLine = Vec2()
@@ -27,10 +29,17 @@ class WindowTempData {
     var currLineTextBaseOffset = 0f
 
     var prevLineTextBaseOffset = 0f
-    /** Current tree depth. */
-    var treeDepth = 0
-    /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary. */
-    var treeMayJumpToParentOnPopMask = 0
+    /** Indentation / start position from left of window (increased by TreePush/TreePop, etc.)  */
+    var indent = 0f
+    /** Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use
+    cases like Tree->Column->Tree. Need revamp columns API. */
+    var columnsOffset = 0f
+
+    var groupOffset = 0f
+
+
+    // Last item status
+
     /** ID for last item */
     var lastItemId: ID = 0
     /** Status flags for last item (see ImGuiItemStatusFlags_) */
@@ -39,6 +48,10 @@ class WindowTempData {
     var lastItemRect = Rect()
     /** End-user display rect for last item (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
     var lastItemDisplayRect = Rect()
+
+
+    // Keyboard/Gamepad navigation
+
     /** Current layer, 0..31 (we currently only use 0..1)   */
     var navLayerCurrent = NavLayer.Main
     /** = (1 << navLayerCurrent) used by ::itemAdd prior to clipping. */
@@ -52,14 +65,23 @@ class WindowTempData {
     /** Set when scrolling can be used (ScrollMax > 0.0f)   */
     var navHasScroll = false
 
+
+    // Miscellaneous
+
     var menuBarAppending = false
     /** MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we switch to the menu bar.
      *  The only situation when MenuBarOffset.y is > 0 if when (SafeAreaPadding.y > FramePadding.y), often used on TVs. */
     var menuBarOffset = Vec2()
+    /** Current tree depth. */
+    var treeDepth = 0
+    /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary. */
+    var treeJumpToParentOnPopMask = 0x00
 
     val childWindows = ArrayList<Window>()
     /** Current persistent per-window storage (store e.g. tree node open/close state) */
     var stateStorage = Storage()
+    /** Current columns set */
+    var currentColumns: Columns? = null
 
     var layoutType = LayoutType.Vertical
 
@@ -69,6 +91,8 @@ class WindowTempData {
     /** (same, but only count widgets which you can Tab through) */
     var focusCounterTab = -1
 
+
+    // Local parameters stacks
 
     /*  We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
         The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not
@@ -86,22 +110,7 @@ class WindowTempData {
 
     val textWrapPosStack = Stack<Float>()
 
-    val allowKeyboardFocusStack = Stack<Boolean>()
-
-    val buttonRepeatStack = Stack<Boolean>()
-
     val groupStack = Stack<GroupData>()
     /** Store size of various stacks for asserting  */
     val stackSizesBackup = IntArray(6)
-
-
-    /** Indentation / start position from left of window (increased by TreePush/TreePop, etc.)  */
-    var indent = 0f
-
-    var groupOffset = 0f
-    /** Offset to the current column (if ColumnsCurrent > 0). FIXME: This and the above should be a stack to allow use
-    cases like Tree->Column->Tree. Need revamp columns API. */
-    var columnsOffset = 0f
-    /** Current columns set */
-    var currentColumns: Columns? = null
 }
