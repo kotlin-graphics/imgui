@@ -33,7 +33,7 @@ interface focusActivation {
         assert(offset >= -1) { "-1 is allowed but not below" }
         val window = g.currentWindow!!
         g.focusRequestNextWindow = window
-        g.focusRequestNextCounterAll = window.dc.focusCounterAll + 1 + offset
-        g.focusRequestNextCounterTab = Int.MAX_VALUE
+        g.focusRequestNextCounterRegular = window.dc.focusCounterRegular + 1 + offset
+        g.focusRequestNextCounterTabStop = Int.MAX_VALUE
     }
 }

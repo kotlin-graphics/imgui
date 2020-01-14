@@ -160,15 +160,15 @@ internal interface basicHelpersForWidgetCode {
 
         // Increment counters
         val isTabStop = window.dc.itemFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
-        window.dc.focusCounterAll++
+        window.dc.focusCounterRegular++
         if (isTabStop)
-            window.dc.focusCounterTab++
+            window.dc.focusCounterTabStop++
 
         // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
         // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
         if (g.activeId == id && g.focusTabPressed && !isActiveIdUsingKey(Key.Tab) && g.focusRequestNextWindow == null) {
             g.focusRequestNextWindow = window
-            g.focusRequestNextCounterTab = window.dc.focusCounterTab + when {
+            g.focusRequestNextCounterTabStop = window.dc.focusCounterTabStop + when {
                 // Modulo on index will be applied at the end of frame once we've got the total counter of items.
                 io.keyShift -> if (isTabStop) -1 else 0
                 else -> +1
@@ -176,9 +176,9 @@ internal interface basicHelpersForWidgetCode {
         }
         // Handle focus requests
         if (g.focusRequestCurrWindow === window) {
-            if (window.dc.focusCounterAll == g.focusRequestCurrCounterAll)
+            if (window.dc.focusCounterRegular == g.focusRequestCurrCounterRegular)
                 return true
-            if (isTabStop && window.dc.focusCounterTab == g.focusRequestCurrCounterTab) {
+            if (isTabStop && window.dc.focusCounterTabStop == g.focusRequestCurrCounterTabStop) {
                 g.navJustTabbedId = id
                 return true
             }
@@ -192,8 +192,8 @@ internal interface basicHelpersForWidgetCode {
     }
 
     fun focusableItemUnregister(window: Window) {
-        window.dc.focusCounterAll--
-        window.dc.focusCounterTab--
+        window.dc.focusCounterRegular--
+        window.dc.focusCounterTabStop--
     }
 
     /** [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == CalcItemWidth().

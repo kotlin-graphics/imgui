@@ -245,19 +245,19 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
 
-    // Legacy Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
+    // Legacy Focus/Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
 
     var focusRequestCurrWindow: Window? = null
 
     var focusRequestNextWindow: Window? = null
     /** Any item being requested for focus, stored as an index (we on layout to be stable between the frame pressing TAB and the next frame, semi-ouch) */
-    var focusRequestCurrCounterAll = Int.MAX_VALUE
+    var focusRequestCurrCounterRegular = Int.MAX_VALUE
     /** Tab item being requested for focus, stored as an index */
-    var focusRequestCurrCounterTab = Int.MAX_VALUE
+    var focusRequestCurrCounterTabStop = Int.MAX_VALUE
     /** Stored for next frame */
-    var focusRequestNextCounterAll = Int.MAX_VALUE
+    var focusRequestNextCounterRegular = Int.MAX_VALUE
     /** Stored for next frame */
-    var focusRequestNextCounterTab = Int.MAX_VALUE
+    var focusRequestNextCounterTabStop = Int.MAX_VALUE
 
     var focusTabPressed = false
 

@@ -86,10 +86,10 @@ class WindowTempData {
     var layoutType = LayoutType.Vertical
 
     var parentLayoutType = LayoutType.Vertical
-    /** Counter for focus/tabbing system. Start at -1 and increase as assigned via FocusableItemRegister() (FIXME-NAV: Needs redesign) */
-    var focusCounterAll = -1
-    /** (same, but only count widgets which you can Tab through) */
-    var focusCounterTab = -1
+    /** (Legacy Focus/Tabbing system) Sequential counter, start at -1 and increase as assigned via FocusableItemRegister() (FIXME-NAV: Needs redesign) */
+    var focusCounterRegular = -1
+    /** (Legacy Focus/Tabbing system) Same, but only count widgets which you can Tab through. */
+    var focusCounterTabStop = -1
 
 
     // Local parameters stacks
