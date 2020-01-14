@@ -207,8 +207,8 @@ interface main {
             // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
             // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
             g.focusRequestNextWindow = g.navWindow
-            g.focusRequestNextCounterAll = Int.MAX_VALUE
-            g.focusRequestNextCounterTab = when {
+            g.focusRequestNextCounterRegular = Int.MAX_VALUE
+            g.focusRequestNextCounterTabStop = when {
                 g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
                 else -> if (io.keyShift) -1 else 0
             }
@@ -216,17 +216,17 @@ interface main {
 
         // Turn queued focus request into current one
         g.focusRequestCurrWindow = null
-        g.focusRequestCurrCounterTab = Int.MAX_VALUE
-        g.focusRequestCurrCounterAll = Int.MAX_VALUE
+        g.focusRequestCurrCounterTabStop = Int.MAX_VALUE
+        g.focusRequestCurrCounterRegular = Int.MAX_VALUE
         g.focusRequestNextWindow?.let { window ->
             g.focusRequestCurrWindow = window
-            if (g.focusRequestNextCounterAll != Int.MAX_VALUE && window.dc.focusCounterAll != -1)
-                g.focusRequestCurrCounterAll = modPositive(g.focusRequestNextCounterAll, window.dc.focusCounterAll + 1)
-            if (g.focusRequestNextCounterTab != Int.MAX_VALUE && window.dc.focusCounterTab != -1)
-                g.focusRequestCurrCounterTab = modPositive(g.focusRequestNextCounterTab, window.dc.focusCounterTab + 1)
+            if (g.focusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
+                g.focusRequestCurrCounterRegular = modPositive(g.focusRequestNextCounterRegular, window.dc.focusCounterRegular + 1)
+            if (g.focusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
+                g.focusRequestCurrCounterTabStop = modPositive(g.focusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
             g.focusRequestNextWindow = null
-            g.focusRequestNextCounterTab = Int.MAX_VALUE
-            g.focusRequestNextCounterAll = Int.MAX_VALUE
+            g.focusRequestNextCounterTabStop = Int.MAX_VALUE
+            g.focusRequestNextCounterRegular = Int.MAX_VALUE
         }
 
         g.navIdTabCounter = Int.MAX_VALUE
