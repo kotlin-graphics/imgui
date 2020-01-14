@@ -72,6 +72,8 @@ class WindowTempData {
     /** MenuBarOffset.x is sort of equivalent of a per-layer CursorPos.x, saved/restored as we switch to the menu bar.
      *  The only situation when MenuBarOffset.y is > 0 if when (SafeAreaPadding.y > FramePadding.y), often used on TVs. */
     var menuBarOffset = Vec2()
+    /** Simplified columns storage for menu items   */
+    val menuColumns = MenuColumns()
     /** Current tree depth. */
     var treeDepth = 0
     /** Store a copy of !g.NavIdIsAlive for TreeDepth 0..31.. Could be turned into a ImU64 if necessary. */
