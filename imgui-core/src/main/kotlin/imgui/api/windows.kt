@@ -3,6 +3,7 @@ package imgui.api
 import gli_.has
 import gli_.hasnt
 import glm_.f
+import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.endColumns
@@ -246,8 +247,6 @@ interface windows {
             window.windowPadding put style.windowPadding
             if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f)
                 window.windowPadding.put(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
-            window.dc.menuBarOffset.x = max(max(window.windowPadding.x, style.itemSpacing.x), g.nextWindowData.menuBarOffsetMinVal.x)
-            window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
 
             /* Collapse window by double-clicking on title bar
             At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
@@ -578,28 +577,35 @@ interface windows {
                 dc.currLineSize put 0f
                 dc.prevLineTextBaseOffset = 0f
                 dc.currLineTextBaseOffset = 0f
+
+                dc.navLayerCurrent = NavLayer.Main
+                dc.navLayerCurrentMask = 1 shl NavLayer.Main
+                dc.navLayerActiveMask = dc.navLayerActiveMaskNext
+                dc.navLayerActiveMaskNext = 0x00
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = scrollMax.y > 0f
-                dc.navLayerActiveMask = dc.navLayerActiveMaskNext
-                dc.navLayerActiveMaskNext = 0
+
                 dc.menuBarAppending = false
+                dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
+                dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
+                dc.menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
+                dc.treeDepth = 0
+                dc.treeJumpToParentOnPopMask = 0x00
                 dc.childWindows.clear()
+                dc.stateStorage = stateStorage
+                dc.currentColumns = null
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
                 dc.focusCounterTabStop = -1
                 dc.focusCounterRegular = -1
+
                 dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
                 dc.itemFlagsStack.clear()
                 dc.itemWidthStack.clear()
                 dc.textWrapPosStack.clear()
-                dc.currentColumns = null
-                dc.treeDepth = 0
-                dc.treeJumpToParentOnPopMask = 0
-                dc.stateStorage = stateStorage
                 dc.groupStack.clear()
-                menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
 
                 if (flags has Wf._ChildWindow && dc.itemFlags != parentWindow!!.dc.itemFlags) {
                     dc.itemFlags = parentWindow.dc.itemFlags
