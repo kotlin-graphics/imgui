@@ -586,8 +586,8 @@ interface windows {
                 dc.childWindows.clear()
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
-                dc.focusCounterTab = -1
-                dc.focusCounterAll = -1
+                dc.focusCounterTabStop = -1
+                dc.focusCounterRegular = -1
                 dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
