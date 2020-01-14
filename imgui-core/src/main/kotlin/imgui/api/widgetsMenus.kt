@@ -216,12 +216,12 @@ interface widgetsMenus {
         } else {
             // Menu inside a menu
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
-            val w = window.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
+            val w = window.dc.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             val flags = Sf._NoHoldingActiveID or Sf._PressedOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
             val textCol = if(enabled) Col.Text else Col.TextDisabled
-            window.drawList.renderArrow(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
+            window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
         }
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
@@ -355,16 +355,16 @@ interface widgetsMenus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
         } else {
             val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut) else Vec2()
-            val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, floor(g.fontSize * 1.2f)) // Feedback for next frame
+            val w = window.dc.menuColumns.declColumns(labelSize.x, shortcutSize.x, floor(g.fontSize * 1.2f)) // Feedback for next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             pressed = selectable(label, false, flags or Sf._DrawFillAvailWidth, Vec2(w, 0f))
             if (shortcutSize.x > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-                renderText(pos + Vec2(window.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
+                renderText(pos + Vec2(window.dc.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
                 popStyleColor()
             }
             if (selected)
-                renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
+                renderCheckMark(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 

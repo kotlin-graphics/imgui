@@ -175,9 +175,6 @@ class Window(var context: Context, var name: String) {
 
     var itemWidthDefault = 0f
 
-    /** Simplified columns storage for menu items   */
-    val menuColumns = MenuColumns()
-
     var stateStorage = Storage()
 
     val columnsStorage = ArrayList<Columns>()
