@@ -1,11 +1,10 @@
 # dear jvm imgui
 
-[![Build Status](https://travis-ci.org/kotlin-graphics/imgui.svg?branch=master)](https://travis-ci.org/kotlin-graphics/imgui) 
+[![Build Status](https://github.com/kotlin-graphics/imgui/workflows/build/badge.svg)](https://github.com/kotlin-graphics/imgui/actions?workflow=build)
 [![license](https://img.shields.io/badge/License-MIT-orange.svg)](https://github.com/kotlin-graphics/imgui/blob/master/LICENSE) 
 [![Release](https://jitpack.io/v/kotlin-graphics/imgui.svg)](https://jitpack.io/#kotlin-graphics/imgui) 
-![](https://reposs.herokuapp.com/?path=kotlin-graphics/imgui&color=yellow) 
+![Size](https://github-size-badge.herokuapp.com/kotlin-graphics/imgui.svg)
 [![Github All Releases](https://img.shields.io/github/downloads/kotlin-graphics/imgui/total.svg)]()
-[![Slack Status](http://slack.kotlinlang.org/badge.svg)](http://slack.kotlinlang.org/)
 
 (This rewrite is free but, on the same line of the original library, it needs your support to sustain its development. There are many desirable features and maintenance ahead. If you are an individual using dear imgui, please consider donating via Patreon or PayPal. If your company is using dear imgui, please consider financial support (e.g. sponsoring a few weeks/months of development. E-mail: elect86 at gmail).
 
