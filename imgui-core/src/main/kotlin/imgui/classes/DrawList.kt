@@ -784,7 +784,17 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
     /** Your rendering function must check for 'UserCallback' in ImDrawCmd and call the function instead of rendering
     triangles.  */
-    fun addCallback(/*ImDrawCallback callback, void* callback_data*/): Nothing = TODO()
+    fun addCallback(callback: DrawCallback, callbackData: ByteBuffer? = null) {
+        var currentCmd = cmdBuffer.peek()
+        if (currentCmd == null || currentCmd.elemCount != 0 || currentCmd.userCallback != null) {
+            addDrawCmd()
+            currentCmd = cmdBuffer.peek()
+        }
+
+        currentCmd.userCallback = callback
+        currentCmd.userCallbackData = callbackData
+        addDrawCmd() // Force a new command after us (see comment below)
+    }
 
     /** This is useful if you need to forcefully create a new draw call (to allow for dependent rendering / blending).
     Otherwise primitives are merged into the same draw-call as much as possible */
@@ -1116,7 +1126,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val fontAtlas = _data.font!!.containerAtlas
         val offset = Vec2()
         val size = Vec2()
-        val uv = Array(2) { Vec2() }
+        val uv = Array(4) { Vec2() }
         if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
             pos -= offset
             val texId: TextureID = fontAtlas.texId

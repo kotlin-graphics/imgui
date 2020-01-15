@@ -29,12 +29,11 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
-import imgui.classes.*
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import kool.getValue
+import kool.setValue
 import imgui.internal.DrawCornerFlag as Dcf
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf

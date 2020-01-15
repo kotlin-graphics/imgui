@@ -109,7 +109,7 @@ object ExampleApp {
         if (noResize) windowFlags = windowFlags or Wf.NoResize
         if (noCollapse) windowFlags = windowFlags or Wf.NoCollapse
         if (noNav) windowFlags = windowFlags or Wf.NoNav
-        if (noBackground) windowFlags = windowFlags or Wf.NoNav
+        if (noBackground) windowFlags = windowFlags or Wf.NoBackground
         if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
         if (noClose) open = null // Don't pass our bool* to Begin
         /*  We specify a default position/size in case there's no data in the .ini file. Typically this isn't required!
