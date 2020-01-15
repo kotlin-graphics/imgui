@@ -536,8 +536,8 @@ internal interface widgetsLowLevelBehaviors {
         val wasSelected = selected
 
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
+        var toggled = false
         if (!isLeaf) {
-            var toggled = false
             if (pressed) {
                 if (flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick) || g.navActivateId == id)
                     toggled = true

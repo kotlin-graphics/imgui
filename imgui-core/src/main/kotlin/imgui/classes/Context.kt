@@ -166,6 +166,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navWindow: Window? = null
     /** Focused item for navigation */
     var navId: ID = 0
+
+    var navFocusScopeId = 0
     /** ~~ (g.activeId == 0) && NavInput.Activate.isPressed() ? navId : 0, also set when calling activateItem() */
     var navActivateId: ID = 0
     /** ~~ isNavInputDown(NavInput.Activate) ? navId : 0   */
@@ -178,8 +180,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navJustTabbedId: ID = 0
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
-    /** Just navigated to this select scope id (result of a successfully MoveRequest). */
-    var navJustMovedToMultiSelectScopeId: ID = 0
+    /** Just navigated to this focus scope id (result of a successfully MoveRequest). */
+    var navJustMovedToFocusScopeId: ID = 0
+
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
@@ -260,10 +263,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var focusRequestNextCounterTabStop = Int.MAX_VALUE
 
     var focusTabPressed = false
-
-    // Range-Select/Multi-Select
-    // [This is unused in this branch, but left here to facilitate merging/syncing multiple branches]
-    var multiSelectScopeId: ID = 0
 
 
     // ------------------------------------------------------------------
