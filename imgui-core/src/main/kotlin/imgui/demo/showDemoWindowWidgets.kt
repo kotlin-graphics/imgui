@@ -428,6 +428,8 @@ object showDemoWindowWidgets {
             }
 
             run {
+                // To wire InputText() with std::string or any other custom string type,
+                // see the "Text Input > Resize Callback" section of this demo, and the misc/cpp/imgui_stdlib.h file.
                 inputText("input text", str0)
                 sameLine(); helpMarker("USER:\nHold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n\nPROGRAMMER:\nYou can use the InputTextFlag.CallbackResize facility if you need to wire InputText() to a dynamic string type. See misc/cpp/imgui_stl.h for an example (this is not demonstrated in imgui_demo.cpp).")
 
@@ -789,12 +791,14 @@ object showDemoWindowWidgets {
             }
         }
 
+        // To wire InputText() with std::string or any other custom string type,
+        // see the "Text Input > Resize Callback" section of this demo, and the misc/cpp/imgui_stdlib.h file.
         treeNode("Text Input") {
 
             treeNode("Multi-line Text Input") {
                 /*  Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
                     and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.  */
-                helpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp)") // TODO fix bug, some '?' appear at the end of the line
+                helpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp because we don't want to include <string> in here)") // TODO fix bug, some '?' appear at the end of the line
                 checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags, Itf.ReadOnly.i)
                 checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags, Itf.AllowTabInput.i)
                 checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags, Itf.CtrlEnterForNewLine.i)
@@ -818,8 +822,9 @@ object showDemoWindowWidgets {
 
 /*            if (ImGui::TreeNode("Resize Callback"))
             {
-                // If you have a custom string type you would typically create a ImGui::InputText() wrapper than takes your type as input.
-                // See misc/cpp/imgui_stdlib.h and .cpp for an implementation of this using std::string.
+            // To wire InputText() with std::string or any other custom string type,
+            // you can use the ImGuiInputTextFlags_CallbackResize flag + create a custom ImGui::InputText() wrapper using your prefered type.
+            // See misc/cpp/imgui_stdlib.h for an implementation of this using std::string.
                 HelpMarker("Demonstrate using ImGuiInputTextFlags_CallbackResize to wire your resizable string type to InputText().\n\nSee misc/cpp/imgui_stdlib.h for an implementation of this for std::string.");
                 struct Funcs
                         {

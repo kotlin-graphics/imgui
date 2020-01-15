@@ -34,11 +34,13 @@ class ListClipper
  *  begin()/end() api directly, but prefer calling step().   */
 constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
-    var startPosY = 0f
-    var itemsHeight = 0f
+    var display: IntRange = 0..0
     var itemsCount = 0
+
+    // [Internal]
     var stepNo = 0
-    var display = 0..0
+    var itemsHeight = 0f
+    var startPosY = 0f
 
     init {
         /* NB: Begin() initialize every fields (as we allow user to call Begin/End multiple times on a same instance if they want). */
