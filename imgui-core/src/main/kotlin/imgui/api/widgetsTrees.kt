@@ -96,7 +96,7 @@ interface widgetsTrees {
         // Handle Left arrow to move to parent tree node (when ImGuiTreeNodeFlags_NavLeftJumpsBackHere is enabled)
         if (g.navMoveDir == Dir.Left && g.navWindow === window && navMoveRequestButNoResultYet())
             if (g.navIdIsAlive && window.dc.treeJumpToParentOnPopMask has treeDepthMask) {
-                setNavId(window.idStack.last(), g.navLayer)
+                setNavId(window.idStack.last(), g.navLayer, 0)
                 navMoveRequestCancel()
             }
         window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask and treeDepthMask - 1

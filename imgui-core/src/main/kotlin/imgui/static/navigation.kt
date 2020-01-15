@@ -101,9 +101,9 @@ fun navUpdate() {
                 unless setItemDefaultFocus() has been called)         */
             //IMGUI_DEBUG_LOG("[Nav] Apply NavInitRequest result: 0x%08X Layer %d in \"%s\"\n", g.NavInitResultId, g.NavLayer, g.NavWindow->Name);
             if (g.navInitRequestFromMove)
-                setNavIDWithRectRel(g.navInitResultId, g.navLayer, g.navInitResultRectRel)
+                setNavIDWithRectRel(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
             else
-                setNavId(g.navInitResultId, g.navLayer)
+                setNavId(g.navInitResultId, g.navLayer, 0)
             nav.navRectRel[g.navLayer] = g.navInitResultRectRel
         }
     g.navInitRequest = false
@@ -163,7 +163,7 @@ fun navUpdate() {
             val parentWindow = childWindow.parentWindow!!
             assert(childWindow.childId != 0)
             focusWindow(parentWindow)
-            setNavId(childWindow.childId, NavLayer.Main)
+            setNavId(childWindow.childId, NavLayer.Main, 0)
             // Reassigning with same value, we're being explicit here.
             g.navIdIsAlive = false  // -V1048
             if (g.navDisableMouseHover)
@@ -178,6 +178,7 @@ fun navUpdate() {
             // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
             if (g.navWindow != null && (g.navWindow!!.flags has Wf._Popup || g.navWindow!!.flags hasnt Wf._ChildWindow))
                 g.navWindow!!.navLastIds[0] = 0
+            g.navFocusScopeId = 0
             g.navId = 0
         }
     }
@@ -299,6 +300,7 @@ fun navUpdate() {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
             window.navRectRel[g.navLayer] clipWith windowRectRel
+            g.navFocusScopeId = 0
             g.navId = 0
         }
         g.navMoveFromClampedRefRect = false
@@ -547,8 +549,12 @@ fun navUpdateMoveResult() {
 
     clearActiveId()
     g.navWindow = window
-    setNavIDWithRectRel(result.id, g.navLayer, result.rectRel)
-    g.navJustMovedToId = result.id
+    if (g.navId != result.id)    {
+        // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
+        g.navJustMovedToId = result.id
+        g.navJustMovedToFocusScopeId = result.focusScopeId
+    }
+    setNavIDWithRectRel(result.id, g.navLayer, result.focusScopeId, result.rectRel)
     g.navMoveFromClampedRefRect = false
 }
 
@@ -791,28 +797,31 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
             else -> g.navMoveRequest && navScoreItem(result, navBb)
         }
         if (newBest) {
-            result.id = id
             result.window = window
+            result.id = id
+            result.focusScopeId = window.dc.navFocusScopeIdCurrent
             result.rectRel put navBbRel
         }
 
+        // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
         val VISIBLE_RATIO = 0.7f
         if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
             if (glm.clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) -
                     glm.clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
-                if (navScoreItem(g.navMoveResultLocalVisibleSet, navBb)) {
+                if (navScoreItem(g.navMoveResultLocalVisibleSet, navBb))
                     result = g.navMoveResultLocalVisibleSet.also {
-                        it.id = id
                         it.window = window
+                        it.id = id
+                        it.focusScopeId = window.dc.navFocusScopeIdCurrent
                         it.rectRel = navBbRel
                     }
-                }
     }
 
     // Update window-relative bounding box of navigated item
     if (g.navId == id) {
         g.navWindow = window    // Always refresh g.NavWindow, because some operations such as FocusItem() don't have a window.
         g.navLayer = window.dc.navLayerCurrent
+        g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         g.navIdIsAlive = true
         g.navIdTabCounter = window.dc.focusCounterTabStop
         window.navRectRel[window.dc.navLayerCurrent] = navBbRel    // Store item bounding box (relative to window position)
@@ -871,10 +880,11 @@ fun navRestoreLayer(layer: NavLayer) {
     g.navLayer = layer
     if (layer == NavLayer.Main)
         g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
-    if (layer == NavLayer.Main && g.navWindow!!.navLastIds[0] != 0)
-        setNavIDWithRectRel(g.navWindow!!.navLastIds[0], layer, g.navWindow!!.navRectRel[0])
+    val window = g.navWindow!!
+    if (layer == NavLayer.Main && window.navLastIds[0] != 0)
+        setNavIDWithRectRel(window.navLastIds[0], layer, 0, window.navRectRel[0])
     else
-        navInitWindow(g.navWindow!!, true)
+        navInitWindow(window, true)
 }
 
 fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {

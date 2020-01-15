@@ -120,7 +120,7 @@ interface widgetsSelectables {
         if (pressed || (hovered && flags has Sf._SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
                 g.navDisableHighlight = true
-                setNavId(id, window.dc.navLayerCurrent)
+                setNavId(id, window.dc.navLayerCurrent, window.dc.navFocusScopeIdCurrent)
             }
         if (pressed)
             markItemEdited(id)

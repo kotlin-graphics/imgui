@@ -59,7 +59,9 @@ class WindowTempData {
     /** Which layer have been written to (result from previous frame)   */
     var navLayerActiveMask = 0
     /** Which layer have been written to (buffer for current frame) */
-    var navLayerActiveMaskNext = 0
+    var navLayerActiveMaskNext = 0x00
+    /** Current focus scope ID while appending */
+    var navFocusScopeIdCurrent: ID = 0
 
     var navHideHighlightOneFrame = false
     /** Set when scrolling can be used (ScrollMax > 0.0f)   */
