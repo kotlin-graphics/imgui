@@ -205,12 +205,12 @@ class MenuColumns {
 
 /** Result of a directional navigation move query result */
 class NavMoveResult {
-    /** Best candidate  */
-    var id: ID = 0
-    /** Best candidate window current selectable group ID */
-    var selectScopeId: ID = 0
     /** Best candidate window   */
     var window: Window? = null
+    /** Best candidate ID  */
+    var id: ID = 0
+    /** Best candidate focus scope ID */
+    var focusScopeId: ID = 0
     /** Best candidate box distance to current NavId    */
     var distBox = Float.MAX_VALUE
     /** Best candidate center distance to current NavId */
@@ -249,7 +249,6 @@ class NextWindowData {
     /** *Always on* This is not exposed publicly, so we don't clear it. */
     var menuBarOffsetMinVal = Vec2()
 
-    /** Also cleared by ItemAdd() */
     fun clearFlags() {
         flags = NextWindowDataFlag.None.i
     }
@@ -257,12 +256,16 @@ class NextWindowData {
 
 class NextItemData {
     var flags: NextItemDataFlags = 0
-    /** Set by SetNextItemWidth(). */
+    /** Set by SetNextItemWidth() */
     var width = 0f
+    /** Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging) */
+    var focusScopeId: ID = 0
+
+    var openCond = Cond.None
     /** Set by SetNextItemOpen() function. */
     var openVal = false
-    var openCond = Cond.None
 
+    /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {
         flags = NextItemDataFlag.None.i
     }
