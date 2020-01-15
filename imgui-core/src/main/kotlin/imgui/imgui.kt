@@ -157,6 +157,7 @@ object ImGui :
         imgui.internal.api.loggingCapture,
         PopupsModalsTooltips,
         navigation,
+        focusScope,
         inputs,
         imgui.internal.api.dragAndDrop,
         newColumnsAPI,
