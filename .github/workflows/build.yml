@@ -23,7 +23,7 @@ jobs:
       run: mkdir shadowJars && mv */build/libs/imgui-*.jar shadowJars
     - uses: actions/upload-artifact@v1
       with:
-        name: ImGui artifacts (linux)
+        name: ImGui linux artifacts
         path: 'shadowJars'
 
   windows: 
@@ -38,6 +38,14 @@ jobs:
           java-version: 11
       - name: Build with Gradle
         run: .\gradlew.bat build
+      - name: Build fat jars
+        run: ./gradlew shadowJar
+      - name: Move jars
+        run: mkdir shadowJars; mv */build/libs/imgui-*.jar shadowJars
+      - uses: actions/upload-artifact@v1
+        with:
+          name: ImGui windows artifacts
+          path: 'shadowJars'
                 
   mac: 
     name: 'Mac OS'
@@ -53,3 +61,11 @@ jobs:
         run: chmod +x gradlew
       - name: Build with Gradle
         run: ./gradlew build
+      - name: Build fat jars
+        run: ./gradlew shadowJar
+      - name: Move jars
+        run: mkdir shadowJars && mv */build/libs/imgui-*.jar shadowJars
+      - uses: actions/upload-artifact@v1
+        with:
+          name: ImGui macOS artifacts
+          path: 'shadowJars'
