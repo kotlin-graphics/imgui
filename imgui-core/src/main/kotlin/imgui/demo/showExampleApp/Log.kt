@@ -131,7 +131,7 @@ object Log {
             else {
                 val clipper = ListClipper(lineOffsets.size)
                 while(clipper.step()) {
-                    for(line_no in clipper.display.first until clipper.display.last) {
+                    for(line_no in clipper.display) {
                         val line = buf.subSequence(lineOffsets[line_no], if(line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
                         textEx(line)
                     }
