@@ -23,6 +23,7 @@ import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
 import imgui.ImGui.textEx
 import imgui.api.g
+import imgui.classes.ListClipper
 import imgui.classes.TextFilter
 import java.util.*
 import kotlin.collections.ArrayList
@@ -128,16 +129,14 @@ object Log {
                         textEx(line)
                 }
             else {
-                textEx(buf.toString())
-                //TODO: Fix and remove above line
-                /*val clipper = ListClipper()
-                clipper.begin(lineOffsets.size)
+                val clipper = ListClipper(lineOffsets.size)
                 while(clipper.step()) {
-                    for(line_no in clipper.display.start until clipper.display.endInclusive - 1) {
-                        textUnformatted(buf.subSequence(lineOffsets[line_no], if(line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString())
+                    for(line_no in clipper.display) {
+                        val line = buf.subSequence(lineOffsets[line_no], if(line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
+                        textEx(line)
                     }
                 }
-                clipper.end()*/
+                clipper.end()
             }
 
             popStyleVar()
