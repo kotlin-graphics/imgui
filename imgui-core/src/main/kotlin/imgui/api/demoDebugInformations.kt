@@ -259,7 +259,7 @@ interface demoDebugInformations {
             text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
             text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
             text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
-            text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataTypeS}\" " +
+            text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
                     "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
             treePop()
         }

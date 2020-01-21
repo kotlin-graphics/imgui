@@ -136,7 +136,7 @@ interface dragAndDrop {
         val cond = if (cond_ == Cond.None) Cond.Always else cond_
 
         assert(type.isNotEmpty())
-        assert(type.length < 32) { "Payload type can be at most 32 characters long" }
+//        assert(type.length < 32) { "Payload type can be at most 32 characters long" }
 //        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
         assert(cond == Cond.Always || cond == Cond.Once)
         assert(payload.sourceId != 0) { "Not called between beginDragDropSource() and endDragDropSource()" }
@@ -170,7 +170,7 @@ interface dragAndDrop {
 
         if (cond == Cond.Always || payload.dataFrameCount == -1) {
             // Copy payload
-            type.toCharArray(payload.dataType)
+            payload.dataType = type
             g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
             when {
                 size > g.dragDropPayloadBufLocal.rem -> { // Store in heap
