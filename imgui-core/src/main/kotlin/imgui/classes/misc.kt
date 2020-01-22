@@ -75,8 +75,9 @@ class OnceUponAFrame {
 class Payload {
     // Members
 
-    /** Data (copied and owned by dear imgui) */
-    var data: ByteBuffer? = null
+    // /** Data (copied and owned by dear imgui) */
+    /** Data provided by setDragDropSource */
+    var data: Any? = null
     /** Data size */
     var dataSize = 0
 

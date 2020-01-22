@@ -7,6 +7,7 @@ import glm_.i
 import glm_.s
 import glm_.vec2.Vec2
 import glm_.vec2.operators.div
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
@@ -988,10 +989,10 @@ object showDemoWindowWidgets {
                             // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
                             if (beginDragDropTarget()) {
                                 acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
-                                    for (i in 0..2) savedPalette[n][i] = it.data!!.getFloat(i)
+                                    for (i in 0..2) savedPalette[n][i] = (it.data!! as Vec3).array[i]
                                 }
                                 acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
-                                    for (i in 0..3) savedPalette[n][i] = it.data!!.getFloat(i)
+                                    for (i in 0..3) savedPalette[n][i] = (it.data!! as Vec4).array[i]
                                 }
                                 endDragDropTarget()
                             }
@@ -1277,7 +1278,7 @@ object showDemoWindowWidgets {
 
                     // Our buttons are both drag sources and drag targets here!
                     if (beginDragDropSource(DragDropFlag.None)) {
-                        setDragDropPayload("DND_DEMO_CELL", n, Int.BYTES)        // Set payload to carry the index of our item (could be anything)
+                        setDragDropPayload("DND_DEMO_CELL", n)        // Set payload to carry the index of our item (could be anything)
                         when (mode) {
                             // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
                             Mode.Copy -> text("Copy $name")
@@ -1289,7 +1290,7 @@ object showDemoWindowWidgets {
                     if (beginDragDropTarget()) {
                         acceptDragDropPayload("DND_DEMO_CELL")?.let { payload ->
                             assert(payload.dataSize == Int.BYTES)
-                            val payloadN = payload.data!!.getInt(0)
+                            val payloadN = payload.data!! as Int
                             when (mode) {
                                 Mode.Copy -> names[n] = names[payloadN]
                                 Mode.Move -> {
