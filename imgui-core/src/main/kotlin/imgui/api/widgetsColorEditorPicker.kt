@@ -265,13 +265,14 @@ interface widgetsColorEditorPicker {
         if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             var acceptedDragDrop = false
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
+                val data = it.data!! as Vec4
                 for (j in 0..2)  // Preserve alpha if any
-                    col[j] = it.data!!.asFloatBuffer()[j]
+                    col[j] = data.array[j]
                 acceptedDragDrop = true
                 valueChanged = true
             }
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
-                val floats = it.data!!.asFloatBuffer()
+                val floats = (it.data!! as Vec4).array
                 for (j in 0 until components)
                     col[j] = floats[j]
                 acceptedDragDrop = true
@@ -753,9 +754,9 @@ interface widgetsColorEditorPicker {
         if (g.activeId == id && flags hasnt Cef.NoDragDrop && beginDragDropSource()) {
 
             if (flags has Cef.NoAlpha)
-                setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, colRgb, Vec3.size, Cond.Once)
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, colRgb, Cond.Once)
             else
-                setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, colRgb, Vec4.size, Cond.Once)
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, colRgb, Cond.Once)
             colorButton(descId, col, flags)
             sameLine()
             textEx("Color")
