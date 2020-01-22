@@ -15,6 +15,8 @@ import imgui.stb.*
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
+import stb_.stbrp
+import stb_.stbtt
 import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
@@ -283,8 +285,7 @@ class FontAtlas {
 //          for (int n = 0; n <= UNICODE_CODEPOINT_MAX; n++)
 //            if (GetBit(n))
 //                {
-//                        out_ranges->push_back((ImWchar)n);
-//                        while (n < max_codepoint && GetBit(n + 1))
+//                        out_ranges->push_back((ImWchar)n);//                        while (n < max_codepoint && GetBit(n + 1))
 //                                n++;
 //                        out_ranges->push_back((ImWchar)n);
 //                    }
@@ -486,13 +487,13 @@ class FontAtlas {
      *  (C++03 doesn't allow instancing ImVector<> with function-local types so we declare the type here.) */
     class FontBuildSrcData {
 
-        val fontInfo = STBTTFontinfo.calloc()
+        val fontInfo = stbtt.FontInfo()
         /** Hold the list of codepoints to pack (essentially points to Codepoints.Data) */
-        val packRange = STBTTPackRange.calloc()
+        val packRange = stbtt.PackRange()
         /** Rectangle to pack. We first fill in their size and the packer will give us their position. */
-        lateinit var rects: STBRPRect.Buffer
+        lateinit var rects: Array<stbrp.Rect>
         /** Output glyphs */
-        lateinit var packedChars: STBTTPackedchar.Buffer
+        lateinit var packedChars: Array<stbtt.PackedChar>
         /** Ranges as requested by user (user is allowed to request too much, e.g. 0x0020..0xFFFF) */
         lateinit var srcRanges: Array<IntRange>
         /** Index into atlas->Fonts[] and dst_tmp_array[] */
@@ -505,15 +506,6 @@ class FontAtlas {
         val glyphsSet = BoolVector()
         /** Glyph codepoints list (flattened version of GlyphsMap) */
         lateinit var glyphsList: ArrayList<Int>
-
-        fun free() {
-            fontInfo.free()
-            packRange.arrayOfUnicodeCodepoints?.free()
-            packRange.free()
-            // dummies
-//            rects.free()
-//            packedChars.free()
-        }
     }
 
     /** Temporary data for one destination ImFont* (multiple source fonts can be merged into one destination ImFont) */
