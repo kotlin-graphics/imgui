@@ -1,8 +1,9 @@
 package stb_
 
-import glm_.i
+import glm_.b
 import glm_.shl
 import imgui.NUL
+import java.nio.ByteBuffer
 
 object stbtt {
 
@@ -507,7 +508,11 @@ object stbtt {
     class _Buf(
             var data: ByteArray? = null,
             var cursor: Int = 0,
-            var size: Int = 0)
+            var size: Int = 0) {
+
+        val indices: IntRange
+            get() = 0..size
+    }
 
     //    //////////////////////////////////////////////////////////////////////////////
 //    //
@@ -716,7 +721,7 @@ object stbtt {
 
         var userdata: Any? = null
         /** pointer to .ttf file */
-        var data: ByteArray? = null
+        var data: ByteBuffer? = null
         /** offset of start of font */
         var fontStart = 0
 
@@ -738,17 +743,17 @@ object stbtt {
         var indexToLocFormat = 0
 
         /** cff font data */
-        lateinit var cff: _Buf
+        lateinit var cff: ByteBuffer
         /** the charstring index */
-        lateinit var charstringB: _Buf
+        lateinit var charStrings: ByteBuffer
         /** global charstring subroutines index */
-        lateinit var gsubrB: _Buf
+        lateinit var gSubrs: ByteBuffer
         /** private charstring subroutines index */
-        lateinit var subrB: _Buf
+        lateinit var subrs: ByteBuffer
         /** array of font dicts */
-        lateinit var fontdictB: _Buf
+        lateinit var fontDicts: ByteBuffer
         /** map from glyph to fontdict */
-        lateinit var fdselecB: _Buf
+        lateinit var fdSelect: ByteBuffer
     }
 
     //            STBTT_DEF int stbtt_InitFont(stbtt_fontinfo *info, const unsigned char *data, int offset);
@@ -1128,146 +1133,7 @@ object stbtt {
 //        #define STBTT__NOTUSED(v)  (void)sizeof(v)
 //        #endif
 //
-//    //////////////////////////////////////////////////////////////////////////
-//    //
-//    // stbtt__buf helpers to parse data from file
-//    //
-//
-//        static stbtt_uint8 stbtt__buf_get8(stbtt__buf *b)
-//        {
-//            if (b->cursor >= b->size)
-//            return 0;
-//            return b->data[b->cursor++];
-//        }
-//
-//        static stbtt_uint8 stbtt__buf_peek8(stbtt__buf *b)
-//        {
-//            if (b->cursor >= b->size)
-//            return 0;
-//            return b->data[b->cursor];
-//        }
-//
-//        static void stbtt__buf_seek(stbtt__buf *b, int o)
-//        {
-//            STBTT_assert(!(o > b->size || o < 0));
-//            b->cursor = (o > b->size || o < 0) ? b->size : o;
-//        }
-//
-//        static void stbtt__buf_skip(stbtt__buf *b, int o)
-//        {
-//            stbtt__buf_seek(b, b->cursor + o);
-//        }
-//
-//        static stbtt_uint32 stbtt__buf_get(stbtt__buf *b, int n)
-//        {
-//            stbtt_uint32 v = 0;
-//            int i;
-//            STBTT_assert(n >= 1 && n <= 4);
-//            for (i = 0; i < n; i++)
-//            v = (v << 8) | stbtt__buf_get8(b);
-//            return v;
-//        }
-//
-    fun _newBuf(p: ByteArray? = null, size: Int = 0): _Buf {
-        assert(size < 0x40000000)
-        return _Buf(p, size, 0)
-    }
-
-    //        #define stbtt__buf_get16(b)  stbtt__buf_get((b), 2)
-//        #define stbtt__buf_get32(b)  stbtt__buf_get((b), 4)
-//
-//        static stbtt__buf stbtt__buf_range(const stbtt__buf *b, int o, int s)
-//        {
-//            stbtt__buf r = stbtt__new_buf(NULL, 0);
-//            if (o < 0 || s < 0 || o > b->size || s > b->size - o) return r;
-//            r.data = b->data + o;
-//            r.size = s;
-//            return r;
-//        }
-//
-//        static stbtt__buf stbtt__cff_get_index(stbtt__buf *b)
-//        {
-//            int count, start, offsize;
-//            start = b->cursor;
-//            count = stbtt__buf_get16(b);
-//            if (count) {
-//                offsize = stbtt__buf_get8(b);
-//                STBTT_assert(offsize >= 1 && offsize <= 4);
-//                stbtt__buf_skip(b, offsize * count);
-//                stbtt__buf_skip(b, stbtt__buf_get(b, offsize) - 1);
-//            }
-//            return stbtt__buf_range(b, start, b->cursor - start);
-//        }
-//
-//        static stbtt_uint32 stbtt__cff_int(stbtt__buf *b)
-//        {
-//            int b0 = stbtt__buf_get8(b);
-//            if (b0 >= 32 && b0 <= 246)       return b0 - 139;
-//            else if (b0 >= 247 && b0 <= 250) return (b0 - 247)*256 + stbtt__buf_get8(b) + 108;
-//            else if (b0 >= 251 && b0 <= 254) return -(b0 - 251)*256 - stbtt__buf_get8(b) - 108;
-//            else if (b0 == 28)               return stbtt__buf_get16(b);
-//            else if (b0 == 29)               return stbtt__buf_get32(b);
-//            STBTT_assert(0);
-//            return 0;
-//        }
-//
-//        static void stbtt__cff_skip_operand(stbtt__buf *b) {
-//            int v, b0 = stbtt__buf_peek8(b);
-//            STBTT_assert(b0 >= 28);
-//            if (b0 == 30) {
-//                stbtt__buf_skip(b, 1);
-//                while (b->cursor < b->size) {
-//                    v = stbtt__buf_get8(b);
-//                    if ((v & 0xF) == 0xF || (v >> 4) == 0xF)
-//                    break;
-//                }
-//            } else {
-//                stbtt__cff_int(b);
-//            }
-//        }
-//
-//        static stbtt__buf stbtt__dict_get(stbtt__buf *b, int key)
-//        {
-//            stbtt__buf_seek(b, 0);
-//            while (b->cursor < b->size) {
-//            int start = b->cursor, end, op;
-//            while (stbtt__buf_peek8(b) >= 28)
-//                stbtt__cff_skip_operand(b);
-//            end = b->cursor;
-//            op = stbtt__buf_get8(b);
-//            if (op == 12)  op = stbtt__buf_get8(b) | 0x100;
-//            if (op == key) return stbtt__buf_range(b, start, end-start);
-//        }
-//            return stbtt__buf_range(b, 0, 0);
-//        }
-//
-//        static void stbtt__dict_get_ints(stbtt__buf *b, int key, int outcount, stbtt_uint32 *out)
-//        {
-//            int i;
-//            stbtt__buf operands = stbtt__dict_get(b, key);
-//            for (i = 0; i < outcount && operands.cursor < operands.size; i++)
-//            out[i] = stbtt__cff_int(&operands);
-//        }
-//
-//        static int stbtt__cff_index_count(stbtt__buf *b)
-//        {
-//            stbtt__buf_seek(b, 0);
-//            return stbtt__buf_get16(b);
-//        }
-//
-//        static stbtt__buf stbtt__cff_index_get(stbtt__buf b, int i)
-//        {
-//            int count, offsize, start, end;
-//            stbtt__buf_seek(&b, 0);
-//            count = stbtt__buf_get16(&b);
-//            offsize = stbtt__buf_get8(&b);
-//            STBTT_assert(i >= 0 && i < count);
-//            STBTT_assert(offsize >= 1 && offsize <= 4);
-//            stbtt__buf_skip(&b, i*offsize);
-//            start = stbtt__buf_get(&b, offsize);
-//            end = stbtt__buf_get(&b, offsize);
-//            return stbtt__buf_range(&b, 2+(count+1)*offsize+start, end - start);
-//        }
+    // _buf.kt
 //
 //    //////////////////////////////////////////////////////////////////////////
 //    //
@@ -1281,17 +1147,18 @@ object stbtt {
 //        #define ttCHAR(p)     (* (stbtt_int8 *) (p))
 //        #define ttFixed(p)    ttLONG(p)
 //
-    fun ttUSHORT(p: PtrChar): Int = p[0].i * 256 + p[1].i
+    fun ttUSHORT(p: PtrByte): Int = p[0] * 256 + p[1]
 
     //        static stbtt_int16 ttSHORT(stbtt_uint8 *p)   { return p[0]*256 + p[1]; }
-        fun ttULONG(p: PtrChar): Int = (p[0] shl 24) + (p[1] shl 16) + (p[2] shl 8) + p[3].i
-//        static stbtt_int32 ttLONG(stbtt_uint8 *p)    { return (p[0]<<24) + (p[1]<<16) + (p[2]<<8) + p[3]; }
+    fun ttULONG(p: PtrByte): Int = (p[0] shl 24) + (p[1] shl 16) + (p[2] shl 8) + p[3]
+
+    //        static stbtt_int32 ttLONG(stbtt_uint8 *p)    { return (p[0]<<24) + (p[1]<<16) + (p[2]<<8) + p[3]; }
 //
-    fun tag4(p: PtrChar, c0: Char, c1: Char, c2: Char, c3: Char): Boolean = p[0] == c0 && p[1] == c1 && p[2] == c2 && p[3] == c3
+    fun tag4(p: PtrByte, c0: Char, c1: Char, c2: Char, c3: Char): Boolean = p[0] == c0.b && p[1] == c1.b && p[2] == c2.b && p[3] == c3.b
 
-    fun tag(p: PtrChar, str: CharArray): Boolean = tag4(p, str[0], str[1], str[2], str[3])
+    fun tag(p: PtrByte, str: CharArray): Boolean = tag4(p, str[0], str[1], str[2], str[3])
 
-//        static int stbtt__isfont(stbtt_uint8 *font)
+    //        static int stbtt__isfont(stbtt_uint8 *font)
 //        {
 //            // check the version number
 //            if (stbtt_tag4(font, '1',0,0,0))  return 1; // TrueType 1
@@ -1303,13 +1170,13 @@ object stbtt {
 //        }
 //
     // @OPTIMIZE: binary search
-    fun _findTable(data: CharArray, fontStart: Int, tag: CharArray): Int {
-        val numTables = ttUSHORT(PtrChar(data) + fontStart + 4)
+    fun _findTable(data: ByteBuffer, fontStart: Int, tag: String): Int {
+        val numTables = ttUSHORT(PtrByte(data) + fontStart + 4)
         val tableDir = fontStart + 12
         for (i in 0 until numTables) {
             val loc = tableDir + 16 * i
-            if (tag(PtrChar(data) + loc + 0, tag))
-                return ttULONG(PtrChar(data) + loc + 8)
+            if (tag(PtrByte(data) + loc + 0, tag.toCharArray()))
+                return ttULONG(PtrByte(data) + loc + 8)
         }
         return 0
     }
@@ -1363,7 +1230,7 @@ object stbtt {
 //        }
 //
     /** stbtt_InitFont_internal */
-    fun initFont(info: FontInfo, data: ByteArray, fontStart: Int): Int {
+    fun initFont(info: FontInfo, data: ByteBuffer, fontStart: Int): Int {
         var cmap = 0
         var t = 0
         var i = 0
@@ -1371,110 +1238,112 @@ object stbtt {
 
         info.data = data
         info.fontStart = fontStart
-        info.cff = _newBuf()
+        info.cff = newBuf()
 
-        cmap = _findTable(data, fontStart, "cmap");       // required
-        info->loca = stbtt__find_table(data, fontstart, "loca"); // required
-        info->head = stbtt__find_table(data, fontstart, "head"); // required
-        info->glyf = stbtt__find_table(data, fontstart, "glyf"); // required
-        info->hhea = stbtt__find_table(data, fontstart, "hhea"); // required
-        info->hmtx = stbtt__find_table(data, fontstart, "hmtx"); // required
-        info->kern = stbtt__find_table(data, fontstart, "kern"); // not required
-        info->gpos = stbtt__find_table(data, fontstart, "GPOS"); // not required
+        cmap = _findTable(data, fontStart, "cmap")       // required
+        info.loca = _findTable(data, fontStart, "loca") // required
+        info.head = _findTable(data, fontStart, "head") // required
+        info.glyf = _findTable(data, fontStart, "glyf") // required
+        info.hhea = _findTable(data, fontStart, "hhea") // required
+        info.hmtx = _findTable(data, fontStart, "hmtx") // required
+        info.kern = _findTable(data, fontStart, "kern") // not required
+        info.gpos = _findTable(data, fontStart, "GPOS") // not required
 
-        if (!cmap || !info->head || !info->hhea || !info->hmtx)
-        return 0;
-        if (info->glyf) {
+        if (cmap == 0 || info.head == 0 || info.hhea == 0 || info.hmtx == 0)
+            return 0
+        if (info.glyf != 0) {
             // required for truetype
-            if (!info->loca) return 0;
+            if (info.loca == 0) return 0
         } else {
             // initialization for CFF / Type2 fonts (OTF)
-            stbtt__buf b, topdict, topdictidx;
-            stbtt_uint32 cstype = 2, charstrings = 0, fdarrayoff = 0, fdselectoff = 0;
-            stbtt_uint32 cff;
+            val topDict = _Buf()
+            val topDictIdx = _Buf()
+            val csType = 2
+            val charStrings = 0
+            var fdArrayOff = 0
+            var fdSelectOff = 0
+            val cff = _findTable(data, fontStart, "CFF ")
+            if (cff == 0) return 0
 
-            cff = stbtt__find_table(data, fontStart, "CFF ");
-            if (!cff) return 0;
-
-            info->fontdicts = stbtt__new_buf(NULL, 0);
-            info->fdselect = stbtt__new_buf(NULL, 0);
+            info.fontDicts = newBuf()
+            info.fdSelect = newBuf()
 
             // @TODO this should use size from table (not 512MB)
-            info->cff = stbtt__new_buf(data+cff, 512*1024*1024);
-            b = info->cff;
+            info.cff = newBuf(data + cff, 512 * 1024 * 1024)
+            val b = info.cff
 
             // read the header
-            stbtt__buf_skip(& b, 2);
-            stbtt__buf_seek(& b, stbtt__buf_get8(&b)); // hdrsize
+            _bufSkip(b, 2)
+            _bufSeek(b, _bufGet8(& b)) // hdrsize
 
             // @TODO the name INDEX could list multiple fonts,
             // but we just use the first one.
-            stbtt__cff_get_index(& b);  // name INDEX
-            topdictidx = stbtt__cff_get_index(& b);
-            topdict = stbtt__cff_index_get(topdictidx, 0);
-            stbtt__cff_get_index(& b);  // string INDEX
-            info->gsubrs = stbtt__cff_get_index(&b);
+            stbtt__cff_get_index(& b)  // name INDEX
+            topDictIdx = stbtt__cff_get_index(& b)
+            topDict = stbtt__cff_index_get(topDictIdx, 0)
+            stbtt__cff_get_index(& b)  // string INDEX
+            info->gsubrs = stbtt__cff_get_index(&b)
 
-            stbtt__dict_get_ints(& topdict, 17, 1, &charstrings);
-            stbtt__dict_get_ints(& topdict, 0x100 | 6, 1, &cstype);
-            stbtt__dict_get_ints(& topdict, 0x100 | 36, 1, &fdarrayoff);
-            stbtt__dict_get_ints(& topdict, 0x100 | 37, 1, &fdselectoff);
-            info->subrs = stbtt__get_subrs(b, topdict);
+            stbtt__dict_get_ints(& topdict, 17, 1, &charstrings)
+            stbtt__dict_get_ints(& topdict, 0x100 | 6, 1, &cstype)
+            stbtt__dict_get_ints(& topdict, 0x100 | 36, 1, &fdarrayoff)
+            stbtt__dict_get_ints(& topdict, 0x100 | 37, 1, &fdselectoff)
+            info->subrs = stbtt__get_subrs(b, topdict)
 
             // we only support Type 2 charstrings
-            if (cstype != 2) return 0;
-            if (charstrings == 0) return 0;
+            if (csType != 2) return 0
+            if (charStrings == 0) return 0
 
-            if (fdarrayoff) {
+            if (fdArrayOff) {
                 // looks like a CID font
-                if (!fdselectoff) return 0;
-                stbtt__buf_seek(& b, fdarrayoff);
-                info->fontdicts = stbtt__cff_get_index(&b);
-                info->fdselect = stbtt__buf_range(&b, fdselectoff, b.size-fdselectoff);
+                if (!fdSelectOff) return 0
+                stbtt__buf_seek(& b, fdarrayoff)
+                info->fontdicts = stbtt__cff_get_index(&b)
+                info->fdselect = stbtt__buf_range(&b, fdselectoff, b.size-fdselectoff)
             }
-//
-//            stbtt__buf_seek(&b, charstrings);
-//            info->charstrings = stbtt__cff_get_index(&b);
-//        }
-//
-//            t = stbtt__find_table(data, fontstart, "maxp");
-//            if (t)
-//                info->numGlyphs = ttUSHORT(data+t+4);
-//            else
-//            info->numGlyphs = 0xffff;
-//
-//            // find a cmap encoding table we understand *now* to avoid searching
-//            // later. (todo: could make this installable)
-//            // the same regardless of glyph.
-//            numTables = ttUSHORT(data + cmap + 2);
-//            info->index_map = 0;
-//            for (i=0; i < numTables; ++i) {
-//            stbtt_uint32 encoding_record = cmap + 4 + 8 * i;
-//            // find an encoding we understand:
-//            switch(ttUSHORT(data+encoding_record)) {
-//                case STBTT_PLATFORM_ID_MICROSOFT:
-//                switch (ttUSHORT(data+encoding_record+2)) {
-//                    case STBTT_MS_EID_UNICODE_BMP:
-//                    case STBTT_MS_EID_UNICODE_FULL:
-//                    // MS/Unicode
-//                    info->index_map = cmap + ttULONG(data+encoding_record+4);
-//                    break;
-//                }
-//                break;
-//                case STBTT_PLATFORM_ID_UNICODE:
-//                // Mac/iOS has these
-//                // all the encodingIDs are unicode, so we don't bother to check it
-//                info->index_map = cmap + ttULONG(data+encoding_record+4);
-//                break;
-//            }
-//        }
-//            if (info->index_map == 0)
-//            return 0;
-//
-//            info->indexToLocFormat = ttUSHORT(data+info->head + 50);
-//            return 1;
-//        }
-//
+
+            stbtt__buf_seek(& b, charstrings);
+            info->charstrings = stbtt__cff_get_index(&b);
+        }
+
+        t = stbtt__find_table(data, fontstart, "maxp");
+        if (t)
+            info->numGlyphs = ttUSHORT(data+t+4);
+        else
+        info->numGlyphs = 0xffff;
+
+        // find a cmap encoding table we understand *now* to avoid searching
+        // later. (todo: could make this installable)
+        // the same regardless of glyph.
+        numTables = ttUSHORT(data + cmap + 2);
+        info->index_map = 0;
+        for (i= 0; i < numTables; ++i) {
+            stbtt_uint32 encoding_record = cmap +4 + 8 * i;
+            // find an encoding we understand:
+            switch(ttUSHORT(data + encoding_record)) {
+                case STBTT_PLATFORM_ID_MICROSOFT :
+                switch(ttUSHORT(data + encoding_record + 2)) {
+                    case STBTT_MS_EID_UNICODE_BMP :
+                    case STBTT_MS_EID_UNICODE_FULL :
+                    // MS/Unicode
+                    info->index_map = cmap+ttULONG(data+encoding_record+4);
+                    break;
+                }
+                break;
+                case STBTT_PLATFORM_ID_UNICODE :
+                // Mac/iOS has these
+                // all the encodingIDs are unicode, so we don't bother to check it
+                info->index_map = cmap+ttULONG(data+encoding_record+4);
+                break;
+            }
+        }
+        if (info->index_map == 0)
+        return 0;
+
+        info->indexToLocFormat = ttUSHORT(data+info->head+50);
+        return 1;
+    }
+
 //        STBTT_DEF int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codepoint)
 //        {
 //            stbtt_uint8 *data = info->data;
@@ -3749,7 +3618,7 @@ object stbtt {
 //    //                                                                                //
 //    ////////////////////////////////////////////////////////////////////////////////////
 //
-            // moved to stbrp
+    // moved to stbrp
 //
 //    //////////////////////////////////////////////////////////////////////////////
 //    //
@@ -4772,103 +4641,103 @@ object stbtt {
 //        #endif // STB_TRUETYPE_IMPLEMENTATION
 //
 
-            // FULL VERSION HISTORY
-            //
-            //   1.19 (2018-02-11) OpenType GPOS kerning (horizontal only), STBTT_fmod
-            //   1.18 (2018-01-29) add missing function
-            //   1.17 (2017-07-23) make more arguments const; doc fix
-            //   1.16 (2017-07-12) SDF support
-            //   1.15 (2017-03-03) make more arguments const
-            //   1.14 (2017-01-16) num-fonts-in-TTC function
-            //   1.13 (2017-01-02) support OpenType fonts, certain Apple fonts
-            //   1.12 (2016-10-25) suppress warnings about casting away const with -Wcast-qual
-            //   1.11 (2016-04-02) fix unused-variable warning
-            //   1.10 (2016-04-02) allow user-defined fabs() replacement
-            //                     fix memory leak if fontsize=0.0
-            //                     fix warning from duplicate typedef
-            //   1.09 (2016-01-16) warning fix; avoid crash on outofmem; use alloc userdata for PackFontRanges
-            //   1.08 (2015-09-13) document stbtt_Rasterize(); fixes for vertical & horizontal edges
-            //   1.07 (2015-08-01) allow PackFontRanges to accept arrays of sparse codepoints;
-            //                     allow PackFontRanges to pack and render in separate phases;
-            //                     fix stbtt_GetFontOFfsetForIndex (never worked for non-0 input?);
-            //                     fixed an assert() bug in the new rasterizer
-            //                     replace assert() with STBTT_assert() in new rasterizer
-            //   1.06 (2015-07-14) performance improvements (~35% faster on x86 and x64 on test machine)
-            //                     also more precise AA rasterizer, except if shapes overlap
-            //                     remove need for STBTT_sort
-            //   1.05 (2015-04-15) fix misplaced definitions for STBTT_STATIC
-            //   1.04 (2015-04-15) typo in example
-            //   1.03 (2015-04-12) STBTT_STATIC, fix memory leak in new packing, various fixes
-            //   1.02 (2014-12-10) fix various warnings & compile issues w/ stb_rect_pack, C++
-            //   1.01 (2014-12-08) fix subpixel position when oversampling to exactly match
-            //                        non-oversampled; STBTT_POINT_SIZE for packed case only
-            //   1.00 (2014-12-06) add new PackBegin etc. API, w/ support for oversampling
-            //   0.99 (2014-09-18) fix multiple bugs with subpixel rendering (ryg)
-            //   0.9  (2014-08-07) support certain mac/iOS fonts without an MS platformID
-            //   0.8b (2014-07-07) fix a warning
-            //   0.8  (2014-05-25) fix a few more warnings
-            //   0.7  (2013-09-25) bugfix: subpixel glyph bug fixed in 0.5 had come back
-            //   0.6c (2012-07-24) improve documentation
-            //   0.6b (2012-07-20) fix a few more warnings
-            //   0.6  (2012-07-17) fix warnings; added stbtt_ScaleForMappingEmToPixels,
-            //                        stbtt_GetFontBoundingBox, stbtt_IsGlyphEmpty
-            //   0.5  (2011-12-09) bugfixes:
-            //                        subpixel glyph renderer computed wrong bounding box
-            //                        first vertex of shape can be off-curve (FreeSans)
-            //   0.4b (2011-12-03) fixed an error in the font baking example
-            //   0.4  (2011-12-01) kerning, subpixel rendering (tor)
-            //                    bugfixes for:
-            //                        codepoint-to-glyph conversion using table fmt=12
-            //                        codepoint-to-glyph conversion using table fmt=4
-            //                        stbtt_GetBakedQuad with non-square texture (Zer)
-            //                    updated Hello World! sample to use kerning and subpixel
-            //                    fixed some warnings
-            //   0.3  (2009-06-24) cmap fmt=12, compound shapes (MM)
-            //                    userdata, malloc-from-userdata, non-zero fill (stb)
-            //   0.2  (2009-03-11) Fix unsigned/signed char warnings
-            //   0.1  (2009-03-09) First public release
-            //
+    // FULL VERSION HISTORY
+    //
+    //   1.19 (2018-02-11) OpenType GPOS kerning (horizontal only), STBTT_fmod
+    //   1.18 (2018-01-29) add missing function
+    //   1.17 (2017-07-23) make more arguments const; doc fix
+    //   1.16 (2017-07-12) SDF support
+    //   1.15 (2017-03-03) make more arguments const
+    //   1.14 (2017-01-16) num-fonts-in-TTC function
+    //   1.13 (2017-01-02) support OpenType fonts, certain Apple fonts
+    //   1.12 (2016-10-25) suppress warnings about casting away const with -Wcast-qual
+    //   1.11 (2016-04-02) fix unused-variable warning
+    //   1.10 (2016-04-02) allow user-defined fabs() replacement
+    //                     fix memory leak if fontsize=0.0
+    //                     fix warning from duplicate typedef
+    //   1.09 (2016-01-16) warning fix; avoid crash on outofmem; use alloc userdata for PackFontRanges
+    //   1.08 (2015-09-13) document stbtt_Rasterize(); fixes for vertical & horizontal edges
+    //   1.07 (2015-08-01) allow PackFontRanges to accept arrays of sparse codepoints;
+    //                     allow PackFontRanges to pack and render in separate phases;
+    //                     fix stbtt_GetFontOFfsetForIndex (never worked for non-0 input?);
+    //                     fixed an assert() bug in the new rasterizer
+    //                     replace assert() with STBTT_assert() in new rasterizer
+    //   1.06 (2015-07-14) performance improvements (~35% faster on x86 and x64 on test machine)
+    //                     also more precise AA rasterizer, except if shapes overlap
+    //                     remove need for STBTT_sort
+    //   1.05 (2015-04-15) fix misplaced definitions for STBTT_STATIC
+    //   1.04 (2015-04-15) typo in example
+    //   1.03 (2015-04-12) STBTT_STATIC, fix memory leak in new packing, various fixes
+    //   1.02 (2014-12-10) fix various warnings & compile issues w/ stb_rect_pack, C++
+    //   1.01 (2014-12-08) fix subpixel position when oversampling to exactly match
+    //                        non-oversampled; STBTT_POINT_SIZE for packed case only
+    //   1.00 (2014-12-06) add new PackBegin etc. API, w/ support for oversampling
+    //   0.99 (2014-09-18) fix multiple bugs with subpixel rendering (ryg)
+    //   0.9  (2014-08-07) support certain mac/iOS fonts without an MS platformID
+    //   0.8b (2014-07-07) fix a warning
+    //   0.8  (2014-05-25) fix a few more warnings
+    //   0.7  (2013-09-25) bugfix: subpixel glyph bug fixed in 0.5 had come back
+    //   0.6c (2012-07-24) improve documentation
+    //   0.6b (2012-07-20) fix a few more warnings
+    //   0.6  (2012-07-17) fix warnings; added stbtt_ScaleForMappingEmToPixels,
+    //                        stbtt_GetFontBoundingBox, stbtt_IsGlyphEmpty
+    //   0.5  (2011-12-09) bugfixes:
+    //                        subpixel glyph renderer computed wrong bounding box
+    //                        first vertex of shape can be off-curve (FreeSans)
+    //   0.4b (2011-12-03) fixed an error in the font baking example
+    //   0.4  (2011-12-01) kerning, subpixel rendering (tor)
+    //                    bugfixes for:
+    //                        codepoint-to-glyph conversion using table fmt=12
+    //                        codepoint-to-glyph conversion using table fmt=4
+    //                        stbtt_GetBakedQuad with non-square texture (Zer)
+    //                    updated Hello World! sample to use kerning and subpixel
+    //                    fixed some warnings
+    //   0.3  (2009-06-24) cmap fmt=12, compound shapes (MM)
+    //                    userdata, malloc-from-userdata, non-zero fill (stb)
+    //   0.2  (2009-03-11) Fix unsigned/signed char warnings
+    //   0.1  (2009-03-09) First public release
+    //
 
-            /*
-            ------------------------------------------------------------------------------
-            This software is available under 2 licenses -- choose whichever you prefer.
-            ------------------------------------------------------------------------------
-            ALTERNATIVE A - MIT License
-            Copyright (c) 2017 Sean Barrett
-            Permission is hereby granted, free of charge, to any person obtaining a copy of
-            this software and associated documentation files (the "Software"), to deal in
-            the Software without restriction, including without limitation the rights to
-            use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-            of the Software, and to permit persons to whom the Software is furnished to do
-            so, subject to the following conditions:
-            The above copyright notice and this permission notice shall be included in all
-            copies or substantial portions of the Software.
-            THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-            AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-            LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-            OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-            SOFTWARE.
-            ------------------------------------------------------------------------------
-            ALTERNATIVE B - Public Domain (www.unlicense.org)
-            This is free and unencumbered software released into the public domain.
-            Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
-            software, either in source code form or as a compiled binary, for any purpose,
-            commercial or non-commercial, and by any means.
-            In jurisdictions that recognize copyright laws, the author or authors of this
-            software dedicate any and all copyright interest in the software to the public
-            domain. We make this dedication for the benefit of the public at large and to
-            the detriment of our heirs and successors. We intend this dedication to be an
-            overt act of relinquishment in perpetuity of all present and future rights to
-            this software under copyright law.
-            THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-            IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-            FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-            AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-            ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-            WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-            ------------------------------------------------------------------------------
-            */
+    /*
+    ------------------------------------------------------------------------------
+    This software is available under 2 licenses -- choose whichever you prefer.
+    ------------------------------------------------------------------------------
+    ALTERNATIVE A - MIT License
+    Copyright (c) 2017 Sean Barrett
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this software and associated documentation files (the "Software"), to deal in
+    the Software without restriction, including without limitation the rights to
+    use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+    of the Software, and to permit persons to whom the Software is furnished to do
+    so, subject to the following conditions:
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    ------------------------------------------------------------------------------
+    ALTERNATIVE B - Public Domain (www.unlicense.org)
+    This is free and unencumbered software released into the public domain.
+    Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
+    software, either in source code form or as a compiled binary, for any purpose,
+    commercial or non-commercial, and by any means.
+    In jurisdictions that recognize copyright laws, the author or authors of this
+    software dedicate any and all copyright interest in the software to the public
+    domain. We make this dedication for the benefit of the public at large and to
+    the detriment of our heirs and successors. We intend this dedication to be an
+    overt act of relinquishment in perpetuity of all present and future rights to
+    this software under copyright law.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    ------------------------------------------------------------------------------
+    */
 
-        }
+}
