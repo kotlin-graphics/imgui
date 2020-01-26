@@ -158,7 +158,6 @@ import imgui.dsl.withStyleVar
 import imgui.dsl.withTextWrapPos
 import imgui.or
 import kool.BYTES
-import unsigned.Ubyte
 import kotlin.math.cos
 import kotlin.math.floor
 import imgui.ColorEditFlag as Cef
@@ -300,7 +299,7 @@ object showDemoWindowWidgets {
     /* Data Types */
     // State
     var s8_v = 127.b
-    var u8_v = Ubyte(255)
+    var u8_v = 255u
     var s16_v = 32767.s
     //    static ImU16  u16_v = 65535;
     var s32_v = -1
@@ -363,6 +362,7 @@ object showDemoWindowWidgets {
     var dummyStr = "This is a dummy field to be able to tab-out of the widgets above.".toCharArray()
     var testWindow = false
 
+    @ExperimentalUnsignedTypes
     operator fun invoke() {
 
         if (!collapsingHeader("Widgets"))
@@ -1076,11 +1076,11 @@ object showDemoWindowWidgets {
             val s8_fifty: Byte = 50.b;
             val s8_min: Byte = (-128).b;
             val s8_max: Byte = 127.b
-            val u8_zero: Ubyte = Ubyte(0);
-            val u8_one: Ubyte = Ubyte(1);
-            val u8_fifty: Ubyte = Ubyte(50);
-            val u8_min: Ubyte = Ubyte(0);
-            val u8_max: Ubyte = Ubyte(255)
+            val u8_zero: UByte = 0u;
+            val u8_one: UByte = 1u;
+            val u8_fifty: UByte = 50u;
+            val u8_min: UByte = 0u;
+            val u8_max: UByte = 255u;
             val s16_zero: Short = 0.s;
             val s16_one: Short = 1.s;
             val s16_fifty: Short = 50.s;

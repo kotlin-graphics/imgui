@@ -8,10 +8,6 @@ import imgui.internal.addClampOverflow
 import imgui.internal.subClampOverflow
 import uno.kotlin.getValue
 import uno.kotlin.setValue
-import unsigned.Ubyte
-import unsigned.Uint
-import unsigned.Ulong
-import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
 /** Data type helpers */
@@ -20,6 +16,7 @@ internal interface dataTypeHelpers {
     //    IMGUI_API const ImGuiDataTypeInfo*  DataTypeGetInfo(ImGuiDataType data_type);
 
     /** DataTypeFormatString */
+    @ExperimentalUnsignedTypes
     fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 0): CharArray {
         // useless
 //    val value: Number = when (dataType) {
@@ -30,20 +27,14 @@ internal interface dataTypeHelpers {
 //        else -> throw Error()
 //    }
         val t = this()
-        val string = format.format(style.locale, when (t) {
-            // we need to intervene since java printf cant handle %u
-            is Ubyte -> t.i
-            is Ushort -> t.i
-            is Uint -> t.L
-            is Ulong -> t.toBigInt()
-            else -> t // normal scalar
-        })
+        val string = format.format(style.locale, t)
         return when (size) {
             0 -> string.toCharArray()
             else -> string.toCharArray(CharArray(size))
         }
     }
 
+    @ExperimentalUnsignedTypes
     fun <N : Number> dataTypeApplyOp(dataType: DataType, op: Char, value1: N, value2: N): N {
         assert(op == '+' || op == '-')
         return when (dataType) {
@@ -57,8 +48,8 @@ internal interface dataTypeHelpers {
                 else -> throw Error()
             }
             DataType.Ubyte -> when (op) {
-                '+' -> Ubyte(addClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX)) as N
-                '-' -> Ubyte(subClampOverflow((value1 as Ubyte).i, (value2 as Ubyte).i, U8_MIN, U8_MAX)) as N
+                '+' -> addClampOverflow(value1.i, value2.i, U8_MIN, U8_MAX) as N
+                '-' -> subClampOverflow(value1.i, value2.i, U8_MIN, U8_MAX) as N
                 else -> throw Error()
             }
             DataType.Short -> when (op) {
@@ -67,8 +58,8 @@ internal interface dataTypeHelpers {
                 else -> throw Error()
             }
             DataType.Ushort -> when (op) {
-                '+' -> Ushort(addClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX)) as N
-                '-' -> Ushort(subClampOverflow((value1 as Ushort).i, (value2 as Ushort).i, U16_MIN, U16_MAX)) as N
+                '+' -> addClampOverflow(value1.i, value2.i, U16_MIN, U16_MAX) as N
+                '-' -> subClampOverflow(value1.i, value2.i, U16_MIN, U16_MAX) as N
                 else -> throw Error()
             }
             DataType.Int -> when (op) {
@@ -77,8 +68,8 @@ internal interface dataTypeHelpers {
                 else -> throw Error()
             }
             DataType.Uint -> when (op) {
-                '+' -> Uint(addClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE)) as N
-                '-' -> Uint(subClampOverflow((value1 as Uint).L, (value2 as Uint).L, 0L, Uint.MAX_VALUE)) as N
+                '+' -> addClampOverflow(value1.L, value2.L, 0L, UInt.MAX_VALUE.toLong()) as N
+                '-' -> subClampOverflow(value1.L, value2.L, 0L, UInt.MAX_VALUE.toLong()) as N
                 else -> throw Error()
             }
             DataType.Long -> when (op) {
@@ -87,8 +78,8 @@ internal interface dataTypeHelpers {
                 else -> throw Error()
             }
             DataType.Ulong -> when (op) {
-                '+' -> Ulong(addClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE)) as N
-                '-' -> Ulong(subClampOverflow((value1 as Ulong).toBigInt(), (value2 as Ulong).toBigInt(), Ulong.MIN_VALUE, Ulong.MAX_VALUE)) as N
+                '+' -> addClampOverflow(value1.toLong().toBigInteger(), value2.toLong().toBigInteger(), ULong.MIN_VALUE.toLong().toBigInteger(), ULong.MAX_VALUE.toLong().toBigInteger()) as N
+                '-' -> subClampOverflow(value1.toLong().toBigInteger(), value2.toLong().toBigInteger(), ULong.MIN_VALUE.toLong().toBigInteger(), ULong.MAX_VALUE.toLong().toBigInteger()) as N
                 else -> throw Error()
             }
             DataType.Float -> when (op) {

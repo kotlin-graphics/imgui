@@ -10,8 +10,6 @@ import imgui.minus
 import imgui.plus
 import kool.BYTES
 import kool.rem
-import unsigned.toBigInt
-import unsigned.toUInt
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -84,15 +82,17 @@ val GCrc32LookupTable = longArrayOf(
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
+@ExperimentalUnsignedTypes
 fun hash(data: ByteBuffer, seed: Int = 0): Int {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable
     var dataSize = data.rem
     while (dataSize-- != 0)
-        crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data.get().toUInt()]
+        crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data.get().toUInt().toInt()]
     return crc.inv()
 }
 
+@ExperimentalUnsignedTypes
 fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): Int {
 
     /*
@@ -124,7 +124,7 @@ fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): Int {
 //            val d = crc and 0xFF
 //            val e = d xor c.b.toUnsignedInt
 //            crc = b xor crc32Lut[e]
-            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.b.toUInt()] // unsigned -> avoid negative values being passed as indices
+            crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.b.toUInt().toInt()] // unsigned -> avoid negative values being passed as indices
         }
     return crc.inv()
 }
@@ -274,14 +274,14 @@ fun subClampOverflow(a: Long, b: Long, mn: Long, mx: Long): Long = when {
 
 /** Ulong versions */
 fun addClampOverflow(a: BigInteger, b: BigInteger, mn: BigInteger, mx: BigInteger): BigInteger = when {
-    b < 0.toBigInt() && (a < mn - b) -> mn
-    b > 0.toBigInt() && (a > mx - b) -> mx
+    b < 0.toBigInteger() && (a < mn - b) -> mn
+    b > 0.toBigInteger() && (a > mx - b) -> mx
     else -> a + b
 }
 
 fun subClampOverflow(a: BigInteger, b: BigInteger, mn: BigInteger, mx: BigInteger): BigInteger = when {
-    b > 0.toBigInt() && (a < mn + b) -> mn
-    b < 0.toBigInt() && (a > mx + b) -> mx
+    b > 0.toBigInteger() && (a < mn + b) -> mn
+    b < 0.toBigInteger() && (a > mx + b) -> mx
     else -> a - b
 }
 

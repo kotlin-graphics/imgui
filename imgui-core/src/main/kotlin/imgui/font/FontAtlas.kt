@@ -18,7 +18,6 @@ import org.lwjgl.stb.*
 import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
-import unsigned.toULong
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -325,9 +324,10 @@ class FontAtlas {
     }
 
     /** Id needs to be >= 0x110000. Id >= 0x80000000 are reserved for ImGui and DrawList   */
+    @ExperimentalUnsignedTypes
     fun addCustomRectRegular(id: Int, width: Int, height: Int): Int {
         // Breaking change on 2019/11/21 (1.74): ImFontAtlas::AddCustomRectRegular() now requires an ID >= 0x110000 (instead of >= 0x10000)
-        assert(id.toULong() >= 0x110000 && width in 0..0xFFFF && height in 0..0xFFFF)
+        assert(id.toULong() >= 0x110000u && width in 0..0xFFFF && height in 0..0xFFFF)
         val r = CustomRect()
         r.id = id
         r.width = width

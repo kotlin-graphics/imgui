@@ -13,7 +13,7 @@ dependencies {
     implementation "$kx:gli:$gli_version"
     implementation "${kx}.glm:glm:$glm_version"
     implementation "$kx:kool:$kool_version"
-    implementation "$kx:kotlin-unsigned:$unsigned_version"
+    //implementation "$kx:kotlin-unsigned:$unsigned_version"
 
     ["", "-jemalloc", "-stb"].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"

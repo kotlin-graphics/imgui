@@ -9,7 +9,6 @@ module com.github.kotlin_graphics.imgui_core {
     requires com.github.kotlin_graphics.gli;
     requires com.github.kotlin_graphics.glm;
     requires com.github.kotlin_graphics.kool;
-    requires com.github.kotlin_graphics.kotlin_unsigned;
 
     requires org.lwjgl;
     requires org.lwjgl.stb;
