@@ -1171,13 +1171,13 @@ object stbtt {
 //
     // @OPTIMIZE: binary search
     fun _findTable(data: ByteBuffer, fontStart: Int, tag: String): Int {
-        val numTables = ttUSHORT(PtrByte(data) + fontStart + 4)
-        val tableDir = fontStart + 12
-        for (i in 0 until numTables) {
-            val loc = tableDir + 16 * i
-            if (tag(PtrByte(data) + loc + 0, tag.toCharArray()))
-                return ttULONG(PtrByte(data) + loc + 8)
-        }
+//        val numTables = ttUSHORT(PtrByte(data) + fontStart + 4)
+//        val tableDir = fontStart + 12
+//        for (i in 0 until numTables) {
+//            val loc = tableDir + 16 * i
+//            if (tag(PtrByte(data) + loc + 0, tag.toCharArray()))
+//                return ttULONG(PtrByte(data) + loc + 8)
+//        }
         return 0
     }
 
@@ -1251,96 +1251,96 @@ object stbtt {
 
         if (cmap == 0 || info.head == 0 || info.hhea == 0 || info.hmtx == 0)
             return 0
-        if (info.glyf != 0) {
-            // required for truetype
-            if (info.loca == 0) return 0
-        } else {
-            // initialization for CFF / Type2 fonts (OTF)
-            val topDict = _Buf()
-            val topDictIdx = _Buf()
-            val csType = 2
-            val charStrings = 0
-            var fdArrayOff = 0
-            var fdSelectOff = 0
-            val cff = _findTable(data, fontStart, "CFF ")
-            if (cff == 0) return 0
-
-            info.fontDicts = newBuf()
-            info.fdSelect = newBuf()
-
-            // @TODO this should use size from table (not 512MB)
-            info.cff = newBuf(data + cff, 512 * 1024 * 1024)
-            val b = info.cff
+//        if (info.glyf != 0) {
+//            // required for truetype
+//            if (info.loca == 0) return 0
+//        } else {
+//            // initialization for CFF / Type2 fonts (OTF)
+//            val topDict = _Buf()
+//            val topDictIdx = _Buf()
+//            val csType = 2
+//            val charStrings = 0
+//            var fdArrayOff = 0
+//            var fdSelectOff = 0
+//            val cff = _findTable(data, fontStart, "CFF ")
+//            if (cff == 0) return 0
+//
+//            info.fontDicts = newBuf()
+//            info.fdSelect = newBuf()
+//
+//            // @TODO this should use size from table (not 512MB)
+//            info.cff = newBuf(data + cff, 512 * 1024 * 1024)
+//            val b = info.cff
 
             // read the header
-            _bufSkip(b, 2)
-            _bufSeek(b, _bufGet8(& b)) // hdrsize
-
-            // @TODO the name INDEX could list multiple fonts,
-            // but we just use the first one.
-            stbtt__cff_get_index(& b)  // name INDEX
-            topDictIdx = stbtt__cff_get_index(& b)
-            topDict = stbtt__cff_index_get(topDictIdx, 0)
-            stbtt__cff_get_index(& b)  // string INDEX
-            info->gsubrs = stbtt__cff_get_index(&b)
-
-            stbtt__dict_get_ints(& topdict, 17, 1, &charstrings)
-            stbtt__dict_get_ints(& topdict, 0x100 | 6, 1, &cstype)
-            stbtt__dict_get_ints(& topdict, 0x100 | 36, 1, &fdarrayoff)
-            stbtt__dict_get_ints(& topdict, 0x100 | 37, 1, &fdselectoff)
-            info->subrs = stbtt__get_subrs(b, topdict)
-
-            // we only support Type 2 charstrings
-            if (csType != 2) return 0
-            if (charStrings == 0) return 0
-
-            if (fdArrayOff) {
-                // looks like a CID font
-                if (!fdSelectOff) return 0
-                stbtt__buf_seek(& b, fdarrayoff)
-                info->fontdicts = stbtt__cff_get_index(&b)
-                info->fdselect = stbtt__buf_range(&b, fdselectoff, b.size-fdselectoff)
-            }
-
-            stbtt__buf_seek(& b, charstrings);
-            info->charstrings = stbtt__cff_get_index(&b);
-        }
-
-        t = stbtt__find_table(data, fontstart, "maxp");
-        if (t)
-            info->numGlyphs = ttUSHORT(data+t+4);
-        else
-        info->numGlyphs = 0xffff;
-
-        // find a cmap encoding table we understand *now* to avoid searching
-        // later. (todo: could make this installable)
-        // the same regardless of glyph.
-        numTables = ttUSHORT(data + cmap + 2);
-        info->index_map = 0;
-        for (i= 0; i < numTables; ++i) {
-            stbtt_uint32 encoding_record = cmap +4 + 8 * i;
-            // find an encoding we understand:
-            switch(ttUSHORT(data + encoding_record)) {
-                case STBTT_PLATFORM_ID_MICROSOFT :
-                switch(ttUSHORT(data + encoding_record + 2)) {
-                    case STBTT_MS_EID_UNICODE_BMP :
-                    case STBTT_MS_EID_UNICODE_FULL :
-                    // MS/Unicode
-                    info->index_map = cmap+ttULONG(data+encoding_record+4);
-                    break;
-                }
-                break;
-                case STBTT_PLATFORM_ID_UNICODE :
-                // Mac/iOS has these
-                // all the encodingIDs are unicode, so we don't bother to check it
-                info->index_map = cmap+ttULONG(data+encoding_record+4);
-                break;
-            }
-        }
-        if (info->index_map == 0)
-        return 0;
-
-        info->indexToLocFormat = ttUSHORT(data+info->head+50);
+//            _bufSkip(b, 2)
+//            _bufSeek(b, _bufGet8(& b)) // hdrsize
+//
+//            // @TODO the name INDEX could list multiple fonts,
+//            // but we just use the first one.
+//            stbtt__cff_get_index(& b)  // name INDEX
+//            topDictIdx = stbtt__cff_get_index(& b)
+//            topDict = stbtt__cff_index_get(topDictIdx, 0)
+//            stbtt__cff_get_index(& b)  // string INDEX
+//            info->gsubrs = stbtt__cff_get_index(&b)
+//
+//            stbtt__dict_get_ints(& topdict, 17, 1, &charstrings)
+//            stbtt__dict_get_ints(& topdict, 0x100 | 6, 1, &cstype)
+//            stbtt__dict_get_ints(& topdict, 0x100 | 36, 1, &fdarrayoff)
+//            stbtt__dict_get_ints(& topdict, 0x100 | 37, 1, &fdselectoff)
+//            info->subrs = stbtt__get_subrs(b, topdict)
+//
+//            // we only support Type 2 charstrings
+//            if (csType != 2) return 0
+//            if (charStrings == 0) return 0
+//
+//            if (fdArrayOff) {
+//                // looks like a CID font
+//                if (!fdSelectOff) return 0
+//                stbtt__buf_seek(& b, fdarrayoff)
+//                info->fontdicts = stbtt__cff_get_index(&b)
+//                info->fdselect = stbtt__buf_range(&b, fdselectoff, b.size-fdselectoff)
+//            }
+//
+//            stbtt__buf_seek(& b, charstrings);
+//            info->charstrings = stbtt__cff_get_index(&b);
+//        }
+//
+//        t = stbtt__find_table(data, fontstart, "maxp");
+//        if (t)
+//            info->numGlyphs = ttUSHORT(data+t+4);
+//        else
+//        info->numGlyphs = 0xffff;
+//
+//        // find a cmap encoding table we understand *now* to avoid searching
+//        // later. (todo: could make this installable)
+//        // the same regardless of glyph.
+//        numTables = ttUSHORT(data + cmap + 2);
+//        info->index_map = 0;
+//        for (i= 0; i < numTables; ++i) {
+//            stbtt_uint32 encoding_record = cmap +4 + 8 * i;
+//            // find an encoding we understand:
+//            switch(ttUSHORT(data + encoding_record)) {
+//                case STBTT_PLATFORM_ID_MICROSOFT :
+//                switch(ttUSHORT(data + encoding_record + 2)) {
+//                    case STBTT_MS_EID_UNICODE_BMP :
+//                    case STBTT_MS_EID_UNICODE_FULL :
+//                    // MS/Unicode
+//                    info->index_map = cmap+ttULONG(data+encoding_record+4);
+//                    break;
+//                }
+//                break;
+//                case STBTT_PLATFORM_ID_UNICODE :
+//                // Mac/iOS has these
+//                // all the encodingIDs are unicode, so we don't bother to check it
+//                info->index_map = cmap+ttULONG(data+encoding_record+4);
+//                break;
+//            }
+//        }
+//        if (info->index_map == 0)
+//        return 0;
+//
+//        info->indexToLocFormat = ttUSHORT(data+info->head+50);
         return 1;
     }
 

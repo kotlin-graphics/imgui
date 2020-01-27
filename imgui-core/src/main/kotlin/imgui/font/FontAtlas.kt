@@ -558,8 +558,8 @@ class FontAtlas {
             // Initialize helper structure for font loading and verify that the TTF/OTF data is correct
             val fontOffset = STBTruetype.stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0) { "FontData is incorrect, or FontNo cannot be found." }
-            if (!STBTruetype.stbtt_InitFont(srcTmp.fontInfo, cfg.fontDataBuffer, fontOffset))
-                return false
+//            if (!STBTruetype.stbtt_InitFont(srcTmp.fontInfo, cfg.fontDataBuffer, fontOffset))
+//                return false
 
             // Measure highest codepoints
             val dstTmp = dstTmpArray[srcTmp.dstIndex]
@@ -583,8 +583,8 @@ class FontAtlas {
                 for (codepoint in srcRange) {
                     if (dstTmp.glyphsSet[codepoint])   // Don't overwrite existing glyphs. We could make this an option for MergeMode (e.g. MergeOverwrite==true)
                         continue
-                    if (!STBTruetype.stbtt_FindGlyphIndex(srcTmp.fontInfo, codepoint).bool)    // It is actually in the font?
-                        continue
+//                    if (!STBTruetype.stbtt_FindGlyphIndex(srcTmp.fontInfo, codepoint).bool)    // It is actually in the font?
+//                        continue
 
                     // Add to avail set/counters
                     srcTmp.glyphsCount++
@@ -619,8 +619,8 @@ class FontAtlas {
             if (srcTmp.glyphsCount == 0)
                 continue
 
-            srcTmp.rects = STBRPRect.create(bufRects.adr + bufRectsOutN * STBRPRect.SIZEOF, srcTmp.glyphsCount)
-            srcTmp.packedChars = STBTTPackedchar.create(bufPackedchars.adr + bufPackedcharsOutN * STBTTPackedchar.SIZEOF, srcTmp.glyphsCount)
+//            srcTmp.rects = STBRPRect.create(bufRects.adr + bufRectsOutN * STBRPRect.SIZEOF, srcTmp.glyphsCount)
+//            srcTmp.packedChars = STBTTPackedchar.create(bufPackedchars.adr + bufPackedcharsOutN * STBTTPackedchar.SIZEOF, srcTmp.glyphsCount)
             bufRectsOutN += srcTmp.glyphsCount
             bufPackedcharsOutN += srcTmp.glyphsCount
 
@@ -629,26 +629,27 @@ class FontAtlas {
             srcTmp.packRange.apply {
                 fontSize = cfg.sizePixels
                 firstUnicodeCodepointInRange = 0
-                arrayOfUnicodeCodepoints = srcTmp.glyphsList.toIntArray().toIntBuffer()
+//                arrayOfUnicodeCodepoints = srcTmp.glyphsList.toIntArray().toIntBuffer()
                 numChars = srcTmp.glyphsList.size
                 chardataForRange = srcTmp.packedChars
-                oversample = cfg.oversample
+//                oversample = cfg.oversample
             }
             // Gather the sizes of all rectangles we will need to pack (this loop is based on stbtt_PackFontRangesGatherRects)
-            val scale = when {
-                cfg.sizePixels > 0 -> STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
-                else -> STBTruetype.stbtt_ScaleForMappingEmToPixels(srcTmp.fontInfo, -cfg.sizePixels)
-            }
+            val scale = 1f
+//                    when {
+//                cfg.sizePixels > 0 -> STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
+//                else -> STBTruetype.stbtt_ScaleForMappingEmToPixels(srcTmp.fontInfo, -cfg.sizePixels)
+//            }
             val padding = texGlyphPadding
             for (glyphIdx in srcTmp.glyphsList.indices) {
-                val glyphIndexInFont = STBTruetype.stbtt_FindGlyphIndex(srcTmp.fontInfo, srcTmp.glyphsList[glyphIdx])
-                assert(glyphIndexInFont != 0)
-                val (x0, y0, x1, y1) = stbtt_GetGlyphBitmapBoxSubpixel(srcTmp.fontInfo, glyphIndexInFont, scale * Vec2(cfg.oversample))
-                srcTmp.rects[glyphIdx].apply {
-                    w = x1 - x0 + padding + cfg.oversample.x - 1
-                    h = y1 - y0 + padding + cfg.oversample.y - 1
-                    totalSurface += w * h
-                }
+//                val glyphIndexInFont = STBTruetype.stbtt_FindGlyphIndex(srcTmp.fontInfo, srcTmp.glyphsList[glyphIdx])
+//                assert(glyphIndexInFont != 0)
+//                val (x0, y0, x1, y1) = stbtt_GetGlyphBitmapBoxSubpixel(srcTmp.fontInfo, glyphIndexInFont, scale * Vec2(cfg.oversample))
+//                srcTmp.rects[glyphIdx].apply {
+//                    w = x1 - x0 + padding + cfg.oversample.x - 1
+//                    h = y1 - y0 + padding + cfg.oversample.y - 1
+//                    totalSurface += w * h
+//                }
             }
         }
 
@@ -684,7 +685,7 @@ class FontAtlas {
             if (srcTmp.glyphsCount == 0)
                 continue
 
-            STBRectPack.stbrp_pack_rects(spc.packInfo, srcTmp.rects)
+//            STBRectPack.stbrp_pack_rects(spc.packInfo, srcTmp.rects)
 
             // Extend texture height and mark missing glyphs as non-packed so we won't render them.
             // FIXME: We are not handling packing failure here (would happen if we got off TEX_HEIGHT_MAX or if a single if larger than TexWidth?)
@@ -711,15 +712,15 @@ class FontAtlas {
             if (srcTmp.glyphsCount == 0)
                 continue
 
-            stbtt_PackFontRangesRenderIntoRects(spc, srcTmp.fontInfo, srcTmp.packRange, srcTmp.rects)
+//            stbtt_PackFontRangesRenderIntoRects(spc, srcTmp.fontInfo, srcTmp.packRange, srcTmp.rects)
 
             // Apply multiply operator
             if (cfg.rasterizerMultiply != 1f) {
                 val multiplyTable = buildMultiplyCalcLookupTable(cfg.rasterizerMultiply)
                 for (glyphIdx in 0 until srcTmp.glyphsCount) {
                     val r = srcTmp.rects[glyphIdx]
-                    if (r.wasPacked)
-                        buildMultiplyRectAlpha8(multiplyTable, texPixelsAlpha8!!, r, texSize.x)
+//                    if (r.wasPacked)
+//                        buildMultiplyRectAlpha8(multiplyTable, texPixelsAlpha8!!, r, texSize.x)
                 }
             }
 //            srcTmp.rects = NULL // JVM dont free, it's a dummy container custom offset'ed
@@ -740,8 +741,8 @@ class FontAtlas {
             val cfg = configData[srcIdx]
             val dstFont = cfg.dstFont!! // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
 
-            val fontScale = STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
-            val (unscaledAscent, unscaledDescent, _) = stbtt_GetFontVMetrics(srcTmp.fontInfo)
+            val fontScale = 1f//STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
+            val (unscaledAscent, unscaledDescent, _) = IntArray(4)//stbtt_GetFontVMetrics(srcTmp.fontInfo)
 
             val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
             val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
@@ -762,14 +763,14 @@ class FontAtlas {
                     }
 
                 // Register glyph
-                stbtt_GetPackedQuad(srcTmp.packedChars, texSize, glyphIdx, q)
+//                stbtt_GetPackedQuad(srcTmp.packedChars, texSize, glyphIdx, q)
                 dstFont.addGlyph(codepoint, q.x0 + charOffX, q.y0 + fontOff.y, q.x1 + charOffX, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, charAdvanceXmod)
             }
         }
         bufPackedchars.free()
 
         // Cleanup temporary (ImVector doesn't honor destructor)
-        srcTmpArray.forEach { it.free() }
+//        srcTmpArray.forEach { it.free() }
         q.free()
 
         buildFinish()
