@@ -1,86 +1,86 @@
 package stb_
 
-// stb_easy_font.h - v1.0 - bitmap font for 3D rendering - public domain
-// Sean Barrett, Feb 2015
-//
-//    Easy-to-deploy,
-//    reasonably compact,
-//    extremely inefficient performance-wise,
-//    crappy-looking,
-//    ASCII-only,
-//    bitmap font for use in 3D APIs.
-//
-// Intended for when you just want to get some text displaying
-// in a 3D app as quickly as possible.
-//
-// Doesn't use any textures, instead builds characters out of quads.
-//
-// DOCUMENTATION:
-//
-//   int stb_easy_font_width(char *text)
-//   int stb_easy_font_height(char *text)
-//
-//      Takes a string and returns the horizontal size and the
-//      vertical size (which can vary if 'text' has newlines).
-//
-//   int stb_easy_font_print(float x, float y,
-//                           char *text, unsigned char color[4],
-//                           void *vertex_buffer, int vbuf_size)
-//
-//      Takes a string (which can contain '\n') and fills out a
-//      vertex buffer with renderable data to draw the string.
-//      Output data assumes increasing x is rightwards, increasing y
-//      is downwards.
-//
-//      The vertex data is divided into quads, i.e. there are four
-//      vertices in the vertex buffer for each quad.
-//
-//      The vertices are stored in an interleaved format:
-//
-//         x:float
-//         y:float
-//         z:float
-//         color:uint8[4]
-//
-//      You can ignore z and color if you get them from elsewhere
-//      This format was chosen in the hopes it would make it
-//      easier for you to reuse existing vertex-buffer-drawing code.
-//
-//      If you pass in NULL for color, it becomes 255,255,255,255.
-//
-//      Returns the number of quads.
-//
-//      If the buffer isn't large enough, it will truncate.
-//      Expect it to use an average of ~270 bytes per character.
-//
-//      If your API doesn't draw quads, build a reusable index
-//      list that allows you to render quads as indexed triangles.
-//
-//   void stb_easy_font_spacing(float spacing)
-//
-//      Use positive values to expand the space between characters,
-//      and small negative values (no smaller than -1.5) to contract
-//      the space between characters.
-//
-//      E.g. spacing = 1 adds one "pixel" of spacing between the
-//      characters. spacing = -1 is reasonable but feels a bit too
-//      compact to me; -0.5 is a reasonable compromise as long as
-//      you're scaling the font up.
-//
-// LICENSE
-//
-//   See end of file for license information.
-//
-// VERSION HISTORY
-//
-//   (2017-01-15)  1.0   space character takes same space as numbers; fix bad spacing of 'f'
-//   (2016-01-22)  0.7   width() supports multiline text; add height()
-//   (2015-09-13)  0.6   #include <math.h>; updated license
-//   (2015-02-01)  0.5   First release
-//
-// CONTRIBUTORS
-//
-//   github:vassvik  --  bug report
+/* stb_easy_font.h - v1.0 - bitmap font for 3D rendering - public domain
+ Sean Barrett, Feb 2015
+
+    Easy-to-deploy,
+    reasonably compact,
+    extremely inefficient performance-wise,
+    crappy-looking,
+    ASCII-only,
+    bitmap font for use in 3D APIs.
+
+ Intended for when you just want to get some text displaying
+ in a 3D app as quickly as possible.
+
+ Doesn't use any textures, instead builds characters out of quads.
+
+ DOCUMENTATION:
+
+   int stb_easy_font_width(char *text)
+   int stb_easy_font_height(char *text)
+
+      Takes a string and returns the horizontal size and the
+      vertical size (which can vary if 'text' has newlines).
+
+   int stb_easy_font_print(float x, float y,
+                           char *text, unsigned char color[4],
+                           void *vertex_buffer, int vbuf_size)
+
+      Takes a string (which can contain '\n') and fills out a
+      vertex buffer with renderable data to draw the string.
+      Output data assumes increasing x is rightwards, increasing y
+      is downwards.
+
+      The vertex data is divided into quads, i.e. there are four
+      vertices in the vertex buffer for each quad.
+
+      The vertices are stored in an interleaved format:
+
+         x:float
+         y:float
+         z:float
+         color:uint8[4]
+
+      You can ignore z and color if you get them from elsewhere
+      This format was chosen in the hopes it would make it
+      easier for you to reuse existing vertex-buffer-drawing code.
+
+      If you pass in NULL for color, it becomes 255,255,255,255.
+
+      Returns the number of quads.
+
+      If the buffer isn't large enough, it will truncate.
+      Expect it to use an average of ~270 bytes per character.
+
+      If your API doesn't draw quads, build a reusable index
+      list that allows you to render quads as indexed triangles.
+
+   void stb_easy_font_spacing(float spacing)
+
+      Use positive values to expand the space between characters,
+      and small negative values (no smaller than -1.5) to contract
+      the space between characters.
+
+      E.g. spacing = 1 adds one "pixel" of spacing between the
+      characters. spacing = -1 is reasonable but feels a bit too
+      compact to me; -0.5 is a reasonable compromise as long as
+      you're scaling the font up.
+
+ LICENSE
+
+   See end of file for license information.
+
+ VERSION HISTORY
+
+   (2017-01-15)  1.0   space character takes same space as numbers; fix bad spacing of 'f'
+   (2016-01-22)  0.7   width() supports multiline text; add height()
+   (2015-09-13)  0.6   #include <math.h>; updated license
+   (2015-02-01)  0.5   First release
+
+ CONTRIBUTORS
+
+   github:vassvik  --  bug report*/
 
 import gli_.has
 import glm_.b
