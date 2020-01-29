@@ -6,12 +6,14 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
-import imgui.*
 import imgui.ImGui.style
+import imgui.MouseCursor
+import imgui.TextureID
 import imgui.internal.fileLoadToMemory
 import imgui.internal.round
 import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
+import imgui.wo
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
@@ -558,14 +560,14 @@ class FontAtlas {
             // Initialize helper structure for font loading and verify that the TTF/OTF data is correct
             val fontOffset = STBTruetype.stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0) { "FontData is incorrect, or FontNo cannot be found." }
-            if (!STBTruetype.stbtt_InitFont(srcTmp.fontInfo, cfg.fontDataBuffer, fontOffset))
+            if (!stbtt.initFont(srcTmp.fontInfo, cfg.fontDataBuffer, fontOffset))
                 return false
 
             // Measure highest codepoints
             val dstTmp = dstTmpArray[srcTmp.dstIndex]
             srcTmp.srcRanges = cfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
             for (srcRange in srcTmp.srcRanges)
-                srcTmp.glyphsHighest = srcTmp.glyphsHighest max srcRange.endInclusive
+                srcTmp.glyphsHighest = srcTmp.glyphsHighest max srcRange.last
             dstTmp.srcCount++
             dstTmp.glyphsHighest = dstTmp.glyphsHighest max srcTmp.glyphsHighest
         }
@@ -583,7 +585,7 @@ class FontAtlas {
                 for (codepoint in srcRange) {
                     if (dstTmp.glyphsSet[codepoint])   // Don't overwrite existing glyphs. We could make this an option for MergeMode (e.g. MergeOverwrite==true)
                         continue
-                    if (!STBTruetype.stbtt_FindGlyphIndex(srcTmp.fontInfo, codepoint).bool)    // It is actually in the font?
+                    if (!stbtt.findGlyphIndex(srcTmp.fontInfo, codepoint).bool)    // It is actually in the font?
                         continue
 
                     // Add to avail set/counters
@@ -619,8 +621,8 @@ class FontAtlas {
             if (srcTmp.glyphsCount == 0)
                 continue
 
-            srcTmp.rects = STBRPRect.create(bufRects.adr + bufRectsOutN * STBRPRect.SIZEOF, srcTmp.glyphsCount)
-            srcTmp.packedChars = STBTTPackedchar.create(bufPackedchars.adr + bufPackedcharsOutN * STBTTPackedchar.SIZEOF, srcTmp.glyphsCount)
+            srcTmp.rects = Array(srcTmp.glyphsCount) { stbrp.Rect() }
+            srcTmp.packedChars = Array(srcTmp.glyphsCount) { stbtt.PackedChar() }
             bufRectsOutN += srcTmp.glyphsCount
             bufPackedcharsOutN += srcTmp.glyphsCount
 
@@ -629,19 +631,19 @@ class FontAtlas {
             srcTmp.packRange.apply {
                 fontSize = cfg.sizePixels
                 firstUnicodeCodepointInRange = 0
-                arrayOfUnicodeCodepoints = srcTmp.glyphsList.toIntArray().toIntBuffer()
+                arrayOfUnicodeCodepoints = srcTmp.glyphsList.toIntArray()
                 numChars = srcTmp.glyphsList.size
                 chardataForRange = srcTmp.packedChars
-                oversample = cfg.oversample
+//                oversample = cfg.oversample TODO
             }
             // Gather the sizes of all rectangles we will need to pack (this loop is based on stbtt_PackFontRangesGatherRects)
             val scale = when {
-                cfg.sizePixels > 0 -> STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
-                else -> STBTruetype.stbtt_ScaleForMappingEmToPixels(srcTmp.fontInfo, -cfg.sizePixels)
+                cfg.sizePixels > 0 -> stbtt.scaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
+                else -> stbtt.scaleForMappingEmToPixels(srcTmp.fontInfo, -cfg.sizePixels)
             }
             val padding = texGlyphPadding
             for (glyphIdx in srcTmp.glyphsList.indices) {
-                val glyphIndexInFont = STBTruetype.stbtt_FindGlyphIndex(srcTmp.fontInfo, srcTmp.glyphsList[glyphIdx])
+                val glyphIndexInFont = stbtt.findGlyphIndex(srcTmp.fontInfo, srcTmp.glyphsList[glyphIdx])
                 assert(glyphIndexInFont != 0)
                 val (x0, y0, x1, y1) = stbtt_GetGlyphBitmapBoxSubpixel(srcTmp.fontInfo, glyphIndexInFont, scale * Vec2(cfg.oversample))
                 srcTmp.rects[glyphIdx].apply {
@@ -845,7 +847,7 @@ class FontAtlas {
         // FIXME: Also note that 0x2026 is currently seldomly included in our font ranges. Because of this we are more likely to use three individual dots.
         fonts.filter { it.ellipsisChar == '\uffff' }.forEach { font ->
             for (ellipsisVariant in charArrayOf('\u2026', '\u0085')) {
-                if(font.findGlyphNoFallback(ellipsisVariant) != null) { // Verify glyph exists
+                if (font.findGlyphNoFallback(ellipsisVariant) != null) { // Verify glyph exists
                     font.ellipsisChar = ellipsisVariant
                     break
                 }

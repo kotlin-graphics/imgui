@@ -1,9 +1,15 @@
 package stb_
 
-import glm_.b
-import glm_.shl
+import gli_.has
+import glm_.*
+import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import imgui.NUL
+import kool.lib.isNotEmpty
+import kool.lim
+import kool.pos
 import java.nio.ByteBuffer
+import kotlin.math.abs
 
 object stbtt {
 
@@ -505,14 +511,7 @@ object stbtt {
 //            #endif
 
     // private structure
-    class _Buf(
-            var data: ByteArray? = null,
-            var cursor: Int = 0,
-            var size: Int = 0) {
-
-        val indices: IntRange
-            get() = 0..size
-    }
+    // class _Buf -> ByteBuffer
 
     //    //////////////////////////////////////////////////////////////////////////////
 //    //
@@ -835,23 +834,25 @@ object stbtt {
 //    //
 //
 //            #ifndef STBTT_vmove // you can predefine these to use different values (but why?)
-//                    enum {
-//                        STBTT_vmove=1,
-//                        STBTT_vline,
-//                        STBTT_vcurve,
-//                        STBTT_vcubic
-//                    };
-//            #endif
+    enum class VType(val i: Int) { move(1), line(2), curve(3), cubic(4) }
+
+    //            #endif
 //
 //            #ifndef stbtt_vertex // you can predefine this to use different values
 //            // (we share this with other code at RAD)
 //            #define stbtt_vertex_type short // can't use stbtt_int16 because that's not visible in the header file
-//            typedef struct
-//                    {
-//                        stbtt_vertex_type x,y,cx,cy,cx1,cy1;
-//                        unsigned char type,padding;
-//                    } stbtt_vertex;
-//            #endif
+    class Vertex {
+        var x = 0
+        var y = 0
+        var cx = 0
+        var cy = 0
+        var cx1 = 0
+        var cy1 = 0
+        var type = NUL
+        var padding = NUL
+    }
+
+    //            #endif
 //
 //            STBTT_DEF int stbtt_IsGlyphEmpty(const stbtt_fontinfo *info, int glyph_index);
 //    // returns non-zero if nothing is drawn for this glyph
@@ -1049,56 +1050,57 @@ object stbtt {
 //    //     http://developer.apple.com/textfonts/TTRefMan/RM06/Chap6name.html
 //    //     http://www.microsoft.com/typography/otspec/name.htm
 //
-//            enum { // platformID
-//                STBTT_PLATFORM_ID_UNICODE   =0,
-//                STBTT_PLATFORM_ID_MAC       =1,
-//                STBTT_PLATFORM_ID_ISO       =2,
-//                STBTT_PLATFORM_ID_MICROSOFT =3
-//            };
-//
-//            enum { // encodingID for STBTT_PLATFORM_ID_UNICODE
-//                STBTT_UNICODE_EID_UNICODE_1_0    =0,
-//                STBTT_UNICODE_EID_UNICODE_1_1    =1,
-//                STBTT_UNICODE_EID_ISO_10646      =2,
-//                STBTT_UNICODE_EID_UNICODE_2_0_BMP=3,
-//                STBTT_UNICODE_EID_UNICODE_2_0_FULL=4
-//            };
-//
-//            enum { // encodingID for STBTT_PLATFORM_ID_MICROSOFT
-//                STBTT_MS_EID_SYMBOL        =0,
-//                STBTT_MS_EID_UNICODE_BMP   =1,
-//                STBTT_MS_EID_SHIFTJIS      =2,
-//                STBTT_MS_EID_UNICODE_FULL  =10
-//            };
-//
-//            enum { // encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes
-//                STBTT_MAC_EID_ROMAN        =0,   STBTT_MAC_EID_ARABIC       =4,
-//                STBTT_MAC_EID_JAPANESE     =1,   STBTT_MAC_EID_HEBREW       =5,
-//                STBTT_MAC_EID_CHINESE_TRAD =2,   STBTT_MAC_EID_GREEK        =6,
-//                STBTT_MAC_EID_KOREAN       =3,   STBTT_MAC_EID_RUSSIAN      =7
-//            };
-//
-//            enum { // languageID for STBTT_PLATFORM_ID_MICROSOFT; same as LCID...
-//                // problematic because there are e.g. 16 english LCIDs and 16 arabic LCIDs
-//                STBTT_MS_LANG_ENGLISH     =0x0409,   STBTT_MS_LANG_ITALIAN     =0x0410,
-//                STBTT_MS_LANG_CHINESE     =0x0804,   STBTT_MS_LANG_JAPANESE    =0x0411,
-//                STBTT_MS_LANG_DUTCH       =0x0413,   STBTT_MS_LANG_KOREAN      =0x0412,
-//                STBTT_MS_LANG_FRENCH      =0x040c,   STBTT_MS_LANG_RUSSIAN     =0x0419,
-//                STBTT_MS_LANG_GERMAN      =0x0407,   STBTT_MS_LANG_SPANISH     =0x0409,
-//                STBTT_MS_LANG_HEBREW      =0x040d,   STBTT_MS_LANG_SWEDISH     =0x041D
-//            };
-//
-//            enum { // languageID for STBTT_PLATFORM_ID_MAC
-//                STBTT_MAC_LANG_ENGLISH      =0 ,   STBTT_MAC_LANG_JAPANESE     =11,
-//                STBTT_MAC_LANG_ARABIC       =12,   STBTT_MAC_LANG_KOREAN       =23,
-//                STBTT_MAC_LANG_DUTCH        =4 ,   STBTT_MAC_LANG_RUSSIAN      =32,
-//                STBTT_MAC_LANG_FRENCH       =1 ,   STBTT_MAC_LANG_SPANISH      =6 ,
-//                STBTT_MAC_LANG_GERMAN       =2 ,   STBTT_MAC_LANG_SWEDISH      =5 ,
-//                STBTT_MAC_LANG_HEBREW       =10,   STBTT_MAC_LANG_CHINESE_SIMPLIFIED =33,
-//                STBTT_MAC_LANG_ITALIAN      =3 ,   STBTT_MAC_LANG_CHINESE_TRAD =19
-//            };
-//
-//            #ifdef __cplusplus
+    enum class PlatformID {
+        UNICODE, MAC, ISO, MICROSOFT;
+
+        val i = ordinal
+    }
+
+    /** encodingID for STBTT_PLATFORM_ID_UNICODE */
+    enum class UnicodeEid {
+        UNICODE_1_0, UNICODE_1_1, ISO_10646, UNICODE_2_0_BMP, UNICODE_2_0_FULL;
+
+        val i = ordinal
+    }
+
+    /** encodingID for STBTT_PLATFORM_ID_MICROSOFT */
+    enum class MsEid(val i: Int) {
+        SYMBOL(0),
+        UNICODE_BMP(1),
+        SHIFTJIS(2),
+        UNICODE_FULL(10)
+    }
+
+    /** encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes */
+    enum class MacEid {
+        ROMAN, JAPANESE, CHINESE_TRAD, KOREAN, ARABIC, HEBREW, GREEK, RUSSIAN;
+
+        val i = ordinal
+    }
+
+    /** languageID for STBTT_PLATFORM_ID_MICROSOFT; same as LCID...
+     *  problematic because there are e.g. 16 english LCIDs and 16 arabic LCIDs */
+    enum class MsLang(val i: Int) {
+        ENGLISH(0x0409), ITALIAN(0x0410),
+        CHINESE(0x0804), JAPANESE(0x0411),
+        DUTCH(0x0413), KOREAN(0x0412),
+        FRENCH(0x040c), RUSSIAN(0x0419),
+        GERMAN(0x0407), SPANISH(0x0409),
+        HEBREW(0x040d), SWEDISH(0x041D)
+    }
+
+    /** languageID for STBTT_PLATFORM_ID_MAC */
+    enum class MacLang(val i: Int) {
+        ENGLISH(0), JAPANESE(11),
+        ARABIC(12), KOREAN(23),
+        DUTCH(4), RUSSIAN(32),
+        FRENCH(1), SPANISH(6),
+        GERMAN(2), SWEDISH(5),
+        HEBREW(10), CHINESE_SIMPLIFIED(33),
+        ITALIAN(3), CHINESE_TRAD(19)
+    }
+
+    //            #ifdef __cplusplus
 //        }
 //        #endif
 //
@@ -1135,28 +1137,28 @@ object stbtt {
 //
     // _buf.kt
 //
-//    //////////////////////////////////////////////////////////////////////////
-//    //
-//    // accessors to parse data from file
-//    //
-//
-//    // on platforms that don't allow misaligned reads, if we want to allow
-//    // truetype fonts that aren't padded to alignment, define ALLOW_UNALIGNED_TRUETYPE
-//
-//        #define ttBYTE(p)     (* (stbtt_uint8 *) (p))
-//        #define ttCHAR(p)     (* (stbtt_int8 *) (p))
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // accessors to parse data from file
+    //
+
+    // on platforms that don't allow misaligned reads, if we want to allow
+    // truetype fonts that aren't padded to alignment, define ALLOW_UNALIGNED_TRUETYPE
+
+    fun ttBYTE(p: ByteBuffer): Int = p[0].i
+    //        #define ttCHAR(p)     (* (stbtt_int8 *) (p))
 //        #define ttFixed(p)    ttLONG(p)
 //
-    fun ttUSHORT(p: PtrByte): Int = p[0] * 256 + p[1]
+    fun ttUSHORT(p: ByteBuffer): Int = p[0] * 256 + p[1]
 
-    //        static stbtt_int16 ttSHORT(stbtt_uint8 *p)   { return p[0]*256 + p[1]; }
-    fun ttULONG(p: PtrByte): Int = (p[0] shl 24) + (p[1] shl 16) + (p[2] shl 8) + p[3]
+    fun ttSHORT(p: ByteBuffer): Int = p[0] * 256 + p[1]
+    fun ttULONG(p: ByteBuffer): Int = (p[0] shl 24) + (p[1] shl 16) + (p[2] shl 8) + p[3]
 
     //        static stbtt_int32 ttLONG(stbtt_uint8 *p)    { return (p[0]<<24) + (p[1]<<16) + (p[2]<<8) + p[3]; }
 //
-    fun tag4(p: PtrByte, c0: Char, c1: Char, c2: Char, c3: Char): Boolean = p[0] == c0.b && p[1] == c1.b && p[2] == c2.b && p[3] == c3.b
+    fun tag4(p: ByteBuffer, c0: Char, c1: Char, c2: Char, c3: Char): Boolean = p[0] == c0.b && p[1] == c1.b && p[2] == c2.b && p[3] == c3.b
 
-    fun tag(p: PtrByte, str: CharArray): Boolean = tag4(p, str[0], str[1], str[2], str[3])
+    fun tag(p: ByteBuffer, str: String): Boolean = tag4(p, str[0], str[1], str[2], str[3])
 
     //        static int stbtt__isfont(stbtt_uint8 *font)
 //        {
@@ -1170,18 +1172,18 @@ object stbtt {
 //        }
 //
     // @OPTIMIZE: binary search
-    fun _findTable(data: ByteBuffer, fontStart: Int, tag: String): Int {
-        val numTables = ttUSHORT(PtrByte(data) + fontStart + 4)
+    fun findTable(data: ByteBuffer, fontStart: Int, tag: String): Int {
+        val numTables = ttUSHORT(data.sliceAt(fontStart + 4))
         val tableDir = fontStart + 12
         for (i in 0 until numTables) {
             val loc = tableDir + 16 * i
-            if (tag(PtrByte(data) + loc + 0, tag.toCharArray()))
-                return ttULONG(PtrByte(data) + loc + 8)
+            if (tag(data.sliceAt(loc + 0), tag))
+                return ttULONG(data.sliceAt(loc + 8))
         }
         return 0
     }
 
-//        static int stbtt_GetFontOffsetForIndex_internal(unsigned char *font_collection, int index)
+    //        static int stbtt_GetFontOffsetForIndex_internal(unsigned char *font_collection, int index)
 //        {
 //            // if it's just a font, there's only one valid index
 //            if (stbtt__isfont(font_collection))
@@ -1216,242 +1218,226 @@ object stbtt {
 //            return 0;
 //        }
 //
-//        static stbtt__buf stbtt__get_subrs(stbtt__buf cff, stbtt__buf fontdict)
-//        {
-//            stbtt_uint32 subrsoff = 0, private_loc[2] = { 0, 0 };
-//            stbtt__buf pdict;
-//            stbtt__dict_get_ints(&fontdict, 18, 2, private_loc);
-//            if (!private_loc[1] || !private_loc[0]) return stbtt__new_buf(NULL, 0);
-//            pdict = stbtt__buf_range(&cff, private_loc[1], private_loc[0]);
-//            stbtt__dict_get_ints(&pdict, 19, 1, &subrsoff);
-//            if (!subrsoff) return stbtt__new_buf(NULL, 0);
-//            stbtt__buf_seek(&cff, private_loc[1]+subrsoff);
-//            return stbtt__cff_get_index(&cff);
-//        }
-//
+    infix fun ByteBuffer.getSubrs(fontDict: ByteBuffer): ByteBuffer {
+        val privateLoc = IntArray(2)
+        fontDict.dictGetInts(18, privateLoc)
+        if (privateLoc.any { it == 0 }) return newBuf()
+        val pDict = range(privateLoc[1], privateLoc[0])
+        val subrsOff = pDict.dictGetInt(19)
+        if (subrsOff == 0) return newBuf()
+        seek(privateLoc[1] + subrsOff)
+        return cffGetIndex()
+    }
+
     /** stbtt_InitFont_internal */
-    fun initFont(info: FontInfo, data: ByteBuffer, fontStart: Int): Int {
-        var cmap = 0
-        var t = 0
-        var i = 0
-        var numTables = 0
+    fun initFont(info: FontInfo, data: ByteBuffer, fontStart: Int): Boolean {
 
         info.data = data
         info.fontStart = fontStart
         info.cff = newBuf()
 
-        cmap = _findTable(data, fontStart, "cmap")       // required
-        info.loca = _findTable(data, fontStart, "loca") // required
-        info.head = _findTable(data, fontStart, "head") // required
-        info.glyf = _findTable(data, fontStart, "glyf") // required
-        info.hhea = _findTable(data, fontStart, "hhea") // required
-        info.hmtx = _findTable(data, fontStart, "hmtx") // required
-        info.kern = _findTable(data, fontStart, "kern") // not required
-        info.gpos = _findTable(data, fontStart, "GPOS") // not required
+        val cmap = findTable(data, fontStart, "cmap")       // required
+        info.loca = findTable(data, fontStart, "loca") // required
+        info.head = findTable(data, fontStart, "head") // required
+        info.glyf = findTable(data, fontStart, "glyf") // required
+        info.hhea = findTable(data, fontStart, "hhea") // required
+        info.hmtx = findTable(data, fontStart, "hmtx") // required
+        info.kern = findTable(data, fontStart, "kern") // not required
+        info.gpos = findTable(data, fontStart, "GPOS") // not required
 
         if (cmap == 0 || info.head == 0 || info.hhea == 0 || info.hmtx == 0)
-            return 0
+            return false
         if (info.glyf != 0) {
             // required for truetype
-            if (info.loca == 0) return 0
+            if (info.loca == 0) return false
         } else {
             // initialization for CFF / Type2 fonts (OTF)
-            val topDict = _Buf()
-            val topDictIdx = _Buf()
-            val csType = 2
-            val charStrings = 0
-            var fdArrayOff = 0
-            var fdSelectOff = 0
-            val cff = _findTable(data, fontStart, "CFF ")
-            if (cff == 0) return 0
+            var csType = 2
+            val cff = findTable(data, fontStart, "CFF ")
+            if (cff == 0) return false
 
             info.fontDicts = newBuf()
             info.fdSelect = newBuf()
 
             // @TODO this should use size from table (not 512MB)
-            info.cff = newBuf(data + cff, 512 * 1024 * 1024)
+            info.cff = newBuf(data.sliceAt(cff), 512 * 1024 * 1024)
             val b = info.cff
 
             // read the header
-            _bufSkip(b, 2)
-            _bufSeek(b, _bufGet8(& b)) // hdrsize
+            b skip 2
+            b seek b.get8().i // hdrsize
 
             // @TODO the name INDEX could list multiple fonts,
             // but we just use the first one.
-            stbtt__cff_get_index(& b)  // name INDEX
-            topDictIdx = stbtt__cff_get_index(& b)
-            topDict = stbtt__cff_index_get(topDictIdx, 0)
-            stbtt__cff_get_index(& b)  // string INDEX
-            info->gsubrs = stbtt__cff_get_index(&b)
+            b.cffGetIndex()  // name INDEX
+            val topDictIdx = b.cffGetIndex()
+            val topDict = topDictIdx cffIndexGet 0
+            b.cffGetIndex()  // string INDEX
+            info.gSubrs = b.cffGetIndex()
 
-            stbtt__dict_get_ints(& topdict, 17, 1, &charstrings)
-            stbtt__dict_get_ints(& topdict, 0x100 | 6, 1, &cstype)
-            stbtt__dict_get_ints(& topdict, 0x100 | 36, 1, &fdarrayoff)
-            stbtt__dict_get_ints(& topdict, 0x100 | 37, 1, &fdselectoff)
-            info->subrs = stbtt__get_subrs(b, topdict)
+            val charStrings = topDict.dictGetInt(17)
+            csType = topDict.dictGetInt(0x100 or 6, csType)
+            val fdArrayOff = topDict.dictGetInt(0x100 or 36)
+            val fdSelectOff = topDict.dictGetInt(0x100 or 37)
+            info.subrs = b.getSubrs(topDict)
 
             // we only support Type 2 charstrings
-            if (csType != 2) return 0
-            if (charStrings == 0) return 0
+            if (csType != 2) return false
+            if (charStrings == 0) return false
 
-            if (fdArrayOff) {
+            if (fdArrayOff != 0) {
                 // looks like a CID font
-                if (!fdSelectOff) return 0
-                stbtt__buf_seek(& b, fdarrayoff)
-                info->fontdicts = stbtt__cff_get_index(&b)
-                info->fdselect = stbtt__buf_range(&b, fdselectoff, b.size-fdselectoff)
+                if (fdSelectOff == 0) return false
+                b seek fdArrayOff
+                info.fontDicts = b.cffGetIndex()
+                info.fdSelect = b.range(fdSelectOff, b.lim - fdSelectOff)
             }
 
-            stbtt__buf_seek(& b, charstrings);
-            info->charstrings = stbtt__cff_get_index(&b);
+            b seek charStrings
+            info.charStrings = b.cffGetIndex()
         }
 
-        t = stbtt__find_table(data, fontstart, "maxp");
-        if (t)
-            info->numGlyphs = ttUSHORT(data+t+4);
-        else
-        info->numGlyphs = 0xffff;
+        val t = findTable(data, fontStart, "maxp")
+        info.numGlyphs = when {
+            t != 0 -> ttUSHORT(data.sliceAt(t + 4))
+            else -> 0xffff
+        }
 
         // find a cmap encoding table we understand *now* to avoid searching
         // later. (todo: could make this installable)
         // the same regardless of glyph.
-        numTables = ttUSHORT(data + cmap + 2);
-        info->index_map = 0;
-        for (i= 0; i < numTables; ++i) {
-            stbtt_uint32 encoding_record = cmap +4 + 8 * i;
+        val numTables = ttUSHORT(data.sliceAt(cmap + 2))
+        info.indexMap = 0
+        for (i in 0 until numTables) {
+            val encodingRecord = cmap + 4 + 8 * i
             // find an encoding we understand:
-            switch(ttUSHORT(data + encoding_record)) {
-                case STBTT_PLATFORM_ID_MICROSOFT :
-                switch(ttUSHORT(data + encoding_record + 2)) {
-                    case STBTT_MS_EID_UNICODE_BMP :
-                    case STBTT_MS_EID_UNICODE_FULL :
-                    // MS/Unicode
-                    info->index_map = cmap+ttULONG(data+encoding_record+4);
-                    break;
+            when (ttUSHORT(data.sliceAt(encodingRecord))) {
+                PlatformID.MICROSOFT.i -> when (ttUSHORT(data.sliceAt(encodingRecord + 2))) {
+                    MsEid.UNICODE_BMP.i, MsEid.UNICODE_FULL.i -> // MS/Unicode
+                        info.indexMap = cmap + ttULONG(data.sliceAt(encodingRecord + 4))
                 }
-                break;
-                case STBTT_PLATFORM_ID_UNICODE :
-                // Mac/iOS has these
-                // all the encodingIDs are unicode, so we don't bother to check it
-                info->index_map = cmap+ttULONG(data+encoding_record+4);
-                break;
+                PlatformID.UNICODE.i ->
+                    // Mac/iOS has these
+                    // all the encodingIDs are unicode, so we don't bother to check it
+                    info.indexMap = cmap + ttULONG(data.sliceAt(encodingRecord + 4))
             }
         }
-        if (info->index_map == 0)
-        return 0;
+        if (info.indexMap == 0)
+            return false
 
-        info->indexToLocFormat = ttUSHORT(data+info->head+50);
-        return 1;
+        info.indexToLocFormat = ttUSHORT(data.sliceAt(info.head + 50))
+        return true
     }
 
-//        STBTT_DEF int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codepoint)
-//        {
-//            stbtt_uint8 *data = info->data;
-//            stbtt_uint32 index_map = info->index_map;
-//
-//            stbtt_uint16 format = ttUSHORT(data + index_map + 0);
-//            if (format == 0) { // apple byte encoding
-//                stbtt_int32 bytes = ttUSHORT(data + index_map + 2);
-//                if (unicode_codepoint < bytes-6)
-//                    return ttBYTE(data + index_map + 6 + unicode_codepoint);
-//                return 0;
-//            } else if (format == 6) {
-//                stbtt_uint32 first = ttUSHORT(data + index_map + 6);
-//                stbtt_uint32 count = ttUSHORT(data + index_map + 8);
-//                if ((stbtt_uint32) unicode_codepoint >= first && (stbtt_uint32) unicode_codepoint < first+count)
-//                    return ttUSHORT(data + index_map + 10 + (unicode_codepoint - first)*2);
-//                return 0;
-//            } else if (format == 2) {
-//                STBTT_assert(0); // @TODO: high-byte mapping for japanese/chinese/korean
-//                return 0;
-//            } else if (format == 4) { // standard mapping for windows fonts: binary search collection of ranges
-//                stbtt_uint16 segcount = ttUSHORT(data+index_map+6) >> 1;
-//                stbtt_uint16 searchRange = ttUSHORT(data+index_map+8) >> 1;
-//                stbtt_uint16 entrySelector = ttUSHORT(data+index_map+10);
-//                stbtt_uint16 rangeShift = ttUSHORT(data+index_map+12) >> 1;
-//
-//                // do a binary search of the segments
-//                stbtt_uint32 endCount = index_map + 14;
-//                stbtt_uint32 search = endCount;
-//
-//                if (unicode_codepoint > 0xffff)
-//                    return 0;
-//
-//                // they lie from endCount .. endCount + segCount
-//                // but searchRange is the nearest power of two, so...
-//                if (unicode_codepoint >= ttUSHORT(data + search + rangeShift*2))
-//                    search += rangeShift*2;
-//
-//                // now decrement to bias correctly to find smallest
-//                search -= 2;
-//                while (entrySelector) {
-//                    stbtt_uint16 end;
-//                    searchRange >>= 1;
-//                    end = ttUSHORT(data + search + searchRange*2);
-//                    if (unicode_codepoint > end)
-//                        search += searchRange*2;
-//                    --entrySelector;
-//                }
-//                search += 2;
-//
-//                {
-//                    stbtt_uint16 offset, start;
-//                    stbtt_uint16 item = (stbtt_uint16) ((search - endCount) >> 1);
-//
-//                    STBTT_assert(unicode_codepoint <= ttUSHORT(data + endCount + 2*item));
-//                    start = ttUSHORT(data + index_map + 14 + segcount*2 + 2 + 2*item);
-//                    if (unicode_codepoint < start)
-//                        return 0;
-//
-//                    offset = ttUSHORT(data + index_map + 14 + segcount*6 + 2 + 2*item);
-//                    if (offset == 0)
-//                        return (stbtt_uint16) (unicode_codepoint + ttSHORT(data + index_map + 14 + segcount*4 + 2 + 2*item));
-//
-//                    return ttUSHORT(data + offset + (unicode_codepoint-start)*2 + index_map + 14 + segcount*6 + 2 + 2*item);
-//                }
-//            } else if (format == 12 || format == 13) {
-//                stbtt_uint32 ngroups = ttULONG(data+index_map+12);
-//                stbtt_int32 low,high;
-//                low = 0; high = (stbtt_int32)ngroups;
-//                // Binary search the right group.
-//                while (low < high) {
-//                    stbtt_int32 mid = low + ((high-low) >> 1); // rounds down, so low <= mid < high
-//                    stbtt_uint32 start_char = ttULONG(data+index_map+16+mid*12);
-//                    stbtt_uint32 end_char = ttULONG(data+index_map+16+mid*12+4);
-//                    if ((stbtt_uint32) unicode_codepoint < start_char)
-//                        high = mid;
-//                    else if ((stbtt_uint32) unicode_codepoint > end_char)
-//                        low = mid+1;
-//                    else {
-//                        stbtt_uint32 start_glyph = ttULONG(data+index_map+16+mid*12+8);
-//                        if (format == 12)
-//                            return start_glyph + unicode_codepoint-start_char;
-//                        else // format == 13
-//                            return start_glyph;
-//                    }
-//                }
-//                return 0; // not found
-//            }
-//            // @TODO
-//            STBTT_assert(0);
-//            return 0;
-//        }
-//
+    fun findGlyphIndex(info: FontInfo, unicodeCodepoint: Int): Int {
+
+        val data = info.data!!
+        val indexMap = info.indexMap
+
+        return when (val format = ttUSHORT(data.sliceAt(indexMap + 0))) {
+            0 -> { // apple byte encoding
+                val bytes = ttUSHORT(data.sliceAt(indexMap + 2))
+                if (unicodeCodepoint < bytes - 6)
+                    ttBYTE(data.sliceAt(indexMap + 6 + unicodeCodepoint))
+                else 0
+            }
+            6 -> {
+                val first = ttUSHORT(data.sliceAt(indexMap + 6))
+                val count = ttUSHORT(data.sliceAt(indexMap + 8))
+                if (unicodeCodepoint in first until first + count)
+                    ttUSHORT(data.sliceAt(indexMap + 10 + (unicodeCodepoint - first) * 2))
+                else 0
+            }
+            2 -> TODO("high-byte mapping for japanese/chinese/korean")
+            4 -> { // standard mapping for windows fonts: binary search collection of ranges
+                val segCount = ttUSHORT(data.sliceAt(indexMap + 6)) shr 1
+                var searchRange = ttUSHORT(data.sliceAt(indexMap + 8)) shr 1
+                var entrySelector = ttUSHORT(data.sliceAt(indexMap + 10))
+                val rangeShift = ttUSHORT(data.sliceAt(indexMap + 12)) shr 1
+
+                // do a binary search of the segments
+                val endCount = indexMap + 14
+                var search = endCount
+
+                if (unicodeCodepoint > 0xffff)
+                    return 0
+
+                // they lie from endCount .. endCount + segCount
+                // but searchRange is the nearest power of two, so...
+                if (unicodeCodepoint >= ttUSHORT(data.sliceAt(search + rangeShift * 2)))
+                    search += rangeShift * 2
+
+                // now decrement to bias correctly to find smallest
+                search -= 2
+                while (entrySelector != 0) {
+                    searchRange = searchRange shr 1
+                    val end = ttUSHORT(data.sliceAt(search + searchRange * 2))
+                    if (unicodeCodepoint > end)
+                        search += searchRange * 2
+                    --entrySelector
+                }
+                search += 2
+
+                run {
+                    val item = (search - endCount) shr 1
+
+                    assert(unicodeCodepoint <= ttUSHORT(data.sliceAt(endCount + 2 * item)))
+                    val start = ttUSHORT(data.sliceAt(indexMap + 14 + segCount * 2 + 2 + 2 * item))
+                    when {
+                        unicodeCodepoint < start -> 0
+                        else -> when (val offset = ttUSHORT(data.sliceAt(indexMap + 14 + segCount * 6 + 2 + 2 * item))) {
+                            0 -> unicodeCodepoint + ttSHORT(data.sliceAt(indexMap + 14 + segCount * 4 + 2 + 2 * item))
+                            else -> ttUSHORT(data.sliceAt(offset + (unicodeCodepoint - start) * 2 + indexMap + 14 + segCount * 6 + 2 + 2 * item))
+                        }
+                    }
+                }
+            }
+            12, 13 -> {
+                val ngroups = ttULONG(data.sliceAt(indexMap + 12))
+                var low = 0
+                var high = ngroups
+                // Binary search the right group.
+                while (low < high) {
+                    val mid = low + ((high - low) shr 1) // rounds down, so low <= mid < high
+                    val startChar = ttULONG(data.sliceAt(indexMap + 16 + mid * 12))
+                    val endChar = ttULONG(data.sliceAt(indexMap + 16 + mid * 12 + 4))
+                    if (unicodeCodepoint < startChar)
+                        high = mid
+                    else if (unicodeCodepoint > endChar)
+                        low = mid + 1
+                    else {
+                        val startGlyph = ttULONG(data.sliceAt(indexMap + 16 + mid * 12 + 8))
+                        return when (format) {
+                            12 -> startGlyph + unicodeCodepoint - startChar
+                            // format == 13
+                            else -> startGlyph
+                        }
+                    }
+                }
+                return 0 // not found
+            }
+            else -> TODO()
+        }
+        // @TODO
+//        STBTT_assert(0)
+//        return 0
+    }
+
+    //
 //        STBTT_DEF int stbtt_GetCodepointShape(const stbtt_fontinfo *info, int unicode_codepoint, stbtt_vertex **vertices)
 //        {
 //            return stbtt_GetGlyphShape(info, stbtt_FindGlyphIndex(info, unicode_codepoint), vertices);
 //        }
 //
-//        static void stbtt_setvertex(stbtt_vertex *v, stbtt_uint8 type, stbtt_int32 x, stbtt_int32 y, stbtt_int32 cx, stbtt_int32 cy)
-//        {
-//            v->type = type;
-//            v->x = (stbtt_int16) x;
-//            v->y = (stbtt_int16) y;
-//            v->cx = (stbtt_int16) cx;
-//            v->cy = (stbtt_int16) cy;
-//        }
-//
-//        static int stbtt__GetGlyfOffset(const stbtt_fontinfo *info, int glyph_index)
+    fun Vertex.set(type: VType, x: Int, y: Int, cx: Int, cy: Int) {
+        this.type = type
+        this.x = x
+        this.y = y
+        this.cx = cx
+        this.cy = cy
+    }
+
+    //        static int stbtt__GetGlyfOffset(const stbtt_fontinfo *info, int glyph_index)
 //        {
 //            int g1,g2;
 //
@@ -1473,22 +1459,22 @@ object stbtt {
 //
 //        static int stbtt__GetGlyphInfoT2(const stbtt_fontinfo *info, int glyph_index, int *x0, int *y0, int *x1, int *y1);
 //
-//        STBTT_DEF int stbtt_GetGlyphBox(const stbtt_fontinfo *info, int glyph_index, int *x0, int *y0, int *x1, int *y1)
-//        {
-//            if (info->cff.size) {
-//            stbtt__GetGlyphInfoT2(info, glyph_index, x0, y0, x1, y1);
-//        } else {
-//            int g = stbtt__GetGlyfOffset(info, glyph_index);
-//            if (g < 0) return 0;
-//
-//            if (x0) *x0 = ttSHORT(info->data + g + 2);
-//            if (y0) *y0 = ttSHORT(info->data + g + 4);
-//            if (x1) *x1 = ttSHORT(info->data + g + 6);
-//            if (y1) *y1 = ttSHORT(info->data + g + 8);
-//        }
-//            return 1;
-//        }
-//
+    fun getGlyphBox(info: FontInfo, glyphIndex: Int, a: Vec2i, b: Vec2i): Boolean {
+        if (info.cff.isNotEmpty())
+            getGlyphInfoT2(info, glyph_index, x0, y0, x1, y1)
+        else {
+            int g = stbtt__GetGlyfOffset (info, glyph_index)
+            if (g < 0) return 0
+
+            if (x0) * x0 = ttSHORT(info->data+g+2)
+            if (y0) * y0 = ttSHORT(info->data+g+4)
+            if (x1) * x1 = ttSHORT(info->data+g+6)
+            if (y1) * y1 = ttSHORT(info->data+g+8)
+        }
+        return 1
+    }
+
+    //
 //        STBTT_DEF int stbtt_GetCodepointBox(const stbtt_fontinfo *info, int codepoint, int *x0, int *y0, int *x1, int *y1)
 //        {
 //            return stbtt_GetGlyphBox(info, stbtt_FindGlyphIndex(info,codepoint), x0,y0,x1,y1);
@@ -1748,78 +1734,77 @@ object stbtt {
 //            return num_vertices;
 //        }
 //
-//        typedef struct
-//        {
-//            int bounds;
-//            int started;
-//            float first_x, first_y;
-//            float x, y;
-//            stbtt_int32 min_x, max_x, min_y, max_y;
-//
-//            stbtt_vertex *pvertices;
-//            int num_vertices;
-//        } stbtt__csctx;
-//
-//        #define STBTT__CSCTX_INIT(bounds) {bounds,0, 0,0, 0,0, 0,0,0,0, NULL, 0}
-//
-//        static void stbtt__track_vertex(stbtt__csctx *c, stbtt_int32 x, stbtt_int32 y)
-//        {
-//            if (x > c->max_x || !c->started) c->max_x = x;
-//            if (y > c->max_y || !c->started) c->max_y = y;
-//            if (x < c->min_x || !c->started) c->min_x = x;
-//            if (y < c->min_y || !c->started) c->min_y = y;
-//            c->started = 1;
-//        }
-//
-//        static void stbtt__csctx_v(stbtt__csctx *c, stbtt_uint8 type, stbtt_int32 x, stbtt_int32 y, stbtt_int32 cx, stbtt_int32 cy, stbtt_int32 cx1, stbtt_int32 cy1)
-//        {
-//            if (c->bounds) {
-//            stbtt__track_vertex(c, x, y);
-//            if (type == STBTT_vcubic) {
-//                stbtt__track_vertex(c, cx, cy);
-//                stbtt__track_vertex(c, cx1, cy1);
-//            }
-//        } else {
-//            stbtt_setvertex(&c->pvertices[c->num_vertices], type, x, y, cx, cy);
-//            c->pvertices[c->num_vertices].cx1 = (stbtt_int16) cx1;
-//            c->pvertices[c->num_vertices].cy1 = (stbtt_int16) cy1;
-//        }
-//            c->num_vertices++;
-//        }
-//
-//        static void stbtt__csctx_close_shape(stbtt__csctx *ctx)
-//        {
-//            if (ctx->first_x != ctx->x || ctx->first_y != ctx->y)
-//            stbtt__csctx_v(ctx, STBTT_vline, (int)ctx->first_x, (int)ctx->first_y, 0, 0, 0, 0);
-//        }
-//
-//        static void stbtt__csctx_rmove_to(stbtt__csctx *ctx, float dx, float dy)
-//        {
-//            stbtt__csctx_close_shape(ctx);
-//            ctx->first_x = ctx->x = ctx->x + dx;
-//            ctx->first_y = ctx->y = ctx->y + dy;
-//            stbtt__csctx_v(ctx, STBTT_vmove, (int)ctx->x, (int)ctx->y, 0, 0, 0, 0);
-//        }
-//
-//        static void stbtt__csctx_rline_to(stbtt__csctx *ctx, float dx, float dy)
-//        {
-//            ctx->x += dx;
-//            ctx->y += dy;
-//            stbtt__csctx_v(ctx, STBTT_vline, (int)ctx->x, (int)ctx->y, 0, 0, 0, 0);
-//        }
-//
-//        static void stbtt__csctx_rccurve_to(stbtt__csctx *ctx, float dx1, float dy1, float dx2, float dy2, float dx3, float dy3)
-//        {
-//            float cx1 = ctx->x + dx1;
-//            float cy1 = ctx->y + dy1;
-//            float cx2 = cx1 + dx2;
-//            float cy2 = cy1 + dy2;
-//            ctx->x = cx2 + dx3;
-//            ctx->y = cy2 + dy3;
-//            stbtt__csctx_v(ctx, STBTT_vcubic, (int)ctx->x, (int)ctx->y, (int)cx1, (int)cy1, (int)cx2, (int)cy2);
-//        }
-//
-//        static stbtt__buf stbtt__get_subr(stbtt__buf idx, int n)
+    class Csctx(var bounds: Int) {
+        var started = false
+        var first = Vec2()
+        var x = 0f
+        var y = 0f
+        var minX = 0
+        var maxX = 0
+        var minY = 0
+        var maxY = 0
+
+        var vertices: Array<Vertex> = emptyArray()
+    }
+
+
+    fun trackVertex(c: Csctx, x: Int, y: Int) {
+        if (x > c.maxX || !c.started) c.maxX = x
+        if (y > c.maxY || !c.started) c.maxY = y
+        if (x < c.minX || !c.started) c.minX = x
+        if (y < c.minY || !c.started) c.minY = y
+        c.started = true
+    }
+
+    fun csctxV(c: Csctx, type: VType, x: Int, y: Int, cx: Int, cy: Int, cx1: Int, cy1: Int) {
+        if (c.bounds != 0) {
+            trackVertex(c, x, y)
+            if (type == VType.cubic) {
+                trackVertex(c, cx, cy)
+                trackVertex(c, cx1, cy1)
+            }
+        } else {
+            c.vertices.last().also {
+                it.set(type, x, y, cx, cy)
+                it.cx1 = cx1
+                it.cy1 = cy1
+            }
+        }
+//        c->num_vertices++
+    }
+
+    fun csctxCloseShape(ctx: Csctx) {
+        if (ctx.first.x != ctx.x || ctx.first.y != ctx.y)
+            csctxV(ctx, VType.line, ctx.first.x.i, ctx.first.y.i, 0, 0, 0, 0)
+    }
+
+    fun csctxRmoveTo(ctx: Csctx, dx: Float, dy: Float) {
+        csctxCloseShape(ctx)
+        ctx.x += dx
+        ctx.first.x = ctx.x
+        ctx.y += dy
+        ctx.first.y = ctx.y
+        csctxV(ctx, VType.move, ctx.x.i, ctx.y.i, 0, 0, 0, 0)
+    }
+
+
+    fun csctxRlineTo(ctx: Csctx, dx: Float, dy: Float) {
+        ctx.x += dx
+        ctx.y += dy
+        csctxV(ctx, VType.line, ctx.x.i, ctx.y.i, 0, 0, 0, 0)
+    }
+
+    fun csctxRccurveTo(ctx: Csctx, dx1: Float, dy1: Float, dx2: Float, dy2: Float, dx3: Float, dy3: Float) {
+        val cx1 = ctx.x + dx1
+        val cy1 = ctx.y + dy1
+        val cx2 = cx1 + dx2
+        val cy2 = cy1 + dy2
+        ctx.x = cx2 + dx3
+        ctx.y = cy2 + dy3
+        csctxV(ctx, VType.cubic, ctx.x.i, ctx.y.i, cx1.i, cy1.i, cx2.i, cy2.i)
+    }
+
+    //        static stbtt__buf stbtt__get_subr(stbtt__buf idx, int n)
 //        {
 //            int count = stbtt__cff_index_count(&idx);
 //            int bias = 107;
@@ -1832,294 +1817,339 @@ object stbtt {
 //                return stbtt__new_buf(NULL, 0);
 //            return stbtt__cff_index_get(idx, n);
 //        }
-//
-//        static stbtt__buf stbtt__cid_get_glyph_subrs(const stbtt_fontinfo *info, int glyph_index)
-//        {
-//            stbtt__buf fdselect = info->fdselect;
-//            int nranges, start, end, v, fmt, fdselector = -1, i;
-//
-//            stbtt__buf_seek(&fdselect, 0);
-//            fmt = stbtt__buf_get8(&fdselect);
-//            if (fmt == 0) {
-//                // untested
-//                stbtt__buf_skip(&fdselect, glyph_index);
-//                fdselector = stbtt__buf_get8(&fdselect);
-//            } else if (fmt == 3) {
-//                nranges = stbtt__buf_get16(&fdselect);
-//                start = stbtt__buf_get16(&fdselect);
-//                for (i = 0; i < nranges; i++) {
-//                    v = stbtt__buf_get8(&fdselect);
-//                    end = stbtt__buf_get16(&fdselect);
-//                    if (glyph_index >= start && glyph_index < end) {
-//                        fdselector = v;
-//                        break;
-//                    }
-//                    start = end;
-//                }
-//            }
-//            if (fdselector == -1) stbtt__new_buf(NULL, 0);
-//            return stbtt__get_subrs(info->cff, stbtt__cff_index_get(info->fontdicts, fdselector));
-//        }
-//
-//        static int stbtt__run_charstring(const stbtt_fontinfo *info, int glyph_index, stbtt__csctx *c)
-//        {
-//            int in_header = 1, maskbits = 0, subr_stack_height = 0, sp = 0, v, i, b0;
-//            int has_subrs = 0, clear_stack;
-//            float s[48];
-//            stbtt__buf subr_stack[10], subrs = info->subrs, b;
-//            float f;
-//
-//            #define STBTT__CSERR(s) (0)
-//
-//            // this currently ignores the initial width value, which isn't needed if we have hmtx
-//            b = stbtt__cff_index_get(info->charstrings, glyph_index);
-//            while (b.cursor < b.size) {
-//                i = 0;
-//                clear_stack = 1;
-//                b0 = stbtt__buf_get8(&b);
-//                switch (b0) {
-//                    // @TODO implement hinting
-//                    case 0x13: // hintmask
-//                    case 0x14: // cntrmask
-//                    if (in_header)
-//                        maskbits += (sp / 2); // implicit "vstem"
-//                    in_header = 0;
-//                    stbtt__buf_skip(&b, (maskbits + 7) / 8);
-//                    break;
-//
-//                    case 0x01: // hstem
-//                    case 0x03: // vstem
-//                    case 0x12: // hstemhm
-//                    case 0x17: // vstemhm
-//                    maskbits += (sp / 2);
-//                    break;
-//
-//                    case 0x15: // rmoveto
-//                    in_header = 0;
-//                    if (sp < 2) return STBTT__CSERR("rmoveto stack");
-//                    stbtt__csctx_rmove_to(c, s[sp-2], s[sp-1]);
-//                    break;
-//                    case 0x04: // vmoveto
-//                    in_header = 0;
-//                    if (sp < 1) return STBTT__CSERR("vmoveto stack");
-//                    stbtt__csctx_rmove_to(c, 0, s[sp-1]);
-//                    break;
-//                    case 0x16: // hmoveto
-//                    in_header = 0;
-//                    if (sp < 1) return STBTT__CSERR("hmoveto stack");
-//                    stbtt__csctx_rmove_to(c, s[sp-1], 0);
-//                    break;
-//
-//                    case 0x05: // rlineto
-//                    if (sp < 2) return STBTT__CSERR("rlineto stack");
-//                    for (; i + 1 < sp; i += 2)
-//                    stbtt__csctx_rline_to(c, s[i], s[i+1]);
-//                    break;
-//
-//                    // hlineto/vlineto and vhcurveto/hvcurveto alternate horizontal and vertical
-//                    // starting from a different place.
-//
-//                    case 0x07: // vlineto
-//                    if (sp < 1) return STBTT__CSERR("vlineto stack");
-//                    goto vlineto;
-//                    case 0x06: // hlineto
-//                    if (sp < 1) return STBTT__CSERR("hlineto stack");
-//                    for (;;) {
-//                        if (i >= sp) break;
-//                        stbtt__csctx_rline_to(c, s[i], 0);
-//                        i++;
-//                        vlineto:
-//                        if (i >= sp) break;
-//                        stbtt__csctx_rline_to(c, 0, s[i]);
-//                        i++;
-//                    }
-//                    break;
-//
-//                    case 0x1F: // hvcurveto
-//                    if (sp < 4) return STBTT__CSERR("hvcurveto stack");
-//                    goto hvcurveto;
-//                    case 0x1E: // vhcurveto
-//                    if (sp < 4) return STBTT__CSERR("vhcurveto stack");
-//                    for (;;) {
-//                        if (i + 3 >= sp) break;
-//                        stbtt__csctx_rccurve_to(c, 0, s[i], s[i+1], s[i+2], s[i+3], (sp - i == 5) ? s[i + 4] : 0.0f);
-//                        i += 4;
-//                        hvcurveto:
-//                        if (i + 3 >= sp) break;
-//                        stbtt__csctx_rccurve_to(c, s[i], 0, s[i+1], s[i+2], (sp - i == 5) ? s[i+4] : 0.0f, s[i+3]);
-//                        i += 4;
-//                    }
-//                    break;
-//
-//                    case 0x08: // rrcurveto
-//                    if (sp < 6) return STBTT__CSERR("rcurveline stack");
-//                    for (; i + 5 < sp; i += 6)
-//                    stbtt__csctx_rccurve_to(c, s[i], s[i+1], s[i+2], s[i+3], s[i+4], s[i+5]);
-//                    break;
-//
-//                    case 0x18: // rcurveline
-//                    if (sp < 8) return STBTT__CSERR("rcurveline stack");
-//                    for (; i + 5 < sp - 2; i += 6)
-//                    stbtt__csctx_rccurve_to(c, s[i], s[i+1], s[i+2], s[i+3], s[i+4], s[i+5]);
-//                    if (i + 1 >= sp) return STBTT__CSERR("rcurveline stack");
-//                    stbtt__csctx_rline_to(c, s[i], s[i+1]);
-//                    break;
-//
-//                    case 0x19: // rlinecurve
-//                    if (sp < 8) return STBTT__CSERR("rlinecurve stack");
-//                    for (; i + 1 < sp - 6; i += 2)
-//                    stbtt__csctx_rline_to(c, s[i], s[i+1]);
-//                    if (i + 5 >= sp) return STBTT__CSERR("rlinecurve stack");
-//                    stbtt__csctx_rccurve_to(c, s[i], s[i+1], s[i+2], s[i+3], s[i+4], s[i+5]);
-//                    break;
-//
-//                    case 0x1A: // vvcurveto
-//                    case 0x1B: // hhcurveto
-//                    if (sp < 4) return STBTT__CSERR("(vv|hh)curveto stack");
-//                    f = 0.0;
-//                    if (sp & 1) { f = s[i]; i++; }
-//                    for (; i + 3 < sp; i += 4) {
-//                    if (b0 == 0x1B)
-//                        stbtt__csctx_rccurve_to(c, s[i], f, s[i+1], s[i+2], s[i+3], 0.0);
-//                    else
-//                        stbtt__csctx_rccurve_to(c, f, s[i], s[i+1], s[i+2], 0.0, s[i+3]);
-//                    f = 0.0;
-//                }
-//                    break;
-//
-//                    case 0x0A: // callsubr
-//                    if (!has_subrs) {
-//                        if (info->fdselect.size)
-//                        subrs = stbtt__cid_get_glyph_subrs(info, glyph_index);
-//                        has_subrs = 1;
-//                    }
-//                    // fallthrough
+
+    fun cidGetGlyphSubrs(info: FontInfo, glyphIndex: Int): ByteBuffer {
+        val fdSelect = info.fdSelect
+        var fdSelector = -1
+
+        fdSelect seek 0
+        val fmt = fdSelect.get8().i
+        if (fmt == 0) {
+            // untested
+            fdSelect skip glyphIndex
+            fdSelector = fdSelect.get8().i
+        } else if (fmt == 3) {
+            val nRanges = fdSelect.get16()
+            var start = fdSelect.get16()
+            for (i in 0 until nRanges) {
+                val v = fdSelect.get8().i
+                val end = fdSelect.get16()
+                if (glyphIndex in start until end) {
+                    fdSelector = v
+                    break
+                }
+                start = end
+            }
+        }
+        if (fdSelector == -1) newBuf()
+        return info.cff getSubrs (info.fontDicts cffIndexGet fdSelector)
+    }
+
+    fun runCharString(info: FontInfo, glyphIndex: Int, c: Csctx): Int {
+
+        var inHeader = true
+        var maskbits = 0
+        var subrStackHeight = 0
+        var sp = 0//v
+        var hasSubrs = false
+        val s = FloatArray(48)
+        val subrStack = Array(10) { ByteBuffer.allocate(0) }
+        var subrs = info.subrs
+
+        fun cserr(s: String) = 0
+
+        // this currently ignores the initial width value, which isn't needed if we have hmtx
+        var b = info.charStrings cffIndexGet glyphIndex
+        while (b.pos < b.lim) {
+            var clearStack = true
+            when (val b0 = b.get8().i) {
+                // @TODO implement hinting
+                0x13, // hintmask
+                0x14 -> { // cntrmask
+                    if (inHeader)
+                        maskbits += sp / 2 // implicit "vstem"
+                    inHeader = false
+                    b.skip((maskbits + 7) / 8)
+                }
+
+                0x01, // hstem
+                0x03, // vstem
+                0x12, // hstemhm
+                0x17 -> // vstemhm
+                    maskbits += (sp / 2)
+
+                0x15 -> { // rmoveto
+                    inHeader = false
+                    if (sp < 2) error("rmoveto stack")
+                    csctxRmoveTo(c, s[sp - 2], s[sp - 1])
+                }
+                0x04 -> { // vmoveto
+                    inHeader = false
+                    if (sp < 1) return cserr("vmoveto stack")
+                    csctxRmoveTo(c, 0f, s[sp - 1])
+                }
+                0x16 -> { // hmoveto
+                    inHeader = false
+                    if (sp < 1) return cserr("hmoveto stack")
+                    csctxRmoveTo(c, s[sp - 1], 0f)
+                }
+
+                0x05 -> { // rlineto
+                    if (sp < 2) return cserr("rlineto stack")
+                    for (i in 0 until (sp - 1) step 2)
+                        csctxRlineTo(c, s[i], s[i + 1])
+                }
+
+                // hlineto/vlineto and vhcurveto/hvcurveto alternate horizontal and vertical
+                // starting from a different place.
+
+                0x07 -> { // vlineto
+                    if (sp < 1) return cserr("vlineto stack")
+                    //goto vlineto
+                    var i = 0
+                    if (i < sp) {
+                        csctxRlineTo(c, 0f, s[i])
+                        i++
+                        while {
+                            if (i >= sp) break
+                            csctxRlineTo(c, s[i], 0f)
+                            i++
+                            if (i >= sp) break
+                            csctxRlineTo(c, 0f, s[i])
+                            i++
+                        }
+                    }
+                }
+                0x06 -> { // hlineto
+                    if (sp < 1) return cserr("hlineto stack")
+                    while {
+                        if (i >= sp) break
+                        csctxRlineTo(c, s[i], 0f)
+                        i++
+                        //vlineto:
+                        if (i >= sp) break
+                        csctxRlineTo(c, 0f, s[i])
+                        i++
+                    }
+                }
+
+                0x1F -> { // hvcurveto
+                    if (sp < 4) return cserr("hvcurveto stack")
+                    //goto hvcurveto
+                    var i = 0
+                    if (i + 3 < sp) {
+                        csctxRccurveTo(c, s[i], 0f, s[i + 1], s[i + 2], if (sp - i == 5) s[i + 4] else 0f, s[i + 3])
+                        i += 4
+                        while {
+                            if (i + 3 >= sp) break
+                            csctxRccurveTo(c, 0f, s[i], s[i + 1], s[i + 2], s[i + 3], if (sp - i == 5) s[i + 4] else 0f)
+                            i += 4
+                            if (i + 3 >= sp) break
+                            csctxRccurveTo(c, s[i], 0f, s[i + 1], s[i + 2], if (sp - i == 5) s[i + 4] else 0f, s[i + 3])
+                            i += 4
+                        }
+                    }
+                }
+                0x1E -> { // vhcurveto
+                    if (sp < 4) return cserr("vhcurveto stack")
+                    while {
+                        if (i + 3 >= sp) break
+                        csctxRccurveTo(c, 0f, s[i], s[i + 1], s[i + 2], s[i + 3], if (sp - i == 5) s[i + 4] else 0f)
+                        i += 4
+                        ///hvcurveto:
+                        if (i + 3 >= sp) break
+                        csctxRccurveTo(c, s[i], 0f, s[i + 1], s[i + 2], if (sp - i == 5) s[i + 4] else 0f, s[i + 3])
+                        i += 4
+                    }
+                }
+
+                0x08 -> { // rrcurveto
+                    if (sp < 6) return cserr("rcurveline stack")
+                    for (i in 0 until (sp - 5) step 6)
+                        csctxRccurveTo(c, s[i], s[i + 1], s[i + 2], s[i + 3], s[i + 4], s[i + 5])
+                }
+
+                0x18 -> { // rcurveline
+                    if (sp < 8) return cserr("rcurveline stack")
+                    for (i in 0 until (sp - 2 - 5) step 6)
+                        csctxRccurveTo(c, s[i], s[i + 1], s[i + 2], s[i + 3], s[i + 4], s[i + 5])
+                    if (i + 1 >= sp) return cserr("rcurveline stack")
+                    csctxRlineTo(c, s[i], s[i + 1])
+                }
+
+                0x19 -> { // rlinecurve
+                    if (sp < 8) return cserr("rlinecurve stack")
+                    for (i in 0 until (sp - 6 - 1) step 2)
+                        csctxRlineTo(c, s[i], s[i + 1])
+                    if (i + 5 >= sp) return cserr("rlinecurve stack")
+                    csctxRccurveTo(c, s[i], s[i + 1], s[i + 2], s[i + 3], s[i + 4], s[i + 5])
+                }
+
+                0x1A, // vvcurveto
+                0x1B -> { // hhcurveto
+                    if (sp < 4) return cserr("(vv|hh)curveto stack")
+                    var f = 0f
+                    var i = 0
+                    if (sp has 1) {
+                        f = s[i]
+                        i++
+                    }
+                    while (i + 3 < sp) {
+                        if (b0 == 0x1B)
+                            csctxRccurveTo(c, s[i], f, s[i + 1], s[i + 2], s[i + 3], 0f)
+                        else
+                            csctxRccurveTo(c, f, s[i], s[i + 1], s[i + 2], 0f, s[i + 3])
+                        f = 0f
+                        i += 4
+                    }
+                }
+
+                0x0A, 0x1D -> { // callsubr
+                    if (b0 == 0x0A && !hasSubrs) {
+                        if (info.fdSelect.isNotEmpty())
+                            subrs = cidGetGlyphSubrs(info, glyphIndex)
+                        hasSubrs = true
+                    }
+                    // fallthrough
 //                    case 0x1D: // callgsubr
-//                    if (sp < 1) return STBTT__CSERR("call(g|)subr stack");
-//                    v = (int) s[--sp];
-//                    if (subr_stack_height >= 10) return STBTT__CSERR("recursion limit");
-//                    subr_stack[subr_stack_height++] = b;
-//                    b = stbtt__get_subr(b0 == 0x0A ? subrs : info->gsubrs, v);
-//                    if (b.size == 0) return STBTT__CSERR("subr not found");
-//                    b.cursor = 0;
-//                    clear_stack = 0;
-//                    break;
-//
-//                    case 0x0B: // return
-//                    if (subr_stack_height <= 0) return STBTT__CSERR("return outside subr");
-//                    b = subr_stack[--subr_stack_height];
-//                    clear_stack = 0;
-//                    break;
-//
-//                    case 0x0E: // endchar
-//                    stbtt__csctx_close_shape(c);
-//                    return 1;
-//
-//                    case 0x0C: { // two-byte escape
-//                    float dx1, dx2, dx3, dx4, dx5, dx6, dy1, dy2, dy3, dy4, dy5, dy6;
-//                    float dx, dy;
-//                    int b1 = stbtt__buf_get8(&b);
-//                    switch (b1) {
-//                        // @TODO These "flex" implementations ignore the flex-depth and resolution,
-//                        // and always draw beziers.
-//                        case 0x22: // hflex
-//                        if (sp < 7) return STBTT__CSERR("hflex stack");
-//                        dx1 = s[0];
-//                        dx2 = s[1];
-//                        dy2 = s[2];
-//                        dx3 = s[3];
-//                        dx4 = s[4];
-//                        dx5 = s[5];
-//                        dx6 = s[6];
-//                        stbtt__csctx_rccurve_to(c, dx1, 0, dx2, dy2, dx3, 0);
-//                        stbtt__csctx_rccurve_to(c, dx4, 0, dx5, -dy2, dx6, 0);
-//                        break;
-//
-//                        case 0x23: // flex
-//                        if (sp < 13) return STBTT__CSERR("flex stack");
-//                        dx1 = s[0];
-//                        dy1 = s[1];
-//                        dx2 = s[2];
-//                        dy2 = s[3];
-//                        dx3 = s[4];
-//                        dy3 = s[5];
-//                        dx4 = s[6];
-//                        dy4 = s[7];
-//                        dx5 = s[8];
-//                        dy5 = s[9];
-//                        dx6 = s[10];
-//                        dy6 = s[11];
-//                        //fd is s[12]
-//                        stbtt__csctx_rccurve_to(c, dx1, dy1, dx2, dy2, dx3, dy3);
-//                        stbtt__csctx_rccurve_to(c, dx4, dy4, dx5, dy5, dx6, dy6);
-//                        break;
-//
-//                        case 0x24: // hflex1
-//                        if (sp < 9) return STBTT__CSERR("hflex1 stack");
-//                        dx1 = s[0];
-//                        dy1 = s[1];
-//                        dx2 = s[2];
-//                        dy2 = s[3];
-//                        dx3 = s[4];
-//                        dx4 = s[5];
-//                        dx5 = s[6];
-//                        dy5 = s[7];
-//                        dx6 = s[8];
-//                        stbtt__csctx_rccurve_to(c, dx1, dy1, dx2, dy2, dx3, 0);
-//                        stbtt__csctx_rccurve_to(c, dx4, 0, dx5, dy5, dx6, -(dy1+dy2+dy5));
-//                        break;
-//
-//                        case 0x25: // flex1
-//                        if (sp < 11) return STBTT__CSERR("flex1 stack");
-//                        dx1 = s[0];
-//                        dy1 = s[1];
-//                        dx2 = s[2];
-//                        dy2 = s[3];
-//                        dx3 = s[4];
-//                        dy3 = s[5];
-//                        dx4 = s[6];
-//                        dy4 = s[7];
-//                        dx5 = s[8];
-//                        dy5 = s[9];
-//                        dx6 = dy6 = s[10];
-//                        dx = dx1+dx2+dx3+dx4+dx5;
-//                        dy = dy1+dy2+dy3+dy4+dy5;
-//                        if (STBTT_fabs(dx) > STBTT_fabs(dy))
-//                            dy6 = -dy;
-//                        else
-//                            dx6 = -dx;
-//                        stbtt__csctx_rccurve_to(c, dx1, dy1, dx2, dy2, dx3, dy3);
-//                        stbtt__csctx_rccurve_to(c, dx4, dy4, dx5, dy5, dx6, dy6);
-//                        break;
-//
-//                        default:
-//                        return STBTT__CSERR("unimplemented");
-//                    }
-//                } break;
-//
-//                    default:
-//                    if (b0 != 255 && b0 != 28 && (b0 < 32 || b0 > 254))
-//                        return STBTT__CSERR("reserved operator");
-//
-//                    // push immediate
-//                    if (b0 == 255) {
-//                        f = (float)(stbtt_int32)stbtt__buf_get32(&b) / 0x10000;
-//                    } else {
-//                        stbtt__buf_skip(&b, -1);
-//                        f = (float)(stbtt_int16)stbtt__cff_int(&b);
-//                    }
-//                    if (sp >= 48) return STBTT__CSERR("push stack overflow");
-//                    s[sp++] = f;
-//                    clear_stack = 0;
-//                    break;
-//                }
-//                if (clear_stack) sp = 0;
-//            }
-//            return STBTT__CSERR("no endchar");
-//
-//            #undef STBTT__CSERR
-//        }
-//
+                    if (sp < 1) return cserr("call(g|)subr stack")
+                    val v = s[--sp].i
+                    if (subrStackHeight >= 10)
+                        return cserr("recursion limit")
+                    subrStack[subrStackHeight++] = b
+                    b = if (b0 == 0x0A) subrs else info.gSubrs
+                    b = b getSubrs v
+                    if (b.lim == 0) return cserr("subr not found")
+                    b.pos = 0
+                    clearStack = false
+                }
+
+                0x0B -> { // return
+                    if (subrStackHeight <= 0) return cserr("return outside subr")
+                    b = subrStack[--subrStackHeight]
+                    clearStack = false
+                }
+
+                0x0E -> { // endchar
+                    csctxCloseShape(c)
+                    return 1
+                }
+
+                0x0C -> {
+                    // two-byte escape
+                    val dx1: Float
+                    val dx2: Float
+                    val dx3: Float
+                    val dx4: Float
+                    val dx5: Float
+                    var dx6: Float
+                    val dy1: Float
+                    val dy2: Float
+                    val dy3: Float
+                    val dy4: Float
+                    val dy5: Float
+                    var dy6: Float
+                    when (val b1 = b.get8().i) {
+                        // @TODO These "flex" implementations ignore the flex-depth and resolution,
+                        // and always draw beziers.
+                        0x22 -> { // hflex
+                            if (sp < 7) return cserr("hflex stack")
+                            dx1 = s[0]
+                            dx2 = s[1]
+                            dy2 = s[2]
+                            dx3 = s[3]
+                            dx4 = s[4]
+                            dx5 = s[5]
+                            dx6 = s[6]
+                            csctxRccurveTo(c, dx1, 0f, dx2, dy2, dx3, 0f)
+                            csctxRccurveTo(c, dx4, 0f, dx5, -dy2, dx6, 0f)
+                        }
+
+                        0x23 -> { // flex
+                            if (sp < 13) return cserr("flex stack")
+                            dx1 = s[0]
+                            dy1 = s[1]
+                            dx2 = s[2]
+                            dy2 = s[3]
+                            dx3 = s[4]
+                            dy3 = s[5]
+                            dx4 = s[6]
+                            dy4 = s[7]
+                            dx5 = s[8]
+                            dy5 = s[9]
+                            dx6 = s[10]
+                            dy6 = s[11]
+                            //fd is s[12]
+                            csctxRccurveTo(c, dx1, dy1, dx2, dy2, dx3, dy3)
+                            csctxRccurveTo(c, dx4, dy4, dx5, dy5, dx6, dy6)
+                        }
+
+                        0x24 -> { // hflex1
+                            if (sp < 9) return cserr("hflex1 stack")
+                            dx1 = s[0]
+                            dy1 = s[1]
+                            dx2 = s[2]
+                            dy2 = s[3]
+                            dx3 = s[4]
+                            dx4 = s[5]
+                            dx5 = s[6]
+                            dy5 = s[7]
+                            dx6 = s[8]
+                            csctxRccurveTo(c, dx1, dy1, dx2, dy2, dx3, 0)
+                            csctxRccurveTo(c, dx4, 0, dx5, dy5, dx6, -(dy1 + dy2 + dy5))
+                        }
+
+                        0x25 -> { // flex1
+                            if (sp < 11) return cserr("flex1 stack")
+                            dx1 = s[0]
+                            dy1 = s[1]
+                            dx2 = s[2]
+                            dy2 = s[3]
+                            dx3 = s[4]
+                            dy3 = s[5]
+                            dx4 = s[6]
+                            dy4 = s[7]
+                            dx5 = s[8]
+                            dy5 = s[9]
+                            dx6 = s[10]
+                            dy6 = s[10]
+                            val dx = dx1 + dx2 + dx3 + dx4 + dx5
+                            val dy = dy1 + dy2 + dy3 + dy4 + dy5
+                            if (abs(dx) > abs(dy))
+                                dy6 = -dy
+                            else
+                                dx6 = -dx
+                            csctxRccurveTo(c, dx1, dy1, dx2, dy2, dx3, dy3)
+                            csctxRccurveTo(c, dx4, dy4, dx5, dy5, dx6, dy6)
+                        }
+
+                        else -> return cserr("unimplemented")
+                    }
+                }
+
+                else -> {
+                    if (b0 != 255 && b0 != 28 && (b0 < 32 || b0 > 254))
+                        return cserr("reserved operator")
+
+                    // push immediate
+                    val f = when (b0) {
+                        255 -> b.get32().f / 0x10000
+                        else -> {
+                            b skip -1
+                            b.cffInt.f
+                        }
+                    }
+                    if (sp >= 48) return cserr("push stack overflow")
+                    s[sp++] = f
+                    clearStack = false
+                }
+            }
+            if (clearStack) sp = 0
+        }
+        return cserr("no endchar")
+    }
+
+    //
 //        static int stbtt__GetGlyphShapeT2(const stbtt_fontinfo *info, int glyph_index, stbtt_vertex **pvertices)
 //        {
 //            // runs the charstring twice, once to count and once to output (to avoid realloc)
@@ -2137,18 +2167,17 @@ object stbtt {
 //            return 0;
 //        }
 //
-//        static int stbtt__GetGlyphInfoT2(const stbtt_fontinfo *info, int glyph_index, int *x0, int *y0, int *x1, int *y1)
-//        {
-//            stbtt__csctx c = STBTT__CSCTX_INIT(1);
-//            int r = stbtt__run_charstring(info, glyph_index, &c);
-//            if (x0)  *x0 = r ? c.min_x : 0;
-//            if (y0)  *y0 = r ? c.min_y : 0;
-//            if (x1)  *x1 = r ? c.max_x : 0;
-//            if (y1)  *y1 = r ? c.max_y : 0;
-//            return r ? c.num_vertices : 0;
-//        }
-//
-//        STBTT_DEF int stbtt_GetGlyphShape(const stbtt_fontinfo *info, int glyph_index, stbtt_vertex **pvertices)
+    fun getGlyphInfoT2(info: FontInfo, glyphIndex: Int, a: Vec2i, b: Vec2i): Int {
+        val c = Csctx(1)
+        val r = runCharString(info, glyphIndex, c).bool
+        a.x = if(r) c.minX else 0
+        a.y = if (r) c.minY else 0
+        b.x = if(r) c.maxX else 0
+        b.y = if(r) c.maxY else 0
+        return if(r) c.num_vertices else 0
+    }
+
+    //        STBTT_DEF int stbtt_GetGlyphShape(const stbtt_fontinfo *info, int glyph_index, stbtt_vertex **pvertices)
 //        {
 //            if (!info->cff.size)
 //            return stbtt__GetGlyphShapeTT(info, glyph_index, pvertices);
@@ -2487,45 +2516,45 @@ object stbtt {
 //            *y1 = ttSHORT(info->data + info->head + 42);
 //        }
 //
-//        STBTT_DEF float stbtt_ScaleForPixelHeight(const stbtt_fontinfo *info, float height)
-//        {
-//            int fheight = ttSHORT(info->data + info->hhea + 4) - ttSHORT(info->data + info->hhea + 6);
-//            return (float) height / fheight;
-//        }
-//
-//        STBTT_DEF float stbtt_ScaleForMappingEmToPixels(const stbtt_fontinfo *info, float pixels)
-//        {
-//            int unitsPerEm = ttUSHORT(info->data + info->head + 18);
-//            return pixels / unitsPerEm;
-//        }
+    fun scaleForPixelHeight(info: FontInfo, height: Float): Float {
+        val data = info.data!!
+        val fheight = ttSHORT(data.sliceAt(info.hhea + 4)) - ttSHORT(data.sliceAt(info.hhea + 6))
+        return height / fheight
+    }
+
+    fun scaleForMappingEmToPixels(info: FontInfo, pixels: Float): Float {
+        val unitsPerEm = ttUSHORT(info.data!!.sliceAt(info.head + 18))
+        return pixels / unitsPerEm
+    }
 //
 //        STBTT_DEF void stbtt_FreeShape(const stbtt_fontinfo *info, stbtt_vertex *v)
 //        {
 //            STBTT_free(v, info->userdata);
 //        }
 //
-//    //////////////////////////////////////////////////////////////////////////////
-//    //
-//    // antialiasing software rasterizer
-//    //
-//
-//        STBTT_DEF void stbtt_GetGlyphBitmapBoxSubpixel(const stbtt_fontinfo *font, int glyph, float scale_x, float scale_y,float shift_x, float shift_y, int *ix0, int *iy0, int *ix1, int *iy1)
-//        {
-//            int x0=0,y0=0,x1,y1; // =0 suppresses compiler warning
-//            if (!stbtt_GetGlyphBox(font, glyph, &x0,&y0,&x1,&y1)) {
-//            // e.g. space character
-//            if (ix0) *ix0 = 0;
-//            if (iy0) *iy0 = 0;
-//            if (ix1) *ix1 = 0;
-//            if (iy1) *iy1 = 0;
-//        } else {
-//            // move to integral bboxes (treating pixels as little squares, what pixels get touched)?
-//            if (ix0) *ix0 = STBTT_ifloor( x0 * scale_x + shift_x);
-//            if (iy0) *iy0 = STBTT_ifloor(-y1 * scale_y + shift_y);
-//            if (ix1) *ix1 = STBTT_iceil ( x1 * scale_x + shift_x);
-//            if (iy1) *iy1 = STBTT_iceil (-y0 * scale_y + shift_y);
-//        }
-//        }
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // antialiasing software rasterizer
+    //
+
+    fun getGlyphBitmapBoxSubpixel(font: FontInfo, glyph: Int, scale: Vec2, shift: Vec2 = Vec2(),
+                                  i0: Vec2i = Vec2i(), i1: Vec2i = Vec2i()): IntArray {
+        val a = Vec2i()
+        val b = Vec2i()
+        if (getGlyphBox(font, glyph, a, b) == 0) {
+            // e.g. space character
+            if (ix0) * ix0 = 0
+            if (iy0) * iy0 = 0
+            if (ix1) * ix1 = 0
+            if (iy1) * iy1 = 0
+        } else {
+            // move to integral bboxes (treating pixels as little squares, what pixels get touched)?
+            if (ix0) * ix0 = STBTT_ifloor(x0 * scale_x + shift_x)
+            if (iy0) * iy0 = STBTT_ifloor(-y1 * scale_y + shift_y)
+            if (ix1) * ix1 = STBTT_iceil(x1 * scale_x + shift_x)
+            if (iy1) * iy1 = STBTT_iceil(-y0 * scale_y + shift_y)
+        }
+    }
 //
 //        STBTT_DEF void stbtt_GetGlyphBitmapBox(const stbtt_fontinfo *font, int glyph, float scale_x, float scale_y, int *ix0, int *iy0, int *ix1, int *iy1)
 //        {
