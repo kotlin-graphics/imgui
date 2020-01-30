@@ -1,6 +1,8 @@
 package stb_
 
 import glm_.i
+import kool.pos
+import java.nio.ByteBuffer
 
 class PtrChar(val array: CharArray, var offset: Int = 0) {
 
@@ -36,4 +38,12 @@ class PtrByte(val array: ByteArray, var offset: Int = 0) {
     }
 
     operator fun plus(offset: Int) = PtrByte(array, this.offset + offset)
+}
+
+fun ByteBuffer.sliceAt(offset: Int): ByteBuffer {
+    val backup = pos
+    pos = offset
+    return slice().also {
+        pos = backup
+    }
 }

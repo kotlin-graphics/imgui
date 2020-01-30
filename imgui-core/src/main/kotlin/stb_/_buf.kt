@@ -50,11 +50,11 @@ infix fun ByteBuffer.getN(n: Int): Int = when (n) {
 }
 
 /** ~stbtt__new_buf */
-fun newBuf(p: ByteArray? = null, size: Int = 0): ByteBuffer {
+fun newBuf(p: ByteBuffer? = null, size: Int = 0): ByteBuffer {
     assert(size < 0x40000000)
     return when (p) {
         null -> ByteBuffer.allocate(0)
-        else -> ByteBuffer.wrap(p)
+        else -> p
     }
 }
 
@@ -131,13 +131,21 @@ fun ByteBuffer.dictGetInts(key: Int, out: IntArray) {
         out[i++] = operands.cffInt
 }
 
+fun ByteBuffer.dictGetInt(key: Int, backup: Int = 0): Int {
+    val operands = dictGet(key)
+    return when {
+        operands.pos < operands.lim -> operands.cffInt
+        else -> backup
+    }
+}
+
 val ByteBuffer.cffIndexCount: Int
     get() {
         seek(0)
         return get16()
     }
 
-fun ByteBuffer.cffIndexGet(i: Int): ByteBuffer {
+infix fun ByteBuffer.cffIndexGet(i: Int): ByteBuffer {
     seek(0)
     val count = get16()
     val offsize = get8().i
