@@ -79,9 +79,14 @@ class ImplGlfw @JvmOverloads constructor(
                 imeWindowHandle = window.hwnd
         }
 
+        // Create mouse cursors
+        // (By design, on X11 cursors are user configurable and some cursors may be missing. When a cursor doesn't exist,
+        // GLFW will emit an error which will often be printed by the app, so we temporarily disable error reporting.
+        // Missing cursors will return NULL and our _UpdateMouseCursor() function will use the Arrow cursor instead.)
+        val prevErrorCallback = glfwSetErrorCallback(null)
         mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
         mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
-        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this.
+        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this. [JVM] TODO
         // mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR)
         mouseCursors[MouseCursor.ResizeNS.i] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)
         mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
@@ -92,6 +97,7 @@ class ImplGlfw @JvmOverloads constructor(
         mouseCursors[MouseCursor.Hand.i] = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
         mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
 //        mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR)
+        glfwSetErrorCallback(prevErrorCallback)
 
         // [JVM] Chain GLFW callbacks: our callbacks will be installed in parallel with any other already existing
         if (installCallbacks) {
