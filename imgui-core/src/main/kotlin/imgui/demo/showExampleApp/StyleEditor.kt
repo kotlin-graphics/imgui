@@ -33,7 +33,6 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
-import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setWindowFontScale
@@ -48,17 +47,18 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
+import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.g
+import imgui.classes.Style
+import imgui.classes.TextFilter
 import imgui.dsl.button
 import imgui.dsl.child
+import imgui.dsl.radioButton
 import imgui.dsl.smallButton
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
-import imgui.api.g
-import imgui.api.demoDebugInformations.Companion.helpMarker
-import imgui.classes.Style
-import imgui.classes.TextFilter
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
 import imgui.WindowFlag as Wf
@@ -195,9 +195,9 @@ object StyleEditor {
 
                 filter.draw("Filter colors", fontSize * 16)
 
-                radioButton("Opaque", ::alphaFlags, 0); sameLine()
-                radioButton("Alpha", ::alphaFlags, Cef.AlphaPreview.i); sameLine()
-                radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i); sameLine()
+                radioButton("Opaque", alphaFlags == 0) { alphaFlags = 0 }; sameLine()
+                radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
+                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) { alphaFlags = Cef.AlphaPreviewHalf.i }; sameLine()
                 helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.");
 
                 child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
