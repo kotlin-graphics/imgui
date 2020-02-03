@@ -236,8 +236,8 @@ val Vec2.lengthSqr: Float
     get() = x * x + y * y
 
 // -----------------------------------------------------------------------------------------------------------------
-// - ImMin/ImMax/ImClamp/ImLerp/ImSwap are used by widgets which support for variety of types: signed/unsigned int/long long float/double
-// (Exceptionally using templates here but we could also redefine them for variety of types)
+// - ImMin/ImMax/ImClamp/ImLerp/ImSwap are used by widgets which support variety of types: signed/unsigned int/long long float/double
+// (Exceptionally using templates here but we could also redefine them for those types)
 // -----------------------------------------------------------------------------------------------------------------
 
 fun swap(a: KMutableProperty0<Float>, b: KMutableProperty0<Float>) {
