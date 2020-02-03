@@ -64,6 +64,8 @@ class Font {
         }
     /** Override a codepoint used for ellipsis rendering. */
     var ellipsisChar = '\uffff'                 // out //
+
+    var dirtyLookupTables = true                // 1     // out //
     /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
     var scale = 1f                              // 4     // in  // = 1.f
     /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
@@ -72,8 +74,6 @@ class Font {
     var descent = 0f                            // 4     // out
     /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding between glyphs)    */
     var metricsTotalSurface = 0                 // 4     // out
-
-    var dirtyLookupTables = true                // 1     // out //
 
     // @formatter:on
 
