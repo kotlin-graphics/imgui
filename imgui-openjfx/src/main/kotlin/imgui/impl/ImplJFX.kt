@@ -103,7 +103,11 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                 keyCtrl = it.isControlDown
                 keyShift = it.isShiftDown
                 keyAlt = it.isAltDown
+//                #ifdef _WIN32
+//                    io.KeySuper = false;
+//                #else
                 keySuper = it.isMetaDown
+//                #endif
             }
             it.consume()
         }
