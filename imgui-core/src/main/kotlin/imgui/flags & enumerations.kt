@@ -264,7 +264,7 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     // [Internal] NB: need to be in sync with last value of ImGuiSelectableFlags_
 
     /** private  */
-    _NoHoldingActiveID(1 shl 20),
+    _NoHoldingActiveId(1 shl 20),
     /** private  */
     _PressedOnClick(1 shl 21),
     /** private  */
