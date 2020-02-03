@@ -24,7 +24,7 @@ import imgui.internal.ColumnsFlag as Cf
  *  - You can also use SameLine(pos_x) to mimic simplified columns.
  *  - The columns API is work-in-progress and rather lacking (columns are arguably the worst part of dear imgui at the moment!)
  *  - There is a maximum of 64 columns.
- *  - By end of the 2019 we will expose a new 'Table' api which will replace columns. */
+ *  - Currently working on new 'Tables' api which will replace columns (see GitHub #2957) */
 interface columns {
 
     /** [2017/12: This is currently the only public API, while we are working on making BeginColumns/EndColumns user-facing]    */

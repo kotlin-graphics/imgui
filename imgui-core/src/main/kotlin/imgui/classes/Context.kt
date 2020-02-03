@@ -182,7 +182,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navJustMovedToId: ID = 0
     /** Just navigated to this focus scope id (result of a successfully MoveRequest). */
     var navJustMovedToFocusScopeId: ID = 0
-
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
@@ -191,18 +190,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navScoringRectScreen = Rect()
     /** Metrics for debugging   */
     var navScoringCount = 0
-    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed top-most.   */
-    var navWindowingTarget: Window? = null
-    /** Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0f */
-    var navWindowingTargetAnim: Window? = null
-
-    val navWindowingList = ArrayList<Window>()
-
-    var navWindowingTimer = 0f
-
-    var navWindowingHighlightAlpha = 0f
-
-    var navWindowingToggleLayer = false
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
     var navLayer = NavLayer.Main
@@ -247,6 +234,23 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val navMoveResultLocalVisibleSet = NavMoveResult()
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
+
+
+    // Navigation: Windowing (CTRL+TAB, holding Menu button + directional pads to move/resize)
+
+    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed top-most.   */
+    var navWindowingTarget: Window? = null
+    /** Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0f */
+    var navWindowingTargetAnim: Window? = null
+
+    val navWindowingList = ArrayList<Window>()
+
+    var navWindowingTimer = 0f
+
+    var navWindowingHighlightAlpha = 0f
+
+    var navWindowingToggleLayer = false
+
 
     // Legacy Focus/Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
 
