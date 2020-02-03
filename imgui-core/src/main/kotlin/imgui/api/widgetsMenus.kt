@@ -207,7 +207,7 @@ interface widgetsMenus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
-            val flags = Sf._NoHoldingActiveID or Sf._PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
+            val flags = Sf._NoHoldingActiveId or Sf._PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
@@ -218,7 +218,7 @@ interface widgetsMenus {
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
             val w = window.dc.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
-            val flags = Sf._NoHoldingActiveID or Sf._PressedOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
+            val flags = Sf._NoHoldingActiveId or Sf._PressedOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
             val textCol = if(enabled) Col.Text else Col.TextDisabled
             window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)

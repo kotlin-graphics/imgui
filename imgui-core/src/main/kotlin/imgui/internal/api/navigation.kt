@@ -165,14 +165,14 @@ internal interface navigation {
     }
 
     /** FIXME-NAV: Refactor those functions into a single, more explicit one. */
-    fun setNavId(id: ID, navLayer: NavLayer, focusScopeId: Int) {
+    fun setNavId(id: ID, navLayer: NavLayer, focusScopeId: ID) {
         // assert(navLayer == 0 || navLayer == 1) useless on jvm
         g.navId = id
         g.navFocusScopeId = focusScopeId
         g.navWindow!!.navLastIds[navLayer] = id
     }
 
-    fun setNavIDWithRectRel(id: ID, navLayer: NavLayer, focusScopeId: Int, rectRel: Rect) {
+    fun setNavIDWithRectRel(id: ID, navLayer: NavLayer, focusScopeId: ID, rectRel: Rect) {
         setNavId(id, navLayer, focusScopeId)
         g.navWindow!!.navRectRel[navLayer] put rectRel
         g.navMousePosDirty = true
