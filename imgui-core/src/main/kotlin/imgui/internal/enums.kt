@@ -4,7 +4,7 @@ import glm_.vec2.Vec2
 import imgui.internal.classes.Rect
 
 
-enum class ButtonFlag(val i: Int) {
+enum class ButtonFlag(val i: ButtonFlags) {
 
     None(0),
     /** hold to repeat  */

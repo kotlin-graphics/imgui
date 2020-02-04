@@ -321,7 +321,7 @@ class StyleMod(val idx: StyleVar) {
 /** Storage for one active tab item (sizeof() 26~32 bytes) */
 class TabItem {
     var id: ID = 0
-    var flags: TabItemFlags = 0
+    var flags = TabItemFlag.None.i
     var lastFrameVisible = -1
     /** This allows us to infer an ordered list of the last activated tabs with little maintenance */
     var lastFrameSelected = -1

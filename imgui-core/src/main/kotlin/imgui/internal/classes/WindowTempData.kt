@@ -43,7 +43,7 @@ class WindowTempData {
     /** ID for last item */
     var lastItemId: ID = 0
     /** Status flags for last item (see ImGuiItemStatusFlags_) */
-    var lastItemStatusFlags: ItemStatusFlags = 0
+    var lastItemStatusFlags = ItemStatusFlag.None.i
     /** Interaction rect for last item    */
     var lastItemRect = Rect()
     /** End-user display rect for last item (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */

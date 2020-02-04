@@ -160,7 +160,7 @@ object ImGui :
         focusScope,
         inputs,
         imgui.internal.api.dragAndDrop,
-        newColumnsAPI,
+        internalColumnsAPI,
         tabBars,
         renderHelpers,
         widgets,

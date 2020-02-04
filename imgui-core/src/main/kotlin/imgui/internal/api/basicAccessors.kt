@@ -2,12 +2,8 @@ package imgui.internal.api
 
 import imgui.ID
 import imgui.api.g
+import imgui.internal.*
 import imgui.internal.classes.Window
-import imgui.internal.InputSource
-import imgui.internal.ItemStatusFlag
-import imgui.internal.get
-import imgui.internal.set
-import imgui.internal.or
 
 /** Basic Accessors */
 internal interface basicAccessors {
@@ -15,6 +11,10 @@ internal interface basicAccessors {
     /** ~GetItemID */
     val itemID: ID
         get() = g.currentWindow!!.dc.lastItemId
+
+    /** ~GetItemStatusFlags */
+    val itemStatusFlags: ItemStatusFlags
+        get() = g.currentWindow!!.dc.lastItemStatusFlags
 
     /** ~GetActiveID */
     val activeID: ID
@@ -100,6 +100,7 @@ internal interface basicAccessors {
             g.activeIdPreviousFrameIsAlive = true
     }
 
+    /** Mark data associated to given item as "edited", used by IsItemDeactivatedAfterEdit() function. */
     fun markItemEdited(id: ID) {
         /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterEdit().
             ActiveId might have been released by the time we call this (as in the typical press/release button behavior)

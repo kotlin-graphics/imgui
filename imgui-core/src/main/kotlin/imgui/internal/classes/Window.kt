@@ -312,6 +312,8 @@ class Window(var context: Context,
     // --------------------------------------------- internal API ------------------------------------------------------
 
 
+    // Windows: Display Order and Focus Order
+
     /** ~BringWindowToFocusFront */
     fun bringToFocusFront() {
         if (g.windowsFocusOrder.last() === this)
@@ -453,6 +455,9 @@ class Window(var context: Context,
         this.collapsed = collapsed
     }
 
+
+    // Garbage collection
+
     /** Free up/compact internal window buffers, we can use this when a window becomes unused.
      *  This is currently unused by the library, but you may call this yourself for easy GC.
      *  Not freed:
@@ -461,7 +466,7 @@ class Window(var context: Context,
      *  This should have no noticeable visual effect. When the window reappear however, expect new allocation/buffer growth/copy cost.
      *
      *  ~gcCompactTransientWindowBuffers */
-    fun gcCompactTransientWindowBuffers() {
+    fun gcCompactTransientBuffers() {
         memoryCompacted = true
         memoryDrawListIdxCapacity = drawList.idxBuffer.cap
         memoryDrawListVtxCapacity = drawList.vtxBuffer.cap

@@ -23,11 +23,14 @@ import imgui.WindowFlag as Wf
 
 @Suppress("UNCHECKED_CAST")
 
-/** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
- *  If this ever crash because g.CurrentWindow is NULL it means that either
- *  - ImGui::NewFrame() has never been called, which is illegal.
- *  - You are calling ImGui functions after ImGui::EndFrame()/ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal. */
 internal interface internal {
+
+    // Windows
+
+    /** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
+     *  If this ever crash because g.CurrentWindow is NULL it means that either
+     *  - ImGui::NewFrame() has never been called, which is illegal.
+     *  - You are calling ImGui functions after ImGui::EndFrame()/ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal. */
 
     /** ~GetCurrentWindowRead */
     val currentWindowRead: Window?
@@ -45,6 +48,9 @@ internal interface internal {
     fun findWindowByID(id: ID): Window? = g.windowsById[id]
 
     fun findWindowByName(name: String): Window? = g.windowsById[hash(name)]
+
+
+    // Windows: Display Order and Focus Order
 
     /** Moving window to front of display (which happens to be back of our sorted list)  ~ FocusWindow  */
     fun focusWindow(window: Window? = null) {
@@ -101,6 +107,9 @@ internal interface internal {
     }
 
     // the rest of the window related functions is inside the corresponding class
+
+
+    // Fonts, drawing
 
     fun setCurrentFont(font: Font) {
         assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }

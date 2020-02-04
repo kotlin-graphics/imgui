@@ -242,7 +242,7 @@ interface main {
 
             // Garbage collect transient buffers of recently unused windows
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
-                it.gcCompactTransientWindowBuffers()
+                it.gcCompactTransientBuffers()
         }
 
         // Closing the focused window restore focus to the first active root window in descending z-order
