@@ -226,7 +226,7 @@ internal interface widgets {
     }
 
     /** square button with an arrow shape */
-    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags): Boolean {
+    fun arrowButtonEx(strId: String, dir: Dir, size: Vec2, flags_: ButtonFlags = ButtonFlag.None.i): Boolean {
 
         var flags = flags_
 
