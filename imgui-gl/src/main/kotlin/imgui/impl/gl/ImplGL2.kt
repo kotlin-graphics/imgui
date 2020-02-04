@@ -14,6 +14,11 @@ import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import kool.*
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV
+import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV_MODE
+import org.lwjgl.opengl.GL11.GL_MODULATE
+import org.lwjgl.opengl.GL11.glTexEnvi
+import org.lwjgl.opengl.GL11.glGetTexEnvi
 import org.lwjgl.opengl.GL13C.GL_TEXTURE_2D
 import org.lwjgl.opengl.GL14C.GL_FUNC_ADD
 import org.lwjgl.opengl.GL14C.glBlendEquation
@@ -48,6 +53,7 @@ class ImplGL2 : GLInterface {
         GL11.glEnableClientState(GL11.GL_COLOR_ARRAY)
         glEnable(GL_TEXTURE_2D)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 
         /*  If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),
             you may need to backup/reset/restore current shader using the lines below. DO NOT MODIFY THIS FILE! Add the code in your calling function:         */
@@ -87,6 +93,7 @@ class ImplGL2 : GLInterface {
         val lastPolygonMode = glGetVec2i(GL_POLYGON_MODE)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
+        val lastTexEnvMode = glGetTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE)
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT or GL_COLOR_BUFFER_BIT or GL11.GL_TRANSFORM_BIT)
 
         // Setup desired GL state
@@ -150,6 +157,7 @@ class ImplGL2 : GLInterface {
         glPolygonMode(GL_FRONT, lastPolygonMode[0]); glPolygonMode(GL_BACK, lastPolygonMode[1])
         glViewport(lastViewport)
         glScissor(lastScissorBox)
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, lastTexEnvMode)
     }
 
     override fun createDeviceObjects(): Boolean = createFontsTexture()
