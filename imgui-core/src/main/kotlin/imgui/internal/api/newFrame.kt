@@ -112,9 +112,10 @@ internal interface newFrame {
             }
     }
 
-    /** Initiate moving window, handle left-click and right-click focus */
+    /** Initiate moving window, handle left-click and right-click focus
+     *  Handle left-click and right-click focus. */
     fun updateMouseMovingWindowEndFrame() {
-        // Initiate moving window
+
         if (g.activeId != 0 || g.hoveredId != 0) return
 
         // Unless we just made a window/popup appear

@@ -79,8 +79,8 @@ interface widgetsMenus {
             We remove 1 worth of rounding to max.x to that text in long menus and small windows don't tend to display
             over the lower-right rounded area, which looks particularly glitchy. */
         val barRect = window.menuBarRect()
-        val clipRect = Rect(round(barRect.min.x), round(barRect.min.y + window.windowBorderSize),
-                round(barRect.min.x max (barRect.max.x - window.windowRounding)), round(barRect.max.y))
+        val clipRect = Rect(round(barRect.min.x + window.windowBorderSize), round(barRect.min.y + window.windowBorderSize),
+                round(barRect.min.x max (barRect.max.x - (window.windowRounding max window.windowBorderSize))), round(barRect.max.y))
         clipRect clipWith window.outerRectClipped
         pushClipRect(clipRect.min, clipRect.max, false)
 

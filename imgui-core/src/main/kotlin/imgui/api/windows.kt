@@ -93,6 +93,7 @@ interface windows {
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
+        window.isFallbackWindow = g.currentWindowStack.isEmpty() && g.withinFrameScopeWithImplicitWindow
 
         // Update the Appearing flag
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
@@ -234,6 +235,7 @@ interface windows {
                 }
             }
 
+            // SELECT VIEWPORT
             // FIXME-VIEWPORT: In the docking/viewport branch, this is the point where we select the current viewport (which may affect the style)
             setCurrentWindow(window)
 
@@ -338,15 +340,14 @@ interface windows {
                 window.pos = findBestWindowPosForPopup(window)
 
             // Clamp position/size so window stays visible within its viewport or monitor
-
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
             val viewportRect = viewportRect
-            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0)
-            // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
-                if (io.displaySize allGreaterThan 0) {
-                    val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
+            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0) {
+                // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
+                val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
+                if (viewportRect.width > 0f && viewportRect.height > 0f)
                     window.clampRect(viewportRect, clampPadding)
-                }
+            }
             window.pos put floor(window.pos)
 
             // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)
@@ -497,22 +498,23 @@ interface windows {
             // We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping child.
             // We also disabled this when we have dimming overlay behind this specific one child.
             // FIXME: More code may rely on explicit sorting of overlapping child window and would need to disable this somehow. Please get in contact if you are affected.
-            var renderDecorationsInParent = false
-            if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip)
-                if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0)
-                    renderDecorationsInParent = true
-            if (renderDecorationsInParent)
-                window.drawList = parentWindow!!.drawList
+            run {
+                var renderDecorationsInParent = false
+                if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip)
+                    if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0)
+                        renderDecorationsInParent = true
+                if (renderDecorationsInParent)
+                    window.drawList = parentWindow!!.drawList
 
-            // Handle title bar, scrollbar, resize grips and resize borders
-            val windowToHighlight = g.navWindowingTarget ?: g.navWindow
-            val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
-                    ?: false)
-            window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
+                // Handle title bar, scrollbar, resize grips and resize borders
+                val windowToHighlight = g.navWindowingTarget ?: g.navWindow
+                val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
+                        ?: false)
+                window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
 
-            if (renderDecorationsInParent)
-                window.drawList = window.drawListInst
-
+                if (renderDecorationsInParent)
+                    window.drawList = window.drawListInst
+            }
             // Draw navigation selection/windowing rectangle border
             if (g.navWindowingTargetAnim === window) {
                 var rounding = max(window.windowRounding, style.windowRounding)
