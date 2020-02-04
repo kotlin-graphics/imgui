@@ -89,7 +89,7 @@ interface widgetsMain {
         return pressed
     }
 
-    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), Bf.None.i)
 
     fun image(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
               borderCol: Vec4 = Vec4()) {
