@@ -12,6 +12,7 @@ import imgui.classes.*
 import imgui.font.Font
 import imgui.internal.*
 import imgui.internal.ColumnsFlags
+import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -45,6 +46,8 @@ class DrawListSharedData {
     var fontSize = 0f
 
     var curveTessellationTol = 0f
+    /** Number of circle segments to use per pixel of radius for AddCircle() etc */
+    var circleSegmentMaxError = 0f
     /** Value for pushClipRectFullscreen() */
     var clipRectFullscreen = Vec4(-8192f, -8192f, 8192f, 8192f)
     /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
@@ -55,6 +58,28 @@ class DrawListSharedData {
     var circleVtx12 = Array(12) {
         val a = it * 2 * glm.PIf / 12
         Vec2(cos(a), sin(a))
+    }
+
+
+    // Cached circle segment counts for the first <n> radii (to avoid calculation overhead)
+
+    /** The segment count for radius (array index + 1) */
+    val circleSegmentCounts = IntArray(numCircleSegmentCounts)
+    /** The MaxCircleSegmentError used to calculate these counts */
+    var circleSegmentCountsMaxCircleSegmentError = -Float.MIN_VALUE // Impossible value to force recalculation
+    /** Recalculate circle segment counts based on the current MaxCircleSegmentError */
+    fun recalculateCircleSegmentCounts() {
+        for (i in 0 until numCircleSegmentCounts)        {
+            val radius = i + 1f
+            circleSegmentCounts[i] = clamp(((glm.πf * 2f) / acos((radius - circleSegmentMaxError) / radius)).i, 3, 10000)
+        }
+
+        circleSegmentCountsMaxCircleSegmentError = circleSegmentMaxError
+    }
+
+    companion object {
+        /** Number of circle segment counts to cache (i.e. the maximum radius before we calculate dynamically) */
+        val numCircleSegmentCounts = 64
     }
 }
 

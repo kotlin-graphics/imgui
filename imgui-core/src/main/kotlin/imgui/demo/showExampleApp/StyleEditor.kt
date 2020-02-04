@@ -320,6 +320,7 @@ object StyleEditor {
                 pushItemWidth(100)
                 dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, Float.MAX_VALUE, "%.2f", 2f)
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
+                dragFloat("Max circle segment error", style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f", 1f)
                 /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                     But application code could have a toggle to switch between zero and non-zero.             */
                 dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")

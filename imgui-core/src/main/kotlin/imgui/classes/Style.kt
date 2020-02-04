@@ -4,7 +4,6 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.Dir
-import imgui.ImGui
 import imgui.ImGui.styleColorsClassic
 import imgui.internal.floor
 import java.util.*
@@ -91,6 +90,9 @@ class Style {
     /** Tessellation tolerance when using pathBezierCurveTo() without a specific number of segments.
      *  Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality. */
     var curveTessellationTol = 1.25f
+    /** Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled() or drawing rounded corner rectangles
+     *  with no explicit segment count specified. Decrease for higher quality but more geometry. */
+    var circleSegmentMaxError = 0.75f
 
     val colors = ArrayList<Vec4>()
 

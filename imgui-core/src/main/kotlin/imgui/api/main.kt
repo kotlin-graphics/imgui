@@ -94,6 +94,7 @@ interface main {
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
+        g.drawListSharedData.circleSegmentMaxError = style.circleSegmentMaxError
         g.drawListSharedData.initialFlags = Dlf.None.i
         if (style.antiAliasedLines)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedLines
@@ -101,6 +102,10 @@ interface main {
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedFill
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
+
+        // Recalculate circle segment counts if the segment error has changed
+        if (g.drawListSharedData.circleSegmentMaxError != g.drawListSharedData.circleSegmentCountsMaxCircleSegmentError)
+            g.drawListSharedData.recalculateCircleSegmentCounts()
 
         g.backgroundDrawList.clear()
         g.backgroundDrawList.pushTextureId(io.fonts.texId)
@@ -407,6 +412,7 @@ interface main {
             assert(io.fonts.fonts.isNotEmpty()) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
             assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
             assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
+            assert(style.circleSegmentMaxError > 0f) { "Invalid style setting!" }
             assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)!" }
             assert(style.windowMinSize allGreaterThanEqual 1) { "Invalid style setting." }
             assert(style.windowMenuButtonPosition == Dir.None || g.style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)
