@@ -8,7 +8,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.beginChildFrame
+import imgui.ImGui.beginChildEx
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
@@ -18,6 +18,7 @@ import imgui.ImGui.clipboardText
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dataTypeApplyOpFromText
 import imgui.ImGui.dummy
+import imgui.ImGui.endChild
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
 import imgui.ImGui.focusWindow
@@ -32,7 +33,11 @@ import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.parseFormatTrimDecorations
 import imgui.ImGui.popFont
+import imgui.ImGui.popStyleColor
+import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushFont
+import imgui.ImGui.pushStyleColor
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
@@ -107,13 +112,21 @@ internal interface inputText {
                 endGroup()
                 return false
             }
-            if (!beginChildFrame(id, frameBb.size)) {
-                endChildFrame()
+            // We reproduce the contents of BeginChildFrame() in order to provide 'label' so our window internal data are easier to read/debug.
+            pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
+            pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
+            pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
+            pushStyleVar(StyleVar.WindowPadding, style.framePadding)
+            val childVisible = beginChildEx(label, id, frameBb.size, true, WindowFlag.NoMove or WindowFlag.AlwaysUseWindowPadding)
+            popStyleVar(3)
+            popStyleColor()
+            if (!childVisible) {
+                endChild()
                 endGroup()
                 return false
             }
             drawWindow = g.currentWindow!!  // Child window
-            // This is to ensure that EndChild() will display a navigation highlight
+            // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
             drawWindow.dc.navLayerActiveMaskNext = drawWindow.dc.navLayerActiveMaskNext or drawWindow.dc.navLayerCurrentMask
             innerSize.x -= drawWindow.scrollbarSizes.x
         } else {
@@ -767,7 +780,7 @@ internal interface inputText {
 
         if (isMultiline) {
             dummy(textSize + Vec2(0f, g.fontSize)) // Always add room to scroll an extra line
-            endChildFrame()
+            endChild()
             endGroup()
         }
 

@@ -8,10 +8,10 @@ import vkk._10.structs.*
 import vkk.entities.VkDebugReportCallback
 import vkk.entities.VkDescriptorPool
 import vkk.entities.VkPipelineCache
-import vkk.identifiers.Device
-import vkk.identifiers.Instance
-import vkk.identifiers.PhysicalDevice
-import vkk.identifiers.Queue
+import identifiers.Device
+import identifiers.Instance
+import identifiers.PhysicalDevice
+import identifiers.Queue
 import kotlin.system.exitProcess
 
 lateinit var instance: Instance
