@@ -13,6 +13,8 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.setActiveId
+import imgui.ImGui.setNextWindowBgAlpha
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.api.g
@@ -202,10 +204,22 @@ internal interface PopupsModalsTooltips {
 
     /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
      *  @param extraFlags WindowFlag   */
-    fun beginTooltipEx(extraFlags: WindowFlags, overridePreviousTooltip: Boolean = true) {
+    fun beginTooltipEx(extraFlags: WindowFlags, tooltipFlags_: TooltipFlags) {
+        var tooltipFlags = tooltipFlags_
+        if (g.dragDropWithinSourceOrTarget)        {
+            // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
+            // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
+            // Whatever we do we want to call SetNextWindowPos() to enforce a tooltip position and disable clipping the tooltip without our display area, like regular tooltip do.
+            //ImVec2 tooltip_pos = g.IO.MousePos - g.ActiveIdClickOffset - g.Style.WindowPadding;
+            val tooltipPos = io.mousePos + Vec2(16 * style.mouseCursorScale, 8 * style.mouseCursorScale)
+            setNextWindowPos(tooltipPos)
+            setNextWindowBgAlpha(style.colors[Col.PopupBg].w * 0.6f)
+            //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * 0.60f); // This would be nice but e.g ColorButton with checkboard has issue with transparent colors :(
+            tooltipFlags = tooltipFlags or TooltipFlag.OverridePreviousTooltip
+        }
 
         var windowName = "##Tooltip_%02d".format(style.locale, g.tooltipOverrideCount)
-        if (overridePreviousTooltip)
+        if (tooltipFlags has TooltipFlag.OverridePreviousTooltip)
             findWindowByName(windowName)?.let {
                 if (it.active) {
                     // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.

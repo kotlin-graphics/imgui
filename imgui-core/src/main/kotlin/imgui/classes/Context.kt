@@ -295,7 +295,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Drag and Drop
     //------------------------------------------------------------------
     var dragDropActive = false
-
+    /** Set when within a BeginDragDropXXX/EndDragDropXXX block. */
     var dragDropWithinSourceOrTarget = false
 
     var dragDropSourceFlags: DragDropFlags = 0
@@ -305,7 +305,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragDropMouseButton = MouseButton.None // -1 at start
 
     var dragDropPayload = Payload()
-
+    /** Store rectangle of current target candidate (we favor small targets when overlapping) */
     var dragDropTargetRect = Rect()
 
     var dragDropTargetId: ID = 0
@@ -319,7 +319,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragDropAcceptIdPrev: ID = 0
     /** Last time a target expressed a desire to accept the source */
     var dragDropAcceptFrameCount = -1
-    /** We don't expose the ImVector<> directly */
+    /** We don't expose the ImVector<> directly, ImGuiPayload only holds pointer+size */
     var dragDropPayloadBufHeap = ByteBuffer.allocate(0)
     /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteBuffer.allocate(16)
