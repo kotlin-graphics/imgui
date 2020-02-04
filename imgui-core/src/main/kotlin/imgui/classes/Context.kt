@@ -222,7 +222,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Move request for this frame */
     var navMoveRequest = false
 
-    var navMoveRequestFlags: NavMoveFlags = 0
+    var navMoveRequestFlags = NavMoveFlag.None.i
     /** None / ForwardQueued / ForwardActive (this is used to navigate sibling parent menus from a child menu)  */
     var navMoveRequestForward = NavForward.None
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
@@ -301,7 +301,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Set when within a BeginDragDropXXX/EndDragDropXXX block. */
     var dragDropWithinSourceOrTarget = false
 
-    var dragDropSourceFlags: DragDropFlags = 0
+    var dragDropSourceFlags = DragDropFlag.None.i
 
     var dragDropSourceFrameCount = -1
 
@@ -313,7 +313,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var dragDropTargetId: ID = 0
 
-    var dragDropAcceptFlags: DragDropFlags = 0
+    var dragDropAcceptFlags = DragDropFlag.None.i
     /** Target item surface (we resolve overlapping targets by prioritizing the smaller surface) */
     var dragDropAcceptIdCurrRectSurface = 0f
     /** Target item id (set at the time of accepting the payload) */
