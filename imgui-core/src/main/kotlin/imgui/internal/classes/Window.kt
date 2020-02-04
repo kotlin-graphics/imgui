@@ -41,7 +41,7 @@ import imgui.WindowFlag as Wf
 
 /** Storage for one window */
 class Window(var context: Context, var name: String) {
-    /** == ImHash(Name) */
+    /** == ImHashStr(Name) */
     val id: ID = hash(name)
     /** See enum WindowFlags */
     var flags = Wf.None.i
@@ -98,6 +98,8 @@ class Window(var context: Context, var name: String) {
     var appearing = false
     /** Do not display (== (HiddenFrames*** > 0)) */
     var hidden = false
+    /** Set on the "Debug##Default" window. */
+    var isFallbackWindow = false
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
     /** Current border being held for resize (-1: none, otherwise 0-3) */
@@ -635,6 +637,9 @@ class Window(var context: Context, var name: String) {
         }
     }
 
+    /** ~RenderWindowDecorations
+     *  Draw background and borders
+     *  Draw and handle scrollbars */
     fun renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
 
         // Ensure that ScrollBar doesn't read last frame's SkipItems
@@ -897,8 +902,10 @@ class Window(var context: Context, var name: String) {
 
     /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)
      *  ~AddRootWindowToDrawData    */
-    fun addToDrawData() =
-            addToDrawData(if (flags has Wf._Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
+    fun addToDrawData() {
+        val layer = (flags has Wf._Tooltip).i
+        addToDrawData(g.drawDataBuilder.layers[layer])
+    }
 
     /** ~SetWindowConditionAllowFlags */
     fun setConditionAllowFlags(flags: Int, enabled: Boolean) = if (enabled) {
@@ -955,7 +962,7 @@ class Window(var context: Context, var name: String) {
         if (flags hasnt (Wf._ChildWindow or Wf.AlwaysAutoResize)) {
             newSize maxAssign style.windowMinSize
             // Reduce artifacts with very small windows
-            newSize.y = kotlin.math.max(newSize.y, titleBarHeight + menuBarHeight + kotlin.math.max(0f, style.windowRounding - 1f))
+            newSize.y = newSize.y max (titleBarHeight + menuBarHeight + (0f max (style.windowRounding - 1f)))
         }
         return newSize
     }

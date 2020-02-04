@@ -275,6 +275,10 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
     }
     popId()
 
+    // Restore nav layer
+    window.dc.navLayerCurrent = NavLayer.Main
+    window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
+
     // Navigation resize (keyboard/gamepad)
     if (g.navWindowingTarget?.rootWindow === window) {
         val navResizeDelta = Vec2()
@@ -302,10 +306,6 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
         window.pos = floor(posTarget)
         window.markIniSettingsDirty()
     }
-
-    // Resize nav layer
-    window.dc.navLayerCurrent = NavLayer.Main
-    window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
 
     window.size put window.sizeFull
 
