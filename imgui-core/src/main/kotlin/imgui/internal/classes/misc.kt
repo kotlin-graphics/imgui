@@ -265,6 +265,7 @@ class NextWindowData {
     val sizeConstraintRect = Rect()
     var sizeCallback: SizeCallback? = null
     var sizeCallbackUserData: Any? = null
+    /** Override background alpha */
     var bgAlphaVal = Float.MAX_VALUE
     /** *Always on* This is not exposed publicly, so we don't clear it. */
     var menuBarOffsetMinVal = Vec2()
