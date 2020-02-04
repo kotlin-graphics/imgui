@@ -156,7 +156,7 @@ interface windowsUtilities {
         g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasFocus
     }
 
-    /** Set next window background color alpha. helper to easily modify ImGuiCol_WindowBg/ChildBg/PopupBg.
+    /** Set next window background color alpha. helper to easily override the Alpha component of ImGuiCol_WindowBg/ChildBg/PopupBg.
      *  You may also use ImGuiWindowFlags_NoBackground. */
     fun setNextWindowBgAlpha(alpha: Float) {
         g.nextWindowData.apply {

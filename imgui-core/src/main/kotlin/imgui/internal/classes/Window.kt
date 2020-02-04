@@ -658,11 +658,15 @@ class Window(var context: Context, var name: String) {
             // Window background
             if (flags hasnt Wf.NoBackground) {
                 var bgCol = getWindowBgColorIdxFromFlags(flags).u32
+                var overrideAlpha = false
                 val alpha = when {
-                    g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> g.nextWindowData.bgAlphaVal
+                    g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> {
+                        overrideAlpha = true
+                        g.nextWindowData.bgAlphaVal
+                    }
                     else -> 1f
                 }
-                if (alpha != 1f)
+                if (overrideAlpha)
                     bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
                 drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
                         if (flags has Wf.NoTitleBar) DrawCornerFlag.All.i else DrawCornerFlag.Bot.i)
