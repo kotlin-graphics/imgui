@@ -3,7 +3,7 @@ package imgui.internal.api
 import glm_.func.common.max
 import glm_.parseInt
 import imgui.*
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.io
 import imgui.api.g
@@ -18,7 +18,6 @@ import imgui.static.navRestoreLastChildNavWindow
 import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.min
-import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
 
@@ -74,7 +73,7 @@ internal interface internal {
         // Steal focus on active widgets
         if (window.flags has Wf._Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..
             if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != window)
-                clearActiveId()
+                clearActiveID()
 
         // Bring to front
         window.bringToFocusFront()

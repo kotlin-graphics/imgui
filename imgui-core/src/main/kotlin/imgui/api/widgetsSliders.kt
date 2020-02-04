@@ -34,8 +34,8 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
-import imgui.ImGui.setActiveId
-import imgui.ImGui.setFocusId
+import imgui.ImGui.setActiveID
+import imgui.ImGui.setFocusID
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
@@ -171,8 +171,8 @@ interface widgetsSliders {
             val focusRequested = focusableItemRegister(window, id)
             val clicked = hovered && io.mouseClicked[0]
             if (focusRequested || clicked || g.navActivateId == id || g.navInputId == id) {
-                setActiveId(id, window)
-                setFocusId(id, window)
+                setActiveID(id, window)
+                setFocusID(id, window)
                 focusWindow(window)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
                 if (focusRequested || (clicked && io.keyCtrl) || g.navInputId == id) {
@@ -279,8 +279,8 @@ interface widgetsSliders {
         }
         val hovered = itemHoverable(frameBb, id)
         if ((hovered && io.mouseClicked[0]) || g.navActivateId == id || g.navInputId == id) {
-            setActiveId(id, window)
-            setFocusId(id, window)
+            setActiveID(id, window)
+            setFocusID(id, window)
             focusWindow(window)
             g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
         }
