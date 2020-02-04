@@ -77,7 +77,7 @@ internal interface internal {
 
         // Bring to front
         focusFrontWindow.bringToFocusFront()
-        if (displayFrontWindow.flags hasnt Wf.NoBringToFrontOnFocus)
+        if ((window.flags or displayFrontWindow.flags) hasnt Wf.NoBringToFrontOnFocus)
             displayFrontWindow.bringToDisplayFront()
     }
 
