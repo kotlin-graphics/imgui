@@ -66,9 +66,8 @@ internal interface internal {
         // Passing NULL allow to disable keyboard focus
         if (window_ == null) return
 
-        var window: Window = window_
         // Move the root window to the top of the pile
-        window.rootWindow?.let { window = it }
+        val window = window_.rootWindow!! // ~assert
 
         // Steal focus on active widgets
         if (window.flags has Wf._Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..

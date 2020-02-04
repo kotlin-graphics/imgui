@@ -145,6 +145,10 @@ interface windows {
         if (windowJustAppearingAfterHiddenForResize && flags hasnt Wf._ChildWindow)
             window.navLastIds[0] = 0
 
+        // Update ->RootWindow and others pointers (before any possible call to FocusWindow)
+        if (firstBeginOfTheFrame)
+            window.updateParentAndRootLinks(flags, parentWindow)
+
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
         var windowSizeXsetByApi = false
@@ -180,7 +184,6 @@ interface windows {
         if (firstBeginOfTheFrame) {
             // Initialize
             val windowIsChildTooltip = flags has Wf._ChildWindow && flags has Wf._Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
-            window.updateParentAndRootLinks(flags, parentWindow)
 
             window.active = true
             window.hasCloseButton = pOpen != null
