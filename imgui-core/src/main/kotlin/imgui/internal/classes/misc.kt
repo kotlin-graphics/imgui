@@ -116,6 +116,7 @@ class Columns {
     var lineMinY = 0f
     var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()
+    val splitter = DrawListSplitter()
 
     fun clear() {
         id = 0

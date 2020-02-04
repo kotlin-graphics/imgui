@@ -157,7 +157,7 @@ class DrawListSplitter {
     }
 
     fun split(drawList: DrawList, channelsCount: Int) {
-        assert(_current == 0 && _count <= 1)
+        assert(_current == 0 && _count <= 1) { "Nested channel splitting is not supported. Please use separate instances of ImDrawListSplitter." }
         val oldChannelsCount = _channels.size
         if (oldChannelsCount < channelsCount)
             for (i in oldChannelsCount until channelsCount)
@@ -184,7 +184,7 @@ class DrawListSplitter {
                 a.textureId == b.textureId && a.vtxOffset == b.vtxOffset && a.userCallback == null && b.userCallback == null
     }
 
-    fun merge(drawList: DrawList) {
+    infix fun merge(drawList: DrawList) {
 
         // Note that we never use or rely on channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
         if (_count <= 1) return
