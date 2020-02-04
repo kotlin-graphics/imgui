@@ -70,12 +70,12 @@ interface columns {
                 // Columns 1+ ignore IndentX (by canceling it out)
                 // FIXME-COLUMNS: Unnecessary, could be locked?
                 dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + columnPadding
-                drawList.channelsSetCurrent(columns.current + 1)
+                columns.splitter.setCurrentChannel(window.drawList, columns.current + 1)
             } else {
                 // New row/line
                 // Column 0 honor IndentX
                 dc.columnsOffset = (columnPadding - window.windowPadding.x) max 0f
-                drawList.channelsSetCurrent(1)
+                columns.splitter.setCurrentChannel(window.drawList, 1)
                 columns.current = 0
                 columns.lineMinY = columns.lineMaxY
             }
