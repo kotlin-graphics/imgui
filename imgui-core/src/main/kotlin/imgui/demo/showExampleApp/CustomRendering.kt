@@ -88,7 +88,7 @@ object CustomRendering {
                     val th = if (n == 0) 1.0f else thickness
                     drawList.apply {
                         addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // n-gon
-                        addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 20, th); x += sz + spacing  // Circle
+                        addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 0, th); x += sz + spacing  // Circle
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0.0f, corners_none, th); x += sz + spacing  // Square
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, corners_all, th); x += sz + spacing  // Square with all rounded corners
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, corners_tl_br, th); x += sz + spacing  // Square with two rounded corners
@@ -104,7 +104,7 @@ object CustomRendering {
                 }
                 drawList.apply {
                     addNgonFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides); x += sz + spacing  // n-gon
-                    addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 32); x += sz + spacing  // Circle
+                    addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 0); x += sz + spacing  // Circle
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col); x += sz + spacing  // Square
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f); x += sz + spacing  // Square with all rounded corners
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, corners_tl_br); x += sz + spacing  // Square with two rounded corners
