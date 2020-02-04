@@ -75,7 +75,7 @@ class Style {
     var buttonTextAlign = Vec2(0.5f)
     /** Alignment of selectable text when selectable is larger than text. Defaults to (0,0) for top-left alignment. */
     var selectableTextAlign = Vec2()
-    /** Window position are clamped to be visible within the display area by at least this amount.
+    /** Window position are clamped to be visible within the display area or monitors by at least this amount.
      *  Only applies to regular windows.    */
     var displayWindowPadding = Vec2(19)
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips

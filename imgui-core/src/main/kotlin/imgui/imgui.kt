@@ -51,7 +51,7 @@ val IMGUI_DEBUG_NAV_SCORING = false
 /** Display the reference navigation rectangle for each window */
 @JvmField
 val IMGUI_DEBUG_NAV_RECTS = false
-/** Save additional comments in .ini file */
+/** Save additional comments in .ini file (particularly helps for Docking, but makes saving slower) */
 @JvmField
 val IMGUI_DEBUG_INI_SETTINGS = false
 

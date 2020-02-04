@@ -44,7 +44,7 @@ class TabBar {
     val tabs = ArrayList<TabItem>()
     /** Zero for tab-bars used by docking */
     var id: ID = 0
-    /** Selected tab */
+    /** Selected tab/window */
     var selectedTabId: ID = 0
     var nextSelectedTabId: ID = 0
     /** Can occasionally be != SelectedTabId (e.g. when previewing contents for CTRL+TAB preview) */

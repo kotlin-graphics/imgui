@@ -20,7 +20,6 @@ import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
-import imgui.ImGui.setTooltip
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
@@ -262,9 +261,10 @@ interface main {
         // Create implicit/fallback window - which we will only render it if the user has added something to it.
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
         // This fallback is particularly important as it avoid ImGui:: calls from crashing.
-        setNextWindowSize(Vec2(400), Cond.FirstUseEver)
-        begin("Debug##Default")
         g.withinFrameScopeWithImplicitWindow = true
+        setNextWindowSize(Vec2(400), Cond.FirstUseEver)
+        val begin = begin("Debug##Default")
+        assert(g.currentWindow!!.isFallbackWindow)
 
         if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PostNewFrame()
@@ -354,16 +354,17 @@ interface main {
 
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
-
-        // Gather ImDrawList to render (for each active window)
         io.metricsRenderWindows = 0
         g.drawDataBuilder.clear()
+
+        // Add background ImDrawList
         if (g.backgroundDrawList.vtxBuffer.hasRemaining())
             g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
 
+        // Add ImDrawList to render
         val windowsToRenderTopMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-                g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })
+                g.navWindowingTarget?.let { g.navWindowingList[0] })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
                 .forEach { it.addToDrawData() }
@@ -376,6 +377,7 @@ interface main {
         // Draw software mouse cursor if requested
         if (io.mouseDrawCursor)
             g.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
+        // Add foreground ImDrawList
         if (g.foregroundDrawList.vtxBuffer.hasRemaining())
             g.foregroundDrawList addTo g.drawDataBuilder.layers[0]
 

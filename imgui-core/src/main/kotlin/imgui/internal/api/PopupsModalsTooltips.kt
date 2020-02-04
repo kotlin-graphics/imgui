@@ -184,18 +184,20 @@ internal interface PopupsModalsTooltips {
      *  Test for id within current popup stack level (currently begin-ed into); this doesn't scan the whole popup stack! */
     fun isPopupOpen(id: ID) = g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
 
-    fun beginPopupEx(id: ID, extraFlags: WindowFlags): Boolean {
+    fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
 
         if (!isPopupOpen(id)) {
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
             return false
         }
 
+        var flags =  flags_
         val name = when {
-            extraFlags has WindowFlag._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
+            flags has WindowFlag._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
             else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
         }
-        val isOpen = begin(name, null, extraFlags or WindowFlag._Popup)
+        flags = flags or WindowFlag._Popup
+        val isOpen = begin(name, null, flags)
         if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
             endPopup()
 
