@@ -189,7 +189,7 @@ object showDemoWindowLayout {
             // Child 1: no border, enable horizontal scrollbar
             run {
                 val windowFlags = Wf.HorizontalScrollbar or if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None
-                child("Child1", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
+                child("ChildL", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
                     for (i in 0..99) {
                         text("%04d: scrollable region", i)
                         if (gotoLine && line == i) setScrollHereY()
@@ -203,7 +203,7 @@ object showDemoWindowLayout {
             run {
                 val windowFlags = (if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None) or if (disableMenu) Wf.None else Wf.MenuBar
                 withStyleVar(StyleVar.ChildRounding, 5f) {
-                    child("Child2", Vec2(0, 260), true, windowFlags) {
+                    child("ChildR", Vec2(0, 260), true, windowFlags) {
                         if (!disableMenu && beginMenuBar()) {
                             if (beginMenu("Menu")) {
                                 MenuFile()
@@ -232,7 +232,7 @@ object showDemoWindowLayout {
             run {
                 cursorPosX += 10f
                 withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
-                    beginChild("blah", Vec2(200, 100), true, Wf.None.i)
+                    beginChild("Red", Vec2(200, 100), true, Wf.None.i)
                     for (n in 0..49)
                         text("Some test $n")
                     endChild()

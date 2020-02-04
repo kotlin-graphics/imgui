@@ -57,10 +57,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Windows, sorted in display order, back to front */
     val windows = ArrayList<Window>()
-    /** Windows, sorted in focus order, back to front */
+    /** Windows, sorted in focus order, back to front.
+     * (FIXME: We could only store root windows here! Need to sort out the Docking equivalent which is RootWindowDockStop and is unfortunately a little more dynamic) */
     val windowsFocusOrder = ArrayList<Window>()
 
-    val windowsSortBuffer = ArrayList<Window>()
+    val windowsTempSortBuffer = ArrayList<Window>()
 
     val currentWindowStack = Stack<Window>()
     /** Map window's ImGuiID to ImGuiWindow* */
@@ -487,7 +488,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             windows.forEach { it.destroy() }
             windows.clear()
             windowsFocusOrder.clear()
-            windowsSortBuffer.clear()
+            windowsTempSortBuffer.clear()
             currentWindow = null
             currentWindowStack.clear()
             windowsById.clear()
