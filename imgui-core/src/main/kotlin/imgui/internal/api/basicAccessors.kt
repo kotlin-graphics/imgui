@@ -111,7 +111,8 @@ internal interface basicAccessors {
         g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edited }
     }
 
-    /** Push a given id value ignoring the ID stack as a seed. */
+    /** Push a given id value ignoring the ID stack as a seed.
+     *  Push given value at the top of the ID stack (whereas PushID combines old and new hashes) */
     fun pushOverrideID(id: ID) {
         g.currentWindow!!.idStack.push(id)
     }
