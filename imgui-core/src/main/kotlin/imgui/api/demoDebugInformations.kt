@@ -202,6 +202,7 @@ interface demoDebugInformations {
         separator()
 
         Funcs.nodeWindows(g.windows, "Windows")
+        //Funcs::NodeWindows(g.WindowsFocusOrder, "WindowsFocusOrder")
         if (treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
             g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs.nodeDrawList(null, it, "DrawList") } }
             treePop()

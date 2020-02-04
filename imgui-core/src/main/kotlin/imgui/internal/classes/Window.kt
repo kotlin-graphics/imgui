@@ -40,7 +40,9 @@ import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
 /** Storage for one window */
-class Window(var context: Context, var name: String) {
+class Window(var context: Context,
+             /** Window name, owned by the window. */
+             var name: String) {
     /** == ImHashStr(Name) */
     val id: ID = hash(name)
     /** See enum WindowFlags */

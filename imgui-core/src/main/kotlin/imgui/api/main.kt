@@ -240,7 +240,7 @@ interface main {
             it.active = false
             it.writeAccessed = false
 
-            // Garbage collect (this is totally functional but we may need decide if the side-effects are desirable)
+            // Garbage collect transient buffers of recently unused windows
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
                 it.gcCompactTransientWindowBuffers()
         }
@@ -327,13 +327,13 @@ interface main {
 
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because childs may not exist yet         */
-        g.windowsSortBuffer.clear()
-        g.windowsSortBuffer.ensureCapacity(g.windows.size)
+        g.windowsTempSortBuffer.clear()
+        g.windowsTempSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf._ChildWindow }  // if a child is active its parent will add it
-                .forEach { it addToSortBuffer g.windowsSortBuffer }
-        assert(g.windows.size == g.windowsSortBuffer.size) { "This usually assert if there is a mismatch between the ImGuiWindowFlags_ChildWindow / ParentWindow values and DC.ChildWindows[] in parents, aka we've done something wrong." }
+                .forEach { it addToSortBuffer g.windowsTempSortBuffer }
+        assert(g.windows.size == g.windowsTempSortBuffer.size) { "This usually assert if there is a mismatch between the ImGuiWindowFlags_ChildWindow / ParentWindow values and DC.ChildWindows[] in parents, aka we've done something wrong." }
         g.windows.clear()
-        g.windows += g.windowsSortBuffer
+        g.windows += g.windowsTempSortBuffer
         io.metricsActiveWindows = g.windowsActiveCount
 
         // Unlock font atlas
