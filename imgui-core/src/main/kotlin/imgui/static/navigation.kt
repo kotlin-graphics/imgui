@@ -357,8 +357,8 @@ fun navUpdateWindowing() {
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
-            g.navWindowingTarget = it
-            g.navWindowingTargetAnim = it
+            g.navWindowingTarget = it.rootWindow // FIXME-DOCK: Will need to use RootWindowDockStop
+            g.navWindowingTargetAnim = it.rootWindow // FIXME-DOCK: Will need to use RootWindowDockStop
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
