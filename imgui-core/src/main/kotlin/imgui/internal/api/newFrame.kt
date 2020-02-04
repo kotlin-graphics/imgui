@@ -2,7 +2,7 @@ package imgui.internal.api
 
 import glm_.f
 import imgui.*
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
@@ -99,7 +99,7 @@ internal interface newFrame {
                 }
                 focusWindow(mov)
             } else {
-                clearActiveId()
+                clearActiveID()
                 g.movingWindow = null
             }
         } else
@@ -108,7 +108,7 @@ internal interface newFrame {
             if (g.activeIdWindow?.moveId == g.activeId) {
                 keepAliveID(g.activeId)
                 if (!io.mouseDown[0])
-                    clearActiveId()
+                    clearActiveID()
             }
     }
 

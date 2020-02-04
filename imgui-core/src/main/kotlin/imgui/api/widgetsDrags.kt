@@ -34,8 +34,8 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
-import imgui.ImGui.setActiveId
-import imgui.ImGui.setFocusId
+import imgui.ImGui.setActiveID
+import imgui.ImGui.setFocusID
 import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
@@ -236,8 +236,8 @@ interface widgetsDrags {
             val clicked = hovered && io.mouseClicked[0]
             val doubleClicked = hovered && io.mouseDoubleClicked[0]
             if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
-                setActiveId(id, window)
-                setFocusId(id, window)
+                setActiveID(id, window)
+                setFocusID(id, window)
                 focusWindow(window)
                 g.activeIdUsingNavDirMask  = (1 shl Dir.Left) or (1 shl Dir.Right)
                 if (focusRequested || (clicked && io.keyCtrl) || doubleClicked || g.navInputId == id) {

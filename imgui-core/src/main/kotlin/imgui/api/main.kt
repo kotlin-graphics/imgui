@@ -7,7 +7,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
@@ -130,7 +130,7 @@ interface main {
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
         if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
-            clearActiveId()
+            clearActiveID()
         if (g.activeId != 0)
             g.activeIdTimer += io.deltaTime
         g.lastActiveIdTimer += io.deltaTime

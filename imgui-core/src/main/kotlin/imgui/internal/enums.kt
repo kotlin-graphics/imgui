@@ -34,12 +34,20 @@ enum class ButtonFlag(val i: Int) {
     /** disable mouse interaction if a key modifier is held */
     NoKeyModifiers(1 shl 12),
     /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
-    NoHoldingActiveID(1 shl 13),
+    NoHoldingActiveId(1 shl 13),
     /** don't override navigation focus when activated */
     NoNavFocus(1 shl 14),
     /** don't report as hovered when navigated on */
     NoHoveredOnNav(1 shl 15),
-    PressedOnMask_(PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold);
+    MouseButtonLeft        (1 shl 16),  // [Default] react on left mouse button
+    MouseButtonRight       (1 shl 17),  // react on right mouse button
+    MouseButtonMiddle      (1 shl 18),  // react on center mouse button
+
+    MouseButtonMask_       (MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
+    MouseButtonShift_      (16),
+    MouseButtonDefault_    (MouseButtonLeft.i),
+    PressedOnMask_         (PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold),
+    PressedOnDefault_      (PressedOnClickRelease.i);
 
     infix fun and(b: ButtonFlag): ButtonFlags = i and b.i
     infix fun and(b: ButtonFlags): ButtonFlags = i and b

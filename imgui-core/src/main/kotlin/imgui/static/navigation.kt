@@ -9,7 +9,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.calcTextSize
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.end
@@ -156,7 +156,7 @@ fun navUpdate() {
     if (NavInput.Cancel.isTest(InputReadMode.Pressed)) {
         if (g.activeId != 0) {
             if (!isActiveIdUsingNavInput(NavInput.Cancel))
-                clearActiveId()
+                clearActiveID()
         } else if (g.navWindow != null && g.navWindow!!.flags has Wf._ChildWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
             // Exit child window
             val childWindow = g.navWindow!!
@@ -433,7 +433,7 @@ fun navUpdateWindowing() {
 
     // Apply final focus
     if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindow)) {
-        clearActiveId()
+        clearActiveID()
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
         applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
@@ -547,7 +547,7 @@ fun navUpdateMoveResult() {
         result.rectRel translateY -deltaScroll.y
     }
 
-    clearActiveId()
+    clearActiveID()
     g.navWindow = window
     if (g.navId != result.id)    {
         // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)

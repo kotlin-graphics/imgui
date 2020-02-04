@@ -8,7 +8,7 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.hoveredId
@@ -185,7 +185,7 @@ internal interface basicHelpersForWidgetCode {
 
             // If another item is about to be focused, we clear our own active id
             if (g.activeId == id)
-                clearActiveId()
+                clearActiveID()
         }
 
         return false

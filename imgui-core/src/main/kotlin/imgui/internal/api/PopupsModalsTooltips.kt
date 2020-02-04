@@ -12,7 +12,7 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
-import imgui.ImGui.setActiveId
+import imgui.ImGui.setActiveID
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
@@ -72,7 +72,7 @@ internal interface PopupsModalsTooltips {
         if (g.navActivateId == id && flags hasnt WindowFlag._NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
             focusWindow(childWindow)
             navInitWindow(childWindow, false)
-            setActiveId(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
+            setActiveID(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
             g.activeIdSource = InputSource.Nav
         }
 
