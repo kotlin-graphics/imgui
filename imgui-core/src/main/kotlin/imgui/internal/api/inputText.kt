@@ -13,7 +13,7 @@ import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.clipboardText
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dataTypeApplyOpFromText
@@ -37,8 +37,8 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.scrollMaxY
-import imgui.ImGui.setActiveId
-import imgui.ImGui.setFocusId
+import imgui.ImGui.setActiveID
+import imgui.ImGui.setFocusID
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeight
 import imgui.api.g
@@ -186,8 +186,8 @@ internal interface inputText {
 
         if (g.activeId != id && initMakeActive) {
             assert(state_!!.id == id)
-            setActiveId(id, window)
-            setFocusId(id, window)
+            setActiveID(id, window)
+            setFocusID(id, window)
             focusWindow(window)
 
             // Declare our inputs
@@ -205,7 +205,7 @@ internal interface inputText {
 
         // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped), clear id immediately (don't wait until the end of the function)
         if (g.activeId == id && state_ == null)
-            clearActiveId()
+            clearActiveID()
 
         // Release focus when we click outside
         if (g.activeId == id && io.mouseClicked[0] && !initState && !initMakeActive)
@@ -569,7 +569,7 @@ internal interface inputText {
             }
         }
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
-        if (clearActiveId && g.activeId == id) clearActiveId()
+        if (clearActiveId && g.activeId == id) clearActiveID()
 
         // Render frame
         if (!isMultiline) {
@@ -800,7 +800,7 @@ internal interface inputText {
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
         val init = g.tempInputTextId != id
         if (init)
-            clearActiveId()
+            clearActiveID()
 
         val fmtBuf = CharArray(32)
         val format = parseFormatTrimDecorations(format_, fmtBuf)

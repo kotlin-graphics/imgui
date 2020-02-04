@@ -1,8 +1,5 @@
 package imgui.api
 
-import glm_.vec2.Vec2
-import glm_.vec3.Vec3
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.clearDragDrop
@@ -12,16 +9,11 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemHoverable
-import imgui.ImGui.setActiveId
+import imgui.ImGui.setActiveID
 import imgui.classes.Payload
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.*
-import kool.BYTES
-import kool.lib.fill
-import kool.rem
-import kool.set
-import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
@@ -78,7 +70,7 @@ interface dragAndDrop {
                 sourceId = window.dc.lastItemId
                 val isHovered = itemHoverable(window.dc.lastItemRect, sourceId)
                 if (isHovered && io.mouseClicked[mouseButton.i]) {
-                    setActiveId(sourceId, window)
+                    setActiveID(sourceId, window)
                     focusWindow(window)
                 }
                 // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.

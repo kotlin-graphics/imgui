@@ -8,7 +8,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcTypematicRepeatAmount
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehaviorT
 import imgui.ImGui.findRenderedTextEnd
@@ -29,20 +29,20 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
-import imgui.ImGui.setActiveId
-import imgui.ImGui.setFocusId
+import imgui.ImGui.setActiveID
+import imgui.ImGui.setFocusID
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.classes.Rect
 import imgui.internal.*
-import imgui.internal.ButtonFlag as Bf
-import imgui.TreeNodeFlag as Tnf
-import kotlin.math.max
-import kotlin.reflect.KMutableProperty0
+import imgui.internal.classes.Rect
 import kool.getValue
 import kool.setValue
+import kotlin.math.max
+import kotlin.reflect.KMutableProperty0
+import imgui.TreeNodeFlag as Tnf
+import imgui.internal.ButtonFlag as Bf
 
 /** Widgets low-level behaviors */
 internal interface widgetsLowLevelBehaviors {
@@ -111,13 +111,17 @@ internal interface widgetsLowLevelBehaviors {
         var flags = flags_
 
         if (flags has Bf.Disabled) {
-            if (g.activeId == id) clearActiveId()
+            if (g.activeId == id) clearActiveID()
             return BooleanArray(3)
         }
 
-        // Default behavior requires click+release on same spot
+        // Default only reacts to left mouse button
+        if (flags hasnt Bf.MouseButtonMask_)
+            flags = flags or Bf.MouseButtonDefault_
+
+        // Default behavior requires click + release inside bounding box
         if (flags hasnt Bf.PressedOnMask_)
-            flags = flags or Bf.PressedOnClickRelease
+            flags = flags or Bf.PressedOnDefault_
 
         val backupHoveredWindow = g.hoveredWindow
         val flattenHoveredChildren = flags has Bf.FlattenChildren && g.hoveredRootWindow === window
@@ -153,36 +157,56 @@ internal interface widgetsLowLevelBehaviors {
         if (hovered && flags has Bf.AllowItemOverlap && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
             hovered = false
 
-        // Mouse
+        // Mouse handling
         if (hovered) {
+
             if (flags hasnt Bf.NoKeyModifiers || (!io.keyCtrl && !io.keyShift && !io.keyAlt)) {
 
-                if (flags has (Bf.PressedOnClickRelease or Bf.PressedOnClickReleaseAnywhere) && io.mouseClicked[0]) {
-                    setActiveId(id, window)
-                    if (flags hasnt Bf.NoNavFocus)
-                        setFocusId(id, window)
-                    focusWindow(window)
+                // Poll buttons
+                val mouseButtonClicked = when {
+                    flags has Bf.MouseButtonLeft && io.mouseClicked[0] -> 0
+                    flags has Bf.MouseButtonRight && io.mouseClicked[1] -> 1
+                    flags has Bf.MouseButtonMiddle && io.mouseClicked[2] -> 2
+                    else -> -1
                 }
-                if ((flags has Bf.PressedOnClick && io.mouseClicked[0]) || (flags has Bf.PressedOnDoubleClick && io.mouseDoubleClicked[0])) {
-                    pressed = true
-                    if (flags has Bf.NoHoldingActiveID)
-                        clearActiveId()
-                    else
-                        setActiveId(id, window) // Hold on ID
-                    focusWindow(window)
+                val mouseButtonReleased = when {
+                    flags has Bf.MouseButtonLeft && io.mouseReleased[0] -> 0
+                    flags has Bf.MouseButtonRight && io.mouseReleased[1] -> 1
+                    flags has Bf.MouseButtonMiddle && io.mouseReleased[2] -> 2
+                    else -> -1
                 }
-                if (flags has Bf.PressedOnRelease && io.mouseReleased[0]) {
-                    // Repeat mode trumps <on release>
-                    if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay))
+
+                if (mouseButtonClicked != -1 && g.activeId != id) {
+                    if (flags has (Bf.PressedOnClickRelease or Bf.PressedOnClickReleaseAnywhere)) {
+                        setActiveID(id, window)
+                        g.activeIdMouseButton = mouseButtonClicked
+                        if (flags hasnt Bf.NoNavFocus)
+                            setFocusID(id, window)
+                        focusWindow(window)
+                    }
+                    if (flags has Bf.PressedOnClick || (flags has Bf.PressedOnDoubleClick && io.mouseDoubleClicked[mouseButtonClicked])) {
                         pressed = true
-                    clearActiveId()
+                        if (flags has Bf.NoHoldingActiveId)
+                            clearActiveID()
+                        else
+                            setActiveID(id, window) // Hold on ID
+                        g.activeIdMouseButton = mouseButtonClicked
+                        focusWindow(window)
+                    }
+                }
+                if (flags has Bf.PressedOnRelease && mouseButtonReleased != -1) {
+                    // Repeat mode trumps on release behavior
+                    if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay))
+                        pressed = true
+                    clearActiveID()
                 }
 
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
-                if (flags has Bf.Repeat && g.activeId == id && io.mouseDownDuration[0] > 0f && isMouseClicked(MouseButton.Left, true))
-                    pressed = true
+                if (g.activeId == id && flags has Bf.Repeat)
+                    if (io.mouseDownDuration[g.activeIdMouseButton] > 0f && isMouseClicked(MouseButton of g.activeIdMouseButton, true))
+                        pressed = true
             }
 
             if (pressed)
@@ -194,7 +218,6 @@ internal interface widgetsLowLevelBehaviors {
         if (g.navId == id && !g.navDisableHighlight && g.navDisableMouseHover && (g.activeId == 0 || g.activeId == id || g.activeId == window.moveId))
             if (flags hasnt Bf.NoHoveredOnNav)
                 hovered = true
-
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
             val navActivatedByInputs = NavInput.Activate.isTest(if (flags has Bf.Repeat) InputReadMode.Repeat else InputReadMode.Pressed)
@@ -203,36 +226,39 @@ internal interface widgetsLowLevelBehaviors {
             if (navActivatedByCode || navActivatedByInputs || g.activeId == id) {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 g.navActivateId = id // This is so SetActiveId assign a Nav source
-                setActiveId(id, window)
+                setActiveID(id, window)
                 if ((navActivatedByCode || navActivatedByInputs) && flags hasnt Bf.NoNavFocus)
-                    setFocusId(id, window)
+                    setFocusID(id, window)
             }
         }
         var held = false
         if (g.activeId == id) {
-            if (pressed)
-                g.activeIdHasBeenPressedBefore = true
             if (g.activeIdSource == InputSource.Mouse) {
                 if (g.activeIdIsJustActivated)
                     g.activeIdClickOffset = io.mousePos - bb.min
-                if (io.mouseDown[0])
+
+                val mouseButton = g.activeIdMouseButton
+                assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
+                if (io.mouseDown[mouseButton])
                     held = true
                 else {
                     val releaseIn = hovered && flags has Bf.PressedOnClickRelease
                     val releaseAnywhere = flags has Bf.PressedOnClickReleaseAnywhere
                     if ((releaseIn || releaseAnywhere) && !g.dragDropActive) {
-                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownWasDoubleClick[0]
-                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[0] >= io.keyRepeatDelay // Repeat mode trumps <on release>
+                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownWasDoubleClick[mouseButton]
+                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton] >= io.keyRepeatDelay // Repeat mode trumps <on release>
                         if (!isDoubleClickRelease && !isRepeatingAlready)
                             pressed = true
                     }
-                    clearActiveId()
+                    clearActiveID()
                 }
                 if (flags hasnt Bf.NoNavFocus)
                     g.navDisableHighlight = true
             } else if (g.activeIdSource == InputSource.Nav)
                 if (g.navActivateDownId != id)
-                    clearActiveId()
+                    clearActiveID()
+            if (pressed)
+                g.activeIdHasBeenPressedBefore = true
         }
         return booleanArrayOf(pressed, hovered, held)
     }
@@ -246,9 +272,9 @@ internal interface widgetsLowLevelBehaviors {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
-                clearActiveId()
+                clearActiveID()
             else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                clearActiveId()
+                clearActiveID()
 
         var v by pV
 

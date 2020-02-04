@@ -24,7 +24,7 @@ internal interface basicAccessors {
     val focusID: ID
         get() = g.navId
 
-    fun setActiveId(id: ID, window: Window?) {
+    fun setActiveID(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
             g.activeIdTimer = 0f
@@ -55,7 +55,7 @@ internal interface basicAccessors {
     }
 
     /** FIXME-NAV: The existence of SetNavID/SetNavIDWithRectRel/SetFocusID is incredibly messy and confusing and needs some explanation or refactoring. */
-    fun setFocusId(id: ID, window: Window) {
+    fun setFocusID(id: ID, window: Window) {
 
         assert(id != 0)
 
@@ -78,7 +78,7 @@ internal interface basicAccessors {
             g.navDisableHighlight = true
     }
 
-    fun clearActiveId() = setActiveId(0, null)
+    fun clearActiveID() = setActiveID(0, null)
 
     var hoveredId: ID
         /** ~GetHoveredID */

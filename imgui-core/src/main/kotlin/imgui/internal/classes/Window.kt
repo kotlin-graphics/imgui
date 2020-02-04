@@ -20,7 +20,7 @@ import imgui.ImGui.keepAliveID
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
-import imgui.ImGui.setActiveId
+import imgui.ImGui.setActiveID
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
@@ -499,7 +499,7 @@ class Window(var context: Context, var name: String) {
             but clear g.MovingWindow afterward.
             This is because we want ActiveId to be set even when the window is not permitted to move.   */
         focusWindow(this)
-        setActiveId(moveId, this)
+        setActiveID(moveId, this)
         g.navDisableHighlight = true
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
 
