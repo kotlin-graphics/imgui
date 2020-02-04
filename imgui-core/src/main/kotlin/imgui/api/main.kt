@@ -94,7 +94,7 @@ interface main {
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
-        g.drawListSharedData.circleSegmentMaxError = style.circleSegmentMaxError
+        g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
         g.drawListSharedData.initialFlags = Dlf.None.i
         if (style.antiAliasedLines)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedLines
@@ -102,10 +102,6 @@ interface main {
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedFill
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
-
-        // Recalculate circle segment counts if the segment error has changed
-        if (g.drawListSharedData.circleSegmentMaxError != g.drawListSharedData.circleSegmentCountsMaxCircleSegmentError)
-            g.drawListSharedData.recalculateCircleSegmentCounts()
 
         g.backgroundDrawList.clear()
         g.backgroundDrawList.pushTextureId(io.fonts.texId)
