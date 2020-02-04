@@ -10,36 +10,36 @@ enum class ButtonFlag(val i: Int) {
     /** hold to repeat  */
     Repeat(1 shl 0),
     /** return true on click (mouse down event) */
-    PressedOnClick         (1 shl 1),
+    PressedOnClick(1 shl 1),
     /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
-    PressedOnClickRelease  (1 shl 2),
+    PressedOnClickRelease(1 shl 2),
     /** return true on click + release even if the release event is not done while hovering the item */
-    PressedOnClickReleaseAnywhere (1 shl 3),
+    PressedOnClickReleaseAnywhere(1 shl 3),
     /** return true on release (default requires click+release) */
-    PressedOnRelease       (1 shl 4),
+    PressedOnRelease(1 shl 4),
     /** return true on double-click (default requires click+release) */
-    PressedOnDoubleClick   (1 shl 5),
+    PressedOnDoubleClick(1 shl 5),
     /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
-    PressedOnDragDropHold  (1 shl 6),
+    PressedOnDragDropHold(1 shl 6),
     /** allow interactions even if a child window is overlapping */
-    FlattenChildren        (1 shl 7),
+    FlattenChildren(1 shl 7),
     /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
-    AllowItemOverlap       (1 shl 8),
+    AllowItemOverlap(1 shl 8),
     /** disable automatically closing parent popup on press // [UNUSED] */
-    DontClosePopups        (1 shl 9),
+    DontClosePopups(1 shl 9),
     /** disable interactions */
-    Disabled               (1 shl 10),
+    Disabled(1 shl 10),
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
-    AlignTextBaseLine      (1 shl 11),
+    AlignTextBaseLine(1 shl 11),
     /** disable mouse interaction if a key modifier is held */
-    NoKeyModifiers         (1 shl 12),
+    NoKeyModifiers(1 shl 12),
     /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
-    NoHoldingActiveID      (1 shl 13),
+    NoHoldingActiveID(1 shl 13),
     /** don't override navigation focus when activated */
-    NoNavFocus             (1 shl 14),
+    NoNavFocus(1 shl 14),
     /** don't report as hovered when navigated on */
-    NoHoveredOnNav         (1 shl 15),
-    PressedOnMask_         (PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold);
+    NoHoveredOnNav(1 shl 15),
+    PressedOnMask_(PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold);
 
     infix fun and(b: ButtonFlag): ButtonFlags = i and b.i
     infix fun and(b: ButtonFlags): ButtonFlags = i and b
@@ -212,6 +212,30 @@ infix fun ItemStatusFlags.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv()
 
 
 enum class TextFlag { None, NoWidthForLargeClippedText }
+
+
+typealias TooltipFlags = Int
+
+enum class TooltipFlag(val i: TooltipFlags) {
+    None(0),
+    /** Override will clear/ignore previously submitted tooltip (defaults to append) */
+    OverridePreviousTooltip(1 shl 0);
+
+    infix fun and(b: TooltipFlag): TooltipFlags = i and b.i
+    infix fun and(b: TooltipFlags): TooltipFlags = i and b
+    infix fun or(b: TooltipFlag): TooltipFlags = i or b.i
+    infix fun or(b: TooltipFlags): TooltipFlags = i or b
+    infix fun xor(b: TooltipFlag): TooltipFlags = i xor b.i
+    infix fun xor(b: TooltipFlags): TooltipFlags = i xor b
+    infix fun wo(b: TooltipFlags): TooltipFlags = and(b.inv())
+}
+
+infix fun TooltipFlags.and(b: TooltipFlag): TooltipFlags = and(b.i)
+infix fun TooltipFlags.or(b: TooltipFlag): TooltipFlags = or(b.i)
+infix fun TooltipFlags.xor(b: TooltipFlag): TooltipFlags = xor(b.i)
+infix fun TooltipFlags.has(b: TooltipFlag): Boolean = and(b.i) != 0
+infix fun TooltipFlags.hasnt(b: TooltipFlag): Boolean = and(b.i) == 0
+infix fun TooltipFlags.wo(b: TooltipFlag): TooltipFlags = and(b.i.inv())
 
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet.
