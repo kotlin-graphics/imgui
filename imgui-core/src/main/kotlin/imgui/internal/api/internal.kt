@@ -47,37 +47,38 @@ internal interface internal {
     fun findWindowByName(name: String): Window? = g.windowsById[hash(name)]
 
     /** Moving window to front of display (which happens to be back of our sorted list)  ~ FocusWindow  */
-    fun focusWindow(window_: Window? = null) {
+    fun focusWindow(window: Window? = null) {
 
-        if (g.navWindow !== window_) {
-            g.navWindow = window_
-            if (window_ != null && g.navDisableMouseHover)
+        if (g.navWindow !== window) {
+            g.navWindow = window
+            if (window != null && g.navDisableMouseHover)
                 g.navMousePosDirty = true
             g.navInitRequest = false
-            g.navId = window_?.navLastIds?.get(0) ?: 0 // Restore NavId
+            g.navId = window?.navLastIds?.get(0) ?: 0 // Restore NavId
             g.navIdIsAlive = false
             g.navLayer = NavLayer.Main
             //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
         }
 
         // Close popups if any
-        closePopupsOverWindow(window_, false)
+        closePopupsOverWindow(window, false)
 
         // Passing NULL allow to disable keyboard focus
-        if (window_ == null) return
+        if (window == null) return
 
         // Move the root window to the top of the pile
-        val window = window_.rootWindow!! // ~assert
+        val focusFrontWindow = window.rootWindow!! // NB: In docking branch this is window->RootWindowDockStop
+        val displayFrontWindow = window.rootWindow!!
 
         // Steal focus on active widgets
-        if (window.flags has Wf._Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..
-            if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != window)
+        if (focusFrontWindow.flags has Wf._Popup) // FIXME: This statement may be unnecessary? Need further testing before removing it..
+            if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != focusFrontWindow)
                 clearActiveID()
 
         // Bring to front
-        window.bringToFocusFront()
-        if (window.flags hasnt Wf.NoBringToFrontOnFocus)
-            window.bringToDisplayFront()
+        focusFrontWindow.bringToFocusFront()
+        if (displayFrontWindow.flags hasnt Wf.NoBringToFrontOnFocus)
+            displayFrontWindow.bringToDisplayFront()
     }
 
     fun focusTopMostWindowUnderOne(underThisWindow: Window? = null, ignoreWindow: Window? = null) {
