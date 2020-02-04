@@ -16,6 +16,7 @@ import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getColorU32
 import imgui.ImGui.invisibleButton
@@ -23,15 +24,18 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDown
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.sliderInt
+import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
 import imgui.MouseButton
-import imgui.dsl.button
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.dsl.button
 import imgui.internal.DrawCornerFlag
 import imgui.internal.DrawCornerFlags
 import kotlin.reflect.KMutableProperty0
@@ -41,6 +45,8 @@ object CustomRendering {
     var sz = 36f
     var thickness = 3f
     var ngonSides = 6
+    var circleSegmentsOverride = false
+    var circleSegmentsOverrideV = 12
     val colf = Vec4(1.0f, 1.0f, 0.4f, 1.0f)
 
     var addingLine = false
@@ -70,28 +76,33 @@ object CustomRendering {
 
             // Primitives
             if (beginTabItem("Primitives")) {
-
+                pushItemWidth(-fontSize * 10)
                 dragFloat("Size", ::sz, 0.2f, 2.0f, 72.0f, "%.0f")
                 dragFloat("Thickness", ::thickness, 0.05f, 1.0f, 8.0f, "%.02f")
-                sliderInt("n-gon sides", ::ngonSides, 3, 12)
+                sliderInt("N-gon sides", ::ngonSides, 3, 12)
+                checkbox("##circlesegmentoverride", ::circleSegmentsOverride)
+                sameLine(0f, style.itemInnerSpacing.x)
+                if (sliderInt("Circle segments", ::circleSegmentsOverrideV, 3, 40))
+                    circleSegmentsOverride = true
                 colorEdit4("Color", colf)
+                popItemWidth()
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
-                var x = p.x + 4f
-                var y = p.y + 4f
                 val spacing = 10f
-                val corners_none: DrawCornerFlags = 0
-                val corners_all: DrawCornerFlags = DrawCornerFlag.All.i
-                val corners_tl_br: DrawCornerFlags = DrawCornerFlag.TopLeft or DrawCornerFlag.BotRight
+                val cornersNone = DrawCornerFlag.None.i
+                val cornersAll = DrawCornerFlag.All.i
+                val cornersTlBr = DrawCornerFlag.TopLeft or DrawCornerFlag.BotRight
+                val circleSegments = if(circleSegmentsOverride) circleSegmentsOverrideV else 0
+                var (x, y) = p + 4f
                 for (n in 0 until 2) {
                     // First line uses a thickness of 1.0f, second line uses the configurable thickness
                     val th = if (n == 0) 1.0f else thickness
                     drawList.apply {
-                        addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // n-gon
-                        addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 0, th); x += sz + spacing  // Circle
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0.0f, corners_none, th); x += sz + spacing  // Square
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, corners_all, th); x += sz + spacing  // Square with all rounded corners
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, corners_tl_br, th); x += sz + spacing  // Square with two rounded corners
+                        addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // N-gon
+                        addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, circleSegments, th); x += sz + spacing  // Circle
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0.0f, cornersNone, th); x += sz + spacing  // Square
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersAll, th); x += sz + spacing  // Square with all rounded corners
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
                         addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col, th); x += sz + spacing      // Triangle
                         addTriangle(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col, th); x += sz * 0.4f + spacing // Thin triangle
                         addLine(Vec2(x, y), Vec2(x + sz, y), col, th); x += sz + spacing  // Horizontal line (note: drawing a filled rectangle will be faster!)
@@ -103,11 +114,11 @@ object CustomRendering {
                     y += sz + spacing
                 }
                 drawList.apply {
-                    addNgonFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides); x += sz + spacing  // n-gon
-                    addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, 0); x += sz + spacing  // Circle
+                    addNgonFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides); x += sz + spacing  // N-gon
+                    addCircleFilled(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, circleSegments); x += sz + spacing  // Circle
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col); x += sz + spacing  // Square
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f); x += sz + spacing  // Square with all rounded corners
-                    addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, corners_tl_br); x += sz + spacing  // Square with two rounded corners
+                    addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersTlBr); x += sz + spacing  // Square with two rounded corners
                     addTriangleFilled(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col); x += sz + spacing      // Triangle
                     addTriangleFilled(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col); x += sz * 0.4f + spacing // Thin triangle
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + thickness), col); x += sz + spacing  // Horizontal line (faster than AddLine, but only handle integer thickness)

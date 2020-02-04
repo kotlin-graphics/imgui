@@ -1,17 +1,13 @@
 package imgui.internal.classes
 
-import glm_.f
-import glm_.glm
-import glm_.i
-import glm_.max
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.g
-import imgui.classes.*
+import imgui.classes.DrawList
 import imgui.font.Font
 import imgui.internal.*
-import imgui.internal.ColumnsFlags
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -35,8 +31,14 @@ class DrawDataBuilder {
     }
 }
 
+// Helper function to calculate a circle's segment count given its radius and a "maximum error" value.
+const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 12
+const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX = 512
+fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((glm.πf * 2f) / acos((_RAD - _MAXERROR) / _RAD)).i, DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+
 /** Data shared between all ImDrawList instances
- * Data shared among multiple draw lists (typically owned by parent ImGui context, but you may create one yourself) */
+ *  You may want to create your own instance of this if you want to use ImDrawList completely without ImGui. In that case, watch out for future changes to this structure.
+ *  Data shared among multiple draw lists (typically owned by parent ImGui context, but you may create one yourself) */
 class DrawListSharedData {
     /** UV of white pixel in the atlas  */
     var texUvWhitePixel = Vec2()
@@ -53,33 +55,26 @@ class DrawListSharedData {
     /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
     var initialFlags = DrawListFlag.None.i
 
-    // Const data
-    // FIXME: Bake rounded corners fill/borders in atlas
-    var circleVtx12 = Array(12) {
+    // [Internal] Lookup tables
+
+    // Lookup tables
+    val circleVtx12 = Array(12) {
+        // FIXME: Bake rounded corners fill/borders in atlas
         val a = it * 2 * glm.PIf / 12
         Vec2(cos(a), sin(a))
     }
+    /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
+    val circleSegmentCounts = IntArray(64)
 
-
-    // Cached circle segment counts for the first <n> radii (to avoid calculation overhead)
-
-    /** The segment count for radius (array index + 1) */
-    val circleSegmentCounts = IntArray(numCircleSegmentCounts)
-    /** The MaxCircleSegmentError used to calculate these counts */
-    var circleSegmentCountsMaxCircleSegmentError = -Float.MIN_VALUE // Impossible value to force recalculation
-    /** Recalculate circle segment counts based on the current MaxCircleSegmentError */
-    fun recalculateCircleSegmentCounts() {
-        for (i in 0 until numCircleSegmentCounts)        {
+    fun setCircleSegmentMaxError_(maxError: Float) {
+        if (circleSegmentMaxError == maxError)
+            return
+        circleSegmentMaxError = maxError
+        for (i in circleSegmentCounts.indices) {
             val radius = i + 1f
-            circleSegmentCounts[i] = clamp(((glm.πf * 2f) / acos((radius - circleSegmentMaxError) / radius)).i, 3, 10000)
+            val segmentCount = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError)
+            circleSegmentCounts[i] = segmentCount min 255
         }
-
-        circleSegmentCountsMaxCircleSegmentError = circleSegmentMaxError
-    }
-
-    companion object {
-        /** Number of circle segment counts to cache (i.e. the maximum radius before we calculate dynamically) */
-        val numCircleSegmentCounts = 64
     }
 }
 

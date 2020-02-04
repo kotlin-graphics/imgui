@@ -15,6 +15,8 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.font.Font
 import imgui.internal.*
+import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC
+import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX
 import imgui.internal.classes.DrawListSharedData
 import imgui.internal.classes.Rect
 import kool.*
@@ -24,7 +26,6 @@ import java.nio.ByteBuffer
 import java.util.Stack
 import kotlin.collections.ArrayList
 import kotlin.collections.lastIndex
-import kotlin.math.acos
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -123,6 +124,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
     // Primitives
     // - For rectangular primitives, "p_min" and "p_max" represent the upper-left and lower-right corners.
+    // - For circle primitives, use "num_segments == 0" to automatically calculate tessellation (preferred).
+    //   In future versions we will use textures to provide cheaper and higher-quality circles.
+    //   Use AddNgon() and AddNgonFilled() functions if you need to guaranteed a specific number of sides.
     // -----------------------------------------------------------------------------------------------------------------
 
     /** JVM it's safe to pass directly Vec2 istances, they wont be modified */
@@ -220,54 +224,59 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathFillConvex(col)
     }
 
-    /** Draw a circle - use num_segments <= 0 to automatically calculate tessellation (preferred). Use AddNgon() instead if you need a specific segment count. */
     fun addCircle(center: Vec2, radius: Float, col: Int, numSegments_: Int = 12, thickness: Float = 1f) {
 
         if (col hasnt COL32_A_MASK || radius <= 0f) return
 
-        // Calculate number of segments if required
+        // Obtain segment count
         val numSegments = when {
             numSegments_ <= 0 -> {
-                val radiusInt = radius.i
-                if (radiusInt <= DrawListSharedData.numCircleSegmentCounts)
-                    _data.circleSegmentCounts[radiusInt - 1] // Use cached value
-                else
-                    clamp(((glm.πf * 2f) / acos((radius - _data.circleSegmentMaxError) / radius)).i, 3, 10000)
+                // Automatic segment count
+                val radiusIdx = radius.i - 1
+                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
+                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
+                }
             }
-            else -> clamp(numSegments_, 3, 10000) // Clamp to avoid drawing insanely tessellated shapes
+            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
         }
 
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
+        if (numSegments == 12)
+            pathArcToFast(center, radius - 0.5f, 0, 12)
+        else
+            pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         pathStroke(col, true, thickness)
     }
 
-    /** Draw a filled circle - use num_segments <= 0 to automatically calculate tessellation (preferred). Use AddNgonFilled() instead if you need a specific segment count. */
     fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 12) {
 
         if (col hasnt COL32_A_MASK || radius <= 0f) return
 
-        // Calculate number of segments if required
+        // Obtain segment count
         val numSegments = when {
             numSegments_ <= 0 -> {
-                val radiusInt = radius.i
-                if (radiusInt <= DrawListSharedData.numCircleSegmentCounts)
-                    _data.circleSegmentCounts[radiusInt-1] // Use cached value
-                else
-                    clamp(((glm.πf * 2f) / acos((radius - _data.circleSegmentMaxError) / radius)).i, 3, 10000)
+                // Automatic segment count
+                val radiusIdx = radius.i - 1
+                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
+                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
+                }
             }
-            else -> clamp(numSegments_, 3, 10000) // Clamp to avoid drawing insanely tessellated shapes
+            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
         }
 
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        pathArcTo(center, radius, 0f, aMax, numSegments - 1)
+        if (numSegments == 12)
+            pathArcToFast(center, radius, 0, 12)
+        else
+            pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
     }
 
-    /** Guaranteed to honor 'num_segments'
-     *  Draw an n-gon with a specific number of sides. Use AddCircle() instead if you want an actual circle and don't care about the exact side count. */
+    /** Guaranteed to honor 'num_segments' */
     fun addNgon(center: Vec2, radius: Float, col: Int, numSegments: Int, thickness: Float) {
         if (col hasnt COL32_A_MASK || numSegments <= 2)
             return
@@ -278,8 +287,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathStroke(col, true, thickness)
     }
 
-    /** Guaranteed to honor 'num_segments'
-     *  Draw a filled n-gon with a specific number of sides. Use AddCircleFilled() instead if you want an actual circle and don't care about the exact side count. */
+    /** Guaranteed to honor 'num_segments' */
     fun addNgonFilled(center: Vec2, radius: Float, col: Int, numSegments: Int) {
         if (col hasnt COL32_A_MASK || numSegments <= 2)
             return
