@@ -1,6 +1,7 @@
 package stb_
 
 import glm_.i
+import kool.lim
 import kool.pos
 import java.nio.ByteBuffer
 
@@ -40,10 +41,26 @@ class PtrByte(val array: ByteArray, var offset: Int = 0) {
     operator fun plus(offset: Int) = PtrByte(array, this.offset + offset)
 }
 
-fun ByteBuffer.sliceAt(offset: Int): ByteBuffer {
+class PtrFloat(val array: FloatArray, var offset: Int = 0) {
+
+    operator fun get(index: Int): Float = array[offset + index]
+    operator fun set(float: Float, index: Int) {
+        array[offset + index] = float
+    }
+
+    operator fun plus(offset: Int) = PtrFloat(array, this.offset + offset)
+
+    fun fill(float: Float, num: Int) {
+        for(i in 0 until num)
+            set(float, i)
+    }
+}
+
+fun ByteBuffer.sliceAt(offset: Int, size: Int = lim - offset): ByteBuffer {
     val backup = pos
     pos = offset
     return slice().also {
         pos = backup
+        it.lim = size
     }
 }

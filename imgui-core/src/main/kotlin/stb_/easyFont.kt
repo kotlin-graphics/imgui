@@ -88,6 +88,7 @@ import glm_.bool
 import glm_.c
 import glm_.i
 import glm_.vec2.Vec2
+import imgui.shr
 import kool.cap
 import kool.lim
 import kool.set
@@ -103,9 +104,9 @@ object easyFont {
         var offset = offset_
         for (i in 0 until numSegs) {
             val len = segs[i].i and 7
-            x += ((segs[i].i shr 3) and 1) // TODO glm Char::shr
+            x += ((segs[i] shr 3) and 1)
             if (len != 0 && offset + 64 <= vBuf.lim) {
-                val y0 = y + (segs[i].i shr 4) // TODO glm Char::shr
+                val y0 = y + (segs[i] shr 4)
                 for (j in 0..3) {
                     vBuf.putFloat(offset + 0, x + if (j == 1 || j == 2) if (vertical.bool) 1 else len else 0)
                     vBuf.putFloat(offset + 4, y0 + if (j >= 2) if (vertical.bool) len else 1 else 0)

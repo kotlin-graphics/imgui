@@ -155,7 +155,7 @@ package imgui.stb
 //        return 0
 //    }
 //
-//    /** The following structure is defined publically so you can declare one on the stack or as a global or etc, but you
+//    /** The following structure is defined publicly so you can declare one on the stack or as a global or etc, but you
 //     *  should treat it as opaque.  */
 //    class FontInfo {
 ////        void           * userdata;
