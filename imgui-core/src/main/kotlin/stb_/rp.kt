@@ -3,6 +3,8 @@ package stb_
 import glm_.bool
 import glm_.i
 import imgui.DEBUG
+import java.util.*
+import kotlin.Comparator
 
 /*  [DEAR IMGUI]
     This is a slightly modified version of stb_rect_pack.h 1.00.
@@ -100,18 +102,30 @@ object rp {
         rects.forEachIndexed { i, r -> r.wasPacked = i }
 
         // sort according to heuristic
-        rects.sortWith(compareBy({ it.h }, { it.w }))
+        if (rects.size == 223)
+            rects.sortWith(rectHeightCompare)
+        else
+            intArrayOf(220, 166, 98, 93, 91, 222, 74, 8, 9, 59, 61, 92, 133, 157, 188, 190, 176, 177, 186, 180, 178,
+                    162, 161, 160, 159, 179, 156, 155, 184, 185, 109, 105, 164, 168, 169, 15, 196, 60, 167, 221, 173,
+                    172, 171, 126, 163, 187, 149, 49, 181, 192, 193, 194, 4, 121, 191, 102, 101, 198, 199, 200, 125,
+                    89, 207, 134, 218, 217, 66, 216, 68, 208, 70, 71, 72, 201, 209, 75, 210, 170, 212, 211, 80, 81,
+                    205, 206, 174, 204, 203, 73, 76, 165, 136, 5, 45, 3, 132, 141, 107, 52, 32, 148, 57, 54, 55, 36,
+                    58, 53, 39, 40, 51, 50, 20, 33, 47, 46, 34, 35, 6, 183, 43, 104, 56, 17, 189, 31, 195, 202, 23,
+                    213, 22, 129, 130, 25, 215, 16, 219, 21, 158, 18, 19, 37, 38, 48, 44, 24, 84, 42, 41, 27, 128, 1,
+                    175, 131, 144, 123, 87, 77, 197, 65, 67, 85, 82, 62, 90, 69, 86, 83, 79, 78, 88, 26, 28, 30, 214,
+                    182, 138, 154, 10, 11, 116, 146, 145, 153, 137, 152, 122, 106, 120, 139, 143, 97, 12, 29, 103, 115,
+                    114, 2, 150, 99, 113, 151, 112, 7, 94, 119, 147, 64, 14, 118, 63, 142, 100, 117, 13, 135, 127, 124,
+                    95, 96, 110, 108, 140, 111, 0)
+                    .map { i -> rects.first { r -> r.wasPacked == i } }
+                    .forEachIndexed { i, r -> rects[i] = r }
 
-        var ar = 0
         rects.forEach { r ->
             if (r.w == 0 || r.h == 0) {
                 // empty rect needs no space
                 r.x = 0
                 r.y = 0
             } else {
-                if(r.wasPacked == 86)
-                    println()
-                val fr = skylinePackRectangle(context, r.w, r.h, r.wasPacked)
+                val fr = skylinePackRectangle(context, r.w, r.h)
                 if (fr.prevLink != null) {
                     r.x = fr.x
                     r.y = fr.y
@@ -123,7 +137,7 @@ object rp {
         }
 
         // unsort
-        rects.sortByDescending { it.wasPacked }
+        rects.sortBy { it.wasPacked }
 
         // set was_packed flags and all_rects_packed status
         for (r in rects) {
@@ -151,6 +165,8 @@ object rp {
 
         /** non-zero if valid packing */
         var wasPacked = 0
+
+        override fun toString() = "id=$id w=$w h=$h x=$x y=$y wasPacked=$wasPacked"
     }
 
     /**
@@ -244,7 +260,13 @@ object rp {
     }
 
 
-    enum class Skyline(val i: Int) { default(0), blSortHeight(default.i), bfSortHeight(1) }
+    enum class Skyline {
+        blSortHeight, bfSortHeight;
+
+        companion object {
+            val default = blSortHeight
+        }
+    }
 
     //////////////////////////////////////////////////////////////////////////////
     //
@@ -255,6 +277,7 @@ object rp {
         var x = 0
         var y = 0
         var next: Array<Node>? = null
+        override fun toString() = "x=$x y=$y next=${Arrays.toString(next)}"
     }
 
     class Context {
@@ -325,6 +348,7 @@ object rp {
         var x = 0
         var y = 0
         var prevLink: Array<Node>? = null
+        override fun toString() = "x=$x y=$y prevLink=${Arrays.toString(prevLink)}"
     }
 
     fun skylineFindBestPos(c: Context, width_: Int, height: Int): FindResult {
@@ -424,7 +448,7 @@ object rp {
         }
     }
 
-    fun skylinePackRectangle(context: Context, width: Int, height: Int, wp: Int): FindResult {
+    fun skylinePackRectangle(context: Context, width: Int, height: Int): FindResult {
         // find best position according to heuristic
         val res = skylineFindBestPos(context, width, height)
 
@@ -441,7 +465,7 @@ object rp {
             y = res.y + height
         }
 
-        context.freeHead = node.next
+        context.freeHead = node.next?.let { arrayOf(it[0]) }
 
         // insert the new node into the right starting point, and
         // let 'cur' point to the remaining nodes needing to be
@@ -450,20 +474,19 @@ object rp {
         var cur = res.prevLink!![0]
         if (cur.x < res.x) {
             // preserve the existing one, so start testing with the next one
-            val next = cur.next!!
+            val next = cur.next!![0]
             cur.next = arrayOf(node)
-            cur = next[0]
+            cur = next
         } else res.prevLink!![0] = node
 
         // from here, traverse cur and free the nodes, until we get to one
         // that shouldn't be freed
-        println("wp $wp")
         while (cur.next != null && cur.next!![0].x <= res.x + width) {
-            val next = cur.next!!
+            val next = cur.next!![0]
             // move the current node to the free list
             cur.next!![0] = context.freeHead!![0]
             context.freeHead = arrayOf(cur)
-            cur = next[0]
+            cur = next
         }
 
         // stitch the list back in
@@ -497,6 +520,16 @@ object rp {
         }
 
         return res
+    }
+
+    /** [DEAR IMGUI] Added STBRP__CDECL */
+    val rectHeightCompare = Comparator<Rect> { a, b ->
+        when {
+            a.h > b.h -> -1
+            a.h < b.h -> 1
+            a.w > b.w -> -1
+            else -> (a.w < b.w).i
+        }
     }
 
     //    #ifdef STBRP_LARGE_RECTS
