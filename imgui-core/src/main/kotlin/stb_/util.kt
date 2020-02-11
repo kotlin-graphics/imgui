@@ -31,6 +31,8 @@ class PString(val array: CharSequence, var offset: Int = 0) {
     }
 }
 
+fun PtrByte(size: Int) = PtrByte(ByteArray(size))
+
 class PtrByte(val array: ByteArray, var offset: Int = 0) {
 
     operator fun get(index: Int): Byte = array[offset + index]
@@ -40,6 +42,8 @@ class PtrByte(val array: ByteArray, var offset: Int = 0) {
 
     operator fun plus(offset: Int) = PtrByte(array, this.offset + offset)
 }
+
+fun PtrFloat(size: Int) = PtrFloat(FloatArray(size))
 
 class PtrFloat(val array: FloatArray, var offset: Int = 0) {
 
@@ -52,7 +56,7 @@ class PtrFloat(val array: FloatArray, var offset: Int = 0) {
     operator fun minus(offset: Int) = PtrFloat(array, this.offset - offset)
 
     fun fill(float: Float, num: Int) {
-        for(i in 0 until num)
+        for (i in 0 until num)
             set(i, float)
     }
 }

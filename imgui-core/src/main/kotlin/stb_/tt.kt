@@ -499,36 +499,24 @@ object tt {
 //#define STBTT_memset       memset
 //#endif
 //#endif
-//
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-//////
-//////   INTERFACE
-//////
-//////
-//
-//#ifndef __STB_INCLUDE_STB_TRUETYPE_H__
-//#define __STB_INCLUDE_STB_TRUETYPE_H__
-//
-//#ifdef STBTT_STATIC
-//#define STBTT_DEF static
-//#else
-//#define STBTT_DEF extern
-//#endif
-//
-//#ifdef __cplusplus
-//extern "C" {
-//    #endif
+
+    /////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
+    //
+    //   INTERFACE
+    //
+    //
+
 
     // -> Buf
 
-////////////////////////////////////////////////////////////////////////////////
-////
-//// TEXTURE BAKING API
-////
-//// If you use this API, you only have to call two functions ever.
-////
-//
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // TEXTURE BAKING API
+    //
+    // If you use this API, you only have to call two functions ever.
+    //
+
 //    typedef struct
 //            {
 //                unsigned short x0,y0,x1,y1; // coordinates of bbox in bitmap
@@ -1106,56 +1094,48 @@ object tt {
     /** encodingID for STBTT_PLATFORM_ID_MICROSOFT */
     enum class MS_EID(val i: Int) { SYMBOL(0), UNICODE_BMP(1), SHIFTJIS(2), UNICODE_FULL(10) }
 
-    //    enum { // encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes
-//        STBTT_MAC_EID_ROMAN        =0,   STBTT_MAC_EID_ARABIC       =4,
-//        STBTT_MAC_EID_JAPANESE     =1,   STBTT_MAC_EID_HEBREW       =5,
-//        STBTT_MAC_EID_CHINESE_TRAD =2,   STBTT_MAC_EID_GREEK        =6,
-//        STBTT_MAC_EID_KOREAN       =3,   STBTT_MAC_EID_RUSSIAN      =7
-//    };
-//
-//    enum { // languageID for STBTT_PLATFORM_ID_MICROSOFT; same as LCID...
-//        // problematic because there are e.g. 16 english LCIDs and 16 arabic LCIDs
-//        STBTT_MS_LANG_ENGLISH     =0x0409,   STBTT_MS_LANG_ITALIAN     =0x0410,
-//        STBTT_MS_LANG_CHINESE     =0x0804,   STBTT_MS_LANG_JAPANESE    =0x0411,
-//        STBTT_MS_LANG_DUTCH       =0x0413,   STBTT_MS_LANG_KOREAN      =0x0412,
-//        STBTT_MS_LANG_FRENCH      =0x040c,   STBTT_MS_LANG_RUSSIAN     =0x0419,
-//        STBTT_MS_LANG_GERMAN      =0x0407,   STBTT_MS_LANG_SPANISH     =0x0409,
-//        STBTT_MS_LANG_HEBREW      =0x040d,   STBTT_MS_LANG_SWEDISH     =0x041D
-//    };
-//
-//    enum { // languageID for STBTT_PLATFORM_ID_MAC
-//        STBTT_MAC_LANG_ENGLISH      =0 ,   STBTT_MAC_LANG_JAPANESE     =11,
-//        STBTT_MAC_LANG_ARABIC       =12,   STBTT_MAC_LANG_KOREAN       =23,
-//        STBTT_MAC_LANG_DUTCH        =4 ,   STBTT_MAC_LANG_RUSSIAN      =32,
-//        STBTT_MAC_LANG_FRENCH       =1 ,   STBTT_MAC_LANG_SPANISH      =6 ,
-//        STBTT_MAC_LANG_GERMAN       =2 ,   STBTT_MAC_LANG_SWEDISH      =5 ,
-//        STBTT_MAC_LANG_HEBREW       =10,   STBTT_MAC_LANG_CHINESE_SIMPLIFIED =33,
-//        STBTT_MAC_LANG_ITALIAN      =3 ,   STBTT_MAC_LANG_CHINESE_TRAD =19
-//    };
-//
-//    #ifdef __cplusplus
-//}
+    /** encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes */
+    enum class MAC_EID {
+        ROMAN, JAPANESE, CHINESE_TRAD, KOREAN, ARABIC, HEBREW, GREEK, RUSSIAN;
+
+        val i = ordinal
+    }
+
+    /** languageID for STBTT_PLATFORM_ID_MICROSOFT; same as LCID... */
+    enum class MS_LANG(val i: Int) {
+        // problematic because there are e.g. 16 english LCIDs and 16 arabic LCIDs
+        ENGLISH(0x0409), ITALIAN(0x0410), CHINESE(0x0804), JAPANESE(0x0411), DUTCH(0x0413), KOREAN(0x0412),
+        FRENCH(0x040c), RUSSIAN(0x0419), GERMAN(0x0407), SPANISH(0x0409), HEBREW(0x040d), SWEDISH(0x041D)
+    }
+
+    enum class MAC_LANG(val i: Int) { // languageID for STBTT_PLATFORM_ID_MAC
+        ENGLISH(0), JAPANESE(11),
+        ARABIC(12), KOREAN(23),
+        DUTCH(4), RUSSIAN(32),
+        FRENCH(1), SPANISH(6),
+        GERMAN(2), SWEDISH(5),
+        HEBREW(10), CHINESE_SIMPLIFIED(33),
+        ITALIAN(3), CHINESE_TRAD(19)
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////
+    ////
+    ////   IMPLEMENTATION
+    ////
+    ////
+    //
+    //#ifdef STB_TRUETYPE_IMPLEMENTATION
+    //
+    //#ifndef STBTT_MAX_OVERSAMPLE
+    var MAX_OVERSAMPLE = 8
 //#endif
-//
-//#endif // __STB_INCLUDE_STB_TRUETYPE_H__
-//
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
-//////
-//////   IMPLEMENTATION
-//////
-//////
-//
-//#ifdef STB_TRUETYPE_IMPLEMENTATION
-//
-//#ifndef STBTT_MAX_OVERSAMPLE
-    const val MAX_OVERSAMPLE = 8
-//#endif
-//
-//#if STBTT_MAX_OVERSAMPLE > 255
-//#error "STBTT_MAX_OVERSAMPLE cannot be > 255"
-//#endif
-//
+
+    init {
+        if (MAX_OVERSAMPLE > 255)
+            error("STBTT_MAX_OVERSAMPLE cannot be > 255")
+    }
+
 //typedef int stbtt__test_oversample_pow2[(STBTT_MAX_OVERSAMPLE & (STBTT_MAX_OVERSAMPLE-1)) == 0 ? 1 : -1];
 
     var RASTERIZER_VERSION = 2
@@ -1191,14 +1171,13 @@ object tt {
 
     fun tag(p: ByteBuffer, str: String) = tag4(p, str[0], str[1], str[2], str[3])
 
-    fun isFont(font: ByteBuffer): Boolean {
-        // check the version number
-        if (tag4(font, '1', NUL, NUL, NUL)) return true // TrueType 1
-        if (tag(font, "typ1")) return true // TrueType with type 1 font -- we don't support this!
-        if (tag(font, "OTTO")) return true // OpenType with CFF
-        if (tag4(font, NUL, 1.c, NUL, NUL)) return true // OpenType 1.0
-        if (tag(font, "true")) return true // Apple specification for TrueType fonts
-        return false
+    fun isFont(font: ByteBuffer): Boolean = when { // check the version number
+        tag4(font, '1', NUL, NUL, NUL) -> true // TrueType 1
+        tag(font, "typ1") -> true // TrueType with type 1 font -- we don't support this!
+        tag(font, "OTTO") -> true // OpenType with CFF
+        tag4(font, NUL, 1.c, NUL, NUL) -> true // OpenType 1.0
+        tag(font, "true") -> true // Apple specification for TrueType fonts
+        else -> false
     }
 
     // @OPTIMIZE: binary search
@@ -1231,21 +1210,19 @@ object tt {
         return -1
     }
 
-//static int stbtt_GetNumberOfFonts_internal(unsigned char *font_collection)
-//{
-//    // if it's just a font, there's only one valid font
-//    if (stbtt__isfont(font_collection))
-//        return 1;
-//
-//    // check if it's a TTC
-//    if (stbtt_tag(font_collection, "ttcf")) {
-//        // version 1?
-//        if (ttULONG(font_collection+4) == 0x00010000 || ttULONG(font_collection+4) == 0x00020000) {
-//            return ttLONG(font_collection+8);
-//        }
-//    }
-//    return 0;
-//}
+    /** ~stbtt_GetNumberOfFonts_internal */
+    fun getNumberOfFonts(fontCollection: ByteBuffer): Int {
+        // if it's just a font, there's only one valid font
+        if (isFont(fontCollection))
+            return 1
+
+        // check if it's a TTC
+        if (tag(fontCollection, "ttcf"))
+        // version 1?
+            if (fontCollection.getInt(4) == 0x00010000 || fontCollection.getInt(4) == 0x00020000)
+                return fontCollection.getInt(8)
+        return 0
+    }
 
     fun getSubrs(cff: Buf, fontDict: Buf): Buf {
         val privateLoc = IntArray(2)
@@ -2525,12 +2502,12 @@ object tt {
     }
 
     class HHeap(var head: Int = -1,
-                var firstFree2: ActiveEdge2? = null,
+                var firstFree2: ActiveEdge? = null,
                 var numRemainingInHeadChunk: Int = 0) {
-        lateinit var array: Array<ActiveEdge2>
+        lateinit var array: Array<ActiveEdge>
     }
 
-    fun hheapAlloc(hh: HHeap): ActiveEdge2 =
+    fun hheapAlloc(hh: HHeap): ActiveEdge =
             if (hh.firstFree2 != null) {
                 val p = hh.firstFree2!!
                 hh.firstFree2 = p.next
@@ -2538,7 +2515,7 @@ object tt {
             } else {
                 if (hh.numRemainingInHeadChunk == 0) {
                     val count = 2000
-                    val c = Array(count) { ActiveEdge2() }
+                    val c = Array(count) { ActiveEdge() }
 //                c.next = hh.head
                     hh.head = 0
                     hh.array = c
@@ -2548,7 +2525,7 @@ object tt {
                 hh.array[hh.head + hh.numRemainingInHeadChunk]
             }
 
-    fun hheapFree(hh: HHeap, p: ActiveEdge2) {
+    fun hheapFree(hh: HHeap, p: ActiveEdge) {
         p.next = hh.firstFree2
         hh.firstFree2 = p
     }
@@ -2573,24 +2550,21 @@ object tt {
     }
 
 
-    /** #if STBTT_RASTERIZER_VERSION==1 */
-    class ActiveEdge1 {
-        var next: ActiveEdge1? = null
+    class ActiveEdge {
+        var next: ActiveEdge? = null
+        var ey = 0f
+
+        // #if STBTT_RASTERIZER_VERSION==1
         var x = 0
         var dx = 0
-        var ey = 0f
-        var direction = 0
-    }
 
-    /** #elif STBTT_RASTERIZER_VERSION==2 */
-    class ActiveEdge2 {
-        var next: ActiveEdge2? = null
+        //        var direction = 0
+        // #elif STBTT_RASTERIZER_VERSION==2
         var fx = 0f
         var fdx = 0f
         var fdy = 0f
         var direction = 0f
         var sy = 0f
-        var ey = 0f
     }
 
     //#if STBTT_RASTERIZER_VERSION == 1
@@ -2598,29 +2572,29 @@ object tt {
     const val FIX = 1 shl FIXSHIFT
     const val FIXMASK = FIX - 1
 
-    //static stbtt__active_edge *stbtt__new_active(stbtt__hheap *hh, stbtt__edge *e, int off_x, float start_point, void *userdata)
-//{
-//    stbtt__active_edge *z = (stbtt__active_edge *) stbtt__hheap_alloc(hh, sizeof(*z), userdata);
-//    float dxdy = (e->x1 - e->x0) / (e->y1 - e->y0);
-//    STBTT_assert(z != NULL);
-//    if (!z) return z;
-//
-//    // round dx down to avoid overshooting
-//    if (dxdy < 0)
-//        z->dx = -STBTT_ifloor(STBTT_FIX * -dxdy);
-//    else
-//    z->dx = STBTT_ifloor(STBTT_FIX * dxdy);
-//
-//    z->x = STBTT_ifloor(STBTT_FIX * e->x0 + z->dx * (start_point - e->y0)); // use z->dx so when we offset later it's by the same amount
-//    z->x -= off_x * STBTT_FIX;
-//
-//    z->ey = e->y1;
-//    z->next = 0;
-//    z->direction = e->invert ? 1 : -1;
-//    return z;
-//}
-//#elif STBTT_RASTERIZER_VERSION == 2
-    fun newActive(hh: HHeap, e: Edge, offX: Int, startPoint: Float): ActiveEdge2 {
+    fun newActive1(hh: HHeap, e: Edge, offX: Int, startPoint: Float): ActiveEdge {
+        val z = hheapAlloc(hh)
+        val dxdy = (e.x1 - e.x0) / (e.y1 - e.y0)
+//        STBTT_assert(z != NULL)
+//        if (!z) return z
+
+        // round dx down to avoid overshooting
+        if (dxdy < 0)
+            z.dx = -floor(FIX * -dxdy).i
+        else
+            z.dx = floor(FIX * dxdy).i
+
+        z.x = floor(FIX * e.x0 + z.dx * (startPoint - e.y0)).i // use z->dx so when we offset later it's by the same amount
+        z.x -= offX * FIX
+
+        z.ey = e.y1
+        z.next = null
+        z.direction = (if (e.invert) 1 else -1).bitsAsFloat
+        return z
+    }
+
+    //#elif STBTT_RASTERIZER_VERSION == 2
+    fun newActive2(hh: HHeap, e: Edge, offX: Int, startPoint: Float): ActiveEdge {
         val z = hheapAlloc(hh)
         val dxdy = (e.x1 - e.x0) / (e.y1 - e.y0)
         //STBTT_assert(e->y0 <= start_point);
@@ -2643,18 +2617,18 @@ object tt {
     /** note: this routine clips fills that extend off the edges... ideally this
      *  wouldn't happen, but it could happen if the truetype glyph bounding boxes
      *  are wrong, or if the user supplies a too-small bitmap */
-    fun fillActiveEdges1(scanline: ByteBuffer, len: Int, e_: ActiveEdge1, maxWeight: Int) {
+    fun fillActiveEdges1(scanline: PtrByte, len: Int, e_: ActiveEdge, maxWeight: Int) {
         // non-zero winding fill
         var x0 = 0
         var w = 0
 
-        var e: ActiveEdge1? = e_
+        var e: ActiveEdge? = e_
         while (e != null) {
             if (w == 0) {
                 // if we're currently at zero, we need to record the edge start point
-                x0 = e.x; w += e.direction
+                x0 = e.x; w += e.direction.asIntBits
             } else {
-                val x1 = e.x; w += e.direction
+                val x1 = e.x; w += e.direction.asIntBits
                 // if we went to zero, we need to draw
                 if (w == 0) {
                     var i = x0 shr FIXSHIFT
@@ -2663,23 +2637,20 @@ object tt {
                     if (i < len && j >= 0) {
                         if (i == j) {
                             // x0,x1 are the same pixel, so compute combined coverage
-                            scanline[i] = scanline[i] + ((x1 - x0) * maxWeight shr FIXSHIFT)
+                            scanline[i] = (scanline[i] + ((x1 - x0) * maxWeight shr FIXSHIFT)).b
                         } else {
                             if (i >= 0) // add antialiasing for x0
-                                scanline[i] = scanline[i] + (((FIX - (x0 and FIXMASK)) * maxWeight) shr FIXSHIFT)
+                                scanline[i] = (scanline[i] + (((FIX - (x0 and FIXMASK)) * maxWeight) shr FIXSHIFT)).b
                             else
                                 i = -1 // clip
 
                             if (j < len) // add antialiasing for x1
-                                scanline[j] = scanline[j] + (((x1 and FIXMASK) * maxWeight) shr FIXSHIFT)
+                                scanline[j] = (scanline[j] + (((x1 and FIXMASK) * maxWeight) shr FIXSHIFT)).b
                             else
                                 j = len // clip
 
-                            ++i
-                            while (i < j) { // fill pixels between x0 and x1
-                                scanline[i] = scanline[i] + maxWeight
-                                ++i
-                            }
+                            while (++i < j) // fill pixels between x0 and x1
+                                scanline[i] = (scanline[i] + maxWeight).b
                         }
                     }
                 }
@@ -2689,112 +2660,111 @@ object tt {
         }
     }
 
-//    fun rasterizeSortedEdges1(result: Bitmap, stbtt__edge *e, int n, int vsubsample, int off_x, int off_y, void *userdata)
-//    {
-//        stbtt__hheap hh = { 0, 0, 0 }
-//        stbtt__active_edge * active = NULL
-//        int y, j = 0
-//        int max_weight =(255 / vsubsample)  // weight per vertical scanline
-//        int s // vertical subsample index
-//                unsigned char scanline_data[512], *scanline
-//
-//        if (result->w > 512)
-//        scanline = (unsigned char *) STBTT_malloc (result->w, userdata)
-//        else
-//        scanline = scanline_data
-//
-//        y = off_y * vsubsample
-//        e[n].y0 = (off_y + result->h) * (float) vsubsample+1
-//
-//        while (j < result->h) {
+    /** [JVM] signature different for different STBTT_RASTERIZER_VERSION, no need to mentioning version in name */
+    fun rasterizeSortedEdges(result: Bitmap, edges: Array<Edge>, n: Int, vSubsample: Int, offX: Int, offY: Int) {
+        val hh = HHeap()
+        var active: ActiveEdge? = null
+        var j = 0
+        val maxWeight = 255 / vSubsample  // weight per vertical scanline
+
+        val scanline = PtrByte(if (result.w > 512) result.w else 512)
+
+        var y = offY * vSubsample
+        var e = 0
+        edges[e + n].y0 = (offY + result.h) * vSubsample.f + 1
+
+        while (j < result.h) {
 //        STBTT_memset(scanline, 0, result->w)
-//        for (s= 0; s < vsubsample; ++s) {
-//        // find center of pixel for this scanline
-//        float scan_y = y +0.5f
-//        stbtt__active_edge * * step = &active
-//
-//        // update all active edges;
-//        // remove all active edges that terminate before the center of this scanline
-//        while ( * step) {
-//        stbtt__active_edge * z = * step
-//                if (z->ey <= scan_y) {
-//        *step = z->next // delete from list
-//        STBTT_assert(z->direction)
-//        z->direction = 0
-//        stbtt__hheap_free(& hh, z)
-//    } else { z ->
-//        x += z->dx // advance to position for current scanline
-//        step = &(( * step)->next) // advance through list
-//    }
-//    }
-//
-//        // resort the list if needed
-//        for (;;) {
-//            int changed =0
-//            step = & active
-//                    while ( * step && ( * step)->next) {
-//                if (( * step)->x > (*step)->next->x) {
-//                stbtt__active_edge * t = * step
-//                        stbtt__active_edge * q = t->next
-//
-//                t->next = q->next
-//                q->next = t
-//                *step = q
-//                changed = 1
-//            }
-//                step = &(*step)->next
-//            }
-//            if (!changed) break
-//        }
-//
-//        // insert all edges that start before the center of this scanline -- omit ones that also end on this scanline
-//        while (e->y0 <= scan_y) {
-//        if (e->y1 > scan_y) {
-//        stbtt__active_edge * z = stbtt__new_active(& hh, e, off_x, scan_y, userdata)
-//        if (z != NULL) {
-//            // find insertion point
-//            if (active == NULL)
-//                active = z
-//            else if (z->x < active->x) {
-//                // insert at front
-//                z ->
-//                next = active
-//                active = z
-//            } else {
-//                // find thing to insert AFTER
-//                stbtt__active_edge * p = active
-//                while (p->next && p->next->x < z->x)
-//                p = p->next
-//                // at this point, p->next->x is NOT < z->x
-//                z->next = p->next
-//                p->next = z
-//            }
-//        }
-//    }
-//        ++e
-//    }
-//
-//        // now process all active edges in XOR fashion
-//        if (active)
-//            stbtt__fill_active_edges(scanline, result->w, active, max_weight)
-//
-//        ++y
-//    }
-//        STBTT_memcpy(result->pixels+j * result->stride, scanline, result->w)
-//        ++j
-//    }
+            for (s in 0 until vSubsample) { // vertical subsample index
+                // find center of pixel for this scanline
+                val scanY = y + 0.5f
+                var step = active
+                var prev: ActiveEdge? = null
+
+                // update all active edges;
+                // remove all active edges that terminate before the center of this scanline
+                while (step != null) {
+                    val z = step
+                    if (z.ey <= scanY) {
+                        step = z.next // delete from list
+                        prev?.next = step
+                        if (z === active) active = active.next
+                        assert(z.direction.asIntBits != 0)
+                        z.direction = 0.bitsAsFloat
+                        hheapFree(hh, z)
+                    } else {
+                        z.x += z.dx // advance to position for current scanline
+                        prev = step
+                        step = step.next // advance through list
+                    }
+                }
+
+                // resort the list if needed
+                while (true) {
+                    var changed = false
+                    step = active
+                    while (step?.next != null) {
+                        if (step.x > step.next!!.x) {
+                            val t = step
+                            val q = t.next!!
+
+                            t.next = q.next
+                            q.next = t
+                            step = q
+                            changed = true
+                        }
+                        prev = step
+                        step = step.next
+                    }
+                    if (!changed) break
+                }
+
+                // insert all edges that start before the center of this scanline -- omit ones that also end on this scanline
+                while (edges[e].y0 <= scanY) {
+                    if (edges[e].y1 > scanY) {
+                        val z = newActive1(hh, edges[e], offX, scanY)
+                        // find insertion point
+                        when {
+                            active == null -> active = z
+                            z.x < active.x -> {
+                                // insert at front
+                                z.next = active
+                                active = z
+                            }
+                            else -> {
+                                // find thing to insert AFTER
+                                var p: ActiveEdge = active
+                                while (p.next != null && p.next!!.x < z.x)
+                                    p = p.next!!
+                                // at this point, p->next->x is NOT < z->x
+                                z.next = p.next
+                                p.next = z
+                            }
+                        }
+                    }
+                    ++e
+                }
+
+                // now process all active edges in XOR fashion
+                active?.let { fillActiveEdges1(scanline, result.w, it, maxWeight) }
+
+                ++y
+            }
+//            STBTT_memcpy(result->pixels+j * result->stride, scanline, result->w)
+            ++j
+        }
 //
 //        stbtt__hheap_cleanup(& hh, userdata)
 //
-//        if (scanline != scanline_data)
+//        if (scanline != scanlineData)
 //            STBTT_free(scanline, userdata)
-//    }
+    }
 
     //#elif STBTT_RASTERIZER_VERSION == 2
 
     /** the edge passed in here does not cross the vertical line at x or the vertical line at x+1
      *  (i.e. it has already been clipped to those) */
-    fun handleClippedEdge2(scanline: PtrFloat, x: Int, e: ActiveEdge2, x0_: Float, y0_: Float, x1_: Float, y1_: Float) {
+    fun handleClippedEdge2(scanline: PtrFloat, x: Int, e: ActiveEdge, x0_: Float, y0_: Float, x1_: Float, y1_: Float) {
 
         var x0 = x0_
         var y0 = y0_
@@ -2833,10 +2803,10 @@ object tt {
         }
     }
 
-    fun fillActiveEdgesNew(scanline: PtrFloat, scanlineFill: PtrFloat, len: Int, e_: ActiveEdge2, yTop: Float) {
+    fun fillActiveEdgesNew(scanline: PtrFloat, scanlineFill: PtrFloat, len: Int, e_: ActiveEdge, yTop: Float) {
 
         val yBottom = yTop + 1
-        var e: ActiveEdge2? = e_
+        var e: ActiveEdge? = e_
         while (e != null) {
             // brute force every pixel
 
@@ -3001,16 +2971,13 @@ object tt {
         }
     }
 
-    /** directly AA rasterize edges w/o supersampling */
-    fun rasterizeSortedEdges2(result: Bitmap, edges: Array<Edge>, n: Int, offX: Int, offY: Int) {
+    /** directly AA rasterize edges w/o supersampling
+     *  [JVM] signature different for different STBTT_RASTERIZER_VERSION, no need to mentioning version in name */
+    fun rasterizeSortedEdges(result: Bitmap, edges: Array<Edge>, n: Int, offX: Int, offY: Int) {
         val hh = HHeap()
-        var active: ActiveEdge2? = null
-        val scanlineData = FloatArray(129)//, *scanline, *scanline2
+        var active: ActiveEdge? = null
 
-        val scanline = PtrFloat(when {
-            result.w > 64 -> FloatArray(result.w * 2 + 1)
-            else -> scanlineData
-        })
+        val scanline = PtrFloat(if (result.w > 64) result.w * 2 + 1 else 129)
 
         val scanline2 = scanline + result.w
 
@@ -3024,7 +2991,7 @@ object tt {
             val scanYTop = y + 0f
             val scanYBottom = y + 1f
             var step = active
-            var prev: ActiveEdge2? = null
+            var prev: ActiveEdge? = null
 
             scanline.fill(0f, result.w)
             scanline2.fill(0f, result.w + 1)
@@ -3049,7 +3016,7 @@ object tt {
             // insert all edges that start before the bottom of this scanline
             while (edges[e].y0 <= scanYBottom) {
                 if (edges[e].y0 != edges[e].y1) {
-                    val z = newActive(hh, edges[e], offX, scanYTop)
+                    val z = newActive2(hh, edges[e], offX, scanYTop)
 //                    if (z != NULL) {
                     if (j == 0 && offY != 0)
                         if (z.ey < scanYTop)
@@ -3233,7 +3200,7 @@ object tt {
         sortEdges(e, n)
 
         // now, traverse the scanlines and find the intersections on each scanline, use xor winding rule
-        rasterizeSortedEdges2(result, e, n, offX, offY)
+        rasterizeSortedEdges(result, e, n, offX, offY)
     }
 
     fun addPoint(points: Array<Vec2>?, n: Int, x: Float, y: Float) {
@@ -3593,7 +3560,7 @@ object tt {
 //    spc->skip_missing = skip;
 //}
 
-    const val OVER_MASK = MAX_OVERSAMPLE - 1
+    var OVER_MASK = MAX_OVERSAMPLE - 1
 
     fun hPrefilter(pixels: ByteBuffer, w: Int, h: Int, strideInBytes: Int, kernelWidth: Int) {
         val buffer = ByteBuffer.allocate(MAX_OVERSAMPLE)
