@@ -9,6 +9,7 @@ import glm_.vec2.operators.div
 import glm_.vec2.operators.times
 import glm_.vec4.Vec4i
 import imgui.NUL
+import kool.BYTES
 import kool.lib.fill
 import kool.set
 import unsigned.toUInt
@@ -543,13 +544,24 @@ object tt {
 //// if return is negative, returns the negative of the number of characters that fit
 //// if return is 0, no characters fit and no rows were used
 //// This uses a very crappy packing.
-//
-//    typedef struct
-//            {
-//                float x0,y0,s0,t0; // top-left
-//                float x1,y1,s1,t1; // bottom-right
-//            } stbtt_aligned_quad;
-//
+
+    class AlignedQuad {
+
+        // top-left
+
+        var x0 = 0f
+        var y0 = 0f
+        var s0 = 0f
+        var t0 = 0f
+
+        // bottom-right
+
+        var x1 = 0f
+        var y1 = 0f
+        var s1 = 0f
+        var t1 = 0f
+    }
+
 //    STBTT_DEF void stbtt_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int ph,  // same data as above
 //            int char_index,             // character to display
 //            float *xpos, float *ypos,   // pointers to current position in screen pixel space
@@ -2437,14 +2449,9 @@ object tt {
 //{
 //    stbtt_GetGlyphHMetrics(info, stbtt_FindGlyphIndex(info,codepoint), advanceWidth, leftSideBearing);
 //}
-//
-//STBTT_DEF void stbtt_GetFontVMetrics(const stbtt_fontinfo *info, int *ascent, int *descent, int *lineGap)
-//{
-//    if (ascent ) *ascent  = ttSHORT(info->data+info->hhea + 4);
-//    if (descent) *descent = ttSHORT(info->data+info->hhea + 6);
-//    if (lineGap) *lineGap = ttSHORT(info->data+info->hhea + 8);
-//}
-//
+
+    fun getFontVMetrics(info: FontInfo) = IntArray(3) { info.data.getShort(info.hhea + 4 + Short.BYTES * it).i }
+
 //STBTT_DEF int  stbtt_GetFontVMetricsOS2(const stbtt_fontinfo *info, int *typoAscent, int *typoDescent, int *typoLineGap)
 //{
 //    int tab = stbtt__find_table(info->data, info->fontstart, "OS/2");
@@ -2523,28 +2530,26 @@ object tt {
         lateinit var array: Array<ActiveEdge2>
     }
 
-    fun hheapAlloc(hh: HHeap): ActiveEdge2 {
-        if (hh.firstFree2 != null) {
-//            void * p = hh->first_free;
-//            hh->first_free = * (void **) p;
-//            return p;
-            return hh.firstFree2!!
-        } else {
-            if (hh.numRemainingInHeadChunk == 0) {
-                val count = 2000
-                val c = Array(count) { ActiveEdge2() }
+    fun hheapAlloc(hh: HHeap): ActiveEdge2 =
+            if (hh.firstFree2 != null) {
+                val p = hh.firstFree2!!
+                hh.firstFree2 = p.next
+                p
+            } else {
+                if (hh.numRemainingInHeadChunk == 0) {
+                    val count = 2000
+                    val c = Array(count) { ActiveEdge2() }
 //                c.next = hh.head
-                hh.head = 0
-                hh.array = c
-                hh.numRemainingInHeadChunk = count
+                    hh.head = 0
+                    hh.array = c
+                    hh.numRemainingInHeadChunk = count
+                }
+                --hh.numRemainingInHeadChunk
+                hh.array[hh.head + hh.numRemainingInHeadChunk]
             }
-            --hh.numRemainingInHeadChunk
-            return hh.array[hh.head + hh.numRemainingInHeadChunk]
-        }
-    }
 
     fun hheapFree(hh: HHeap, p: ActiveEdge2) {
-        p.next = null
+        p.next = hh.firstFree2
         hh.firstFree2 = p
     }
 
@@ -3019,7 +3024,7 @@ object tt {
             val scanYTop = y + 0f
             val scanYBottom = y + 1f
             var step = active
-            lateinit var prev: ActiveEdge2
+            var prev: ActiveEdge2? = null
 
             scanline.fill(0f, result.w)
             scanline2.fill(0f, result.w + 1)
@@ -3030,7 +3035,8 @@ object tt {
                 val z = step
                 if (z.ey <= scanYTop) {
                     step = z.next // delete from list
-                    prev.next = step
+                    prev?.next = step
+                    if (z === active) active = active.next
                     assert(z.direction != 0f)
                     z.direction = 0f
                     hheapFree(hh, z)
@@ -3840,34 +3846,33 @@ object tt {
 //    *descent = (float) i_descent * scale;
 //    *lineGap = (float) i_lineGap * scale;
 //}
-//
-//STBTT_DEF void stbtt_GetPackedQuad(const stbtt_packedchar *chardata, int pw, int ph, int char_index, float *xpos, float *ypos, stbtt_aligned_quad *q, int align_to_integer)
-//{
-//    float ipw = 1.0f / pw, iph = 1.0f / ph;
-//    const stbtt_packedchar *b = chardata + char_index;
-//
-//    if (align_to_integer) {
-//        float x = (float) STBTT_ifloor((*xpos + b->xoff) + 0.5f);
-//        float y = (float) STBTT_ifloor((*ypos + b->yoff) + 0.5f);
-//        q->x0 = x;
-//        q->y0 = y;
-//        q->x1 = x + b->xoff2 - b->xoff;
-//        q->y1 = y + b->yoff2 - b->yoff;
-//    } else {
-//        q->x0 = *xpos + b->xoff;
-//        q->y0 = *ypos + b->yoff;
-//        q->x1 = *xpos + b->xoff2;
-//        q->y1 = *ypos + b->yoff2;
-//    }
-//
-//    q->s0 = b->x0 * ipw;
-//    q->t0 = b->y0 * iph;
-//    q->s1 = b->x1 * ipw;
-//    q->t1 = b->y1 * iph;
-//
-//    *xpos += b->xadvance;
-//}
-//
+
+    fun getPackedQuad(charData: Array<PackedChar>, p: Vec2i, charIndex: Int, pos: Vec2 = Vec2(), q: AlignedQuad, alignToInteger: Boolean = false) {
+        val ip = 1f / Vec2(p)
+        val b = charData[charIndex]
+
+        if (alignToInteger) {
+            val x = floor((pos.x + b.xOff) + 0.5f)
+            val y = floor((pos.y + b.yOff) + 0.5f)
+            q.x0 = x
+            q.y0 = y
+            q.x1 = x + b.xOff2 - b.xOff
+            q.y1 = y + b.yOff2 - b.yOff
+        } else {
+            q.x0 = pos.x + b.xOff
+            q.y0 = pos.y + b.yOff
+            q.x1 = pos.x + b.xOff2
+            q.y1 = pos.y + b.yOff2
+        }
+
+        q.s0 = b.x0 * ip.x
+        q.t0 = b.y0 * ip.y
+        q.s1 = b.x1 * ip.x
+        q.t1 = b.y1 * ip.y
+
+        pos.x += b.xAdvance
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
 ////
 //// sdf computation

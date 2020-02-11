@@ -12,12 +12,10 @@ import imgui.TextureID
 import imgui.internal.fileLoadToMemory
 import imgui.internal.round
 import imgui.internal.upperPowerOfTwo
-import imgui.stb.*
+import imgui.stb.stbClear
 import imgui.wo
 import kool.*
 import kool.lib.isNotEmpty
-import org.lwjgl.stb.STBRPRect
-import org.lwjgl.stb.STBTTAlignedQuad
 import stb_.rp
 import stb_.tt
 import uno.convert.decode85
@@ -148,14 +146,15 @@ class FontAtlas {
      *  to build the texture and fonts. */
     fun clearInputData() {
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
-        configData.filter { it.fontData.isNotEmpty() && it.fontDataOwnedByAtlas }.forEach {
-            it.fontData = charArrayOf()
-            it.fontDataBuffer.free()
-        }
+        configData
+                .filter { it.fontData.isNotEmpty() && it.fontDataOwnedByAtlas }
+                .forEach { it.fontData = charArrayOf() }
 
         // When clearing this we lose access to  the font name and other information used to build the font.
         fonts.filter {
-            if (it.configData.isNotEmpty()) configData.contains(it.configData[0]) else false
+            if (it.configData.isNotEmpty())
+                it.configData[0] in configData
+            else false
         }.forEach {
             it.configData.clear()
             it.configDataCount = 0
@@ -752,20 +751,18 @@ class FontAtlas {
                 val multiplyTable = buildMultiplyCalcLookupTable(cfg.rasterizerMultiply)
                 for (glyphIdx in 0 until srcTmp.glyphsCount) {
                     val r = srcTmp.rects[glyphIdx]
-//                    if (r.wasPacked)
-//                        buildMultiplyRectAlpha8(multiplyTable, texPixelsAlpha8!!, r, texSize.x)
+                    if (r.wasPacked != 0)
+                        buildMultiplyRectAlpha8(multiplyTable, texPixelsAlpha8!!, r, texSize.x)
                 }
             }
-//            srcTmp.rects = NULL // JVM dont free, it's a dummy container custom offset'ed
+//            srcTmp.rects = NULL // [JVM] doesnt need to free
         }
 
-        // End packing
+        // End packing [JVM] doesnt need to free
 //        STBTruetype.stbtt_PackEnd(spc)
-//        spc.free()
 //        bufRects.free()
 
         // 9. Setup ImFont and glyphs for runtime
-        val q = STBTTAlignedQuad.calloc()
         for (srcIdx in srcTmpArray.indices) {
             val srcTmp = srcTmpArray[srcIdx]
             if (srcTmp.glyphsCount == 0)
@@ -774,8 +771,8 @@ class FontAtlas {
             val cfg = configData[srcIdx]
             val dstFont = cfg.dstFont!! // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
 
-            val fontScale = 1f//STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
-            val (unscaledAscent, unscaledDescent, _) = IntArray(4)//stbtt_GetFontVMetrics(srcTmp.fontInfo)
+            val fontScale = tt.scaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
+            val (unscaledAscent, unscaledDescent, _) = tt.getFontVMetrics(srcTmp.fontInfo)
 
             val ascent = floor(unscaledAscent * fontScale + if (unscaledAscent > 0f) +1 else -1)
             val descent = floor(unscaledDescent * fontScale + if (unscaledDescent > 0f) +1 else -1)
@@ -796,15 +793,14 @@ class FontAtlas {
                     }
 
                 // Register glyph
-//                stbtt_GetPackedQuad(srcTmp.packedChars, texSize, glyphIdx, q)
+                val q = tt.AlignedQuad()
+                tt.getPackedQuad(srcTmp.packedChars, texSize, glyphIdx, q = q)
                 dstFont.addGlyph(codepoint, q.x0 + charOffX, q.y0 + fontOff.y, q.x1 + charOffX, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, charAdvanceXmod)
             }
         }
-//        bufPackedchars.free()
 
         // Cleanup temporary (ImVector doesn't honor destructor)
 //        srcTmpArray.forEach { it.free() }
-        q.free()
 
         buildFinish()
         return true
@@ -923,7 +919,7 @@ class FontAtlas {
         (if (value > 255) 255 else (value and 0xFF)).c
     }
 
-    fun buildMultiplyRectAlpha8(table: CharArray, pixels: ByteBuffer, rect: STBRPRect, stride: Int) {
+    fun buildMultiplyRectAlpha8(table: CharArray, pixels: ByteBuffer, rect: rp.Rect, stride: Int) {
         var ptr = rect.x + rect.y * stride
         var j = rect.h
         while (j > 0) {
