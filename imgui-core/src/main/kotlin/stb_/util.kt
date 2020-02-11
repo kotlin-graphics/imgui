@@ -8,7 +8,7 @@ import java.nio.ByteBuffer
 class PtrChar(val array: CharArray, var offset: Int = 0) {
 
     operator fun get(index: Int): Char = array[offset + index]
-    operator fun set(char: Char, index: Int) {
+    operator fun set(index: Int, char: Char) {
         array[offset + index] = char
     }
 
@@ -34,7 +34,7 @@ class PString(val array: CharSequence, var offset: Int = 0) {
 class PtrByte(val array: ByteArray, var offset: Int = 0) {
 
     operator fun get(index: Int): Byte = array[offset + index]
-    operator fun set(byte: Byte, index: Int) {
+    operator fun set(index: Int, byte: Byte) {
         array[offset + index] = byte
     }
 
@@ -44,15 +44,16 @@ class PtrByte(val array: ByteArray, var offset: Int = 0) {
 class PtrFloat(val array: FloatArray, var offset: Int = 0) {
 
     operator fun get(index: Int): Float = array[offset + index]
-    operator fun set(float: Float, index: Int) {
+    operator fun set(index: Int, float: Float) {
         array[offset + index] = float
     }
 
     operator fun plus(offset: Int) = PtrFloat(array, this.offset + offset)
+    operator fun minus(offset: Int) = PtrFloat(array, this.offset - offset)
 
     fun fill(float: Float, num: Int) {
         for(i in 0 until num)
-            set(float, i)
+            set(i, float)
     }
 }
 

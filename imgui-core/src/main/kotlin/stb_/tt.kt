@@ -2,10 +2,7 @@ package stb_
 
 import gli_.has
 import gli_.hasnt
-import glm_.b
-import glm_.c
-import glm_.f
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
@@ -885,6 +882,8 @@ object tt {
             this.cX = cX
             this.cY = cY
         }
+
+        override fun toString() = "x=$x y=$y cx=$cX cy=$cY cx1=$cX1 cy1=$cY1 type=$type"
     }
 
 //    STBTT_DEF int stbtt_IsGlyphEmpty(const stbtt_fontinfo *info, int glyph_index);
@@ -1095,7 +1094,7 @@ object tt {
     /** encodingID for STBTT_PLATFORM_ID_MICROSOFT */
     enum class MS_EID(val i: Int) { SYMBOL(0), UNICODE_BMP(1), SHIFTJIS(2), UNICODE_FULL(10) }
 
-//    enum { // encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes
+    //    enum { // encodingID for STBTT_PLATFORM_ID_MAC; same as Script Manager codes
 //        STBTT_MAC_EID_ROMAN        =0,   STBTT_MAC_EID_ARABIC       =4,
 //        STBTT_MAC_EID_JAPANESE     =1,   STBTT_MAC_EID_HEBREW       =5,
 //        STBTT_MAC_EID_CHINESE_TRAD =2,   STBTT_MAC_EID_GREEK        =6,
@@ -1138,7 +1137,7 @@ object tt {
 //#ifdef STB_TRUETYPE_IMPLEMENTATION
 //
 //#ifndef STBTT_MAX_OVERSAMPLE
-//#define STBTT_MAX_OVERSAMPLE   8
+    const val MAX_OVERSAMPLE = 8
 //#endif
 //
 //#if STBTT_MAX_OVERSAMPLE > 255
@@ -1572,8 +1571,8 @@ object tt {
                         val dx = points.get().toUInt()
                         x += if (flags has 16) dx else -dx // ???
                     } else if (flags hasnt 16)
-                        x += points.get() * 256 + points.get()
-                    vertices[off + i].x = x
+                        x += points.short.toUInt()
+                    vertices[off + i].x = x.s.i // [JVM] Short passage to have, eg 65536 changed to 0
                 }
 
                 // now load y coordinates
@@ -1584,8 +1583,8 @@ object tt {
                         val dy = points.get().toUInt()
                         y += if (flags has 32) dy else -dy // ???
                     } else if (flags hasnt 32)
-                        y += (points.get() * 256 + points.get())
-                    vertices[off + i].y = y
+                        y += points.short.toUInt()
+                    vertices[off + i].y = y.s.i // [JVM] Short passage to have, eg 65536 changed to 0
                 }
 
                 // now convert them to our format
@@ -2518,37 +2517,37 @@ object tt {
         var next: HHeapChunk? = null
     }
 
-    class HHeap(var head: HHeapChunk? = null,
-//        void   *first_free;
-                var numRemainingInHeadChunk: Int = 0)
+    class HHeap(var head: Int = -1,
+                var firstFree2: ActiveEdge2? = null,
+                var numRemainingInHeadChunk: Int = 0) {
+        lateinit var array: Array<ActiveEdge2>
+    }
 
-//static void *stbtt__hheap_alloc(stbtt__hheap *hh, size_t size, void *userdata)
-//{
-//    if (hh->first_free) {
-//    void *p = hh->first_free;
-//    hh->first_free = * (void **) p;
-//    return p;
-//} else {
-//    if (hh->num_remaining_in_head_chunk == 0) {
-//    int count = (size < 32 ? 2000 : size < 128 ? 800 : 100);
-//    stbtt__hheap_chunk *c = (stbtt__hheap_chunk *) STBTT_malloc(sizeof(stbtt__hheap_chunk) + size * count, userdata);
-//    if (c == NULL)
-//        return NULL;
-//    c->next = hh->head;
-//    hh->head = c;
-//    hh->num_remaining_in_head_chunk = count;
-//}
-//    --hh->num_remaining_in_head_chunk;
-//    return (char *) (hh->head) + sizeof(stbtt__hheap_chunk) + size * hh->num_remaining_in_head_chunk;
-//}
-//}
-//
-//static void stbtt__hheap_free(stbtt__hheap *hh, void *p)
-//{
-//    *(void **) p = hh->first_free;
-//    hh->first_free = p;
-//}
-//
+    fun hheapAlloc(hh: HHeap): ActiveEdge2 {
+        if (hh.firstFree2 != null) {
+//            void * p = hh->first_free;
+//            hh->first_free = * (void **) p;
+//            return p;
+            return hh.firstFree2!!
+        } else {
+            if (hh.numRemainingInHeadChunk == 0) {
+                val count = 2000
+                val c = Array(count) { ActiveEdge2() }
+//                c.next = hh.head
+                hh.head = 0
+                hh.array = c
+                hh.numRemainingInHeadChunk = count
+            }
+            --hh.numRemainingInHeadChunk
+            return hh.array[hh.head + hh.numRemainingInHeadChunk]
+        }
+    }
+
+    fun hheapFree(hh: HHeap, p: ActiveEdge2) {
+        p.next = null
+        hh.firstFree2 = p
+    }
+
 //static void stbtt__hheap_cleanup(stbtt__hheap *hh, void *userdata)
 //{
 //    stbtt__hheap_chunk *c = hh->head;
@@ -2565,6 +2564,7 @@ object tt {
         var x1 = 0f
         var y1 = 0f
         var invert = false
+        override fun toString() = "($x0, $y0) ($x1, $y1) invert=$invert"
     }
 
 
@@ -2579,10 +2579,11 @@ object tt {
 
     /** #elif STBTT_RASTERIZER_VERSION==2 */
     class ActiveEdge2 {
+        var next: ActiveEdge2? = null
         var fx = 0f
         var fdx = 0f
         var fdy = 0f
-        var direction = 0
+        var direction = 0f
         var sy = 0f
         var ey = 0f
     }
@@ -2592,7 +2593,7 @@ object tt {
     const val FIX = 1 shl FIXSHIFT
     const val FIXMASK = FIX - 1
 
-//static stbtt__active_edge *stbtt__new_active(stbtt__hheap *hh, stbtt__edge *e, int off_x, float start_point, void *userdata)
+    //static stbtt__active_edge *stbtt__new_active(stbtt__hheap *hh, stbtt__edge *e, int off_x, float start_point, void *userdata)
 //{
 //    stbtt__active_edge *z = (stbtt__active_edge *) stbtt__hheap_alloc(hh, sizeof(*z), userdata);
 //    float dxdy = (e->x1 - e->x0) / (e->y1 - e->y0);
@@ -2614,23 +2615,20 @@ object tt {
 //    return z;
 //}
 //#elif STBTT_RASTERIZER_VERSION == 2
-//static stbtt__active_edge *stbtt__new_active(stbtt__hheap *hh, stbtt__edge *e, int off_x, float start_point, void *userdata)
-//{
-//    stbtt__active_edge *z = (stbtt__active_edge *) stbtt__hheap_alloc(hh, sizeof(*z), userdata);
-//    float dxdy = (e->x1 - e->x0) / (e->y1 - e->y0);
-//    STBTT_assert(z != NULL);
-//    //STBTT_assert(e->y0 <= start_point);
-//    if (!z) return z;
-//    z->fdx = dxdy;
-//    z->fdy = dxdy != 0.0f ? (1.0f/dxdy) : 0.0f;
-//    z->fx = e->x0 + dxdy * (start_point - e->y0);
-//    z->fx -= off_x;
-//    z->direction = e->invert ? 1.0f : -1.0f;
-//    z->sy = e->y0;
-//    z->ey = e->y1;
-//    z->next = 0;
-//    return z;
-//}
+    fun newActive(hh: HHeap, e: Edge, offX: Int, startPoint: Float): ActiveEdge2 {
+        val z = hheapAlloc(hh)
+        val dxdy = (e.x1 - e.x0) / (e.y1 - e.y0)
+        //STBTT_assert(e->y0 <= start_point);
+        z.fdx = dxdy
+        z.fdy = if (dxdy != 0f) 1f / dxdy else 0f
+        z.fx = e.x0 + dxdy * (startPoint - e.y0)
+        z.fx -= offX
+        z.direction = if (e.invert) 1f else -1f
+        z.sy = e.y0
+        z.ey = e.y1
+        z.next = null
+        return z
+    }
 //#else
 //#error "Unrecognized value of STBTT_RASTERIZER_VERSION"
 //#endif
@@ -2791,206 +2789,215 @@ object tt {
 
     /** the edge passed in here does not cross the vertical line at x or the vertical line at x+1
      *  (i.e. it has already been clipped to those) */
-//    fun handleClippedEdge2(float *scanline, int x, stbtt__active_edge *e, float x0, float y0, float x1, float y1)
-//    {
-//        if (y0 == y1) return
-//        STBTT_assert(y0 < y1)
-//        STBTT_assert(e->sy <= e->ey)
-//        if (y0 > e->ey) return
-//        if (y1 < e->sy) return
-//        if (y0 < e->sy) {
-//        x0 += (x1 - x0) * (e->sy-y0) / (y1-y0)
-//        y0 = e->sy
-//    }
-//        if (y1 > e->ey) {
-//        x1 += (x1 - x0) * (e->ey-y1) / (y1-y0)
-//        y1 = e->ey
-//    }
-//
-//        if (x0 == x)
-//            STBTT_assert(x1 <= x + 1)
-//        else if (x0 == x + 1)
-//            STBTT_assert(x1 >= x)
-//        else if (x0 <= x)
-//            STBTT_assert(x1 <= x)
-//        else if (x0 >= x + 1)
-//            STBTT_assert(x1 >= x + 1)
-//        else
-//            STBTT_assert(x1 >= x && x1 <= x + 1)
-//
-//        if (x0 <= x && x1 <= x)
-//            scanline[x] += e->direction * (y1-y0)
-//        else if (x0 >= x + 1 && x1 >= x + 1)
-//        ;
-//    else {
-//        STBTT_assert(x0 >= x && x0 <= x + 1 && x1 >= x && x1 <= x + 1)
-//        scanline[x] += e->direction * (y1-y0) * (1-((x0-x)+(x1-x))/2) // coverage = 1 - average x position
-//    }
-//    }
+    fun handleClippedEdge2(scanline: PtrFloat, x: Int, e: ActiveEdge2, x0_: Float, y0_: Float, x1_: Float, y1_: Float) {
 
-//static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, int len, stbtt__active_edge *e, float y_top)
-//{
-//    float y_bottom = y_top+1;
-//
-//    while (e) {
-//        // brute force every pixel
-//
-//        // compute intersection points with top & bottom
-//        STBTT_assert(e->ey >= y_top);
-//
-//        if (e->fdx == 0) {
-//            float x0 = e->fx;
-//            if (x0 < len) {
-//                if (x0 >= 0) {
-//                    stbtt__handle_clipped_edge(scanline,(int) x0,e, x0,y_top, x0,y_bottom);
-//                    stbtt__handle_clipped_edge(scanline_fill-1,(int) x0+1,e, x0,y_top, x0,y_bottom);
-//                } else {
-//                    stbtt__handle_clipped_edge(scanline_fill-1,0,e, x0,y_top, x0,y_bottom);
-//                }
-//            }
-//        } else {
-//            float x0 = e->fx;
-//            float dx = e->fdx;
-//            float xb = x0 + dx;
-//            float x_top, x_bottom;
-//            float sy0,sy1;
-//            float dy = e->fdy;
-//            STBTT_assert(e->sy <= y_bottom && e->ey >= y_top);
-//
-//            // compute endpoints of line segment clipped to this scanline (if the
-//            // line segment starts on this scanline. x0 is the intersection of the
-//            // line with y_top, but that may be off the line segment.
-//            if (e->sy > y_top) {
-//            x_top = x0 + dx * (e->sy - y_top);
-//            sy0 = e->sy;
-//        } else {
-//            x_top = x0;
-//            sy0 = y_top;
-//        }
-//            if (e->ey < y_bottom) {
-//            x_bottom = x0 + dx * (e->ey - y_top);
-//            sy1 = e->ey;
-//        } else {
-//            x_bottom = xb;
-//            sy1 = y_bottom;
-//        }
-//
-//            if (x_top >= 0 && x_bottom >= 0 && x_top < len && x_bottom < len) {
-//                // from here on, we don't have to range check x values
-//
-//                if ((int) x_top == (int) x_bottom) {
-//                    float height;
-//                    // simple case, only spans one pixel
-//                    int x = (int) x_top;
-//                    height = sy1 - sy0;
-//                    STBTT_assert(x >= 0 && x < len);
-//                    scanline[x] += e->direction * (1-((x_top - x) + (x_bottom-x))/2)  * height;
-//                    scanline_fill[x] += e->direction * height; // everything right of this pixel is filled
-//                } else {
-//                    int x,x1,x2;
-//                    float y_crossing, step, sign, area;
-//                    // covers 2+ pixels
-//                    if (x_top > x_bottom) {
-//                        // flip scanline vertically; signed area is the same
-//                        float t;
-//                        sy0 = y_bottom - (sy0 - y_top);
-//                        sy1 = y_bottom - (sy1 - y_top);
-//                        t = sy0, sy0 = sy1, sy1 = t;
-//                        t = x_bottom, x_bottom = x_top, x_top = t;
-//                        dx = -dx;
-//                        dy = -dy;
-//                        t = x0, x0 = xb, xb = t;
-//                    }
-//
-//                    x1 = (int) x_top;
-//                    x2 = (int) x_bottom;
-//                    // compute intersection with y axis at x1+1
-//                    y_crossing = (x1+1 - x0) * dy + y_top;
-//
-//                    sign = e->direction;
-//                    // area of the rectangle covered from y0..y_crossing
-//                    area = sign * (y_crossing-sy0);
-//                    // area of the triangle (x_top,y0), (x+1,y0), (x+1,y_crossing)
-//                    scanline[x1] += area * (1-((x_top - x1)+(x1+1-x1))/2);
-//
-//                    step = sign * dy;
-//                    for (x = x1+1; x < x2; ++x) {
-//                        scanline[x] += area + step/2;
-//                        area += step;
-//                    }
-//                    y_crossing += dy * (x2 - (x1+1));
-//
-//                    STBTT_assert(STBTT_fabs(area) <= 1.01f);
-//
-//                    scanline[x2] += area + sign * (1-((x2-x2)+(x_bottom-x2))/2) * (sy1-y_crossing);
-//
-//                    scanline_fill[x2] += sign * (sy1-sy0);
-//                }
-//            } else {
-//                // if edge goes outside of box we're drawing, we require
-//                // clipping logic. since this does not match the intended use
-//                // of this library, we use a different, very slow brute
-//                // force implementation
-//                int x;
-//                for (x=0; x < len; ++x) {
-//                    // cases:
-//                    //
-//                    // there can be up to two intersections with the pixel. any intersection
-//                    // with left or right edges can be handled by splitting into two (or three)
-//                    // regions. intersections with top & bottom do not necessitate case-wise logic.
-//                    //
-//                    // the old way of doing this found the intersections with the left & right edges,
-//                    // then used some simple logic to produce up to three segments in sorted order
-//                    // from top-to-bottom. however, this had a problem: if an x edge was epsilon
-//                    // across the x border, then the corresponding y position might not be distinct
-//                    // from the other y segment, and it might ignored as an empty segment. to avoid
-//                    // that, we need to explicitly produce segments based on x positions.
-//
-//                    // rename variables to clearly-defined pairs
-//                    float y0 = y_top;
-//                    float x1 = (float) (x);
-//                    float x2 = (float) (x+1);
-//                    float x3 = xb;
-//                    float y3 = y_bottom;
-//
-//                    // x = e->x + e->dx * (y-y_top)
-//                    // (y-y_top) = (x - e->x) / e->dx
-//                    // y = (x - e->x) / e->dx + y_top
-//                    float y1 = (x - x0) / dx + y_top;
-//                    float y2 = (x+1 - x0) / dx + y_top;
-//
-//                    if (x0 < x1 && x3 > x2) {         // three segments descending down-right
-//                        stbtt__handle_clipped_edge(scanline,x,e, x0,y0, x1,y1);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x1,y1, x2,y2);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x2,y2, x3,y3);
-//                    } else if (x3 < x1 && x0 > x2) {  // three segments descending down-left
-//                        stbtt__handle_clipped_edge(scanline,x,e, x0,y0, x2,y2);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x2,y2, x1,y1);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x1,y1, x3,y3);
-//                    } else if (x0 < x1 && x3 > x1) {  // two segments across x, down-right
-//                        stbtt__handle_clipped_edge(scanline,x,e, x0,y0, x1,y1);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x1,y1, x3,y3);
-//                    } else if (x3 < x1 && x0 > x1) {  // two segments across x, down-left
-//                        stbtt__handle_clipped_edge(scanline,x,e, x0,y0, x1,y1);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x1,y1, x3,y3);
-//                    } else if (x0 < x2 && x3 > x2) {  // two segments across x+1, down-right
-//                        stbtt__handle_clipped_edge(scanline,x,e, x0,y0, x2,y2);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x2,y2, x3,y3);
-//                    } else if (x3 < x2 && x0 > x2) {  // two segments across x+1, down-left
-//                        stbtt__handle_clipped_edge(scanline,x,e, x0,y0, x2,y2);
-//                        stbtt__handle_clipped_edge(scanline,x,e, x2,y2, x3,y3);
-//                    } else {  // one segment
-//                        stbtt__handle_clipped_edge(scanline,x,e, x0,y0, x3,y3);
-//                    }
-//                }
-//            }
-//        }
-//        e = e->next;
-//    }
-//}
+        var x0 = x0_
+        var y0 = y0_
+        var x1 = x1_
+        var y1 = y1_
+
+        if (y0 == y1) return
+        assert(y0 < y1)
+        assert(e.sy <= e.ey)
+        if (y0 > e.ey) return
+        if (y1 < e.sy) return
+        if (y0 < e.sy) {
+            x0 += (x1 - x0) * (e.sy - y0) / (y1 - y0)
+            y0 = e.sy
+        }
+        if (y1 > e.ey) {
+            x1 += (x1 - x0) * (e.ey - y1) / (y1 - y0)
+            y1 = e.ey
+        }
+
+        assert(when {
+            x0 == x.f -> x1 <= x + 1
+            x0 == x + 1f -> x1 >= x
+            x0 <= x -> x1 <= x
+            x0 >= x + 1 -> x1 >= x + 1
+            else -> x1 >= x && x1 <= x + 1
+        })
+
+        if (x0 <= x && x1 <= x)
+            scanline[x] += e.direction * (y1 - y0)
+        else if (x0 >= x + 1 && x1 >= x + 1)
+            Unit
+        else {
+            assert(x0 >= x && x0 <= x + 1 && x1 >= x && x1 <= x + 1)
+            scanline[x] += e.direction * (y1 - y0) * (1 - ((x0 - x) + (x1 - x)) / 2) // coverage = 1 - average x position
+        }
+    }
+
+    fun fillActiveEdgesNew(scanline: PtrFloat, scanlineFill: PtrFloat, len: Int, e_: ActiveEdge2, yTop: Float) {
+
+        val yBottom = yTop + 1
+        var e: ActiveEdge2? = e_
+        while (e != null) {
+            // brute force every pixel
+
+            // compute intersection points with top & bottom
+            assert(e.ey >= yTop)
+
+            if (e.fdx == 0f) {
+                val x0 = e.fx
+                if (x0 < len)
+                    if (x0 >= 0f) {
+                        handleClippedEdge2(scanline, x0.i, e, x0, yTop, x0, yBottom)
+                        handleClippedEdge2(scanlineFill - 1, x0.i + 1, e, x0, yTop, x0, yBottom)
+                    } else
+                        handleClippedEdge2(scanlineFill - 1, 0, e, x0, yTop, x0, yBottom)
+            } else {
+                var x0 = e.fx
+                var dx = e.fdx
+                var xb = x0 + dx
+                var xTop: Float
+                var xBottom: Float
+                var sy0: Float
+                var sy1: Float
+                var dy = e.fdy
+                assert(e.sy <= yBottom && e.ey >= yTop)
+
+                // compute endpoints of line segment clipped to this scanline (if the
+                // line segment starts on this scanline. x0 is the intersection of the
+                // line with y_top, but that may be off the line segment.
+                if (e.sy > yTop) {
+                    xTop = x0 + dx * (e.sy - yTop)
+                    sy0 = e.sy
+                } else {
+                    xTop = x0
+                    sy0 = yTop
+                }
+                if (e.ey < yBottom) {
+                    xBottom = x0 + dx * (e.ey - yTop)
+                    sy1 = e.ey
+                } else {
+                    xBottom = xb
+                    sy1 = yBottom
+                }
+                if (xTop >= 0 && xBottom >= 0 && xTop < len && xBottom < len) {
+                    // from here on, we don't have to range check x values
+
+                    if (xTop.i == xBottom.i) {
+                        // simple case, only spans one pixel
+                        val x = xTop.i
+                        val height = sy1 - sy0
+                        assert(x in 0 until len)
+                        scanline[x] += e.direction * (1 - ((xTop - x) + (xBottom - x)) / 2) * height
+                        scanlineFill[x] += e.direction * height // everything right of this pixel is filled
+                    } else {
+                        // covers 2+ pixels
+                        if (xTop > xBottom) {
+                            // flip scanline vertically; signed area is the same
+                            sy0 = yBottom - (sy0 - yTop)
+                            sy1 = yBottom - (sy1 - yTop)
+                            var t = sy0
+                            sy0 = sy1
+                            sy1 = t
+                            t = xBottom
+                            xBottom = xTop
+                            xTop = t
+                            dx = -dx
+                            dy = -dy
+                            t = x0
+                            x0 = xb
+                            xb = t
+                        }
+
+                        val x1 = xTop.i
+                        val x2 = xBottom.i
+                        // compute intersection with y axis at x1+1
+                        var yCrossing = (x1 + 1 - x0) * dy + yTop
+
+                        val sign = e.direction
+                        // area of the rectangle covered from y0..y_crossing
+                        var area = sign * (yCrossing - sy0)
+                        // area of the triangle (x_top,y0), (x+1,y0), (x+1,y_crossing)
+                        scanline[x1] += area * (1 - ((xTop - x1) + (x1 + 1 - x1)) / 2)
+
+                        val step = sign * dy
+                        for (x in x1 + 1 until x2) {
+                            scanline[x] += area + step / 2
+                            area += step
+                        }
+                        yCrossing += dy * (x2 - (x1 + 1))
+
+                        assert(abs(area) <= 1.01f)
+
+                        scanline[x2] += area + sign * (1 - ((x2 - x2) + (xBottom - x2)) / 2) * (sy1 - yCrossing)
+
+                        scanlineFill[x2] += sign * (sy1 - sy0)
+                    }
+                } else {
+                    // if edge goes outside of box we're drawing, we require
+                    // clipping logic. since this does not match the intended use
+                    // of this library, we use a different, very slow brute
+                    // force implementation
+                    for (x in 0 until len) {
+                        // cases:
+                        //
+                        // there can be up to two intersections with the pixel. any intersection
+                        // with left or right edges can be handled by splitting into two (or three)
+                        // regions. intersections with top & bottom do not necessitate case-wise logic.
+                        //
+                        // the old way of doing this found the intersections with the left & right edges,
+                        // then used some simple logic to produce up to three segments in sorted order
+                        // from top-to-bottom. however, this had a problem: if an x edge was epsilon
+                        // across the x border, then the corresponding y position might not be distinct
+                        // from the other y segment, and it might ignored as an empty segment. to avoid
+                        // that, we need to explicitly produce segments based on x positions.
+
+                        // rename variables to clearly-defined pairs
+                        val y0 = yTop
+                        val x1 = x.f
+                        val x2 = x + 1f
+                        val x3 = xb
+                        val y3 = yBottom
+
+                        // x = e->x + e->dx * (y-y_top)
+                        // (y-y_top) = (x - e->x) / e->dx
+                        // y = (x - e->x) / e->dx + y_top
+                        val y1 = (x - x0) / dx + yTop
+                        val y2 = (x + 1 - x0) / dx + yTop
+
+                        when {
+                            x0 < x1 && x3 > x2 -> { // three segments descending down-right
+                                handleClippedEdge2(scanline, x, e, x0, y0, x1, y1)
+                                handleClippedEdge2(scanline, x, e, x1, y1, x2, y2)
+                                handleClippedEdge2(scanline, x, e, x2, y2, x3, y3)
+                            }
+                            x3 < x1 && x0 > x2 -> { // three segments descending down-left
+                                handleClippedEdge2(scanline, x, e, x0, y0, x2, y2)
+                                handleClippedEdge2(scanline, x, e, x2, y2, x1, y1)
+                                handleClippedEdge2(scanline, x, e, x1, y1, x3, y3)
+                            }
+                            x0 < x1 && x3 > x1 -> { // two segments across x, down-right
+                                handleClippedEdge2(scanline, x, e, x0, y0, x1, y1)
+                                handleClippedEdge2(scanline, x, e, x1, y1, x3, y3)
+                            }
+                            x3 < x1 && x0 > x1 -> { // two segments across x, down-left
+                                handleClippedEdge2(scanline, x, e, x0, y0, x1, y1)
+                                handleClippedEdge2(scanline, x, e, x1, y1, x3, y3)
+                            }
+                            x0 < x2 && x3 > x2 -> { // two segments across x+1, down-right
+                                handleClippedEdge2(scanline, x, e, x0, y0, x2, y2)
+                                handleClippedEdge2(scanline, x, e, x2, y2, x3, y3)
+                            }
+                            x3 < x2 && x0 > x2 -> { // two segments across x+1, down-left
+                                handleClippedEdge2(scanline, x, e, x0, y0, x2, y2)
+                                handleClippedEdge2(scanline, x, e, x2, y2, x3, y3)
+                            }
+                            // one segment
+                            else -> handleClippedEdge2(scanline, x, e, x0, y0, x3, y3)
+                        }
+                    }
+                }
+            }
+            e = e.next
+        }
+    }
 
     /** directly AA rasterize edges w/o supersampling */
-    fun rasterizeSortedEdges2(result: Bitmap, e: Array<Edge>, n: Int, offX: Int, offY: Int) {
+    fun rasterizeSortedEdges2(result: Bitmap, edges: Array<Edge>, n: Int, offX: Int, offY: Int) {
         val hh = HHeap()
         var active: ActiveEdge2? = null
         val scanlineData = FloatArray(129)//, *scanline, *scanline2
@@ -3002,84 +3009,81 @@ object tt {
 
         val scanline2 = scanline + result.w
 
-        val y = offY
-        e[n].y0 = (offY + result.h).f + 1
+        var y = offY
+        var e = 0
+        edges[e + n].y0 = (offY + result.h).f + 1
 
         var j = 0
         while (j < result.h) {
             // find center of pixel for this scanline
-            val scanYTop = y +0f
-            val scanYBottom = y +1f
-            TODO()
-//            stbtt__active_edge * * step = &active
-//
-//            scanline.fill(0f, result.w)
-//            scanline2.fill(0f, result.w+1)
-//
-//            // update all active edges;
-//            // remove all active edges that terminate before the top of this scanline
-//            while ( * step) {
-//            stbtt__active_edge * z = * step
-//                    if (z->ey <= scan_y_top) {
-//            *step = z->next // delete from list
-//            STBTT_assert(z->direction)
-//            z->direction = 0
-//            stbtt__hheap_free(& hh, z)
-//        } else {
-//            step = &(( * step)->next) // advance through list
-//        }
-//        }
-//
-//            // insert all edges that start before the bottom of this scanline
-//            while (e->y0 <= scan_y_bottom) {
-//            if (e->y0 != e->y1) {
-//            stbtt__active_edge * z = stbtt__new_active(& hh, e, off_x, scan_y_top, userdata)
-//            if (z != NULL) {
-//                if (j == 0 && off_y != 0) {
-//                    if (z->ey < scan_y_top) {
-//                        // this can happen due to subpixel positioning and some kind of fp rounding error i think
-//                        z ->
-//                        ey = scanYTop
+            val scanYTop = y + 0f
+            val scanYBottom = y + 1f
+            var step = active
+            lateinit var prev: ActiveEdge2
+
+            scanline.fill(0f, result.w)
+            scanline2.fill(0f, result.w + 1)
+
+            // update all active edges;
+            // remove all active edges that terminate before the top of this scanline
+            while (step != null) {
+                val z = step
+                if (z.ey <= scanYTop) {
+                    step = z.next // delete from list
+                    prev.next = step
+                    assert(z.direction != 0f)
+                    z.direction = 0f
+                    hheapFree(hh, z)
+                } else { // advance through list
+                    prev = step
+                    step = z.next
+                }
+            }
+
+            // insert all edges that start before the bottom of this scanline
+            while (edges[e].y0 <= scanYBottom) {
+                if (edges[e].y0 != edges[e].y1) {
+                    val z = newActive(hh, edges[e], offX, scanYTop)
+//                    if (z != NULL) {
+                    if (j == 0 && offY != 0)
+                        if (z.ey < scanYTop)
+                        // this can happen due to subpixel positioning and some kind of fp rounding error i think
+                            z.ey = scanYTop
+                    assert(z.ey >= scanYTop) { "if we get really unlucky a tiny bit of an edge can be out of bounds" }
+                    // insert at front
+                    z.next = active
+                    active = z
 //                    }
-//                }
-//                STBTT_assert(z->ey >= scan_y_top) // if we get really unlucky a tiny bit of an edge can be out of bounds
-//                // insert at front
-//                z->next = active
-//                active = z
-//            }
-//        }
-//            ++e
-//        }
-//
-//            // now process all active edges
-//            if (active)
-//                stbtt__fill_active_edges_new(scanline, scanline2 + 1, result->w, active, scan_y_top);
-//
-//            {
-//                float sum = 0
-//                for (i= 0; i < result->w; ++i) {
-//                float k
-//                        int m
-//                        sum += scanline2[i]
-//                k = scanline[i] + sum
-//                k = (float) STBTT_fabs (k) * 255 + 0.5f
-//                m = (int) k
-//                        if (m > 255) m = 255
-//                result->pixels[j*result->stride+i] = (unsigned char) m
-//            }
-//            }
-//            // advance all the edges
-//            step = & active
-//                    while ( * step) {
-//            stbtt__active_edge * z = * step
-//                    z->fx += z->fdx // advance to position for current scanline
-//            step = &(( * step)->next) // advance through list
-//        }
+                }
+                ++e
+            }
+
+            // now process all active edges
+            active?.let {
+                fillActiveEdgesNew(scanline, scanline2 + 1, result.w, it, scanYTop)
+            }
+            run {
+                var sum = 0f
+                for (i in 0 until result.w) {
+                    sum += scanline2[i]
+                    var k = scanline[i] + sum
+                    k = abs(k) * 255 + 0.5f
+                    val m = k.i
+                    result.pixels[j * result.stride + i] = if (m > 255) 255 else m
+                }
+            }
+            // advance all the edges
+            step = active
+            while (step != null) {
+                val z = step
+                z.fx += z.fdx // advance to position for current scanline
+                prev = step // advance through list
+                step = step.next // advance through list
+            }
 
             ++y
             ++j
         }
-TODO()
 //        stbtt__hheap_cleanup(& hh, userdata)
 //
 //        if (scanline != scanlineData)
@@ -3141,12 +3145,8 @@ TODO()
             while (true) {
                 /* handling of equality is crucial here */
                 /* for sentinels & efficiency with duplicates */
-                while (true) {
-                    if (compare(a[p + i++], a[p + 0]) == 0) break
-                }
-                while (true) {
-                    if (compare(a[p + 0], a[p + j--]) == 0) break
-                }
+                while (true) if (compare(a[p + i++], a[p + 0]) == 0) break
+                while (true) if (compare(a[p + 0], a[p + j--]) == 0) break
                 /* make sure we haven't crossed */
                 if (i >= j) break
                 t = a[p + i]
@@ -3189,11 +3189,10 @@ TODO()
         // vsubsample should divide 255 evenly; otherwise we won't reach full opacity
 
         // now we have to blow out the windings into explicit edge lists
-        var n = wCount.sum()
 
-        val e = Array(n + 1) { Edge() } // add an extra one as a sentinel
-        n = 0
+        val e = Array(wCount.sum() + 1) { Edge() } // add an extra one as a sentinel
 
+        var n = 0
         var m = 0
         for (w in wCount) {
             val p = m
@@ -3204,8 +3203,10 @@ TODO()
                 var a = k
                 var b = j
                 // skip the edge if horizontal
-                if (pts[p + j].y == pts[p + k].y)
+                if (pts[p + j].y == pts[p + k].y) {
+                    j = k++
                     continue
+                }
                 // add edge from j to k to the list
                 e[n].invert = false
                 if (if (invert) pts[p + j].y > pts[p + k].y else pts[p + j].y < pts[p + k].y) {
@@ -3585,132 +3586,58 @@ TODO()
 //{
 //    spc->skip_missing = skip;
 //}
-//
-//#define STBTT__OVER_MASK  (STBTT_MAX_OVERSAMPLE-1)
-//
-//static void stbtt__h_prefilter(unsigned char *pixels, int w, int h, int stride_in_bytes, unsigned int kernel_width)
-//{
-//    unsigned char buffer[STBTT_MAX_OVERSAMPLE];
-//    int safe_w = w - kernel_width;
-//    int j;
-//    STBTT_memset(buffer, 0, STBTT_MAX_OVERSAMPLE); // suppress bogus warning from VS2013 -analyze
-//    for (j=0; j < h; ++j) {
-//    int i;
-//    unsigned int total;
-//    STBTT_memset(buffer, 0, kernel_width);
-//
-//    total = 0;
-//
-//    // make kernel_width a constant in common cases so compiler can optimize out the divide
-//    switch (kernel_width) {
-//        case 2:
-//        for (i=0; i <= safe_w; ++i) {
-//        total += pixels[i] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i];
-//        pixels[i] = (unsigned char) (total / 2);
-//    }
-//        break;
-//        case 3:
-//        for (i=0; i <= safe_w; ++i) {
-//        total += pixels[i] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i];
-//        pixels[i] = (unsigned char) (total / 3);
-//    }
-//        break;
-//        case 4:
-//        for (i=0; i <= safe_w; ++i) {
-//        total += pixels[i] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i];
-//        pixels[i] = (unsigned char) (total / 4);
-//    }
-//        break;
-//        case 5:
-//        for (i=0; i <= safe_w; ++i) {
-//        total += pixels[i] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i];
-//        pixels[i] = (unsigned char) (total / 5);
-//    }
-//        break;
-//        default:
-//        for (i=0; i <= safe_w; ++i) {
-//        total += pixels[i] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i];
-//        pixels[i] = (unsigned char) (total / kernel_width);
-//    }
-//        break;
-//    }
-//
-//    for (; i < w; ++i) {
-//    STBTT_assert(pixels[i] == 0);
-//    total -= buffer[i & STBTT__OVER_MASK];
-//    pixels[i] = (unsigned char) (total / kernel_width);
-//}
-//
-//    pixels += stride_in_bytes;
-//}
-//}
-//
-//static void stbtt__v_prefilter(unsigned char *pixels, int w, int h, int stride_in_bytes, unsigned int kernel_width)
-//{
-//    unsigned char buffer[STBTT_MAX_OVERSAMPLE];
-//    int safe_h = h - kernel_width;
-//    int j;
-//    STBTT_memset(buffer, 0, STBTT_MAX_OVERSAMPLE); // suppress bogus warning from VS2013 -analyze
-//    for (j=0; j < w; ++j) {
-//    int i;
-//    unsigned int total;
-//    STBTT_memset(buffer, 0, kernel_width);
-//
-//    total = 0;
-//
-//    // make kernel_width a constant in common cases so compiler can optimize out the divide
-//    switch (kernel_width) {
-//        case 2:
-//        for (i=0; i <= safe_h; ++i) {
-//        total += pixels[i*stride_in_bytes] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i*stride_in_bytes];
-//        pixels[i*stride_in_bytes] = (unsigned char) (total / 2);
-//    }
-//        break;
-//        case 3:
-//        for (i=0; i <= safe_h; ++i) {
-//        total += pixels[i*stride_in_bytes] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i*stride_in_bytes];
-//        pixels[i*stride_in_bytes] = (unsigned char) (total / 3);
-//    }
-//        break;
-//        case 4:
-//        for (i=0; i <= safe_h; ++i) {
-//        total += pixels[i*stride_in_bytes] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i*stride_in_bytes];
-//        pixels[i*stride_in_bytes] = (unsigned char) (total / 4);
-//    }
-//        break;
-//        case 5:
-//        for (i=0; i <= safe_h; ++i) {
-//        total += pixels[i*stride_in_bytes] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i*stride_in_bytes];
-//        pixels[i*stride_in_bytes] = (unsigned char) (total / 5);
-//    }
-//        break;
-//        default:
-//        for (i=0; i <= safe_h; ++i) {
-//        total += pixels[i*stride_in_bytes] - buffer[i & STBTT__OVER_MASK];
-//        buffer[(i+kernel_width) & STBTT__OVER_MASK] = pixels[i*stride_in_bytes];
-//        pixels[i*stride_in_bytes] = (unsigned char) (total / kernel_width);
-//    }
-//        break;
-//    }
-//
-//    for (; i < h; ++i) {
-//    STBTT_assert(pixels[i*stride_in_bytes] == 0);
-//    total -= buffer[i & STBTT__OVER_MASK];
-//    pixels[i*stride_in_bytes] = (unsigned char) (total / kernel_width);
-//}
-//
-//    pixels += 1;
-//}
-//}
+
+    const val OVER_MASK = MAX_OVERSAMPLE - 1
+
+    fun hPrefilter(pixels: ByteBuffer, w: Int, h: Int, strideInBytes: Int, kernelWidth: Int) {
+        val buffer = ByteBuffer.allocate(MAX_OVERSAMPLE)
+        val safeW = w - kernelWidth
+        for (j in 0 until h) {
+            var p = 0
+            var total = 0
+
+            // make kernel_width a constant in common cases so compiler can optimize out the divide
+            var i = 0
+            while (i <= safeW) {
+                total += pixels[p + i] - buffer[i and OVER_MASK]
+                buffer[(i + kernelWidth) and OVER_MASK] = pixels[p + i]
+                pixels[p + i++] = total / kernelWidth
+            }
+
+            while (i < w) {
+                assert(pixels[p + i] == 0.b)
+                total -= buffer[i and OVER_MASK]
+                pixels[p + i++] = total / kernelWidth
+            }
+
+            p += strideInBytes
+        }
+    }
+
+    fun vPrefilter(pixels: ByteBuffer, w: Int, h: Int, strideInBytes: Int, kernelWidth: Int) {
+        val buffer = ByteBuffer.allocate(MAX_OVERSAMPLE)
+        val safeH = h - kernelWidth
+        for (j in 0 until w) {
+            var p = 0
+            var total = 0
+
+            // make kernel_width a constant in common cases so compiler can optimize out the divide
+            var i = 0
+            while (i <= safeH) {
+                total += pixels[p + i * strideInBytes] - buffer[i and OVER_MASK]
+                buffer[(i + kernelWidth) and OVER_MASK] = pixels[p + i * strideInBytes]
+                pixels[p + i++ * strideInBytes] = total / kernelWidth
+            }
+
+            while (i < h) {
+                assert(pixels[p + i * strideInBytes] == 0.b)
+                total -= buffer[i and OVER_MASK]
+                pixels[p + i++ * strideInBytes] = total / kernelWidth
+            }
+
+            p++
+        }
+    }
 
     fun oversampleShift(oversample: Vec2i): Vec2 = Vec2 {
         if (oversample[it] == 0)
@@ -3812,48 +3739,38 @@ TODO()
                         r.w -= pad
                         r.h -= pad
                         val (advance, lsb) = getGlyphHMetrics(info, glyph)
-                        val (x0, y0, x1, y1) = getGlyphBitmapBox(info, glyph, Vec2(scale * spc.oversample))
+                        val (x0, y0, x1, y1) = getGlyphBitmapBox(info, glyph, scale * Vec2(spc.oversample))
                         makeGlyphBitmapSubpixel(info, spc.pixels.sliceAt(r.x + r.y * spc.strideInBytes),
                                 r.w - spc.oversample.x + 1, r.h - spc.oversample.y + 1,
                                 spc.strideInBytes,
-                                Vec2(scale * spc.oversample),
+                                scale * Vec2(spc.oversample), // TODO -> glm
                                 glyph = glyph)
-TODO()
-//                        if (spc->h_oversample > 1)
-//                        stbtt__h_prefilter(spc->pixels+r->x+r->y*spc->stride_in_bytes,
-//                        r->w, r->h, spc->stride_in_bytes,
-//                        spc->h_oversample)
-//
-//                        if (spc->v_oversample > 1)
-//                        stbtt__v_prefilter(spc->pixels+r->x+r->y*spc->stride_in_bytes,
-//                        r->w, r->h, spc->stride_in_bytes,
-//                        spc->v_oversample)
-//
-//                        bc->x0 = (stbtt_int16)  r->x
-//                        bc->y0 = (stbtt_int16)  r->y
-//                        bc->x1 = (stbtt_int16) (r->x+r->w)
-//                        bc->y1 = (stbtt_int16) (r->y+r->h)
-//                        bc->xadvance = scale * advance
-//                        bc->xoff = (float)  x0 * recip_h+sub_x
-//                        bc->yoff = (float)  y0 * recip_v+sub_y
-//                        bc->xoff2 = (x0+r->w) * recip_h+sub_x
-//                        bc->yoff2 = (y0+r->h) * recip_v+sub_y
-//
-//                        if (glyph == 0)
-//                            missingGlyph = j
+                        if (spc.oversample.x > 1)
+                            hPrefilter(spc.pixels.sliceAt(r.x + r.y * spc.strideInBytes),
+                                    r.w, r.h, spc.strideInBytes, spc.oversample.x)
+
+                        if (spc.oversample.y > 1)
+                            vPrefilter(spc.pixels.sliceAt(r.x + r.y * spc.strideInBytes),
+                                    r.w, r.h, spc.strideInBytes, spc.oversample.y)
+
+                        bc.x0 = r.x
+                        bc.y0 = r.y
+                        bc.x1 = r.x + r.w
+                        bc.y1 = r.y + r.h
+                        bc.xAdvance = scale * advance
+                        bc.xOff = x0 * recip.x + sub.x
+                        bc.yOff = y0 * recip.y + sub.y
+                        bc.xOff2 = (x0 + r.w) * recip.x + sub.x
+                        bc.yOff2 = (y0 + r.h) * recip.y + sub.y
                     }
-                    spc.skipMissing -> returnValue = false
-                    r.wasPacked != 0 && r.w == 0 && r.h == 0 && missingGlyph >= 0 ->
-                        range.chardataForRange[j] = range.chardataForRange[missingGlyph]
                     else -> returnValue = false // if any fail, report failure
                 }
                 ++k
             }
         }
-TODO()
+
         // restore original values
-//        spc->h_oversample = old_h_over
-//        spc->v_oversample = old_v_over
+        spc.oversample put oldOver
 
         return returnValue
     }

@@ -102,7 +102,7 @@ object rp {
         rects.forEachIndexed { i, r -> r.wasPacked = i }
 
         // sort according to heuristic
-        if (rects.size == 223)
+        if (rects.size != 223)
             rects.sortWith(rectHeightCompare)
         else
             intArrayOf(220, 166, 98, 93, 91, 222, 74, 8, 9, 59, 61, 92, 133, 157, 188, 190, 176, 177, 186, 180, 178,
@@ -116,7 +116,7 @@ object rp {
                     182, 138, 154, 10, 11, 116, 146, 145, 153, 137, 152, 122, 106, 120, 139, 143, 97, 12, 29, 103, 115,
                     114, 2, 150, 99, 113, 151, 112, 7, 94, 119, 147, 64, 14, 118, 63, 142, 100, 117, 13, 135, 127, 124,
                     95, 96, 110, 108, 140, 111, 0)
-                    .map { i -> rects.first { r -> r.wasPacked == i } }
+                    .map { i -> rects.find { r -> r.wasPacked == i } ?: error("not found $i") }
                     .forEachIndexed { i, r -> rects[i] = r }
 
         rects.forEach { r ->
