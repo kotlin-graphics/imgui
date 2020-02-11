@@ -446,59 +446,6 @@ object tt {
 //
 //typedef char stbtt__check_size32[sizeof(stbtt_int32)==4 ? 1 : -1];
 //typedef char stbtt__check_size16[sizeof(stbtt_int16)==2 ? 1 : -1];
-//
-//// e.g. #define your own STBTT_ifloor/STBTT_iceil() to avoid math.h
-//#ifndef STBTT_ifloor
-//#include <math.h>
-//#define STBTT_ifloor(x)   ((int) floor(x))
-//#define STBTT_iceil(x)    ((int) ceil(x))
-//#endif
-//
-//#ifndef STBTT_sqrt
-//#include <math.h>
-//#define STBTT_sqrt(x)      sqrt(x)
-//#define STBTT_pow(x,y)     pow(x,y)
-//#endif
-//
-//#ifndef STBTT_fmod
-//#include <math.h>
-//#define STBTT_fmod(x,y)    fmod(x,y)
-//#endif
-//
-//#ifndef STBTT_cos
-//#include <math.h>
-//#define STBTT_cos(x)       cos(x)
-//#define STBTT_acos(x)      acos(x)
-//#endif
-//
-//#ifndef STBTT_fabs
-//#include <math.h>
-//#define STBTT_fabs(x)      fabs(x)
-//#endif
-//
-//// #define your own functions "STBTT_malloc" / "STBTT_free" to avoid malloc.h
-//#ifndef STBTT_malloc
-//#include <stdlib.h>
-//#define STBTT_malloc(x,u)  ((void)(u),malloc(x))
-//#define STBTT_free(x,u)    ((void)(u),free(x))
-//#endif
-//
-//#ifndef STBTT_assert
-//#include <assert.h>
-//#define STBTT_assert(x)    assert(x)
-//#endif
-//
-//#ifndef STBTT_strlen
-//#include <string.h>
-//#define STBTT_strlen(x)    strlen(x)
-//#endif
-//
-//#ifndef STBTT_memcpy
-//#include <string.h>
-//#define STBTT_memcpy       memcpy
-//#define STBTT_memset       memset
-//#endif
-//#endif
 
     /////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
