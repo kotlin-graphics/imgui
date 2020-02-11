@@ -1,5 +1,6 @@
 package stb_
 
+import glm_.b
 import glm_.i
 import kool.lim
 import kool.pos
@@ -41,6 +42,11 @@ class PtrByte(val array: ByteArray, var offset: Int = 0) {
     }
 
     operator fun plus(offset: Int) = PtrByte(array, this.offset + offset)
+
+    fun fill(int: Int, num: Int) {
+        for (i in 0 until num)
+            set(i, int.b)
+    }
 }
 
 fun PtrFloat(size: Int) = PtrFloat(FloatArray(size))

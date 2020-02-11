@@ -1104,7 +1104,8 @@ object tt {
     /** languageID for STBTT_PLATFORM_ID_MICROSOFT; same as LCID... */
     enum class MS_LANG(val i: Int) {
         // problematic because there are e.g. 16 english LCIDs and 16 arabic LCIDs
-        ENGLISH(0x0409), ITALIAN(0x0410), CHINESE(0x0804), JAPANESE(0x0411), DUTCH(0x0413), KOREAN(0x0412),
+        ENGLISH(0x0409),
+        ITALIAN(0x0410), CHINESE(0x0804), JAPANESE(0x0411), DUTCH(0x0413), KOREAN(0x0412),
         FRENCH(0x040c), RUSSIAN(0x0419), GERMAN(0x0407), SPANISH(0x0409), HEBREW(0x040d), SWEDISH(0x041D)
     }
 
@@ -2589,7 +2590,7 @@ object tt {
 
         z.ey = e.y1
         z.next = null
-        z.direction = (if (e.invert) 1 else -1).bitsAsFloat
+        z.direction = if (e.invert) 1f else -1f
         return z
     }
 
@@ -2617,7 +2618,7 @@ object tt {
     /** note: this routine clips fills that extend off the edges... ideally this
      *  wouldn't happen, but it could happen if the truetype glyph bounding boxes
      *  are wrong, or if the user supplies a too-small bitmap */
-    fun fillActiveEdges1(scanline: PtrByte, len: Int, e_: ActiveEdge, maxWeight: Int) {
+    fun fillActiveEdges(scanline: PtrByte, len: Int, e_: ActiveEdge, maxWeight: Int) {
         // non-zero winding fill
         var x0 = 0
         var w = 0
@@ -2626,9 +2627,9 @@ object tt {
         while (e != null) {
             if (w == 0) {
                 // if we're currently at zero, we need to record the edge start point
-                x0 = e.x; w += e.direction.asIntBits
+                x0 = e.x; w += e.direction.i
             } else {
-                val x1 = e.x; w += e.direction.asIntBits
+                val x1 = e.x; w += e.direction.i
                 // if we went to zero, we need to draw
                 if (w == 0) {
                     var i = x0 shr FIXSHIFT
@@ -2674,7 +2675,7 @@ object tt {
         edges[e + n].y0 = (offY + result.h) * vSubsample.f + 1
 
         while (j < result.h) {
-//        STBTT_memset(scanline, 0, result->w)
+            scanline.fill(0, result.w)
             for (s in 0 until vSubsample) { // vertical subsample index
                 // find center of pixel for this scanline
                 val scanY = y + 0.5f
@@ -2689,8 +2690,8 @@ object tt {
                         step = z.next // delete from list
                         prev?.next = step
                         if (z === active) active = active.next
-                        assert(z.direction.asIntBits != 0)
-                        z.direction = 0.bitsAsFloat
+                        assert(z.direction != 0f)
+                        z.direction = 0f
                         hheapFree(hh, z)
                     } else {
                         z.x += z.dx // advance to position for current scanline
@@ -2746,11 +2747,14 @@ object tt {
                 }
 
                 // now process all active edges in XOR fashion
-                active?.let { fillActiveEdges1(scanline, result.w, it, maxWeight) }
+                active?.let {
+                    fillActiveEdges(scanline, result.w, it, maxWeight)
+                }
 
                 ++y
             }
-//            STBTT_memcpy(result->pixels+j * result->stride, scanline, result->w)
+            for (i in 0 until result.w)
+                result.pixels[j * result.stride + i] = scanline[i]
             ++j
         }
 //
@@ -3200,7 +3204,10 @@ object tt {
         sortEdges(e, n)
 
         // now, traverse the scanlines and find the intersections on each scanline, use xor winding rule
-        rasterizeSortedEdges(result, e, n, offX, offY)
+        when (RASTERIZER_VERSION) {
+            1 -> rasterizeSortedEdges(result, e, n, vsubsample, offX, offY)
+            2 -> rasterizeSortedEdges(result, e, n, offX, offY)
+        }
     }
 
     fun addPoint(points: Array<Vec2>?, n: Int, x: Float, y: Float) {
@@ -3534,7 +3541,7 @@ object tt {
 
         rp.initTarget(context, pw - padding, ph - padding, nodes)
 
-        pixels?.fill(0, 0, pw * ph) // background of 0 around pixels
+        pixels?.fill(0, toIndex =  pw * ph) // background of 0 around pixels
 
         return true
     }
@@ -3568,6 +3575,7 @@ object tt {
         for (j in 0 until h) {
             var p = 0
             var total = 0
+            buffer.fill(0, toIndex = kernelWidth)
 
             // make kernel_width a constant in common cases so compiler can optimize out the divide
             var i = 0
@@ -3684,7 +3692,6 @@ object tt {
 
     /** rects array must be big enough to accommodate all characters in the given ranges */
     fun packFontRangesRenderIntoRects(spc: PackContext, info: FontInfo, ranges: Array<PackRange>, rects: Array<rp.Rect>): Boolean {
-        var missingGlyph = -1
         var returnValue = true
 
         // save current values
