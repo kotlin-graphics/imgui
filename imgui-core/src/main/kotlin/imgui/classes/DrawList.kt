@@ -1,11 +1,8 @@
 package imgui.classes
 
 import gli_.hasnt
-import glm_.L
-import glm_.f
+import glm_.*
 import glm_.func.common.max
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -300,14 +297,11 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addText(pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size) = addText(g.font, g.fontSize, pos, col, text, textEnd)
 
-    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: CharArray, textEnd_: Int = text.size, wrapWidth: Float = 0f,
-                cpuFineClipRect: Vec4? = null) {
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textEnd: Int = text.size,
+                wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
 
-        var textEnd = textEnd_
-        if (textEnd == 0)
-            textEnd = text.strlen
         if (textEnd == 0)
             return
 
@@ -321,10 +315,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         val clipRect = Vec4(_clipRectStack.last())
         cpuFineClipRect?.let {
-            clipRect.x = glm.max(clipRect.x, cpuFineClipRect.x)
-            clipRect.y = glm.max(clipRect.y, cpuFineClipRect.y)
-            clipRect.z = glm.min(clipRect.z, cpuFineClipRect.z)
-            clipRect.w = glm.min(clipRect.w, cpuFineClipRect.w)
+            clipRect.x = clipRect.x max cpuFineClipRect.x
+            clipRect.y = clipRect.y max cpuFineClipRect.y
+            clipRect.z = clipRect.z min cpuFineClipRect.z
+            clipRect.w = clipRect.w min cpuFineClipRect.w
         }
         font.renderText(this, fontSize, pos, col, clipRect, text, textEnd, wrapWidth, cpuFineClipRect != null)
     }

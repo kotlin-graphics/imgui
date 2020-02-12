@@ -434,8 +434,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var wantCaptureKeyboardNextFrame = -1
 
     var wantTextInputNextFrame = -1
-
-//    char                    TempBuffer[1024*3+1];               // Temporary text buffer
+    /** Temporary text buffer */
+    val tempBuffer = ByteArray(1024 * 3 + 1)
 
     /*  Context creation and access
         Each context create its own ImFontAtlas by default. You may instance one yourself and pass it to Context()

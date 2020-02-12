@@ -351,7 +351,7 @@ class TabBar {
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label, id, closeButtonId)
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)

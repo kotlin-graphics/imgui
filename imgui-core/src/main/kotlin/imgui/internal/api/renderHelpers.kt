@@ -1,8 +1,10 @@
 package imgui.internal.api
 
+import glm_.b
 import glm_.f
 import glm_.func.common.max
 import glm_.glm
+import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -16,6 +18,7 @@ import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.internal.api.internal.Companion.alphaBlendColor
+import unsigned.toUInt
 import kotlin.math.max
 
 /** Render helpers
@@ -35,21 +38,19 @@ internal interface renderHelpers {
         }
 
         if (textDisplayEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toByteArray(), textDisplayEnd)
             if (g.logEnabled)
                 logRenderedText(pos, text, textDisplayEnd)
         }
     }
 
-    fun renderTextWrapped(pos: Vec2, text: String, textEnd_: Int?, wrapWidth: Float) {
+    fun renderTextWrapped(pos: Vec2, text: ByteArray, textEnd: Int = text.size, wrapWidth: Float) {
 
         val window = g.currentWindow!!
 
-        val textEnd = textEnd_ ?: text.length // FIXME-OPT
-
         if (textEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toCharArray(), textEnd, wrapWidth)
-            if (g.logEnabled) logRenderedText(pos, text, textEnd)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, textEnd, wrapWidth)
+            if (g.logEnabled) logRenderedText(pos, String(text), textEnd)
         }
     }
 
@@ -60,7 +61,7 @@ internal interface renderHelpers {
         if (textDisplayEnd == 0) return
 
         val window = g.currentWindow!!
-        renderTextClippedEx(window.drawList, posMin, posMax, text, textDisplayEnd, textSizeIfKnown, align, clipRect)
+        renderTextClippedEx(window.drawList, posMin, posMax, text.toByteArray(), textDisplayEnd, textSizeIfKnown, align, clipRect)
         if (g.logEnabled)
             logRenderedText(posMax, text, textDisplayEnd)
     }
@@ -68,7 +69,7 @@ internal interface renderHelpers {
     /** Default clipRect uses (pos_min,pos_max)
      *  Handle clipping on CPU immediately (vs typically let the GPU clip the triangles that are overlapping the clipping
      *  rectangle edges)    */
-    fun renderTextClippedEx(drawList: DrawList, posMin: Vec2, posMax: Vec2, text: String, textDisplayEnd: Int = -1,
+    fun renderTextClippedEx(drawList: DrawList, posMin: Vec2, posMax: Vec2, text: ByteArray, textDisplayEnd: Int = -1,
                             textSizeIfKnown: Vec2? = null, align: Vec2 = Vec2(), clipRect: Rect? = null) {
 
         // Perform CPU side clipping for single clipped element to avoid using scissor state
@@ -84,24 +85,23 @@ internal interface renderHelpers {
         }
 
         // Align whole block. We should defer that to the better rendering function when we'll have support for individual line alignment.
-        if (align.x > 0f) pos.x = glm.max(pos.x, pos.x + (posMax.x - pos.x - textSize.x) * align.x)
-        if (align.y > 0f) pos.y = glm.max(pos.y, pos.y + (posMax.y - pos.y - textSize.y) * align.y)
+        if (align.x > 0f) pos.x = pos.x max (pos.x + (posMax.x - pos.x - textSize.x) * align.x)
+        if (align.y > 0f) pos.y = pos.y max (pos.y + (posMax.y - pos.y - textSize.y) * align.y)
 
         // Render
         if (needClipping) {
             val fineClipRect = Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
-            drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, fineClipRect)
+            drawList.addText(null, 0f, pos, Col.Text.u32, text, textDisplayEnd, 0f, fineClipRect)
         } else
-            drawList.addText(null, 0f, pos, Col.Text.u32, text.toCharArray(), textDisplayEnd, 0f, null)
+            drawList.addText(null, 0f, pos, Col.Text.u32, text, textDisplayEnd, 0f, null)
     }
 
     /** Another overly complex function until we reorganize everything into a nice all-in-one helper.
      *  This is made more complex because we have dissociated the layout rectangle (pos_min..pos_max) which define _where_ the ellipsis is, from actual clipping of text and limit of the ellipsis display.
      *  This is because in the context of tabs we selectively hide part of the text when the Close Button appears, but we don't want the ellipsis to move. */
     fun renderTextEllipsis(drawList: DrawList, posMin: Vec2, posMax: Vec2, clipMaxX: Float, ellipsisMaxX: Float,
-                           text: String, textEndFull_: Int, textSizeIfKnown: Vec2?) {
+                           text: ByteArray, textEndFull: Int = findRenderedTextEnd(text), textSizeIfKnown: Vec2?) {
 
-        val textEndFull = if (textEndFull_ == -1) findRenderedTextEnd(text) else textEndFull_
         val textSize = textSizeIfKnown ?: calcTextSize(text, textEndFull, false, 0f)
 
         //draw_list->AddLine(ImVec2(pos_max.x, pos_min.y - 4), ImVec2(pos_max.x, pos_max.y + 4), IM_COL32(0, 0, 255, 255));
@@ -117,7 +117,7 @@ internal interface renderHelpers {
              */
             val font = drawList._data.font!!
             val fontSize = drawList._data.fontSize
-            val textEndEllipsis = intArrayOf(-1)
+            val textEndEllipsis = Vec1i(-1)
 
             var ellipsisChar = font.ellipsisChar
             var ellipsisCharCount = 1
@@ -139,16 +139,18 @@ internal interface renderHelpers {
 
             // We can now claim the space between pos_max.x and ellipsis_max.x
             val textAvailWidth = ((max(posMax.x, ellipsisMaxX) - ellipsisTotalWidth) - posMin.x) max 1f
-            var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text, textEndFull, textEndEllipsis).x
+            var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text,
+                    textEnd = textEndFull, remaining = textEndEllipsis).x
             if (0 == textEndEllipsis[0] && textEndEllipsis[0] < textEndFull) {
                 // Always display at least 1 character if there's no room for character + ellipsis
-                textEndEllipsis[0] = text.countUtf8BytesFromChar(textEndFull)
-                textSizeClippedX = font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text, textEndEllipsis[0]).x
+                textEndEllipsis[0] = textCountUtf8BytesFromChar(text, textEndFull)
+                textSizeClippedX = font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text, textEnd = textEndEllipsis[0]).x
             }
-            while (textEndEllipsis[0] > 0 && text[textEndEllipsis[0] - 1].isBlankA) {
+            while (textEndEllipsis[0] > 0 && charIsBlankA(text[textEndEllipsis[0] - 1].toUInt())) {
                 // Trim trailing space before ellipsis (FIXME: Supporting non-ascii blanks would be nice, for this we need a function to backtrack in UTF-8 text)
                 textEndEllipsis[0]--
-                textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text.substring(textEndEllipsis[0]), textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
+                textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text,
+                        textEndEllipsis[0], textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
             }
 
             // Render text, render ellipsis
@@ -163,7 +165,7 @@ internal interface renderHelpers {
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndFull, textSize, Vec2())
 
         if (g.logEnabled)
-            logRenderedText(posMin, text, textEndFull)
+            logRenderedText(posMin, String(text), textEndFull)
     }
 
     /** Render a rectangle shaped with optional rounding and borders    */
@@ -280,18 +282,22 @@ internal interface renderHelpers {
     }
 
     /** Find the optional ## from which we stop displaying text.    */
-    fun findRenderedTextEnd(text: String, textEnd_: Int = -1): Int { // TODO function extension?
+    fun findRenderedTextEnd(text: String, textEnd: Int = -1): Int {
+        val bytes = text.toByteArray()
+        return findRenderedTextEnd(bytes, if(textEnd != -1) textEnd else bytes.size)
+    }
+
+    /** Find the optional ## from which we stop displaying text.    */
+    fun findRenderedTextEnd(text: ByteArray, textEnd: Int = text.size): Int {
         var textDisplayEnd = 0
-        val textEnd = if (textEnd_ == -1) text.length else textEnd_
-        while (textDisplayEnd < textEnd && text[textDisplayEnd] != NUL && (text[textDisplayEnd + 0] != '#' || text[textDisplayEnd + 1] != '#'))
+        while (textDisplayEnd < textEnd && text[textDisplayEnd] != 0.b && (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
             textDisplayEnd++
         return textDisplayEnd
     }
 
-    fun logRenderedText(refPos: Vec2?, text: String, textEnd_: Int = text.length) {
-        val window = g.currentWindow!!
+    fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = findRenderedTextEnd(text)) { // TODO ByteArray?
 
-        val textEnd = if (textEnd_ == 0) findRenderedTextEnd(text) else textEnd_
+        val window = g.currentWindow!!
 
         val logNewLine = refPos?.let { it.y > g.logLinePosY + 1 } ?: false
 
@@ -300,16 +306,12 @@ internal interface renderHelpers {
             g.logLineFirstItem = true
 
         var textRemaining = text
-        if (g.logDepthRef > window.dc.treeDepth)
+        if (g.logDepthRef > window.dc.treeDepth) // Re-adjust padding if we have popped out of our starting depth
             g.logDepthRef = window.dc.treeDepth
-
         val treeDepth = window.dc.treeDepth - g.logDepthRef
-
-        //TODO: make textEnd aware
         while (true) {
-            /*  Split the string. Each new line (after a '\n') is followed by spacing corresponding to the current depth of our log entry.
-                We don't add a trailing \n to allow a subsequent item on the same line to be captured.
-            */
+            // Split the string. Each new line (after a '\n') is followed by spacing corresponding to the current depth of our log entry.
+            // We don't add a trailing \n to allow a subsequent item on the same line to be captured.
             val lineStart = textRemaining
             val lineEnd = if (lineStart.indexOf('\n') == -1) lineStart.length else lineStart.indexOf('\n')
             val isFirstLine = text.startsWith(lineStart)
