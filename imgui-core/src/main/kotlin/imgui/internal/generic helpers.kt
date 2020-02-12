@@ -4,10 +4,8 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import imgui.Dir
-import imgui.NUL
-import imgui.minus
-import imgui.plus
+import imgui.*
+import imgui.api.g
 import kool.BYTES
 import kool.rem
 import unsigned.toBigInt
@@ -148,6 +146,7 @@ val Int.upperPowerOfTwo: Int
 
 
 // -----------------------------------------------------------------------------------------------------------------
+// Helpers: String, Formatting
 // [SECTION] MISC HELPERS/UTILITIES (String, Format, Hash functions)
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -192,23 +191,80 @@ fun trimBlanks(buf: CharArray): CharArray {
 
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
 //IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
-//IMGUI_API int           ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_list args) IM_FMTLIST(3);
+
+fun formatStringV(buf: ByteArray, fmt: String, vararg args: Any): Int {
+    val bytes = fmt.format(g.style.locale, *args).toByteArray()
+    bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
+    return bytes.size.also { w -> buf[w] = 0 }
+}
+
 //IMGUI_API const char*   ImParseFormatFindStart(const char* format);
 //IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
 //IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
 //IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
+fun charIsBlankA(c: Int): Boolean = c == ' '.i || c == '\t'.i
+
 val Char.isBlankA: Boolean
     get() = this == ' ' || this == '\t'
+
+fun charIsBlankW(c: Int): Boolean = c == ' '.i || c == '\t'.i || c == 0x3000
+
 val Char.isBlankW: Boolean
     get() = this == ' ' || this == '\t' || i == 0x3000
 
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar
+// [SECTION] MISC HELPERS/UTILITIES (ImText* functions)
 // -----------------------------------------------------------------------------------------------------------------
 
 //IMGUI_API int           ImTextStrToUtf8(char* buf, int buf_size, const ImWchar* in_text, const ImWchar* in_text_end);      // return output UTF-8 bytes count
-//IMGUI_API int           ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* in_text_end);          // read one character. return input UTF-8 bytes count
+/** read one character. return input UTF-8 bytes count
+ *  @return [JVM] [char: Int, bytes: Int] */
+fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int): Pair<Int, Int> {
+    var str = textBegin
+    fun s(i: Int = 0) = text[i + str].toUInt()
+    fun spp() = text[i + str++].toUInt()
+    val invalid = UNICODE_CODEPOINT_INVALID // will be invalid but not end of string
+    if ((s() and 0x80) == 0) return spp() to 1
+    if ((s() and 0xe0) == 0xc0) {
+        if (textEnd != 0 && textEnd - str < 2) return invalid to 1
+        if (s() < 0xc2) return invalid to 2
+        var c = (spp() and 0x1f) shl 6
+        if ((s() and 0xc0) != 0x80) return invalid to 2
+        c += (spp() and 0x3f)
+        return c to 2
+    }
+    if ((s() and 0xf0) == 0xe0) {
+        if (textEnd != 0 && textEnd - str < 3) return invalid to 1
+        if (s() == 0xe0 && (s(1) < 0xa0 || s(1) > 0xbf)) return invalid to 3
+        if (s() == 0xed && s(1) > 0x9f) return invalid to 3 // str[1] < 0x80 is checked below
+        var c = (spp() and 0x0f) shl 12
+        if ((s() and 0xc0) != 0x80) return invalid to 3
+        c += (spp() and 0x3f) shl 6
+        if ((s() and 0xc0) != 0x80) return invalid to 3
+        c += spp() and 0x3f
+        return c to 3
+    }
+    if ((s() and 0xf8) == 0xf0) {
+        if (textEnd != 0 && textEnd - str < 4) return invalid to 1
+        if (s() > 0xf4) return invalid to 4
+        if (s() == 0xf0 && (s(1) < 0x90 || s(1) > 0xbf)) return invalid to 4
+        if (s() == 0xf4 && s(1) > 0x8f) return invalid to 4 // str[1] < 0x80 is checked below
+        var c = (spp() and 0x07) shl 18
+        if ((s() and 0xc0) != 0x80) return invalid to 4
+        c += (spp() and 0x3f) shl 12
+        if ((s() and 0xc0) != 0x80) return invalid to 4
+        c += (spp() and 0x3f) shl 6
+        if ((s() and 0xc0) != 0x80) return invalid to 4
+        c += spp() and 0x3f
+        // utf-8 encodings of values used in surrogate pairs are invalid
+        if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
+        return c to 4
+    }
+    return 0 to 0
+}
+
 /** ~ImTextStrFromUtf8 */
 fun CharArray.textStr(src: CharArray): Int {
     var i = 0
@@ -219,6 +275,12 @@ fun CharArray.textStr(src: CharArray): Int {
     return i
 }
 //IMGUI_API int           ImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);                            // return number of UTF-8 code-points (NOT bytes count)
+/** return number of bytes to express one char in UTF-8 */
+fun textCountUtf8BytesFromChar(text: ByteArray, textEnd: Int): Int {
+    val (_, bytes) = textCharFromUtf8(text, textEnd = textEnd)
+    return bytes
+}
+
 /** return number of bytes to express one char in UTF-8 */
 fun String.countUtf8BytesFromChar(textEnd: Int) = kotlin.math.min(length, textEnd)
 //IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string in UTF-8

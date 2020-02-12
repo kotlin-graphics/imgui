@@ -19,6 +19,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
 import imgui.internal.TextFlag
+import imgui.internal.formatStringV
 
 
 /** Widgets: Text */
@@ -33,15 +34,13 @@ interface widgetsText {
     /** formatted text */
     fun text(fmt: String, vararg args: Any) = textV(fmt, args)
 
-    fun textV(fmt_: String, args: Array<out Any>) {
+    fun textV(fmt: String, args: Array<out Any>) {
 
         val window = currentWindow
         if (window.skipItems) return
 
-        val fmt = if (args.isEmpty()) fmt_ else fmt_.format(style.locale, *args)
-
-        val textEnd = fmt.length
-        textEx(fmt, textEnd, TextFlag.NoWidthForLargeClippedText)
+        val textEnd = formatStringV(g.tempBuffer, fmt, *args)
+        textEx(PChars(g.tempBuffer, end = textEnd), TextFlag.NoWidthForLargeClippedText)
     }
 
     /** shortcut for

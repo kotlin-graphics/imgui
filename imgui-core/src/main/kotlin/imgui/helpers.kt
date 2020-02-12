@@ -2,12 +2,14 @@ package imgui
 
 import com.sun.jdi.VirtualMachine
 import glm_.L
+import glm_.b
 import glm_.vec4.Vec4
 import imgui.classes.InputTextCallbackData
 import imgui.classes.SizeCallbackData
 import imgui.internal.F32_TO_INT8_SAT
 import kool.*
 import org.lwjgl.system.MemoryUtil
+import unsigned.toUInt
 import java.nio.IntBuffer
 
 
@@ -152,3 +154,19 @@ infix fun Int.wo(i: Int) = and(i.inv())
 
 var imeInProgress = false
 //    var imeLastKey = 0
+
+class PChars(var chars: ByteArray, var begin: Int = 0, var end: Int = chars.size) {
+
+    fun new() = PChars(chars, begin, end)
+    val i get() = chars[begin].toUInt()
+    operator fun invoke() = chars[begin]
+    operator fun compareTo(ptr: Int): Int = begin.compareTo(ptr)
+}
+
+fun ByteArray.memchr(startIdx: Int, c: Char, num: Int = size - startIdx): Int {
+    val char = c.b
+    for (i in startIdx until startIdx + num)
+        if(this[i] == char)
+            return i
+    return -1
+}
