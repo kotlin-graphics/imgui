@@ -1,22 +1,26 @@
 package imgui.font
 
 
-import glm_.*
+import glm_.compareTo
+import glm_.glm
+import glm_.i
+import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
-import imgui.NUL
 import imgui.api.g
 import imgui.classes.DrawList
-import imgui.internal.DrawVert
-import imgui.internal.isBlankA
-import imgui.internal.isBlankW
+import imgui.internal.charIsBlankA
+import imgui.internal.charIsBlankW
 import imgui.internal.round
-import imgui.resize
-import kool.*
+import imgui.internal.textCharFromUtf8
+import imgui.memchr
+import kool.lim
+import kool.pos
 import org.lwjgl.system.Platform
-import kotlin.math.floor
 import uno.kotlin.plusAssign
+import unsigned.toUInt
+import kotlin.math.floor
 
 
 /** Font runtime data and rendering
@@ -93,10 +97,8 @@ class Font {
 
     /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
         'wrapWidth' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable. */
-    fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: String, textEnd_: Int = text.length,
-                      remaining: IntArray? = null): Vec2 { // utf8
-
-        val textEnd = if (textEnd_ == -1) text.length else textEnd_
+    fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: ByteArray, textBegin: Int = 0,
+                      textEnd: Int = text.size, remaining: Vec1i? = null): Vec2 { // utf8
 
         val lineHeight = size
         val scale = size / fontSize
@@ -107,7 +109,7 @@ class Font {
         val wordWrapEnabled = wrapWidth > 0f
         var wordWrapEol = -1
 
-        var s = 0
+        var s = textBegin
         while (s < textEnd) {
 
             if (wordWrapEnabled) {
@@ -115,7 +117,7 @@ class Font {
                 /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
                     and not intrusive for what's essentially an uncommon feature.   */
                 if (wordWrapEol == -1) {
-                    wordWrapEol = calcWordWrapPositionA(scale, text.toCharArray(), s, textEnd, wrapWidth - lineWidth)
+                    wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - lineWidth)
                     /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
                         discontinuity.                     */
                     if (wordWrapEol == s)
@@ -132,13 +134,9 @@ class Font {
 
                     // Wrapping skips upcoming blanks
                     while (s < textEnd) {
-                        val c = text[s]
-                        if (c.isBlankA)
-                            s++
-                        else if (c == '\n') {
-                            s++
-                            break
-                        } else break
+                        val c = text[s].toUInt()
+                        if (charIsBlankA(c)) s++ else if (c == '\n'.i) {
+                            s++; break; } else break
                     }
                     continue
                 }
@@ -146,28 +144,27 @@ class Font {
 
             // Decode and advance source
             val prevS = s
-            val c = text[s]
-            /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
-                    https://www.ibm.com/developerworks/library/j-unicode/index.html             */
-            if (c < Char.MIN_SURROGATE)
+            var c = text[s].toUInt()
+            if (c < 0x80)
                 s += 1
             else {
-                TODO("Probabily surrogate character")
-//                s += ImTextCharFromUtf8(& c, s, text_end)
-//                if (c.i == 0x0) break   // Malformed UTF-8?
+                val (char, bytes) = textCharFromUtf8(text, s, textEnd)
+                c = char
+                s += bytes
+                if (c == 0x0) break   // Malformed UTF-8?
             }
 
             if (c < 32) {
-                if (c == '\n') {
+                if (c == '\n'.i) {
                     textSize.x = glm.max(textSize.x, lineWidth)
                     textSize.y += lineHeight
                     lineWidth = 0f
                     continue
                 }
-                if (c == '\r') continue
+                if (c == '\r'.i) continue
             }
 
-            val charWidth = (if (c < indexAdvanceX.size) indexAdvanceX[c.i] else fallbackAdvanceX) * scale
+            val charWidth = indexAdvanceX.getOrElse(c) { fallbackAdvanceX } * scale
             if (lineWidth + charWidth >= maxWidth) {
                 s = prevS
                 break
@@ -178,15 +175,15 @@ class Font {
         if (textSize.x < lineWidth)
             textSize.x = lineWidth
 
-        if (lineWidth > 0 || textSize.y == 0.0f)
+        if (lineWidth > 0 || textSize.y == 0f)
             textSize.y += lineHeight
 
-        remaining?.set(0, s)
+        remaining?.put(s)
 
         return textSize
     }
 
-    fun calcWordWrapPositionA(scale: Float, text: CharArray, ptr: Int, textEnd: Int, wrapWidth_: Float): Int {
+    fun calcWordWrapPositionA(scale: Float, text: ByteArray, textBegin: Int, textEnd: Int, wrapWidth_: Float): Int {
 
         /*  Simple word-wrapping for English, not full-featured. Please submit failing cases!
             FIXME: Much possible improvements (don't cut things like "word !", "word!!!" but cut within "word,,,,",
@@ -209,22 +206,25 @@ class Font {
         var blankWidth = 0f
         val wrapWidth = wrapWidth_ / scale   // We work with unscaled widths to avoid scaling every characters
 
-        var wordEnd = ptr
+        var wordEnd = textBegin
         var prevWordEnd = -1
         var insideWord = true
 
-        var s = ptr
-        while (s < textEnd) {    // TODO remove textEnd?
-            val c = text[s]
-            val nextS =
-                    if (c < 0x80)
-                        s + 1
-                    else
-                        TODO() // (s + ImTextCharFromUtf8(&c, s, text_end)).c
-            if (c == NUL) break
+        var s = textBegin
+        while (s < textEnd) {
+            var c = s.i
+            val nextS = s + when {
+                c < 0x80 -> 1
+                else -> {
+                    val (char, bytes) = textCharFromUtf8(text, s, textEnd)
+                    c = char
+                    bytes
+                }
+            }
+            if (c == 0) break
 
             if (c < 32) {
-                if (c == '\n') {
+                if (c == '\n'.i) {
                     lineWidth = 0f
                     wordWidth = 0f
                     blankWidth = 0f
@@ -232,13 +232,13 @@ class Font {
                     s = nextS
                     continue
                 }
-                if (c == '\r') {
+                if (c == '\r'.i) {
                     s = nextS
                     continue
                 }
             }
-            val charWidth = indexAdvanceX.getOrElse(c.i, { fallbackAdvanceX })
-            if (c.isBlankW) {
+            val charWidth = indexAdvanceX.getOrElse(c) { fallbackAdvanceX }
+            if (charIsBlankW(c)) {
                 if (insideWord) {
                     lineWidth += blankWidth
                     blankWidth = 0.0f
@@ -257,7 +257,7 @@ class Font {
                     blankWidth = 0f
                 }
                 // Allow wrapping after punctuation.
-                insideWord = !(c == '.' || c == ',' || c == ';' || c == '!' || c == '?' || c == '\"')
+                insideWord = c != '.'.i && c != ','.i && c != ';'.i && c != '!'.i && c != '?'.i && c != '\"'.i
             }
 
             // We ignore blank width at the end of the line (they can be skipped)
@@ -287,15 +287,13 @@ class Font {
     }
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
-    fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: CharArray, textEnd_: Int = -1, // TODO return it also?
-                   wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
+    fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: ByteArray,
+                   textEnd_: Int = text.size, wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
         var textEnd = textEnd_
 
         // Align to be pixel perfect
-        pos.x = floor(pos.x) + displayOffset.x
-        pos.y = floor(pos.y) + displayOffset.y
-        var (x, y) = pos
+        var (x, y) = pos(floor(pos.x) + displayOffset.x, floor(pos.y) + displayOffset.y)
         if (y > clipRect.w) return
 
         val scale = size / fontSize
@@ -307,7 +305,8 @@ class Font {
         var s = 0
         if (y + lineHeight < clipRect.y && !wordWrapEnabled)
             while (y + lineHeight < clipRect.y && s < textEnd) {
-                s = text.memchr(s, '\n')?.plus(1) ?: textEnd
+                s = text.memchr(s, '\n')
+                s = if (s == -1) s + 1 else textEnd
                 y += lineHeight
             }
 
@@ -317,7 +316,8 @@ class Font {
             var sEnd = s
             var yEnd = y
             while (yEnd < clipRect.w && s < textEnd) {
-                sEnd = text.memchr(sEnd, '\n')?.plus(1) ?: textEnd
+                sEnd = text.memchr(sEnd, '\n')
+                sEnd = if (sEnd == -1) sEnd + 1 else textEnd
                 yEnd += lineHeight
             }
             textEnd = sEnd
@@ -331,6 +331,8 @@ class Font {
         val idxCountMax = (textEnd - s) * 6
         val idxExpectedSize = drawList.idxBuffer.lim + idxCountMax
         drawList.primReserve(idxCountMax, vtxCountMax)
+
+        // set
         drawList.vtxBuffer.pos = drawList._vtxWritePtr
         drawList.idxBuffer.pos = drawList._idxWritePtr
 
@@ -360,40 +362,34 @@ class Font {
 
                     // Wrapping skips upcoming blanks
                     while (s < textEnd) {
-                        val c = text[s]
-                        if (c.isBlankA) s++
-                        else if (c == '\n') {
-                            s++
-                            break
-                        } else break
+                        val c = text[s].toUInt()
+                        if (charIsBlankA(c)) s++; else if (c == '\n'.i) {
+                            s++; break; } else break
                     }
                     continue
                 }
             }
             // Decode and advance source
-            if (s >= text.size)
-                return
-            val c = text[s]
-            /*  JVM imgui specific, not 0x80 because on jvm we have Unicode with surrogates characters (instead of utf8)
-                    https://www.ibm.com/developerworks/library/j-unicode/index.html             */
-            if (c < Char.MIN_HIGH_SURROGATE)
+            var c = text[s].toUInt()
+            if (c < 0x80)
                 s += 1
             else {
-                TODO("Probably surrogate character")
-//                s += textCharFromUtf8(& c, s, text_end)
-//                if (c == 0) // Malformed UTF-8?
-//                    break
+                val (char, bytes) = textCharFromUtf8(text, s, textEnd)
+                c = char
+                s += bytes
+                if (c == 0) // Malformed UTF-8?
+                    break
             }
 
             if (c < 32) {
-                if (c == '\n') {
+                if (c == '\n'.i) {
                     x = pos.x
                     y += lineHeight
                     if (y > clipRect.w)
                         break // break out of main loop
                     continue
                 }
-                if (c == '\r') continue
+                if (c == '\r'.i) continue
             }
 
             var charWidth = 0f
@@ -403,7 +399,7 @@ class Font {
                 charWidth = glyph.advanceX * scale
 
                 // Arbitrarily assume that both space and tabs are empty glyphs as an optimization
-                if (c != ' ' && c != '\t') {
+                if (c != ' '.i && c != '\t'.i) {
                     /*  We don't do a second finer clipping test on the Y axis as we've already skipped anything before
                         clipRect.y and exit once we pass clipRect.w    */
                     var x1 = x + glyph.x0 * scale
@@ -461,6 +457,7 @@ class Font {
             }
             x += charWidth
         }
+        // reset
         drawList.vtxBuffer.pos = 0
         drawList.idxBuffer.pos = 0
 
@@ -471,13 +468,6 @@ class Font {
         drawList._vtxWritePtr = vtxWrite
         drawList._idxWritePtr = idxWrite
         drawList._vtxCurrentIdx = vtxCurrentIdx
-    }
-
-    fun CharArray.memchr(startIdx: Int, c: Char): Int? {
-        for (index in startIdx until size)
-            if (c == this[index])
-                return index
-        return null
     }
 
     // [Internal] Don't use!
