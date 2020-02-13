@@ -513,9 +513,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             shrinkWidthBuffer.clear()
 
             privateClipboard = ""
-            inputTextState.textW = charArrayOf()
-            inputTextState.initialTextA = charArrayOf()
-            inputTextState.textA = charArrayOf()
+            inputTextState.textW = CharArray(0)
+            inputTextState.initialTextA = ByteArray(0)
+            inputTextState.textA = ByteArray(0)
 
             if (logFile != null) {
                 logFile = null

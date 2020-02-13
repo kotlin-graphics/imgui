@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.func.common.max
+import glm_.min
 import glm_.parseInt
 import imgui.*
 import imgui.ImGui.clearActiveID
@@ -163,14 +164,15 @@ internal interface internal {
      *  fmt = "%.3f"       -> return fmt
      *  fmt = "hello %.3f" -> return fmt + 6
      *  fmt = "%.3f hello" -> return buf written with "%.3f" */
-    fun parseFormatTrimDecorations(fmt: String, buf: CharArray): String {
+    fun parseFormatTrimDecorations(fmt: String): String {
         val fmtStart = parseFormatFindStart(fmt)
         if (fmt[fmtStart] != '%')
             return fmt
         val fmtEnd = parseFormatFindEnd(fmt.substring(fmtStart))
-        if (fmtStart + fmtEnd >= fmt.length) // If we only have leading decoration, we don't need to copy the data.
-            return fmt.substring(fmtStart)
-        return String(buf, fmtStart, min(fmtEnd - fmtStart + 1, buf.size))
+        return when {
+            fmtStart + fmtEnd >= fmt.length -> fmt.substring(fmtStart) // If we only have leading decoration, we don't need to copy the data.
+            else -> fmt.substring(fmtStart, fmtEnd)
+        }
     }
 
     /** Parse display precision back from the display format string

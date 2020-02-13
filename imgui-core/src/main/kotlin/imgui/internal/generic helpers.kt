@@ -154,14 +154,8 @@ val Int.upperPowerOfTwo: Int
 
 //IMGUI_API int           ImStricmp(const char* str1, const char* str2);
 //IMGUI_API int           ImStrnicmp(const char* str1, const char* str2, size_t count);
-void ImStrncpy(char* dst, const char* src, size_t count)
-{
-    if (count < 1)
-        return;
-    if (count > 1)
-        strncpy(dst, src, count - 1);
-    dst[count - 1] = 0;
-}
+// [JVM] => System.arrayCopy
+//IMGUI_API void          ImStrncpy(char* dst, const char* src, size_t count);
 
 //IMGUI_API char*         ImStrdup(const char* str);
 //IMGUI_API char*         ImStrdupcpy(char* dst, size_t* p_dst_size, const char* str);
@@ -386,8 +380,8 @@ fun textCountUtf8BytesFromChar(c: Int) = when {
 }
 
 /** Find beginning-of-line
- *  ~InputTextCalcTextSizeW(ImStrbolW(searches_input_ptr[0], text_begin), searches_input_ptr[0]).x*/
-fun CharArray.beginOfLine(midLine: Int): Int {
+ *  ~ImStrbolW */
+infix fun CharArray.beginOfLine(midLine: Int): Int {
     var res = midLine
     while (res > 0 && this[res - 1] != '\n') res--
     return res

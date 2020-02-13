@@ -92,14 +92,14 @@ interface widgetsText {
         if (window.skipItems) return
         val w = calcItemWidth()
 
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
         val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
         val totalBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x else 0f, style.framePadding.y * 2) + labelSize)
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, 0)) return
         // Render
         val text = fmt.format(style.locale, *args)
-        renderTextClipped(valueBb.min, valueBb.max, text, text.length, null, Vec2(0f, 0.5f))
+        renderTextClipped(valueBb.min, valueBb.max, text, null, Vec2(0f, 0.5f))
         if (labelSize.x > 0f)
             renderText(Vec2(valueBb.max.x + style.itemInnerSpacing.x, valueBb.min.y + style.framePadding.y), label)
     }
@@ -114,8 +114,7 @@ interface widgetsText {
         if (window.skipItems) return
 
         val text = fmt.format(style.locale, *args)
-        val textEnd = text.length
-        val labelSize = calcTextSize(text, textEnd, false)
+        val labelSize = calcTextSize(text, hideTextAfterDoubleHash =  false)
         val totalSize = Vec2(g.fontSize + if(labelSize.x > 0f) (labelSize.x + style.framePadding.x * 2) else 0f, labelSize.y)  // Empty text doesn't add padding
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currLineTextBaseOffset

@@ -1,8 +1,10 @@
 package imgui.internal.api
 
 import glm_.*
-import imgui.*
+import imgui.DataType
 import imgui.ImGui.style
+import imgui.NUL
+import imgui._i
 import imgui.api.*
 import imgui.internal.addClampOverflow
 import imgui.internal.subClampOverflow
@@ -19,29 +21,22 @@ internal interface dataTypeHelpers {
 
     //    IMGUI_API const ImGuiDataTypeInfo*  DataTypeGetInfo(ImGuiDataType data_type);
 
-    /** DataTypeFormatString */
-    fun KMutableProperty0<*>.format(dataType: DataType, format: String, size: Int = 0): CharArray {
-        // useless
-//    val value: Number = when (dataType) {
-//        DataType.Int, DataType.Uint -> this() as Int    // Signedness doesn't matter when pushing the argument
-//        DataType.Long, DataType.Ulong -> this() as Long // Signedness doesn't matter when pushing the argument
-//        DataType.Float -> this() as Float
-//        DataType.Double -> this() as Double
-//        else -> throw Error()
-//    }
-        val t = this()
-        val string = format.format(style.locale, when (t) {
+    /** DataTypeFormatString TODO clean if it's fine */
+    fun KMutableProperty0<*>.format(dataType: DataType, format: String/*, size: Int = 0*/): /*CharArray*/
+            String {
+        val arg = when (val t = this()) {
             // we need to intervene since java printf cant handle %u
             is Ubyte -> t.i
             is Ushort -> t.i
             is Uint -> t.L
             is Ulong -> t.toBigInt()
             else -> t // normal scalar
-        })
-        return when (size) {
+        }
+        return format.format(style.locale, arg)
+        /*return when (size) {
             0 -> string.toCharArray()
             else -> string.toCharArray(CharArray(size))
-        }
+        }*/
     }
 
     fun <N : Number> dataTypeApplyOp(dataType: DataType, op: Char, value1: N, value2: N): N {
@@ -106,23 +101,21 @@ internal interface dataTypeHelpers {
 
     /** User can input math operators (e.g. +100) to edit a numerical values.
      *  NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess.. */
-    fun dataTypeApplyOpFromText(buf: CharArray, initialValueBuf: CharArray, dataType: DataType, pData: IntArray,
+    fun dataTypeApplyOpFromText(buf: String, initialValueBuf: ByteArray, dataType: DataType, pData: IntArray,
                                 format: String? = null): Boolean {
         _i = pData[0]
         return dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::_i, format)
                 .also { pData[0] = _i }
     }
 
-    fun dataTypeApplyOpFromText(buf_: CharArray, initialValueBuf_: CharArray, dataType: DataType,
+    fun dataTypeApplyOpFromText(buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
                                 dataPtr: KMutableProperty0<*>, format: String? = null): Boolean {
 
-        val buf = String(buf_)
-                .replace(Regex("\\s+"), "")
+        val buf = buf_.replace(Regex("\\s+"), "")
                 .replace("$NUL", "")
                 .split(Regex("-+\\*/"))
 
-        val initialValueBuf = String(initialValueBuf_)
-                .replace(Regex("\\s+"), "")
+        val initialValueBuf = String(initialValueBuf_).replace(Regex("\\s+"), "")
                 .replace("$NUL", "")
                 .split(Regex("-+\\*/"))
 

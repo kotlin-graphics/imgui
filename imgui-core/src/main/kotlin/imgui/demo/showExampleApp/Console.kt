@@ -1,5 +1,6 @@
 package imgui.demo.showExampleApp
 
+import glm_.b
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -56,9 +57,9 @@ object Console {
     operator fun invoke(open: KMutableProperty0<Boolean>) = console.draw("Example: Console", open)
 
     class ExampleAppConsole {
-        val inputBuf = CharArray(256)
+        val inputBuf = ByteArray(256)
         val items = ArrayList<String>()
-        val commands = ArrayList<String>(Arrays.asList("HELP", "HISTORY", "CLEAR", "CLASSIFY")) // "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
+        val commands = arrayListOf("HELP", "HISTORY", "CLEAR", "CLASSIFY") // "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
         val history = ArrayList<String>()
         /** -1: new line, 0..History.Size-1 browsing history. */
         var historyPos = -1
@@ -174,14 +175,15 @@ object Console {
 
             var reclaimFocus = false
             if (inputText("Input", inputBuf, Itf.EnterReturnsTrue.i or Itf.CallbackCompletion.i or Itf.CallbackHistory.i, textEditCallbackStub, this)) {
-                val slen = inputBuf.textStr(inputBuf)
-                val s = String(inputBuf.copyOf(slen)).split(" ")[0]
-                if (s.isNotEmpty())
-                    execCommand(s)
-                for (i in 0 until slen)
-                    inputBuf[i] = NUL
-
-                reclaimFocus = true
+                TODO()
+//                val slen = inputBuf.textStr(inputBuf)
+//                val s = String(inputBuf.copyOf(slen)).split(" ")[0]
+//                if (s.isNotEmpty())
+//                    execCommand(s)
+//                for (i in 0 until slen)
+//                    inputBuf[i] = NUL
+//
+//                reclaimFocus = true
             }
 
             setItemDefaultFocus()
@@ -227,7 +229,7 @@ object Console {
                     var wordStart = wordEnd
                     while (wordStart > 0) {
                         val c = data.buf[wordStart]
-                        if (c.isWhitespace() or (c == ';'))
+                        if (c == ' '.b || c == '\t'.b || c == ','.b || c == ';'.b)
                             break
                         wordStart--
                     }
@@ -266,7 +268,7 @@ object Console {
 
                             if (matchLen > 0) {
                                 data.deleteChars(wordStart, wordEnd - wordStart)
-                                data.insertChars(data.cursorPos, candidates[0], matchLen)
+                                data.insertChars(data.cursorPos, candidates[0].toByteArray(), matchLen)
                             }
                         }
                     }

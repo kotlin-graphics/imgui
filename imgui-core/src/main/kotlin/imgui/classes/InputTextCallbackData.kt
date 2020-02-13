@@ -1,5 +1,6 @@
 package imgui.classes
 
+import glm_.b
 import glm_.glm
 import imgui.*
 import imgui.api.g
@@ -62,9 +63,9 @@ class InputTextCallbackData {
         var dst = pos
         var src = pos + bytesCount
         var c = buf[src++]
-        while (c != NUL) {
+        while (c != 0.b) {
             buf[dst++] = c
-            c = buf.getOrElse(src++) { NUL }
+            c = buf.getOrElse(src++) { 0.b }
         }
         if (cursorPos + bytesCount >= pos)
             cursorPos -= bytesCount
@@ -76,12 +77,12 @@ class InputTextCallbackData {
         bufTextLen -= bytesCount
     }
 
-    fun insertChars(pos: Int, newText: String, newTextEnd: Int? = null) = insertChars(pos, newText.toCharArray(), newTextEnd)
+    fun insertChars(pos: Int, newText: String) = insertChars(pos, newText.toByteArray())
 
-    fun insertChars(pos: Int, newText: CharArray, newTextEnd: Int? = null) {
+    fun insertChars(pos: Int, newText: ByteArray, newTextEnd: Int = newText.size) {
 
         val isResizable = flags has InputTextFlag.CallbackResize
-        val newTextLen = newTextEnd ?: newText.strlen
+        val newTextLen = newTextEnd
         if (newTextLen + bufTextLen >= bufSize) {
 
             if (!isResizable) return
@@ -91,9 +92,9 @@ class InputTextCallbackData {
             assert(editState.id != 0 && g.activeId == editState.id)
             assert(buf === editState.textA)
             val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
-            val t = CharArray(newBufSize)
-            System.arraycopy(editState.textA, 0, t, 0, editState.textA.size)
-            editState.textA = t
+            val new = ByteArray(newBufSize)
+            System.arraycopy(editState.textA, 0, new, 0, editState.textA.size)
+            editState.textA = new
             buf = editState.textA
             editState.bufCapacityA = newBufSize
             bufSize = newBufSize

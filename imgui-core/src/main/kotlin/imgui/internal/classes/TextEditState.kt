@@ -1,6 +1,7 @@
 package imgui.internal.classes
 
 import gli_.has
+import glm_.b
 import glm_.c
 import glm_.glm
 import imgui.*
@@ -50,14 +51,14 @@ class TextEditState {
         curLenW = 0
         curLenA = 0
         textW[0] = NUL
-        textA[0] = NUL
+        textA[0] = 0.b
         cursorClamp()
     }
 
     fun clearFreeMemory() {
-        textW = charArrayOf()
-        textA = charArrayOf()
-        initialTextA = charArrayOf()
+        textW = CharArray(0)
+        textA = ByteArray(0)
+        initialTextA = ByteArray(0)
     }
 
     val undoAvailCount: Int
