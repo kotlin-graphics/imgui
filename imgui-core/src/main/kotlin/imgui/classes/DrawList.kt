@@ -295,10 +295,16 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathFillConvex(col)
     }
 
-    fun addText(pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size) = addText(g.font, g.fontSize, pos, col, text, textEnd)
+    fun addText(pos: Vec2, col: Int, text: String) = addText(g.font, g.fontSize, pos, col, text)
 
-    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textEnd: Int = text.size,
+    fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
                 wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
+        val bytes = text.toByteArray()
+        addText(font, fontSize, pos, col, bytes, bytes.size, wrapWidth, cpuFineClipRect)
+    }
+
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray,
+                textEnd: Int = text.size, wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
 

@@ -71,7 +71,7 @@ internal interface inputText {
      *  (FIXME: Rather confusing and messy function, among the worse part of our codebase, expecting to rewrite a V2 at some point.. Partly because we are
      *  doing UTF8 > U16 > UTF8 conversions on the go to easily internal interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
-    fun inputTextEx(label: String, hint: String?, buf: CharArray, sizeArg: Vec2, flags: InputTextFlags,
+    fun inputTextEx(label: String, hint: String?, buf: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
                     callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
 
         val window = currentWindow
@@ -161,16 +161,15 @@ internal interface inputText {
 
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
-            val bufLen = buf.strlen
-            state_.initialTextA = CharArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            val bufLen = buf.size
+            state_.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             System.arraycopy(buf, 0, state_.initialTextA, 0, bufLen)
 
             // Start edition
             state_.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
-            state_.textA = CharArray(0)
+            state_.textA = ByteArray(0)
             state_.textAIsValid = false // TextA is not valid yet (we will display buf until then)
-
-            state_.curLenW = state_.textW.textStr(buf) // TODO check if ImTextStrFromUtf8 needed
+            state_.curLenW = textStrFromUtf8(state_.textW, buf, ) // TODO check if ImTextStrFromUtf8 needed
             /*  We can't get the result from ImStrncpy() above because it is not UTF-8 aware.
                 Here we'll cut off malformed UTF-8.                 */
             state_.curLenA = state_.curLenW //TODO check (int)(bufEnd - buf)

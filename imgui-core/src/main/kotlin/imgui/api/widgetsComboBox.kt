@@ -33,10 +33,10 @@ import imgui.internal.*
 import imgui.internal.classes.Rect
 import kool.getValue
 import kool.setValue
-import imgui.internal.DrawCornerFlag as Dcf
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
+import imgui.internal.DrawCornerFlag as Dcf
 
 /** Widgets: Combo Box
  *  - The BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it, by creating e.g. Selectable() items.
@@ -59,9 +59,9 @@ interface widgetsComboBox {
         val id = window.getId(label)
 
         val arrowSize = if (flags has Cf.NoArrowButton) 0f else frameHeight
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val expectedW = calcItemWidth()
-        val w = if(flags has Cf.NoPreview) arrowSize else expectedW
+        val w = if (flags has Cf.NoPreview) arrowSize else expectedW
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         itemSize(totalBb, style.framePadding.y)
@@ -75,10 +75,10 @@ interface widgetsComboBox {
         renderNavHighlight(frameBb, id)
         if (flags hasnt Cf.NoPreview)
             window.drawList.addRectFilled(frameBb.min, Vec2(valueX2, frameBb.max.y), frameCol.u32,
-                    style.frameRounding, if(flags has Cf.NoArrowButton) Dcf.All.i else Dcf.Left.i)
+                    style.frameRounding, if (flags has Cf.NoArrowButton) Dcf.All.i else Dcf.Left.i)
         if (flags hasnt Cf.NoArrowButton) {
-            val bgCol = if(popupOpen || hovered) Col.ButtonHovered else Col.Button
-            window.drawList.addRectFilled(Vec2(valueX2, frameBb.min.y), frameBb.max, bgCol.u32, style.frameRounding, if(w <= arrowSize) Dcf.All.i else Dcf.Right.i)
+            val bgCol = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
+            window.drawList.addRectFilled(Vec2(valueX2, frameBb.min.y), frameBb.max, bgCol.u32, style.frameRounding, if (w <= arrowSize) Dcf.All.i else Dcf.Right.i)
             if (valueX2 + arrowSize - style.framePadding.x <= frameBb.max.x)
                 window.drawList.renderArrow(Vec2(valueX2 + style.framePadding.y, frameBb.min.y + style.framePadding.y), Col.Text.u32, Dir.Down, 1f)
         }

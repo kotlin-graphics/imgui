@@ -26,21 +26,25 @@ import kotlin.math.max
  *  NB: All position are in absolute pixels coordinates (we are never using window coordinates internally) */
 internal interface renderHelpers {
 
-    fun renderText(pos: Vec2, text: String, textEnd: Int = text.length, hideTextAfterHash: Boolean = true) {
+    fun renderText(pos: Vec2, text: String, hideTextAfterHash: Boolean = true) {
+        val bytes = text.toByteArray()
+        renderText(pos, bytes, bytes.size, hideTextAfterHash)
+    }
+    fun renderText(pos: Vec2, text: ByteArray, textEnd: Int = text.size, hideTextAfterHash: Boolean = true) {
 
         val window = g.currentWindow!!
 
         // Hide anything after a '##' string
         val textDisplayEnd = when {
             hideTextAfterHash -> findRenderedTextEnd(text, textEnd)
-            textEnd == -1 -> text.length
+            textEnd == -1 -> text.size
             else -> textEnd
         }
 
         if (textDisplayEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text.toByteArray(), textDisplayEnd)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, textDisplayEnd)
             if (g.logEnabled)
-                logRenderedText(pos, text, textDisplayEnd)
+                logRenderedText(pos, String(text), textDisplayEnd)
         }
     }
 
