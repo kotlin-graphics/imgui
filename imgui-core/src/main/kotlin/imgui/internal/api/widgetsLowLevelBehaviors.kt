@@ -476,7 +476,12 @@ internal interface widgetsLowLevelBehaviors {
         return held
     }
 
-    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String, labelEnd_: Int = -1): Boolean {
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: String): Boolean {
+        val bytes = label.toByteArray()
+        return treeNodeBehavior(id, flags, bytes, bytes.size)
+    }
+
+    fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: ByteArray, labelEnd_: Int = -1): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false

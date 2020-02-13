@@ -76,24 +76,24 @@ interface widgetsInputWithKeyboard {
     }
 
     fun inputFloat2(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Float, v, 2, null, null, format, flags)
+            inputScalarN<Float>(label, DataType.Float, v, 2, null, null, format, flags)
 
     fun inputVec2(label: String, v: Vec2, format: String = "%.3f", flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Float, v to _fa, 2, null, null, format, flags)
+            inputScalarN<Float>(label, DataType.Float, v to _fa, Vec2.length, null, null, format, flags)
                     .also { v put _fa }
 
     fun inputFloat3(label: String, v: FloatArray, format: String? = null, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Float, v, 3, null, null, format, flags)
+            inputScalarN<Float>(label, DataType.Float, v, 3, null, null, format, flags)
 
     fun inputVec3(label: String, v: Vec3, format: String? = null, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Float, v to _fa, 3, null, null, format, flags)
+            inputScalarN<Float>(label, DataType.Float, v to _fa, Vec3.length, null, null, format, flags)
                     .also { v put _fa }
 
     fun inputFloat4(label: String, v: FloatArray, format: String? = null, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Float, v, 4, null, null, format, flags)
+            inputScalarN<Float>(label, DataType.Float, v, 4, null, null, format, flags)
 
     fun inputVec4(label: String, v: Vec4, format: String? = null, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Float, v to _fa, 4, null, null, format, flags)
+            inputScalarN<Float>(label, DataType.Float, v to _fa, Vec4.length, null, null, format, flags)
                     .also { v put _fa }
 
     fun inputInt(label: String, v: KMutableProperty0<Int>, step: Int = 1, stepFast: Int = 100, flags: InputTextFlags = 0): Boolean {
@@ -104,24 +104,24 @@ interface widgetsInputWithKeyboard {
     }
 
     fun inputInt2(label: String, v: IntArray, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Int, v, 2, null, null, "%d", flags)
+            inputScalarN<Int>(label, DataType.Int, v, 2, null, null, "%d", flags)
 
     fun inputVec2i(label: String, v: Vec2i, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Int, v to _ia, 2, null, null, "%d", flags)
+            inputScalarN<Int>(label, DataType.Int, v to _ia, Vec2i.length, null, null, "%d", flags)
                     .also { v put _ia }
 
     fun inputInt3(label: String, v: IntArray, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Int, v, 3, null, null, "%d", flags)
+            inputScalarN<Int>(label, DataType.Int, v, 3, null, null, "%d", flags)
 
     fun inputVec3i(label: String, v: Vec3i, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Int, v to _ia, 3, null, null, "%d", flags)
+            inputScalarN<Int>(label, DataType.Int, v to _ia, Vec3i.length, null, null, "%d", flags)
                     .also { v put _ia }
 
     fun inputInt4(label: String, v: IntArray, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Int, v, 4, null, null, "%d", flags)
+            inputScalarN<Int>(label, DataType.Int, v, 4, null, null, "%d", flags)
 
     fun inputVec4i(label: String, v: Vec4i, flags: InputTextFlags = 0): Boolean =
-            inputScalarN(label, DataType.Int, v to _ia, 4, null, null, "%d", flags)
+            inputScalarN<Int>(label, DataType.Int, v to _ia, Vec4i.length, null, null, "%d", flags)
                     .also { v put _ia }
 
     fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0, format: String? = null,

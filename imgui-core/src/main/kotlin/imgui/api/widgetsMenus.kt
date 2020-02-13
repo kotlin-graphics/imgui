@@ -183,7 +183,7 @@ interface widgetsMenus {
 
         val id = window.getId(label)
 
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
@@ -335,7 +335,7 @@ interface widgetsMenus {
         if (window.skipItems) return false
 
         val pos = Vec2(window.dc.cursorPos)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
@@ -360,7 +360,7 @@ interface widgetsMenus {
             pressed = selectable(label, false, flags or Sf._DrawFillAvailWidth, Vec2(w, 0f))
             if (shortcutSize.x > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-                renderText(pos + Vec2(window.dc.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
+                renderText(pos + Vec2(window.dc.menuColumns.pos[1] + extraW, 0f), shortcut, false)
                 popStyleColor()
             }
             if (selected)

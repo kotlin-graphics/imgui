@@ -21,9 +21,9 @@ class TextEditState {
      *  So we copy into own buffer.    */
     var textW = CharArray(0)
     /** temporary buffer for callbacks and other operations. size=capacity. */
-    var textA = CharArray(0)
+    var textA = ByteArray(0)
     /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
-    var initialTextA = CharArray(0)
+    var initialTextA = ByteArray(0)
     /** temporary UTF8 buffer is not initially valid before we make the widget active (until then we pull the data from user argument) */
     var textAIsValid = false
     /** end-user buffer size    */

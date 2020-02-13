@@ -17,6 +17,7 @@ import imgui.ImGui.unindent
 import imgui.internal.NextItemDataFlag
 import imgui.max
 import imgui.internal.classes.itemHoveredDataBackup
+import imgui.internal.formatStringV
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
@@ -35,13 +36,11 @@ interface widgetsTrees {
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(strId: String, fmt: String, vararg args: Any): Boolean = treeNodeExV(strId, 0, fmt, *args)
+    fun treeNode(strId: String, fmt: String, vararg args: Any): Boolean = treeNodeEx(strId, 0, fmt, *args)
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(ptrId: Any, fmt: String, vararg args: Any): Boolean = treeNodeExV(ptrId, 0, fmt, *args)
-//    IMGUI_API bool          TreeNodeV(const char* str_id, const char* fmt, va_list args);           // "
-//    IMGUI_API bool          TreeNodeV(const void* ptr_id, const char* fmt, va_list args);           // "
+    fun treeNode(ptrId: Any, fmt: String, vararg args: Any): Boolean = treeNodeEx(ptrId, 0, fmt, *args)
 
     fun treeNodeEx(label: String, flags: TreeNodeFlags = 0): Boolean {
         val window = currentWindow
@@ -50,31 +49,24 @@ interface widgetsTrees {
         return treeNodeBehavior(window.getId(label), flags, label)
     }
 
-    /** @return isOpen */
-    fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean =
-            treeNodeExV(strId, flags, fmt, args)
-
-//    IMGUI_API bool          TreeNodeEx(const void* ptr_id, ImGuiTreeNodeFlags flags, const char* fmt, ...) IM_PRINTFARGS(3);
-
-    fun treeNodeExV(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        val label = fmt.format(style.locale, *args)
-
-        return treeNodeBehavior(window.getId(strId), flags, label, label.length)
+        val labelEnd = formatStringV(g.tempBuffer, fmt, args)
+        return treeNodeBehavior(window.getId(strId), flags, g.tempBuffer, labelEnd)
     }
 
-    fun treeNodeExV(ptrId: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeEx(ptrId: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        val label = fmt.format(style.locale, *args)
-
-        return treeNodeBehavior(window.getId(ptrId), flags, label, label.length)
+        val labelEnd = formatStringV(g.tempBuffer, fmt, args)
+        return treeNodeBehavior(window.getId(ptrId), flags, g.tempBuffer, labelEnd)
     }
+
 //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
 
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call TreePush/TreePop yourself if desired.  */
