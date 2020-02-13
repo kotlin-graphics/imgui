@@ -160,7 +160,7 @@ interface widgetsMain {
         if (window.skipItems) return false
 
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight
         val pos = Vec2(window.dc.cursorPos) //cursorPos gets updated somewhere else, which means we need to make a copy else checkboxes act incorrectly
@@ -229,7 +229,7 @@ interface widgetsMain {
         if (window.skipItems) return false
 
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight
         val pos = window.dc.cursorPos

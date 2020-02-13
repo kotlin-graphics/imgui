@@ -306,7 +306,7 @@ interface demoDebugInformations {
                     drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
                 }
                 if (showWindowsBeginOrder && window.flags hasnt Wf._ChildWindow) {
-                    val buf = "${window.beginOrderWithinContext}".toCharArray(CharArray(32))
+                    val buf = "${window.beginOrderWithinContext}"
                     drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
                     drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
                 }

@@ -155,14 +155,6 @@ infix fun Int.wo(i: Int) = and(i.inv())
 var imeInProgress = false
 //    var imeLastKey = 0
 
-class PChars(var chars: ByteArray, var begin: Int = 0, var end: Int = chars.size) {
-
-    fun new() = PChars(chars, begin, end)
-    val i get() = chars[begin].toUInt()
-    operator fun invoke() = chars[begin]
-    operator fun compareTo(ptr: Int): Int = begin.compareTo(ptr)
-}
-
 fun ByteArray.memchr(startIdx: Int, c: Char, num: Int = size - startIdx): Int {
     val char = c.b
     for (i in startIdx until startIdx + num)

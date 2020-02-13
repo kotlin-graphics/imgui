@@ -327,7 +327,7 @@ fun navUpdate() {
                 getForegroundDrawList(nav).addRect(nav.pos + nav.navRectRel[layer].min, nav.pos + nav.navRectRel[layer].max, COL32(255, 200, 0, 255))  // [DEBUG]
             val col = if (!nav.hidden) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
             val p = navCalcPreferredRefPos()
-            val buf = "${g.navLayer}".toCharArray(CharArray(32))
+            val buf = "${g.navLayer}".toByteArray()
             getForegroundDrawList(nav).addCircleFilled(p, 3f, col)
             getForegroundDrawList(nav).addText(null, 13f, p + Vec2(8, -4), col, buf)
         }
@@ -694,12 +694,12 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     if (IMGUI_DEBUG_NAV_SCORING)
         if (isMouseHoveringRect(cand)) {
             val buf = "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
-                    .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial)
+                    .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial).toByteArray()
             getForegroundDrawList(window).apply {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
                 addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 150))
-                addText(io.fontDefault, 13f, cand.max, 0.inv(), buf.toCharArray())
+                addText(io.fontDefault, 13f, cand.max, 0.inv(), buf)
             }
         } else if (io.keyCtrl) { // Hold to preview score in matching quadrant. Press C to rotate.
             if (Key.C.isPressed) {
@@ -707,7 +707,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
                 io.keysDownDuration[io.keyMap[Key.C]] = 0.01f
             }
             if (quadrant == g.navMoveDir) {
-                val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toCharArray()
+                val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toByteArray()
                 getForegroundDrawList(window).apply {
                     addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
                     addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)

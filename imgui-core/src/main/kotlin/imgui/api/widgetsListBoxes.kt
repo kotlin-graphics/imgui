@@ -85,7 +85,7 @@ interface widgetsListBoxes {
         if (window.skipItems) return false
 
         val id = getId(label)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         // Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
         val size = calcItemSize(sizeArg, calcItemWidth(), textLineHeightWithSpacing * 7.4f + style.itemSpacing.y)

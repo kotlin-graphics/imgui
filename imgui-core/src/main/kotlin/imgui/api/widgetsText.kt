@@ -40,7 +40,7 @@ interface widgetsText {
         if (window.skipItems) return
 
         val textEnd = formatStringV(g.tempBuffer, fmt, *args)
-        textEx(PChars(g.tempBuffer, end = textEnd), TextFlag.NoWidthForLargeClippedText)
+        textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText)
     }
 
     /** shortcut for
@@ -126,6 +126,6 @@ interface widgetsText {
         // Render
         val textCol = Col.Text.u32
         window.drawList.renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, g.fontSize * 0.5f), textCol)
-        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, 0f), text, text.length, false)
+        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, 0f), text, false)
     }
 }

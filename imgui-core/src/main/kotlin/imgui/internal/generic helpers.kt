@@ -1,6 +1,7 @@
 package imgui.internal
 
 import glm_.*
+import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -219,12 +220,13 @@ val Char.isBlankW: Boolean
 // -----------------------------------------------------------------------------------------------------------------
 
 //IMGUI_API int           ImTextStrToUtf8(char* buf, int buf_size, const ImWchar* in_text, const ImWchar* in_text_end);      // return output UTF-8 bytes count
+
 /** read one character. return input UTF-8 bytes count
  *  @return [JVM] [char: Int, bytes: Int] */
 fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int): Pair<Int, Int> {
     var str = textBegin
     fun s(i: Int = 0) = text[i + str].toUInt()
-    fun spp() = text[i + str++].toUInt()
+    fun spp() = text[str++].toUInt()
     val invalid = UNICODE_CODEPOINT_INVALID // will be invalid but not end of string
     if ((s() and 0x80) == 0) return spp() to 1
     if ((s() and 0xe0) == 0xc0) {
@@ -263,6 +265,25 @@ fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int): Pair<In
         return c to 4
     }
     return 0 to 0
+}
+
+/** return input UTF-8 bytes count */
+fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int, textRemaining: Vec1i? = null): Int {
+    var b = 0
+    var bufEnd = buf.size
+    var t = 0
+    while (b < bufEnd - 1 && (textEnd == 0 || t < textEnd) && text[t] != 0.b) {
+        val (c, bytes) = textCharFromUtf8(text, t, textEnd)
+        t += bytes
+        if (c == 0)
+            break
+        if (c <= UNICODE_CODEPOINT_MAX)    // FIXME: Losing characters that don't fit in 2 bytes
+        buf[b++] = c.c
+    }
+    *b = 0
+    if (in_text_remaining)
+    *in_text_remaining = in_text
+    return (int)(b - buf)
 }
 
 /** ~ImTextStrFromUtf8 */
