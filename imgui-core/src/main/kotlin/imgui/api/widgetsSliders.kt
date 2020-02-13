@@ -145,7 +145,7 @@ interface widgetsSliders {
         val id = window.getId(label)
         val w = calcItemWidth()
 
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
@@ -202,7 +202,7 @@ interface widgetsSliders {
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = format.format(style.locale, pData())
-        renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
+        renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
@@ -261,7 +261,7 @@ interface widgetsSliders {
 
         val id = window.getId(label)
 
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
@@ -302,9 +302,9 @@ interface widgetsSliders {
 
         /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
             For the vertical slider we allow centered text to overlap the frame padding         */
-        val value = String(pData.format(dataType, format))
+        val value = pData.format(dataType, format)
         val posMin = Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y)
-        renderTextClipped(posMin, frameBb.max, value, value.length, null, Vec2(0.5f, 0f))
+        renderTextClipped(posMin, frameBb.max, value, null, Vec2(0.5f, 0f))
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 

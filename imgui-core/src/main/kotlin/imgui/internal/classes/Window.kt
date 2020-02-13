@@ -766,8 +766,8 @@ class Window(var context: Context,
         // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
         // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
         val UNSAVED_DOCUMENT_MARKER = "*"
-        val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, -1, false).x else 0f
-        val textSize = calcTextSize(name, -1, true) + Vec2(markerSizeX, 0f)
+        val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, hideTextAfterDoubleHash = false).x else 0f
+        val textSize = calcTextSize(name, hideTextAfterDoubleHash = true) + Vec2(markerSizeX, 0f)
 
         // As a nice touch we try to ensure that centered title text doesn't get affected by visibility of Close/Collapse button,
         // while uncentered title text will still reach edges correct.
@@ -785,12 +785,12 @@ class Window(var context: Context,
         val layoutR = Rect(titleBarRect.min.x + padL, titleBarRect.min.y, titleBarRect.max.x - padR, titleBarRect.max.y)
         val clipR = Rect(layoutR.min.x, layoutR.min.y, layoutR.max.x + style.itemInnerSpacing.x, layoutR.max.y)
         //if (g.IO.KeyCtrl) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
-        renderTextClipped(layoutR.min, layoutR.max, name, -1, textSize, style.windowTitleAlign, clipR)
+        renderTextClipped(layoutR.min, layoutR.max, name, textSize, style.windowTitleAlign, clipR)
 
         if (flags has Wf.UnsavedDocument) {
             val markerPos = Vec2(kotlin.math.max(layoutR.min.x, layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
             val off = Vec2(0f, floor(-g.fontSize * 0.25f))
-            renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipR)
+            renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER, null, Vec2(0, style.windowTitleAlign.y), clipR)
         }
     }
 

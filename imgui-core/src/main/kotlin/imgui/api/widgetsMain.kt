@@ -299,10 +299,10 @@ interface widgetsMain {
         // Default displaying the fraction as percentage string, but user can override it
         val overlay = if (overlay_.isEmpty()) "%.0f%%".format(style.locale, fraction * 100 + 0.01f) else overlay_
 
-        val overlaySize = calcTextSize(overlay, -1)
+        val overlaySize = calcTextSize(overlay)
         if (overlaySize.x > 0f) {
             val x = glm.clamp(fillBr.x + style.itemSpacing.x, bb.min.x, bb.max.x - overlaySize.x - style.itemInnerSpacing.x)
-            renderTextClipped(Vec2(x, bb.min.y), bb.max, overlay, -1, overlaySize, Vec2(0f, 0.5f), bb)
+            renderTextClipped(Vec2(x, bb.min.y), bb.max, overlay, overlaySize, Vec2(0f, 0.5f), bb)
         }
     }
 

@@ -163,8 +163,7 @@ internal interface widgets {
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
-        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, -1, labelSize,
-                style.buttonTextAlign, bb)
+        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, labelSize, style.buttonTextAlign, bb)
 
         // Automatically close popups
         //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))

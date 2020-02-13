@@ -15,9 +15,9 @@ import imgui.ImGui.logText
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
-import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.internal.api.internal.Companion.alphaBlendColor
+import imgui.internal.classes.Rect
 import unsigned.toUInt
 import kotlin.math.max
 
@@ -30,6 +30,7 @@ internal interface renderHelpers {
         val bytes = text.toByteArray()
         renderText(pos, bytes, bytes.size, hideTextAfterHash)
     }
+
     fun renderText(pos: Vec2, text: ByteArray, textEnd: Int = text.size, hideTextAfterHash: Boolean = true) {
 
         val window = g.currentWindow!!
@@ -58,16 +59,22 @@ internal interface renderHelpers {
         }
     }
 
-    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textEnd: Int = -1, textSizeIfKnown: Vec2? = null,
+    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: String, textSizeIfKnown: Vec2? = null,
+                          align: Vec2 = Vec2(), clipRect: Rect? = null) {
+        val bytes = text.toByteArray()
+        renderTextClipped(posMin, posMax, bytes, bytes.size, textSizeIfKnown, align, clipRect)
+    }
+
+    fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: ByteArray, textEnd: Int = text.size, textSizeIfKnown: Vec2? = null,
                           align: Vec2 = Vec2(), clipRect: Rect? = null) {
         // Hide anything after a '##' string
         val textDisplayEnd = findRenderedTextEnd(text, textEnd)
         if (textDisplayEnd == 0) return
 
         val window = g.currentWindow!!
-        renderTextClippedEx(window.drawList, posMin, posMax, text.toByteArray(), textDisplayEnd, textSizeIfKnown, align, clipRect)
+        renderTextClippedEx(window.drawList, posMin, posMax, text, textDisplayEnd, textSizeIfKnown, align, clipRect)
         if (g.logEnabled)
-            logRenderedText(posMax, text, textDisplayEnd)
+            logRenderedText(posMax, String(text), textDisplayEnd)
     }
 
     /** Default clipRect uses (pos_min,pos_max)
@@ -288,7 +295,7 @@ internal interface renderHelpers {
     /** Find the optional ## from which we stop displaying text.    */
     fun findRenderedTextEnd(text: String, textEnd: Int = -1): Int {
         val bytes = text.toByteArray()
-        return findRenderedTextEnd(bytes, if(textEnd != -1) textEnd else bytes.size)
+        return findRenderedTextEnd(bytes, if (textEnd != -1) textEnd else bytes.size)
     }
 
     /** Find the optional ## from which we stop displaying text.    */

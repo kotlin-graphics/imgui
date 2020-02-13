@@ -185,18 +185,20 @@ interface widgetsColorEditorPicker {
 
         } else if (flags has Cef.DisplayHEX && flags hasnt Cef.NoInputs) {
             // RGB Hexadecimal Input
-            val text = if (alpha) "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
-            else "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
-            val buf = text.toCharArray(CharArray(64))
+            val buf = when {
+                alpha -> "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
+                else -> "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
+            }
             setNextItemWidth(wInputs)
             if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
                 while (buf[p] == '#' || buf[p].isBlankA) p++
                 i.fill(0)
-                String(buf, p, buf.strlen - p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
+                buf.substring(p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
-            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
+            if (flags hasnt Cef.NoOptions)
+                openPopupOnItemClick("context")
         }
 
         var pickerActiveWindow: Window? = null
