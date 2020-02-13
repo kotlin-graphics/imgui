@@ -133,7 +133,6 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
-import imgui.ImGui.treeNodeExV
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
@@ -175,8 +174,8 @@ object showDemoWindowWidgets {
     var e = 0
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
     var currentItem0 = 0
-    var str0 = "Hello, world!".toCharArray(CharArray(128))
-    var str1 = "".toCharArray(CharArray(128))
+    var str0 = "Hello, world!"
+    var str1 = ByteArray(128)
     var i0 = 123
     var f0 = 0.001f
     var f1 = 1e10f
@@ -213,7 +212,7 @@ object showDemoWindowWidgets {
 
     /* Text */
     var wrapWidth = 200f
-    val buf = "日本語".toCharArray(CharArray(32)) // "nihongo"
+    val buf = "日本語" // "nihongo"
 
 
     /* Images */
@@ -255,10 +254,10 @@ object showDemoWindowWidgets {
         label:
         ${'\t'}lock cmpxchg8b eax
         
-        """.trimIndent().toCharArray(CharArray(1024 * 16))
+        """
     var flags = Itf.AllowTabInput.i
 
-    val bufs = Array(6) { CharArray(64) }
+    val bufs = Array(6) { ByteArray(64) }
 
     object TextFilters {
         val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
@@ -266,7 +265,7 @@ object showDemoWindowWidgets {
         }
     }
 
-    val bufPass = "password123".toCharArray(CharArray(64))
+    val bufPass = "password123"
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
@@ -357,10 +356,10 @@ object showDemoWindowWidgets {
     var itemType = 1
     var b0 = false
     val col = floatArrayOf(1f, 0.5f, 0f, 1f)
-    val str = CharArray(16)
+    val str = ByteArray(16)
     var currentItem1 = 1
     var embedAllInsideAChildWindow = false
-    var dummyStr = "This is a dummy field to be able to tab-out of the widgets above.".toCharArray()
+    var dummyStr = "This is a dummy field to be able to tab-out of the widgets above."
     var testWindow = false
 
     operator fun invoke() {
@@ -526,7 +525,7 @@ object showDemoWindowWidgets {
                         nodeFlags = nodeFlags or Tnf.Selected
                     if (i < 3) {
                         // Items 0..2 are Tree Node
-                        val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
+                        val nodeOpen = treeNodeEx(i, nodeFlags, "Selectable Node $i")
                         if (isItemClicked()) nodeClicked = i
                         if (nodeOpen) {
                             bulletText("Blah blah\nBlah Blah")
@@ -537,7 +536,7 @@ object showDemoWindowWidgets {
                             The only reason we use TreeNode at all is to allow selection of the leaf.
                             Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
                         nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
-                        treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
+                        treeNodeEx(i, nodeFlags, "Selectable Leaf $i")
                         if (isItemClicked()) nodeClicked = i
                     }
                 }

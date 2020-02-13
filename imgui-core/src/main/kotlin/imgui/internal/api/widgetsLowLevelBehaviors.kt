@@ -535,7 +535,7 @@ internal interface widgetsLowLevelBehaviors {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
         }
 
@@ -645,7 +645,7 @@ internal interface widgetsLowLevelBehaviors {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        ImGuiTestEngineHook_ItemInfo(id, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
 

@@ -39,11 +39,11 @@ import imgui.api.demoDebugInformations.Companion.helpMarker
 object showDemoWindowMisc {
 
     /* Tabbing */
-    var buf0 = "dummy".toCharArray(CharArray(32))
+    var buf0 = "dummy"
 
 
     /* Focus from code */
-    var buf1 = "click on a button to set focus".toCharArray(CharArray(128))
+    var buf1 = "click on a button to set focus"
     val f3 = FloatArray(3)
     var float3 = 0f
 

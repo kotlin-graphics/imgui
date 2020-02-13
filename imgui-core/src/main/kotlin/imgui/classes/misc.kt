@@ -174,12 +174,12 @@ class Storage {
 //}
 class TextFilter(defaultFilter: String? = "") {
 
-    val inputBuf = CharArray(256)
+    var inputBuf = ByteArray(256)
     val filters = ArrayList<String>()
     var countGrep = 0
 
     init {
-        defaultFilter?.toCharArray(inputBuf)
+        defaultFilter?.let { inputBuf = it.toByteArray() }
     }
 
     class TextRange
@@ -221,7 +221,11 @@ class TextFilter(defaultFilter: String? = "") {
 
     fun build() {
         filters.clear()
-        filters.addAll(String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).collect(Collectors.toList()))
+        filters.addAll(String(inputBuf)
+                .split(",")
+                .stream()
+                .filter(String::isNotEmpty)
+                .collect(Collectors.toList()))
     }
 }
 

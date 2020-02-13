@@ -39,7 +39,7 @@ internal interface plot {
         var scaleMax = scaleMax_
         val valuesCount = data.count()
 
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         if (frameSize.x == 0f) frameSize.x = calcItemWidth()
         if (frameSize.y == 0f) frameSize.y = labelSize.y + style.framePadding.y * 2
 
@@ -123,7 +123,7 @@ internal interface plot {
         }
         // Text overlay
         if (overlayText.isNotEmpty())
-            renderTextClipped(Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y), frameBb.max, overlayText, -1, null, Vec2(0.5f, 0f))
+            renderTextClipped(Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y), frameBb.max, overlayText, null, Vec2(0.5f, 0f))
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
     }

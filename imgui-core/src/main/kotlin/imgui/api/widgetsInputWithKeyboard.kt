@@ -43,19 +43,32 @@ import imgui.internal.ButtonFlag as Bf
  *  - Most of the ImGuiInputTextFlags flags are only useful for InputText() and not for InputFloatX, InputIntX, InputDouble etc. */
 interface widgetsInputWithKeyboard {
 
-    fun inputText(label: String, buf: CharArray, flags: InputTextFlags = 0,
-                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+    /** String overload */
+    fun inputText(label: String, buf: String, flags: InputTextFlags = 0,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputText(label, buf.toByteArray(), flags, callback, userData)
 
-        // TODO, enable callback and userData, related: https://github.com/kotlin-graphics/imgui/commit/082d94e359b2c262cd67c429bfff7fe3900d74cc
+    fun inputText(label: String, buf: ByteArray, flags: InputTextFlags = 0,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
     }
 
-    fun inputTextMultiline(label: String, buf: CharArray, size: Vec2 = Vec2(), flags: InputTextFlags = 0
+    /** String overload */
+    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextFlags = 0
+            /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean =
+            inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline/*, callback, user_data*/)
+
+    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextFlags = 0
             /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean =
             inputTextEx(label, null, buf, size, flags or Itf._Multiline/*, callback, user_data*/)
 
-    fun inputTextWithHint(label: String, hint: String, buf: CharArray, flags: InputTextFlags = 0
+    /** String overload */
+    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextFlags = 0
+            /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean =
+            inputTextWithHint(label, hint, buf.toByteArray(), flags)
+
+    fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextFlags = 0
             /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean {
         assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, hint, buf, Vec2(), flags/*, callback, user_data*/)
@@ -154,7 +167,7 @@ interface widgetsInputWithKeyboard {
             else -> format_
         }
 
-        val buf = pData.format(dataType, format, 64)
+        val buf = pData.format(dataType, format/*, 64*/)
 
         var valueChanged = false
         var flags = flags_

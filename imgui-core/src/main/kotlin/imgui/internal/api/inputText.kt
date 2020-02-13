@@ -55,7 +55,6 @@ import imgui.internal.classes.TextEditState
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
-import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -100,7 +99,7 @@ internal interface inputText {
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
         val h = if (isMultiline) g.fontSize * 8f else labelSize.y
         val frameSize = calcItemSize(sizeArg, calcItemWidth(), h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
         val totalSize = Vec2(frameSize.x + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
@@ -587,7 +586,7 @@ internal interface inputText {
                     assert(applyNewTextLength <= buf.size)
                 }
                 // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
-                ImStrncpy(buf, apply_new_text, ImMin(apply_new_text_length + 1, buf_size));
+                System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)
                 valueChanged = true
             }
 
@@ -615,10 +614,10 @@ internal interface inputText {
             without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
             Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
         val bufDisplayMaxLength = 2 * 1024 * 1024
-        var bufDisplay = if (bufDisplayFromState) state_!!.textA else buf
+        var bufDisplay = if (bufDisplayFromState) state!!.textA else buf
         var bufDisplayEnd = -1 // We have specialized paths below for setting the length
         if (isDisplayingHint) {
-            bufDisplay = hint!!.toCharArray()
+            bufDisplay = hint!!.toByteArray()
             bufDisplayEnd = hint.length
         }
 
@@ -626,7 +625,7 @@ internal interface inputText {
         // FIXME: We could remove the '&& render_cursor' to keep rendering selection when inactive.
         if (renderCursor || renderSelection) {
 
-            val state = state_!! // ~assert
+            state!!
             if (!isDisplayingHint)
                 bufDisplayEnd = state.curLenA
 
@@ -646,7 +645,7 @@ internal interface inputText {
 
             run {
                 // Find lines numbers straddling 'cursor' (slot 0) and 'select_start' (slot 1) positions.
-                val searchesInputPtr = IntArray(2)
+                val searchesInputPtr = IntArray(2) { -1 }
                 val searchesResultLineNo = intArrayOf(-1000, -1000)
                 var searchesRemaining = 0
                 if (renderCursor) {
@@ -669,12 +668,10 @@ internal interface inputText {
                     if (text[s++] == '\n') {
                         lineCount++
                         if (searchesResultLineNo[0] == -1 && s >= searchesInputPtr[0]) {
-                            searchesResultLineNo[0] = lineCount
-                            if (--searchesRemaining <= 0) break
+                            searchesResultLineNo[0] = lineCount; if (--searchesRemaining <= 0) break
                         }
                         if (searchesResultLineNo[1] == -1 && s >= searchesInputPtr[1]) {
-                            searchesResultLineNo[1] = lineCount
-                            if (--searchesRemaining <= 0) break
+                            searchesResultLineNo[1] = lineCount; if (--searchesRemaining <= 0) break
                         }
                     }
                 lineCount++
@@ -684,11 +681,11 @@ internal interface inputText {
                     searchesResultLineNo[1] = lineCount
 
                 // Calculate 2d position by finding the beginning of the line and measuring distance
-                var start = text.beginOfLine(searchesInputPtr[0])
+                var start = text beginOfLine searchesInputPtr[0]
                 cursorOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[0]).x
                 cursorOffset.y = searchesResultLineNo[0] * g.fontSize
                 if (searchesResultLineNo[1] >= 0) {
-                    start = text.beginOfLine(searchesInputPtr[1])
+                    start = text beginOfLine searchesInputPtr[1]
                     selectStartOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[1]).x
                     selectStartOffset.y = searchesResultLineNo[1] * g.fontSize
                 }
@@ -781,13 +778,13 @@ internal interface inputText {
         } else {
             // Render text only (no selection, no cursor)
             if (isMultiline) {
-                _i = bufDisplayEnd
-                textSize.put(innerSize.x, inputTextCalcTextLenAndLineCount(bufDisplay, ::_i) * g.fontSize) // We don't need width
-                bufDisplayEnd = _i
+                val (lineCount, textEnd) =inputTextCalcTextLenAndLineCount(bufDisplay)
+                bufDisplayEnd = textEnd
+                textSize.put(innerSize.x, lineCount * g.fontSize) // We don't need width
             } else if (!isDisplayingHint && g.activeId == id)
-                bufDisplayEnd = state_!!.curLenA
+                bufDisplayEnd = state!!.curLenA
             else if (!isDisplayingHint)
-                bufDisplayEnd = bufDisplay.strlen
+                bufDisplayEnd = bufDisplay.size
 
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
@@ -823,8 +820,8 @@ internal interface inputText {
 
     /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
      *  FIXME: Facilitate using this in variety of other situations. */
-    fun tempInputTextScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<*>,
-                            format_: String): Boolean {
+    fun tempInputTextScalar(bb: Rect, id: ID, label: String, dataType: DataType,
+                            pData: KMutableProperty0<*>, format_: String): Boolean {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -832,16 +829,15 @@ internal interface inputText {
         if (init)
             clearActiveID()
 
-        val fmtBuf = CharArray(32)
-        val format = parseFormatTrimDecorations(format_, fmtBuf)
-        var dataBuf = pData.format(dataType, format, 32)
-        dataBuf = trimBlanks(dataBuf)
+        val format = parseFormatTrimDecorations(format_)
+        val dataBuf = pData.format(dataType, format).trim()
+
         g.currentWindow!!.dc.cursorPos put bb.min
         val flags: InputTextFlags = Itf.AutoSelectAll or Itf._NoMarkEdited or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        var valueChanged = inputTextEx(label, null, dataBuf, bb.size, flags)
+        var valueChanged = inputTextEx(label, null, dataBuf.toByteArray(), bb.size, flags)
         if (init) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.tempInputTextId = g.activeId
@@ -920,18 +916,20 @@ internal interface inputText {
             return true
         }
 
-        fun inputTextCalcTextLenAndLineCount(text: CharArray, outTextEnd: KMutableProperty0<Int>): Int {
-
+        /** @return [JVM] [lineCount, textEnd] */
+        fun inputTextCalcTextLenAndLineCount(text: ByteArray): Pair<Int, Int> {
             var lineCount = 0
             var s = 0
-            while (text.getOrElse(s++) { NUL } != NUL) // We are only matching for \n so we can ignore UTF-8 decoding
-                if (text.getOrElse(s) { NUL } == '\n')
+            var c = text[s++]
+            while (c != 0.b) { // We are only matching for \n so we can ignore UTF-8 decoding
+                if (c == '\n'.b)
                     lineCount++
+                c = text[s++]
+            }
             s--
-            if (text[s] != '\n' && text[s] != '\r')
+            if (text[s] != '\n'.b && text[s] != '\r'.b)
                 lineCount++
-            outTextEnd.set(s)
-            return lineCount
+            return lineCount to s
         }
 
         fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remaining: KMutableProperty0<Int>? = null,
