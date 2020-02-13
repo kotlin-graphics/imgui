@@ -154,12 +154,13 @@ val Int.upperPowerOfTwo: Int
 
 //IMGUI_API int           ImStricmp(const char* str1, const char* str2);
 //IMGUI_API int           ImStrnicmp(const char* str1, const char* str2, size_t count);
-fun CharArray.strncpy(src: CharArray, count: Int) {
-    if (count < 1) return
-    for (i in 0 until count) {
-//        if (src[i] == NUL) break
-        this[i] = src[i]
-    }
+void ImStrncpy(char* dst, const char* src, size_t count)
+{
+    if (count < 1)
+        return;
+    if (count > 1)
+        strncpy(dst, src, count - 1);
+    dst[count - 1] = 0;
 }
 
 //IMGUI_API char*         ImStrdup(const char* str);
@@ -219,7 +220,51 @@ val Char.isBlankW: Boolean
 // [SECTION] MISC HELPERS/UTILITIES (ImText* functions)
 // -----------------------------------------------------------------------------------------------------------------
 
-//IMGUI_API int           ImTextStrToUtf8(char* buf, int buf_size, const ImWchar* in_text, const ImWchar* in_text_end);      // return output UTF-8 bytes count
+/** return output UTF-8 bytes count */
+fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
+    var b = 0
+    var t = 0
+    while (b < buf.size && t < text.size && text[t] != NUL) {
+        val c = text[t++].i
+        if (c < 0x80)
+            buf[b++] = c.b
+        else
+            b += textCharToUtf8(buf, b, c)
+    }
+//    *b = 0
+    return b
+}
+
+/** Based on stb_to_utf8() from github.com/nothings/stb/ */
+fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
+    if (c < 0x80) {
+        buf[b + 0] = c.b
+        return 1
+    }
+    if (c < 0x800) {
+        if (buf.size < b + 2) return 0
+        buf[b + 0] = (0xc0 + (c ushr 6)).b
+        buf[b + 1] = (0x80 + (c and 0x3f)).b
+        return 2
+    }
+    if (c in 0xdc00..0xe000)
+        return 0
+    if (c in 0xd800..0xdc00) {
+        if (buf.size < b + 4) return 0
+        buf[b + 0] = (0xf0 + (c ushr 18)).b
+        buf[b + 1] = (0x80 + ((c ushr 12) and 0x3f)).b
+        buf[b + 2] = (0x80 + ((c ushr 6) and 0x3f)).b
+        buf[b + 3] = (0x80 + (c and 0x3f)).b
+        return 4
+    }
+    //else if (c < 0x10000) {
+    if (buf.size < b + 3) return 0
+    buf[b + 0] = (0xe0 + (c ushr 12)).b
+    buf[b + 1] = (0x80 + ((c ushr 6) and 0x3f)).b
+    buf[b + 2] = (0x80 + (c and 0x3f)).b
+    return 3
+//    }
+}
 
 /** read one character. return input UTF-8 bytes count
  *  @return [JVM] [char: Int, bytes: Int] */
@@ -268,22 +313,20 @@ fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int): Pair<In
 }
 
 /** return input UTF-8 bytes count */
-fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int, textRemaining: Vec1i? = null): Int {
+fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, textRemaining: Vec1i? = null): Int {
     var b = 0
-    var bufEnd = buf.size
     var t = 0
-    while (b < bufEnd - 1 && (textEnd == 0 || t < textEnd) && text[t] != 0.b) {
+    while (b < buf.lastIndex && t < textEnd && text[t] != 0.b) {
         val (c, bytes) = textCharFromUtf8(text, t, textEnd)
         t += bytes
         if (c == 0)
             break
         if (c <= UNICODE_CODEPOINT_MAX)    // FIXME: Losing characters that don't fit in 2 bytes
-        buf[b++] = c.c
+            buf[b++] = c.c
     }
-    *b = 0
-    if (in_text_remaining)
-    *in_text_remaining = in_text
-    return (int)(b - buf)
+//    *b = 0
+    textRemaining?.put(t)
+    return b
 }
 
 /** ~ImTextStrFromUtf8 */
@@ -295,7 +338,22 @@ fun CharArray.textStr(src: CharArray): Int {
     }
     return i
 }
-//IMGUI_API int           ImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);                            // return number of UTF-8 code-points (NOT bytes count)
+
+/** return number of UTF-8 code-points (NOT bytes count) */
+fun textCountCharsFromUtf8(text: ByteArray, textEnd: Int = text.size): Int {
+    var charCount = 0
+    var t = 0
+    while (t < textEnd && text[t] != 0.b) {
+        val (c, bytes) = textCharFromUtf8(text, t, textEnd)
+        t += bytes
+        if (c == 0)
+            break
+        if (c <= UNICODE_CODEPOINT_MAX)
+            charCount++
+    }
+    return charCount
+}
+
 /** return number of bytes to express one char in UTF-8 */
 fun textCountUtf8BytesFromChar(text: ByteArray, textEnd: Int): Int {
     val (_, bytes) = textCharFromUtf8(text, textEnd = textEnd)
@@ -304,8 +362,28 @@ fun textCountUtf8BytesFromChar(text: ByteArray, textEnd: Int): Int {
 
 /** return number of bytes to express one char in UTF-8 */
 fun String.countUtf8BytesFromChar(textEnd: Int) = kotlin.math.min(length, textEnd)
-//IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string in UTF-8
 
+/** return number of bytes to express string in UTF-8 */
+fun textCountUtf8BytesFromStr(text: CharArray, textEnd: Int): Int {
+    var bytesCount = 0
+    var t = 0
+    while (t < textEnd && text[t] != NUL) {
+        val c = text[t++].i
+        if (c < 0x80)
+            bytesCount++
+        else
+            bytesCount += textCountUtf8BytesFromChar(c)
+    }
+    return bytesCount
+}
+
+fun textCountUtf8BytesFromChar(c: Int) = when {
+    c < 0x80 -> 1
+    c < 0x800 -> 2
+    c in 0xdc00..0xe000 -> 0
+    c in 0xd800..0xdc00 -> 4
+    else -> 3
+}
 
 /** Find beginning-of-line
  *  ~InputTextCalcTextSizeW(ImStrbolW(searches_input_ptr[0], text_begin), searches_input_ptr[0]).x*/
