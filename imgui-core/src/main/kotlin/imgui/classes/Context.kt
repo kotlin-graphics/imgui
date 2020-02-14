@@ -340,7 +340,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var lastValidMousePos = Vec2()
 
-    var inputTextState = TextEditState()
+    var inputTextState = InputTextState()
 
     var inputTextPasswordFont = Font()
     /** Temporary text input when CTRL+clicking on a slider, etc.   */

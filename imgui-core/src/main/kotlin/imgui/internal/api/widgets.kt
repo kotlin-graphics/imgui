@@ -48,7 +48,7 @@ internal interface widgets {
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textEx(text: ByteArray, textEnd: Int = text.size, flag: TextFlag = TextFlag.None) {
+    fun textEx(text: ByteArray, textEnd: Int = text.strlen(), flag: TextFlag = TextFlag.None) {
 
         val window = currentWindow
         if (window.skipItems) return
@@ -57,14 +57,11 @@ internal interface widgets {
         val wrapPosX = window.dc.textWrapPos
         val wrapEnabled = wrapPosX >= 0f
         if (textEnd > 2000 && !wrapEnabled) {
-            /*  Long text!
-                Perform manual coarse clipping to optimize for long multi-line text
-                - From this point we will only compute the width of lines that are visible. Optimization only available
-                    when word-wrapping is disabled.
-                - We also don't vertically center the text within the line full height, which is unlikely to matter
-                    because we are likely the biggest and only item on the line.
-                - We use memchr(), pay attention that well optimized versions of those str/mem functions are much faster
-                    than a casually written loop.   */
+            // Long text!
+            // Perform manual coarse clipping to optimize for long multi-line text
+            // - From this point we will only compute the width of lines that are visible. Optimization only available when word-wrapping is disabled.
+            // - We also don't vertically center the text within the line full height, which is unlikely to matter because we are likely the biggest and only item on the line.
+            // - We use memchr(), pay attention that well optimized versions of those str/mem functions are much faster than a casually written loop.
             TODO()
 //            var line = 0
 //            val lineHeight = textLineHeight

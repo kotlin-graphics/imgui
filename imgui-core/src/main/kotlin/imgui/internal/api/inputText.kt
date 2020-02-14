@@ -51,7 +51,7 @@ import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.internal.*
 import imgui.internal.classes.Rect
-import imgui.internal.classes.TextEditState
+import imgui.internal.classes.InputTextState
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
@@ -141,7 +141,7 @@ internal interface inputText {
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
         // NB: we are only allowed to access 'editState' if we are the active widget.
-        var state: TextEditState? = g.inputTextState.takeIf { it.id == id }
+        var state: InputTextState? = g.inputTextState.takeIf { it.id == id }
 
         val focusRequested = focusableItemRegister(window, id)
         val focusRequestedByCode = focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterRegular == window.dc.focusCounterRegular
@@ -155,7 +155,6 @@ internal interface inputText {
         var clearActiveId = false
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 
-//        println(g.imeLastKey)
         val initMakeActive = focusRequested || userClicked || userScrollFinish || userNavInputStart
         val initState = initMakeActive || userScrollActive
         if (initState && g.activeId != id) {
@@ -165,7 +164,7 @@ internal interface inputText {
 
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
-            val bufLen = buf.size
+            val bufLen = buf.strlen()
             state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
@@ -291,8 +290,8 @@ internal interface inputText {
                 state.selectedAllMouseLock = true
             } else if (hovered && isOsx && io.mouseDoubleClicked[0]) {
                 // Double-click select a word only, OS X style (by simulating keystrokes)
-                state.onKeyPressed(TextEditState.K.WORDLEFT)
-                state.onKeyPressed(TextEditState.K.WORDRIGHT or TextEditState.K.SHIFT)
+                state.onKeyPressed(InputTextState.K.WORDLEFT)
+                state.onKeyPressed(InputTextState.K.WORDRIGHT or InputTextState.K.SHIFT)
             } else if (io.mouseClicked[0] && !state.selectedAllMouseLock) {
                 if (hovered) {
                     state.click(mouseX, mouseY)
@@ -340,7 +339,7 @@ internal interface inputText {
         var cancelEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
             state!!
-            val kMask = if (io.keyShift) TextEditState.K.SHIFT else 0
+            val kMask = if (io.keyShift) InputTextState.K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
             val isShortcutKey = (if (isOsx) io.keySuper && !io.keyCtrl else io.keyCtrl && !io.keySuper) && !io.keyAlt && !io.keyShift
@@ -359,35 +358,35 @@ internal interface inputText {
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(when {
-                    isStartendKeyDown -> TextEditState.K.LINESTART
-                    isWordmoveKeyDown -> TextEditState.K.WORDLEFT
-                    else -> TextEditState.K.LEFT
+                    isStartendKeyDown -> InputTextState.K.LINESTART
+                    isWordmoveKeyDown -> InputTextState.K.WORDLEFT
+                    else -> InputTextState.K.LEFT
                 } or kMask)
                 Key.RightArrow.isPressed -> state.onKeyPressed(when {
-                    isStartendKeyDown -> TextEditState.K.LINEEND
-                    isWordmoveKeyDown -> TextEditState.K.WORDRIGHT
-                    else -> TextEditState.K.RIGHT
+                    isStartendKeyDown -> InputTextState.K.LINEEND
+                    isWordmoveKeyDown -> InputTextState.K.WORDRIGHT
+                    else -> InputTextState.K.RIGHT
                 } or kMask)
                 Key.UpArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
                         drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
                     else
-                        state.onKeyPressed((if (isStartendKeyDown) TextEditState.K.TEXTSTART else TextEditState.K.UP) or kMask)
+                        state.onKeyPressed((if (isStartendKeyDown) InputTextState.K.TEXTSTART else InputTextState.K.UP) or kMask)
                 Key.DownArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
                         drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
                     else
-                        state.onKeyPressed((if (isStartendKeyDown) TextEditState.K.TEXTEND else TextEditState.K.DOWN) or kMask)
-                Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) TextEditState.K.TEXTSTART else TextEditState.K.LINESTART) or kMask)
-                Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) TextEditState.K.TEXTEND else TextEditState.K.LINEEND) or kMask)
-                Key.Delete.isPressed && !isReadOnly -> state.onKeyPressed(TextEditState.K.DELETE or kMask)
+                        state.onKeyPressed((if (isStartendKeyDown) InputTextState.K.TEXTEND else InputTextState.K.DOWN) or kMask)
+                Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) InputTextState.K.TEXTSTART else InputTextState.K.LINESTART) or kMask)
+                Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) InputTextState.K.TEXTEND else InputTextState.K.LINEEND) or kMask)
+                Key.Delete.isPressed && !isReadOnly -> state.onKeyPressed(InputTextState.K.DELETE or kMask)
                 Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
-                            state.onKeyPressed(TextEditState.K.WORDLEFT or TextEditState.K.SHIFT)
+                            state.onKeyPressed(InputTextState.K.WORDLEFT or InputTextState.K.SHIFT)
                         else if (isOsx && io.keySuper && !io.keyAlt && !io.keyCtrl)
-                            state.onKeyPressed(TextEditState.K.LINESTART or TextEditState.K.SHIFT)
-                    state.onKeyPressed(TextEditState.K.BACKSPACE or kMask)
+                            state.onKeyPressed(InputTextState.K.LINESTART or InputTextState.K.SHIFT)
+                    state.onKeyPressed(InputTextState.K.BACKSPACE or kMask)
                 }
                 Key.Enter.isPressed || Key.KeyPadEnter.isPressed -> {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
@@ -406,7 +405,7 @@ internal interface inputText {
                     clearActiveId = true
                 }
                 isUndo || isRedo -> {
-                    state.onKeyPressed(if (isUndo) TextEditState.K.UNDO else TextEditState.K.REDO)
+                    state.onKeyPressed(if (isUndo) InputTextState.K.UNDO else InputTextState.K.REDO)
                     state.clearSelection()
                 }
                 isShortcutKey && Key.A.isPressed -> {
@@ -548,7 +547,7 @@ internal interface inputText {
                         if (cbData.selectionEnd != utf8SelectionEnd) {
                             state.stb.selectEnd = textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd); }
                         if (cbData.bufDirty) {
-                            assert(cbData.bufTextLen == cbData.buf.size) { "You need to maintain BufTextLen if you change the text!" }
+                            assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
                                 val new = CharArray(state.textW.size + (cbData.bufTextLen - backupCurrentTextLength))
                                 System.arraycopy(state.textW, 0, new, 0, state.textW.size)
@@ -784,7 +783,7 @@ internal interface inputText {
             } else if (!isDisplayingHint && g.activeId == id)
                 bufDisplayEnd = state!!.curLenA
             else if (!isDisplayingHint)
-                bufDisplayEnd = bufDisplay.size
+                bufDisplayEnd = bufDisplay.strlen()
 
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
@@ -932,8 +931,9 @@ internal interface inputText {
             return lineCount to s
         }
 
-        fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int, remaining: KMutableProperty0<Int>? = null,
-                                   outOffset: Vec2? = null, stopOnNewLine: Boolean = false): Vec2 {
+        fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int,
+                                   remaining: KMutableProperty0<Int>? = null, outOffset: Vec2? = null,
+                                   stopOnNewLine: Boolean = false): Vec2 {
 
             val font = g.font
             val lineHeight = g.fontSize
