@@ -150,7 +150,6 @@ interface widgetsMenus {
         setNextWindowSize(Vec2(io.displaySize.x, g.nextWindowData.menuBarOffsetMinVal.y + g.fontBaseSize + style.framePadding.y))
         pushStyleVar(StyleVar.WindowRounding, 0f)
         pushStyleVar(StyleVar.WindowMinSize, Vec2i())
-        val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val windowFlags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val isOpen = begin("##MainMenuBar", null, windowFlags) && beginMenuBar()
         popStyleVar(2)

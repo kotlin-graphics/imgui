@@ -712,7 +712,7 @@ interface widgetsColorEditorPicker {
         itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id)) return false
 
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
+        val (pressed, hovered, _) = buttonBehavior(bb, id)
 
         var flags = flags_
         if (flags has Cef.NoAlpha)
