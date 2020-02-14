@@ -263,7 +263,7 @@ interface main {
         // This fallback is particularly important as it avoid ImGui:: calls from crashing.
         g.withinFrameScopeWithImplicitWindow = true
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
-        val begin = begin("Debug##Default")
+        begin("Debug##Default")
         assert(g.currentWindow!!.isFallbackWindow)
 
         if (IMGUI_ENABLE_TEST_ENGINE)

@@ -67,7 +67,7 @@ interface widgetsComboBox {
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id, frameBb)) return false
 
-        val (pressed, hovered, held) = buttonBehavior(frameBb, id)
+        val (pressed, hovered, _) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
 
         val frameCol = if (hovered) Col.FrameBgHovered else Col.FrameBg
