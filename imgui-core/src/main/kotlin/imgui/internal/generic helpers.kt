@@ -357,10 +357,14 @@ fun textCountUtf8BytesFromChar(text: ByteArray, textEnd: Int): Int {
 /** return number of bytes to express one char in UTF-8 */
 fun String.countUtf8BytesFromChar(textEnd: Int) = kotlin.math.min(length, textEnd)
 
+/** return number of bytes to express string in UTF-8
+ *  overload with textBegin = 0 */
+fun textCountUtf8BytesFromStr(text: CharArray, textEnd: Int): Int = textCountUtf8BytesFromStr(text, 0, textEnd)
+
 /** return number of bytes to express string in UTF-8 */
-fun textCountUtf8BytesFromStr(text: CharArray, textEnd: Int): Int {
+fun textCountUtf8BytesFromStr(text: CharArray, textBegin: Int, textEnd: Int): Int {
     var bytesCount = 0
-    var t = 0
+    var t = textBegin
     while (t < textEnd && text[t] != NUL) {
         val c = text[t++].i
         if (c < 0x80)

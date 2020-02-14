@@ -204,7 +204,7 @@ interface windows {
 //                window->Name = ImStrdupcpy(window->Name, &buf_len, name)
 //                window->NameBufLen = (int)buf_len
                 window.name = name
-                window.nameBufLen = name.length
+                window.nameBufLen = name.toByteArray().size
             }
 
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS

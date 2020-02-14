@@ -15,6 +15,7 @@ import imgui.internal.charIsBlankW
 import imgui.internal.round
 import imgui.internal.textCharFromUtf8
 import imgui.memchr
+import imgui.strlen
 import kool.lim
 import kool.pos
 import org.lwjgl.system.Platform
@@ -98,7 +99,7 @@ class Font {
     /*  'maxWidth' stops rendering after a certain width (could be turned into a 2d size). FLT_MAX to disable.
         'wrapWidth' enable automatic word-wrapping across multiple lines to fit into given width. 0.0f to disable. */
     fun calcTextSizeA(size: Float, maxWidth: Float, wrapWidth: Float, text: ByteArray, textBegin: Int = 0,
-                      textEnd: Int = text.size, remaining: Vec1i? = null): Vec2 { // utf8
+                      textEnd: Int = text.strlen(), remaining: Vec1i? = null): Vec2 { // utf8
 
         val lineHeight = size
         val scale = size / fontSize
@@ -288,7 +289,8 @@ class Font {
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: ByteArray,
-                   textEnd_: Int = text.size, wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
+                   textEnd_: Int = text.strlen(), // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
+                   wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
         var textEnd = textEnd_
 

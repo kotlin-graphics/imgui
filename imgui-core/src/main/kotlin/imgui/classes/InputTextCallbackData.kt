@@ -79,10 +79,10 @@ class InputTextCallbackData {
 
     fun insertChars(pos: Int, newText: String) = insertChars(pos, newText.toByteArray())
 
-    fun insertChars(pos: Int, newText: ByteArray, newTextEnd: Int = newText.size) {
+    fun insertChars(pos: Int, newText: ByteArray, newTextEnd: Int = -1) {
 
         val isResizable = flags has InputTextFlag.CallbackResize
-        val newTextLen = newTextEnd
+        val newTextLen = if(newTextEnd != -1) newTextEnd else newText.strlen()
         if (newTextLen + bufTextLen >= bufSize) {
 
             if (!isResizable) return

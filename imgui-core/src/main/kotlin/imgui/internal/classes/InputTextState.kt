@@ -1,57 +1,69 @@
 package imgui.internal.classes
 
 import gli_.has
-import glm_.b
 import glm_.c
 import glm_.glm
+import glm_.max
 import imgui.*
 import imgui.api.g
 import imgui.internal.api.inputText.Companion.inputTextCalcTextSizeW
 import imgui.internal.isBlankW
-import kotlin.math.max
+import imgui.internal.textCountUtf8BytesFromStr
+import imgui.stb.te
+import org.lwjgl.system.Platform
 
 /** Internal state of the currently focused/edited text input box   */
-class TextEditState {
+class InputTextState {
 
     /** widget id owning the text state */
     var id: ID = 0
-    // we need to maintain our buffer length in both UTF-8 and wchar format. UTF-8 len is valid even if TextA is not.
-    var curLenA = 0
+    var curLenA = 0 // we need to maintain our buffer length in both UTF-8 and wchar format. UTF-8 len is valid even if TextA is not.
     var curLenW = 0
-    /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer.
-     *  So we copy into own buffer.    */
+
+    /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer. So we copy into own buffer.    */
     var textW = CharArray(0)
+
     /** temporary buffer for callbacks and other operations. size=capacity. */
     var textA = ByteArray(0)
+
     /** backup of end-user buffer at the time of focus (in UTF-8, unaltered)    */
     var initialTextA = ByteArray(0)
+
     /** temporary UTF8 buffer is not initially valid before we make the widget active (until then we pull the data from user argument) */
     var textAIsValid = false
+
     /** end-user buffer size    */
     var bufCapacityA = 0
+
     /** horizontal scrolling/offset */
     var scrollX = 0f
+
     /** state for stb_textedit.h */
-    val stb = State()
+    val stb = te.State()
+
     /** timer for cursor blink, reset on every user action so the cursor reappears immediately */
     var cursorAnim = 0f
+
     /** set when we want scrolling to follow the current cursor position (not always!) */
     var cursorFollow = false
+
     /** after a double-click to select all, we ignore further mouse drags to update selection */
     var selectedAllMouseLock = false
 
     /** Temporarily set when active */
     var userFlags: InputTextFlags = 0
+
     /** Temporarily set when active */
     var userCallback: InputTextCallback? = null
+
     /** Temporarily set when active */
     var userCallbackData: Any? = null
 
     fun clearText() {
         curLenW = 0
         curLenA = 0
-        textW[0] = NUL
-        textA[0] = 0.b
+        textW = CharArray(0)
+        textA = ByteArray(0)
         cursorClamp()
     }
 
@@ -62,10 +74,10 @@ class TextEditState {
     }
 
     val undoAvailCount: Int
-        get() = stb.undostate.undoPoint
+        get() = stb.undoState.undoPoint
 
     val redoAvailCount: Int
-        get() = UNDOSTATECOUNT - stb.undostate.redoPoint
+        get() = UNDOSTATECOUNT - stb.undoState.redoPoint
 
     /** Cannot be inline because we call in code in stb_textedit.h implementation */
     fun onKeyPressed(key: Int) {
@@ -101,28 +113,35 @@ class TextEditState {
     }
 
 
+    //-------------------------------------------------------------------------
+    // STB libraries includes
+    //-------------------------------------------------------------------------
+
+    val GETWIDTH_NEWLINE = -1f
+
     /*
     ====================================================================================================================
-        [imgui.cpp] Wrapper for stb_textedit.h to edit text (our wrapper is for: statically sized buffer, single-line,
-        wchar characters. InputText converts between UTF-8 and wchar)
+    Wrapper for stb_textedit.h to edit text (our wrapper is for: statically sized buffer, single-line, wchar characters.
+    InputText converts between UTF-8 and wchar)
     ====================================================================================================================
     */
 
-    val stringLen get() = curLenW
+    val stringLen: Int get() = curLenW
 
-    fun getChar(idx: Int) = textW[idx]
-    fun getWidth(lineStartIdx: Int, charIdx: Int): Float {
-        val c = textW[lineStartIdx + charIdx]
-        return if (c == '\n') -1f else g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
+    fun getChar(idx: Int): Char = textW[idx]
+    fun getWidth(lineStartIdx: Int, charIdx: Int): Float = when (val c = textW[lineStartIdx + charIdx]) {
+        '\n' -> GETWIDTH_NEWLINE
+        else -> g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
     }
 
-    fun keyToText(key: Int) = if (key >= 0x200000) 0 else key
-    val newLine get() = '\n'
+    fun keyToText(key: Int): Int = if (key >= 0x200000) 0 else key
 
-    var textRemaining = 0
+    val NEWLINE = '\n'
 
-    fun layout(r: Row, lineStartIdx: Int) {
-        val size = inputTextCalcTextSizeW(textW, lineStartIdx, curLenW, ::textRemaining, null, true)
+    private var textRemaining = 0
+
+    fun layoutRow(r: te.Row, lineStartIdx: Int) {
+        val size = inputTextCalcTextSizeW(textW, lineStartIdx, curLenW, ::textRemaining, stopOnNewLine = true)
         r.apply {
             x0 = 0f
             x1 = size.x
@@ -133,58 +152,77 @@ class TextEditState {
         }
     }
 
-    val Char.isSeparator
-        get() = isBlankW || this == ',' || this == ';' || this == '(' || this == ')' ||
-                this == '{' || this == '}' || this == '[' || this == ']' || this == '|'
+    val Char.isSeparator: Boolean
+        get() = let { c ->
+            isBlankW || c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|'
+        }
 
-    fun isWordBoundaryFromRight(idx: Int) = if (idx > 0) textW[idx - 1].isSeparator && !textW[idx].isSeparator else true
-
-    fun moveWordLeft(idx_: Int): Int {
-        var idx = idx_ - 1
-        while (idx >= 0 && !isWordBoundaryFromRight(idx)) idx--
-        return if (idx < 0) 0 else idx
+    infix fun isWordBoundaryFromRight(idx: Int): Boolean = when {
+        idx > 0 -> textW[idx - 1].isSeparator && !textW[idx].isSeparator
+        else -> true
     }
 
-    fun moveWordRight(idx_: Int): Int {
+    infix fun isWordBoundaryFromLeft(idx: Int): Boolean = when {
+        idx > 0 -> !textW[idx - 1].isSeparator && textW[idx].isSeparator
+        else -> true
+    }
+
+    infix fun moveWordLeft(idx: Int): Int {
+        var i = idx - 1
+        while (i >= 0 && !isWordBoundaryFromRight(i)) i--
+        return if (i < 0) 0 else i
+    }
+
+    infix fun moveWordRight(idx_: Int): Int {
         var idx = idx_ + 1
         val len = curLenW
-        while (idx < len && !isWordBoundaryFromRight(idx)) idx++
+        fun isWordBoundary() = when (Platform.get()) {
+            Platform.MACOSX -> isWordBoundaryFromLeft(idx)
+            else -> isWordBoundaryFromRight(idx)
+        }
+        while (idx < len && !isWordBoundary()) idx++
         return if (idx > len) len else idx
     }
 
     fun deleteChars(pos: Int, n: Int) {
 
-        if (n == 0)
+        if (n == 0) // TODO [JVM] needed?
             return
 
         var dst = pos
 
         // We maintain our buffer length in both UTF-8 and wchar formats
-        curLenA -= n //TODO check textCountUtf8BytesFromStr(dst, dst + n)
+        curLenA -= textCountUtf8BytesFromStr(textW, dst, dst + n)
         curLenW -= n
 
         // Offset remaining text (FIXME-OPT: Use memmove)
-        for (c in pos + n until textW.size)
-            textW[dst++] = textW[c]
-        textW[dst] = NUL
+        var src = pos + n
+        var c = textW[src++]
+        while (c != NUL) {
+            textW[dst++] = c
+            c = textW[src++]
+        }
+//        textW[dst] = NUL TODO check
     }
+
+    fun insertChars(pos: Int, newText: Char): Boolean = insertChars(pos, charArrayOf(newText), 0, 1)
 
     fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextLen: Int): Boolean {
 
         val isResizable = userFlags has InputTextFlag.CallbackResize
         val textLen = curLenW
         assert(pos <= textLen)
-//        if (newTextLen + textLen + 1 > text.size) return false
 
-        val newTextLenUtf8 = newTextLen //TODO check textCountUtf8BytesFromStr(new_text, new_text + newTextLen)
-        if (!isResizable && newTextLenUtf8 + curLenA > bufCapacityA) return false
+        val newTextLenUtf8 = textCountUtf8BytesFromStr(newText, ptr, newTextLen)
+        if (!isResizable && newTextLenUtf8 + curLenA > bufCapacityA)
+            return false
 
         // Grow internal buffer if needed
         if (newTextLen + textLen > textW.size) {
             if (!isResizable)
                 return false
             assert(textLen < textW.size)
-            val tmp = CharArray(textLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen)))
+            val tmp = CharArray(textLen + glm.clamp(newTextLen * 4, 32, 256 max newTextLen))
             System.arraycopy(textW, 0, tmp, 0, textW.size)
             textW = tmp
         }
@@ -195,7 +233,7 @@ class TextEditState {
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8
-        textW[curLenW] = NUL
+//        textW[curLenW] = NUL TODO check
 
         return true
     }
@@ -205,34 +243,63 @@ class TextEditState {
     object K {
         /** keyboard input to move cursor left  */
         val LEFT = 0x20000
+
         /** keyboard input to move cursor right */
         val RIGHT = 0x20001
+
         /** keyboard input to move cursor up    */
         val UP = 0x20002
+
         /** keyboard input to move cursor down  */
         val DOWN = 0x20003
+
         /** keyboard input to move cursor to start of line  */
         val LINESTART = 0x20004
+
         /** keyboard input to move cursor to end of line    */
         val LINEEND = 0x20005
+
         /** keyboard input to move cursor to start of text  */
         val TEXTSTART = 0x20006
+
         /** keyboard input to move cursor to end of text    */
         val TEXTEND = 0x20007
+
         /** keyboard input to delete selection or character under cursor    */
         val DELETE = 0x20008
+
         /** keyboard input to delete selection or character left of cursor  */
         val BACKSPACE = 0x20009
+
         /** keyboard input to perform undo  */
         val UNDO = 0x2000A
+
         /** keyboard input to perform redo  */
         val REDO = 0x2000B
+
         /** keyboard input to move cursor left one word */
         val WORDLEFT = 0x2000C
+
         /** keyboard input to move cursor right one word    */
         val WORDRIGHT = 0x2000D
 
         val SHIFT = 0x40000
+    }
+
+    // stb_textedit internally allows for a single undo record to do addition and deletion, but somehow, calling
+    // the stb_textedit_paste() function creates two separate records, so we perform it manually. (FIXME: Report to nothings/stb?)
+    fun replace(text: CharArray, textBegin: Int, textLen: Int)    {
+        makeundoReplace(str, state, 0, str->CurLenW, text_len);
+        ImStb::STB_TEXTEDIT_DELETECHARS(str, 0, str->CurLenW);
+        if (textLen <= 0)
+            return;
+        if (ImStb::STB_TEXTEDIT_INSERTCHARS(str, 0, text, text_len))
+            {
+                state->cursor = textLen;
+                state->has_preferred_x = 0;
+                return;
+            }
+        IM_ASSERT(0); // Failed to insert character, normally shouldn't happen because of how we currently use stb_textedit_replace()
     }
 
     /*
@@ -254,8 +321,6 @@ class TextEditState {
             val tmp = Array(len) { UndoRecord(src[pSrc + it]) }
             for (i in 0 until len) dst[pDst + i] = tmp[i]
         }
-
-        val GETWIDTH_NEWLINE = -1f
     }
 
     class UndoRecord {
@@ -419,6 +484,7 @@ class TextEditState {
         var padding1 = NUL
         var padding2 = NUL
         var padding3 = NUL
+
         /** this determines where the cursor up/down tries to seek to along x   */
         var preferredX = 0f
         val undostate = UndoState()
@@ -445,12 +511,16 @@ class TextEditState {
     class Row {
         /** starting x location */
         var x0 = 0f
+
         /** end x location (allows for align=right, etc)    */
         var x1 = 0f
+
         /** position of baseline relative to previous row's baseline    */
         var baselineYDelta = 0f
+
         /** height of row above baseline    */
         var yMin = 0f
+
         /** height of row below baseline   */
         var yMax = 0f
 
@@ -474,7 +544,7 @@ class TextEditState {
 
         // search rows to find one that straddles 'y'
         while (i < n) {
-            layout(r, i)
+            layoutRow(r, i)
             if (r.numChars <= 0)
                 return n
 
@@ -539,7 +609,7 @@ class TextEditState {
 
     fun undo() {
 
-        val s = stb.undostate
+        val s = stb.undoState
         if (s.undoPoint == 0) return
 
         // we need to do two things: apply the undo record, and create a redo record
@@ -598,7 +668,7 @@ class TextEditState {
 
     fun redo() {
 
-        val s = stb.undostate
+        val s = stb.undoState
         if (s.redoPoint == UNDOSTATECOUNT) return
 
         // we need to do two things: apply the redo record, and create an undo record
@@ -640,16 +710,16 @@ class TextEditState {
         s.redoPoint++
     }
 
-    fun makeundoInsert(where: Int, length: Int) = stb.undostate.createundo(where, 0, length)
+    fun makeundoInsert(where: Int, length: Int) = stb.undoState.createundo(where, 0, length)
 
-    fun makeundoDelete(where: Int, length: Int) = stb.undostate.createundo(where, length, 0)?.let {
+    fun makeundoDelete(where: Int, length: Int) = stb.undoState.createundo(where, length, 0)?.let {
         for (i in 0 until length)
-            stb.undostate.undoChar[it + i] = getChar(where + i)
+            stb.undoState.undoChar[it + i] = getChar(where + i)
     }
 
-    fun makeundoReplace(where: Int, oldLength: Int, newLength: Int) = stb.undostate.createundo(where, oldLength, newLength)?.let {
+    fun makeundoReplace(where: Int, oldLength: Int, newLength: Int) = stb.undoState.createundo(where, oldLength, newLength)?.let {
         for (i in 0 until oldLength)
-            stb.undostate.undoChar[i] = getChar(where + i)
+            stb.undoState.undoChar[i] = getChar(where + i)
     }
 
 
@@ -657,12 +727,16 @@ class TextEditState {
         // position of n'th character
         var x = 0f
         var y = 0f
+
         /** height of line   */
         var height = 0f
+
         /** first char of row   */
         var firstChar = 0
+
         /** first char length   */
         var length = 0
+
         /** first char of previous row  */
         var prevFirst = 0
     }
@@ -682,7 +756,7 @@ class TextEditState {
             // if it's at the end, then find the last line -- simpler than trying to
             // explicitly handle this case in the regular code
             if (singleLine) {
-                layout(r, 0)
+                layoutRow(r, 0)
                 with(find) {
                     y = 0f
                     firstChar = 0
@@ -695,7 +769,7 @@ class TextEditState {
                 x = 0f
                 height = 1f
                 while (i < z) {
-                    layout(r, i)
+                    layoutRow(r, i)
                     prevStart = i
                     i += r.numChars
                 }
@@ -710,7 +784,7 @@ class TextEditState {
         find.y = 0f
 
         while (true) {
-            layout(r, i)
+            layoutRow(r, i)
             if (n < i + r.numChars)
                 break
             prevStart = i
@@ -839,8 +913,8 @@ class TextEditState {
             return true
         }
         // remove the undo since we didn't actually insert the characters
-        if (stb.undostate.undoPoint != 0)
-            --stb.undostate.undoPoint
+        if (stb.undoState.undoPoint != 0)
+            --stb.undoState.undoPoint
         return false
     }
 
@@ -932,7 +1006,7 @@ class TextEditState {
                     var x = row.x0
                     val start = find.firstChar + find.length
                     cursor = start
-                    layout(row, cursor)
+                    layoutRow(row, cursor)
                     for (i in 0 until row.numChars) {
                         val dx = getWidth(start, i)
                         if (dx == GETWIDTH_NEWLINE)
@@ -972,7 +1046,7 @@ class TextEditState {
                     // now find character position up a row
                     val goalX = if (hasPreferredX) preferredX else find.x
                     cursor = find.prevFirst
-                    layout(row, cursor)
+                    layoutRow(row, cursor)
                     var x = row.x0
                     while (i < row.numChars) {
                         val dx = getWidth(find.prevFirst, i++)

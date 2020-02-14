@@ -221,6 +221,7 @@ class TextFilter(defaultFilter: String? = "") {
 
     fun build() {
         filters.clear()
+        // TODO check if resync
         filters.addAll(String(inputBuf)
                 .split(",")
                 .stream()
