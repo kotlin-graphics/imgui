@@ -65,7 +65,7 @@ class Window(var context: Context,
     /** Window border size at the time of Begin().    */
     var windowBorderSize = 1f
     /** Size of buffer storing Name. May be larger than strlen(Name)! */
-    var nameBufLen = name.length
+    var nameBufLen = name.toByteArray().size
     /** == window->GetID("#MOVE")   */
     var moveId: ID
     /** ID of corresponding item in parent window (for navigation to return from child window to parent window)   */

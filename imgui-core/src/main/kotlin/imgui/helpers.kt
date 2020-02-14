@@ -9,11 +9,11 @@ import imgui.classes.SizeCallbackData
 import imgui.internal.F32_TO_INT8_SAT
 import kool.*
 import org.lwjgl.system.MemoryUtil
-import unsigned.toUInt
 import java.nio.IntBuffer
 
 
 internal var ptrIndices = 0
+
 // it was: java.lang.Byte.valueOf(it.b)
 internal var ptrId: Array<Int> = Array(512) { it }
 
@@ -57,6 +57,7 @@ infix fun CharArray.cmp(other: CharArray): Boolean {
 object Debug {
 
     var vm: VirtualMachine? = null
+
     /** Instance count update interval in seconds   */
     var updateInterval = 5
     private var lastUpdate = System.nanoTime()
@@ -158,7 +159,16 @@ var imeInProgress = false
 fun ByteArray.memchr(startIdx: Int, c: Char, num: Int = size - startIdx): Int {
     val char = c.b
     for (i in startIdx until startIdx + num)
-        if(this[i] == char)
+        if (this[i] == char)
             return i
     return -1
 }
+
+fun ByteArray.strlen(): Int {
+    var len = 0
+    for (b in this)
+        if (b == 0.b) break
+        else len++
+    return len
+}
+

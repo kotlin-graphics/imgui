@@ -31,14 +31,14 @@ internal interface renderHelpers {
         renderText(pos, bytes, bytes.size, hideTextAfterHash)
     }
 
-    fun renderText(pos: Vec2, text: ByteArray, textEnd: Int = text.size, hideTextAfterHash: Boolean = true) {
+    fun renderText(pos: Vec2, text: ByteArray, textEnd: Int = -1, hideTextAfterHash: Boolean = true) {
 
         val window = g.currentWindow!!
 
         // Hide anything after a '##' string
         val textDisplayEnd = when {
             hideTextAfterHash -> findRenderedTextEnd(text, textEnd)
-            textEnd == -1 -> text.size
+            textEnd == -1 -> text.strlen()
             else -> textEnd
         }
 
@@ -49,9 +49,11 @@ internal interface renderHelpers {
         }
     }
 
-    fun renderTextWrapped(pos: Vec2, text: ByteArray, textEnd: Int = text.size, wrapWidth: Float) {
+    fun renderTextWrapped(pos: Vec2, text: ByteArray, textEnd_: Int, wrapWidth: Float) {
 
         val window = g.currentWindow!!
+
+        val textEnd = if (textEnd_ == -1) text.strlen() else textEnd_ // FIXME-OPT
 
         if (textEnd > 0) {
             window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, textEnd, wrapWidth)
