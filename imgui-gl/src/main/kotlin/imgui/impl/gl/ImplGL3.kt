@@ -81,6 +81,7 @@ class ImplGL3 : GLInterface {
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
         // DisplayPos is (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
+        // TODO re-sync -> mat from drawData
         val orthoProjection = glm.ortho(0f, io.displaySize.x.f, io.displaySize.y.f, 0f, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
@@ -96,8 +97,8 @@ class ImplGL3 : GLInterface {
         glEnableVertexAttribArray(semantic.attr.TEX_COORD)
         glEnableVertexAttribArray(semantic.attr.COLOR)
         glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
-        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size.L)
-        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.size, Vec2.size * 2L)
+        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
+        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.size, Vec2.size * 2)
     }
 
     /** OpenGL3 Render function.
@@ -141,14 +142,9 @@ class ImplGL3 : GLInterface {
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
         var clipOriginLowerLeft = true
-        val lastClipOrigin = when {
-            // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
-            CLIP_ORIGIN && Platform.get() != Platform.MACOSX -> glGetInteger(GL_CLIP_ORIGIN).also {
-                if (it == GL20C.GL_UPPER_LEFT)
-                    clipOriginLowerLeft = false
-            }
-            else -> 0
-        }
+        if (CLIP_ORIGIN && Platform.get() != Platform.MACOSX)
+            if (glGetInteger(GL_CLIP_ORIGIN) == GL20C.GL_UPPER_LEFT) // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+                clipOriginLowerLeft = false
 
         // Setup desired GL state
         setupRenderState(drawData, fbWidth, fbHeight)
@@ -319,6 +315,7 @@ class ImplGL3 : GLInterface {
             }
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
+
         // #if defined(IMGUI_IMPL_OPENGL_ES2) || defined(IMGUI_IMPL_OPENGL_ES3) || !defined(GL_VERSION_3_2) -> false
         var MAY_HAVE_DRAW_WITH_BASE_VERTEX = true
     }

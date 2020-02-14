@@ -321,6 +321,7 @@ internal interface renderHelpers {
             g.logDepthRef = window.dc.treeDepth
         val treeDepth = window.dc.treeDepth - g.logDepthRef
         while (true) {
+            // TODO re-sync
             // Split the string. Each new line (after a '\n') is followed by spacing corresponding to the current depth of our log entry.
             // We don't add a trailing \n to allow a subsequent item on the same line to be captured.
             val lineStart = textRemaining

@@ -312,9 +312,9 @@ internal interface PopupsModalsTooltips {
         }
 
         // Default popup policy
-        val dirPreferedOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
+        val dirPreferredOrder = arrayOf(Dir.Right, Dir.Down, Dir.Up, Dir.Left)
         for (n in (if (lastDir != Dir.None) -1 else 0) until Dir.COUNT) {
-            val dir = if (n == -1) lastDir else dirPreferedOrder[n]
+            val dir = if (n == -1) lastDir else dirPreferredOrder[n]
             if (n != -1 && dir == lastDir) continue  // Already tried this direction?
             val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
             val availH = (if (dir == Dir.Up) rAvoid.min.y else rOuter.max.y) - if (dir == Dir.Down) rAvoid.max.y else rOuter.min.y

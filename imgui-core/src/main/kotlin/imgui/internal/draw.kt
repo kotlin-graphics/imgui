@@ -145,11 +145,11 @@ class DrawListSplitter {
     } // Do not clear Channels[] so our allocations are reused next frame
 
     fun clearFreeMemory() {
-        _channels.forEachIndexed { i, c ->
+        _channels.forEach {
             //            if (i == _current)
 //                memset(&_Channels[i], 0, sizeof(_Channels[i]));  // Current channel is a copy of CmdBuffer/IdxBuffer, don't destruct again
-            c._cmdBuffer.clear()
-            c._idxBuffer.clear()
+            it._cmdBuffer.clear()
+            it._idxBuffer.clear()
         }
         _current = 0
         _count = 1

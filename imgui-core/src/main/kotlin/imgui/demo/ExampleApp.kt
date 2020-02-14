@@ -90,7 +90,7 @@ object ExampleApp {
         if (show.autoResize) AutoResize(show::autoResize)
         if (show.constrainedResize) ConstrainedResize(show::constrainedResize)
         if (show.simpleOverlay) SimpleOverlay(show::simpleOverlay)
-        if (show.windowTitles) WindowTitles(show::windowTitles)
+        if (show.windowTitles) WindowTitles()
         if (show.customRendering) CustomRendering(show::customRendering)
         if (show.metrics) showMetricsWindow(show::metrics)
         if (show.styleEditor)

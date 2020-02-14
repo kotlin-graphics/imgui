@@ -88,7 +88,7 @@ var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
 var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
 @JvmField
         /** Custom log entry from user land into test log */
-var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { g, fmt -> }
+var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { _, _ -> }
 
 /** Last Unicode code point supported by this build. */
 const val UNICODE_CODEPOINT_MAX = 0xFFFF
