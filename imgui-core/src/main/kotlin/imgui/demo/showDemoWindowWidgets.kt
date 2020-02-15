@@ -630,7 +630,7 @@ object showDemoWindowWidgets {
                 // Normally we would use u8"blah blah" with the proper characters directly in the string.
                 text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                 text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
-                inputText("UTF-16 input", buf)
+                inputText("UTF-8 input", buf)
             }
         }
 
