@@ -4,9 +4,11 @@ import com.sun.jdi.VirtualMachine
 import glm_.L
 import glm_.b
 import glm_.vec4.Vec4
+import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.classes.SizeCallbackData
 import imgui.internal.F32_TO_INT8_SAT
+import imgui.internal.textStrToUtf8
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import java.nio.IntBuffer
@@ -173,6 +175,7 @@ fun ByteArray.strlen(): Int {
 }
 
 fun String.toByteArray(size: Int): ByteArray = toByteArray().copyInto(ByteArray(size))
+fun String.toUtf8(size: Int) = ByteArray(size).also { textStrToUtf8(it, toCharArray()) }
 fun String.toByteArray(array: ByteArray): ByteArray = toByteArray().copyInto(array)
 
 infix fun ByteArray.strcmp(b: ByteArray): Int {
