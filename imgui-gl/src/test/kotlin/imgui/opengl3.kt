@@ -113,8 +113,6 @@ private class ImGuiOpenGL3 {
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
 //        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 16f, glyphRanges = imgui.font.glyphRanges.japanese)!!
-//        val a = ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.TTF", 18f)!!
-//        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
 
         /*  Main loop
             This automatically also polls events, swaps buffers and resets the appBuffer

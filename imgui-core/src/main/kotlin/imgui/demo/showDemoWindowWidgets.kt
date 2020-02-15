@@ -254,7 +254,7 @@ object showDemoWindowWidgets {
         label:
         ${'\t'}lock cmpxchg8b eax
         
-        """.toByteArray(1024 * 16)
+        """.trimIndent().toByteArray(1024 * 16)
     var flags = Itf.AllowTabInput.i
 
     val bufs = Array(6) { ByteArray(64) }
