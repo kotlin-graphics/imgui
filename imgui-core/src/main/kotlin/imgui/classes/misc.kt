@@ -179,7 +179,7 @@ class TextFilter(defaultFilter: String? = "") {
     var countGrep = 0
 
     init {
-        defaultFilter?.let { inputBuf = it.toByteArray() }
+        defaultFilter?.toByteArray(inputBuf)
     }
 
     class TextRange

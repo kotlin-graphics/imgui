@@ -1,6 +1,7 @@
 package imgui.api
 
 import gli_.has
+import glm_.b
 import glm_.func.cos
 import glm_.func.sin
 import glm_.glm
@@ -67,6 +68,7 @@ import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import unsigned.toUInt
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.internal.DrawCornerFlag as Dcf
@@ -190,7 +192,7 @@ interface widgetsColorEditorPicker {
                 else -> "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
             }
             setNextItemWidth(wInputs)
-            if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
+            if (inputText("##Text", buf.toByteArray(64), Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
                 while (buf[p] == '#' || buf[p].isBlankA) p++

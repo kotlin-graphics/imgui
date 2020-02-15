@@ -252,12 +252,11 @@ object ExampleApp {
             checkbox("No bring to front", ::noBringToFront)
         }
 
+        // All demo contents
         showDemoWindowWidgets()
         showDemoWindowLayout()
         showDemoWindowPopups()
         showDemoWindowColumns()
-
-
         showDemoWindowMisc()
 
         // End of ShowDemoWindow()

@@ -52,6 +52,10 @@ import imgui.classes.InputTextCallbackData
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.InputTextState
+import imgui.stb.te.click
+import imgui.stb.te.cut
+import imgui.stb.te.locateCoord
+import imgui.stb.te.paste
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue
