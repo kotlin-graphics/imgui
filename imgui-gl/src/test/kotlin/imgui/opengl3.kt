@@ -6,6 +6,7 @@ import gln.checkError
 import gln.glClearColor
 import gln.glViewport
 import imgui.classes.Context
+import imgui.classes.IO
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
@@ -112,7 +113,7 @@ private class ImGuiOpenGL3 {
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
         //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
 //        ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.ttf", 16f, glyphRanges = imgui.font.glyphRanges.japanese)!!
-//        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
+//        val a = ImGui.io.fonts.addFontFromFileTTF("extraFonts/ArialUni.TTF", 18f)!!
 //        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
 
         /*  Main loop

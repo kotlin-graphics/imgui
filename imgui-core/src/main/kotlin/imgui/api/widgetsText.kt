@@ -32,9 +32,7 @@ interface widgetsText {
             textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText)
 
     /** formatted text */
-    fun text(fmt: String, vararg args: Any) = textV(fmt, args)
-
-    fun textV(fmt: String, args: Array<out Any>) {
+    fun text(fmt: String, vararg args: Any) {
 
         val window = currentWindow
         if (window.skipItems) return
@@ -59,11 +57,9 @@ interface widgetsText {
      *      pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
      *      text(fmt, ...)
      *      popStyleColor() */
-    fun textDisabled(fmt: String, vararg args: Any) = textDisabledV(fmt, args)
-
-    fun textDisabledV(fmt: String, args: Array<out Any>) {
+    fun textDisabled(fmt: String, vararg args: Any) {
         pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        textV(fmt, args)
+        text(fmt, args)
         popStyleColor()
     }
 

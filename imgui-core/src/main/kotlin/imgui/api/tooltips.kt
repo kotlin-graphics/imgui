@@ -1,15 +1,10 @@
 package imgui.api
 
-import glm_.vec2.Vec2
-import imgui.*
 import imgui.ImGui.beginTooltipEx
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.end
-import imgui.ImGui.io
-import imgui.ImGui.setNextWindowBgAlpha
-import imgui.ImGui.setNextWindowPos
-import imgui.ImGui.style
-import imgui.ImGui.textV
+import imgui.ImGui.text
+import imgui.has
 import imgui.internal.TooltipFlag
 import imgui.WindowFlag as Wf
 
@@ -26,11 +21,9 @@ interface tooltips {
     }
 
     /** set a text-only tooltip, typically use with ImGui::IsItemHovered(). override any previous call to SetTooltip(). */
-    fun setTooltipV(fmt: String, args: Array<out Any>) {
+    fun setTooltip(fmt: String, vararg args: Any) {
         beginTooltipEx(Wf.None.i, TooltipFlag.OverridePreviousTooltip.i)
-        textV(fmt, args)
+        text(fmt, args)
         endTooltip()
     }
-
-    fun setTooltip(fmt: String, vararg args: Any) = setTooltipV(fmt, args)
 }

@@ -213,7 +213,7 @@ class Font {
 
         var s = textBegin
         while (s < textEnd) {
-            var c = s.i
+            var c = text[s].toUInt()
             val nextS = s + when {
                 c < 0x80 -> 1
                 else -> {

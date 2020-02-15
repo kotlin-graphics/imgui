@@ -174,7 +174,7 @@ object showDemoWindowWidgets {
     var e = 0
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
     var currentItem0 = 0
-    var str0 = "Hello, world!"
+    var str0 = "Hello, world!".toByteArray(128)
     var str1 = ByteArray(128)
     var i0 = 123
     var f0 = 0.001f
@@ -212,7 +212,7 @@ object showDemoWindowWidgets {
 
     /* Text */
     var wrapWidth = 200f
-    val buf = "日本語" // "nihongo"
+    val buf = "日本語".toByteArray(32) // "nihongo"
 
 
     /* Images */
@@ -254,7 +254,7 @@ object showDemoWindowWidgets {
         label:
         ${'\t'}lock cmpxchg8b eax
         
-        """
+        """.toByteArray(1024 * 16)
     var flags = Itf.AllowTabInput.i
 
     val bufs = Array(6) { ByteArray(64) }
@@ -265,7 +265,7 @@ object showDemoWindowWidgets {
         }
     }
 
-    val bufPass = "password123"
+    val bufPass = "password123".toByteArray(64)
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
@@ -615,7 +615,7 @@ object showDemoWindowWidgets {
                     windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
                 }
             }
-            treeNode("JVM UTF-16 Unicode with surrogate characters") {
+            treeNode("UTF-8 text") {
                 /*  UTF-8 test with Japanese characters
                     (Needs a suitable font, try Noto, or Arial Unicode, or M+ fonts. Read docs/FONTS.txt for details.)
                     - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
