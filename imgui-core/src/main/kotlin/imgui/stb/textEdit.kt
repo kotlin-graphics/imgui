@@ -2,6 +2,7 @@ package imgui.stb
 
 import gli_.has
 import glm_.c
+import glm_.i
 import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
 
@@ -288,12 +289,14 @@ object te {
     const val UNDOSTATECOUNT = 99
     const val UNDOCHARCOUNT = 999
 
-    class UndoRecord {
-        // private data
-        var where = 0
-        var insertLength = 0
-        var deleteLength = 0
-        var charStorage = 0
+    class UndoRecord(
+            // private data
+            var where: Int = 0,
+            var insertLength: Int = 0,
+            var deleteLength: Int = 0,
+            var charStorage: Int = 0) {
+
+        constructor(ur: UndoRecord) : this(ur.where, ur.insertLength, ur.deleteLength, ur.charStorage)
     }
 
     class UndoState {
@@ -318,15 +321,92 @@ object te {
                     val n = undoRec[0].insertLength
                     // delete n characters from all other records
                     undoCharPoint -= n
-                    STB_TEXTEDIT_memmove(state->undo_char, state->undo_char+n, (size_t) (state->undo_char_point*sizeof(STB_TEXTEDIT_CHARTYPE)));
-                    for (i= 0; i < state->undo_point; ++i)
-                    if (state->undo_rec[i].char_storage >= 0)
-                    state->undo_rec[i].char_storage -= n; // @OPTIMIZE: get rid of char_storage and infer it
+                    for (i in 0 until undoCharPoint)
+                        undoChar[i] = undoChar[n + i]
+                    for (i in 0 until undoPoint)
+                        if (undoRec[i].charStorage >= 0)
+                            undoRec[i].charStorage -= n // @OPTIMIZE: get rid of char_storage and infer it
                 }
-                --state->undo_point;
-                STB_TEXTEDIT_memmove(state->undo_rec, state->undo_rec+1, (size_t) (state->undo_point*sizeof(state->undo_rec[0])));
+                --undoPoint
+                for (i in 0 until undoPoint)
+                    undoRec[i] = undoRec[i + 1]
             }
         }
+
+        /** discard the oldest entry in the redo list--it's bad if this
+         *  ever happens, but because undo & redo have to store the actual
+         *  characters in different cases, the redo character buffer can
+         * fill up even though the undo buffer didn't */
+        fun discardRedo() {
+            val k = UNDOSTATECOUNT - 1
+
+            if (redoPoint <= k) {
+                // if the k'th undo state has characters, clean those up
+                if (undoRec[k].charStorage >= 0) {
+                    val n = undoRec[k].insertLength
+                    // move the remaining redo character data to the end of the buffer
+                    redoCharPoint += n
+                    for (i in 0 until UNDOCHARCOUNT - redoCharPoint)
+                        undoChar[UNDOCHARCOUNT - i - 1] = undoChar[UNDOCHARCOUNT - n - i - 1]
+                    // adjust the position of all the other records to account for above memmove
+                    for (i in redoPoint until k)
+                        if (undoRec[i].charStorage >= 0)
+                            undoRec[i].charStorage += n
+                }
+                // now move all the redo records towards the end of the buffer; the first one is at 'redo_point'
+                // {DEAR IMGUI]
+                val moveSize = UNDOSTATECOUNT - redoPoint - 1
+                for (i in 0 until moveSize)
+                    undoRec[UNDOSTATECOUNT - 1 - i] = undoRec[UNDOSTATECOUNT - 2 - i]
+
+                // now move redo_point to point to the new one
+                ++redoPoint
+            }
+        }
+
+        fun createUndoRecord(numchars: Int): UndoRecord? {
+            // any time we create a new undo record, we discard redo
+            flushRedo()
+
+            // if we have no free records, we have to make room, by sliding the
+            // existing records down
+            if (undoPoint == UNDOSTATECOUNT)
+                discardUndo()
+
+            // if the characters to store won't possibly fit in the buffer, we can't undo
+            if (numchars > UNDOCHARCOUNT) {
+                undoPoint = 0
+                undoCharPoint = 0
+                return null
+            }
+
+            // if we don't have enough free characters in the buffer, we have to make room
+            while (undoCharPoint + numchars > UNDOCHARCOUNT)
+                discardUndo()
+
+            return undoRec[undoPoint++]
+        }
+
+        fun createUndo(pos: Int, insertLen: Int, deleteLen: Int): Int? {
+            val r = createUndoRecord(insertLen) ?: return null
+
+            r.where = pos
+            r.insertLength = insertLen
+            r.deleteLength = deleteLen
+
+            return when {
+                insertLen == 0 -> {
+                    r.charStorage = -1
+                    null
+                }
+                else -> {
+                    r.charStorage = undoCharPoint
+                    undoCharPoint += insertLen
+                    r.charStorage
+                }
+            }
+        }
+
     }
 
     class State {
@@ -357,8 +437,10 @@ object te {
         //
         // private data
         //
-//        unsigned char cursor_at_end_of_line // not implemented yet
-//        unsigned char initialized
+
+        /** not implemented yet */
+        var cursorAtEndOfLine = false
+        var initialized = false
         var hasPreferredX = false
         var singleLine = false
 //        unsigned char padding1, padding2, padding3
@@ -394,6 +476,30 @@ object te {
                 selectStart = cursor
             } else cursor = selectEnd
         }
+
+        fun makeUndoInsert(where: Int, length: Int) = undoState.createUndo(where, 0, length)
+
+        /** reset the state to default */
+        fun clear(isSingleLine: Boolean) {
+            undoState.apply {
+                undoPoint = 0
+                undoCharPoint = 0
+                redoPoint = UNDOSTATECOUNT
+                redoCharPoint = UNDOCHARCOUNT
+            }
+            selectStart = 0
+            selectEnd = 0
+            cursor = 0
+            hasPreferredX = false
+            preferredX = 0f
+            cursorAtEndOfLine = false
+            initialized = true
+            singleLine = isSingleLine
+            insertMode = false
+        }
+
+        /** API initialize */
+        fun initialize(isSingleLine: Boolean) = clear(isSingleLine)
     }
 
 
@@ -430,7 +536,7 @@ object te {
     //
 
     /** traverse the layout to locate the nearest character to a display position */
-    fun InputTextState.textLocateCoord(x: Float, y: Float): Int {
+    fun InputTextState.locateCoord(x: Float, y: Float): Int {
         val r = Row()
         val n = stringLen
         var baseY = 0f
@@ -619,7 +725,7 @@ object te {
 
     /** delete characters while updating undo */
     fun InputTextState.delete(where: Int, len: Int) {
-        makeundoDelete(where, len)
+        makeUndoDelete(where, len)
         deleteChars(where, len)
         stb.hasPreferredX = false
     }
@@ -709,14 +815,14 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
     }
 
     /** API paste: replace existing selection with passed-in text */
-    fun InputTextState.pasteInternal(text: CharArray): Boolean {
+    fun InputTextState.paste(text: CharArray, len: Int = text.size): Boolean {
         // if there's a selection, the paste should delete it
         clamp()
         deleteSelection()
         // try to insert the characters
-        if (insertChars(stb.cursor, text, 0, text.len)) {
-            makeUndoInsert(stb.cursor, text.len)
-            stb.cursor += text.len
+        if (insertChars(stb.cursor, text, 0, len)) {
+            stb.makeUndoInsert(stb.cursor, len)
+            stb.cursor += len
             stb.hasPreferredX = false
             return true
         }
@@ -727,322 +833,327 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
     }
 
     /** API key: process a keyboard input */
-    infix fun InputTextState.key(key: Int) = when (key) {
-//                #ifdef STB_TEXTEDIT_K_INSERT
-//                    case STB_TEXTEDIT_K_INSERT:
-//                    state->insert_mode = !state->insert_mode
-//                    break
-//                #endif
+    infix fun InputTextState.key(key: Int) {
+        when (key) {
+    //                #ifdef STB_TEXTEDIT_K_INSERT
+    //                    case STB_TEXTEDIT_K_INSERT:
+    //                    state->insert_mode = !state->insert_mode
+    //                    break
+    //                #endif
 
-        K.UNDO -> {
-            undo()
-            stb.hasPreferredX = false
-        }
-
-        K.REDO -> {
-            redo()
-            stb.hasPreferredX = false
-        }
-
-        K.LEFT -> {
-            // if currently there's a selection, move cursor to start of selection
-            if (stb.hasSelection)
-                moveToFirst()
-            else if (stb.cursor > 0)
-                --stb.cursor
-            stb.hasPreferredX = false
-        }
-
-        K.RIGHT -> {
-            // if currently there's a selection, move cursor to end of selection
-            if (stb.hasSelection)
-                moveToLast()
-            else
-                ++stb.cursor
-            clamp()
-            stb.hasPreferredX = false
-        }
-
-        K.LEFT or K.SHIFT -> {
-            clamp()
-            prepSelectionAtCursor()
-            // move selection left
-            if (stb.selectEnd > 0)
-                --stb.selectEnd
-            stb.cursor = stb.selectEnd
-            stb.hasPreferredX = false
-        }
-
-//            #ifdef STB_TEXTEDIT_MOVEWORDLEFT
-        K.WORDLEFT -> {
-            if (stb.hasSelection)
-                moveToFirst()
-            else {
-                stb.cursor = moveWordLeft(stb.cursor)
-                clamp()
+            K.UNDO -> {
+                undo()
+                stb.hasPreferredX = false
             }
-        }
 
-        K.WORDLEFT or K.SHIFT -> {
-            if (!stb.hasSelection)
-                prepSelectionAtCursor()
-
-            stb.cursor = moveWordLeft(stb.cursor)
-            stb.selectEnd = stb.cursor
-
-            clamp()
-        }
-//            #endif
-
-//                #ifdef STB_TEXTEDIT_MOVEWORDRIGHT
-        K.WORDRIGHT -> {
-            if (stb.hasSelection)
-                moveToLast()
-            else {
-                stb.cursor = moveWordRight(stb.cursor)
-                clamp()
+            K.REDO -> {
+                redo()
+                stb.hasPreferredX = false
             }
-        }
 
-        K.WORDRIGHT or K.SHIFT -> {
-            if (!stb.hasSelection)
-                prepSelectionAtCursor()
-
-            stb.cursor = moveWordRight(stb.cursor)
-            stb.selectEnd = stb.cursor
-
-            clamp()
-        }
-//                #endif
-
-        K.RIGHT or K.SHIFT -> {
-            prepSelectionAtCursor()
-            // move selection right
-            ++stb.selectEnd
-            clamp()
-            stb.cursor = stb.selectEnd
-            stb.hasPreferredX = false
-        }
-
-        K.DOWN,
-        K.DOWN or K.SHIFT -> {
-            val find = FindState()
-            val row = Row()
-//                int i
-            val sel = key has K.SHIFT
-
-            if (stb.singleLine)
-            // on windows, up&down in single-line behave like left&right
-                key(K.RIGHT or (key and K.SHIFT))
-
-            if (sel)
-                prepSelectionAtCursor()
-            else if (stb.hasSelection)
-                moveToLast()
-
-            // compute current position of cursor point
-            clamp()
-            findCharpos(find, stb.cursor, stb.singleLine)
-
-            // now find character position down a row
-            if (find.length != 0) {
-                val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
-                val start = find.firstChar + find.length
-                stb.cursor = start
-                layoutRow(row, stb.cursor)
-                var x = row.x0
-                for (i in 0 until row.numChars) {
-                    val dx = getWidth(start, i)
-//                        #ifdef STB_TEXTEDIT_GETWIDTH_NEWLINE
-                    if (dx == GETWIDTH_NEWLINE)
-                        break
-//                        #endif
-                    x += dx
-                    if (x > goalX)
-                        break
-                    ++stb.cursor
-                }
-                clamp()
-
-                stb.hasPreferredX = true
-                stb.preferredX = goalX
-
-                if (sel)
-                    stb.selectEnd = stb.cursor
-            }
-        }
-
-        K.UP,
-        K.UP or K.SHIFT -> {
-            val find = FindState()
-            val row = Row()
-            val sel = key has K.SHIFT
-
-            if (stb.singleLine)
-            // on windows, up&down become left&right
-                key(K.LEFT or (key and K.SHIFT))
-
-            if (sel)
-                prepSelectionAtCursor()
-            else if (stb.hasSelection)
-                moveToFirst()
-
-            // compute current position of cursor point
-            clamp()
-            findCharpos(find, stb.cursor, stb.singleLine)
-
-            // can only go up if there's a previous row
-            if (find.prevFirst != find.firstChar) {
-                // now find character position up a row
-                val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
-                stb.cursor = find.prevFirst
-                layoutRow(row, stb.cursor)
-                var x = row.x0
-                for (i in 0 until row.numChars) {
-                    val dx = getWidth(find.prevFirst, i)
-//                        #ifdef STB_TEXTEDIT_GETWIDTH_NEWLINE
-                    if (dx == GETWIDTH_NEWLINE)
-                        break
-//                        #endif
-                    x += dx
-                    if (x > goalX)
-                        break
-                    ++stb.cursor
-                }
-                clamp()
-
-                stb.hasPreferredX = true
-                stb.preferredX = goalX
-
-                if (sel)
-                    stb.selectEnd = stb.cursor
-            }
-        }
-
-        K.DELETE,
-        K.DELETE or K.SHIFT -> {
-            if (stb.hasSelection)
-                deleteSelection()
-            else {
-                val n = stringLen
-                if (stb.cursor < n)
-                    delete(stb.cursor, 1)
-            }
-            stb.hasPreferredX = false
-        }
-
-        K.BACKSPACE,
-        K.BACKSPACE or K.SHIFT -> {
-            if (stb.hasSelection)
-                deleteSelection()
-            else {
-                clamp()
-                if (stb.cursor > 0) {
-                    delete(stb.cursor - 1, 1)
+            K.LEFT -> {
+                // if currently there's a selection, move cursor to start of selection
+                if (stb.hasSelection)
+                    stb.moveToFirst()
+                else if (stb.cursor > 0)
                     --stb.cursor
+                stb.hasPreferredX = false
+            }
+
+            K.RIGHT -> {
+                // if currently there's a selection, move cursor to end of selection
+                if (stb.hasSelection)
+                    moveToLast()
+                else
+                    ++stb.cursor
+                clamp()
+                stb.hasPreferredX = false
+            }
+
+            K.LEFT or K.SHIFT -> {
+                clamp()
+                stb.prepSelectionAtCursor()
+                // move selection left
+                if (stb.selectEnd > 0)
+                    --stb.selectEnd
+                stb.cursor = stb.selectEnd
+                stb.hasPreferredX = false
+            }
+
+    //            #ifdef STB_TEXTEDIT_MOVEWORDLEFT
+            K.WORDLEFT -> {
+                if (stb.hasSelection)
+                    stb.moveToFirst()
+                else {
+                    stb.cursor = moveWordLeft(stb.cursor)
+                    clamp()
                 }
             }
-            stb.hasPreferredX = false
-        }
 
-        K.TEXTSTART -> {
-            stb.cursor = 0
-            stb.selectStart = 0
-            stb.selectEnd = 0
-            stb.hasPreferredX = false
-        }
+            K.WORDLEFT or K.SHIFT -> {
+                if (!stb.hasSelection)
+                    stb.prepSelectionAtCursor()
 
-        K.TEXTEND -> {
-            stb.cursor = stringLen
-            stb.selectStart 0
-            stb.selectEnd = 0
-            stb.hasPreferredX = false
-        }
+                stb.cursor = moveWordLeft(stb.cursor)
+                stb.selectEnd = stb.cursor
 
-        K.TEXTSTART or K.SHIFT -> {
-            prepSelectionAtCursor()
-            stb.cursor = 0
-            stb.selectEnd = 0
-            stb.hasPreferredX = false
-        }
+                clamp()
+            }
+    //            #endif
 
-        K.TEXTEND or K.SHIFT -> {
-            prepSelectionAtCursor()
-            stb.cursor = stringLen
-            stb.selectEnd = stringLen
-            stb.hasPreferredX = false
-        }
+    //                #ifdef STB_TEXTEDIT_MOVEWORDRIGHT
+            K.WORDRIGHT -> {
+                if (stb.hasSelection)
+                    moveToLast()
+                else {
+                    stb.cursor = moveWordRight(stb.cursor)
+                    clamp()
+                }
+            }
 
-        K.LINESTART -> {
-            clamp()
-            moveToFirst()
-            if (stb.singleLine)
-                stb.cursor = 0
-            else while (stb.cursor > 0 && getChar(stb.cursor - 1) != NEWLINE)
-                --stb.cursor
-            stb.hasPreferredX = false
-        }
+            K.WORDRIGHT or K.SHIFT -> {
+                if (!stb.hasSelection)
+                    stb.prepSelectionAtCursor()
 
-        K.LINEEND -> {
-            val n = stringLen
-            clamp()
-            moveToFirst()
-            if (stb.singleLine)
-                stb.cursor = n
-            else while (stb.cursor < n && getChar(stb.cursor) != NEWLINE)
-                ++stb.cursor
-            stb.hasPreferredX = false
-        }
+                stb.cursor = moveWordRight(stb.cursor)
+                stb.selectEnd = stb.cursor
 
-        K.LINESTART or K.SHIFT -> {
-            clamp()
-            prepSelectionAtCursor()
-            if (stb.singleLine)
-                stb.cursor = 0
-            else while (stb.cursor > 0 && getChar(stb.cursor - 1) != NEWLINE)
-                --stb.cursor
-            stb.selectEnd = stb.cursor
-            stb.hasPreferredX = false
-        }
+                clamp()
+            }
+    //                #endif
 
-        K.LINEEND or K.SHIFT -> {
-            val n = stringLen
-            clamp()
-            prepSelectionAtCursor()
-            if (stb.singleLine)
-                stb.cursor = n
-            else while (stb.cursor < n && getChar(stb.cursor) != NEWLINE)
-                ++stb.cursor
-            stb.selectEnd = stb.cursor
-            stb.hasPreferredX = false
-        }
+            K.RIGHT or K.SHIFT -> {
+                stb.prepSelectionAtCursor()
+                // move selection right
+                ++stb.selectEnd
+                clamp()
+                stb.cursor = stb.selectEnd
+                stb.hasPreferredX = false
+            }
 
-        // @TODO:
-        //    STB_TEXTEDIT_K_PGUP      - move cursor up a page
-        //    STB_TEXTEDIT_K_PGDOWN    - move cursor down a page
+            K.DOWN,
+            K.DOWN or K.SHIFT -> {
+                val find = FindState()
+                val row = Row()
+    //                int i
+                val sel = key has K.SHIFT
 
-        else -> {
-            val c = keyToText(key)
-            if (c > 0) {
-                val ch = c.c
+                if (stb.singleLine)
+                // on windows, up&down in single-line behave like left&right
+                    key(K.RIGHT or (key and K.SHIFT))
+                else {
+                    if (sel)
+                        stb.prepSelectionAtCursor()
+                    else if (stb.hasSelection)
+                        moveToLast()
 
-                // can't add newline in single-line mode
-                if (ch != '\n' || !stb.singleLine)
-                    if (stb.insertMode && !stb.hasSelection && stb.cursor < stringLen) {
-                        makeUndoReplace(stb.cursor, 1, 1)
-                        deleteChars(stb.cursor, 1)
-                        if (insertChars(stb.cursor, ch)) {
+                    // compute current position of cursor point
+                    clamp()
+                    findCharpos(find, stb.cursor, stb.singleLine)
+
+                    // now find character position down a row
+                    if (find.length != 0) {
+                        val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
+                        val start = find.firstChar + find.length
+                        stb.cursor = start
+                        layoutRow(row, stb.cursor)
+                        var x = row.x0
+                        for (i in 0 until row.numChars) {
+                            val dx = getWidth(start, i)
+    //                        #ifdef STB_TEXTEDIT_GETWIDTH_NEWLINE
+                            if (dx == GETWIDTH_NEWLINE)
+                                break
+    //                        #endif
+                            x += dx
+                            if (x > goalX)
+                                break
                             ++stb.cursor
-                            stb.hasPreferredX = true
                         }
-                    } else {
-                        deleteSelection() // implicitly clamps
-                        if (insertChars(stb.cursor, ch)) {
-                            makeUndoInsert(stb.cursor, 1)
-                            ++stb.cursor
-                            stb.hasPreferredX = false
-                        }
+                        clamp()
+
+                        stb.hasPreferredX = true
+                        stb.preferredX = goalX
+
+                        if (sel)
+                            stb.selectEnd = stb.cursor
                     }
+                }
+            }
+
+            K.UP,
+            K.UP or K.SHIFT -> {
+                val find = FindState()
+                val row = Row()
+                val sel = key has K.SHIFT
+
+                if (stb.singleLine)
+                // on windows, up&down become left&right
+                    key(K.LEFT or (key and K.SHIFT))
+                else {
+                    if (sel)
+                        stb.prepSelectionAtCursor()
+                    else if (stb.hasSelection)
+                        stb.moveToFirst()
+
+                    // compute current position of cursor point
+                    clamp()
+                    findCharpos(find, stb.cursor, stb.singleLine)
+
+                    // can only go up if there's a previous row
+                    if (find.prevFirst != find.firstChar) {
+                        // now find character position up a row
+                        val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
+                        stb.cursor = find.prevFirst
+                        layoutRow(row, stb.cursor)
+                        var x = row.x0
+                        for (i in 0 until row.numChars) {
+                            val dx = getWidth(find.prevFirst, i)
+    //                        #ifdef STB_TEXTEDIT_GETWIDTH_NEWLINE
+                            if (dx == GETWIDTH_NEWLINE)
+                                break
+    //                        #endif
+                            x += dx
+                            if (x > goalX)
+                                break
+                            ++stb.cursor
+                        }
+                        clamp()
+
+                        stb.hasPreferredX = true
+                        stb.preferredX = goalX
+
+                        if (sel)
+                            stb.selectEnd = stb.cursor
+                    }
+                }
+            }
+
+            K.DELETE,
+            K.DELETE or K.SHIFT -> {
+                if (stb.hasSelection)
+                    deleteSelection()
+                else {
+                    val n = stringLen
+                    if (stb.cursor < n)
+                        delete(stb.cursor, 1)
+                }
+                stb.hasPreferredX = false
+            }
+
+            K.BACKSPACE,
+            K.BACKSPACE or K.SHIFT -> {
+                if (stb.hasSelection)
+                    deleteSelection()
+                else {
+                    clamp()
+                    if (stb.cursor > 0) {
+                        delete(stb.cursor - 1, 1)
+                        --stb.cursor
+                    }
+                }
+                stb.hasPreferredX = false
+            }
+
+            K.TEXTSTART -> {
+                stb.cursor = 0
+                stb.selectStart = 0
+                stb.selectEnd = 0
+                stb.hasPreferredX = false
+            }
+
+            K.TEXTEND -> {
+                stb.cursor = stringLen
+                stb.selectStart = 0
+                stb.selectEnd = 0
+                stb.hasPreferredX = false
+            }
+
+            K.TEXTSTART or K.SHIFT -> {
+                stb.prepSelectionAtCursor()
+                stb.cursor = 0
+                stb.selectEnd = 0
+                stb.hasPreferredX = false
+            }
+
+            K.TEXTEND or K.SHIFT -> {
+                stb.prepSelectionAtCursor()
+                stb.cursor = stringLen
+                stb.selectEnd = stringLen
+                stb.hasPreferredX = false
+            }
+
+            K.LINESTART -> {
+                clamp()
+                stb.moveToFirst()
+                if (stb.singleLine)
+                    stb.cursor = 0
+                else while (stb.cursor > 0 && getChar(stb.cursor - 1) != NEWLINE)
+                    --stb.cursor
+                stb.hasPreferredX = false
+            }
+
+            K.LINEEND -> {
+                val n = stringLen
+                clamp()
+                stb.moveToFirst()
+                if (stb.singleLine)
+                    stb.cursor = n
+                else while (stb.cursor < n && getChar(stb.cursor) != NEWLINE)
+                    ++stb.cursor
+                stb.hasPreferredX = false
+            }
+
+            K.LINESTART or K.SHIFT -> {
+                clamp()
+                stb.prepSelectionAtCursor()
+                if (stb.singleLine)
+                    stb.cursor = 0
+                else while (stb.cursor > 0 && getChar(stb.cursor - 1) != NEWLINE)
+                    --stb.cursor
+                stb.selectEnd = stb.cursor
+                stb.hasPreferredX = false
+            }
+
+            K.LINEEND or K.SHIFT -> {
+                val n = stringLen
+                clamp()
+                stb.prepSelectionAtCursor()
+                if (stb.singleLine)
+                    stb.cursor = n
+                else while (stb.cursor < n && getChar(stb.cursor) != NEWLINE)
+                    ++stb.cursor
+                stb.selectEnd = stb.cursor
+                stb.hasPreferredX = false
+            }
+
+            // @TODO:
+            //    STB_TEXTEDIT_K_PGUP      - move cursor up a page
+            //    STB_TEXTEDIT_K_PGDOWN    - move cursor down a page
+
+            else -> {
+                val c = keyToText(key)
+                if (c > 0) {
+                    val ch = c.c
+
+                    // can't add newline in single-line mode
+                    if (ch != '\n' || !stb.singleLine)
+                        if (stb.insertMode && !stb.hasSelection && stb.cursor < stringLen) {
+                            makeUndoReplace(stb.cursor, 1, 1)
+                            deleteChars(stb.cursor, 1)
+                            if (insertChar(stb.cursor, ch)) {
+                                ++stb.cursor
+                                stb.hasPreferredX = true
+                            }
+                        } else {
+                            deleteSelection() // implicitly clamps
+                            if (insertChar(stb.cursor, ch)) {
+                                stb.makeUndoInsert(stb.cursor, 1)
+                                ++stb.cursor
+                                stb.hasPreferredX = false
+                            }
+                        }
+                }
+                Unit
             }
         }
     }
@@ -1053,260 +1164,146 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
     //
     // @OPTIMIZE: the undo/redo buffer should be circular
 
-    // stb_textedit_flush_redo [JVM] -> UndoState class
+    // [JVM] -> UndoState class
+    // stb_textedit_flush_redo
+    // stb_textedit_discard_undo
+    // stb_textedit_discard_redo
+    // stb_text_create_undo_record
+    // stb_text_createundo
 
-    // stb_textedit_discard_undo [JVM] -> UndoState class
 
-//// discard the oldest entry in the redo list--it's bad if this
-//// ever happens, but because undo & redo have to store the actual
-//// characters in different cases, the redo character buffer can
-//// fill up even though the undo buffer didn't
-//static void stb_textedit_discard_redo(StbUndoState *state)
-//{
-//    int k = STB_TEXTEDIT_UNDOSTATECOUNT-1
-//
-//    if (state->redo_point <= k) {
-//    // if the k'th undo state has characters, clean those up
-//    if (state->undo_rec[k].char_storage >= 0) {
-//    int n = state->undo_rec[k].insert_length, i
-//    // move the remaining redo character data to the end of the buffer
-//    state->redo_char_point += n
-//    STB_TEXTEDIT_memmove(state->undo_char + state->redo_char_point, state->undo_char + state->redo_char_point-n, (size_t) ((STB_TEXTEDIT_UNDOCHARCOUNT - state->redo_char_point)*sizeof(STB_TEXTEDIT_CHARTYPE)))
-//    // adjust the position of all the other records to account for above memmove
-//    for (i=state->redo_point; i < k; ++i)
-//    if (state->undo_rec[i].char_storage >= 0)
-//    state->undo_rec[i].char_storage += n
-//}
-//    // now move all the redo records towards the end of the buffer; the first one is at 'redo_point'
-//    // {DEAR IMGUI]
-//    size_t move_size = (size_t)((STB_TEXTEDIT_UNDOSTATECOUNT - state->redo_point - 1) * sizeof(state->undo_rec[0]))
-//    const char* buf_begin = (char*)state->undo_rec; (void)buf_begin
-//    const char* buf_end   = (char*)state->undo_rec + sizeof(state->undo_rec); (void)buf_end
-//    IM_ASSERT(((char*)(state->undo_rec + state->redo_point)) >= buf_begin)
-//    IM_ASSERT(((char*)(state->undo_rec + state->redo_point + 1) + move_size) <= buf_end)
-//    STB_TEXTEDIT_memmove(state->undo_rec + state->redo_point+1, state->undo_rec + state->redo_point, move_size)
-//
-//    // now move redo_point to point to the new one
-//    ++state->redo_point
-//}
-//}
-//
-//static StbUndoRecord *stb_text_create_undo_record(StbUndoState *state, int numchars)
-//{
-//    // any time we create a new undo record, we discard redo
-//    stb_textedit_flush_redo(state)
-//
-//    // if we have no free records, we have to make room, by sliding the
-//    // existing records down
-//    if (state->undo_point == STB_TEXTEDIT_UNDOSTATECOUNT)
-//    stb_textedit_discard_undo(state)
-//
-//    // if the characters to store won't possibly fit in the buffer, we can't undo
-//    if (numchars > STB_TEXTEDIT_UNDOCHARCOUNT) {
-//        state->undo_point = 0
-//        state->undo_char_point = 0
-//        return NULL
-//    }
-//
-//    // if we don't have enough free characters in the buffer, we have to make room
-//    while (state->undo_char_point + numchars > STB_TEXTEDIT_UNDOCHARCOUNT)
-//    stb_textedit_discard_undo(state)
-//
-//    return &state->undo_rec[state->undo_point++]
-//}
-//
-//static STB_TEXTEDIT_CHARTYPE *stb_text_createundo(StbUndoState *state, int pos, int insert_len, int delete_len)
-//{
-//    StbUndoRecord *r = stb_text_create_undo_record(state, insert_len)
-//    if (r == NULL)
-//        return NULL
-//
-//    r->where = pos
-//    r->insert_length = (STB_TEXTEDIT_POSITIONTYPE) insert_len
-//    r->delete_length = (STB_TEXTEDIT_POSITIONTYPE) delete_len
-//
-//    if (insert_len == 0) {
-//        r->char_storage = -1
-//        return NULL
-//    } else {
-//        r->char_storage = state->undo_char_point
-//        state->undo_char_point += insert_len
-//        return &state->undo_char[r->char_storage]
-//    }
-//}
-//
-//static void stb_text_undo(STB_TEXTEDIT_STRING *str, STB_TexteditState *state)
-//{
-//    StbUndoState *s = &state->undostate
-//    StbUndoRecord u, *r
-//    if (s->undo_point == 0)
-//    return
-//
-//    // we need to do two things: apply the undo record, and create a redo record
-//    u = s->undo_rec[s->undo_point-1]
-//    r = &s->undo_rec[s->redo_point-1]
-//    r->char_storage = -1
-//
-//    r->insert_length = u.delete_length
-//    r->delete_length = u.insert_length
-//    r->where = u.where
-//
-//    if (u.delete_length) {
-//        // if the undo record says to delete characters, then the redo record will
-//        // need to re-insert the characters that get deleted, so we need to store
-//        // them.
-//
-//        // there are three cases:
-//        //    there's enough room to store the characters
-//        //    characters stored for *redoing* don't leave room for redo
-//        //    characters stored for *undoing* don't leave room for redo
-//        // if the last is true, we have to bail
-//
-//        if (s->undo_char_point + u.delete_length >= STB_TEXTEDIT_UNDOCHARCOUNT) {
-//            // the undo records take up too much character space; there's no space to store the redo characters
-//            r->insert_length = 0
-//        } else {
-//            int i
-//
-//            // there's definitely room to store the characters eventually
-//            while (s->undo_char_point + u.delete_length > s->redo_char_point) {
-//            // should never happen:
-//            if (s->redo_point == STB_TEXTEDIT_UNDOSTATECOUNT)
-//            return
-//            // there's currently not enough room, so discard a redo record
-//            stb_textedit_discard_redo(s)
-//        }
-//            r = &s->undo_rec[s->redo_point-1]
-//
-//            r->char_storage = s->redo_char_point - u.delete_length
-//            s->redo_char_point = s->redo_char_point - u.delete_length
-//
-//            // now save the characters
-//            for (i=0; i < u.delete_length; ++i)
-//            s->undo_char[r->char_storage + i] = STB_TEXTEDIT_GETCHAR(str, u.where + i)
-//        }
-//
-//        // now we can carry out the deletion
-//        STB_TEXTEDIT_DELETECHARS(str, u.where, u.delete_length)
-//    }
-//
-//    // check type of recorded action:
-//    if (u.insert_length) {
-//        // easy case: was a deletion, so we need to insert n characters
-//        STB_TEXTEDIT_INSERTCHARS(str, u.where, &s->undo_char[u.char_storage], u.insert_length)
-//        s->undo_char_point -= u.insert_length
-//    }
-//
-//    state->cursor = u.where + u.insert_length
-//
-//    s->undo_point--
-//    s->redo_point--
-//}
-//
-//static void stb_text_redo(STB_TEXTEDIT_STRING *str, STB_TexteditState *state)
-//{
-//    StbUndoState *s = &state->undostate
-//    StbUndoRecord *u, r
-//    if (s->redo_point == STB_TEXTEDIT_UNDOSTATECOUNT)
-//    return
-//
-//    // we need to do two things: apply the redo record, and create an undo record
-//    u = &s->undo_rec[s->undo_point]
-//    r = s->undo_rec[s->redo_point]
-//
-//    // we KNOW there must be room for the undo record, because the redo record
-//    // was derived from an undo record
-//
-//    u->delete_length = r.insert_length
-//    u->insert_length = r.delete_length
-//    u->where = r.where
-//    u->char_storage = -1
-//
-//    if (r.delete_length) {
-//        // the redo record requires us to delete characters, so the undo record
-//        // needs to store the characters
-//
-//        if (s->undo_char_point + u->insert_length > s->redo_char_point) {
-//            u->insert_length = 0
-//            u->delete_length = 0
-//        } else {
-//            int i
-//            u->char_storage = s->undo_char_point
-//            s->undo_char_point = s->undo_char_point + u->insert_length
-//
-//            // now save the characters
-//            for (i=0; i < u->insert_length; ++i)
-//            s->undo_char[u->char_storage + i] = STB_TEXTEDIT_GETCHAR(str, u->where + i)
-//        }
-//
-//        STB_TEXTEDIT_DELETECHARS(str, r.where, r.delete_length)
-//    }
-//
-//    if (r.insert_length) {
-//        // easy case: need to insert n characters
-//        STB_TEXTEDIT_INSERTCHARS(str, r.where, &s->undo_char[r.char_storage], r.insert_length)
-//        s->redo_char_point += r.insert_length
-//    }
-//
-//    state->cursor = r.where + r.insert_length
-//
-//    s->undo_point++
-//    s->redo_point++
-//}
-//
-//static void stb_text_makeundo_insert(STB_TexteditState *state, int where, int length)
-//{
-//    stb_text_createundo(&state->undostate, where, 0, length)
-//}
-//
-//static void stb_text_makeundo_delete(STB_TEXTEDIT_STRING *str, STB_TexteditState *state, int where, int length)
-//{
-//    int i
-//    STB_TEXTEDIT_CHARTYPE *p = stb_text_createundo(&state->undostate, where, length, 0)
-//    if (p) {
-//        for (i=0; i < length; ++i)
-//        p[i] = STB_TEXTEDIT_GETCHAR(str, where+i)
-//    }
-//}
-//
-//static void stb_text_makeundo_replace(STB_TEXTEDIT_STRING *str, STB_TexteditState *state, int where, int old_length, int new_length)
-//{
-//    int i
-//    STB_TEXTEDIT_CHARTYPE *p = stb_text_createundo(&state->undostate, where, old_length, new_length)
-//    if (p) {
-//        for (i=0; i < old_length; ++i)
-//        p[i] = STB_TEXTEDIT_GETCHAR(str, where+i)
-//    }
-//}
-//
-//// reset the state to default
-//static void stb_textedit_clear_state(STB_TexteditState *state, int is_single_line)
-//{
-//    state->undostate.undo_point = 0
-//    state->undostate.undo_char_point = 0
-//    state->undostate.redo_point = STB_TEXTEDIT_UNDOSTATECOUNT
-//    state->undostate.redo_char_point = STB_TEXTEDIT_UNDOCHARCOUNT
-//    state->select_end = state->select_start = 0
-//    state->cursor = 0
-//    state->has_preferred_x = 0
-//    state->preferred_x = 0
-//    state->cursor_at_end_of_line = 0
-//    state->initialized = 1
-//    state->single_line = (unsigned char) is_single_line
-//    state->insert_mode = 0
-//}
-//
-//// API initialize
-//static void stb_textedit_initialize_state(STB_TexteditState *state, int is_single_line)
-//{
-//    stb_textedit_clear_state(state, is_single_line)
-//}
-//
-//#if defined(__GNUC__) || defined(__clang__)
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Wcast-qual"
-//#endif
-//
+    fun InputTextState.undo() {
+        val s = stb.undoState
+        if (s.undoPoint == 0)
+            return
+
+        // we need to do two things: apply the undo record, and create a redo record
+        val u = UndoRecord(s.undoRec[s.undoPoint - 1])
+        var r = s.undoRec[s.redoPoint - 1]
+        r.charStorage = -1
+
+        r.insertLength = u.deleteLength
+        r.deleteLength = u.insertLength
+        r.where = u.where
+
+        if (u.deleteLength != 0) {
+            // if the undo record says to delete characters, then the redo record will
+            // need to re-insert the characters that get deleted, so we need to store
+            // them.
+
+            // there are three cases:
+            //    there's enough room to store the characters
+            //    characters stored for *redoing* don't leave room for redo
+            //    characters stored for *undoing* don't leave room for redo
+            // if the last is true, we have to bail
+
+            if (s.undoCharPoint + u.deleteLength >= UNDOCHARCOUNT)
+            // the undo records take up too much character space; there's no space to store the redo characters
+                r.insertLength = 0
+            else {
+                // there's definitely room to store the characters eventually
+                while (s.undoCharPoint + u.deleteLength > s.redoCharPoint) {
+                    // should never happen:
+                    if (s.redoPoint == UNDOSTATECOUNT)
+                        return
+                    // there's currently not enough room, so discard a redo record
+                    s.discardRedo()
+                }
+                r = s.undoRec[s.redoPoint - 1]
+
+                r.charStorage = s.redoCharPoint - u.deleteLength
+                s.redoCharPoint = s.redoCharPoint - u.deleteLength
+
+                // now save the characters
+                for (i in 0 until u.deleteLength)
+                    s.undoChar[r.charStorage + i] = getChar(u.where + i)
+            }
+
+            // now we can carry out the deletion
+            deleteChars(u.where, u.deleteLength)
+        }
+
+        // check type of recorded action:
+        if (u.insertLength != 0) {
+            // easy case: was a deletion, so we need to insert n characters
+            insertChars(u.where, s.undoChar, u.charStorage, u.insertLength)
+            s.undoCharPoint -= u.insertLength
+        }
+
+        stb.cursor = u.where + u.insertLength
+
+        s.undoPoint--
+        s.redoPoint--
+    }
+
+    fun InputTextState.redo() {
+        val s = stb.undoState
+        if (s.redoPoint == UNDOSTATECOUNT)
+            return
+
+        // we need to do two things: apply the redo record, and create an undo record
+        val u = s.undoRec[s.undoPoint]
+        val r = UndoRecord(s.undoRec[s.redoPoint])
+
+        // we KNOW there must be room for the undo record, because the redo record
+        // was derived from an undo record
+
+        u.deleteLength = r.insertLength
+        u.insertLength = r.deleteLength
+        u.where = r.where
+        u.charStorage = -1
+
+        if (r.deleteLength != 0) {
+            // the redo record requires us to delete characters, so the undo record
+            // needs to store the characters
+
+            if (s.undoCharPoint + u.insertLength > s.redoCharPoint) {
+                u.insertLength = 0
+                u.deleteLength = 0
+            } else {
+                u.charStorage = s.undoCharPoint
+                s.undoCharPoint = s.undoCharPoint + u.insertLength
+
+                // now save the characters
+                for (i in 0 until u.insertLength)
+                    s.undoChar[u.charStorage + i] = getChar(u.where + i)
+            }
+
+            deleteChars(r.where, r.deleteLength)
+        }
+
+        if (r.insertLength != 0) {
+            // easy case: need to insert n characters
+            insertChars(r.where, s.undoChar, r.charStorage, r.insertLength)
+            s.redoCharPoint += r.insertLength
+        }
+
+        stb.cursor = r.where + r.insertLength
+
+        s.undoPoint++
+        s.redoPoint++
+    }
+
+    // stb_text_makeundo_insert [JVM] -> State class
+
+    fun InputTextState.makeUndoDelete(where: Int, length: Int) {
+        stb.undoState.createUndo(where, length, 0)?.let { p ->
+            for (i in 0 until length)
+                stb.undoState.undoChar[p + i] = getChar(where + i)
+        }
+    }
+
+    fun InputTextState.makeUndoReplace(where: Int, oldLength: Int, newLength: Int) {
+        stb.undoState.createUndo(where, oldLength, newLength)?.let { p ->
+            for (i in 0 until oldLength)
+                stb.undoState.undoChar[p + i] = getChar(where + i)
+        }
+    }
+
+    // [JVM] -> State class
+    // stb_textedit_clear_state
+    // stb_textedit_initialize_state
+
 //static int stb_textedit_paste(STB_TEXTEDIT_STRING *str, STB_TexteditState *state, STB_TEXTEDIT_CHARTYPE const *ctext, int len)
 //{
 //    return stb_textedit_paste_internal(str, state, (STB_TEXTEDIT_CHARTYPE *) ctext, len)

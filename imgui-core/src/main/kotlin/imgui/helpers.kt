@@ -172,3 +172,5 @@ fun ByteArray.strlen(): Int {
     return len
 }
 
+fun String.toByteArray(size: Int): ByteArray = toByteArray().copyInto(ByteArray(size))
+fun String.toByteArray(array: ByteArray): ByteArray = toByteArray().copyInto(array)

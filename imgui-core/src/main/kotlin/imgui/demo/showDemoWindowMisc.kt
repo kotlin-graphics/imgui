@@ -35,15 +35,16 @@ import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.toByteArray
 
 object showDemoWindowMisc {
 
     /* Tabbing */
-    var buf0 = "dummy"
+    var buf0 = "dummy".toByteArray(32)
 
 
     /* Focus from code */
-    var buf1 = "click on a button to set focus"
+    var buf1 = "click on a button to set focus".toByteArray(128)
     val f3 = FloatArray(3)
     var float3 = 0f
 

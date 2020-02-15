@@ -684,7 +684,6 @@ interface windows {
         // Update the Hidden flag
         window.hidden = window.hiddenFramesCanSkipItems > 0 || window.hiddenFramesCannotSkipItems > 0
 
-        // Return false if we don't intend to display anything to allow user to perform an early out optimization
         // Update the SkipItems flag, used to early out of all items functions (no layout required)
         val skipItems = window.run { (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0 }
         window.skipItems = skipItems
