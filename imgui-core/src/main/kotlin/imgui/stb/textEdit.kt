@@ -394,8 +394,8 @@ object te {
             r.insertLength = insertLen
             r.deleteLength = deleteLen
 
-            return when {
-                insertLen == 0 -> {
+            return when (insertLen) {
+                0 -> {
                     r.charStorage = -1
                     null
                 }
@@ -499,7 +499,7 @@ object te {
         }
 
         /** API initialize */
-        fun initialize(isSingleLine: Boolean) = clear(isSingleLine)
+        infix fun initialize(isSingleLine: Boolean) = clear(isSingleLine)
     }
 
 
@@ -540,7 +540,7 @@ object te {
         val r = Row()
         val n = stringLen
         var baseY = 0f
-        var prevX = 0f
+        var prevX: Float
         var i = 0
 
         // search rows to find one that straddles 'y'

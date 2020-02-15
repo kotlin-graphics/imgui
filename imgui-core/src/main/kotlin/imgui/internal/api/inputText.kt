@@ -190,7 +190,7 @@ internal interface inputText {
             else {
                 state.id = id
                 state.scrollX = 0f
-                state.stb.clear(!isMultiline)
+                state.stb initialize !isMultiline
                 if (!isMultiline && focusRequestedByCode)
                     selectAll = true
             }
@@ -465,7 +465,7 @@ internal interface inputText {
 
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
-                if (!isReadOnly && !buf.contentEquals(state.initialTextA)) {
+                if (!isReadOnly && buf strcmp state.initialTextA != 0) {
                     // Push records into the undo stack so we can CTRL+Z the revert operation itself
                     applyNewText = state.initialTextA
 //                    apply_new_text_length = state->InitialTextA.Size - 1
@@ -564,7 +564,7 @@ internal interface inputText {
                     }
                 }
                 // Will copy result string if modified
-                if (!isReadOnly && !state.textA.contentEquals(buf)) {
+                if (!isReadOnly && state.textA strcmp buf != 0) {
                     applyNewText = state.textA
                     applyNewTextLength = state.curLenA
                 }
@@ -667,8 +667,8 @@ internal interface inputText {
                 if (isMultiline) searchesRemaining++
                 var lineCount = 0
                 var s = 0
-                while (s < text.size && text[s] != NUL)
-                    if (text[s++] == '\n') {
+                while (s < text.size && text[s] != NUL) {
+                    if (text[s] == '\n') {
                         lineCount++
                         if (searchesResultLineNo[0] == -1 && s >= searchesInputPtr[0]) {
                             searchesResultLineNo[0] = lineCount; if (--searchesRemaining <= 0) break
@@ -677,6 +677,8 @@ internal interface inputText {
                             searchesResultLineNo[1] = lineCount; if (--searchesRemaining <= 0) break
                         }
                     }
+                    s++
+                }
                 lineCount++
                 if (searchesResultLineNo[0] == -1)
                     searchesResultLineNo[0] = lineCount
