@@ -200,11 +200,12 @@ internal interface basicHelpersForWidgetCode {
      *  Those two functions CalcItemWidth vs CalcItemSize are awkwardly named because they are not fully symmetrical.
      *  Note that only CalcItemWidth() is publicly exposed.
      *  The 4.0f here may be changed to match CalcItemWidth() and/or BeginChild() (right now we have a mismatch which is harmless but undesirable) */
-    fun calcItemSize(size: Vec2, defaultW: Float, defaultH: Float): Vec2 {
+    fun calcItemSize(size_: Vec2, defaultW: Float, defaultH: Float): Vec2 {
         val window = g.currentWindow!!
 
-        val regionMax = if (size anyLessThan 0f) contentRegionMaxAbs else Vec2()
+        val regionMax = if (size_ anyLessThan 0f) contentRegionMaxAbs else Vec2()
 
+        var size = Vec2(size_)
         if (size.x == 0f)
             size.x = defaultW
         else if (size.x < 0f)
