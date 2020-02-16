@@ -54,7 +54,6 @@ internal interface PopupsModalsTooltips {
         }
         val backupBorderSize = style.childBorderSize
         if (!border) style.childBorderSize = 0f
-        flags = flags or flags_
         val ret = begin(title, null, flags)
         style.childBorderSize = backupBorderSize
 
