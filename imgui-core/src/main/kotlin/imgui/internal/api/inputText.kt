@@ -169,12 +169,14 @@ internal interface inputText {
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             val bufLen = buf.strlen()
-            state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            if(state.initialTextA.size < bufLen)
+                state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
             // Start edition
-            state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
-            state.textA = ByteArray(0)
+            if(state.textW.size < buf.size)
+                state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+//            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
             state.curLenA = bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
@@ -236,7 +238,7 @@ internal interface inputText {
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
         if (isReadOnly && state != null && (renderCursor || renderSelection)) {
-            state.textW = CharArray(buf.size)
+            if(state.textW.size < buf.size) state.textW = CharArray(buf.size)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd(0))
             state.curLenA = bufEnd.x
             state.cursorClamp()
@@ -323,14 +325,13 @@ internal interface inputText {
 
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
-            if (io.inputQueueCharacters.size > 0)
+            if (io.inputQueueCharacters.isNotEmpty())
             /*if (io.inputQueueCharacters[0] != NUL) I cant explaing why JVM had this TODO check */ {
                 if (!ignoreCharInputs && !isReadOnly && !userNavInputStart)
                     io.inputQueueCharacters.filter { it != NUL || (it == '\t' && io.keyShift) }.map {
                         // TODO check
-                        withChar { c ->
-                            // Insert character if they pass filtering
-                            if (inputTextFilterCharacter(c.apply { set(it) }, flags, callback, callbackUserData))
+                        withChar { c -> // Insert character if they pass filtering
+                            if (inputTextFilterCharacter(c(it), flags, callback, callbackUserData))
                                 state.onKeyPressed(c().i)
                         }
                     }
@@ -490,7 +491,7 @@ internal interface inputText {
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (!isReadOnly) {
                     state.textAIsValid = true
-                    state.textA = ByteArray(state.textW.size * 4)
+                    if(state.textA.size < state.textW.size * 4) state.textA = ByteArray(state.textW.size * 4)
                     textStrToUtf8(state.textA, state.textW)
                 }
 
@@ -553,9 +554,9 @@ internal interface inputText {
                         if (cbData.bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
-                                val new = CharArray(state.textW.size + (cbData.bufTextLen - backupCurrentTextLength))
-                                System.arraycopy(state.textW, 0, new, 0, state.textW.size)
-                                state.textW = new
+                                val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)
+                                if(state.textW.size < newSize)
+                                    state.textW = CharArray(newSize)
                             }
                             state.curLenW = textStrFromUtf8(state.textW, cbData.buf)
                             state.curLenA = cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
@@ -590,6 +591,7 @@ internal interface inputText {
                 }
                 // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
                 System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)
+                if(applyNewTextLength < buf.size) buf[applyNewTextLength] = 0
                 valueChanged = true
             }
 

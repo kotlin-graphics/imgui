@@ -225,7 +225,7 @@ fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
         else
             b += textCharToUtf8(buf, b, c)
     }
-//    *b = 0
+    if(b < buf.size) buf[b] = 0
     return b
 }
 
@@ -318,7 +318,7 @@ fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, t
         if (c <= UNICODE_CODEPOINT_MAX)    // FIXME: Losing characters that don't fit in 2 bytes
             buf[b++] = c.c
     }
-//    *b = 0
+    if(b < buf.size) buf[b] = NUL
     textRemaining?.put(t)
     return b
 }

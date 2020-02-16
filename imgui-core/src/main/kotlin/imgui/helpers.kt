@@ -12,6 +12,7 @@ import imgui.internal.textStrToUtf8
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import java.nio.IntBuffer
+import kotlin.reflect.KMutableProperty0
 
 
 internal var ptrIndices = 0
@@ -186,4 +187,10 @@ infix fun ByteArray.strcmp(b: ByteArray): Int {
         i++
     }
     return 0
+}
+
+/** TODO -> uno or kool */
+operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
+    set(t)
+    return this
 }
