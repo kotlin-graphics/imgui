@@ -203,7 +203,7 @@ class InputTextState {
             textW[dst++] = c
             c = textW[src++]
         }
-//        textW[dst] = NUL TODO check
+        if(dst < textW.size) textW[dst] = NUL
     }
 
     fun insertChar(pos: Int, newText: Char): Boolean = insertChars(pos, charArrayOf(newText), 0, 1)
@@ -234,7 +234,7 @@ class InputTextState {
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8
-//        textW[curLenW] = NUL TODO check
+        if(curLenW < textW.size) textW[curLenW] = NUL
 
         return true
     }
