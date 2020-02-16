@@ -468,7 +468,6 @@ internal interface inputText {
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
                 if (!isReadOnly && buf strcmp state.initialTextA != 0) {
-
                     applyNewText = state.initialTextA
                     applyNewTextLength = state.initialTextA.size
 
