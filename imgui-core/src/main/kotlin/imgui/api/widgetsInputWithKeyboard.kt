@@ -55,23 +55,23 @@ interface widgetsInputWithKeyboard {
     }
 
     /** String overload */
-    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextFlags = 0
-            /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean =
-            inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline/*, callback, user_data*/)
+    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextFlags = 0,
+                           callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline, callback, userData)
 
-    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextFlags = 0
-            /*,ImGuiTextEditCallback callback = NULL, void* user_data = NULL*/): Boolean =
-            inputTextEx(label, null, buf, size, flags or Itf._Multiline/*, callback, user_data*/)
+    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextFlags = 0,
+            callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+            inputTextEx(label, null, buf, size, flags or Itf._Multiline, callback, userData)
 
     /** String overload */
-    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextFlags = 0
-            /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean =
+    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextFlags = 0,
+            callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextWithHint(label, hint, buf.toByteArray(), flags)
 
-    fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextFlags = 0
-            /*, ImGuiInputTextCallback callback = NULL, void* user_data = NULL*/): Boolean {
+    fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextFlags = 0,
+            callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
-        return inputTextEx(label, hint, buf, Vec2(), flags/*, callback, user_data*/)
+        return inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
     }
 
     fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
