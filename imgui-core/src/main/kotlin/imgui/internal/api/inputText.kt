@@ -51,6 +51,7 @@ import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.internal.*
 import imgui.internal.classes.InputTextState
+import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.Rect
 import imgui.stb.te.click
 import imgui.stb.te.cut
@@ -169,12 +170,12 @@ internal interface inputText {
             // Take a copy of the initial buffer value (both in original UTF-8 format and converted to wchar)
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             val bufLen = buf.strlen()
-            if(state.initialTextA.size < bufLen)
+            if (state.initialTextA.size < bufLen)
                 state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
             // Start edition
-            if(state.textW.size < buf.size)
+            if (state.textW.size < buf.size)
                 state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
 //            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
@@ -238,7 +239,7 @@ internal interface inputText {
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
         if (isReadOnly && state != null && (renderCursor || renderSelection)) {
-            if(state.textW.size < buf.size) state.textW = CharArray(buf.size)
+            if (state.textW.size < buf.size) state.textW = CharArray(buf.size)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd(0))
             state.curLenA = bufEnd.x
             state.cursorClamp()
@@ -296,8 +297,8 @@ internal interface inputText {
                 state.selectedAllMouseLock = true
             } else if (hovered && isOsx && io.mouseDoubleClicked[0]) {
                 // Double-click select a word only, OS X style (by simulating keystrokes)
-                state.onKeyPressed(InputTextState.K.WORDLEFT)
-                state.onKeyPressed(InputTextState.K.WORDRIGHT or InputTextState.K.SHIFT)
+                state.onKeyPressed(K.WORDLEFT)
+                state.onKeyPressed(K.WORDRIGHT or K.SHIFT)
             } else if (io.mouseClicked[0] && !state.selectedAllMouseLock) {
                 if (hovered) {
                     state.click(mouseX, mouseY)
@@ -344,7 +345,7 @@ internal interface inputText {
         var cancelEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
             state!!
-            val kMask = if (io.keyShift) InputTextState.K.SHIFT else 0
+            val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
             val isShortcutKey = (if (isOsx) io.keySuper && !io.keyCtrl else io.keyCtrl && !io.keySuper) && !io.keyAlt && !io.keyShift
@@ -363,35 +364,35 @@ internal interface inputText {
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(when {
-                    isStartendKeyDown -> InputTextState.K.LINESTART
-                    isWordmoveKeyDown -> InputTextState.K.WORDLEFT
-                    else -> InputTextState.K.LEFT
+                    isStartendKeyDown -> K.LINESTART
+                    isWordmoveKeyDown -> K.WORDLEFT
+                    else -> K.LEFT
                 } or kMask)
                 Key.RightArrow.isPressed -> state.onKeyPressed(when {
-                    isStartendKeyDown -> InputTextState.K.LINEEND
-                    isWordmoveKeyDown -> InputTextState.K.WORDRIGHT
-                    else -> InputTextState.K.RIGHT
+                    isStartendKeyDown -> K.LINEEND
+                    isWordmoveKeyDown -> K.WORDRIGHT
+                    else -> K.RIGHT
                 } or kMask)
                 Key.UpArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
                         drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
                     else
-                        state.onKeyPressed((if (isStartendKeyDown) InputTextState.K.TEXTSTART else InputTextState.K.UP) or kMask)
+                        state.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 Key.DownArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
                         drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
                     else
-                        state.onKeyPressed((if (isStartendKeyDown) InputTextState.K.TEXTEND else InputTextState.K.DOWN) or kMask)
-                Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) InputTextState.K.TEXTSTART else InputTextState.K.LINESTART) or kMask)
-                Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) InputTextState.K.TEXTEND else InputTextState.K.LINEEND) or kMask)
-                Key.Delete.isPressed && !isReadOnly -> state.onKeyPressed(InputTextState.K.DELETE or kMask)
+                        state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
+                Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
+                Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
+                Key.Delete.isPressed && !isReadOnly -> state.onKeyPressed(K.DELETE or kMask)
                 Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
-                            state.onKeyPressed(InputTextState.K.WORDLEFT or InputTextState.K.SHIFT)
+                            state.onKeyPressed(K.WORDLEFT or K.SHIFT)
                         else if (isOsx && io.keySuper && !io.keyAlt && !io.keyCtrl)
-                            state.onKeyPressed(InputTextState.K.LINESTART or InputTextState.K.SHIFT)
-                    state.onKeyPressed(InputTextState.K.BACKSPACE or kMask)
+                            state.onKeyPressed(K.LINESTART or K.SHIFT)
+                    state.onKeyPressed(K.BACKSPACE or kMask)
                 }
                 Key.Enter.isPressed || Key.KeyPadEnter.isPressed -> {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
@@ -410,7 +411,7 @@ internal interface inputText {
                     clearActiveId = true
                 }
                 isUndo || isRedo -> {
-                    state.onKeyPressed(if (isUndo) InputTextState.K.UNDO else InputTextState.K.REDO)
+                    state.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
                     state.clearSelection()
                 }
                 isShortcutKey && Key.A.isPressed -> {
@@ -467,15 +468,23 @@ internal interface inputText {
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
                 if (!isReadOnly && buf strcmp state.initialTextA != 0) {
-                    // Push records into the undo stack so we can CTRL+Z the revert operation itself
+
                     applyNewText = state.initialTextA
-//                    apply_new_text_length = state->InitialTextA.Size - 1
-                    var wText = CharArray(0)
-                    if (applyNewText.isNotEmpty()) {
-                        wText = CharArray(textCountCharsFromUtf8(applyNewText))
+                    applyNewTextLength = state.initialTextA.size
+
+                    // Select all text
+                    state.onKeyPressed(K.TEXTSTART)
+                    state.onKeyPressed(K.TEXTEND or K.SHIFT)
+
+                    // Paste converted text or empty buffer
+                    if (state.initialTextA.isNotEmpty()) {
+                        val wText = CharArray(textCountCharsFromUtf8(applyNewText))
                         textStrFromUtf8(wText, applyNewText)
+                        state.paste(wText)
+                    } else {
+                        val empty = CharArray(0)
+                        state.paste(empty)
                     }
-                    TODO("stb_textedit_replace(state, &state->Stb, w_text.Data, (apply_new_text_length > 0) ? (w_text.Size - 1) : 0)")
                 }
 
             /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
@@ -491,7 +500,7 @@ internal interface inputText {
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (!isReadOnly) {
                     state.textAIsValid = true
-                    if(state.textA.size < state.textW.size * 4) state.textA = ByteArray(state.textW.size * 4)
+                    if (state.textA.size < state.textW.size * 4) state.textA = ByteArray(state.textW.size * 4)
                     textStrToUtf8(state.textA, state.textW)
                 }
 
@@ -555,7 +564,7 @@ internal interface inputText {
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
                                 val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)
-                                if(state.textW.size < newSize)
+                                if (state.textW.size < newSize)
                                     state.textW = CharArray(newSize)
                             }
                             state.curLenW = textStrFromUtf8(state.textW, cbData.buf)
@@ -591,7 +600,7 @@ internal interface inputText {
                 }
                 // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
                 System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)
-                if(applyNewTextLength < buf.size) buf[applyNewTextLength] = 0
+                if (applyNewTextLength < buf.size) buf[applyNewTextLength] = 0
                 valueChanged = true
             }
 
