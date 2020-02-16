@@ -39,7 +39,7 @@ class InputTextCallbackData {
     var eventKey = Key.Tab
     /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
     var buf = ByteArray(0)
-    /** JVM custom, current buf pointer */
+    /** [JVM], current buf pointer */
     var bufPtr = 0
     /** Text length (in bytes)        Read-write   [Resize,Completion,History,Always] */
     var bufTextLen = 0
