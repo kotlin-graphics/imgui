@@ -1153,7 +1153,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                             }
                         }
                 }
-                Unit
             }
         }
     }
