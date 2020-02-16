@@ -50,8 +50,8 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.internal.*
-import imgui.internal.classes.Rect
 import imgui.internal.classes.InputTextState
+import imgui.internal.classes.Rect
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.locateCoord
@@ -103,7 +103,7 @@ internal interface inputText {
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val h = if (isMultiline) g.fontSize * 8f else labelSize.y
         val frameSize = calcItemSize(sizeArg, calcItemWidth(), h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
         val totalSize = Vec2(frameSize.x + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
@@ -667,18 +667,16 @@ internal interface inputText {
                 if (isMultiline) searchesRemaining++
                 var lineCount = 0
                 var s = 0
-                while (s < text.size && text[s] != NUL) {
-                    if (text[s] == '\n') {
+                while (s < text.size && text[s] != NUL)
+                    if (text[s++] == '\n') {
                         lineCount++
-                        if (searchesResultLineNo[0] == -1 && s >= searchesInputPtr[0]) {
+                        if (searchesResultLineNo[0] == -1 && s > searchesInputPtr[0]) {
                             searchesResultLineNo[0] = lineCount; if (--searchesRemaining <= 0) break
                         }
-                        if (searchesResultLineNo[1] == -1 && s >= searchesInputPtr[1]) {
+                        if (searchesResultLineNo[1] == -1 && s > searchesInputPtr[1]) {
                             searchesResultLineNo[1] = lineCount; if (--searchesRemaining <= 0) break
                         }
                     }
-                    s++
-                }
                 lineCount++
                 if (searchesResultLineNo[0] == -1)
                     searchesResultLineNo[0] = lineCount
@@ -783,7 +781,7 @@ internal interface inputText {
         } else {
             // Render text only (no selection, no cursor)
             if (isMultiline) {
-                val (lineCount, textEnd) =inputTextCalcTextLenAndLineCount(bufDisplay)
+                val (lineCount, textEnd) = inputTextCalcTextLenAndLineCount(bufDisplay)
                 bufDisplayEnd = textEnd
                 textSize.put(innerSize.x, lineCount * g.fontSize) // We don't need width
             } else if (!isDisplayingHint && g.activeId == id)
