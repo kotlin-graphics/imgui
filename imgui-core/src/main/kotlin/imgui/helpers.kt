@@ -182,10 +182,7 @@ infix fun ByteArray.strcmp(b: ByteArray): Int {
     var i = 0
     while (i < size && i < b.size) {
         if (get(i) != b[i])
-            return when (0.b) {
-                get(i), b[i] -> 0
-                else -> get(i).compareTo(b[i])
-            }
+            return get(i).compareTo(b[i])
         i++
     }
     return 0
