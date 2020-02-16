@@ -153,7 +153,7 @@ class IO(sharedFontAtlas: FontAtlas?) {
     /** Queue new character input */
     fun addInputCharacter(c: Char) {
         if (c.i in 1..UNICODE_CODEPOINT_MAX)
-            inputQueueCharacters.add(c)
+            inputQueueCharacters += c
     }
 
 //    IMGUI_API void  AddInputCharactersUTF8(const char* str);    // Queue new characters input from an UTF-8 string
