@@ -37,7 +37,7 @@ import imgui.dsl.collapsingHeader
 import imgui.dsl.selectable
 import imgui.dsl.treeNode
 
-object showDemoWindowColumns {
+object ShowDemoWindowColumns {
 
     /* Columns */
     var selected = -1

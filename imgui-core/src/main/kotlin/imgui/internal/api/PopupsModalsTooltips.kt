@@ -27,6 +27,7 @@ import imgui.static.navRestoreLastChildNavWindow
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0
+import imgui.WindowFlag as Wf
 
 /** Popups, Modals, Tooltips */
 internal interface PopupsModalsTooltips {
@@ -34,8 +35,8 @@ internal interface PopupsModalsTooltips {
     fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: WindowFlags): Boolean {
 
         val parentWindow = g.currentWindow!!
-        var flags = WindowFlag.NoTitleBar or WindowFlag.NoResize or WindowFlag.NoSavedSettings or WindowFlag._ChildWindow
-        flags = flags or (parentWindow.flags and WindowFlag.NoMove.i)  // Inherit the NoMove flag
+        var flags = flags_ or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf._ChildWindow
+        flags = flags or (parentWindow.flags and Wf.NoMove.i)  // Inherit the NoMove flag
 
         // Size
         val contentAvail = contentRegionAvail
@@ -68,7 +69,7 @@ internal interface PopupsModalsTooltips {
             parentWindow.dc.cursorPos put childWindow.pos
 
         // Process navigation-in immediately so NavInit can run on first frame
-        if (g.navActivateId == id && flags hasnt WindowFlag._NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
+        if (g.navActivateId == id && flags hasnt Wf._NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
             focusWindow(childWindow)
             navInitWindow(childWindow, false)
             setActiveID(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
@@ -154,8 +155,8 @@ internal interface PopupsModalsTooltips {
                     popupCountToKeep++
                     continue
                 }
-                assert(popup.window!!.flags has WindowFlag._Popup)
-                if (popup.window!!.flags has WindowFlag._ChildWindow) {
+                assert(popup.window!!.flags has Wf._Popup)
+                if (popup.window!!.flags has Wf._ChildWindow) {
                     popupCountToKeep++
                     continue
                 }
@@ -192,10 +193,10 @@ internal interface PopupsModalsTooltips {
 
         var flags =  flags_
         val name = when {
-            flags has WindowFlag._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
+            flags has Wf._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
             else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
         }
-        flags = flags or WindowFlag._Popup
+        flags = flags or Wf._Popup
         val isOpen = begin(name, null, flags)
         if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
             endPopup()
@@ -229,7 +230,7 @@ internal interface PopupsModalsTooltips {
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
-        val flags = WindowFlag._Tooltip or WindowFlag.NoMouseInputs or WindowFlag.NoTitleBar or WindowFlag.NoMove or WindowFlag.NoResize or WindowFlag.NoSavedSettings or WindowFlag.AlwaysAutoResize
+        val flags = Wf._Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
         begin(windowName, null, flags or extraFlags)
     }
 
@@ -237,14 +238,14 @@ internal interface PopupsModalsTooltips {
     val topMostPopupModal: Window?
         get() {
             for (n in g.openPopupStack.size - 1 downTo 0)
-                g.openPopupStack[n].window?.let { if (it.flags has WindowFlag._Modal) return it }
+                g.openPopupStack[n].window?.let { if (it.flags has Wf._Modal) return it }
             return null
         }
 
     fun findBestWindowPosForPopup(window: Window): Vec2 {
 
         val rOuter = window.getAllowedExtentRect()
-        if (window.flags has WindowFlag._ChildMenu) {
+        if (window.flags has Wf._ChildMenu) {
             /*  Child menus typically request _any_ position within the parent menu item,
                 and then we move the new menu outside the parent bounds.
                 This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
@@ -260,11 +261,11 @@ internal interface PopupsModalsTooltips {
             }
             return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
         }
-        if (window.flags has WindowFlag._Popup) {
+        if (window.flags has Wf._Popup) {
             val rAvoid = Rect(window.pos.x - 1, window.pos.y - 1, window.pos.x + 1, window.pos.y + 1)
             return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
         }
-        if (window.flags has WindowFlag._Tooltip) {
+        if (window.flags has Wf._Tooltip) {
             // Position tooltip (always follows mouse)
             val sc = style.mouseCursorScale
             val refPos = navCalcPreferredRefPos()
