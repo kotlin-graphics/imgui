@@ -107,7 +107,7 @@ import kotlin.math.sin
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 
-object showDemoWindowLayout {
+object ShowDemoWindowLayout {
 
     /* Child regions */
     var disableMouseWheel = false

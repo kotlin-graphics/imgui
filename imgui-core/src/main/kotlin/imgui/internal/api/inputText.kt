@@ -55,6 +55,7 @@ import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.Rect
 import imgui.stb.te.click
 import imgui.stb.te.cut
+import imgui.stb.te.drag
 import imgui.stb.te.locateCoord
 import imgui.stb.te.paste
 import uno.kotlin.getValue
@@ -64,6 +65,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
+import imgui.WindowFlag as Wf
 
 /** InputText */
 internal interface inputText {
@@ -126,7 +128,7 @@ internal interface inputText {
             pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
             pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
             pushStyleVar(StyleVar.WindowPadding, style.framePadding)
-            val childVisible = beginChildEx(label, id, frameBb.size, true, WindowFlag.NoMove or WindowFlag.AlwaysUseWindowPadding)
+            val childVisible = beginChildEx(label, id, frameBb.size, true, Wf.NoMove or Wf.AlwaysUseWindowPadding)
             popStyleVar(3)
             popStyleColor()
             if (!childVisible) {
@@ -292,10 +294,10 @@ internal interface inputText {
 
             // OS X style: Double click selects by word instead of selecting whole text
             val isOsx = io.configMacOSXBehaviors
-            if (selectAll || (hovered && !isOsx && io.mouseDoubleClicked[0])) {
+            if (selectAll /*|| (hovered && !isOsx && io.mouseDoubleClicked[0])*/) { // [JVM] https://github.com/ocornut/imgui/pull/2244
                 state.selectAll()
                 state.selectedAllMouseLock = true
-            } else if (hovered && isOsx && io.mouseDoubleClicked[0]) {
+            } else if (hovered /*&& isOsx*/ && io.mouseDoubleClicked[0]) { // [JVM] https://github.com/ocornut/imgui/pull/2244
                 // Double-click select a word only, OS X style (by simulating keystrokes)
                 state.onKeyPressed(K.WORDLEFT)
                 state.onKeyPressed(K.WORDRIGHT or K.SHIFT)
@@ -304,11 +306,10 @@ internal interface inputText {
                     state.click(mouseX, mouseY)
                     state.cursorAnimReset()
                 }
-            } else if (io.mouseDown[0] && !state.selectedAllMouseLock && io.mouseDelta.anyNotEqual(0f)) {
-                state.stb.selectStart = state.stb.cursor
-                state.stb.selectEnd = state.locateCoord(mouseX, mouseY)
-                state.cursorFollow = true
+            } else if (io.mouseDown[0] && !state.selectedAllMouseLock && (io.mouseDelta.x != 0f || io.mouseDelta.y != 0f)) { // TODO -> glm once anyNotEqual gets fixed
+                state.drag(mouseX, mouseY)
                 state.cursorAnimReset()
+                state.cursorFollow = true
             }
             if (state.selectedAllMouseLock && !io.mouseDown[0])
                 state.selectedAllMouseLock = false
@@ -326,8 +327,7 @@ internal interface inputText {
 
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
-            if (io.inputQueueCharacters.isNotEmpty())
-            /*if (io.inputQueueCharacters[0] != NUL) I cant explaing why JVM had this TODO check */ {
+            if (io.inputQueueCharacters.isNotEmpty()) {
                 if (!ignoreCharInputs && !isReadOnly && !userNavInputStart)
                     io.inputQueueCharacters.filter { it != NUL || (it == '\t' && io.keyShift) }.map {
                         // TODO check
@@ -735,8 +735,8 @@ internal interface inputText {
             val drawScroll = Vec2(state.scrollX, 0f)
             if (renderSelection) {
 
-                val textSelectedBegin = glm.min(state.stb.selectStart, state.stb.selectEnd)
-                val textSelectedEnd = glm.max(state.stb.selectStart, state.stb.selectEnd)
+                val textSelectedBegin = state.stb.selectStart min state.stb.selectEnd
+                val textSelectedEnd = state.stb.selectStart max state.stb.selectEnd
 
                 val bgColor = getColorU32(Col.TextSelectedBg, if (renderCursor) 1f else 0.6f) // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
                 val bgOffYUp = if (isMultiline) 0f else -1f // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.

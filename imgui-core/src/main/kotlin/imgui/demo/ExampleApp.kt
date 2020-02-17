@@ -29,6 +29,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.g
 import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.menu
@@ -253,11 +254,11 @@ object ExampleApp {
         }
 
         // All demo contents
-        showDemoWindowWidgets()
-        showDemoWindowLayout()
-        showDemoWindowPopups()
-        showDemoWindowColumns()
-        showDemoWindowMisc()
+        ShowDemoWindowWidgets()
+        ShowDemoWindowLayout()
+        ShowDemoWindowPopups()
+        ShowDemoWindowColumns()
+        ShowDemoWindowMisc()
 
         // End of ShowDemoWindow()
         end()

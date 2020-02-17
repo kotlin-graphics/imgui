@@ -37,7 +37,7 @@ import imgui.dsl.treeNode
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.toByteArray
 
-object showDemoWindowMisc {
+object ShowDemoWindowMisc {
 
     /* Tabbing */
     var buf0 = "dummy".toByteArray(32)
