@@ -468,22 +468,16 @@ internal interface inputText {
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
                 if (!isReadOnly && buf strcmp state.initialTextA != 0) {
+                    // Push records into the undo stack so we can CTRL+Z the revert operation itself
                     applyNewText = state.initialTextA
                     applyNewTextLength = state.initialTextA.size
 
-                    // Select all text
-                    state.onKeyPressed(K.TEXTSTART)
-                    state.onKeyPressed(K.TEXTEND or K.SHIFT)
-
-                    // Paste converted text or empty buffer
-                    if (state.initialTextA.isNotEmpty()) {
-                        val wText = CharArray(textCountCharsFromUtf8(applyNewText))
-                        textStrFromUtf8(wText, applyNewText)
-                        state.paste(wText)
-                    } else {
-                        val empty = CharArray(0)
-                        state.paste(empty)
+                    var wText = CharArray(0)
+                    if (applyNewTextLength > 0) {
+                        wText = CharArray(textCountCharsFromUtf8(applyNewText, applyNewTextLength))
+                        textStrFromUtf8(wText, applyNewText, applyNewTextLength)
                     }
+                    state.replace(wText, if(applyNewTextLength > 0) wText.size else 0)
                 }
 
             /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
