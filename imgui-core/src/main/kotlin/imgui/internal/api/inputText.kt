@@ -480,11 +480,9 @@ internal interface inputText {
                     state.replace(wText, if(applyNewTextLength > 0) wText.size else 0)
                 }
 
-            /*  When using `InputTextFlag.EnterReturnsTrue` as a special case we reapply the live buffer back to the
-                input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
-                If we didn't do that, code like `inputInt()` with `InputTextFlag.EnterReturnsTrue` would fail.
-                Also this allows the user to use `inputText()` with `InputTextFlag.EnterReturnsTrue` without
-                maintaining any user-side storage.  */
+            // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
+            // If we didn't do that, code like InputInt() with ImGuiInputTextFlags_EnterReturnsTrue would fail.
+            // This also allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage (please note that if you use this property along ImGuiInputTextFlags_CallbackResize you can end up with your temporary string object unnecessarily allocating once a frame, either store your string data, either if you don't then don't use ImGuiInputTextFlags_CallbackResize).
             val applyEditBackToUserBuffer = !cancelEdit || (enterPressed && flags hasnt Itf.EnterReturnsTrue)
             if (applyEditBackToUserBuffer) {
                 // Apply new value immediately - copy modified buffer back
@@ -575,8 +573,11 @@ internal interface inputText {
 
             // Copy result to user buffer
             if (applyNewText != null) {
+                // We cannot test for 'backup_current_text_length != apply_new_text_length' here because we have no guarantee that the size
+                // of our owned buffer matches the size of the string object held by the user, and by design we allow InputText() to be used
+                // without any storage on user's side.
                 assert(applyNewTextLength >= 0)
-                if (backupCurrentTextLength != applyNewTextLength && isResizable) {
+                if (isResizable) {
                     val callbackData = InputTextCallbackData().also {
                         it.eventFlag = Itf.CallbackResize.i
                         it.flags = flags
@@ -591,6 +592,8 @@ internal interface inputText {
                     applyNewTextLength = callbackData.bufTextLen min buf.size
                     assert(applyNewTextLength <= buf.size)
                 }
+                //IMGUI_DEBUG_LOG("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);
+
                 // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
                 System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)
                 if (applyNewTextLength < buf.size) buf[applyNewTextLength] = 0
