@@ -851,8 +851,8 @@ object ShowDemoWindowWidgets {
                 text("Password input")
                 inputText("password", password, Itf.Password.i)
                 sameLine(); helpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.")
-                inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password or Itf.CharsNoBlank)
-                inputText("password (clear)", password, Itf.CharsNoBlank.i)
+                inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password.i)
+                inputText("password (clear)", password)
             }
 
             treeNode("Resize Callback") {
