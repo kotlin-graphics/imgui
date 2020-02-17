@@ -9,6 +9,7 @@ import imgui.internal.isBlankW
 import imgui.internal.textCountUtf8BytesFromStr
 import imgui.stb.te
 import imgui.stb.te.key
+import imgui.stb.te.makeUndoReplace
 import org.lwjgl.system.Platform
 
 /** Internal state of the currently focused/edited text input box   */
@@ -203,7 +204,7 @@ class InputTextState {
             textW[dst++] = c
             c = textW[src++]
         }
-        if(dst < textW.size) textW[dst] = NUL
+        if (dst < textW.size) textW[dst] = NUL
     }
 
     fun insertChar(pos: Int, newText: Char): Boolean = insertChars(pos, charArrayOf(newText), 0, 1)
@@ -234,7 +235,7 @@ class InputTextState {
 
         curLenW += newTextLen
         curLenA += newTextLenUtf8
-        if(curLenW < textW.size) textW[curLenW] = NUL
+        if (curLenW < textW.size) textW[curLenW] = NUL
 
         return true
     }
@@ -285,6 +286,21 @@ class InputTextState {
         val WORDRIGHT = 0x2000D
 
         val SHIFT = 0x40000
+    }
+
+    /** stb_textedit internally allows for a single undo record to do addition and deletion, but somehow, calling
+     *  the stb_textedit_paste() function creates two separate records, so we perform it manually. (FIXME: Report to nothings/stb?) */
+    fun replace(text: CharArray, textLen: Int = text.size) {
+        makeUndoReplace(0, curLenW, textLen)
+        deleteChars(0, curLenW)
+        if (textLen <= 0)
+            return
+        if (insertChars(0, text, 0, textLen)) {
+            stb.cursor = textLen
+            stb.hasPreferredX = false
+            return
+        }
+        assert(false) { "Failed to insert character, normally shouldn't happen because of how we currently use stb_textedit_replace()" }
     }
 
 //    /*
