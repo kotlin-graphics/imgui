@@ -7,6 +7,7 @@ import glm_.i
 import glm_.s
 import glm_.vec2.Vec2
 import glm_.vec2.operators.div
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
@@ -132,7 +133,6 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
-import imgui.ImGui.treeNodeExV
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
@@ -155,6 +155,7 @@ import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
 import imgui.dsl.withTextWrapPos
+import imgui.internal.ItemFlags
 import imgui.or
 import kool.BYTES
 import unsigned.Ubyte
@@ -165,7 +166,7 @@ import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
 
-object showDemoWindowWidgets {
+object ShowDemoWindowWidgets {
 
     /* Basic */
     var counter = 0
@@ -174,8 +175,8 @@ object showDemoWindowWidgets {
     var e = 0
     val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
     var currentItem0 = 0
-    var str0 = "Hello, world!".toCharArray(CharArray(128))
-    var str1 = "".toCharArray(CharArray(128))
+    var str0 = "Hello, world!".toByteArray(128)
+    var str1 = ByteArray(128)
     var i0 = 123
     var f0 = 0.001f
     var f1 = 1e10f
@@ -201,6 +202,7 @@ object showDemoWindowWidgets {
     /* Trees */
     var baseFlags: TreeNodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or Tnf.SpanAvailWidth
     var alignLabelWithCurrentXposition = false
+
     /** Dumb representation of what may be user-side selection state. You may carry selection state inside or
      *  outside your objects in whatever format you see fit.    */
     var selectionMask = 1 shl 2
@@ -212,7 +214,7 @@ object showDemoWindowWidgets {
 
     /* Text */
     var wrapWidth = 200f
-    val buf = "日本語".toCharArray(CharArray(32)) // "nihongo"
+    val buf = "日本語".toByteArray(32) // "nihongo"
 
 
     /* Images */
@@ -254,10 +256,10 @@ object showDemoWindowWidgets {
         label:
         ${'\t'}lock cmpxchg8b eax
         
-        """.trimIndent().toCharArray(CharArray(1024 * 16))
+        """.trimIndent().toByteArray(1024 * 16)
     var flags = Itf.AllowTabInput.i
 
-    val bufs = Array(6) { CharArray(64) }
+    val bufs = Array(6) { ByteArray(64) }
 
     object TextFilters {
         val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
@@ -265,7 +267,7 @@ object showDemoWindowWidgets {
         }
     }
 
-    val bufPass = "password123".toCharArray(CharArray(64))
+    val password = "password123".toByteArray(64)
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
@@ -274,6 +276,8 @@ object showDemoWindowWidgets {
     var dragAndDrop = true
     var optionsMenu = true
     var hdr = false
+    var noBorder = false
+
     // Generate a dummy default palette. The palette will persist and can be edited.
     var savedPaletteInit = true
     var savedPalette = Array(32) { Vec4() }
@@ -301,10 +305,13 @@ object showDemoWindowWidgets {
     var s8_v = 127.b
     var u8_v = Ubyte(255)
     var s16_v = 32767.s
+
     //    static ImU16  u16_v = 65535;
     var s32_v = -1
+
     //    static ImU32  u32_v = (ImU32)-1;
     var s64_v = -1L
+
     //    static ImU64  u64_v = (ImU64)-1;
     var f32_v = 0.123f
     var f64_v = 90000.01234567890123456789
@@ -316,6 +323,34 @@ object showDemoWindowWidgets {
     var vec4f = floatArrayOf(0.1f, 0.2f, 0.3f, 0.44f)
     val vec4i = intArrayOf(1, 5, 100, 255)
 
+    /* Text Input */
+    object Funcs0 {
+        val MyResizeCallback: InputTextCallback = { data ->
+//            if (data.eventFlag == Itf.CallbackResize.i) {
+//                val myStr = data.userData as ByteArray
+//                assert(myStr[0] == data.buf[0])
+//                if (myStr.size < data.buf.size)
+//                    myStr[myStr.lastIndex] = 0
+//                else if (data.buf.size < myStr.size) {
+//                    val newBuf = ByteArray(data.bufSize)  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+//                    myStr.copyInto(newBuf)
+//                    data.userData = newBuf
+//                    data.buf = newBuf
+//                }
+//            }
+            false
+        }
+
+        // Tip: Because ImGui:: is a namespace you would typicall add your own function into the namespace in your own source files.
+        // For example, you may add a function called ImGui::InputText(const char* label, MyString* my_str).
+        val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: ItemFlags) -> Boolean =
+                { label, myStr, size, flags ->
+                    assert(flags hasnt Itf.CallbackResize)
+                    inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
+                }
+    }
+
+    var myStr = ByteArray(0)
 
     /* Plots Widgets */
     var animate = true
@@ -356,10 +391,10 @@ object showDemoWindowWidgets {
     var itemType = 1
     var b0 = false
     val col = floatArrayOf(1f, 0.5f, 0f, 1f)
-    val str = CharArray(16)
+    val str = ByteArray(16)
     var currentItem1 = 1
     var embedAllInsideAChildWindow = false
-    var dummyStr = "This is a dummy field to be able to tab-out of the widgets above.".toCharArray()
+    var dummyStr = "This is a dummy field to be able to tab-out of the widgets above."
     var testWindow = false
 
     operator fun invoke() {
@@ -525,7 +560,7 @@ object showDemoWindowWidgets {
                         nodeFlags = nodeFlags or Tnf.Selected
                     if (i < 3) {
                         // Items 0..2 are Tree Node
-                        val nodeOpen = treeNodeExV(i, nodeFlags, "Selectable Node $i")
+                        val nodeOpen = treeNodeEx(i, nodeFlags, "Selectable Node $i")
                         if (isItemClicked()) nodeClicked = i
                         if (nodeOpen) {
                             bulletText("Blah blah\nBlah Blah")
@@ -536,7 +571,7 @@ object showDemoWindowWidgets {
                             The only reason we use TreeNode at all is to allow selection of the leaf.
                             Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
                         nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
-                        treeNodeExV(i, nodeFlags, "Selectable Leaf $i")
+                        treeNodeEx(i, nodeFlags, "Selectable Leaf $i")
                         if (isItemClicked()) nodeClicked = i
                     }
                 }
@@ -615,7 +650,7 @@ object showDemoWindowWidgets {
                     windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
                 }
             }
-            treeNode("JVM UTF-16 Unicode with surrogate characters") {
+            treeNode("UTF-8 text") {
                 /*  UTF-8 test with Japanese characters
                     (Needs a suitable font, try Noto, or Arial Unicode, or M+ fonts. Read docs/FONTS.txt for details.)
                     - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
@@ -630,7 +665,7 @@ object showDemoWindowWidgets {
                 // Normally we would use u8"blah blah" with the proper characters directly in the string.
                 text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                 text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
-                inputText("UTF-16 input", buf)
+                inputText("UTF-8 input", buf)
             }
         }
 
@@ -814,50 +849,23 @@ object showDemoWindowWidgets {
                 inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter.i, TextFilters.filterImGuiLetters)
 
                 text("Password input")
-                inputText("password", bufPass, Itf.Password or Itf.CharsNoBlank)
+                inputText("password", password, Itf.Password.i)
                 sameLine(); helpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.")
-                inputTextWithHint("password (w/ hint)", "<password>", bufPass, Itf.Password or Itf.CharsNoBlank)
-                inputText("password (clear)", bufPass, Itf.CharsNoBlank.i)
+                inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password.i)
+                inputText("password (clear)", password)
             }
 
-/*            if (ImGui::TreeNode("Resize Callback"))
-            {
-            // To wire InputText() with std::string or any other custom string type,
-            // you can use the ImGuiInputTextFlags_CallbackResize flag + create a custom ImGui::InputText() wrapper using your prefered type.
-            // See misc/cpp/imgui_stdlib.h for an implementation of this using std::string.
-                HelpMarker("Demonstrate using ImGuiInputTextFlags_CallbackResize to wire your resizable string type to InputText().\n\nSee misc/cpp/imgui_stdlib.h for an implementation of this for std::string.");
-                struct Funcs
-                        {
-                            static int MyResizeCallback(ImGuiInputTextCallbackData* data)
-                            {
-                                if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
-                                {
-                                    ImVector<char>* my_str = (ImVector<char>*)data->UserData;
-                                    IM_ASSERT(my_str->begin() == data->Buf);
-                                    my_str->resize(data->BufSize);  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
-                                    data->Buf = my_str->begin();
-                                }
-                                return 0;
-                            }
-
-                            // Tip: Because ImGui:: is a namespace you would typicall add your own function into the namespace in your own source files.
-                            // For example, you may add a function called ImGui::InputText(const char* label, MyString* my_str).
-                            static bool MyInputTextMultiline(const char* label, ImVector<char>* my_str, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0)
-                            {
-                                IM_ASSERT((flags & ImGuiInputTextFlags_CallbackResize) == 0);
-                                return ImGui::InputTextMultiline(label, my_str->begin(), my_str->size(), size, flags | ImGuiInputTextFlags_CallbackResize, Funcs::MyResizeCallback, (void*)my_str);
-                            }
-                        };
+            treeNode("Resize Callback") {
+                // To wire InputText() with std::string or any other custom string type,
+                // you can use the ImGuiInputTextFlags_CallbackResize flag + create a custom ImGui::InputText() wrapper using your prefered type.
+                // See misc/cpp/imgui_stdlib.h for an implementation of this using std::string.
+                helpMarker("Demonstrate using ImGuiInputTextFlags_CallbackResize to wire your resizable string type to InputText().\n\nSee misc/cpp/imgui_stdlib.h for an implementation of this for std::string.")
 
                 // For this demo we are using ImVector as a string container.
                 // Note that because we need to store a terminating zero character, our size/capacity are 1 more than usually reported by a typical string class.
-                static ImVector<char> my_str;
-                if (my_str.empty())
-                    my_str.push_back(0);
-                Funcs::MyInputTextMultiline("##MyStr", &my_str, ImVec2(-Float.MIN_VALUE, ImGui::GetTextLineHeight() * 16));
-                ImGui::Text("Data: %p\nSize: %d\nCapacity: %d", my_str.begin(), my_str.size(), my_str.capacity());
-                ImGui::TreePop();
-            }*/
+                Funcs0.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), 0)
+                text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
+            }
         }
 
         // Plot/Graph widgets are currently fairly limited.
@@ -988,10 +996,10 @@ object showDemoWindowWidgets {
                             // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
                             if (beginDragDropTarget()) {
                                 acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
-                                    for (i in 0..2) savedPalette[n][i] = it.data!!.getFloat(i)
+                                    for (i in 0..2) savedPalette[n][i] = (it.data!! as Vec3).array[i]
                                 }
                                 acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
-                                    for (i in 0..3) savedPalette[n][i] = it.data!!.getFloat(i)
+                                    for (i in 0..3) savedPalette[n][i] = (it.data!! as Vec4).array[i]
                                 }
                                 endDragDropTarget()
                             }
@@ -1000,7 +1008,8 @@ object showDemoWindowWidgets {
                 }
             }
             text("Color button only:")
-            colorButton("MyColor##3c", color, miscFlags, Vec2(80, 80))
+            checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
+            colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else Cef.None, Vec2(80))
 
             text("Color picker:")
             checkbox("With Alpha", ::alpha)
@@ -1070,45 +1079,45 @@ object showDemoWindowWidgets {
             // Limits (as helper variables that we can take the address of)
             // Note that the SliderScalar function has a maximum usable range of half the natural type maximum, hence the /2 below.
             // @formatter:off
-            val s8_zero: Byte = 0.b;
-            val s8_one: Byte = 1.b;
-            val s8_fifty: Byte = 50.b;
-            val s8_min: Byte = (-128).b;
+            val s8_zero: Byte = 0.b
+            val s8_one: Byte = 1.b
+            val s8_fifty: Byte = 50.b
+            val s8_min: Byte = (-128).b
             val s8_max: Byte = 127.b
-            val u8_zero: Ubyte = Ubyte(0);
-            val u8_one: Ubyte = Ubyte(1);
-            val u8_fifty: Ubyte = Ubyte(50);
-            val u8_min: Ubyte = Ubyte(0);
+            val u8_zero: Ubyte = Ubyte(0)
+            val u8_one: Ubyte = Ubyte(1)
+            val u8_fifty: Ubyte = Ubyte(50)
+            val u8_min: Ubyte = Ubyte(0)
             val u8_max: Ubyte = Ubyte(255)
-            val s16_zero: Short = 0.s;
-            val s16_one: Short = 1.s;
-            val s16_fifty: Short = 50.s;
-            val s16_min: Short = (-32768).s;
+            val s16_zero: Short = 0.s
+            val s16_one: Short = 1.s
+            val s16_fifty: Short = 50.s
+            val s16_min: Short = (-32768).s
             val s16_max: Short = 32767.s
 //            const ImU16   u16_zero = 0,   u16_one = 1,   u16_fifty = 50, u16_min = 0,           u16_max = 65535;
-            val s32_zero: Int = 0;
-            val s32_one: Int = 1;
-            val s32_fifty: Int = 50;
-            val s32_min: Int = Int.MIN_VALUE / 2;
-            val s32_max: Int = Int.MAX_VALUE / 2;
-            val s32_hi_a = Int.MAX_VALUE / 2 - 100;
+            val s32_zero: Int = 0
+            val s32_one: Int = 1
+            val s32_fifty: Int = 50
+            val s32_min: Int = Int.MIN_VALUE / 2
+            val s32_max: Int = Int.MAX_VALUE / 2
+            val s32_hi_a = Int.MAX_VALUE / 2 - 100
             val s32_hi_b = Int.MAX_VALUE / 2
 //            const ImU32   u32_zero = 0,   u32_one = 1,   u32_fifty = 50, u32_min = 0,           u32_max = UINT_MAX/2,   u32_hi_a = UINT_MAX/2 - 100,   u32_hi_b = UINT_MAX/2;
-            val s64_zero: Long = 0L;
-            val s64_one: Long = 1L;
-            val s64_fifty: Long = 50L;
-            val s64_min: Long = Long.MIN_VALUE / 2;
-            val s64_max: Long = Long.MAX_VALUE / 2;
-            val s64_hi_a = Long.MAX_VALUE / 2 - 100;
+            val s64_zero: Long = 0L
+            val s64_one: Long = 1L
+            val s64_fifty: Long = 50L
+            val s64_min: Long = Long.MIN_VALUE / 2
+            val s64_max: Long = Long.MAX_VALUE / 2
+            val s64_hi_a = Long.MAX_VALUE / 2 - 100
             val s64_hi_b = Long.MAX_VALUE / 2
 //            const ImU64   u64_zero = 0,   u64_one = 1,   u64_fifty = 50, u64_min = 0,           u64_max = ULLONG_MAX/2, u64_hi_a = ULLONG_MAX/2 - 100, u64_hi_b = ULLONG_MAX/2;
-            val f32_zero: Float = 0f;
-            val f32_one: Float = 1f;
-            val f32_lo_a: Float = -10_000_000_000f;
+            val f32_zero: Float = 0f
+            val f32_one: Float = 1f
+            val f32_lo_a: Float = -10_000_000_000f
             val f32_hi_a: Float = +10_000_000_000f
-            val f64_zero: Double = 0.0;
-            val f64_one: Double = 1.0;
-            val f64_lo_a: Double = -1_000_000_000_000_000.0;
+            val f64_zero: Double = 0.0
+            val f64_one: Double = 1.0
+            val f64_lo_a: Double = -1_000_000_000_000_000.0
             val f64_hi_a: Double = +1_000_000_000_000_000.0
 
             val dragSpeed = 0.2f
@@ -1277,7 +1286,7 @@ object showDemoWindowWidgets {
 
                     // Our buttons are both drag sources and drag targets here!
                     if (beginDragDropSource(DragDropFlag.None)) {
-                        setDragDropPayload("DND_DEMO_CELL", n, Int.BYTES)        // Set payload to carry the index of our item (could be anything)
+                        setDragDropPayload("DND_DEMO_CELL", n)        // Set payload to carry the index of our item (could be anything)
                         when (mode) {
                             // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
                             Mode.Copy -> text("Copy $name")
@@ -1289,7 +1298,7 @@ object showDemoWindowWidgets {
                     if (beginDragDropTarget()) {
                         acceptDragDropPayload("DND_DEMO_CELL")?.let { payload ->
                             assert(payload.dataSize == Int.BYTES)
-                            val payloadN = payload.data!!.getInt(0)
+                            val payloadN = payload.data!! as Int
                             when (mode) {
                                 Mode.Copy -> names[n] = names[payloadN]
                                 Mode.Move -> {

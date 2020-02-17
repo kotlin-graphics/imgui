@@ -1,9 +1,10 @@
 package imgui.internal.api
 
 import glm_.func.common.max
+import glm_.min
 import glm_.parseInt
 import imgui.*
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.io
 import imgui.api.g
@@ -18,17 +19,19 @@ import imgui.static.navRestoreLastChildNavWindow
 import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.min
-import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
 
 @Suppress("UNCHECKED_CAST")
 
-/** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
- *  If this ever crash because g.CurrentWindow is NULL it means that either
- *  - ImGui::NewFrame() has never been called, which is illegal.
- *  - You are calling ImGui functions after ImGui::EndFrame()/ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal. */
 internal interface internal {
+
+    // Windows
+
+    /** We should always have a CurrentWindow in the stack (there is an implicit "Debug" window)
+     *  If this ever crash because g.CurrentWindow is NULL it means that either
+     *  - ImGui::NewFrame() has never been called, which is illegal.
+     *  - You are calling ImGui functions after ImGui::EndFrame()/ImGui::Render() and before the next ImGui::NewFrame(), which is also illegal. */
 
     /** ~GetCurrentWindowRead */
     val currentWindowRead: Window?
@@ -47,39 +50,42 @@ internal interface internal {
 
     fun findWindowByName(name: String): Window? = g.windowsById[hash(name)]
 
-    /** Moving window to front of display (which happens to be back of our sorted list)  ~ FocusWindow  */
-    fun focusWindow(window_: Window? = null) {
 
-        if (g.navWindow !== window_) {
-            g.navWindow = window_
-            if (window_ != null && g.navDisableMouseHover)
+    // Windows: Display Order and Focus Order
+
+    /** Moving window to front of display (which happens to be back of our sorted list)  ~ FocusWindow  */
+    fun focusWindow(window: Window? = null) {
+
+        if (g.navWindow !== window) {
+            g.navWindow = window
+            if (window != null && g.navDisableMouseHover)
                 g.navMousePosDirty = true
             g.navInitRequest = false
-            g.navId = window_?.navLastIds?.get(0) ?: 0 // Restore NavId
+            g.navId = window?.navLastIds?.get(0) ?: 0 // Restore NavId
             g.navIdIsAlive = false
             g.navLayer = NavLayer.Main
             //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
         }
 
         // Close popups if any
-        closePopupsOverWindow(window_, false)
+        closePopupsOverWindow(window, false)
 
         // Passing NULL allow to disable keyboard focus
-        if (window_ == null) return
+        if (window == null) return
 
-        var window: Window = window_
         // Move the root window to the top of the pile
-        window.rootWindow?.let { window = it }
+        val focusFrontWindow = window.rootWindow!! // NB: In docking branch this is window->RootWindowDockStop
+        val displayFrontWindow = window.rootWindow!!
 
         // Steal focus on active widgets
-        if (window.flags has Wf._Popup) // FIXME: This statement should be unnecessary. Need further testing before removing it..
-            if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != window)
-                clearActiveId()
+        if (focusFrontWindow.flags has Wf._Popup) // FIXME: This statement may be unnecessary? Need further testing before removing it..
+            if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != focusFrontWindow)
+                clearActiveID()
 
         // Bring to front
-        window.bringToFocusFront()
-        if (window.flags hasnt Wf.NoBringToFrontOnFocus)
-            window.bringToDisplayFront()
+        focusFrontWindow.bringToFocusFront()
+        if ((window.flags or displayFrontWindow.flags) hasnt Wf.NoBringToFrontOnFocus)
+            displayFrontWindow.bringToDisplayFront()
     }
 
     fun focusTopMostWindowUnderOne(underThisWindow: Window? = null, ignoreWindow: Window? = null) {
@@ -102,6 +108,9 @@ internal interface internal {
     }
 
     // the rest of the window related functions is inside the corresponding class
+
+
+    // Fonts, drawing
 
     fun setCurrentFont(font: Font) {
         assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
@@ -155,14 +164,15 @@ internal interface internal {
      *  fmt = "%.3f"       -> return fmt
      *  fmt = "hello %.3f" -> return fmt + 6
      *  fmt = "%.3f hello" -> return buf written with "%.3f" */
-    fun parseFormatTrimDecorations(fmt: String, buf: CharArray): String {
+    fun parseFormatTrimDecorations(fmt: String): String {
         val fmtStart = parseFormatFindStart(fmt)
         if (fmt[fmtStart] != '%')
             return fmt
         val fmtEnd = parseFormatFindEnd(fmt.substring(fmtStart))
-        if (fmtStart + fmtEnd >= fmt.length) // If we only have leading decoration, we don't need to copy the data.
-            return fmt.substring(fmtStart)
-        return String(buf, fmtStart, min(fmtEnd - fmtStart + 1, buf.size))
+        return when {
+            fmtStart + fmtEnd >= fmt.length -> fmt.substring(fmtStart) // If we only have leading decoration, we don't need to copy the data.
+            else -> fmt.substring(fmtStart, fmtEnd)
+        }
     }
 
     /** Parse display precision back from the display format string

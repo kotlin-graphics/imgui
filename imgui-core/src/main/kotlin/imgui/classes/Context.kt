@@ -57,10 +57,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Windows, sorted in display order, back to front */
     val windows = ArrayList<Window>()
-    /** Windows, sorted in focus order, back to front */
+    /** Windows, sorted in focus order, back to front.
+     * (FIXME: We could only store root windows here! Need to sort out the Docking equivalent which is RootWindowDockStop and is unfortunately a little more dynamic) */
     val windowsFocusOrder = ArrayList<Window>()
 
-    val windowsSortBuffer = ArrayList<Window>()
+    val windowsTempSortBuffer = ArrayList<Window>()
 
     val currentWindowStack = Stack<Window>()
     /** Map window's ImGuiID to ImGuiWindow* */
@@ -125,6 +126,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Activating with mouse or nav (gamepad/keyboard) */
     var activeIdSource = InputSource.None
 
+    var activeIdMouseButton = 0
+
     var activeIdPreviousFrame: ID = 0
 
     var activeIdPreviousFrameIsAlive = false
@@ -159,13 +162,15 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 
     //------------------------------------------------------------------
-    // Navigation data (for gamepad/keyboard)
+    // Gamepad/keyboard Navigation
     //------------------------------------------------------------------
 
     /** Focused window for navigation. Could be called 'FocusWindow'    */
     var navWindow: Window? = null
     /** Focused item for navigation */
     var navId: ID = 0
+
+    var navFocusScopeId = 0
     /** ~~ (g.activeId == 0) && NavInput.Activate.isPressed() ? navId : 0, also set when calling activateItem() */
     var navActivateId: ID = 0
     /** ~~ isNavInputDown(NavInput.Activate) ? navId : 0   */
@@ -178,8 +183,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navJustTabbedId: ID = 0
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
-    /** Just navigated to this select scope id (result of a successfully MoveRequest). */
-    var navJustMovedToMultiSelectScopeId: ID = 0
+    /** Just navigated to this focus scope id (result of a successfully MoveRequest). */
+    var navJustMovedToFocusScopeId: ID = 0
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
@@ -188,18 +193,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navScoringRectScreen = Rect()
     /** Metrics for debugging   */
     var navScoringCount = 0
-    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed top-most.   */
-    var navWindowingTarget: Window? = null
-    /** Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0f */
-    var navWindowingTargetAnim: Window? = null
-
-    val navWindowingList = ArrayList<Window>()
-
-    var navWindowingTimer = 0f
-
-    var navWindowingHighlightAlpha = 0f
-
-    var navWindowingToggleLayer = false
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
     var navLayer = NavLayer.Main
@@ -229,7 +222,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Move request for this frame */
     var navMoveRequest = false
 
-    var navMoveRequestFlags: NavMoveFlags = 0
+    var navMoveRequestFlags = NavMoveFlag.None.i
     /** None / ForwardQueued / ForwardActive (this is used to navigate sibling parent menus from a child menu)  */
     var navMoveRequestForward = NavForward.None
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
@@ -245,19 +238,36 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
 
-    // Tabbing system (older than Nav, active even if Nav is disabled. FIXME-NAV: This needs a redesign!)
+
+    // Navigation: Windowing (CTRL+TAB, holding Menu button + directional pads to move/resize)
+
+    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed top-most.   */
+    var navWindowingTarget: Window? = null
+    /** Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0f */
+    var navWindowingTargetAnim: Window? = null
+
+    val navWindowingList = ArrayList<Window>()
+
+    var navWindowingTimer = 0f
+
+    var navWindowingHighlightAlpha = 0f
+
+    var navWindowingToggleLayer = false
+
+
+    // Legacy Focus/Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
 
     var focusRequestCurrWindow: Window? = null
 
     var focusRequestNextWindow: Window? = null
     /** Any item being requested for focus, stored as an index (we on layout to be stable between the frame pressing TAB and the next frame, semi-ouch) */
-    var focusRequestCurrCounterAll = Int.MAX_VALUE
+    var focusRequestCurrCounterRegular = Int.MAX_VALUE
     /** Tab item being requested for focus, stored as an index */
-    var focusRequestCurrCounterTab = Int.MAX_VALUE
+    var focusRequestCurrCounterTabStop = Int.MAX_VALUE
     /** Stored for next frame */
-    var focusRequestNextCounterAll = Int.MAX_VALUE
+    var focusRequestNextCounterRegular = Int.MAX_VALUE
     /** Stored for next frame */
-    var focusRequestNextCounterTab = Int.MAX_VALUE
+    var focusRequestNextCounterTabStop = Int.MAX_VALUE
 
     var focusTabPressed = false
 
@@ -288,22 +298,22 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Drag and Drop
     //------------------------------------------------------------------
     var dragDropActive = false
-
+    /** Set when within a BeginDragDropXXX/EndDragDropXXX block. */
     var dragDropWithinSourceOrTarget = false
 
-    var dragDropSourceFlags: DragDropFlags = 0
+    var dragDropSourceFlags = DragDropFlag.None.i
 
     var dragDropSourceFrameCount = -1
 
     var dragDropMouseButton = MouseButton.None // -1 at start
 
     var dragDropPayload = Payload()
-
+    /** Store rectangle of current target candidate (we favor small targets when overlapping) */
     var dragDropTargetRect = Rect()
 
     var dragDropTargetId: ID = 0
 
-    var dragDropAcceptFlags: DragDropFlags = 0
+    var dragDropAcceptFlags = DragDropFlag.None.i
     /** Target item surface (we resolve overlapping targets by prioritizing the smaller surface) */
     var dragDropAcceptIdCurrRectSurface = 0f
     /** Target item id (set at the time of accepting the payload) */
@@ -312,7 +322,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragDropAcceptIdPrev: ID = 0
     /** Last time a target expressed a desire to accept the source */
     var dragDropAcceptFrameCount = -1
-    /** We don't expose the ImVector<> directly */
+    /** We don't expose the ImVector<> directly, ImGuiPayload only holds pointer+size */
     var dragDropPayloadBufHeap = ByteBuffer.allocate(0)
     /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteBuffer.allocate(16)
@@ -330,7 +340,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var lastValidMousePos = Vec2()
 
-    var inputTextState = TextEditState()
+    var inputTextState = InputTextState()
 
     var inputTextPasswordFont = Font()
     /** Temporary text input when CTRL+clicking on a slider, etc.   */
@@ -359,9 +369,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
 
-    // Range-Select/Multi-Select
-    // [This is unused in this branch, but left here to facilitate merging/syncing multiple branches]
-    var multiSelectScopeId: ID = 0
 
     // Platform support
 
@@ -427,8 +434,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var wantCaptureKeyboardNextFrame = -1
 
     var wantTextInputNextFrame = -1
-
-//    char                    TempBuffer[1024*3+1];               // Temporary text buffer
+    /** Temporary text buffer */
+    val tempBuffer = ByteArray(1024 * 3 + 1)
 
     /*  Context creation and access
         Each context create its own ImFontAtlas by default. You may instance one yourself and pass it to Context()
@@ -481,7 +488,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             windows.forEach { it.destroy() }
             windows.clear()
             windowsFocusOrder.clear()
-            windowsSortBuffer.clear()
+            windowsTempSortBuffer.clear()
             currentWindow = null
             currentWindowStack.clear()
             windowsById.clear()
@@ -506,9 +513,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             shrinkWidthBuffer.clear()
 
             privateClipboard = ""
-            inputTextState.textW = charArrayOf()
-            inputTextState.initialTextA = charArrayOf()
-            inputTextState.textA = charArrayOf()
+            inputTextState.textW = CharArray(0)
+            inputTextState.initialTextA = ByteArray(0)
+            inputTextState.textA = ByteArray(0)
 
             if (logFile != null) {
                 logFile = null

@@ -7,7 +7,7 @@ import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.buttonBehavior
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
@@ -229,7 +229,7 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
             // Manual auto-fit when double-clicking
             sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
             retAutoFit = true
-            clearActiveId()
+            clearActiveID()
         } else if (held) {
             // Resize from any of the four corners
             // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
@@ -275,6 +275,10 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
     }
     popId()
 
+    // Restore nav layer
+    window.dc.navLayerCurrent = NavLayer.Main
+    window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
+
     // Navigation resize (keyboard/gamepad)
     if (g.navWindowingTarget?.rootWindow === window) {
         val navResizeDelta = Vec2()
@@ -302,10 +306,6 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
         window.pos = floor(posTarget)
         window.markIniSettingsDirty()
     }
-
-    // Resize nav layer
-    window.dc.navLayerCurrent = NavLayer.Main
-    window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
 
     window.size put window.sizeFull
 

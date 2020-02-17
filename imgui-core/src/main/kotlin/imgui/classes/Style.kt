@@ -4,7 +4,6 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.Dir
-import imgui.ImGui
 import imgui.ImGui.styleColorsClassic
 import imgui.internal.floor
 import java.util.*
@@ -76,7 +75,7 @@ class Style {
     var buttonTextAlign = Vec2(0.5f)
     /** Alignment of selectable text when selectable is larger than text. Defaults to (0,0) for top-left alignment. */
     var selectableTextAlign = Vec2()
-    /** Window position are clamped to be visible within the display area by at least this amount.
+    /** Window position are clamped to be visible within the display area or monitors by at least this amount.
      *  Only applies to regular windows.    */
     var displayWindowPadding = Vec2(19)
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
@@ -91,6 +90,9 @@ class Style {
     /** Tessellation tolerance when using pathBezierCurveTo() without a specific number of segments.
      *  Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality. */
     var curveTessellationTol = 1.25f
+    /** Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled() or drawing rounded corner rectangles
+     *  with no explicit segment count specified. Decrease for higher quality but more geometry. */
+    var circleSegmentMaxError = 1.6f
 
     val colors = ArrayList<Vec4>()
 

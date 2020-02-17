@@ -34,8 +34,8 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
-import imgui.ImGui.setActiveId
-import imgui.ImGui.setFocusId
+import imgui.ImGui.setActiveID
+import imgui.ImGui.setFocusID
 import imgui.ImGui.style
 import imgui.ImGui.tempInputTextIsActive
 import imgui.ImGui.tempInputTextScalar
@@ -209,7 +209,7 @@ interface widgetsDrags {
 
         val id = window.getId(label)
         val w = calcItemWidth()
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
@@ -236,8 +236,8 @@ interface widgetsDrags {
             val clicked = hovered && io.mouseClicked[0]
             val doubleClicked = hovered && io.mouseDoubleClicked[0]
             if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
-                setActiveId(id, window)
-                setFocusId(id, window)
+                setActiveID(id, window)
+                setFocusID(id, window)
                 focusWindow(window)
                 g.activeIdUsingNavDirMask  = (1 shl Dir.Left) or (1 shl Dir.Right)
                 if (focusRequested || (clicked && io.keyCtrl) || doubleClicked || g.navInputId == id) {
@@ -260,8 +260,8 @@ interface widgetsDrags {
             markItemEdited(id)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = String(pData.format(dataType, format))
-        renderTextClipped(frameBb.min, frameBb.max, value, value.length, null, Vec2(0.5f))
+        val value = pData.format(dataType, format)
+        renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)

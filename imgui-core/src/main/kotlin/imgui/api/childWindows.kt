@@ -75,6 +75,6 @@ interface childWindows {
             } else // Not navigable into
                 itemAdd(bb, 0)
         }
-        g.withinEndChild = true
+        g.withinEndChild = false
     }
 }

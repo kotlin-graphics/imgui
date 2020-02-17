@@ -89,7 +89,7 @@ interface widgetsMain {
         return pressed
     }
 
-    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), 0)
+    fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), Bf.None.i)
 
     fun image(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
               borderCol: Vec4 = Vec4()) {
@@ -160,7 +160,7 @@ interface widgetsMain {
         if (window.skipItems) return false
 
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight
         val pos = Vec2(window.dc.cursorPos) //cursorPos gets updated somewhere else, which means we need to make a copy else checkboxes act incorrectly
@@ -229,7 +229,7 @@ interface widgetsMain {
         if (window.skipItems) return false
 
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight
         val pos = window.dc.cursorPos
@@ -299,10 +299,10 @@ interface widgetsMain {
         // Default displaying the fraction as percentage string, but user can override it
         val overlay = if (overlay_.isEmpty()) "%.0f%%".format(style.locale, fraction * 100 + 0.01f) else overlay_
 
-        val overlaySize = calcTextSize(overlay, -1)
+        val overlaySize = calcTextSize(overlay)
         if (overlaySize.x > 0f) {
             val x = glm.clamp(fillBr.x + style.itemSpacing.x, bb.min.x, bb.max.x - overlaySize.x - style.itemInnerSpacing.x)
-            renderTextClipped(Vec2(x, bb.min.y), bb.max, overlay, -1, overlaySize, Vec2(0f, 0.5f), bb)
+            renderTextClipped(Vec2(x, bb.min.y), bb.max, overlay, overlaySize, Vec2(0f, 0.5f), bb)
         }
     }
 

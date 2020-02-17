@@ -7,7 +7,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
@@ -20,7 +20,6 @@ import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
-import imgui.ImGui.setTooltip
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
@@ -94,6 +93,7 @@ interface main {
         assert(g.font.isLoaded)
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
+        g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
         g.drawListSharedData.initialFlags = Dlf.None.i
         if (style.antiAliasedLines)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedLines
@@ -130,7 +130,7 @@ interface main {
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
         if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
-            clearActiveId()
+            clearActiveID()
         if (g.activeId != 0)
             g.activeIdTimer += io.deltaTime
         g.lastActiveIdTimer += io.deltaTime
@@ -207,8 +207,8 @@ interface main {
             // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
             // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
             g.focusRequestNextWindow = g.navWindow
-            g.focusRequestNextCounterAll = Int.MAX_VALUE
-            g.focusRequestNextCounterTab = when {
+            g.focusRequestNextCounterRegular = Int.MAX_VALUE
+            g.focusRequestNextCounterTabStop = when {
                 g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
                 else -> if (io.keyShift) -1 else 0
             }
@@ -216,17 +216,17 @@ interface main {
 
         // Turn queued focus request into current one
         g.focusRequestCurrWindow = null
-        g.focusRequestCurrCounterTab = Int.MAX_VALUE
-        g.focusRequestCurrCounterAll = Int.MAX_VALUE
+        g.focusRequestCurrCounterTabStop = Int.MAX_VALUE
+        g.focusRequestCurrCounterRegular = Int.MAX_VALUE
         g.focusRequestNextWindow?.let { window ->
             g.focusRequestCurrWindow = window
-            if (g.focusRequestNextCounterAll != Int.MAX_VALUE && window.dc.focusCounterAll != -1)
-                g.focusRequestCurrCounterAll = modPositive(g.focusRequestNextCounterAll, window.dc.focusCounterAll + 1)
-            if (g.focusRequestNextCounterTab != Int.MAX_VALUE && window.dc.focusCounterTab != -1)
-                g.focusRequestCurrCounterTab = modPositive(g.focusRequestNextCounterTab, window.dc.focusCounterTab + 1)
+            if (g.focusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
+                g.focusRequestCurrCounterRegular = modPositive(g.focusRequestNextCounterRegular, window.dc.focusCounterRegular + 1)
+            if (g.focusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
+                g.focusRequestCurrCounterTabStop = modPositive(g.focusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
             g.focusRequestNextWindow = null
-            g.focusRequestNextCounterTab = Int.MAX_VALUE
-            g.focusRequestNextCounterAll = Int.MAX_VALUE
+            g.focusRequestNextCounterTabStop = Int.MAX_VALUE
+            g.focusRequestNextCounterRegular = Int.MAX_VALUE
         }
 
         g.navIdTabCounter = Int.MAX_VALUE
@@ -240,9 +240,9 @@ interface main {
             it.active = false
             it.writeAccessed = false
 
-            // Garbage collect (this is totally functional but we may need decide if the side-effects are desirable)
+            // Garbage collect transient buffers of recently unused windows
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
-                it.gcCompactTransientWindowBuffers()
+                it.gcCompactTransientBuffers()
         }
 
         // Closing the focused window restore focus to the first active root window in descending z-order
@@ -261,9 +261,10 @@ interface main {
         // Create implicit/fallback window - which we will only render it if the user has added something to it.
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
         // This fallback is particularly important as it avoid ImGui:: calls from crashing.
+        g.withinFrameScopeWithImplicitWindow = true
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")
-        g.withinFrameScopeWithImplicitWindow = true
+        assert(g.currentWindow!!.isFallbackWindow)
 
         if (IMGUI_ENABLE_TEST_ENGINE)
             ImGuiTestEngineHook_PostNewFrame()
@@ -326,13 +327,13 @@ interface main {
 
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because childs may not exist yet         */
-        g.windowsSortBuffer.clear()
-        g.windowsSortBuffer.ensureCapacity(g.windows.size)
+        g.windowsTempSortBuffer.clear()
+        g.windowsTempSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf._ChildWindow }  // if a child is active its parent will add it
-                .forEach { it addToSortBuffer g.windowsSortBuffer }
-        assert(g.windows.size == g.windowsSortBuffer.size) { "This usually assert if there is a mismatch between the ImGuiWindowFlags_ChildWindow / ParentWindow values and DC.ChildWindows[] in parents, aka we've done something wrong." }
+                .forEach { it addToSortBuffer g.windowsTempSortBuffer }
+        assert(g.windows.size == g.windowsTempSortBuffer.size) { "This usually assert if there is a mismatch between the ImGuiWindowFlags_ChildWindow / ParentWindow values and DC.ChildWindows[] in parents, aka we've done something wrong." }
         g.windows.clear()
-        g.windows += g.windowsSortBuffer
+        g.windows += g.windowsTempSortBuffer
         io.metricsActiveWindows = g.windowsActiveCount
 
         // Unlock font atlas
@@ -353,18 +354,17 @@ interface main {
 
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
-
-        // Gather DrawList to render (for each active window)
         io.metricsRenderWindows = 0
-        io.metricsRenderIndices = 0
-        io.metricsRenderVertices = 0
         g.drawDataBuilder.clear()
+
+        // Add background ImDrawList
         if (g.backgroundDrawList.vtxBuffer.hasRemaining())
             g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
 
+        // Add ImDrawList to render
         val windowsToRenderTopMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-                g.navWindowingList.getOrNull(0).takeIf { g.navWindowingTarget != null })
+                g.navWindowingTarget?.let { g.navWindowingList[0] })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
                 .forEach { it.addToDrawData() }
@@ -377,6 +377,7 @@ interface main {
         // Draw software mouse cursor if requested
         if (io.mouseDrawCursor)
             g.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
+        // Add foreground ImDrawList
         if (g.foregroundDrawList.vtxBuffer.hasRemaining())
             g.foregroundDrawList addTo g.drawDataBuilder.layers[0]
 
@@ -409,6 +410,7 @@ interface main {
             assert(io.fonts.fonts.isNotEmpty()) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
             assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
             assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
+            assert(style.circleSegmentMaxError > 0f) { "Invalid style setting!" }
             assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)!" }
             assert(style.windowMinSize allGreaterThanEqual 1) { "Invalid style setting." }
             assert(style.windowMenuButtonPosition == Dir.None || g.style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)

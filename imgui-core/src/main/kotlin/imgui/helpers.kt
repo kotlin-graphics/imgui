@@ -2,16 +2,21 @@ package imgui
 
 import com.sun.jdi.VirtualMachine
 import glm_.L
+import glm_.b
 import glm_.vec4.Vec4
+import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.classes.SizeCallbackData
 import imgui.internal.F32_TO_INT8_SAT
+import imgui.internal.textStrToUtf8
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import java.nio.IntBuffer
+import kotlin.reflect.KMutableProperty0
 
 
 internal var ptrIndices = 0
+
 // it was: java.lang.Byte.valueOf(it.b)
 internal var ptrId: Array<Int> = Array(512) { it }
 
@@ -55,6 +60,7 @@ infix fun CharArray.cmp(other: CharArray): Boolean {
 object Debug {
 
     var vm: VirtualMachine? = null
+
     /** Instance count update interval in seconds   */
     var updateInterval = 5
     private var lastUpdate = System.nanoTime()
@@ -152,3 +158,39 @@ infix fun Int.wo(i: Int) = and(i.inv())
 
 var imeInProgress = false
 //    var imeLastKey = 0
+
+fun ByteArray.memchr(startIdx: Int, c: Char, num: Int = size - startIdx): Int {
+    val char = c.b
+    for (i in startIdx until startIdx + num)
+        if (this[i] == char)
+            return i
+    return -1
+}
+
+fun ByteArray.strlen(): Int {
+    var len = 0
+    for (b in this)
+        if (b == 0.b) break
+        else len++
+    return len
+}
+
+fun String.toByteArray(size: Int): ByteArray = toByteArray().copyInto(ByteArray(size))
+fun String.toUtf8(size: Int) = ByteArray(size).also { textStrToUtf8(it, toCharArray()) }
+fun String.toByteArray(array: ByteArray): ByteArray = toByteArray().copyInto(array)
+
+infix fun ByteArray.strcmp(b: ByteArray): Int {
+    var i = 0
+    while (i < size && i < b.size) {
+        if (get(i) != b[i])
+            return get(i).compareTo(b[i])
+        i++
+    }
+    return 0
+}
+
+/** TODO -> uno or kool */
+operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
+    set(t)
+    return this
+}

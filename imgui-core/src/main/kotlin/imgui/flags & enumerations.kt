@@ -264,7 +264,7 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     // [Internal] NB: need to be in sync with last value of ImGuiSelectableFlags_
 
     /** private  */
-    _NoHoldingActiveID(1 shl 20),
+    _NoHoldingActiveId(1 shl 20),
     /** private  */
     _PressedOnClick(1 shl 21),
     /** private  */
@@ -966,6 +966,8 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
     NoSidePreview(1 shl 8),
     /** ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source. */
     NoDragDrop(1 shl 9),
+    /** ColorButton: disable border (which is enforced by default) */
+    NoBorder(1 shl 10),
 
     // User Options (right-click on widget to change some of them).
 

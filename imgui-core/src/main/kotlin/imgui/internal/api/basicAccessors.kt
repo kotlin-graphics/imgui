@@ -2,12 +2,8 @@ package imgui.internal.api
 
 import imgui.ID
 import imgui.api.g
+import imgui.internal.*
 import imgui.internal.classes.Window
-import imgui.internal.InputSource
-import imgui.internal.ItemStatusFlag
-import imgui.internal.get
-import imgui.internal.set
-import imgui.internal.or
 
 /** Basic Accessors */
 internal interface basicAccessors {
@@ -15,6 +11,10 @@ internal interface basicAccessors {
     /** ~GetItemID */
     val itemID: ID
         get() = g.currentWindow!!.dc.lastItemId
+
+    /** ~GetItemStatusFlags */
+    val itemStatusFlags: ItemStatusFlags
+        get() = g.currentWindow!!.dc.lastItemStatusFlags
 
     /** ~GetActiveID */
     val activeID: ID
@@ -24,7 +24,7 @@ internal interface basicAccessors {
     val focusID: ID
         get() = g.navId
 
-    fun setActiveId(id: ID, window: Window?) {
+    fun setActiveID(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
             g.activeIdTimer = 0f
@@ -55,18 +55,19 @@ internal interface basicAccessors {
     }
 
     /** FIXME-NAV: The existence of SetNavID/SetNavIDWithRectRel/SetFocusID is incredibly messy and confusing and needs some explanation or refactoring. */
-    fun setFocusId(id: ID, window: Window) {
+    fun setFocusID(id: ID, window: Window) {
 
         assert(id != 0)
 
-        /*  Assume that setFocusId() is called in the context where its ::navLayer is the current layer,
-            which is the case everywhere we call it.         */
+        /*  Assume that SetFocusID() is called in the context where its window->DC.NavLayerCurrent and window->DC.NavFocusScopeIdCurrent are valid.
+            Note that window may be != g.CurrentWindow (e.g. SetFocusID call in InputTextEx for multi-line text)         */
         val navLayer = window.dc.navLayerCurrent
         if (g.navWindow !== window)
             g.navInitRequest = false
-        g.navId = id
         g.navWindow = window
+        g.navId = id
         g.navLayer = navLayer
+        g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         window.navLastIds[navLayer] = id
         if (window.dc.lastItemId == id)
             window.navRectRel[navLayer].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
@@ -77,7 +78,7 @@ internal interface basicAccessors {
             g.navDisableHighlight = true
     }
 
-    fun clearActiveId() = setActiveId(0, null)
+    fun clearActiveID() = setActiveID(0, null)
 
     var hoveredId: ID
         /** ~GetHoveredID */
@@ -99,6 +100,7 @@ internal interface basicAccessors {
             g.activeIdPreviousFrameIsAlive = true
     }
 
+    /** Mark data associated to given item as "edited", used by IsItemDeactivatedAfterEdit() function. */
     fun markItemEdited(id: ID) {
         /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterEdit().
             ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
@@ -110,7 +112,8 @@ internal interface basicAccessors {
         g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edited }
     }
 
-    /** Push a given id value ignoring the ID stack as a seed. */
+    /** Push a given id value ignoring the ID stack as a seed.
+     *  Push given value at the top of the ID stack (whereas PushID combines old and new hashes) */
     fun pushOverrideID(id: ID) {
         g.currentWindow!!.idStack.push(id)
     }

@@ -14,10 +14,10 @@ import kool.Stack
 // Version
 const val IMGUI_BUILD = 0
 /** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
-const val IMGUI_VERSION = "1.75 WIP"// build: $IMGUI_BUILD"
+const val IMGUI_VERSION = "1.76 WIP"// build: $IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 17401
+const val IMGUI_VERSION_NUM = 17502
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -51,7 +51,7 @@ val IMGUI_DEBUG_NAV_SCORING = false
 /** Display the reference navigation rectangle for each window */
 @JvmField
 val IMGUI_DEBUG_NAV_RECTS = false
-/** Save additional comments in .ini file */
+/** Save additional comments in .ini file (particularly helps for Docking, but makes saving slower) */
 @JvmField
 val IMGUI_DEBUG_INI_SETTINGS = false
 
@@ -88,7 +88,7 @@ var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
 var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
 @JvmField
         /** Custom log entry from user land into test log */
-var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { g, fmt -> }
+var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { _, _ -> }
 
 /** Last Unicode code point supported by this build. */
 const val UNICODE_CODEPOINT_MAX = 0xFFFF
@@ -157,9 +157,10 @@ object ImGui :
         imgui.internal.api.loggingCapture,
         PopupsModalsTooltips,
         navigation,
+        focusScope,
         inputs,
         imgui.internal.api.dragAndDrop,
-        newColumnsAPI,
+        internalColumnsAPI,
         tabBars,
         renderHelpers,
         widgets,

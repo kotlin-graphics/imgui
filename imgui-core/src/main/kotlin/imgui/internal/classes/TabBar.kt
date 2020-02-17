@@ -44,7 +44,7 @@ class TabBar {
     val tabs = ArrayList<TabItem>()
     /** Zero for tab-bars used by docking */
     var id: ID = 0
-    /** Selected tab */
+    /** Selected tab/window */
     var selectedTabId: ID = 0
     var nextSelectedTabId: ID = 0
     /** Can occasionally be != SelectedTabId (e.g. when previewing contents for CTRL+TAB preview) */
@@ -351,7 +351,7 @@ class TabBar {
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label, id, closeButtonId)
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)

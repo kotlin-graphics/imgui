@@ -4,7 +4,7 @@ package imgui.internal.api
 
 import glm_.*
 import imgui.*
-import imgui.ImGui.clearActiveId
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.formatArgPattern
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
@@ -220,7 +220,7 @@ internal interface templateFunctions {
             var clickedT = 0f
             if (g.activeIdSource == InputSource.Mouse) {
                 if (!io.mouseDown[0])
-                    clearActiveId()
+                    clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
                     clickedT = when {
@@ -235,7 +235,7 @@ internal interface templateFunctions {
                 val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var delta = if (axis == Axis.X) delta2.x else -delta2.y
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
-                    clearActiveId()
+                    clearActiveID()
                 else if (delta != 0f) {
                     clickedT = sliderCalcRatioFromValue(dataType, v, vMin, vMax, power, linearZeroPos)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0

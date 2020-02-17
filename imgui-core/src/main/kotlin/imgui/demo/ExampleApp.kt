@@ -29,6 +29,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.g
 import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.menu
@@ -90,7 +91,7 @@ object ExampleApp {
         if (show.autoResize) AutoResize(show::autoResize)
         if (show.constrainedResize) ConstrainedResize(show::constrainedResize)
         if (show.simpleOverlay) SimpleOverlay(show::simpleOverlay)
-        if (show.windowTitles) WindowTitles(show::windowTitles)
+        if (show.windowTitles) WindowTitles()
         if (show.customRendering) CustomRendering(show::customRendering)
         if (show.metrics) showMetricsWindow(show::metrics)
         if (show.styleEditor)
@@ -252,13 +253,12 @@ object ExampleApp {
             checkbox("No bring to front", ::noBringToFront)
         }
 
-        showDemoWindowWidgets()
-        showDemoWindowLayout()
-        showDemoWindowPopups()
-        showDemoWindowColumns()
-
-
-        showDemoWindowMisc()
+        // All demo contents
+        ShowDemoWindowWidgets()
+        ShowDemoWindowLayout()
+        ShowDemoWindowPopups()
+        ShowDemoWindowColumns()
+        ShowDemoWindowMisc()
 
         // End of ShowDemoWindow()
         end()

@@ -138,7 +138,8 @@ object Documents {
 
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
 
-        if (!begin("Example: Documents", pOpen, WindowFlag.MenuBar.i)) {
+        val windowContentsVisible = begin("Example: Documents", pOpen, WindowFlag.MenuBar.i)
+        if (!windowContentsVisible) {
             end()
             return
         }

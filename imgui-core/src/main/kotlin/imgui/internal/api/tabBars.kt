@@ -26,7 +26,7 @@ internal interface tabBars {
 
     fun tabItemCalcSize(label: String, hasCloseButton: Boolean): Vec2 {
 
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val size = Vec2(labelSize.x + style.framePadding.x, labelSize.y + style.framePadding.y * 2f)
         size.x += style.framePadding.x + when {
             hasCloseButton -> style.itemInnerSpacing.x + g.fontSize // We use Y intentionally to fit the close button circle.
@@ -61,13 +61,14 @@ internal interface tabBars {
 
     /** Render text label (with custom clipping) + Unsaved Document marker + Close Button logic
      *  We tend to lock style.FramePadding for a given tab-bar, hence the 'frame_padding' parameter.    */
-    fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2, label: String, tabId: ID, closeButtonId: ID): Boolean {
+    fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2,
+                                   label: ByteArray, tabId: ID, closeButtonId: ID): Boolean {
 
         val labelSize = calcTextSize(label, -1, true)
         if (bb.width <= 1f) return false
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
-        val TAB_UNSAVED_MARKER = "*"
+        val TAB_UNSAVED_MARKER = "*".toByteArray()
         val textPixelClipBb = Rect(bb.min.x + framePadding.x, bb.min.y + framePadding.y, bb.max.x - framePadding.x, bb.max.y)
         if (flags has TabItemFlag.UnsavedDocument) {
             textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, -1, false).x

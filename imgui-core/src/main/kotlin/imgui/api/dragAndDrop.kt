@@ -1,8 +1,5 @@
 package imgui.api
 
-import glm_.vec2.Vec2
-import glm_.vec3.Vec3
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.clearDragDrop
@@ -12,16 +9,11 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemHoverable
-import imgui.ImGui.setActiveId
+import imgui.ImGui.setActiveID
 import imgui.classes.Payload
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.*
-import kool.BYTES
-import kool.lib.fill
-import kool.rem
-import kool.set
-import java.nio.ByteBuffer
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
@@ -78,7 +70,7 @@ interface dragAndDrop {
                 sourceId = window.dc.lastItemId
                 val isHovered = itemHoverable(window.dc.lastItemRect, sourceId)
                 if (isHovered && io.mouseClicked[mouseButton.i]) {
-                    setActiveId(sourceId, window)
+                    setActiveID(sourceId, window)
                     focusWindow(window)
                 }
                 // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
@@ -128,64 +120,30 @@ interface dragAndDrop {
         return false
     }
 
-    /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
-     *  Data is copied and held by imgui.
-     *  Use 'cond' to choose to submit payload on drag start or every frame */
+    @Deprecated("Replaced by setDragDropPayload without size argument", ReplaceWith("setDragDropPayload(type, data, cond_)"))
     fun setDragDropPayload(type: String, data: Any, size: Int, cond_: Cond = Cond.None): Boolean {
+        return setDragDropPayload(type, data, cond_)
+    }
+
+//    /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
+//     *  Data is copied and held by imgui.
+    /** Type is a user defined string. Types starting with '_' are reserved for dear imgui internal types.
+     *  Data is held by imgui.
+     *  Use 'cond' to choose to submit payload on drag start or every frame */
+    fun setDragDropPayload(type: String, data: Any, cond_: Cond = Cond.None): Boolean {
         val payload = g.dragDropPayload
         val cond = if (cond_ == Cond.None) Cond.Always else cond_
 
         assert(type.isNotEmpty())
-        assert(type.length < 32) { "Payload type can be at most 32 characters long" }
+//        assert(type.length < 32) { "Payload type can be at most 32 characters long" }
 //        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
         assert(cond == Cond.Always || cond == Cond.Once)
         assert(payload.sourceId != 0) { "Not called between beginDragDropSource() and endDragDropSource()" }
 
-        fun savePayload() {
-            when (data) {
-                is Byte -> payload.data!![0] = data
-                is Int -> payload.data!!.putInt(0, data)
-                is Short -> payload.data!!.putShort(0, data)
-                is Long -> payload.data!!.putLong(0, data)
-                is Float -> payload.data!!.putFloat(0, data)
-                is Double -> payload.data!!.putDouble(0, data)
-                is Char -> payload.data!!.putChar(0, data)
-                is Vec2 -> {
-                    val floats = payload.data!!.asFloatBuffer()
-                    for (i in 0 until size / Float.BYTES)
-                        floats[i] = data[i]
-                }
-                is Vec3 -> {
-                    val floats = payload.data!!.asFloatBuffer()
-                    for (i in 0 until size / Float.BYTES)
-                        floats[i] = data[i]
-                }
-                is Vec4 -> {
-                    val floats = payload.data!!.asFloatBuffer()
-                    for (i in 0 until size / Float.BYTES)
-                        floats[i] = data[i]
-                }
-            }
-        }
-
         if (cond == Cond.Always || payload.dataFrameCount == -1) {
             // Copy payload
-            type.toCharArray(payload.dataType)
-            g.dragDropPayloadBufHeap = ByteBuffer.allocate(0)
-            when {
-                size > g.dragDropPayloadBufLocal.rem -> { // Store in heap
-                    g.dragDropPayloadBufHeap = ByteBuffer.allocate(size)
-                    payload.data = g.dragDropPayloadBufHeap
-                    savePayload()
-                }
-                size > 0 -> { // Store locally
-                    g.dragDropPayloadBufLocal.fill(0)
-                    payload.data = g.dragDropPayloadBufLocal
-                    savePayload()
-                }
-                else -> payload.data = null
-            }
-            payload.dataSize = size
+            payload.dataType = type
+            payload.data = data
         }
         payload.dataFrameCount = g.frameCount
 

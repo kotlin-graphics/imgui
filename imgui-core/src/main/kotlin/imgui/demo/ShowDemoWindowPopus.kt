@@ -41,7 +41,7 @@ import imgui.dsl.withStyleVar
 import imgui.demo.showExampleApp.MenuFile
 import imgui.WindowFlag as Wf
 
-object showDemoWindowPopups {
+object ShowDemoWindowPopups {
 
     /* Popus */
     var selectedFish = -1
@@ -49,7 +49,7 @@ object showDemoWindowPopups {
 
     /* Context Menu */
     var value = 0.5f
-    var name = CharArray(128) { NUL }.also { "Label1".toCharArray().copyInto(it) }
+    var name = "Label1".toByteArray(128)
 
     var dontAskMeNextTime = false
 
@@ -148,7 +148,7 @@ object showDemoWindowPopups {
                 BeginPopupContextItem() will use the last item ID as the popup ID.
                 In addition here, we want to include your editable label inside the button label. We use the ### operator to override the ID (read FAQ about ID for details)
              */
-            val text = "Button: ${String(name.copyOfRange(0, name.strlen))}###Button" // ### operator override id ignoring the preceding label
+            val text = "Button: ${String(name, 0, name.strlen())}###Button" // ### operator override id ignoring the preceding label
             button(text)
             popupContextItem {
                 text("Edit name")

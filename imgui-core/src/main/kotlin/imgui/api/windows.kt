@@ -3,6 +3,7 @@ package imgui.api
 import gli_.has
 import gli_.hasnt
 import glm_.f
+import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.endColumns
@@ -92,6 +93,7 @@ interface windows {
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
+        window.isFallbackWindow = g.currentWindowStack.isEmpty() && g.withinFrameScopeWithImplicitWindow
 
         // Update the Appearing flag
         // Not using !WasActive because the implicit "Debug" window would always toggle off->on
@@ -143,6 +145,10 @@ interface windows {
         if (windowJustAppearingAfterHiddenForResize && flags hasnt Wf._ChildWindow)
             window.navLastIds[0] = 0
 
+        // Update ->RootWindow and others pointers (before any possible call to FocusWindow)
+        if (firstBeginOfTheFrame)
+            window.updateParentAndRootLinks(flags, parentWindow)
+
         // Process SetNextWindow***() calls
         var windowPosSetByApi = false
         var windowSizeXsetByApi = false
@@ -178,7 +184,6 @@ interface windows {
         if (firstBeginOfTheFrame) {
             // Initialize
             val windowIsChildTooltip = flags has Wf._ChildWindow && flags has Wf._Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
-            window.updateParentAndRootLinks(flags, parentWindow)
 
             window.active = true
             window.hasCloseButton = pOpen != null
@@ -199,7 +204,7 @@ interface windows {
 //                window->Name = ImStrdupcpy(window->Name, &buf_len, name)
 //                window->NameBufLen = (int)buf_len
                 window.name = name
-                window.nameBufLen = name.length
+                window.nameBufLen = name.toByteArray().size
             }
 
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
@@ -233,6 +238,7 @@ interface windows {
                 }
             }
 
+            // SELECT VIEWPORT
             // FIXME-VIEWPORT: In the docking/viewport branch, this is the point where we select the current viewport (which may affect the style)
             setCurrentWindow(window)
 
@@ -246,8 +252,6 @@ interface windows {
             window.windowPadding put style.windowPadding
             if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f)
                 window.windowPadding.put(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
-            window.dc.menuBarOffset.x = max(max(window.windowPadding.x, style.itemSpacing.x), g.nextWindowData.menuBarOffsetMinVal.x)
-            window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
 
             /* Collapse window by double-clicking on title bar
             At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
@@ -339,15 +343,14 @@ interface windows {
                 window.pos = findBestWindowPosForPopup(window)
 
             // Clamp position/size so window stays visible within its viewport or monitor
-
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
             val viewportRect = viewportRect
-            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0)
-            // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
-                if (io.displaySize allGreaterThan 0) {
-                    val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
+            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0) {
+                // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
+                val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
+                if (viewportRect.width > 0f && viewportRect.height > 0f)
                     window.clampRect(viewportRect, clampPadding)
-                }
+            }
             window.pos put floor(window.pos)
 
             // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)
@@ -498,22 +501,23 @@ interface windows {
             // We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping child.
             // We also disabled this when we have dimming overlay behind this specific one child.
             // FIXME: More code may rely on explicit sorting of overlapping child window and would need to disable this somehow. Please get in contact if you are affected.
-            var renderDecorationsInParent = false
-            if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip)
-                if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0)
-                    renderDecorationsInParent = true
-            if (renderDecorationsInParent)
-                window.drawList = parentWindow!!.drawList
+            run {
+                var renderDecorationsInParent = false
+                if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip)
+                    if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0)
+                        renderDecorationsInParent = true
+                if (renderDecorationsInParent)
+                    window.drawList = parentWindow!!.drawList
 
-            // Handle title bar, scrollbar, resize grips and resize borders
-            val windowToHighlight = g.navWindowingTarget ?: g.navWindow
-            val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
-                    ?: false)
-            window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
+                // Handle title bar, scrollbar, resize grips and resize borders
+                val windowToHighlight = g.navWindowingTarget ?: g.navWindow
+                val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
+                        ?: false)
+                window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
 
-            if (renderDecorationsInParent)
-                window.drawList = window.drawListInst
-
+                if (renderDecorationsInParent)
+                    window.drawList = window.drawListInst
+            }
             // Draw navigation selection/windowing rectangle border
             if (g.navWindowingTargetAnim === window) {
                 var rounding = max(window.windowRounding, style.windowRounding)
@@ -578,28 +582,35 @@ interface windows {
                 dc.currLineSize put 0f
                 dc.prevLineTextBaseOffset = 0f
                 dc.currLineTextBaseOffset = 0f
+
+                dc.navLayerCurrent = NavLayer.Main
+                dc.navLayerCurrentMask = 1 shl NavLayer.Main
+                dc.navLayerActiveMask = dc.navLayerActiveMaskNext
+                dc.navLayerActiveMaskNext = 0x00
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = scrollMax.y > 0f
-                dc.navLayerActiveMask = dc.navLayerActiveMaskNext
-                dc.navLayerActiveMaskNext = 0
+
                 dc.menuBarAppending = false
+                dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
+                dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
+                dc.menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
+                dc.treeDepth = 0
+                dc.treeJumpToParentOnPopMask = 0x00
                 dc.childWindows.clear()
+                dc.stateStorage = stateStorage
+                dc.currentColumns = null
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
-                dc.focusCounterTab = -1
-                dc.focusCounterAll = -1
+                dc.focusCounterTabStop = -1
+                dc.focusCounterRegular = -1
+
                 dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
                 dc.itemFlagsStack.clear()
                 dc.itemWidthStack.clear()
                 dc.textWrapPosStack.clear()
-                dc.currentColumns = null
-                dc.treeDepth = 0
-                dc.treeMayJumpToParentOnPopMask = 0
-                dc.stateStorage = stateStorage
                 dc.groupStack.clear()
-                menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
 
                 if (flags has Wf._ChildWindow && dc.itemFlags != parentWindow!!.dc.itemFlags) {
                     dc.itemFlags = parentWindow.dc.itemFlags
@@ -673,7 +684,6 @@ interface windows {
         // Update the Hidden flag
         window.hidden = window.hiddenFramesCanSkipItems > 0 || window.hiddenFramesCannotSkipItems > 0
 
-        // Return false if we don't intend to display anything to allow user to perform an early out optimization
         // Update the SkipItems flag, used to early out of all items functions (no layout required)
         val skipItems = window.run { (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0 }
         window.skipItems = skipItems

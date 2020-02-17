@@ -33,7 +33,6 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
-import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setWindowFontScale
@@ -48,17 +47,18 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
+import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.g
+import imgui.classes.Style
+import imgui.classes.TextFilter
 import imgui.dsl.button
 import imgui.dsl.child
+import imgui.dsl.radioButton
 import imgui.dsl.smallButton
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
-import imgui.api.g
-import imgui.api.demoDebugInformations.Companion.helpMarker
-import imgui.classes.Style
-import imgui.classes.TextFilter
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
 import imgui.WindowFlag as Wf
@@ -195,9 +195,9 @@ object StyleEditor {
 
                 filter.draw("Filter colors", fontSize * 16)
 
-                radioButton("Opaque", ::alphaFlags, 0); sameLine()
-                radioButton("Alpha", ::alphaFlags, Cef.AlphaPreview.i); sameLine()
-                radioButton("Both", ::alphaFlags, Cef.AlphaPreviewHalf.i); sameLine()
+                radioButton("Opaque", alphaFlags == 0) { alphaFlags = 0 }; sameLine()
+                radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
+                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) { alphaFlags = Cef.AlphaPreviewHalf.i }; sameLine()
                 helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.");
 
                 child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
@@ -283,6 +283,7 @@ object StyleEditor {
                                             if (isMouseHoveringRect(cellP1, cellP2))
                                                 tooltip {
                                                     text("Codepoint: U+%04X", base + n)
+                                                    text("visible: ${glyph.visible}")
                                                     separator()
                                                     text("AdvanceX+1: %.1f", glyph.advanceX)
                                                     text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
@@ -318,8 +319,9 @@ object StyleEditor {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
-                dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, Float.MAX_VALUE, "%.2f", 2f)
+                dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
+                dragFloat("Circle segment Max Error", style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f")
                 /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                     But application code could have a toggle to switch between zero and non-zero.             */
                 dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")

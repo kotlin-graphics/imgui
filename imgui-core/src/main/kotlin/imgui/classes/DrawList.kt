@@ -1,10 +1,8 @@
 package imgui.classes
 
 import gli_.hasnt
-import glm_.L
-import glm_.f
+import glm_.*
 import glm_.func.common.max
-import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -14,6 +12,8 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.font.Font
 import imgui.internal.*
+import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC
+import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX
 import imgui.internal.classes.DrawListSharedData
 import imgui.internal.classes.Rect
 import kool.*
@@ -121,6 +121,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
     // Primitives
     // - For rectangular primitives, "p_min" and "p_max" represent the upper-left and lower-right corners.
+    // - For circle primitives, use "num_segments == 0" to automatically calculate tessellation (preferred).
+    //   In future versions we will use textures to provide cheaper and higher-quality circles.
+    //   Use AddNgon() and AddNgonFilled() functions if you need to guaranteed a specific number of sides.
     // -----------------------------------------------------------------------------------------------------------------
 
     /** JVM it's safe to pass directly Vec2 istances, they wont be modified */
@@ -218,23 +221,55 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathFillConvex(col)
     }
 
-    fun addCircle(center: Vec2, radius: Float, col: Int, numSegments: Int = 12, thickness: Float = 1f) {
+    fun addCircle(center: Vec2, radius: Float, col: Int, numSegments_: Int = 12, thickness: Float = 1f) {
 
-        if (col hasnt COL32_A_MASK || numSegments <= 2) return
+        if (col hasnt COL32_A_MASK || radius <= 0f) return
+
+        // Obtain segment count
+        val numSegments = when {
+            numSegments_ <= 0 -> {
+                // Automatic segment count
+                val radiusIdx = radius.i - 1
+                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
+                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
+                }
+            }
+            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+        }
 
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
+        if (numSegments == 12)
+            pathArcToFast(center, radius - 0.5f, 0, 12)
+        else
+            pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         pathStroke(col, true, thickness)
     }
 
-    fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments: Int = 12) {
+    fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 12) {
 
-        if (col hasnt COL32_A_MASK || numSegments <= 2) return
+        if (col hasnt COL32_A_MASK || radius <= 0f) return
+
+        // Obtain segment count
+        val numSegments = when {
+            numSegments_ <= 0 -> {
+                // Automatic segment count
+                val radiusIdx = radius.i - 1
+                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
+                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
+                }
+            }
+            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+        }
 
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        pathArcTo(center, radius, 0f, aMax, numSegments - 1)
+        if (numSegments == 12)
+            pathArcToFast(center, radius, 0, 12)
+        else
+            pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
     }
 
@@ -260,16 +295,19 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathFillConvex(col)
     }
 
-    fun addText(pos: Vec2, col: Int, text: CharArray, textEnd: Int = text.size) = addText(g.font, g.fontSize, pos, col, text, textEnd)
+    fun addText(pos: Vec2, col: Int, text: String) = addText(g.font, g.fontSize, pos, col, text)
 
-    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: CharArray, textEnd_: Int = text.size, wrapWidth: Float = 0f,
-                cpuFineClipRect: Vec4? = null) {
+    fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
+                wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
+        val bytes = text.toByteArray()
+        addText(font, fontSize, pos, col, bytes, bytes.size, wrapWidth, cpuFineClipRect)
+    }
+
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray,
+                textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
 
-        var textEnd = textEnd_
-        if (textEnd == 0)
-            textEnd = text.strlen
         if (textEnd == 0)
             return
 
@@ -283,10 +321,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         val clipRect = Vec4(_clipRectStack.last())
         cpuFineClipRect?.let {
-            clipRect.x = glm.max(clipRect.x, cpuFineClipRect.x)
-            clipRect.y = glm.max(clipRect.y, cpuFineClipRect.y)
-            clipRect.z = glm.min(clipRect.z, cpuFineClipRect.z)
-            clipRect.w = glm.min(clipRect.w, cpuFineClipRect.w)
+            clipRect.x = clipRect.x max cpuFineClipRect.x
+            clipRect.y = clipRect.y max cpuFineClipRect.y
+            clipRect.z = clipRect.z min cpuFineClipRect.z
+            clipRect.w = clipRect.w min cpuFineClipRect.w
         }
         font.renderText(this, fontSize, pos, col, clipRect, text, textEnd, wrapWidth, cpuFineClipRect != null)
     }
@@ -814,8 +852,11 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     // -----------------------------------------------------------------------------------------------------------------
     // Advanced: Channels
-    // - Use to split render into layers. By switching channels to can render out-of-order (e.g. submit foreground primitives before background primitives)
-    // - Use to minimize draw calls (e.g. if going back-and-forth between multiple non-overlapping clipping rectangles, prefer to append into separate channels then merge at the end)
+    // - Use to split render into layers. By switching channels to can render out-of-order (e.g. submit FG primitives before BG primitives)
+    // - Use to minimize draw calls (e.g. if going back-and-forth between multiple clipping rectangles, prefer to append into separate channels then merge at the end)
+    // - FIXME-OBSOLETE: This API shouldn't have been in ImDrawList in the first place!
+    //   Prefer using your own persistent copy of ImDrawListSplitter as you can stack them.
+    //   Using the ImDrawList::ChannelsXXXX you cannot stack a split over another.nels then merge at the end)
     // -----------------------------------------------------------------------------------------------------------------
 
     fun channelsSplit(count: Int) = _splitter.split(this, count)

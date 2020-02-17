@@ -20,7 +20,7 @@ import imgui.ImGui.keepAliveID
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
-import imgui.ImGui.setActiveId
+import imgui.ImGui.setActiveID
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
@@ -40,8 +40,10 @@ import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
 /** Storage for one window */
-class Window(var context: Context, var name: String) {
-    /** == ImHash(Name) */
+class Window(var context: Context,
+             /** Window name, owned by the window. */
+             var name: String) {
+    /** == ImHashStr(Name) */
     val id: ID = hash(name)
     /** See enum WindowFlags */
     var flags = Wf.None.i
@@ -63,7 +65,7 @@ class Window(var context: Context, var name: String) {
     /** Window border size at the time of Begin().    */
     var windowBorderSize = 1f
     /** Size of buffer storing Name. May be larger than strlen(Name)! */
-    var nameBufLen = name.length
+    var nameBufLen = name.toByteArray().size
     /** == window->GetID("#MOVE")   */
     var moveId: ID
     /** ID of corresponding item in parent window (for navigation to return from child window to parent window)   */
@@ -98,6 +100,8 @@ class Window(var context: Context, var name: String) {
     var appearing = false
     /** Do not display (== (HiddenFrames*** > 0)) */
     var hidden = false
+    /** Set on the "Debug##Default" window. */
+    var isFallbackWindow = false
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
     /** Current border being held for resize (-1: none, otherwise 0-3) */
@@ -174,9 +178,6 @@ class Window(var context: Context, var name: String) {
     var lastTimeActive = -1f
 
     var itemWidthDefault = 0f
-
-    /** Simplified columns storage for menu items   */
-    val menuColumns = MenuColumns()
 
     var stateStorage = Storage()
 
@@ -310,6 +311,8 @@ class Window(var context: Context, var name: String) {
 
     // --------------------------------------------- internal API ------------------------------------------------------
 
+
+    // Windows: Display Order and Focus Order
 
     /** ~BringWindowToFocusFront */
     fun bringToFocusFront() {
@@ -452,6 +455,9 @@ class Window(var context: Context, var name: String) {
         this.collapsed = collapsed
     }
 
+
+    // Garbage collection
+
     /** Free up/compact internal window buffers, we can use this when a window becomes unused.
      *  This is currently unused by the library, but you may call this yourself for easy GC.
      *  Not freed:
@@ -460,7 +466,7 @@ class Window(var context: Context, var name: String) {
      *  This should have no noticeable visual effect. When the window reappear however, expect new allocation/buffer growth/copy cost.
      *
      *  ~gcCompactTransientWindowBuffers */
-    fun gcCompactTransientWindowBuffers() {
+    fun gcCompactTransientBuffers() {
         memoryCompacted = true
         memoryDrawListIdxCapacity = drawList.idxBuffer.cap
         memoryDrawListVtxCapacity = drawList.vtxBuffer.cap
@@ -500,7 +506,7 @@ class Window(var context: Context, var name: String) {
             but clear g.MovingWindow afterward.
             This is because we want ActiveId to be set even when the window is not permitted to move.   */
         focusWindow(this)
-        setActiveId(moveId, this)
+        setActiveID(moveId, this)
         g.navDisableHighlight = true
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
 
@@ -638,6 +644,9 @@ class Window(var context: Context, var name: String) {
         }
     }
 
+    /** ~RenderWindowDecorations
+     *  Draw background and borders
+     *  Draw and handle scrollbars */
     fun renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
 
         // Ensure that ScrollBar doesn't read last frame's SkipItems
@@ -656,11 +665,15 @@ class Window(var context: Context, var name: String) {
             // Window background
             if (flags hasnt Wf.NoBackground) {
                 var bgCol = getWindowBgColorIdxFromFlags(flags).u32
+                var overrideAlpha = false
                 val alpha = when {
-                    g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> g.nextWindowData.bgAlphaVal
+                    g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> {
+                        overrideAlpha = true
+                        g.nextWindowData.bgAlphaVal
+                    }
                     else -> 1f
                 }
-                if (alpha != 1f)
+                if (overrideAlpha)
                     bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
                 drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
                         if (flags has Wf.NoTitleBar) DrawCornerFlag.All.i else DrawCornerFlag.Bot.i)
@@ -753,8 +766,8 @@ class Window(var context: Context, var name: String) {
         // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
         // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
         val UNSAVED_DOCUMENT_MARKER = "*"
-        val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, -1, false).x else 0f
-        val textSize = calcTextSize(name, -1, true) + Vec2(markerSizeX, 0f)
+        val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER, hideTextAfterDoubleHash = false).x else 0f
+        val textSize = calcTextSize(name, hideTextAfterDoubleHash = true) + Vec2(markerSizeX, 0f)
 
         // As a nice touch we try to ensure that centered title text doesn't get affected by visibility of Close/Collapse button,
         // while uncentered title text will still reach edges correct.
@@ -772,12 +785,12 @@ class Window(var context: Context, var name: String) {
         val layoutR = Rect(titleBarRect.min.x + padL, titleBarRect.min.y, titleBarRect.max.x - padR, titleBarRect.max.y)
         val clipR = Rect(layoutR.min.x, layoutR.min.y, layoutR.max.x + style.itemInnerSpacing.x, layoutR.max.y)
         //if (g.IO.KeyCtrl) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
-        renderTextClipped(layoutR.min, layoutR.max, name, -1, textSize, style.windowTitleAlign, clipR)
+        renderTextClipped(layoutR.min, layoutR.max, name, textSize, style.windowTitleAlign, clipR)
 
         if (flags has Wf.UnsavedDocument) {
             val markerPos = Vec2(kotlin.math.max(layoutR.min.x, layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
             val off = Vec2(0f, floor(-g.fontSize * 0.25f))
-            renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER, -1, null, Vec2(0, style.windowTitleAlign.y), clipR)
+            renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER, null, Vec2(0, style.windowTitleAlign.y), clipR)
         }
     }
 
@@ -900,8 +913,10 @@ class Window(var context: Context, var name: String) {
 
     /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)
      *  ~AddRootWindowToDrawData    */
-    fun addToDrawData() =
-            addToDrawData(if (flags has Wf._Tooltip) g.drawDataBuilder.layers[1] else g.drawDataBuilder.layers[0])
+    fun addToDrawData() {
+        val layer = (flags has Wf._Tooltip).i
+        addToDrawData(g.drawDataBuilder.layers[layer])
+    }
 
     /** ~SetWindowConditionAllowFlags */
     fun setConditionAllowFlags(flags: Int, enabled: Boolean) = if (enabled) {
@@ -958,7 +973,7 @@ class Window(var context: Context, var name: String) {
         if (flags hasnt (Wf._ChildWindow or Wf.AlwaysAutoResize)) {
             newSize maxAssign style.windowMinSize
             // Reduce artifacts with very small windows
-            newSize.y = kotlin.math.max(newSize.y, titleBarHeight + menuBarHeight + kotlin.math.max(0f, style.windowRounding - 1f))
+            newSize.y = newSize.y max (titleBarHeight + menuBarHeight + (0f max (style.windowRounding - 1f)))
         }
         return newSize
     }

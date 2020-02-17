@@ -79,8 +79,8 @@ interface widgetsMenus {
             We remove 1 worth of rounding to max.x to that text in long menus and small windows don't tend to display
             over the lower-right rounded area, which looks particularly glitchy. */
         val barRect = window.menuBarRect()
-        val clipRect = Rect(round(barRect.min.x), round(barRect.min.y + window.windowBorderSize),
-                round(barRect.min.x max (barRect.max.x - window.windowRounding)), round(barRect.max.y))
+        val clipRect = Rect(round(barRect.min.x + window.windowBorderSize), round(barRect.min.y + window.windowBorderSize),
+                round(barRect.min.x max (barRect.max.x - (window.windowRounding max window.windowBorderSize))), round(barRect.max.y))
         clipRect clipWith window.outerRectClipped
         pushClipRect(clipRect.min, clipRect.max, false)
 
@@ -118,7 +118,7 @@ interface widgetsMenus {
                 val layer = NavLayer.Menu
                 assert(window.dc.navLayerActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 focusWindow(window)
-                setNavIDWithRectRel(window.navLastIds[layer], layer, window.navRectRel[layer])
+                setNavIDWithRectRel(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
                 g.navLayer = layer
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
@@ -150,7 +150,6 @@ interface widgetsMenus {
         setNextWindowSize(Vec2(io.displaySize.x, g.nextWindowData.menuBarOffsetMinVal.y + g.fontBaseSize + style.framePadding.y))
         pushStyleVar(StyleVar.WindowRounding, 0f)
         pushStyleVar(StyleVar.WindowMinSize, Vec2i())
-        val flags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val windowFlags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val isOpen = begin("##MainMenuBar", null, windowFlags) && beginMenuBar()
         popStyleVar(2)
@@ -183,7 +182,7 @@ interface widgetsMenus {
 
         val id = window.getId(label)
 
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pressed: Boolean
         var menuIsOpen = isPopupOpen(id)
@@ -207,7 +206,7 @@ interface widgetsMenus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
-            val flags = Sf._NoHoldingActiveID or Sf._PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
+            val flags = Sf._NoHoldingActiveId or Sf._PressedOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
             pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
@@ -216,12 +215,12 @@ interface widgetsMenus {
         } else {
             // Menu inside a menu
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
-            val w = window.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
+            val w = window.dc.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
-            val flags = Sf._NoHoldingActiveID or Sf._PressedOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
+            val flags = Sf._NoHoldingActiveId or Sf._PressedOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
             val textCol = if(enabled) Col.Text else Col.TextDisabled
-            window.drawList.renderArrow(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
+            window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
         }
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
@@ -335,7 +334,7 @@ interface widgetsMenus {
         if (window.skipItems) return false
 
         val pos = Vec2(window.dc.cursorPos)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
@@ -355,16 +354,16 @@ interface widgetsMenus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
         } else {
             val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut) else Vec2()
-            val w = window.menuColumns.declColumns(labelSize.x, shortcutSize.x, floor(g.fontSize * 1.2f)) // Feedback for next frame
+            val w = window.dc.menuColumns.declColumns(labelSize.x, shortcutSize.x, floor(g.fontSize * 1.2f)) // Feedback for next frame
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             pressed = selectable(label, false, flags or Sf._DrawFillAvailWidth, Vec2(w, 0f))
             if (shortcutSize.x > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-                renderText(pos + Vec2(window.menuColumns.pos[1] + extraW, 0f), shortcut, 0, false)
+                renderText(pos + Vec2(window.dc.menuColumns.pos[1] + extraW, 0f), shortcut, false)
                 popStyleColor()
             }
             if (selected)
-                renderCheckMark(pos + Vec2(window.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
+                renderCheckMark(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 

@@ -7,7 +7,6 @@ import glm_.glm
 import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
@@ -185,18 +184,20 @@ interface widgetsColorEditorPicker {
 
         } else if (flags has Cef.DisplayHEX && flags hasnt Cef.NoInputs) {
             // RGB Hexadecimal Input
-            val text = if (alpha) "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
-            else "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
-            val buf = text.toCharArray(CharArray(64))
+            val buf = when {
+                alpha -> "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
+                else -> "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
+            }
             setNextItemWidth(wInputs)
-            if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
+            if (inputText("##Text", buf.toByteArray(64), Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
                 while (buf[p] == '#' || buf[p].isBlankA) p++
                 i.fill(0)
-                String(buf, p, buf.strlen - p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
+                buf.substring(p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
-            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
+            if (flags hasnt Cef.NoOptions)
+                openPopupOnItemClick("context")
         }
 
         var pickerActiveWindow: Window? = null
@@ -265,13 +266,14 @@ interface widgetsColorEditorPicker {
         if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             var acceptedDragDrop = false
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
+                val data = it.data!! as Vec4
                 for (j in 0..2)  // Preserve alpha if any
-                    col[j] = it.data!!.asFloatBuffer()[j]
+                    col[j] = data.array[j]
                 acceptedDragDrop = true
                 valueChanged = true
             }
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_4F)?.let {
-                val floats = it.data!!.asFloatBuffer()
+                val floats = (it.data!! as Vec4).array
                 for (j in 0 until components)
                     col[j] = floats[j]
                 acceptedDragDrop = true
@@ -363,7 +365,7 @@ interface widgetsColorEditorPicker {
         if (flags hasnt Cef._InputMask)
             flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._InputMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
-        assert((flags and Cef._InputMask).isPowerOfTwo);  // Check that only 1 is selected
+        assert((flags and Cef._InputMask).isPowerOfTwo)  // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
@@ -709,7 +711,7 @@ interface widgetsColorEditorPicker {
         itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id)) return false
 
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
+        val (pressed, hovered, _) = buttonBehavior(bb, id)
 
         var flags = flags_
         if (flags has Cef.NoAlpha)
@@ -723,10 +725,11 @@ interface widgetsColorEditorPicker {
         val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
         val bbInner = Rect(bb)
-        /*  The border (using Col.FrameBg) tends to look off when color is near-opaque and rounding is enabled.
-            This offset seemed like a good middle ground to reduce those artifacts.  */
-        val off = -0.75f
-        bbInner expand off
+        var off = 0f
+        if (flags hasnt Cef.NoBorder) {
+            off = -0.75f // The border (using Col_FrameBg) tends to look off when color is near-opaque and rounding is enabled. This offset seemed like a good middle ground to reduce those artifacts.
+            bbInner expand off
+        }
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
@@ -743,19 +746,20 @@ interface widgetsColorEditorPicker {
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, Dcf.All.i)
         }
         renderNavHighlight(bb, id)
-        if (style.frameBorderSize > 0f)
-            renderFrameBorder(bb.min, bb.max, rounding)
-        else
-            window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
+        if (flags hasnt Cef.NoBorder)
+            if (style.frameBorderSize > 0f)
+                renderFrameBorder(bb.min, bb.max, rounding)
+            else
+                window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
         /*  Drag and Drop Source
             NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.         */
         if (g.activeId == id && flags hasnt Cef.NoDragDrop && beginDragDropSource()) {
 
             if (flags has Cef.NoAlpha)
-                setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, colRgb, Vec3.size, Cond.Once)
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_3F, colRgb, Cond.Once)
             else
-                setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, colRgb, Vec4.size, Cond.Once)
+                setDragDropPayload(PAYLOAD_TYPE_COLOR_4F, colRgb, Cond.Once)
             colorButton(descId, col, flags)
             sameLine()
             textEx("Color")

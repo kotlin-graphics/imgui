@@ -19,6 +19,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
 import imgui.internal.TextFlag
+import imgui.internal.formatStringV
 
 
 /** Widgets: Text */
@@ -31,17 +32,13 @@ interface widgetsText {
             textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText)
 
     /** formatted text */
-    fun text(fmt: String, vararg args: Any) = textV(fmt, args)
-
-    fun textV(fmt_: String, args: Array<out Any>) {
+    fun text(fmt: String, vararg args: Any) {
 
         val window = currentWindow
         if (window.skipItems) return
 
-        val fmt = if (args.isEmpty()) fmt_ else fmt_.format(style.locale, *args)
-
-        val textEnd = fmt.length
-        textEx(fmt, textEnd, TextFlag.NoWidthForLargeClippedText)
+        val textEnd = formatStringV(g.tempBuffer, fmt, *args)
+        textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText)
     }
 
     /** shortcut for
@@ -60,11 +57,9 @@ interface widgetsText {
      *      pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
      *      text(fmt, ...)
      *      popStyleColor() */
-    fun textDisabled(fmt: String, vararg args: Any) = textDisabledV(fmt, args)
-
-    fun textDisabledV(fmt: String, args: Array<out Any>) {
+    fun textDisabled(fmt: String, vararg args: Any) {
         pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        textV(fmt, args)
+        text(fmt, args)
         popStyleColor()
     }
 
@@ -93,14 +88,14 @@ interface widgetsText {
         if (window.skipItems) return
         val w = calcItemWidth()
 
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
         val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
         val totalBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x else 0f, style.framePadding.y * 2) + labelSize)
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, 0)) return
         // Render
         val text = fmt.format(style.locale, *args)
-        renderTextClipped(valueBb.min, valueBb.max, text, text.length, null, Vec2(0f, 0.5f))
+        renderTextClipped(valueBb.min, valueBb.max, text, null, Vec2(0f, 0.5f))
         if (labelSize.x > 0f)
             renderText(Vec2(valueBb.max.x + style.itemInnerSpacing.x, valueBb.min.y + style.framePadding.y), label)
     }
@@ -115,8 +110,7 @@ interface widgetsText {
         if (window.skipItems) return
 
         val text = fmt.format(style.locale, *args)
-        val textEnd = text.length
-        val labelSize = calcTextSize(text, textEnd, false)
+        val labelSize = calcTextSize(text, hideTextAfterDoubleHash =  false)
         val totalSize = Vec2(g.fontSize + if(labelSize.x > 0f) (labelSize.x + style.framePadding.x * 2) else 0f, labelSize.y)  // Empty text doesn't add padding
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currLineTextBaseOffset
@@ -127,6 +121,6 @@ interface widgetsText {
         // Render
         val textCol = Col.Text.u32
         window.drawList.renderBullet(bb.min + Vec2(style.framePadding.x + g.fontSize * 0.5f, g.fontSize * 0.5f), textCol)
-        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, 0f), text, text.length, false)
+        renderText(bb.min + Vec2(g.fontSize + style.framePadding.x * 2, 0f), text, false)
     }
 }

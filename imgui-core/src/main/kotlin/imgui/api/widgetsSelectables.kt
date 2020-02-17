@@ -57,7 +57,7 @@ interface widgetsSelectables {
             pushColumnsBackground()
 
         val id = window.getId(label)
-        val labelSize = calcTextSize(label, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val size = Vec2(if (sizeArg.x != 0f) sizeArg.x else labelSize.x, if (sizeArg.y != 0f) sizeArg.y else labelSize.y)
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currLineTextBaseOffset
@@ -102,7 +102,7 @@ interface widgetsSelectables {
 
         // We use NoHoldingActiveID on menus so user can click and _hold_ on a menu then drag to browse child entries
         var buttonFlags = 0
-        if (flags has Sf._NoHoldingActiveID) buttonFlags = buttonFlags or Bf.NoHoldingActiveID
+        if (flags has Sf._NoHoldingActiveId) buttonFlags = buttonFlags or Bf.NoHoldingActiveId
         if (flags has Sf._PressedOnClick) buttonFlags = buttonFlags or Bf.PressedOnClick
         if (flags has Sf._PressedOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
@@ -120,7 +120,7 @@ interface widgetsSelectables {
         if (pressed || (hovered && flags has Sf._SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
                 g.navDisableHighlight = true
-                setNavId(id, window.dc.navLayerCurrent)
+                setNavId(id, window.dc.navLayerCurrent, window.dc.navFocusScopeIdCurrent)
             }
         if (pressed)
             markItemEdited(id)
@@ -147,7 +147,7 @@ interface widgetsSelectables {
         }
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        renderTextClipped(bbInner.min, bbInner.max, label, -1, labelSize, style.selectableTextAlign, bb)
+        renderTextClipped(bbInner.min, bbInner.max, label, labelSize, style.selectableTextAlign, bb)
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups

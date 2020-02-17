@@ -1,13 +1,12 @@
 package imgui.internal
 
 import glm_.*
+import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
-import imgui.Dir
-import imgui.NUL
-import imgui.minus
-import imgui.plus
+import imgui.*
+import imgui.api.g
 import kool.BYTES
 import kool.rem
 import unsigned.toBigInt
@@ -148,19 +147,15 @@ val Int.upperPowerOfTwo: Int
 
 
 // -----------------------------------------------------------------------------------------------------------------
+// Helpers: String, Formatting
 // [SECTION] MISC HELPERS/UTILITIES (String, Format, Hash functions)
 // -----------------------------------------------------------------------------------------------------------------
 
 
 //IMGUI_API int           ImStricmp(const char* str1, const char* str2);
 //IMGUI_API int           ImStrnicmp(const char* str1, const char* str2, size_t count);
-fun CharArray.strncpy(src: CharArray, count: Int) {
-    if (count < 1) return
-    for (i in 0 until count) {
-//        if (src[i] == NUL) break
-        this[i] = src[i]
-    }
-}
+// [JVM] => System.arrayCopy
+//IMGUI_API void          ImStrncpy(char* dst, const char* src, size_t count);
 
 //IMGUI_API char*         ImStrdup(const char* str);
 //IMGUI_API char*         ImStrdupcpy(char* dst, size_t* p_dst_size, const char* str);
@@ -192,23 +187,142 @@ fun trimBlanks(buf: CharArray): CharArray {
 
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
 //IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
-//IMGUI_API int           ImFormatStringV(char* buf, size_t buf_size, const char* fmt, va_list args) IM_FMTLIST(3);
+
+fun formatStringV(buf: ByteArray, fmt: String, vararg args: Any): Int {
+    val bytes = fmt.format(g.style.locale, *args).toByteArray()
+    bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
+    return bytes.size.also { w -> buf[w] = 0 }
+}
+
 //IMGUI_API const char*   ImParseFormatFindStart(const char* format);
 //IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
 //IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
 //IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
+fun charIsBlankA(c: Int): Boolean = c == ' '.i || c == '\t'.i
+
 val Char.isBlankA: Boolean
     get() = this == ' ' || this == '\t'
+
+fun charIsBlankW(c: Int): Boolean = c == ' '.i || c == '\t'.i || c == 0x3000
+
 val Char.isBlankW: Boolean
     get() = this == ' ' || this == '\t' || i == 0x3000
 
 
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar
+// [SECTION] MISC HELPERS/UTILITIES (ImText* functions)
 // -----------------------------------------------------------------------------------------------------------------
 
-//IMGUI_API int           ImTextStrToUtf8(char* buf, int buf_size, const ImWchar* in_text, const ImWchar* in_text_end);      // return output UTF-8 bytes count
-//IMGUI_API int           ImTextCharFromUtf8(unsigned int* out_char, const char* in_text, const char* in_text_end);          // read one character. return input UTF-8 bytes count
+/** return output UTF-8 bytes count */
+fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
+    var b = 0
+    var t = 0
+    while (b < buf.size && t < text.size && text[t] != NUL) {
+        val c = text[t++].i
+        if (c < 0x80)
+            buf[b++] = c.b
+        else
+            b += textCharToUtf8(buf, b, c)
+    }
+    if(b < buf.size) buf[b] = 0
+    return b
+}
+
+/** Based on stb_to_utf8() from github.com/nothings/stb/ */
+fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
+    if (c < 0x80) {
+        buf[b + 0] = c.b
+        return 1
+    }
+    if (c < 0x800) {
+        if (buf.size < b + 2) return 0
+        buf[b + 0] = (0xc0 + (c ushr 6)).b
+        buf[b + 1] = (0x80 + (c and 0x3f)).b
+        return 2
+    }
+    if (c in 0xdc00..0xe000)
+        return 0
+    if (c in 0xd800..0xdc00) {
+        if (buf.size < b + 4) return 0
+        buf[b + 0] = (0xf0 + (c ushr 18)).b
+        buf[b + 1] = (0x80 + ((c ushr 12) and 0x3f)).b
+        buf[b + 2] = (0x80 + ((c ushr 6) and 0x3f)).b
+        buf[b + 3] = (0x80 + (c and 0x3f)).b
+        return 4
+    }
+    //else if (c < 0x10000) {
+    if (buf.size < b + 3) return 0
+    buf[b + 0] = (0xe0 + (c ushr 12)).b
+    buf[b + 1] = (0x80 + ((c ushr 6) and 0x3f)).b
+    buf[b + 2] = (0x80 + (c and 0x3f)).b
+    return 3
+//    }
+}
+
+/** read one character. return input UTF-8 bytes count
+ *  @return [JVM] [char: Int, bytes: Int] */
+fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int): Pair<Int, Int> {
+    var str = textBegin
+    fun s(i: Int = 0) = text[i + str].toUInt()
+    fun spp() = text[str++].toUInt()
+    val invalid = UNICODE_CODEPOINT_INVALID // will be invalid but not end of string
+    if ((s() and 0x80) == 0) return spp() to 1
+    if ((s() and 0xe0) == 0xc0) {
+        if (textEnd != 0 && textEnd - str < 2) return invalid to 1
+        if (s() < 0xc2) return invalid to 2
+        var c = (spp() and 0x1f) shl 6
+        if ((s() and 0xc0) != 0x80) return invalid to 2
+        c += (spp() and 0x3f)
+        return c to 2
+    }
+    if ((s() and 0xf0) == 0xe0) {
+        if (textEnd != 0 && textEnd - str < 3) return invalid to 1
+        if (s() == 0xe0 && (s(1) < 0xa0 || s(1) > 0xbf)) return invalid to 3
+        if (s() == 0xed && s(1) > 0x9f) return invalid to 3 // str[1] < 0x80 is checked below
+        var c = (spp() and 0x0f) shl 12
+        if ((s() and 0xc0) != 0x80) return invalid to 3
+        c += (spp() and 0x3f) shl 6
+        if ((s() and 0xc0) != 0x80) return invalid to 3
+        c += spp() and 0x3f
+        return c to 3
+    }
+    if ((s() and 0xf8) == 0xf0) {
+        if (textEnd != 0 && textEnd - str < 4) return invalid to 1
+        if (s() > 0xf4) return invalid to 4
+        if (s() == 0xf0 && (s(1) < 0x90 || s(1) > 0xbf)) return invalid to 4
+        if (s() == 0xf4 && s(1) > 0x8f) return invalid to 4 // str[1] < 0x80 is checked below
+        var c = (spp() and 0x07) shl 18
+        if ((s() and 0xc0) != 0x80) return invalid to 4
+        c += (spp() and 0x3f) shl 12
+        if ((s() and 0xc0) != 0x80) return invalid to 4
+        c += (spp() and 0x3f) shl 6
+        if ((s() and 0xc0) != 0x80) return invalid to 4
+        c += spp() and 0x3f
+        // utf-8 encodings of values used in surrogate pairs are invalid
+        if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
+        return c to 4
+    }
+    return 0 to 0
+}
+
+/** return input UTF-8 bytes count */
+fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, textRemaining: Vec1i? = null): Int {
+    var b = 0
+    var t = 0
+    while (b < buf.lastIndex && t < textEnd && text[t] != 0.b) {
+        val (c, bytes) = textCharFromUtf8(text, t, textEnd)
+        t += bytes
+        if (c == 0)
+            break
+        if (c <= UNICODE_CODEPOINT_MAX)    // FIXME: Losing characters that don't fit in 2 bytes
+            buf[b++] = c.c
+    }
+    if(b < buf.size) buf[b] = NUL
+    textRemaining?.put(t)
+    return b
+}
+
 /** ~ImTextStrFromUtf8 */
 fun CharArray.textStr(src: CharArray): Int {
     var i = 0
@@ -218,15 +332,60 @@ fun CharArray.textStr(src: CharArray): Int {
     }
     return i
 }
-//IMGUI_API int           ImTextCountCharsFromUtf8(const char* in_text, const char* in_text_end);                            // return number of UTF-8 code-points (NOT bytes count)
+
+/** return number of UTF-8 code-points (NOT bytes count) */
+fun textCountCharsFromUtf8(text: ByteArray, textEnd: Int = text.size): Int {
+    var charCount = 0
+    var t = 0
+    while (t < textEnd && text[t] != 0.b) {
+        val (c, bytes) = textCharFromUtf8(text, t, textEnd)
+        t += bytes
+        if (c == 0)
+            break
+        if (c <= UNICODE_CODEPOINT_MAX)
+            charCount++
+    }
+    return charCount
+}
+
+/** return number of bytes to express one char in UTF-8 */
+fun textCountUtf8BytesFromChar(text: ByteArray, textEnd: Int): Int {
+    val (_, bytes) = textCharFromUtf8(text, textEnd = textEnd)
+    return bytes
+}
+
 /** return number of bytes to express one char in UTF-8 */
 fun String.countUtf8BytesFromChar(textEnd: Int) = kotlin.math.min(length, textEnd)
-//IMGUI_API int           ImTextCountUtf8BytesFromStr(const ImWchar* in_text, const ImWchar* in_text_end);                   // return number of bytes to express string in UTF-8
 
+/** return number of bytes to express string in UTF-8
+ *  overload with textBegin = 0 */
+fun textCountUtf8BytesFromStr(text: CharArray, textEnd: Int): Int = textCountUtf8BytesFromStr(text, 0, textEnd)
+
+/** return number of bytes to express string in UTF-8 */
+fun textCountUtf8BytesFromStr(text: CharArray, textBegin: Int, textEnd: Int): Int {
+    var bytesCount = 0
+    var t = textBegin
+    while (t < textEnd && text[t] != NUL) {
+        val c = text[t++].i
+        if (c < 0x80)
+            bytesCount++
+        else
+            bytesCount += textCountUtf8BytesFromChar(c)
+    }
+    return bytesCount
+}
+
+fun textCountUtf8BytesFromChar(c: Int) = when {
+    c < 0x80 -> 1
+    c < 0x800 -> 2
+    c in 0xdc00..0xe000 -> 0
+    c in 0xd800..0xdc00 -> 4
+    else -> 3
+}
 
 /** Find beginning-of-line
- *  ~InputTextCalcTextSizeW(ImStrbolW(searches_input_ptr[0], text_begin), searches_input_ptr[0]).x*/
-fun CharArray.beginOfLine(midLine: Int): Int {
+ *  ~ImStrbolW */
+infix fun CharArray.beginOfLine(midLine: Int): Int {
     var res = midLine
     while (res > 0 && this[res - 1] != '\n') res--
     return res
@@ -236,8 +395,8 @@ val Vec2.lengthSqr: Float
     get() = x * x + y * y
 
 // -----------------------------------------------------------------------------------------------------------------
-// - ImMin/ImMax/ImClamp/ImLerp/ImSwap are used by widgets which support for variety of types: signed/unsigned int/long long float/double
-// (Exceptionally using templates here but we could also redefine them for variety of types)
+// - ImMin/ImMax/ImClamp/ImLerp/ImSwap are used by widgets which support variety of types: signed/unsigned int/long long float/double
+// (Exceptionally using templates here but we could also redefine them for those types)
 // -----------------------------------------------------------------------------------------------------------------
 
 fun swap(a: KMutableProperty0<Float>, b: KMutableProperty0<Float>) {

@@ -75,8 +75,9 @@ class OnceUponAFrame {
 class Payload {
     // Members
 
-    /** Data (copied and owned by dear imgui) */
-    var data: ByteBuffer? = null
+    // /** Data (copied and owned by dear imgui) */
+    /** Data provided by setDragDropSource */
+    var data: Any? = null
     /** Data size */
     var dataSize = 0
 
@@ -88,9 +89,8 @@ class Payload {
     var sourceParentId: ID = 0
     /** Data timestamp */
     var dataFrameCount = -1
-    /** Data type tag (short user-supplied string, 32 characters max) */
-    val dataType = CharArray(32)
-    val dataTypeS get() = String(dataType)
+    /** Data type tag (short user-supplied string, 32 characters max) */ // JVM: No character limit
+    var dataType: String? = null
     /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
     var preview = false
     /** Set when AcceptDragDropPayload() was called and mouse button is released over the target item. */
@@ -101,13 +101,13 @@ class Payload {
         sourceId = 0
         data = null
         dataSize = 0
-        dataType.fill(NUL)
+        dataType = null
         dataFrameCount = -1
         delivery = false
         preview = false
     }
 
-    fun isDataType(type: String): Boolean = dataFrameCount != -1 && type cmp dataType
+    fun isDataType(type: String): Boolean = dataFrameCount != -1 && type == dataType
 }
 
 class SizeCallbackData(
@@ -174,12 +174,12 @@ class Storage {
 //}
 class TextFilter(defaultFilter: String? = "") {
 
-    val inputBuf = CharArray(256)
+    var inputBuf = ByteArray(256)
     val filters = ArrayList<String>()
     var countGrep = 0
 
     init {
-        defaultFilter?.toCharArray(inputBuf)
+        defaultFilter?.toByteArray(inputBuf)
     }
 
     class TextRange
@@ -221,7 +221,12 @@ class TextFilter(defaultFilter: String? = "") {
 
     fun build() {
         filters.clear()
-        filters.addAll(String(inputBuf.copyOf(inputBuf.strlen)).split(",").stream().filter(String::isNotEmpty).collect(Collectors.toList()))
+        // TODO check if resync
+        filters.addAll(String(inputBuf)
+                .split(",")
+                .stream()
+                .filter(String::isNotEmpty)
+                .collect(Collectors.toList()))
     }
 }
 

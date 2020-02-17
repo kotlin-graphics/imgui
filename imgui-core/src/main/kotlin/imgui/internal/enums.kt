@@ -4,42 +4,50 @@ import glm_.vec2.Vec2
 import imgui.internal.classes.Rect
 
 
-enum class ButtonFlag {
+enum class ButtonFlag(val i: ButtonFlags) {
 
-    None,
+    None(0),
     /** hold to repeat  */
-    Repeat,
-    /** [Default] return true on click + release on same item  */
-    PressedOnClickRelease,
-    /** return true on click (default requires click+release)    */
-    PressedOnClick,
-    /** return true on release (default requires click+release)  */
-    PressedOnRelease,
+    Repeat(1 shl 0),
+    /** return true on click (mouse down event) */
+    PressedOnClick(1 shl 1),
+    /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
+    PressedOnClickRelease(1 shl 2),
+    /** return true on click + release even if the release event is not done while hovering the item */
+    PressedOnClickReleaseAnywhere(1 shl 3),
+    /** return true on release (default requires click+release) */
+    PressedOnRelease(1 shl 4),
     /** return true on double-click (default requires click+release) */
-    PressedOnDoubleClick,
+    PressedOnDoubleClick(1 shl 5),
+    /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
+    PressedOnDragDropHold(1 shl 6),
     /** allow interactions even if a child window is overlapping */
-    FlattenChildren,
-    /** require previous frame HoveredId to either match id or be null before being usable, use along with setItemAllowOverlap() */
-    AllowItemOverlap,
+    FlattenChildren(1 shl 7),
+    /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
+    AllowItemOverlap(1 shl 8),
     /** disable automatically closing parent popup on press // [UNUSED] */
-    DontClosePopups,
+    DontClosePopups(1 shl 9),
     /** disable interactions */
-    Disabled,
-    /** vertically align button to match text baseline - ButtonEx() only
-     *  FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
-    AlignTextBaseLine,
+    Disabled(1 shl 10),
+    /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
+    AlignTextBaseLine(1 shl 11),
     /** disable mouse interaction if a key modifier is held */
-    NoKeyModifiers,
-    /** don't set ActiveId while holding the mouse (ButtonFlag.PressedOnClick only) */
-    NoHoldingActiveID,
-    /** press when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
-    PressedOnDragDropHold,
-    /** don't override navigation focus when activated; */
-    NoNavFocus,
+    NoKeyModifiers(1 shl 12),
+    /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
+    NoHoldingActiveId(1 shl 13),
+    /** don't override navigation focus when activated */
+    NoNavFocus(1 shl 14),
     /** don't report as hovered when navigated on */
-    NoHoveredOnNav;
+    NoHoveredOnNav(1 shl 15),
+    MouseButtonLeft        (1 shl 16),  // [Default] react on left mouse button
+    MouseButtonRight       (1 shl 17),  // react on right mouse button
+    MouseButtonMiddle      (1 shl 18),  // react on center mouse button
 
-    val i: ButtonFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    MouseButtonMask_       (MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
+    MouseButtonShift_      (16),
+    MouseButtonDefault_    (MouseButtonLeft.i),
+    PressedOnMask_         (PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold),
+    PressedOnDefault_      (PressedOnClickRelease.i);
 
     infix fun and(b: ButtonFlag): ButtonFlags = i and b.i
     infix fun and(b: ButtonFlags): ButtonFlags = i and b
@@ -212,6 +220,30 @@ infix fun ItemStatusFlags.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv()
 
 
 enum class TextFlag { None, NoWidthForLargeClippedText }
+
+
+typealias TooltipFlags = Int
+
+enum class TooltipFlag(val i: TooltipFlags) {
+    None(0),
+    /** Override will clear/ignore previously submitted tooltip (defaults to append) */
+    OverridePreviousTooltip(1 shl 0);
+
+    infix fun and(b: TooltipFlag): TooltipFlags = i and b.i
+    infix fun and(b: TooltipFlags): TooltipFlags = i and b
+    infix fun or(b: TooltipFlag): TooltipFlags = i or b.i
+    infix fun or(b: TooltipFlags): TooltipFlags = i or b
+    infix fun xor(b: TooltipFlag): TooltipFlags = i xor b.i
+    infix fun xor(b: TooltipFlags): TooltipFlags = i xor b
+    infix fun wo(b: TooltipFlags): TooltipFlags = and(b.inv())
+}
+
+infix fun TooltipFlags.and(b: TooltipFlag): TooltipFlags = and(b.i)
+infix fun TooltipFlags.or(b: TooltipFlag): TooltipFlags = or(b.i)
+infix fun TooltipFlags.xor(b: TooltipFlag): TooltipFlags = xor(b.i)
+infix fun TooltipFlags.has(b: TooltipFlag): Boolean = and(b.i) != 0
+infix fun TooltipFlags.hasnt(b: TooltipFlag): Boolean = and(b.i) == 0
+infix fun TooltipFlags.wo(b: TooltipFlag): TooltipFlags = and(b.i.inv())
 
 
 /** FIXME: this is in development, not exposed/functional as a generic feature yet.

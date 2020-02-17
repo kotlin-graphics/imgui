@@ -202,6 +202,7 @@ interface demoDebugInformations {
         separator()
 
         Funcs.nodeWindows(g.windows, "Windows")
+        //Funcs::NodeWindows(g.WindowsFocusOrder, "WindowsFocusOrder")
         if (treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
             g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs.nodeDrawList(null, it, "DrawList") } }
             treePop()
@@ -220,8 +221,8 @@ interface demoDebugInformations {
 
         // Details for TabBars
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
-            for (n in 0 until g.tabBars.size)
-                Funcs.nodeTabBar(g.tabBars[n]!!)
+            for (n in 0 until g.tabBars.buf.size)
+                Funcs.nodeTabBar(g.tabBars.buf[n]!!)
             treePop()
         }
 
@@ -259,7 +260,7 @@ interface demoDebugInformations {
             text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
             text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
             text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
-            text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataTypeS}\" " +
+            text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
                     "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
             treePop()
         }
@@ -305,7 +306,7 @@ interface demoDebugInformations {
                     drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
                 }
                 if (showWindowsBeginOrder && window.flags hasnt Wf._ChildWindow) {
-                    val buf = "${window.beginOrderWithinContext}".toCharArray(CharArray(32))
+                    val buf = "${window.beginOrderWithinContext}"
                     drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
                     drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
                 }

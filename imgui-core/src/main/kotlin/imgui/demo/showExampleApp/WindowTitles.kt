@@ -8,14 +8,13 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.text
 import imgui.ImGui.time
 import imgui.dsl.window
-import kotlin.reflect.KMutableProperty0
 
 object WindowTitles {
 
     /** Demonstrate using "##" and "###" in identifiers to manipulate ID generation.
      *  This apply to regular items as well. Read FAQ section "How can I have multiple widgets with the same label?
      *  Can I have widget without a label? (Yes). A primer on the purpose of labels/IDs." for details.   */
-    operator fun invoke(open: KMutableProperty0<Boolean>) {
+    operator fun invoke() {
         /*  By default, Windows are uniquely identified by their title.
             You can use the "##" and "###" markers to manipulate the display/ID.
             Using "##" to display same title but have unique identifier.    */

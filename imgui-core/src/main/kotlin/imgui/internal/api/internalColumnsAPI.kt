@@ -26,7 +26,8 @@ import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
 
-internal interface newColumnsAPI {
+/** Internal Columns API (this is not exposed because we will encourage transitioning to the Tables api) */
+internal interface internalColumnsAPI {
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
     fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {
@@ -84,8 +85,8 @@ internal interface newColumnsAPI {
         }
 
         if (columns.count > 1) {
-            window.drawList.channelsSplit(1 + columns.count)
-            window.drawList.channelsSetCurrent(1)
+            columns.splitter.split(window.drawList, 1 + columns.count)
+            columns.splitter.setCurrentChannel(window.drawList, 1)
             pushColumnClipRect(0)
         }
 
@@ -107,7 +108,7 @@ internal interface newColumnsAPI {
         popItemWidth()
         if (columns.count > 1) {
             popClipRect()
-            window.drawList.channelsMerge()
+            columns.splitter merge window.drawList
         }
 
         val flags = columns.flags
@@ -187,7 +188,7 @@ internal interface newColumnsAPI {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
         if (columns.count == 1) return
-        window.drawList.channelsSetCurrent(0)
+        columns.splitter.setCurrentChannel(window.drawList, 0)
         val cmdSize = window.drawList.cmdBuffer.size
         pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
         assert(cmdSize == window.drawList.cmdBuffer.size) { "Being in channel 0 this should not have created an ImDrawCmd" }
@@ -197,7 +198,7 @@ internal interface newColumnsAPI {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
         if (columns.count == 1) return
-        window.drawList.channelsSetCurrent(columns.current + 1)
+        columns.splitter.setCurrentChannel(window.drawList, columns.current + 1)
         popClipRect()
     }
 
