@@ -64,7 +64,7 @@ class DrawListSharedData {
         Vec2(cos(a), sin(a))
     }
     /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
-    val circleSegmentCounts = IntArray(64)
+    val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
 
     fun setCircleSegmentMaxError_(maxError: Float) {
         if (circleSegmentMaxError == maxError)
