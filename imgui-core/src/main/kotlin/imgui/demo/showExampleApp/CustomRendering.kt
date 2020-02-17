@@ -1,12 +1,15 @@
 package imgui.demo.showExampleApp
 
+import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.COL32
+import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.backgroundDrawList
 import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
+import imgui.ImGui.calcItemWidth
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.contentRegionAvail
@@ -27,6 +30,7 @@ import imgui.ImGui.isMouseDown
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
+import imgui.ImGui.separator
 import imgui.ImGui.sliderInt
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -36,8 +40,9 @@ import imgui.ImGui.windowSize
 import imgui.MouseButton
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.dsl.button
+import imgui.dsl.radioButton
 import imgui.internal.DrawCornerFlag
-import imgui.internal.DrawCornerFlags
+import imgui.u32
 import kotlin.reflect.KMutableProperty0
 
 object CustomRendering {
@@ -47,7 +52,8 @@ object CustomRendering {
     var ngonSides = 6
     var circleSegmentsOverride = false
     var circleSegmentsOverrideV = 12
-    val colf = Vec4(1.0f, 1.0f, 0.4f, 1.0f)
+    val colf = Vec4(1f, 1f, 0.4f, 1f)
+    var gradientSteps = 16
 
     var addingLine = false
     val points = ArrayList<Vec2>()
@@ -85,14 +91,13 @@ object CustomRendering {
                 if (sliderInt("Circle segments", ::circleSegmentsOverrideV, 3, 40))
                     circleSegmentsOverride = true
                 colorEdit4("Color", colf)
-                popItemWidth()
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
                 val spacing = 10f
                 val cornersNone = DrawCornerFlag.None.i
                 val cornersAll = DrawCornerFlag.All.i
                 val cornersTlBr = DrawCornerFlag.TopLeft or DrawCornerFlag.BotRight
-                val circleSegments = if(circleSegmentsOverride) circleSegmentsOverrideV else 0
+                val circleSegments = if (circleSegmentsOverride) circleSegmentsOverrideV else 0
                 var (x, y) = p + 4f
                 for (n in 0 until 2) {
                     // First line uses a thickness of 1.0f, second line uses the configurable thickness
@@ -126,6 +131,26 @@ object CustomRendering {
                     addRectFilled(Vec2(x, y), Vec2(x + 1, y + 1), col); x += sz            // Pixel (faster than AddLine)
                 }
                 dummy(Vec2((sz + spacing) * 9.8f, (sz + spacing) * 3))
+
+                // Draw black and white gradients
+                separator()
+                alignTextToFramePadding()
+                text("Gradient steps")
+                sameLine(); radioButton("16", gradientSteps == 16) { gradientSteps = 16 }
+                sameLine(); radioButton("32", gradientSteps == 32) { gradientSteps = 32 }
+                sameLine(); radioButton("256", gradientSteps == 256) { gradientSteps = 256 }
+                val gradientSize = Vec2(calcItemWidth(), 64f)
+                val (a, b) = cursorScreenPos
+                x = a
+                y = b
+                for (n in 0 until gradientSteps) {
+                    val f = n / gradientSteps.f
+                    val col32 = Vec4(f, f, f, 1f).u32
+                    drawList.addRectFilled(Vec2(x + gradientSize.x * f, y), Vec2(x + gradientSize.x * ((n + 1) / gradientSteps.f), y + gradientSize.y), col32)
+                }
+                invisibleButton("##gradient", gradientSize)
+
+                popItemWidth()
                 endTabItem()
             }
 
