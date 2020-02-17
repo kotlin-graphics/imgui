@@ -102,11 +102,11 @@ internal interface renderHelpers {
         if (align.y > 0f) pos.y = pos.y max (pos.y + (posMax.y - pos.y - textSize.y) * align.y)
 
         // Render
-        if (needClipping) {
-            val fineClipRect = Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
-            drawList.addText(null, 0f, pos, Col.Text.u32, text, textDisplayEnd, 0f, fineClipRect)
-        } else
-            drawList.addText(null, 0f, pos, Col.Text.u32, text, textDisplayEnd, 0f, null)
+        val fineClipRect = when {
+            needClipping -> Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
+            else -> null
+        }
+        drawList.addText(null, 0f, pos, Col.Text.u32, text, textDisplayEnd, 0f, fineClipRect)
     }
 
     /** Another overly complex function until we reorganize everything into a nice all-in-one helper.
