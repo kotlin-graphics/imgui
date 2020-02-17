@@ -1,7 +1,7 @@
 package imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.Cond
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginPopup
@@ -22,6 +22,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
 import imgui.ImGui.textEx
+import imgui.StyleVar
 import imgui.api.g
 import imgui.classes.ListClipper
 import imgui.classes.TextFilter
@@ -68,8 +69,10 @@ object Log {
 
         val buf = StringBuilder()
         val filter = TextFilter()
+
         /** Index to lines offset. We maintain this with AddLog() calls, allowing us to have a random access on lines */
         val lineOffsets = ArrayList<Int>()
+
         /** Keep scrolling if already at the bottom */
         var autoScroll = true
 
@@ -130,12 +133,11 @@ object Log {
                 }
             else {
                 val clipper = ListClipper(lineOffsets.size)
-                while(clipper.step()) {
-                    for(line_no in clipper.display) {
-                        val line = buf.subSequence(lineOffsets[line_no], if(line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
-                        textEx(line)
+                while (clipper.step())
+                    for (lineNo in clipper.display) {
+                        val lineEnd = if (lineNo + 1 < lineOffsets.size) lineOffsets[lineNo + 1] - 1 else buf.length
+                        textEx(buf.subSequence(lineOffsets[lineNo], lineEnd).toString())
                     }
-                }
                 clipper.end()
             }
 

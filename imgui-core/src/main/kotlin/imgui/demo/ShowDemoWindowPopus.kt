@@ -41,7 +41,7 @@ import imgui.dsl.withStyleVar
 import imgui.demo.showExampleApp.MenuFile
 import imgui.WindowFlag as Wf
 
-object showDemoWindowPopups {
+object ShowDemoWindowPopups {
 
     /* Popus */
     var selectedFish = -1

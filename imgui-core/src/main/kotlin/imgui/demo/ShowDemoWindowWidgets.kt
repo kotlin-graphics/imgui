@@ -140,6 +140,7 @@ import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
 import imgui.ImGui.windowDrawList
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.g
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
 import imgui.dsl.collapsingHeader
@@ -166,7 +167,7 @@ import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
 
-object showDemoWindowWidgets {
+object ShowDemoWindowWidgets {
 
     /* Basic */
     var counter = 0
