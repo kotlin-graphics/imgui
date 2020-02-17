@@ -42,7 +42,7 @@ internal interface widgets {
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
     fun textEx(text: String, textEnd: Int = -1, flag: TextFlag = TextFlag.None) {
         val bytes = text.toByteArray()
-        textEx(bytes, if (textEnd != -1) textEnd else bytes.size)
+        textEx(bytes, if (textEnd != -1) textEnd else bytes.strlen())
     }
 
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:

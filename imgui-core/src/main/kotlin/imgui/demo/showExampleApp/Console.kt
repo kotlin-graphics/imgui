@@ -35,6 +35,7 @@ import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.textEx
+import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.classes.InputTextCallbackData
 import imgui.classes.TextFilter
@@ -74,7 +75,7 @@ object Console {
         fun clearLog() = items.clear()
 
         fun addLog(fmt: String, vararg args: Any) {
-            items.add(fmt.format(*args))
+            items += fmt.format(*args)
         }
 
         fun draw(title: String, pOpen: KMutableProperty0<Boolean>) {
@@ -159,7 +160,7 @@ object Console {
                     pushStyleColor(Col.Text, Vec4(1f, 0.8f, 0.6f, 1f))
                     popColor = true
                 }
-                textEx(i)
+                textUnformatted(i)
                 if (popColor)
                     popStyleColor()
             }
@@ -175,15 +176,10 @@ object Console {
 
             var reclaimFocus = false
             if (inputText("Input", inputBuf, Itf.EnterReturnsTrue.i or Itf.CallbackCompletion.i or Itf.CallbackHistory.i, textEditCallbackStub, this)) {
-                TODO()
-//                val slen = inputBuf.textStr(inputBuf)
-//                val s = String(inputBuf.copyOf(slen)).split(" ")[0]
-//                if (s.isNotEmpty())
-//                    execCommand(s)
-//                for (i in 0 until slen)
-//                    inputBuf[i] = NUL
-//
-//                reclaimFocus = true
+                val s = String(inputBuf).trimEnd()
+                if(s.isNotEmpty())
+                    execCommand(s)
+                reclaimFocus = true
             }
 
             setItemDefaultFocus()
@@ -194,27 +190,29 @@ object Console {
         }
 
         fun execCommand(cmdLine: String) {
-            addLog("# %s\n", cmdLine)
+            addLog("# $cmdLine\n")
 
+            // Insert into history. First find match and delete it so it can be pushed to the back. This isn't trying to be smart or optimal.
             historyPos = -1
-            history.remove(cmdLine) //could be at any pos, we only want it to be last. so we remove the current instance
-            history.add(cmdLine)
+            history -= cmdLine
+            history += cmdLine
 
-            when (cmdLine) {
+            // Process command
+            when (cmdLine.toUpperCase()) {
                 "CLEAR" -> clearLog()
                 "HELP" -> {
                     addLog("Commands:")
-                    commands.forEach { addLog("- %s", it) }
+                    commands.forEach { addLog("- $it") }
                 }
                 "HISTORY" -> {
                     val first = history.size - 10
                     for (i in (if (first > 0) first else 0) until history.size)
-                        addLog("%3d: %s\n", i, history[i])
+                        addLog("%3d: ${history[i]}\n", i)
                 }
-                else -> addLog("Unknown command: '%s'\n", cmdLine)
+                else -> addLog("Unknown command: '$cmdLine'\n")
             }
 
-            // On commad input, we scroll to bottom even if AutoScroll==false
+            // On command input, we scroll to bottom even if AutoScroll==false
             scrollToBottom = true
         }
 
