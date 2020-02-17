@@ -1,14 +1,12 @@
 package imgui.api
 
 import gli_.has
-import glm_.b
 import glm_.func.cos
 import glm_.func.sin
 import glm_.glm
 import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
@@ -68,7 +66,6 @@ import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import unsigned.toUInt
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.internal.DrawCornerFlag as Dcf
@@ -368,7 +365,7 @@ interface widgetsColorEditorPicker {
         if (flags hasnt Cef._InputMask)
             flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._InputMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
-        assert((flags and Cef._InputMask).isPowerOfTwo);  // Check that only 1 is selected
+        assert((flags and Cef._InputMask).isPowerOfTwo)  // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
@@ -728,10 +725,11 @@ interface widgetsColorEditorPicker {
         val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
         val bbInner = Rect(bb)
-        /*  The border (using Col.FrameBg) tends to look off when color is near-opaque and rounding is enabled.
-            This offset seemed like a good middle ground to reduce those artifacts.  */
-        val off = -0.75f
-        bbInner expand off
+        var off = 0f
+        if (flags hasnt Cef.NoBorder) {
+            off = -0.75f // The border (using Col_FrameBg) tends to look off when color is near-opaque and rounding is enabled. This offset seemed like a good middle ground to reduce those artifacts.
+            bbInner expand off
+        }
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
@@ -748,10 +746,11 @@ interface widgetsColorEditorPicker {
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, Dcf.All.i)
         }
         renderNavHighlight(bb, id)
-        if (style.frameBorderSize > 0f)
-            renderFrameBorder(bb.min, bb.max, rounding)
-        else
-            window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
+        if (flags hasnt Cef.NoBorder)
+            if (style.frameBorderSize > 0f)
+                renderFrameBorder(bb.min, bb.max, rounding)
+            else
+                window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
         /*  Drag and Drop Source
             NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.         */
