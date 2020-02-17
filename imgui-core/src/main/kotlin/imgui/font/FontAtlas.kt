@@ -532,7 +532,7 @@ class FontAtlas {
 
         assert(configData.isNotEmpty())
 
-        buildRegisterDefaultCustomRects()
+        buildInit()
 
         // Clear atlas
         texId = 0
@@ -784,7 +784,8 @@ class FontAtlas {
         return true
     }
 
-    fun buildRegisterDefaultCustomRects() {
+    /** Register default custom rectangles (this is called/shared by both the stb_truetype and the FreeType builder) */
+    fun buildInit() {
         if (customRectIds[0] >= 0) return
         customRectIds[0] = when {
             flags hasnt FontAtlasFlag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
