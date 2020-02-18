@@ -682,7 +682,8 @@ enum class NavInput {
     /** move up = Arrow keys  */
     _KeyUp,
     /** move down = Arrow keys  */
-    _KeyDown;
+    _KeyDown,
+    Count;
 
     @JvmField
     val i = ordinal

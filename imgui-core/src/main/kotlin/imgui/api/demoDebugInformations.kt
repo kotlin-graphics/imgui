@@ -23,7 +23,7 @@ import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameCount
 import imgui.ImGui.getForegroundDrawList
-import imgui.ImGui.getId
+import imgui.ImGui.getID
 import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -130,7 +130,7 @@ interface demoDebugInformations {
         if (showConfigInfo) {
 
             val copyToClipboard = button("Copy to clipboard")
-            beginChildFrame(getId("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
+            beginChildFrame(getID("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
             if (copyToClipboard) {
                 logToClipboard()
                 logText("```\n") // Back quotes will make the text appears without formatting when pasting to GitHub

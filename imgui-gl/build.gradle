@@ -68,12 +68,15 @@ jar {
 
 shadowJar.archiveClassifier = 'all'
 
-compileKotlin{
+compileKotlin {
     kotlinOptions.jvmTarget = "11"
     destinationDir = compileJava.destinationDir
 }
-compileTestKotlin{
-    kotlinOptions.jvmTarget = "11"
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "11"
+        freeCompilerArgs = ["-XXLanguage:+InlineClasses"]
+    }
     destinationDir = compileTestJava.destinationDir
 }
 
