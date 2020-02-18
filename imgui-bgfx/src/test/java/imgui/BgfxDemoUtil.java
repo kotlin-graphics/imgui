@@ -162,7 +162,7 @@ final class BgfxDemoUtil {
 
     static short loadShader(String name) throws IOException {
 
-        String resourcePath = "/bgfx/shaders/";
+        String resourcePath = "/shaders/";
 
         switch (renderer) {
 
