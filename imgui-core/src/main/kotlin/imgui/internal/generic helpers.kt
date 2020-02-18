@@ -188,7 +188,7 @@ fun trimBlanks(buf: CharArray): CharArray {
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
 //IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
 
-fun formatStringV(buf: ByteArray, fmt: String, vararg args: Any): Int {
+fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
     val bytes = fmt.format(g.style.locale, *args).toByteArray()
     bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
     return bytes.size.also { w -> buf[w] = 0 }

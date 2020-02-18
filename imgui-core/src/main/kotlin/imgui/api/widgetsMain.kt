@@ -18,7 +18,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushId
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
@@ -123,7 +123,7 @@ interface widgetsMain {
             We could hash the size/uv to create a unique ID but that would prevent the user from animating UV.         */
         pushId(userTextureId)
         val id = window.getId("#image")
-        popId()
+        popID()
 
         val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding * 2)

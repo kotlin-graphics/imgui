@@ -4,7 +4,7 @@ import imgui.ImGui.button
 import imgui.ImGui.clipboardText
 import imgui.ImGui.logBegin
 import imgui.ImGui.popAllowKeyboardFocus
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.pushId
 import imgui.ImGui.sameLine
@@ -81,7 +81,7 @@ interface loggingCapture {
         setNextItemWidth(80f)
         sliderInt("Default Depth", g::logDepthToExpandDefault, 0, 9)
         popAllowKeyboardFocus()
-        popId()
+        popID()
 
         // Start logging at the end of the function so that the buttons don't appear in the log
         if (logToTty) logToTTY()

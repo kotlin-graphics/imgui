@@ -25,7 +25,7 @@ interface idStackScopes {
     fun pushId(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
 
     /** pop from the ID stack. */
-    fun popId() = g.currentWindow!!.idStack.pop()
+    fun popID() = g.currentWindow!!.idStack.pop()
 
     /** calculate unique ID (hash of whole ID stack + given parameter). e.g. if you want to query into ImGuiStorage
      *  yourself. otherwise rarely needed   */

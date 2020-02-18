@@ -30,7 +30,7 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushId
 import imgui.ImGui.pushTextWrapPos
@@ -363,7 +363,7 @@ interface demoDebugInformations {
                 pushId(font)
                 if (selectable(font.debugName, font === fontCurrent))
                     io.fontDefault = font
-                popId()
+                popID()
             }
             endCombo()
         }
@@ -664,7 +664,7 @@ interface demoDebugInformations {
                             val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
                             val s = if (tab.nameOffset != -1) tabBar.getTabName(tab) else ""
                             text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
-                            popId()
+                            popID()
                         }
                     }
                     treePop()

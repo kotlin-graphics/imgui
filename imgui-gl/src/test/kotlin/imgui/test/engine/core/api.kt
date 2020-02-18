@@ -5,22 +5,32 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
+import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
+import imgui.ImGui.clipboardText
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragInt
+import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getID
+import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.plotLines
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
+import imgui.ImGui.scrollMaxY
+import imgui.ImGui.scrollY
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowFocus
+import imgui.ImGui.setScrollHereY
 import imgui.ImGui.setTooltip
+import imgui.ImGui.sliderInt
 import imgui.ImGui.smallButton
 import imgui.ImGui.splitterBehavior
 import imgui.ImGui.style
@@ -29,8 +39,12 @@ import imgui.classes.Context
 import imgui.dsl.tabBar
 import imgui.dsl.tabItem
 import imgui.internal.Axis
+import imgui.internal.ItemStatusFlags
 import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
+import imgui.test.IMGUI_HAS_DOCK
 import imgui.test.engine.TestEngine
+import imgui.test.engine.itemLocate
 import kool.free
 import kotlin.reflect.KMutableProperty0
 import imgui.TabBarFlag as Tbf
@@ -85,6 +99,7 @@ infix fun TestEngine.shutdownContext(engine: TestEngine) {
     if (hookingEngine === this)
         hookingEngine = null
 }
+
 //ImGuiTestEngineIO&  ImGuiTestEngine_GetIO(ImGuiTestEngine* engine) [JVM] -> Class
 fun TestEngine.abort() {
     abort = true
@@ -93,7 +108,7 @@ fun TestEngine.abort() {
 
 fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>) {
 
-    if (uiFocus)    {
+    if (uiFocus) {
         setNextWindowFocus()
         uiFocus = false
     }
@@ -114,7 +129,7 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>) {
 //    }
 //    #endif
 
-    fun helpTooltip(desc: String)    {
+    fun helpTooltip(desc: String) {
         if (isItemHovered()) setTooltip(desc)
     }
 
@@ -150,7 +165,7 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>) {
     var logHeight = uiLogHeight
     var listHeight = (availY - uiLogHeight) max minSize0
     run {
-        val window = currentWindow!!
+        val window = currentWindow
         val y = cursorScreenPos.y + listHeight
         val splitterBb = Rect(window.workRect.min.x, y - 1, window.workRect.max.x, y + 1)
         _f = listHeight
@@ -162,7 +177,7 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>) {
 
     // TESTS
     beginChild("List", Vec2(0, listHeight), false, Wf.NoScrollbar.i)
-    tabBar("##Tests", Tbf.NoTooltip.i)    {
+    tabBar("##Tests", Tbf.NoTooltip.i) {
         tabItem("TESTS") { showTestGroup(TestGroup.Tests) }
         tabItem("PERFS") { showTestGroup(TestGroup.Perf) }
     }
@@ -173,107 +188,151 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>) {
     beginChild("Log", Vec2(0f, logHeight))
     tabBar("##tools") {
         tabItem("LOG") {
-            text(uiSelectedTest?.let { "Log for ${uiSelectedTest.category}: ${uiSelectedTest.name}" } ?: "N/A")
+            text(uiSelectedTest.let { "Log for ${uiSelectedTest.category}: ${uiSelectedTest.name}" } ?: "N/A")
             if (smallButton("Clear"))
-                if (engine->UiSelectedTest)
-            engine->UiSelectedTest->TestLog.Clear()
-            SameLine()
-            if (SmallButton("Copy to clipboard"))
-                if (engine->UiSelectedTest)
-            SetClipboardText(engine->UiSelectedTest->TestLog.Buffer.c_str())
-            Separator()
+                uiSelectedTest.testLog.clear()
+            sameLine()
+            if (smallButton("Copy to clipboard"))
+                uiSelectedTest.let { clipboardText = it.testLog.buffer }
+            separator()
 
             // Quick status
-            ImGuiContext* ui_context = engine->UiContextActive ? engine->UiContextActive : engine->UiContextVisible
-            ImGuiID item_hovered_id = ui_context->HoveredIdPreviousFrame
-            ImGuiID item_active_id = ui_context->ActiveId
-            ImGuiTestItemInfo* item_hovered_info = item_hovered_id ? ImGuiTestEngine_ItemLocate(engine, item_hovered_id, "") : NULL
-            ImGuiTestItemInfo* item_active_info = item_active_id ? ImGuiTestEngine_ItemLocate(engine, item_active_id, "") : NULL
-            Text("Hovered: 0x%08X (\"%s\") @ (%.1f,%.1f)", item_hovered_id, item_hovered_info ? item_hovered_info->DebugLabel : "", ui_context->IO.MousePos.x, ui_context->IO.MousePos.y)
-            Text("Active:  0x%08X (\"%s\")", item_active_id, item_active_info ? item_active_info->DebugLabel : "")
+            val uiContext = uiContextActive ?: uiContextVisible
+            val itemHoveredId = uiContext!!.hoveredIdPreviousFrame
+            val itemActiveId = uiContext.activeId
+            val itemHoveredInfo = if (itemHoveredId != 0) itemLocate(itemHoveredId, "") else null
+            val itemActiveInfo = if (itemActiveId != 0) itemLocate(itemActiveId, "") else null
+            text("Hovered: 0x%08X (\"${itemHoveredInfo?.debugLabel ?: ""}\") @ (%.1f,%.1f)", itemHoveredId, uiContext.io.mousePos.x, uiContext.io.mousePos.y)
+            text("Active:  0x%08X (\"${itemActiveInfo?.debugLabel else ""}\")", itemActiveId)
 
-            Separator()
-            BeginChild("Log")
-            if (engine->UiSelectedTest)
-            {
-                DrawTestLog(engine, engine->UiSelectedTest, true)
-                if (GetScrollY() >= GetScrollMaxY())
-                    SetScrollHereY()
+            separator()
+            beginChild("Log")
+            uiSelectedTest.let {
+                drawTestLog(it, true)
+                if (scrollY >= scrollMaxY)
+                    setScrollHereY()
             }
-            EndChild()
+            endChild()
         }
 
         // Tools
-        if (BeginTabItem("MISC TOOLS"))
-        {
-            ImGuiIO& io = GetIO()
-            Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate)
-            Separator()
+        tabItem("MISC TOOLS") {
+            text("%.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
+            separator()
 
-            Text("Tools:")
-            Checkbox("Capture Tool", &engine->CaptureTool.Visible)
-            Checkbox("Slow down whole app", &engine->ToolSlowDown)
-            SameLine()
-            SetNextItemWidth(70)
-            SliderInt("##ms", &engine->ToolSlowDownMs, 0, 400, "%d ms")
+            text("Tools:")
+            checkbox("Capture Tool", captureTool::visible)
+            checkbox("Slow down whole app", ::toolSlowDown)
+            sameLine()
+            setNextItemWidth(70f)
+            sliderInt("##ms", ::toolSlowDownMs, 0, 400, "%d ms")
 
-            Separator()
-            Text("Configuration:")
-            CheckboxFlags("io.ConfigFlags: NavEnableKeyboard", (unsigned int *)&io.ConfigFlags, ImGuiConfigFlags_NavEnableKeyboard)
-            CheckboxFlags("io.ConfigFlags: NavEnableGamepad", (unsigned int *)&io.ConfigFlags, ImGuiConfigFlags_NavEnableGamepad)
-            #ifdef IMGUI_HAS_DOCK
-                Checkbox("io.ConfigDockingAlwaysTabBar", &io.ConfigDockingAlwaysTabBar)
-            #endif
-            EndTabItem()
+            separator()
+            text("Configuration:")
+            checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+            checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
+            if (IMGUI_HAS_DOCK)
+                checkbox("io.ConfigDockingAlwaysTabBar", io::configDockingAlwaysTabBar)
         }
 
         // FIXME-TESTS: Need to be visualizing the samples/spikes.
-        if (BeginTabItem("PERFS TOOLS"))
-        {
-            double dt_1 = 1.0 / GetIO().Framerate
-            double fps_now = 1.0 / dt_1
-            double dt_100 = engine->PerfDeltaTime100.GetAverage()
-            double dt_1000 = engine->PerfDeltaTime1000.GetAverage()
-            double dt_2000 = engine->PerfDeltaTime2000.GetAverage()
+        tabItem("PERFS TOOLS") {
+            val dt1 = 1.0 / ImGui.io.framerate
+            val fpsNow = 1.0 / dt1
+            val dt100 = perfDeltaTime100.average
+            val dt1000 = perfDeltaTime1000.average
+            val dt2000 = perfDeltaTime2000.average
 
             //if (engine->PerfRefDeltaTime <= 0.0 && engine->PerfRefDeltaTime.IsFull())
             //    engine->PerfRefDeltaTime = dt_2000;
 
-            Checkbox("Unthrolled", &engine->IO.ConfigNoThrottle)
-            SameLine()
-            if (Button("Pick ref dt"))
-                engine->PerfRefDeltaTime = dt_2000
+            checkbox("Unthrolled", io::configNoThrottle)
+            sameLine()
+            if (button("Pick ref dt"))
+                perfRefDeltaTime = dt2000
 
-            const ImGuiInputTextCallback filter_callback = [](ImGuiInputTextCallbackData* data) { return (data->EventChar == ',' || data->EventChar == ';') ? 1 : 0; }
-            InputText("Branch/Annotation", engine->IO.PerfAnnotation, IM_ARRAYSIZE(engine->IO.PerfAnnotation), ImGuiInputTextFlags_CallbackCharFilter, filter_callback, NULL)
+            val filterCallback: InputTextCallback = { data -> data.eventChar == ',' || data.eventChar == ';' }
+            inputText("Branch/Annotation", io.perfAnnotation, InputTextFlag.CallbackCharFilter.i, filterCallback)
 
-            double dt_ref = engine->PerfRefDeltaTime
-            Text("[ref dt]    %6.3f ms", engine->PerfRefDeltaTime * 1000)
-            Text("[last 0001] %6.3f ms (%.1f FPS) ++ %6.3f ms",                           dt_1    * 1000.0, 1.0 / dt_1,    (dt_1 - dt_ref) * 1000)
-            Text("[last 0100] %6.3f ms (%.1f FPS) ++ %6.3f ms ~ converging in %.1f secs", dt_100  * 1000.0, 1.0 / dt_100,  (dt_1 - dt_ref) * 1000, 100.0  / fps_now)
-            Text("[last 1000] %6.3f ms (%.1f FPS) ++ %6.3f ms ~ converging in %.1f secs", dt_1000 * 1000.0, 1.0 / dt_1000, (dt_1 - dt_ref) * 1000, 1000.0 / fps_now)
-            Text("[last 2000] %6.3f ms (%.1f FPS) ++ %6.3f ms ~ converging in %.1f secs", dt_2000 * 1000.0, 1.0 / dt_2000, (dt_1 - dt_ref) * 1000, 2000.0 / fps_now)
+            val dtRef = perfRefDeltaTime
+            text("[ref dt]    %6.3f ms", perfRefDeltaTime * 1000)
+            text("[last 0001] %6.3f ms (%.1f FPS) ++ %6.3f ms", dt1 * 1000.0, 1.0 / dt1, (dt1 - dtRef) * 1000)
+            text("[last 0100] %6.3f ms (%.1f FPS) ++ %6.3f ms ~ converging in %.1f secs", dt100 * 1000.0, 1.0 / dt100, (dt1 - dtRef) * 1000, 100.0 / fpsNow)
+            text("[last 1000] %6.3f ms (%.1f FPS) ++ %6.3f ms ~ converging in %.1f secs", dt1000 * 1000.0, 1.0 / dt1000, (dt1 - dtRef) * 1000, 1000.0 / fpsNow)
+            text("[last 2000] %6.3f ms (%.1f FPS) ++ %6.3f ms ~ converging in %.1f secs", dt2000 * 1000.0, 1.0 / dt2000, (dt1 - dtRef) * 1000, 2000.0 / fpsNow)
 
             //PlotLines("Last 100", &engine->PerfDeltaTime100.Samples.Data, engine->PerfDeltaTime100.Samples.Size, engine->PerfDeltaTime100.Idx, NULL, 0.0f, dt_1000 * 1.10f, ImVec2(0.0f, GetFontSize()));
-            ImVec2 plot_size(0.0f, GetFrameHeight() * 3)
-            ImMovingAverage<double>* ma = &engine->PerfDeltaTime500
-            PlotLines("Last 500",
-                    [](void* data, int n) { ImMovingAverage<double>* ma = (ImMovingAverage<double>*)data; return (float)(ma->Samples[n] * 1000); },
+            val plotSize = Vec2(0f, frameHeight * 3)
+            val ma = perfDeltaTime500
+            plotLines("Last 500",
+                    { n -> val ma = (ImMovingAverage<double> *) data; return (float)(ma->Samples[n] * 1000); },
                     ma, ma->Samples.Size, 0*ma->Idx, NULL, 0.0f, (float)(ImMax(dt_100, dt_1000) * 1000.0 * 1.2f), plot_size)
-
-            EndTabItem()
         }
     }
-    EndChild()
+    endChild()
 
-    End()
+    end()
 
     // Capture Tool
-    ImGuiCaptureTool& capture_tool = engine->CaptureTool
-    capture_tool.Context.ScreenCaptureFunc = engine->IO.ScreenCaptureFunc
-    if (capture_tool.Visible)
-        capture_tool.ShowCaptureToolWindow(&capture_tool.Visible)
+    captureTool.context.screenCaptureFunc = io.screenCaptureFunc
+    if (captureTool.Visible)
+        captureTool.showCaptureToolWindow(captureTool.visible)
 }
+
+fun drawTestLog(e: TestEngine, test: Test, isInteractive: Boolean) {
+    val errorCol = COL32(255, 150, 150, 255)
+    val warningCol = COL32(240, 240, 150, 255)
+    val unimportantCol = COL32(190, 190, 190, 255)
+
+    // FIXME-OPT: Split TestLog by lines so we can clip it easily.
+    val log = test.testLog
+
+    val text = test.testLog.buffer.begin()
+    const char * text_end = test->TestLog.Buffer.end()
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 2.0f))
+    ImVector<ImGuiTestLogLineInfo>& line_info_vector = test->Status == ImGuiTestStatus_Error ? log->LineInfoError : log->LineInfo
+    ImGuiListClipper clipper
+            clipper.Begin(line_info_vector.Size)
+    while (clipper.Step()) {
+        for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
+        {
+            ImGuiTestLogLineInfo& line_info = line_info_vector[line_no]
+            const char * line_start = text +line_info.LineOffset
+            const char * line_end = strchr (line_start, '\n')
+            if (line_end == NULL)
+                line_end = text_end
+
+            switch(line_info.Level)
+            {
+                case ImGuiTestVerboseLevel_Error :
+                ImGui::PushStyleColor(ImGuiCol_Text, error_col)
+                break
+                case ImGuiTestVerboseLevel_Warning :
+                ImGui::PushStyleColor(ImGuiCol_Text, warning_col)
+                break
+                case ImGuiTestVerboseLevel_Debug :
+                case ImGuiTestVerboseLevel_Trace :
+                ImGui::PushStyleColor(ImGuiCol_Text, unimportant_col)
+                break
+                default:
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE)
+                break
+            }
+            ImGui::TextUnformatted(line_start, line_end)
+            ImGui::PopStyleColor()
+
+            ImGui::PushID(line_no)
+            if (ImGui::BeginPopupContextItem("Context", 1)) {
+                if (!ParseLineAndDrawFileOpenItem(e, test, line_start, line_end))
+                    ImGui::MenuItem("No options", NULL, false, false)
+                ImGui::EndPopup()
+            }
+            ImGui::PopID()
+        }
+    }
+    ImGui::PopStyleVar()
+}
+
 ImGuiTest*          ImGuiTestEngine_RegisterTest(ImGuiTestEngine* engine, const char* category, const char* name, const char* src_file = NULL, int src_line = 0)
 void                ImGuiTestEngine_QueueTests(ImGuiTestEngine* engine, ImGuiTestGroup group, const char* filter = NULL, ImGuiTestRunFlags run_flags = 0)
 void                ImGuiTestEngine_QueueTest(ImGuiTestEngine* engine, ImGuiTest* test, ImGuiTestRunFlags run_flags)
@@ -290,8 +349,7 @@ typedef void (*ImGuiTestEngineSrcFileOpenFunc)(const char* filename, int line, v
 typedef bool (*ImGuiTestEngineScreenCaptureFunc)(int x, int y, int w, int h, unsigned int* pixels, void* user_data)
 
 // IO structure
-struct ImGuiTestEngineIO
-{
+class TestEngineIO {
     ImGuiTestEngineEndFrameFunc     EndFrameFunc = NULL
     ImGuiTestEngineNewFrameFunc     NewFrameFunc = NULL
     ImGuiTestEngineSrcFileOpenFunc  SrcFileOpenFunc = NULL     // (Optional) To open source files
@@ -322,48 +380,44 @@ struct ImGuiTestEngineIO
 }
 
 // Result of an ItemLocate query
-struct ImGuiTestItemInfo
-{
-    int                         RefCount : 8               // User can increment this if they want to hold on the result pointer across frames, otherwise the task will be GC-ed.
-    int                         NavLayer : 1               // Nav layer of the item
-    int                         Depth : 16                 // Depth from requested parent id. 0 == ID is immediate child of requested parent id.
-    int                         TimestampMain = -1         // Timestamp of main result (all fields)
-    int                         TimestampStatus = -1       // Timestamp of StatusFlags
-    ImGuiID                     ID = 0                     // Item ID
-    ImGuiID                     ParentID = 0               // Item Parent ID (value at top of the ID stack)
-    ImGuiWindow*                Window = NULL              // Item Window
-    ImRect                      RectFull = ImRect()        // Item Rectangle
-    ImRect                      RectClipped = ImRect()     // Item Rectangle (clipped with window->ClipRect at time of item submission)
-    ImGuiItemStatusFlags        StatusFlags = 0            // Item Status flags (fully updated for some items only, compare TimestampStatus to FrameCount)
-    char                        DebugLabel[32] = {}        // Shortened label for debugging purpose
-
-    ImGuiTestItemInfo()
-    {
-        RefCount = 0
-        NavLayer = 0
-        Depth = 0
-    }
+class TestItemInfo {
+    var refCount = 0               // User can increment this if they want to hold on the result pointer across frames, otherwise the task will be GC-ed.
+    var navLayer = 0              // Nav layer of the item
+    var depth = 0              // Depth from requested parent id. 0 == ID is immediate child of requested parent id.
+    var timestampMain = -1         // Timestamp of main result (all fields)
+    var timestampStatus = -1       // Timestamp of StatusFlags
+    var id: ID = 0                     // Item ID
+    var parentID: ID = 0               // Item Parent ID (value at top of the ID stack)
+    var window: Window? = null              // Item Window
+    var rectFull = Rect()        // Item Rectangle
+    var rectClipped = Rect()     // Item Rectangle (clipped with window->ClipRect at time of item submission)
+    var statusFlags: ItemStatusFlags = 0            // Item Status flags (fully updated for some items only, compare TimestampStatus to FrameCount)
+    var debugLabel/*[32]*/ = ""         // Shortened label for debugging purpose
 }
 
 // Result of an ItemGather query
-struct ImGuiTestItemList
-{
+class TestItemList {
     ImPool<ImGuiTestItemInfo>   Pool
     int&                        Size           // FIXME: THIS IS REF/POINTER to Pool.Buf.Size! This codebase is totally embracing evil C++!
 
-    void                        Clear()                 { Pool.Clear(); }
-    void                        Reserve(int capacity)   { Pool.Reserve(capacity); }
+    void                        Clear()
+    { Pool.Clear(); }
+    void                        Reserve(int capacity)
+    { Pool.Reserve(capacity); }
     //int                       GetSize() const         { return Pool.GetSize(); }
-    const ImGuiTestItemInfo*    operator[] (size_t n)   { return Pool.GetByIndex((int)n); }
-    const ImGuiTestItemInfo*    GetByIndex(int n)       { return Pool.GetByIndex(n); }
-    const ImGuiTestItemInfo*    GetByID(ImGuiID id)     { return Pool.GetByKey(id); }
+    const ImGuiTestItemInfo*    operator [] (size_t n)
+    { return Pool.GetByIndex((int) n); }
+    const ImGuiTestItemInfo*    GetByIndex(int n)
+    { return Pool.GetByIndex(n); }
+    const ImGuiTestItemInfo*    GetByID(ImGuiID id)
+    { return Pool.GetByKey(id); }
 
-    ImGuiTestItemList() : Size(Pool.Buf.Size) {} // FIXME: THIS IS REF/POINTER to Pool.Buf.Size!
+    ImGuiTestItemList() : Size(Pool.Buf.Size)
+    {} // FIXME: THIS IS REF/POINTER to Pool.Buf.Size!
 }
 
 // Gather items in given parent scope.
-struct ImGuiTestGatherTask
-{
+class TestGatherTask {
     ImGuiID                 ParentID = 0
     int                     Depth = 0
     ImGuiTestItemList*      OutList = NULL
@@ -371,16 +425,20 @@ struct ImGuiTestGatherTask
 }
 
 // Helper to output a string showing the Path, ID or Debug Label based on what is available (some items only have ID as we couldn't find/store a Path)
-struct ImGuiTestRefDesc
-{
+class TestRefDesc {
     char Buf[80]
 
-    const char* c_str()     { return Buf; }
+    const char* c_str()
+    { return Buf; }
     ImGuiTestRefDesc(const ImGuiTestRef& ref, const ImGuiTestItemInfo* item = NULL)
     {
         if (ref.Path)
             ImFormatString(Buf, IM_ARRAYSIZE(Buf), "'%s' > %08X", ref.Path, ref.ID)
         else
             ImFormatString(Buf, IM_ARRAYSIZE(Buf), "%08X > '%s'", ref.ID, item ? item->DebugLabel : "NULL")
+    }
+
+    override fun toString(): String {
+        return super.toString()
     }
 }

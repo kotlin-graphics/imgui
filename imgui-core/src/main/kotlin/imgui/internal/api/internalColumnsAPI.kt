@@ -12,7 +12,7 @@ import imgui.ImGui.getColumnOffset
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushId
@@ -210,7 +210,7 @@ internal interface internalColumnsAPI {
         // In addition, when an identifier isn't explicitly provided we include the number of columns in the hash to make it uniquer.
         pushId(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
         return window.getId(if (strId.isNotEmpty()) strId else "columns")
-                .also { popId() }
+                .also { popID() }
     }
 
     // findOrCreateColumns is in Window class

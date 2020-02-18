@@ -1,6 +1,5 @@
 package imgui.api
 
-import glm_.glm
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -19,7 +18,7 @@ import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
 import imgui.internal.TextFlag
-import imgui.internal.formatStringV
+import imgui.internal.formatString
 
 
 /** Widgets: Text */
@@ -37,7 +36,7 @@ interface widgetsText {
         val window = currentWindow
         if (window.skipItems) return
 
-        val textEnd = formatStringV(g.tempBuffer, fmt, *args)
+        val textEnd = formatString(g.tempBuffer, fmt, *args)
         textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText)
     }
 

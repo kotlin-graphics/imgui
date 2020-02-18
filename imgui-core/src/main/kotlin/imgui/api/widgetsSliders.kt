@@ -25,7 +25,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
 import imgui.ImGui.pushMultiItemsWidths
@@ -231,10 +231,10 @@ interface widgetsSliders {
                 DataType.Float -> withFloat(pData as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
                 else -> error("invalid")
             } || valueChanged
-            popId()
+            popID()
             popItemWidth()
         }
-        popId()
+        popID()
 
         val labelEnd = findRenderedTextEnd(label)
         if (0 != labelEnd) {

@@ -25,7 +25,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
 import imgui.ImGui.pushMultiItemsWidths
@@ -118,7 +118,7 @@ interface widgetsDrags {
 
         textEx(label, findRenderedTextEnd(label))
         endGroup()
-        popId()
+        popID()
         return valueChanged
     }
 
@@ -177,7 +177,7 @@ interface widgetsDrags {
 
         textEx(label, findRenderedTextEnd(label))
         endGroup()
-        popId()
+        popID()
         return valueChanged
     }
 
@@ -293,10 +293,10 @@ interface widgetsDrags {
                 }
                 else -> error("invalid")
             }
-            popId()
+            popID()
             popItemWidth()
         }
-        popId()
+        popID()
 
         val labelEnd = findRenderedTextEnd(label)
         if (0 != labelEnd)        {
