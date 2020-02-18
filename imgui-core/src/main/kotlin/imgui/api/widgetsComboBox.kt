@@ -16,7 +16,7 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopupEx
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleVar
@@ -198,7 +198,7 @@ interface widgetsComboBox {
                 currentItem = i
             }
             if (itemSelected) setItemDefaultFocus()
-            popId()
+            popID()
         }
         endCombo()
         return valueChanged

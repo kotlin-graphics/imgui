@@ -27,6 +27,8 @@ dependencies {
         shadow natives
     }
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation "$kx:gli:$gli_version"
+    testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.4.2'
 }
 
 task lightJar(type: Jar) {
@@ -87,3 +89,5 @@ compileJava {
         classpath = files()
     }
 }
+
+test.useJUnitPlatform()

@@ -180,13 +180,13 @@ public class Jdsl {
     public static void withId(int id, Runnable block) {
         imgui.pushId(id);
         block.run();
-        imgui.popId();
+        imgui.popID();
     }
 
     public static void withId(String id, Runnable block) {
         imgui.pushId(id);
         block.run();
-        imgui.popId();
+        imgui.popID();
     }
 
 

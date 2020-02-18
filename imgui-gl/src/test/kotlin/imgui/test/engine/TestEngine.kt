@@ -3,6 +3,7 @@ package imgui.test.engine
 import imgui.classes.Context
 import imgui.classes.TextFilter
 import imgui.test.engine.core.TestInputs
+import imgui.test.engine.core.TestLocateTask
 import java.nio.ByteBuffer
 
 class TestEngine {

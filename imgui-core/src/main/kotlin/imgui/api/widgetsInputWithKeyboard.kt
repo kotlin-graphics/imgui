@@ -22,7 +22,7 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
 import imgui.ImGui.pushMultiItemsWidths
@@ -211,7 +211,7 @@ interface widgetsInputWithKeyboard {
             }
             style.framePadding put backupFramePadding
 
-            popId()
+            popID()
             endGroup()
         } else if (inputText(label, buf, flags))
             valueChanged = dataTypeApplyOpFromText(string, g.inputTextState.initialTextA, dataType, pData, format)
@@ -242,10 +242,10 @@ interface widgetsInputWithKeyboard {
                 else -> error("invalid")
             } || valueChanged
             sameLine(0f, style.itemInnerSpacing.x)
-            popId()
+            popID()
             popItemWidth()
         }
-        popId()
+        popID()
 
         val labelEnd = findRenderedTextEnd(label)
         if (0 != labelEnd)        {

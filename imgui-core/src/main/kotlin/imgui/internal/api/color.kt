@@ -18,7 +18,7 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.frameHeight
 import imgui.ImGui.openPopup
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
@@ -142,7 +142,7 @@ internal interface color {
                 for (i in 0..2) dummyRefCol[i] = refCol[i]
                 if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
                 colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
-                popId()
+                popID()
             }
             popItemWidth()
         }

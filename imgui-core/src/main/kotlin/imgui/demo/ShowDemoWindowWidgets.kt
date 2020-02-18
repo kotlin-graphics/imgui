@@ -96,7 +96,7 @@ import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
 import imgui.ImGui.popButtonRepeat
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.progressBar
 import imgui.ImGui.pushButtonRepeat
@@ -1314,7 +1314,7 @@ object ShowDemoWindowWidgets {
                         }
                         endDragDropTarget()
                     }
-                    popId()
+                    popID()
                 }
             }
 

@@ -49,7 +49,7 @@ import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popButtonRepeat
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFont
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
@@ -200,17 +200,17 @@ object dsl {
 
     inline fun withId(id: Int, block: () -> Unit) {
         pushId(id)
-        try { block() } finally { popId() }
+        try { block() } finally { popID() }
     }
 
     inline fun withId(id: String, block: () -> Unit) {
         pushId(id)
-        try { block() } finally { popId() }
+        try { block() } finally { popID() }
     }
 
     inline fun withId(id: Any, block: () -> Unit) {
         pushId(id)
-        try { block() } finally { popId() }
+        try { block() } finally { popID() }
     }
 
 

@@ -16,7 +16,7 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushId
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.text
@@ -273,7 +273,7 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
             window.calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
         }
     }
-    popId()
+    popID()
 
     // Restore nav layer
     window.dc.navLayerCurrent = NavLayer.Main
