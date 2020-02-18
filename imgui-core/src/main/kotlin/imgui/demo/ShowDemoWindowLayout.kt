@@ -37,7 +37,7 @@ import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.getColumnWidth
-import imgui.ImGui.getId
+import imgui.ImGui.getID
 import imgui.ImGui.inputInt
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
@@ -586,7 +586,7 @@ object ShowDemoWindowLayout {
                     textUnformatted(names1[i])
 
                     val childFlags = if (enableExtraDecorations) Wf.MenuBar else Wf.None
-                    val windowVisible = beginChild(getId(i), Vec2(childW, 200f), true, childFlags.i)
+                    val windowVisible = beginChild(getID(i), Vec2(childW, 200f), true, childFlags.i)
                     menuBar { textUnformatted("abc") }
                     if (scrollToOff)
                         scrollY = scrollToOffPx
@@ -615,7 +615,7 @@ object ShowDemoWindowLayout {
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
                 val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
-                val windowVisible = beginChild(getId(i), Vec2(-100f, childHeight), true, childFlags)
+                val windowVisible = beginChild(getID(i), Vec2(-100f, childHeight), true, childFlags)
                 if (scrollToOff)
                     scrollX = scrollToOffPx
                 if (scrollToPos)
