@@ -1,6 +1,8 @@
 package imgui.test.engine.core
 
+import gli_.hasnt
 import imgui.test.engine.TestEngine
+import imgui.wo
 
 //-------------------------------------------------------------------------
 // Forward Declarations
@@ -16,9 +18,24 @@ import imgui.test.engine.TestEngine
 
 inline class TestFlags(val i: Int)         // Flags: See ImGuiTestFlags_
 inline class TestCheckFlags(val i: Int)    // Flags: See ImGuiTestCheckFlags_
-inline class TestLogFlags(val i: Int)      // Flags: See ImGuiTestLogFlags_
+{
+    infix fun hasnt(f: TestCheckFlag): Boolean = i hasnt f.i.i
+}
+
+inline class TestLogFlags(val i: Int){      // Flags: See ImGuiTestLogFlags_
+    infix fun hasnt(f: TestLogFlag) = i hasnt f.i.i
+}
 inline class TestOpFlags(val i: Int)       // Flags: See ImGuiTestOpFlags_
-inline class TestRunFlags(val i: Int)      // Flags: See ImGuiTestRunFlags_
+{
+    infix fun hasnt(f: TestOpFlag): Boolean = i hasnt f.i.i
+    infix fun or(f: TestOpFlag): TestOpFlags = i or f.i.i
+}
+
+inline class TestRunFlags(val i: Int) {     // Flags: See ImGuiTestRunFlags_
+    infix fun wo(f: TestRunFlag) = TestRunFlags(i wo f.i.i)
+    infix fun or(f: TestRunFlag) = TestRunFlags(i or f.i.i)
+    infix fun hasnt(f: TestRunFlag) = i hasnt f.i.i
+}
 
 //-------------------------------------------------------------------------
 // [SECTION] FORWARD DECLARATIONS

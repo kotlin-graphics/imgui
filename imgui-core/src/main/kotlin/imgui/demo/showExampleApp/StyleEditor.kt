@@ -28,7 +28,7 @@ import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.logToTTY
 import imgui.ImGui.popFont
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushId
@@ -298,7 +298,7 @@ object StyleEditor {
                         }
                         treePop()
                     }
-                    popId()
+                    popID()
                 }
                 treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
                     val tintCol = Vec4(1f)

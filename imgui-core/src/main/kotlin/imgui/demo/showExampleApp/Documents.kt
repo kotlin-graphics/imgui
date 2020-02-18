@@ -25,7 +25,7 @@ import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushId
 import imgui.ImGui.pushItemWidth
@@ -88,7 +88,7 @@ class MyDocument(
         if (button("Save", Vec2(100, 0)))
             doSave()
         colorEdit3("color", color)  // Useful to test drag and drop and hold-dragged-to-open-tab behavior.
-        popId()
+        popID()
     }
 
     // Display context menu for the Document
@@ -177,7 +177,7 @@ object Documents {
             if (checkbox(doc.name, doc::open))
                 if (!doc.open)
                     doc.doForceClose()
-            popId()
+            popID()
         }
 
         separator()

@@ -52,7 +52,7 @@ import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
 import imgui.ImGui.nextColumn
 import imgui.ImGui.plotHistogram
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
@@ -355,7 +355,7 @@ object ShowDemoWindowLayout {
                 val nextButtonX2 = lastButtonX2 + style.itemSpacing.x + buttonSz.x // Expected position if next button was on same line
                 if (n + 1 < buttonsCount && nextButtonX2 < windowVisibleX2)
                     sameLine()
-                popId()
+                popID()
             }
         }
 
@@ -606,7 +606,7 @@ object ShowDemoWindowLayout {
                     text("%.0f/%.0f", scrollY, scrollMaxY)
                 }
             }
-            popId()
+            popID()
 
             // Horizontal scroll functions
             spacing()
@@ -634,7 +634,7 @@ object ShowDemoWindowLayout {
                 text("${names2[i]}\n%.0f/%.0f", scrollX, scrollMaxX)
                 spacing()
             }
-            popId()
+            popID()
 
             // Miscellaneous Horizontal Scrolling Demo
 
@@ -659,7 +659,7 @@ object ShowDemoWindowLayout {
                     pushStyleColor(Col.ButtonActive, Color.hsv(hue, 0.8f, 0.8f))
                     button(label, Vec2(40f + sin((line + n).f) * 20f, 0f))
                     popStyleColor(3)
-                    popId()
+                    popID()
                 }
             }
             val _scrollX = scrollX

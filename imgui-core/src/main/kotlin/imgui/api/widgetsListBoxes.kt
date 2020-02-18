@@ -15,7 +15,7 @@ import imgui.ImGui.isRectVisible
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushId
 import imgui.ImGui.renderText
 import imgui.ImGui.sameLine
@@ -61,7 +61,7 @@ interface widgetsListBoxes {
                         valueChanged = true
                     }
                     if (itemSelected()) setItemDefaultFocus()
-                    popId()
+                    popID()
                 }
         listBoxFooter()
         if (valueChanged)

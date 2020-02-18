@@ -9,7 +9,7 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.end
 import imgui.ImGui.inputFloat
 import imgui.ImGui.nextColumn
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
@@ -84,11 +84,11 @@ object PropertyEditor {
                     popItemWidth()
                     nextColumn()
                 }
-                popId()
+                popID()
             }
             treePop()
         }
-        popId()
+        popID()
     }
 
     val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)

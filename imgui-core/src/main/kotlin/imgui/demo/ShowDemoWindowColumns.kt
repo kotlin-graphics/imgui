@@ -16,7 +16,7 @@ import imgui.ImGui.getColumnWidth
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.nextColumn
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushId
 import imgui.ImGui.pushStyleVar
@@ -218,6 +218,6 @@ object ShowDemoWindowColumns {
 
         if (disableIndent)
             popStyleVar()
-        popId()
+        popID()
     }
 }

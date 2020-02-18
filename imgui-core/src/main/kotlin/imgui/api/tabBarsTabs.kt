@@ -2,7 +2,7 @@ package imgui.api
 
 import glm_.max
 import imgui.*
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
 import imgui.internal.classes.Rect
@@ -44,7 +44,7 @@ interface tabBarsTabs {
             window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.lastTabContentHeight
 
         if (tabBar.flags hasnt TabBarFlag._DockNode)
-            popId()
+            popID()
 
         g.currentTabBarStack.pop()
         g.currentTabBar = g.currentTabBarStack.lastOrNull()?.tabBar

@@ -1,5 +1,6 @@
 package imgui.test.engine.core
 
+import glm_.c
 import glm_.vec2.Vec2
 import imgui.ID
 import imgui.Key
@@ -15,6 +16,8 @@ import imgui.test.engine.KeyState
 //-------------------------------------------------------------------------
 
 inline class TestVerboseLevel(val i: Int) {
+    operator fun compareTo(b: TestVerboseLevel): Int = i.compareTo(b.i)
+
     companion object {
         val Silent = TestVerboseLevel(0)
         val Error = TestVerboseLevel(1)

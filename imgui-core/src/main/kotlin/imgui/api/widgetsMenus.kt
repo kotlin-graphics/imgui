@@ -26,7 +26,7 @@ import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
@@ -128,7 +128,7 @@ interface widgetsMenus {
 
         assert(window.flags has Wf.MenuBar && window.dc.menuBarAppending)
         popClipRect()
-        popId()
+        popID()
         with(window.dc) {
             // Save horizontal position so next append can reuse it. This is kinda equivalent to a per-layer CursorPos.
             menuBarOffset.x = cursorPos.x - window.menuBarRect().min.x

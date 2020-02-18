@@ -44,7 +44,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushId
@@ -257,7 +257,7 @@ interface widgetsColorEditorPicker {
             col[2] = f[2]
             if (alpha) col[3] = f[3]
         }
-        popId()
+        popID()
         endGroup()
 
         // Drag and Drop Target
@@ -687,7 +687,7 @@ interface widgetsColorEditorPicker {
         if (valueChanged)
             markItemEdited(window.dc.lastItemId)
 
-        popId()
+        popID()
 
         return valueChanged
     }

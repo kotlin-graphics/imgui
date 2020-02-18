@@ -8,7 +8,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushId
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
@@ -17,7 +17,7 @@ import imgui.ImGui.unindent
 import imgui.internal.NextItemDataFlag
 import imgui.max
 import imgui.internal.classes.itemHoveredDataBackup
-import imgui.internal.formatStringV
+import imgui.internal.formatString
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
@@ -54,7 +54,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatStringV(g.tempBuffer, fmt, args)
+        val labelEnd = formatString(g.tempBuffer, fmt, args)
         return treeNodeBehavior(window.getId(strId), flags, g.tempBuffer, labelEnd)
     }
 
@@ -63,7 +63,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatStringV(g.tempBuffer, fmt, args)
+        val labelEnd = formatString(g.tempBuffer, fmt, args)
         return treeNodeBehavior(window.getId(ptrId), flags, g.tempBuffer, labelEnd)
     }
 
@@ -94,7 +94,7 @@ interface widgetsTrees {
         window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask and treeDepthMask - 1
 
         assert(window.idStack.size > 1) { "There should always be 1 element in the idStack (pushed during window creation). If this triggers you called ::treePop/popId() too much." }
-        popId()
+        popID()
     }
 
     /** horizontal distance preceding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2)
