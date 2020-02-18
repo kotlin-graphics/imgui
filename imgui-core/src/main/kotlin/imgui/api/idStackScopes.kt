@@ -29,7 +29,7 @@ interface idStackScopes {
 
     /** calculate unique ID (hash of whole ID stack + given parameter). e.g. if you want to query into ImGuiStorage
      *  yourself. otherwise rarely needed   */
-    fun getId(strId: String) = g.currentWindow!!.getId(strId)
+    fun getID(strId: String) = g.currentWindow!!.getId(strId)
 
-    fun getId(ptrId: Any): ID = g.currentWindow!!.getId(ptrId)
+    fun getID(ptrId: Any): ID = g.currentWindow!!.getId(ptrId)
 }
