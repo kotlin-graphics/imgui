@@ -17,6 +17,7 @@ module com.github.kotlin_graphics.imgui_core {
 
     exports imgui.api;
     exports imgui.classes;
+    exports imgui.internal.classes; // TODO remove me https://sormuras.github.io/blog/2018-09-11-testing-in-the-modular-world.html
     exports imgui.demo.showExampleApp;
     exports imgui.demo;
     exports imgui.font;
