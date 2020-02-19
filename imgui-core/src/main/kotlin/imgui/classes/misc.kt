@@ -143,10 +143,10 @@ class Storage {
     fun int(key: ID, defaultVal: Int = 0): Int = data[key] ?: defaultVal
     operator fun set(key: ID, value: Int) = data.set(key, value)
 
-    fun bool(key: ID, defaultVal: Boolean = false) = data[key]?.bool ?: defaultVal
+    fun bool(key: ID, defaultVal: Boolean = false): Boolean = data[key]?.bool ?: defaultVal
     operator fun set(id: ID, value: Boolean) = data.set(id, value.i)
 
-    fun float(key: ID, defaultVal: Float = 0f) = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
+    fun float(key: ID, defaultVal: Float = 0f): Float = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
     operator fun set(key: ID, value: Float) = data.set(key, glm.floatBitsToInt(value))
 
 //    IMGUI_API void*     GetVoidPtr(ImGuiID key) const; // default_val is NULL
@@ -156,7 +156,10 @@ class Storage {
     // - References are only valid until a new value is added to the storage. Calling a Set***() function or a Get***Ref() function invalidates the pointer.
     // - A typical use case where this is convenient for quick hacking (e.g. add storage during a live Edit&Continue session if you can't modify existing struct)
     //      float* pvar = ImGui::GetFloatRef(key); ImGui::SliderFloat("var", pvar, 0, 100.0f); some_var += *pvar;
-//    IMGUI_API int*      GetIntRef(ImGuiID key, int default_val = 0);
+
+//    fun getIntRef(key: ID, defaultVal: Int = 0) {
+//        int(key, defaultVal)
+//    }
 //    IMGUI_API bool*     GetBoolRef(ImGuiID key, bool default_val = false);
 //    IMGUI_API float*    GetFloatRef(ImGuiID key, float default_val = 0.0f);
 //    IMGUI_API void**    GetVoidPtrRef(ImGuiID key, void* default_val = NULL);

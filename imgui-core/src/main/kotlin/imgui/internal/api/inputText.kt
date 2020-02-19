@@ -375,12 +375,12 @@ internal interface inputText {
                 } or kMask)
                 Key.UpArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
-                        drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
+                        drawWindow setScrollY glm.max(drawWindow.scroll.y - g.fontSize, 0f)
                     else
                         state.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 Key.DownArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
-                        drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
+                        drawWindow setScrollY glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY)
                     else
                         state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
                 Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)

@@ -30,11 +30,11 @@ fun <R>CHECK_RETV(expr: Boolean, ret: R): R? {
 //    if (ImGuiTestEngineHook_Error(__FILE__, __func__, __LINE__, ImGuiTestCheckFlags_None, _FMT, __VA_ARGS__)) {
 //        IM_ASSERT(0); }
 //} while (0)
-//#define IM_ERRORF_NOHDR(_FMT,...)   do {
-//    if (ImGuiTestEngineHook_Error(NULL, NULL, 0, ImGuiTestCheckFlags_None, _FMT, __VA_ARGS__)) {
-//        IM_ASSERT(0); }
-//} while (0)
-//
+fun ERRORF_NOHDR(fmt: String, vararg args: Any) {
+    if (TestEngineHook_Error(/*NULL, NULL, 0,*/ TestCheckFlag.None.i, fmt, args))
+        assert(false)
+}
+
 //template<typename T> void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, T value)         { buf.append("???"); IM_UNUSED(value); }
 //template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, const char* value)  { buf.appendf("%s", value); }
 //template<> inline void ImGuiTestEngineUtil_AppendStrValue(ImGuiTextBuffer& buf, bool value)         { buf.append(value ? "true" : "false"); }
@@ -130,7 +130,8 @@ fun <R>CHECK_RETV(expr: Boolean, ret: R): R? {
 //-------------------------------------------------------------------------
 
 // Return true to request a debugger break
-fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/ flags: TestCheckFlags, result: Boolean): Boolean {
+fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/
+        flags: TestCheckFlags, result: Boolean, expr: String? = null): Boolean {
 
     val engine = hookingEngine
 
@@ -183,17 +184,13 @@ fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/
     return false
 }
 
-bool ImGuiTestEngineHook_Error(const char* file, const char* func, int line, ImGuiTestCheckFlags flags, const char* fmt, ...)
-{
-    va_list args
-            va_start(args, fmt)
-    Str256 buf
-            buf.setfv(fmt, args)
-    bool ret = ImGuiTestEngineHook_Check (file, func, line, flags, false, buf.c_str())
-    va_end(args)
+fun TestEngineHook_Error(/*file, const char* func, int line,*/ flags: TestCheckFlags, fmt: String, vararg args: Any): Boolean{
+    val buf = fmt.format(args)
+    val ret = TestEngineHook_Check (/*file, func, line,*/ flags, false, buf)
 
-    ImGuiTestEngine * engine = GImGuiHookingEngine
-    if (engine && engine->Abort)
-    return false
-    return ret
+    val engine = hookingEngine
+    return when (engine?.abort) {
+        true -> false
+        else -> ret
+    }
 }
