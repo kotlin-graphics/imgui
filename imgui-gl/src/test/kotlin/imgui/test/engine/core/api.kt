@@ -40,6 +40,7 @@ import imgui.dsl.tabBar
 import imgui.dsl.tabItem
 import imgui.internal.Axis
 import imgui.internal.ItemStatusFlags
+import imgui.internal.NavLayer
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.test.IMGUI_HAS_DOCK
@@ -382,7 +383,7 @@ class TestEngineIO {
 // Result of an ItemLocate query
 class TestItemInfo {
     var refCount = 0               // User can increment this if they want to hold on the result pointer across frames, otherwise the task will be GC-ed.
-    var navLayer = 0              // Nav layer of the item
+    var navLayer = NavLayer.Main              // Nav layer of the item
     var depth = 0              // Depth from requested parent id. 0 == ID is immediate child of requested parent id.
     var timestampMain = -1         // Timestamp of main result (all fields)
     var timestampStatus = -1       // Timestamp of StatusFlags
@@ -439,6 +440,6 @@ class TestRefDesc {
     }
 
     override fun toString(): String {
-        return super.toString()
+        TODO()
     }
 }

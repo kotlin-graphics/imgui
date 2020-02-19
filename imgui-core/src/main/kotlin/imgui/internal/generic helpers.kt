@@ -51,6 +51,14 @@ fun fileLoadToMemory(filename: String): CharArray? =
             CharArray(bytes.size) { bytes[it].c }
         }
 
+/** [JVM] */
+fun hash(data: Int, seed: Int = 0): Int {
+    val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
+    buffer.putInt(0, data)
+    return hash(buffer, seed)
+}
+
+/** [JVM] */
 fun hash(data: IntArray, seed: Int = 0): Int {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])

@@ -85,8 +85,36 @@ fun TestEngine.yield() {
         ctx->RecoverFromUiContextErrors()
     }
 }
-void                ImGuiTestEngine_SetDeltaTime(ImGuiTestEngine* engine, float delta_time)
-int                 ImGuiTestEngine_GetFrameCount(ImGuiTestEngine* engine)
-double              ImGuiTestEngine_GetPerfDeltaTime500Average(ImGuiTestEngine* engine)
-const char*         ImGuiTestEngine_GetVerboseLevelName(ImGuiTestVerboseLevel v)
-bool                ImGuiTestEngine_CaptureScreenshot(ImGuiTestEngine* engine, ImGuiCaptureArgs* args)
+
+infix fun TestEngine.setDeltaTime(deltaTime: Float) {
+
+    assert(deltaTime >= 0f)
+    overrideDeltaTime = deltaTime
+}
+
+// ImGuiTestEngine_GetFrameCount -> val
+
+val TestEngine.perfDeltaTime500Average
+    get() = perfDeltaTime500.average
+
+//const char*         ImGuiTestEngine_GetVerboseLevelName(ImGuiTestVerboseLevel v)
+
+infix fun TestEngine.captureScreenshot(args: CaptureArgs): Boolean {
+
+    ImGuiCaptureContext& ct = engine->CaptureTool.Context;
+    if (ct.ScreenCaptureFunc == NULL)
+    {
+        IM_ASSERT(0);
+        return false;
+    }
+
+    // Graphics API must render a window so it can be captured
+    const bool backup_fast = engine->IO.ConfigRunFast;
+    engine->IO.ConfigRunFast = false;
+
+    while (ct.CaptureScreenshot(args))
+        ImGuiTestEngine_Yield(engine);
+
+    engine->IO.ConfigRunFast = backup_fast;
+    return true;
+}

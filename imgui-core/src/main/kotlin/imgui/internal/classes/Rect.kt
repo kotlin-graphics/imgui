@@ -32,6 +32,11 @@ class Rect {
         this.max = Vec2(max)
     }
 
+    constructor(min: Vec2, max: Vec2i) {
+        this.min = Vec2(min)
+        this.max = Vec2(max)
+    }
+
     constructor(v: Vec4) {
         min.put(v.x, v.y)
         max.put(v.z, v.w)

@@ -1,8 +1,12 @@
 package imgui.test.engine
 
+import gli_.has
 import org.lwjgl.system.Platform
 
 inline class KeyModFlags(val i: Int)       // See ImGuiKeyModFlags_
+{
+    infix fun has(f: KeyModFlag): Boolean = i has f.i.i
+}
 
 inline class KeyModFlag(val i: KeyModFlags) {
     companion object {
@@ -72,7 +76,17 @@ enum class KeyState {
 //void        ImDebugShowInputTextState();
 //
 //const char* GetImGuiKeyName(ImGuiKey key);
-//void        GetImGuiKeyModsPrefixStr(ImGuiKeyModFlags mod_flags, char* out_buf, size_t out_buf_size);
+
+fun getKeyModsPrefixStr(modFlags: KeyModFlags): String {
+    var res = ""
+    if (modFlags != KeyModFlag.None.i) {
+        if (modFlags has KeyModFlag.Ctrl) res += "Ctrl+"
+        if (modFlags has KeyModFlag.Alt) res += "Alt+"
+        if (modFlags has KeyModFlag.Shift) res += "Shift+"
+        if (modFlags has KeyModFlag.Super) res += "Super+"
+    }
+    return res
+}
 //const ImBuildInfo&  ImGetBuildInfo();
 //ImFont*     FindFontByName(const char* name);
 //

@@ -235,16 +235,7 @@ class Window(var context: Context,
         return id
     }
 
-    fun getId(n: Int): ID {
-        val seed = idStack.last()
-        val bytes = ByteBuffer.allocate(Int.BYTES).apply {
-            order(ByteOrder.LITTLE_ENDIAN)
-            putInt(0, n)
-        }
-        return hash(bytes, seed).also { id ->
-            keepAliveID(id)
-        }
-    }
+    fun getId(n: Int): ID = hash(n, seed = idStack.last()).also { keepAliveID(it) }
 
     fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): ID {
         val seed: ID = idStack.last()
@@ -262,14 +253,7 @@ class Window(var context: Context,
         return System.identityHashCode(ptrId[ptrIndex])
     }
 
-    fun getIdNoKeepAlive(n: Int): ID {
-        val seed = idStack.last()
-        val bytes = ByteBuffer.allocate(Int.BYTES).apply {
-            order(ByteOrder.LITTLE_ENDIAN)
-            putInt(0, n)
-        }
-        return hash(bytes, seed)
-    }
+    fun getIdNoKeepAlive(n: Int): ID = hash(n, seed = idStack.last())
 
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
     fun getIdFromRectangle(rAbs: Rect): ID {
@@ -529,7 +513,7 @@ class Window(var context: Context,
 
 
     /** ~SetScrollX(ImGuiWindow* window, float new_scroll_x) */
-    fun setScrollX(newScrollX: Float) {
+    infix fun setScrollX(newScrollX: Float) {
         scrollTarget.x = newScrollX
         scrollTargetCenterRatio.x = 0f
     }

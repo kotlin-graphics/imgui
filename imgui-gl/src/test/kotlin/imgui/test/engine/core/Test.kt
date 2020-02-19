@@ -1,6 +1,6 @@
 package imgui.test.engine.core
 
-import imgui.test.engine.TestContext
+import imgui.test.engine.context.TestContext
 
 //-------------------------------------------------------------------------
 // ImGuiTest

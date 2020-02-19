@@ -1,5 +1,6 @@
 package imgui.test.engine.core
 
+import gli_.has
 import gli_.hasnt
 import imgui.test.engine.TestEngine
 import imgui.wo
@@ -35,6 +36,7 @@ inline class TestRunFlags(val i: Int) {     // Flags: See ImGuiTestRunFlags_
     infix fun wo(f: TestRunFlag) = TestRunFlags(i wo f.i.i)
     infix fun or(f: TestRunFlag) = TestRunFlags(i or f.i.i)
     infix fun hasnt(f: TestRunFlag) = i hasnt f.i.i
+    infix fun has(f: TestRunFlags): Boolean = i has f.i
 }
 
 //-------------------------------------------------------------------------

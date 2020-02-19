@@ -269,20 +269,20 @@ fun navUpdate() {
             val scrollSpeed = round(it.calcFontSize() * 100 * io.deltaTime) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
             if (it.dc.navLayerActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
                 if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
-                    it.setScrollX(floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed))
+                    it setScrollX floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed)
                 if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down)
-                    it.setScrollY(floor(it.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else 1f) * scrollSpeed))
+                    it setScrollY floor(it.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else 1f) * scrollSpeed)
             }
 
             // *Normal* Manual scroll with NavScrollXXX keys
             // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
             val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
             if (scrollDir.x != 0f && it.scrollbar.x) {
-                it.setScrollX(floor(it.scroll.x + scrollDir.x * scrollSpeed))
+                it setScrollX floor(it.scroll.x + scrollDir.x * scrollSpeed)
                 g.navMoveFromClampedRefRect = true
             }
             if (scrollDir.y != 0f) {
-                it.setScrollY(floor(it.scroll.y + scrollDir.y * scrollSpeed))
+                it setScrollY floor(it.scroll.y + scrollDir.y * scrollSpeed)
                 g.navMoveFromClampedRefRect = true
             }
         }
@@ -579,8 +579,8 @@ fun navUpdatePageUpPageDown(): Float {
             when {
                 Key.PageUp.isPressed(true) -> window.setScrollY(window.scroll.y - window.innerRect.height)
                 Key.PageDown.isPressed(true) -> window.setScrollY(window.scroll.y + window.innerRect.height)
-                homePressed -> window.setScrollY(0f)
-                endPressed -> window.setScrollY(window.scrollMax.y)
+                homePressed -> window setScrollY 0f
+                endPressed -> window setScrollY window.scrollMax.y
             }
         } else {
             val navRectRel = window.navRectRel[g.navLayer]
