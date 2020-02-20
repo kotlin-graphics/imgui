@@ -16,7 +16,15 @@ import imgui.test.engine.KeyState
 
 inline class TestVerboseLevel(val i: Int) {
     operator fun compareTo(b: TestVerboseLevel): Int = i.compareTo(b.i)
-
+    val name get() = when(this) {
+        Silent -> "Silent"
+        Error -> "Error"
+        Warning -> "Warning"
+        Info -> "Info"
+        Debug -> "Debug"
+        Trace -> "Trace"
+        else -> error("")
+    }
     companion object {
         val Silent = TestVerboseLevel(0)
         val Error = TestVerboseLevel(1)

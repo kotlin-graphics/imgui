@@ -4,6 +4,7 @@ import engine.context.yield
 import engine.core.*
 import glm_.glm
 import glm_.vec2.Vec2
+import imgui.ID
 import imgui.clamp
 import imgui.hasnt
 import imgui.internal.NavLayer
@@ -15,6 +16,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import imgui.WindowFlag as Wf
+
+// [JVM]
+fun TestContext.mouseMove(ref: ID, flags: TestOpFlags = TestOpFlag.None.i) = mouseMove(TestRef(ref), flags)
 
 // FIXME: Maybe ImGuiTestOpFlags_NoCheckHoveredId could be automatic if we detect that another item is active as intended?
 fun TestContext.mouseMove(ref: TestRef, flags: TestOpFlags = TestOpFlag.None.i) {

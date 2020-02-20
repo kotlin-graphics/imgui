@@ -7,6 +7,8 @@ import imgui.internal.*
 
 // [JVM]
 fun TestContext.getID(ref: ID): ID = getID(TestRef(ref))
+// [JVM]
+fun TestContext.getID(ref: String): ID = getID(TestRef(path = ref))
 
 fun TestContext.getID(ref: TestRef): ID = when (ref.id) {
     0 -> hashDecoratedPath(ref.path!!, refID)

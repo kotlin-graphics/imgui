@@ -213,13 +213,13 @@ class TestContext {
 }
 
 // Helper to increment/decrement the function depth (so our log entry can be padded accordingly)
-#define IM_TOKENPASTE(x, y)     x ## y
-#define IM_TOKENPASTE2(x, y)    IM_TOKENPASTE(x, y)
-#define IMGUI_TEST_CONTEXT_REGISTER_DEPTH(_THIS)        ImGuiTestContextDepthScope IM_TOKENPASTE2(depth_register, __LINE__)(_THIS)
-
-struct ImGuiTestContextDepthScope
-{
-    ImGuiTestContext * TestContext
-    ImGuiTestContextDepthScope(ImGuiTestContext * ctx) { TestContext = ctx; TestContext->ActionDepth++; }
-    ~ImGuiTestContextDepthScope { TestContext -> ActionDepth--; }
-}
+//#define IM_TOKENPASTE(x, y)     x ## y
+//#define IM_TOKENPASTE2(x, y)    IM_TOKENPASTE(x, y)
+//#define IMGUI_TEST_CONTEXT_REGISTER_DEPTH(_THIS)        ImGuiTestContextDepthScope IM_TOKENPASTE2(depth_register, __LINE__)(_THIS)
+//
+//struct ImGuiTestContextDepthScope
+//{
+//    ImGuiTestContext * TestContext
+//    ImGuiTestContextDepthScope(ImGuiTestContext * ctx) { TestContext = ctx; TestContext->ActionDepth++; }
+//    ~ImGuiTestContextDepthScope { TestContext -> ActionDepth--; }
+//}
