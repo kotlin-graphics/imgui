@@ -9,7 +9,7 @@ import imgui.ImGui.indent
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.popID
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
@@ -74,7 +74,7 @@ interface widgetsTrees {
         val window = currentWindow
         indent()
         window.dc.treeDepth++
-        pushId(ptrId ?: "#TreePush")
+        pushID(ptrId ?: "#TreePush")
     }
 
     /** ~ Unindent()+PopId()    */

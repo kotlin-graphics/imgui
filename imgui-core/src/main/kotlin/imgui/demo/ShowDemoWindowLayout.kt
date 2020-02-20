@@ -56,7 +56,7 @@ import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
@@ -349,7 +349,7 @@ object ShowDemoWindowLayout {
             val buttonsCount = 20
             val windowVisibleX2 = windowPos.x + windowContentRegionMax.x
             for (n in 0 until buttonsCount) {
-                pushId(n)
+                pushID(n)
                 button("Box", buttonSz)
                 val lastButtonX2 = itemRectMax.x
                 val nextButtonX2 = lastButtonX2 + style.itemSpacing.x + buttonSz.x // Expected position if next button was on same line
@@ -579,7 +579,7 @@ object ShowDemoWindowLayout {
             var childW = (contentRegionAvail.x - 4 * style.itemSpacing.x) / 5
             if (childW < 1f)
                 childW = 1f
-            pushId("##VerticalScrolling")
+            pushID("##VerticalScrolling")
             for (i in 0..4) {
                 if (i > 0) sameLine()
                 group {
@@ -611,7 +611,7 @@ object ShowDemoWindowLayout {
             // Horizontal scroll functions
             spacing()
             helpMarker("Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\nUsing the \"Scroll To Pos\" button above will make the discontinuity at edges visible: scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.")
-            pushId("##HorizontalScrolling")
+            pushID("##HorizontalScrolling")
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
                 val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
@@ -651,7 +651,7 @@ object ShowDemoWindowLayout {
                 val numButtons = 10 + (line * if (line has 1) 9 else 3)
                 for (n in 0 until numButtons) {
                     if (n > 0) sameLine()
-                    pushId(n + line * 1000)
+                    pushID(n + line * 1000)
                     val label = if (n % 15 == 0) "FizzBuzz" else if (n % 3 == 0) "Fizz" else if (n % 5 == 0) "Buzz" else "$n"
                     val hue = n * 0.05f
                     pushStyleColor(Col.Button, Color.hsv(hue, 0.6f, 0.6f))

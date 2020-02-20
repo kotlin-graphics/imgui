@@ -20,7 +20,7 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.openPopup
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
@@ -129,7 +129,7 @@ internal interface color {
             for (pickerType in 0..1) {
                 // Draw small/thumbnail version of each picker type (over an invisible button for selection)
                 if (pickerType > 0) separator()
-                pushId(pickerType)
+                pushID(pickerType)
                 var pickerFlags: ColorEditFlags = Cef.NoInputs or Cef.NoOptions or Cef.NoLabel or
                         Cef.NoSidePreview or (flags and Cef.NoAlpha)
                 if (pickerType == 0) pickerFlags = pickerFlags or Cef.PickerHueBar

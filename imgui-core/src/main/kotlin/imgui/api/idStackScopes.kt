@@ -13,16 +13,16 @@ interface idStackScopes {
 
 
     /** push string into the ID stack (will hash string).  */
-    fun pushId(strId: String) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strId) }
+    fun pushID(strId: String) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strId) }
 
     /** push string into the ID stack (will hash string).  */
-    fun pushId(strId: String, strIdEnd: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strId, strIdEnd) }
+    fun pushID(strId: String, strIdEnd: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strId, strIdEnd) }
 
     /** push pointer into the ID stack (will hash pointer).  */
-    fun pushId(ptrId: Any) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(ptrId) }
+    fun pushID(ptrId: Any) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(ptrId) }
 
     /** push integer into the ID stack (will hash integer). */
-    fun pushId(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
+    fun pushID(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
 
     /** pop from the ID stack. */
     fun popID() = g.currentWindow!!.idStack.pop()

@@ -27,7 +27,7 @@ import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.sameLine
@@ -77,7 +77,7 @@ class MyDocument(
 
     // Display dummy contents for the Document
     fun displayContents() {
-        pushId(this)
+        pushID(this)
         text("Document \"$name\"")
         pushStyleColor(Col.Text, color)
         textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
@@ -173,7 +173,7 @@ object Documents {
         for (docN in documents.indices) {
             val doc = documents[docN]
             if (docN > 0) sameLine()
-            pushId(doc)
+            pushID(doc)
             if (checkbox(doc.name, doc::open))
                 if (!doc.open)
                     doc.doForceClose()

@@ -193,7 +193,7 @@ class FontAtlas {
         then the RGB pixels emitted will always be white (~75% of memory/bandwidth waste.  */
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
-    private fun build() {
+    fun build() {
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         buildWithStbTrueType()
     }

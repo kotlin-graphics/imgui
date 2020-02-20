@@ -12,7 +12,7 @@ import imgui.ImGui.nextColumn
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.separator
@@ -57,7 +57,7 @@ object PropertyEditor {
 
     fun showDummyObject(prefix: String, uid: Int) {
         //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
-        pushId(uid)
+        pushID(uid)
         /*  Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree
             lines equal high.             */
         alignTextToFramePadding()
@@ -68,7 +68,7 @@ object PropertyEditor {
         nextColumn()
         if (nodeOpen) {
             for (i in 0..7) {
-                pushId(i) // Use field index as identifier.
+                pushID(i) // Use field index as identifier.
                 if (i < 2)
                     showDummyObject("Child", 424242)
                 else {

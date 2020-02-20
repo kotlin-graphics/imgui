@@ -80,6 +80,13 @@ fun <R> withBool(block: (KMutableProperty0<Boolean>) -> R): R {
     return block(::bool).also { bPtr-- }
 }
 
+fun <R> withBool(boolean: Boolean, block: (KMutableProperty0<Boolean>) -> R): Boolean {
+    bPtr++
+    bool = boolean
+    block(::bool)
+    return bool.also { bPtr-- }
+}
+
 
 // static arrays to avoid GC pressure
 val _fa = FloatArray(4)
@@ -87,7 +94,7 @@ val _fa2 = FloatArray(4)
 val _ia = IntArray(4)
 
 
-// static referenceable
+// static referencable
 var _b = false
 var _i = 0
 var _L = 0L
