@@ -18,10 +18,7 @@ class TestLocateTask(
     val result = TestItemInfo()
 }
 
-class TestRunTask {
-    var test: Test? = null
-    var runFlags: TestRunFlags = TestRunFlag.None.i
-}
+class TestRunTask(var test: Test? = null, var runFlags: TestRunFlags = TestRunFlag.None.i)
 
 // [Internal] Test Engine Context
 struct ImGuiTestEngine
