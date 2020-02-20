@@ -31,7 +31,7 @@ import imgui.ImGui.popFont
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
@@ -233,7 +233,7 @@ object StyleEditor {
                 helpMarker("Read FAQ and docs/FONTS.txt for details on font loading.")
                 pushItemWidth(120)
                 atlas.fonts.forEachIndexed { i, font ->
-                    pushId(font)
+                    pushID(font)
                     val name = font.configData.getOrNull(0)?.name ?: ""
                     val fontDetailsOpened = treeNode(font, "Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
                     sameLine(); smallButton("Set as default") { io.fontDefault = font }

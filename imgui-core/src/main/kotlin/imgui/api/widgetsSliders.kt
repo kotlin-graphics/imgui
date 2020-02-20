@@ -27,7 +27,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -220,10 +220,10 @@ interface widgetsSliders {
 
         var valueChanged = false
         beginGroup()
-        pushId(label)
+        pushID(label)
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
-            pushId(i)
+            pushID(i)
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {

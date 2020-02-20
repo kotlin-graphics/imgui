@@ -17,7 +17,7 @@ import imgui.ImGui.mouseCursor
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.popID
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -208,7 +208,7 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
     window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
 
     // Manual resize grips
-    pushId("#RESIZE")
+    pushID("#RESIZE")
     for (resizeGripN in 0 until resizeGripCount) {
 
         val grip = resizeGripDef[resizeGripN]

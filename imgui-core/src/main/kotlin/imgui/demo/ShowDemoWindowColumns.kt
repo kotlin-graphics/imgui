@@ -18,7 +18,7 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.nextColumn
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -59,7 +59,7 @@ object ShowDemoWindowColumns {
         if (!collapsingHeader("Columns"))
             return
 
-        pushId("Columns")
+        pushID("Columns")
 
         checkbox("Disable tree indentation", ::disableIndent)
         sameLine()

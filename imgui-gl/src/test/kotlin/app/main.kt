@@ -1,0 +1,310 @@
+package app
+
+import app.tests.registerTests
+import engine.core.*
+import engine.osIsDebuggerPresent
+import glm_.parseInt
+import imgui.ConfigFlag
+import imgui.ImGui
+import imgui.api.gImGui
+import imgui.classes.Context
+import imgui.or
+import uno.kotlin.parseInt
+import kotlin.system.exitProcess
+
+/*
+ dear imgui - Standalone GUI/command-line app for Test Engine
+ If you are new to dear imgui, see examples/README.txt and documentation at the top of imgui.cpp.
+
+ Interactive mode, e.g.
+   main.exe [tests]
+   main.exe -gui -fileopener ..\..\tools\win32_open_with_sublime.cmd -slow
+   main.exe -gui -fileopener ..\..\tools\win32_open_with_sublime.cmd -nothrottle
+
+ Command-line mode, e.g.
+   main.exe -nogui -v -nopause
+   main.exe -nogui -nopause perf_
+*/
+
+
+//-------------------------------------------------------------------------
+// Test Application
+//-------------------------------------------------------------------------
+
+val app = TestApp
+
+fun main(args: Array<String>) {
+
+//    #ifdef CMDLINE_ARGS
+//        if (argc == 1)
+//        {
+//            printf("# [exe] %s\n", CMDLINE_ARGS);
+//            ImParseSplitCommandLine(&argc, (const char***)&argv, CMDLINE_ARGS);
+//            if (!ParseCommandLineOptions(argc, argv))
+//                return ImGuiTestAppErrorCode_CommandLineError;
+//            free(argv);
+//        }
+//        else
+//    #endif
+//    {
+    if (!parseCommandLineOptions(args))
+        exitProcess(TestAppErrorCode.CommandLineError.ordinal)
+//    }
+//    argv = NULL;
+
+    // Default verbose level differs whether we are in in GUI or Command-Line mode
+    if (app.optVerboseLevel == TestVerboseLevel.COUNT)
+        app.optVerboseLevel = if (app.optGUI) TestVerboseLevel.Debug else TestVerboseLevel.Silent
+    if (app.optVerboseLevelOnError == TestVerboseLevel.COUNT)
+        app.optVerboseLevelOnError = if (app.optGUI) TestVerboseLevel.Debug else TestVerboseLevel.Debug
+
+    // Setup Dear ImGui binding
+    val ctx = Context()
+    ImGui.styleColorsDark()
+    val io = ImGui.io.apply {
+        iniFilename = "imgui.ini"
+        configFlags = configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
+    }
+    //ImGuiStyle& style = ImGui::GetStyle();
+    //style.Colors[ImGuiCol_Border] = style.Colors[ImGuiCol_BorderShadow] = ImVec4(1.0f, 0, 0, 1.0f);
+    //style.FrameBorderSize = 1.0f;
+    //style.FrameRounding = 5.0f;
+//    #ifdef IMGUI_HAS_VIEWPORT
+//    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+//    #endif
+//    #ifdef IMGUI_HAS_DOCK
+//            io.ConfigFlags | = ImGuiConfigFlags_DockingEnable
+//    //io.ConfigDockingTabBarOnSingleWindows = true;
+//    #endif
+
+    // Load Fonts
+    loadFonts()
+
+    // Create TestEngine context
+    assert(app.testEngine == null)
+    val engine = testEngine_createContext(gImGui!!).also { app.testEngine = it }
+
+    // Apply options
+    val testIo = engine.io.apply {
+        configRunWithGui = app.optGUI
+        configRunFast = app.optFast
+        configVerboseLevel = app.optVerboseLevel
+        configVerboseLevelOnError = app.optVerboseLevelOnError
+        configNoThrottle = app.optNoThrottle
+        perfStressAmount = app.optStressAmount
+        if (!app.optGUI && osIsDebuggerPresent())
+            configBreakOnError = true
+//        srcFileOpenFunc = srcFileOpenerFunc TODO
+//        #if defined(IMGUI_TESTS_BACKEND_WIN32_DX11) || defined(IMGUI_TESTS_BACKEND_SDL_GL3) || defined(IMGUI_TESTS_BACKEND_GLFW_GL3)
+        if (app.optGUI)
+            screenCaptureFunc = captureFramebufferScreenshot
+        else
+//        #endif
+            screenCaptureFunc = captureScreenshotNull
+    }
+    // Set up TestEngine context
+    engine.registerTests()
+//    engine.calcSourceLineEnds()
+
+    // Non-interactive mode queue all tests by default
+    if (!app.optGUI && app.testsToRun.isEmpty())
+        app.testsToRun += "tests"
+
+    // Queue requested tests
+    // FIXME: Maybe need some cleanup to not hard-coded groups.
+//    for (testSpec in app.testsToRun)
+//        when(testSpec) {
+//        "tests" -> engine.queueTests(g_App.TestEngine, ImGuiTestGroup_Tests, NULL, ImGuiTestRunFlags_CommandLine)
+//        else if (strcmp(test_spec, "perf") == 0)
+//            ImGuiTestEngine_QueueTests(g_App.TestEngine, ImGuiTestGroup_Perf, NULL, ImGuiTestRunFlags_CommandLine)
+//        else {
+//            if (strcmp(test_spec, "all") == 0)
+//                test_spec = NULL
+//            for (int group = 0; group < ImGuiTestGroup_COUNT; group++)
+//            ImGuiTestEngine_QueueTests(g_App.TestEngine, (ImGuiTestGroup) group, test_spec, ImGuiTestRunFlags_CommandLine)
+//        }
+//        IM_FREE(test_spec)
+//    }
+    app.testsToRun.clear()
+
+    // Branch name stored in annotation field by default
+    // FIXME-TESTS: Obtain from git? maybe pipe from a batch-file?
+//    #if defined(IMGUI_HAS_DOCK)
+//    strcpy(testIo.PerfAnnotation, "docking")
+//    #elif defined (IMGUI_HAS_TABLE)
+//    strcpy(testIo.PerfAnnotation, "tables")
+//    #else
+    testIo.perfAnnotation = "master"
+//    #endif
+
+    // Run
+    if (app.optGUI)
+        mainLoop()
+    else
+        mainLoopNull()
+
+    // Print results
+    val (countTested, countSuccess) = engine.result
+    engine.printResultSummary()
+    val errorCode = if (countTested != countSuccess) TestAppErrorCode.TestFailed else TestAppErrorCode.Success
+
+    // Shutdown
+    // We shutdown the Dear ImGui context _before_ the test engine context, so .ini data may be saved.
+    ctx.destroy()
+    engine.shutdownContext()
+
+//    if (app.optFileOpener)
+//        free(g_App.OptFileOpener)
+
+    if (app.optPauseOnExit && !app.optGUI) {
+        println("Press Enter to exit.")
+        System.`in`.read()
+    }
+
+    exitProcess(errorCode.ordinal)
+}
+
+fun parseCommandLineOptions(args: Array<String>): Boolean {
+    var n = 0
+    while (n < args.size) {
+        val arg = args[n]
+        if (arg[n++] == '-')
+            when (arg) {
+                // Command-line option
+                "-v" -> {
+                    app.optVerboseLevel = TestVerboseLevel.Info
+                    app.optVerboseLevelOnError = TestVerboseLevel.Debug
+                }
+                "-gui" -> app.optGUI = true
+                "-nogui" -> app.optGUI = false
+                "-fast" -> {
+                    app.optFast = true
+                    app.optNoThrottle = true
+                }
+                "-slow" -> {
+                    app.optFast = false
+                    app.optNoThrottle = false
+                }
+                "-nothrottle" -> app.optNoThrottle = true
+                "-nopause" -> app.optPauseOnExit = false
+                "-stressamount" -> if (n < args.size) app.optStressAmount = args[n++].parseInt()
+//            "-fileopener") == 0 && n + 1 < argc) {
+//                g_App.OptFileOpener = strdup(argv[n + 1])
+//                ImPathFixSeparatorsForCurrentOS(g_App.OptFileOpener)
+//                n++
+//            }
+                else -> when {
+                    arg.startsWith("-v") && arg[2] >= '0' && arg[2] <= '5' -> app.optVerboseLevel = TestVerboseLevel(arg[2].parseInt())
+                    arg.startsWith("-ve") && arg[3] >= '0' && arg[3] <= '5' -> app.optVerboseLevelOnError = TestVerboseLevel(arg[3].parseInt())
+                    else -> {
+                        println("""
+                            Syntax: .. <options> [tests]
+                            Options:
+                                -h                       : show command-line help.
+                                -v                       : verbose mode (same as -v2 -ve4)
+                                -v0/-v1/-v2/-v3/-v4      : verbose level [v0: silent, v1: errors, v2: warnings: v3: info, v4: debug]
+                                -ve0/-ve1/-ve2/-ve3/-ve4 : verbose level for failing tests [v0: silent, v1: errors, v2: warnings: v3: info, v4: debug]
+                                -gui/-nogui              : enable interactive mode.
+                                -slow                    : run automation at feeble human speed.
+                                -nothrottle              : run GUI app without throlling/vsync by default.
+                                -nopause                 : don't pause application on exit.
+                                -stressamount <int>      : set performance test duration multiplier (default: 5)
+                                -fileopener <file>       : provide a bat/cmd/shell script to open source file.
+                            Tests:
+                                all/tests/perf           : queue by groups: all, only tests, only performance benchmarks.
+                                [pattern]                : queue all tests containing the word [pattern].
+                                """)
+                        return false
+                    }
+                }
+            }
+        else // Add tests
+            app.testsToRun += args[n]
+    }
+    return true
+}
+
+fun loadFonts() {
+    val io = ImGui.io
+    io.fonts.addFontDefault()
+    //ImFontConfig cfg;
+    //cfg.RasterizerMultiply = 1.1f;
+
+    io.fonts.addFontFromFileTTF("fonts/Roboto-Medium.ttf", 16f)
+    //io.Fonts->AddFontFromFileTTF(Str64f("%s/%s", base_font_dir.c_str(), "RobotoMono-Regular.ttf").c_str(), 16.0f, &cfg);
+    //io.Fonts->AddFontFromFileTTF(Str64f("%s/%s", base_font_dir.c_str(), "Cousine-Regular.ttf").c_str(), 15.0f);
+    //io.Fonts->AddFontFromFileTTF(Str64f("%s/%s", base_font_dir.c_str(), "DroidSans.ttf").c_str(), 16.0f);
+    //io.Fonts->AddFontFromFileTTF(Str64f("%s/%s", base_font_dir.c_str(), "ProggyTiny.ttf").c_str(), 10.0f);
+    //IM_ASSERT(font != NULL);
+}
+
+
+//bool MainLoopEndFrame()
+//{
+//    ImGuiTestEngine_ShowTestWindow(g_App.TestEngine, NULL)
+//
+//    static bool showDemoWindow = true
+//    static bool showAnotherWindow = false
+//
+//    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+//    if (showDemoWindow)
+//        ImGui::ShowDemoWindow(& show_demo_window);
+//
+//    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+//    {
+//        static float f = 0.0f
+//        static int counter = 0
+//
+//        ImGui::Begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
+//
+//        ImGui::Text("This is some useful text.")               // Display some text (you can use a format strings too)
+//        ImGui::Checkbox("Demo Window", & show_demo_window)      // Edit bools storing our window open/close state
+//        ImGui::Checkbox("Another Window", & show_another_window)
+//
+//        ImGui::SliderFloat("float", & f, 0.0f, 1.0f)            // Edit 1 float using a slider from 0.0f to 1.0f
+//        ImGui::ColorEdit3("clear color", (float *)& g_App . ClearColor) // Edit 3 floats representing a color
+//
+//        if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+//            counter++
+//        ImGui::SameLine()
+//        ImGui::Text("counter = %d", counter)
+//
+//        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate)
+//        ImGui::End()
+//    }
+//
+//    // 3. Show another simple window.
+//    if (showAnotherWindow) {
+//        ImGui::Begin("Another Window", & show_another_window)   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+//        ImGui::Text("Hello from another window!")
+//        if (ImGui::Button("Close Me"))
+//            showAnotherWindow = false
+//        ImGui::End()
+//    }
+//
+//    ImGui::EndFrame()
+//
+//    return true
+//}
+
+
+// Source file opener
+//static void SrcFileOpenerFunc(const char* filename, int line, void*)
+//{
+//    if (!g_App.OptFileOpener) {
+//        fprintf(stderr, "Executable needs to be called with a -fileopener argument!\n")
+//        return
+//    }
+//
+//    ImGuiTextBuffer cmd_line
+//            cmd_line.appendf("%s %s %d", g_App.OptFileOpener, filename, line)
+//    printf("Calling: '%s'\n", cmd_line.c_str())
+//    bool ret = ImOsCreateProcess (cmd_line.c_str())
+//    if (!ret)
+//        fprintf(stderr, "Error creating process!\n")
+//}
+
+// Return value for main()
+enum class TestAppErrorCode { Success, CommandLineError, TestFailed }
+
+

@@ -100,7 +100,7 @@ import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.progressBar
 import imgui.ImGui.pushButtonRepeat
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.radioButton
 import imgui.ImGui.resetMouseDragDelta
@@ -1280,7 +1280,7 @@ object ShowDemoWindowWidgets {
                 radioButton("Move", mode == Mode.Move) { mode = Mode.Move }; sameLine()
                 radioButton("Swap", mode == Mode.Swap) { mode = Mode.Swap }
                 names.forEachIndexed { n, name ->
-                    pushId(n)
+                    pushID(n)
                     if ((n % 3) != 0) sameLine()
                     button(name, Vec2(60))
 

@@ -19,7 +19,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popID
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -121,7 +121,7 @@ interface widgetsMain {
 
         /*  Default to using texture ID as ID. User can still push string/integer prefixes.
             We could hash the size/uv to create a unique ID but that would prevent the user from animating UV.         */
-        pushId(userTextureId)
+        pushID(userTextureId)
         val id = window.getId("#image")
         popID()
 

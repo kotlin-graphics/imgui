@@ -178,13 +178,13 @@ public class Jdsl {
     // ID stack/scopes
 
     public static void withId(int id, Runnable block) {
-        imgui.pushId(id);
+        imgui.pushID(id);
         block.run();
         imgui.popID();
     }
 
     public static void withId(String id, Runnable block) {
-        imgui.pushId(id);
+        imgui.pushID(id);
         block.run();
         imgui.popID();
     }
