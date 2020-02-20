@@ -37,6 +37,7 @@ inline class TestRunFlags(val i: Int) {     // Flags: See ImGuiTestRunFlags_
     infix fun or(f: TestRunFlag) = TestRunFlags(i or f.i.i)
     infix fun hasnt(f: TestRunFlag) = i hasnt f.i.i
     infix fun has(f: TestRunFlags): Boolean = i has f.i
+    infix fun has(f: TestRunFlag): Boolean = i has f.i.i
 }
 
 //-------------------------------------------------------------------------

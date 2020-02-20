@@ -4,8 +4,8 @@ import imgui.clamp
 import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.linearSweep
-import imgui.test.engine.core.TestRef
-import imgui.test.engine.core.TestRefDesc
+import engine.core.TestRef
+import engine.core.TestRefDesc
 import kotlin.math.abs
 import io.kotlintest.shouldBe
 
@@ -13,10 +13,10 @@ fun TestContext.scrollToY (ref: TestRef/*, scroll_ratio_y = 0.5f*/) {
 
 //    IM_UNUSED(scroll_ratio_y);
 
-    if (isError())        return
+    if (isError)        return
 
     // If the item is not currently visible, scroll to get it in the center of our window
-    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
     val g = uiContext!!
     val item = itemLocate(ref)
     val desc = TestRefDesc(ref, item)

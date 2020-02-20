@@ -1,6 +1,9 @@
 package engine.context
 
+import engine.BuildInfo
+import engine.core.TestRunFlag
 import engine.core.perfDeltaTime500Average
+import java.nio.file.Paths
 
 //-------------------------------------------------------------------------
 // ImGuiTestContext - Performance Tools
@@ -17,7 +20,7 @@ fun TestContext.perfCalcRef () {
         n++
     }
     perfRefDt = engine!!.perfDeltaTime500Average
-    SetGuiFuncEnabled(true)
+    setGuiFuncEnabled(true)
 }
 
 fun TestContext.perfCapture () {
@@ -37,32 +40,31 @@ fun TestContext.perfCapture () {
 
     val dtCurr = engine!!.perfDeltaTime500Average
     val dtRefMs = perfRefDt * 1000
-    val dt_delta_ms = (dtCurr - PerfRefDt) * 1000
+    val dtDeltaMs = (dtCurr - perfRefDt) * 1000
 
-    const ImBuildInfo& build_info = ImGetBuildInfo()
+    val buildInfo = BuildInfo()
 
     // Display results
     // FIXME-TESTS: Would be nice if we could submit a custom marker (e.g. branch/feature name)
-    LogInfo("[PERF] Conditions: Stress x%d, %s, %s, %s, %s, %s",
-            PerfStressAmount, build_info.Type, build_info.Cpu, build_info.OS, build_info.Compiler, build_info.Date)
-    LogInfo("[PERF] Result: %+6.3f ms (from ref %+6.3f)", dt_delta_ms, dtRefMs)
+    logInfo("[PERF] Conditions: Stress x$perfStressAmount, $buildInfo")
+    logInfo("[PERF] Result: %+6.3f ms (from ref %+6.3f)", dtDeltaMs, dtRefMs)
 
     // Log to .csv
-    FILE* f = fopen("imgui_perflog.csv", "a+t")
-    if (f == NULL)
-    {
-        LogError("Failed to log to CSV file!")
-    }
-    else
-    {
-        fprintf(f,
-                "%s,%s,%.3f,x%d,%s,%s,%s,%s,%s,%s\n",
-                Test->Category, Test->Name, dt_delta_ms,
-        PerfStressAmount, EngineIO->PerfAnnotation, build_info.Type, build_info.Cpu, build_info.OS, build_info.Compiler, build_info.Date)
-        fflush(f)
-        fclose(f)
-    }
+    val path = Paths.get("imgui_perflog.csv")
+//    if (f == NULL)
+//    {
+//        LogError("Failed to log to CSV file!")
+//    }
+//    else
+//    {
+//        fprintf(f,
+//                "%s,%s,%.3f,x%d,%s,%s,%s,%s,%s,%s\n",
+//                Test->Category, Test->Name, dt_delta_ms,
+//        PerfStressAmount, EngineIO->PerfAnnotation, build_info.Type, build_info.Cpu, build_info.OS, build_info.Compiler, build_info.Date)
+//        fflush(f)
+//        fclose(f)
+//    }
 
     // Disable the "Success" message
-    RunFlags |= ImGuiTestRunFlags_NoSuccessMsg
+    runFlags = runFlags or TestRunFlag.NoSuccessMsg
 }

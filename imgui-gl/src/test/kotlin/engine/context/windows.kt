@@ -1,16 +1,19 @@
 package engine.context
 
-import engine.core.TestRef
+import engine.core.*
+import engine.hashDecoratedPath
 import glm_.f
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.Cond
+import imgui.ID
+import imgui.ImGui
 import imgui.ImGui.findWindowByID
 import imgui.ImGui.focusWindow
-import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.test.IMGUI_HAS_TABLE
-import imgui.test.engine.TestEngine
+import imgui.internal.floor
+import imgui.internal.lengthSqr
+import imgui.toByteArray
 import io.kotlintest.shouldBe
 
 // FIXME-TESTS: May be to focus window when docked? Otherwise locate request won't even see an item?
@@ -24,30 +27,30 @@ fun TestContext.windowRef(ref: TestRef) {
 //            IM_ASSERT(len < IM_ARRAYSIZE(RefStr) - 1)
 
         it.toByteArray(refStr)
-        refID = hashDecoratedPath(ref.path, 0)
+        refID = hashDecoratedPath(ref.path!!, 0)
     } ?: run {
         refStr[0] = 0
         refID = ref.id
     }
 
     // Automatically uncollapse by default
-    if (opFlags_ hasnt TestOpFlag.NoAutoUncollapse)
-        getWindowByRef("").let { windowAutoUncollapse(it) }
+    if (opFlags hasnt TestOpFlag.NoAutoUncollapse)
+        getWindowByRef("")?.let { windowAutoUncollapse(it) }
 }
 
 fun TestContext.windowClose(ref: TestRef) {
-    if (isError)        return
+    if (isError) return
 
-    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
     logDebug("WindowClose")
-    itemClick(engine.engine.context.getID("#CLOSE", ref))
+    itemClick(getID("#CLOSE", ref))
 }
 
 fun TestContext.windowCollapse(window: Window?, collapsed: Boolean) {
-    if (isError)        return
-    if (window == null)        return
+    if (isError) return
+    if (window == null) return
 
-    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
     logDebug("WindowSetCollapsed $collapsed")
     //ImGuiWindow* window = GetWindowByRef(ref);
     //if (window == NULL)
@@ -60,7 +63,7 @@ fun TestContext.windowCollapse(window: Window?, collapsed: Boolean) {
         var opFlags = opFlags
         val backupOpFlags = opFlags
         opFlags = opFlags or TestOpFlag.NoAutoUncollapse
-        itemClick(engine.engine.context.getID("#COLLAPSE", window.id))
+        itemClick(getID("#COLLAPSE", window.id))
         opFlags = backupOpFlags
         yield()
         CHECK(window.collapsed == collapsed)
@@ -69,7 +72,7 @@ fun TestContext.windowCollapse(window: Window?, collapsed: Boolean) {
 
 fun TestContext.windowAutoUncollapse(window: Window) {
     if (window.collapsed) {
-        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
         logDebug("Uncollapse window '${window.name}'")
         windowCollapse(window, false)
         window.collapsed shouldBe false
@@ -79,11 +82,11 @@ fun TestContext.windowAutoUncollapse(window: Window) {
 // FIXME-TESTS: Ideally we would aim toward a clickable spot in the window.
 fun TestContext.windowFocus(ref: TestRef) {
 
-    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    val desc = TestRefDesc(ref, null)
+//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+    val desc = TestRefDesc(ref)
     logDebug("FocusWindow('$desc')")
 
-    val windowId = engine.engine.context.getID(ref)
+    val windowId = getID(ref)
     val window = findWindowByID(windowId)
     CHECK_SILENT(window != null)
     window?.let {
@@ -94,13 +97,13 @@ fun TestContext.windowFocus(ref: TestRef) {
 
 fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
 
-    if (isError)        return
+    if (isError) return
 
     val window = getWindowByRef(ref)
     CHECK_SILENT(window != null)
     window!!
 
-    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
     logDebug("WindowMove ${window.name} (%.1f,%.1f) ", inputPos.x, inputPos.y)
     val targetPos = floor(inputPos - pivot * window.size)
     if ((targetPos - window.pos).lengthSqr < 0.001f)
@@ -137,12 +140,12 @@ fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
 fun TestContext.windowResize(ref: ID, sz: Vec2) = windowResize(TestRef(ref), sz)
 
 fun TestContext.windowResize(ref: TestRef, sz: Vec2) {
-    if (isError)        return
+    if (isError) return
 
     val window = getWindowByRef(ref)!!
     val size = floor(sz)
 
-    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
     logDebug("WindowResize ${window.name} (%.1f,%.1f)", size.x, size.y)
     if ((size - window.size).lengthSqr < 0.001f)
         return
@@ -163,7 +166,7 @@ fun TestContext.windowResize(ref: TestRef, sz: Vec2) {
 
 fun TestContext.windowMoveToMakePosVisible(window: Window, pos: Vec2) {
     val g = uiContext!!
-    if (isError)        return
+    if (isError) return
 
     val visibleR = Rect(0f, 0f, g.io.displaySize.x.f, g.io.displaySize.y.f)   // FIXME: Viewport
     if (pos !in visibleR) {
@@ -178,26 +181,27 @@ fun TestContext.windowMoveToMakePosVisible(window: Window, pos: Vec2) {
     }
 }
 
-fun TestContext.windowBringToFront(window: Window?, flags: TestOpFlags = TestOpFlag.None.i): Boolean {
+fun TestContext.windowBringToFront(window_: Window?, flags: TestOpFlags = TestOpFlag.None.i): Boolean {
 
+    var window = window_
     val g = uiContext!!
-    if (isError)        return false
+    if (isError) return false
 
     if (window == null) {
         val windowId = getID("")
-        window = ImGui.findWindowByID(windowId)
-        assert(window != null)
+        window = ImGui.findWindowByID(windowId)!!
+//        assert(window != null)
     }
 
     if (window !== g.navWindow) {
-        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
         logDebug("BringWindowToFront->FocusWindow('${window.name}')")
         ImGui.focusWindow(window)
         yield()
         yield()
         //IM_CHECK(g.NavWindow == window);
     } else if (window.rootWindow !== g.windows.last().rootWindow) {
-        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
         logDebug("BringWindowToDisplayFront('${window.name}') (window.back=${g.windows.last().name})")
         window.bringToDisplayFront()
         yield()
@@ -216,17 +220,19 @@ fun TestContext.windowBringToFront(window: Window?, flags: TestOpFlags = TestOpF
 }
 
 fun TestContext.popupClose() {
-    if (isError)        return
+    if (isError) return
 
-    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
     logDebug("PopupClose")
     ImGui.closePopupToLevel(0, true)    // FIXME
 }
 
+// [JVM]
+fun TestContext.getWindowByRef(ref: String): Window? = getWindowByRef(TestRef(path = ref))
 fun TestContext.getWindowByRef(ref: TestRef): Window? {
-    val windowId = engine.engine.context.getID(ref)
+    val windowId = getID(ref)
     return findWindowByID(windowId)
 }
 
-val focusWindowRef: TestRef
+val TestContext.focusWindowRef: TestRef
     get() = TestRef(uiContext!!.navWindow?.id ?: 0)

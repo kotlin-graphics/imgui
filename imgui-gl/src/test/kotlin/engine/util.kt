@@ -13,6 +13,7 @@ import imgui.internal.ItemFlag
 import org.lwjgl.system.Platform
 import unsigned.toUInt
 import java.io.PrintStream
+import java.util.*
 
 inline class KeyModFlags(val i: Int)       // See ImGuiKeyModFlags_
 {
@@ -49,15 +50,15 @@ val termColor = TermColors()
 typealias OsConsoleTextColor = AnsiColorCode
 //enum class OsConsoleTextColor { Black, White, BrightWhite, BrightRed, BrightGreen, BrightBlue, BrightYellow }
 
-//struct ImBuildInfo
-//{
-//    const char* Type = "";
-//    const char* Cpu = "";
-//    const char* OS = "";
-//    const char* Compiler = "";
-//    char        Date[32];           // "YYYY-MM-DD"
-//    const char* Time = "";          //
-//};
+class BuildInfo {
+    var type = ""
+    var cpu = ""
+    var os = ""
+    var compiler = ""
+    lateinit var date: Date           // "YYYY-MM-DD"
+    var time = ""          //
+    override fun toString() = "$type, $cpu, $os, $compiler, $date"
+}
 
 
 // Helpers: miscellaneous functions

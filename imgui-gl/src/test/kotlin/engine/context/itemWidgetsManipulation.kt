@@ -132,6 +132,8 @@ fun TestContext.itemAction(action_: TestAction, ref: TestRef, actionArg: Int? = 
     assert(false)
 }
 
+// [JVM]
+fun TestContext.itemClick(ref: ID, button: Int = 0) = itemAction(TestAction.Click, TestRef(ref), button)
 fun TestContext.itemClick(ref: TestRef, button: Int = 0) = itemAction(TestAction.Click, ref, button)
 
 infix fun TestContext.itemDoubleClick(ref: TestRef) = itemAction(TestAction.DoubleClick, ref)
