@@ -32,7 +32,7 @@ import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.popID
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -360,7 +360,7 @@ interface demoDebugInformations {
         val fontCurrent = font
         if (beginCombo(label, fontCurrent.debugName)) {
             for (font in io.fonts.fonts) {
-                pushId(font)
+                pushID(font)
                 if (selectable(font.debugName, font === fontCurrent))
                     io.fontDefault = font
                 popID()
@@ -654,7 +654,7 @@ interface demoDebugInformations {
                 if (treeNode(tabBar, string)) {
                     for (tabN in tabBar.tabs.indices) {
                         val tab = tabBar.tabs[tabN]
-                        pushId(tab)
+                        pushID(tab)
                         if (smallButton("<"))
                             tabBar.queueChangeTabOrder(tab, -1)
                         sameLine(0, 2)

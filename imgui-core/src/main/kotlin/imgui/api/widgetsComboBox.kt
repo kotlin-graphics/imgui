@@ -18,7 +18,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
@@ -190,7 +190,7 @@ interface widgetsComboBox {
         // FIXME-OPT: Use clipper (but we need to disable it on the appearing frame to make sure our call to setItemDefaultFocus() is processed)
         var valueChanged = false
         for (i in items.indices) {
-            pushId(i)
+            pushID(i)
             val itemSelected = i == currentItem
             val itemText = items.getOrElse(i) { "*Unknown item*" }
             if (selectable(itemText, itemSelected)) {

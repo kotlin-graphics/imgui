@@ -30,7 +30,7 @@ import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderCheckMark
@@ -72,7 +72,7 @@ interface widgetsMenus {
 
         assert(!window.dc.menuBarAppending)
         beginGroup() // Backup position on layer 0 // FIXME: Misleading to use a group for that backup/restore
-        pushId("##menubar")
+        pushID("##menubar")
 
         /*  We don't clip with current window clipping rectangle as it is already set to the area below. However we clip
             with window full rect.

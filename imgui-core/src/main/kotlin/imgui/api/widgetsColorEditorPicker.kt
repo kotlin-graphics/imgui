@@ -47,7 +47,7 @@ import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popID
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.renderColorRectWithAlphaCheckerboard
@@ -109,7 +109,7 @@ interface widgetsColorEditorPicker {
         g.nextItemData.clearFlags()
 
         beginGroup()
-        pushId(label)
+        pushID(label)
 
         var flags = flags_
 
@@ -348,7 +348,7 @@ interface widgetsColorEditorPicker {
         val width = calcItemWidth()
         g.nextItemData.clearFlags()
 
-        pushId(label)
+        pushID(label)
         beginGroup()
 
         var flags = flags_

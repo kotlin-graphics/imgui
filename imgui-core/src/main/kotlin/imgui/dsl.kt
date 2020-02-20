@@ -58,7 +58,7 @@ import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.pushButtonRepeat
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFont
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
@@ -199,17 +199,17 @@ object dsl {
     // ID stack/scopes
 
     inline fun withId(id: Int, block: () -> Unit) {
-        pushId(id)
+        pushID(id)
         try { block() } finally { popID() }
     }
 
     inline fun withId(id: String, block: () -> Unit) {
-        pushId(id)
+        pushID(id)
         try { block() } finally { popID() }
     }
 
     inline fun withId(id: Any, block: () -> Unit) {
-        pushId(id)
+        pushID(id)
         try { block() } finally { popID() }
     }
 

@@ -24,7 +24,7 @@ import imgui.ImGui.io
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
@@ -181,7 +181,7 @@ interface widgetsInputWithKeyboard {
             val buttonSize = frameHeight
 
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
-            pushId(label)
+            pushID(label)
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
 
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
@@ -230,10 +230,10 @@ interface widgetsInputWithKeyboard {
 
         var valueChanged = false
         beginGroup()
-        pushId(label)
+        pushID(label)
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
-            pushId(i)
+            pushID(i)
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {

@@ -270,7 +270,7 @@ fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
 
 /** read one character. return input UTF-8 bytes count
  *  @return [JVM] [char: Int, bytes: Int] */
-fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int): Pair<Int, Int> {
+fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
     var str = textBegin
     fun s(i: Int = 0) = text[i + str].toUInt()
     fun spp() = text[str++].toUInt()
