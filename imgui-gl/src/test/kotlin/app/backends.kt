@@ -7,6 +7,7 @@ import glm_.f
 import imgui.ImGui
 import imgui.Key
 import kool.lib.fill
+import kool.set
 import org.lwjgl.opengl.GL11C.*
 import java.nio.ByteBuffer
 
@@ -31,8 +32,9 @@ fun mainLoopEndFrame(): Boolean {
         begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
 
         text("This is some useful text.")               // Display some text (you can use a format strings too)
-        checkbox("Demo Window", ::showDemoWindow)      // Edit bools storing our window open/close state
-        checkbox("Another Window", ::showAnotherWindow)
+        // TODO
+//        checkbox("Demo Window", ::showDemoWindow)      // Edit bools storing our window open/close state
+//        checkbox("Another Window", ::showAnotherWindow)
 
         sliderFloat("float", ::f, 0f, 1f)            // Edit 1 float using a slider from 0.0f to 1.0f
         colorEdit3("clear color", app.clearColor) // Edit 3 floats representing a color
@@ -84,12 +86,12 @@ fun mainLoopNewFrameNull(): Boolean {
 
 fun mainLoopNull() {
     // Init
-    val io = ImGui.io
-    io.fonts.build()
-    for (n in 0 until Key.COUNT)
-        io.keyMap[n] = n
-
-    val testIo = app.testEngine!!.io.apply {
+    ImGui.io.apply {
+        fonts.build()
+        for (n in 0 until Key.COUNT)
+            keyMap[n] = n
+    }
+    app.testEngine!!.io.apply {
         configLogToTTY = true
         newFrameFunc = { _, _ -> mainLoopNewFrameNull() }
         endFrameFunc = { _, _ -> mainLoopEndFrame() }
@@ -246,9 +248,9 @@ val captureFramebufferScreenshot: TestEngineScreenCaptureFunc =
             var lineA = 0
             var lineB = stride * (h - 1)
             while (lineA < lineB) {
-                repeat(stride) { lineTmp[i] = pixels[lineA + it] }
-                repeat(stride) { pixels[lineA + i] = pixels[lineB + it] }
-                repeat(stride) { pixels[lineB + i] = lineTmp[it] }
+                repeat(stride) { lineTmp[it] = pixels[lineA + it] }
+                repeat(stride) { pixels[lineA + it] = pixels[lineB + it] }
+                repeat(stride) { pixels[lineB + it] = lineTmp[it] }
                 lineA += stride
                 lineB -= stride
             }

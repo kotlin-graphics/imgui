@@ -3,7 +3,7 @@
 
 package app.tests
 
-import engine.TestEngine
+import engine.core.TestEngine
 import engine.core.Test
 import engine.core.TestGroup
 import engine.pathFindFilename

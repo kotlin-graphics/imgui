@@ -56,7 +56,7 @@ interface main {
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
 
         if (IMGUI_ENABLE_TEST_ENGINE)
-            ImGuiTestEngineHook_PreNewFrame()
+            Hook.preNewFrame!!(g)
 
         // Check and assert for various common IO and Configuration mistakes
         newFrameSanityChecks()
@@ -267,7 +267,7 @@ interface main {
         assert(g.currentWindow!!.isFallbackWindow)
 
         if (IMGUI_ENABLE_TEST_ENGINE)
-            ImGuiTestEngineHook_PostNewFrame()
+            Hook.postNewFrame!!(g)
     }
 
     /** Ends the Dear ImGui frame. automatically called by ::render(), you likely don't need to call that yourself directly.

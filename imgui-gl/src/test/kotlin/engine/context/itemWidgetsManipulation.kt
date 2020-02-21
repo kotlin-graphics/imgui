@@ -159,12 +159,13 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
     var actionedTotal = 0
     for (pass in 0 until maxPasses) {
 
-        val items = ArrayList<TestItemInfo>()
+        val items = TestItemList()
         gatherItems(items, refParent, maxDepth)
 
         // Find deep most items
         val highestDepth = when (action) {
-            TestAction.Close -> items.filter { it.statusFlags has Isf.Openable && it.statusFlags has Isf.Opened }.maxBy { it.depth }
+            TestAction.Close -> items.list.filter { it.statusFlags has Isf.Openable && it.statusFlags has Isf.Opened }
+                    .map { it.depth }.max() ?: -1
             else -> -1
         }
 
@@ -239,7 +240,7 @@ fun TestContext.itemHold(ref: TestRef, time: Float) {
     mouseMove(ref)
 
     yield()
-    inputs!!.mouseButtonsValue = 1 shl 0)
+    inputs!!.mouseButtonsValue = 1 shl 0
     sleep(time)
     inputs!!.mouseButtonsValue = 0
     yield()

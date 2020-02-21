@@ -53,7 +53,7 @@ fun fileLoadToMemory(filename: String): CharArray? =
 
 /** [JVM] */
 fun hash(data: Int, seed: Int = 0): Int {
-    val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
+    val buffer = ByteBuffer.allocate(Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     buffer.putInt(0, data)
     return hash(buffer, seed)
 }

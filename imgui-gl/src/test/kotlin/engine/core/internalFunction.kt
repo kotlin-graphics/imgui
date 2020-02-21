@@ -1,9 +1,10 @@
 package engine.core
 
-import imgui.ID
 import IMGUI_DEBUG_TEST_ENGINE
 import engine.CaptureArgs
-import engine.TestEngine
+import engine.context.TestActiveFunc
+import engine.context.recoverFromUiContextErrors
+import imgui.ID
 import imgui.toByteArray
 
 
@@ -36,9 +37,10 @@ fun TestEngine.itemLocate(id: ID, debugId: String?): TestItemInfo? {
                 debugId.toByteArray(task.debugName)
             else {
                 val headerSz = task.debugName.size * 0.3f
-                val footerSz = task.debugName.size-2-headerSz
+                val footerSz = task.debugName.size - 2 - headerSz
                 assert(headerSz > 0 && footerSz > 0)
-                formatString(task.debugName, "%.*s..%.*s", (int)header_sz, debug_id, (int)footer_sz, debug_id+debug_id_sz-footer_sz)
+                TODO()
+//                formatString(task.debugName, "%.*s..%.*s", (int)header_sz, debug_id, (int)footer_sz, debug_id+debug_id_sz-footer_sz)
             }
         }
     locateTasks += task
@@ -52,37 +54,38 @@ infix fun TestEngine.findLocateTask(id: ID): TestLocateTask? = locateTasks.find 
 infix fun TestEngine.pushInput(input: TestInput) {
     inputs.queue += input
 }
+
 // Yield control back from the TestFunc to the main update + GuiFunc, for one frame.
 fun TestEngine.yield() {
     val ctx = testContext
-    val g = ctx.uiContext
+    val g = ctx!!.uiContext!!
 
     if (g.withinFrameScope)
-        io.endFrameFunc(engine, engine->IO.UserData)
+        io.endFrameFunc!!(this, io.userData)
 
-    io.newFrameFunc(engine, engine->IO.UserData)
-    assert(g.IO.DeltaTime > 0.0f)
+    io.newFrameFunc!!(this, io.userData)
+    assert(g.io.deltaTime > 0f)
 
-    if (!g.WithinFrameScope)
+    if (!g.withinFrameScope)
         return
 
-    if (ctx != null)
+    if (ctx != null) {
         // Can only yield in the test func!
-        assert(ctx.activeFunc == TestActiveFunc_TestFunc)
+        assert(ctx.activeFunc == TestActiveFunc.TestFunc)
 
-    ctx?.test?.guiFunc?.let {
-        // Call user GUI function
-        if (!(ctx.runFlags & ImGuiTestRunFlags_NoGuiFunc))
-        {
-            ImGuiTestActiveFunc backup_active_func = ctx->ActiveFunc
-            ctx->ActiveFunc = ImGuiTestActiveFunc_GuiFunc
-            engine->TestContext->Test->GuiFunc(engine->TestContext)
-            ctx->ActiveFunc = backup_active_func
+        ctx.test?.guiFunc?.let {
+            // Call user GUI function
+            if (ctx.runFlags hasnt TestRunFlag.NoGuiFunc) {
+                val backupActiveFunc = ctx.activeFunc
+                ctx.activeFunc = TestActiveFunc.GuiFunc
+                it(ctx)
+                ctx.activeFunc = backupActiveFunc
+            }
+
+            // Safety net
+            //if (ctx->Test->Status == ImGuiTestStatus_Error)
+            ctx.recoverFromUiContextErrors()
         }
-
-        // Safety net
-        //if (ctx->Test->Status == ImGuiTestStatus_Error)
-        ctx->RecoverFromUiContextErrors()
     }
 }
 
@@ -101,20 +104,19 @@ val TestEngine.perfDeltaTime500Average
 
 infix fun TestEngine.captureScreenshot(args: CaptureArgs): Boolean {
 
-    ImGuiCaptureContext& ct = engine->CaptureTool.Context;
-    if (ct.ScreenCaptureFunc == NULL)
-    {
-        IM_ASSERT(0);
-        return false;
+    val ct = captureTool.context
+    if (ct.screenCaptureFunc == null) {
+        assert(false)
+        return false
     }
 
     // Graphics API must render a window so it can be captured
-    const bool backup_fast = engine->IO.ConfigRunFast;
-    engine->IO.ConfigRunFast = false;
+    val backupFast = io.configRunFast
+    io.configRunFast = false
 
-    while (ct.CaptureScreenshot(args))
-        ImGuiTestEngine_Yield(engine);
+    while (ct.captureScreenshot(args))
+        yield()
 
-    engine->IO.ConfigRunFast = backup_fast;
-    return true;
+    io.configRunFast = backupFast
+    return true
 }

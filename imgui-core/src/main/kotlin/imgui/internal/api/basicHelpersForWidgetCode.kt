@@ -104,7 +104,7 @@ internal interface basicHelpersForWidgetCode {
         g.nextItemData.flags = NextItemDataFlag.None.i
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
-            ImGuiTestEngineHook_ItemAdd(navBbArg ?: bb, id)
+            Hook.itemAdd!!(g,navBbArg ?: bb, id)
 
         // Clipping test
         if (isClippedEx(bb, id, false)) return false

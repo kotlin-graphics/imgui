@@ -129,7 +129,7 @@ internal interface widgetsLowLevelBehaviors {
             g.hoveredWindow = window
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
-            ImGuiTestEngineHook_ItemAdd(bb, id)
+            Hook.itemAdd!!(g, bb, id)
 
         var pressed = false
         var hovered = itemHoverable(bb, id)
@@ -412,8 +412,10 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
-    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float): Boolean {
+    fun splitterBehavior(bb: Rect, id: ID, axis: Axis,
+                         size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
+                         minSize1: Float, minSize2: Float,
+                         hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f): Boolean {
 
         var size1 by size1ptr
         var size2 by size2ptr
@@ -532,7 +534,7 @@ internal interface widgetsLowLevelBehaviors {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+            Hook.itemInfo?.invoke(g, window.dc.lastItemId, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
         }
 
@@ -642,7 +644,7 @@ internal interface widgetsLowLevelBehaviors {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        ImGuiTestEngineHook_ItemInfo(id, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        Hook.itemInfo?.invoke(g, id, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
 

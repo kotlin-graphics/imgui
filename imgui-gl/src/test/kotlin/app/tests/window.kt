@@ -1,6 +1,6 @@
 package app.tests
 
-import engine.TestEngine
+import engine.core.TestEngine
 import engine.context.TestContext
 import engine.core.CHECK_EQ
 import engine.core.Test

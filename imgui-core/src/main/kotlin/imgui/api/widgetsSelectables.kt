@@ -154,7 +154,7 @@ interface widgetsSelectables {
         if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && window.dc.itemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return pressed
     }
 

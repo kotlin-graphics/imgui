@@ -193,7 +193,7 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
 
         return pressed
     }

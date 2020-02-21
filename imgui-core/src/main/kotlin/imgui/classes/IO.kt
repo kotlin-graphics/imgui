@@ -19,7 +19,7 @@ import uno.glfw.HWND
  *  Communicate most settings and inputs/outputs to Dear ImGui using this structure.
  *  Access via ::io. Read 'Programmer guide' section in .cpp file for general usage.
  *  ----------------------------------------------------------------------------- */
-class IO(sharedFontAtlas: FontAtlas?) {
+class IO(sharedFontAtlas: FontAtlas? = null) {
 
     //------------------------------------------------------------------
     // Configuration (fill once)
