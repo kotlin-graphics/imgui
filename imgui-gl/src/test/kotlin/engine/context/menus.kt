@@ -1,6 +1,7 @@
 package engine.context
 
 import engine.core.TestItemInfo
+import engine.core.TestItemList
 import engine.core.TestRef
 
 fun TestContext.menuAction(action: TestAction, ref: TestRef) {
@@ -67,10 +68,10 @@ fun TestContext.menuAction(action: TestAction, ref: TestRef) {
 
 fun TestContext.menuActionAll(action: TestAction, refParent: TestRef) {
 
-    val items = ArrayList<TestItemInfo>()
+    val items = TestItemList()
     menuAction(TestAction.Open, refParent)
     gatherItems(items, focusWindowRef, 1)
-    for (item in items) {
+    for (item in items.list) {
         menuAction(TestAction.Open, refParent) // We assume that every interaction will close the menu again
         itemAction(action, item.id)
     }

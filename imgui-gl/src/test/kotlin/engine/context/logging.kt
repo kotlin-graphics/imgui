@@ -1,13 +1,9 @@
 package engine.context
 
-import imgui.*
-import IMGUI_HAS_TABLE
-import engine.OsConsoleTextColor
-import engine.TestEngine
-import engine.context.itemLocate
 import engine.core.*
-import engine.osConsoleSetTextColor
 import engine.termColor
+import glm_.func.common.max
+import imgui.max
 
 fun TestContext.logEx(level_: TestVerboseLevel, flags: TestLogFlags, fmt: String, vararg args: Any) {
 
@@ -22,7 +18,7 @@ fun TestContext.logEx(level_: TestVerboseLevel, flags: TestLogFlags, fmt: String
         return
 
     val log = test!!.testLog
-    val prevSize = log.buffer.size()
+    val prevSize = log.buffer.length
 
     //const char verbose_level_char = ImGuiTestEngine_GetVerboseLevelName(level)[0];
     //if (flags & ImGuiTestLogFlags_NoHeader)
@@ -30,22 +26,22 @@ fun TestContext.logEx(level_: TestVerboseLevel, flags: TestLogFlags, fmt: String
     //else
     //    log->Buffer.appendf("[%c] [%04d] ", verbose_level_char, ctx->FrameCount);
     if (flags hasnt TestLogFlag.NoHeader)
-        log.buffer.appendf("[%04d] ", frameCount)
+        log.buffer.append("[%04d] ".format(frameCount))
 
     if (level >= TestVerboseLevel.Debug)
-        log.buffer.appendf("-- %*s", max(0, (actionDepth - 1) * 2), "")
-    log.buffer.appendfv(fmt, args)
+        log.buffer.append("-- %*s".format(0 max  (actionDepth - 1) * 2))
+    log.buffer.append(fmt.format(args))
     log.buffer.append("\n")
 
-    log.updateLineOffsets(engineIO, level, log.buffer.begin() + prevSize)
-    logToTTY(level, log.buffer.c_str() + prevSize)
+    log.updateLineOffsets(engineIO!!, level, prevSize)
+    logToTTY(level, log.buffer.substring(prevSize))
 }
 
 fun TestContext.logToTTY(level: TestVerboseLevel, message: String) {
 
     assert(level > TestVerboseLevel.Silent && level < TestVerboseLevel.COUNT)
 
-    if (!engineIO.configLogToTTY)
+    if (!engineIO!!.configLogToTTY)
         return
 
     val test = test!!
@@ -69,7 +65,7 @@ fun TestContext.logToTTY(level: TestVerboseLevel, message: String) {
         }
         // Otherwise print only current message. If we are executing here log level already is within range of
         // ConfigVerboseLevelOnError setting.
-    } else if (engineIO.configVerboseLevel < level)
+    } else if (engineIO!!.configVerboseLevel < level)
     // Skip printing messages of lower level than configured.
         return
 

@@ -1,6 +1,9 @@
 package engine.context
 
-fun TestContext.yield() = engine!!.yeld
+import engine.core.setDeltaTime
+import engine.core.yield
+
+fun TestContext.yield() = engine!!.yield()
 
 infix fun TestContext.yieldFrames(count_: Int) {
     var count = count_
@@ -34,11 +37,11 @@ infix fun TestContext.sleep(time_: Float) {
 // Sleep for a given clock time from the point of view of the imgui context, without affecting wall clock time of the running application.
 fun TestContext.sleepNoSkip(time_: Float, frameTimeStep: Float) {
 
-    if (isError)        return
+    if (isError) return
 
     var time = time_
 
-    while (time > 0f && !abort)    {
+    while (time > 0f && !abort) {
         engine!! setDeltaTime frameTimeStep
         engine!!.yield()
         time -= uiContext!!.io.deltaTime

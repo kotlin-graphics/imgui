@@ -266,7 +266,7 @@ interface widgetsDrags {
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return valueChanged
     }
 

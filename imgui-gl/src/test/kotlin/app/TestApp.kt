@@ -1,8 +1,8 @@
 package app
 
-import engine.TestEngine
-import glm_.vec4.Vec4
+import engine.core.TestEngine
 import engine.core.TestVerboseLevel
+import glm_.vec4.Vec4
 
 //#if defined(IMGUI_TESTS_BACKEND_WIN32_DX11) || defined(IMGUI_TESTS_BACKEND_SDL_GL3)
 val DEFAULT_OPT_GUI = true

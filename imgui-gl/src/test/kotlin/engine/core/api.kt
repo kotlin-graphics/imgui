@@ -1,15 +1,12 @@
 package engine.core
 
-import engine.core.showTestGroup
-import engine.TestEngine
-import engine.context.TestContext
 import engine.pathFindFilename
 import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import IMGUI_HAS_DOCK
 import imgui.classes.Context
+import imgui.classes.TextFilter
 import imgui.internal.Axis
 import imgui.internal.ItemStatusFlags
 import imgui.internal.NavLayer
@@ -40,6 +37,12 @@ fun testEngine_createContext(imguiContext: Context): TestEngine {
     if (hookingEngine == null)
         hookingEngine = engine
 
+    Hook.preNewFrame = ::hookPrenewframe
+    Hook.postNewFrame = ::hookPostnewframe
+    Hook.itemAdd = ::hookItemAdd
+    Hook.itemInfo = ::hookItemInfo
+    Hook.log = ::hookLog
+
     // Add .ini handle for ImGuiWindow type
 //    ImGuiSettingsHandler ini_handler
 //    ini_handler.TypeName = "TestEngine"
@@ -58,7 +61,7 @@ fun TestEngine.shutdownContext() {
     uiContextTarget = null
     uiContextActive = null
 
-    userDataBuffer!!.free()
+    userDataBuffer?.free()
     userDataBuffer = null
 //    userDataBufferSize = 0
 
@@ -178,7 +181,7 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>? = null) {
             val itemHoveredInfo = if (itemHoveredId != 0) itemLocate(itemHoveredId, "") else null
             val itemActiveInfo = if (itemActiveId != 0) itemLocate(itemActiveId, "") else null
             ImGui.text("Hovered: 0x%08X (\"${itemHoveredInfo?.debugLabel ?: ""}\") @ (%.1f,%.1f)", itemHoveredId, uiContext.io.mousePos.x, uiContext.io.mousePos.y)
-            ImGui.text("Active:  0x%08X (\"${itemActiveInfo?.debugLabel else ""}\")", itemActiveId)
+            ImGui.text("Active:  0x%08X (\"${itemActiveInfo?.debugLabel ?: ""}\")", itemActiveId)
 
             ImGui.separator()
             ImGui.beginChild("Log")
@@ -240,9 +243,9 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>? = null) {
             //PlotLines("Last 100", &engine->PerfDeltaTime100.Samples.Data, engine->PerfDeltaTime100.Samples.Size, engine->PerfDeltaTime100.Idx, NULL, 0.0f, dt_1000 * 1.10f, ImVec2(0.0f, GetFontSize()));
             val plotSize = Vec2(0f, ImGui.frameHeight * 3)
             val ma = perfDeltaTime500
-            ImGui.plotLines("Last 500",
-                    { n -> val ma = (MovingAverageDouble) data; return (float)(ma->Samples[n] * 1000); },
-                    ma, ma->Samples.Size, 0*ma->Idx, NULL, 0.0f, (float)(ImMax(dt_100, dt_1000) * 1000.0 * 1.2f), plot_size)
+//            ImGui.plotLines("Last 500", TODO
+//                    { n -> val ma = (MovingAverageDouble) data; return (float)(ma->Samples[n] * 1000); },
+//                    ma, ma->Samples.Size, 0*ma->Idx, NULL, 0.0f, (float)(ImMax(dt_100, dt_1000) * 1000.0 * 1.2f), plot_size)
         }
     }
     ImGui.endChild()
@@ -252,17 +255,17 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>? = null) {
     // Capture Tool
     captureTool.context.screenCaptureFunc = io.screenCaptureFunc
     if (captureTool.visible)
-        captureTool.showCaptureToolWindow(captureTool.visible)
+        captureTool.showCaptureToolWindow(captureTool::visible)
 }
 
-infix fun TestContext.showTestGroup(group: TestGroup) {
+infix fun TestEngine.showTestGroup(group: TestGroup) {
 
     val style = ImGui.style
-    val filter = engine!!.uiTestFilter
+    val filter = uiTestFilter
 
     //ImGui::Text("TESTS (%d)", engine->TestsAll.Size);
     if (ImGui.button("Run All"))
-        engine!!.queueTests(group, String(filter.inputBuf)) // FIXME: Filter func differs
+        queueTests(group, String(filter.inputBuf)) // FIXME: Filter func differs
 
     ImGui.sameLine()
     filter.draw("##filter", -1f)
@@ -271,14 +274,14 @@ infix fun TestContext.showTestGroup(group: TestGroup) {
     if (ImGui.beginChild("Tests", Vec2())) {
         ImGui.pushStyleVar(StyleVar.ItemSpacing, Vec2(6, 3))
         ImGui.pushStyleVar(StyleVar.FramePadding, Vec2(4, 1))
-        for (n in engine!!.testsAll.indices) {
-            val test = engine!!.testsAll[n]
+        for (n in testsAll.indices) {
+            val test = testsAll[n]
             if (test.group != group)
                 continue
             if (!filter.passFilter(test.name!!) && !filter.passFilter(test.category!!))
                 continue
 
-            val testContext = engine!!.testContext!!.takeIf { it.test === test }
+            val testContext = testContext!!.takeIf { it.test === test }
 
             ImGui.pushID(n)
 
@@ -296,7 +299,7 @@ infix fun TestContext.showTestGroup(group: TestGroup) {
             ImGui.colorButton("status", statusColor, ColorEditFlag.NoTooltip.i)
             ImGui.sameLine()
             if (test.status == TestStatus.Running)
-                ImGui.renderText(p + style.framePadding + Vec2(), "|\0/\0-\0\\".substring((((ImGui.frameCount) / 5) and 3) shl 1))
+                ImGui.renderText(p + style.framePadding + Vec2(), "|\\0/\\0-\\0\\".substring((((ImGui.frameCount) / 5) and 3) shl 1))
 
             var queueTest = false
             var queueGuiFunc = false
@@ -309,12 +312,12 @@ infix fun TestContext.showTestGroup(group: TestGroup) {
             ImGui.sameLine()
 
             val buf = "%-*s - ${test.name}".format(10, test.category)
-            if (ImGui.selectable(buf, test == engine!!.uiSelectedTest))
+            if (ImGui.selectable(buf, test == uiSelectedTest))
                 selectTest = true
 
             // Double-click to run test, CTRL+Double-click to run GUI function
             if (ImGui.isItemHovered() && ImGui.isMouseDoubleClicked(MouseButton.Left))
-                if (ImGui.io.KeyCtrl)
+                if (ImGui.io.keyCtrl)
                     queueGuiFunc = true
                 else
                     queueTest = true
@@ -326,7 +329,7 @@ infix fun TestContext.showTestGroup(group: TestGroup) {
             ImGui::EndTooltip();
             }*/
 
-            if (engine!!.uiSelectAndScrollToTest == test)
+            if (uiSelectAndScrollToTest == test)
                 ImGui.setScrollHereY()
 
             var viewSource = false
@@ -339,11 +342,11 @@ infix fun TestContext.showTestGroup(group: TestGroup) {
                 val isRunningGuiFunc = testContext?.runFlags?.has(TestRunFlag.NoTestFunc) == true
                 if (ImGui.menuItem("Run GUI func", selected = isRunningGuiFunc))
                     if (isRunningGuiFunc)
-                        engine!!.abort()
+                        abort()
                     else queueGuiFunc = true
                 ImGui.separator()
 
-                val openSourceAvailable = test.sourceFile != null && engine!!.io.srcFileOpenFunc != null
+                val openSourceAvailable = test.sourceFile != null && io.srcFileOpenFunc != null
                 if (openSourceAvailable) {
                     TODO()
 //                    buf.setf("Open source (%s:%d)", test->SourceFileShort, test->SourceLine)
@@ -360,12 +363,12 @@ infix fun TestContext.showTestGroup(group: TestGroup) {
 
                 ImGui.separator()
                 if (ImGui.menuItem("Copy name", selected = false))
-                    ImGui.clipboardText = test.name
+                    ImGui.clipboardText = test.name!!
 
-                if (ImGui.menuItem("Copy log", selected = false, !test.testLog.buffer.isEmpty()))
+                if (ImGui.menuItem("Copy log", selected = false, enabled = test.testLog.buffer.isNotEmpty()))
                     ImGui.clipboardText = test.testLog.buffer.toString()
 
-                if (ImGui.menuItem("Clear log", selected = false, !test.testLog.buffer.isEmpty()))
+                if (ImGui.menuItem("Clear log", selected = false, enabled = test.testLog.buffer.isNotEmpty()))
                     test.testLog.clear()
 
                 ImGui.endPopup()
@@ -498,33 +501,19 @@ fun TestEngine.registerTest(category: String, name: String, srcFile: String? = n
 }
 
 fun TestEngine.queueTests(group: TestGroup, filterStr: String? = null, runFlags: TestRunFlags = TestRunFlag.None.i) {
-    TODO()
-//    assert(group.i < TestGroup.COUNT.i)
-//    ImGuiTextFilter filter
-//    filterStr?.let {
-//        assert(strlen(filterStr) + 1 < IM_ARRAYSIZE(filter.InputBuf))
-//        ImFormatString(filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf), "%s", filterStr)
-//        filter.Build()
-//    }
-//    for (int n = 0; n < engine->TestsAll.Size; n++)
-//    {
-//        ImGuiTest* test = engine->TestsAll[n]
-//        if (test->Group != group)
-//        continue
-//        if (!filter.PassFilter(test->Name))
-//        continue
-//        ImGuiTestEngine_QueueTest(engine, test, runFlags)
-//    }
+    assert(group.i < TestGroup.COUNT.i)
+    val filter = TextFilter()
+    testsAll.filter { it.group == group && filter.passFilter(it.name!!) }.forEach { queueTest(it, runFlags) }
 }
 
 fun TestEngine.queueTest(test: Test, runFlags: TestRunFlags) {
 
-    if (engine!! isRunningTest test)
+    if (isRunningTest(test))
         return
 
     // Detect lack of signal from imgui context, most likely not compiled with IMGUI_ENABLE_TEST_ENGINE=1
-    if (engine!!.frameCount < engine!!.uiContextTarget.frameCount - 2) {
-        engine!!.abort()
+    if (frameCount < uiContextTarget!!.frameCount - 2) {
+        abort()
         assert(false) { "Not receiving signal from core library. Did you call ImGuiTestEngine_CreateContext() with the correct context? Did you compile imgui/ with IMGUI_ENABLE_TEST_ENGINE=1?" }
         test.status = TestStatus.Error
         return
@@ -537,7 +526,7 @@ fun TestEngine.queueTest(test: Test, runFlags: TestRunFlags) {
 
 val TestEngine.isRunningTests get() = testsQueue.isNotEmpty()
 
-infix fun TestEngine.isRunningTest(test: Test): Boolean = test in testsQueue
+infix fun TestEngine.isRunningTest(test: Test): Boolean = testsQueue.any { it.test === test }
 
 fun TestEngine.calcSourceLineEnds() {
     TODO()
@@ -634,30 +623,31 @@ class TestItemInfo {
 
 // Result of an ItemGather query
 class TestItemList {
-    ImPool<ImGuiTestItemInfo>   Pool
-    int&                        Size           // FIXME: THIS IS REF/POINTER to Pool.Buf.Size! This codebase is totally embracing evil C++!
+    val list = ArrayList<TestItemInfo>()
+    val map = mutableMapOf<ID, Int>()
 
-    void                        Clear()
-    { Pool.Clear(); }
-    void                        Reserve(int capacity)
-    { Pool.Reserve(capacity); }
-    //int                       GetSize() const         { return Pool.GetSize(); }
-    const ImGuiTestItemInfo*    operator [] (size_t n)
-    { return Pool.GetByIndex((int) n); }
-    const ImGuiTestItemInfo*    GetByIndex(int n)
-    { return Pool.GetByIndex(n); }
-    const ImGuiTestItemInfo*    GetByID(ImGuiID id)
-    { return Pool.GetByKey(id); }
+    fun clear() {
+        list.clear()
+        map.clear()
+    }
 
-    ImGuiTestItemList() : Size(Pool.Buf.Size)
-    {} // FIXME: THIS IS REF/POINTER to Pool.Buf.Size!
+    fun reserve(capacity: Int) = list.ensureCapacity(capacity)
+    operator fun get(n: Int): TestItemInfo = getByIndex(n)
+    infix fun getByIndex(n: Int): TestItemInfo = list[n]
+    infix fun getByID(id: ID): Int? = map[id]
+    infix fun getOrAddByKey(key: ID): TestItemInfo = map[key]?.let { list[it] }
+            ?: add().also { map[key] = list.lastIndex }
+
+    fun add(): TestItemInfo = TestItemInfo().also { list += it }
+    val size get() = list.size
+    val lastIndex get() = list.lastIndex
 }
 
 // Gather items in given parent scope.
 class TestGatherTask {
     var parentID: ID = 0
     var depth = 0
-    var outList: ArrayList<TestItemInfo>? = null
+    var outList: TestItemList? = null
     var lastItemInfo: TestItemInfo? = null
 }
 

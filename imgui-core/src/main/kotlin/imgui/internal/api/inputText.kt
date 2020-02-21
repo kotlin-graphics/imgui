@@ -586,7 +586,7 @@ internal interface inputText {
                         it.bufSize = buf.size max applyNewTextLength
                         it.userData = callbackUserData
                     }
-                    callback!!.invoke(callbackData)
+                    callback!!(callbackData)
                     buf = callbackData.buf
 //                    buf_size = callback_data.BufSize; TODO?
                     applyNewTextLength = callbackData.bufTextLen min buf.size
@@ -821,7 +821,7 @@ internal interface inputText {
         if (valueChanged && flags hasnt Itf._NoMarkEdited)
             markItemEdited(id)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return when {
             flags has Itf.EnterReturnsTrue -> enterPressed
             else -> valueChanged

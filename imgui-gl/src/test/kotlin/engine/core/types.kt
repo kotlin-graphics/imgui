@@ -1,14 +1,14 @@
 package engine.core
 
+import engine.KeyModFlag
+import engine.KeyModFlags
+import engine.KeyState
 import glm_.vec2.Vec2
 import imgui.ID
 import imgui.Key
 import imgui.NUL
 import imgui.NavInput
 import imgui.classes.IO
-import imgui.test.engine.KeyModFlag
-import imgui.test.engine.KeyModFlags
-import imgui.test.engine.KeyState
 
 //-------------------------------------------------------------------------
 // Types
@@ -124,7 +124,7 @@ class TestInput(
 }
 
 class TestInputs {
-    lateinit var simulatedIO: IO
+    val simulatedIO = IO()
     var applyingSimulatedIO = 0
     val mousePosValue = Vec2()             // Own non-rounded copy of MousePos in order facilitate simulating mouse movement very slow speed and high-framerate
     val hostLastMousePos = Vec2()

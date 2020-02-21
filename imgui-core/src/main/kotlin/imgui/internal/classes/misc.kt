@@ -371,29 +371,29 @@ inline class PoolIdx(val i: Int)
 
 class TabBarPool {
     /** Contiguous data */
-    val buf = ArrayList<TabBar?>()
+    val list = ArrayList<TabBar?>()
     /** ID->Index */
     val map = mutableMapOf<ID, PoolIdx>()
 
-    operator fun get(key: ID): TabBar? = map[key]?.let { buf[it.i] }
-    operator fun get(n: PoolIdx): TabBar? = buf.getOrNull(n.i)
-    fun getIndex(p: TabBar): PoolIdx = PoolIdx(buf.indexOf(p))
-    fun getOrAddByKey(key: ID): TabBar = map[key]?.let { buf[it.i] }
-            ?: add().also { map[key] = PoolIdx(buf.lastIndex) }
+    operator fun get(key: ID): TabBar? = map[key]?.let { list[it.i] }
+    operator fun get(n: PoolIdx): TabBar? = list.getOrNull(n.i)
+    fun getIndex(p: TabBar): PoolIdx = PoolIdx(list.indexOf(p))
+    fun getOrAddByKey(key: ID): TabBar = map[key]?.let { list[it.i] }
+            ?: add().also { map[key] = PoolIdx(list.lastIndex) }
 
-    operator fun contains(p: TabBar): Boolean = p in buf
+    operator fun contains(p: TabBar): Boolean = p in list
     fun clear() {
-        buf.clear()
+        list.clear()
         map.clear()
     }
 
-    fun add(): TabBar = TabBar().also { buf += it }
+    fun add(): TabBar = TabBar().also { list += it }
     fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
     fun remove(key: ID, idx: PoolIdx) {
-        buf[idx.i] = null
+        list[idx.i] = null
         map -= key
     }
 
     val size: Int
-        get() = buf.size
+        get() = list.size
 }

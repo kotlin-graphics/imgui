@@ -1,7 +1,12 @@
 package engine.core
 
+import engine.CaptureTool
+import engine.MovingAverageDouble
+import engine.context.TestContext
 import imgui.ID
-import imgui.test.engine.TestEngine
+import imgui.classes.Context
+import imgui.classes.TextFilter
+import java.nio.ByteBuffer
 
 //-------------------------------------------------------------------------
 // [SECTION] DATA STRUCTURES
@@ -21,60 +26,49 @@ class TestLocateTask(
 class TestRunTask(var test: Test? = null, var runFlags: TestRunFlags = TestRunFlag.None.i)
 
 // [Internal] Test Engine Context
-struct ImGuiTestEngine
-{
-    ImGuiTestEngineIO IO
-            ImGuiContext * UiContextVisible = NULL        // imgui context for visible/interactive needs
-    ImGuiContext * UiContextBlind = NULL          // FIXME
-    ImGuiContext * UiContextTarget = NULL         // imgui context for testing == io.ConfigRunBlind ? UiBlindContext : UiVisibleContext when running tests, otherwise NULL.
-    ImGuiContext * UiContextActive = NULL         // imgui context for testing == UiContextTarget or NULL
+class TestEngine {
 
-    int FrameCount = 0
-    float OverrideDeltaTime = - 1.0f      // Inject custom delta time into imgui context to simulate clock passing faster than wall clock time.
-    ImVector < ImGuiTest * > TestsAll
-            ImVector<ImGuiTestRunTask> TestsQueue
-            ImGuiTestContext * TestContext = NULL
-    int CallDepth = 0
-    ImVector < ImGuiTestLocateTask * > LocateTasks
-            ImGuiTestGatherTask GatherTask
-            void * UserDataBuffer = NULL
-    size_t UserDataBufferSize = 0
+    val io = TestEngineIO()
+    var uiContextVisible: Context? = null        // imgui context for visible/interactive needs
+    var uiContextBlind: Context? = null          // FIXME
+    var uiContextTarget: Context? = null         // imgui context for testing == io.ConfigRunBlind ? UiBlindContext : UiVisibleContext when running tests, otherwise NULL.
+    var uiContextActive: Context? = null         // imgui context for testing == UiContextTarget or NULL
+
+    var frameCount = 0
+    var overrideDeltaTime = -1f      // Inject custom delta time into imgui context to simulate clock passing faster than wall clock time.
+    val testsAll = ArrayList<Test>()
+    val testsQueue = ArrayList<TestRunTask>()
+    var testContext: TestContext? = null
+    var callDepth = 0
+    val locateTasks = ArrayList<TestLocateTask>()
+    val gatherTask = TestGatherTask()
+    var userDataBuffer: ByteBuffer? = null
+//    size_t                      UserDataBufferSize = 0
 
     // Inputs
-    ImGuiTestInputs Inputs
+    var inputs = TestInputs()
 
-            // UI support
-            bool Abort = false
-    bool UiFocus = false
-    ImGuiTest * UiSelectAndScrollToTest = NULL
-    ImGuiTest * UiSelectedTest = NULL
-    ImGuiTextFilter UiTestFilter
-            float UiLogHeight = 150.0f
+    // UI support
+    var abort = false
+    var uiFocus = false
+    var uiSelectAndScrollToTest: Test? = null
+    var uiSelectedTest: Test? = null
+    var uiTestFilter = TextFilter()
+    var uiLogHeight = 150f
 
     // Performance Monitor
-    double PerfRefDeltaTime
-            ImMovingAverage<double> PerfDeltaTime100
-            ImMovingAverage<double> PerfDeltaTime500
-            ImMovingAverage<double> PerfDeltaTime1000
-            ImMovingAverage<double> PerfDeltaTime2000
+    var perfRefDeltaTime = 0.0
+    val perfDeltaTime100 = MovingAverageDouble(100)
+    val perfDeltaTime500 = MovingAverageDouble(500)
+    val perfDeltaTime1000 = MovingAverageDouble(1000)
+    val perfDeltaTime2000 = MovingAverageDouble(2000)
 
-            // Tools
-            ImGuiCaptureTool CaptureTool
-            bool ToolSlowDown = false
-    int ToolSlowDownMs = 100
+
+    // Tools
+    val captureTool = CaptureTool()
+    var toolSlowDown = false
+    var toolSlowDownMs = 100
 
     // Functions
-    ImGuiTestEngine()
-    {
-        PerfRefDeltaTime = 0.0f
-        PerfDeltaTime100.Init(100)
-        PerfDeltaTime500.Init(500)
-        PerfDeltaTime1000.Init(1000)
-        PerfDeltaTime2000.Init(2000)
-    }
-    ~ImGuiTestEngine()
-{
-    if (UiContextBlind != NULL)
-        ImGui::DestroyContext(UiContextBlind)
-}
+    fun destroy() = uiContextBlind?.destroy()
 }
