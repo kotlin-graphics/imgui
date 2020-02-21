@@ -29,8 +29,8 @@ fun TestContext.logEx(level_: TestVerboseLevel, flags: TestLogFlags, fmt: String
         log.buffer.append("[%04d] ".format(frameCount))
 
     if (level >= TestVerboseLevel.Debug)
-        log.buffer.append("-- %*s".format(0 max  (actionDepth - 1) * 2))
-    log.buffer.append(fmt.format(args))
+        log.buffer.append("-- ${" ".repeat(0 max  (actionDepth - 1) * 2)}")
+    log.buffer.append(fmt.format(*args))
     log.buffer.append("\n")
 
     log.updateLineOffsets(engineIO!!, level, prevSize)
@@ -77,7 +77,7 @@ fun TestContext.logToTTY(level: TestVerboseLevel, message: String) {
     println(color(message))
 }
 
-fun TestContext.logDebug(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Debug, TestLogFlag.None.i, fmt, args)  // ImGuiTestVerboseLevel_Debug or ImGuiTestVerboseLevel_Trace depending on context depth
+fun TestContext.logDebug(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Debug, TestLogFlag.None.i, fmt, *args)  // ImGuiTestVerboseLevel_Debug or ImGuiTestVerboseLevel_Trace depending on context depth
 fun TestContext.logInfo(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Info, TestLogFlag.None.i, fmt, args)  // ImGuiTestVerboseLevel_Info
 fun TestContext.logWarning(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Warning, TestLogFlag.None.i, fmt, args)  // ImGuiTestVerboseLevel_Warning
 fun TestContext.logError(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Error, TestLogFlag.None.i, fmt, args)  // ImGuiTestVerboseLevel_Error

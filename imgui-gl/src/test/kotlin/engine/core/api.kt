@@ -150,7 +150,7 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>? = null) {
         uiLogHeight = logHeight
         listHeight = _f
         logHeight = _f1
-        //DebugDrawItemRect();
+//        ImGui.debugDrawItemRect()
     }
 
     // TESTS
@@ -311,7 +311,7 @@ infix fun TestEngine.showTestGroup(group: TestGroup) {
             }
             ImGui.sameLine()
 
-            val buf = "%-*s - ${test.name}".format(10, test.category)
+            val buf = "${test.category ?: ""}${" ".repeat(10 - (test.category?.length ?: 0))} - ${test.name}"
             if (ImGui.selectable(buf, test == uiSelectedTest))
                 selectTest = true
 
@@ -375,10 +375,10 @@ infix fun TestEngine.showTestGroup(group: TestGroup) {
             }
 
             // Process source popup
-            TODO()
 //            static ImGuiTextBuffer source_blurb
 //            static int goto_line = -1
-//            if (viewSource) {
+            if (viewSource) {
+                TODO()
 //                source_blurb.clear()
 //                size_t file_size = 0
 //                char * file_data = (char *) ImFileLoadToMemory (test->SourceFile, "rb", &file_size)
@@ -388,8 +388,9 @@ infix fun TestEngine.showTestGroup(group: TestGroup) {
 //                    source_blurb.append("<Error loading sources>")
 //                goto_line = (test->SourceLine+test->SourceLineEnd) / 2
 //                ImGui::OpenPopup("Source")
-//            }
-//            if (ImGui::BeginPopup("Source")) {
+            }
+            if (ImGui.beginPopup("Source")) {
+                TODO()
 //                // FIXME: Local vs screen pos too messy :(
 //                const ImVec2 start_pos = ImGui::GetCursorStartPos()
 //                const float line_height = ImGui::GetTextLineHeight()
@@ -402,22 +403,20 @@ infix fun TestEngine.showTestGroup(group: TestGroup) {
 //
 //                ImGui::TextUnformatted(source_blurb.c_str(), source_blurb.end())
 //                ImGui::EndPopup()
-//            }
+            }
 
             // Process selection
-//            if (selectTest)
-//                engine->UiSelectedTest = test
-//
-//            // Process queuing
-//            if (engine->CallDepth == 0)
-//            {
-//                if (queueTest)
-//                    ImGuiTestEngine_QueueTest(engine, test, ImGuiTestRunFlags_ManualRun)
-//                else if (queueGuiFunc)
-//                    ImGuiTestEngine_QueueTest(engine, test, ImGuiTestRunFlags_ManualRun | ImGuiTestRunFlags_NoTestFunc)
-//            }
-//
-//            ImGui::PopID()
+            if (selectTest)
+                uiSelectedTest = test
+
+            // Process queuing
+            if (callDepth == 0)
+                if (queueTest)
+                    queueTest(test, TestRunFlag.ManualRun.i)
+                else if (queueGuiFunc)
+                    queueTest(test, TestRunFlag.ManualRun or TestRunFlag.NoTestFunc)
+
+            ImGui.popID()
         }
         ImGui.spacing()
         ImGui.popStyleVar()
@@ -433,7 +432,6 @@ fun TestEngine.drawTestLog(test: Test, isInteractive: Boolean) {
 
     // FIXME-OPT: Split TestLog by lines so we can clip it easily.
     val log = test.testLog
-    TODO()
 //    val text = test.testLog.buffer.begin()
 //    const char * text_end = test->TestLog.Buffer.end()
 //    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 2.0f))

@@ -30,7 +30,7 @@ fun TestContext.windowRef(ref: TestRef) {
 //            IM_ASSERT(len < IM_ARRAYSIZE(RefStr) - 1)
 
         it.toByteArray(refStr)
-        refID = hashDecoratedPath(ref.path!!, 0)
+        refID = hashDecoratedPath(it, 0)
     } ?: run {
         refStr[0] = 0
         refID = ref.id

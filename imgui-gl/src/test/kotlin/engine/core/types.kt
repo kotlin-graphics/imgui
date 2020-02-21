@@ -93,6 +93,8 @@ inline class TestOpFlag(val i: TestOpFlags) {
 }
 
 inline class TestRunFlag(val i: TestRunFlags) {
+    infix fun or(f: TestRunFlag) = i or f.i
+
     companion object {
         val None = TestRunFlag(TestRunFlags(0))
         val NoGuiFunc = TestRunFlag(TestRunFlags(1 shl 0))
