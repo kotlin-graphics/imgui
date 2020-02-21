@@ -177,7 +177,13 @@ fun ByteArray.strlen(): Int {
 
 fun String.toByteArray(size: Int): ByteArray = toByteArray().copyInto(ByteArray(size))
 fun String.toUtf8(size: Int) = ByteArray(size).also { textStrToUtf8(it, toCharArray()) }
-fun String.toByteArray(array: ByteArray): ByteArray = toByteArray().copyInto(array)
+fun String.toByteArray(array: ByteArray): ByteArray {
+    val bytes = toByteArray()
+    bytes.copyInto(array)
+    if(bytes.size < array.size)
+        array[bytes.size] = 0 // NUL
+    return array
+}
 
 infix fun ByteArray.strcmp(b: ByteArray): Int {
     var i = 0
