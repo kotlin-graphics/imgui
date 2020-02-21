@@ -76,6 +76,7 @@ class BuildInfo {
 // Adapted from ImHash(). Not particularly fast!
 fun hashDecoratedPath(str_: String, seed_: ID = 0): ID {
 
+    if(str_.isEmpty()) return 0
     val str = str_.toByteArray()
     var seed = seed_
 

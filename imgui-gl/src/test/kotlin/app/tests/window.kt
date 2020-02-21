@@ -1,15 +1,15 @@
 package app.tests
 
-import engine.core.TestEngine
 import engine.context.TestContext
-import engine.core.CHECK_EQ
-import engine.core.Test
-import engine.core.registerTest
+import engine.context.finish
+import engine.core.*
 import glm_.f
 import glm_.vec2.Vec2
-import imgui.ImGui
-import imgui.max
+import glm_.vec4.Vec4
+import imgui.*
+import io.kotlintest.matchers.floats.shouldBeLessThan
 import io.kotlintest.shouldBe
+import kotlin.math.abs
 import imgui.WindowFlag as Wf
 
 //-------------------------------------------------------------------------
@@ -38,110 +38,93 @@ fun registerTests_Window(e: TestEngine) {
         }
     }
 
-//    // ## Test that a window starting collapsed performs width/contents size measurement on its first few frames.
-//    t = REGISTER_TEST("window", "window_size_collapsed_1");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Appearing);
-//        ImGui::Begin("Issue 2336", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::Text("This is some text");
-//        ImGui::Text("This is some more text");
-//        ImGui::Text("This is some more text again");
-//
-//        float w = ImGui::GetWindowWidth();
-//        if (ctx->FrameCount == 0) // We are past the warm-up frames already
-//        {
-//            float expected_w = ImGui::CalcTextSize("This is some more text again").x + ImGui::GetStyle().WindowPadding.x * 2.0f;
-//            IM_CHECK_LT(ImFabs(w - expected_w), 1.0f);
-//        }
-//        ImGui::End();
-//    };
-//
-//    t = REGISTER_TEST("window", "window_size_contents");
-//    t->Flags |= ImGuiTestFlags_NoAutoFinish;
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiStyle& style = ImGui::GetStyle();
-//
-//        {
-//            ImGui::Begin("Test Contents Size 1", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-//            ImGui::ColorButton("test", ImVec4(1, 0.4f, 0, 1.0f), ImGuiColorEditFlags_NoTooltip, ImVec2(150, 150));
-//            ImGuiWindow* window = ctx->UiContext->CurrentWindow;
-//            if (ctx->FrameCount > 0)
-//            IM_CHECK_EQ(window->ContentSize, ImVec2(150.0f, 150.0f));
-//            ImGui::End();
-//        }
-//        {
-//            ImGui::SetNextWindowContentSize(ImVec2(150, 150));
-//            ImGui::Begin("Test Contents Size 2", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-//            ImGuiWindow* window = ctx->UiContext->CurrentWindow;
-//            if (ctx->FrameCount >= 0)
-//            IM_CHECK_EQ(window->ContentSize, ImVec2(150.0f, 150.0f));
-//            ImGui::End();
-//        }
-//        {
-//            ImGui::SetNextWindowContentSize(ImVec2(150, 150));
-//            ImGui::SetNextWindowSize(ImVec2(150, 150) + style.WindowPadding * 2.0f + ImVec2(0.0f, ImGui::GetFrameHeight()));
-//            ImGui::Begin("Test Contents Size 3", NULL, ImGuiWindowFlags_None);
-//            ImGuiWindow* window = ctx->UiContext->CurrentWindow;
-//            if (ctx->FrameCount >= 0)
-//            {
-//                IM_CHECK(window->ScrollbarY == false);
-//                IM_CHECK_EQ(window->ScrollMax.y, 0.0f);
-//            }
-//            ImGui::End();
-//        }
-//        {
-//            ImGui::SetNextWindowContentSize(ImVec2(150, 150 + 1));
-//            ImGui::SetNextWindowSize(ImVec2(150, 150) + style.WindowPadding * 2.0f + ImVec2(0.0f, ImGui::GetFrameHeight()));
-//            ImGui::Begin("Test Contents Size 4", NULL, ImGuiWindowFlags_None);
-//            ImGuiWindow* window = ctx->UiContext->CurrentWindow;
-//            if (ctx->FrameCount >= 0)
-//            {
-//                IM_CHECK(window->ScrollbarY == true);
-//                IM_CHECK_EQ(window->ScrollMax.y, 1.0f);
-//            }
-//            ImGui::End();
-//        }
-//
-//        if (ctx->FrameCount == 2)
-//        ctx->Finish();
-//    };
-//
-//    // ## Test that non-integer size/position passed to window gets rounded down and not cause any drift.
-//    t = REGISTER_TEST("window", "window_size_unrounded");
-//    t->Flags |= ImGuiTestFlags_NoAutoFinish;
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // #2067
-//        {
-//            ImGui::SetNextWindowPos(ImVec2(901.0f, 103.0f), ImGuiCond_Once);
-//            ImGui::SetNextWindowSize(ImVec2(348.48f, 400.0f), ImGuiCond_Once);
-//            ImGui::Begin("Issue 2067", NULL, ImGuiWindowFlags_NoSavedSettings);
-//            ImVec2 pos = ImGui::GetWindowPos();
-//            ImVec2 size = ImGui::GetWindowSize();
-//            //ctx->LogDebug("%f %f, %f %f", pos.x, pos.y, size.x, size.y);
-//            IM_CHECK_NO_RET(pos.x == 901.0f && pos.y == 103.0f);
-//            IM_CHECK_NO_RET(size.x == 348.0f && size.y == 400.0f);
-//            ImGui::End();
-//        }
-//        // Test that non-rounded size constraint are not altering pos/size (#2530)
-//        {
-//            ImGui::SetNextWindowPos(ImVec2(901.0f, 103.0f), ImGuiCond_Once);
-//            ImGui::SetNextWindowSize(ImVec2(348.48f, 400.0f), ImGuiCond_Once);
-//            ImGui::SetNextWindowSizeConstraints(ImVec2(475.200012f, 0.0f), ImVec2(475.200012f, 100.4f));
-//            ImGui::Begin("Issue 2530", NULL, ImGuiWindowFlags_NoSavedSettings);
-//            ImVec2 pos = ImGui::GetWindowPos();
-//            ImVec2 size = ImGui::GetWindowSize();
-//            //ctx->LogDebug("%f %f, %f %f", pos.x, pos.y, size.x, size.y);
-//            IM_CHECK_EQ(pos, ImVec2(901.0f, 103.0f));
-//            IM_CHECK_EQ(size, ImVec2(475.0f, 100.0f));
-//            ImGui::End();
-//        }
-//        if (ctx->FrameCount == 2)
-//        ctx->Finish();
-//    };
-//
+    // ## Test that a window starting collapsed performs width/contents size measurement on its first few frames.
+    t = e.registerTest("window", "window_size_collapsed_1")
+    t.guiFunc = { ctx: TestContext ->
+        ImGui.setNextWindowCollapsed(true, Cond.Appearing)
+        ImGui.begin("Issue 2336", null, Wf.NoSavedSettings.i)
+        ImGui.text("This is some text")
+        ImGui.text("This is some more text")
+        ImGui.text("This is some more text again")
+
+        val w = ImGui.windowWidth
+        if (ctx.frameCount == 0) { // We are past the warm-up frames already
+            val expectedW = ImGui.calcTextSize("This is some more text again").x + ImGui.style.windowPadding.x * 2f
+            abs(w - expectedW) shouldBeLessThan 1f
+        }
+        ImGui.end()
+    }
+
+    t = e.registerTest("window", "window_size_contents")
+    t.flags = t.flags or TestFlag.NoAutoFinish
+    t.guiFunc = { ctx: TestContext ->
+
+        val style = ImGui.style
+
+        dsl.window("Test Contents Size 1", null, Wf.AlwaysAutoResize.i) {
+            ImGui.colorButton("test", Vec4(1f, 0.4f, 0f, 1f), ColorEditFlag.NoTooltip.i, Vec2(150))
+            val window = ctx.uiContext!!.currentWindow!!
+            if (ctx.frameCount > 0)
+                window.contentSize shouldBe Vec2(150f)
+        }
+        ImGui.setNextWindowContentSize(Vec2(150, 150))
+        dsl.window("Test Contents Size 2", null, Wf.AlwaysAutoResize.i) {
+            val window = ctx.uiContext!!.currentWindow!!
+            if (ctx.frameCount >= 0)
+                window.contentSize shouldBe Vec2( 150.0f)
+        }
+        ImGui.setNextWindowContentSize(Vec2(150))
+        ImGui.setNextWindowSize(Vec2(150) + style.windowPadding * 2f + Vec2(0f, ImGui.frameHeight))
+        dsl.window("Test Contents Size 3", null, Wf.None.i) {
+            val window = ctx.uiContext!!.currentWindow!!
+            if (ctx.frameCount >= 0)            {
+                window.scrollbar.y shouldBe false
+                window.scrollMax.y shouldBe 0f
+            }
+        }
+        ImGui.setNextWindowContentSize(Vec2(150, 150 + 1))
+        ImGui.setNextWindowSize(Vec2(150) + style.windowPadding * 2f + Vec2(0f, ImGui.frameHeight))
+        dsl.window("Test Contents Size 4", null, Wf.None.i) {
+            val window = ctx.uiContext!!.currentWindow!!
+            if (ctx.frameCount >= 0)            {
+                window.scrollbar.y shouldBe true
+                window.scrollMax.y shouldBe 1f
+            }
+        }
+
+        if (ctx.frameCount == 2)
+            ctx.finish()
+    }
+
+    // ## Test that non-integer size/position passed to window gets rounded down and not cause any drift.
+    t = e.registerTest("window", "window_size_unrounded")
+    t.flags = t.flags or TestFlag.NoAutoFinish
+    t.guiFunc = { ctx: TestContext ->
+        // #2067
+        ImGui.setNextWindowPos(Vec2(901f, 103f), Cond.Once)
+        ImGui.setNextWindowSize(Vec2(348.48f, 400f), Cond.Once)
+        dsl.window("Issue 2067", null, Wf.NoSavedSettings.i) {
+            val pos = ImGui.windowPos
+            val size = ImGui.windowSize
+            //ctx->LogDebug("%f %f, %f %f", pos.x, pos.y, size.x, size.y);
+            pos.x shouldBe 901f; pos.y shouldBe 103f
+            size.x shouldBe 348f; size.y shouldBe 400f
+        }
+        // Test that non-rounded size constraint are not altering pos/size (#2530)
+        ImGui.setNextWindowPos(Vec2(901f, 103f), Cond.Once)
+        ImGui.setNextWindowSize(Vec2(348.48f, 400f), Cond.Once)
+        ImGui.setNextWindowSizeConstraints(Vec2(475.200012f, 0f), Vec2(475.200012f, 100.4f))
+        dsl.window("Issue 2530", null, Wf.NoSavedSettings.i) {
+            val pos = ImGui.windowPos
+            val size = ImGui.windowSize
+            //ctx->LogDebug("%f %f, %f %f", pos.x, pos.y, size.x, size.y);
+            pos shouldBe Vec2(901f, 103f)
+            size shouldBe Vec2(475f, 100f)
+        }
+        if (ctx.frameCount == 2)
+            ctx.finish()
+    }
+
 //    // ## Test basic window auto resize
 //    t = REGISTER_TEST("window", "window_auto_resize_basic");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)

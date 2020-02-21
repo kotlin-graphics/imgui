@@ -392,8 +392,6 @@ object dsl {
     inline fun tabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0, block: () -> Unit) {
         if (beginTabItem(label, pOpen, flags))
             try { block() } finally { endTabItem() }
-        else
-            endTabItem()
     }
 
 

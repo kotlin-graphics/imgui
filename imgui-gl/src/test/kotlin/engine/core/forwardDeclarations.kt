@@ -27,6 +27,7 @@ inline class TestFlags(val i: Int)         // Flags: See ImGuiTestFlags_
 {
     infix fun hasnt(f: TestFlag): Boolean = i hasnt f.i.i
     infix fun has(f: TestFlag): Boolean = i has f.i.i
+    infix fun or(f: TestFlag) = TestFlags(i or f.i.i)
 }
 
 inline class TestCheckFlags(val i: Int)    // Flags: See ImGuiTestCheckFlags_
@@ -47,6 +48,7 @@ inline class TestOpFlags(val i: Int)       // Flags: See ImGuiTestOpFlags_
 inline class TestRunFlags(val i: Int) {     // Flags: See ImGuiTestRunFlags_
     infix fun wo(f: TestRunFlag) = TestRunFlags(i wo f.i.i)
     infix fun or(f: TestRunFlag) = TestRunFlags(i or f.i.i)
+    infix fun or(f: TestRunFlags) = TestRunFlags(i or f.i)
     infix fun hasnt(f: TestRunFlag) = i hasnt f.i.i
     infix fun has(f: TestRunFlags): Boolean = i has f.i
     infix fun has(f: TestRunFlag): Boolean = i has f.i.i
