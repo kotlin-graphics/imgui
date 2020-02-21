@@ -221,8 +221,8 @@ interface demoDebugInformations {
 
         // Details for TabBars
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
-            for (n in 0 until g.tabBars.buf.size)
-                Funcs.nodeTabBar(g.tabBars.buf[n]!!)
+            for (n in 0 until g.tabBars.list.size)
+                Funcs.nodeTabBar(g.tabBars.list[n]!!)
             treePop()
         }
 

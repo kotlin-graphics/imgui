@@ -3,13 +3,16 @@ package engine
 import com.github.ajalt.mordant.AnsiColorCode
 import com.github.ajalt.mordant.TermColors
 import gli_.has
+import glm_.L
 import glm_.b
+import glm_.d
 import glm_.i
 import glm_.vec4.Vec4
 import imgui.Col
 import imgui.ID
 import imgui.ImGui
 import imgui.internal.ItemFlag
+import imgui.wo
 import org.lwjgl.system.Platform
 import unsigned.toUInt
 import java.io.PrintStream
@@ -18,6 +21,8 @@ import java.util.*
 inline class KeyModFlags(val i: Int)       // See ImGuiKeyModFlags_
 {
     infix fun has(f: KeyModFlag): Boolean = i has f.i.i
+    infix fun or(f: KeyModFlags) = KeyModFlags(i or f.i)
+    infix fun wo(f: KeyModFlags) = KeyModFlags(i wo f.i)
 }
 
 inline class KeyModFlag(val i: KeyModFlags) {
@@ -119,11 +124,12 @@ val crc32Lut by lazy {
     }
 }
 
-//void        ImSleepInMilliseconds(int ms);
+fun sleepInMilliseconds(ms: Int) = Thread.sleep(ms.L)
+
 //ImU64       ImGetTimeInMicroseconds();
 //
 //bool        ImOsCreateProcess(const char* cmd_line);
-//void        ImOsOpenInShell(const char* path);
+fun osOpenInShell(path: String) = Unit // TODD
 fun osConsoleSetTextColor(stream: PrintStream, color: OsConsoleTextColor) = Unit
 fun osIsDebuggerPresent() = true
 
@@ -160,7 +166,8 @@ class MovingAverageDouble(val sampleCount: Int) {
     var idx = 0
     var fillAmount = 0
 
-    operator fun plusAssign(v: Double) {
+    operator fun plusAssign(v_: Number) {
+        val v = v_.d
         accum += v - samples[idx]
         samples[idx] = v
         if (++idx == samples.size)

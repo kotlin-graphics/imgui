@@ -166,7 +166,7 @@ internal interface widgets {
         //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))
         //    CloseCurrentPopup();
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.lastItemStatusFlags)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.lastItemStatusFlags)
         return pressed
     }
 

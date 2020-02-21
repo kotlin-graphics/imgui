@@ -39,7 +39,7 @@ fun TestContext.itemLocate(ref: TestRef, flags: TestOpFlags = TestOpFlag.None.i)
     return null
 }
 
-fun TestContext.gatherItems (outList: ArrayList<TestItemInfo>?, parent: TestRef, depth_: Int = -1) {
+fun TestContext.gatherItems (outList: TestItemList?, parent: TestRef, depth_: Int = -1) {
 
     var depth = depth_
     assert(outList != null)

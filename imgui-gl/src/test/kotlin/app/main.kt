@@ -5,6 +5,7 @@ import engine.core.*
 import engine.osIsDebuggerPresent
 import glm_.parseInt
 import imgui.ConfigFlag
+import imgui.IMGUI_ENABLE_TEST_ENGINE
 import imgui.ImGui
 import imgui.api.gImGui
 import imgui.classes.Context
@@ -34,6 +35,8 @@ import kotlin.system.exitProcess
 val app = TestApp
 
 fun main(args: Array<String>) {
+
+    IMGUI_ENABLE_TEST_ENGINE = true
 
 //    #ifdef CMDLINE_ARGS
 //        if (argc == 1)
@@ -96,11 +99,10 @@ fun main(args: Array<String>) {
             configBreakOnError = true
 //        srcFileOpenFunc = srcFileOpenerFunc TODO
 //        #if defined(IMGUI_TESTS_BACKEND_WIN32_DX11) || defined(IMGUI_TESTS_BACKEND_SDL_GL3) || defined(IMGUI_TESTS_BACKEND_GLFW_GL3)
-        if (app.optGUI)
-            screenCaptureFunc = captureFramebufferScreenshot
-        else
-//        #endif
-            screenCaptureFunc = captureScreenshotNull
+        screenCaptureFunc = when {
+            app.optGUI -> captureFramebufferScreenshot
+            else -> /* #endif */ captureScreenshotNull
+        }
     }
     // Set up TestEngine context
     engine.registerTests()
@@ -112,19 +114,16 @@ fun main(args: Array<String>) {
 
     // Queue requested tests
     // FIXME: Maybe need some cleanup to not hard-coded groups.
-//    for (testSpec in app.testsToRun)
-//        when(testSpec) {
-//        "tests" -> engine.queueTests(g_App.TestEngine, ImGuiTestGroup_Tests, NULL, ImGuiTestRunFlags_CommandLine)
-//        else if (strcmp(test_spec, "perf") == 0)
-//            ImGuiTestEngine_QueueTests(g_App.TestEngine, ImGuiTestGroup_Perf, NULL, ImGuiTestRunFlags_CommandLine)
-//        else {
-//            if (strcmp(test_spec, "all") == 0)
-//                test_spec = NULL
-//            for (int group = 0; group < ImGuiTestGroup_COUNT; group++)
-//            ImGuiTestEngine_QueueTests(g_App.TestEngine, (ImGuiTestGroup) group, test_spec, ImGuiTestRunFlags_CommandLine)
-//        }
-//        IM_FREE(test_spec)
-//    }
+    for (testSpec_ in app.testsToRun)
+        when(testSpec_) {
+        "tests" -> app.testEngine!!.queueTests(TestGroup.Tests, runFlags = TestRunFlag.CommandLine.i)
+        "perf" -> app.testEngine!!.queueTests(TestGroup.Perf, runFlags = TestRunFlag.CommandLine.i)
+        else -> {
+            val testSpec = testSpec_.takeIf { testSpec_ != "all" }
+            for (group in 0 until TestGroup.COUNT.i)
+                app.testEngine!!.queueTests(TestGroup(group), testSpec, runFlags = TestRunFlag.CommandLine.i)
+        }
+    }
     app.testsToRun.clear()
 
     // Branch name stored in annotation field by default
@@ -167,8 +166,8 @@ fun main(args: Array<String>) {
 fun parseCommandLineOptions(args: Array<String>): Boolean {
     var n = 0
     while (n < args.size) {
-        val arg = args[n]
-        if (arg[n++] == '-')
+        val arg = args[n++]
+        if (arg[0] == '-')
             when (arg) {
                 // Command-line option
                 "-v" -> {
@@ -219,7 +218,7 @@ fun parseCommandLineOptions(args: Array<String>): Boolean {
                 }
             }
         else // Add tests
-            app.testsToRun += args[n]
+            app.testsToRun += arg
     }
     return true
 }

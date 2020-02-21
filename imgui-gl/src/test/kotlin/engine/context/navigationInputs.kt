@@ -27,7 +27,7 @@ infix fun TestContext.setInputMode(inputMode: InputSource) {
 
 infix fun TestContext.navKeyPress(input: NavInput) {
 
-    assert(input < NavInput.Count)
+    assert(input != NavInput.Count)
     if (isError) return
 
 //    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
