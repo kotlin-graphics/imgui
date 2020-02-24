@@ -11,6 +11,9 @@ import imgui.internal.hasnt
 import imgui.internal.ItemStatusFlag as Isf
 
 // [JVM]
+fun TestContext.itemAction(action: TestAction, ref: String, actionArg: Int? = null) = itemAction(action, TestRef(path = ref), actionArg)
+
+// [JVM]
 fun TestContext.itemAction(action: TestAction, ref: ID, actionArg: Int? = null) = itemAction(action, TestRef(ref), actionArg)
 
 fun TestContext.itemAction(action_: TestAction, ref: TestRef, actionArg: Int? = null) {

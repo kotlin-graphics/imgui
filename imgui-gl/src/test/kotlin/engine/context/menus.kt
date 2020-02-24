@@ -2,67 +2,61 @@ package engine.context
 
 import engine.core.TestItemList
 import engine.core.TestRef
+import glm_.b
+import glm_.vec2.Vec2
+import imgui.internal.strchrRange
+import imgui.strlen
 
 fun TestContext.menuAction(action: TestAction, ref: TestRef) {
 
     if (isError) return
 
     REGISTER_DEPTH {
-        logDebug("MenuAction '${ref.path}' %08X", ref.id)
 
-        assert(ref.path != null)
+        logDebug("MenuAction '${ref.path!!}' %08X", ref.id)
 
-        TODO()
-//    int depth = 0
-//    const char* path = ref.Path
-//    const char* path_end = path + strlen(path)
-//    Str128 buf
-//    while (path < path_end)
-//    {
-//        const char* p = ImStrchrRange(path, path_end, '/')
-//        if (p == NULL)
-//            p = path_end
-//        const bool is_target_item = (p == path_end)
-//        if (depth == 0)
-//        {
-//            // Click menu in menu bar
-//            IM_ASSERT(RefStr[0] != 0) // Unsupported: window needs to be in Ref
-//            buf.setf("##menubar/%.*s", (int)(p - path), path)
-//        }
-//        else
-//        {
-//            // Click sub menu in its own window
-//            buf.setf("/##Menu_%02d/%.*s", depth - 1, (int)(p - path), path)
-//        }
-//
-//        // We cannot move diagonally to a menu item because depending on the angle and other items we cross on our path we could close our target menu.
-//        // First move horizontally into the menu, then vertically!
-//        if (depth > 0)
-//        {
-//            ImGuiTestItemInfo* item = ItemLocate(buf.c_str())
-//            IM_CHECK_SILENT(item != NULL)
-//            item->RefCount++
-//            if (depth > 1 && (Inputs->MousePosValue.x <= item->RectFull.Min.x || Inputs->MousePosValue.x >= item->RectFull.Max.x))
-//            MouseMoveToPos(ImVec2(item->RectFull.GetCenter().x, Inputs->MousePosValue.y))
-//            if (depth > 0 && (Inputs->MousePosValue.y <= item->RectFull.Min.y || Inputs->MousePosValue.y >= item->RectFull.Max.y))
-//            MouseMoveToPos(ImVec2(Inputs->MousePosValue.x, item->RectFull.GetCenter().y))
-//            item->RefCount--
-//        }
-//
-//        if (is_target_item)
-//        {
-//            // Final item
-//            ItemAction(action, buf.c_str())
-//        }
-//        else
-//        {
-//            // Then aim at the menu item
-//            ItemAction(ImGuiTestAction_Click, buf.c_str())
-//        }
-//
-//        path = p + 1
-//        depth++
-//    }
+//        assert(ref.path != null)
+
+        var depth = 0
+        val str = ref.path!!.toByteArray()
+        var path = 0
+        val pathEnd = str.strlen()
+        while (path < pathEnd) {
+            var p = strchrRange(str, path, pathEnd, '/')
+            if (p == -1)
+                p = pathEnd
+            val isTargetItem = p == pathEnd
+            val buf = when (depth) {
+                0 -> { // Click menu in menu bar
+                    assert(refStr[0] != 0.b) { "Unsupported: window needs to be in Ref" }
+                    "##menubar/${String(str, path, p - path)}"
+                }
+                // Click sub menu in its own window
+                else -> "/##Menu_%02d/${String(str, path, p - path)}".format(depth - 1)
+            }
+
+            // We cannot move diagonally to a menu item because depending on the angle and other items we cross on our path we could close our target menu.
+            // First move horizontally into the menu, then vertically!
+            if (depth > 0) {
+                val item = itemLocate(buf)!!
+//                IM_CHECK_SILENT(item != NULL)
+                item.refCount++
+                if (depth > 1 && (inputs!!.mousePosValue.x <= item.rectFull.min.x || inputs!!.mousePosValue.x >= item.rectFull.max.x))
+                    mouseMoveToPos(Vec2(item.rectFull.center.x, inputs!!.mousePosValue.y))
+                if (depth > 0 && (inputs!!.mousePosValue.y <= item.rectFull.min.y || inputs!!.mousePosValue.y >= item.rectFull.max.y))
+                    mouseMoveToPos(Vec2(inputs!!.mousePosValue.x, item.rectFull.center.y))
+                item.refCount--
+            }
+
+            if (isTargetItem)
+                // Final item
+                itemAction(action, buf)
+            else // Then aim at the menu item
+                itemAction(TestAction.Click, buf)
+
+            path = p + 1
+            depth++
+        }
     }
 }
 
@@ -76,6 +70,9 @@ fun TestContext.menuActionAll(action: TestAction, refParent: TestRef) {
         itemAction(action, item.id)
     }
 }
+
+// [JVM]
+infix fun TestContext.menuClick(ref: String) = menuAction(TestAction.Click, TestRef(path = ref))
 
 infix fun TestContext.menuClick(ref: TestRef) = menuAction(TestAction.Click, ref)
 

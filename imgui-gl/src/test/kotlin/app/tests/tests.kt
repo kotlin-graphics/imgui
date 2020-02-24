@@ -4,9 +4,6 @@
 package app.tests
 
 import engine.core.TestEngine
-import engine.core.Test
-import engine.core.TestGroup
-import engine.pathFindFilename
 
 //-------------------------------------------------------------------------
 // NOTES (also see TODO in imgui_te_core.cpp)
@@ -15,11 +12,11 @@ import engine.pathFindFilename
 // - GuiFunc can't run code that yields. There is an assert for that.
 //-------------------------------------------------------------------------
 
-fun TestEngine.registerTests(){
+fun TestEngine.registerTests() {
     // Tests
     registerTests_Window(this)
-//    RegisterTests_Layout(e)
-//    RegisterTests_Widgets(e)
+    registerTests_Layout(this)
+    registerTests_Widgets(this)
 //    RegisterTests_Nav(e)
 //    RegisterTests_Columns(e)
 //    RegisterTests_Table(e)

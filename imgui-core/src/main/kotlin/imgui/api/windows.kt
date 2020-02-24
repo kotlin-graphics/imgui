@@ -477,7 +477,7 @@ interface windows {
 
             // Setup draw list and outer clipping rectangle
             window.drawList.clear()
-            window.drawList.pushTextureId(g.font.containerAtlas.texId)
+            window.drawList.pushTextureId(g.font.containerAtlas.texID)
             pushClipRect(hostRect.min, hostRect.max, false)
 
             // Draw modal window background (darkens what is behind them, all viewports)
