@@ -74,7 +74,7 @@ fun TestContext.itemAction(action_: TestAction, ref: TestRef, actionArg: Int? = 
 
         if (action == TestAction.Open) {
             assert(actionArg == null) // Unused
-            if (item.statusFlags has Isf.Opened) {
+            if (item.statusFlags hasnt Isf.Opened) {
                 item.refCount++
                 mouseMove(ref)
 
