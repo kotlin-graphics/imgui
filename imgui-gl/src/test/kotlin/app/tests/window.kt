@@ -2,6 +2,7 @@ package app.tests
 
 import engine.context.*
 import engine.core.*
+import glm_.ext.equal
 import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
@@ -262,199 +263,188 @@ fun registerTests_Window(e: TestEngine) {
         }
     }
 
-//    // ## Test that child window correctly affect contents size based on how their size was specified.
-//    t = REGISTER_TEST("window", "window_child_layout_size");
-//    t->Flags |= ImGuiTestFlags_NoAutoFinish;
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::Text("Hi");
-//        ImGui::BeginChild("Child 1", ImVec2(100, 100), true);
-//        ImGui::EndChild();
-//        if (ctx->FrameCount == 2)
-//        IM_CHECK_EQ(ctx->UiContext->CurrentWindow->ContentSize, ImVec2(100, 100 + ImGui::GetTextLineHeightWithSpacing()));
-//        if (ctx->FrameCount == 2)
-//        ctx->Finish();
-//        ImGui::End();
-//    };
-//
-//    // ## Test that child window outside the visible section of their parent are clipped
-//    t = REGISTER_TEST("window", "window_child_clip");
-//    t->Flags |= ImGuiTestFlags_NoAutoFinish;
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::SetNextWindowSize(ImVec2(200, 200));
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::SetCursorPos(ImVec2(0, 0));
-//        ImGui::BeginChild("Child 1", ImVec2(100, 100));
-//        if (ctx->FrameCount == 2)
-//        IM_CHECK_EQ(ctx->UiContext->CurrentWindow->SkipItems, false);
-//        ImGui::EndChild();
-//        ImGui::SetCursorPos(ImVec2(300, 300));
-//        ImGui::BeginChild("Child 2", ImVec2(100, 100));
-//        if (ctx->FrameCount == 2)
-//        IM_CHECK_EQ(ctx->UiContext->CurrentWindow->SkipItems, true);
-//        ImGui::EndChild();
-//        ImGui::End();
-//        if (ctx->FrameCount == 2)
-//        ctx->Finish();
-//    };
-//
-//    // ## Test that basic SetScrollHereY call scrolls all the way (#1804)
-//    // ## Test expected value of ScrollMaxY
-//    t = REGISTER_TEST("window", "window_scroll_001");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::SetNextWindowSize(ImVec2(0.0f, 500));
-//        ImGui::Begin("Test Scrolling", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        for (int n = 0; n < 100; n++)
-//        ImGui::Text("Hello %d\n", n);
-//        ImGui::SetScrollHereY(0.0f);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiWindow* window = ImGui::FindWindowByName("Test Scrolling");
-//        ImGuiStyle& style = ImGui::GetStyle();
-//
-//        IM_CHECK(window->ContentSize.y > 0.0f);
-//        float scroll_y = window->Scroll.y;
-//        float scroll_max_y = window->ScrollMax.y;
-//        ctx->LogDebug("scroll_y = %f", scroll_y);
-//        ctx->LogDebug("scroll_max_y = %f", scroll_max_y);
-//        ctx->LogDebug("window->SizeContents.y = %f", window->ContentSize.y);
-//
-//        IM_CHECK_NO_RET(scroll_y > 0.0f);
-//        IM_CHECK_NO_RET(scroll_y == scroll_max_y);
-//
-//        float expected_size_contents_y = 100 * ImGui::GetTextLineHeightWithSpacing() - style.ItemSpacing.y; // Newer definition of SizeContents as per 1.71
-//        IM_CHECK(FloatEqual(window->ContentSize.y, expected_size_contents_y));
-//
-//        float expected_scroll_max_y = expected_size_contents_y + window->WindowPadding.y * 2.0f - window->InnerRect.GetHeight();
-//        IM_CHECK(FloatEqual(scroll_max_y, expected_scroll_max_y));
-//    };
-//
-//    // ## Test that ScrollMax values are correctly zero (we had/have bugs where they are seldomly == BorderSize)
-//    t = REGISTER_TEST("window", "window_scroll_002");
-//    t->Flags |= ImGuiTestFlags_NoAutoFinish;
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Scrolling 1", NULL, ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
-//        ImGui::Dummy(ImVec2(200, 200));
-//        ImGuiWindow* window1 = ctx->UiContext->CurrentWindow;
-//        IM_CHECK_NO_RET(window1->ScrollMax.x == 0.0f); // FIXME-TESTS: If another window in another test used same name, ScrollMax won't be zero on first frame
-//        IM_CHECK_NO_RET(window1->ScrollMax.y == 0.0f);
-//        ImGui::End();
-//
-//        ImGui::Begin("Test Scrolling 2", NULL, ImGuiWindowFlags_AlwaysVerticalScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
-//        ImGui::Dummy(ImVec2(200, 200));
-//        ImGuiWindow* window2 = ctx->UiContext->CurrentWindow;
-//        IM_CHECK_NO_RET(window2->ScrollMax.x == 0.0f);
-//        IM_CHECK_NO_RET(window2->ScrollMax.y == 0.0f);
-//        ImGui::End();
-//        if (ctx->FrameCount == 2)
-//        ctx->Finish();
-//    };
-//
-//    // ## Test that SetScrollY/GetScrollY values are matching. You'd think this would be obvious! Think again!
-//    // FIXME-TESTS: With/without menu bars, could we easily allow for test variations that affects both GuiFunc and TestFunc
-//    t = REGISTER_TEST("window", "window_scroll_003");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Scrolling 3");
-//        for (int n = 0; n < 100; n++)
-//        ImGui::Text("Line %d", n);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->Yield();
-//        ImGuiWindow* window = ImGui::FindWindowByName("Test Scrolling 3");
-//        ImGui::SetScrollY(window, 100.0f);
-//        ctx->Yield();
-//        float sy = window->Scroll.y;
-//        IM_CHECK_EQ(sy, 100.0f);
-//    };
-//
-//    // ## Test that an auto-fit window doesn't have scrollbar while resizing (FIXME-TESTS: Also test non-zero ScrollMax when implemented)
-//    t = REGISTER_TEST("window", "window_scroll_while_resizing");
-//    t->Flags |= ImGuiTestFlags_NoAutoFinish;
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Scrolling", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::Text("Below is a child window");
-//        ImGui::BeginChild("blah", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-//        ImGuiWindow* child_window = ctx->UiContext->CurrentWindow;
-//        ImGui::EndChild();
-//        IM_CHECK(child_window->ScrollbarY == false);
-//        if (ctx->FrameCount >= ctx->FirstFrameCount)
-//        {
-//            ImGuiWindow* window = ctx->UiContext->CurrentWindow;
-//            IM_CHECK(window->ScrollbarY == false);
-//            //IM_CHECK(window->ScrollMax.y == 0.0f);    // FIXME-TESTS: 1.71 I would like to make this change but unsure of side effects yet
-//            if (ctx->FrameCount == 2)
-//            ctx->Finish();
-//        }
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowResize("Test Scrolling", ImVec2(400, 400));
-//        ctx->WindowResize("Test Scrolling", ImVec2(100, 100));
-//    };
-//
-//    // ## Test window moving
-//    t = REGISTER_TEST("window", "window_move");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::SetNextWindowSize(ImVec2(0, 0));
-//        ImGui::Begin("Movable Window");
-//        ImGui::TextUnformatted("Lorem ipsum dolor sit amet");
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiWindow* window = ctx->GetWindowByRef("Movable Window");
-//        ctx->WindowMove("Movable Window", ImVec2(0, 0));
-//        IM_CHECK(window->Pos == ImVec2(0, 0));
-//        ctx->WindowMove("Movable Window", ImVec2(100, 0));
-//        IM_CHECK(window->Pos == ImVec2(100, 0));
-//        ctx->WindowMove("Movable Window", ImVec2(50, 100));
-//        IM_CHECK(window->Pos == ImVec2(50, 100));
-//    };
-//
-//    // ## Test closing current popup
-//    // FIXME-TESTS: Test left-click/right-click forms of closing popups
-//    t = REGISTER_TEST("window", "window_close_current_popup");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::SetNextWindowSize(ImVec2(0, 0));
-//        ImGui::Begin("Popups", NULL, ImGuiWindowFlags_MenuBar);
-//        if (ImGui::BeginMenuBar())
-//        {
-//            if (ImGui::BeginMenu("Menu"))
-//            {
-//                if (ImGui::BeginMenu("Submenu"))
-//                {
-//                    if (ImGui::MenuItem("Close"))
-//                        ImGui::CloseCurrentPopup();
-//                    ImGui::EndMenu();
-//                }
-//                ImGui::EndMenu();
-//            }
-//            ImGui::EndMenuBar();
-//        }
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowRef("Popups");
-//        IM_CHECK(ctx->UiContext->OpenPopupStack.size() == 0);
-//        ctx->MenuClick("Menu");
-//        IM_CHECK(ctx->UiContext->OpenPopupStack.size() == 1);
-//        ctx->MenuClick("Menu/Submenu");
-//        IM_CHECK(ctx->UiContext->OpenPopupStack.size() == 2);
-//        ctx->MenuClick("Menu/Submenu/Close");
-//        IM_CHECK(ctx->UiContext->OpenPopupStack.size() == 0);
-//    };
+    // ## Test that child window correctly affect contents size based on how their size was specified.
+    e.registerTest("window", "window_child_layout_size").let { t ->
+        t.flags = t.flags or TestFlag.NoAutoFinish
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                ImGui.text("Hi")
+                dsl.child("Child 1", Vec2(100), true) {}
+                if (ctx.frameCount == 2)
+                    ctx.uiContext!!.currentWindow!!.contentSize shouldBe Vec2(100, 100 + ImGui.textLineHeightWithSpacing)
+                if (ctx.frameCount == 2)
+                    ctx.finish()
+            }
+        }
+    }
+
+    // ## Test that child window outside the visible section of their parent are clipped
+    e.registerTest("window", "window_child_clip").let { t ->
+        t.flags = t.flags or TestFlag.NoAutoFinish
+        t.guiFunc = { ctx: TestContext ->
+            ImGui.setNextWindowSize(Vec2(200))
+            ImGui.begin("Test Window", null, Wf.NoSavedSettings.i)
+            ImGui.cursorPos = Vec2()
+            ImGui.beginChild("Child 1", Vec2(100))
+            if (ctx.frameCount == 2)
+                ctx.uiContext!!.currentWindow!!.skipItems shouldBe false
+            ImGui.endChild()
+            ImGui.cursorPos = Vec2(300)
+            ImGui.beginChild("Child 2", Vec2(100))
+            if (ctx.frameCount == 2)
+                ctx.uiContext!!.currentWindow!!.skipItems shouldBe true
+            ImGui.endChild()
+            ImGui.end()
+            if (ctx.frameCount == 2)
+                ctx.finish()
+        }
+    }
+
+    // ## Test that basic SetScrollHereY call scrolls all the way (#1804)
+    // ## Test expected value of ScrollMaxY
+    e.registerTest("window", "window_scroll_001").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            ImGui.setNextWindowSize(Vec2(0f, 500f))
+            ImGui.begin("Test Scrolling", null, Wf.NoSavedSettings.i)
+            for (n in 0..99)
+                ImGui.text("Hello $n\n")
+            ImGui.setScrollHereY(0f)
+            ImGui.end()
+        }
+        t.testFunc = { ctx: TestContext ->
+            val window = ImGui.findWindowByName("Test Scrolling")!!
+            val style = ImGui.style
+
+            window.contentSize.y shouldBeGreaterThan 0f
+            val scrollY = window.scroll.y
+            val scrollMaxY = window.scrollMax.y
+            ctx.logDebug("scroll_y = $scrollY")
+            ctx.logDebug("scroll_max_y = $scrollMaxY")
+            ctx.logDebug("window->SizeContents.y = ${window.contentSize.y}")
+
+            scrollY shouldBeGreaterThan 0f
+            scrollY shouldBe scrollMaxY
+
+            val expectedSizeContentsY = 100 * ImGui.textLineHeightWithSpacing - style.itemSpacing.y // Newer definition of SizeContents as per 1.71
+            window.contentSize.y.equal(expectedSizeContentsY) shouldBe true
+
+            val expectedScrollMaxY = expectedSizeContentsY + window.windowPadding.y * 2f - window.innerRect.height
+            scrollMaxY.equal(expectedScrollMaxY) shouldBe true
+        }
+    }
+
+    // ## Test that ScrollMax values are correctly zero (we had/have bugs where they are seldomly == BorderSize)
+    e.registerTest("window", "window_scroll_002").let { t ->
+        t.flags = t.flags or TestFlag.NoAutoFinish
+        t.guiFunc = { ctx: TestContext ->
+            ImGui.begin("Test Scrolling 1", null, Wf.AlwaysHorizontalScrollbar or Wf.AlwaysAutoResize)
+            ImGui.dummy(Vec2(200))
+            ctx.uiContext!!.currentWindow!!.apply {
+                scrollMax.x shouldBe 0f // FIXME-TESTS: If another window in another test used same name, ScrollMax won't be zero on first frame
+                scrollMax.y shouldBe 0f
+            }
+            ImGui.end()
+
+            ImGui.begin("Test Scrolling 2", null, Wf.AlwaysVerticalScrollbar or Wf.AlwaysAutoResize)
+            ImGui.dummy(Vec2(200))
+            ctx.uiContext!!.currentWindow!!.apply {
+                scrollMax.x shouldBe 0f
+                scrollMax.y shouldBe 0f
+            }
+            ImGui.end()
+            if (ctx.frameCount == 2)
+                ctx.finish()
+        }
+    }
+
+    // ## Test that SetScrollY/GetScrollY values are matching. You'd think this would be obvious! Think again!
+    // FIXME-TESTS: With/without menu bars, could we easily allow for test variations that affects both GuiFunc and TestFunc
+    e.registerTest("window", "window_scroll_003").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Test Scrolling 3") {
+                for (n in 0..99)
+                    ImGui.text("Line $n")
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            ctx.yield()
+            val window = ImGui.findWindowByName("Test Scrolling 3")!!
+            window.setScrollY(100f)
+            ctx.yield()
+            val sy = window.scroll.y
+            sy shouldBe 100f
+        }
+    }
+
+    // ## Test that an auto-fit window doesn't have scrollbar while resizing (FIXME-TESTS: Also test non-zero ScrollMax when implemented)
+    e.registerTest("window", "window_scroll_while_resizing").let { t ->
+        t.flags = t.flags or TestFlag.NoAutoFinish
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Test Scrolling", null, Wf.NoSavedSettings.i) {
+                ImGui.text("Below is a child window")
+                dsl.child("blah", Vec2(), false, Wf.HorizontalScrollbar.i) {
+                    val childWindow = ctx.uiContext!!.currentWindow!!
+                    childWindow.scrollbar.y shouldBe false
+                }
+                if (ctx.frameCount >= ctx.firstFrameCount) {
+                    val window = ctx.uiContext!!.currentWindow!!
+                    window.scrollbar.y shouldBe false
+                    //IM_CHECK(window->ScrollMax.y == 0.0f);    // FIXME-TESTS: 1.71 I would like to make this change but unsure of side effects yet
+                    if (ctx.frameCount == 2)
+                        ctx.finish()
+                }
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowResize("Test Scrolling", Vec2(400))
+            ctx.windowResize("Test Scrolling", Vec2(100))
+        }
+    }
+
+    // ## Test window moving
+    e.registerTest("window", "window_move").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            ImGui.setNextWindowSize(Vec2(0))
+            dsl.window("Movable Window") {
+                ImGui.textUnformatted("Lorem ipsum dolor sit amet")
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            val window = ctx.getWindowByRef("Movable Window")!!
+            ctx.windowMove("Movable Window", Vec2())
+            window.pos shouldBe Vec2()
+            ctx.windowMove("Movable Window", Vec2(100, 0))
+            window.pos shouldBe Vec2(100, 0)
+            ctx.windowMove("Movable Window", Vec2(50, 100))
+            window.pos shouldBe Vec2(50, 100)
+        }
+    }
+
+    // ## Test closing current popup
+    // FIXME-TESTS: Test left-click/right-click forms of closing popups
+    e.registerTest("window", "window_close_current_popup").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            ImGui.setNextWindowSize(Vec2())
+            dsl.window("Popups", null, Wf.MenuBar.i) {
+                dsl.menuBar {
+                    dsl.menu("Menu") {
+                        dsl.menu("Submenu") {
+                            if (ImGui.menuItem("Close"))
+                                ImGui.closeCurrentPopup()
+                        }
+                    }
+                }
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowRef("Popups")
+            ctx.uiContext!!.openPopupStack.isEmpty() shouldBe true
+            ctx.menuClick("Menu")
+            (ctx.uiContext!!.openPopupStack.size == 1) shouldBe true
+            ctx.menuClick("Menu/Submenu")
+            (ctx.uiContext!!.openPopupStack.size == 2) shouldBe true
+            ctx.menuClick("Menu/Submenu/Close")
+            ctx.uiContext!!.openPopupStack.isEmpty() shouldBe true
+        }
+    }
 }

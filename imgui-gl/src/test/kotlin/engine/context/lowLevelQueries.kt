@@ -4,6 +4,9 @@ import engine.core.*
 import engine.hashDecoratedPath
 import glm_.b
 
+// [JVM]
+fun TestContext.itemLocate(ref: String, flags: TestOpFlags = TestOpFlag.None.i): TestItemInfo? = itemLocate(TestRef(path = ref), flags)
+
 fun TestContext.itemLocate(ref: TestRef, flags: TestOpFlags = TestOpFlag.None.i): TestItemInfo? {
 
     if (isError) return null

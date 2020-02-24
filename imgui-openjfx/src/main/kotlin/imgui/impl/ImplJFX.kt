@@ -161,7 +161,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
             }
         }
 
-        io.fonts.texId = addTex(createTex)
+        io.fonts.texID = addTex(createTex)
         isInit = true
     }
 
@@ -691,7 +691,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                         //get the image that is correctly colored, or compute
                                         val cTex = texColorMapping.computeIfAbsent(Pair(cmd.textureId!!, col1)) {
                                             if (DEBUG)
-                                                println("generating color multiplied texture (texture ${cmd.textureId!!} ${if (cmd.textureId!! == io.fonts.texId) "[font texture]" else ""}, color ${col1.toVec4() * Vec4(255)})")
+                                                println("generating color multiplied texture (texture ${cmd.textureId!!} ${if (cmd.textureId!! == io.fonts.texID) "[font texture]" else ""}, color ${col1.toVec4() * Vec4(255)})")
                                             val retImg = WritableImage(currentTex.width.i, currentTex.height.i)
                                             val nipw = retImg.pixelWriter
                                             val textCol = vtx1.col.toJFXColor()

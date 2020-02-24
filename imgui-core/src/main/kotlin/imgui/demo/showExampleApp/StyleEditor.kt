@@ -303,7 +303,7 @@ object StyleEditor {
                 treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
                     val tintCol = Vec4(1f)
                     val borderCol = Vec4(1f, 1f, 1f, 0.5f)
-                    image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
+                    image(atlas.texID, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
                 }
 
                 helpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.")

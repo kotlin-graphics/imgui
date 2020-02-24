@@ -683,7 +683,7 @@ object ShowDemoWindowWidgets {
                 Using showMetricsWindow() as a "debugger" to inspect the draw data that are being passed to your
                 render will help you debug issues if you are confused about this.
                 Consider using the lower-level drawList.addImage() API, via imgui.windowDrawList.addImage().    */
-            val myTexId = io.fonts.texId
+            val myTexId = io.fonts.texID
             val myTexSize = Vec2(io.fonts.texSize)
 
             text("%.0fx%.0f", myTexSize.x, myTexSize.y)
