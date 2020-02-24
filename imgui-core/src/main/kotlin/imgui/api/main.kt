@@ -103,11 +103,11 @@ interface main {
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
 
         g.backgroundDrawList.clear()
-        g.backgroundDrawList.pushTextureId(io.fonts.texId)
+        g.backgroundDrawList.pushTextureId(io.fonts.texID)
         g.backgroundDrawList.pushClipRectFullScreen()
 
         g.foregroundDrawList.clear()
-        g.foregroundDrawList.pushTextureId(io.fonts.texId)
+        g.foregroundDrawList.pushTextureId(io.fonts.texID)
         g.foregroundDrawList.pushClipRectFullScreen()
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.

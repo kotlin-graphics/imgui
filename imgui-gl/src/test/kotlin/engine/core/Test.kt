@@ -27,6 +27,7 @@ class Test {
     var sourceLineEnd = 0      //
     var argVariant = 0         // User parameter, for use by GuiFunc/TestFunc. Generally we use it to run variations of a same test.
     var userDataSize = 0       // When SetUserDataType() is used, we create an instance of user structure so we can be used by GuiFunc/TestFunc.
+    var userData: Any? = null  // [JVM]
 
     //    ImGuiTestUserDataConstructor    UserDataConstructor
 //    ImGuiTestUserDataDestructor     UserDataDestructor

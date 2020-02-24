@@ -105,6 +105,9 @@ fun TestContext.windowFocus(ref: TestRef) {
     }
 }
 
+// [JVM]
+fun TestContext.windowMove(ref: String, inputPos: Vec2, pivot: Vec2 = Vec2()) = windowMove(TestRef(path = ref), inputPos, pivot)
+
 fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
 
     if (isError) return
@@ -148,6 +151,10 @@ fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
     }
 }
 
+// [JVM]
+fun TestContext.windowResize(ref: String, sz: Vec2) = windowResize(TestRef(path = ref), sz)
+
+// [JVM]
 fun TestContext.windowResize(ref: ID, sz: Vec2) = windowResize(TestRef(ref), sz)
 
 fun TestContext.windowResize(ref: TestRef, sz: Vec2) {

@@ -315,7 +315,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val font = font_ ?: _data.font!!
         val fontSize = if (fontSize_ == 0f) _data.fontSize else fontSize_
 
-        assert(font.containerAtlas.texId == _textureIdStack.last()) {
+        assert(font.containerAtlas.texID == _textureIdStack.last()) {
             "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font_"
         }
 
@@ -1170,7 +1170,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val uv = Array(4) { Vec2() }
         if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
             pos -= offset
-            val texId: TextureID = fontAtlas.texId
+            val texId: TextureID = fontAtlas.texID
             pushTextureId(texId)
             addImage(texId, pos + Vec2(1, 0) * scale, pos + Vec2(1, 0) * scale + size * scale, uv[2], uv[3], colShadow)
             addImage(texId, pos + Vec2(2, 0) * scale, pos + Vec2(2, 0) * scale + size * scale, uv[2], uv[3], colShadow)

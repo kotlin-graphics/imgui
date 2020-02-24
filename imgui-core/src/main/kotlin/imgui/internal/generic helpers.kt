@@ -167,7 +167,13 @@ val Int.upperPowerOfTwo: Int
 
 //IMGUI_API char*         ImStrdup(const char* str);
 //IMGUI_API char*         ImStrdupcpy(char* dst, size_t* p_dst_size, const char* str);
-//IMGUI_API const char*   ImStrchrRange(const char* str_begin, const char* str_end, char c);
+fun strchrRange(str: ByteArray, strBegin: Int, strEnd: Int, c: Char): Int {
+    for (i in strBegin until strEnd)
+        if (str[i] == c.b)
+            return i
+    return -1
+}
+
 val CharArray.strlenW: Int
     get() {
         var n = 0
@@ -233,7 +239,7 @@ fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
         else
             b += textCharToUtf8(buf, b, c)
     }
-    if(b < buf.size) buf[b] = 0
+    if (b < buf.size) buf[b] = 0
     return b
 }
 
@@ -326,7 +332,7 @@ fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, t
         if (c <= UNICODE_CODEPOINT_MAX)    // FIXME: Losing characters that don't fit in 2 bytes
             buf[b++] = c.c
     }
-    if(b < buf.size) buf[b] = NUL
+    if (b < buf.size) buf[b] = NUL
     textRemaining?.put(t)
     return b
 }
