@@ -142,6 +142,9 @@ fun TestContext.itemClick(ref: String, button: Int = 0) = itemAction(TestAction.
 fun TestContext.itemClick(ref: ID, button: Int = 0) = itemAction(TestAction.Click, TestRef(ref), button)
 fun TestContext.itemClick(ref: TestRef, button: Int = 0) = itemAction(TestAction.Click, ref, button)
 
+// [JVM]
+infix fun TestContext.itemDoubleClick(ref: String) = itemAction(TestAction.DoubleClick, TestRef(path = ref))
+
 infix fun TestContext.itemDoubleClick(ref: TestRef) = itemAction(TestAction.DoubleClick, ref)
 
 infix fun TestContext.itemCheck(ref: TestRef) = itemAction(TestAction.Check, ref)

@@ -1,7 +1,10 @@
 package engine.core
 
-import engine.*
+import engine.KeyModFlag
+import engine.KeyState
 import engine.context.*
+import engine.osIsDebuggerPresent
+import engine.sleepInMilliseconds
 import gli_.has
 import gli_.hasnt
 import glm_.f
@@ -213,23 +216,10 @@ fun TestEngine.processTestQueue() {
 
         ctx.logEx(TestVerboseLevel.Info, TestLogFlag.NoHeader.i, "----------------------------------------------------------------------")
         ctx.logInfo("Test: '${test.category}' '${test.name}'..")
-//        if (test.userDataConstructor != NULL) TODO
-//        {
-//            if ((engine->UserDataBuffer == NULL) || (engine->UserDataBufferSize < test->UserDataSize))
-//            {
-//                IM_FREE(engine->UserDataBuffer)
-//                engine->UserDataBufferSize = test->UserDataSize
-//                engine->UserDataBuffer = IM_ALLOC(engine->UserDataBufferSize)
-//            }
-//
-//            test->UserDataConstructor(engine->UserDataBuffer)
-//            ImGuiTestEngine_RunTest(engine, & ctx, engine->UserDataBuffer)
-//            test->UserDataDestructor(engine->UserDataBuffer)
-//        }
-//        else
-//        {
-        runTest(ctx, null)
-//        }
+        test.userData?.let {
+            userData = it
+        }
+        runTest(ctx, userData)
         ranTests++
 
         assert(testContext === ctx)
