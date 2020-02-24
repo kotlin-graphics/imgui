@@ -64,8 +64,8 @@ fun TestContext.keyChars(chars: ByteArray) {
     REGISTER_DEPTH {
         logDebug("KeyChars('${String(chars)}')")
         var p = 0
-        while (chars[p] != 0.b) {
-            val (c, bytesCount) = textCharFromUtf8(chars)
+        while (p < chars.size && chars[p] != 0.b) {
+            val (c, bytesCount) = textCharFromUtf8(chars, p)
             p += bytesCount
             if (c in 1..0xFFFF)
                 inputs!!.queue += TestInput.fromChar(c.c)
@@ -77,6 +77,9 @@ fun TestContext.keyChars(chars: ByteArray) {
     }
 }
 
+// [JVM]
+fun TestContext.keyCharsAppend(string: String) = keyCharsAppend(string.toByteArray())
+
 fun TestContext.keyCharsAppend(chars: ByteArray) {
 
     if (isError) return
@@ -87,6 +90,9 @@ fun TestContext.keyCharsAppend(chars: ByteArray) {
         keyChars(chars)
     }
 }
+
+// [JVM]
+fun TestContext.keyCharsAppendEnter(string: String) = keyCharsAppendEnter(string.toByteArray())
 
 fun TestContext.keyCharsAppendEnter(chars: ByteArray) {
 
