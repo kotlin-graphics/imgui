@@ -122,6 +122,7 @@ class TabBar {
         wantLayout = true // Layout will be done on the first call to ItemTab()
         prevFrameVisible = currFrameVisible
         currFrameVisible = g.frameCount
+        framePadding put g.style.framePadding
 
         // Layout
         itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
