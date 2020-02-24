@@ -24,7 +24,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
     /** Io.Fonts-> is owned by the ImGuiContext and will be destructed along with it.   */
-    var fontAtlasOwnedByContext = sharedFontAtlas != null
+    var fontAtlasOwnedByContext = sharedFontAtlas == null
 
     var io = IO(sharedFontAtlas)
 
