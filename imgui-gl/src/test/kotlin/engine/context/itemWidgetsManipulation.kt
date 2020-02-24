@@ -159,6 +159,9 @@ infix fun TestContext.itemOpen(ref: TestRef) = itemAction(TestAction.Open, ref)
 infix fun TestContext.itemClose(ref: ID) = itemAction(TestAction.Close, TestRef(ref))
 infix fun TestContext.itemClose(ref: TestRef) = itemAction(TestAction.Close, ref)
 
+// [JVM]
+infix fun TestContext.itemInput(ref: String) = itemAction(TestAction.Input, TestRef(path = ref))
+
 infix fun TestContext.itemInput(ref: TestRef) = itemAction(TestAction.Input, ref)
 
 infix fun TestContext.itemNavActivate(ref: TestRef) = itemAction(TestAction.NavActivate, ref)

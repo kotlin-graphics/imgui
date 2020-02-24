@@ -4,9 +4,10 @@ import engine.context.*
 import engine.core.TestEngine
 import engine.core.TestOpFlag
 import engine.core.registerTest
-import glm_.i
+import glm_.ext.equal
 import glm_.vec2.Vec2
 import imgui.ImGui
+import imgui.Key
 import imgui.dsl
 import imgui.min
 import io.kotlintest.shouldBe
@@ -248,68 +249,66 @@ fun registerTests_Widgets(e: TestEngine) {
         }
     }
 
-//    // ## Test checkbox click
-//    t = REGISTER_TEST("widgets", "widgets_checkbox_001");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Window1");
-//        ImGui::Checkbox("Checkbox", &ctx->GenericVars.Bool1);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // We use WindowRef() to ensure the window is uncollapsed.
-//        IM_CHECK(ctx->GenericVars.Bool1 == false);
-//        ctx->WindowRef("Window1");
-//        ctx->ItemClick("Checkbox");
-//        IM_CHECK(ctx->GenericVars.Bool1 == true);
-//    };
-//
-//    // FIXME-TESTS: WIP
-//    t = REGISTER_TEST("widgets", "widgets_datatype_1");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::SetNextWindowSize(ImVec2(200, 200));
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        char buf[3] = { 42, 100, 42 };
-//        ImGui::DragScalar("Drag", ImGuiDataType_S8, &buf[1], 0.5f, NULL, NULL);
-//        IM_ASSERT(buf[0] == 42 && buf[2] == 42);
-//        ImGui::End();
-//    };
-//
-//    // ## Test DragInt() as InputText
-//    // ## Test ColorEdit4() as InputText (#2557)
-//    t = REGISTER_TEST("widgets", "widgets_as_input");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::DragInt("Drag", &vars.Int1);
-//        ImGui::ColorEdit4("Color", &vars.Vec4.x);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ctx->WindowRef("Test Window");
-//
-//        IM_CHECK_EQ(vars.Int1, 0);
-//        ctx->ItemInput("Drag");
-//        IM_CHECK_EQ(ctx->UiContext->ActiveId, ctx->GetID("Drag"));
-//        ctx->KeyCharsAppendEnter("123");
-//        IM_CHECK_EQ(vars.Int1, 123);
-//
-//        ctx->ItemInput("Color##Y");
-//        IM_CHECK_EQ(ctx->UiContext->ActiveId, ctx->GetID("Color##Y"));
-//        ctx->KeyCharsAppend("123");
-//        IM_CHECK(FloatEqual(vars.Vec4.y, 123.0f / 255.0f));
-//        ctx->KeyPressMap(ImGuiKey_Tab);
-//        ctx->KeyCharsAppendEnter("200");
-//        IM_CHECK(FloatEqual(vars.Vec4.x,   0.0f / 255.0f));
-//        IM_CHECK(FloatEqual(vars.Vec4.y, 123.0f / 255.0f));
-//        IM_CHECK(FloatEqual(vars.Vec4.z, 200.0f / 255.0f));
-//    };
-//
+    // ## Test checkbox click
+    e.registerTest("widgets", "widgets_checkbox_001").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Window1") {
+                ImGui.checkbox("Checkbox", ctx.genericVars::bool1)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            // We use WindowRef() to ensure the window is uncollapsed.
+            ctx.genericVars.bool1 shouldBe false
+            ctx.windowRef("Window1")
+            ctx.itemClick("Checkbox")
+            ctx.genericVars.bool1 shouldBe true
+        }
+    }
+
+    // FIXME-TESTS: WIP
+    e.registerTest("widgets", "widgets_datatype_1").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            ImGui.setNextWindowSize(Vec2(200))
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                val buf = floatArrayOf(42f, 100f, 42f)
+                ImGui.dragScalar("Drag", buf, 1, 0.5f)
+                assert(buf[0] == 42f && buf[2] == 42f)
+            }
+        }
+    }
+
+    // ## Test DragInt() as InputText
+    // ## Test ColorEdit4() as InputText (#2557)
+    e.registerTest("widgets", "widgets_as_input").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            ImGui.begin("Test Window", null, Wf.NoSavedSettings.i)
+                ImGui.dragInt("Drag", vars::int1)
+                ImGui.colorEdit4("Color", vars.vec4)
+            ImGui.end()
+        }
+        t.testFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            ctx.windowRef("Test Window")
+
+            vars.int1 shouldBe 0
+            ctx.itemInput("Drag")
+            ctx.uiContext!!.activeId shouldBe ctx.getID("Drag")
+            ctx.keyCharsAppendEnter("123")
+            vars.int1 shouldBe 123
+
+            ctx.itemInput("Color##Y")
+            ctx.uiContext!!.activeId shouldBe ctx.getID("Color##Y")
+            ctx.keyCharsAppend("123")
+            vars.vec4.y.equal(123f / 255f) shouldBe true
+            ctx.keyPressMap(Key.Tab)
+            ctx.keyCharsAppendEnter("200")
+            (vars.vec4.x.equal(0f / 255f)) shouldBe true
+            (vars.vec4.y.equal(123f / 255f)) shouldBe true
+            (vars.vec4.z.equal(200f / 255f)) shouldBe true
+        }
+    }
+
 //    // ## Test InputText widget
 //    t = REGISTER_TEST("widgets", "widgets_inputtext_1");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)
