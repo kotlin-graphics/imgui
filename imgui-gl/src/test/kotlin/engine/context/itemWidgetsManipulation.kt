@@ -1,11 +1,11 @@
 package engine.context
 
+import engine.KeyModFlag
+import engine.core.*
 import imgui.ID
 import imgui.Key
 import imgui.MouseButton
 import imgui.internal.InputSource
-import engine.KeyModFlag
-import engine.core.*
 import imgui.internal.has
 import imgui.internal.hasnt
 import imgui.internal.ItemStatusFlag as Isf
@@ -18,119 +18,122 @@ fun TestContext.itemAction(action_: TestAction, ref: TestRef, actionArg: Int? = 
     var action = action_
     if (isError) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
+    REGISTER_DEPTH {
 
-    // [DEBUG] Breakpoint
-    //if (ref.ID == 0x0d4af068)
-    //    printf("");
+        // [DEBUG] Breakpoint
+        //if (ref.ID == 0x0d4af068)
+        //    printf("");
 
-    val item = itemLocate(ref) ?: return
-    val desc = TestRefDesc(ref, item)
+        val item = itemLocate(ref) ?: return
+        val desc = TestRefDesc(ref, item)
 
-    logDebug("Item${action.name} $desc${if (inputMode == InputSource.Mouse) "" else " (w/ Nav)"}")
+        logDebug("Item${action.name} $desc${if (inputMode == InputSource.Mouse) "" else " (w/ Nav)"}")
 
-    // Automatically uncollapse by default
-    item.window?.let {
-        if (opFlags hasnt TestOpFlag.NoAutoUncollapse)
-            windowAutoUncollapse(it)
-    }
+        // Automatically uncollapse by default
+        item.window?.let {
+            if (opFlags hasnt TestOpFlag.NoAutoUncollapse)
+                windowAutoUncollapse(it)
+        }
 
-    if (action == TestAction.Click || action == TestAction.DoubleClick)
-        if (inputMode == InputSource.Mouse) {
-            val mouseButton = actionArg ?: 0
-            assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
-            mouseMove(ref)
-            if (!engineIO!!.configRunFast)
-                sleep(0.05f)
-            if (action == TestAction.DoubleClick)
-                mouseDoubleClick(mouseButton)
-            else
-                mouseClick(mouseButton)
-            return
-        } else action = TestAction.NavActivate
+        if (action == TestAction.Click || action == TestAction.DoubleClick)
+            if (inputMode == InputSource.Mouse) {
+                val mouseButton = actionArg ?: 0
+                assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
+                mouseMove(ref)
+                if (!engineIO!!.configRunFast)
+                    sleep(0.05f)
+                if (action == TestAction.DoubleClick)
+                    mouseDoubleClick(mouseButton)
+                else
+                    mouseClick(mouseButton)
+                return
+            } else action = TestAction.NavActivate
 
-    if (action == TestAction.NavActivate) {
-        assert(actionArg == null) // Unused
-        navMoveTo(ref)
-        navActivate()
-        if (action == TestAction.DoubleClick)
-            assert(false)
-        return
-    }
-
-    if (action == TestAction.Input) {
-        assert(actionArg == null) // Unused
-        if (inputMode == InputSource.Mouse) {
-            mouseMove(ref)
-            keyDownMap(Key.Count, KeyModFlag.Ctrl.i)
-            mouseClick(0)
-            keyUpMap(Key.Count, KeyModFlag.Ctrl.i)
-        } else {
+        if (action == TestAction.NavActivate) {
+            assert(actionArg == null) // Unused
             navMoveTo(ref)
-            navInput()
+            navActivate()
+            if (action == TestAction.DoubleClick)
+                assert(false)
+            return
         }
-        return
-    }
 
-    if (action == TestAction.Open) {
-        assert(actionArg == null) // Unused
-        if (item.statusFlags has Isf.Opened) {
-            item.refCount++
-            mouseMove(ref)
-
-            // Some item may open just by hovering, give them that chance
-            if (item.statusFlags hasnt Isf.Opened) {
-                itemClick(ref)
-                if (item.statusFlags hasnt Isf.Opened) {
-                    itemDoubleClick(ref) // Attempt a double-click // FIXME-TESTS: let's not start doing those fuzzy things..
-                    if (item.statusFlags hasnt Isf.Opened)
-                        ERRORF_NOHDR("Unable to Open item: ${TestRefDesc(ref, item)}")
-                }
+        if (action == TestAction.Input) {
+            assert(actionArg == null) // Unused
+            if (inputMode == InputSource.Mouse) {
+                mouseMove(ref)
+                keyDownMap(Key.Count, KeyModFlag.Ctrl.i)
+                mouseClick(0)
+                keyUpMap(Key.Count, KeyModFlag.Ctrl.i)
+            } else {
+                navMoveTo(ref)
+                navInput()
             }
-            item.refCount--
-            yield()
+            return
         }
-        return
-    }
 
-    if (action == TestAction.Close) {
-        assert(actionArg == null) // Unused
-        if (item.statusFlags has Isf.Opened) {
-            item.refCount++
-            itemClick(ref)
+        if (action == TestAction.Open) {
+            assert(actionArg == null) // Unused
             if (item.statusFlags has Isf.Opened) {
-                itemDoubleClick(ref) // Attempt a double-click // FIXME-TESTS: let's not start doing those fuzzy things..
-                if (item.statusFlags has Isf.Opened)
-                    ERRORF_NOHDR("Unable to Close item: ${TestRefDesc(ref, item)}")
+                item.refCount++
+                mouseMove(ref)
+
+                // Some item may open just by hovering, give them that chance
+                if (item.statusFlags hasnt Isf.Opened) {
+                    itemClick(ref)
+                    if (item.statusFlags hasnt Isf.Opened) {
+                        itemDoubleClick(ref) // Attempt a double-click // FIXME-TESTS: let's not start doing those fuzzy things..
+                        if (item.statusFlags hasnt Isf.Opened)
+                            ERRORF_NOHDR("Unable to Open item: ${TestRefDesc(ref, item)}")
+                    }
+                }
+                item.refCount--
+                yield()
             }
-            item.refCount--
-            yield()
+            return
         }
-        return
-    }
 
-    if (action == TestAction.Check) {
-        assert(actionArg == null) // Unused
-        if (item.statusFlags has Isf.Checkable && item.statusFlags hasnt Isf.Checked) {
-            itemClick(ref)
-            yield()
+        if (action == TestAction.Close) {
+            assert(actionArg == null) // Unused
+            if (item.statusFlags has Isf.Opened) {
+                item.refCount++
+                itemClick(ref)
+                if (item.statusFlags has Isf.Opened) {
+                    itemDoubleClick(ref) // Attempt a double-click // FIXME-TESTS: let's not start doing those fuzzy things..
+                    if (item.statusFlags has Isf.Opened)
+                        ERRORF_NOHDR("Unable to Close item: ${TestRefDesc(ref, item)}")
+                }
+                item.refCount--
+                yield()
+            }
+            return
         }
-        itemVerifyCheckedIfAlive(ref, true) // We can't just IM_ASSERT(ItemIsChecked()) because the item may disappear and never update its StatusFlags any more!
-        return
-    }
 
-    if (action == TestAction.Uncheck) {
-        assert(actionArg == null) // Unused
-        if (item.statusFlags has Isf.Checkable && item.statusFlags has Isf.Checked) {
-            itemClick(ref)
-            yield()
+        if (action == TestAction.Check) {
+            assert(actionArg == null) // Unused
+            if (item.statusFlags has Isf.Checkable && item.statusFlags hasnt Isf.Checked) {
+                itemClick(ref)
+                yield()
+            }
+            itemVerifyCheckedIfAlive(ref, true) // We can't just IM_ASSERT(ItemIsChecked()) because the item may disappear and never update its StatusFlags any more!
+            return
         }
-        itemVerifyCheckedIfAlive(ref, false) // We can't just IM_ASSERT(ItemIsChecked()) because the item may disappear and never update its StatusFlags any more!
-        return
-    }
 
-    assert(false)
+        if (action == TestAction.Uncheck) {
+            assert(actionArg == null) // Unused
+            if (item.statusFlags has Isf.Checkable && item.statusFlags has Isf.Checked) {
+                itemClick(ref)
+                yield()
+            }
+            itemVerifyCheckedIfAlive(ref, false) // We can't just IM_ASSERT(ItemIsChecked()) because the item may disappear and never update its StatusFlags any more!
+            return
+        }
+        assert(false)
+    }
 }
+
+// [JVM]
+fun TestContext.itemClick(ref: String, button: Int = 0) = itemAction(TestAction.Click, TestRef(path = ref), button)
 
 // [JVM]
 fun TestContext.itemClick(ref: ID, button: Int = 0) = itemAction(TestAction.Click, TestRef(ref), button)
@@ -142,6 +145,8 @@ infix fun TestContext.itemCheck(ref: TestRef) = itemAction(TestAction.Check, ref
 
 infix fun TestContext.itemUncheck(ref: TestRef) = itemAction(TestAction.Uncheck, ref)
 
+// [JVM]
+infix fun TestContext.itemOpen(ref: String) = itemAction(TestAction.Open, TestRef(path = ref))
 infix fun TestContext.itemOpen(ref: TestRef) = itemAction(TestAction.Open, ref)
 
 // [JVM]
@@ -232,56 +237,59 @@ fun TestContext.itemCloseAll(refParent: TestRef, depth: Int = 99, passes: Int = 
 
 fun TestContext.itemHold(ref: TestRef, time: Float) {
 
-    if (isError)        return
+    if (isError) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("ItemHold '${ref.path}' %08X", ref.id)
+    REGISTER_DEPTH {
+        logDebug("ItemHold '${ref.path}' %08X", ref.id)
 
-    mouseMove(ref)
+        mouseMove(ref)
 
-    yield()
-    inputs!!.mouseButtonsValue = 1 shl 0
-    sleep(time)
-    inputs!!.mouseButtonsValue = 0
-    yield()
+        yield()
+        inputs!!.mouseButtonsValue = 1 shl 0
+        sleep(time)
+        inputs!!.mouseButtonsValue = 0
+        yield()
+    }
 }
 
 fun TestContext.itemHoldForFrames(ref: TestRef, frames: Int) {
 
-    if (isError)        return
+    if (isError) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("ItemHoldForFrames '${ref.path}' %08X", ref.id)
+    REGISTER_DEPTH {
+        logDebug("ItemHoldForFrames '${ref.path}' %08X", ref.id)
 
-    mouseMove(ref)
-    yield()
-    inputs!!.mouseButtonsValue = 1 shl 0
-    yieldFrames(frames)
-    inputs!!.mouseButtonsValue = 0
-    yield()
+        mouseMove(ref)
+        yield()
+        inputs!!.mouseButtonsValue = 1 shl 0
+        yieldFrames(frames)
+        inputs!!.mouseButtonsValue = 0
+        yield()
+    }
 }
 
 fun TestContext.itemDragAndDrop(refSrc: TestRef, refDst: TestRef) {
 
-    if (isError)        return
+    if (isError) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    val itemSrc = itemLocate(refSrc)
-    val itemDst = itemLocate(refDst)
-    val descSrc = TestRefDesc(refSrc, itemSrc)
-    val descDst = TestRefDesc(refDst, itemDst)
-    logDebug("ItemDragAndDrop $descSrc to $descDst")
+    REGISTER_DEPTH {
+        val itemSrc = itemLocate(refSrc)
+        val itemDst = itemLocate(refDst)
+        val descSrc = TestRefDesc(refSrc, itemSrc)
+        val descDst = TestRefDesc(refDst, itemDst)
+        logDebug("ItemDragAndDrop $descSrc to $descDst")
 
-    mouseMove(refSrc, TestOpFlag.NoCheckHoveredId.i)
-    sleepShort()
-    mouseDown(0)
+        mouseMove(refSrc, TestOpFlag.NoCheckHoveredId.i)
+        sleepShort()
+        mouseDown(0)
 
-    // Enforce lifting drag threshold even if both item are exactly at the same location.
-    mouseLiftDragThreshold()
+        // Enforce lifting drag threshold even if both item are exactly at the same location.
+        mouseLiftDragThreshold()
 
-    mouseMove(refDst, TestOpFlag.NoCheckHoveredId.i)
-    sleepShort()
-    mouseUp(0)
+        mouseMove(refDst, TestOpFlag.NoCheckHoveredId.i)
+        sleepShort()
+        mouseUp(0)
+    }
 }
 
 fun TestContext.itemVerifyCheckedIfAlive(ref: TestRef, checked: Boolean) {
