@@ -8,9 +8,9 @@ fun TestContext.itemLocate(ref: TestRef, flags: TestOpFlags = TestOpFlag.None.i)
 
     if (isError) return null
 
-    val fullId = when (ref.id) {
-        0 -> hashDecoratedPath(ref.path!!, refID)
-        else -> ref.id
+    val fullId = when {
+        ref.id != 0 -> ref.id
+        else -> hashDecoratedPath(ref.path!!, refID)
     }
 
     return REGISTER_DEPTH {
