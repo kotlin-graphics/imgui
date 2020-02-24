@@ -43,7 +43,7 @@ class TestEngine {
     val locateTasks = ArrayList<TestLocateTask>()
     val gatherTask = TestGatherTask()
     var userDataBuffer: ByteBuffer? = null
-//    size_t                      UserDataBufferSize = 0
+    var userData: Any? = null
 
     // Inputs
     var inputs = TestInputs()

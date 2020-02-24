@@ -22,7 +22,7 @@ fun registerTests_Layout(e: TestEngine) {
     e.registerTest("layout", "layout_baseline_and_cursormax").let { t ->
         t.guiFunc = { ctx: TestContext ->
 
-            var y = 0f
+            var y: Float
 
             ImGui.begin("Test Window", null, WindowFlag.NoSavedSettings.i)
             val g = ctx.uiContext!!
