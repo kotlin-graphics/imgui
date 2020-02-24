@@ -81,6 +81,8 @@ inline class TestLogFlag(val i: TestLogFlags) {
 
 // Generic flags for various ImGuiTestContext functions
 inline class TestOpFlag(val i: TestOpFlags) {
+    infix fun or(f: TestOpFlag) = TestOpFlags(i.i or f.i.i)
+
     companion object {
         val None = TestOpFlag(TestOpFlags(0))
         val Verbose = TestOpFlag(TestOpFlags(1 shl 0))

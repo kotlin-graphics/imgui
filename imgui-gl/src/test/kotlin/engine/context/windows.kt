@@ -22,79 +22,86 @@ fun TestContext.windowRef(ref: String) = windowRef(TestRef(path = ref))
 // FIXME-TESTS: May be to focus window when docked? Otherwise locate request won't even see an item?
 fun TestContext.windowRef(ref: TestRef) {
 
-//        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("WindowRef '${ref.path ?: "NULL"}' %08X", ref.id)
+    REGISTER_DEPTH {
+        logDebug("WindowRef '${ref.path ?: "NULL"}' %08X", ref.id)
 
-    ref.path?.let {
+        ref.path?.let {
 //            size_t len = strlen(ref.Path)
 //            IM_ASSERT(len < IM_ARRAYSIZE(RefStr) - 1)
 
-        it.toByteArray(refStr)
-        refID = hashDecoratedPath(it, 0)
-    } ?: run {
-        refStr[0] = 0
-        refID = ref.id
-    }
+            it.toByteArray(refStr)
+            refID = hashDecoratedPath(it, 0)
+        } ?: run {
+            refStr[0] = 0
+            refID = ref.id
+        }
 
-    // Automatically uncollapse by default
-    if (opFlags hasnt TestOpFlag.NoAutoUncollapse)
-        getWindowByRef("")?.let { windowAutoUncollapse(it) }
+        // Automatically uncollapse by default
+        if (opFlags hasnt TestOpFlag.NoAutoUncollapse)
+            getWindowByRef("")?.let { windowAutoUncollapse(it) }
+    }
 }
 
 fun TestContext.windowClose(ref: TestRef) {
     if (isError) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("WindowClose")
-    itemClick(getID("#CLOSE", ref))
+    REGISTER_DEPTH {
+        logDebug("WindowClose")
+        itemClick(getID("#CLOSE", ref))
+    }
 }
 
 fun TestContext.windowCollapse(window: Window?, collapsed: Boolean) {
     if (isError) return
     if (window == null) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("WindowSetCollapsed $collapsed")
-    //ImGuiWindow* window = GetWindowByRef(ref);
-    //if (window == NULL)
-    //{
-    //    IM_ERRORF_NOHDR("Unable to find Ref window: %s / %08X", RefStr, RefID);
-    //    return;
-    //}
+    REGISTER_DEPTH {
+        logDebug("WindowSetCollapsed $collapsed")
+        //ImGuiWindow* window = GetWindowByRef(ref);
+        //if (window == NULL)
+        //{
+        //    IM_ERRORF_NOHDR("Unable to find Ref window: %s / %08X", RefStr, RefID);
+        //    return;
+        //}
 
-    if (window.collapsed != collapsed) {
-        var opFlags = opFlags
-        val backupOpFlags = opFlags
-        opFlags = opFlags or TestOpFlag.NoAutoUncollapse
-        itemClick(getID("#COLLAPSE", window.id))
-        opFlags = backupOpFlags
-        yield()
-        CHECK(window.collapsed == collapsed)
+        if (window.collapsed != collapsed) {
+            var opFlags = opFlags
+            val backupOpFlags = opFlags
+            opFlags = opFlags or TestOpFlag.NoAutoUncollapse
+            itemClick(getID("#COLLAPSE", window.id))
+            opFlags = backupOpFlags
+            yield()
+            CHECK(window.collapsed == collapsed)
+        }
     }
 }
 
 fun TestContext.windowAutoUncollapse(window: Window) {
-    if (window.collapsed) {
-//        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-        logDebug("Uncollapse window '${window.name}'")
-        windowCollapse(window, false)
-        window.collapsed shouldBe false
-    }
+    if (window.collapsed)
+        REGISTER_DEPTH {
+            logDebug("Uncollapse window '${window.name}'")
+            windowCollapse(window, false)
+            window.collapsed shouldBe false
+        }
 }
+
+// [JVM]
+fun TestContext.windowFocus(ref: String) = windowFocus(TestRef(path = ref))
 
 // FIXME-TESTS: Ideally we would aim toward a clickable spot in the window.
 fun TestContext.windowFocus(ref: TestRef) {
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    val desc = TestRefDesc(ref)
-    logDebug("FocusWindow('$desc')")
+    REGISTER_DEPTH {
+        val desc = TestRefDesc(ref)
+        logDebug("FocusWindow('$desc')")
 
-    val windowId = getID(ref)
-    val window = findWindowByID(windowId)
-    CHECK_SILENT(window != null)
-    window?.let {
-        focusWindow(it)
-        yield()
+        val windowId = getID(ref)
+        val window = findWindowByID(windowId)
+        CHECK_SILENT(window != null)
+        window?.let {
+            focusWindow(it)
+            yield()
+        }
     }
 }
 
@@ -106,23 +113,23 @@ fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
     CHECK_SILENT(window != null)
     window!!
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("WindowMove ${window.name} (%.1f,%.1f) ", inputPos.x, inputPos.y)
-    val targetPos = floor(inputPos - pivot * window.size)
-    if ((targetPos - window.pos).lengthSqr < 0.001f)
-        return
+    REGISTER_DEPTH {
+        logDebug("WindowMove ${window.name} (%.1f,%.1f) ", inputPos.x, inputPos.y)
+        val targetPos = floor(inputPos - pivot * window.size)
+        if ((targetPos - window.pos).lengthSqr < 0.001f)
+            return
 
-    windowBringToFront(window)
-    windowCollapse(window, false)
+        windowBringToFront(window)
+        windowCollapse(window, false)
 
-    val h = ImGui.frameHeight
+        val h = ImGui.frameHeight
 
-    // FIXME-TESTS: Need to find a -visible- click point
-    mouseMoveToPos(window.pos + Vec2(h * 2f, h * 0.5f))
-    //IM_CHECK_SILENT(UiContext->HoveredWindow == window);  // FIXME-TESTS:
-    mouseDown(0)
+        // FIXME-TESTS: Need to find a -visible- click point
+        mouseMoveToPos(window.pos + Vec2(h * 2f, h * 0.5f))
+        //IM_CHECK_SILENT(UiContext->HoveredWindow == window);  // FIXME-TESTS:
+        mouseDown(0)
 
-    // Disable docking
+        // Disable docking
 //        #if IMGUI_HAS_DOCK
 //        if (UiContext->IO.ConfigDockingWithShift)
 //        KeyUpMap(ImGuiKey_COUNT, ImGuiKeyModFlags_Shift)
@@ -130,14 +137,15 @@ fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
 //        KeyDownMap(ImGuiKey_COUNT, ImGuiKeyModFlags_Shift)
 //        #endif
 
-    val delta = targetPos - window.pos
-    mouseMoveToPos(inputs!!.mousePosValue + delta)
-    yield()
+        val delta = targetPos - window.pos
+        mouseMoveToPos(inputs!!.mousePosValue + delta)
+        yield()
 
-    mouseUp()
+        mouseUp()
 //        #if IMGUI_HAS_DOCK
 //        KeyUpMap(ImGuiKey_COUNT, ImGuiKeyModFlags_Shift)
 //        #endif
+    }
 }
 
 fun TestContext.windowResize(ref: ID, sz: Vec2) = windowResize(TestRef(ref), sz)
@@ -148,23 +156,24 @@ fun TestContext.windowResize(ref: TestRef, sz: Vec2) {
     val window = getWindowByRef(ref)!!
     val size = floor(sz)
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("WindowResize ${window.name} (%.1f,%.1f)", size.x, size.y)
-    if ((size - window.size).lengthSqr < 0.001f)
-        return
+    REGISTER_DEPTH {
+        logDebug("WindowResize ${window.name} (%.1f,%.1f)", size.x, size.y)
+        if ((size - window.size).lengthSqr < 0.001f)
+            return
 
-    windowBringToFront(window)
-    windowCollapse(window, false)
+        windowBringToFront(window)
+        windowCollapse(window, false)
 
-    val id = window getResizeID 0
-    mouseMove(id)
-    mouseDown(0)
+        val id = window getResizeID 0
+        mouseMove(id)
+        mouseDown(0)
 
-    val delta = size - window.size
-    mouseMoveToPos(inputs!!.mousePosValue + delta)
-    yield()
+        val delta = size - window.size
+        mouseMoveToPos(inputs!!.mousePosValue + delta)
+        yield()
 
-    mouseUp()
+        mouseUp()
+    }
 }
 
 fun TestContext.windowMoveToMakePosVisible(window: Window, pos: Vec2) {
@@ -196,20 +205,21 @@ fun TestContext.windowBringToFront(window_: Window?, flags: TestOpFlags = TestOp
 //        assert(window != null)
     }
 
-    if (window !== g.navWindow) {
-//        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-        logDebug("BringWindowToFront->FocusWindow('${window.name}')")
-        ImGui.focusWindow(window)
-        yield()
-        yield()
-        //IM_CHECK(g.NavWindow == window);
-    } else if (window.rootWindow !== g.windows.last().rootWindow) {
-//        IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-        logDebug("BringWindowToDisplayFront('${window.name}') (window.back=${g.windows.last().name})")
-        window.bringToDisplayFront()
-        yield()
-        yield()
-    }
+    if (window !== g.navWindow)
+        REGISTER_DEPTH {
+            logDebug("BringWindowToFront->FocusWindow('${window.name}')")
+            ImGui.focusWindow(window)
+            yield()
+            yield()
+            //IM_CHECK(g.NavWindow == window);
+        }
+    else if (window.rootWindow !== g.windows.last().rootWindow)
+        REGISTER_DEPTH {
+            logDebug("BringWindowToDisplayFront('${window.name}') (window.back=${g.windows.last().name})")
+            window.bringToDisplayFront()
+            yield()
+            yield()
+        }
 
     // We cannot guarantee this will work 100%
     // Because merely hovering an item may e.g. open a window or change focus.
@@ -225,9 +235,10 @@ fun TestContext.windowBringToFront(window_: Window?, flags: TestOpFlags = TestOp
 fun TestContext.popupClose() {
     if (isError) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("PopupClose")
-    ImGui.closePopupToLevel(0, true)    // FIXME
+    REGISTER_DEPTH {
+        logDebug("PopupClose")
+        ImGui.closePopupToLevel(0, true)    // FIXME
+    }
 }
 
 // [JVM]
