@@ -82,6 +82,7 @@ enum class TestActiveFunc { None, GuiFunc, TestFunc }
 // Generic structure with varied data. This is useful for tests to quickly share data between the GUI functions and the Test function.
 // This is however totally optional. Using SetUserDataType() it is possible to store custom data on the stack and read from it as UserData.
 class TestGenericVars {
+    var byte1: Byte = 0
     var int1 = 0
     var int2 = 0
     val intArray = IntArray(10)

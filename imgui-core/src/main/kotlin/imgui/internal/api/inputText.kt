@@ -847,13 +847,14 @@ internal interface inputText {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        var valueChanged = inputTextEx(label, null, dataBuf.toByteArray(), bb.size, flags)
+        val buf = dataBuf.toByteArray(32)
+        var valueChanged = inputTextEx(label, null, buf, bb.size, flags)
         if (init) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.tempInputTextId = g.activeId
         }
         if (valueChanged) {
-            valueChanged = dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
+            valueChanged = dataTypeApplyOpFromText(String(buf), g.inputTextState.initialTextA, dataType, pData)
             if (valueChanged)
                 markItemEdited(id)
         }
