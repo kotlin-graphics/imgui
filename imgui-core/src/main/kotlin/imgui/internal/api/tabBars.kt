@@ -64,7 +64,7 @@ internal interface tabBars {
     fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2,
                                    label: ByteArray, tabId: ID, closeButtonId: ID): Boolean {
 
-        val labelSize = calcTextSize(label, -1, true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
         if (bb.width <= 1f) return false
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
@@ -106,7 +106,8 @@ internal interface tabBars {
 
         // Label with ellipsis
         val ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x - 1f
-        renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x, ellipsisMaxX, label, -1, labelSize)
+        renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x,
+                ellipsisMaxX, label, textSizeIfKnown = labelSize)
 
         return closeButtonPressed
     }
