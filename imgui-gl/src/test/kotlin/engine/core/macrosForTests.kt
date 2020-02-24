@@ -34,7 +34,7 @@ fun <R>CHECK_RETV(expr: Boolean, ret: R): R? {
 //        IM_ASSERT(0); }
 //} while (0)
 fun ERRORF_NOHDR(fmt: String, vararg args: Any) {
-    if (TestEngineHook_Error(/*NULL, NULL, 0,*/ TestCheckFlag.None.i, fmt, args))
+    if (TestEngineHook_Error(/*NULL, NULL, 0,*/ TestCheckFlag.None.i, fmt, *args))
         assert(false)
 }
 
@@ -151,7 +151,7 @@ fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/
                 test.status = TestStatus.Error
 
             val sf = StackWalker.getInstance().walk { it.findFirst().get() }
-            System.err.printf("KO Class: ${sf.declaringClass.simpleName}, Method: %-7s, Line: ${sf.lineNumber}%n", sf.methodName)
+//            System.err.printf("KO Class: ${sf.declaringClass.simpleName}, Method: %-7s, Line: ${sf.lineNumber}%n", sf.methodName)
 //            val display_value_expr = (value_expr != NULL) && (result == false)
 //            if (file) {
 //                if (display_value_expr)
@@ -166,7 +166,7 @@ fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/
 //            }
         } else if (flags hasnt TestCheckFlag.SilentSuccess) {
             val sf = StackWalker.getInstance().walk { it.findFirst().get() }
-            System.err.printf("OK Class: ${sf.declaringClass.simpleName}, Method: %-7s, Line: ${sf.lineNumber}%n", sf.methodName)
+//            System.err.printf("OK Class: ${sf.declaringClass.simpleName}, Method: %-7s, Line: ${sf.lineNumber}%n", sf.methodName)
 //            if (file)
 //                ctx->LogInfo("OK %s:%d '%s'", file_without_path, line, expr)
 //            else
@@ -178,18 +178,18 @@ fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/
 //            assert(false)
 //        }
 
-    if (result == false && engine.io.configStopOnError && !engine.abort)
+    if (!result && engine.io.configStopOnError && !engine.abort)
         engine.abort = true
     //ImGuiTestEngine_Abort(engine);
 
-    if (result == false && engine.io.configBreakOnError && !engine.abort)
+    if (!result && engine.io.configBreakOnError && !engine.abort)
         return true
 
     return false
 }
 
 fun TestEngineHook_Error(/*file, const char* func, int line,*/ flags: TestCheckFlags, fmt: String, vararg args: Any): Boolean{
-    val buf = fmt.format(args)
+    val buf = fmt.format(*args)
     val ret = TestEngineHook_Check(/*file, func, line,*/ flags, false, buf)
 
     val engine = hookingEngine

@@ -1,6 +1,5 @@
 package engine.context
 
-import engine.core.TestItemInfo
 import engine.core.TestItemList
 import engine.core.TestRef
 
@@ -8,12 +7,12 @@ fun TestContext.menuAction(action: TestAction, ref: TestRef) {
 
     if (isError) return
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    logDebug("MenuAction '${ref.path}' %08X", ref.id)
+    REGISTER_DEPTH {
+        logDebug("MenuAction '${ref.path}' %08X", ref.id)
 
-    assert(ref.path != null)
+        assert(ref.path != null)
 
-    TODO()
+        TODO()
 //    int depth = 0
 //    const char* path = ref.Path
 //    const char* path_end = path + strlen(path)
@@ -64,6 +63,7 @@ fun TestContext.menuAction(action: TestAction, ref: TestRef) {
 //        path = p + 1
 //        depth++
 //    }
+    }
 }
 
 fun TestContext.menuActionAll(action: TestAction, refParent: TestRef) {

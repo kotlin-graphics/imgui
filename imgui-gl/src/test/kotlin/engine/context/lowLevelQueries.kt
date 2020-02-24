@@ -1,45 +1,42 @@
 package engine.context
 
-import engine.context.itemLocate
-import engine.context.yield
 import engine.core.*
 import engine.hashDecoratedPath
 import glm_.b
 
 fun TestContext.itemLocate(ref: TestRef, flags: TestOpFlags = TestOpFlag.None.i): TestItemInfo? {
 
-    if (isError)        return null
+    if (isError) return null
 
-    val fullId = when(ref.id) {
+    val fullId = when (ref.id) {
         0 -> hashDecoratedPath(ref.path!!, refID)
         else -> ref.id
     }
 
-//    IMGUI_TEST_CONTEXT_REGISTER_DEPTH(this)
-    var item: TestItemInfo? = null
-    var retries = 0
-    while (retries < 2)    {
-        item = engine!!.itemLocate(fullId, ref.path)
-        item?.let { return it }
-        engine!!.yield()
-        retries++
-    }
+    return REGISTER_DEPTH {
+        var retries = 0
+        while (retries < 2) {
+            val item = engine!!.itemLocate(fullId, ref.path)
+            item?.let { return it }
+            engine!!.yield()
+            retries++
+        }
 
-    if (flags hasnt TestOpFlag.NoError)    {
-        // Prefixing the string with / ignore the reference/current ID
-        val path = ref.path
-        if (path?.get(0) == '/' && refStr[0] != 0.b)
-            ERRORF_NOHDR("Unable to locate item: '$path'")
-        else if (path != null)
-            ERRORF_NOHDR("Unable to locate item: '$refStr/$path' (0x%08X)", fullId)
-        else
-            ERRORF_NOHDR("Unable to locate item: 0x%08X", ref.id)
+        if (flags hasnt TestOpFlag.NoError) {
+            // Prefixing the string with / ignore the reference/current ID
+            val path = ref.path
+            if (path?.get(0) == '/' && refStr[0] != 0.b)
+                ERRORF_NOHDR("Unable to locate item: '$path'")
+            else if (path != null)
+                ERRORF_NOHDR("Unable to locate item: '$refStr/$path' (0x%08X)", fullId)
+            else
+                ERRORF_NOHDR("Unable to locate item: 0x%08X", ref.id)
+        }
+        null
     }
-
-    return null
 }
 
-fun TestContext.gatherItems (outList: TestItemList?, parent: TestRef, depth_: Int = -1) {
+fun TestContext.gatherItems(outList: TestItemList?, parent: TestRef, depth_: Int = -1) {
 
     var depth = depth_
     assert(outList != null)
@@ -48,7 +45,7 @@ fun TestContext.gatherItems (outList: TestItemList?, parent: TestRef, depth_: In
     assert(gatherTask.parentID == 0)
     assert(gatherTask.lastItemInfo == null)
 
-    if (isError)        return
+    if (isError) return
 
     // Register gather tasks
     if (depth == -1)
@@ -61,7 +58,7 @@ fun TestContext.gatherItems (outList: TestItemList?, parent: TestRef, depth_: In
 
     // Keep running while gathering
     val beginGatherSize = outList.size
-    while (true)    {
+    while (true) {
         val beginGatherSizeForFrame = outList.size
         yield()
         val endGatherSizeForFrame = outList.size

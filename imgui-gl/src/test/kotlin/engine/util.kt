@@ -76,7 +76,7 @@ class BuildInfo {
 // Adapted from ImHash(). Not particularly fast!
 fun hashDecoratedPath(str_: String, seed_: ID = 0): ID {
 
-    if(str_.isEmpty()) return 0
+    if (str_.isEmpty()) return 0
     val str = str_.toByteArray()
     var seed = seed_
 
@@ -94,14 +94,14 @@ fun hashDecoratedPath(str_: String, seed_: ID = 0): ID {
     while (c != 0.b) {
         if (c == '\\'.b && !inhibitOne) {
             inhibitOne = true
-            c = str[current++]
+            c = str.getOrElse(current++) { 0 }
             continue
         }
 
         // Forward slashes are ignored unless prefixed with a backward slash
         if (c == '/'.b && !inhibitOne) {
             inhibitOne = false
-            c = str[current++]
+            c = str.getOrElse(current++) { 0 }
             continue
         }
 
@@ -111,6 +111,7 @@ fun hashDecoratedPath(str_: String, seed_: ID = 0): ID {
 
         crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor c.toUInt()]
         inhibitOne = false
+        c = str.getOrElse(current++) { 0 }
     }
     return crc.inv()
 }

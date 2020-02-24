@@ -216,7 +216,14 @@ class TestContext {
 //#define IM_TOKENPASTE(x, y)     x ## y
 //#define IM_TOKENPASTE2(x, y)    IM_TOKENPASTE(x, y)
 //#define IMGUI_TEST_CONTEXT_REGISTER_DEPTH(_THIS)        ImGuiTestContextDepthScope IM_TOKENPASTE2(depth_register, __LINE__)(_THIS)
-//
+
+inline fun <R>TestContext.REGISTER_DEPTH(block: () -> R): R {
+    actionDepth++
+    val res = block()
+    actionDepth--
+    return res
+}
+
 //struct ImGuiTestContextDepthScope
 //{
 //    ImGuiTestContext * TestContext
