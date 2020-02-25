@@ -10,6 +10,7 @@ import glm_.ext.equal
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.api.gImGui
+import imgui.internal.hash
 import imgui.stb.te
 import io.kotlintest.shouldBe
 import imgui.WindowFlag as Wf
@@ -694,69 +695,72 @@ fun registerTests_Widgets(e: TestEngine) {
         }
     }
 
-//    // ## Test the IsItemDeactivatedXXX() functions (e.g. #2550, #1875)
-//    t = REGISTER_TEST("widgets", "widgets_status_multicomponent");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        bool ret = ImGui::InputFloat4("Field", &vars.FloatArray[0]);
-//        vars.Status.QueryInc(ret);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // Accumulate return values over several frames/action into each bool
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGuiTestGenericStatus& status = vars.Status;
-//
-//        // FIXME-TESTS: Better helper to build ids out of various type of data
-//        ctx->WindowRef("Test Window");
-//        int n;
-//        n = 0; ImGuiID field_0 = ImHashData(&n, sizeof(n), ctx->GetID("Field"));
-//        n = 1; ImGuiID field_1 = ImHashData(&n, sizeof(n), ctx->GetID("Field"));
-//        //n = 2; ImGuiID field_2 = ImHashData(&n, sizeof(n), ctx->GetID("Field"));
-//
-//        // Testing activation/deactivation flags
-//        ctx->ItemClick(field_0);
-//        IM_CHECK(status.Ret == 0 && status.Activated == 1 && status.Deactivated == 0 && status.DeactivatedAfterEdit == 0);
-//        status.Clear();
-//        ctx->KeyPressMap(ImGuiKey_Enter);
-//        IM_CHECK(status.Ret == 0 && status.Activated == 0 && status.Deactivated == 1 && status.DeactivatedAfterEdit == 0);
-//        status.Clear();
-//
-//        // Testing validation with Return after editing
-//        ctx->ItemClick(field_0);
-//        status.Clear();
-//        ctx->KeyCharsAppend("123");
-//        IM_CHECK(status.Ret >= 1 && status.Activated == 0 && status.Deactivated == 0);
-//        status.Clear();
-//        ctx->KeyPressMap(ImGuiKey_Enter);
-//        IM_CHECK(status.Ret == 0 && status.Activated == 0 && status.Deactivated == 1);
-//        status.Clear();
-//
-//        // Testing validation with Tab after editing
-//        ctx->ItemClick(field_0);
-//        ctx->KeyCharsAppend("456");
-//        status.Clear();
-//        ctx->KeyPressMap(ImGuiKey_Tab);
-//        IM_CHECK(status.Ret == 0 && status.Activated == 1 && status.Deactivated == 1 && status.DeactivatedAfterEdit == 1);
-//
-//        // Testing Edited flag on all components
-//        ctx->ItemClick(field_1); // FIXME-TESTS: Should not be necessary!
-//        ctx->ItemClick(field_0);
-//        ctx->KeyCharsAppend("111");
-//        IM_CHECK(status.Edited >= 1);
-//        ctx->KeyPressMap(ImGuiKey_Tab);
-//        status.Clear();
-//        ctx->KeyCharsAppend("222");
-//        IM_CHECK(status.Edited >= 1);
-//        ctx->KeyPressMap(ImGuiKey_Tab);
-//        status.Clear();
-//        ctx->KeyCharsAppend("333");
-//        IM_CHECK(status.Edited >= 1);
-//    };
-//
+    // ## Test the IsItemDeactivatedXXX() functions (e.g. #2550, #1875)
+    e.registerTest("widgets", "widgets_status_multicomponent").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                val ret = ImGui.inputFloat4("Field", vars.floatArray)
+                vars.status.queryInc(ret)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            // Accumulate return values over several frames/action into each bool
+            val vars = ctx.genericVars
+            val status = vars.status
+
+            // FIXME-TESTS: Better helper to build ids out of various type of data
+            ctx.windowRef("Test Window")
+            var n: Int
+            n = 0;
+            val field0: ID = hash(n, ctx.getID("Field"));
+            n = 1;
+            val field1: ID = hash(n, ctx.getID("Field"))
+            //n = 2; ImGuiID field_2 = ImHashData(&n, sizeof(n), ctx->GetID("Field"));
+
+            status.apply {
+                // Testing activation/deactivation flags
+                ctx.itemClick(field0)
+                assert(ret == 0 && activated == 1 && deactivated == 0 && deactivatedAfterEdit == 0)
+                clear()
+                ctx.keyPressMap(Key.Enter)
+                assert(ret == 0 && activated == 0 && deactivated == 1 && deactivatedAfterEdit == 0)
+                clear()
+
+                // Testing validation with Return after editing
+                ctx.itemClick(field0)
+                clear()
+                ctx.keyCharsAppend("123")
+                assert(ret >= 1 && activated == 0 && deactivated == 0)
+                clear()
+                ctx.keyPressMap(Key.Enter)
+                assert(ret == 0 && activated == 0 && deactivated == 1)
+                clear()
+
+                // Testing validation with Tab after editing
+                ctx.itemClick(field0)
+                ctx.keyCharsAppend("456")
+                clear()
+                ctx.keyPressMap(Key.Tab)
+                assert(ret == 0 && activated == 1 && deactivated == 1 && deactivatedAfterEdit == 1)
+
+                // Testing Edited flag on all components
+                ctx.itemClick(field1) // FIXME-TESTS: Should not be necessary!
+                ctx.itemClick(field0)
+                ctx.keyCharsAppend("111")
+                assert(edited >= 1)
+                ctx.keyPressMap(Key.Tab)
+                clear()
+                ctx.keyCharsAppend("222")
+                assert(edited >= 1)
+                ctx.keyPressMap(Key.Tab)
+                clear()
+                ctx.keyCharsAppend("333")
+                assert(edited >= 1)
+            }
+        }
+    }
+
 //    // ## Test the IsItemEdited() function when input vs output format are not matching
 //    t = REGISTER_TEST("widgets", "widgets_status_inputfloat_format_mismatch");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)
