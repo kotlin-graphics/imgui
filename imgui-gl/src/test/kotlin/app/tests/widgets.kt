@@ -1,16 +1,15 @@
 package app.tests
 
+import engine.KeyModFlag
 import engine.context.*
 import engine.core.TestEngine
 import engine.core.TestOpFlag
 import engine.core.registerTest
 import glm_.ext.equal
 import glm_.vec2.Vec2
-import imgui.ImGui
-import imgui.Key
-import imgui.dsl
-import imgui.min
+import imgui.*
 import io.kotlintest.shouldBe
+import kotlin.text.toByteArray
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
@@ -282,10 +281,10 @@ fun registerTests_Widgets(e: TestEngine) {
     e.registerTest("widgets", "widgets_as_input").let { t ->
         t.guiFunc = { ctx: TestContext ->
             val vars = ctx.genericVars
-            ImGui.begin("Test Window", null, Wf.NoSavedSettings.i)
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
                 ImGui.dragInt("Drag", vars::int1)
                 ImGui.colorEdit4("Color", vars.vec4)
-            ImGui.end()
+            }
         }
         t.testFunc = { ctx: TestContext ->
             val vars = ctx.genericVars
@@ -309,50 +308,50 @@ fun registerTests_Widgets(e: TestEngine) {
         }
     }
 
-//    // ## Test InputText widget
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_1");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::SetNextWindowSize(ImVec2(200, 200));
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::InputText("InputText", vars.Str1, IM_ARRAYSIZE(vars.Str1));
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        char* buf = ctx->GenericVars.Str1;
-//
-//        ctx->WindowRef("Test Window");
-//
-//        // Insert
-//        strcpy(buf, "Hello");
-//        ctx->ItemClick("InputText");
-//        ctx->KeyCharsAppendEnter("World123");
-//        IM_CHECK_STR_EQ(buf, "HelloWorld123");
-//
-//        // Delete
-//        ctx->ItemClick("InputText");
-//        ctx->KeyPressMap(ImGuiKey_End);
-//        ctx->KeyPressMap(ImGuiKey_Backspace, ImGuiKeyModFlags_None, 3);
-//        ctx->KeyPressMap(ImGuiKey_Enter);
-//        IM_CHECK_STR_EQ(buf, "HelloWorld");
-//
-//        // Insert, Cancel
-//        ctx->ItemClick("InputText");
-//        ctx->KeyPressMap(ImGuiKey_End);
-//        ctx->KeyChars("XXXXX");
-//        ctx->KeyPressMap(ImGuiKey_Escape);
-//        IM_CHECK_STR_EQ(buf, "HelloWorld");
-//
-//        // Delete, Cancel
-//        ctx->ItemClick("InputText");
-//        ctx->KeyPressMap(ImGuiKey_End);
-//        ctx->KeyPressMap(ImGuiKey_Backspace, ImGuiKeyModFlags_None, 5);
-//        ctx->KeyPressMap(ImGuiKey_Escape);
-//        IM_CHECK_STR_EQ(buf, "HelloWorld");
-//    };
-//
+    // ## Test InputText widget
+    e.registerTest("widgets", "widgets_inputtext_1").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            ImGui.setNextWindowSize(Vec2(200))
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                ImGui.inputText("InputText", vars.str1)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+
+            val buf = ctx.genericVars.str1
+
+            ctx.windowRef("Test Window")
+
+            // Insert
+            "Hello".toByteArray(buf)
+            ctx.itemClick("InputText")
+            ctx.keyCharsAppendEnter("World123")
+            String(buf, 0, buf.strlen()) shouldBe "HelloWorld123"
+
+            // Delete
+            ctx.itemClick("InputText")
+            ctx.keyPressMap(Key.End)
+            ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 3)
+            ctx.keyPressMap(Key.Enter)
+            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+
+            // Insert, Cancel
+            ctx.itemClick("InputText")
+            ctx.keyPressMap(Key.End)
+            ctx.keyChars("XXXXX")
+            ctx.keyPressMap(Key.Escape)
+            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+
+//            // Delete, Cancel
+//            ctx->ItemClick("InputText")
+//            ctx->KeyPressMap(ImGuiKey_End)
+//            ctx->KeyPressMap(ImGuiKey_Backspace, ImGuiKeyModFlags_None, 5)
+//            ctx->KeyPressMap(ImGuiKey_Escape)
+//            IM_CHECK_STR_EQ(buf, "HelloWorld")
+        }
+    }
+
 //    // ## Test InputText undo/redo ops, in particular related to issue we had with stb_textedit undo/redo buffers
 //    t = REGISTER_TEST("widgets", "widgets_inputtext_2");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)

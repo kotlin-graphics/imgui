@@ -174,11 +174,15 @@ internal interface inputText {
             val bufLen = buf.strlen()
             if (state.initialTextA.size < bufLen)
                 state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            else
+                state.initialTextA[bufLen] = 0
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
             // Start edition
             if (state.textW.size < buf.size)
                 state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            else
+                state.textW[buf.size] = NUL
 //            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
