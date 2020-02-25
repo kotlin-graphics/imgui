@@ -581,41 +581,40 @@ fun registerTests_Widgets(e: TestEngine) {
         }
     }
 
-//    // ## Test for Nav interference
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_nav");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImVec2 sz(50, 0);
-//        ImGui::Button("UL", sz); ImGui::SameLine();
-//        ImGui::Button("U",  sz); ImGui::SameLine();
-//        ImGui::Button("UR", sz);
-//        ImGui::Button("L",  sz); ImGui::SameLine();
-//        ImGui::SetNextItemWidth(sz.x);
-//        ImGui::InputText("##Field", vars.Str1, IM_ARRAYSIZE(vars.Str1), ImGuiInputTextFlags_AllowTabInput);
-//        ImGui::SameLine();
-//        ImGui::Button("R", sz);
-//        ImGui::Button("DL", sz); ImGui::SameLine();
-//        ImGui::Button("D", sz); ImGui::SameLine();
-//        ImGui::Button("DR", sz);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemClick("##Field");
-//        ctx->KeyPressMap(ImGuiKey_LeftArrow);
-//        IM_CHECK_EQ(ctx->UiContext->NavId, ctx->GetID("##Field"));
-//        ctx->KeyPressMap(ImGuiKey_RightArrow);
-//        IM_CHECK_EQ(ctx->UiContext->NavId, ctx->GetID("##Field"));
-//        ctx->KeyPressMap(ImGuiKey_UpArrow);
-//        IM_CHECK_EQ(ctx->UiContext->NavId, ctx->GetID("U"));
-//        ctx->KeyPressMap(ImGuiKey_DownArrow);
-//        ctx->KeyPressMap(ImGuiKey_DownArrow);
-//        IM_CHECK_EQ(ctx->UiContext->NavId, ctx->GetID("D"));
-//    };
-//
+    // ## Test for Nav interference
+    e.registerTest("widgets", "widgets_inputtext_nav").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                val sz = Vec2(50, 0)
+                ImGui.button("UL", sz); ImGui.sameLine()
+                ImGui.button("U",  sz); ImGui.sameLine()
+                ImGui.button("UR", sz)
+                ImGui.button("L",  sz); ImGui.sameLine()
+                ImGui.setNextItemWidth(sz.x)
+                ImGui.inputText("##Field", vars.str1, InputTextFlag.AllowTabInput.i)
+                ImGui.sameLine()
+                ImGui.button("R", sz)
+                ImGui.button("DL", sz); ImGui.sameLine()
+                ImGui.button("D", sz); ImGui.sameLine()
+                ImGui.button("DR", sz)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowRef("Test Window")
+            ctx.itemClick("##Field")
+            ctx.keyPressMap(Key.LeftArrow)
+            ctx.uiContext!!.navId shouldBe ctx.getID("##Field")
+            ctx.keyPressMap(Key.RightArrow)
+            ctx.uiContext!!.navId shouldBe ctx.getID("##Field")
+            ctx.keyPressMap(Key.UpArrow)
+            ctx.uiContext!!.navId shouldBe ctx.getID("U")
+            ctx.keyPressMap(Key.DownArrow)
+            ctx.keyPressMap(Key.DownArrow)
+            ctx.uiContext!!.navId shouldBe ctx.getID("D")
+        }
+    }
+
 //    // ## Test ColorEdit4() and IsItemDeactivatedXXX() functions
 //    // ## Test that IsItemActivated() doesn't trigger when clicking the color button to open picker
 //    t = REGISTER_TEST("widgets", "widgets_status_coloredit");
