@@ -57,6 +57,9 @@ fun TestContext.keyPressMap(key: Key, modFlags: KeyModFlags = KeyModFlag.None.i,
     }
 }
 
+// [JVM]
+fun TestContext.keyChars(string: String) = keyChars(string.toByteArray())
+
 fun TestContext.keyChars(chars: ByteArray) {
 
     if (isError) return
