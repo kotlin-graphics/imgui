@@ -280,6 +280,9 @@ fun TestContext.itemHoldForFrames(ref: TestRef, frames: Int) {
     }
 }
 
+// [JVM]
+fun TestContext.itemDragAndDrop(refSrc: String, refDst: String) = itemDragAndDrop(TestRef(path = refSrc), TestRef(path = refDst))
+
 fun TestContext.itemDragAndDrop(refSrc: TestRef, refDst: TestRef) {
 
     if (isError) return
