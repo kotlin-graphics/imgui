@@ -5,6 +5,7 @@ import engine.context.*
 import engine.core.TestEngine
 import engine.core.TestOpFlag
 import engine.core.registerTest
+import engine.inputText_
 import glm_.ext.equal
 import glm_.vec2.Vec2
 import imgui.*
@@ -328,28 +329,28 @@ fun registerTests_Widgets(e: TestEngine) {
             "Hello".toByteArray(buf)
             ctx.itemClick("InputText")
             ctx.keyCharsAppendEnter("World123")
-            String(buf, 0, buf.strlen()) shouldBe "HelloWorld123"
+            buf.cStr shouldBe "HelloWorld123"
 
             // Delete
             ctx.itemClick("InputText")
             ctx.keyPressMap(Key.End)
             ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 3)
             ctx.keyPressMap(Key.Enter)
-            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+            buf.cStr shouldBe "HelloWorld"
 
             // Insert, Cancel
             ctx.itemClick("InputText")
             ctx.keyPressMap(Key.End)
             ctx.keyChars("XXXXX")
             ctx.keyPressMap(Key.Escape)
-            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+            buf.cStr shouldBe "HelloWorld"
 
             // Delete, Cancel
             ctx.itemClick("InputText")
             ctx.keyPressMap(Key.End)
             ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 5)
             ctx.keyPressMap(Key.Escape)
-            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+            buf.cStr shouldBe "HelloWorld"
         }
     }
 
@@ -452,21 +453,21 @@ fun registerTests_Widgets(e: TestEngine) {
             val bufVisible = vars.str2
             ctx.windowRef("Test Window")
 
-            String(bufVisible, 0, bufVisible.strlen()) shouldBe ""
+            bufVisible.cStr shouldBe ""
             "Hello".toByteArray(bufUser)
             ctx.yield()
-            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello"
+            bufVisible.cStr shouldBe "Hello"
             ctx.itemClick("##InputText")
             ctx.keyCharsAppend("1")
             ctx.yield()
-            String(bufUser, 0, bufUser.strlen()) shouldBe "Hello1"
-            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello1"
+            bufUser.cStr shouldBe "Hello1"
+            bufVisible.cStr shouldBe "Hello1"
 
             // Because the item is active, it owns the source data, so:
             "Overwritten".toByteArray(bufUser)
             ctx.yield()
-            String(bufUser, 0, bufUser.strlen()) shouldBe "Hello1"
-            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello1"
+            bufUser.cStr shouldBe "Hello1"
+            bufVisible.cStr shouldBe "Hello1"
 
             // Lose focus, at this point the InputTextState->ID should be holding on the last active state,
             // so we verify that InputText() is picking up external changes.
@@ -474,116 +475,112 @@ fun registerTests_Widgets(e: TestEngine) {
             ctx.uiContext!!.activeId shouldBe 0
             "Hello2".toByteArray(bufUser)
             ctx.yield()
-            String(bufUser, 0, bufUser.strlen()) shouldBe "Hello2"
-            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello2"
+            bufUser.cStr shouldBe "Hello2"
+            bufVisible.cStr shouldBe "Hello2"
         }
     }
 
-//    // ## Test that InputText doesn't go havoc when activated via another item
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_4_id_conflict");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::SetNextWindowSize(ImVec2(ImGui::GetFontSize() * 50, 0.0f));
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        if (ctx->FrameCount < 50)
-//        ImGui::Button("Hello");
-//        else
-//        ImGui::InputText("Hello", vars.Str1, IM_ARRAYSIZE(vars.Str1));
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemHoldForFrames("Hello", 100);
-//    };
-//
-//    // ## Test that InputText doesn't append two tab characters if the backend supplies both tab key and character
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_5_tab_double_insertion");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::InputText("Field", vars.Str1, IM_ARRAYSIZE(vars.Str1), ImGuiInputTextFlags_AllowTabInput);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemClick("Field");
-//        ctx->UiContext->IO.AddInputCharacter((ImWchar)'\t');
-//        ctx->KeyPressMap(ImGuiKey_Tab);
-//        IM_CHECK_STR_EQ(vars.Str1, "\t");
-//    };
-//
-//    // ## Test input clearing action (ESC key) being undoable (#3008).
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_6_esc_undo");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::InputText("Field", vars.Str1, IM_ARRAYSIZE(vars.Str1));
-//        ImGui::End();
-//
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        // FIXME-TESTS: Facilitate usage of variants
-//        const int test_count = ctx->HasDock ? 2 : 1;
-//        for (int test_n = 0; test_n < test_count; test_n++)
-//        {
-//            ctx->LogDebug("TEST CASE %d", test_n);
-//            const char* initial_value = (test_n == 0) ? "" : "initial";
-//            strcpy(vars.Str1, initial_value);
-//            ctx->WindowRef("Test Window");
-//            ctx->ItemInput("Field");
-//            ctx->KeyCharsReplace("text");
-//            IM_CHECK_STR_EQ(vars.Str1, "text");
-//            ctx->KeyPressMap(ImGuiKey_Escape);                      // Reset input to initial value.
-//            IM_CHECK_STR_EQ(vars.Str1, initial_value);
-//            ctx->ItemInput("Field");
-//            ctx->KeyPressMap(ImGuiKey_Z, ImGuiKeyModFlags_Shortcut);    // Undo
-//            IM_CHECK_STR_EQ(vars.Str1, "text");
-//            ctx->KeyPressMap(ImGuiKey_Enter);                       // Unfocus otherwise test_n==1 strcpy will fail
-//        }
-//    };
-//
-//    // ## Test resize callback (#3009, #2006, #1443, #1008)
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_7_resizecallback");
-//    struct StrVars { Str str; };
-//    t->SetUserDataType<StrVars>();
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        StrVars& vars = ctx->GetUserData<StrVars>();
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        if (ImGui::InputText("Field1", &vars.str, ImGuiInputTextFlags_EnterReturnsTrue))
-//        {
-//            IM_CHECK_EQ(vars.str.capacity(), 4 + 5 + 1);
-//            IM_CHECK_STR_EQ(vars.str.c_str(), "abcdhello");
-//        }
-//        Str str_local_unsaved = "abcd";
-//        if (ImGui::InputText("Field2", &str_local_unsaved, ImGuiInputTextFlags_EnterReturnsTrue))
-//        {
-//            IM_CHECK_EQ(str_local_unsaved.capacity(), 4 + 5 + 1);
-//            IM_CHECK_STR_EQ(str_local_unsaved.c_str(), "abcdhello");
-//        }
-//        ImGui::End();
-//
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        StrVars& vars = ctx->GetUserData<StrVars>();
-//        vars.str.set("abcd");
-//        IM_CHECK_EQ(vars.str.capacity(), 4+1);
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemInput("Field1");
-//        ctx->KeyCharsAppendEnter("hello");
-//        ctx->ItemInput("Field2");
-//        ctx->KeyCharsAppendEnter("hello");
-//    };
-//
+    // ## Test that InputText doesn't go havoc when activated via another item
+    e.registerTest("widgets", "widgets_inputtext_4_id_conflict").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            ImGui.setNextWindowSize(Vec2(ImGui.fontSize * 50, 0f))
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                if (ctx.frameCount < 50)
+                    ImGui.button("Hello")
+                else
+                    ImGui.inputText("Hello", vars.str1)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowRef("Test Window")
+            ctx.itemHoldForFrames("Hello", 100)
+        }
+    }
+
+    // ## Test that InputText doesn't append two tab characters if the backend supplies both tab key and character
+    e.registerTest("widgets", "widgets_inputtext_5_tab_double_insertion").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                ImGui.inputText("Field", vars.str1, InputTextFlag.AllowTabInput.i)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            ctx.windowRef("Test Window")
+            ctx.itemClick("Field")
+            ctx.uiContext!!.io.addInputCharacter('\t')
+            ctx.keyPressMap(Key.Tab)
+            vars.str1.cStr shouldBe "\t"
+        }
+    }
+
+    // ## Test input clearing action (ESC key) being undoable (#3008).
+    e.registerTest("widgets", "widgets_inputtext_6_esc_undo").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                ImGui.inputText("Field", vars.str1)
+            }
+
+        }
+        t.testFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            // FIXME-TESTS: Facilitate usage of variants
+            val testCount = if (ctx.hasDock) 2 else 1
+            for (testN in 0 until testCount) {
+                ctx.logDebug("TEST CASE $testN")
+                val initialValue = if (testN == 0) "" else "initial"
+                initialValue.toByteArray(vars.str1)
+                ctx.windowRef("Test Window")
+                ctx.itemInput("Field")
+                ctx.keyCharsReplace("text")
+                vars.str1.cStr shouldBe "text"
+                ctx.keyPressMap(Key.Escape)                      // Reset input to initial value.
+                vars.str1.cStr shouldBe initialValue
+                ctx.itemInput("Field")
+                ctx.keyPressMap(Key.Z, KeyModFlag.Shortcut.i)    // Undo
+                vars.str1.cStr shouldBe "text"
+                ctx.keyPressMap(Key.Enter)                       // Unfocus otherwise test_n==1 strcpy will fail
+            }
+        }
+    }
+
+    // ## Test resize callback (#3009, #2006, #1443, #1008)
+    e.registerTest("widgets", "widgets_inputtext_7_resizecallback").let { t ->
+        t.userData = ByteArray(0)
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.userData as ByteArray
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                if (ImGui.inputText_("Field1", vars, InputTextFlag.EnterReturnsTrue.i)) {
+                    vars.strlen() shouldBe (4 + 5)
+                    vars.cStr shouldBe "abcdhello"
+                }
+                // [JVM] increase buffer size in order to avoid reassignment inside ImGui::inputText when
+                // calling the callback which would create a new (bigger) ByteArray, breaking our
+                // ::strLocalUnsaved reference.
+                // This is a jvm limit, cpp works because it passes pointers around
+                val strLocalUnsaved = "abcd".toByteArray(32)
+                if (ImGui.inputText_("Field2", strLocalUnsaved, InputTextFlag.EnterReturnsTrue.i)) {
+                    strLocalUnsaved.strlen() shouldBe (4 + 5)
+                    strLocalUnsaved.cStr shouldBe "abcdhello"
+                }
+            }
+        }
+        t.testFunc = { ctx: TestContext->
+            // size 32 for the same reason as right above
+            ctx.userData = "abcd".toByteArray(32).also {
+                it.strlen() shouldBe 4
+            }
+            ctx.windowRef("Test Window")
+            ctx.itemInput("Field1")
+            ctx.keyCharsAppendEnter("hello")
+            ctx.itemInput("Field2")
+            ctx.keyCharsAppendEnter("hello")
+        }
+    }
+
 //    // ## Test for Nav interference
 //    t = REGISTER_TEST("widgets", "widgets_inputtext_nav");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)
