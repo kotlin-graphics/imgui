@@ -533,7 +533,7 @@ class Window(var context: Context,
     }
 
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
-    fun setScrollFromPosY(localY_: Float, centerYRatio: Float = 0.5f) = with(currentWindow) {
+    fun setScrollFromPosY(localY_: Float, centerYRatio: Float = 0.5f) {
         /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
             window size         */
         assert(centerYRatio in 0f..1f)
@@ -548,7 +548,7 @@ class Window(var context: Context,
         val windowRect = Rect(innerRect.min - 1, innerRect.max + 1)
         //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
         val deltaScroll = Vec2()
-        if (!windowRect.contains(itemRect)) {
+        if (itemRect !in windowRect) {
             if (scrollbar.x && itemRect.min.x < windowRect.min.x)
                 setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
             else if (scrollbar.x && itemRect.max.x >= windowRect.max.x)
