@@ -8,11 +8,13 @@ import engine.core.registerTest
 import engine.inputText_
 import glm_.ext.equal
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.gImGui
 import imgui.internal.hash
 import imgui.stb.te
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldNotBe
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
@@ -712,9 +714,9 @@ fun registerTests_Widgets(e: TestEngine) {
             // FIXME-TESTS: Better helper to build ids out of various type of data
             ctx.windowRef("Test Window")
             var n: Int
-            n = 0;
-            val field0: ID = hash(n, ctx.getID("Field"));
-            n = 1;
+            n = 0
+            val field0: ID = hash(n, ctx.getID("Field"))
+            n = 1
             val field1: ID = hash(n, ctx.getID("Field"))
             //n = 2; ImGuiID field_2 = ImHashData(&n, sizeof(n), ctx->GetID("Field"));
 
@@ -761,125 +763,113 @@ fun registerTests_Widgets(e: TestEngine) {
         }
     }
 
-//    // ## Test the IsItemEdited() function when input vs output format are not matching
-//    t = REGISTER_TEST("widgets", "widgets_status_inputfloat_format_mismatch");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        bool ret = ImGui::InputFloat("Field", &vars.Float1);
-//        vars.Status.QueryInc(ret);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGuiTestGenericStatus& status = vars.Status;
-//
-//        // Input "1" which will be formatted as "1.000", make sure we don't report IsItemEdited() multiple times!
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemClick("Field");
-//        ctx->KeyCharsAppend("1");
-//        IM_CHECK(status.Ret == 1 && status.Edited == 1 && status.Activated == 1 && status.Deactivated == 0 && status.DeactivatedAfterEdit == 0);
-//        ctx->Yield();
-//        ctx->Yield();
-//        IM_CHECK(status.Edited == 1);
-//    };
-//
-//    // ## Test ColorEdit basic Drag and Drop
-//    t = REGISTER_TEST("widgets", "widgets_coloredit_drag");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::SetNextWindowSize(ImVec2(300, 200));
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::ColorEdit4("ColorEdit1", &vars.Vec4Array[0].x, ImGuiColorEditFlags_None);
-//        ImGui::ColorEdit4("ColorEdit2", &vars.Vec4Array[1].x, ImGuiColorEditFlags_None);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        vars.Vec4Array[0] = ImVec4(1, 0, 0, 1);
-//        vars.Vec4Array[1] = ImVec4(0, 1, 0, 1);
-//
-//        ctx->WindowRef("Test Window");
-//
-//        IM_CHECK_NE(memcmp(&vars.Vec4Array[0], &vars.Vec4Array[1], sizeof(ImVec4)), 0);
-//        ctx->ItemDragAndDrop("ColorEdit1/##ColorButton", "ColorEdit2/##X"); // FIXME-TESTS: Inner items
-//        IM_CHECK_EQ(memcmp(&vars.Vec4Array[0], &vars.Vec4Array[1], sizeof(ImVec4)), 0);
-//    };
-//
-//    // ## Test that disabled Selectable has an ID but doesn't interfere with navigation
-//    t = REGISTER_TEST("widgets", "widgets_selectable_disabled");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        ImGui::Selectable("Selectable A");
-//        if (ctx->FrameCount == 0)
-//        IM_CHECK_EQ(ImGui::GetItemID(), ImGui::GetID("Selectable A"));
-//        ImGui::Selectable("Selectable B", false, ImGuiSelectableFlags_Disabled);
-//        if (ctx->FrameCount == 0)
-//        IM_CHECK_EQ(ImGui::GetItemID(), ImGui::GetID("Selectable B")); // Make sure B has an ID
-//        ImGui::Selectable("Selectable C");
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemClick("Selectable A");
-//        IM_CHECK_EQ(ctx->UiContext->NavId, ctx->GetID("Selectable A"));
-//        ctx->KeyPressMap(ImGuiKey_DownArrow);
-//        IM_CHECK_EQ(ctx->UiContext->NavId, ctx->GetID("Selectable C")); // Make sure we have skipped B
-//    };
-//
-//    // ## Test that tight tab bar does not create extra drawcalls
-//    t = REGISTER_TEST("widgets", "widgets_tabbar_drawcalls");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        if (ImGui::BeginTabBar("Tab Drawcalls"))
-//        {
-//            for (int i = 0; i < 20; i++)
-//            if (ImGui::BeginTabItem(Str30f("Tab %d", i).c_str()))
-//                ImGui::EndTabItem();
-//            ImGui::EndTabBar();
-//        }
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiWindow* window = ImGui::FindWindowByName("Test Window");
-//        ctx->WindowResize("Test Window", ImVec2(300, 300));
-//        int draw_calls = window->DrawList->CmdBuffer.Size;
-//        ctx->WindowResize("Test Window", ImVec2(1, 1));
-//        IM_CHECK(draw_calls == window->DrawList->CmdBuffer.Size);
-//    };
-//
-//    // ## Test recursing Tab Bars (Bug #2371)
-//    t = REGISTER_TEST("widgets", "widgets_tabbar_recurse");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        if (ImGui::BeginTabBar("TabBar 0"))
-//        {
-//            if (ImGui::BeginTabItem("TabItem"))
-//            {
-//                // If we have many tab bars here, it will invalidate pointers from pooled tab bars
-//                for (int i = 0; i < 128; i++)
-//                if (ImGui::BeginTabBar(Str30f("Inner TabBar %d", i).c_str()))
-//                {
-//                    if (ImGui::BeginTabItem("Inner TabItem"))
-//                        ImGui::EndTabItem();
-//                    ImGui::EndTabBar();
-//                }
-//                ImGui::EndTabItem();
-//            }
-//            ImGui::EndTabBar();
-//        }
-//        ImGui::End();
-//    };
-//
+    // ## Test the IsItemEdited() function when input vs output format are not matching
+    e.registerTest("widgets", "widgets_status_inputfloat_format_mismatch").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                val ret = ImGui.inputFloat("Field", vars::float1)
+                vars.status.queryInc(ret)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            val status = vars.status
+
+            // Input "1" which will be formatted as "1.000", make sure we don't report IsItemEdited() multiple times!
+            ctx.windowRef("Test Window")
+            ctx.itemClick("Field")
+            ctx.keyCharsAppend("1")
+            status.apply {
+                assert(ret == 1 && edited == 1 && activated == 1 && deactivated == 0 && deactivatedAfterEdit == 0)
+                ctx.yield()
+                ctx.yield()
+                assert(edited == 1)
+            }
+        }
+    }
+
+    // ## Test ColorEdit basic Drag and Drop
+    e.registerTest("widgets", "widgets_coloredit_drag").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            ImGui.setNextWindowSize(Vec2(300, 200))
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                ImGui.colorEdit4("ColorEdit1", vars.vec4Array[0], ColorEditFlag.None.i)
+                ImGui.colorEdit4("ColorEdit2", vars.vec4Array[1], ColorEditFlag.None.i)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            vars.vec4Array[0] = Vec4(1, 0, 0, 1)
+            vars.vec4Array[1] = Vec4(0, 1, 0, 1)
+
+            ctx.windowRef("Test Window")
+
+            vars.vec4Array[0] shouldNotBe vars.vec4Array[1]
+            ctx.itemDragAndDrop("ColorEdit1/##ColorButton", "ColorEdit2/##X") // FIXME-TESTS: Inner items
+            vars.vec4Array[0] shouldBe vars.vec4Array[1]
+        }
+    }
+
+    // ## Test that disabled Selectable has an ID but doesn't interfere with navigation
+    e.registerTest("widgets", "widgets_selectable_disabled").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                ImGui.selectable("Selectable A")
+                if (ctx.frameCount == 0)
+                    ImGui.itemID shouldBe ImGui.getID("Selectable A")
+                ImGui.selectable("Selectable B", false, SelectableFlag.Disabled.i)
+                if (ctx.frameCount == 0)
+                    ImGui.itemID shouldBe ImGui.getID("Selectable B") // Make sure B has an ID
+                ImGui.selectable("Selectable C")
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowRef("Test Window")
+            ctx.itemClick("Selectable A")
+            ctx.uiContext!!.navId shouldBe ctx.getID("Selectable A")
+            ctx.keyPressMap(Key.DownArrow)
+            ctx.uiContext!!.navId shouldBe ctx.getID("Selectable C") // Make sure we have skipped B
+        }
+    }
+
+    // ## Test that tight tab bar does not create extra drawcalls
+    e.registerTest("widgets", "widgets_tabbar_drawcalls").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                dsl.tabBar("Tab Drawcalls") {
+                    for (i in 0..19)
+                        dsl.tabItem("Tab $i") {}
+                }
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            val window = ImGui.findWindowByName("Test Window")!!
+            ctx.windowResize("Test Window", Vec2(300))
+            val drawCalls = window.drawList.cmdBuffer.size
+            ctx.windowResize("Test Window", Vec2(1))
+            drawCalls shouldBe window.drawList.cmdBuffer.size
+        }
+    }
+
+    // ## Test recursing Tab Bars (Bug #2371)
+    e.registerTest("widgets", "widgets_tabbar_recurse").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                dsl.tabBar("TabBar 0") {
+                    dsl.tabItem("TabItem") {
+                        // If we have many tab bars here, it will invalidate pointers from pooled tab bars
+                        for (i in 0..127)
+                            dsl.tabBar("Inner TabBar $i") {
+                                dsl.tabItem("Inner TabItem") {}
+                            }
+                    }
+                }
+            }
+        }
+    }
+
 //    #ifdef IMGUI_HAS_DOCK
 //        // ## Test Dockspace within a TabItem
 //        t = REGISTER_TEST("widgets", "widgets_tabbar_dockspace");
