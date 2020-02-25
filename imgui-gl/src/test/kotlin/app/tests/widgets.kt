@@ -8,8 +8,9 @@ import engine.core.registerTest
 import glm_.ext.equal
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.api.gImGui
+import imgui.stb.te
 import io.kotlintest.shouldBe
-import kotlin.text.toByteArray
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
 
@@ -309,174 +310,175 @@ fun registerTests_Widgets(e: TestEngine) {
     }
 
     // ## Test InputText widget
-//    e.registerTest("widgets", "widgets_inputtext_1").let { t ->
-//        t.guiFunc = { ctx: TestContext ->
-//            val vars = ctx.genericVars
-//            ImGui.setNextWindowSize(Vec2(200))
-//            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
-//                ImGui.inputText("InputText", vars.str1)
-//            }
-//        }
-//        t.testFunc = { ctx: TestContext ->
-//
-//            val buf = ctx.genericVars.str1
-//
-//            ctx.windowRef("Test Window")
-//
-//            // Insert
-//            "Hello".toByteArray(buf)
-//            ctx.itemClick("InputText")
-//            ctx.keyCharsAppendEnter("World123")
-//            String(buf, 0, buf.strlen()) shouldBe "HelloWorld123"
-//
-//            // Delete
-//            ctx.itemClick("InputText")
-//            ctx.keyPressMap(Key.End)
-//            ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 3)
-//            ctx.keyPressMap(Key.Enter)
-//            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
-//
-//            // Insert, Cancel
-////            ctx.itemClick("InputText")
-////            ctx.keyPressMap(Key.End)
-////            ctx.keyChars("XXXXX")
-////            ctx.keyPressMap(Key.Escape)
-////            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
-//
-////            // Delete, Cancel
-////            ctx->ItemClick("InputText")
-////            ctx->KeyPressMap(ImGuiKey_End)
-////            ctx->KeyPressMap(ImGuiKey_Backspace, ImGuiKeyModFlags_None, 5)
-////            ctx->KeyPressMap(ImGuiKey_Escape)
-////            IM_CHECK_STR_EQ(buf, "HelloWorld")
-//        }
-//    }
+    e.registerTest("widgets", "widgets_inputtext_1").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            ImGui.setNextWindowSize(Vec2(200))
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                ImGui.inputText("InputText", vars.str1)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
 
-//    // ## Test InputText undo/redo ops, in particular related to issue we had with stb_textedit undo/redo buffers
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_2");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        if (vars.StrLarge.empty())
-//            vars.StrLarge.resize(10000, 0);
-//        ImGui::SetNextWindowSize(ImVec2(ImGui::GetFontSize() * 50, 0.0f));
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        ImGui::Text("strlen() = %d", (int)strlen(vars.StrLarge.Data));
-//        ImGui::InputText("Dummy", vars.Str1, IM_ARRAYSIZE(vars.Str1), ImGuiInputTextFlags_None);
-//        ImGui::InputTextMultiline("InputText", vars.StrLarge.Data, vars.StrLarge.Size, ImVec2(-1, ImGui::GetFontSize() * 20), ImGuiInputTextFlags_None);
-//        ImGui::End();
-//        //ImDebugShowInputTextState();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // https://github.com/nothings/stb/issues/321
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//
-//        // Start with a 350 characters buffer.
-//        // For this test we don't inject the characters via pasting or key-by-key in order to precisely control the undo/redo state.
-//        char* buf = vars.StrLarge.Data;
-//        IM_CHECK_EQ((int)strlen(buf), 0);
-//        for (int n = 0; n < 10; n++)
-//        strcat(buf, "xxxxxxx abcdefghijklmnopqrstuvwxyz\n");
-//        IM_CHECK_EQ((int)strlen(buf), 350);
-//
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemClick("Dummy"); // This is to ensure stb_textedit_clear_state() gets called (clear the undo buffer, etc.)
-//        ctx->ItemClick("InputText");
-//
-//        ImGuiInputTextState& input_text_state = GImGui->InputTextState;
-//        ImStb::StbUndoState& undo_state = input_text_state.Stb.undostate;
-//        IM_CHECK_EQ(input_text_state.ID, GImGui->ActiveId);
-//        IM_CHECK_EQ(undo_state.undo_point, 0);
-//        IM_CHECK_EQ(undo_state.undo_char_point, 0);
-//        IM_CHECK_EQ(undo_state.redo_point, STB_TEXTEDIT_UNDOSTATECOUNT);
-//        IM_CHECK_EQ(undo_state.redo_char_point, STB_TEXTEDIT_UNDOCHARCOUNT);
-//        IM_CHECK_EQ(STB_TEXTEDIT_UNDOCHARCOUNT, 999); // Test designed for this value
-//
-//        // Insert 350 characters via 10 paste operations
-//        // We use paste operations instead of key-by-key insertion so we know our undo buffer will contains 10 undo points.
-//        //const char line_buf[26+8+1+1] = "xxxxxxx abcdefghijklmnopqrstuvwxyz\n"; // 8+26+1 = 35
-//        //ImGui::SetClipboardText(line_buf);
-//        //IM_CHECK(strlen(line_buf) == 35);
-//        //ctx->KeyPressMap(ImGuiKey_V, ImGuiKeyModFlags_Shortcut, 10);
-//
-//        // Select all, copy, paste 3 times
-//        ctx->KeyPressMap(ImGuiKey_A, ImGuiKeyModFlags_Shortcut);    // Select all
-//        ctx->KeyPressMap(ImGuiKey_C, ImGuiKeyModFlags_Shortcut);    // Copy
-//        ctx->KeyPressMap(ImGuiKey_End, ImGuiKeyModFlags_Shortcut);  // Go to end, clear selection
-//        ctx->SleepShort();
-//        for (int n = 0; n < 3; n++)
-//        {
-//            ctx->KeyPressMap(ImGuiKey_V, ImGuiKeyModFlags_Shortcut);// Paste append three times
-//            ctx->SleepShort();
-//        }
-//        int len = (int)strlen(vars.StrLarge.Data);
-//        IM_CHECK_EQ(len, 350 * 4);
-//        IM_CHECK_EQ(undo_state.undo_point, 3);
-//        IM_CHECK_EQ(undo_state.undo_char_point, 0);
-//
-//        // Undo x2
-//        IM_CHECK(undo_state.redo_point == STB_TEXTEDIT_UNDOSTATECOUNT);
-//        ctx->KeyPressMap(ImGuiKey_Z, ImGuiKeyModFlags_Shortcut);
-//        ctx->KeyPressMap(ImGuiKey_Z, ImGuiKeyModFlags_Shortcut);
-//        len = (int)strlen(vars.StrLarge.Data);
-//        IM_CHECK_EQ(len, 350 * 2);
-//        IM_CHECK_EQ(undo_state.undo_point, 1);
-//        IM_CHECK_EQ(undo_state.redo_point, STB_TEXTEDIT_UNDOSTATECOUNT - 2);
-//        IM_CHECK_EQ(undo_state.redo_char_point, STB_TEXTEDIT_UNDOCHARCOUNT - 350 * 2);
-//
-//        // Undo x1 should call stb_textedit_discard_redo()
-//        ctx->KeyPressMap(ImGuiKey_Z, ImGuiKeyModFlags_Shortcut);
-//        len = (int)strlen(vars.StrLarge.Data);
-//        IM_CHECK_EQ(len, 350 * 1);
-//    };
-//
-//    // ## Test InputText vs user ownership of data
-//    t = REGISTER_TEST("widgets", "widgets_inputtext_3_text_ownership");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        ImGui::LogToBuffer();
-//        ImGui::InputText("##InputText", vars.Str1, IM_ARRAYSIZE(vars.Str1)); // Remove label to simplify the capture/comparison
-//        ImStrncpy(vars.Str2, ctx->UiContext->LogBuffer.c_str(), IM_ARRAYSIZE(vars.Str2));
-//        ImGui::LogFinish();
-//        ImGui::Text("Captured: \"%s\"", vars.Str2);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        char* buf_user = vars.Str1;
-//        char* buf_visible = vars.Str2;
-//        ctx->WindowRef("Test Window");
-//
-//        IM_CHECK_STR_EQ(buf_visible, "");
-//        strcpy(buf_user, "Hello");
-//        ctx->Yield();
-//        IM_CHECK_STR_EQ(buf_visible, "Hello");
-//        ctx->ItemClick("##InputText");
-//        ctx->KeyCharsAppend("1");
-//        ctx->Yield();
-//        IM_CHECK_STR_EQ(buf_user, "Hello1");
-//        IM_CHECK_STR_EQ(buf_visible, "Hello1");
-//
-//        // Because the item is active, it owns the source data, so:
-//        strcpy(buf_user, "Overwritten");
-//        ctx->Yield();
-//        IM_CHECK_STR_EQ(buf_user, "Hello1");
-//        IM_CHECK_STR_EQ(buf_visible, "Hello1");
-//
-//        // Lose focus, at this point the InputTextState->ID should be holding on the last active state,
-//        // so we verify that InputText() is picking up external changes.
-//        ctx->KeyPressMap(ImGuiKey_Escape);
-//        IM_CHECK_EQ(ctx->UiContext->ActiveId, (unsigned)0);
-//        strcpy(buf_user, "Hello2");
-//        ctx->Yield();
-//        IM_CHECK_STR_EQ(buf_user, "Hello2");
-//        IM_CHECK_STR_EQ(buf_visible, "Hello2");
-//    };
-//
+            val buf = ctx.genericVars.str1
+
+            ctx.windowRef("Test Window")
+
+            // Insert
+            "Hello".toByteArray(buf)
+            ctx.itemClick("InputText")
+            ctx.keyCharsAppendEnter("World123")
+            String(buf, 0, buf.strlen()) shouldBe "HelloWorld123"
+
+            // Delete
+            ctx.itemClick("InputText")
+            ctx.keyPressMap(Key.End)
+            ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 3)
+            ctx.keyPressMap(Key.Enter)
+            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+
+            // Insert, Cancel
+            ctx.itemClick("InputText")
+            ctx.keyPressMap(Key.End)
+            ctx.keyChars("XXXXX")
+            ctx.keyPressMap(Key.Escape)
+            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+
+            // Delete, Cancel
+            ctx.itemClick("InputText")
+            ctx.keyPressMap(Key.End)
+            ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 5)
+            ctx.keyPressMap(Key.Escape)
+            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+        }
+    }
+
+    // ## Test InputText undo/redo ops, in particular related to issue we had with stb_textedit undo/redo buffers
+    e.registerTest("widgets", "widgets_inputtext_2").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            if (vars.strLarge.isEmpty())
+                vars.strLarge = ByteArray(10000)
+            ImGui.setNextWindowSize(Vec2(ImGui.fontSize * 50, 0f))
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                ImGui.text("strlen() = ${vars.strLarge.strlen()}")
+                ImGui.inputText("Dummy", vars.str1, InputTextFlag.None.i)
+                ImGui.inputTextMultiline("InputText", vars.strLarge, Vec2(-1f, ImGui.fontSize * 20), InputTextFlag.None.i)
+            }
+            //ImDebugShowInputTextState();
+        }
+        t.testFunc = { ctx: TestContext ->
+
+            // https://github.com/nothings/stb/issues/321
+            val vars = ctx.genericVars
+
+            // Start with a 350 characters buffer.
+            // For this test we don't inject the characters via pasting or key-by-key in order to precisely control the undo/redo state.
+            val buf = vars.strLarge
+            buf.strlen() shouldBe 0
+            for (n in 0..9) {
+                val bytes = "xxxxxxx abcdefghijklmnopqrstuvwxyz\n".toByteArray()
+                val size = bytes.strlen()
+                bytes.copyInto(buf, size * n)
+            }
+            buf.strlen() shouldBe 350
+
+            ctx.windowRef("Test Window")
+            ctx.itemClick("Dummy") // This is to ensure stb_textedit_clear_state() gets called (clear the undo buffer, etc.)
+            ctx.itemClick("InputText")
+
+            val inputTextState = gImGui!!.inputTextState
+            val undoState = inputTextState.stb.undoState
+            inputTextState.id shouldBe gImGui!!.activeId
+            undoState.undoPoint shouldBe 0
+            undoState.undoCharPoint shouldBe 0
+            undoState.redoPoint = te.UNDOSTATECOUNT
+            undoState.redoCharPoint shouldBe te.UNDOCHARCOUNT
+            te.UNDOCHARCOUNT shouldBe 999 // Test designed for this value
+
+            // Insert 350 characters via 10 paste operations
+            // We use paste operations instead of key-by-key insertion so we know our undo buffer will contains 10 undo points.
+            //const char line_buf[26+8+1+1] = "xxxxxxx abcdefghijklmnopqrstuvwxyz\n"; // 8+26+1 = 35
+            //ImGui::SetClipboardText(line_buf);
+            //IM_CHECK(strlen(line_buf) == 35);
+            //ctx->KeyPressMap(ImGuiKey_V, ImGuiKeyModFlags_Shortcut, 10);
+
+            // Select all, copy, paste 3 times
+            ctx.keyPressMap(Key.A, KeyModFlag.Shortcut.i)    // Select all
+            ctx.keyPressMap(Key.C, KeyModFlag.Shortcut.i)    // Copy
+            ctx.keyPressMap(Key.End, KeyModFlag.Shortcut.i)  // Go to end, clear selection
+            ctx.sleepShort()
+            for (n in 0..2) {
+                ctx.keyPressMap(Key.V, KeyModFlag.Shortcut.i)// Paste append three times
+                ctx.sleepShort()
+            }
+            var len = vars.strLarge.strlen()
+            len shouldBe (350 * 4)
+            undoState.undoPoint shouldBe 3
+            undoState.undoCharPoint shouldBe 0
+
+            // Undo x2
+            undoState.redoPoint shouldBe te.UNDOSTATECOUNT
+            ctx.keyPressMap(Key.Z, KeyModFlag.Shortcut.i)
+            ctx.keyPressMap(Key.Z, KeyModFlag.Shortcut.i)
+            len = vars.strLarge.strlen()
+            len shouldBe (350 * 2)
+            undoState.undoPoint shouldBe 1
+            undoState.redoPoint shouldBe (te.UNDOSTATECOUNT - 2)
+            undoState.redoCharPoint shouldBe (te.UNDOCHARCOUNT - 350 * 2)
+
+            // Undo x1 should call stb_textedit_discard_redo()
+            ctx.keyPressMap(Key.Z, KeyModFlag.Shortcut.i)
+            len = vars.strLarge.strlen()
+            len shouldBe (350 * 1)
+        }
+    }
+
+    // ## Test InputText vs user ownership of data
+    e.registerTest("widgets", "widgets_inputtext_3_text_ownership").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                ImGui.logToBuffer()
+                ImGui.inputText("##InputText", vars.str1) // Remove label to simplify the capture/comparison
+                ctx.uiContext!!.logBuffer.toString().toByteArray(vars.str2)
+                ImGui.logFinish()
+                ImGui.text("Captured: \"${String(vars.str2)}\"")
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            val bufUser = vars.str1
+            val bufVisible = vars.str2
+            ctx.windowRef("Test Window")
+
+            String(bufVisible, 0, bufVisible.strlen()) shouldBe ""
+            "Hello".toByteArray(bufUser)
+            ctx.yield()
+            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello"
+            ctx.itemClick("##InputText")
+            ctx.keyCharsAppend("1")
+            ctx.yield()
+            String(bufUser, 0, bufUser.strlen()) shouldBe "Hello1"
+            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello1"
+
+            // Because the item is active, it owns the source data, so:
+            "Overwritten".toByteArray(bufUser)
+            ctx.yield()
+            String(bufUser, 0, bufUser.strlen()) shouldBe "Hello1"
+            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello1"
+
+            // Lose focus, at this point the InputTextState->ID should be holding on the last active state,
+            // so we verify that InputText() is picking up external changes.
+            ctx.keyPressMap(Key.Escape)
+            ctx.uiContext!!.activeId shouldBe 0
+            "Hello2".toByteArray(bufUser)
+            ctx.yield()
+            String(bufUser, 0, bufUser.strlen()) shouldBe "Hello2"
+            String(bufVisible, 0, bufVisible.strlen()) shouldBe "Hello2"
+        }
+    }
+
 //    // ## Test that InputText doesn't go havoc when activated via another item
 //    t = REGISTER_TEST("widgets", "widgets_inputtext_4_id_conflict");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)
