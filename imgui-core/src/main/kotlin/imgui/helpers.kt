@@ -184,17 +184,17 @@ fun String.toByteArray(array: ByteArray): ByteArray {
     return array
 }
 
-infix fun ByteArray.strcmp(b: ByteArray): Int {
+// Function to implement strcmp function https://www.techiedelight.com/implement-strcmp-function-c/
+infix fun ByteArray.strcmp(other: ByteArray): Int {
     var i = 0
-    while (i < size && i < b.size) {
-        if (get(i) != b[i])
-            return get(i).compareTo(b[i])
+    while (i < size && get(i) != 0.b) {
+        // if characters differ or end of second string is reached
+        if (get(i) != other.getOrElse(i) { 0 })
+            break
+        // move to next pair of characters
         i++
     }
-    return when {
-        size != b.size -> getOrElse(i) { 0 }.compareTo(b.getOrElse(i) { 0 })
-        else -> 0
-    }
+    return getOrElse(i) { 0 }.compareTo(other.getOrElse(i) { 0 })
 }
 
 /** TODO -> uno or kool */

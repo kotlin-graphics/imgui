@@ -568,7 +568,7 @@ fun registerTests_Widgets(e: TestEngine) {
                 }
             }
         }
-        t.testFunc = { ctx: TestContext->
+        t.testFunc = { ctx: TestContext ->
             // size 32 for the same reason as right above
             ctx.userData = "abcd".toByteArray(32).also {
                 it.strlen() shouldBe 4
@@ -588,9 +588,9 @@ fun registerTests_Widgets(e: TestEngine) {
             dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
                 val sz = Vec2(50, 0)
                 ImGui.button("UL", sz); ImGui.sameLine()
-                ImGui.button("U",  sz); ImGui.sameLine()
+                ImGui.button("U", sz); ImGui.sameLine()
                 ImGui.button("UR", sz)
-                ImGui.button("L",  sz); ImGui.sameLine()
+                ImGui.button("L", sz); ImGui.sameLine()
                 ImGui.setNextItemWidth(sz.x)
                 ImGui.inputText("##Field", vars.str1, InputTextFlag.AllowTabInput.i)
                 ImGui.sameLine()
@@ -615,83 +615,85 @@ fun registerTests_Widgets(e: TestEngine) {
         }
     }
 
-//    // ## Test ColorEdit4() and IsItemDeactivatedXXX() functions
-//    // ## Test that IsItemActivated() doesn't trigger when clicking the color button to open picker
-//    t = REGISTER_TEST("widgets", "widgets_status_coloredit");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        bool ret = ImGui::ColorEdit4("Field", &vars.Vec4.x, ImGuiColorEditFlags_None);
-//        vars.Status.QueryInc(ret);
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // Accumulate return values over several frames/action into each bool
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGuiTestGenericStatus& status = vars.Status;
-//
-//        // Testing activation flag being set
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemClick("Field/##ColorButton");
-//        IM_CHECK(status.Ret == 0 && status.Activated == 1 && status.Deactivated == 1 && status.DeactivatedAfterEdit == 0 && status.Edited == 0);
-//        status.Clear();
-//
-//        ctx->KeyPressMap(ImGuiKey_Escape);
-//        IM_CHECK(status.Ret == 0 && status.Activated == 0 && status.Deactivated == 0 && status.DeactivatedAfterEdit == 0 && status.Edited == 0);
-//        status.Clear();
-//    };
-//
-//    // ## Test InputText() and IsItemDeactivatedXXX() functions (mentioned in #2215)
-//    t = REGISTER_TEST("widgets", "widgets_status_inputtext");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize);
-//        bool ret = ImGui::InputText("Field", vars.Str1, IM_ARRAYSIZE(vars.Str1));
-//        vars.Status.QueryInc(ret);
-//        ImGui::InputText("Dummy Sibling", vars.Str2, IM_ARRAYSIZE(vars.Str2));
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // Accumulate return values over several frames/action into each bool
-//        ImGuiTestGenericVars& vars = ctx->GenericVars;
-//        ImGuiTestGenericStatus& status = vars.Status;
-//
-//        // Testing activation flag being set
-//        ctx->WindowRef("Test Window");
-//        ctx->ItemClick("Field");
-//        IM_CHECK(status.Ret == 0 && status.Activated == 1 && status.Deactivated == 0 && status.DeactivatedAfterEdit == 0 && status.Edited == 0);
-//        status.Clear();
-//
-//        // Testing deactivated flag being set when canceling with Escape
-//        ctx->KeyPressMap(ImGuiKey_Escape);
-//        IM_CHECK(status.Ret == 0 && status.Activated == 0 && status.Deactivated == 1 && status.DeactivatedAfterEdit == 0 && status.Edited == 0);
-//        status.Clear();
-//
-//        // Testing validation with Return after editing
-//        ctx->ItemClick("Field");
-//        IM_CHECK(!status.Ret && status.Activated && !status.Deactivated && !status.DeactivatedAfterEdit && status.Edited == 0);
-//        status.Clear();
-//        ctx->KeyCharsAppend("Hello");
-//        IM_CHECK(status.Ret && !status.Activated && !status.Deactivated && !status.DeactivatedAfterEdit && status.Edited >= 1);
-//        status.Clear();
-//        ctx->KeyPressMap(ImGuiKey_Enter);
-//        IM_CHECK(!status.Ret && !status.Activated && status.Deactivated && status.DeactivatedAfterEdit && status.Edited == 0);
-//        status.Clear();
-//
-//        // Testing validation with Tab after editing
-//        ctx->ItemClick("Field");
-//        ctx->KeyCharsAppend(" World");
-//        IM_CHECK(status.Ret && status.Activated && !status.Deactivated && !status.DeactivatedAfterEdit && status.Edited >= 1);
-//        status.Clear();
-//        ctx->KeyPressMap(ImGuiKey_Tab);
-//        IM_CHECK(!status.Ret && !status.Activated && status.Deactivated && status.DeactivatedAfterEdit && status.Edited == 0);
-//        status.Clear();
-//    };
-//
+    // ## Test ColorEdit4() and IsItemDeactivatedXXX() functions
+    // ## Test that IsItemActivated() doesn't trigger when clicking the color button to open picker
+    e.registerTest("widgets", "widgets_status_coloredit").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                val ret = ImGui.colorEdit4("Field", vars.vec4, ColorEditFlag.None.i)
+                vars.status.queryInc(ret)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            // Accumulate return values over several frames/action into each bool
+            val vars = ctx.genericVars
+            val status = vars.status
+
+            // Testing activation flag being set
+            ctx.windowRef("Test Window")
+            ctx.itemClick("Field/##ColorButton")
+            status.apply {
+                assert(ret == 0 && activated == 1 && deactivated == 1 && deactivatedAfterEdit == 0 && edited == 0)
+                clear()
+
+                ctx.keyPressMap(Key.Escape)
+                assert(ret == 0 && activated == 0 && deactivated == 0 && deactivatedAfterEdit == 0 && edited == 0)
+                clear()
+            }
+        }
+    }
+
+    // ## Test InputText() and IsItemDeactivatedXXX() functions (mentioned in #2215)
+    e.registerTest("widgets", "widgets_status_inputtext").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            val vars = ctx.genericVars
+            dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
+                val ret = ImGui.inputText("Field", vars.str1)
+                vars.status.queryInc(ret)
+                ImGui.inputText("Dummy Sibling", vars.str2)
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            // Accumulate return values over several frames/action into each bool
+            val vars = ctx.genericVars
+            val status = vars.status
+
+            // Testing activation flag being set
+            ctx.windowRef("Test Window")
+            ctx.itemClick("Field")
+            status.apply {
+                assert(ret == 0 && activated == 1 && deactivated == 0 && deactivatedAfterEdit == 0 && edited == 0)
+                clear()
+
+                // Testing deactivated flag being set when canceling with Escape
+                ctx.keyPressMap(Key.Escape)
+                assert(ret == 0 && activated == 0 && deactivated == 1 && deactivatedAfterEdit == 0 && edited == 0)
+                clear()
+
+                // Testing validation with Return after editing
+                ctx.itemClick("Field")
+                assert(ret == 0 && activated != 0 && deactivated == 0 && deactivatedAfterEdit == 0 && edited == 0)
+                clear()
+                ctx.keyCharsAppend("Hello")
+                assert(ret != 0 && activated == 0 && deactivated == 0 && deactivatedAfterEdit == 0 && edited >= 1)
+                clear()
+                ctx.keyPressMap(Key.Enter)
+                assert(ret == 0 && activated == 0 && deactivated != 0 && deactivatedAfterEdit != 0 && edited == 0)
+                clear()
+
+                // Testing validation with Tab after editing
+                ctx.itemClick("Field")
+                ctx.keyCharsAppend(" World")
+                assert(ret != 0 && activated != 0 && deactivated == 0 && deactivatedAfterEdit == 0 && edited >= 1)
+                clear()
+                ctx.keyPressMap(Key.Tab)
+                assert(ret == 0 && activated == 0 && deactivated != 0 && deactivatedAfterEdit != 0 && edited == 0)
+                clear()
+            }
+        }
+    }
+
 //    // ## Test the IsItemDeactivatedXXX() functions (e.g. #2550, #1875)
 //    t = REGISTER_TEST("widgets", "widgets_status_multicomponent");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)
