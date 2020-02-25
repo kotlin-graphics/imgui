@@ -8,11 +8,10 @@ import glm_.b
 import glm_.d
 import glm_.i
 import glm_.vec4.Vec4
-import imgui.Col
-import imgui.ID
-import imgui.ImGui
+import imgui.*
+import imgui.classes.InputTextCallbackData
 import imgui.internal.ItemFlag
-import imgui.wo
+import io.kotlintest.shouldBe
 import org.lwjgl.system.Platform
 import unsigned.toUInt
 import java.io.PrintStream
@@ -197,13 +196,48 @@ fun ImGui.popDisabled() {
     popItemFlag()
 }
 
-////-----------------------------------------------------------------------------
-//// STR + InputText bindings (FIXME: move to Str.cpp?)
-////-----------------------------------------------------------------------------
-//
-//class Str;
+//-----------------------------------------------------------------------------
+// STR + InputText bindings (FIXME: move to Str.cpp?)
+//-----------------------------------------------------------------------------
+
+class InputTextCallbackStr_UserData(
+        var strObj: ByteArray,
+        var chainCallback: InputTextCallback?,
+        var chainCallbackUserData: Any?)
+
+val inputTextCallback: InputTextCallback = { data: InputTextCallbackData ->
+    val userData = data.userData as InputTextCallbackStr_UserData
+    when {
+        data.eventFlag == InputTextFlag.CallbackResize.i -> {
+            // Resize string callback
+            // If for some reason we refuse the new length (BufTextLen) and/or capacity (BufSize) we need to set them back to what we want.
+            val str = userData.strObj
+            data.buf.cStr shouldBe str.cStr
+            if(str.size < data.bufTextLen)
+                userData.strObj = str.copyInto(ByteArray(data.bufTextLen))
+            data.buf = userData.strObj
+            false
+        }
+        userData.chainCallback != null -> {
+            // Forward to user callback, if any
+            data.userData = userData.chainCallbackUserData
+            userData.chainCallback!!(data)
+        }
+        else -> false
+    }
+}
+
 //namespace ImGui
 //{
-//    bool    InputText(const char* label, Str* str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
+fun ImGui.inputText_(label: String, str: ByteArray, flags_: InputTextFlags = InputTextFlag.None.i,
+                    callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+
+    var flags = flags_
+    assert(flags hasnt InputTextFlag.CallbackResize)
+    flags = flags or InputTextFlag.CallbackResize
+
+    val cbUserData = InputTextCallbackStr_UserData(str, callback, userData)
+    return inputText(label, str.cStr, flags, inputTextCallback, cbUserData)
+}
 //    bool    InputTextMultiline(const char* label, Str* str, const ImVec2& size = ImVec2(0, 0), ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);
 //}
