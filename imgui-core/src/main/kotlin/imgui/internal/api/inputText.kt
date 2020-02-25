@@ -56,7 +56,6 @@ import imgui.internal.classes.Rect
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag
-import imgui.stb.te.locateCoord
 import imgui.stb.te.paste
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
@@ -174,14 +173,14 @@ internal interface inputText {
             val bufLen = buf.strlen()
             if (state.initialTextA.size < bufLen)
                 state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
-            else
+            else if (state.initialTextA.size > bufLen)
                 state.initialTextA[bufLen] = 0
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
             // Start edition
             if (state.textW.size < buf.size)
                 state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
-            else
+            else if (state.textW.size > buf.size)
                 state.textW[buf.size] = NUL
 //            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
@@ -245,7 +244,10 @@ internal interface inputText {
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
         if (isReadOnly && state != null && (renderCursor || renderSelection)) {
-            if (state.textW.size < buf.size) state.textW = CharArray(buf.size)
+            if (state.textW.size < buf.size)
+                state.textW = CharArray(buf.size)
+            else if(state.textW.size > buf.size)
+                state.textW[buf.size] = NUL
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd(0))
             state.curLenA = bufEnd.x
             state.cursorClamp()
@@ -481,7 +483,7 @@ internal interface inputText {
                         wText = CharArray(textCountCharsFromUtf8(applyNewText, applyNewTextLength))
                         textStrFromUtf8(wText, applyNewText, applyNewTextLength)
                     }
-                    state.replace(wText, if(applyNewTextLength > 0) wText.size else 0)
+                    state.replace(wText, if (applyNewTextLength > 0) wText.size else 0)
                 }
 
             // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
@@ -495,7 +497,10 @@ internal interface inputText {
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (!isReadOnly) {
                     state.textAIsValid = true
-                    if (state.textA.size < state.textW.size * 4) state.textA = ByteArray(state.textW.size * 4)
+                    if (state.textA.size < state.textW.size * 4)
+                        state.textA = ByteArray(state.textW.size * 4)
+                    else if (state.textA.size > state.textW.size * 4)
+                        state.textA[state.textW.size * 4] = 0
                     textStrToUtf8(state.textA, state.textW)
                 }
 
@@ -561,6 +566,8 @@ internal interface inputText {
                                 val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)
                                 if (state.textW.size < newSize)
                                     state.textW = CharArray(newSize)
+                                else if (state.textW.size > newSize)
+                                    state.textW[newSize] = NUL
                             }
                             state.curLenW = textStrFromUtf8(state.textW, cbData.buf)
                             state.curLenA = cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
