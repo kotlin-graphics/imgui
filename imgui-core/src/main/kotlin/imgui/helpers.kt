@@ -4,7 +4,6 @@ import com.sun.jdi.VirtualMachine
 import glm_.L
 import glm_.b
 import glm_.vec4.Vec4
-import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.classes.SizeCallbackData
 import imgui.internal.F32_TO_INT8_SAT
@@ -180,7 +179,7 @@ fun String.toUtf8(size: Int) = ByteArray(size).also { textStrToUtf8(it, toCharAr
 fun String.toByteArray(array: ByteArray): ByteArray {
     val bytes = toByteArray()
     bytes.copyInto(array)
-    if(bytes.size < array.size)
+    if (bytes.size < array.size)
         array[bytes.size] = 0 // NUL
     return array
 }
@@ -192,7 +191,10 @@ infix fun ByteArray.strcmp(b: ByteArray): Int {
             return get(i).compareTo(b[i])
         i++
     }
-    return 0
+    return when {
+        size != b.size -> getOrElse(i) { 0 }.compareTo(b.getOrElse(i) { 0 })
+        else -> 0
+    }
 }
 
 /** TODO -> uno or kool */
@@ -200,3 +202,5 @@ operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
     set(t)
     return this
 }
+
+val ByteArray.cStr get() = String(this, 0, strlen())

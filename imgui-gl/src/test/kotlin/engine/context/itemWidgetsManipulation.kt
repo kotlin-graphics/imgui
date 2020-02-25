@@ -261,6 +261,9 @@ fun TestContext.itemHold(ref: TestRef, time: Float) {
     }
 }
 
+// [JVM]
+fun TestContext.itemHoldForFrames(ref: String, frames: Int) = itemHoldForFrames(TestRef(path = ref), frames)
+
 fun TestContext.itemHoldForFrames(ref: TestRef, frames: Int) {
 
     if (isError) return

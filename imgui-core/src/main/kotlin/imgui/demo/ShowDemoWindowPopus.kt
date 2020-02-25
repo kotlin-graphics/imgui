@@ -148,7 +148,7 @@ object ShowDemoWindowPopups {
                 BeginPopupContextItem() will use the last item ID as the popup ID.
                 In addition here, we want to include your editable label inside the button label. We use the ### operator to override the ID (read FAQ about ID for details)
              */
-            val text = "Button: ${String(name, 0, name.strlen())}###Button" // ### operator override id ignoring the preceding label
+            val text = "Button: ${name.cStr}###Button" // ### operator override id ignoring the preceding label
             button(text)
             popupContextItem {
                 text("Edit name")

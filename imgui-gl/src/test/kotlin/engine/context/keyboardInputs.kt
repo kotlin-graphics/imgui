@@ -109,6 +109,9 @@ fun TestContext.keyCharsAppendEnter(chars: ByteArray) {
     }
 }
 
+// [JVM]
+fun TestContext.keyCharsReplace(string: String) = keyCharsReplace(string.toByteArray())
+
 fun TestContext.keyCharsReplace(chars: ByteArray) {
 
     if (isError) return
