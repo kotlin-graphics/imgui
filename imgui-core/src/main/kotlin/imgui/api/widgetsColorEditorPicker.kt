@@ -152,7 +152,7 @@ interface widgetsColorEditorPicker {
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
 
         var valueChanged = false
-        var valueChangedAsFloat = false
+        val valueChangedAsFloat = false
 
         val pos = Vec2(window.dc.cursorPos)
         val inputsOffsetX = if (style.colorButtonPosition == Dir.Left) wButton else 0f

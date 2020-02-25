@@ -309,48 +309,48 @@ fun registerTests_Widgets(e: TestEngine) {
     }
 
     // ## Test InputText widget
-    e.registerTest("widgets", "widgets_inputtext_1").let { t ->
-        t.guiFunc = { ctx: TestContext ->
-            val vars = ctx.genericVars
-            ImGui.setNextWindowSize(Vec2(200))
-            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
-                ImGui.inputText("InputText", vars.str1)
-            }
-        }
-        t.testFunc = { ctx: TestContext ->
-
-            val buf = ctx.genericVars.str1
-
-            ctx.windowRef("Test Window")
-
-            // Insert
-            "Hello".toByteArray(buf)
-            ctx.itemClick("InputText")
-            ctx.keyCharsAppendEnter("World123")
-            String(buf, 0, buf.strlen()) shouldBe "HelloWorld123"
-
-            // Delete
-            ctx.itemClick("InputText")
-            ctx.keyPressMap(Key.End)
-            ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 3)
-            ctx.keyPressMap(Key.Enter)
-            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
-
-            // Insert, Cancel
-            ctx.itemClick("InputText")
-            ctx.keyPressMap(Key.End)
-            ctx.keyChars("XXXXX")
-            ctx.keyPressMap(Key.Escape)
-            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
-
-//            // Delete, Cancel
-//            ctx->ItemClick("InputText")
-//            ctx->KeyPressMap(ImGuiKey_End)
-//            ctx->KeyPressMap(ImGuiKey_Backspace, ImGuiKeyModFlags_None, 5)
-//            ctx->KeyPressMap(ImGuiKey_Escape)
-//            IM_CHECK_STR_EQ(buf, "HelloWorld")
-        }
-    }
+//    e.registerTest("widgets", "widgets_inputtext_1").let { t ->
+//        t.guiFunc = { ctx: TestContext ->
+//            val vars = ctx.genericVars
+//            ImGui.setNextWindowSize(Vec2(200))
+//            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+//                ImGui.inputText("InputText", vars.str1)
+//            }
+//        }
+//        t.testFunc = { ctx: TestContext ->
+//
+//            val buf = ctx.genericVars.str1
+//
+//            ctx.windowRef("Test Window")
+//
+//            // Insert
+//            "Hello".toByteArray(buf)
+//            ctx.itemClick("InputText")
+//            ctx.keyCharsAppendEnter("World123")
+//            String(buf, 0, buf.strlen()) shouldBe "HelloWorld123"
+//
+//            // Delete
+//            ctx.itemClick("InputText")
+//            ctx.keyPressMap(Key.End)
+//            ctx.keyPressMap(Key.Backspace, KeyModFlag.None.i, 3)
+//            ctx.keyPressMap(Key.Enter)
+//            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+//
+//            // Insert, Cancel
+////            ctx.itemClick("InputText")
+////            ctx.keyPressMap(Key.End)
+////            ctx.keyChars("XXXXX")
+////            ctx.keyPressMap(Key.Escape)
+////            String(buf, 0, buf.strlen()) shouldBe "HelloWorld"
+//
+////            // Delete, Cancel
+////            ctx->ItemClick("InputText")
+////            ctx->KeyPressMap(ImGuiKey_End)
+////            ctx->KeyPressMap(ImGuiKey_Backspace, ImGuiKeyModFlags_None, 5)
+////            ctx->KeyPressMap(ImGuiKey_Escape)
+////            IM_CHECK_STR_EQ(buf, "HelloWorld")
+//        }
+//    }
 
 //    // ## Test InputText undo/redo ops, in particular related to issue we had with stb_textedit undo/redo buffers
 //    t = REGISTER_TEST("widgets", "widgets_inputtext_2");

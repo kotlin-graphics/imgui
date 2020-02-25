@@ -73,12 +73,12 @@ fun TestEngine.yield() {
         // Can only yield in the test func!
         assert(ctx.activeFunc == TestActiveFunc.TestFunc)
 
-        ctx.test?.guiFunc?.let {
+        ctx.test?.guiFunc?.let { f ->
             // Call user GUI function
             if (ctx.runFlags hasnt TestRunFlag.NoGuiFunc) {
                 val backupActiveFunc = ctx.activeFunc
                 ctx.activeFunc = TestActiveFunc.GuiFunc
-                it(ctx)
+                f(ctx)
                 ctx.activeFunc = backupActiveFunc
             }
 
