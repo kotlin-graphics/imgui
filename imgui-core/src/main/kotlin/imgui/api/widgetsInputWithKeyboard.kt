@@ -170,8 +170,8 @@ interface widgetsInputWithKeyboard {
             else -> format_
         }
 
-        val string = pData.format(dataType, format/*, 64*/)
-        val buf = string.toByteArray(64)
+        val buf = pData.format(dataType, format/*, 64*/).toByteArray(64)
+        fun string() = String(buf, 0, buf.strlen())
 
         var valueChanged = false
         var flags = flags_
@@ -188,7 +188,7 @@ interface widgetsInputWithKeyboard {
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
 
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = dataTypeApplyOpFromText(string, g.inputTextState.initialTextA, dataType, pData, format)
+                valueChanged = dataTypeApplyOpFromText(string(), g.inputTextState.initialTextA, dataType, pData, format)
 
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)
@@ -217,7 +217,7 @@ interface widgetsInputWithKeyboard {
             popID()
             endGroup()
         } else if (inputText(label, buf, flags))
-            valueChanged = dataTypeApplyOpFromText(string, g.inputTextState.initialTextA, dataType, pData, format)
+            valueChanged = dataTypeApplyOpFromText(string(), g.inputTextState.initialTextA, dataType, pData, format)
 
         if (valueChanged)
             markItemEdited(window.dc.lastItemId)
