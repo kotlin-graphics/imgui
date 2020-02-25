@@ -824,7 +824,7 @@ internal interface inputText {
 
         // Log as text
         if (g.logEnabled && !(isPassword && !isDisplayingHint))
-            logRenderedText(drawPos, String(bufDisplay), bufDisplayEnd)
+            logRenderedText(drawPos, String(bufDisplay, 0, bufDisplayEnd), bufDisplayEnd)
 
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)

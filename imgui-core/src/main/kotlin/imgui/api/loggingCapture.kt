@@ -97,8 +97,7 @@ interface loggingCapture {
         if (g.logFile != null) {
             val writer = FileWriter(g.logFile, true)
             writer.write(String.format(fmt, *args))
-        } else {
+        } else
             g.logBuffer.append(fmt.format(*args))
-        }
     }
 }
