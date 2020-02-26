@@ -239,7 +239,7 @@ class DrawListSplitter {
     }
 
     fun setCurrentChannel(drawList: DrawList, idx: Int) {
-        assert(idx in 1 until _count)
+        assert(idx in 0 until _count)
         if (_current == idx) return
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
         _channels[_current]._cmdBuffer.clear()

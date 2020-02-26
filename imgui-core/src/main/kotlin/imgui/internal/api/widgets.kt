@@ -147,7 +147,7 @@ internal interface widgets {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pos = Vec2(window.dc.cursorPos)
@@ -238,7 +238,7 @@ internal interface widgets {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(strId)
+        val id = window.getID(strId)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         val defaultSize = frameHeight
         itemSize(size, if (size.y >= defaultSize) style.framePadding.y else -1f)

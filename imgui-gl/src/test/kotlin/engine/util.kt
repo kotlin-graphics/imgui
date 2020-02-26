@@ -25,6 +25,8 @@ inline class KeyModFlags(val i: Int)       // See ImGuiKeyModFlags_
 }
 
 inline class KeyModFlag(val i: KeyModFlags) {
+    infix fun or(f: KeyModFlag) = KeyModFlags(i.i or f.i.i)
+
     companion object {
         val None = KeyModFlag(KeyModFlags(0))
         val Ctrl = KeyModFlag(KeyModFlags(1 shl 0))
@@ -212,7 +214,7 @@ val inputTextCallback: InputTextCallback = { data: InputTextCallbackData ->
             // If for some reason we refuse the new length (BufTextLen) and/or capacity (BufSize) we need to set them back to what we want.
             val str = userData.strObj
             data.buf.cStr shouldBe str.cStr
-            if(str.size < data.bufTextLen)
+            if (str.size < data.bufTextLen)
                 userData.strObj = str.copyInto(ByteArray(data.bufTextLen))
             data.buf = userData.strObj
             false
@@ -229,7 +231,7 @@ val inputTextCallback: InputTextCallback = { data: InputTextCallbackData ->
 //namespace ImGui
 //{
 fun ImGui.inputText_(label: String, str: ByteArray, flags_: InputTextFlags = InputTextFlag.None.i,
-                    callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+                     callback: InputTextCallback? = null, userData: Any? = null): Boolean {
 
     var flags = flags_
     assert(flags hasnt InputTextFlag.CallbackResize)

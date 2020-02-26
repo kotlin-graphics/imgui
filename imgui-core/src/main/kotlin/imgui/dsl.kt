@@ -7,6 +7,7 @@ import imgui.ImGui.arrowButton
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginChildFrame
+import imgui.ImGui.beginColumns
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
@@ -30,6 +31,7 @@ import imgui.ImGui.combo
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endChildFrame
+import imgui.ImGui.endColumns
 import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
@@ -71,6 +73,8 @@ import imgui.ImGui.treePop
 import imgui.ImGui.treePush
 import imgui.ImGui.unindent
 import imgui.font.Font
+import imgui.internal.ColumnsFlag
+import imgui.internal.ColumnsFlags
 import kotlin.reflect.KMutableProperty0
 
 /** twin brother of dsl_ */
@@ -421,5 +425,13 @@ object dsl {
     inline fun childFrame(id: ID, size: Vec2, extraFlags: WindowFlags = 0, block: () -> Unit) {
         beginChildFrame(id, size, extraFlags)
         try { block() } finally { endChildFrame() }
+    }
+
+    // Columns TODO -> jDsl
+
+    inline fun columns(strId: String = "", columnsCount: Int,
+                       flags: ColumnsFlags = ColumnsFlag.None.i, block: () -> Unit) {
+        beginColumns(strId, columnsCount, flags)
+        try { block() } finally { endColumns() }
     }
 }

@@ -56,7 +56,7 @@ interface widgetsComboBox {
 
         assert((flags and (Cf.NoArrowButton or Cf.NoPreview)) != (Cf.NoArrowButton or Cf.NoPreview)) { "Can't use both flags together" }
 
-        val id = window.getId(label)
+        val id = window.getID(label)
 
         val arrowSize = if (flags has Cf.NoArrowButton) 0f else frameHeight
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)

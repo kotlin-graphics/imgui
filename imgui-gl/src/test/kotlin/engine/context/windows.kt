@@ -17,6 +17,8 @@ import imgui.toByteArray
 import io.kotlintest.shouldBe
 
 // [JVM]
+fun TestContext.windowRef(ref: ID) = windowRef(TestRef(ref))
+// [JVM]
 fun TestContext.windowRef(ref: String) = windowRef(TestRef(path = ref))
 
 // FIXME-TESTS: May be to focus window when docked? Otherwise locate request won't even see an item?

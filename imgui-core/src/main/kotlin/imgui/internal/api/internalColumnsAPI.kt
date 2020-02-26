@@ -209,7 +209,7 @@ internal interface internalColumnsAPI {
         // Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same as another widget.
         // In addition, when an identifier isn't explicitly provided we include the number of columns in the hash to make it uniquer.
         pushID(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
-        return window.getId(if (strId.isNotEmpty()) strId else "columns")
+        return window.getID(if (strId.isNotEmpty()) strId else "columns")
                 .also { popID() }
     }
 

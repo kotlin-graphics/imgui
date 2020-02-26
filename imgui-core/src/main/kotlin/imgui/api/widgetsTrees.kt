@@ -31,7 +31,7 @@ interface widgetsTrees {
     fun treeNode(label: String): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
-        return treeNodeBehavior(window.getId(label), 0, label)
+        return treeNodeBehavior(window.getID(label), 0, label)
     }
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
@@ -46,7 +46,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        return treeNodeBehavior(window.getId(label), flags, label)
+        return treeNodeBehavior(window.getID(label), flags, label)
     }
 
     fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
@@ -55,7 +55,7 @@ interface widgetsTrees {
         if (window.skipItems) return false
 
         val labelEnd = formatString(g.tempBuffer, fmt, args)
-        return treeNodeBehavior(window.getId(strId), flags, g.tempBuffer, labelEnd)
+        return treeNodeBehavior(window.getID(strId), flags, g.tempBuffer, labelEnd)
     }
 
     fun treeNodeEx(ptrId: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
@@ -64,7 +64,7 @@ interface widgetsTrees {
         if (window.skipItems) return false
 
         val labelEnd = formatString(g.tempBuffer, fmt, args)
-        return treeNodeBehavior(window.getId(ptrId), flags, g.tempBuffer, labelEnd)
+        return treeNodeBehavior(window.getID(ptrId), flags, g.tempBuffer, labelEnd)
     }
 
 //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
@@ -114,7 +114,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        return treeNodeBehavior(window.getId(label), flags or Tnf.CollapsingHeader, label)
+        return treeNodeBehavior(window.getID(label), flags or Tnf.CollapsingHeader, label)
     }
 
     /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
@@ -125,7 +125,7 @@ interface widgetsTrees {
 
         if (open?.get()  == false) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton else 0
         val isOpen = treeNodeBehavior(id, flags, label)
         if (open != null) {
@@ -138,7 +138,7 @@ interface widgetsTrees {
                     max(window.dc.lastItemRect.min.x, window.dc.lastItemRect.max.x - style.framePadding.x * 2f - buttonSize),
                     (window.dc.lastItemRect.min.y))
             itemHoveredDataBackup {
-                if (closeButton(window.getId(id + 1), buttonPos))
+                if (closeButton(window.getID(id + 1), buttonPos))
                     open.set(false)
             }
         }
