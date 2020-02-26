@@ -235,23 +235,6 @@ class FontAtlas {
         get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
 
 
-// Helper to build glyph ranges from text/string data. Feed your application strings/characters to it then call BuildRanges().
-    // This is essentially a tightly packed of vector of 64k booleans = 8KB storage.
-//    struct ImFontGlyphRangesBuilder
-//    {
-//        ImVector<ImU32> UsedChars;            // Store 1-bit per Unicode code point (0=unused, 1=used)
-//
-//    ImFontGlyphRangesBuilder()          { Clear(); }
-//    inline void     Clear()             { int size_in_bytes = UNICODE_CODEPOINT_MAX / 8; UsedChars.resize(size_in_bytes / (int)sizeof(ImU32)); memset(UsedChars.Data, 0, (size_t)size_in_bytes); }
-//    inline bool     GetBit(int n) const { int off = (n >> 5); ImU32 mask = 1u << (n & 31); return (UsedChars[off] & mask) != 0; }  // Get bit n in the array
-//    inline void     SetBit(int n)       { int off = (n >> 5); ImU32 mask = 1u << (n & 31); UsedChars[off] |= mask; }               // Set bit n in the array
-//    inline void     AddChar(ImWchar c)  { SetBit(c); }                          // Add character
-//        IMGUI_API void AddText(const char* text, const char* text_end = NULL);      // Add string (each character of the UTF-8 string are added)
-//        IMGUI_API void AddRanges(const ImWchar* ranges);                            // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext
-//        IMGUI_API void BuildRanges(ImVector<ImWchar>* out_ranges);                  // Output new ranges
-//    };
-
-
 //    //-----------------------------------------------------------------------------
 //    +// ImFontAtlas::GlyphRangesBuilder
 //    +//-----------------------------------------------------------------------------
@@ -305,18 +288,25 @@ class FontAtlas {
 
         /** Input, User ID. Use < 0x110000 to map into a font glyph, >= 0x110000 for other/internal/custom texture data.   */
         var id = 0xFFFFFFFF.i
+
         /** Input, Desired rectangle width */
         var width = 0
+
         /** Input, Desired rectangle height */
         var height = 0
+
         /** Output, Packed width position in Atlas  */
         var x = 0xFFFF
+
         /** Output, Packed height position in Atlas  */
         var y = 0xFFFF
+
         /** Input, For custom font glyphs only (ID < 0x110000): glyph xadvance */
         var glyphAdvanceX = 0f
+
         /** Input, For custom font glyphs only (ID < 0x110000): glyph display offset   */
         var glyphOffset = Vec2()
+
         /** Input, For custom font glyphs only (ID < 0x110000): target font    */
         var font: Font? = null
 
@@ -391,8 +381,10 @@ class FontAtlas {
     /** Flags: for ImFontAtlas */
     enum class FontAtlasFlag {
         None,
+
         /** Don't round the height to next power of two */
         NoPowerOfTwoHeight,
+
         /** Don't build software mouse cursors into the atlas   */
         NoMouseCursors;
 
@@ -404,35 +396,47 @@ class FontAtlas {
 
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
     var locked = false
+
     /** Build flags (see ImFontAtlasFlags_) */
     var flags = FontAtlasFlag.None.i
+
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
     var texID: TextureID = 0
+
     /** 1 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y  */
     var texPixelsAlpha8: ByteBuffer? = null
+
     /** 4 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y * 4  */
     var texPixelsRGBA32: ByteBuffer? = null
+
     /** Texture size calculated during Build(). */
     var texSize = Vec2i()
+
     /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
      *  texture size restrictions you may want to increase texture width to decrease height.    */
     var texDesiredWidth = 0
+
     /** Padding between glyphs within texture in pixels. Defaults to 1.
      *  If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
     var texGlyphPadding = 1
+
     /** = (1.0f/TexWidth, 1.0f/TexHeight)   */
     var texUvScale = Vec2()
+
     /** Texture coordinates to a white pixel    */
     var texUvWhitePixel = Vec2()
+
     /** Hold all the fonts returned by AddFont*. Fonts[0] is the default font upon calling ImGui::NewFrame(), use
      *  ImGui::PushFont()/PopFont() to change the current font. */
     val fonts = ArrayList<Font>()
 
     /** Rectangles for packing custom texture data into the atlas.  */
     private val customRects = ArrayList<CustomRect>()
+
     /** Internal data   */
     private val configData = ArrayList<FontConfig>()
+
     /** Identifiers of custom texture rectangle used by FontAtlas/DrawList  */
     private val customRectIds = intArrayOf(-1)
 
@@ -487,22 +491,31 @@ class FontAtlas {
     class FontBuildSrcData {
 
         val fontInfo = STBTTFontinfo.calloc()
+
         /** Hold the list of codepoints to pack (essentially points to Codepoints.Data) */
         val packRange = STBTTPackRange.calloc()
+
         /** Rectangle to pack. We first fill in their size and the packer will give us their position. */
         lateinit var rects: STBRPRect.Buffer
+
         /** Output glyphs */
         lateinit var packedChars: STBTTPackedchar.Buffer
+
         /** Ranges as requested by user (user is allowed to request too much, e.g. 0x0020..0xFFFF) */
         lateinit var srcRanges: Array<IntRange>
+
         /** Index into atlas->Fonts[] and dst_tmp_array[] */
         var dstIndex = 0
+
         /** Highest requested codepoint */
         var glyphsHighest = 0
+
         /** Glyph count (excluding missing glyphs and glyphs already set by an earlier source font) */
         var glyphsCount = 0
+
         /** Glyph bit map (random access, 1-bit per codepoint. This will be a maximum of 8KB) */
         val glyphsSet = BoolVector()
+
         /** Glyph codepoints list (flattened version of GlyphsMap) */
         lateinit var glyphsList: ArrayList<Int>
 
@@ -522,6 +535,7 @@ class FontAtlas {
         var srcCount = 0
         var glyphsHighest = 0
         var glyphsCount = 0
+
         /** This is used to resolve collision when multiple sources are merged into a same destination font. */
         var glyphsSet = BoolVector()
     }
@@ -854,7 +868,7 @@ class FontAtlas {
         // FIXME: Also note that 0x2026 is currently seldomly included in our font ranges. Because of this we are more likely to use three individual dots.
         fonts.filter { it.ellipsisChar == '\uffff' }.forEach { font ->
             for (ellipsisVariant in charArrayOf('\u2026', '\u0085')) {
-                if(font.findGlyphNoFallback(ellipsisVariant) != null) { // Verify glyph exists
+                if (font.findGlyphNoFallback(ellipsisVariant) != null) { // Verify glyph exists
                     font.ellipsisChar = ellipsisVariant
                     break
                 }

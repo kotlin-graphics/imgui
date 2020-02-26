@@ -7,12 +7,22 @@ import engine.context.yieldFrames
 import engine.core.TestEngine
 import engine.core.registerTest
 import engine.hashDecoratedPath
+import glm_.b
+import glm_.s
+import glm_.vec2.Vec2
+import imgui.DataType
 import imgui.ImGui
+import imgui.WindowFlag
 import imgui.dsl
+import imgui.font.FontAtlas
+import imgui.font.FontConfig
+import imgui.font.FontGlyphRangesBuilder
 import imgui.internal.classes.Pool
 import imgui.internal.classes.PoolIdx
 import imgui.internal.classes.TabBar
 import imgui.internal.hash
+import unsigned.Ubyte
+import unsigned.Ushort
 
 fun registerTests_Misc(e: TestEngine) {
 
@@ -182,140 +192,133 @@ fun registerTests_Misc(e: TestEngine) {
         }
     }
 
-//    // ## Test ImFontAtlas building with overlapping glyph ranges (#2353, #2233)
-//    t = REGISTER_TEST("misc", "misc_atlas_build_glyph_overlap");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImFontAtlas atlas;
-//        ImFontConfig font_config;
-//        static const ImWchar default_ranges[] =
-//                {
-//                    0x0020, 0x00FF, // Basic Latin + Latin Supplement
-//                    0x0080, 0x00FF, // Latin_Supplement
-//                    0,
-//                };
-//        font_config.GlyphRanges = default_ranges;
-//        atlas.AddFontDefault(&font_config);
-//        atlas.Build();
-//    };
-//
-//    t = REGISTER_TEST("misc", "misc_atlas_ranges_builder");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImFontGlyphRangesBuilder builder;
-//        builder.AddChar(31);
-//        builder.AddChar(0x10000-1);
-//        ImVector<ImWchar> out_ranges;
-//        builder.BuildRanges(&out_ranges);
-//        builder.Clear();
-//        IM_CHECK_EQ(out_ranges.Size, 5);
-//    };
-//
-//    // ## Test whether splitting/merging draw lists properly retains a texture id.
-//    t = REGISTER_TEST("misc", "misc_drawlist_splitter_texture_id");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-//        ImTextureID prev_texture_id = draw_list->_TextureIdStack.back();
-//        const int draw_count = draw_list->CmdBuffer.Size;
-//        IM_CHECK(draw_list->CmdBuffer.back().ElemCount == 0);
-//
-//        ImVec2 p = ImGui::GetCursorScreenPos();
-//        ImGui::Dummy(ImVec2(100+10+100, 100));
-//
-//        draw_list->ChannelsSplit(2);
-//        draw_list->ChannelsSetCurrent(0);
-//        // Image wont be clipped when added directly into the draw list.
-//        draw_list->AddImage((ImTextureID)100, p, p + ImVec2(100, 100));
-//        draw_list->ChannelsSetCurrent(1);
-//        draw_list->AddImage((ImTextureID)200, p + ImVec2(110, 0), p + ImVec2(210, 100));
-//        draw_list->ChannelsMerge();
-//
-//        IM_CHECK_NO_RET(draw_list->CmdBuffer.Size == draw_count + 2);
-//        IM_CHECK_NO_RET(draw_list->CmdBuffer.back().ElemCount == 0);
-//        IM_CHECK_NO_RET(prev_texture_id == draw_list->CmdBuffer.back().TextureId);
-//
-//        // Replace fake texture IDs with a known good ID in order to prevent graphics API crashing application.
-//        for (ImDrawCmd& cmd : draw_list->CmdBuffer)
-//        if (cmd.TextureId == (ImTextureID)100 || cmd.TextureId == (ImTextureID)200)
-//        cmd.TextureId = prev_texture_id;
-//
-//        ImGui::End();
-//    };
-//
-//    t = REGISTER_TEST("misc", "misc_repeat_typematic");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->LogDebug("Regular repeat delay/rate");
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.00f, 0.00f, 1.0f, 0.2f), 1); // Trigger @ 0.0f, 1.0f, 1.2f, 1.4f, etc.
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.00f, 0.99f, 1.0f, 0.2f), 0); // "
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.99f, 1.00f, 1.0f, 0.2f), 1); // "
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.99f, 1.01f, 1.0f, 0.2f), 1); // "
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.99f, 1.41f, 1.0f, 0.2f), 3); // "
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(1.01f, 1.41f, 1.0f, 0.2f), 2); // "
-//
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.99f, 1.01f, 1.1f, 0.2f), 0); // Trigger @ 0.0f, 1.1f, 1.3f, 1.5f, etc.
-//
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.99f, 1.01f, 0.1f, 1.0f), 0); // Trigger @ 0.0f, 0.1f, 1.1f, 2.1f, etc.
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.99f, 1.11f, 0.1f, 1.0f), 1); // "
-//
-//        ctx->LogDebug("No repeat delay");
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.00f, 0.00f, 0.0f, 0.2f), 1); // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.19f, 0.20f, 0.0f, 0.2f), 1); // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.20f, 0.20f, 0.0f, 0.2f), 0); // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.19f, 1.01f, 0.0f, 0.2f), 5); // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
-//
-//        ctx->LogDebug("No repeat rate");
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.00f, 0.00f, 1.0f, 0.0f), 1); // Trigger @ 0.0f, 1.0f
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.99f, 1.01f, 1.0f, 0.0f), 1); // "
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(1.01f, 2.00f, 1.0f, 0.0f), 0); // "
-//
-//        ctx->LogDebug("No repeat delay/rate");
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.00f, 0.00f, 0.0f, 0.0f), 1); // Trigger @ 0.0f
-//        IM_CHECK_EQ_NO_RET(ImGui::CalcTypematicRepeatAmount(0.01f, 1.01f, 0.0f, 0.0f), 0); // "
-//    };
-//
-//    // ## Test ImGui::InputScalar() handling overflow for different data types
-//    t = REGISTER_TEST("misc", "misc_input_scalar_overflow");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        {
-//            ImS8 one = 1;
-//            ImS8 value = 2;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_S8, '+', &value, &value, &one);
-//            IM_CHECK(value == 3);
-//            value = SCHAR_MAX;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_S8, '+', &value, &value, &one);
-//            IM_CHECK(value == SCHAR_MAX);
-//            value = SCHAR_MIN;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_S8, '-', &value, &value, &one);
-//            IM_CHECK(value == SCHAR_MIN);
-//        }
-//        {
-//            ImU8 one = 1;
-//            ImU8 value = 2;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_U8, '+', &value, &value, &one);
-//            IM_CHECK(value == 3);
-//            value = UCHAR_MAX;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_U8, '+', &value, &value, &one);
-//            IM_CHECK(value == UCHAR_MAX);
-//            value = 0;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_U8, '-', &value, &value, &one);
-//            IM_CHECK(value == 0);
-//        }
-//        {
-//            ImS16 one = 1;
-//            ImS16 value = 2;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_S16, '+', &value, &value, &one);
-//            IM_CHECK(value == 3);
-//            value = SHRT_MAX;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_S16, '+', &value, &value, &one);
-//            IM_CHECK(value == SHRT_MAX);
-//            value = SHRT_MIN;
-//            ImGui::DataTypeApplyOp(ImGuiDataType_S16, '-', &value, &value, &one);
-//            IM_CHECK(value == SHRT_MIN);
-//        }
+    // ## Test ImFontAtlas building with overlapping glyph ranges (#2353, #2233)
+    e.registerTest("misc", "misc_atlas_build_glyph_overlap").let { t ->
+        t.testFunc = {
+            val atlas = FontAtlas()
+            val fontConfig = FontConfig()
+            fontConfig.glyphRanges = defaultRanges
+            atlas.addFontDefault(fontConfig)
+            atlas.build()
+        }
+    }
+
+    e.registerTest("misc", "misc_atlas_ranges_builder").let { t ->
+        t.testFunc = {
+            val builder = FontGlyphRangesBuilder()
+            builder.addChar(31)
+            builder.addChar(0x10000 - 1)
+            val outRanges = builder.buildRanges()
+            builder.clear()
+            assert(outRanges.size == (5 - 1) / 2)
+        }
+    }
+
+    // ## Test whether splitting/merging draw lists properly retains a texture id.
+    e.registerTest("misc", "misc_drawlist_splitter_texture_id").let { t ->
+        t.guiFunc = {
+            ImGui.begin("Test Window", null, WindowFlag.NoSavedSettings.i)
+            val drawList = ImGui.windowDrawList
+            val prevTextureId = drawList._textureIdStack.last()
+            val drawCount = drawList.cmdBuffer.size
+            assert(drawList.cmdBuffer.last().elemCount == 0)
+
+            val p = ImGui.cursorScreenPos
+            ImGui.dummy(Vec2(100 + 10 + 100, 100))
+
+            drawList.apply {
+                channelsSplit(2)
+                channelsSetCurrent(0)
+                // Image wont be clipped when added directly into the draw list.
+                addImage(100, p, p + 100)
+                channelsSetCurrent(1)
+                addImage(200, p + Vec2(110, 0), p + Vec2(210, 100))
+                channelsMerge()
+
+                assert(cmdBuffer.size == drawCount + 2)
+                assert(cmdBuffer.last().elemCount == 0)
+                assert(prevTextureId == cmdBuffer.last().textureId)
+            }
+            // Replace fake texture IDs with a known good ID in order to prevent graphics API crashing application.
+            for (cmd in drawList.cmdBuffer)
+                if (cmd.textureId == 100 || cmd.textureId == 200)
+                    cmd.textureId = prevTextureId
+
+            ImGui.end()
+        }
+    }
+
+    e.registerTest("misc", "misc_repeat_typematic").let { t ->
+        t.testFunc = { ctx: TestContext ->
+            ctx.logDebug("Regular repeat delay/rate")
+            assert(ImGui.calcTypematicRepeatAmount(0.00f, 0.00f, 1.0f, 0.2f) == 1) // Trigger @ 0.0f, 1.0f, 1.2f, 1.4f, etc.
+            assert(ImGui.calcTypematicRepeatAmount(0.00f, 0.99f, 1.0f, 0.2f) == 0) // "
+            assert(ImGui.calcTypematicRepeatAmount(0.99f, 1.00f, 1.0f, 0.2f) == 1) // "
+            assert(ImGui.calcTypematicRepeatAmount(0.99f, 1.01f, 1.0f, 0.2f) == 1) // "
+            assert(ImGui.calcTypematicRepeatAmount(0.99f, 1.41f, 1.0f, 0.2f) == 3) // "
+            assert(ImGui.calcTypematicRepeatAmount(1.01f, 1.41f, 1.0f, 0.2f) == 2) // "
+
+            assert(ImGui.calcTypematicRepeatAmount(0.99f, 1.01f, 1.1f, 0.2f) == 0) // Trigger @ 0.0f, 1.1f, 1.3f, 1.5f, etc.
+
+            assert(ImGui.calcTypematicRepeatAmount(0.99f, 1.01f, 0.1f, 1.0f) == 0) // Trigger @ 0.0f, 0.1f, 1.1f, 2.1f, etc.
+            assert(ImGui.calcTypematicRepeatAmount(0.99f, 1.11f, 0.1f, 1.0f) == 1) // "
+
+            ctx.logDebug("No repeat delay")
+            assert(ImGui.calcTypematicRepeatAmount(0.00f, 0.00f, 0.0f, 0.2f) == 1) // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
+            assert(ImGui.calcTypematicRepeatAmount(0.19f, 0.20f, 0.0f, 0.2f) == 1) // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
+            assert(ImGui.calcTypematicRepeatAmount(0.20f, 0.20f, 0.0f, 0.2f) == 0) // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
+            assert(ImGui.calcTypematicRepeatAmount(0.19f, 1.01f, 0.0f, 0.2f) == 5) // Trigger @ 0.0f, 0.2f, 0.4f, 0.6f, etc.
+
+            ctx.logDebug("No repeat rate")
+            assert(ImGui.calcTypematicRepeatAmount(0.00f, 0.00f, 1.0f, 0.0f) == 1) // Trigger @ 0.0f, 1.0f
+            assert(ImGui.calcTypematicRepeatAmount(0.99f, 1.01f, 1.0f, 0.0f) == 1) // "
+            assert(ImGui.calcTypematicRepeatAmount(1.01f, 2.00f, 1.0f, 0.0f) == 0) // "
+
+            ctx.logDebug("No repeat delay/rate")
+            assert(ImGui.calcTypematicRepeatAmount(0.00f, 0.00f, 0.0f, 0.0f) == 1) // Trigger @ 0.0f
+            assert(ImGui.calcTypematicRepeatAmount(0.01f, 1.01f, 0.0f, 0.0f) == 0) // "
+        }
+    }
+
+    // ## Test ImGui::InputScalar() handling overflow for different data types
+    e.registerTest("misc", "misc_input_scalar_overflow").let { t ->
+        t.testFunc = { ctx: TestContext ->
+            run {
+                val one: Byte = 1
+                var value: Byte = 2
+                value = ImGui.dataTypeApplyOp(DataType.Byte, '+', value, one)
+                assert(value == 3.b)
+                value = Byte.MAX_VALUE
+                value = ImGui.dataTypeApplyOp(DataType.Byte, '+', value, one)
+                assert(value == Byte.MAX_VALUE)
+                value = Byte.MIN_VALUE
+                value = ImGui.dataTypeApplyOp(DataType.Byte, '-', value, one)
+                assert(value == Byte.MIN_VALUE)
+            }
+        run {
+            val one = Ubyte(1)
+            var value = Ubyte(2)
+            value = ImGui.dataTypeApplyOp(DataType.Ubyte, '+', value, one)
+            assert(value == Ubyte(3))
+            value = Ubyte.MAX
+            value = ImGui.dataTypeApplyOp(DataType.Ubyte, '+', value, one)
+            assert(value == Ubyte.MAX)
+            value = Ubyte(0)
+            value = ImGui.dataTypeApplyOp(DataType.Ubyte, '-', value, one)
+            assert(value == Ubyte(0))
+        }
+        run {
+            val one: Short = 1
+            var value: Short = 2
+            value = ImGui.dataTypeApplyOp(DataType.Short, '+', value, one)
+            assert(value == 3.s)
+            value = Short.MAX_VALUE
+            value = ImGui.dataTypeApplyOp(DataType.Short, '+', value, one)
+            assert(value == Short.MAX_VALUE)
+            value = Short.MIN_VALUE
+            value = ImGui.dataTypeApplyOp(DataType.Short, '-', value, one)
+            assert(value == Short.MIN_VALUE)
+        }
 //        {
 //            ImU16 one = 1;
 //            ImU16 value = 2;
@@ -376,8 +379,9 @@ fun registerTests_Misc(e: TestEngine) {
 //            ImGui::DataTypeApplyOp(ImGuiDataType_U64, '-', &value, &value, &one);
 //            IM_CHECK(value == 0);
 //        }
-//    };
-//
+        }
+    }
+
 //    // ## Test basic clipboard, test that clipboard is empty on start
 //    t = REGISTER_TEST("misc", "misc_clipboard");
 //    t->TestFunc = [](ImGuiTestContext* ctx)
@@ -777,3 +781,7 @@ fun registerTests_Misc(e: TestEngine) {
 //        ImGui::GetStyle() = style_backup;
 //    };
 }
+
+val defaultRanges = arrayOf(
+        IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
+        IntRange(0x0080, 0x00FF)) // Latin_Supplement
