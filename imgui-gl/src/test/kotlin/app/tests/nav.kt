@@ -82,8 +82,8 @@ fun registerTests_Nav(e: TestEngine) {
         }
         t.testFunc = { ctx: TestContext ->
             val vars = ctx.genericVars
-            var popupOpen by vars::bool1
-            var fieldActive by vars::bool2
+            val popupOpen by vars::bool1
+            val fieldActive by vars::bool2
 
             // FIXME-TESTS: Come up with a better mechanism to get popup ID
             var popupId by vars::id
@@ -108,7 +108,7 @@ fun registerTests_Nav(e: TestEngine) {
 
     // ## Test AltGr doesn't trigger menu layer
     e.registerTest("nav", "nav_altgr_no_menu").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             dsl.window("Test window", null, Wf.NoSavedSettings or Wf.MenuBar) {
                 dsl.menuBar {
                     dsl.menu("Menu") {
@@ -136,7 +136,7 @@ fun registerTests_Nav(e: TestEngine) {
 
     // ## Test navigation home and end keys
     e.registerTest("nav", "nav_home_end_keys").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.setNextWindowSize(Vec2(100, 150))
             dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
                 for (i in 0..9)
@@ -188,7 +188,7 @@ fun registerTests_Nav(e: TestEngine) {
 
     // ## Test CTRL+TAB window focusing
     e.registerTest("nav", "nav_ctrl_tab_focusing").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             dsl.window("Window 1", null, Wf.AlwaysAutoResize.i) {
                 ImGui.textUnformatted("Not empty space")
             }
@@ -236,7 +236,7 @@ fun registerTests_Nav(e: TestEngine) {
 
     // ## Test NavID restoration during CTRL+TAB focusing
     e.registerTest("nav", "nav_ctrl_tab_nav_id_restore").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             dsl.window("Window 1", null, Wf.AlwaysAutoResize.i) {
                 ImGui.button("Button 1")
             }
