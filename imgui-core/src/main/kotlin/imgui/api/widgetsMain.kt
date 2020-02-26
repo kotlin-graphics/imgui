@@ -78,7 +78,7 @@ interface widgetsMain {
 
         assert(sizeArg.allNotEqual(0f)) { "Cannot use zero-size for InvisibleButton(). Unlike Button() there is not way to fallback using the label size." }
 
-        val id = window.getId(strId)
+        val id = window.getID(strId)
         val size = calcItemSize(sizeArg, 0f, 0f)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         itemSize(size)
@@ -122,7 +122,7 @@ interface widgetsMain {
         /*  Default to using texture ID as ID. User can still push string/integer prefixes.
             We could hash the size/uv to create a unique ID but that would prevent the user from animating UV.         */
         pushID(userTextureId)
-        val id = window.getId("#image")
+        val id = window.getID("#image")
         popID()
 
         val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
@@ -159,7 +159,7 @@ interface widgetsMain {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight
@@ -228,7 +228,7 @@ interface widgetsMain {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight

@@ -142,7 +142,7 @@ interface widgetsSliders {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val w = calcItemWidth()
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -259,7 +259,7 @@ interface widgetsSliders {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)

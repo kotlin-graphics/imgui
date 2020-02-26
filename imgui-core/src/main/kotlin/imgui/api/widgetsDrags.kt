@@ -207,7 +207,7 @@ interface widgetsDrags {
         if (power != 1f)
             assert(pMin != null && pMax != null) { "When using a power curve the drag needs to have known bounds" }
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val w = calcItemWidth()
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
