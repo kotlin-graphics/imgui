@@ -330,12 +330,12 @@ class DrawData {
         val ret = DrawData()
 
         ret.cmdLists.addAll(cmdLists)
-        ret.displayPos = displayPos
-        ret.displaySize = displaySize
+        ret.displayPos put displayPos
+        ret.displaySize put displaySize
         ret.totalIdxCount = totalIdxCount
         ret.totalVtxCount = totalVtxCount
         ret.valid = valid
-        ret.framebufferScale = framebufferScale
+        ret.framebufferScale put framebufferScale
 
         return ret
     }
