@@ -1,8 +1,13 @@
 package imgui
 
 import glm_.*
+import java.math.BigInteger
 import kotlin.math.min as kmin
 import kotlin.math.max as kmax
+import kotlin.plus
+import kotlin.minus
+import kotlin.times
+import kotlin.div
 import imgui.internal.lerp as ilerp
 
 infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
@@ -12,6 +17,7 @@ infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> =
     this is Long && other is Long -> this + other
     this is Float && other is Float -> this + other
     this is Double && other is Double -> this + other
+    this is BigInteger && other is BigInteger -> this + other
     else -> error("Invalid operand types")
 } as N
 
@@ -22,6 +28,7 @@ infix operator fun <N> N.minus(other: N): N where N : Number, N : Comparable<N> 
     this is Long && other is Long -> this - other
     this is Float && other is Float -> this - other
     this is Double && other is Double -> this - other
+    this is BigInteger && other is BigInteger -> this - other
     else -> error("Invalid operand types")
 } as N
 
@@ -32,6 +39,7 @@ infix operator fun <N> N.times(other: N): N where N : Number, N : Comparable<N> 
     this is Long && other is Long -> this * other
     this is Float && other is Float -> this * other
     this is Double && other is Double -> this * other
+    this is BigInteger && other is BigInteger -> this * other
     else -> error("Invalid operand types")
 } as N
 
@@ -42,6 +50,7 @@ infix operator fun <N> N.div(other: N): N where N : Number, N : Comparable<N> = 
     this is Long && other is Long -> this / other
     this is Float && other is Float -> this / other
     this is Double && other is Double -> this / other
+    this is BigInteger && other is BigInteger -> this / other
     else -> error("Invalid operand types")
 } as N
 

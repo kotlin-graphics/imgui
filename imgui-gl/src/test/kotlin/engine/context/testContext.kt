@@ -164,7 +164,7 @@ class TestContext {
     var refID: ID = 0
     var inputMode = InputSource.Mouse
     var opFlags = TestOpFlag.None.i
-    val clipboard = ArrayList<Byte>()
+    var clipboard = ByteArray(0)
 
     // Performance
     var perfRefDt = -1.0
