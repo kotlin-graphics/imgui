@@ -50,18 +50,15 @@ object LongText {
             1 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
                 val clipper = ListClipper(lines)
-                while (clipper.step()) {
-                    for (i in clipper.display) {
+                while (clipper.step())
+                    for (i in clipper.display)
                         text("%d The quick brown fox jumps over the lazy dog".format(i))
-                    }
-                }
                 popStyleVar()
             }
             2 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0, 1))
-                for (i in 0 until lines) {
+                for (i in 0 until lines)
                     text("%d The quick brown fox jumps over the lazy dog".format(i))
-                }
                 popStyleVar()
             }
         }
