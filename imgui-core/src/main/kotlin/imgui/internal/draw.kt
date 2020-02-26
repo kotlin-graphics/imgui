@@ -335,6 +335,7 @@ class DrawData {
         ret.totalIdxCount = totalIdxCount
         ret.totalVtxCount = totalVtxCount
         ret.valid = valid
+        ret.framebufferScale = framebufferScale
 
         return ret
     }
