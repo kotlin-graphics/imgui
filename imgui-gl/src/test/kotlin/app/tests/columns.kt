@@ -16,7 +16,7 @@ fun registerTests_Columns(e: TestEngine) {
 
     // ## Test number of draw calls used by columns
     e.registerTest("columns", "columns_draw_calls").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.begin("Test window 1", null, WindowFlag.NoSavedSettings.i)
             ImGui.text("Hello")
             val drawList = ImGui.windowDrawList
@@ -81,7 +81,7 @@ fun registerTests_Columns(e: TestEngine) {
 
     // ## Test behavior of some Column functions without Columns/BeginColumns.
     e.registerTest("columns", "columns_functions_without_columns").let { t ->
-        t.testFunc = { ctx: TestContext ->
+        t.testFunc = {
             dsl.window("Test window 1", null, WindowFlag.NoSavedSettings.i) {
                 assert(ImGui.columnsCount == 1)
                 assert(ImGui.getColumnOffset() == 0f)
