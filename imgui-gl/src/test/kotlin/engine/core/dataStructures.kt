@@ -4,8 +4,10 @@ import engine.CaptureTool
 import engine.MovingAverageDouble
 import engine.context.TestContext
 import imgui.ID
+import imgui.cStr
 import imgui.classes.Context
 import imgui.classes.TextFilter
+import unsigned.toULong
 import java.nio.ByteBuffer
 
 //-------------------------------------------------------------------------
@@ -21,6 +23,7 @@ class TestLocateTask(
 ) {
     var debugName = ByteArray(64)  // char[64]
     val result = TestItemInfo()
+    override fun toString() = "id=${id.toULong()} frameCount=$frameCount debugName=${debugName.cStr}"
 }
 
 class TestRunTask(var test: Test? = null, var runFlags: TestRunFlags = TestRunFlag.None.i)

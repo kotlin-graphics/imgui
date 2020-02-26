@@ -11,8 +11,13 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.gImGui
+import imgui.internal.ItemStatusFlag
+import imgui.internal.classes.Rect
+import imgui.internal.has
 import imgui.internal.hash
 import imgui.stb.te
+import io.kotlintest.matchers.floats.shouldBeGreaterThan
+import io.kotlintest.matchers.floats.shouldBeLessThan
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldNotBe
 import imgui.WindowFlag as Wf
@@ -888,178 +893,157 @@ fun registerTests_Widgets(e: TestEngine) {
 //        ImGui::End();
 //    };
 //    #endif
-//
-//    // ## Test SetSelected on first frame of a TabItem
-//    t = REGISTER_TEST("widgets", "widgets_tabbar_tabitem_setselected");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        if (ImGui::BeginTabBar("tab_bar"))
-//        {
-//            if (ImGui::BeginTabItem("TabItem 0"))
-//            {
-//                ImGui::TextUnformatted("First tab content");
-//                ImGui::EndTabItem();
-//            }
-//
-//            if (ctx->FrameCount >= 0)
-//            {
-//                bool tab_item_visible = ImGui::BeginTabItem("TabItem 1", NULL, ctx->FrameCount == 0 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None);
-//                if (tab_item_visible)
-//                {
-//                    ImGui::TextUnformatted("Second tab content");
-//                    ImGui::EndTabItem();
-//                }
-//                if (ctx->FrameCount > 0)
-//                IM_CHECK(tab_item_visible);
-//            }
-//            ImGui::EndTabBar();
-//        }
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx) { ctx->Yield(); };
-//
-//    // ## Test ImGuiTreeNodeFlags_SpanAvailWidth and ImGuiTreeNodeFlags_SpanFullWidth flags
-//    t = REGISTER_TEST("widgets", "widgets_tree_node_span_width");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_Always);
-//        ImGui::Begin("Test Window", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGuiWindow* window = ImGui::GetCurrentWindow();
-//
-//        ImGui::SetNextItemOpen(true);
-//        if (ImGui::TreeNodeEx("Parent"))
-//        {
-//            // Interaction rect does not span entire width of work area.
-//            IM_CHECK(window->DC.LastItemRect.Max.x < window->WorkRect.Max.x);
-//            // But it starts at very beginning of WorkRect for first tree level.
-//            IM_CHECK(window->DC.LastItemRect.Min.x == window->WorkRect.Min.x);
-//            ImGui::SetNextItemOpen(true);
-//            if (ImGui::TreeNodeEx("Regular"))
-//            {
-//                // Interaction rect does not span entire width of work area.
-//                IM_CHECK(window->DC.LastItemRect.Max.x < window->WorkRect.Max.x);
-//                IM_CHECK(window->DC.LastItemRect.Min.x > window->WorkRect.Min.x);
-//                ImGui::TreePop();
-//            }
-//            ImGui::SetNextItemOpen(true);
-//            if (ImGui::TreeNodeEx("SpanAvailWidth", ImGuiTreeNodeFlags_SpanAvailWidth))
-//            {
-//                // Interaction rect matches visible frame rect
-//                IM_CHECK((window->DC.LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) != 0);
-//                IM_CHECK(window->DC.LastItemDisplayRect.Min == window->DC.LastItemRect.Min);
-//                IM_CHECK(window->DC.LastItemDisplayRect.Max == window->DC.LastItemRect.Max);
-//                // Interaction rect extends to the end of the available area.
-//                IM_CHECK(window->DC.LastItemRect.Max.x == window->WorkRect.Max.x);
-//                ImGui::TreePop();
-//            }
-//            ImGui::SetNextItemOpen(true);
-//            if (ImGui::TreeNodeEx("SpanFullWidth", ImGuiTreeNodeFlags_SpanFullWidth))
-//            {
-//                // Interaction rect matches visible frame rect
-//                IM_CHECK((window->DC.LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) != 0);
-//                IM_CHECK(window->DC.LastItemDisplayRect.Min == window->DC.LastItemRect.Min);
-//                IM_CHECK(window->DC.LastItemDisplayRect.Max == window->DC.LastItemRect.Max);
-//                // Interaction rect extends to the end of the available area.
-//                IM_CHECK(window->DC.LastItemRect.Max.x == window->WorkRect.Max.x);
-//                // ImGuiTreeNodeFlags_SpanFullWidth also extends interaction rect to the left.
-//                IM_CHECK(window->DC.LastItemRect.Min.x == window->WorkRect.Min.x);
-//                ImGui::TreePop();
-//            }
-//            ImGui::TreePop();
-//        }
-//
-//        ImGui::End();
-//    };
-//
-//    // ## Test PlotLines() with a single value (#2387).
-//    t = REGISTER_TEST("widgets", "widgets_plot_lines_unexpected_input");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        float values[1] = {0.f};
-//        ImGui::PlotLines("PlotLines 1", NULL, 0);
-//        ImGui::PlotLines("PlotLines 2", values, 0);
-//        ImGui::PlotLines("PlotLines 3", values, 1);
-//        // FIXME-TESTS: If test did not crash - it passed. A better way to check this would be useful.
-//    };
-//
-//    // ## Test BeginDragDropSource() with NULL id.
-//    t = REGISTER_TEST("widgets", "widgets_drag_source_null_id");
-//    struct WidgetDragSourceNullIDData
-//            {
-//                ImVec2 Source;
-//                ImVec2 Destination;
-//                bool Dropped = false;
-//            };
-//    t->SetUserDataType<WidgetDragSourceNullIDData>();
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        WidgetDragSourceNullIDData& user_data = *(WidgetDragSourceNullIDData*)ctx->UserData;
-//
-//        ImGui::Begin("Null ID Test");
-//        ImGui::TextUnformatted("Null ID");
-//        user_data.Source = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax()).GetCenter();
-//
-//        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-//        {
-//            int magic = 0xF00;
-//            ImGui::SetDragDropPayload("MAGIC", &magic, sizeof(int));
-//            ImGui::EndDragDropSource();
-//        }
-//        ImGui::TextUnformatted("Drop Here");
-//        user_data.Destination = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax()).GetCenter();
-//
-//        if (ImGui::BeginDragDropTarget())
-//        {
-//            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MAGIC"))
-//            {
-//                user_data.Dropped = true;
-//                IM_CHECK_EQ(payload->DataSize, (int)sizeof(int));
-//                IM_CHECK_EQ(*(int*)payload->Data, 0xF00);
-//            }
-//            ImGui::EndDragDropTarget();
-//        }
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        WidgetDragSourceNullIDData& user_data = *(WidgetDragSourceNullIDData*)ctx->UserData;
-//
-//        // ImGui::TextUnformatted() does not have an ID therefore we can not use ctx->ItemDragAndDrop() as that refers
-//        // to items by their ID.
-//        ctx->MouseMoveToPos(user_data.Source);
-//        ctx->SleepShort();
-//        ctx->MouseDown(0);
-//
-//        ctx->MouseMoveToPos(user_data.Destination);
-//        ctx->SleepShort();
-//        ctx->MouseUp(0);
-//
-//        IM_CHECK(user_data.Dropped);
-//    };
-//
-//    // ## Test long text rendering by TextUnformatted().
-//    t = REGISTER_TEST("widgets", "widgets_text_unformatted_long");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowRef("Dear ImGui Demo");
-//        ctx->MenuClick("Examples/Long text display");
-//        ctx->WindowRef("Example: Long text display");
-//        ctx->ItemClick("Add 1000 lines");
-//        ctx->SleepShort();
-//
-//        Str64f title("/Example: Long text display\\/Log_%08X", ctx->GetID("Log"));
-//        ImGuiWindow* log_panel = ctx->GetWindowByRef(title.c_str());
-//        IM_CHECK(log_panel != NULL);
-//        ImGui::SetScrollY(log_panel, log_panel->ScrollMax.y);
-//        ctx->SleepShort();
-//        ctx->ItemClick("Clear");
-//        // FIXME-TESTS: A bit of extra testing that will be possible once tomato problem is solved.
-//        // ctx->ComboClick("Test type/Single call to TextUnformatted()");
-//        // ctx->ComboClick("Test type/Multiple calls to Text(), clipped");
-//        // ctx->ComboClick("Test type/Multiple calls to Text(), not clipped (slow)");
-//        ctx->WindowClose("");
-//    };
+
+    // ## Test SetSelected on first frame of a TabItem
+    e.registerTest("widgets", "widgets_tabbar_tabitem_setselected").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                dsl.tabBar("tab_bar") {
+                    dsl.tabItem("TabItem 0") {
+                        ImGui.textUnformatted("First tab content")
+                    }
+
+                    if (ctx.frameCount >= 0) {
+                        val flag = if (ctx.frameCount == 0) TabItemFlag.SetSelected else TabItemFlag.None
+                        val tabItemVisible = ImGui.beginTabItem("TabItem 1", null, flag.i)
+                        if (tabItemVisible) {
+                            ImGui.textUnformatted("Second tab content")
+                            ImGui.endTabItem()
+                        }
+                        if (ctx.frameCount > 0)
+                            assert(tabItemVisible)
+                    }
+                }
+            }
+        }
+        t.testFunc = { ctx: TestContext -> ctx.yield() }
+    }
+
+    // ## Test ImGuiTreeNodeFlags_SpanAvailWidth and ImGuiTreeNodeFlags_SpanFullWidth flags
+    e.registerTest("widgets", "widgets_tree_node_span_width").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+            ImGui.setNextWindowSize(Vec2(300, 100), Cond.Always)
+            dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
+                val window = ImGui.currentWindow
+
+                ImGui.setNextItemOpen(true)
+                if (ImGui.treeNodeEx("Parent")) {
+                    // Interaction rect does not span entire width of work area.
+                    window.dc.lastItemRect.max.x shouldBeLessThan window.workRect.max.x
+                    // But it starts at very beginning of WorkRect for first tree level.
+                    window.dc.lastItemRect.min.x shouldBe window.workRect.min.x
+                    ImGui.setNextItemOpen(true)
+                    if (ImGui.treeNodeEx("Regular")) {
+                        // Interaction rect does not span entire width of work area.
+                        window.dc.lastItemRect.max.x shouldBeLessThan window.workRect.max.x
+                        window.dc.lastItemRect.min.x shouldBeGreaterThan window.workRect.min.x
+                        ImGui.treePop()
+                    }
+                    ImGui.setNextItemOpen(true)
+                    if (ImGui.treeNodeEx("SpanAvailWidth", TreeNodeFlag.SpanAvailWidth.i)) {
+                        // Interaction rect matches visible frame rect
+                        assert(window.dc.lastItemStatusFlags has ItemStatusFlag.HasDisplayRect)
+                        window.dc.lastItemDisplayRect.min shouldBe window.dc.lastItemRect.min
+                        window.dc.lastItemDisplayRect.max shouldBe window.dc.lastItemRect.max
+                        // Interaction rect extends to the end of the available area.
+                        window.dc.lastItemRect.max.x shouldBe window.workRect.max.x
+                        ImGui.treePop()
+                    }
+                    ImGui.setNextItemOpen(true)
+                    if (ImGui.treeNodeEx("SpanFullWidth", TreeNodeFlag.SpanFullWidth.i)) {
+                        // Interaction rect matches visible frame rect
+                        assert(window.dc.lastItemStatusFlags has ItemStatusFlag.HasDisplayRect)
+                        window.dc.lastItemDisplayRect.min shouldBe window.dc.lastItemRect.min
+                        window.dc.lastItemDisplayRect.max shouldBe window.dc.lastItemRect.max
+                        // Interaction rect extends to the end of the available area.
+                        window.dc.lastItemRect.max.x shouldBe window.workRect.max.x
+                        // ImGuiTreeNodeFlags_SpanFullWidth also extends interaction rect to the left.
+                        window.dc.lastItemRect.min.x shouldBe window.workRect.min.x
+                        ImGui.treePop()
+                    }
+                    ImGui.treePop()
+                }
+            }
+        }
+    }
+
+    // ## Test PlotLines() with a single value (#2387).
+    e.registerTest("widgets", "widgets_plot_lines_unexpected_input").let { t ->
+        t.testFunc = { ctx: TestContext ->
+            val values = floatArrayOf(0f)
+            ImGui.plotLines("PlotLines 1", floatArrayOf())
+            ImGui.plotLines("PlotLines 2", values)
+            ImGui.plotLines("PlotLines 3", values)
+            // FIXME-TESTS: If test did not crash - it passed. A better way to check this would be useful.
+        }
+    }
+
+    // ## Test BeginDragDropSource() with NULL id.
+    e.registerTest("widgets", "widgets_drag_source_null_id").let { t ->
+        t.userData = WidgetDragSourceNullIdData()
+        t.guiFunc = { ctx: TestContext ->
+
+            val userData = ctx.userData as WidgetDragSourceNullIdData
+
+            dsl.window("Null ID Test") {
+                ImGui.textUnformatted("Null ID")
+                userData.source = Rect(ImGui.itemRectMin, ImGui.itemRectMax).center
+
+                dsl.dragDropSource(DragDropFlag.SourceAllowNullID.i) {
+                    val magic = 0xF00
+                    ImGui.setDragDropPayload("MAGIC", magic)
+                }
+                ImGui.textUnformatted("Drop Here")
+                userData.destination = Rect(ImGui.itemRectMin, ImGui.itemRectMax).center
+
+                dsl.dragDropTarget {
+                    ImGui.acceptDragDropPayload("MAGIC")?.let { payload ->
+                        userData.dropped = true
+                        (payload.data as Int) shouldBe 0xF00
+                    }
+                }
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+
+            val userData = ctx.userData as WidgetDragSourceNullIdData
+
+            // ImGui::TextUnformatted() does not have an ID therefore we can not use ctx->ItemDragAndDrop() as that refers
+            // to items by their ID.
+            ctx.mouseMoveToPos(userData.source)
+            ctx.sleepShort()
+            ctx.mouseDown(0)
+
+            ctx.mouseMoveToPos(userData.destination)
+            ctx.sleepShort()
+            ctx.mouseUp(0)
+
+            userData.dropped shouldBe true
+        }
+    }
+
+    // ## Test long text rendering by TextUnformatted().
+    e.registerTest("widgets", "widgets_text_unformatted_long").let { t ->
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowRef("Dear ImGui Demo")
+            ctx.menuClick("Examples/Long text display")
+            ctx.windowRef("Example: Long text display")
+            ctx.itemClick("Add 1000 lines")
+            ctx.sleepShort()
+
+            val title = "/Example: Long text display\\/Log_%08X".format(ctx.getID("Log"))
+            val logPanel = ctx.getWindowByRef(title)!!
+//            assert(logPanel != null)
+            logPanel setScrollY logPanel.scrollMax.y
+            ctx.sleepShort()
+            ctx.itemClick("Clear")
+            // FIXME-TESTS: A bit of extra testing that will be possible once tomato problem is solved.
+            // ctx->ComboClick("Test type/Single call to TextUnformatted()");
+            // ctx->ComboClick("Test type/Multiple calls to Text(), clipped");
+            // ctx->ComboClick("Test type/Multiple calls to Text(), not clipped (slow)");
+            ctx.windowClose("")
+        }
+    }
 }
 
 class ButtonStateTestVars {
@@ -1069,3 +1053,8 @@ class ButtonStateTestVars {
 
 // ## Test ButtonBehavior frame by frame behaviors (see comments at the top of the ButtonBehavior() function)
 enum class ButtonStateMachineTestStep { None, Init, MovedOver, MouseDown, MovedAway, MovedOverAgain, MouseUp, Done }
+
+class WidgetDragSourceNullIdData(var dropped: Boolean = false) {
+    lateinit var source: Vec2
+    lateinit var destination: Vec2
+}
