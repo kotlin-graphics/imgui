@@ -28,7 +28,7 @@ object LongText {
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
         setNextWindowSize(Vec2(520, 600), Cond.FirstUseEver)
-        if (!begin("Example: Long text display, TODO", open)) {
+        if (!begin("Example: Long text display", open)) {
             end()
             return
         }

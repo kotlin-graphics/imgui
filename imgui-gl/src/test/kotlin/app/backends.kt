@@ -12,7 +12,7 @@ import org.lwjgl.opengl.GL11C.*
 import java.nio.ByteBuffer
 
 
-var showDemoWindow = true
+var showDemoWindow_ = true
 var showAnotherWindow = false
 
 var f = 0f
@@ -23,8 +23,8 @@ fun mainLoopEndFrame(): Boolean {
     app.testEngine!!.showTestWindow()
 
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (showDemoWindow)
-        ImGui.showDemoWindow(::showDemoWindow)
+    if (showDemoWindow_)
+        ImGui.showDemoWindow(::showDemoWindow_)
 
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     ImGui.apply {
@@ -32,9 +32,8 @@ fun mainLoopEndFrame(): Boolean {
         begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
 
         text("This is some useful text.")               // Display some text (you can use a format strings too)
-        // TODO
-//        checkbox("Demo Window", ::showDemoWindow)      // Edit bools storing our window open/close state
-//        checkbox("Another Window", ::showAnotherWindow)
+        checkbox("Demo Window", ::showDemoWindow_)      // Edit bools storing our window open/close state
+        checkbox("Another Window", ::showAnotherWindow)
 
         sliderFloat("float", ::f, 0f, 1f)            // Edit 1 float using a slider from 0.0f to 1.0f
         colorEdit3("clear color", app.clearColor) // Edit 3 floats representing a color
