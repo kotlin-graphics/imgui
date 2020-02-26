@@ -701,7 +701,7 @@ interface widgetsColorEditorPicker {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(descId)
+        val id = window.getID(descId)
         val defaultSize = frameHeight
         if (size.x == 0f)
             size.x = defaultSize

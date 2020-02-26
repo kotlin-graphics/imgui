@@ -13,7 +13,6 @@ import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
-import imgui.ImGui.currentWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveID
@@ -29,10 +28,7 @@ import imgui.classes.SizeCallbackData
 import imgui.classes.Storage
 import imgui.internal.*
 import imgui.static.viewportRect
-import kool.BYTES
 import kool.cap
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.abs
@@ -146,7 +142,7 @@ class Window(var context: Context,
 
     init {
         idStack += id
-        moveId = getId("#MOVE")
+        moveId = getID("#MOVE")
         childId = 0
     }
 
@@ -214,7 +210,7 @@ class Window(var context: Context,
     var memoryDrawListVtxCapacity = 0
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
-    fun getId(str: String, end: Int = 0): ID {
+    fun getID(str: String, end: Int = 0): ID {
         // FIXME: ImHash with str_end doesn't behave same as with identical zero-terminated string, because of ### handling.
         val seed: ID = idStack.last()
         val id: ID = hash(str, end, seed)
@@ -222,7 +218,7 @@ class Window(var context: Context,
         return id
     }
 
-    fun getId(ptr: Any): ID {
+    fun getID(ptr: Any): ID {
         val ptrIndex = ++ptrIndices
         if (ptrIndex >= ptrId.size) {
             val newBufLength = ptrId.size + 512
@@ -235,7 +231,7 @@ class Window(var context: Context,
         return id
     }
 
-    fun getId(n: Int): ID = hash(n, seed = idStack.last()).also { keepAliveID(it) }
+    fun getID(n: Int): ID = hash(n, seed = idStack.last()).also { keepAliveID(it) }
 
     fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): ID {
         val seed: ID = idStack.last()
@@ -735,12 +731,12 @@ class Window(var context: Context,
 
         // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
         if (hasCollapseButton)
-            if (collapseButton(getId("#COLLAPSE"), collapseButtonPos))
+            if (collapseButton(getID("#COLLAPSE"), collapseButtonPos))
                 wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
 
         // Close button
         if (hasCloseButton)
-            if (closeButton(getId("#CLOSE"), closeButtonPos))
+            if (closeButton(getID("#CLOSE"), closeButtonPos))
                 pOpen!!.set(false)
 
         dc.navLayerCurrent = NavLayer.Main

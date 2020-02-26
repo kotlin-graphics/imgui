@@ -53,7 +53,7 @@ fun TestContext.itemAction(action_: TestAction, ref: TestRef, actionArg: Int? = 
             } else action = TestAction.NavActivate
 
         if (action == TestAction.NavActivate) {
-            assert(actionArg == null) // Unused
+            assert(actionArg == null || actionArg == 0) // Unused
             navMoveTo(ref)
             navActivate()
             if (action == TestAction.DoubleClick)
@@ -147,7 +147,13 @@ infix fun TestContext.itemDoubleClick(ref: String) = itemAction(TestAction.Doubl
 
 infix fun TestContext.itemDoubleClick(ref: TestRef) = itemAction(TestAction.DoubleClick, ref)
 
+// [JVM]
+infix fun TestContext.itemCheck(ref: String) = itemCheck(TestRef(path = ref))
+
 infix fun TestContext.itemCheck(ref: TestRef) = itemAction(TestAction.Check, ref)
+
+// [JVM]
+infix fun TestContext.itemUncheck(ref: String) = itemUncheck(TestRef(path = ref))
 
 infix fun TestContext.itemUncheck(ref: TestRef) = itemAction(TestAction.Uncheck, ref)
 

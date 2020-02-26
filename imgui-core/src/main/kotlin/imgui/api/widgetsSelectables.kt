@@ -56,7 +56,7 @@ interface widgetsSelectables {
         if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)  // FIXME-OPT: Avoid if vertically clipped.
             pushColumnsBackground()
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val size = Vec2(if (sizeArg.x != 0f) sizeArg.x else labelSize.x, if (sizeArg.y != 0f) sizeArg.y else labelSize.y)
         val pos = Vec2(window.dc.cursorPos)

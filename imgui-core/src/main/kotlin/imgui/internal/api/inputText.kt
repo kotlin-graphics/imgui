@@ -104,7 +104,7 @@ internal interface inputText {
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val h = if (isMultiline) g.fontSize * 8f else labelSize.y
         val frameSize = calcItemSize(sizeArg, calcItemWidth(), h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
