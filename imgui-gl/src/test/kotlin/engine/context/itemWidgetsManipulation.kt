@@ -178,7 +178,7 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
 
     var actionedTotal = 0
     for (pass in 0 until maxPasses) {
-
+        println(pass)
         val items = TestItemList()
         gatherItems(items, refParent, maxDepth)
 
@@ -209,6 +209,7 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
             if (isError) break
 
             val info = items[n]
+            println("Window ${info.window?.name} [$n] ${info.debugLabel}")
             when (action) {
                 TestAction.Click -> {
                     itemAction(action, info.id)
@@ -246,9 +247,15 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
     logDebug("$action $actionedTotal items in total!")
 }
 
+// [JVM]
+fun TestContext.itemOpenAll(refParent: String, depth: Int = 99, passes: Int = 99) = itemOpenAll(TestRef(path = refParent), depth, passes)
+
 fun TestContext.itemOpenAll(refParent: TestRef, depth: Int = 99, passes: Int = 99) = itemActionAll(TestAction.Open, refParent, depth, passes)
 
 fun TestContext.itemCloseAll(refParent: TestRef, depth: Int = 99, passes: Int = 99) = itemActionAll(TestAction.Close, refParent, depth, passes)
+
+// [JVM]
+fun TestContext.itemHold(ref: String, time: Float) = itemHold(TestRef(path = ref), time)
 
 fun TestContext.itemHold(ref: TestRef, time: Float) {
 
