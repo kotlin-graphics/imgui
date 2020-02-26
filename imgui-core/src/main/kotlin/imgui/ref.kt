@@ -103,3 +103,4 @@ var _f = 0f
 var _f1 = 0f
 var _f2 = 0f
 var _c = NUL
+var _s = ""

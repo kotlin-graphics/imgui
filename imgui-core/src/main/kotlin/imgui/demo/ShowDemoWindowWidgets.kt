@@ -161,6 +161,7 @@ import kool.BYTES
 import unsigned.Ubyte
 import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
@@ -226,6 +227,14 @@ object ShowDemoWindowWidgets {
     var currentItem3 = 0
     var currentItem4 = 0
     var currentItem5 = 0
+    var currentItem6 = 0
+
+    object FuncHolder {
+        val itemGetter: (Array<String>, Int, KMutableProperty0<String>) -> Boolean = { items, idx, pStr ->
+            pStr.set(items[idx])
+            true
+        }
+    }
 
 
     /* Selectables */
@@ -747,9 +756,7 @@ object ShowDemoWindowWidgets {
             combo("combo 3 (array)", ::currentItem5, items)
 
             // Simplified one-liner Combo() using an accessor function TODO
-//                struct FuncHolder { static bool ItemGetter(void * data, int idx, const char * * out_str) { *out_str = ((const char * *) data)[idx]; return true; } };
-//                static int item_current_4 = 0;
-//                ImGui::Combo("combo 4 (function)", & item_current_4, &FuncHolder::ItemGetter, items, IM_ARRAYSIZE(items));
+            combo("combo 4 (function)", ::currentItem6, FuncHolder.itemGetter, items.toTypedArray())
         }
 
         treeNode("Selectables") {
