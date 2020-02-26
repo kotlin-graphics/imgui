@@ -141,7 +141,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
         io.backendLanguageUserData = null
         io.backendRendererUserData = null
         io.backendPlatformUserData = null
-        io.setClipboardTextFn = { text ->
+        io.setClipboardTextFn = { userData, text ->
             Clipboard.getSystemClipboard().setContent(mapOf(DataFormat.PLAIN_TEXT to text))
         }
         io.getClipboardTextFn = {
