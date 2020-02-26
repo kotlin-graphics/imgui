@@ -167,11 +167,8 @@ internal interface internal {
         val fmtStart = parseFormatFindStart(fmt)
         if (fmt[fmtStart] != '%')
             return fmt
-        val fmtEnd = parseFormatFindEnd(fmt.substring(fmtStart))
-        return when {
-            fmtStart + fmtEnd >= fmt.length -> fmt.substring(fmtStart) // If we only have leading decoration, we don't need to copy the data.
-            else -> fmt.substring(fmtStart, fmtEnd)
-        }
+        val fmtEnd = fmtStart + parseFormatFindEnd(fmt.substring(fmtStart))
+        return fmt.substring(fmtStart, fmtEnd)
     }
 
     /** Parse display precision back from the display format string

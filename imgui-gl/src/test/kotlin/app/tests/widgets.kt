@@ -276,7 +276,7 @@ fun registerTests_Widgets(e: TestEngine) {
 
     // FIXME-TESTS: WIP
     e.registerTest("widgets", "widgets_datatype_1").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.setNextWindowSize(Vec2(200))
             dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
                 val buf = floatArrayOf(42f, 100f, 42f)
@@ -841,7 +841,7 @@ fun registerTests_Widgets(e: TestEngine) {
 
     // ## Test that tight tab bar does not create extra drawcalls
     e.registerTest("widgets", "widgets_tabbar_drawcalls").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
                 dsl.tabBar("Tab Drawcalls") {
                     for (i in 0..19)
@@ -860,7 +860,7 @@ fun registerTests_Widgets(e: TestEngine) {
 
     // ## Test recursing Tab Bars (Bug #2371)
     e.registerTest("widgets", "widgets_tabbar_recurse").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
                 dsl.tabBar("TabBar 0") {
                     dsl.tabItem("TabItem") {
@@ -921,7 +921,7 @@ fun registerTests_Widgets(e: TestEngine) {
 
     // ## Test ImGuiTreeNodeFlags_SpanAvailWidth and ImGuiTreeNodeFlags_SpanFullWidth flags
     e.registerTest("widgets", "widgets_tree_node_span_width").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.setNextWindowSize(Vec2(300, 100), Cond.Always)
             dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
                 val window = ImGui.currentWindow
@@ -969,7 +969,7 @@ fun registerTests_Widgets(e: TestEngine) {
 
     // ## Test PlotLines() with a single value (#2387).
     e.registerTest("widgets", "widgets_plot_lines_unexpected_input").let { t ->
-        t.testFunc = { ctx: TestContext ->
+        t.testFunc = {
             val values = floatArrayOf(0f)
             ImGui.plotLines("PlotLines 1", floatArrayOf())
             ImGui.plotLines("PlotLines 2", values)

@@ -148,7 +148,7 @@ fun registerTests_Window(e: TestEngine) {
 
     // ## Test that uncollapsing an auto-resizing window does not go through a frame where the window is smaller than expected
     e.registerTest("window", "window_auto_resize_uncollapse").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             // FIXME-TESTS: Ideally we'd like a variant with/without the if (Begin) here
             dsl.window("Test Window", null, Wf.NoSavedSettings or Wf.AlwaysAutoResize) {
                 ImGui.text("Some text\nOver two lines\nOver three lines")
@@ -177,7 +177,7 @@ fun registerTests_Window(e: TestEngine) {
 
     // ## Test appending multiple times to a child window (bug #2282)
     e.registerTest("window", "window_append").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.setNextWindowSize(Vec2(200))
             dsl.window("Test Window", null, Wf.NoSavedSettings.i) {
                 ImGui.text("Line 1")
@@ -303,7 +303,7 @@ fun registerTests_Window(e: TestEngine) {
     // ## Test that basic SetScrollHereY call scrolls all the way (#1804)
     // ## Test expected value of ScrollMaxY
     e.registerTest("window", "window_scroll_001").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.setNextWindowSize(Vec2(0f, 500f))
             ImGui.begin("Test Scrolling", null, Wf.NoSavedSettings.i)
             for (n in 0..99)
@@ -360,7 +360,7 @@ fun registerTests_Window(e: TestEngine) {
     // ## Test that SetScrollY/GetScrollY values are matching. You'd think this would be obvious! Think again!
     // FIXME-TESTS: With/without menu bars, could we easily allow for test variations that affects both GuiFunc and TestFunc
     e.registerTest("window", "window_scroll_003").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             dsl.window("Test Scrolling 3") {
                 for (n in 0..99)
                     ImGui.text("Line $n")
@@ -403,7 +403,7 @@ fun registerTests_Window(e: TestEngine) {
 
     // ## Test window moving
     e.registerTest("window", "window_move").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.setNextWindowSize(Vec2(0))
             dsl.window("Movable Window") {
                 ImGui.textUnformatted("Lorem ipsum dolor sit amet")
@@ -423,7 +423,7 @@ fun registerTests_Window(e: TestEngine) {
     // ## Test closing current popup
     // FIXME-TESTS: Test left-click/right-click forms of closing popups
     e.registerTest("window", "window_close_current_popup").let { t ->
-        t.guiFunc = { ctx: TestContext ->
+        t.guiFunc = {
             ImGui.setNextWindowSize(Vec2())
             dsl.window("Popups", null, Wf.MenuBar.i) {
                 dsl.menuBar {

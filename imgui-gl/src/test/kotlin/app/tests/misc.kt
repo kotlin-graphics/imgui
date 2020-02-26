@@ -6,8 +6,13 @@ import engine.context.logDebug
 import engine.context.yieldFrames
 import engine.core.TestEngine
 import engine.core.registerTest
+import engine.hashDecoratedPath
 import imgui.ImGui
 import imgui.dsl
+import imgui.internal.classes.Pool
+import imgui.internal.classes.PoolIdx
+import imgui.internal.classes.TabBar
+import imgui.internal.hash
 
 fun registerTests_Misc(e: TestEngine) {
 
@@ -52,7 +57,7 @@ fun registerTests_Misc(e: TestEngine) {
 
             ctx.yieldFrames(3) // Give time to perform GC
             ctx.logDebug("Check GC-ed state")
-            for (i in 0..2)            {
+            for (i in 0..2) {
                 val window = ctx.getWindowByRef("GC Test $i")!!
                 assert(window.memoryCompacted)
                 assert(window.idStack.isEmpty())
@@ -62,125 +67,121 @@ fun registerTests_Misc(e: TestEngine) {
         }
     }
 
-//    // ## Test hash functions and ##/### operators
-//    t = REGISTER_TEST("misc", "misc_hash_001");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // Test hash function for the property we need
-//        IM_CHECK_EQ(ImHashStr("helloworld"), ImHashStr("world", 0, ImHashStr("hello", 0)));  // String concatenation
-//        IM_CHECK_EQ(ImHashStr("hello###world"), ImHashStr("###world"));                      // ### operator reset back to the seed
-//        IM_CHECK_EQ(ImHashStr("hello###world", 0, 1234), ImHashStr("###world", 0, 1234));    // ### operator reset back to the seed
-//        IM_CHECK_EQ(ImHashStr("helloxxx", 5), ImHashStr("hello"));                           // String size is honored
-//        IM_CHECK_EQ(ImHashStr("", 0, 0), (ImU32)0);                                          // Empty string doesn't alter hash
-//        IM_CHECK_EQ(ImHashStr("", 0, 1234), (ImU32)1234);                                    // Empty string doesn't alter hash
-//        IM_CHECK_EQ(ImHashStr("hello", 5), ImHashData("hello", 5));                          // FIXME: Do we need to guarantee this?
-//
-//        const int data[2] = { 42, 50 };
-//        IM_CHECK_EQ(ImHashData(&data[0], sizeof(int) * 2), ImHashData(&data[1], sizeof(int), ImHashData(&data[0], sizeof(int))));
-//        IM_CHECK_EQ(ImHashData("", 0, 1234), (ImU32)1234);                                   // Empty data doesn't alter hash
-//
-//        // Verify that Test Engine high-level hash wrapper works
-//        IM_CHECK_EQ(ImHashDecoratedPath("Hello/world"), ImHashStr("Helloworld"));            // Slashes are ignored
-//        IM_CHECK_EQ(ImHashDecoratedPath("Hello\\/world"), ImHashStr("Hello/world"));         // Slashes can be inhibited
-//        IM_CHECK_EQ(ImHashDecoratedPath("/Hello", 42), ImHashDecoratedPath("Hello"));        // Leading / clears seed
-//    };
-//
-//    // ## Test ImVector functions
-//    t = REGISTER_TEST("misc", "misc_vector_001");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImVector<int> v;
-//        IM_CHECK(v.Data == NULL);
-//        v.push_back(0);
-//        v.push_back(1);
-//        IM_CHECK(v.Data != NULL && v.Size == 2);
-//        v.push_back(2);
-//        bool r = v.find_erase(1);
-//        IM_CHECK(r == true);
-//        IM_CHECK(v.Data != NULL && v.Size == 2);
-//        r = v.find_erase(1);
-//        IM_CHECK(r == false);
-//        IM_CHECK(v.contains(0));
-//        IM_CHECK(v.contains(2));
-//        v.resize(0);
-//        IM_CHECK(v.Data != NULL && v.Capacity >= 3);
-//        v.clear();
-//        IM_CHECK(v.Data == NULL && v.Capacity == 0);
-//    };
-//
-//    // ## Test ImPool functions
-//    t = REGISTER_TEST("misc", "misc_pool_001");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImPool<ImGuiTabBar> pool;
-//        pool.GetOrAddByKey(0x11);
-//        pool.GetOrAddByKey(0x22); // May invalidate first point
-//        ImGuiTabBar* t1 = pool.GetByKey(0x11);
-//        ImGuiTabBar* t2 = pool.GetByKey(0x22);
-//        IM_CHECK(t1 != NULL && t2 != NULL);
-//        IM_CHECK(t1 + 1 == t2);
-//        IM_CHECK(pool.GetIndex(t1) == 0);
-//        IM_CHECK(pool.GetIndex(t2) == 1);
-//        IM_CHECK(pool.Contains(t1) && pool.Contains(t2));
-//        IM_CHECK(pool.Contains(t2 + 1) == false);
-//        IM_CHECK(pool.GetByIndex(pool.GetIndex(t1)) == t1);
-//        IM_CHECK(pool.GetByIndex(pool.GetIndex(t2)) == t2);
-//        ImGuiTabBar* t3 = pool.GetOrAddByKey(0x33);
-//        IM_CHECK(pool.GetIndex(t3) == 2);
-//        IM_CHECK(pool.GetSize() == 3);
-//        pool.Remove(0x22, pool.GetByKey(0x22));
-//        IM_CHECK(pool.GetByKey(0x22) == NULL);
-//        IM_CHECK(pool.GetSize() == 3);
-//        ImGuiTabBar* t4 = pool.GetOrAddByKey(0x40);
-//        IM_CHECK(pool.GetIndex(t4) == 1);
-//        IM_CHECK(pool.GetSize() == 3);
-//        pool.Clear();
-//        IM_CHECK(pool.GetSize() == 0);
-//    };
-//
-//    // ## Test behavior of ImParseFormatTrimDecorations
-//    t = REGISTER_TEST("misc", "misc_format_parse");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // fmt = "blah blah"  -> return fmt
-//        // fmt = "%.3f"       -> return fmt
-//        // fmt = "hello %.3f" -> return fmt + 6
-//        // fmt = "%.3f hello" -> return buf, "%.3f"
-//        //const char* ImGui::ParseFormatTrimDecorations(const char* fmt, char* buf, int buf_size)
-//        const char* fmt = NULL;
-//        const char* out = NULL;
-//        char buf[32] = { 0 };
-//        size_t buf_size = sizeof(buf);
-//
-//        fmt = "blah blah";
-//        out = ImParseFormatTrimDecorations(fmt, buf, buf_size);
-//        IM_CHECK(out == fmt);
-//
-//        fmt = "%.3f";
-//        out = ImParseFormatTrimDecorations(fmt, buf, buf_size);
-//        IM_CHECK(out == fmt);
-//
-//        fmt = "hello %.3f";
-//        out = ImParseFormatTrimDecorations(fmt, buf, buf_size);
-//        IM_CHECK(out == fmt + 6);
-//        IM_CHECK(strcmp(out, "%.3f") == 0);
-//
-//        fmt = "%%hi%.3f";
-//        out = ImParseFormatTrimDecorations(fmt, buf, buf_size);
-//        IM_CHECK(out == fmt + 4);
-//        IM_CHECK(strcmp(out, "%.3f") == 0);
-//
-//        fmt = "hello %.3f ms";
-//        out = ImParseFormatTrimDecorations(fmt, buf, buf_size);
-//        IM_CHECK(out == buf);
-//        IM_CHECK(strcmp(out, "%.3f") == 0);
-//
-//        fmt = "hello %f blah";
-//        out = ImParseFormatTrimDecorations(fmt, buf, buf_size);
-//        IM_CHECK(out == buf);
-//        IM_CHECK(strcmp(out, "%f") == 0);
-//    };
-//
+    // ## Test hash functions and ##/### operators
+    e.registerTest("misc", "misc_hash_001").let { t ->
+        t.testFunc = {
+            // Test hash function for the property we need
+            assert(hash("helloworld") == hash("world", 0, hash("hello", 0)))  // String concatenation
+            assert(hash("hello###world") == hash("###world"))                      // ### operator reset back to the seed
+            assert(hash("hello###world", 0, 1234) == hash("###world", 0, 1234))    // ### operator reset back to the seed
+            assert(hash("helloxxx", 5) == hash("hello"))                           // String size is honored
+            assert(hash("", 0, 0) == 0)                                          // Empty string doesn't alter hash
+            assert(hash("", 0, 1234) == 1234)                                    // Empty string doesn't alter hash
+            assert(hash("hello", 5) == hash("hello", 5))                          // FIXME: Do we need to guarantee this?
+
+            val data = intArrayOf(42, 50)
+            assert(hash(data) == hash(data[1], hash(data[0])))
+            assert(hash("", 0, 1234) == 1234)                                   // Empty data doesn't alter hash
+
+            // Verify that Test Engine high-level hash wrapper works
+            assert(hashDecoratedPath("Hello/world") == hash("Helloworld"))            // Slashes are ignored
+            assert(hashDecoratedPath("Hello\\/world") == hash("Hello/world"))         // Slashes can be inhibited
+            assert(hashDecoratedPath("/Hello", 42) == hashDecoratedPath("Hello"))        // Leading / clears seed
+        }
+    }
+
+    // ## Test ImVector functions
+    e.registerTest("misc", "misc_vector_001").let { t ->
+        t.testFunc = {
+            val v = ArrayList<Int>()
+            assert(v.isEmpty())
+            v += 0
+            v += 1
+            assert(v.size == 2)
+            v += 2
+            var r = v.remove(1)
+            assert(r)
+            assert(v.size == 2)
+            r = v.remove(1)
+            assert(!r)
+            assert(0 in v)
+            assert(2 in v)
+//            v.resize(0);
+//            IM_CHECK(v.Data != NULL && v.Capacity >= 3);
+            v.clear()
+            assert(v.size == 0)
+        }
+    }
+
+    // ## Test ImPool functions
+    e.registerTest("misc", "misc_pool_001").let { t ->
+        t.testFunc = {
+            val pool = Pool { TabBar() }
+            pool.getOrAddByKey(0x11)
+            pool.getOrAddByKey(0x22) // May invalidate first point
+            val t1 = pool[0x11]!!
+            val t2 = pool[0x22]!!
+//            assert(t1 != null && t2 != null)
+            assert(pool.buf[pool.getIndex(t1).i + 1] === t2)
+            assert(pool.getIndex(t1) == PoolIdx(0))
+            assert(pool.getIndex(t2) == PoolIdx(1))
+            assert(t1 in pool && t2 in pool)
+            assert(TabBar() !in pool)
+            assert(pool[pool.getIndex(t1)] === t1)
+            assert(pool[pool.getIndex(t2)] === t2)
+            val t3 = pool.getOrAddByKey(0x33)
+            assert(pool.getIndex(t3) == PoolIdx(2))
+            assert(pool.size == 3)
+            pool.remove(0x22, pool[0x22]!!)
+            assert(pool[0x22] == null)
+            assert(pool.size == 2) // [JVM] different from native, 3
+            val t4 = pool.getOrAddByKey(0x40)
+            assert(pool.getIndex(t4) == PoolIdx(2)) // [JVM] different from native, 1
+            assert(pool.size == 3)
+            pool.clear()
+            assert(pool.size == 0)
+        }
+    }
+
+    // ## Test behavior of ImParseFormatTrimDecorations
+    e.registerTest("misc", "misc_format_parse").let { t ->
+        t.testFunc = {
+            // fmt = "blah blah"  -> return fmt
+            // fmt = "%.3f"       -> return fmt
+            // fmt = "hello %.3f" -> return fmt + 6
+            // fmt = "%.3f hello" -> return buf, "%.3f"
+            //const char* ImGui::ParseFormatTrimDecorations(const char* fmt, char* buf, int buf_size)
+
+            var fmt = "blah blah"
+            var out = ImGui.parseFormatTrimDecorations(fmt)
+            assert(out == fmt)
+
+            fmt = "%.3f"
+            out = ImGui.parseFormatTrimDecorations(fmt)
+            assert(out == fmt)
+
+            fmt = "hello %.3f"
+            out = ImGui.parseFormatTrimDecorations(fmt)
+            assert(out == fmt.substring(6))
+            assert(out == "%.3f")
+
+            fmt = "%%hi%.3f"
+            out = ImGui.parseFormatTrimDecorations(fmt)
+            assert(out == fmt.substring(4))
+            assert(out == "%.3f")
+
+            fmt = "hello %.3f ms"
+            out = ImGui.parseFormatTrimDecorations(fmt)
+//            assert(out == buf)
+            assert(out == "%.3f")
+
+            fmt = "hello %f blah"
+            out = ImGui.parseFormatTrimDecorations(fmt)
+//            IM_CHECK(out == buf)
+            assert(out == "%f")
+        }
+    }
+
 //    // ## Test ImFontAtlas building with overlapping glyph ranges (#2353, #2233)
 //    t = REGISTER_TEST("misc", "misc_atlas_build_glyph_overlap");
 //    t->TestFunc = [](ImGuiTestContext* ctx)

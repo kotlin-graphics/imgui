@@ -329,7 +329,7 @@ class DrawData {
     fun clone(): DrawData {
         val ret = DrawData()
 
-        ret.cmdLists.addAll(cmdLists)
+        ret.cmdLists.addAll(cmdLists) // TODO check if it's fine https://github.com/kotlin-graphics/imgui/pull/135
         ret.displayPos = displayPos
         ret.displaySize = displaySize
         ret.totalIdxCount = totalIdxCount
