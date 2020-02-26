@@ -384,28 +384,26 @@ fun TestEngine.runTest(ctx: TestContext, userData: Any?) {
     ctx.frameCount = 0
     ctx.windowRef("")
     ctx setInputMode InputSource.Mouse
-    ctx.clipboard.clear()
+    ctx.clipboard = ByteArray(0)
     ctx.genericVars.clear()
     test.testLog.clear()
 
-    // Setup buffered clipboard TODO
+    // Setup buffered clipboard
+    val i = ctx.uiContext!!.io
 //    typedef const char* (*ImGuiGetClipboardTextFn)(void* user_data)
 //    typedef void        (*ImGuiSetClipboardTextFn)(void* user_data, const char* text)
-//    ImGuiGetClipboardTextFn backup_get_clipboard_text_fn = ctx->UiContext->IO.GetClipboardTextFn
-//    ImGuiSetClipboardTextFn backup_set_clipboard_text_fn = ctx->UiContext->IO.SetClipboardTextFn
-//    void*                   backup_clipboard_user_data   = ctx->UiContext->IO.ClipboardUserData
-//    ctx->UiContext->IO.GetClipboardTextFn = [](void* user_data) -> const char*
-//    {
-//        ImGuiTestContext* ctx = (ImGuiTestContext*)user_data
-//        return ctx->Clipboard.empty() ? "" : ctx->Clipboard.Data
-//    }
-//    ctx->UiContext->IO.SetClipboardTextFn = [](void* user_data, const char* text)
-//    {
-//        ImGuiTestContext* ctx = (ImGuiTestContext*)user_data
-//        ctx->Clipboard.resize((int)strlen(text) + 1)
-//        strcpy(ctx->Clipboard.Data, text)
-//    }
-//    ctx->UiContext->IO.ClipboardUserData = ctx
+    val backupGetClipboardTextFn = i.getClipboardTextFn
+    val backupSetClipboardTextFn = i.setClipboardTextFn
+    val backupClipboardUserData = i.clipboardUserData
+    i.getClipboardTextFn = { userData_ ->
+        val ctx_ = userData_ as TestContext
+        String(ctx_.clipboard)
+    }
+    i.setClipboardTextFn = { userData_, text ->
+        val ctx_ = userData_ as TestContext
+        ctx_.clipboard = text.toByteArray()
+    }
+    i.clipboardUserData = ctx
 
     // Mark as currently running the TestFunc (this is the only time when we are allowed to yield)
     assert(ctx.activeFunc == TestActiveFunc.None)
@@ -475,9 +473,9 @@ fun TestEngine.runTest(ctx: TestContext, userData: Any?) {
     ctx.activeFunc = backupActiveFunc
 
     // Restore backend clipboard functions TODO
-//    ctx->UiContext->IO.GetClipboardTextFn = backup_get_clipboard_text_fn
-//    ctx->UiContext->IO.SetClipboardTextFn = backup_set_clipboard_text_fn
-//    ctx->UiContext->IO.ClipboardUserData = backup_clipboard_user_data
+    i.getClipboardTextFn = backupGetClipboardTextFn
+    i.setClipboardTextFn = backupSetClipboardTextFn
+    i.clipboardUserData = backupClipboardUserData
 }
 
 // Settings
