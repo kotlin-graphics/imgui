@@ -289,7 +289,7 @@ class Font {
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: ByteArray,
-                   textEnd_: Int = text.strlen(), // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
+                   textBegin: Int, textEnd_: Int = text.strlen(textBegin), // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
         var textEnd = textEnd_
@@ -304,7 +304,7 @@ class Font {
         var wordWrapEol = 0
 
         // Fast-forward to first visible line
-        var s = 0
+        var s = textBegin
         if (y + lineHeight < clipRect.y && !wordWrapEnabled)
             while (y + lineHeight < clipRect.y && s < textEnd) {
                 s = text.memchr(s, '\n')

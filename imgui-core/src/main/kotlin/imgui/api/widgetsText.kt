@@ -37,7 +37,7 @@ interface widgetsText {
         if (window.skipItems) return
 
         val textEnd = formatString(g.tempBuffer, fmt, *args)
-        textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText)
+        textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText.i)
     }
 
     /** shortcut for
