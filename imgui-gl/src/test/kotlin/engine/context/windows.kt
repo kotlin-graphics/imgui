@@ -42,6 +42,9 @@ fun TestContext.windowRef(ref: TestRef) {
     }
 }
 
+// [JVM]
+fun TestContext.windowClose(ref: String) = windowClose(TestRef(path = ref))
+
 fun TestContext.windowClose(ref: TestRef) {
     if (isError) return
 
