@@ -21,11 +21,11 @@ fun TestEngine.registerTests() {
     registerTests_Columns(this)
 //    RegisterTests_Table(e)
 //    RegisterTests_Docking(e)
-//    RegisterTests_Misc(e)
-//
-//    // Captures
+    registerTests_Misc(this)
+
+    // Captures
 //    RegisterTests_Capture(e)
-//
-//    // Performance Benchmarks
+
+    // Performance Benchmarks
 //    RegisterTests_Perf(e)
 }

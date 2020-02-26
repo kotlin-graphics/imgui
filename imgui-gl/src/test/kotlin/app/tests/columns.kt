@@ -80,14 +80,14 @@ fun registerTests_Columns(e: TestEngine) {
     }
 
     // ## Test behavior of some Column functions without Columns/BeginColumns.
-//    t = REGISTER_TEST("columns", "columns_functions_without_columns")
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ImGui::Begin("Test window 1", NULL, ImGuiWindowFlags_NoSavedSettings)
-//        IM_CHECK_EQ(ImGui::GetColumnsCount(), 1)
-//        IM_CHECK_EQ(ImGui::GetColumnOffset(), 0.0f)
-//        IM_CHECK_EQ(ImGui::GetColumnWidth(), ImGui::GetContentRegionAvail().x)
-//        IM_CHECK_EQ(ImGui::GetColumnIndex(), 0)
-//        ImGui::End()
-//    }
+    e.registerTest("columns", "columns_functions_without_columns").let { t ->
+        t.testFunc = { ctx: TestContext ->
+            dsl.window("Test window 1", null, WindowFlag.NoSavedSettings.i) {
+                assert(ImGui.columnsCount == 1)
+                assert(ImGui.getColumnOffset() == 0f)
+                assert(ImGui.getColumnWidth() == ImGui.contentRegionAvail.x)
+                assert(ImGui.columnIndex == 0)
+            }
+        }
+    }
 }
