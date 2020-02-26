@@ -148,7 +148,7 @@ class Window(var context: Context,
 
     fun destroy() {
         assert(drawList === drawListInst)
-        drawList.destroy()
+        columnsStorage.forEach { it.destroy() }
     }
 
     // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
@@ -1015,4 +1015,6 @@ class Window(var context: Context,
             else -> Col.WindowBg
         }
     }
+
+    override fun toString() = name
 }

@@ -118,6 +118,8 @@ class Columns {
     val columns = ArrayList<ColumnData>()
     val splitter = DrawListSplitter()
 
+    fun destroy() = splitter.destroy()
+
     fun clear() {
         id = 0
         flags = ColumnsFlag.None.i
