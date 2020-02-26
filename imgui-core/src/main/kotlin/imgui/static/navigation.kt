@@ -329,7 +329,7 @@ fun navUpdate() {
             val p = navCalcPreferredRefPos()
             val buf = "${g.navLayer}".toByteArray()
             getForegroundDrawList(nav).addCircleFilled(p, 3f, col)
-            getForegroundDrawList(nav).addText(null, 13f, p + Vec2(8, -4), col, buf)
+            getForegroundDrawList(nav).addText(null, 13f, p + Vec2(8, -4), col, buf, 0)
         }
 }
 
@@ -698,8 +698,8 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
             getForegroundDrawList(window).apply {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
-                addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf) + Vec2(4), COL32(40, 0, 0, 150))
-                addText(io.fontDefault, 13f, cand.max, 0.inv(), buf)
+                addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf, 0) + Vec2(4), COL32(40, 0, 0, 150))
+                addText(io.fontDefault, 13f, cand.max, 0.inv(), buf, 0)
             }
         } else if (io.keyCtrl) { // Hold to preview score in matching quadrant. Press C to rotate.
             if (Key.C.isPressed) {
@@ -710,7 +710,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toByteArray()
                 getForegroundDrawList(window).apply {
                     addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                    addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                    addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf, 0)
                 }
             }
         }

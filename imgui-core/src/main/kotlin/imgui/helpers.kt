@@ -166,10 +166,10 @@ fun ByteArray.memchr(startIdx: Int, c: Char, num: Int = size - startIdx): Int {
     return -1
 }
 
-fun ByteArray.strlen(): Int {
+fun ByteArray.strlen(begin: Int = 0): Int {
     var len = 0
-    for (b in this)
-        if (b == 0.b) break
+    for (i in begin until size)
+        if (get(i) == 0.b) break
         else len++
     return len
 }

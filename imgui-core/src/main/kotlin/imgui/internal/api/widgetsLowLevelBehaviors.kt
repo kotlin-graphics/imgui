@@ -491,8 +491,8 @@ internal interface widgetsLowLevelBehaviors {
             else -> Vec2(style.framePadding.x, window.dc.currLineTextBaseOffset min style.framePadding.y)
         }
 
-        val labelEnd = if (labelEnd_ == -1) findRenderedTextEnd(label) else labelEnd_
-        val labelSize = calcTextSize(label, labelEnd, false)
+        val labelEnd = if (labelEnd_ == -1) findRenderedTextEnd(label, 0) else labelEnd_
+        val labelSize = calcTextSize(label, 0, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
@@ -639,7 +639,7 @@ internal interface widgetsLowLevelBehaviors {
                 window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol, if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
-            renderText(textPos, label, labelEnd, false)
+            renderText(textPos, label, 0, labelEnd, false)
         }
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)

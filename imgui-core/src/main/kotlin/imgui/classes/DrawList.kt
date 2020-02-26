@@ -300,10 +300,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
                 wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
         val bytes = text.toByteArray()
-        addText(font, fontSize, pos, col, bytes, bytes.size, wrapWidth, cpuFineClipRect)
+        addText(font, fontSize, pos, col, bytes, 0, bytes.size, wrapWidth, cpuFineClipRect)
     }
 
-    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray,
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int,
                 textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
@@ -326,7 +326,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             clipRect.z = clipRect.z min cpuFineClipRect.z
             clipRect.w = clipRect.w min cpuFineClipRect.w
         }
-        font.renderText(this, fontSize, pos, col, clipRect, text, textEnd, wrapWidth, cpuFineClipRect != null)
+        font.renderText(this, fontSize, Vec2(pos), col, clipRect, text, textBegin, textEnd, wrapWidth, cpuFineClipRect != null)
     }
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.

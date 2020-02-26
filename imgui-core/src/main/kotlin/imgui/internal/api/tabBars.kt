@@ -64,14 +64,14 @@ internal interface tabBars {
     fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2,
                                    label: ByteArray, tabId: ID, closeButtonId: ID): Boolean {
 
-        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
+        val labelSize = calcTextSize(label, 0, hideTextAfterDoubleHash =  true)
         if (bb.width <= 1f) return false
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
         val TAB_UNSAVED_MARKER = "*".toByteArray()
         val textPixelClipBb = Rect(bb.min.x + framePadding.x, bb.min.y + framePadding.y, bb.max.x - framePadding.x, bb.max.y)
         if (flags has TabItemFlag.UnsavedDocument) {
-            textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, -1, false).x
+            textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, 0, -1, false).x
             val unsavedMarkerPos = Vec2(min(bb.min.x + framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + framePadding.y + floor(-g.fontSize * 0.25f))
             renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - framePadding, TAB_UNSAVED_MARKER, 0, null)
         }
