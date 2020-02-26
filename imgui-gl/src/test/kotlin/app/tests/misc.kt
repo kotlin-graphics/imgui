@@ -1,9 +1,6 @@
 package app.tests
 
-import engine.context.TestContext
-import engine.context.getWindowByRef
-import engine.context.logDebug
-import engine.context.yieldFrames
+import engine.context.*
 import engine.core.TestEngine
 import engine.core.registerTest
 import engine.hashDecoratedPath
@@ -11,15 +8,15 @@ import glm_.b
 import glm_.s
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.classes.TextFilter
 import imgui.font.FontAtlas
 import imgui.font.FontConfig
 import imgui.font.FontGlyphRangesBuilder
+import imgui.internal.*
 import imgui.internal.classes.Pool
 import imgui.internal.classes.PoolIdx
+import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
-import imgui.internal.hash
-import imgui.internal.textStrFromUtf8
-import imgui.internal.textStrToUtf8
 import unsigned.Ubyte
 import unsigned.Uint
 import unsigned.Ulong
@@ -578,149 +575,138 @@ fun registerTests_Misc(e: TestEngine) {
         }
     }
 
-//    // ## Test ImGuiTextFilter
-//    t = REGISTER_TEST("misc", "misc_text_filter");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        static ImGuiTextFilter filter;
-//        ImGui::Begin("Text filter");
-//        filter.Draw("Filter", ImGui::GetFontSize() * 16);   // Test input filter drawing
-//        ImGui::End();
-//    };
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // Test ImGuiTextFilter::Draw()
-//        ctx->WindowRef("Text filter");
-//        ctx->ItemInput("Filter");
-//        ctx->KeyCharsAppend("Big,Cat,, ,  ,Bird"); // Trigger filter rebuild
-//
-//        // Test functionality
-//        ImGuiTextFilter filter;
-//        ImStrncpy(filter.InputBuf, "-bar", IM_ARRAYSIZE(filter.InputBuf));
-//        filter.Build();
-//
-//        IM_CHECK(filter.PassFilter("bartender") == false);
-//        IM_CHECK(filter.PassFilter("cartender") == true);
-//
-//        ImStrncpy(filter.InputBuf, "bar ", IM_ARRAYSIZE(filter.InputBuf));
-//        filter.Build();
-//        IM_CHECK(filter.PassFilter("bartender") == true);
-//        IM_CHECK(filter.PassFilter("cartender") == false);
-//
-//        ImStrncpy(filter.InputBuf, "bar", IM_ARRAYSIZE(filter.InputBuf));
-//        filter.Build();
-//        IM_CHECK(filter.PassFilter("bartender") == true);
-//        IM_CHECK(filter.PassFilter("cartender") == false);
-//    };
-//
-//    // ## Visual ImBezierClosestPoint test.
-//    t = REGISTER_TEST("misc", "misc_bezier_closest_point");
-//    t->GuiFunc = [](ImGuiTestContext* ctx)
-//    {
-//        // FIXME-TESTS: Store normalized?
-//        static ImVec2 points[4] = { ImVec2(30, 75), ImVec2(185, 355), ImVec2(400, 60), ImVec2(590, 370) };
-//        static int num_segments = 0;
-//        const ImGuiStyle& style = ctx->UiContext->Style;
-//
-//        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Appearing);
-//        ImGui::Begin("Bezier", NULL, ImGuiWindowFlags_NoSavedSettings);
-//        ImGui::DragInt("Segments", &num_segments, 0.05f, 0, 20);
-//
-//        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-//        const ImVec2 mouse_pos = ImGui::GetMousePos();
-//        const ImVec2 wp = ImGui::GetWindowPos();
-//
-//        // Draw modifiable control points
-//        for (ImVec2& pt : points)
-//        {
-//            const float half_circle = 2.0f;
-//            const float full_circle = half_circle * 2.0f;
-//            ImRect r(wp + pt - ImVec2(half_circle, half_circle), wp + pt + ImVec2(half_circle, half_circle));
-//            ImGuiID id = ImGui::GetID((void*)(&pt - points));
-//
-//            ImGui::ItemAdd(r, id);
-//            bool is_hovered = ImGui::IsItemHovered();
-//            bool is_active = ImGui::IsItemActive();
-//            if (is_hovered || is_active)
-//                draw_list->AddCircleFilled(r.GetCenter(), full_circle, IM_COL32(0,255,0,255));
-//            else
-//            draw_list->AddCircle(r.GetCenter(), full_circle, IM_COL32(0,255,0,255));
-//
-//            if (is_active)
-//            {
-//                if (ImGui::IsMouseDown(0))
-//                    pt = mouse_pos - wp;
-//                else
-//                    ImGui::ClearActiveID();
-//            }
-//            else if (ImGui::IsMouseDown(0) && is_hovered)
-//                ImGui::SetActiveID(id, ImGui::GetCurrentWindow());
-//        }
-//        draw_list->AddLine(wp + points[0], wp + points[1], IM_COL32(0,255,0,100));
-//        draw_list->AddLine(wp + points[2], wp + points[3], IM_COL32(0,255,0,100));
-//
-//        // Draw curve itself
-//        draw_list->AddBezierCurve(wp + points[0], wp + points[1], wp + points[2], wp + points[3], IM_COL32_WHITE, 2.0f, num_segments);
-//
-//        // Draw point closest to the mouse cursor
-//        ImVec2 point;
-//        if (num_segments == 0)
-//            point = ImBezierClosestPointCasteljau(wp + points[0], wp + points[1], wp + points[2], wp + points[3], mouse_pos, style.CurveTessellationTol);
-//        else
-//            point = ImBezierClosestPoint(wp + points[0], wp + points[1], wp + points[2], wp + points[3], mouse_pos, num_segments);
-//        draw_list->AddCircleFilled(point, 4.0f, IM_COL32(255,0,0,255));
-//
-//        ImGui::End();
-//    };
-//
-//    // FIXME-TESTS
-//    t = REGISTER_TEST("demo", "demo_misc_001");
-//    t->GuiFunc = NULL;
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowRef("Dear ImGui Demo");
-//        ctx->ItemOpen("Widgets");
-//        ctx->ItemOpen("Basic");
-//        ctx->ItemClick("Basic/Button");
-//        ctx->ItemClick("Basic/radio a");
-//        ctx->ItemClick("Basic/radio b");
-//        ctx->ItemClick("Basic/radio c");
-//        ctx->ItemClick("Basic/combo");
-//        ctx->ItemClick("Basic/combo");
-//        ctx->ItemClick("Basic/color 2/##ColorButton");
-//        //ctx->ItemClick("##Combo/BBBB");     // id chain
-//        ctx->SleepShort();
-//        ctx->PopupClose();
-//
-//        //ctx->ItemClick("Layout");  // FIXME: close popup
-//        ctx->ItemOpen("Layout");
-//        ctx->ItemOpen("Scrolling");
-//        ctx->ItemHold("Scrolling/>>", 1.0f);
-//        ctx->SleepShort();
-//    };
-//
-//    // ## Coverage: open everything in demo window
-//    // ## Extra: test for inconsistent ScrollMax.y across whole demo window
-//    // ## Extra: run Log/Capture api on whole demo window
-//    t = REGISTER_TEST("demo", "demo_cov_auto_open");
-//    t->TestFunc = [](ImGuiTestContext* ctx)
-//    {
-//        ctx->WindowRef("Dear ImGui Demo");
-//        ctx->ItemOpenAll("");
-//
-//        // Additional tests we bundled here because we are benefiting from the "opened all" state
-//        ImGuiWindow* window = ctx->GetWindowByRef("");
-//        ctx->ScrollVerifyScrollMax(window);
-//
-//        // Test the Log/Capture api
-//        const char* clipboard = ImGui::GetClipboardText();
-//        IM_CHECK(strlen(clipboard) == 0);
-//        ctx->ItemClick("Capture\\/Logging/LogButtons/Log To Clipboard");
-//        clipboard = ImGui::GetClipboardText();
-//        const int clipboard_len = (int)strlen(clipboard);
-//        IM_CHECK_GT(clipboard_len, 15000); // This is going to vary (as of 2019-11-18 on Master this 22766)
-//    };
-//
+    // ## Test ImGuiTextFilter
+    e.registerTest("misc", "misc_text_filter").let { t ->
+        t.guiFunc = {
+            dsl.window("Text filter") {
+                filter.draw("Filter", ImGui.fontSize * 16)   // Test input filter drawing
+            }
+        }
+        t.testFunc = { ctx: TestContext ->
+            // Test ImGuiTextFilter::Draw()
+            ctx.windowRef("Text filter")
+            ctx.itemInput("Filter")
+            ctx.keyCharsAppend("Big,Cat,, ,  ,Bird") // Trigger filter rebuild
+
+            // Test functionality
+            val filter = TextFilter()
+            filter += "-bar"
+            assert(!filter.passFilter("bartender"))
+            assert(filter.passFilter("cartender"))
+
+            filter.clear()
+            filter += "bar "
+            assert(filter.passFilter("bartender"))
+            assert(!filter.passFilter("cartender"))
+
+            filter.clear()
+            filter += "bar"
+            assert(filter.passFilter("bartender"))
+            assert(!filter.passFilter("cartender"))
+        }
+    }
+
+    // ## Visual ImBezierClosestPoint test.
+    e.registerTest("misc", "misc_bezier_closest_point").let { t ->
+        t.guiFunc = { ctx: TestContext ->
+
+            val style = ctx.uiContext!!.style
+
+            ImGui.setNextWindowSize(Vec2(600, 400), Cond.Appearing)
+            ImGui.begin("Bezier", null, WindowFlag.NoSavedSettings.i)
+            ImGui.dragInt("Segments", ::numSegments, 0.05f, 0, 20)
+
+            val drawList = ImGui.windowDrawList
+            val mousePos = ImGui.mousePos
+            val wp = ImGui.windowPos
+
+            // Draw modifiable control points
+            for (pt in points) {
+                val halfCircle = 2f
+                val fullCircle = halfCircle * 2f
+                val r = Rect(wp + pt - halfCircle, wp + pt + halfCircle)
+                val id = ImGui.getID(points.indexOf(pt))
+
+                ImGui.itemAdd(r, id)
+                val isHovered = ImGui.isItemHovered()
+                val isActive = ImGui.isItemActive
+                if (isHovered || isActive)
+                    drawList.addCircleFilled(r.center, fullCircle, COL32(0, 255, 0, 255))
+                else
+                    drawList.addCircle(r.center, fullCircle, COL32(0, 255, 0, 255))
+
+                if (isActive)
+                    if (ImGui.isMouseDown(MouseButton.Left))
+                        pt put (mousePos - wp)
+                    else
+                        ImGui.clearActiveID()
+                else if (ImGui.isMouseDown(MouseButton.Left) && isHovered)
+                    ImGui.setActiveID(id, ImGui.currentWindow)
+            }
+            drawList.addLine(wp + points[0], wp + points[1], COL32(0, 255, 0, 100))
+            drawList.addLine(wp + points[2], wp + points[3], COL32(0, 255, 0, 100))
+
+            // Draw curve itself
+            drawList.addBezierCurve(wp + points[0], wp + points[1], wp + points[2], wp + points[3], COL32_WHITE, 2f, numSegments)
+
+            // Draw point closest to the mouse cursor
+            val point = when (numSegments) {
+                0 -> bezierClosestPointCasteljau(wp + points[0], wp + points[1], wp + points[2], wp + points[3], mousePos, style.curveTessellationTol)
+                else -> bezierClosestPoint(wp + points[0], wp + points[1], wp + points[2], wp + points[3], mousePos, numSegments)
+            }
+            drawList.addCircleFilled(point, 4f, COL32(255, 0, 0, 255))
+
+            ImGui.end()
+        }
+    }
+
+    // FIXME-TESTS
+    e.registerTest("demo", "demo_misc_001").let { t ->
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowRef("Dear ImGui Demo")
+            ctx.itemOpen("Widgets")
+            ctx.itemOpen("Basic")
+            ctx.itemClick("Basic/Button")
+            ctx.itemClick("Basic/radio a")
+            ctx.itemClick("Basic/radio b")
+            ctx.itemClick("Basic/radio c")
+            ctx.itemClick("Basic/combo")
+            ctx.itemClick("Basic/combo")
+            ctx.itemClick("Basic/color 2/##ColorButton")
+            //ctx->ItemClick("##Combo/BBBB");     // id chain
+            ctx.sleepShort()
+            ctx.popupClose()
+
+            //ctx->ItemClick("Layout");  // FIXME: close popup
+            ctx.itemOpen("Layout")
+            ctx.itemOpen("Scrolling")
+            ctx.itemHold("Scrolling/>>", 1f)
+            ctx.sleepShort()
+        }
+    }
+
+    // ## Coverage: open everything in demo window
+    // ## Extra: test for inconsistent ScrollMax.y across whole demo window
+    // ## Extra: run Log/Capture api on whole demo window
+    e.registerTest("demo", "demo_cov_auto_open").let { t ->
+        t.testFunc = { ctx: TestContext ->
+            ctx.windowRef("Dear ImGui Demo")
+            ctx.itemOpenAll("")
+
+            // Additional tests we bundled here because we are benefiting from the "opened all" state
+            val window = ctx.getWindowByRef("")!!
+            ctx.scrollVerifyScrollMax(window)
+
+            // Test the Log/Capture api
+            var clipboard = ImGui.clipboardText
+            assert(clipboard.isEmpty())
+            ctx.itemClick("Capture\\/Logging/LogButtons/Log To Clipboard")
+            clipboard = ImGui.clipboardText
+            val clipboardLen = clipboard.length
+            assert(clipboardLen >= 15000) // This is going to vary (as of 2019-11-18 on Master this 22766)
+        }
+    }
+
 //    // ## Coverage: closes everything in demo window
 //    t = REGISTER_TEST("demo", "demo_cov_auto_close");
 //    t->TestFunc = [](ImGuiTestContext* ctx)
@@ -825,3 +811,9 @@ fun registerTests_Misc(e: TestEngine) {
 val defaultRanges = arrayOf(
         IntRange(0x0020, 0x00FF), // Basic Latin + Latin Supplement
         IntRange(0x0080, 0x00FF)) // Latin_Supplement
+
+val filter = TextFilter()
+
+// FIXME-TESTS: Store normalized?
+val points = arrayOf(Vec2(30, 75), Vec2(185, 355), Vec2(400, 60), Vec2(590, 370))
+var numSegments = 0
