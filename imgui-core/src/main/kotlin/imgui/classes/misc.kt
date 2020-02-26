@@ -10,8 +10,6 @@ import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.frameCount
 import imgui.ImGui.inputText
 import imgui.ImGui.setNextItemWidth
-import java.nio.ByteBuffer
-import java.util.stream.Collectors
 
 
 class Color {
@@ -170,24 +168,33 @@ class Storage {
 
 /** Helper: Growable text buffer for logging/accumulating text
  *  (this could be called 'ImGuiTextBuilder' / 'ImGuiStringBuilder') */
-//class TextBuffer {
-//    init {
-//        TODO()
-//    }
-//}
-class TextFilter(defaultFilter: String? = "") {
+//class TextBuffer [JVM] StringBuilder
 
+class TextFilter(defaultFilter: String = "") {
+
+    // filters
+    val inc = ArrayList<String>()
+    val exc = ArrayList<String>()
     var inputBuf = ByteArray(256)
-    val filters = ArrayList<String>()
     var countGrep = 0
 
     init {
-        defaultFilter?.toByteArray(inputBuf)
+        this += defaultFilter
     }
 
-    class TextRange
+    operator fun plusAssign(filter: String) {
+        val f = filter.trim()
+        if(f.isNotEmpty()) {
+            if (f[0] == '-')
+                exc += f.drop(1)
+            else {
+                inc += f
+                countGrep++
+            }
+        }
+    }
 
-    fun isActive() = filters.isNotEmpty()
+    fun isActive() = inc.isNotEmpty() || exc.isNotEmpty()
 
     /** Helper calling InputText+Build   */
     fun draw(label: String = "Filter (inc,-exc)", width: Float): Boolean {
@@ -199,37 +206,50 @@ class TextFilter(defaultFilter: String? = "") {
         return valueChanged
     }
 
-    fun passFilter(text: String, textEnd: Int = 0): Boolean {
-        val check = if (textEnd > 0) text.substring(0, textEnd) else text
-
-        if (filters.isEmpty()) return true
-        if (filters.stream().filter(String::isNotEmpty).count() == 0L) return true
-
-        var passSub = false
-
-        for (f in filters) {
-            if (f.isEmpty()) continue
-            if (f[0] == '-') {
-                // Subtract
-                if (check.contains(f.substring(1)))
-                    return false
-                else
-                    passSub = true
-            } else if (check.contains(f))  // Grep
-                return true
-        }
+    fun passFilter(text_: String, textEnd: Int = text_.length): Boolean {
+        val text = if (textEnd != text_.length) text_.substring(0, textEnd) else text_
+        if (exc.any { it in text }) return false
+        if (inc.any { it in text }) return true
         // Implicit * grep
-        return passSub //countGrep == 0
+        return countGrep == 0
+//        if (filters.isEmpty()) return true
+//        if (filters.stream().filter(String::isNotEmpty).count() == 0L) return true
+//
+//        var passSub = false
+//
+//        for (f in filters) {
+//            if (f.isEmpty()) continue
+//            if (f[0] == '-') {
+//                // Subtract
+//                if (check.contains(f.substring(1)))
+//                    return false
+//                else
+//                    passSub = true
+//            } else if (check.contains(f))  // Grep
+//                return true
+//        }
+//        // Implicit * grep
+//        return passSub //countGrep == 0
     }
 
     fun build() {
-        filters.clear()
-        // TODO check if resync
-        filters.addAll(String(inputBuf)
-                .split(",")
-                .stream()
-                .filter(String::isNotEmpty)
-                .collect(Collectors.toList()))
+        inc.clear()
+        exc.clear()
+        countGrep = 0
+        String(inputBuf).split(",").map { it.trim() }.filter(String::isNotEmpty).
+                forEach { f ->
+                    if (f[0] == '-') exc += f
+                    else {
+                        inc += f
+                        countGrep++
+                    }
+                }
+    }
+
+    fun clear() {
+        inc.clear()
+        exc.clear()
+        countGrep = 0
     }
 }
 
