@@ -156,7 +156,7 @@ object ExampleApp {
             }
         }
 
-        text("dear imgui says hello. ($IMGUI_VERSION)")
+        text("dear imgui says hello. (1.75)") // TODO ($IMGUI_VERSION)
         spacing()
 
         collapsingHeader("Help") {

@@ -178,7 +178,7 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
 
     var actionedTotal = 0
     for (pass in 0 until maxPasses) {
-        println(pass)
+        println("pass $pass")
         val items = TestItemList()
         gatherItems(items, refParent, maxDepth)
 
@@ -209,7 +209,7 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
             if (isError) break
 
             val info = items[n]
-            println("Window ${info.window?.name} [$n] ${info.debugLabel}")
+            println("Window ${info.window?.name} [$n] ${info.debugLabel}, ${info.depth}")
             when (action) {
                 TestAction.Click -> {
                     itemAction(action, info.id)

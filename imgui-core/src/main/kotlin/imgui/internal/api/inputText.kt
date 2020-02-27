@@ -940,6 +940,7 @@ internal interface inputText {
 
         /** @return [JVM] [lineCount, textEnd] */
         fun inputTextCalcTextLenAndLineCount(text: ByteArray): Pair<Int, Int> {
+            if(text.isEmpty()) return 1 to 0
             var lineCount = 0
             var s = 0
             var c = text[s++]

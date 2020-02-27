@@ -118,7 +118,7 @@ interface widgetsListBoxes {
         val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.25f else 0f
         /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
             appears. We could also enforce that by passing a flag to BeginChild().         */
-        val size = Vec2(0f, floor(textLineHeightWithSpacing * heightInItemsF + style.itemSpacing.y * 2f))
+        val size = Vec2(0f, floor(textLineHeightWithSpacing * heightInItemsF + style.framePadding.y * 2f))
         return listBoxHeader(label, size)
     }
 
