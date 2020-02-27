@@ -63,7 +63,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatString(g.tempBuffer, fmt, args)
+        val labelEnd = formatString(g.tempBuffer, fmt, *args)
         return treeNodeBehavior(window.getID(ptrId), flags, g.tempBuffer, labelEnd)
     }
 

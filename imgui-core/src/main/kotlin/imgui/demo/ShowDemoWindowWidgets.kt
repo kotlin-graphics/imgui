@@ -337,7 +337,7 @@ object ShowDemoWindowWidgets {
     object Funcs0 {
         val MyResizeCallback: InputTextCallback = { data ->
             if (data.eventFlag == Itf.CallbackResize.i)            {
-//                ImVector<char>* my_str = (ImVector<char>*)data->UserData;
+//                ImVector<char>* my_str = (ImVector<char>*)data->UserData; TODO
 //                IM_ASSERT(my_str->begin() == data->Buf);
 //                my_str->resize(data->BufSize);  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
 //                data->Buf = my_str->begin();
@@ -1028,7 +1028,6 @@ object ShowDemoWindowWidgets {
             combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
             sameLine(); helpMarker("User can right-click the picker to change mode.")
             var flags = miscFlags
-            // @formatter:off
             if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
             if (alphaBar) flags = flags or Cef.AlphaBar
             if (!sidePreview) flags = flags or Cef.NoSidePreview
@@ -1038,7 +1037,6 @@ object ShowDemoWindowWidgets {
             if (displayMode == 2) flags = flags or Cef.DisplayRGB   // Override display mode
             if (displayMode == 3) flags = flags or Cef.DisplayHSV
             if (displayMode == 4) flags = flags or Cef.DisplayHEX
-            // @formatter:on
             colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
             text("Programmatically set defaults:")
