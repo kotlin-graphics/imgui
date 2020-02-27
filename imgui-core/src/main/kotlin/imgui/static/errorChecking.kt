@@ -28,8 +28,7 @@ fun errorCheckBeginEndCompareStacksSize(window: Window, write: Boolean) {
 
     // Window stacks
     // NOT checking: DC.ItemWidth, DC.AllowKeyboardFocus, DC.ButtonRepeat, DC.TextWrapPos (per window) to allow user to conveniently push once and not pop (they are cleared on Begin)
-    run { val n = window.idStack.size; if (write) p[i] = n else assert(p[i] == n) {
-        "PushID/PopID or TreeNode/TreePop Mismatch!" }; i++; }    // Too few or too many PopID()/TreePop()
+    run { val n = window.idStack.size; if (write) p[i] = n else assert(p[i] == n) { "PushID/PopID or TreeNode/TreePop Mismatch!" }; i++; }    // Too few or too many PopID()/TreePop()
     run { val n = window.dc.groupStack.size; if (write) p[i] = n else assert(p[i] == n) { "BeginGroup/EndGroup Mismatch!" }; i++; }    // Too few or too many EndGroup()
 
     // Global stacks
