@@ -688,24 +688,24 @@ fun registerTests_Misc(e: TestEngine) {
     // ## Coverage: open everything in demo window
     // ## Extra: test for inconsistent ScrollMax.y across whole demo window
     // ## Extra: run Log/Capture api on whole demo window
-    e.registerTest("demo", "demo_cov_auto_open").let { t ->
-        t.testFunc = { ctx: TestContext ->
-            ctx.windowRef("Dear ImGui Demo")
-            ctx.itemOpenAll("")
-
-            // Additional tests we bundled here because we are benefiting from the "opened all" state
-            val window = ctx.getWindowByRef("")!!
-            ctx.scrollVerifyScrollMax(window)
-
-            // Test the Log/Capture api
-            var clipboard = ImGui.clipboardText
-            assert(clipboard.isEmpty())
-            ctx.itemClick("Capture\\/Logging/LogButtons/Log To Clipboard")
-            clipboard = ImGui.clipboardText
-            val clipboardLen = clipboard.length
-            assert(clipboardLen >= 15000) // This is going to vary (as of 2019-11-18 on Master this 22766)
-        }
-    }
+//    e.registerTest("demo", "demo_cov_auto_open").let { t ->
+//        t.testFunc = { ctx: TestContext ->
+//            ctx.windowRef("Dear ImGui Demo")
+//            ctx.itemOpenAll("")
+//
+//            // Additional tests we bundled here because we are benefiting from the "opened all" state
+//            val window = ctx.getWindowByRef("")!!
+//            ctx.scrollVerifyScrollMax(window)
+//
+//            // Test the Log/Capture api
+//            var clipboard = ImGui.clipboardText
+//            assert(clipboard.isEmpty())
+//            ctx.itemClick("Capture\\/Logging/LogButtons/Log To Clipboard")
+//            clipboard = ImGui.clipboardText
+//            val clipboardLen = clipboard.length
+//            assert(clipboardLen >= 15000) // This is going to vary (as of 2019-11-18 on Master this 22766)
+//        }
+//    }
 
 //    // ## Coverage: closes everything in demo window
 //    t = REGISTER_TEST("demo", "demo_cov_auto_close");
