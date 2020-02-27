@@ -22,15 +22,15 @@ import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.windowContentRegionMax
-import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.classes.Rect
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
-import imgui.internal.ItemFlag as If
 import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.ButtonFlag as Bf
+import imgui.internal.ItemFlag as If
 
 /** Widgets: Selectables
  *  - A selectable highlights when hovered, and can display another color when selected.
@@ -167,10 +167,9 @@ interface widgetsSelectables {
     /** "bool* p_selected" point to the selection state (read-write), as a convenient helper.   */
     fun selectable(label: String, selectedPtr: KMutableProperty0<Boolean>, flags: SelectableFlags = 0, size: Vec2 = Vec2()): Boolean {
         var selected by selectedPtr
-        if (selectable(label, selected, flags, size)) {
+        return if (selectable(label, selected, flags, size)) {
             selected = !selected
-            return true
-        }
-        return false
+            true
+        } else false
     }
 }

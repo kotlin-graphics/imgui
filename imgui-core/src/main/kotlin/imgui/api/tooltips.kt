@@ -23,7 +23,7 @@ interface tooltips {
     /** set a text-only tooltip, typically use with ImGui::IsItemHovered(). override any previous call to SetTooltip(). */
     fun setTooltip(fmt: String, vararg args: Any) {
         beginTooltipEx(Wf.None.i, TooltipFlag.OverridePreviousTooltip.i)
-        text(fmt, args)
+        text(fmt, *args)
         endTooltip()
     }
 }

@@ -218,7 +218,7 @@ internal interface PopupsModalsTooltips {
             tooltipFlags = tooltipFlags or TooltipFlag.OverridePreviousTooltip
         }
 
-        var windowName = "##Tooltip_%02d".format(style.locale, g.tooltipOverrideCount)
+        var windowName = "##Tooltip_%02d".format(g.tooltipOverrideCount)
         if (tooltipFlags has TooltipFlag.OverridePreviousTooltip)
             findWindowByName(windowName)?.let {
                 if (it.active) {

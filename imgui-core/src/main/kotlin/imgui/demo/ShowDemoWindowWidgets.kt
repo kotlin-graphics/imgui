@@ -140,6 +140,7 @@ import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
 import imgui.ImGui.windowDrawList
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.gImGui
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
 import imgui.dsl.collapsingHeader
@@ -335,18 +336,12 @@ object ShowDemoWindowWidgets {
     /* Text Input */
     object Funcs0 {
         val MyResizeCallback: InputTextCallback = { data ->
-//            if (data.eventFlag == Itf.CallbackResize.i) {
-//                val myStr = data.userData as ByteArray
-//                assert(myStr[0] == data.buf[0])
-//                if (myStr.size < data.buf.size)
-//                    myStr[myStr.lastIndex] = 0
-//                else if (data.buf.size < myStr.size) {
-//                    val newBuf = ByteArray(data.bufSize)  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
-//                    myStr.copyInto(newBuf)
-//                    data.userData = newBuf
-//                    data.buf = newBuf
-//                }
-//            }
+            if (data.eventFlag == Itf.CallbackResize.i)            {
+//                ImVector<char>* my_str = (ImVector<char>*)data->UserData;
+//                IM_ASSERT(my_str->begin() == data->Buf);
+//                my_str->resize(data->BufSize);  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+//                data->Buf = my_str->begin();
+            }
             false
         }
 
