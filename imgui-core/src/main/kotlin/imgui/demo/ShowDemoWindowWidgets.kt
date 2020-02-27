@@ -141,6 +141,7 @@ import imgui.ImGui.vSliderInt
 import imgui.ImGui.windowDrawList
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.api.gImGui
+import imgui.api.g
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
 import imgui.dsl.collapsingHeader
@@ -286,7 +287,6 @@ object ShowDemoWindowWidgets {
     var dragAndDrop = true
     var optionsMenu = true
     var hdr = false
-    var noBorder = false
 
     // Generate a dummy default palette. The palette will persist and can be edited.
     var savedPaletteInit = true
@@ -1008,8 +1008,7 @@ object ShowDemoWindowWidgets {
                 }
             }
             text("Color button only:")
-            checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
-            colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else Cef.None, Vec2(80))
+            colorButton("MyColor##3c", color, miscFlags, Vec2(80, 80))
 
             text("Color picker:")
             checkbox("With Alpha", ::alpha)
