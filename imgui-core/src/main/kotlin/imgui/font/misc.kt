@@ -60,15 +60,10 @@ class FontConfig {
     var dstFont: Font? = null
 }
 
-/** A single font glyph (code point + coordinates within in ImFontAtlas + offset)
- *
- *   Hold rendering data for one glyph.
- *  (Note: some language parsers may fail to convert the 31+1 bitfield members, in this case maybe drop store a single u32 or we can rework this) */
+/** A single font glyph (code point + coordinates within in ImFontAtlas + offset) */
 class FontGlyph {
     /** 0x0000..0xFFFF  */
     var codepoint = NUL
-    /** Flag to allow early out when rendering */
-    var visible = true
     /** Distance to next character (= data from font + FontConfig.glyphExtraSpacing.x baked in)  */
     var advanceX = 0f
     // Glyph corners
