@@ -278,7 +278,7 @@ object ShowDemoWindowWidgets {
         }
     }
 
-    val password = "password123".toByteArray(64)
+    val bufPass = "password123".toByteArray(64)
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
@@ -849,10 +849,10 @@ object ShowDemoWindowWidgets {
                 inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter.i, TextFilters.filterImGuiLetters)
 
                 text("Password input")
-                inputText("password", password, Itf.Password.i)
+                inputText("password", bufPass, Itf.Password or Itf.CharsNoBlank)
                 sameLine(); helpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.")
-                inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password.i)
-                inputText("password (clear)", password)
+                inputTextWithHint("password (w/ hint)", "<password>", bufPass, Itf.Password or Itf.CharsNoBlank)
+                inputText("password (clear)", bufPass, Itf.CharsNoBlank.i)
             }
 
             treeNode("Resize Callback") {

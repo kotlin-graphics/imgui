@@ -283,7 +283,6 @@ object StyleEditor {
                                             if (isMouseHoveringRect(cellP1, cellP2))
                                                 tooltip {
                                                     text("Codepoint: U+%04X", base + n)
-                                                    text("visible: ${glyph.visible}")
                                                     separator()
                                                     text("AdvanceX+1: %.1f", glyph.advanceX)
                                                     text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
