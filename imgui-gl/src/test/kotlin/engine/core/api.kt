@@ -265,7 +265,7 @@ infix fun TestEngine.showTestGroup(group: TestGroup) {
 
     //ImGui::Text("TESTS (%d)", engine->TestsAll.Size);
     if (ImGui.button("Run All"))
-        queueTests(group, String(filter.inputBuf)) // FIXME: Filter func differs
+        queueTests(group, filter.inputBuf.cStr) // FIXME: Filter func differs
 
     ImGui.sameLine()
     filter.draw("##filter", -1f)

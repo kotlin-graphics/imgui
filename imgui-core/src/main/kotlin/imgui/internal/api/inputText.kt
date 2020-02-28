@@ -865,7 +865,7 @@ internal interface inputText {
             g.tempInputTextId = g.activeId
         }
         if (valueChanged) {
-            valueChanged = dataTypeApplyOpFromText(String(buf), g.inputTextState.initialTextA, dataType, pData)
+            valueChanged = dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
             if (valueChanged)
                 markItemEdited(id)
         }
