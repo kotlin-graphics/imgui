@@ -51,8 +51,6 @@ interface main {
 
     fun newFrame() {
 
-        ptrIndices = 0
-
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
 
         if (IMGUI_ENABLE_TEST_ENGINE)
