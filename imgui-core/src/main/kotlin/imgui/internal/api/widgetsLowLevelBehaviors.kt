@@ -39,6 +39,10 @@ import imgui.internal.*
 import imgui.internal.classes.Rect
 import kool.getValue
 import kool.setValue
+import unsigned.Ubyte
+import unsigned.Uint
+import unsigned.Ulong
+import unsigned.Ushort
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
@@ -387,18 +391,36 @@ internal interface widgetsLowLevelBehaviors {
             sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
                     .also { pV.set(_i.b as N) }
         }
+        DataType.Ubyte -> {
+            _i = (pV() as Ubyte).i
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
+                    .also { (pV() as Ubyte).v = _i.b }
+        }
         DataType.Short -> {
             _i = (pV() as Short).i
             sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
                     .also { pV.set(_i.s as N) }
         }
+        DataType.Ushort -> {
+            _i = (pV() as Ushort).i
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
+                    .also { (pV() as Ushort).v = _i.s }
+        }
         DataType.Int -> {
             assert(pMin as Int >= Int.MIN_VALUE / 2 && pMax as Int <= Int.MAX_VALUE / 2)
             sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
         }
+        DataType.Uint -> {
+            assert(pMax as Uint <= Uint.MAX / 2)
+            sliderBehaviorT(bb, id, dataType, pV, pMin, pMax as N, format, power, flag, outGrabBb)
+        }
         DataType.Long -> {
             assert(pMin as Long >= Long.MIN_VALUE / 2 && pMax as Long <= Long.MAX_VALUE / 2)
             sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
+        }
+        DataType.Ulong -> {
+            assert(pMax as Ulong <= Ulong.MAX / 2)
+            sliderBehaviorT(bb, id, dataType, pV, pMin, pMax as N, format, power, flag, outGrabBb)
         }
         DataType.Float -> {
             assert(pMin as Float >= -Float.MAX_VALUE / 2f && pMax as Float <= Float.MAX_VALUE / 2f)
