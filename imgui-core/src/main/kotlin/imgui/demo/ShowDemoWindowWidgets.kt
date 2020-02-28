@@ -1327,24 +1327,48 @@ object ShowDemoWindowWidgets {
             // Note that the ImGuiHoveredFlags_XXX flags can be combined.
             // Because BulletText is an item itself and that would affect the output of IsItemXXX functions,
             // we query every state in a single call to avoid storing them and to simplify the code
-            bulletText("Return value = $ret\n" +
-                    "isItemFocused = $isItemFocused\n" +
-                    "isItemHovered() = ${isItemHovered()}\n" +
-                    "isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
-                    "isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
-                    "isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}\n" +
-                    "isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}\n" +
-                    "isItemActive = $isItemActive\n" +
-                    "isItemEdited = $isItemEdited\n" +
-                    "isItemActivated = $isItemActivated\n" +
-                    "isItemDeactivated = $isItemDeactivated\n" +
-                    "isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit\n" +
-                    "isItemVisible = $isItemVisible\n" +
-                    "isItemClicked = ${isItemClicked()}\n" +
-                    "IsItemToggledOpen = $isItemToggledOpen" +
-                    "GetItemRectMin() = (%.1f, %.1f)\n" +
-                    "GetItemRectMax() = (%.1f, %.1f)\n" +
-                    "GetItemRectSize() = (%.1f, %.1f)", itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
+            if (DEBUG)
+                bulletText("""
+                    Return value = $ret
+                    isItemFocused = ${isItemFocused.i}
+                    isItemHovered() = ${isItemHovered().i}
+                    isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup).i}
+                    isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem).i}
+                    isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped).i}
+                    isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly).i}
+                    isItemActive = ${isItemActive.i}
+                    isItemEdited = ${isItemEdited.i}
+                    isItemActivated = ${isItemActivated.i}
+                    isItemDeactivated = ${isItemDeactivated.i}
+                    isItemDeactivatedAfterEdit = ${isItemDeactivatedAfterEdit.i}
+                    isItemVisible = ${isItemVisible.i}
+                    isItemClicked = ${isItemClicked().i}
+                    IsItemToggledOpen = ${isItemToggledOpen.i}
+                    GetItemRectMin() = (%.1f, %.1f)
+                    GetItemRectMax() = (%.1f, %.1f)
+                    GetItemRectSize() = (%.1f, %.1f)
+                    """.trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
+            else
+                bulletText("""
+                    Return value = $ret
+                    isItemFocused = $isItemFocused
+                    isItemHovered() = ${isItemHovered().i}
+                    isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)}
+                    isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}
+                    isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}
+                    isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}
+                    isItemActive = $isItemActive
+                    isItemEdited = $isItemEdited
+                    isItemActivated = $isItemActivated
+                    isItemDeactivated = $isItemDeactivated
+                    isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit
+                    isItemVisible = $isItemVisible
+                    isItemClicked = ${isItemClicked()}
+                    IsItemToggledOpen = $isItemToggledOpen
+                    GetItemRectMin() = (%.1f, %.1f)
+                    GetItemRectMax() = (%.1f, %.1f)
+                    GetItemRectSize() = (%.1f, %.1f)
+                    """.trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
 
             checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAChildWindow)
             if (embedAllInsideAChildWindow)
