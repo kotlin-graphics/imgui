@@ -209,7 +209,8 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
             if (isError) break
 
             val info = items[n]
-            println("Window ${info.window?.name} [$n] ${info.debugLabel}, ${info.depth}")
+            if (pass > 2)
+                println("Window ${info.window?.name} [$n] ${info.debugLabel}, ${info.depth}")
             when (action) {
                 TestAction.Click -> {
                     itemAction(action, info.id)
