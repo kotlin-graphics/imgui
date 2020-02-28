@@ -452,7 +452,7 @@ fun registerTests_Widgets(e: TestEngine) {
                 ImGui.inputText("##InputText", vars.str1) // Remove label to simplify the capture/comparison
                 ctx.uiContext!!.logBuffer.toString().toByteArray(vars.str2)
                 ImGui.logFinish()
-                ImGui.text("Captured: \"${String(vars.str2)}\"")
+                ImGui.text("Captured: \"${vars.str2.cStr}\"")
             }
         }
         t.testFunc = { ctx: TestContext ->

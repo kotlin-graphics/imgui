@@ -57,7 +57,7 @@ internal interface renderHelpers {
 
         if (textEnd > 0) {
             window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, 0, textEnd, wrapWidth)
-            if (g.logEnabled) logRenderedText(pos, String(text), textEnd)
+            if (g.logEnabled) logRenderedText(pos, text.cStr, textEnd)
         }
     }
 
@@ -76,7 +76,7 @@ internal interface renderHelpers {
         val window = g.currentWindow!!
         renderTextClippedEx(window.drawList, posMin, posMax, text, textDisplayEnd, textSizeIfKnown, align, clipRect)
         if (g.logEnabled)
-            logRenderedText(posMax, String(text), textDisplayEnd)
+            logRenderedText(posMax, text.cStr, textDisplayEnd)
     }
 
     /** Default clipRect uses (pos_min,pos_max)
@@ -178,7 +178,7 @@ internal interface renderHelpers {
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndFull, textSize, Vec2())
 
         if (g.logEnabled)
-            logRenderedText(posMin, String(text), textEndFull)
+            logRenderedText(posMin, text.cStr, textEndFull)
     }
 
     /** Render a rectangle shaped with optional rounding and borders    */

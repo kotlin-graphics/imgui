@@ -8,6 +8,7 @@ import engine.getKeyModsPrefixStr
 import glm_.b
 import glm_.c
 import imgui.Key
+import imgui.cStr
 import imgui.internal.textCharFromUtf8
 
 fun TestContext.keyDownMap(key: Key, modFlags: KeyModFlags = KeyModFlag.None.i) {
@@ -65,7 +66,7 @@ fun TestContext.keyChars(chars: ByteArray) {
     if (isError) return
 
     REGISTER_DEPTH {
-        logDebug("KeyChars('${String(chars)}')")
+        logDebug("KeyChars('${chars.cStr}')")
         var p = 0
         while (p < chars.size && chars[p] != 0.b) {
             val (c, bytesCount) = textCharFromUtf8(chars, p)
@@ -88,7 +89,7 @@ fun TestContext.keyCharsAppend(chars: ByteArray) {
     if (isError) return
 
     REGISTER_DEPTH {
-        logDebug("KeyCharsAppend('${String(chars)}')")
+        logDebug("KeyCharsAppend('${chars.cStr}')")
         keyPressMap(Key.End)
         keyChars(chars)
     }
@@ -102,7 +103,7 @@ fun TestContext.keyCharsAppendEnter(chars: ByteArray) {
     if (isError) return
 
     REGISTER_DEPTH {
-        logDebug("KeyCharsAppendEnter('${String(chars)}')")
+        logDebug("KeyCharsAppendEnter('${chars.cStr}')")
         keyPressMap(Key.End)
         keyChars(chars)
         keyPressMap(Key.Enter)
@@ -117,7 +118,7 @@ fun TestContext.keyCharsReplace(chars: ByteArray) {
     if (isError) return
 
     REGISTER_DEPTH {
-        logDebug("KeyCharsReplace('${String(chars)}')")
+        logDebug("KeyCharsReplace('${chars.cStr}')")
         keyPressMap(Key.A, KeyModFlag.Ctrl.i)
         keyPressMap(Key.Delete)
         keyChars(chars)
@@ -129,7 +130,7 @@ fun TestContext.keyCharsReplaceEnter(chars: ByteArray) {
     if (isError) return
 
     REGISTER_DEPTH {
-        logDebug("KeyCharsReplaceEnter('${String(chars)}')")
+        logDebug("KeyCharsReplaceEnter('${chars.cStr}')")
         keyPressMap(Key.A, KeyModFlag.Ctrl.i)
         keyPressMap(Key.Delete)
         keyCharsReplace(chars)

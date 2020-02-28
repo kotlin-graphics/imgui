@@ -348,7 +348,7 @@ object ShowDemoWindowWidgets {
         val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: ItemFlags) -> Boolean =
                 { label, myStr, size, flags ->
                     assert(flags hasnt Itf.CallbackResize)
-                    inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
+                    inputTextMultiline(label, myStr.cStr, size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
                 }
     }
 
