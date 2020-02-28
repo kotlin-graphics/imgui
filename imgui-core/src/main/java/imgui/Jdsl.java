@@ -300,10 +300,10 @@ public class Jdsl {
         }
     }
 
-    public static void treePushed(Object ptrId, Runnable block) {
-        imgui.treePush(ptrId);
-        imgui.treePop();
-    }
+//    public static void treePushed(Object ptrId, Runnable block) { TODO check me
+//        imgui.treePush(ptrId);
+//        imgui.treePop();
+//    }
 
     public static void collapsingHeader(String label, Runnable block) {
         collapsingHeader(label, 0, block);

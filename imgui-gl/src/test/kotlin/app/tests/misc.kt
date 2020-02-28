@@ -4,6 +4,7 @@ import engine.context.*
 import engine.core.TestEngine
 import engine.core.registerTest
 import engine.hashDecoratedPath
+import glm_.L
 import glm_.b
 import glm_.s
 import glm_.vec2.Vec2
@@ -17,6 +18,7 @@ import imgui.internal.classes.Pool
 import imgui.internal.classes.PoolIdx
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
+import kool.IntPtr
 import unsigned.Ubyte
 import unsigned.Uint
 import unsigned.Ulong
@@ -625,7 +627,7 @@ fun registerTests_Misc(e: TestEngine) {
                 val halfCircle = 2f
                 val fullCircle = halfCircle * 2f
                 val r = Rect(wp + pt - halfCircle, wp + pt + halfCircle)
-                val id = ImGui.getID(points.indexOf(pt))
+                val id = ImGui.getID(IntPtr(points.indexOf(pt).L))
 
                 ImGui.itemAdd(r, id)
                 val isHovered = ImGui.isItemHovered()

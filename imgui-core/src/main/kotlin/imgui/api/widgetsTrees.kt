@@ -36,11 +36,15 @@ interface widgetsTrees {
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(strId: String, fmt: String, vararg args: Any): Boolean = treeNodeEx(strId, 0, fmt, *args)
+    fun treeNode(strID: String, fmt: String, vararg args: Any): Boolean = treeNodeEx(strID, 0, fmt, *args)
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(ptrId: Any, fmt: String, vararg args: Any): Boolean = treeNodeEx(ptrId, 0, fmt, *args)
+    fun treeNode(ptrID: Any, fmt: String, vararg args: Any): Boolean = treeNodeEx(ptrID, 0, fmt, *args)
+
+    /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
+     *  Bullet().   */
+    fun treeNode(intPtr: Long, fmt: String, vararg args: Any): Boolean = treeNodeEx(intPtr, 0, fmt, *args)
 
     fun treeNodeEx(label: String, flags: TreeNodeFlags = 0): Boolean {
         val window = currentWindow
@@ -49,32 +53,41 @@ interface widgetsTrees {
         return treeNodeBehavior(window.getID(label), flags, label)
     }
 
-    fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeEx(strID: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
         val labelEnd = formatString(g.tempBuffer, fmt, args)
-        return treeNodeBehavior(window.getID(strId), flags, g.tempBuffer, labelEnd)
+        return treeNodeBehavior(window.getID(strID), flags, g.tempBuffer, labelEnd)
     }
 
-    fun treeNodeEx(ptrId: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeEx(ptrID: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
         val labelEnd = formatString(g.tempBuffer, fmt, *args)
-        return treeNodeBehavior(window.getID(ptrId), flags, g.tempBuffer, labelEnd)
+        return treeNodeBehavior(window.getID(ptrID), flags, g.tempBuffer, labelEnd)
+    }
+
+    fun treeNodeEx(intPtr: Long, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val labelEnd = formatString(g.tempBuffer, fmt, *args)
+        return treeNodeBehavior(window.getID(intPtr), flags, g.tempBuffer, labelEnd)
     }
 
 //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
 
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call TreePush/TreePop yourself if desired.  */
-    fun treePush(ptrId: Any?) {
+    fun treePush(strId: String = "#TreePush") {
         val window = currentWindow
         indent()
         window.dc.treeDepth++
-        pushID(ptrId ?: "#TreePush")
+        pushID(strId)
     }
 
     /** ~ Unindent()+PopId()    */
