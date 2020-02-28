@@ -14,9 +14,7 @@ import java.nio.IntBuffer
 import kotlin.reflect.KMutableProperty0
 
 
-internal var ptrIndices = 0
-
-// it was: java.lang.Byte.valueOf(it.b)
+// We need boxed objects in order to deliver a constant hashcode
 internal var ptrId: Array<Int> = Array(512) { it }
 
 

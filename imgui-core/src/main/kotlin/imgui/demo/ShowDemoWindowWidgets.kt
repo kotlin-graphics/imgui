@@ -1,10 +1,7 @@
 package imgui.demo
 
 import gli_.has
-import glm_.b
-import glm_.glm
-import glm_.i
-import glm_.s
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.operators.div
 import glm_.vec3.Vec3
@@ -531,7 +528,7 @@ object ShowDemoWindowWidgets {
                     if (i == 0)
                         setNextItemOpen(true, Cond.Once)
 
-                    treeNode(i, "Child $i") {
+                    treeNode(i.L, "Child $i") {
                         text("blah blah")
                         sameLine()
                         smallButton("button") { }

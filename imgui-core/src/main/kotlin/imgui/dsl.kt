@@ -70,7 +70,6 @@ import imgui.ImGui.selectable
 import imgui.ImGui.smallButton
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
-import imgui.ImGui.treePush
 import imgui.ImGui.unindent
 import imgui.font.Font
 import imgui.internal.ColumnsFlag
@@ -296,15 +295,15 @@ object dsl {
             try { block() } finally { treePop() }
     }
 
-    inline fun treeNode(ptrId: Any, fmt: String, block: () -> Unit) {
-        if (treeNode(ptrId, fmt))
+    inline fun treeNode(intPtr: Long, fmt: String, block: () -> Unit) {
+        if (treeNode(intPtr, fmt))
             try { block() } finally { treePop() }
     }
 
-    inline fun treePushed(ptrId: Any?, block: () -> Unit) {
-        treePush(ptrId)
-        try { block() } finally { treePop() }
-    }
+//    inline fun treePushed(intPtr: Long?, block: () -> Unit) { TODO check me
+//        treePush(intPtr)
+//        try { block() } finally { treePop() }
+//    }
 
     inline fun collapsingHeader(label: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
         if (collapsingHeader(label, flags))
