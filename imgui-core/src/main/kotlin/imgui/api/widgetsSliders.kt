@@ -46,6 +46,10 @@ import imgui.internal.SliderFlag
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
+import unsigned.Ubyte
+import unsigned.Uint
+import unsigned.Ulong
+import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Sliders
@@ -201,7 +205,13 @@ interface widgetsSliders {
             window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = format.format(style.locale, pData())
+        val value = format.format(style.locale, when(val data = pData()) {
+            is Ubyte -> data.v
+            is Ushort -> data.v
+            is Uint -> data.v
+            is Ulong -> data.v
+            else -> data
+        })
         renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
