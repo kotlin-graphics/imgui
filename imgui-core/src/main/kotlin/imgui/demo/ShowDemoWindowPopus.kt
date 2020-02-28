@@ -222,7 +222,8 @@ object ShowDemoWindowPopups {
                 behavior for regular menus. */
             withId("foo") {
                 menuItem("Menu item", "CTRL+M")
-                menu("Menu inside a regular window") { MenuFile() }
+                menu("Menu inside a regular window") {
+                    MenuFile() }
             }
             separator()
         }

@@ -383,6 +383,7 @@ interface demoDebugInformations {
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         if (io.fontAllowUserScaling)
             bulletText("CTRL+Mouse Wheel to zoom window contents.")
+        bulletText("While inputing text:\n")
         indent {
             bulletText("CTRL+Left/Right to word jump.")
             bulletText("CTRL+A or double-click to select all.")
