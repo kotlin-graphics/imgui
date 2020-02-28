@@ -535,18 +535,17 @@ interface widgetsColorEditorPicker {
             val subFlagsToForward = Cef._DataTypeMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
-            valueChanged = when {
-                flags has Cef.DisplayRGB || flags hasnt Cef._DisplayMask ->
-                    if (colorEdit4("##rgb", col, subFlags or Cef.DisplayRGB)) {
-                        // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
-                        // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
-                        valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
-                        true
-                    } else valueChanged
-                flags has Cef.DisplayHSV || flags hasnt Cef._DisplayMask -> colorEdit4("##hsv", col, subFlags or Cef.DisplayHSV)
-                flags has Cef.DisplayHEX || flags hasnt Cef._DisplayMask -> colorEdit4("##hex", col, subFlags or Cef.DisplayHEX)
-                else -> false
-            } or valueChanged
+            if(flags has Cef.DisplayRGB || flags hasnt Cef._DisplayMask)
+                if (colorEdit4("##rgb", col, subFlags or Cef.DisplayRGB)) {
+                    // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
+                    // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
+                    valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
+                    valueChanged = true
+                }
+            if(flags has Cef.DisplayHSV || flags hasnt Cef._DisplayMask)
+                valueChanged = colorEdit4("##hsv", col, subFlags or Cef.DisplayHSV) || valueChanged
+            if(flags has Cef.DisplayHEX || flags hasnt Cef._DisplayMask)
+                valueChanged = colorEdit4("##hex", col, subFlags or Cef.DisplayHEX) || valueChanged
             popItemWidth()
         }
 
