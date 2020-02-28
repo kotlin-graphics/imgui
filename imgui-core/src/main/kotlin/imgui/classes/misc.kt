@@ -236,7 +236,7 @@ class TextFilter(defaultFilter: String = "") {
         inc.clear()
         exc.clear()
         countGrep = 0
-        String(inputBuf).split(",").map { it.trim() }.filter(String::isNotEmpty).
+        inputBuf.cStr.split(",").map { it.trim() }.filter(String::isNotEmpty).
                 forEach { f ->
                     if (f[0] == '-') exc += f
                     else {

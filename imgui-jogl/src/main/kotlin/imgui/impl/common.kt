@@ -113,7 +113,7 @@ class JoglProgram(gl: GL3, vert: String, frag: String) {
                 if (i[0] == GL2ES3.GL_FALSE) {
                     ByteBuffer(100).use {
                         glGetProgramInfoLog(name, 100, i, it)
-                        throw Error(String(it.toByteArray()))
+                        throw Error(String(it.toByteArray())) // .cStr ?
                     }
                 }
             }

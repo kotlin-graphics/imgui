@@ -397,7 +397,7 @@ fun TestEngine.runTest(ctx: TestContext, userData: Any?) {
     val backupClipboardUserData = i.clipboardUserData
     i.getClipboardTextFn = { userData_ ->
         val ctx_ = userData_ as TestContext
-        String(ctx_.clipboard)
+        ctx_.clipboard.cStr
     }
     i.setClipboardTextFn = { userData_, text ->
         val ctx_ = userData_ as TestContext
