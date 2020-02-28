@@ -111,11 +111,16 @@ infix fun IntBuffer.growCapacity(sz: Int): Int {
 }
 
 infix fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
+//    if(DEBUG)
+//        println(toString() + ", newCapacity=$newCapacity")
     if (newCapacity <= cap)
         return this
     val newData = IntBuffer(newCapacity)
-    if (lim > 0)
+    val backupLim = lim
+    lim = 0
+    if (cap > 0)
         MemoryUtil.memCopy(adr, newData.adr, remSize.L)
+    newData.lim = backupLim
     free()
     return newData
 }
