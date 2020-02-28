@@ -3,8 +3,8 @@ package imgui.impl
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.ImGui.io
 import imgui.*
+import imgui.ImGui.io
 import imgui.internal.DrawData
 import javafx.application.Platform
 import javafx.event.Event
@@ -27,6 +27,7 @@ import kotlin.math.roundToInt
 typealias JFXColor = javafx.scene.paint.Color
 
 private const val COLOR_SIZE_MASK = 0xFF
+
 //-1 is no multiplication (each pixel * 1.0 for each component, so the original)
 private const val TEXTURE_COLOR_UNMULTIPLIED = -1
 
@@ -141,12 +142,8 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
         io.backendLanguageUserData = null
         io.backendRendererUserData = null
         io.backendPlatformUserData = null
-        io.setClipboardTextFn = { userData, text ->
-            Clipboard.getSystemClipboard().setContent(mapOf(DataFormat.PLAIN_TEXT to text))
-        }
-        io.getClipboardTextFn = {
-            Clipboard.getSystemClipboard().getContent(DataFormat.PLAIN_TEXT) as String
-        }
+        io.setClipboardTextFn = { _, text -> Clipboard.getSystemClipboard().setContent(mapOf(DataFormat.PLAIN_TEXT to text)) }
+        io.getClipboardTextFn = { Clipboard.getSystemClipboard().getContent(DataFormat.PLAIN_TEXT) as String }
         io.clipboardUserData = 0L
 
         val (pixels, size) = io.fonts.getTexDataAsAlpha8()
@@ -336,6 +333,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                         var col = JFXColor(0.0, 0.0, 0.0, 0.0)
                         //for multi-triangle draws, when they border, how many verts there are
                         var pos = 0
+
                         //add a point to the polygon that will be drawn
                         fun addPoint(x: Float, y: Float) {
                             if (pos == xs.size) {
