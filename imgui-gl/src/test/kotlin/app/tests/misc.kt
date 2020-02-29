@@ -18,7 +18,6 @@ import imgui.internal.classes.Pool
 import imgui.internal.classes.PoolIdx
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
-import kool.IntPtr
 import unsigned.Ubyte
 import unsigned.Uint
 import unsigned.Ulong
@@ -627,7 +626,7 @@ fun registerTests_Misc(e: TestEngine) {
                 val halfCircle = 2f
                 val fullCircle = halfCircle * 2f
                 val r = Rect(wp + pt - halfCircle, wp + pt + halfCircle)
-                val id = ImGui.getID(IntPtr(points.indexOf(pt).L))
+                val id = ImGui.getID(points.indexOf(pt).L)
 
                 ImGui.itemAdd(r, id)
                 val isHovered = ImGui.isItemHovered()
