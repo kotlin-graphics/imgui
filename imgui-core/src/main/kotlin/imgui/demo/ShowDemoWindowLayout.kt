@@ -104,7 +104,6 @@ import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
-import kool.IntPtr
 import kotlin.math.sin
 import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
@@ -588,7 +587,7 @@ object ShowDemoWindowLayout {
                     textUnformatted(names1[i])
 
                     val childFlags = if (enableExtraDecorations) Wf.MenuBar else Wf.None
-                    val windowVisible = beginChild(getID(IntPtr(i.L)), Vec2(childW, 200f), true, childFlags.i)
+                    val windowVisible = beginChild(getID(i.L), Vec2(childW, 200f), true, childFlags.i)
                     menuBar { textUnformatted("abc") }
                     if (scrollToOff)
                         scrollY = scrollToOffPx
@@ -617,7 +616,7 @@ object ShowDemoWindowLayout {
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
                 val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
-                val windowVisible = beginChild(getID(IntPtr(i.L)), Vec2(-100f, childHeight), true, childFlags)
+                val windowVisible = beginChild(getID(i.L), Vec2(-100f, childHeight), true, childFlags)
                 if (scrollToOff)
                     scrollX = scrollToOffPx
                 if (scrollToPos)
