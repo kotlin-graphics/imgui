@@ -1,5 +1,6 @@
 package imgui.demo
 
+import glm_.L
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
@@ -191,13 +192,13 @@ object ShowDemoWindowColumns {
         treeNode("Tree") {
             columns(2, "tree", true)
             for (x in 0..2) {
-                val open1 = treeNode(x, "Node%d", x)
+                val open1 = treeNode(x.L, "Node$x")
                 nextColumn()
                 text("Node contents")
                 nextColumn()
                 if (open1) {
                     for (y in 0..2) {
-                        val open2 = treeNode(y, "Node$x.$y")
+                        val open2 = treeNode(y.L, "Node$x.$y")
                         nextColumn()
                         text("Node contents")
                         if (open2) {
