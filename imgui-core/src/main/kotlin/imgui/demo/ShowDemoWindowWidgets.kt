@@ -559,7 +559,7 @@ object ShowDemoWindowWidgets {
                         nodeFlags = nodeFlags or Tnf.Selected
                     if (i < 3) {
                         // Items 0..2 are Tree Node
-                        val nodeOpen = treeNodeEx(i, nodeFlags, "Selectable Node $i")
+                        val nodeOpen = treeNodeEx(i.L, nodeFlags, "Selectable Node $i")
                         if (isItemClicked()) nodeClicked = i
                         if (nodeOpen) {
                             bulletText("Blah blah\nBlah Blah")
@@ -570,7 +570,7 @@ object ShowDemoWindowWidgets {
                             The only reason we use TreeNode at all is to allow selection of the leaf.
                             Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
                         nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
-                        treeNodeEx(i, nodeFlags, "Selectable Leaf $i")
+                        treeNodeEx(i.L, nodeFlags, "Selectable Leaf $i")
                         if (isItemClicked()) nodeClicked = i
                     }
                 }
