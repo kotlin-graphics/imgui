@@ -1,5 +1,6 @@
 package imgui.demo.showExampleApp
 
+import glm_.L
 import glm_.c
 import glm_.f
 import glm_.i
@@ -265,7 +266,7 @@ object StyleEditor {
                             for (base in 0..UNICODE_CODEPOINT_MAX step 256) {
                                 val count = (0 until 256).count { font.findGlyphNoFallback(base + it) != null }
                                 val s = if (count > 1) "glyphs" else "glyph"
-                                if (count > 0 && treeNode(base, "U+%04X..U+%04X ($count $s)", base, base + 255)) {
+                                if (count > 0 && treeNode(Integer.valueOf(base), "U+%04X..U+%04X ($count $s)", base, base + 255)) {
                                     val cellSize = font.fontSize * 1
                                     val cellSpacing = style.itemSpacing.y
                                     val basePos = Vec2(cursorScreenPos)

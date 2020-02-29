@@ -269,23 +269,36 @@ class Window(var context: Context,
     }
 
     /** [JVM] */
-    fun getID(ptrID: Any): ID = System.identityHashCode(ptrID).also { keepAliveID(id) }
+    fun getID(ptrID: Any): ID {
+        val seed: ID = idStack.last()
+        val id: ID = hash(System.identityHashCode(ptrID), seed)
+        keepAliveID(id)
+        return id
+    }
 
     /** [JVM] we hack the pointer version in this way */
     fun getID(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
-        return System.identityHashCode(ptrId[intPtr.i]).also { keepAliveID(id) }
+        val seed: ID = idStack.last()
+        val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed)
+        keepAliveID(id)
+        return id
     }
 
-    fun getID(n: Int): ID = hash(n, seed = idStack.last()).also { keepAliveID(it) }
+    fun getID(n: Int): ID {
+        val seed = idStack.last()
+        val id = hash(n, seed)
+        keepAliveID(id)
+        return id
+    }
 
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID = hash(strID, strID.length - strEnd, seed_ = idStack.last())
 
-    fun getIdNoKeepAlive(ptrID: Any): ID = System.identityHashCode(ptrID)
+    fun getIdNoKeepAlive(ptrID: Any): ID = hash(System.identityHashCode(ptrID), seed = idStack.last())
 
     fun getIdNoKeepAlive(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
-        return System.identityHashCode(ptrId[intPtr.i])
+        return hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
     }
 
     fun getIdNoKeepAlive(n: Int): ID = hash(n, seed = idStack.last())
