@@ -10,6 +10,7 @@ import imgui.ImGui
 import imgui.api.gImGui
 import imgui.classes.Context
 import imgui.or
+import org.lwjgl.system.Configuration
 import uno.kotlin.parseInt
 import kotlin.system.exitProcess
 
@@ -35,6 +36,9 @@ import kotlin.system.exitProcess
 val app = TestApp
 
 fun main(args: Array<String>) {
+
+    Configuration.DEBUG.set(true)
+    Configuration.DEBUG_MEMORY_ALLOCATOR.set(true)
 
     IMGUI_ENABLE_TEST_ENGINE = true
 

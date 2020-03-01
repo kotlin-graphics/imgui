@@ -30,6 +30,7 @@ import imgui.internal.*
 import imgui.static.viewportRect
 import kool.cap
 import java.util.*
+import java.util.logging.Level
 import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
@@ -39,6 +40,7 @@ import imgui.WindowFlag as Wf
 class Window(var context: Context,
              /** Window name, owned by the window. */
              var name: String) {
+
     /** == ImHashStr(Name) */
     val id: ID = hash(name)
 
@@ -184,6 +186,7 @@ class Window(var context: Context,
     fun destroy() {
         assert(drawList === drawListInst)
         columnsStorage.forEach { it.destroy() }
+        drawListInst.destroy()
     }
 
     // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
@@ -226,7 +229,7 @@ class Window(var context: Context,
     /** Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back) */
     var settingsOffset = -1
 
-    var drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    val drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
 
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
     var drawList = drawListInst
@@ -304,9 +307,7 @@ class Window(var context: Context,
     fun getIdNoKeepAlive(n: Int): ID = hash(n, seed = idStack.last())
 
     private fun increase() {
-        val newBufLength = ptrId.size + 512
-        val newBuf = Array(newBufLength) { i -> ptrId.getOrElse(i) { i } }
-        ptrId = newBuf
+        ptrId = Array(ptrId.size + 512) { i -> ptrId.getOrElse(i) { i } }
     }
 
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
