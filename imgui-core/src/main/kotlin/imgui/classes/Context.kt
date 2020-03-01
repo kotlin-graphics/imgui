@@ -599,8 +599,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             openPopupStack.clear()
             beginPopupStack.clear()
             drawDataBuilder.clear()
-            backgroundDrawList.clearFreeMemory()
-            foregroundDrawList.clearFreeMemory()
+            backgroundDrawList.clearFreeMemory(destroy = true)
+            foregroundDrawList.clearFreeMemory(destroy = true)
 
             tabBars.clear()
             currentTabBarStack.clear()

@@ -14,14 +14,14 @@ import engine.core.TestEngine
 
 fun TestEngine.registerTests() {
     // Tests
-    registerTests_Window(this)
-    registerTests_Layout(this)
-    registerTests_Widgets(this)
-    registerTests_Nav(this)
-    registerTests_Columns(this)
+//    registerTests_Window(this)
+//    registerTests_Layout(this)
+//    registerTests_Widgets(this)
+//    registerTests_Nav(this)
+//    registerTests_Columns(this)
 //    RegisterTests_Table(e)
 //    RegisterTests_Docking(e)
-//    registerTests_Misc(this)
+    registerTests_Misc(this)
 
     // Captures
 //    RegisterTests_Capture(e)

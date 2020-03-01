@@ -138,7 +138,7 @@ class Columns {
 
     fun destroy() {
         logger.log(Level.INFO, "Columns.destroy()=$this")
-        splitter.destroy()
+        splitter.clearFreeMemory(destroy = true)
     }
 
     fun clear() {
@@ -482,7 +482,7 @@ class Pool<T>(val placementNew: () -> T) {
         buf.removeAt(idx.i)
         map.remove(key)
         // update indices in map
-        map.replaceAll { _, i -> if (i > idx) i - 1 else i }
+        map.replaceAll { _, i -> i - (i > idx).i}
     }
 //    void        Reserve(int capacity)
 //    { Buf.reserve(capacity); Map.Data.reserve(capacity); }
