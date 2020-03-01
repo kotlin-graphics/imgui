@@ -21,6 +21,7 @@ import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
+import java.util.logging.Level
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -41,6 +42,9 @@ import kotlin.math.sqrt
  *  DrawListSharedData (so you can use ImDrawList without ImGui)    */
 class DrawList(sharedData: DrawListSharedData?) {
 
+    init {
+        logger.log(Level.INFO, "DrawList()=$this")
+    }
     // -----------------------------------------------------------------------------------------------------------------
     // This is what you have to render
     // -----------------------------------------------------------------------------------------------------------------
@@ -49,10 +53,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     var cmdBuffer = Stack<DrawCmd>()
 
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
-    var idxBuffer = IntBuffer(0)
+    var idxBuffer = IntBuffer(0).also { logger.log(Level.INFO, "new ${it.adr}") }
 
     /** Vertex buffer.  */
-    var vtxBuffer = DrawVert_Buffer(0)
+    var vtxBuffer = DrawVert_Buffer(0).also { logger.log(Level.INFO, "new ${it.data.adr}") }
 
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -91,7 +95,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** [Internal] for channels api */
     val _splitter = DrawListSplitter()
 
-    fun destroy() = clearFreeMemory()
+    fun destroy() {
+//        logger.log(Level.INFO, "DrawList.destroy, $this")
+        clearFreeMemory()
+    }
 
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
@@ -878,8 +885,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
     fun clear() {
         cmdBuffer.clear()
-        idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
-        vtxBuffer.resize(0)
+        idxBuffer = idxBuffer.resize(0) // we dont assign because it wont create a new instance for sure
+        vtxBuffer = vtxBuffer.resize(0)
         flags = _data.initialFlags
         _vtxCurrentOffset = 0
         _vtxCurrentIdx = 0
@@ -892,6 +899,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun clearFreeMemory() {
+//        logger.log(Level.INFO, "clearFreeMemory=$this")
         clear()
         _splitter.clearFreeMemory()
         vtxBuffer.data.free()

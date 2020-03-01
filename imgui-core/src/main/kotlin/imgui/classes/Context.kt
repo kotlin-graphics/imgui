@@ -351,12 +351,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list) */
     var dimBgRatio = 0f
 
-    var backgroundDrawList: DrawList = DrawList(drawListSharedData).apply {
+    val backgroundDrawList: DrawList = DrawList(drawListSharedData).apply {
         _ownerName = "##Background" // Give it a name for debugging
     }
 
     /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
-    var foregroundDrawList: DrawList = DrawList(drawListSharedData).apply {
+    val foregroundDrawList: DrawList = DrawList(drawListSharedData).apply {
         _ownerName = "##Foreground" // Give it a name for debugging
     }
 

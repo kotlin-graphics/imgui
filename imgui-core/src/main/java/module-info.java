@@ -14,6 +14,7 @@ module com.github.kotlin_graphics.imgui_core {
     requires org.lwjgl;
     requires org.lwjgl.stb;
     requires annotations;
+    requires java.logging;
 
     exports imgui.api;
     exports imgui.classes;
