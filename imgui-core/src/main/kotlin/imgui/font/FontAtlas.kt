@@ -182,6 +182,7 @@ class FontAtlas {
         clearTexData()
         clearFonts()
         stbClear()
+        texPixelsAlpha8?.free()
     }
 
     /*  Build atlas, retrieve pixel data.
