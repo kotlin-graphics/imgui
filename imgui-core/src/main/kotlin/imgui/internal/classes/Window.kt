@@ -186,7 +186,7 @@ class Window(var context: Context,
     fun destroy() {
         assert(drawList === drawListInst)
         columnsStorage.forEach { it.destroy() }
-        drawListInst.destroy()
+        drawListInst.clearFreeMemory(true)
     }
 
     // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
@@ -527,6 +527,7 @@ class Window(var context: Context,
         memoryCompacted = false
         drawList.apply {
             idxBuffer = idxBuffer reserve memoryDrawListIdxCapacity
+            logger.log(Level.INFO, "vtxBuffer reserve $memoryDrawListVtxCapacity")
             vtxBuffer = vtxBuffer reserve memoryDrawListVtxCapacity
         }
         memoryDrawListIdxCapacity = 0

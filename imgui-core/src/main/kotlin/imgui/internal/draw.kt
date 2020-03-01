@@ -147,22 +147,19 @@ class DrawListSplitter {
         clear()
     }
 
-    fun destroy() {
-        logger.log(Level.INFO, "DrawListSplitter.destroy() $this, ${System.identityHashCode(this)}")
-        clearFreeMemory()
-    }
-
     fun clear() {
         _current = 0
         _count = 1
     } // Do not clear Channels[] so our allocations are reused next frame
 
-    fun clearFreeMemory() {
+    fun clearFreeMemory(destroy: Boolean = false) {
         _channels.forEach {
             //            if (i == _current)
 //                memset(&_Channels[i], 0, sizeof(_Channels[i]));  // Current channel is a copy of CmdBuffer/IdxBuffer, don't destruct again
             it._cmdBuffer.clear()
             it._idxBuffer.free()
+            if (!destroy)
+                it._idxBuffer = IntBuffer(0)
         }
         _current = 0
         _count = 1
