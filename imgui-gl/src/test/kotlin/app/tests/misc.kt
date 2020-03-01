@@ -699,12 +699,12 @@ fun registerTests_Misc(e: TestEngine) {
             ctx.scrollVerifyScrollMax(window)
 
             // Test the Log/Capture api
-            var clipboard = ImGui.clipboardText
-            assert(clipboard.isEmpty())
-            ctx.itemClick("Capture\\/Logging/LogButtons/Log To Clipboard")
-            clipboard = ImGui.clipboardText
-            val clipboardLen = clipboard.length
-            assert(clipboardLen >= 15000) // This is going to vary (as of 2019-11-18 on Master this 22766)
+//            var clipboard = ImGui.clipboardText
+//            assert(clipboard.isEmpty())
+//            ctx.itemClick("Capture\\/Logging/LogButtons/Log To Clipboard")
+//            clipboard = ImGui.clipboardText
+//            val clipboardLen = clipboard.length
+//            assert(clipboardLen >= 15000) // This is going to vary (as of 2019-11-18 on Master this 22766)
         }
     }
 

@@ -11,6 +11,10 @@ import imgui.internal.textStrToUtf8
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import java.nio.IntBuffer
+import java.util.logging.FileHandler
+import java.util.logging.Level
+import java.util.logging.Logger
+import java.util.logging.SimpleFormatter
 import kotlin.reflect.KMutableProperty0
 
 
@@ -92,6 +96,12 @@ object Debug {
     private var cachedInstanceCounts = countInstances()
 }
 
+val fileHandler = FileHandler("./imgui.log").apply { formatter = SimpleFormatter() }
+val logger = Logger.getLogger("My Logger").apply {
+    addHandler(fileHandler)
+    useParentHandlers = false
+}
+
 infix fun IntBuffer.resize(newSize: Int): IntBuffer = when {
     newSize > cap -> reserve(growCapacity(newSize))
     else -> this
@@ -109,16 +119,17 @@ infix fun IntBuffer.growCapacity(sz: Int): Int {
 }
 
 infix fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
-    if(DEBUG)
-        println(toString() + ", newCapacity=$newCapacity")
+    logger.log(Level.INFO,"$this, newCapacity=$newCapacity")
     if (newCapacity <= cap)
         return this
     val newData = IntBuffer(newCapacity)
+    logger.log(Level.INFO,", new:${newData.adr}")
     val backupLim = lim
     lim = 0
     if (cap > 0)
         MemoryUtil.memCopy(adr, newData.adr, remSize.L)
     newData.lim = backupLim
+    logger.log(Level.INFO, " free:$adr\n")
     free()
     return newData
 }

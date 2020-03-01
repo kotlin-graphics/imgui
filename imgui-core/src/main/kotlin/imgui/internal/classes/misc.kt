@@ -8,6 +8,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
 import imgui.internal.*
+import java.util.logging.Level
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -131,7 +132,14 @@ class Columns {
     val columns = ArrayList<ColumnData>()
     val splitter = DrawListSplitter()
 
-    fun destroy() = splitter.destroy()
+    init {
+        logger.log(Level.INFO, "Columns()=$this")
+    }
+
+    fun destroy() {
+        logger.log(Level.INFO, "Columns.destroy()=$this")
+        splitter.destroy()
+    }
 
     fun clear() {
         id = 0

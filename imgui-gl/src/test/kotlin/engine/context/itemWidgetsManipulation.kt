@@ -177,7 +177,7 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
     assert(maxDepth > 0 && maxPasses > 0)
 
     var actionedTotal = 0
-    for (pass in 0 until maxPasses) {
+    for (pass in 0 until 1) {
         println("pass $pass")
         val items = TestItemList()
         gatherItems(items, refParent, maxDepth)
