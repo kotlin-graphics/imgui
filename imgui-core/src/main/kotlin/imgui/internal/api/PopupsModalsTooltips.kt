@@ -49,10 +49,8 @@ internal interface PopupsModalsTooltips {
         setNextWindowSize(size)
 
         // Build up name. If you need to append to a same child from multiple location in the ID stack, use BeginChild(ImGuiID id) with a stable value.
-        val title = when {
-            name.isNotEmpty() -> "${parentWindow.name}/$name".format(style.locale)
-            else -> "${parentWindow.name}/%08X".format(style.locale, id)
-        }
+        val postfix = if(name.isEmpty()) "" else "_"
+        val title = "${parentWindow.name}/$name$postfix%08X".format(style.locale, id)
         val backupBorderSize = style.childBorderSize
         if (!border) style.childBorderSize = 0f
         val ret = begin(title, null, flags)
@@ -220,7 +218,7 @@ internal interface PopupsModalsTooltips {
             tooltipFlags = tooltipFlags or TooltipFlag.OverridePreviousTooltip
         }
 
-        var windowName = "##Tooltip_%02d".format(style.locale, g.tooltipOverrideCount)
+        var windowName = "##Tooltip_%02d".format(g.tooltipOverrideCount)
         if (tooltipFlags has TooltipFlag.OverridePreviousTooltip)
             findWindowByName(windowName)?.let {
                 if (it.active) {

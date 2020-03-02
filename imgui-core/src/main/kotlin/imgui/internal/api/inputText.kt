@@ -56,7 +56,6 @@ import imgui.internal.classes.Rect
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag
-import imgui.stb.te.locateCoord
 import imgui.stb.te.paste
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
@@ -105,7 +104,7 @@ internal interface inputText {
 
         if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
             beginGroup()
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val h = if (isMultiline) g.fontSize * 8f else labelSize.y
         val frameSize = calcItemSize(sizeArg, calcItemWidth(), h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
@@ -174,11 +173,15 @@ internal interface inputText {
             val bufLen = buf.strlen()
             if (state.initialTextA.size < bufLen)
                 state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            else if (state.initialTextA.size > bufLen)
+                state.initialTextA[bufLen] = 0
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
             // Start edition
             if (state.textW.size < buf.size)
                 state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+            else if (state.textW.size > buf.size)
+                state.textW[buf.size] = NUL
 //            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
@@ -241,7 +244,10 @@ internal interface inputText {
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
         if (isReadOnly && state != null && (renderCursor || renderSelection)) {
-            if (state.textW.size < buf.size) state.textW = CharArray(buf.size)
+            if (state.textW.size < buf.size)
+                state.textW = CharArray(buf.size)
+            else if(state.textW.size > buf.size)
+                state.textW[buf.size] = NUL
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd(0))
             state.curLenA = bufEnd.x
             state.cursorClamp()
@@ -375,12 +381,12 @@ internal interface inputText {
                 } or kMask)
                 Key.UpArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
-                        drawWindow.setScrollY(glm.max(drawWindow.scroll.y - g.fontSize, 0f))
+                        drawWindow setScrollY glm.max(drawWindow.scroll.y - g.fontSize, 0f)
                     else
                         state.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
                 Key.DownArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
-                        drawWindow.setScrollY(glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY))
+                        drawWindow setScrollY glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY)
                     else
                         state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
                 Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
@@ -477,7 +483,7 @@ internal interface inputText {
                         wText = CharArray(textCountCharsFromUtf8(applyNewText, applyNewTextLength))
                         textStrFromUtf8(wText, applyNewText, applyNewTextLength)
                     }
-                    state.replace(wText, if(applyNewTextLength > 0) wText.size else 0)
+                    state.replace(wText, if (applyNewTextLength > 0) wText.size else 0)
                 }
 
             // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
@@ -491,7 +497,10 @@ internal interface inputText {
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
                 if (!isReadOnly) {
                     state.textAIsValid = true
-                    if (state.textA.size < state.textW.size * 4) state.textA = ByteArray(state.textW.size * 4)
+                    if (state.textA.size < state.textW.size * 4)
+                        state.textA = ByteArray(state.textW.size * 4)
+                    else if (state.textA.size > state.textW.size * 4)
+                        state.textA[state.textW.size * 4] = 0
                     textStrToUtf8(state.textA, state.textW)
                 }
 
@@ -557,6 +566,8 @@ internal interface inputText {
                                 val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)
                                 if (state.textW.size < newSize)
                                     state.textW = CharArray(newSize)
+                                else if (state.textW.size > newSize)
+                                    state.textW[newSize] = NUL
                             }
                             state.curLenW = textStrFromUtf8(state.textW, cbData.buf)
                             state.curLenA = cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
@@ -586,7 +597,7 @@ internal interface inputText {
                         it.bufSize = buf.size max applyNewTextLength
                         it.userData = callbackUserData
                     }
-                    callback!!.invoke(callbackData)
+                    callback!!(callbackData)
                     buf = callbackData.buf
 //                    buf_size = callback_data.BufSize; TODO?
                     applyNewTextLength = callbackData.bufTextLen min buf.size
@@ -769,7 +780,7 @@ internal interface inputText {
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0, bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
             }
 
             // Draw blinking cursor
@@ -798,7 +809,7 @@ internal interface inputText {
 
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, 0, bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
             }
         }
 
@@ -813,7 +824,7 @@ internal interface inputText {
 
         // Log as text
         if (g.logEnabled && !(isPassword && !isDisplayingHint))
-            logRenderedText(drawPos, String(bufDisplay), bufDisplayEnd)
+            logRenderedText(drawPos, String(bufDisplay, 0, bufDisplayEnd), bufDisplayEnd)
 
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
@@ -821,7 +832,7 @@ internal interface inputText {
         if (valueChanged && flags hasnt Itf._NoMarkEdited)
             markItemEdited(id)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return when {
             flags has Itf.EnterReturnsTrue -> enterPressed
             else -> valueChanged
@@ -847,13 +858,14 @@ internal interface inputText {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        var valueChanged = inputTextEx(label, null, dataBuf.toByteArray(), bb.size, flags)
+        val buf = dataBuf.toByteArray(32)
+        var valueChanged = inputTextEx(label, null, buf, bb.size, flags)
         if (init) {
             assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
             g.tempInputTextId = g.activeId
         }
         if (valueChanged) {
-            valueChanged = dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
+            valueChanged = dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
             if (valueChanged)
                 markItemEdited(id)
         }
@@ -928,6 +940,7 @@ internal interface inputText {
 
         /** @return [JVM] [lineCount, textEnd] */
         fun inputTextCalcTextLenAndLineCount(text: ByteArray): Pair<Int, Int> {
+            if(text.isEmpty()) return 1 to 0
             var lineCount = 0
             var s = 0
             var c = text[s++]

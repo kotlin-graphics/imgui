@@ -176,7 +176,7 @@ object Console {
 
             var reclaimFocus = false
             if (inputText("Input", inputBuf, Itf.EnterReturnsTrue.i or Itf.CallbackCompletion.i or Itf.CallbackHistory.i, textEditCallbackStub, this)) {
-                val s = String(inputBuf).trimEnd()
+                val s = inputBuf.cStr.trimEnd()
                 if(s.isNotEmpty())
                     execCommand(s)
                 reclaimFocus = true
@@ -232,7 +232,7 @@ object Console {
                         wordStart--
                     }
 
-                    val word = String(data.buf.copyOfRange(wordStart, wordEnd))
+                    val word = data.buf.copyOfRange(wordStart, wordEnd).cStr
                     val candidates = ArrayList<String>()
                     for (c in commands) {
                         if (c.startsWith(word))

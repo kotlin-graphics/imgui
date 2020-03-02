@@ -29,7 +29,7 @@ interface childWindows {
      *    this is due to legacy reason and inconsistent with most BeginXXX functions apart from the regular Begin()
      *    which behaves like BeginChild().]  */
     fun beginChild(strId: String, size: Vec2 = Vec2(), border: Boolean = false, flags: WindowFlags = 0): Boolean =
-            beginChildEx(strId, currentWindow.getId(strId), size, border, flags)
+            beginChildEx(strId, currentWindow.getID(strId), size, border, flags)
 
     /** begin a scrolling region.
      *  size == 0f: use remaining window size

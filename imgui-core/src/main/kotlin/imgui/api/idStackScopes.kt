@@ -11,25 +11,29 @@ import imgui.ID
  *      whereas "str_id" denote a string that is only used as an ID and not normally displayed.  */
 interface idStackScopes {
 
+    /** [JVM] */
+    fun pushID(ptrID: Any) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(ptrID) }
 
     /** push string into the ID stack (will hash string).  */
-    fun pushId(strId: String) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strId) }
+    fun pushID(strID: String) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strID) }
 
     /** push string into the ID stack (will hash string).  */
-    fun pushId(strId: String, strIdEnd: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strId, strIdEnd) }
+    fun pushID(strID: String, strIdEnd: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strID, strIdEnd) }
 
     /** push pointer into the ID stack (will hash pointer).  */
-    fun pushId(ptrId: Any) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(ptrId) }
+    fun pushID(intPtr: Long) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intPtr) }
 
     /** push integer into the ID stack (will hash integer). */
-    fun pushId(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
+    fun pushID(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
 
     /** pop from the ID stack. */
-    fun popId() = g.currentWindow!!.idStack.pop()
+    fun popID() = g.currentWindow!!.idStack.pop()
 
     /** calculate unique ID (hash of whole ID stack + given parameter). e.g. if you want to query into ImGuiStorage
      *  yourself. otherwise rarely needed   */
-    fun getId(strId: String) = g.currentWindow!!.getId(strId)
+    fun getID(strID: String) = g.currentWindow!!.getID(strID)
 
-    fun getId(ptrId: Any): ID = g.currentWindow!!.getId(ptrId)
+    fun getID(ptrID: Any): ID = g.currentWindow!!.getID(ptrID)
+
+    fun getID(intPtr: Long): ID = g.currentWindow!!.getID(intPtr)
 }
