@@ -57,12 +57,20 @@ typealias OsConsoleTextColor = AnsiColorCode
 //enum class OsConsoleTextColor { Black, White, BrightWhite, BrightRed, BrightGreen, BrightBlue, BrightYellow }
 
 class BuildInfo {
-    var type = ""
-    var cpu = ""
-    var os = ""
-    var compiler = ""
-    lateinit var date: Date           // "YYYY-MM-DD"
-    var time = ""          //
+    val type = when {
+        java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0 ->
+            "Debug"
+        else -> "Release"
+    }
+    val cpu = when(System.getProperty("sun.arch.data.model")) {
+        "32" -> "X86"
+        "64" -> "X64"
+        else -> "Unknown"
+    }
+    val os = System.getProperty("os.name") //Platform.get()
+    val compiler = "ojdk ${System.getProperty("java.version")}"
+    val date = Date()           // "YYYY-MM-DD"
+    var time = System.currentTimeMillis()          //
     override fun toString() = "$type, $cpu, $os, $compiler, $date"
 }
 
@@ -158,7 +166,8 @@ fun getKeyModsPrefixStr(modFlags: KeyModFlags): String {
     }
     return res
 }
-//const ImBuildInfo&  ImGetBuildInfo();
+
+//const ImBuildInfo&  ImGetBuildInfo(); [JVM] -> simply instantiate BuildInfo
 //ImFont*     FindFontByName(const char* name);
 
 // Helper: maintain/calculate moving average
