@@ -51,7 +51,7 @@ interface widgetsListBoxes {
         // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
         val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
-            for (i in clipper.display.first until clipper.display.last)
+            for (i in clipper.display)
                 withBool { itemSelected ->
                     itemSelected.set(i == currentItem)
                     val itemText = items.getOrElse(i) { "*Unknown item*" }

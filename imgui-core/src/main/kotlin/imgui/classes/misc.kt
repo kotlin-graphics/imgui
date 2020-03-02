@@ -197,7 +197,7 @@ class TextFilter(defaultFilter: String = "") {
     fun isActive() = inc.isNotEmpty() || exc.isNotEmpty()
 
     /** Helper calling InputText+Build   */
-    fun draw(label: String = "Filter (inc,-exc)", width: Float): Boolean {
+    fun draw(label: String = "Filter (inc,-exc)", width: Float = 0f): Boolean {
         if (width != 0f)
             setNextItemWidth(width)
         val valueChanged = inputText(label, inputBuf)

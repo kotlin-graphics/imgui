@@ -100,8 +100,8 @@ interface miscellaneousUtilities {
     fun calcListClipping(itemsCount: Int, itemsHeight: Float): IntRange {
         val window = g.currentWindow!!
         return when {
-            g.logEnabled -> 0..itemsCount // If logging is active, do not perform any clipping
-            window.skipItems -> 0..0
+            g.logEnabled -> 0 until itemsCount // If logging is active, do not perform any clipping
+            window.skipItems -> 0 until 0
             else -> {
                 // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
                 val unclippedRect = window.clipRect
@@ -119,7 +119,7 @@ interface miscellaneousUtilities {
                     end++
                 start = glm.clamp(start, 0, itemsCount)
                 end = glm.clamp(end + 1, start, itemsCount)
-                start..end
+                start until end
             }
         }
     }

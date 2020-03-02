@@ -527,7 +527,6 @@ class Window(var context: Context,
         memoryCompacted = false
         drawList.apply {
             idxBuffer = idxBuffer reserve memoryDrawListIdxCapacity
-            logger.log(Level.INFO, "vtxBuffer reserve $memoryDrawListVtxCapacity")
             vtxBuffer = vtxBuffer reserve memoryDrawListVtxCapacity
         }
         memoryDrawListIdxCapacity = 0

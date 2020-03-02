@@ -132,14 +132,7 @@ class Columns {
     val columns = ArrayList<ColumnData>()
     val splitter = DrawListSplitter()
 
-    init {
-        logger.log(Level.INFO, "Columns()=$this")
-    }
-
-    fun destroy() {
-        logger.log(Level.INFO, "Columns.destroy()=$this")
-        splitter.clearFreeMemory(destroy = true)
-    }
+    fun destroy() = splitter.clearFreeMemory(destroy = true)
 
     fun clear() {
         id = 0
