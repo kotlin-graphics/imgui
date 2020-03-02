@@ -13,22 +13,22 @@ import imgui.internal.classes.Rect
 // Hooks for Core Library
 //-------------------------------------------------------------------------
 
-fun hookPrenewframe(ctx: Context) {
-    hookingEngine?.preNewFrame(ctx)
+fun hookPrenewframe(uiCtx: Context) {
+    hookingEngine?.preNewFrame(uiCtx)
 }
 
-fun hookPostnewframe(ctx: Context) {
-    hookingEngine?.postNewFrame(ctx)
+fun hookPostnewframe(uiCtx: Context) {
+    hookingEngine?.postNewFrame(uiCtx)
 }
 
-fun hookItemAdd(ctx: Context, bb: Rect, id: ID) {
+fun hookItemAdd(uiCtx: Context, bb: Rect, id: ID) {
 
     val engine = hookingEngine
-    if (engine == null || engine.uiContextActive !== ctx)
+    if (engine == null || engine.uiContextActive !== uiCtx)
         return
 
     assert(id != 0)
-    val g = ctx
+    val g = uiCtx
     val window = g.currentWindow!!
 
     // FIXME-OPT: Early out if there are no active Locate/Gather tasks.
@@ -84,14 +84,14 @@ fun hookItemAdd(ctx: Context, bb: Rect, id: ID) {
 }
 
 // label is optional
-fun hookItemInfo(ctx: Context, id: ID, label: String, flags: ItemStatusFlags) {
+fun hookItemInfo(uiCtx: Context, id: ID, label: String, flags: ItemStatusFlags) {
 
     val engine = hookingEngine
-    if (engine == null || engine.uiContextActive !== ctx)
+    if (engine == null || engine.uiContextActive !== uiCtx)
         return
 
     assert(id != 0)
-    val g = ctx
+    val g = uiCtx
     val window = g.currentWindow!!
     assert(window.dc.lastItemId == id || window.dc.lastItemId == 0)
 
@@ -117,9 +117,9 @@ fun hookItemInfo(ctx: Context, id: ID, label: String, flags: ItemStatusFlags) {
 }
 
 // Forward core/user-land text to test log
-fun hookLog(ctx: Context, fmt: String) {
+fun hookLog(uiCtx: Context, fmt: String) {
     val engine = hookingEngine
-    if (engine == null || engine.uiContextActive !== ctx)
+    if (engine == null || engine.uiContextActive !== uiCtx)
     return
 
     engine.testContext!!.logEx(TestVerboseLevel.Debug, TestLogFlag.None.i, fmt)

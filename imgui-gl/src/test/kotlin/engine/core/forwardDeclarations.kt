@@ -258,16 +258,16 @@ fun TestEngine.clearLocateTasks() {
     locateTasks.clear()
 }
 
-infix fun TestEngine.preNewFrame(ctx: Context) {
+infix fun TestEngine.preNewFrame(uiCtx: Context) {
 
-    if (uiContextTarget !== ctx)
+    if (uiContextTarget !== uiCtx)
         return
-    assert(ctx === gImGui)
-    val g = ctx
+    assert(uiCtx === gImGui)
+    val g = uiCtx
 
     // Inject extra time into the imgui context
     if (overrideDeltaTime >= 0f) {
-        ctx.io.deltaTime = overrideDeltaTime
+        uiCtx.io.deltaTime = overrideDeltaTime
         overrideDeltaTime = -1f
     }
 
@@ -275,10 +275,10 @@ infix fun TestEngine.preNewFrame(ctx: Context) {
     frameCount = g.frameCount + 1
     testContext?.let { testCtx ->
         val t0 = testCtx.runningTime
-        val t1 = t0 + ctx.io.deltaTime
+        val t1 = t0 + uiCtx.io.deltaTime
         testCtx.frameCount++
         testCtx.runningTime = t1
-        updateWatchdog(ctx, t0, t1)
+        updateWatchdog(uiCtx, t0, t1)
     }
 
     perfDeltaTime100 += g.io.deltaTime
@@ -308,7 +308,7 @@ infix fun TestEngine.preNewFrame(ctx: Context) {
 }
 
 // FIXME: Trying to abort a running GUI test won't kill the app immediately.
-fun TestEngine.updateWatchdog(ctx: Context, t0: Double, t1: Double) {
+fun TestEngine.updateWatchdog(uiCtx: Context, t0: Double, t1: Double) {
 
     val testCtx = testContext!!
 
@@ -374,22 +374,22 @@ fun TestEngine.postNewFrame(ctx: Context) {
         processTestQueue()
 }
 
-fun TestEngine.runTest(ctx: TestContext, userData: Any?) {
+fun TestEngine.runTest(uiCtx: TestContext, userData: Any?) {
 
     // Clear ImGui inputs to avoid key/mouse leaks from one test to another
     clearInput()
 
-    val test = ctx.test!!
-    ctx.userData = userData
-    ctx.frameCount = 0
-    ctx.windowRef("")
-    ctx setInputMode InputSource.Mouse
-    ctx.clipboard = ByteArray(0)
-    ctx.genericVars.clear()
+    val test = uiCtx.test!!
+    uiCtx.userData = userData
+    uiCtx.frameCount = 0
+    uiCtx.windowRef("")
+    uiCtx setInputMode InputSource.Mouse
+    uiCtx.clipboard = ByteArray(0)
+    uiCtx.genericVars.clear()
     test.testLog.clear()
 
     // Setup buffered clipboard
-    val i = ctx.uiContext!!.io
+    val i = uiCtx.uiContext!!.io
 //    typedef const char* (*ImGuiGetClipboardTextFn)(void* user_data)
 //    typedef void        (*ImGuiSetClipboardTextFn)(void* user_data, const char* text)
     val backupGetClipboardTextFn = i.getClipboardTextFn
@@ -403,47 +403,47 @@ fun TestEngine.runTest(ctx: TestContext, userData: Any?) {
         val ctx_ = userData_ as TestContext
         ctx_.clipboard = text.toByteArray()
     }
-    i.clipboardUserData = ctx
+    i.clipboardUserData = uiCtx
 
     // Mark as currently running the TestFunc (this is the only time when we are allowed to yield)
-    assert(ctx.activeFunc == TestActiveFunc.None)
-    val backupActiveFunc = ctx.activeFunc
-    ctx.activeFunc = TestActiveFunc.TestFunc
+    assert(uiCtx.activeFunc == TestActiveFunc.None)
+    val backupActiveFunc = uiCtx.activeFunc
+    uiCtx.activeFunc = TestActiveFunc.TestFunc
 
     // Warm up GUI
     // - We need one mandatory frame running GuiFunc before running TestFunc
     // - We add a second frame, to avoid running tests while e.g. windows are typically appearing for the first time, hidden,
     // measuring their initial size. Most tests are going to be more meaningful with this stabilized base.
     if (test.flags hasnt TestFlag.NoWarmUp) {
-        ctx.frameCount -= 2
-        ctx.yield()
-        ctx.yield()
+        uiCtx.frameCount -= 2
+        uiCtx.yield()
+        uiCtx.yield()
     }
-    ctx.firstFrameCount = ctx.frameCount
+    uiCtx.firstFrameCount = uiCtx.frameCount
 
     // Call user test function (optional)
-    if (ctx.runFlags has TestRunFlag.NoTestFunc)
+    if (uiCtx.runFlags has TestRunFlag.NoTestFunc)
     // No test function
         while (!abort && test.status == TestStatus.Running)
-            ctx.yield()
+            uiCtx.yield()
     else {
         // Test function
-        test.testFunc?.invoke(ctx) ?: run {
+        test.testFunc?.invoke(uiCtx) ?: run {
             // No test function
             if (test.flags has TestFlag.NoAutoFinish)
                 while (!abort && test.status == TestStatus.Running)
-                    ctx.yield()
+                    uiCtx.yield()
         }
 
         // Recover missing End*/Pop* calls.
-        ctx.recoverFromUiContextErrors()
+        uiCtx.recoverFromUiContextErrors()
 
         if (!io.configRunFast)
-            ctx.sleepShort()
+            uiCtx.sleepShort()
 
         while (io.configKeepGuiFunc && !abort) {
-            ctx.runFlags = ctx.runFlags or TestRunFlag.NoTestFunc
-            ctx.yield()
+            uiCtx.runFlags = uiCtx.runFlags or TestRunFlag.NoTestFunc
+            uiCtx.yield()
         }
     }
 
@@ -456,21 +456,21 @@ fun TestEngine.runTest(ctx: TestContext, userData: Any?) {
 
     when {
         test.status == TestStatus.Success -> {
-            if (ctx.runFlags hasnt TestRunFlag.NoSuccessMsg)
-                ctx.logInfo("Success.")
+            if (uiCtx.runFlags hasnt TestRunFlag.NoSuccessMsg)
+                uiCtx.logInfo("Success.")
         }
-        abort -> ctx.logWarning("Aborted.")
-        test.status == TestStatus.Error -> ctx.logError("${test.name} test failed.")
-        else -> ctx.logWarning("Unknown status.")
+        abort -> uiCtx.logWarning("Aborted.")
+        test.status == TestStatus.Error -> uiCtx.logError("${test.name} test failed.")
+        else -> uiCtx.logWarning("Unknown status.")
     }
 
     // Additional yields to avoid consecutive tests who may share identifiers from missing their window/item activation.
-    ctx.runFlags = ctx.runFlags or TestRunFlag.NoGuiFunc
-    ctx.yield()
-    ctx.yield()
+    uiCtx.runFlags = uiCtx.runFlags or TestRunFlag.NoGuiFunc
+    uiCtx.yield()
+    uiCtx.yield()
 
     // Restore active func
-    ctx.activeFunc = backupActiveFunc
+    uiCtx.activeFunc = backupActiveFunc
 
     // Restore backend clipboard functions TODO
     i.getClipboardTextFn = backupGetClipboardTextFn
