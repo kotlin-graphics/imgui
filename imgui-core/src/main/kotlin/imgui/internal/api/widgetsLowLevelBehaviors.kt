@@ -39,6 +39,10 @@ import imgui.internal.*
 import imgui.internal.classes.Rect
 import kool.getValue
 import kool.setValue
+import unsigned.Ubyte
+import unsigned.Uint
+import unsigned.Ulong
+import unsigned.Ushort
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
@@ -129,7 +133,7 @@ internal interface widgetsLowLevelBehaviors {
             g.hoveredWindow = window
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
-            ImGuiTestEngineHook_ItemAdd(bb, id)
+            Hook.itemAdd!!(g, bb, id)
 
         var pressed = false
         var hovered = itemHoverable(bb, id)
@@ -387,18 +391,36 @@ internal interface widgetsLowLevelBehaviors {
             sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
                     .also { pV.set(_i.b as N) }
         }
+        DataType.Ubyte -> {
+            _i = (pV() as Ubyte).i
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
+                    .also { (pV() as Ubyte).v = _i.b }
+        }
         DataType.Short -> {
             _i = (pV() as Short).i
             sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
                     .also { pV.set(_i.s as N) }
         }
+        DataType.Ushort -> {
+            _i = (pV() as Ushort).i
+            sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flag, outGrabBb)
+                    .also { (pV() as Ushort).v = _i.s }
+        }
         DataType.Int -> {
             assert(pMin as Int >= Int.MIN_VALUE / 2 && pMax as Int <= Int.MAX_VALUE / 2)
             sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
         }
+        DataType.Uint -> {
+            assert(pMax as Uint <= Uint.MAX / 2)
+            sliderBehaviorT(bb, id, dataType, pV, pMin, pMax as N, format, power, flag, outGrabBb)
+        }
         DataType.Long -> {
             assert(pMin as Long >= Long.MIN_VALUE / 2 && pMax as Long <= Long.MAX_VALUE / 2)
             sliderBehaviorT(bb, id, dataType, pV, pMin as N, pMax, format, power, flag, outGrabBb)
+        }
+        DataType.Ulong -> {
+            assert(pMax as Ulong <= Ulong.MAX / 2)
+            sliderBehaviorT(bb, id, dataType, pV, pMin, pMax as N, format, power, flag, outGrabBb)
         }
         DataType.Float -> {
             assert(pMin as Float >= -Float.MAX_VALUE / 2f && pMax as Float <= Float.MAX_VALUE / 2f)
@@ -412,8 +434,10 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
-    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float): Boolean {
+    fun splitterBehavior(bb: Rect, id: ID, axis: Axis,
+                         size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
+                         minSize1: Float, minSize2: Float,
+                         hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f): Boolean {
 
         var size1 by size1ptr
         var size2 by size2ptr
@@ -489,8 +513,8 @@ internal interface widgetsLowLevelBehaviors {
             else -> Vec2(style.framePadding.x, window.dc.currLineTextBaseOffset min style.framePadding.y)
         }
 
-        val labelEnd = if (labelEnd_ == -1) findRenderedTextEnd(label) else labelEnd_
-        val labelSize = calcTextSize(label, labelEnd, false)
+        val labelEnd = if (labelEnd_ == -1) findRenderedTextEnd(label, 0) else labelEnd_
+        val labelSize = calcTextSize(label, 0, labelEnd, false)
 
         // We vertically grow up to current line height up the typical widget height.
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
@@ -532,7 +556,7 @@ internal interface widgetsLowLevelBehaviors {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+            Hook.itemInfo?.invoke(g, window.dc.lastItemId, label.cStr, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
             return isOpen
         }
 
@@ -637,12 +661,12 @@ internal interface widgetsLowLevelBehaviors {
                 window.drawList.renderArrow(Vec2(textPos.x - textOffsetX + padding.x, textPos.y + g.fontSize * 0.15f), textCol, if (isOpen) Dir.Down else Dir.Right, 0.7f)
             if (g.logEnabled)
                 logRenderedText(textPos, ">")
-            renderText(textPos, label, labelEnd, false)
+            renderText(textPos, label, 0, labelEnd, false)
         }
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        ImGuiTestEngineHook_ItemInfo(id, String(label), window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        Hook.itemInfo?.invoke(g, id, label.cStr, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         return isOpen
     }
 

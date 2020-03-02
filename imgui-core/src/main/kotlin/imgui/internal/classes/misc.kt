@@ -8,6 +8,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
 import imgui.internal.*
+import java.util.logging.Level
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -42,16 +43,21 @@ fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((g
 class DrawListSharedData {
     /** UV of white pixel in the atlas  */
     var texUvWhitePixel = Vec2()
+
     /** Current/default font (optional, for simplified AddText overload) */
     var font: Font? = null
+
     /** Current/default font size (optional, for simplified AddText overload) */
     var fontSize = 0f
 
     var curveTessellationTol = 0f
+
     /** Number of circle segments to use per pixel of radius for AddCircle() etc */
     var circleSegmentMaxError = 0f
+
     /** Value for pushClipRectFullscreen() */
     var clipRectFullscreen = Vec4(-8192f, -8192f, 8192f, 8192f)
+
     /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
     var initialFlags = DrawListFlag.None.i
 
@@ -63,6 +69,7 @@ class DrawListSharedData {
         val a = it * 2 * glm.PIf / 12
         Vec2(cos(a), sin(a))
     }
+
     /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
     val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
 
@@ -88,6 +95,7 @@ class ColumnData {
     /** Column start offset, normalized 0f (far left) -> 1f (far right) */
     var offsetNorm = 0f
     var offsetNormBeforeResize = 0f
+
     /** Not exposed */
     var flags: ColumnsFlags = 0
     var clipRect = Rect()
@@ -101,22 +109,30 @@ class Columns {
     var isBeingResized = false
     var current = 0
     var count = 1
+
     /** Offsets from HostWorkRect.Min.x */
     var offMinX = 0f
+
     /** Offsets from HostWorkRect.Min.x */
     var offMaxX = 0f
+
     /** Backup of CursorPos at the time of BeginColumns() */
     var hostCursorPosY = 0f
+
     /** Backup of CursorMaxPos at the time of BeginColumns() */
     var hostCursorMaxPosX = 0f
+
     /** Backup of ClipRect at the time of BeginColumns() */
     var hostClipRect = Rect()
+
     /** Backup of WorkRect at the time of BeginColumns() */
     var hostWorkRect = Rect()
     var lineMinY = 0f
     var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()
     val splitter = DrawListSplitter()
+
+    fun destroy() = splitter.clearFreeMemory(destroy = true)
 
     fun clear() {
         id = 0
@@ -228,16 +244,21 @@ class MenuColumns {
 class NavMoveResult {
     /** Best candidate window   */
     var window: Window? = null
+
     /** Best candidate ID  */
     var id: ID = 0
+
     /** Best candidate focus scope ID */
     var focusScopeId: ID = 0
+
     /** Best candidate box distance to current NavId    */
     var distBox = Float.MAX_VALUE
+
     /** Best candidate center distance to current NavId */
     var distCenter = Float.MAX_VALUE
 
     var distAxial = Float.MAX_VALUE
+
     /** Best candidate bounding box in window relative space    */
     var rectRel = Rect()
 
@@ -262,12 +283,15 @@ class NextWindowData {
     val sizeVal = Vec2()
     val contentSizeVal = Vec2()
     var collapsedVal = false
+
     /** Valid if 'SetNextWindowSizeConstraint' is true  */
     val sizeConstraintRect = Rect()
     var sizeCallback: SizeCallback? = null
     var sizeCallbackUserData: Any? = null
+
     /** Override background alpha */
     var bgAlphaVal = Float.MAX_VALUE
+
     /** *Always on* This is not exposed publicly, so we don't clear it. */
     var menuBarOffsetMinVal = Vec2()
 
@@ -278,12 +302,15 @@ class NextWindowData {
 
 class NextItemData {
     var flags: NextItemDataFlags = 0
+
     /** Set by SetNextItemWidth() */
     var width = 0f
+
     /** Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging) */
     var focusScopeId: ID = 0
 
     var openCond = Cond.None
+
     /** Set by SetNextItemOpen() function. */
     var openVal = false
 
@@ -323,14 +350,19 @@ class TabItem {
     var id: ID = 0
     var flags = TabItemFlag.None.i
     var lastFrameVisible = -1
+
     /** This allows us to infer an ordered list of the last activated tabs with little maintenance */
     var lastFrameSelected = -1
+
     /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
     var nameOffset = -1
+
     /** Position relative to beginning of tab */
     var offset = 0f
+
     /** Width currently displayed */
     var width = 0f
+
     /** Width of actual contents, stored during BeginTabItem() call */
     var contentWidth = 0f
 }
@@ -367,33 +399,86 @@ class PtrOrIndex(
 /** Helper: ImPool<>
  *  Basic keyed storage for contiguous instances, slow/amortized insertion, O(1) indexable, O(Log N) queries by ID over a dense/hot buffer,
  *  Honor constructor/destructor. Add/remove invalidate all pointers. Indexes have the same lifetime as the associated object. */
-inline class PoolIdx(val i: Int)
+inline class PoolIdx(val i: Int) {
+    operator fun inc() = PoolIdx(i + 1)
+    operator fun dec() = PoolIdx(i - 1)
+    operator fun compareTo(other: PoolIdx): Int = i.compareTo(other.i)
+    operator fun minus(int: Int) = PoolIdx(i - int)
+}
 
 class TabBarPool {
     /** Contiguous data */
-    val buf = ArrayList<TabBar?>()
+    val list = ArrayList<TabBar?>()
+
     /** ID->Index */
     val map = mutableMapOf<ID, PoolIdx>()
 
-    operator fun get(key: ID): TabBar? = map[key]?.let { buf[it.i] }
-    operator fun get(n: PoolIdx): TabBar? = buf.getOrNull(n.i)
-    fun getIndex(p: TabBar): PoolIdx = PoolIdx(buf.indexOf(p))
-    fun getOrAddByKey(key: ID): TabBar = map[key]?.let { buf[it.i] }
-            ?: add().also { map[key] = PoolIdx(buf.lastIndex) }
+    operator fun get(key: ID): TabBar? = map[key]?.let { list[it.i] }
+    operator fun get(n: PoolIdx): TabBar? = list.getOrNull(n.i)
+    fun getIndex(p: TabBar): PoolIdx = PoolIdx(list.indexOf(p))
+    fun getOrAddByKey(key: ID): TabBar = map[key]?.let { list[it.i] }
+            ?: add().also { map[key] = PoolIdx(list.lastIndex) }
 
-    operator fun contains(p: TabBar): Boolean = p in buf
+    operator fun contains(p: TabBar): Boolean = p in list
     fun clear() {
-        buf.clear()
+        list.clear()
         map.clear()
     }
 
-    fun add(): TabBar = TabBar().also { buf += it }
-    fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
-    fun remove(key: ID, idx: PoolIdx) {
-        buf[idx.i] = null
-        map -= key
-    }
+    fun add(): TabBar = TabBar().also { list += it }
+//    fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
+//    fun remove(key: ID, idx: PoolIdx) {
+//        list[idx.i] = null
+//        map -= key
+//    }
 
     val size: Int
-        get() = buf.size
+        get() = list.size
+}
+
+class Pool<T>(val placementNew: () -> T) {
+    val buf = ArrayList<T>()        // Contiguous data
+    val map = mutableMapOf<ID, PoolIdx>()        // ID->Index
+
+    fun destroy() = clear()
+
+    fun getByKey(key: ID): T? = map[key]?.let { buf[it.i] }
+    operator fun get(key: ID): T? = getByKey(key)
+
+    fun getByIndex(n: PoolIdx): T = buf[n.i]
+    operator fun get(n: PoolIdx): T = getByIndex(n)
+
+    fun getIndex(p: T) = PoolIdx(buf.indexOf(p))
+    fun getOrAddByKey(key: ID): T {
+        map[key]?.let { return buf[it.i] }
+        val new = add()
+        map[key] = PoolIdx(buf.lastIndex) // not size because ::add already increased it
+        return new
+    }
+
+    operator fun contains(p: T): Boolean = p in buf
+    fun clear() {
+        map.clear()
+        buf.clear()
+    }
+
+    fun add(): T {
+        val new = placementNew()
+        buf += new
+        return new
+    }
+
+    @Deprecated("just a placeholder to remind the different behaviour with the indices")
+    fun remove(key: ID, p: T) = remove(key, getIndex(p))
+    @Deprecated("just a placeholder to remind the different behaviour with the indices")
+    fun remove(key: ID, idx: PoolIdx) {
+        buf.removeAt(idx.i)
+        map.remove(key)
+        // update indices in map
+        map.replaceAll { _, i -> i - (i > idx).i}
+    }
+//    void        Reserve(int capacity)
+//    { Buf.reserve(capacity); Map.Data.reserve(capacity); }
+
+    val size get() = buf.size
 }

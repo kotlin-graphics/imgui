@@ -22,5 +22,9 @@ internal interface loggingCapture {
     }
 
     /** Start logging/capturing to internal buffer */
-    fun logToBuffer(autoOpenDepth: Int = -1): Nothing = TODO()
+    fun logToBuffer(autoOpenDepth: Int = -1) {
+        if (g.logEnabled)
+            return
+        logBegin(LogType.Buffer, autoOpenDepth)
+    }
 }

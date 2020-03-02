@@ -21,6 +21,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
+import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -139,16 +140,15 @@ object ShowDemoWindowPopups {
                 }
             }
 
-            /*
-                We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the Begin call.
-                So here we will make it that clicking on the text field with the right mouse button (1) will toggle the visibility of the popup above.
-                ImGui::Text("(You can also right-click me to open the same popup as above.)");
-                ImGui::OpenPopupOnItemClick("item context menu", 1);
-                When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
-                BeginPopupContextItem() will use the last item ID as the popup ID.
-                In addition here, we want to include your editable label inside the button label. We use the ### operator to override the ID (read FAQ about ID for details)
-             */
-            val text = "Button: ${String(name, 0, name.strlen())}###Button" // ### operator override id ignoring the preceding label
+            // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the Begin call.
+            // So here we will make it that clicking on the text field with the right mouse button (1) will toggle the visibility of the popup above.
+            text("(You can also right-click me to open the same popup as above.)")
+            openPopupOnItemClick("item context menu", MouseButton.Right)
+
+            // When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
+            // BeginPopupContextItem() will use the last item ID as the popup ID.
+            // In addition here, we want to include your editable label inside the button label. We use the ### operator to override the ID (read FAQ about ID for details)
+            val text = "Button: ${name.cStr}###Button" // ### operator override id ignoring the preceding label
             button(text)
             popupContextItem {
                 text("Edit name")

@@ -13,11 +13,12 @@ import kool.Stack
 
 // Version
 const val IMGUI_BUILD = 0
+
 /** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
-const val IMGUI_VERSION = "1.76 WIP"// build: $IMGUI_BUILD"
+const val IMGUI_VERSION = "1.75"// build: $IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 17502
+const val IMGUI_VERSION_NUM = 17501
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -27,17 +28,22 @@ var USE_BGRA_PACKED_COLOR = false
 @JvmField
 val COL32_R_SHIFT = lazy { if (USE_BGRA_PACKED_COLOR) 16 else 0 }.value
 val COL32_G_SHIFT = 8
+
 @JvmField
 val COL32_B_SHIFT = lazy { if (USE_BGRA_PACKED_COLOR) 0 else 16 }.value
 val COL32_A_SHIFT = 24
+
 @JvmField
 val COL32_A_MASK = 0xFF000000.i
 
 fun COL32(r: Int, g: Int, b: Int, a: Int) = (a shl COL32_A_SHIFT) or (b shl COL32_B_SHIFT) or (g shl COL32_G_SHIFT) or (r shl COL32_R_SHIFT)
+
 @JvmField
 val COL32_WHITE = COL32(255, 255, 255, 255) // Opaque white = 0xFFFFFFFF
+
 @JvmField
 val COL32_BLACK = COL32(0, 0, 0, 255)       // Opaque black
+
 @JvmField
 val COL32_BLACK_TRANS = COL32(0, 0, 0, 0)   // Transparent black = 0x00000000
 
@@ -48,9 +54,11 @@ const val MOUSE_INVALID = -256000f
 /** Display navigation scoring preview when hovering items. Display last moving direction matches when holding CTRL */
 @JvmField
 val IMGUI_DEBUG_NAV_SCORING = false
+
 /** Display the reference navigation rectangle for each window */
 @JvmField
 val IMGUI_DEBUG_NAV_RECTS = false
+
 /** Save additional comments in .ini file (particularly helps for Docking, but makes saving slower) */
 @JvmField
 val IMGUI_DEBUG_INI_SETTINGS = false
@@ -59,6 +67,7 @@ val IMGUI_DEBUG_INI_SETTINGS = false
 
 /** Time before the highlight and screen dimming starts fading in */
 const val NAV_WINDOWING_HIGHLIGHT_DELAY = 0.2f
+
 /** Time before the window list starts to appear */
 const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 
@@ -66,32 +75,38 @@ const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 
 /** Extend outside and inside windows. Affect FindHoveredWindow(). */
 const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
+
 /** Reduce visual noise by only highlighting the border after a certain time. */
 const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
+
 /** Lock scrolled window (so it doesn't pick child windows that are scrolling through) for a certaint time, unless mouse moved. */
 const val WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER = 2f
 
 // Test engine hooks (imgui-test)
-@JvmField
 var IMGUI_ENABLE_TEST_ENGINE = false
+
 @JvmField
 var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
-@JvmField
-var ImGuiTestEngineHook_PreNewFrame: () -> Unit = {}
-@JvmField
-var ImGuiTestEngineHook_PostNewFrame: () -> Unit = {}
-/** Register item bounding box */
-@JvmField
-var ImGuiTestEngineHook_ItemAdd: (bb: Rect, id: ID) -> Unit = { _, _ -> }
-/** Register item label and status flags (optional) */
-@JvmField
-var ImGuiTestEngineHook_ItemInfo: (id: ID, label: String, flags: ItemStatusFlags) -> Unit = { _, _, _ -> }
-@JvmField
-        /** Custom log entry from user land into test log */
-var ImGuiTestEngineHook_Log: (g: Context, /*vararg*/ fmt: String) -> Unit = { _, _ -> }
+
+object Hook {
+
+    var preNewFrame: ((ctx: Context) -> Unit)? = null
+
+    var postNewFrame: ((ctx: Context) -> Unit)? = null
+
+    /** Register item bounding box */
+    var itemAdd: ((ctx: Context, bb: Rect, id: ID) -> Unit)? = null
+
+    /** Register item label and status flags (optional) */
+    var itemInfo: ((ctx: Context, id: ID, label: String, flags: ItemStatusFlags) -> Unit)? = null
+
+    /** Custom log entry from user land into test log */
+    var log: ((ctx: Context, fmt: String) -> Unit)? = null
+}
 
 /** Last Unicode code point supported by this build. */
 const val UNICODE_CODEPOINT_MAX = 0xFFFF
+
 /** Standard invalid Unicode code point. */
 const val UNICODE_CODEPOINT_INVALID = 0xFFFD
 
@@ -175,7 +190,7 @@ object ImGui :
 
 
 @JvmField
-var DEBUG = false
+var DEBUG = true
 
 internal typealias stak = Stack
 

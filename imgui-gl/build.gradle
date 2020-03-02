@@ -27,6 +27,9 @@ dependencies {
         shadow natives
     }
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation "$kx:gli:$gli_version"
+    testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.4.2'
+    testImplementation 'com.github.ajalt:mordant:1.2.1'
 }
 
 task lightJar(type: Jar) {
@@ -68,12 +71,15 @@ jar {
 
 shadowJar.archiveClassifier = 'all'
 
-compileKotlin{
+compileKotlin {
     kotlinOptions.jvmTarget = "11"
     destinationDir = compileJava.destinationDir
 }
-compileTestKotlin{
-    kotlinOptions.jvmTarget = "11"
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "11"
+        freeCompilerArgs = ["-XXLanguage:+InlineClasses"]
+    }
     destinationDir = compileTestJava.destinationDir
 }
 
@@ -84,3 +90,5 @@ compileJava {
         classpath = files()
     }
 }
+
+test.useJUnitPlatform()

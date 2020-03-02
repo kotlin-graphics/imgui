@@ -1,10 +1,7 @@
 package imgui.demo
 
 import gli_.has
-import glm_.b
-import glm_.glm
-import glm_.i
-import glm_.s
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.operators.div
 import glm_.vec3.Vec3
@@ -96,11 +93,11 @@ import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
 import imgui.ImGui.popButtonRepeat
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.progressBar
 import imgui.ImGui.pushButtonRepeat
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.radioButton
 import imgui.ImGui.resetMouseDragDelta
@@ -159,8 +156,12 @@ import imgui.internal.ItemFlags
 import imgui.or
 import kool.BYTES
 import unsigned.Ubyte
+import unsigned.Uint
+import unsigned.Ulong
+import unsigned.Ushort
 import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.SelectableFlag as Sf
@@ -226,6 +227,14 @@ object ShowDemoWindowWidgets {
     var currentItem3 = 0
     var currentItem4 = 0
     var currentItem5 = 0
+    var currentItem6 = 0
+
+    object FuncHolder {
+        val itemGetter: (Array<String>, Int, KMutableProperty0<String>) -> Boolean = { items, idx, pStr ->
+            pStr.set(items[idx])
+            true
+        }
+    }
 
 
     /* Selectables */
@@ -267,7 +276,7 @@ object ShowDemoWindowWidgets {
         }
     }
 
-    val password = "password123".toByteArray(64)
+    val bufPass = "password123".toByteArray(64)
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
@@ -276,7 +285,6 @@ object ShowDemoWindowWidgets {
     var dragAndDrop = true
     var optionsMenu = true
     var hdr = false
-    var noBorder = false
 
     // Generate a dummy default palette. The palette will persist and can be edited.
     var savedPaletteInit = true
@@ -305,14 +313,11 @@ object ShowDemoWindowWidgets {
     var s8_v = 127.b
     var u8_v = Ubyte(255)
     var s16_v = 32767.s
-
-    //    static ImU16  u16_v = 65535;
+    var u16_v = Ushort(65535)
     var s32_v = -1
-
-    //    static ImU32  u32_v = (ImU32)-1;
+    var u32_v = Uint(-1)
     var s64_v = -1L
-
-    //    static ImU64  u64_v = (ImU64)-1;
+    var u64_v = Ulong(-1)
     var f32_v = 0.123f
     var f64_v = 90000.01234567890123456789
     var dragClamp = false
@@ -326,18 +331,12 @@ object ShowDemoWindowWidgets {
     /* Text Input */
     object Funcs0 {
         val MyResizeCallback: InputTextCallback = { data ->
-//            if (data.eventFlag == Itf.CallbackResize.i) {
-//                val myStr = data.userData as ByteArray
-//                assert(myStr[0] == data.buf[0])
-//                if (myStr.size < data.buf.size)
-//                    myStr[myStr.lastIndex] = 0
-//                else if (data.buf.size < myStr.size) {
-//                    val newBuf = ByteArray(data.bufSize)  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
-//                    myStr.copyInto(newBuf)
-//                    data.userData = newBuf
-//                    data.buf = newBuf
-//                }
-//            }
+            if (data.eventFlag == Itf.CallbackResize.i) {
+//                ImVector<char>* my_str = (ImVector<char>*)data->UserData; TODO
+//                IM_ASSERT(my_str->begin() == data->Buf);
+//                my_str->resize(data->BufSize);  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+//                data->Buf = my_str->begin();
+            }
             false
         }
 
@@ -346,7 +345,7 @@ object ShowDemoWindowWidgets {
         val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: ItemFlags) -> Boolean =
                 { label, myStr, size, flags ->
                     assert(flags hasnt Itf.CallbackResize)
-                    inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
+                    inputTextMultiline(label, myStr.cStr, size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
                 }
     }
 
@@ -529,7 +528,7 @@ object ShowDemoWindowWidgets {
                     if (i == 0)
                         setNextItemOpen(true, Cond.Once)
 
-                    treeNode(i, "Child $i") {
+                    treeNode(i.L, "Child $i") {
                         text("blah blah")
                         sameLine()
                         smallButton("button") { }
@@ -560,7 +559,7 @@ object ShowDemoWindowWidgets {
                         nodeFlags = nodeFlags or Tnf.Selected
                     if (i < 3) {
                         // Items 0..2 are Tree Node
-                        val nodeOpen = treeNodeEx(i, nodeFlags, "Selectable Node $i")
+                        val nodeOpen = treeNodeEx(i.L, nodeFlags, "Selectable Node $i")
                         if (isItemClicked()) nodeClicked = i
                         if (nodeOpen) {
                             bulletText("Blah blah\nBlah Blah")
@@ -571,7 +570,7 @@ object ShowDemoWindowWidgets {
                             The only reason we use TreeNode at all is to allow selection of the leaf.
                             Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
                         nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
-                        treeNodeEx(i, nodeFlags, "Selectable Leaf $i")
+                        treeNodeEx(i.L, nodeFlags, "Selectable Leaf $i")
                         if (isItemClicked()) nodeClicked = i
                     }
                 }
@@ -683,7 +682,7 @@ object ShowDemoWindowWidgets {
                 Using showMetricsWindow() as a "debugger" to inspect the draw data that are being passed to your
                 render will help you debug issues if you are confused about this.
                 Consider using the lower-level drawList.addImage() API, via imgui.windowDrawList.addImage().    */
-            val myTexId = io.fonts.texId
+            val myTexId = io.fonts.texID
             val myTexSize = Vec2(io.fonts.texSize)
 
             text("%.0fx%.0f", myTexSize.x, myTexSize.y)
@@ -747,9 +746,7 @@ object ShowDemoWindowWidgets {
             combo("combo 3 (array)", ::currentItem5, items)
 
             // Simplified one-liner Combo() using an accessor function TODO
-//                struct FuncHolder { static bool ItemGetter(void * data, int idx, const char * * out_str) { *out_str = ((const char * *) data)[idx]; return true; } };
-//                static int item_current_4 = 0;
-//                ImGui::Combo("combo 4 (function)", & item_current_4, &FuncHolder::ItemGetter, items, IM_ARRAYSIZE(items));
+            combo("combo 4 (function)", ::currentItem6, FuncHolder.itemGetter, items.toTypedArray())
         }
 
         treeNode("Selectables") {
@@ -802,12 +799,10 @@ object ShowDemoWindowWidgets {
                             // Note: We _unnecessarily_ test for both x/y and i here only to silence some static analyzer. The second part of each test is unnecessary.
                             val x = i % 4
                             val y = i / 4
-                            // @formatter:off
                             if (x > 0) selected3[i - 1] = selected3[i - 1] xor true
                             if (x < 3 && i < 15) selected3[i + 1] = selected3[i + 1] xor true
                             if (y > 0 && i > 3) selected3[i - 4] = selected3[i - 4] xor true
                             if (y < 3 && i < 12) selected3[i + 4] = selected3[i + 4] xor true
-                            // @formatter:on
                         }
                         if ((i % 4) < 3) sameLine()
                     }
@@ -849,10 +844,10 @@ object ShowDemoWindowWidgets {
                 inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter.i, TextFilters.filterImGuiLetters)
 
                 text("Password input")
-                inputText("password", password, Itf.Password.i)
+                inputText("password", bufPass, Itf.Password or Itf.CharsNoBlank)
                 sameLine(); helpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.")
-                inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password.i)
-                inputText("password (clear)", password)
+                inputTextWithHint("password (w/ hint)", "<password>", bufPass, Itf.Password or Itf.CharsNoBlank)
+                inputText("password (clear)", bufPass, Itf.CharsNoBlank.i)
             }
 
             treeNode("Resize Callback") {
@@ -937,7 +932,7 @@ object ShowDemoWindowWidgets {
             checkbox("With Options Menu", ::optionsMenu); sameLine(); helpMarker("Right-click on the individual color widget to show options.")
             checkbox("With HDR", ::hdr); sameLine(); helpMarker("Currently all this does is to lift the 0..1 limits on dragging widgets.")
             var miscFlags = if (hdr) Cef.HDR.i else Cef.None.i
-            if (dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
+            if (!dragAndDrop) miscFlags = miscFlags or Cef.NoDragDrop
             if (alphaHalfPreview) miscFlags = miscFlags or Cef.AlphaPreviewHalf
             else if (alphaPreview) miscFlags = miscFlags or Cef.AlphaPreview
             if (!optionsMenu) miscFlags = miscFlags or Cef.NoOptions
@@ -1008,8 +1003,7 @@ object ShowDemoWindowWidgets {
                 }
             }
             text("Color button only:")
-            checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
-            colorButton("MyColor##3c", color, miscFlags or if (noBorder) Cef.NoBorder else Cef.None, Vec2(80))
+            colorButton("MyColor##3c", color, miscFlags, Vec2(80, 80))
 
             text("Color picker:")
             checkbox("With Alpha", ::alpha)
@@ -1028,7 +1022,6 @@ object ShowDemoWindowWidgets {
             combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
             sameLine(); helpMarker("User can right-click the picker to change mode.")
             var flags = miscFlags
-            // @formatter:off
             if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
             if (alphaBar) flags = flags or Cef.AlphaBar
             if (!sidePreview) flags = flags or Cef.NoSidePreview
@@ -1038,7 +1031,6 @@ object ShowDemoWindowWidgets {
             if (displayMode == 2) flags = flags or Cef.DisplayRGB   // Override display mode
             if (displayMode == 3) flags = flags or Cef.DisplayHSV
             if (displayMode == 4) flags = flags or Cef.DisplayHEX
-            // @formatter:on
             colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
             text("Programmatically set defaults:")
@@ -1079,58 +1071,28 @@ object ShowDemoWindowWidgets {
             // Limits (as helper variables that we can take the address of)
             // Note that the SliderScalar function has a maximum usable range of half the natural type maximum, hence the /2 below.
             // @formatter:off
-            val s8_zero: Byte = 0.b
-            val s8_one: Byte = 1.b
-            val s8_fifty: Byte = 50.b
-            val s8_min: Byte = (-128).b
-            val s8_max: Byte = 127.b
-            val u8_zero: Ubyte = Ubyte(0)
-            val u8_one: Ubyte = Ubyte(1)
-            val u8_fifty: Ubyte = Ubyte(50)
-            val u8_min: Ubyte = Ubyte(0)
-            val u8_max: Ubyte = Ubyte(255)
-            val s16_zero: Short = 0.s
-            val s16_one: Short = 1.s
-            val s16_fifty: Short = 50.s
-            val s16_min: Short = (-32768).s
-            val s16_max: Short = 32767.s
-//            const ImU16   u16_zero = 0,   u16_one = 1,   u16_fifty = 50, u16_min = 0,           u16_max = 65535;
-            val s32_zero: Int = 0
-            val s32_one: Int = 1
-            val s32_fifty: Int = 50
-            val s32_min: Int = Int.MIN_VALUE / 2
-            val s32_max: Int = Int.MAX_VALUE / 2
-            val s32_hi_a = Int.MAX_VALUE / 2 - 100
-            val s32_hi_b = Int.MAX_VALUE / 2
-//            const ImU32   u32_zero = 0,   u32_one = 1,   u32_fifty = 50, u32_min = 0,           u32_max = UINT_MAX/2,   u32_hi_a = UINT_MAX/2 - 100,   u32_hi_b = UINT_MAX/2;
-            val s64_zero: Long = 0L
-            val s64_one: Long = 1L
-            val s64_fifty: Long = 50L
-            val s64_min: Long = Long.MIN_VALUE / 2
-            val s64_max: Long = Long.MAX_VALUE / 2
-            val s64_hi_a = Long.MAX_VALUE / 2 - 100
-            val s64_hi_b = Long.MAX_VALUE / 2
-//            const ImU64   u64_zero = 0,   u64_one = 1,   u64_fifty = 50, u64_min = 0,           u64_max = ULLONG_MAX/2, u64_hi_a = ULLONG_MAX/2 - 100, u64_hi_b = ULLONG_MAX/2;
-            val f32_zero: Float = 0f
-            val f32_one: Float = 1f
-            val f32_lo_a: Float = -10_000_000_000f
-            val f32_hi_a: Float = +10_000_000_000f
-            val f64_zero: Double = 0.0
-            val f64_one: Double = 1.0
-            val f64_lo_a: Double = -1_000_000_000_000_000.0
-            val f64_hi_a: Double = +1_000_000_000_000_000.0
+            val s8_zero: Byte = 0.b; val s8_one: Byte = 1.b; val s8_fifty: Byte = 50.b; val s8_min: Byte = (-128).b; val s8_max: Byte = 127.b
+            val u8_zero: Ubyte = Ubyte(0); val u8_one: Ubyte = Ubyte(1); val u8_fifty: Ubyte = Ubyte(50); val u8_min: Ubyte = Ubyte(0); val u8_max: Ubyte = Ubyte(255)
+            val s16_zero: Short = 0.s; val s16_one: Short = 1.s;  val s16_fifty: Short = 50.s; val s16_min: Short = (-32768).s; val s16_max: Short = 32767.s
+            val u16_zero: Ushort = Ushort(0); val u16_one = Ushort(1); val u16_fifty: Ushort = Ushort(50); val u16_min: Ushort = Ushort(0); val u16_max: Ushort = Ushort(65535)
+            val s32_zero: Int = 0; val s32_one: Int = 1; val s32_fifty: Int = 50; val s32_min: Int = Int.MIN_VALUE / 2; val s32_max: Int = Int.MAX_VALUE / 2; val s32_hi_a = Int.MAX_VALUE / 2 - 100; val s32_hi_b = Int.MAX_VALUE / 2
+            val u32_zero: Uint = Uint(0); val u32_one: Uint = Uint(1); val u32_fifty: Uint = Uint(50); val u32_min: Uint = Uint(0); val u32_max: Uint = Uint.MAX / 2; val u32_hi_a = Uint.MAX / 2 - 100; val u32_hi_b: Uint = Uint.MAX / 2
+            val s64_zero: Long = 0L; val s64_one: Long = 1L; val s64_fifty: Long = 50L; val s64_min: Long = Long.MIN_VALUE / 2; val s64_max: Long = Long.MAX_VALUE / 2; val s64_hi_a: Long = Long.MAX_VALUE / 2 - 100; val s64_hi_b: Long = Long.MAX_VALUE / 2
+            val u64_zero: Ulong = Ulong(0); val u64_one: Ulong = Ulong(1); val u64_fifty: Ulong = Ulong(50); val u64_min: Ulong = Ulong(0); val u64_max: Ulong = Ulong.MAX / 2; val u64_hi_a: Ulong = Ulong.MAX / 2 - 100; val u64_hi_b: Ulong = Ulong.MAX / 2
+            val f32_zero: Float = 0f; val f32_one: Float = 1f; val f32_lo_a: Float = -10_000_000_000f; val f32_hi_a: Float = +10_000_000_000f
+            val f64_zero: Double = 0.0; val f64_one: Double = 1.0; val f64_lo_a: Double = -1_000_000_000_000_000.0; val f64_hi_a: Double = +1_000_000_000_000_000.0
 
             val dragSpeed = 0.2f
             text("Drags:")
             checkbox("Clamp integers to 0..50", ::dragClamp); sameLine(); helpMarker("As with every widgets in dear imgui, we never modify values unless there is a user interaction.\nYou can override the clamping limits by using CTRL+Click to input a value.")
             dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, s8_zero.takeIf { dragClamp }, s8_fifty.takeIf { dragClamp })
-//            dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
+            dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
             dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
-//            ImGui::DragScalar("drag u16",       ImGuiDataType_U16,    &u16_v, drag_speed, drag_clamp ? &u16_zero : NULL, drag_clamp ? &u16_fifty : NULL, "%u ms");
+            dragScalar("drag u16", DataType.Ushort, ::u16_v, dragSpeed, u16_zero.takeIf { dragClamp }, u16_fifty.takeIf { dragClamp }, "%d ms")
             dragScalar("drag s32", DataType.Int, ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
-//            ImGui::DragScalar("drag u32",       ImGuiDataType_U32,    &u32_v, drag_speed, drag_clamp ? &u32_zero : NULL, drag_clamp ? &u32_fifty : NULL, "%u ms");
+            dragScalar("drag u32", DataType.Uint, ::u32_v, dragSpeed, u32_zero.takeIf { dragClamp }, u32_fifty.takeIf { dragClamp }, "%d ms")
             dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
-//            ImGui::DragScalar("drag u64",       ImGuiDataType_U64,    &u64_v, drag_speed, drag_clamp ? &u64_zero : NULL, drag_clamp ? &u64_fifty : NULL);
+            dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
             dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", 1f)
             dragScalar("drag float ^2", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", 2f); sameLine(); helpMarker("You can use the 'power' parameter to increase tweaking precision on one side of the range.")
             dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams", 1f)
@@ -1138,21 +1100,21 @@ object ShowDemoWindowWidgets {
 
             text("Sliders")
             sliderScalar("slider s8 full", DataType.Byte, ::s8_v, s8_min, s8_max, "%d")
-//            ImGui::SliderScalar("slider u8 full",     ImGuiDataType_U8,     &u8_v,  &u8_min,   &u8_max,   "%u");
+            sliderScalar("slider u8 full", DataType.Ubyte, ::u8_v, u8_min, u8_max, "%d")
             sliderScalar("slider s16 full", DataType.Short, ::s16_v, s16_min, s16_max, "%d")
-//            ImGui::SliderScalar("slider u16 full",    ImGuiDataType_U16,    &u16_v, &u16_min,  &u16_max,  "%u");
+            sliderScalar("slider u16 full", DataType.Ushort, ::u16_v, u16_min, u16_max, "%d")
             sliderScalar("slider s32 low", DataType.Int, ::s32_v, s32_zero, s32_fifty, "%d")
             sliderScalar("slider s32 high", DataType.Int, ::s32_v, s32_hi_a, s32_hi_b, "%d")
             sliderScalar("slider s32 full", DataType.Int, ::s32_v, s32_min, s32_max, "%d")
-//            ImGui::SliderScalar("slider u32 low",     ImGuiDataType_U32,    &u32_v, &u32_zero, &u32_fifty,"%u");
-//            ImGui::SliderScalar("slider u32 high",    ImGuiDataType_U32,    &u32_v, &u32_hi_a, &u32_hi_b, "%u");
-//            ImGui::SliderScalar("slider u32 full",    ImGuiDataType_U32,    &u32_v, &u32_min,  &u32_max,  "%u");
+            sliderScalar("slider u32 low", DataType.Uint, ::u32_v, u32_zero, u32_fifty, "%d")
+            sliderScalar("slider u32 high", DataType.Uint, ::u32_v, u32_hi_a, u32_hi_b, "%d")
+            sliderScalar("slider u32 full", DataType.Uint, ::u32_v, u32_min, u32_max, "%d")
             sliderScalar("slider s64 low", DataType.Long, ::s64_v, s64_zero, s64_fifty, "%d")
             sliderScalar("slider s64 high", DataType.Long, ::s64_v, s64_hi_a, s64_hi_b, "%d")
             sliderScalar("slider s64 full", DataType.Long, ::s64_v, s64_min, s64_max, "%d")
-//            ImGui::SliderScalar("slider u64 low",     ImGuiDataType_U64,    &u64_v, &u64_zero, &u64_fifty,"%I64u ms");
-//            ImGui::SliderScalar("slider u64 high",    ImGuiDataType_U64,    &u64_v, &u64_hi_a, &u64_hi_b, "%I64u ms");
-//            ImGui::SliderScalar("slider u64 full",    ImGuiDataType_U64,    &u64_v, &u64_min,  &u64_max,  "%I64u ms");
+            sliderScalar("slider u64 low", DataType.Ulong, ::u64_v, u64_zero, u64_fifty, "%d ms")
+            sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, u64_hi_a, u64_hi_b, "%d ms")
+            sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, u64_min, u64_max, "%d ms")
             sliderScalar("slider float low", DataType.Float, ::f32_v, f32_zero, f32_one)
             sliderScalar("slider float low^2", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", 2f)
             sliderScalar("slider float high", DataType.Float, ::f32_v, f32_lo_a, f32_hi_a, "%e")
@@ -1163,15 +1125,15 @@ object ShowDemoWindowWidgets {
             text("Inputs")
             checkbox("Show step buttons", ::inputsStep)
             inputScalar("input s8", DataType.Byte, ::s8_v, s8_one.takeIf { inputsStep }, null, "%d")
-//            inputScalar("input u8",  DataType.Ubyte, ::u8_v,  u8_one.takeIf { inputsStep },  null, "%d")
+            inputScalar("input u8", DataType.Ubyte, ::u8_v, u8_one.takeIf { inputsStep }, null, "%d")
             inputScalar("input s16", DataType.Short, ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
-//            ImGui::InputScalar("input u16",     ImGuiDataType_U16,    &u16_v, inputs_step ? &u16_one : NULL, NULL, "%u");
+            inputScalar("input u16", DataType.Ushort, ::u16_v, u16_one.takeIf { inputsStep }, null, "%d")
             inputScalar("input s32", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%d")
             inputScalar("input s32 hex", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
-//            ImGui::InputScalar("input u32",     ImGuiDataType_U32,    &u32_v, inputs_step ? &u32_one : NULL, NULL, "%u");
-//            ImGui::InputScalar("input u32 hex", ImGuiDataType_U32,    &u32_v, inputs_step ? &u32_one : NULL, NULL, "%08X", ImGuiInputTextFlags_CharsHexadecimal);
+            inputScalar("input u32", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input u32 hex", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
             inputScalar("input s64", DataType.Long, ::s64_v, s64_one.takeIf { inputsStep })
-//            ImGui::InputScalar("input u64",     ImGuiDataType_U64,    &u64_v, inputs_step ? &u64_one : NULL);
+            inputScalar("input u64", DataType.Ulong, ::u64_v, u64_one.takeIf { inputsStep })
             inputScalar("input float", DataType.Float, ::f32_v, f32_one.takeIf { inputsStep })
             inputScalar("input double", DataType.Double, ::f64_v, f64_one.takeIf { inputsStep })
             // @formatter:on
@@ -1280,7 +1242,7 @@ object ShowDemoWindowWidgets {
                 radioButton("Move", mode == Mode.Move) { mode = Mode.Move }; sameLine()
                 radioButton("Swap", mode == Mode.Swap) { mode = Mode.Swap }
                 names.forEachIndexed { n, name ->
-                    pushId(n)
+                    pushID(n)
                     if ((n % 3) != 0) sameLine()
                     button(name, Vec2(60))
 
@@ -1314,7 +1276,7 @@ object ShowDemoWindowWidgets {
                         }
                         endDragDropTarget()
                     }
-                    popId()
+                    popID()
                 }
             }
 
@@ -1362,24 +1324,48 @@ object ShowDemoWindowWidgets {
             // Note that the ImGuiHoveredFlags_XXX flags can be combined.
             // Because BulletText is an item itself and that would affect the output of IsItemXXX functions,
             // we query every state in a single call to avoid storing them and to simplify the code
-            bulletText("Return value = $ret\n" +
-                    "isItemFocused = $isItemFocused\n" +
-                    "isItemHovered() = ${isItemHovered()}\n" +
-                    "isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
-                    "isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
-                    "isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}\n" +
-                    "isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}\n" +
-                    "isItemActive = $isItemActive\n" +
-                    "isItemEdited = $isItemEdited\n" +
-                    "isItemActivated = $isItemActivated\n" +
-                    "isItemDeactivated = $isItemDeactivated\n" +
-                    "isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit\n" +
-                    "isItemVisible = $isItemVisible\n" +
-                    "isItemClicked = ${isItemClicked()}\n" +
-                    "IsItemToggledOpen = $isItemToggledOpen" +
-                    "GetItemRectMin() = (%.1f, %.1f)\n" +
-                    "GetItemRectMax() = (%.1f, %.1f)\n" +
-                    "GetItemRectSize() = (%.1f, %.1f)", itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
+            if (DEBUG)
+                bulletText("""
+                    Return value = $ret
+                    isItemFocused = ${isItemFocused.i}
+                    isItemHovered() = ${isItemHovered().i}
+                    isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup).i}
+                    isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem).i}
+                    isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped).i}
+                    isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly).i}
+                    isItemActive = ${isItemActive.i}
+                    isItemEdited = ${isItemEdited.i}
+                    isItemActivated = ${isItemActivated.i}
+                    isItemDeactivated = ${isItemDeactivated.i}
+                    isItemDeactivatedAfterEdit = ${isItemDeactivatedAfterEdit.i}
+                    isItemVisible = ${isItemVisible.i}
+                    isItemClicked = ${isItemClicked().i}
+                    IsItemToggledOpen = ${isItemToggledOpen.i}
+                    GetItemRectMin() = (%.1f, %.1f)
+                    GetItemRectMax() = (%.1f, %.1f)
+                    GetItemRectSize() = (%.1f, %.1f)
+                    """.trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
+            else
+                bulletText("""
+                    Return value = $ret
+                    isItemFocused = $isItemFocused
+                    isItemHovered() = ${isItemHovered().i}
+                    isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)}
+                    isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}
+                    isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}
+                    isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}
+                    isItemActive = $isItemActive
+                    isItemEdited = $isItemEdited
+                    isItemActivated = $isItemActivated
+                    isItemDeactivated = $isItemDeactivated
+                    isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit
+                    isItemVisible = $isItemVisible
+                    isItemClicked = ${isItemClicked()}
+                    IsItemToggledOpen = $isItemToggledOpen
+                    GetItemRectMin() = (%.1f, %.1f)
+                    GetItemRectMax() = (%.1f, %.1f)
+                    GetItemRectSize() = (%.1f, %.1f)
+                    """.trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
 
             checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAChildWindow)
             if (embedAllInsideAChildWindow)
