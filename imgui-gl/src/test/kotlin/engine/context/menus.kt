@@ -7,6 +7,9 @@ import glm_.vec2.Vec2
 import imgui.internal.strchrRange
 import imgui.strlen
 
+// [JVM]
+fun TestContext.menuAction(action: TestAction, ref: String) = menuAction(action, TestRef(path = ref))
+
 fun TestContext.menuAction(action: TestAction, ref: TestRef) {
 
     if (isError) return
@@ -49,7 +52,7 @@ fun TestContext.menuAction(action: TestAction, ref: TestRef) {
             }
 
             if (isTargetItem)
-                // Final item
+            // Final item
                 itemAction(action, buf)
             else // Then aim at the menu item
                 itemAction(TestAction.Click, buf)
@@ -76,10 +79,16 @@ infix fun TestContext.menuClick(ref: String) = menuAction(TestAction.Click, Test
 
 infix fun TestContext.menuClick(ref: TestRef) = menuAction(TestAction.Click, ref)
 
+// [JVM]
+infix fun TestContext.menuCheck(ref: String) = menuAction(TestAction.Check, TestRef(path = ref))
 infix fun TestContext.menuCheck(ref: TestRef) = menuAction(TestAction.Check, ref)
 
 infix fun TestContext.menuUncheck(ref: TestRef) = menuAction(TestAction.Uncheck, ref)
 
+// [JVM]
+infix fun TestContext.menuCheckAll(refParent: String) = menuActionAll(TestAction.Check, TestRef(path = refParent))
 infix fun TestContext.menuCheckAll(refParent: TestRef) = menuActionAll(TestAction.Check, refParent)
 
+// [JVM]
+infix fun TestContext.menuUncheckAll(refParent: String) = menuActionAll(TestAction.Uncheck, TestRef(path = refParent))
 infix fun TestContext.menuUncheckAll(refParent: TestRef) = menuActionAll(TestAction.Uncheck, refParent)

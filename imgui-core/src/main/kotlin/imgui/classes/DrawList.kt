@@ -42,9 +42,6 @@ import kotlin.math.sqrt
  *  DrawListSharedData (so you can use ImDrawList without ImGui)    */
 class DrawList(sharedData: DrawListSharedData?) {
 
-    init {
-//        logger.log(Level.INFO, "DrawList()=$this")
-    }
     // -----------------------------------------------------------------------------------------------------------------
     // This is what you have to render
     // -----------------------------------------------------------------------------------------------------------------
@@ -53,10 +50,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     var cmdBuffer = Stack<DrawCmd>()
 
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
-    var idxBuffer = IntBuffer(0)//.also { logger.log(Level.INFO, "new ${it.adr}") }
+    var idxBuffer = IntBuffer(0)
 
     /** Vertex buffer.  */
-    var vtxBuffer = DrawVert_Buffer(0).also { logger.log(Level.INFO, "new ${it.data.adr}") }
+    var vtxBuffer = DrawVert_Buffer(0)
 
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -881,7 +878,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun clear() {
         cmdBuffer.clear()
         idxBuffer = idxBuffer.resize(0) // we dont assign because it wont create a new instance for sure
-        vtxBuffer = vtxBuffer.resize(0).also { logger.log(Level.INFO, "resize(0) ${it.data.adr}") }
+        vtxBuffer = vtxBuffer.resize(0)
         flags = _data.initialFlags
         _vtxCurrentOffset = 0
         _vtxCurrentIdx = 0
@@ -894,10 +891,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun clearFreeMemory(destroy: Boolean = false) {
-//        logger.log(Level.INFO, "clearFreeMemory=$this")
         clear()
         _splitter.clearFreeMemory(destroy)
-        logger.log(Level.INFO, "free() =${vtxBuffer.data} adr=${vtxBuffer.data.adr}")
         vtxBuffer.data.free()
         idxBuffer.free()
         if(!destroy) {
@@ -922,7 +917,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cmdBuffer.last().elemCount += idxCount
 
         val vtxBufferOldSize = vtxBuffer.size
-        vtxBuffer = vtxBuffer.resize(vtxBufferOldSize + vtxCount).also { logger.log(Level.INFO, "resize(${vtxBufferOldSize + vtxCount}) ${it.data.adr}") }
+        vtxBuffer = vtxBuffer.resize(vtxBufferOldSize + vtxCount)
         _vtxWritePtr = vtxBufferOldSize
 
         val idxBufferOldSize = idxBuffer.lim
@@ -1379,7 +1374,6 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
         val newData = ByteBuffer(newCapacity * DrawVert.size)
         if (lim > 0)
             MemoryUtil.memCopy(data.adr, newData.adr, data.lim.L)
-        logger.log(Level.INFO, "free()=${data.adr}")
         data.free()
         return DrawVert_Buffer(newData)
     }

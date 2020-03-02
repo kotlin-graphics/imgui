@@ -180,7 +180,7 @@ object ShowDemoWindowColumns {
                 val ITEMS_COUNT = 2000
                 val clipper = ListClipper(ITEMS_COUNT)  // Also demonstrate using the clipper for large list
                 while (clipper.step())
-                    for (i in clipper.display.start until clipper.display.endInclusive)
+                    for (i in clipper.display)
                         for (j in 0..9) {
                             text("Line $i Column $j...")
                             nextColumn()
