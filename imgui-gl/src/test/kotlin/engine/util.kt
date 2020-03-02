@@ -151,7 +151,7 @@ fun pathFindFilename(path: String): String = path.substringAfterLast('/').substr
 //void        ImParseDateFromCompilerIntoYMD(const char* in_data, char* out_buf, size_t out_buf_size);
 //
 //bool        ImFileCreateDirectoryChain(const char* path, const char* path_end = NULL);
-//bool        ImFileLoadSourceBlurb(const char* file_name, int line_no_start, int line_no_end, ImGuiTextBuffer* out_buf);
+//bool        ImFileLoadSourceBlurb(const char* filename, int line_no_start, int line_no_end, ImGuiTextBuffer* out_buf);
 //void        ImDebugShowInputTextState();
 //
 //const char* GetImGuiKeyName(ImGuiKey key);
