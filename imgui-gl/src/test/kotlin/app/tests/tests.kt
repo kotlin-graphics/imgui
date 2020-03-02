@@ -4,6 +4,7 @@
 package app.tests
 
 import engine.core.TestEngine
+import java.io.File
 
 //-------------------------------------------------------------------------
 // NOTES (also see TODO in imgui_te_core.cpp)
@@ -13,6 +14,11 @@ import engine.core.TestEngine
 //-------------------------------------------------------------------------
 
 fun TestEngine.registerTests() {
+
+    val file = File("imgui_perflog.csv")
+    file.createNewFile()
+    file.writeText("") // clear
+
     // Tests
     registerTests_Window(this)
     registerTests_Layout(this)
@@ -27,5 +33,5 @@ fun TestEngine.registerTests() {
 //    RegisterTests_Capture(e)
 
     // Performance Benchmarks
-//    RegisterTests_Perf(e)
+    registerTests_Perf(this)
 }

@@ -91,6 +91,19 @@ val GCrc32LookupTable = longArrayOf(
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
+fun hash(data: ByteArray, seed: Int = 0): Int {
+    var crc = seed.inv()
+    val crc32Lut = GCrc32LookupTable
+    var b = 0
+    var dataSize = data.size
+    while (dataSize-- != 0)
+        crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data[b++].toUInt()]
+    return crc.inv()
+}
+
+/** Known size hash
+ *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
+ *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
 fun hash(data: ByteBuffer, seed: Int = 0): Int {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable

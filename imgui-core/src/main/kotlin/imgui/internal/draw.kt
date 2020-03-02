@@ -216,8 +216,7 @@ class DrawListSplitter {
                 // Merge previous channel last draw command with current channel first draw command if matching.
                 lastCmd.elemCount += ch._cmdBuffer[0].elemCount
                 idxOffset += ch._cmdBuffer[0].elemCount
-                TODO()
-//                ch.cmdBuffer.erase(ch.CmdBuffer.Data); // FIXME-OPT: Improve for multiple merges.
+                ch._cmdBuffer.clear()//remove(ch._cmdBuffer.data); // FIXME-OPT: Improve for multiple merges.
             }
             if (ch._cmdBuffer.isNotEmpty())
                 lastCmd = ch._cmdBuffer.last()
