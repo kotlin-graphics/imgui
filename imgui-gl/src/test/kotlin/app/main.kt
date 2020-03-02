@@ -233,6 +233,8 @@ fun loadFonts() {
     //ImFontConfig cfg;
     //cfg.RasterizerMultiply = 1.1f;
 
+    // Find font directory
+    io.fonts.addFontFromFileTTF("fonts/NotoSans-Regular.ttf", 16f)
     io.fonts.addFontFromFileTTF("fonts/Roboto-Medium.ttf", 16f)
     //io.Fonts->AddFontFromFileTTF(Str64f("%s/%s", base_font_dir.c_str(), "RobotoMono-Regular.ttf").c_str(), 16.0f, &cfg);
     //io.Fonts->AddFontFromFileTTF(Str64f("%s/%s", base_font_dir.c_str(), "Cousine-Regular.ttf").c_str(), 15.0f);
