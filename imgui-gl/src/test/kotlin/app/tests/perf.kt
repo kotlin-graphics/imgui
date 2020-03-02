@@ -11,7 +11,9 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.internal.*
 import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC
+import kool.getValue
 import kool.rem
+import kool.setValue
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -917,86 +919,87 @@ fun registerTests_Perf(e: TestEngine) {
     }
 
     // ## Measure performance of drawlist text rendering
-    val measureTextRenderingPerf = { ctx: TestContext ->
-
-        ImGui.setNextWindowSize(Vec2(300, 120), Cond.Always)
-        ImGui.begin("Test Func", null, WindowFlag.NoSavedSettings)
-
-        val window = ImGui.currentWindow
-        val drawList = ImGui.windowDrawList
-        val testVariant = ctx.test!!.argVariant
-        var str by ctx.genericVars::strLarge
-        var wrapWidth = 0f
-        var lineNum by ctx.genericVars::int1
-        val cpuFineClipRect: Vec4? = null
-        val textSize = ctx.genericVars.vec2
-        val windowPadding = ImGui.cursorScreenPos - window.pos
-
-        if (testVariant has PerfTestTextFlag.WithWrapWidth.i)
-            wrapWidth = 250f
-
-        if (testVariant has PerfTestTextFlag.WithCpuFineClipRect.i)
-            cpuFineClipRect = ctx.genericVars.vec4
-
-        // Set up test string.
-        if (ctx.genericVars.strLarge.isEmpty())        {
-            if (testVariant has PerfTestTextFlag.TextLong.i)            {
-                lineNum = 6
-                str = ByteArray(2000)
-            }
-            else if (testVariant has PerfTestTextFlag.TextWayTooLong.i)            {
-                lineNum = 1
-                str = ByteArray(10000)
-            }
-            else            {
-                lineNum = 400
-                str = ByteArray(30)
-            }
-            // Support variable stress.
-            lineNum *= ctx.perfStressAmount
-            // Create test string.
-            str.fill('f'.b)
-            for (i in 14 until str.size step 15)
-                str[i] = ' '.b      // Spaces for word wrap.
-//            str.back() = 0             // Null-terminate
-            // Measure text size and cache result.
-            textSize put ImGui.calcTextSize(str, false, wrapWidth)
-            // Set up a cpu fine clip rect which should be about half of rect rendered text would occupy.
-            if (testVariant has PerfTestTextFlag.WithCpuFineClipRect.i)            {
-                cpu_fine_clip_rect ->
-                x = window->Pos.x+window_padding.x
-                cpu_fine_clip_rect->y = window->Pos.y+window_padding.y
-                cpu_fine_clip_rect->z = window->Pos.x+window_padding.x+text_size.x * 0.5f
-                cpu_fine_clip_rect->w = window->Pos.y+window_padding.y+text_size.y * line_num * 0.5f
-            }
-        }
-
-        ImGui::PushClipRect(ImVec2(-FLT_MAX, -FLT_MAX), ImVec2(FLT_MAX, FLT_MAX), false)
-        for (int i = 0, end = line_num; i < end; i++)
-        drawList->AddText(NULL, 0.0f, window->Pos+ImVec2(window_padding.x, window_padding.y+text_size.y * (float)i), IM_COL32_WHITE, &str.front(), &str.back(), wrap_width, cpu_fine_clip_rect)
-        ImGui::PopClipRect()
-
-        ImGui::End()
-    }
-    const char * base_name = "perf_draw_text"
-    const char * text_suffixes [] = { "_short", "_long", "_too_long" }
-    const char * wrap_suffixes [] = { "", "_wrapped" }
-    const char * clip_suffixes [] = { "", "_clipped" }
-    for (int i = 0; i < IM_ARRAYSIZE(text_suffixes); i++)
-    {
-        for (int j = 0; j < IM_ARRAYSIZE(wrap_suffixes); j++)
-        {
-            for (int k = 0; k < IM_ARRAYSIZE(clip_suffixes); k++)
-            {
-                Str64f test_name ("%s%s%s%s", base_name, text_suffixes[i], wrap_suffixes[j], clip_suffixes[k])
-                t = REGISTER_TEST("perf", "")
-                t->SetOwnedName(test_name.c_str())
-                t->ArgVariant = (PerfTestTextFlags_TextShort << i) | (PerfTestTextFlags_NoWrapWidth << j) | (PerfTestTextFlags_NoCpuFineClipRect << k)
-                t->GuiFunc = measure_text_rendering_perf
-                t->TestFunc = PerfCaptureFunc
-            }
-        }
-    }
+//    val measureTextRenderingPerf = { ctx: TestContext -> TODO bug
+//
+//        ImGui.setNextWindowSize(Vec2(300, 120), Cond.Always)
+//        ImGui.begin("Test Func", null, WindowFlag.NoSavedSettings.i)
+//
+//        val window = ImGui.currentWindow
+//        val drawList = ImGui.windowDrawList
+//        val testVariant = ctx.test!!.argVariant
+//        var str by ctx.genericVars::strLarge
+//        var wrapWidth = 0f
+//        var lineNum by ctx.genericVars::int1
+//        var cpuFineClipRect: Vec4? = null
+//        val textSize = ctx.genericVars.vec2
+//        val windowPadding = ImGui.cursorScreenPos - window.pos
+//
+//        if (testVariant has PerfTestTextFlag.WithWrapWidth.i)
+//            wrapWidth = 250f
+//
+//        if (testVariant has PerfTestTextFlag.WithCpuFineClipRect.i)
+//            cpuFineClipRect = ctx.genericVars.vec4
+//
+//        // Set up test string.
+//        if (ctx.genericVars.strLarge.isEmpty()) {
+//            when {
+//                testVariant has PerfTestTextFlag.TextLong.i -> {
+//                    lineNum = 6
+//                    str = ByteArray(2000)
+//                }
+//                testVariant has PerfTestTextFlag.TextWayTooLong.i -> {
+//                    lineNum = 1
+//                    str = ByteArray(10000)
+//                }
+//                else -> {
+//                    lineNum = 400
+//                    str = ByteArray(30)
+//                }
+//            }
+//            // Support variable stress.
+//            lineNum *= ctx.perfStressAmount
+//            // Create test string.
+//            str.fill('f'.b)
+//            for (i in 14 until str.size step 15)
+//                str[i] = ' '.b      // Spaces for word wrap.
+////            str.back() = 0             // Null-terminate
+//            // Measure text size and cache result.
+//            textSize put ImGui.calcTextSize(str, 0, str.size, false, wrapWidth)
+//            // Set up a cpu fine clip rect which should be about half of rect rendered text would occupy.
+//            if (testVariant has PerfTestTextFlag.WithCpuFineClipRect.i)
+//                cpuFineClipRect!!.put(
+//                        window.pos.x + windowPadding.x,
+//                        window.pos.y + windowPadding.y,
+//                        window.pos.x + windowPadding.x + textSize.x * 0.5f,
+//                        window.pos.y + windowPadding.y + textSize.y * lineNum * 0.5f)
+//        }
+//
+//        ImGui.pushClipRect(Vec2(-Float.MAX_VALUE), Vec2(Float.MAX_VALUE), false)
+//        var i = 0
+//        var end = lineNum
+//        while (i < end) {
+//            val pos = window.pos + Vec2(windowPadding.x, windowPadding.y + textSize.y * i)
+//            drawList.addText(null, 0f, pos, COL32_WHITE, str, 0, str.size, wrapWidth, cpuFineClipRect)
+//            i++
+//        }
+//        ImGui.popClipRect()
+//
+//        ImGui.end()
+//    }
+//    val baseName = "perf_draw_text"
+//    arrayOf("_short", "_long", "_too_long").forEachIndexed { i, textSuffix ->
+//        arrayOf("", "_wrapped").forEachIndexed { j, wrapSuffix ->
+//            arrayOf("", "_clipped").forEachIndexed { k, clipSuffix ->
+//                val testName = "$baseName$textSuffix$wrapSuffix$clipSuffix"
+//                e.registerTest("perf", "").let { t ->
+//                    t.setOwnedName(testName)
+//                    t.argVariant = (PerfTestTextFlag.TextShort.i shl i) or (PerfTestTextFlag.NoWrapWidth.i shl j) or (PerfTestTextFlag.NoCpuFineClipRect.i shl k)
+//                    t.guiFunc = measureTextRenderingPerf
+//                    t.testFunc = perfCaptureFunc
+//                }
+//            }
+//        }
+//    }
 }
 
 // ## Measure the drawing cost of various ImDrawList primitives
