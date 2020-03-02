@@ -177,8 +177,8 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
     assert(maxDepth > 0 && maxPasses > 0)
 
     var actionedTotal = 0
-    for (pass in 0 until 1) {
-        println("pass $pass")
+    for (pass in 0 until maxPasses) {
+//        println("pass $pass")
         val items = TestItemList()
         gatherItems(items, refParent, maxDepth)
 
@@ -209,8 +209,8 @@ fun TestContext.itemActionAll(action: TestAction, refParent: TestRef, maxDepth: 
             if (isError) break
 
             val info = items[n]
-            if (pass > 2)
-                println("Window ${info.window?.name} [$n] ${info.debugLabel}, ${info.depth}")
+//            if (pass > -1)
+//                println("Window ${info.window?.name} [$n] ${info.debugLabel}, ${info.depth}")
             when (action) {
                 TestAction.Click -> {
                     itemAction(action, info.id)
@@ -253,6 +253,8 @@ fun TestContext.itemOpenAll(refParent: String, depth: Int = 99, passes: Int = 99
 
 fun TestContext.itemOpenAll(refParent: TestRef, depth: Int = 99, passes: Int = 99) = itemActionAll(TestAction.Open, refParent, depth, passes)
 
+// [JVM]
+fun TestContext.itemCloseAll(refParent: String, depth: Int = 99, passes: Int = 99) = itemActionAll(TestAction.Close, TestRef(path = refParent), depth, passes)
 fun TestContext.itemCloseAll(refParent: TestRef, depth: Int = 99, passes: Int = 99) = itemActionAll(TestAction.Close, refParent, depth, passes)
 
 // [JVM]

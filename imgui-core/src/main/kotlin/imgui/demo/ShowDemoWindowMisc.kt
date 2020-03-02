@@ -1,7 +1,7 @@
 package imgui.demo
 
 import glm_.i
-import imgui.Col
+import imgui.*
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -29,13 +29,10 @@ import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
-import imgui.MouseButton
-import imgui.MouseCursor
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
-import imgui.api.demoDebugInformations.Companion.helpMarker
-import imgui.toByteArray
 
 object ShowDemoWindowMisc {
 
@@ -59,12 +56,12 @@ object ShowDemoWindowMisc {
             val filter = TextFilter()
             text("Filter usage:\n" +
                     "  \"\"         display all lines\n" +
-            "  \"xxx\"      display lines containing \"xxx\"\n" +
-            "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n" +
-            "  \"-xxx\"     hide lines containing \"xxx\"")
-            filter.draw(width = 100.0f)
+                    "  \"xxx\"      display lines containing \"xxx\"\n" +
+                    "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n" +
+                    "  \"-xxx\"     hide lines containing \"xxx\"")
+            filter.draw()
             val lines = arrayListOf("aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world")
-            lines.stream().filter{ filter.passFilter(it) }.forEach { bulletText(it) }
+            lines.stream().filter { filter.passFilter(it) }.forEach { bulletText(it) }
         }
 
         collapsingHeader("Inputs, Navigation & Focus") {
@@ -134,7 +131,7 @@ object ShowDemoWindowMisc {
                     // UTF-8 will represent some characters using multiple bytes, so we join them here
                     // example: 'ç' becomes "0xC3, 0xA7"
                     val bytes = c.toString().toByteArray().joinToString { "0x%X".format(it) }
-                    sameLine();  text("\'%c\' (%s)", if(c > ' ' && c.i <= 255) c else '?', bytes)
+                    sameLine(); text("\'%c\' (%s)", if (c > ' ' && c.i <= 255) c else '?', bytes)
                 }
 
                 text("NavInputs down:")
@@ -199,8 +196,18 @@ object ShowDemoWindowMisc {
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
                 MouseButton.values().filter { it != MouseButton.None }.forEach { button ->
-                    text("isMouseDragging($button):  w/ default threshold: ${isMouseDragging(button)},  w/ zero threshold: " +
-                            "${isMouseDragging(button, 0f)}\n  w/ large threshold: ${isMouseDragging(button, 20f)}")
+                    if (DEBUG)
+                        text("""
+                            |isMouseDragging(${button.ordinal}):
+                            |  w/ default threshold: ${isMouseDragging(button).i}
+                            |  w/ zero threshold: ${isMouseDragging(button, 0f).i}
+                            |  w/ large threshold: ${isMouseDragging(button, 20f).i}""".trimMargin())
+                    else
+                        text("""
+                            |isMouseDragging($button):
+                            |  w/ default threshold: ${isMouseDragging(button)}
+                            |  w/ zero threshold: ${isMouseDragging(button, 0f)}
+                            |  w/ large threshold: ${isMouseDragging(button, 20f)}""".trimMargin())
                 }
                 button("Drag Me")
                 if (isItemActive)

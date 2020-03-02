@@ -1,5 +1,6 @@
 package imgui.internal
 
+import glm_.asHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
@@ -143,7 +144,6 @@ class DrawListSplitter {
     val _channels = Stack<DrawChannel>()
 
     init {
-        logger.log(Level.INFO, "DrawListSplitter() $this, ${System.identityHashCode(this)}")
         clear()
     }
 
@@ -159,7 +159,7 @@ class DrawListSplitter {
             it._cmdBuffer.clear()
             it._idxBuffer.free()
             if (!destroy)
-                it._idxBuffer = IntBuffer(0)
+                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.asHexString}") }
         }
         _current = 0
         _count = 1
@@ -256,7 +256,6 @@ class DrawListSplitter {
         _channels[_current]._cmdBuffer.addAll(drawList.cmdBuffer)
         _channels[_current]._idxBuffer.free()
         _channels[_current]._idxBuffer = imgui.IntBuffer(drawList.idxBuffer)
-        logger.log(Level.INFO, "_channels=$_channels{._idxBuffer=${_channels[_current]._idxBuffer}")
         _current = idx
         drawList.cmdBuffer.clear()
         drawList.cmdBuffer.addAll(_channels[idx]._cmdBuffer)

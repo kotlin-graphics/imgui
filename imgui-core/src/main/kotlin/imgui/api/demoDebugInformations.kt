@@ -544,8 +544,8 @@ interface demoDebugInformations {
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper(cmd.elemCount / 3)
                     while (clipper.step()) {
-                        var idx_i = elemOffset + clipper.display.start * 3
-                        for (prim in clipper.display.start until clipper.display.last) {
+                        var idx_i = elemOffset + clipper.display.first * 3
+                        for (prim in clipper.display) {
                             var bufP = 0
                             val triangles = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
