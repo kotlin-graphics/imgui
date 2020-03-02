@@ -78,9 +78,9 @@ fun TestContext.logToTTY(level: TestVerboseLevel, message: String) {
 }
 
 fun TestContext.logDebug(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Debug, TestLogFlag.None.i, fmt, *args)  // ImGuiTestVerboseLevel_Debug or ImGuiTestVerboseLevel_Trace depending on context depth
-fun TestContext.logInfo(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Info, TestLogFlag.None.i, fmt, args)  // ImGuiTestVerboseLevel_Info
-fun TestContext.logWarning(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Warning, TestLogFlag.None.i, fmt, args)  // ImGuiTestVerboseLevel_Warning
-fun TestContext.logError(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Error, TestLogFlag.None.i, fmt, args)  // ImGuiTestVerboseLevel_Error
+fun TestContext.logInfo(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Info, TestLogFlag.None.i, fmt, *args)  // ImGuiTestVerboseLevel_Info
+fun TestContext.logWarning(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Warning, TestLogFlag.None.i, fmt, *args)  // ImGuiTestVerboseLevel_Warning
+fun TestContext.logError(fmt: String, vararg args: Any) = logEx(TestVerboseLevel.Error, TestLogFlag.None.i, fmt, *args)  // ImGuiTestVerboseLevel_Error
 fun TestContext.logDebugInfo() {
     val itemHoveredId = uiContext!!.hoveredIdPreviousFrame
     val itemActiveId = uiContext!!.activeId
