@@ -34,7 +34,8 @@ class ListClipper
  *  begin()/end() api directly, but prefer calling step().   */
 constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
-    var display: IntRange = 0..0
+    @Deprecated("Dummy deprecation: this is a remainder this is inclusive on the JVM, unlike the native imgui")
+    lateinit var display: IntRange
     var itemsCount = 0
 
     // [Internal]
@@ -61,7 +62,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
             /*  Step 0: the clipper let you process the first element, regardless of it being visible or not, so we can measure
                 the element height.     */
             stepNo == 0 -> {
-                display = 0..1
+                display = 0 until 1
                 startPosY = window.dc.cursorPos.y
                 stepNo = 1
                 true
@@ -76,7 +77,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                     val itemsHeight = window.dc.cursorPos.y - startPosY
                     assert(itemsHeight > 0f) { "If this triggers, it means Item 0 hasn't moved the cursor vertically" }
                     begin(itemsCount - 1, itemsHeight)
-                    display = display.start + 1..display.last + 1
+                    display = display.first + 1 until display.last + 1
                     stepNo = 3
                     true
                 }
@@ -84,7 +85,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
             /*  Step 2: dummy step only required if an explicit items_height was passed to constructor or Begin() and user still
                 call Step(). Does nothing and switch to Step 3.     */
             stepNo == 2 -> {
-                assert(display.start >= 0 && display.last >= 0)
+                assert(display.first >= 0 && display.last >= 0)
                 stepNo = 3
                 true
             }
@@ -112,11 +113,11 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
         this.itemsHeight = itemsHeight
         this.itemsCount = itemsCount
         stepNo = 0
-        display = -1..-1
+        display = -1..-1 // [JVM], no need to use `until`, -1 is a special value for invalid status
         if (itemsHeight > 0f) {
             display = calcListClipping(itemsCount, itemsHeight) // calculate how many to clip/display
-            if (display.start > 0)
-                setCursorPosYAndSetupDummyPrevLine(startPosY + display.start * itemsHeight, itemsHeight) // advance cursor
+            if (display.first > 0)
+                setCursorPosYAndSetupDummyPrevLine(startPosY + display.first * itemsHeight, itemsHeight) // advance cursor
             stepNo = 2
         }
     }

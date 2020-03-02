@@ -1,12 +1,14 @@
 package imgui.api
 
 import gli_.has
+import glm_.b
 import glm_.func.cos
 import glm_.func.sin
 import glm_.glm
 import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
@@ -44,10 +46,10 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.renderColorRectWithAlphaCheckerboard
@@ -66,6 +68,7 @@ import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import unsigned.toUInt
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.internal.DrawCornerFlag as Dcf
@@ -109,7 +112,7 @@ interface widgetsColorEditorPicker {
         g.nextItemData.clearFlags()
 
         beginGroup()
-        pushId(label)
+        pushID(label)
 
         var flags = flags_
 
@@ -152,7 +155,7 @@ interface widgetsColorEditorPicker {
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
 
         var valueChanged = false
-        var valueChangedAsFloat = false
+        val valueChangedAsFloat = false
 
         val pos = Vec2(window.dc.cursorPos)
         val inputsOffsetX = if (style.colorButtonPosition == Dir.Left) wButton else 0f
@@ -257,7 +260,7 @@ interface widgetsColorEditorPicker {
             col[2] = f[2]
             if (alpha) col[3] = f[3]
         }
-        popId()
+        popID()
         endGroup()
 
         // Drag and Drop Target
@@ -348,7 +351,7 @@ interface widgetsColorEditorPicker {
         val width = calcItemWidth()
         g.nextItemData.clearFlags()
 
-        pushId(label)
+        pushID(label)
         beginGroup()
 
         var flags = flags_
@@ -365,7 +368,7 @@ interface widgetsColorEditorPicker {
         if (flags hasnt Cef._InputMask)
             flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._InputMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
-        assert((flags and Cef._InputMask).isPowerOfTwo)  // Check that only 1 is selected
+        assert((flags and Cef._InputMask).isPowerOfTwo);  // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
@@ -532,18 +535,17 @@ interface widgetsColorEditorPicker {
             val subFlagsToForward = Cef._DataTypeMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
-            valueChanged = when {
-                flags has Cef.DisplayRGB || flags hasnt Cef._DisplayMask ->
-                    if (colorEdit4("##rgb", col, subFlags or Cef.DisplayRGB)) {
-                        // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
-                        // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
-                        valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
-                        true
-                    } else valueChanged
-                flags has Cef.DisplayHSV || flags hasnt Cef._DisplayMask -> colorEdit4("##hsv", col, subFlags or Cef.DisplayHSV)
-                flags has Cef.DisplayHEX || flags hasnt Cef._DisplayMask -> colorEdit4("##hex", col, subFlags or Cef.DisplayHEX)
-                else -> false
-            } or valueChanged
+            if(flags has Cef.DisplayRGB || flags hasnt Cef._DisplayMask)
+                if (colorEdit4("##rgb", col, subFlags or Cef.DisplayRGB)) {
+                    // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
+                    // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
+                    valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
+                    valueChanged = true
+                }
+            if(flags has Cef.DisplayHSV || flags hasnt Cef._DisplayMask)
+                valueChanged = colorEdit4("##hsv", col, subFlags or Cef.DisplayHSV) || valueChanged
+            if(flags has Cef.DisplayHEX || flags hasnt Cef._DisplayMask)
+                valueChanged = colorEdit4("##hex", col, subFlags or Cef.DisplayHEX) || valueChanged
             popItemWidth()
         }
 
@@ -687,7 +689,7 @@ interface widgetsColorEditorPicker {
         if (valueChanged)
             markItemEdited(window.dc.lastItemId)
 
-        popId()
+        popID()
 
         return valueChanged
     }
@@ -701,7 +703,7 @@ interface widgetsColorEditorPicker {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(descId)
+        val id = window.getID(descId)
         val defaultSize = frameHeight
         if (size.x == 0f)
             size.x = defaultSize
@@ -725,11 +727,10 @@ interface widgetsColorEditorPicker {
         val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
         val bbInner = Rect(bb)
-        var off = 0f
-        if (flags hasnt Cef.NoBorder) {
-            off = -0.75f // The border (using Col_FrameBg) tends to look off when color is near-opaque and rounding is enabled. This offset seemed like a good middle ground to reduce those artifacts.
-            bbInner expand off
-        }
+        /*  The border (using Col.FrameBg) tends to look off when color is near-opaque and rounding is enabled.
+            This offset seemed like a good middle ground to reduce those artifacts.  */
+        val off = -0.75f
+        bbInner expand off
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
@@ -746,11 +747,10 @@ interface widgetsColorEditorPicker {
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, Dcf.All.i)
         }
         renderNavHighlight(bb, id)
-        if (flags hasnt Cef.NoBorder)
-            if (style.frameBorderSize > 0f)
-                renderFrameBorder(bb.min, bb.max, rounding)
-            else
-                window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
+        if (style.frameBorderSize > 0f)
+            renderFrameBorder(bb.min, bb.max, rounding)
+        else
+            window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
 
         /*  Drag and Drop Source
             NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.         */

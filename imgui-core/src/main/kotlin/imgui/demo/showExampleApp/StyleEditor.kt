@@ -1,5 +1,6 @@
 package imgui.demo.showExampleApp
 
+import glm_.L
 import glm_.c
 import glm_.f
 import glm_.i
@@ -28,10 +29,10 @@ import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.logToTTY
 import imgui.ImGui.popFont
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
@@ -233,7 +234,7 @@ object StyleEditor {
                 helpMarker("Read FAQ and docs/FONTS.txt for details on font loading.")
                 pushItemWidth(120)
                 atlas.fonts.forEachIndexed { i, font ->
-                    pushId(font)
+                    pushID(font)
                     val name = font.configData.getOrNull(0)?.name ?: ""
                     val fontDetailsOpened = treeNode(font, "Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
                     sameLine(); smallButton("Set as default") { io.fontDefault = font }
@@ -265,7 +266,7 @@ object StyleEditor {
                             for (base in 0..UNICODE_CODEPOINT_MAX step 256) {
                                 val count = (0 until 256).count { font.findGlyphNoFallback(base + it) != null }
                                 val s = if (count > 1) "glyphs" else "glyph"
-                                if (count > 0 && treeNode(base, "U+%04X..U+%04X ($count $s)", base, base + 255)) {
+                                if (count > 0 && treeNode(Integer.valueOf(base), "U+%04X..U+%04X ($count $s)", base, base + 255)) {
                                     val cellSize = font.fontSize * 1
                                     val cellSpacing = style.itemSpacing.y
                                     val basePos = Vec2(cursorScreenPos)
@@ -283,7 +284,6 @@ object StyleEditor {
                                             if (isMouseHoveringRect(cellP1, cellP2))
                                                 tooltip {
                                                     text("Codepoint: U+%04X", base + n)
-                                                    text("visible: ${glyph.visible}")
                                                     separator()
                                                     text("AdvanceX+1: %.1f", glyph.advanceX)
                                                     text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
@@ -298,12 +298,12 @@ object StyleEditor {
                         }
                         treePop()
                     }
-                    popId()
+                    popID()
                 }
                 treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
                     val tintCol = Vec4(1f)
                     val borderCol = Vec4(1f, 1f, 1f, 0.5f)
-                    image(atlas.texId, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
+                    image(atlas.texID, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
                 }
 
                 helpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.")

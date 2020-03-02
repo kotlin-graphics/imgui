@@ -682,7 +682,8 @@ enum class NavInput {
     /** move up = Arrow keys  */
     _KeyUp,
     /** move down = Arrow keys  */
-    _KeyDown;
+    _KeyDown,
+    Count;
 
     @JvmField
     val i = ordinal
@@ -966,8 +967,6 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
     NoSidePreview(1 shl 8),
     /** ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source. */
     NoDragDrop(1 shl 9),
-    /** ColorButton: disable border (which is enforced by default) */
-    NoBorder(1 shl 10),
 
     // User Options (right-click on widget to change some of them).
 

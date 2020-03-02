@@ -2,7 +2,7 @@ package imgui.api
 
 import glm_.max
 import imgui.*
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
 import imgui.internal.classes.Rect
@@ -19,7 +19,7 @@ interface tabBarsTabs {
         val window = g.currentWindow!!
         if (window.skipItems) return false
 
-        val id = window.getId(strId)
+        val id = window.getID(strId)
         val tabBar = g.tabBars.getOrAddByKey(id)
         val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerClipRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
@@ -44,7 +44,7 @@ interface tabBarsTabs {
             window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.lastTabContentHeight
 
         if (tabBar.flags hasnt TabBarFlag._DockNode)
-            popId()
+            popID()
 
         g.currentTabBarStack.pop()
         g.currentTabBar = g.currentTabBarStack.lastOrNull()?.tabBar

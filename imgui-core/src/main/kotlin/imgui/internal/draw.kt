@@ -1,15 +1,18 @@
 package imgui.internal
 
+import glm_.asHexString
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.TextureID
 import imgui.classes.DrawList
+import imgui.logger
 import imgui.resize
 import kool.*
 import kool.lib.indices
 import java.nio.ByteBuffer
 import java.util.Stack
+import java.util.logging.Level
 
 /** Draw callbacks for advanced uses.
  *  NB: You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering,
@@ -37,16 +40,21 @@ class DrawCmd {
     /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
      *  vtx_buffer[] array, indices in idx_buffer[].    */
     var elemCount = 0
+
     /** Clipping rectangle (x1, y1, x2, y2). Subtract ImDrawData->DisplayPos to get clipping rectangle in "viewport" coordinates */
     var clipRect = Vec4()
+
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
     var textureId: TextureID? = null
+
     /** Start offset in vertex buffer. Pre-1.71 or without ImGuiBackendFlags_RendererHasVtxOffset: always 0.
      *  With ImGuiBackendFlags_RendererHasVtxOffset: may be >0 to support meshes larger than 64K vertices with 16-bit indices. */
     var vtxOffset = 0
+
     /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
     var idxOffset = 0
+
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
 
@@ -81,9 +89,9 @@ typealias DrawIdx = Int
  *
  *  A single vertex (pos + uv + col = 20 bytes by default. Override layout with IMGUI_OVERRIDE_DRAWVERT_STRUCT_LAYOUT) */
 class DrawVert(
-    var pos: Vec2 = Vec2(),
-    var uv: Vec2 = Vec2(),
-    var col: Int = 0) {
+        var pos: Vec2 = Vec2(),
+        var uv: Vec2 = Vec2(),
+        var col: Int = 0) {
 
     companion object {
         val size = 2 * Vec2.size + Int.BYTES
@@ -128,8 +136,10 @@ class DrawChannel {
 class DrawListSplitter {
     /** Current channel number (0) */
     var _current = 0
+
     /** Number of active channels (1+) */
     var _count = 0
+
     /** Draw channels (not resized down so _Count might be < Channels.Size) */
     val _channels = Stack<DrawChannel>()
 
@@ -137,19 +147,19 @@ class DrawListSplitter {
         clear()
     }
 
-    fun destroy() = clearFreeMemory()
-
     fun clear() {
         _current = 0
         _count = 1
     } // Do not clear Channels[] so our allocations are reused next frame
 
-    fun clearFreeMemory() {
+    fun clearFreeMemory(destroy: Boolean = false) {
         _channels.forEach {
             //            if (i == _current)
 //                memset(&_Channels[i], 0, sizeof(_Channels[i]));  // Current channel is a copy of CmdBuffer/IdxBuffer, don't destruct again
             it._cmdBuffer.clear()
-            it._idxBuffer.clear()
+            it._idxBuffer.free()
+            if (!destroy)
+                it._idxBuffer = IntBuffer(0).also { i -> logger.log(Level.INFO, "idxBuffer adr = ${i.adr.asHexString}") }
         }
         _current = 0
         _count = 1
@@ -206,8 +216,7 @@ class DrawListSplitter {
                 // Merge previous channel last draw command with current channel first draw command if matching.
                 lastCmd.elemCount += ch._cmdBuffer[0].elemCount
                 idxOffset += ch._cmdBuffer[0].elemCount
-                TODO()
-//                ch.cmdBuffer.erase(ch.CmdBuffer.Data); // FIXME-OPT: Improve for multiple merges.
+                ch._cmdBuffer.clear()//remove(ch._cmdBuffer.data); // FIXME-OPT: Improve for multiple merges.
             }
             if (ch._cmdBuffer.isNotEmpty())
                 lastCmd = ch._cmdBuffer.last()
@@ -239,18 +248,16 @@ class DrawListSplitter {
     }
 
     fun setCurrentChannel(drawList: DrawList, idx: Int) {
-        assert(idx in 1 until _count)
+        assert(idx in 0 until _count)
         if (_current == idx) return
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
         _channels[_current]._cmdBuffer.clear()
-        for (cmd in drawList.cmdBuffer)
-            _channels[_current]._cmdBuffer.push(cmd)
+        _channels[_current]._cmdBuffer.addAll(drawList.cmdBuffer)
         _channels[_current]._idxBuffer.free()
         _channels[_current]._idxBuffer = imgui.IntBuffer(drawList.idxBuffer)
         _current = idx
         drawList.cmdBuffer.clear()
-        for (cmd in _channels[idx]._cmdBuffer)
-            drawList.cmdBuffer.push(cmd)
+        drawList.cmdBuffer.addAll(_channels[idx]._cmdBuffer)
         drawList.idxBuffer.free()
         drawList.idxBuffer = imgui.IntBuffer(_channels[idx]._idxBuffer)
         drawList._idxWritePtr = drawList.idxBuffer.lim
@@ -272,16 +279,22 @@ class DrawData {
 
     /** Only valid after Render() is called and before the next NewFrame() is called.   */
     var valid = false
+
     /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
     val cmdLists = ArrayList<DrawList>()
+
     /** For convenience, sum of all DrawList's IdxBuffer.Size   */
     var totalIdxCount = 0
+
     /** For convenience, sum of all DrawList's VtxBuffer.Size   */
     var totalVtxCount = 0
+
     /** Upper-left position of the viewport to render (== upper-left of the orthogonal projection matrix to use) */
     var displayPos = Vec2()
+
     /** Size of the viewport to render (== io.displaySize for the main viewport) (displayPos + displaySize == lower-right of the orthogonal projection matrix to use) */
     var displaySize = Vec2()
+
     /** Amount of pixels for each unit of DisplaySize. Based on io.DisplayFramebufferScale. Generally (1,1) on normal display, (2,2) on OSX with Retina display. */
     var framebufferScale = Vec2()
 
@@ -329,7 +342,7 @@ class DrawData {
     fun clone(): DrawData {
         val ret = DrawData()
 
-        ret.cmdLists.addAll(cmdLists)
+        ret.cmdLists.addAll(cmdLists) // TODO check if it's fine https://github.com/kotlin-graphics/imgui/pull/135
         ret.displayPos = displayPos
         ret.displaySize = displaySize
         ret.totalIdxCount = totalIdxCount

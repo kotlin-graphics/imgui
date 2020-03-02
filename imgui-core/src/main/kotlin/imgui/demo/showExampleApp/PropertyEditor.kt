@@ -9,10 +9,10 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.end
 import imgui.ImGui.inputFloat
 import imgui.ImGui.nextColumn
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.separator
@@ -57,7 +57,7 @@ object PropertyEditor {
 
     fun showDummyObject(prefix: String, uid: Int) {
         //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
-        pushId(uid)
+        pushID(uid)
         /*  Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree
             lines equal high.             */
         alignTextToFramePadding()
@@ -68,7 +68,7 @@ object PropertyEditor {
         nextColumn()
         if (nodeOpen) {
             for (i in 0..7) {
-                pushId(i) // Use field index as identifier.
+                pushID(i) // Use field index as identifier.
                 if (i < 2)
                     showDummyObject("Child", 424242)
                 else {
@@ -84,11 +84,11 @@ object PropertyEditor {
                     popItemWidth()
                     nextColumn()
                 }
-                popId()
+                popID()
             }
             treePop()
         }
-        popId()
+        popID()
     }
 
     val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)

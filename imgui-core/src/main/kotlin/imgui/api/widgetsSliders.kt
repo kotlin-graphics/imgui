@@ -25,9 +25,9 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -46,6 +46,10 @@ import imgui.internal.SliderFlag
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
+import unsigned.Ubyte
+import unsigned.Uint
+import unsigned.Ulong
+import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
 /** Widgets: Sliders
@@ -142,7 +146,7 @@ interface widgetsSliders {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val w = calcItemWidth()
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -201,13 +205,19 @@ interface widgetsSliders {
             window.drawList.addRectFilled(grabBb.min, grabBb.max, getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), style.grabRounding)
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = format.format(style.locale, pData())
+        val value = format.format(style.locale, when(val data = pData()) {
+            is Ubyte -> data.v
+            is Ushort -> data.v
+            is Uint -> data.v
+            is Ulong -> data.v
+            else -> data
+        })
         renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return valueChanged
     }
 
@@ -220,10 +230,10 @@ interface widgetsSliders {
 
         var valueChanged = false
         beginGroup()
-        pushId(label)
+        pushID(label)
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
-            pushId(i)
+            pushID(i)
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {
@@ -231,10 +241,10 @@ interface widgetsSliders {
                 DataType.Float -> withFloat(pData as FloatArray, i) { sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, power) }
                 else -> error("invalid")
             } || valueChanged
-            popId()
+            popID()
             popItemWidth()
         }
-        popId()
+        popID()
 
         val labelEnd = findRenderedTextEnd(label)
         if (0 != labelEnd) {
@@ -259,7 +269,7 @@ interface widgetsSliders {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)

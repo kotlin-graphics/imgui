@@ -8,8 +8,8 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.indent
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
-import imgui.ImGui.popId
-import imgui.ImGui.pushId
+import imgui.ImGui.popID
+import imgui.ImGui.pushID
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
@@ -17,7 +17,7 @@ import imgui.ImGui.unindent
 import imgui.internal.NextItemDataFlag
 import imgui.max
 import imgui.internal.classes.itemHoveredDataBackup
-import imgui.internal.formatStringV
+import imgui.internal.formatString
 import imgui.internal.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
@@ -31,50 +31,63 @@ interface widgetsTrees {
     fun treeNode(label: String): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
-        return treeNodeBehavior(window.getId(label), 0, label)
+        return treeNodeBehavior(window.getID(label), 0, label)
     }
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(strId: String, fmt: String, vararg args: Any): Boolean = treeNodeEx(strId, 0, fmt, *args)
+    fun treeNode(strID: String, fmt: String, vararg args: Any): Boolean = treeNodeEx(strID, 0, fmt, *args)
 
     /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
      *  Bullet().   */
-    fun treeNode(ptrId: Any, fmt: String, vararg args: Any): Boolean = treeNodeEx(ptrId, 0, fmt, *args)
+    fun treeNode(ptrID: Any, fmt: String, vararg args: Any): Boolean = treeNodeEx(ptrID, 0, fmt, *args)
+
+    /** read the FAQ about why and how to use ID. to align arbitrary text at the same level as a TreeNode() you can use
+     *  Bullet().   */
+    fun treeNode(intPtr: Long, fmt: String, vararg args: Any): Boolean = treeNodeEx(intPtr, 0, fmt, *args)
 
     fun treeNodeEx(label: String, flags: TreeNodeFlags = 0): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
-        return treeNodeBehavior(window.getId(label), flags, label)
+        return treeNodeBehavior(window.getID(label), flags, label)
     }
 
-    fun treeNodeEx(strId: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeEx(strID: String, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatStringV(g.tempBuffer, fmt, args)
-        return treeNodeBehavior(window.getId(strId), flags, g.tempBuffer, labelEnd)
+        val labelEnd = formatString(g.tempBuffer, fmt, args)
+        return treeNodeBehavior(window.getID(strID), flags, g.tempBuffer, labelEnd)
     }
 
-    fun treeNodeEx(ptrId: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+    fun treeNodeEx(ptrID: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatStringV(g.tempBuffer, fmt, args)
-        return treeNodeBehavior(window.getId(ptrId), flags, g.tempBuffer, labelEnd)
+        val labelEnd = formatString(g.tempBuffer, fmt, *args)
+        return treeNodeBehavior(window.getID(ptrID), flags, g.tempBuffer, labelEnd)
+    }
+
+    fun treeNodeEx(intPtr: Long, flags: TreeNodeFlags, fmt: String, vararg args: Any): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems) return false
+
+        val labelEnd = formatString(g.tempBuffer, fmt, *args)
+        return treeNodeBehavior(window.getID(intPtr), flags, g.tempBuffer, labelEnd)
     }
 
 //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
 
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call TreePush/TreePop yourself if desired.  */
-    fun treePush(ptrId: Any?) {
+    fun treePush(strId: String = "#TreePush") {
         val window = currentWindow
         indent()
         window.dc.treeDepth++
-        pushId(ptrId ?: "#TreePush")
+        pushID(strId)
     }
 
     /** ~ Unindent()+PopId()    */
@@ -94,7 +107,7 @@ interface widgetsTrees {
         window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask and treeDepthMask - 1
 
         assert(window.idStack.size > 1) { "There should always be 1 element in the idStack (pushed during window creation). If this triggers you called ::treePop/popId() too much." }
-        popId()
+        popID()
     }
 
     /** horizontal distance preceding label when using TreeNode*() or Bullet() == (g.FontSize + style.FramePadding.x*2)
@@ -114,7 +127,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        return treeNodeBehavior(window.getId(label), flags or Tnf.CollapsingHeader, label)
+        return treeNodeBehavior(window.getID(label), flags or Tnf.CollapsingHeader, label)
     }
 
     /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
@@ -125,7 +138,7 @@ interface widgetsTrees {
 
         if (open?.get()  == false) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton else 0
         val isOpen = treeNodeBehavior(id, flags, label)
         if (open != null) {
@@ -138,7 +151,7 @@ interface widgetsTrees {
                     max(window.dc.lastItemRect.min.x, window.dc.lastItemRect.max.x - style.framePadding.x * 2f - buttonSize),
                     (window.dc.lastItemRect.min.y))
             itemHoveredDataBackup {
-                if (closeButton(window.getId(id + 1), buttonPos))
+                if (closeButton(window.getID(id + 1), buttonPos))
                     open.set(false)
             }
         }

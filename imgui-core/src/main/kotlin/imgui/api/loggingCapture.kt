@@ -4,9 +4,9 @@ import imgui.ImGui.button
 import imgui.ImGui.clipboardText
 import imgui.ImGui.logBegin
 import imgui.ImGui.popAllowKeyboardFocus
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.pushAllowKeyboardFocus
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.sliderInt
@@ -73,7 +73,7 @@ interface loggingCapture {
     /** Helper to display buttons for logging to tty/file/clipboard
      *  FIXME-OBSOLETE: We should probably obsolete this and let the user have their own helper (this is one of the oldest function alive!) */
     fun logButtons() {
-        pushId("LogButtons")
+        pushID("LogButtons")
         val logToTty = button("Log To TTY"); sameLine()
         val logToFile = button("Log To File"); sameLine()
         val logToClipboard = button("Log To Clipboard"); sameLine()
@@ -81,7 +81,7 @@ interface loggingCapture {
         setNextItemWidth(80f)
         sliderInt("Default Depth", g::logDepthToExpandDefault, 0, 9)
         popAllowKeyboardFocus()
-        popId()
+        popID()
 
         // Start logging at the end of the function so that the buttons don't appear in the log
         if (logToTty) logToTTY()
@@ -97,8 +97,7 @@ interface loggingCapture {
         if (g.logFile != null) {
             val writer = FileWriter(g.logFile, true)
             writer.write(String.format(fmt, *args))
-        } else {
+        } else
             g.logBuffer.append(fmt.format(*args))
-        }
     }
 }
