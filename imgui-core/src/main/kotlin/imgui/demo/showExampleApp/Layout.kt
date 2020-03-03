@@ -39,7 +39,7 @@ object Layout {
         var open by pOpen
 
         setNextWindowSize(Vec2(500, 440), Cond.FirstUseEver)
-        if (begin("Example: Simple Layout", pOpen, Wf.MenuBar.i)) {
+        if (begin("Example: Simple layout", pOpen, Wf.MenuBar.i)) {
             menuBar {
                 menu("File") {
                     menuItem("Close") { open = false }
