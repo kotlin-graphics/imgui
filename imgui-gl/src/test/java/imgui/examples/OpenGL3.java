@@ -1,8 +1,11 @@
-package imgui;
+package imgui.examples;
 
 import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
+import imgui.Cond;
+import imgui.ImGui;
+import imgui.MutableProperty0;
 import imgui.classes.IO;
 import imgui.classes.Context;
 import imgui.impl.gl.ImplGL3;
