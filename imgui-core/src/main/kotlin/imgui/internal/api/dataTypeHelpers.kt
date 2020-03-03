@@ -6,6 +6,7 @@ import imgui.ImGui.style
 import imgui.NUL
 import imgui._i
 import imgui.api.*
+import imgui.cStr
 import imgui.internal.addClampOverflow
 import imgui.internal.subClampOverflow
 import uno.kotlin.getValue
@@ -115,7 +116,7 @@ internal interface dataTypeHelpers {
                 .replace("$NUL", "")
                 .split(Regex("-+\\*/"))
 
-        val initialValueBuf = String(initialValueBuf_).replace(Regex("\\s+"), "")
+        val initialValueBuf = initialValueBuf_.cStr.replace(Regex("\\s+"), "")
                 .replace("$NUL", "")
                 .split(Regex("-+\\*/"))
 
@@ -161,7 +162,7 @@ internal interface dataTypeHelpers {
                     dataBackup != v
                 }
                 DataType.Float -> {
-                    // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in TODO not true in java
+                    // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in [JVM] not true
                     val fmt = format ?: "%f"
                     var v by dataPtr as KMutableProperty0<Float>
                     val dataBackup = v

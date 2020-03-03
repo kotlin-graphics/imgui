@@ -16,9 +16,9 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.openPopupEx
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
@@ -56,7 +56,7 @@ interface widgetsComboBox {
 
         assert((flags and (Cf.NoArrowButton or Cf.NoPreview)) != (Cf.NoArrowButton or Cf.NoPreview)) { "Can't use both flags together" }
 
-        val id = window.getId(label)
+        val id = window.getID(label)
 
         val arrowSize = if (flags has Cf.NoArrowButton) 0f else frameHeight
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -190,7 +190,7 @@ interface widgetsComboBox {
         // FIXME-OPT: Use clipper (but we need to disable it on the appearing frame to make sure our call to setItemDefaultFocus() is processed)
         var valueChanged = false
         for (i in items.indices) {
-            pushId(i)
+            pushID(i)
             val itemSelected = i == currentItem
             val itemText = items.getOrElse(i) { "*Unknown item*" }
             if (selectable(itemText, itemSelected)) {
@@ -198,8 +198,47 @@ interface widgetsComboBox {
                 currentItem = i
             }
             if (itemSelected) setItemDefaultFocus()
-            popId()
+            popID()
         }
+        endCombo()
+        return valueChanged
+    }
+
+    /** Old API, prefer using BeginCombo() nowadays if you can. */
+    fun combo(label: String, pCurrentItem: KMutableProperty0<Int>, itemsGetter: (Array<String>, Int, KMutableProperty0<String>) -> Boolean,
+              items: Array<String>, popupMaxHeightInItems: Int = -1): Boolean {
+
+        var currentItem by pCurrentItem
+        // Call the getter to obtain the preview string which is a parameter to BeginCombo()
+        var previewValue by ::_s
+        if (currentItem >= 0 && currentItem < items.size)
+            itemsGetter(items, currentItem, ::_s)
+
+        // The old Combo() API exposed "popup_max_height_in_items". The new more general BeginCombo() API doesn't have/need it, but we emulate it here.
+        if (popupMaxHeightInItems != -1 && g.nextWindowData.flags hasnt NextWindowDataFlag.HasSizeConstraint)
+            setNextWindowSizeConstraints(Vec2(), Vec2(Float.MAX_VALUE, calcMaxPopupHeightFromItemCount(popupMaxHeightInItems)))
+
+        if (!beginCombo(label, previewValue, Cf.None.i))
+            return false
+
+        // Display items
+        // FIXME-OPT: Use clipper (but we need to disable it on the appearing frame to make sure our call to SetItemDefaultFocus() is processed)
+        var valueChanged = false
+        for (i in items.indices) {
+            pushID(i)
+            val itemSelected = i == currentItem
+            var itemText by ::_s
+            if (!itemsGetter(items, i, ::_s))
+                itemText = "*Unknown item*"
+            if (selectable(itemText, itemSelected)) {
+                valueChanged = true
+                currentItem = i
+            }
+            if (itemSelected)
+                setItemDefaultFocus()
+            popID()
+        }
+
         endCombo()
         return valueChanged
     }

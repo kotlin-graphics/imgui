@@ -18,8 +18,8 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
-import imgui.ImGui.pushId
+import imgui.ImGui.popID
+import imgui.ImGui.pushID
 import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -78,7 +78,7 @@ interface widgetsMain {
 
         assert(sizeArg.allNotEqual(0f)) { "Cannot use zero-size for InvisibleButton(). Unlike Button() there is not way to fallback using the label size." }
 
-        val id = window.getId(strId)
+        val id = window.getID(strId)
         val size = calcItemSize(sizeArg, 0f, 0f)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         itemSize(size)
@@ -121,9 +121,9 @@ interface widgetsMain {
 
         /*  Default to using texture ID as ID. User can still push string/integer prefixes.
             We could hash the size/uv to create a unique ID but that would prevent the user from animating UV.         */
-        pushId(userTextureId)
-        val id = window.getId("#image")
-        popId()
+        pushID(Integer.valueOf(userTextureId))
+        val id = window.getID("#image")
+        popID()
 
         val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding * 2)
@@ -159,7 +159,7 @@ interface widgetsMain {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight
@@ -193,7 +193,7 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
 
         return pressed
     }
@@ -228,7 +228,7 @@ interface widgetsMain {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val squareSz = frameHeight

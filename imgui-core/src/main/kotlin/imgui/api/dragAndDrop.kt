@@ -73,15 +73,19 @@ interface dragAndDrop {
                     setActiveID(sourceId, window)
                     focusWindow(window)
                 }
-                // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
-                g.activeIdAllowOverlap = when (g.activeId) {
-                    sourceId -> isHovered
-                    else -> false
-                }
-            }
-            if (g.activeId != sourceId) return false
+                if(g.activeId == sourceId) // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
+                    g.activeIdAllowOverlap = isHovered
+            } else
+                g.activeIdAllowOverlap = false
+            if (g.activeId != sourceId)
+                return false
             sourceParentId = window.idStack.last()
             sourceDragActive = isMouseDragging(mouseButton)
+
+            // Disable navigation and key inputs while dragging
+            g.activeIdUsingNavDirMask = 0.inv()
+            g.activeIdUsingNavInputMask = 0.inv()
+            g.activeIdUsingKeyInputMask = 0L.inv()
         } else {
             window = null
             sourceId = hash("#SourceExtern")

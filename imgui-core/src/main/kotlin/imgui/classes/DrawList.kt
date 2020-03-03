@@ -21,8 +21,7 @@ import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
-import kotlin.collections.ArrayList
-import kotlin.collections.lastIndex
+import java.util.logging.Level
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -49,8 +48,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Draw commands. Typically 1 command = 1 GPU draw call, unless the command is a callback.    */
     var cmdBuffer = Stack<DrawCmd>()
+
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
     var idxBuffer = IntBuffer(0)
+
     /** Vertex buffer.  */
     var vtxBuffer = DrawVert_Buffer(0)
 
@@ -61,28 +62,35 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
     var flags: DrawListFlags = 0
+
     /** Pointer to shared draw data (you can use ImGui::drawListSharedData to get the one from current ImGui context) */
     var _data: DrawListSharedData = sharedData ?: DrawListSharedData()
+
     /** Pointer to owner window's name for debugging    */
     var _ownerName = ""
+
     /** [Internal] Always 0 unless 'Flags & ImDrawListFlags_AllowVtxOffset'. */
     var _vtxCurrentOffset = 0
+
     /** [Internal] Generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0. */
     var _vtxCurrentIdx = 0
+
     /** [Internal] point within VtxBuffer.Data after each add command (to avoid using the ImVector<> operators too much)    */
     var _vtxWritePtr = 0
+
     /** [Internal] point within IdxBuffer.Data after each add command (to avoid using the ImVector<> operators too much)    */
     var _idxWritePtr = 0
 
     val _clipRectStack = Stack<Vec4>()
+
     /** [Internal]  */
     val _textureIdStack = Stack<TextureID>()
+
     /** [Internal] current path building    */
     val _path = ArrayList<Vec2>()
+
     /** [Internal] for channels api */
     val _splitter = DrawListSplitter()
-
-    fun destroy() = clearFreeMemory()
 
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
@@ -300,10 +308,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
                 wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
         val bytes = text.toByteArray()
-        addText(font, fontSize, pos, col, bytes, bytes.size, wrapWidth, cpuFineClipRect)
+        addText(font, fontSize, pos, col, bytes, 0, bytes.size, wrapWidth, cpuFineClipRect)
     }
 
-    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray,
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int = 0,
                 textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
@@ -315,9 +323,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val font = font_ ?: _data.font!!
         val fontSize = if (fontSize_ == 0f) _data.fontSize else fontSize_
 
-        assert(font.containerAtlas.texId == _textureIdStack.last()) {
-            "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font_"
-        }
+        assert(font.containerAtlas.texID == _textureIdStack.last()) { "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font_" }
 
         val clipRect = Vec4(_clipRectStack.last())
         cpuFineClipRect?.let {
@@ -326,7 +332,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             clipRect.z = clipRect.z min cpuFineClipRect.z
             clipRect.w = clipRect.w min cpuFineClipRect.w
         }
-        font.renderText(this, fontSize, pos, col, clipRect, text, textEnd, wrapWidth, cpuFineClipRect != null)
+        font.renderText(this, fontSize, Vec2(pos), col, clipRect, text, textBegin, textEnd, wrapWidth, cpuFineClipRect != null)
     }
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
@@ -871,8 +877,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
     fun clear() {
         cmdBuffer.clear()
-        idxBuffer.resize(0) // we dont assign because it wont create a new istance for sure
-        vtxBuffer.resize(0)
+        idxBuffer = idxBuffer.resize(0) // we dont assign because it wont create a new instance for sure
+        vtxBuffer = vtxBuffer.resize(0)
         flags = _data.initialFlags
         _vtxCurrentOffset = 0
         _vtxCurrentIdx = 0
@@ -884,11 +890,15 @@ class DrawList(sharedData: DrawListSharedData?) {
         _splitter.clear()
     }
 
-    fun clearFreeMemory() {
+    fun clearFreeMemory(destroy: Boolean = false) {
         clear()
-        _splitter.clearFreeMemory()
+        _splitter.clearFreeMemory(destroy)
         vtxBuffer.data.free()
         idxBuffer.free()
+        if(!destroy) {
+            vtxBuffer = DrawVert_Buffer(0)
+            idxBuffer = IntBuffer(0)
+        }
     }
 
     /** Reserve space for a number of vertices and indices.
@@ -1170,7 +1180,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val uv = Array(4) { Vec2() }
         if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
             pos -= offset
-            val texId: TextureID = fontAtlas.texId
+            val texId: TextureID = fontAtlas.texID
             pushTextureId(texId)
             addImage(texId, pos + Vec2(1, 0) * scale, pos + Vec2(1, 0) * scale + size * scale, uv[2], uv[3], colShadow)
             addImage(texId, pos + Vec2(2, 0) * scale, pos + Vec2(2, 0) * scale + size * scale, uv[2], uv[3], colShadow)

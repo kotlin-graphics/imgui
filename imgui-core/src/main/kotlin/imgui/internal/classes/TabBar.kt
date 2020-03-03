@@ -122,6 +122,7 @@ class TabBar {
         wantLayout = true // Layout will be done on the first call to ItemTab()
         prevFrameVisible = currFrameVisible
         currFrameVisible = g.frameCount
+        framePadding put g.style.framePadding
 
         // Layout
         itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
@@ -350,7 +351,7 @@ class TabBar {
             flags = flags or TabItemFlag.NoCloseWithMiddleMouseButton
 
         // Render tab label, process close button
-        val closeButtonId = if (pOpen?.get() == true) window.getId(id + 1) else 0
+        val closeButtonId = if (pOpen?.get() == true) window.getID(id + 1) else 0
         val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
@@ -538,7 +539,7 @@ class TabBar {
                 keepAliveID(id)
                 id
             }
-            else -> g.currentWindow!!.getId(label)
+            else -> g.currentWindow!!.getID(label)
         }
     }
 

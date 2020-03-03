@@ -16,8 +16,8 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
-import imgui.ImGui.popId
-import imgui.ImGui.pushId
+import imgui.ImGui.popID
+import imgui.ImGui.pushID
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -208,7 +208,7 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
     window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
 
     // Manual resize grips
-    pushId("#RESIZE")
+    pushID("#RESIZE")
     for (resizeGripN in 0 until resizeGripCount) {
 
         val grip = resizeGripDef[resizeGripN]
@@ -220,7 +220,7 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
         if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
 
         val f = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
-        val (_, hovered, held) = buttonBehavior(resizeRect, window.getId(resizeGripN), f)
+        val (_, hovered, held) = buttonBehavior(resizeRect, window.getID(resizeGripN), f)
         //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
         if (hovered || held)
             g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
@@ -242,7 +242,7 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
     }
     for (borderN in 0 until resizeBorderCount) {
         val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
-        val (_, hovered, held) = buttonBehavior(borderRect, window.getId((borderN + 4)), ButtonFlag.FlattenChildren)
+        val (_, hovered, held) = buttonBehavior(borderRect, window.getID((borderN + 4)), ButtonFlag.FlattenChildren)
         //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
         if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
             g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
@@ -273,7 +273,7 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
             window.calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
         }
     }
-    popId()
+    popID()
 
     // Restore nav layer
     window.dc.navLayerCurrent = NavLayer.Main

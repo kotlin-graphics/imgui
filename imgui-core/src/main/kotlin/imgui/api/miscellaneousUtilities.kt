@@ -68,15 +68,15 @@ interface miscellaneousUtilities {
      *  CalcTextSize("") should return ImVec2(0.0f, g.FontSize)   */
     fun calcTextSize(text: String, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
         val bytes = text.toByteArray()
-        return calcTextSize(bytes, bytes.size, hideTextAfterDoubleHash, wrapWidth)
+        return calcTextSize(bytes, 0, bytes.size, hideTextAfterDoubleHash, wrapWidth)
     }
 
     /** Calculate text size. Text can be multi-line. Optionally ignore text after a ## marker.
      *  CalcTextSize("") should return ImVec2(0.0f, g.FontSize)   */
-    fun calcTextSize(text: ByteArray, textEnd: Int = text.size, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
+    fun calcTextSize(text: ByteArray, textBegin: Int, textEnd: Int = text.size, hideTextAfterDoubleHash: Boolean = false, wrapWidth: Float = -1f): Vec2 {
 
         val textDisplayEnd = when {
-            hideTextAfterDoubleHash -> findRenderedTextEnd(text, textEnd)  // Hide anything after a '##' string
+            hideTextAfterDoubleHash -> findRenderedTextEnd(text, 0, textEnd)  // Hide anything after a '##' string
             else -> textEnd
         }
 
@@ -100,8 +100,8 @@ interface miscellaneousUtilities {
     fun calcListClipping(itemsCount: Int, itemsHeight: Float): IntRange {
         val window = g.currentWindow!!
         return when {
-            g.logEnabled -> 0..itemsCount // If logging is active, do not perform any clipping
-            window.skipItems -> 0..0
+            g.logEnabled -> 0 until itemsCount // If logging is active, do not perform any clipping
+            window.skipItems -> 0 until 0
             else -> {
                 // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
                 val unclippedRect = window.clipRect
@@ -119,7 +119,7 @@ interface miscellaneousUtilities {
                     end++
                 start = glm.clamp(start, 0, itemsCount)
                 end = glm.clamp(end + 1, start, itemsCount)
-                start..end
+                start until end
             }
         }
     }

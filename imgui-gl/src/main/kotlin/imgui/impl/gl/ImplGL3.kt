@@ -239,7 +239,7 @@ class ImplGL3 : GLInterface {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
 
         // Store our identifier
-        io.fonts.texId = fontTexture[0]
+        io.fonts.texID = fontTexture[0]
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
@@ -253,7 +253,7 @@ class ImplGL3 : GLInterface {
     override fun destroyFontsTexture() {
         if (fontTexture[0] != 0) {
             glDeleteTextures(fontTexture)
-            io.fonts.texId = 0
+            io.fonts.texID = 0
             fontTexture[0] = 0
         }
     }

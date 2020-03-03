@@ -1,7 +1,6 @@
 package imgui.font
 
 
-import glm_.c
 import glm_.compareTo
 import glm_.glm
 import glm_.i
@@ -275,21 +274,22 @@ class Font {
     }
 
     fun renderChar(drawList: DrawList, size: Float, pos: Vec2, col: Int, c: Char) {
-        val glyph = findGlyph(c)
-        if (glyph == null || !glyph.visible) // TODO kt bug https://youtrack.jetbrains.com/issue/KT-36791
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r') // Match behavior of RenderText(), those 4 codepoints are hard-coded.
             return
-        val scale = if (size >= 0f) size / fontSize else 1f
-        val x = floor(pos.x + displayOffset.x)
-        val y = floor(pos.y + displayOffset.y)
-        drawList.primReserve(6, 4)
-        val a = Vec2(x + glyph.x0 * scale, y + glyph.y0 * scale)
-        val c_ = Vec2(x + glyph.x1 * scale, y + glyph.y1 * scale)
-        drawList.primRectUV(a, c_, Vec2(glyph.u0, glyph.v0), Vec2(glyph.u1, glyph.v1), col)
+        findGlyph(c)?.let {
+            val scale = if (size >= 0f) size / fontSize else 1f
+            val x = floor(pos.x) + displayOffset.x
+            val y = floor(pos.y) + displayOffset.y
+            drawList.primReserve(6, 4)
+            val a = Vec2(x + it.x0 * scale, y + it.y0 * scale)
+            val c_ = Vec2(x + it.x1 * scale, y + it.y1 * scale)
+            drawList.primRectUV(a, c_, Vec2(it.u0, it.v0), Vec2(it.u1, it.v1), col)
+        }
     }
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: ByteArray,
-                   textEnd_: Int = text.strlen(), // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
+                   textBegin: Int, textEnd_: Int = text.strlen(textBegin), // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
 
         var textEnd = textEnd_
@@ -304,7 +304,7 @@ class Font {
         var wordWrapEol = 0
 
         // Fast-forward to first visible line
-        var s = 0
+        var s = textBegin
         if (y + lineHeight < clipRect.y && !wordWrapEnabled)
             while (y + lineHeight < clipRect.y && s < textEnd) {
                 s = text.memchr(s, '\n')
@@ -394,61 +394,66 @@ class Font {
                 if (c == '\r'.i) continue
             }
 
-            val glyph = findGlyph(c) ?: continue
+            var charWidth = 0f
+            val glyph = findGlyph(c)
 
-            val charWidth = glyph.advanceX * scale
-            if (glyph.visible) {
-                // We don't do a second finer clipping test on the Y axis as we've already skipped anything before clip_rect.y and exit once we pass clip_rect.w
-                var x1 = x + glyph.x0 * scale
-                var x2 = x + glyph.x1 * scale
-                var y1 = y + glyph.y0 * scale
-                var y2 = y + glyph.y1 * scale
-                if (x1 <= clipRect.z && x2 >= clipRect.x) {
-                    // Render a character
-                    var u1 = glyph.u0
-                    var v1 = glyph.v0
-                    var u2 = glyph.u1
-                    var v2 = glyph.v1
+            if (glyph != null) {
+                charWidth = glyph.advanceX * scale
 
-                    // CPU side clipping used to fit text in their frame when the frame is too small. Only does clipping for axis aligned quads.
-                    if (cpuFineClip) {
-                        if (x1 < clipRect.x) {
-                            u1 = u1 + (1f - (x2 - clipRect.x) / (x2 - x1)) * (u2 - u1)
-                            x1 = clipRect.x
-                        }
-                        if (y1 < clipRect.y) {
-                            v1 = v1 + (1f - (y2 - clipRect.y) / (y2 - y1)) * (v2 - v1)
-                            y1 = clipRect.y
-                        }
-                        if (x2 > clipRect.z) {
-                            u2 = u1 + ((clipRect.z - x1) / (x2 - x1)) * (u2 - u1)
-                            x2 = clipRect.z
-                        }
-                        if (y2 > clipRect.w) {
-                            v2 = v1 + ((clipRect.w - y1) / (y2 - y1)) * (v2 - v1)
-                            y2 = clipRect.w
-                        }
-                        if (y1 >= y2) {
-                            x += charWidth
-                            continue
-                        }
-                    }
+                // Arbitrarily assume that both space and tabs are empty glyphs as an optimization
+                if (c != ' '.i && c != '\t'.i) {
+                    /*  We don't do a second finer clipping test on the Y axis as we've already skipped anything before
+                        clipRect.y and exit once we pass clipRect.w    */
+                    var x1 = x + glyph.x0 * scale
+                    var x2 = x + glyph.x1 * scale
+                    var y1 = y + glyph.y0 * scale
+                    var y2 = y + glyph.y1 * scale
+                    if (x1 <= clipRect.z && x2 >= clipRect.x) {
+                        // Render a character
+                        var u1 = glyph.u0
+                        var v1 = glyph.v0
+                        var u2 = glyph.u1
+                        var v2 = glyph.v1
 
-                    // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
-                    drawList.apply {
-                        idxBuffer.let {
-                            it += vtxCurrentIdx; it += vtxCurrentIdx + 1; it += vtxCurrentIdx + 2
-                            it += vtxCurrentIdx; it += vtxCurrentIdx + 2; it += vtxCurrentIdx + 3
+                        /*  CPU side clipping used to fit text in their frame when the frame is too small. Only does
+                            clipping for axis aligned quads.    */
+                        if (cpuFineClip) {
+                            if (x1 < clipRect.x) {
+                                u1 += (1f - (x2 - clipRect.x) / (x2 - x1)) * (u2 - u1)
+                                x1 = clipRect.x
+                            }
+                            if (y1 < clipRect.y) {
+                                v1 += (1f - (y2 - clipRect.y) / (y2 - y1)) * (v2 - v1)
+                                y1 = clipRect.y
+                            }
+                            if (x2 > clipRect.z) {
+                                u2 = u1 + ((clipRect.z - x1) / (x2 - x1)) * (u2 - u1)
+                                x2 = clipRect.z
+                            }
+                            if (y2 > clipRect.w) {
+                                v2 = v1 + ((clipRect.w - y1) / (y2 - y1)) * (v2 - v1)
+                                y2 = clipRect.w
+                            }
+                            if (y1 >= y2) {
+                                x += charWidth
+                                continue
+                            }
                         }
-                        vtxBuffer.let {
-                            it += x1; it += y1; it += u1; it += v1; it += col
-                            it += x2; it += y1; it += u2; it += v1; it += col
-                            it += x2; it += y2; it += u2; it += v2; it += col
-                            it += x1; it += y2; it += u1; it += v2; it += col
+
+                        /*  We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a
+                            debug builds. Inlined here:   */
+
+                        drawList.apply {
+                            idxBuffer += vtxCurrentIdx; idxBuffer += vtxCurrentIdx + 1; idxBuffer += vtxCurrentIdx + 2
+                            idxBuffer += vtxCurrentIdx; idxBuffer += vtxCurrentIdx + 2; idxBuffer += vtxCurrentIdx + 3
+                            vtxBuffer += x1; vtxBuffer += y1; vtxBuffer += u1; vtxBuffer += v1; vtxBuffer += col
+                            vtxBuffer += x2; vtxBuffer += y1; vtxBuffer += u2; vtxBuffer += v1; vtxBuffer += col
+                            vtxBuffer += x2; vtxBuffer += y2; vtxBuffer += u2; vtxBuffer += v2; vtxBuffer += col
+                            vtxBuffer += x1; vtxBuffer += y2; vtxBuffer += u1; vtxBuffer += v2; vtxBuffer += col
+                            vtxWrite += 4
+                            vtxCurrentIdx += 4
+                            idxWrite += 6
                         }
-                        vtxWrite += 4
-                        vtxCurrentIdx += 4
-                        idxWrite += 6
                     }
                 }
             }
@@ -475,7 +480,6 @@ class Font {
 
         val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
 
-        // Build lookup table
         assert(glyphs.size < 0xFFFF) { "-1 is reserved" }
         indexAdvanceX.clear()
         indexLookup.clear()
@@ -489,7 +493,7 @@ class Font {
         // Create a glyph to handle TAB
         // FIXME: Needs proper TAB handling but it needs to be contextualized (or we could arbitrary say that each string starts at "column 0" ?)
         if (findGlyph(' ') != null) {
-            if (glyphs.last().codepoint != '\t')   // So we can call this function multiple times (FIXME: Flaky)
+            if (glyphs.last().codepoint != '\t')   // So we can call this function multiple times
                 glyphs += FontGlyph()
             val tabGlyph = glyphs.last()
             tabGlyph put findGlyph(' ')!!
@@ -499,11 +503,6 @@ class Font {
             indexLookup[tabGlyph.codepoint.i] = glyphs.lastIndex
         }
 
-        // Mark special glyphs as not visible (note that AddGlyph already mark as non-visible glyphs with zero-size polygons)
-        setGlyphVisible(' ', false)
-        setGlyphVisible('\t', false)
-
-        // Setup fall-backs
         fallbackGlyph = findGlyphNoFallback(fallbackChar)
         fallbackAdvanceX = fallbackGlyph?.advanceX ?: 0f
         for (i in 0 until maxCodepoint + 1)
@@ -544,8 +543,7 @@ class Font {
     fun addGlyph(codepoint: Int, x0: Float, y0: Float, x1: Float, y1: Float, u0: Float, v0: Float, u1: Float, v1: Float, advanceX: Float) {
         val glyph = FontGlyph()
         glyphs += glyph
-        glyph.codepoint = codepoint.c
-        glyph.visible = x0 != x1 && y0 != y1
+        glyph.codepoint = codepoint.toChar()
         glyph.x0 = x0
         glyph.y0 = y0
         glyph.x1 = x1
@@ -578,10 +576,6 @@ class Font {
         growIndex(dst + 1)
         indexLookup[dst] = indexLookup.getOrElse(src) { -1 }
         indexAdvanceX[dst] = indexAdvanceX.getOrElse(src) { 1f }
-    }
-
-    fun setGlyphVisible(c: Char, visible: Boolean = true) {
-        findGlyph(c)?.visible = visible
     }
 
     fun setCurrent() {

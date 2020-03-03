@@ -13,7 +13,6 @@ import imgui.ImGui.defaultFont
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.style
-import imgui.classes.*
 import imgui.font.Font
 import imgui.internal.*
 import imgui.internal.classes.ColorMod
@@ -29,7 +28,7 @@ interface parametersStacks {
     fun pushFont(font: Font = defaultFont) {
         font.setCurrent()
         g.fontStack.push(font)
-        g.currentWindow!!.drawList.pushTextureId(font.containerAtlas.texId)
+        g.currentWindow!!.drawList.pushTextureId(font.containerAtlas.texID)
     }
 
     fun popFont() {
