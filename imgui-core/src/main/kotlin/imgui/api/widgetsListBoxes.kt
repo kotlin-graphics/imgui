@@ -10,13 +10,13 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endGroup
-import imgui.ImGui.getId
+import imgui.ImGui.getID
 import imgui.ImGui.isRectVisible
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
-import imgui.ImGui.pushId
+import imgui.ImGui.popID
+import imgui.ImGui.pushID
 import imgui.ImGui.renderText
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -51,17 +51,17 @@ interface widgetsListBoxes {
         // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
         val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
-            for (i in clipper.display.start until clipper.display.last)
+            for (i in clipper.display)
                 withBool { itemSelected ->
                     itemSelected.set(i == currentItem)
                     val itemText = items.getOrElse(i) { "*Unknown item*" }
-                    pushId(i)
+                    pushID(i)
                     if (selectable(itemText, itemSelected)) {
                         currentItem = i
                         valueChanged = true
                     }
                     if (itemSelected()) setItemDefaultFocus()
-                    popId()
+                    popID()
                 }
         listBoxFooter()
         if (valueChanged)
@@ -84,7 +84,7 @@ interface widgetsListBoxes {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = getId(label)
+        val id = getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         // Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
@@ -118,7 +118,7 @@ interface widgetsListBoxes {
         val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.25f else 0f
         /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
             appears. We could also enforce that by passing a flag to BeginChild().         */
-        val size = Vec2(0f, floor(textLineHeightWithSpacing * heightInItemsF + style.itemSpacing.y * 2f))
+        val size = Vec2(0f, floor(textLineHeightWithSpacing * heightInItemsF + style.framePadding.y * 2f))
         return listBoxHeader(label, size)
     }
 

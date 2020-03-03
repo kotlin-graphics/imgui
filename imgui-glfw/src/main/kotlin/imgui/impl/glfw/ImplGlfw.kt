@@ -71,8 +71,8 @@ class ImplGlfw @JvmOverloads constructor(
             backendLanguageUserData = null
             backendRendererUserData = null
             backendPlatformUserData = null
-            setClipboardTextFn = { glfwSetClipboardString(clipboardUserData, it) }
-            getClipboardTextFn = { glfwGetClipboardString(clipboardUserData) }
+            setClipboardTextFn = { _, text ->  glfwSetClipboardString(clipboardUserData as Long, text) }
+            getClipboardTextFn = { glfwGetClipboardString(clipboardUserData as Long) }
             clipboardUserData = window.handle.L
 
             if (Platform.get() == Platform.WINDOWS)

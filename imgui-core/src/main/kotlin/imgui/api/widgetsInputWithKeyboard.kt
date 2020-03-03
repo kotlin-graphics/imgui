@@ -22,9 +22,9 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
@@ -44,68 +44,70 @@ import imgui.internal.ButtonFlag as Bf
 interface widgetsInputWithKeyboard {
 
     /** String overload */
-    fun inputText(label: String, buf: String, flags: InputTextFlags = 0,
+    fun inputText(label: String, buf: String, flags: InputTextFlags = Itf.None.i,
                   callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputText(label, buf.toByteArray(), flags, callback, userData)
 
-    fun inputText(label: String, buf: ByteArray, flags: InputTextFlags = 0,
+    fun inputText(label: String, buf: ByteArray, flags: InputTextFlags = Itf.None.i,
                   callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, null, buf, Vec2(), flags, callback, userData)
     }
 
     /** String overload */
-    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextFlags = 0,
+    fun inputTextMultiline(label: String, buf: String, size: Vec2 = Vec2(), flags: InputTextFlags = Itf.None.i,
                            callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextEx(label, null, buf.toByteArray(), size, flags or Itf._Multiline, callback, userData)
 
-    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextFlags = 0,
-            callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+    fun inputTextMultiline(label: String, buf: ByteArray, size: Vec2 = Vec2(), flags: InputTextFlags = Itf.None.i,
+                           callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextEx(label, null, buf, size, flags or Itf._Multiline, callback, userData)
 
     /** String overload */
-    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextFlags = 0,
-            callback: InputTextCallback? = null, userData: Any? = null): Boolean =
+    fun inputTextWithHint(label: String, hint: String, buf: String, flags: InputTextFlags = Itf.None.i,
+                          callback: InputTextCallback? = null, userData: Any? = null): Boolean =
             inputTextWithHint(label, hint, buf.toByteArray(), flags)
 
     fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextFlags = 0,
-            callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+                          callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
         return inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
     }
 
-    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f, format: String = "%.3f",
-                   flags: InputTextFlags = 0): Boolean =
+
+    fun inputFloat(label: String, v: FloatArray, step: Float = 0f, stepFast: Float = 0f,
+                   format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             inputFloat(label, v, 0, step, stepFast, format, flags)
 
     fun inputFloat(label: String, v: FloatArray, ptr: Int = 0, step: Float = 0f, stepFast: Float = 0f,
-                   format: String = "%.3f", flags: InputTextFlags = 0): Boolean =
+                   format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             withFloat(v, ptr) { inputFloat(label, it, step, stepFast, format, flags) }
 
     fun inputFloat(label: String, v: KMutableProperty0<Float>, step: Float = 0f, stepFast: Float = 0f,
-                   format: String = "%.3f", flags_: InputTextFlags = 0): Boolean {
+                   format: String = "%.3f", flags_: InputTextFlags = Itf.None.i): Boolean {
         val flags = flags_ or Itf.CharsScientific
         return inputScalar(label, DataType.Float, v, step.takeIf { it > 0f }, stepFast.takeIf { it > 0f }, format, flags)
     }
 
-    fun inputFloat2(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = 0): Boolean =
+
+    fun inputFloat2(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             inputScalarN<Float>(label, DataType.Float, v, 2, null, null, format, flags)
 
-    fun inputVec2(label: String, v: Vec2, format: String = "%.3f", flags: InputTextFlags = 0): Boolean =
+    fun inputVec2(label: String, v: Vec2, format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             inputScalarN<Float>(label, DataType.Float, v to _fa, Vec2.length, null, null, format, flags)
                     .also { v put _fa }
 
-    fun inputFloat3(label: String, v: FloatArray, format: String? = null, flags: InputTextFlags = 0): Boolean =
+    fun inputFloat3(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             inputScalarN<Float>(label, DataType.Float, v, 3, null, null, format, flags)
 
-    fun inputVec3(label: String, v: Vec3, format: String? = null, flags: InputTextFlags = 0): Boolean =
+    fun inputVec3(label: String, v: Vec3, format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             inputScalarN<Float>(label, DataType.Float, v to _fa, Vec3.length, null, null, format, flags)
                     .also { v put _fa }
 
-    fun inputFloat4(label: String, v: FloatArray, format: String? = null, flags: InputTextFlags = 0): Boolean =
+    fun inputFloat4(label: String, v: FloatArray, format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             inputScalarN<Float>(label, DataType.Float, v, 4, null, null, format, flags)
 
-    fun inputVec4(label: String, v: Vec4, format: String? = null, flags: InputTextFlags = 0): Boolean =
+    fun inputVec4(label: String, v: Vec4, format: String = "%.3f", flags: InputTextFlags = Itf.None.i): Boolean =
             inputScalarN<Float>(label, DataType.Float, v to _fa, Vec4.length, null, null, format, flags)
                     .also { v put _fa }
 
@@ -137,23 +139,24 @@ interface widgetsInputWithKeyboard {
             inputScalarN<Int>(label, DataType.Int, v to _ia, Vec4i.length, null, null, "%d", flags)
                     .also { v put _ia }
 
-    fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0, format: String? = null,
-                    flags_: InputTextFlags = 0): Boolean {
+    fun inputDouble(label: String, v: KMutableProperty0<Double>, step: Double = 0.0, stepFast: Double = 0.0,
+                    format: String? = "%.6f", flags_: InputTextFlags = Itf.None.i): Boolean {
         val flags = flags_ or Itf.CharsScientific
         /*  Ideally we'd have a minimum decimal precision of 1 to visually denote that this is a float,
             while hiding non-significant digits? %f doesn't have a minimum of 1         */
         return inputScalar(label, DataType.Double, v, step.takeIf { it > 0.0 }, stepFast.takeIf { it > 0.0 }, format, flags)
     }
 
-    fun <N> inputScalar(label: String, dataType: DataType,
-                        pData: IntArray, step: Int?, stepFast: Int?,
-                        format: String? = null, flags: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> =
+    fun <N> inputScalar(label: String, dataType: DataType, pData: IntArray, step: Int?, stepFast: Int?,
+                        format: String? = null, flags: InputTextFlags = Itf.None.i)
+            : Boolean where N : Number, N : Comparable<N> =
             withInt(pData) { inputScalar(label, dataType, it, step, stepFast, format, flags) }
 
     fun <N> inputScalar(label: String, dataType: DataType,
                         pData: KMutableProperty0<N>,
                         step: N? = null, stepFast: N? = null,
-                        format_: String? = null, flags_: InputTextFlags = 0): Boolean where N : Number, N : Comparable<N> {
+                        format_: String? = null, flags_: InputTextFlags = Itf.None.i)
+            : Boolean where N : Number, N : Comparable<N> {
 
         var data by pData
         val window = currentWindow
@@ -167,8 +170,7 @@ interface widgetsInputWithKeyboard {
             else -> format_
         }
 
-        val string = pData.format(dataType, format/*, 64*/)
-        val buf = string.toByteArray(64)
+        val buf = pData.format(dataType, format/*, 64*/).toByteArray(64)
 
         var valueChanged = false
         var flags = flags_
@@ -181,11 +183,11 @@ interface widgetsInputWithKeyboard {
             val buttonSize = frameHeight
 
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
-            pushId(label)
+            pushID(label)
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
 
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
-                valueChanged = dataTypeApplyOpFromText(string, g.inputTextState.initialTextA, dataType, pData, format)
+                valueChanged = dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData, format)
 
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)
@@ -205,16 +207,16 @@ interface widgetsInputWithKeyboard {
             }
 
             val labelEnd = findRenderedTextEnd(label)
-            if (0 != labelEnd)            {
+            if (0 != labelEnd) {
                 sameLine(0f, style.itemInnerSpacing.x)
                 textEx(label, labelEnd)
             }
             style.framePadding put backupFramePadding
 
-            popId()
+            popID()
             endGroup()
         } else if (inputText(label, buf, flags))
-            valueChanged = dataTypeApplyOpFromText(string, g.inputTextState.initialTextA, dataType, pData, format)
+            valueChanged = dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData, format)
 
         if (valueChanged)
             markItemEdited(window.dc.lastItemId)
@@ -230,10 +232,10 @@ interface widgetsInputWithKeyboard {
 
         var valueChanged = false
         beginGroup()
-        pushId(label)
+        pushID(label)
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
-            pushId(i)
+            pushID(i)
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             valueChanged = when (dataType) {
@@ -242,13 +244,13 @@ interface widgetsInputWithKeyboard {
                 else -> error("invalid")
             } || valueChanged
             sameLine(0f, style.itemInnerSpacing.x)
-            popId()
+            popID()
             popItemWidth()
         }
-        popId()
+        popID()
 
         val labelEnd = findRenderedTextEnd(label)
-        if (0 != labelEnd)        {
+        if (0 != labelEnd) {
             sameLine(0f, style.itemInnerSpacing.x)
             textEx(label, labelEnd)
         }

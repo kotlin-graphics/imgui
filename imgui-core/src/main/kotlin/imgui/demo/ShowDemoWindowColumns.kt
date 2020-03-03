@@ -1,5 +1,6 @@
 package imgui.demo
 
+import glm_.L
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
@@ -16,9 +17,9 @@ import imgui.ImGui.getColumnWidth
 import imgui.ImGui.inputFloat
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.nextColumn
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -59,7 +60,7 @@ object ShowDemoWindowColumns {
         if (!collapsingHeader("Columns"))
             return
 
-        pushId("Columns")
+        pushID("Columns")
 
         checkbox("Disable tree indentation", ::disableIndent)
         sameLine()
@@ -179,7 +180,7 @@ object ShowDemoWindowColumns {
                 val ITEMS_COUNT = 2000
                 val clipper = ListClipper(ITEMS_COUNT)  // Also demonstrate using the clipper for large list
                 while (clipper.step())
-                    for (i in clipper.display.start until clipper.display.endInclusive)
+                    for (i in clipper.display)
                         for (j in 0..9) {
                             text("Line $i Column $j...")
                             nextColumn()
@@ -191,13 +192,13 @@ object ShowDemoWindowColumns {
         treeNode("Tree") {
             columns(2, "tree", true)
             for (x in 0..2) {
-                val open1 = treeNode(x, "Node%d", x)
+                val open1 = treeNode(x.L, "Node$x")
                 nextColumn()
                 text("Node contents")
                 nextColumn()
                 if (open1) {
                     for (y in 0..2) {
-                        val open2 = treeNode(y, "Node$x.$y")
+                        val open2 = treeNode(y.L, "Node$x.$y")
                         nextColumn()
                         text("Node contents")
                         if (open2) {
@@ -218,6 +219,6 @@ object ShowDemoWindowColumns {
 
         if (disableIndent)
             popStyleVar()
-        popId()
+        popID()
     }
 }

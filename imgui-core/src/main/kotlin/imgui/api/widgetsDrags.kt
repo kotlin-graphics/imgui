@@ -25,9 +25,9 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -101,7 +101,7 @@ interface widgetsDrags {
         val window = currentWindow
         if (window.skipItems) return false
 
-        pushId(label)
+        pushID(label)
         beginGroup()
         pushMultiItemsWidths(2, calcItemWidth())
 
@@ -118,7 +118,7 @@ interface widgetsDrags {
 
         textEx(label, findRenderedTextEnd(label))
         endGroup()
-        popId()
+        popID()
         return valueChanged
     }
 
@@ -160,7 +160,7 @@ interface widgetsDrags {
         val window = currentWindow
         if (window.skipItems) return false
 
-        pushId(label)
+        pushID(label)
         beginGroup()
         pushMultiItemsWidths(2, calcItemWidth())
 
@@ -177,7 +177,7 @@ interface widgetsDrags {
 
         textEx(label, findRenderedTextEnd(label))
         endGroup()
-        popId()
+        popID()
         return valueChanged
     }
 
@@ -207,7 +207,7 @@ interface widgetsDrags {
         if (power != 1f)
             assert(pMin != null && pMax != null) { "When using a power curve the drag needs to have known bounds" }
 
-        val id = window.getId(label)
+        val id = window.getID(label)
         val w = calcItemWidth()
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
@@ -266,7 +266,7 @@ interface widgetsDrags {
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return valueChanged
     }
 
@@ -278,10 +278,10 @@ interface widgetsDrags {
 
         var valueChanged = false
         beginGroup()
-        pushId(label)
+        pushID(label)
         pushMultiItemsWidths(components, calcItemWidth())
         for (i in 0 until components) {
-            pushId(i)
+            pushID(i)
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
             when (dataType) {
@@ -293,10 +293,10 @@ interface widgetsDrags {
                 }
                 else -> error("invalid")
             }
-            popId()
+            popID()
             popItemWidth()
         }
-        popId()
+        popID()
 
         val labelEnd = findRenderedTextEnd(label)
         if (0 != labelEnd)        {

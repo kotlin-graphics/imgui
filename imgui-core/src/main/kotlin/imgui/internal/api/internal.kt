@@ -1,7 +1,6 @@
 package imgui.internal.api
 
 import glm_.func.common.max
-import glm_.min
 import glm_.parseInt
 import imgui.*
 import imgui.ImGui.clearActiveID
@@ -10,15 +9,14 @@ import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
+import imgui.internal.NavLayer
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
-import imgui.internal.NavLayer
 import imgui.internal.hash
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
 import java.util.*
 import java.util.regex.Pattern
-import kotlin.math.min
 import imgui.WindowFlag as Wf
 
 
@@ -39,12 +37,13 @@ internal interface internal {
 
     /** ~GetCurrentWindow */
     val currentWindow: Window
-        get() = g.currentWindow?.apply { writeAccessed = true } ?: throw Error(
-                "We should always have a CurrentWindow in the stack (there is an implicit \"Debug\" window)\n" +
-                        "If this ever crash because ::currentWindow is NULL it means that either\n" +
-                        "   - ::newFrame() has never been called, which is illegal.\n" +
-                        "   - You are calling ImGui functions after ::render() and before the next ::newFrame(), which is also illegal.\n" +
-                        "   - You are calling ImGui functions after ::endFrame()/::render() and before the next ImGui::newFrame(), which is also illegal.")
+        get() = g.currentWindow?.apply { writeAccessed = true } ?: throw Error("""
+                We should always have a CurrentWindow in the stack (there is an implicit \"Debug\" window)
+                If this ever crash because ::currentWindow is NULL it means that either
+                - ::newFrame() has never been called, which is illegal.
+                - You are calling ImGui functions after ::render() and before the next ::newFrame(), which is also illegal.
+                - You are calling ImGui functions after ::endFrame()/::render() and before the next ImGui::newFrame(), which is also illegal.
+                """.trimIndent())
 
     fun findWindowByID(id: ID): Window? = g.windowsById[id]
 
@@ -168,11 +167,8 @@ internal interface internal {
         val fmtStart = parseFormatFindStart(fmt)
         if (fmt[fmtStart] != '%')
             return fmt
-        val fmtEnd = parseFormatFindEnd(fmt.substring(fmtStart))
-        return when {
-            fmtStart + fmtEnd >= fmt.length -> fmt.substring(fmtStart) // If we only have leading decoration, we don't need to copy the data.
-            else -> fmt.substring(fmtStart, fmtEnd)
-        }
+        val fmtEnd = fmtStart + parseFormatFindEnd(fmt.substring(fmtStart))
+        return fmt.substring(fmtStart, fmtEnd)
     }
 
     /** Parse display precision back from the display format string

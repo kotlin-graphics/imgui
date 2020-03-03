@@ -51,12 +51,10 @@ interface main {
 
     fun newFrame() {
 
-        ptrIndices = 0
-
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
 
         if (IMGUI_ENABLE_TEST_ENGINE)
-            ImGuiTestEngineHook_PreNewFrame()
+            Hook.preNewFrame!!(g)
 
         // Check and assert for various common IO and Configuration mistakes
         newFrameSanityChecks()
@@ -103,11 +101,11 @@ interface main {
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
 
         g.backgroundDrawList.clear()
-        g.backgroundDrawList.pushTextureId(io.fonts.texId)
+        g.backgroundDrawList.pushTextureId(io.fonts.texID)
         g.backgroundDrawList.pushClipRectFullScreen()
 
         g.foregroundDrawList.clear()
-        g.foregroundDrawList.pushTextureId(io.fonts.texId)
+        g.foregroundDrawList.pushTextureId(io.fonts.texID)
         g.foregroundDrawList.pushClipRectFullScreen()
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
@@ -267,7 +265,7 @@ interface main {
         assert(g.currentWindow!!.isFallbackWindow)
 
         if (IMGUI_ENABLE_TEST_ENGINE)
-            ImGuiTestEngineHook_PostNewFrame()
+            Hook.postNewFrame!!(g)
     }
 
     /** Ends the Dear ImGui frame. automatically called by ::render(), you likely don't need to call that yourself directly.
@@ -282,7 +280,7 @@ interface main {
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
             if (DEBUG)
-                println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
+                Unit // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
 //            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
             io.imeSetInputScreenPosFn!!(1000, 1000)
             g.platformImeLastPos put g.platformImePos

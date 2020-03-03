@@ -23,16 +23,16 @@ import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameCount
 import imgui.ImGui.getForegroundDrawList
-import imgui.ImGui.getId
+import imgui.ImGui.getID
 import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -130,7 +130,7 @@ interface demoDebugInformations {
         if (showConfigInfo) {
 
             val copyToClipboard = button("Copy to clipboard")
-            beginChildFrame(getId("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
+            beginChildFrame(getID("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
             if (copyToClipboard) {
                 logToClipboard()
                 logText("```\n") // Back quotes will make the text appears without formatting when pasting to GitHub
@@ -221,8 +221,8 @@ interface demoDebugInformations {
 
         // Details for TabBars
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
-            for (n in 0 until g.tabBars.buf.size)
-                Funcs.nodeTabBar(g.tabBars.buf[n]!!)
+            for (n in 0 until g.tabBars.list.size)
+                Funcs.nodeTabBar(g.tabBars.list[n]!!)
             treePop()
         }
 
@@ -360,10 +360,10 @@ interface demoDebugInformations {
         val fontCurrent = font
         if (beginCombo(label, fontCurrent.debugName)) {
             for (font in io.fonts.fonts) {
-                pushId(font)
+                pushID(font)
                 if (selectable(font.debugName, font === fontCurrent))
                     io.fontDefault = font
-                popId()
+                popID()
             }
             endCombo()
         }
@@ -383,6 +383,7 @@ interface demoDebugInformations {
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         if (io.fontAllowUserScaling)
             bulletText("CTRL+Mouse Wheel to zoom window contents.")
+        bulletText("While inputing text:\n")
         indent {
             bulletText("CTRL+Left/Right to word jump.")
             bulletText("CTRL+A or double-click to select all.")
@@ -543,8 +544,8 @@ interface demoDebugInformations {
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper(cmd.elemCount / 3)
                     while (clipper.step()) {
-                        var idx_i = elemOffset + clipper.display.start * 3
-                        for (prim in clipper.display.start until clipper.display.last) {
+                        var idx_i = elemOffset + clipper.display.first * 3
+                        for (prim in clipper.display) {
                             var bufP = 0
                             val triangles = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
@@ -654,7 +655,7 @@ interface demoDebugInformations {
                 if (treeNode(tabBar, string)) {
                     for (tabN in tabBar.tabs.indices) {
                         val tab = tabBar.tabs[tabN]
-                        pushId(tab)
+                        pushID(tab)
                         if (smallButton("<"))
                             tabBar.queueChangeTabOrder(tab, -1)
                         sameLine(0, 2)
@@ -664,7 +665,7 @@ interface demoDebugInformations {
                             val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
                             val s = if (tab.nameOffset != -1) tabBar.getTabName(tab) else ""
                             text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
-                            popId()
+                            popID()
                         }
                     }
                     treePop()
