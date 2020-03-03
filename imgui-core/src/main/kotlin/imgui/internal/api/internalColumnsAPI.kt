@@ -12,10 +12,10 @@ import imgui.ImGui.getColumnOffset
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.style
@@ -208,9 +208,9 @@ internal interface internalColumnsAPI {
 
         // Differentiate column ID with an arbitrary prefix for cases where users name their columns set the same as another widget.
         // In addition, when an identifier isn't explicitly provided we include the number of columns in the hash to make it uniquer.
-        pushId(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
-        return window.getId(if (strId.isNotEmpty()) strId else "columns")
-                .also { popId() }
+        pushID(0x11223347 + if (strId.isNotEmpty()) 0 else columnsCount)
+        return window.getID(if (strId.isNotEmpty()) strId else "columns")
+                .also { popID() }
     }
 
     // findOrCreateColumns is in Window class

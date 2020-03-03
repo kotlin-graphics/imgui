@@ -7,47 +7,63 @@ import imgui.internal.classes.Rect
 enum class ButtonFlag(val i: ButtonFlags) {
 
     None(0),
+
     /** hold to repeat  */
     Repeat(1 shl 0),
+
     /** return true on click (mouse down event) */
     PressedOnClick(1 shl 1),
+
     /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
     PressedOnClickRelease(1 shl 2),
+
     /** return true on click + release even if the release event is not done while hovering the item */
     PressedOnClickReleaseAnywhere(1 shl 3),
+
     /** return true on release (default requires click+release) */
     PressedOnRelease(1 shl 4),
+
     /** return true on double-click (default requires click+release) */
     PressedOnDoubleClick(1 shl 5),
+
     /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
     PressedOnDragDropHold(1 shl 6),
+
     /** allow interactions even if a child window is overlapping */
     FlattenChildren(1 shl 7),
+
     /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
     AllowItemOverlap(1 shl 8),
+
     /** disable automatically closing parent popup on press // [UNUSED] */
     DontClosePopups(1 shl 9),
+
     /** disable interactions */
     Disabled(1 shl 10),
+
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
     AlignTextBaseLine(1 shl 11),
+
     /** disable mouse interaction if a key modifier is held */
     NoKeyModifiers(1 shl 12),
+
     /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
     NoHoldingActiveId(1 shl 13),
+
     /** don't override navigation focus when activated */
     NoNavFocus(1 shl 14),
+
     /** don't report as hovered when navigated on */
     NoHoveredOnNav(1 shl 15),
-    MouseButtonLeft        (1 shl 16),  // [Default] react on left mouse button
-    MouseButtonRight       (1 shl 17),  // react on right mouse button
-    MouseButtonMiddle      (1 shl 18),  // react on center mouse button
+    MouseButtonLeft(1 shl 16),  // [Default] react on left mouse button
+    MouseButtonRight(1 shl 17),  // react on right mouse button
+    MouseButtonMiddle(1 shl 18),  // react on center mouse button
 
-    MouseButtonMask_       (MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
-    MouseButtonShift_      (16),
-    MouseButtonDefault_    (MouseButtonLeft.i),
-    PressedOnMask_         (PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold),
-    PressedOnDefault_      (PressedOnClickRelease.i);
+    MouseButtonMask_(MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
+    MouseButtonShift_(16),
+    MouseButtonDefault_(MouseButtonLeft.i),
+    PressedOnMask_(PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold),
+    PressedOnDefault_(PressedOnClickRelease.i);
 
     infix fun and(b: ButtonFlag): ButtonFlags = i and b.i
     infix fun and(b: ButtonFlags): ButtonFlags = i and b
@@ -80,14 +96,19 @@ typealias ColumnsFlags = Int
 enum class ColumnsFlag {
 
     None,
+
     /** Disable column dividers */
     NoBorder,
+
     /** Disable resizing columns when clicking on the dividers  */
     NoResize,
+
     /** Disable column width preservation when adjusting columns    */
     NoPreserveWidths,
+
     /** Disable forcing columns to fit within window    */
     NoForceWithinWindow,
+
     /** (WIP) Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns
      *  width at all_. Will eventually remove.  */
     GrowParentContentsSize;
@@ -115,6 +136,7 @@ typealias SeparatorFlags = Int
 
 enum class SeparatorFlag {
     None,
+
     /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
     Horizontal,
     Vertical,
@@ -146,14 +168,18 @@ typealias ItemFlags = Int
 enum class ItemFlag(@JvmField val i: ItemFlags) {
     None(0),
     NoTabStop(1 shl 0),  // false
+
     /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
     ButtonRepeat(1 shl 1),  // false
+
     /** [BETA] Disable interactions but doesn't affect visuals yet. See github.com/ocornut/imgui/issues/211 */
     Disabled(1 shl 2),  // false
     NoNav(1 shl 3),  // false
     NoNavDefaultFocus(1 shl 4),  // false
+
     /** MenuItem/Selectable() automatically closes current Popup window */
     SelectableDontClosePopup(1 shl 5),  // false
+
     /** [BETA] Represent a mixed/indeterminate value, generally multi-selection where values differ. Currently only supported by Checkbox() (later should support all sorts of widgets) */
     MixedValue(1 shl 6),  // false
 
@@ -183,15 +209,20 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     None(0),
     HoveredRect(1 shl 0),
     HasDisplayRect(1 shl 1),
+
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
     Edited(1 shl 2),
+
     /** Set when Selectable(), TreeNode() reports toggling a selection. We can't report "Selected" because reporting
      *  the change allows us to handle clipping with less issues. */
     ToggledSelection(1 shl 3),
+
     /** Set when TreeNode() reports toggling their open state. */
     ToggledOpen(1 shl 4),
+
     /** Set if the widget/group is able to provide data for the ImGuiItemStatusFlags_Deactivated flag. */
     HasDeactivated(1 shl 5),
+
     /** Only valid if ImGuiItemStatusFlags_HasDeactivated is set. */
     Deactivated(1 shl 6),
 
@@ -219,13 +250,35 @@ infix fun ItemStatusFlags.hasnt(b: ItemStatusFlag): Boolean = and(b.i) == 0
 infix fun ItemStatusFlags.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
 
 
-enum class TextFlag { None, NoWidthForLargeClippedText }
+typealias TextFlags = Int
+
+enum class TextFlag {
+    None, NoWidthForLargeClippedText;
+
+    val i: TextFlags = ordinal
+
+    infix fun and(b: TextFlag): TextFlags = i and b.i
+    infix fun and(b: TextFlags): TextFlags = i and b
+    infix fun or(b: TextFlag): TextFlags = i or b.i
+    infix fun or(b: TextFlags): TextFlags = i or b
+    infix fun xor(b: TextFlag): TextFlags = i xor b.i
+    infix fun xor(b: TextFlags): TextFlags = i xor b
+    infix fun wo(b: TextFlags): TextFlags = and(b.inv())
+}
+
+infix fun TextFlags.and(b: TextFlag): TextFlags = and(b.i)
+infix fun TextFlags.or(b: TextFlag): TextFlags = or(b.i)
+infix fun TextFlags.xor(b: TextFlag): TextFlags = xor(b.i)
+infix fun TextFlags.has(b: TextFlag): Boolean = and(b.i) != 0
+infix fun TextFlags.hasnt(b: TextFlag): Boolean = and(b.i) == 0
+infix fun TextFlags.wo(b: TextFlag): TextFlags = and(b.i.inv())
 
 
 typealias TooltipFlags = Int
 
 enum class TooltipFlag(val i: TooltipFlags) {
     None(0),
+
     /** Override will clear/ignore previously submitted tooltip (defaults to append) */
     OverridePreviousTooltip(1 shl 0);
 
@@ -275,8 +328,10 @@ enum class PlotType { Lines, Histogram }
 
 enum class InputSource {
     None, Mouse, Nav,
+
     /** Only used occasionally for storage, not tested/handled by most code */
     NavKeyboard,
+
     /** Only used occasionally for storage, not tested/handled by most code */
     NavGamepad
 }
@@ -290,6 +345,7 @@ typealias NavHighlightFlags = Int
 
 enum class NavHighlightFlag {
     None, TypeDefault, TypeThin,
+
     /** Draw rectangular highlight if (g.NavId == id) _even_ when using the mouse. */
     AlwaysDraw,
     NoRounding;
@@ -342,17 +398,22 @@ typealias NavMoveFlags = Int
 
 enum class NavMoveFlag {
     None,
+
     /** On failed request, restart from opposite side */
     LoopX,
     LoopY,
+
     /** On failed request, request from opposite side one line down (when NavDir==right) or one line up (when NavDir==left) */
     WrapX,
+
     /** This is not super useful for provided for completeness */
     WrapY,
+
     /** Allow scoring and considering the current NavId as a move target candidate.
      *  This is used when the move source is offset (e.g. pressing PageDown actually needs to send a Up move request,
      *  if we are pressing PageDown from the bottom-most item we need to stay in place) */
     AllowCurrentNavId,
+
     /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible.; */
     AlsoScoreVisibleSet,
     ScrollToEdge;
@@ -381,6 +442,7 @@ enum class NavForward { None, ForwardQueued, ForwardActive }
 enum class NavLayer {
     /** Main scrolling layer */
     Main,
+
     /** Menu layer (access with Alt/ImGuiNavInput_Menu) */
     Menu;
 
@@ -415,6 +477,7 @@ enum class DrawCornerFlag(val i: DrawCornerFlags) {
     Bot(BotLeft or BotRight),   // 0xC
     Left(TopLeft or BotLeft),    // 0x5
     Right(TopRight or BotRight),  // 0xA
+
     /** In your function calls you may use ~0 (= all bits sets) instead of DrawCornerFlags.All, as a convenience  */
     All(0xF);
 
@@ -440,10 +503,13 @@ typealias DrawListFlags = Int
 /** Flags: for ImDrawList */
 enum class DrawListFlag(val i: DrawListFlags) {
     None(0),
+
     /** Lines are anti-aliased (*2 the number of triangles for 1.0f wide line, otherwise *3 the number of triangles) */
     AntiAliasedLines(1 shl 0),
+
     /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
     AntiAliasedFill(1 shl 1),
+
     /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
     AllowVtxOffset(1 shl 2);
 

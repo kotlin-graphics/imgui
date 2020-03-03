@@ -1,4 +1,4 @@
-package imgui
+package examples
 
 
 //import org.lwjgl.util.remotery.Remotery
@@ -7,6 +7,8 @@ import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
+import imgui.DEBUG
+import imgui.ImGui
 import imgui.classes.Context
 import imgui.impl.gl.ImplGL2
 import imgui.impl.glfw.ImplGlfw

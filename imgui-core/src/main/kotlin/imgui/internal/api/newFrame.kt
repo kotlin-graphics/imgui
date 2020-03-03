@@ -79,7 +79,10 @@ internal interface newFrame {
     }
 
     /** Handle mouse moving window
-     *  Note: moving window with the navigation keys (Square + d-pad / CTRL+TAB + Arrows) are processed in NavUpdateWindowing() */
+     *  Note: moving window with the navigation keys (Square + d-pad / CTRL+TAB + Arrows) are processed in NavUpdateWindowing()
+     *  FIXME: We don't have strong guarantee that g.MovingWindow stay synched with g.ActiveId == g.MovingWindow->MoveId.
+     *  This is currently enforced by the fact that BeginDragDropSource() is setting all g.ActiveIdUsingXXXX flags to inhibit navigation inputs,
+     *  but if we should more thoroughly test cases where g.ActiveId or g.MovingWindow gets changed and not the other. */
     fun updateMouseMovingWindowNewFrame() {
 
         val mov = g.movingWindow

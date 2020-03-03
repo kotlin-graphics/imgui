@@ -477,7 +477,7 @@ interface windows {
 
             // Setup draw list and outer clipping rectangle
             window.drawList.clear()
-            window.drawList.pushTextureId(g.font.containerAtlas.texId)
+            window.drawList.pushTextureId(g.font.containerAtlas.texID)
             pushClipRect(hostRect.min, hostRect.max, false)
 
             // Draw modal window background (darkens what is behind them, all viewports)
@@ -647,7 +647,7 @@ interface windows {
             window.dc.lastItemRect = titleBarRect
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
-                ImGuiTestEngineHook_ItemAdd(window.dc.lastItemRect, window.dc.lastItemId)
+                Hook.itemAdd!!(g, window.dc.lastItemRect, window.dc.lastItemId)
         } else   // Append
             setCurrentWindow(window)
 
@@ -665,7 +665,7 @@ interface windows {
             // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
             assert(flags has Wf.NoTitleBar)
             if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)
-                if (window.outerRectClipped.min anyGreaterThanEqual window.outerRectClipped.max)
+                if (window.outerRectClipped.min.x >= window.outerRectClipped.max.x || window.outerRectClipped.min.y >= window.outerRectClipped.max.y) // TODO anyGreaterThanEqual bugged
                     window.hiddenFramesCanSkipItems = 1
 
             // Hide along with parent or if parent is collapsed

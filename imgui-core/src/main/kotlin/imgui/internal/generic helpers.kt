@@ -51,6 +51,14 @@ fun fileLoadToMemory(filename: String): CharArray? =
             CharArray(bytes.size) { bytes[it].c }
         }
 
+/** [JVM] */
+fun hash(data: Int, seed: Int = 0): Int {
+    val buffer = ByteBuffer.allocate(Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
+    buffer.putInt(0, data)
+    return hash(buffer, seed)
+}
+
+/** [JVM] */
 fun hash(data: IntArray, seed: Int = 0): Int {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
@@ -79,6 +87,19 @@ val GCrc32LookupTable = longArrayOf(
         0xA00AE278, 0xD70DD2EE, 0x4E048354, 0x3903B3C2, 0xA7672661, 0xD06016F7, 0x4969474D, 0x3E6E77DB, 0xAED16A4A, 0xD9D65ADC, 0x40DF0B66, 0x37D83BF0, 0xA9BCAE53, 0xDEBB9EC5, 0x47B2CF7F, 0x30B5FFE9,
         0xBDBDF21C, 0xCABAC28A, 0x53B39330, 0x24B4A3A6, 0xBAD03605, 0xCDD70693, 0x54DE5729, 0x23D967BF, 0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D)
         .map { it.i }.toIntArray()
+
+/** Known size hash
+ *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
+ *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
+fun hash(data: ByteArray, seed: Int = 0): Int {
+    var crc = seed.inv()
+    val crc32Lut = GCrc32LookupTable
+    var b = 0
+    var dataSize = data.size
+    while (dataSize-- != 0)
+        crc = (crc ushr 8) xor crc32Lut[(crc and 0xFF) xor data[b++].toUInt()]
+    return crc.inv()
+}
 
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
@@ -159,7 +180,13 @@ val Int.upperPowerOfTwo: Int
 
 //IMGUI_API char*         ImStrdup(const char* str);
 //IMGUI_API char*         ImStrdupcpy(char* dst, size_t* p_dst_size, const char* str);
-//IMGUI_API const char*   ImStrchrRange(const char* str_begin, const char* str_end, char c);
+fun strchrRange(str: ByteArray, strBegin: Int, strEnd: Int, c: Char): Int {
+    for (i in strBegin until strEnd)
+        if (str[i] == c.b)
+            return i
+    return -1
+}
+
 val CharArray.strlenW: Int
     get() {
         var n = 0
@@ -188,7 +215,7 @@ fun trimBlanks(buf: CharArray): CharArray {
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
 //IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
 
-fun formatStringV(buf: ByteArray, fmt: String, vararg args: Any): Int {
+fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
     val bytes = fmt.format(g.style.locale, *args).toByteArray()
     bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
     return bytes.size.also { w -> buf[w] = 0 }
@@ -225,7 +252,7 @@ fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
         else
             b += textCharToUtf8(buf, b, c)
     }
-    if(b < buf.size) buf[b] = 0
+    if (b < buf.size) buf[b] = 0
     return b
 }
 
@@ -262,7 +289,7 @@ fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
 
 /** read one character. return input UTF-8 bytes count
  *  @return [JVM] [char: Int, bytes: Int] */
-fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int): Pair<Int, Int> {
+fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
     var str = textBegin
     fun s(i: Int = 0) = text[i + str].toUInt()
     fun spp() = text[str++].toUInt()
@@ -318,7 +345,7 @@ fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, t
         if (c <= UNICODE_CODEPOINT_MAX)    // FIXME: Losing characters that don't fit in 2 bytes
             buf[b++] = c.c
     }
-    if(b < buf.size) buf[b] = NUL
+    if (b < buf.size) buf[b] = NUL
     textRemaining?.put(t)
     return b
 }

@@ -127,16 +127,16 @@ val viewportRect: Rect
 // Platform dependent default implementations
 //-----------------------------------------------------------------------------
 
-val getClipboardTextFn_DefaultImpl: () -> String? = {
+val getClipboardTextFn_DefaultImpl: (userData: Any?) -> String? = {
     // Create a Clipboard object using getSystemClipboard() method
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
     // Get data stored in the clipboard that is in the form of a string (text)
     clipboard.getData(DataFlavor.stringFlavor) as? String
 }
 
-val setClipboardTextFn_DefaultImpl: (String) -> Unit = {
+val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { userData, text ->
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-    clipboard.setContents(StringSelection(it), null)
+    clipboard.setContents(StringSelection(text), null)
 }
 
 var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->

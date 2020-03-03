@@ -4,7 +4,6 @@ import com.sun.jdi.VirtualMachine
 import glm_.L
 import glm_.b
 import glm_.vec4.Vec4
-import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.classes.SizeCallbackData
 import imgui.internal.F32_TO_INT8_SAT
@@ -12,12 +11,14 @@ import imgui.internal.textStrToUtf8
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import java.nio.IntBuffer
+import java.util.logging.FileHandler
+import java.util.logging.Level
+import java.util.logging.Logger
+import java.util.logging.SimpleFormatter
 import kotlin.reflect.KMutableProperty0
 
 
-internal var ptrIndices = 0
-
-// it was: java.lang.Byte.valueOf(it.b)
+// We need boxed objects in order to deliver a constant hashcode
 internal var ptrId: Array<Int> = Array(512) { it }
 
 
@@ -95,6 +96,12 @@ object Debug {
     private var cachedInstanceCounts = countInstances()
 }
 
+val fileHandler = FileHandler("./imgui.log").apply { formatter = SimpleFormatter() }
+val logger = Logger.getLogger("My Logger").apply {
+    addHandler(fileHandler)
+    useParentHandlers = false
+}
+
 infix fun IntBuffer.resize(newSize: Int): IntBuffer = when {
     newSize > cap -> reserve(growCapacity(newSize))
     else -> this
@@ -115,8 +122,11 @@ infix fun IntBuffer.reserve(newCapacity: Int): IntBuffer {
     if (newCapacity <= cap)
         return this
     val newData = IntBuffer(newCapacity)
-    if (lim > 0)
+    val backupLim = lim
+    lim = 0
+    if (cap > 0)
         MemoryUtil.memCopy(adr, newData.adr, remSize.L)
+    newData.lim = backupLim
     free()
     return newData
 }
@@ -167,26 +177,35 @@ fun ByteArray.memchr(startIdx: Int, c: Char, num: Int = size - startIdx): Int {
     return -1
 }
 
-fun ByteArray.strlen(): Int {
+fun ByteArray.strlen(begin: Int = 0): Int {
     var len = 0
-    for (b in this)
-        if (b == 0.b) break
+    for (i in begin until size)
+        if (get(i) == 0.b) break
         else len++
     return len
 }
 
 fun String.toByteArray(size: Int): ByteArray = toByteArray().copyInto(ByteArray(size))
 fun String.toUtf8(size: Int) = ByteArray(size).also { textStrToUtf8(it, toCharArray()) }
-fun String.toByteArray(array: ByteArray): ByteArray = toByteArray().copyInto(array)
+fun String.toByteArray(array: ByteArray): ByteArray {
+    val bytes = toByteArray()
+    bytes.copyInto(array)
+    if (bytes.size < array.size)
+        array[bytes.size] = 0 // NUL
+    return array
+}
 
-infix fun ByteArray.strcmp(b: ByteArray): Int {
+// Function to implement strcmp function https://www.techiedelight.com/implement-strcmp-function-c/
+infix fun ByteArray.strcmp(other: ByteArray): Int {
     var i = 0
-    while (i < size && i < b.size) {
-        if (get(i) != b[i])
-            return get(i).compareTo(b[i])
+    while (i < size && get(i) != 0.b) {
+        // if characters differ or end of second string is reached
+        if (get(i) != other.getOrElse(i) { 0 })
+            break
+        // move to next pair of characters
         i++
     }
-    return 0
+    return getOrElse(i) { 0 }.compareTo(other.getOrElse(i) { 0 })
 }
 
 /** TODO -> uno or kool */
@@ -194,3 +213,5 @@ operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
     set(t)
     return this
 }
+
+val ByteArray.cStr get() = String(this, 0, strlen())

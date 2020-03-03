@@ -28,24 +28,24 @@ internal interface renderHelpers {
 
     fun renderText(pos: Vec2, text: String, hideTextAfterHash: Boolean = true) {
         val bytes = text.toByteArray()
-        renderText(pos, bytes, bytes.size, hideTextAfterHash)
+        renderText(pos, bytes, 0, bytes.size, hideTextAfterHash)
     }
 
-    fun renderText(pos: Vec2, text: ByteArray, textEnd: Int = -1, hideTextAfterHash: Boolean = true) {
+    fun renderText(pos: Vec2, text: ByteArray, textBegin: Int = 0, textEnd: Int = -1, hideTextAfterHash: Boolean = true) {
 
         val window = g.currentWindow!!
 
         // Hide anything after a '##' string
         val textDisplayEnd = when {
-            hideTextAfterHash -> findRenderedTextEnd(text, textEnd)
-            textEnd == -1 -> text.strlen()
+            hideTextAfterHash -> findRenderedTextEnd(text, textBegin, textEnd)
+            textEnd == -1 -> text.strlen(textBegin)
             else -> textEnd
         }
 
-        if (textDisplayEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, textDisplayEnd)
+        if (textBegin != textDisplayEnd) {
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, textBegin, textDisplayEnd)
             if (g.logEnabled)
-                logRenderedText(pos, String(text), textDisplayEnd)
+                logRenderedText(pos, String(text, textBegin, textEnd - textBegin), textDisplayEnd)
         }
     }
 
@@ -56,8 +56,8 @@ internal interface renderHelpers {
         val textEnd = if (textEnd_ == -1) text.strlen() else textEnd_ // FIXME-OPT
 
         if (textEnd > 0) {
-            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, textEnd, wrapWidth)
-            if (g.logEnabled) logRenderedText(pos, String(text), textEnd)
+            window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, 0, textEnd, wrapWidth)
+            if (g.logEnabled) logRenderedText(pos, text.cStr, textEnd)
         }
     }
 
@@ -70,13 +70,13 @@ internal interface renderHelpers {
     fun renderTextClipped(posMin: Vec2, posMax: Vec2, text: ByteArray, textEnd: Int = text.size, textSizeIfKnown: Vec2? = null,
                           align: Vec2 = Vec2(), clipRect: Rect? = null) {
         // Hide anything after a '##' string
-        val textDisplayEnd = findRenderedTextEnd(text, textEnd)
+        val textDisplayEnd = findRenderedTextEnd(text, 0, textEnd)
         if (textDisplayEnd == 0) return
 
         val window = g.currentWindow!!
         renderTextClippedEx(window.drawList, posMin, posMax, text, textDisplayEnd, textSizeIfKnown, align, clipRect)
         if (g.logEnabled)
-            logRenderedText(posMax, String(text), textDisplayEnd)
+            logRenderedText(posMax, text.cStr, textDisplayEnd)
     }
 
     /** Default clipRect uses (pos_min,pos_max)
@@ -87,7 +87,7 @@ internal interface renderHelpers {
 
         // Perform CPU side clipping for single clipped element to avoid using scissor state
         val pos = Vec2(posMin)
-        val textSize = textSizeIfKnown ?: calcTextSize(text, textDisplayEnd, false, 0f)
+        val textSize = textSizeIfKnown ?: calcTextSize(text, 0, textDisplayEnd, false, 0f)
 
         val clipMin = clipRect?.min ?: posMin
         val clipMax = clipRect?.max ?: posMax
@@ -106,7 +106,7 @@ internal interface renderHelpers {
             needClipping -> Vec4(clipMin.x, clipMin.y, clipMax.x, clipMax.y)
             else -> null
         }
-        drawList.addText(null, 0f, pos, Col.Text.u32, text, textDisplayEnd, 0f, fineClipRect)
+        drawList.addText(null, 0f, pos, Col.Text.u32, text, 0, textDisplayEnd, 0f, fineClipRect)
     }
 
     /** Another overly complex function until we reorganize everything into a nice all-in-one helper.
@@ -115,7 +115,7 @@ internal interface renderHelpers {
     fun renderTextEllipsis(drawList: DrawList, posMin: Vec2, posMax: Vec2, clipMaxX: Float, ellipsisMaxX: Float,
                            text: ByteArray, textEndFull: Int = findRenderedTextEnd(text), textSizeIfKnown: Vec2?) {
 
-        val textSize = textSizeIfKnown ?: calcTextSize(text, textEndFull, false, 0f)
+        val textSize = textSizeIfKnown ?: calcTextSize(text, 0, textEndFull, false, 0f)
 
         //draw_list->AddLine(ImVec2(pos_max.x, pos_min.y - 4), ImVec2(pos_max.x, pos_max.y + 4), IM_COL32(0, 0, 255, 255));
         //draw_list->AddLine(ImVec2(ellipsis_max_x, pos_min.y-2), ImVec2(ellipsis_max_x, pos_max.y+2), IM_COL32(0, 255, 0, 255));
@@ -178,7 +178,7 @@ internal interface renderHelpers {
             renderTextClippedEx(drawList, posMin, Vec2(clipMaxX, posMax.y), text, textEndFull, textSize, Vec2())
 
         if (g.logEnabled)
-            logRenderedText(posMin, String(text), textEndFull)
+            logRenderedText(posMin, text.cStr, textEndFull)
     }
 
     /** Render a rectangle shaped with optional rounding and borders    */
@@ -297,13 +297,14 @@ internal interface renderHelpers {
     /** Find the optional ## from which we stop displaying text.    */
     fun findRenderedTextEnd(text: String, textEnd: Int = -1): Int {
         val bytes = text.toByteArray()
-        return findRenderedTextEnd(bytes, if (textEnd != -1) textEnd else bytes.size)
+        return findRenderedTextEnd(bytes, 0, if (textEnd != -1) textEnd else bytes.size)
     }
 
     /** Find the optional ## from which we stop displaying text.    */
-    fun findRenderedTextEnd(text: ByteArray, textEnd: Int = text.size): Int {
-        var textDisplayEnd = 0
-        while (textDisplayEnd < textEnd && text[textDisplayEnd] != 0.b && (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
+    fun findRenderedTextEnd(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.size): Int {
+        var textDisplayEnd = textBegin
+        while (textDisplayEnd < textEnd && text[textDisplayEnd] != 0.b &&
+                (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
             textDisplayEnd++
         return textDisplayEnd
     }

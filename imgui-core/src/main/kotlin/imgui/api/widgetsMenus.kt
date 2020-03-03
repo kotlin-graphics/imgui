@@ -26,11 +26,11 @@ import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popId
+import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.pushId
+import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderCheckMark
@@ -72,7 +72,7 @@ interface widgetsMenus {
 
         assert(!window.dc.menuBarAppending)
         beginGroup() // Backup position on layer 0 // FIXME: Misleading to use a group for that backup/restore
-        pushId("##menubar")
+        pushID("##menubar")
 
         /*  We don't clip with current window clipping rectangle as it is already set to the area below. However we clip
             with window full rect.
@@ -128,7 +128,7 @@ interface widgetsMenus {
 
         assert(window.flags has Wf.MenuBar && window.dc.menuBarAppending)
         popClipRect()
-        popId()
+        popID()
         with(window.dc) {
             // Save horizontal position so next append can reuse it. This is kinda equivalent to a per-layer CursorPos.
             menuBarOffset.x = cursorPos.x - window.menuBarRect().min.x
@@ -180,7 +180,7 @@ interface widgetsMenus {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val id = window.getId(label)
+        val id = window.getID(label)
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
@@ -286,7 +286,7 @@ interface widgetsMenus {
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.beginPopupStack.size, true)
 
-        ImGuiTestEngineHook_ItemInfo(id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
@@ -367,7 +367,7 @@ interface widgetsMenus {
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 
-        ImGuiTestEngineHook_ItemInfo(window.dc.lastItemId, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        Hook.itemInfo?.invoke(g, window.dc.lastItemId, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
         return pressed
     }
 

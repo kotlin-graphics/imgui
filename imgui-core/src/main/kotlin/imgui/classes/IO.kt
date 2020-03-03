@@ -19,7 +19,7 @@ import uno.glfw.HWND
  *  Communicate most settings and inputs/outputs to Dear ImGui using this structure.
  *  Access via ::io. Read 'Programmer guide' section in .cpp file for general usage.
  *  ----------------------------------------------------------------------------- */
-class IO(sharedFontAtlas: FontAtlas?) {
+class IO(sharedFontAtlas: FontAtlas? = null) {
 
     //------------------------------------------------------------------
     // Configuration (fill once)
@@ -105,9 +105,9 @@ class IO(sharedFontAtlas: FontAtlas?) {
 
     // Optional: Access OS clipboard
     // (default to use native Win32 clipboard on Windows, otherwise uses a private clipboard. Override to access OS clipboard on other architectures)
-    var getClipboardTextFn: (() -> String?)? = getClipboardTextFn_DefaultImpl
-    var setClipboardTextFn: ((String) -> Unit)? = setClipboardTextFn_DefaultImpl
-    var clipboardUserData: Ptr = MemoryUtil.NULL
+    var getClipboardTextFn: ((userData: Any?) -> String?)? = getClipboardTextFn_DefaultImpl
+    var setClipboardTextFn: ((userData: Any?, text: String) -> Unit)? = setClipboardTextFn_DefaultImpl
+    var clipboardUserData: Any? = null
 
     //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
 //    // (default to posix malloc/free)

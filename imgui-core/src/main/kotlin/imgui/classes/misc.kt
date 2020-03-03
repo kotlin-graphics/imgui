@@ -10,8 +10,6 @@ import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.frameCount
 import imgui.ImGui.inputText
 import imgui.ImGui.setNextItemWidth
-import java.nio.ByteBuffer
-import java.util.stream.Collectors
 
 
 class Color {
@@ -143,10 +141,10 @@ class Storage {
     fun int(key: ID, defaultVal: Int = 0): Int = data[key] ?: defaultVal
     operator fun set(key: ID, value: Int) = data.set(key, value)
 
-    fun bool(key: ID, defaultVal: Boolean = false) = data[key]?.bool ?: defaultVal
+    fun bool(key: ID, defaultVal: Boolean = false): Boolean = data[key]?.bool ?: defaultVal
     operator fun set(id: ID, value: Boolean) = data.set(id, value.i)
 
-    fun float(key: ID, defaultVal: Float = 0f) = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
+    fun float(key: ID, defaultVal: Float = 0f): Float = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
     operator fun set(key: ID, value: Float) = data.set(key, glm.floatBitsToInt(value))
 
 //    IMGUI_API void*     GetVoidPtr(ImGuiID key) const; // default_val is NULL
@@ -156,7 +154,10 @@ class Storage {
     // - References are only valid until a new value is added to the storage. Calling a Set***() function or a Get***Ref() function invalidates the pointer.
     // - A typical use case where this is convenient for quick hacking (e.g. add storage during a live Edit&Continue session if you can't modify existing struct)
     //      float* pvar = ImGui::GetFloatRef(key); ImGui::SliderFloat("var", pvar, 0, 100.0f); some_var += *pvar;
-//    IMGUI_API int*      GetIntRef(ImGuiID key, int default_val = 0);
+
+//    fun getIntRef(key: ID, defaultVal: Int = 0) {
+//        int(key, defaultVal)
+//    }
 //    IMGUI_API bool*     GetBoolRef(ImGuiID key, bool default_val = false);
 //    IMGUI_API float*    GetFloatRef(ImGuiID key, float default_val = 0.0f);
 //    IMGUI_API void**    GetVoidPtrRef(ImGuiID key, void* default_val = NULL);
@@ -167,27 +168,36 @@ class Storage {
 
 /** Helper: Growable text buffer for logging/accumulating text
  *  (this could be called 'ImGuiTextBuilder' / 'ImGuiStringBuilder') */
-//class TextBuffer {
-//    init {
-//        TODO()
-//    }
-//}
-class TextFilter(defaultFilter: String? = "") {
+//class TextBuffer [JVM] StringBuilder
 
+class TextFilter(defaultFilter: String = "") {
+
+    // filters
+    val inc = ArrayList<String>()
+    val exc = ArrayList<String>()
     var inputBuf = ByteArray(256)
-    val filters = ArrayList<String>()
     var countGrep = 0
 
     init {
-        defaultFilter?.toByteArray(inputBuf)
+        this += defaultFilter
     }
 
-    class TextRange
+    operator fun plusAssign(filter: String) {
+        val f = filter.trim()
+        if(f.isNotEmpty()) {
+            if (f[0] == '-')
+                exc += f.drop(1)
+            else {
+                inc += f
+                countGrep++
+            }
+        }
+    }
 
-    fun isActive() = filters.isNotEmpty()
+    fun isActive() = inc.isNotEmpty() || exc.isNotEmpty()
 
     /** Helper calling InputText+Build   */
-    fun draw(label: String = "Filter (inc,-exc)", width: Float): Boolean {
+    fun draw(label: String = "Filter (inc,-exc)", width: Float = 0f): Boolean {
         if (width != 0f)
             setNextItemWidth(width)
         val valueChanged = inputText(label, inputBuf)
@@ -196,37 +206,50 @@ class TextFilter(defaultFilter: String? = "") {
         return valueChanged
     }
 
-    fun passFilter(text: String, textEnd: Int = 0): Boolean {
-        val check = if (textEnd > 0) text.substring(0, textEnd) else text
-
-        if (filters.isEmpty()) return true
-        if (filters.stream().filter(String::isNotEmpty).count() == 0L) return true
-
-        var passSub = false
-
-        for (f in filters) {
-            if (f.isEmpty()) continue
-            if (f[0] == '-') {
-                // Subtract
-                if (check.contains(f.substring(1)))
-                    return false
-                else
-                    passSub = true
-            } else if (check.contains(f))  // Grep
-                return true
-        }
+    fun passFilter(text_: String, textEnd: Int = text_.length): Boolean {
+        val text = if (textEnd != text_.length) text_.substring(0, textEnd) else text_
+        if (exc.any { it in text }) return false
+        if (inc.any { it in text }) return true
         // Implicit * grep
-        return passSub //countGrep == 0
+        return countGrep == 0
+//        if (filters.isEmpty()) return true
+//        if (filters.stream().filter(String::isNotEmpty).count() == 0L) return true
+//
+//        var passSub = false
+//
+//        for (f in filters) {
+//            if (f.isEmpty()) continue
+//            if (f[0] == '-') {
+//                // Subtract
+//                if (check.contains(f.substring(1)))
+//                    return false
+//                else
+//                    passSub = true
+//            } else if (check.contains(f))  // Grep
+//                return true
+//        }
+//        // Implicit * grep
+//        return passSub //countGrep == 0
     }
 
     fun build() {
-        filters.clear()
-        // TODO check if resync
-        filters.addAll(String(inputBuf)
-                .split(",")
-                .stream()
-                .filter(String::isNotEmpty)
-                .collect(Collectors.toList()))
+        inc.clear()
+        exc.clear()
+        countGrep = 0
+        inputBuf.cStr.split(",").map { it.trim() }.filter(String::isNotEmpty).
+                forEach { f ->
+                    if (f[0] == '-') exc += f
+                    else {
+                        inc += f
+                        countGrep++
+                    }
+                }
+    }
+
+    fun clear() {
+        inc.clear()
+        exc.clear()
+        countGrep = 0
     }
 }
 

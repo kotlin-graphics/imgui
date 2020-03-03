@@ -13,7 +13,6 @@ import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
-import imgui.ImGui.currentWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveID
@@ -29,11 +28,9 @@ import imgui.classes.SizeCallbackData
 import imgui.classes.Storage
 import imgui.internal.*
 import imgui.static.viewportRect
-import kool.BYTES
 import kool.cap
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.*
+import java.util.logging.Level
 import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
@@ -43,44 +40,60 @@ import imgui.WindowFlag as Wf
 class Window(var context: Context,
              /** Window name, owned by the window. */
              var name: String) {
+
     /** == ImHashStr(Name) */
     val id: ID = hash(name)
+
     /** See enum WindowFlags */
     var flags = Wf.None.i
 
     /** Position (always rounded-up to nearest pixel)    */
     var pos = Vec2()
+
     /** Current size (==SizeFull or collapsed title bar size)   */
     var size = Vec2()
+
     /** Size when non collapsed */
     var sizeFull = Vec2()
+
     /** Size of contents/scrollable client area (calculated from the extents reach of the cursor) from previous frame. Does not include window decoration or window padding. */
     var contentSize = Vec2()
+
     /** Size of contents/scrollable client area explicitly request by the user via SetNextWindowContentSize(). */
     var contentSizeExplicit = Vec2()
+
     /** Window padding at the time of Begin(). */
     var windowPadding = Vec2()
+
     /** Window rounding at the time of Begin().   */
     var windowRounding = 0f
+
     /** Window border size at the time of Begin().    */
     var windowBorderSize = 1f
+
     /** Size of buffer storing Name. May be larger than strlen(Name)! */
     var nameBufLen = name.toByteArray().size
+
     /** == window->GetID("#MOVE")   */
     var moveId: ID
+
     /** ID of corresponding item in parent window (for navigation to return from child window to parent window)   */
     var childId: ID = 0
 
     var scroll = Vec2()
 
     var scrollMax = Vec2()
+
     /** target scroll position. stored as cursor position with scrolling canceled out, so the highest point is always
     0.0f. (FLT_MAX for no change)   */
     var scrollTarget = Vec2(Float.MAX_VALUE)
+
     /** 0.0f = scroll so that target position is at top, 0.5f = scroll so that target position is centered  */
     var scrollTargetCenterRatio = Vec2(.5f)
+
     /** Size taken by scrollbars on each axis */
     var scrollbarSizes = Vec2()
+
     /** Are scrollbars visible? */
     var scrollbar = Vec2bool()
 
@@ -88,30 +101,42 @@ class Window(var context: Context,
     var active = false
 
     var wasActive = false
+
     /** Set to true when any widget access the current window   */
     var writeAccessed = false
+
     /** Set when collapsing window to become only title-bar */
     var collapsed = false
 
     var wantCollapseToggle = false
+
     /** Set when items can safely be all clipped (e.g. window not visible or collapsed) */
     var skipItems = false
+
     /** Set during the frame where the window is appearing (or re-appearing)    */
     var appearing = false
+
     /** Do not display (== (HiddenFrames*** > 0)) */
     var hidden = false
+
     /** Set on the "Debug##Default" window. */
     var isFallbackWindow = false
+
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
+
     /** Current border being held for resize (-1: none, otherwise 0-3) */
     var resizeBorderHeld = -1
+
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
+
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
     var beginOrderWithinParent = -1
+
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
     var beginOrderWithinContext = -1
+
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
     var popupId: ID = 0
 
@@ -122,18 +147,25 @@ class Window(var context: Context,
     var autoFitOnlyGrows = false
 
     var autoPosLastDirection = Dir.None
+
     /** Hide the window for N frames */
     var hiddenFramesCanSkipItems = 0
+
     /** Hide the window for N frames while allowing items to be submitted so we can measure their size */
     var hiddenFramesCannotSkipItems = 0
+
     /** store acceptable condition flags for SetNextWindowPos() use. */
     var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+
     /** store acceptable condition flags for SetNextWindowSize() use.    */
     var setWindowSizeAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+
     /** store acceptable condition flags for SetNextWindowCollapsed() use.   */
     var setWindowCollapsedAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+
     /** store window position when using a non-zero Pivot (position set needs to be processed when we know the window size) */
     var setWindowPosVal = Vec2(Float.MAX_VALUE)
+
     /** store window pivot for positioning. Vec2(0) when positioning from top-left corner; Vec2(0.5f) for centering;
      *  Vec2(1) for bottom right.   */
     var setWindowPosPivot = Vec2(Float.MAX_VALUE)
@@ -141,18 +173,20 @@ class Window(var context: Context,
 
     /** ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this should be in the TempData structure)   */
     val idStack = Stack<ID>()
+
     /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
     var dc = WindowTempData()
 
     init {
         idStack += id
-        moveId = getId("#MOVE")
+        moveId = getID("#MOVE")
         childId = 0
     }
 
     fun destroy() {
         assert(drawList === drawListInst)
-        drawList.destroy()
+        columnsStorage.forEach { it.destroy() }
+        drawListInst.clearFreeMemory(true)
     }
 
     // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
@@ -160,20 +194,26 @@ class Window(var context: Context,
 
     /** == Window->Rect() just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
+
     /** Inner rectangle (omit title bar, menu bar, scroll bar) */
     var innerRect = Rect(0f, 0f, 0f, 0f) // Clear so the InnerRect.GetSize() code in Begin() doesn't lead to overflow even if the result isn't used.
+
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()
+
     /** Cover the whole scrolling region, shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward). */
     var workRect = Rect()
+
     /** Current clipping/scissoring rectangle, evolve as we are using PushClipRect(), etc. == DrawList->clip_rect_stack.back(). */
     var clipRect = Rect()
+
     /** FIXME: This is currently confusing/misleading. It is essentially WorkRect but not handling of scrolling. We currently rely on it as right/bottom aligned sizing operation need some size to rely on. */
     var contentRegionRect = Rect()
 
 
     /** Last frame number the window was Active. */
     var lastFrameActive = -1
+
     /** Last timestamp the window was Active (using float as we don't need high precision there) */
     var lastTimeActive = -1f
 
@@ -182,20 +222,27 @@ class Window(var context: Context,
     var stateStorage = Storage()
 
     val columnsStorage = ArrayList<Columns>()
+
     /** User scale multiplier per-window, via SetWindowFontScale() */
     var fontWindowScale = 1f
+
     /** Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back) */
     var settingsOffset = -1
 
-    var drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    val drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
+
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
     var drawList = drawListInst
+
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
+
     /** Point to ourself or first ancestor that is not a child window.  */
     var rootWindow: Window? = null
+
     /** Point to ourself or first ancestor which will display TitleBgActive color when this window is active.   */
     var rootWindowForTitleBarHighlight: Window? = null
+
     /** Point to ourself or first ancestor which doesn't have the NavFlattened flag.    */
     var rootWindowForNav: Window? = null
 
@@ -203,8 +250,10 @@ class Window(var context: Context,
     /** When going to the menu bar, we remember the child window we came from. (This could probably be made implicit if
      *  we kept g.Windows sorted by last focused including child window.)   */
     var navLastChildNavWindow: Window? = null
+
     /** Last known NavId for this window, per layer (0/1). ID-Array   */
     val navLastIds = IntArray(NavLayer.COUNT)
+
     /** Reference rectangle, in window relative space   */
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
@@ -214,61 +263,51 @@ class Window(var context: Context,
     var memoryDrawListVtxCapacity = 0
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
-    fun getId(str: String, end: Int = 0): ID {
+    fun getID(strID: String, end: Int = 0): ID {
         // FIXME: ImHash with str_end doesn't behave same as with identical zero-terminated string, because of ### handling.
         val seed: ID = idStack.last()
-        val id: ID = hash(str, end, seed)
+        val id: ID = hash(strID, end, seed)
         keepAliveID(id)
         return id
     }
 
-    fun getId(ptr: Any): ID {
-        val ptrIndex = ++ptrIndices
-        if (ptrIndex >= ptrId.size) {
-            val newBufLength = ptrId.size + 512
-            val newBuf = Array(newBufLength) { it }
-            System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
-            ptrId = newBuf
-        }
-        val id: ID = System.identityHashCode(ptrId[ptrIndex])
-        keepAliveID(id)
-        return id
-    }
-
-    fun getId(n: Int): ID {
-        val seed = idStack.last()
-        val bytes = ByteBuffer.allocate(Int.BYTES).apply {
-            order(ByteOrder.LITTLE_ENDIAN)
-            putInt(0, n)
-        }
-        return hash(bytes, seed).also { id ->
-            keepAliveID(id)
-        }
-    }
-
-    fun getIdNoKeepAlive(str: String, strEnd: Int = str.length): ID {
+    /** [JVM] */
+    fun getID(ptrID: Any): ID {
         val seed: ID = idStack.last()
-        return hash(str, str.length - strEnd, seed)
+        val id: ID = hash(System.identityHashCode(ptrID), seed)
+        keepAliveID(id)
+        return id
     }
 
-    fun getIdNoKeepAlive(ptr: Any): ID {
-        val ptrIndex = ++ptrIndices
-        if (ptrIndex >= ptrId.size) {
-            val newBufLength = ptrId.size + 512
-            val newBuf = Array(newBufLength) { it }
-            System.arraycopy(ptrId, 0, newBuf, 0, ptrId.size)
-            ptrId = newBuf
-        }
-        return System.identityHashCode(ptrId[ptrIndex])
+    /** [JVM] we hack the pointer version in this way */
+    fun getID(intPtr: Long): ID {
+        if (intPtr >= ptrId.size) increase()
+        val seed: ID = idStack.last()
+        val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed)
+        keepAliveID(id)
+        return id
     }
 
-    fun getIdNoKeepAlive(n: Int): ID {
+    fun getID(n: Int): ID {
         val seed = idStack.last()
-        val bytes = ByteBuffer.allocate(Int.BYTES).apply {
-            order(ByteOrder.LITTLE_ENDIAN)
-            putInt(0, n)
-        }
-        return hash(bytes, seed)
+        val id = hash(n, seed)
+        keepAliveID(id)
+        return id
+    }
+
+    fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID = hash(strID, strID.length - strEnd, seed_ = idStack.last())
+
+    fun getIdNoKeepAlive(ptrID: Any): ID = hash(System.identityHashCode(ptrID), seed = idStack.last())
+
+    fun getIdNoKeepAlive(intPtr: Long): ID {
+        if (intPtr >= ptrId.size) increase()
+        return hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
+    }
+
+    fun getIdNoKeepAlive(n: Int): ID = hash(n, seed = idStack.last())
+
+    private fun increase() {
+        ptrId = Array(ptrId.size + 512) { i -> ptrId.getOrElse(i) { i } }
     }
 
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
@@ -529,7 +568,7 @@ class Window(var context: Context,
 
 
     /** ~SetScrollX(ImGuiWindow* window, float new_scroll_x) */
-    fun setScrollX(newScrollX: Float) {
+    infix fun setScrollX(newScrollX: Float) {
         scrollTarget.x = newScrollX
         scrollTargetCenterRatio.x = 0f
     }
@@ -549,7 +588,7 @@ class Window(var context: Context,
     }
 
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
-    fun setScrollFromPosY(localY_: Float, centerYRatio: Float = 0.5f) = with(currentWindow) {
+    fun setScrollFromPosY(localY_: Float, centerYRatio: Float = 0.5f) {
         /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
             window size         */
         assert(centerYRatio in 0f..1f)
@@ -564,7 +603,7 @@ class Window(var context: Context,
         val windowRect = Rect(innerRect.min - 1, innerRect.max + 1)
         //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
         val deltaScroll = Vec2()
-        if (!windowRect.contains(itemRect)) {
+        if (itemRect !in windowRect) {
             if (scrollbar.x && itemRect.min.x < windowRect.min.x)
                 setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
             else if (scrollbar.x && itemRect.max.x >= windowRect.max.x)
@@ -751,12 +790,12 @@ class Window(var context: Context,
 
         // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
         if (hasCollapseButton)
-            if (collapseButton(getId("#COLLAPSE"), collapseButtonPos))
+            if (collapseButton(getID("#COLLAPSE"), collapseButtonPos))
                 wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
 
         // Close button
         if (hasCloseButton)
-            if (closeButton(getId("#CLOSE"), closeButtonPos))
+            if (closeButton(getID("#CLOSE"), closeButtonPos))
                 pOpen!!.set(false)
 
         dc.navLayerCurrent = NavLayer.Main
@@ -1035,4 +1074,6 @@ class Window(var context: Context,
             else -> Col.WindowBg
         }
     }
+
+    override fun toString() = name
 }

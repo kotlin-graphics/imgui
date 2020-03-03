@@ -111,12 +111,12 @@ You should be able to try the examples from `test` (tested on Windows/Mac/Linux)
 
 OpenGL Kotlin:
 
-- [lwjgl](imgui-gl/src/test/kotlin/imgui/opengl3.kt) 
-- [jogl](imgui-jogl/src/test/kotlin/imgui/JoglGL3.kt) (currently not-maintained)
+- [lwjgl](imgui-gl/src/test/kotlin/imgui/examples/opengl3.kt) 
+- [jogl](imgui-jogl/src/test/kotlin/imgui/examples/JoglGL3.kt) (currently not-maintained)
 
 OpenGL Java:
 
-- [lwjgl](imgui-gl/src/test/java/imgui/OpenGL3.java) 
+- [lwjgl](imgui-gl/src/test/java/imgui/examples/OpenGL3.java) 
 
 Vulkan Kotlin:
 
@@ -128,6 +128,61 @@ You should refer to those also to learn how to use the imgui library.
 The demo applications are unfortunately not yet DPI aware so expect some blurriness on a 4K screen. For DPI awareness you can load/reload your font at different scale, and scale your Style with `style.ScaleAllSizes()`.
 
 Ps: `DEBUG = false` to turn off debugs `println()`
+
+### Functional Programming / Domain Specific Language
+
+All the functions are ported exactly as the original. Moreover, in order to take advantage of Functional Programming 
+this port offers some comfortable constructs, giving the luxury to forget about some annoying and very error prone
+burden code such as the ending `*Pop()`, `*end()` and so on.
+
+These constructs shine especially in Kotlin, where they are also inlined.
+ 
+Let's take an original cpp sample and let's see how we can make it nicer:
+```cpp
+    if (ImGui::TreeNode("Querying Status (Active/Focused/Hovered etc.)")) {            
+        ImGui::Checkbox("Hovered/Active tests after Begin() for title bar testing", &test_window);
+        if (test_window) {            
+            ImGui::Begin("Title bar Hovered/Active tests", &test_window);
+            if (ImGui::BeginPopupContextItem()) // <-- This is using IsItemHovered() {                
+                if (ImGui::MenuItem("Close")) { test_window = false; }
+                ImGui::EndPopup();
+            }
+            ImGui::Text("whatever\n");
+            ImGui::End();
+        }
+        ImGui::TreePop();
+    }
+```
+This may become in Kotlin:
+```kotlin
+    treeNode("Querying Status (Active/Focused/Hovered etc.)") {            
+        checkbox("Hovered/Active tests after Begin() for title bar testing", ::test_window)
+        if (test_window)
+            window ("Title bar Hovered/Active tests", ::test_window) {
+                popupContextItem { // <-- This is using IsItemHovered() {                    
+                    menuItem("Close") { test_window = false }
+                }
+                text("whatever\n")
+            }
+    }
+```
+Or in Java:
+```java
+    treeNode("Querying Status (Active/Focused/Hovered etc.)", () -> {            
+        checkbox("Hovered/Active tests after Begin() for title bar testing", test_window)
+        if (test_window[0])
+            window ("Title bar Hovered/Active tests", test_window, () -> {
+                popupContextItem(() -> { // <-- This is using IsItemHovered() {                    
+                    menuItem("Close", () -> test_window = false);
+                });
+                text("whatever\n");
+            });
+    });
+```
+
+The demo mixes some traditional imgui-calls with these DSL calls.
+
+Refer to the corresponding [`dsl`](src/main/kotlin/imgui/dsl.kt) object for Kotlin or [`dsl_`](src/main/java/imgui/dsl_.java) class for Java.
 
 ### Native Roadmap
 
