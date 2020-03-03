@@ -1,5 +1,6 @@
 package engine
 
+import app.app
 import engine.context.TestContext
 import gli_.has
 import gli_.hasnt
@@ -14,8 +15,12 @@ import imgui.*
 import imgui.api.gImGui
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import kool.free
+import kool.lim
 import kool.set
-import java.awt.image.BufferedImage
+import sliceAt
+import java.awt.Transparency
+import java.awt.image.*
 import java.io.File
 import java.nio.ByteBuffer
 import javax.imageio.ImageIO
@@ -30,7 +35,7 @@ class ImageBuf {
     var height = 0
     var data: ByteBuffer? = null
 
-//    ~ImageBuf() TODO
+    //    ~ImageBuf() TODO
 //    { Clear(); }
 //
 //    void Clear()                                           // Free allocated memory buffer if such exists.
@@ -40,9 +45,12 @@ class ImageBuf {
         data = ByteBuffer.allocate(width * height * 4)
     }
 
-    fun saveFile(filename: String) {                    // Save pixel data to specified file.
-        val image = BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR)
-        image.raster.setDataElements(0, 0, width, height, data)
+    fun saveFile(filename: String) { // Save pixel data to specified file.
+        val bytes = ByteArray(data!!.lim) { data!![it] }
+        val buffer = DataBufferByte(bytes, bytes.size)
+        val raster = Raster.createInterleavedRaster(buffer, width, height, 4 * width, 4, IntArray(4) { it }, null)
+        val cm = ComponentColorModel(ColorModel.getRGBdefault().colorSpace, true, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE)
+        val image = BufferedImage(cm, raster, false, null)
         ImageIO.write(image, filename, File(filename))
     }
 
@@ -66,6 +74,12 @@ class ImageBuf {
         for (y in 0 until h)
             for (i in 0 until source.width * 4)
                 data!![(dstY + y) * width + dstX + i] = source.data!![(srcY + y) * source.width + srcX]
+    }
+
+    fun clear() {
+        if (app.optGUI)
+            data?.free()
+        data = null
     }
 }
 
@@ -115,7 +129,7 @@ class CaptureContext(
     // [Internal]
     internal var captureRect = Rect()                   // Viewport rect that is being captured.
     internal var combinedWindowRectPos = Vec2()         // Top-left corner of region that covers all windows included in capture. This is not same as _CaptureRect.Min when capturing explicitly specified rect.
-    internal var output: ImageBuf? = null                        // Output image buffer.
+    internal var output = ImageBuf()                        // Output image buffer.
     internal var saveFileNameFinal = ""   // Final file name to which captured image will be saved.
     internal var chunkNo = 0                   // Number of chunk that is being captured when capture spans multiple frames.
     internal var frameNo = 0                   // Frame number during capture process that spans multiple frames.
@@ -227,11 +241,11 @@ class CaptureContext(
             captureRect expand args.inPadding
 
             // Initialize capture buffer.
-            output!!.createEmpty(captureRect.width.i, captureRect.height.i)
+            output.createEmpty(captureRect.width.i, captureRect.height.i)
         } else if (frameNo % 4 == 0) {
             // FIXME: Implement capture of regions wider than viewport.
             // Capture a portion of image. Capturing of windows wider than viewport is not implemented yet.
-            val capture_rect = Rect(captureRect)
+            val captureRect = Rect(captureRect)
             val clipRect = Rect(Vec2(), io.displaySize)
 //            #ifdef IMGUI_HAS_VIEWPORT
 //                if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -240,44 +254,37 @@ class CaptureContext(
 //                clipRect = ImRect(main_viewport->Pos, main_viewport->Pos + main_viewport->Size)
 //            }
 //            #endif
-            capture_rect clipWith clipRect
-            val captureHeight = io.displaySize.y min captureRect.height.i
-            val x1 = (capture_rect.min.x - clipRect.min.x).i
-            val y1 = (capture_rect.min.y - clipRect.min.y).i
-            val w = capture_rect.width.i
-            val h = min(output!!.height - chunkNo * captureHeight, captureHeight).i
+            captureRect clipWith clipRect
+            val captureHeight = io.displaySize.y min this.captureRect.height.i
+            val x1 = (captureRect.min.x - clipRect.min.x).i
+            val y1 = (captureRect.min.y - clipRect.min.y).i
+            val w = captureRect.width.i
+            val h = min(output.height - chunkNo * captureHeight, captureHeight).i
             if (h > 0) {
-                TODO()
-//                if (!screenCaptureFunc(x1, y1, w, h, output.data.sliceAt(chunkNo * w * captureHeight), userData))
-//                    return false
+                if (!screenCaptureFunc!!(x1, y1, w, h, output.data!!.sliceAt(chunkNo * w * captureHeight), userData))
+                    return false
                 chunkNo++
 
                 // Window moves up in order to expose it's lower part.
                 for (window in args.inCaptureWindows)
                     window.setPos(window.pos - Vec2(0, h.f))
-                captureRect translateY -h.f
+                this.captureRect translateY -h.f
             } else {
                 output.removeAlpha()
 
                 if (args.outImageBuf == null) {
                     // Save file only if custom buffer was not specified.
-                    TODO()
-//                    val file_name_size = IM_ARRAYSIZE (_SaveFileNameFinal)
-//                    if (ImFormatString(_SaveFileNameFinal, file_name_size, args->OutImageFileTemplate, args->OutFileCounter+1) >= file_name_size)
-//                    {
-//                        ImGui::LogText("Capture Tool: file name is too long.")
-//                    }
-//                    else
-//                    {
+                    saveFileNameFinal = args.outImageFileTemplate.format(args.outFileCounter + 1)
 //                    ImPathFixSeparatorsForCurrentOS(_SaveFileNameFinal)
 //                    if (!ImFileCreateDirectoryChain(_SaveFileNameFinal, ImPathFindFilename(_SaveFileNameFinal))) {
 //                        ImGui.logText("Capture Tool: unable to create directory for file '%s'.", _SaveFileNameFinal)
 //                    } else {
-//                        args.outFileCounter++
-//                        output.saveFile(saveFileNameFinal)
+//                    fileCreateDirectoryChain(pathFindDirectory(saveFileNameFinal))
+//                    File(saveFileNameFinal).createNewFile()
+                    args.outFileCounter++
+                    output.saveFile(saveFileNameFinal)
 //                    }
-//                    }
-//                    output.clear()
+                    output.clear()
                 }
 
                 // Restore window position

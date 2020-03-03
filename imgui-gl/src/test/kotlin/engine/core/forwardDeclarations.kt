@@ -209,7 +209,7 @@ fun TestEngine.processTestQueue() {
 //        #else
         ctx.hasDock = false
 //        #endif
-        ctx.captureArgs.outImageFileTemplate = "captures/${test.name}_%%04d.png"
+        ctx.captureArgs.outImageFileTemplate = "captures/${test.name}_%04d.png"
         testContext = ctx
         if (trackScrolling)
             uiSelectAndScrollToTest = test
