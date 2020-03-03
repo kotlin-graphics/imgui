@@ -14,6 +14,7 @@ import imgui.internal.ItemFlag
 import io.kotlintest.shouldBe
 import org.lwjgl.system.Platform
 import unsigned.toUInt
+import java.io.File
 import java.io.PrintStream
 import java.util.*
 
@@ -144,13 +145,18 @@ fun osConsoleSetTextColor(stream: PrintStream, color: OsConsoleTextColor) = Unit
 fun osIsDebuggerPresent() = true
 
 fun pathFindFilename(path: String): String = path.substringAfterLast('/').substringAfterLast('\\')
+fun pathFindDirectory(path: String): String = path.substringBeforeLast('/').substringBeforeLast('\\')
 
 //void        ImPathFixSeparatorsForCurrentOS(char* buf);
 //
 //void        ImParseSplitCommandLine(int* out_argc, char const*** out_argv, const char* cmd_line);
 //void        ImParseDateFromCompilerIntoYMD(const char* in_data, char* out_buf, size_t out_buf_size);
-//
-//bool        ImFileCreateDirectoryChain(const char* path, const char* path_end = NULL);
+
+fun fileCreateDirectoryChain(path: String) {
+    val dir = path.substringBeforeLast('/')
+    File(dir).mkdir()
+}
+
 //bool        ImFileLoadSourceBlurb(const char* filename, int line_no_start, int line_no_end, ImGuiTextBuffer* out_buf);
 //void        ImDebugShowInputTextState();
 //

@@ -101,11 +101,7 @@ fun mainLoopNull() {
     }
 }
 
-val captureScreenshotNull: TestEngineScreenCaptureFunc =
-        { x: Int, y: Int, w: Int, h: Int, pixels: ByteBuffer, user: Any? ->
-            pixels.fill(0)
-            true
-        }
+val captureScreenshotNull: TestEngineScreenCaptureFunc = { _, _, _, _, pixels, _ -> pixels.fill(0); true }
 
 //-------------------------------------------------------------------------
 // Backend: GLFW + OpenGL3
@@ -235,7 +231,7 @@ fun mainLoop() {
 }
 
 val captureFramebufferScreenshot: TestEngineScreenCaptureFunc =
-        { x: Int, y: Int, w: Int, h: Int, pixels: ByteBuffer, user: Any? ->
+        { x: Int, y: Int, w: Int, h: Int, pixels: ByteBuffer, _: Any? ->
             val y2 = ImGui.io.displaySize.y - (y + h)
             glPixelStorei(GL_PACK_ALIGNMENT, 1)
             glReadPixels(x, y2, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
