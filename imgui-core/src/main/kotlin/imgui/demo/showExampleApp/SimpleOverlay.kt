@@ -34,7 +34,7 @@ object SimpleOverlay {
             flags = flags or Wf.NoMove
         }
         setNextWindowBgAlpha(0.35f)  // Transparent background
-        window("Example: Simple Overlay", open, flags) {
+        window("Example: Simple overlay", open, flags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
             text("Mouse Position: " + when {

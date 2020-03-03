@@ -9,6 +9,8 @@ import imgui.internal.linearSweep
 import io.kotlintest.shouldBe
 import kotlin.math.abs
 
+// [JVM]
+fun TestContext.scrollToY(ref: String, scrollRatioY: Float = 0.5f) = scrollToY(TestRef(path = ref))
 fun TestContext.scrollToY(ref: TestRef/*, scroll_ratio_y = 0.5f*/) {
 
 //    IM_UNUSED(scroll_ratio_y);

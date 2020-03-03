@@ -13,6 +13,9 @@ val TestContext.mainViewportPos
         Vec2()
 //    #endif
 
+// [JVM]
+fun TestContext.captureAddWindow(ref: String): Boolean = captureAddWindow(TestRef(path = ref))
+
 fun TestContext.captureAddWindow(ref: TestRef): Boolean {
     val window = getWindowByRef(ref)
     if (window == null)
