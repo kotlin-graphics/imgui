@@ -20,7 +20,7 @@ fun TestEngine.registerTests() {
     file.writeText("") // clear
 
     // Tests
-    registerTests_Window(this)
+    /*registerTests_Window(this)
     registerTests_Layout(this)
     registerTests_Widgets(this)
     registerTests_Nav(this)
@@ -28,10 +28,10 @@ fun TestEngine.registerTests() {
 //    RegisterTests_Table(e)
 //    RegisterTests_Docking(e)
     registerTests_Misc(this)
-
+*/
     // Captures
-//    RegisterTests_Capture(e)
+    registerTests_Capture(this)
 
     // Performance Benchmarks
-    registerTests_Perf(this)
+//    registerTests_Perf(this)
 }
