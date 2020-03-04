@@ -59,25 +59,8 @@ interface main {
         // Check and assert for various common IO and Configuration mistakes
         newFrameSanityChecks()
 
-        // Load settings on first frame (if not explicitly loaded manually before)
-        if (!g.settingsLoaded) {
-            assert(g.settingsWindows.isEmpty())
-            io.iniFilename?.let(::loadIniSettingsFromDisk)
-            g.settingsLoaded = true
-        }
-
-        // Save settings (with a delay so we don't spam disk too much)
-        if (g.settingsDirtyTimer > 0f) {
-            g.settingsDirtyTimer -= io.deltaTime
-            if (g.settingsDirtyTimer <= 0f) {
-                val ini = io.iniFilename
-                if (ini != null)
-                    saveIniSettingsToDisk(ini)
-                else
-                    io.wantSaveIniSettings = true  // Let user know they can call SaveIniSettingsToMemory(). user will need to clear io.WantSaveIniSettings themselves.
-                g.settingsDirtyTimer = 0f
-            }
-        }
+        // Load settings on first frame, save settings when modified (after a delay)
+        updateSettings()
 
         g.time += io.deltaTime
         g.withinFrameScope = true
@@ -85,6 +68,12 @@ interface main {
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
         g.menusIdSubmittedThisFrame.clear()
+
+        // Calculate frame-rate for the user, as a purely luxurious feature
+        g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
+        g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
+        g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
+        io.framerate = if(g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size.f) else Float.MAX_VALUE
 
         // Setup current font and draw list shared data
         io.fonts.locked = true
@@ -116,7 +105,7 @@ interface main {
         if (g.dragDropActive && g.dragDropPayload.sourceId == g.activeId)
             keepAliveID(g.dragDropPayload.sourceId)
 
-        // Clear reference to active widget if the widget isn't alive anymore
+        // Update HoveredId data
         if (g.hoveredIdPreviousFrame == 0)
             g.hoveredIdTimer = 0f
         if (g.hoveredIdPreviousFrame == 0 || (g.hoveredId != 0 && g.activeId == g.hoveredId))
@@ -128,6 +117,8 @@ interface main {
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
+
+        // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
         if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
             clearActiveID()
         if (g.activeId != 0)
@@ -170,15 +161,6 @@ interface main {
         // Update mouse input state
         updateMouseInputs()
 
-        // Calculate frame-rate for the user, as a purely luxurious feature
-        g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
-        g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
-        g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        io.framerate = when {
-            g.framerateSecPerFrameAccum > 0f -> 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size)
-            else -> Float.MAX_VALUE
-        }
-
         // Find hovered window
         // (needs to be before UpdateMouseMovingWindowNewFrame so we fill g.HoveredWindowUnderMovingWindow on the mouse release frame)
         updateHoveredWindowAndCaptureFlags()
@@ -200,35 +182,8 @@ interface main {
         // Mouse wheel scrolling, scale
         updateMouseWheel()
 
-        // Pressing TAB activate widget focus
-        g.focusTabPressed = g.navWindow?.let { it.active && it.flags hasnt Wf.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed } == true
-        if (g.activeId == 0 && g.focusTabPressed) {
-            // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
-            // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
-            g.focusRequestNextWindow = g.navWindow
-            g.focusRequestNextCounterRegular = Int.MAX_VALUE
-            g.focusRequestNextCounterTabStop = when {
-                g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
-                else -> if (io.keyShift) -1 else 0
-            }
-        }
-
-        // Turn queued focus request into current one
-        g.focusRequestCurrWindow = null
-        g.focusRequestCurrCounterTabStop = Int.MAX_VALUE
-        g.focusRequestCurrCounterRegular = Int.MAX_VALUE
-        g.focusRequestNextWindow?.let { window ->
-            g.focusRequestCurrWindow = window
-            if (g.focusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
-                g.focusRequestCurrCounterRegular = modPositive(g.focusRequestNextCounterRegular, window.dc.focusCounterRegular + 1)
-            if (g.focusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
-                g.focusRequestCurrCounterTabStop = modPositive(g.focusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
-            g.focusRequestNextWindow = null
-            g.focusRequestNextCounterTabStop = Int.MAX_VALUE
-            g.focusRequestNextCounterRegular = Int.MAX_VALUE
-        }
-
-        g.navIdTabCounter = Int.MAX_VALUE
+        // Update legacy TAB focus
+        updateTabFocus()
 
         // Mark all windows as not visible and compact unused memory.
         assert(g.windowsFocusOrder.size == g.windows.size)
