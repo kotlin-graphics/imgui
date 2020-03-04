@@ -21,6 +21,7 @@ import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
+import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
@@ -80,9 +81,31 @@ object CustomRendering {
 
         if (beginTabBar("##TabBar")) {
 
-            // Primitives
             if (beginTabItem("Primitives")) {
+
                 pushItemWidth(-fontSize * 10)
+
+                // Draw gradients
+                // (note that those are currently exacerbating our sRGB/Linear issues)
+                text("Gradients")
+                val gradientSize = Vec2(calcItemWidth(), frameHeight)
+                run {
+                    val p = cursorScreenPos
+                    val colA = Vec4(0f, 0f, 0f, 1f).u32
+                    val colB = Vec4(1f).u32
+                    drawList.addRectFilledMultiColor(p, Vec2(p.x + gradientSize.x, p.y + gradientSize.y), colA, colB, colB, colA)
+                    invisibleButton("##gradient1", gradientSize)
+                }
+                run {
+                    val p = cursorScreenPos
+                    val colA = Vec4(0f, 1f, 0f, 1f).u32
+                    val colB = Vec4(1f, 0f, 0f, 1f).u32
+                    drawList.addRectFilledMultiColor(p, Vec2(p.x + gradientSize.x, p.y + gradientSize.y), colA, colB, colB, colA)
+                    invisibleButton("##gradient2", gradientSize)
+                }
+
+                // Draw a bunch of primitives
+                text("All primitives")
                 dragFloat("Size", ::sz, 0.2f, 2.0f, 72.0f, "%.0f")
                 dragFloat("Thickness", ::thickness, 0.05f, 1.0f, 8.0f, "%.02f")
                 sliderInt("N-gon sides", ::ngonSides, 3, 12)
@@ -131,24 +154,6 @@ object CustomRendering {
                     addRectFilled(Vec2(x, y), Vec2(x + 1, y + 1), col); x += sz            // Pixel (faster than AddLine)
                 }
                 dummy(Vec2((sz + spacing) * 9.8f, (sz + spacing) * 3))
-
-                // Draw black and white gradients
-                separator()
-                alignTextToFramePadding()
-                text("Gradient steps")
-                sameLine(); if (radioButton("16", gradientSteps == 16)) gradientSteps = 16
-                sameLine(); if (radioButton("32", gradientSteps == 32)) gradientSteps = 32
-                sameLine(); if (radioButton("256", gradientSteps == 256)) gradientSteps = 256
-                val gradientSize = Vec2(calcItemWidth(), 64f)
-                x = cursorScreenPos.x
-                y = cursorScreenPos.y
-                for (n in 0 until gradientSteps) {
-                    val f0 = n / gradientSteps.f
-                    val f1 = (n + 1) / gradientSteps.f
-                    val col32 = Vec4(f0, f0, f0, 1f).u32
-                    drawList.addRectFilled(Vec2(x + gradientSize.x * f0, y), Vec2(x + gradientSize.x * f1, y + gradientSize.y), col32)
-                }
-                invisibleButton("##gradient", gradientSize)
 
                 popItemWidth()
                 endTabItem()
@@ -214,13 +219,11 @@ object CustomRendering {
                 sameLine(); helpMarker("The Background draw list will be rendered below every Dear ImGui windows.")
                 checkbox("Draw in Foreground draw list", ::drawFg)
                 sameLine(); helpMarker("The Foreground draw list will be rendered over every Dear ImGui windows.")
-                val windowPos = windowPos
-                val windowSize = windowSize
                 val windowCenter = Vec2(windowPos.x + windowSize.x * 0.5f, windowPos.y + windowSize.y * 0.5f)
                 if (drawBg)
-                    backgroundDrawList.addCircle(windowCenter, windowSize.x * 0.6f, COL32(255, 0, 0, 200), 48, 10f + 4)
+                    backgroundDrawList.addCircle(windowCenter, windowSize.x * 0.6f, COL32(255, 0, 0, 200), 0, 10f + 4)
                 if (drawFg)
-                    foregroundDrawList.addCircle(windowCenter, windowSize.y * 0.6f, COL32(0, 255, 0, 200), 48, 10f)
+                    foregroundDrawList.addCircle(windowCenter, windowSize.y * 0.6f, COL32(0, 255, 0, 200), 0, 10f)
                 endTabItem()
             }
             endTabBar()
