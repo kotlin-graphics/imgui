@@ -239,7 +239,7 @@ interface parametersStacks {
 
     // Parameters stacks (current window)
 
-    /** set width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
+    /** push width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
      *  (so -1.0f always align width to the right side). 0.0f = default to ~2/3 of windows width,     */
     fun pushItemWidth(itemWidth: Int) = pushItemWidth(itemWidth.f)
 
@@ -284,7 +284,7 @@ interface parametersStacks {
         return floor(w)
     }
 
-    /** word-wrapping for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column);
+    /** push word-wrapping position for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column);
      *  > 0.0f: wrap at 'wrapLocalPosX' position in window local space */
     fun pushTextWrapPos(wrapLocalPosX: Float = 0f) = with(currentWindow.dc) {
         textWrapPos = wrapLocalPosX

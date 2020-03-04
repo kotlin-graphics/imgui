@@ -246,7 +246,7 @@ internal interface inputText {
         if (isReadOnly && state != null && (renderCursor || renderSelection)) {
             if (state.textW.size < buf.size)
                 state.textW = CharArray(buf.size)
-            else if(state.textW.size > buf.size)
+            else if (state.textW.size > buf.size)
                 state.textW[buf.size] = NUL
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd(0))
             state.curLenA = bufEnd.x
@@ -841,29 +841,44 @@ internal interface inputText {
 
     /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
      *  FIXME: Facilitate using this in variety of other situations. */
-    fun tempInputTextScalar(bb: Rect, id: ID, label: String, dataType: DataType,
-                            pData: KMutableProperty0<*>, format_: String): Boolean {
+    fun tempInputText(bb: Rect, id: ID, label: String, buf: ByteArray, flags: InputTextFlags): Boolean {
+        // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
+        // We clear ActiveID on the first frame to allow the InputText() taking it back.
+        val init = g.tempInputId != id
+
+        if (init)
+            clearActiveID()
+
+        g.currentWindow!!.dc.cursorPos put bb.min
+        val valueChanged = inputTextEx(label, null, buf, bb.size, flags)
+        if (init) {
+            // First frame we started displaying the InputText widget, we expect it to take the active id.
+            assert(g.activeId == id)
+            g.tempInputId = g.activeId
+        }
+        return valueChanged
+    }
+
+    /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
+     *  FIXME: Facilitate using this in variety of other situations. */
+    fun tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType,
+                        pData: KMutableProperty0<*>, format_: String): Boolean {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
-        val init = g.tempInputTextId != id
+        val init = g.tempInputId != id
         if (init)
             clearActiveID()
 
         val format = parseFormatTrimDecorations(format_)
         val dataBuf = pData.format(dataType, format).trim()
 
-        g.currentWindow!!.dc.cursorPos put bb.min
         val flags: InputTextFlags = Itf.AutoSelectAll or Itf._NoMarkEdited or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
         val buf = dataBuf.toByteArray(32)
-        var valueChanged = inputTextEx(label, null, buf, bb.size, flags)
-        if (init) {
-            assert(g.activeId == id) { "First frame we started displaying the InputText widget, we expect it to take the active id." }
-            g.tempInputTextId = g.activeId
-        }
+        var valueChanged = tempInputText(bb, id, label, dataBuf.toByteArray(), flags)
         if (valueChanged) {
             valueChanged = dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
             if (valueChanged)
@@ -872,7 +887,7 @@ internal interface inputText {
         return valueChanged
     }
 
-    fun tempInputTextIsActive(id: ID): Boolean = g.activeId == id && g.tempInputTextId == id
+    fun tempInputIsActive(id: ID): Boolean = g.activeId == id && g.tempInputId == id
 
     companion object {
         /** Return false to discard a character.    */
@@ -940,7 +955,7 @@ internal interface inputText {
 
         /** @return [JVM] [lineCount, textEnd] */
         fun inputTextCalcTextLenAndLineCount(text: ByteArray): Pair<Int, Int> {
-            if(text.isEmpty()) return 1 to 0
+            if (text.isEmpty()) return 1 to 0
             var lineCount = 0
             var s = 0
             var c = text[s++]
