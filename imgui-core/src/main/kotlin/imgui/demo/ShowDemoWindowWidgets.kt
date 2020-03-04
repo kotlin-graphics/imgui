@@ -280,6 +280,7 @@ object ShowDemoWindowWidgets {
 
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
+    var noBorder = false
     var alphaPreview = true
     var alphaHalfPreview = false
     var dragAndDrop = true
@@ -1003,7 +1004,8 @@ object ShowDemoWindowWidgets {
                 }
             }
             text("Color button only:")
-            colorButton("MyColor##3c", color, miscFlags, Vec2(80, 80))
+            checkbox("ImGuiColorEditFlags_NoBorder", ::noBorder)
+            colorButton("MyColor##3c", color, miscFlags or if(noBorder) Cef.NoBorder else Cef.None, Vec2(80))
 
             text("Color picker:")
             checkbox("With Alpha", ::alpha)

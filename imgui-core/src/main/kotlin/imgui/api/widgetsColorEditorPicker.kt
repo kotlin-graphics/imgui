@@ -1,14 +1,12 @@
 package imgui.api
 
 import gli_.has
-import glm_.b
 import glm_.func.cos
 import glm_.func.sin
 import glm_.glm
 import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.acceptDragDropPayload
@@ -68,7 +66,6 @@ import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import unsigned.toUInt
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 import imgui.internal.DrawCornerFlag as Dcf
@@ -535,16 +532,16 @@ interface widgetsColorEditorPicker {
             val subFlagsToForward = Cef._DataTypeMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.NoOptions or Cef.NoSmallPreview or
                     Cef.AlphaPreview or Cef.AlphaPreviewHalf
             val subFlags = (flags and subFlagsToForward) or Cef.NoPicker
-            if(flags has Cef.DisplayRGB || flags hasnt Cef._DisplayMask)
+            if (flags has Cef.DisplayRGB || flags hasnt Cef._DisplayMask)
                 if (colorEdit4("##rgb", col, subFlags or Cef.DisplayRGB)) {
                     // FIXME: Hackily differentiating using the DragInt (ActiveId != 0 && !ActiveIdAllowOverlap) vs. using the InputText or DropTarget.
                     // For the later we don't want to run the hue-wrap canceling code. If you are well versed in HSV picker please provide your input! (See #2050)
                     valueChangedFixHueWrap = g.activeId != 0 && !g.activeIdAllowOverlap
                     valueChanged = true
                 }
-            if(flags has Cef.DisplayHSV || flags hasnt Cef._DisplayMask)
+            if (flags has Cef.DisplayHSV || flags hasnt Cef._DisplayMask)
                 valueChanged = colorEdit4("##hsv", col, subFlags or Cef.DisplayHSV) || valueChanged
-            if(flags has Cef.DisplayHEX || flags hasnt Cef._DisplayMask)
+            if (flags has Cef.DisplayHEX || flags hasnt Cef._DisplayMask)
                 valueChanged = colorEdit4("##hex", col, subFlags or Cef.DisplayHEX) || valueChanged
             popItemWidth()
         }
@@ -727,10 +724,11 @@ interface widgetsColorEditorPicker {
         val gridStep = glm.min(size.x, size.y) / 2.99f
         val rounding = glm.min(style.frameRounding, gridStep * 0.5f)
         val bbInner = Rect(bb)
-        /*  The border (using Col.FrameBg) tends to look off when color is near-opaque and rounding is enabled.
-            This offset seemed like a good middle ground to reduce those artifacts.  */
-        val off = -0.75f
-        bbInner expand off
+        var off = 0f
+        if (flags hasnt Cef.NoBorder) {
+            off = -0.75f // The border (using Col_FrameBg) tends to look off when color is near-opaque and rounding is enabled. This offset seemed like a good middle ground to reduce those artifacts.
+            bbInner expand off
+        }
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
@@ -747,10 +745,12 @@ interface widgetsColorEditorPicker {
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, Dcf.All.i)
         }
         renderNavHighlight(bb, id)
-        if (style.frameBorderSize > 0f)
-            renderFrameBorder(bb.min, bb.max, rounding)
-        else
-            window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)  // Color button are often in need of some sort of border
+        // Color button are often in need of some sort of border
+        if (flags hasnt Cef.NoBorder)
+            if (g.style.frameBorderSize > 0f)
+                renderFrameBorder(bb.min, bb.max, rounding)
+            else
+                window.drawList.addRect(bb.min, bb.max, Col.FrameBg.u32, rounding)
 
         /*  Drag and Drop Source
             NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.         */
