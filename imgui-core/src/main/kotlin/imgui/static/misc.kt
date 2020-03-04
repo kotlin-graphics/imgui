@@ -13,22 +13,45 @@ import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.popID
 import imgui.ImGui.pushID
+import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g
+import imgui.dsl.tooltip
+import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.classes.Window.Companion.resizeGripDef
-import imgui.dsl.tooltip
-import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
+
+// Called by NewFrame()
+fun updateSettings() {
+    // Load settings on first frame (if not explicitly loaded manually before)
+    if (!g.settingsLoaded) {
+        assert(g.settingsWindows.isEmpty())
+        io.iniFilename?.let(::loadIniSettingsFromDisk)
+        g.settingsLoaded = true
+    }
+
+    // Save settings (with a delay after the last modification, so we don't spam disk too much)
+    if (g.settingsDirtyTimer > 0f) {
+        g.settingsDirtyTimer -= io.deltaTime
+        if (g.settingsDirtyTimer <= 0f) {
+            io.iniFilename?.let(::saveIniSettingsToDisk) ?: run {
+                io.wantSaveIniSettings = true  // Let user know they can call SaveIniSettingsToMemory(). user will need to clear io.WantSaveIniSettings themselves.
+            }
+            g.settingsDirtyTimer = 0f
+        }
+    }
+}
 
 fun updateMouseInputs() {
 
@@ -183,7 +206,7 @@ fun updateMouseWheel() {
 
 /** Handle resize for: Resize Grips, Borders, Gamepad
  * @return [JVM] borderHelf to Boolean   */
-fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Pair<Int, Boolean> {
+fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Pair<Int, Boolean> {
 
     var borderHeld = borderHeld_
 
@@ -312,6 +335,40 @@ fun updateManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resi
     return borderHeld to retAutoFit
 }
 
+fun updateTabFocus() {
+
+    // Pressing TAB activate widget focus
+    g.focusTabPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed }
+            ?: false
+    if (g.activeId == 0 && g.focusTabPressed) {
+        // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
+        // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
+        g.focusRequestNextWindow = g.navWindow
+        g.focusRequestNextCounterRegular = Int.MAX_VALUE
+        g.focusRequestNextCounterTabStop = when {
+            g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
+            else -> if (io.keyShift) -1 else 0
+        }
+    }
+
+    // Turn queued focus request into current one
+    g.focusRequestCurrWindow = null
+    g.focusRequestCurrCounterRegular = Int.MAX_VALUE
+    g.focusRequestCurrCounterTabStop = Int.MAX_VALUE
+    g.focusRequestNextWindow?.let { window ->
+        g.focusRequestCurrWindow = window
+        if (g.focusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
+            g.focusRequestCurrCounterRegular = modPositive(g.focusRequestNextCounterRegular, window.dc.focusCounterRegular+1)
+        if (g.focusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
+            g.focusRequestCurrCounterTabStop = modPositive(g.focusRequestNextCounterTabStop, window.dc.focusCounterTabStop+1)
+        g.focusRequestNextWindow = null
+        g.focusRequestNextCounterRegular = Int.MAX_VALUE
+        g.focusRequestNextCounterTabStop = Int.MAX_VALUE
+    }
+
+    g.navIdTabCounter = Int.MAX_VALUE
+}
+
 /** [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack. */
 fun updateDebugToolItemPicker() {
 
@@ -329,7 +386,7 @@ fun updateDebugToolItemPicker() {
         setNextWindowBgAlpha(0.6f)
         tooltip {
             text("HoveredId: 0x%08X", hoveredId)
-            text("Press ESC to abort picking.");
+            text("Press ESC to abort picking.")
             textColored(getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
         }
     }
