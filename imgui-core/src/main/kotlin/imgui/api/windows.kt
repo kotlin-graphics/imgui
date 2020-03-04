@@ -604,7 +604,6 @@ interface windows {
                 dc.focusCounterTabStop = -1
                 dc.focusCounterRegular = -1
 
-                dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
                 dc.itemFlagsStack.clear()
@@ -612,10 +611,9 @@ interface windows {
                 dc.textWrapPosStack.clear()
                 dc.groupStack.clear()
 
-                if (flags has Wf._ChildWindow && dc.itemFlags != parentWindow!!.dc.itemFlags) {
-                    dc.itemFlags = parentWindow.dc.itemFlags
-                    dc.itemFlagsStack.add(dc.itemFlags)
-                }
+                dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
+                if (parentWindow != null)
+                    dc.itemFlagsStack += dc.itemFlags
 
                 if (autoFitFrames.x > 0) autoFitFrames.x--
                 if (autoFitFrames.y > 0) autoFitFrames.y--
