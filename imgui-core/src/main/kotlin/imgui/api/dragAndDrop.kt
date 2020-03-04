@@ -83,9 +83,9 @@ interface dragAndDrop {
             sourceDragActive = isMouseDragging(mouseButton)
 
             // Disable navigation and key inputs while dragging
-            g.activeIdUsingNavDirMask = 0.inv()
-            g.activeIdUsingNavInputMask = 0.inv()
-            g.activeIdUsingKeyInputMask = 0L.inv()
+            g.activeIdUsingNavDirMask = -1
+            g.activeIdUsingNavInputMask = -1
+            g.activeIdUsingKeyInputMask = -1L
         } else {
             window = null
             sourceId = hash("#SourceExtern")
