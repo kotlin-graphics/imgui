@@ -454,6 +454,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** If no custom clipboard handler is defined   */
     var privateClipboard = ""
 
+    /** A list of menu IDs that were rendered at least once */
+    val renderedMenusId = ArrayList<ID>()
+
 
     // Platform support
 
