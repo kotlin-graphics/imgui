@@ -38,8 +38,8 @@ import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.sliderBehavior
 import imgui.ImGui.style
-import imgui.ImGui.tempInputTextIsActive
-import imgui.ImGui.tempInputTextScalar
+import imgui.ImGui.tempInputIsActive
+import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
 import imgui.internal.SliderFlag
@@ -169,7 +169,7 @@ interface widgetsSliders {
 
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         val hovered = itemHoverable(frameBb, id)
-        val tempInputIsActive = tempInputTextIsActive(id)
+        val tempInputIsActive = tempInputIsActive(id)
         var tempInputStart = false
         if (!tempInputIsActive) {
             val focusRequested = focusableItemRegister(window, id)
@@ -187,7 +187,7 @@ interface widgetsSliders {
         }
 
         if (tempInputIsActive || tempInputStart)
-            return tempInputTextScalar(frameBb, id, label, DataType.Float, pData, format)
+            return tempInputScalar(frameBb, id, label, DataType.Float, pData, format)
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg

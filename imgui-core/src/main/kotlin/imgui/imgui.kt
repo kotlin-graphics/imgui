@@ -116,7 +116,7 @@ var MINECRAFT_BEHAVIORS = false
 object ImGui :
 //-----------------------------------------------------------------------------
 // ImGui: Dear ImGui end-user API
-// (Inside a namespace so you can add extra functions in your own separate file. Please don't modify imgui source files!)
+// (This is a namespace. You can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
 //-----------------------------------------------------------------------------
 // context doesnt exist, only Context class
         main,
@@ -153,6 +153,7 @@ object ImGui :
         focusActivation,
         itemWidgetsUtilities,
         miscellaneousUtilities,
+        textUtilities,
         colorUtilities,
         inputUtilitiesKeyboard,
         inputUtilitiesMouse,
