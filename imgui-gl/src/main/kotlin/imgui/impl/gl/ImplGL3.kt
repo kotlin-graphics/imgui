@@ -33,6 +33,7 @@ import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
 import org.lwjgl.system.Platform
+import org.lwjgl.system.MemoryStack
 
 class ImplGL3 : GLInterface {
 
@@ -126,7 +127,15 @@ class ImplGL3 : GLInterface {
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
         val lastPolygonMode = when {
-            POLYGON_MODE -> glGetInteger(GL_POLYGON_MODE)
+            POLYGON_MODE -> {
+                val stack = MemoryStack.stackGet()
+                val sp = stack.getPointer()
+                val params = stack.callocInt(2);
+                glGetIntegerv(GL_POLYGON_MODE, params)
+                val tmp = params.get(0)
+                stack.setPointer(sp)
+                tmp
+            }
             else -> 0
         }
         val lastViewport = glGetVec4i(GL_VIEWPORT)
