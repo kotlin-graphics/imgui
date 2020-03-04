@@ -1,6 +1,5 @@
 package imgui.demo.showExampleApp
 
-import glm_.L
 import glm_.c
 import glm_.f
 import glm_.i
@@ -68,6 +67,7 @@ object StyleEditor {
 
     var init = true
     var refSavedStyle: Style? = null
+
     // Default Styles Selector
     var styleIdx = 0
 
@@ -285,6 +285,10 @@ object StyleEditor {
                                                 tooltip {
                                                     text("Codepoint: U+%04X", base + n)
                                                     separator()
+                                                    if (DEBUG)
+                                                        text("Visible: ${glyph.visible}")
+                                                    else
+                                                        text("Visible: ${glyph.visible.i}")
                                                     text("AdvanceX+1: %.1f", glyph.advanceX)
                                                     text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
                                                     text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
