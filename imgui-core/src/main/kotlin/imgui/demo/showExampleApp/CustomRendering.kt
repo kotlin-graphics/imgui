@@ -143,14 +143,15 @@ object CustomRendering {
                 x = cursorScreenPos.x
                 y = cursorScreenPos.y
                 for (n in 0 until gradientSteps) {
-                    val f = n / gradientSteps.f
-                    val col32 = Vec4(f, f, f, 1f).u32
-                    drawList.addRectFilled(Vec2(x + gradientSize.x * (n / gradientSteps.f), y), Vec2(x + gradientSize.x * ((n + 1) / gradientSteps), y + gradientSize.y), col32)
-                    endTabItem()
+                    val f0 = n / gradientSteps.f
+                    val f1 = (n + 1) / gradientSteps.f
+                    val col32 = Vec4(f0, f0, f0, 1f).u32
+                    drawList.addRectFilled(Vec2(x + gradientSize.x * f0, y), Vec2(x + gradientSize.x * f1, y + gradientSize.y), col32)
                 }
                 invisibleButton("##gradient", gradientSize)
 
                 popItemWidth()
+                endTabItem()
             }
 
             if (beginTabItem("Canvas")) {
