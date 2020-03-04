@@ -44,7 +44,7 @@ interface main {
         get() = gImGui?.io
                 ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
-    /** access the Style structure (colors, sizes). Always use PushStyleCol(), PushStyleVar() to modify style mid-frame. */
+    /** access the Style structure (colors, sizes). Always use PushStyleCol(), PushStyleVar() to modify style mid-frame! */
     val style: Style
         get() = gImGui?.style
                 ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
@@ -139,8 +139,8 @@ interface main {
         g.activeIdHasBeenEditedThisFrame = false
         g.activeIdPreviousFrameIsAlive = false
         g.activeIdIsJustActivated = false
-        if (g.tempInputTextId != 0 && g.activeId != g.tempInputTextId)
-            g.tempInputTextId = 0
+        if (g.tempInputId != 0 && g.activeId != g.tempInputId)
+            g.tempInputId = 0
         if (g.activeId == 0) {
             g.activeIdUsingNavInputMask = 0
             g.activeIdUsingNavDirMask = 0
@@ -268,9 +268,9 @@ interface main {
             Hook.postNewFrame!!(g)
     }
 
-    /** Ends the Dear ImGui frame. automatically called by ::render(), you likely don't need to call that yourself directly.
-     *  If you don't need to render data (skipping rendering) you may call ::endFrame() but you'll have wasted CPU already!
-     *  If you don't need to render, better to not create any imgui windows and not call ::newFrame() at all!  */
+    /** Ends the Dear ImGui frame. automatically called by ::render().
+     *  If you don't need to render data (skipping rendering) you may call ::endFrame() without Render()... but you'll have wasted CPU already!
+     *  If you don't need to render, better to not create any windows and not call ::newFrame() at all!  */
     fun endFrame() {
 
         assert(g.initialized)
@@ -344,8 +344,7 @@ interface main {
         io.navInputs.fill(0f)
     }
 
-    /** ends the Dear ImGui frame, finalize the draw data. You can get call GetDrawData() to obtain it and run your rendering function.
-     *  (Obsolete: this used to call io.RenderDrawListsFn(). Nowadays, we allow and prefer calling your render function yourself.)   */
+    /** ends the Dear ImGui frame, finalize the draw data. You can get call GetDrawData() to obtain it and run your rendering function (up to v1.60, this used to call io.RenderDrawListsFn(). Nowadays, we allow and prefer calling your render function yourself.)   */
     fun render() {
 
         assert(g.initialized)

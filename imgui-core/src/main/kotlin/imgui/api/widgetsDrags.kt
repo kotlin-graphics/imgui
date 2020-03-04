@@ -37,8 +37,8 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.style
-import imgui.ImGui.tempInputTextIsActive
-import imgui.ImGui.tempInputTextScalar
+import imgui.ImGui.tempInputIsActive
+import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
 import imgui.internal.DragFlag
 import imgui.internal.classes.Rect
@@ -229,7 +229,7 @@ interface widgetsDrags {
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         val hovered = itemHoverable(frameBb, id)
-        val tempInputIsActive = tempInputTextIsActive(id)
+        val tempInputIsActive = tempInputIsActive(id)
         var tempInputStart = false
         if (!tempInputIsActive) {
             val focusRequested = focusableItemRegister(window, id)
@@ -247,7 +247,7 @@ interface widgetsDrags {
             }
         }
         if (tempInputIsActive || tempInputStart)
-            return tempInputTextScalar(frameBb, id, label, dataType, pData, format)
+            return tempInputScalar(frameBb, id, label, dataType, pData, format)
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
