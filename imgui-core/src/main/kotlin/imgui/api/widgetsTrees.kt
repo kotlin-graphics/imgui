@@ -139,7 +139,9 @@ interface widgetsTrees {
         if (open?.get()  == false) return false
 
         val id = window.getID(label)
-        val flags = flags_ or Tnf.CollapsingHeader or if (open != null) Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton else 0
+        var flags = flags_ or Tnf.CollapsingHeader
+        if (open != null)
+            flags = flags or Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton
         val isOpen = treeNodeBehavior(id, flags, label)
         if (open != null) {
             /*  Create a small overlapping close button
