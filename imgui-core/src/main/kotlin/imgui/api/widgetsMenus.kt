@@ -179,11 +179,26 @@ interface widgetsMenus {
         if (window.skipItems) return false
 
         val id = window.getID(label)
+        var menuIsOpen = isPopupOpen(id)
+        var flags = Wf._ChildMenu or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoTitleBar or Wf.NoSavedSettings or Wf.NoNavFocus
+
+        // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal focus and not allow hovering on parent menu)
+        if (window.flags has (Wf._Popup or Wf._ChildMenu))
+            flags = flags or Wf._ChildWindow
+
+        if (id in g.renderedMenusId) {
+            // Menu with same ID was already created - append to it.
+            if (menuIsOpen)
+                menuIsOpen = beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
+            if (!menuIsOpen)
+                g.nextWindowData.clearFlags()          // We behave like Begin() and need to consume those values
+            return menuIsOpen
+        } else
+            g.renderedMenusId += id            // Tag menu as used. Next time BeginMenu() with same ID is called it will append to existing menu.
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pressed: Boolean
-        var menuIsOpen = isPopupOpen(id)
         val menusetIsOpen = window.flags hasnt Wf._Popup && g.openPopupStack.size > g.beginPopupStack.size &&
                 g.openPopupStack[g.beginPopupStack.size].openParentId == window.idStack.last()
         val backedNavWindow = g.navWindow
@@ -296,13 +311,8 @@ interface widgetsMenus {
         if (wantOpen) openPopup(label)
 
         if (menuIsOpen) {
-            // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal focus and not allow hovering on parent menu)
             setNextWindowPos(popupPos, Cond.Always)
-            var flags = Wf._ChildMenu or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoTitleBar or Wf.NoSavedSettings or Wf.NoNavFocus
-            if (window.flags has (Wf._Popup or Wf._ChildMenu))
-                flags = flags or Wf._ChildWindow
-            // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
-            menuIsOpen = beginPopupEx(id, flags)
+            menuIsOpen = beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
         } else
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
 
