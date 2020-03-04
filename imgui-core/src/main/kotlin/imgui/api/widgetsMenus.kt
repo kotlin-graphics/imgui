@@ -40,11 +40,9 @@ import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
+import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.min
-import imgui.internal.*
-import imgui.internal.LayoutType
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -86,7 +84,7 @@ interface widgetsMenus {
 
         with(window.dc) {
             cursorPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
-            layoutType = LayoutType.Horizontal
+            layoutType = Lt.Horizontal
             navLayerCurrent = NavLayer.Menu
             navLayerCurrentMask = 1 shl NavLayer.Menu
             menuBarAppending = true
@@ -134,7 +132,7 @@ interface widgetsMenus {
             menuBarOffset.x = cursorPos.x - window.menuBarRect().min.x
             groupStack.last().emitItem = false
             endGroup() // Restore position on layer 0
-            layoutType = LayoutType.Vertical
+            layoutType = Lt.Vertical
             navLayerCurrent = NavLayer.Main
             navLayerCurrentMask = 1 shl NavLayer.Main
             menuBarAppending = false
@@ -198,7 +196,7 @@ interface widgetsMenus {
             e.g. Menus tend to overlap each other horizontally to amplify relative Z-ordering.         */
         val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
-        if (window.dc.layoutType == LayoutType.Horizontal) {
+        if (window.dc.layoutType == Lt.Horizontal) {
             /*  Menu inside an horizontal menu bar
                 Selectable extend their highlight by half ItemSpacing in each direction.
                 For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in begin() */
@@ -219,7 +217,7 @@ interface widgetsMenus {
             val extraW = glm.max(0f, contentRegionAvail.x - w)
             val flags = Sf._NoHoldingActiveId or Sf._PressedOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
             pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
-            val textCol = if(enabled) Col.Text else Col.TextDisabled
+            val textCol = if (enabled) Col.Text else Col.TextDisabled
             window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
         }
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
@@ -243,10 +241,10 @@ interface widgetsMenus {
                 // FIXME-DPI: Values should be derived from a master "scale" factor.
                 val nextWindowRect = childMenuWindow.rect()
                 val ta = io.mousePos - io.mouseDelta
-                val tb = if(window.pos.x < childMenuWindow.pos.x) nextWindowRect.tl else nextWindowRect.tr
-                val tc = if(window.pos.x < childMenuWindow.pos.x) nextWindowRect.bl else nextWindowRect.br
-                val extra = glm.clamp (abs(ta.x - tb.x) * 0.3f, 5f, 30f)    // add a bit of extra slack.
-                ta.x += if(window.pos.x < childMenuWindow.pos.x) -0.5f else +0.5f // to avoid numerical issues
+                val tb = if (window.pos.x < childMenuWindow.pos.x) nextWindowRect.tl else nextWindowRect.tr
+                val tc = if (window.pos.x < childMenuWindow.pos.x) nextWindowRect.bl else nextWindowRect.br
+                val extra = glm.clamp(abs(ta.x - tb.x) * 0.3f, 5f, 30f)    // add a bit of extra slack.
+                ta.x += if (window.pos.x < childMenuWindow.pos.x) -0.5f else +0.5f // to avoid numerical issues
                 tb.y = ta.y + max((tb.y - extra) - ta.y, -100f)                // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus // FIXME: Multiply by fb_scale?
                 tc.y = ta.y + min((tc.y + extra) - ta.y, +100f)
                 movingTowardOtherChildMenu = triangleContainsPoint(ta, tb, tc, io.mousePos)
@@ -298,15 +296,16 @@ interface widgetsMenus {
         if (wantOpen) openPopup(label)
 
         if (menuIsOpen) {
-            /*  Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu
-                would steal focus and not allow hovering on parent menu)             */
+            // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal focus and not allow hovering on parent menu)
             setNextWindowPos(popupPos, Cond.Always)
             var flags = Wf._ChildMenu or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoTitleBar or Wf.NoSavedSettings or Wf.NoNavFocus
             if (window.flags has (Wf._Popup or Wf._ChildMenu))
                 flags = flags or Wf._ChildWindow
-            // menuIsOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
+            // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
             menuIsOpen = beginPopupEx(id, flags)
-        }
+        } else
+            g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
+
 
         return menuIsOpen
     }
@@ -338,7 +337,7 @@ interface widgetsMenus {
 
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
-        val flags = Sf._PressedOnRelease or Sf._SetNavIdOnHover or if(enabled) Sf.None else Sf.Disabled
+        val flags = Sf._PressedOnRelease or Sf._SetNavIdOnHover or if (enabled) Sf.None else Sf.Disabled
         val pressed: Boolean
         if (window.dc.layoutType == Lt.Horizontal) {
             /*  Mimic the exact layout spacing of beginMenu() to allow menuItem() inside a menu bar, which is a little 
