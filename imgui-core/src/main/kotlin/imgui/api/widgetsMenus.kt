@@ -52,7 +52,8 @@ import imgui.internal.LayoutType as Lt
 
 /** Menu
  *  - Use BeginMenuBar() on a window ImGuiWindowFlags_MenuBar to append to its menu bar.
- *  - Use BeginMainMenuBar() to create a menu bar at the top of the screen. */
+ *  - Use BeginMainMenuBar() to create a menu bar at the top of the screen and append to it.
+ *  - Use BeginMenu() to create a menu. You can call BeginMenu() multiple time with the same identifier to append more items to it. */
 interface widgetsMenus {
 
     /** Append to menu-bar of current window (requires WindowFlag.MenuBar flag set on parent window).
@@ -180,21 +181,25 @@ interface widgetsMenus {
 
         val id = window.getID(label)
         var menuIsOpen = isPopupOpen(id)
-        var flags = Wf._ChildMenu or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoTitleBar or Wf.NoSavedSettings or Wf.NoNavFocus
 
         // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal focus and not allow hovering on parent menu)
+        var flags = Wf._ChildMenu or Wf.AlwaysAutoResize or Wf.NoMove or Wf.NoTitleBar or Wf.NoSavedSettings or Wf.NoNavFocus
         if (window.flags has (Wf._Popup or Wf._ChildMenu))
             flags = flags or Wf._ChildWindow
 
-        if (id in g.renderedMenusId) {
-            // Menu with same ID was already created - append to it.
+        // If a menu with same the ID was already submitted, we will append to it, matching the behavior of Begin().
+        // We are relying on a O(N) search - so O(N log N) over the frame - which seems like the most efficient for the expected small amount of BeginMenu() calls per frame.
+        // If somehow this is ever becoming a problem we can switch to use e.g. a ImGuiStorager mapping key to last frame used.
+        if (id in g.menusIdSubmittedThisFrame) {
             if (menuIsOpen)
                 menuIsOpen = beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
-            if (!menuIsOpen)
-                g.nextWindowData.clearFlags()          // We behave like Begin() and need to consume those values
+            else
+                g.nextWindowData.clearFlags()          // we behave like Begin() and need to consume those values
             return menuIsOpen
-        } else
-            g.renderedMenusId += id            // Tag menu as used. Next time BeginMenu() with same ID is called it will append to existing menu.
+        }
+
+        // Tag menu as used. Next time BeginMenu() with same ID is called it will append to existing menu
+        g.menusIdSubmittedThisFrame += id
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 

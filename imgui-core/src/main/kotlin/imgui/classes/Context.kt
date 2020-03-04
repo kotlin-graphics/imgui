@@ -455,7 +455,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var privateClipboard = ""
 
     /** A list of menu IDs that were rendered at least once */
-    val renderedMenusId = ArrayList<ID>()
+    val menusIdSubmittedThisFrame = ArrayList<ID>()
 
 
     // Platform support
@@ -610,6 +610,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             shrinkWidthBuffer.clear()
 
             privateClipboard = ""
+            g.menusIdSubmittedThisFrame.clear()
             inputTextState.textW = CharArray(0)
             inputTextState.initialTextA = ByteArray(0)
             inputTextState.textA = ByteArray(0)
