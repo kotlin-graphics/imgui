@@ -126,7 +126,7 @@ class ImplGL3 : GLInterface {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
-         val lastPolygonMode = when {
+        val lastPolygonMode = when {
             POLYGON_MODE -> {
                 val stack = MemoryStack.stackGet()
                 val sp = stack.getPointer()
