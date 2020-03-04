@@ -130,12 +130,6 @@ object ExampleApp {
 
         // Menu Bar
         menuBar {
-            menu("Foo") {
-                menu("AAA") {}
-                menu("BBB") {}
-                menu("AAA") {}
-                menu("BBB") {}
-            }
             menu("Menu") { MenuFile() }
 //            stop = true
 //            println("nav window name " + g.navWindow?.rootWindow?.name)
