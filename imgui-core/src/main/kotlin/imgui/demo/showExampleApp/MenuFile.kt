@@ -43,6 +43,7 @@ object MenuFile {
         }
         menuItem("Save", "Ctrl+S")
         menuItem("Save As..")
+
         separator()
         menu("Options") {
             menuItem("Enabled", "", ::enabled)
@@ -53,8 +54,8 @@ object MenuFile {
             sliderFloat("Value", ::float, 0f, 1f)
             inputFloat("Input", ::float, 0.1f)
             combo("Combo", ::combo, "Yes\u0000No\u0000Maybe\u0000\u0000")
-            checkbox("Check", ::check)
         }
+
         menu("Colors") {
             val sz = textLineHeight
             for (col in Col.values()) {
@@ -65,8 +66,15 @@ object MenuFile {
                 sameLine()
                 menuItem(name)
             }
-
         }
+
+        // Here we demonstrate appending again to the "Options" menu (which we already created above)
+        // Of course in this demo it is a little bit silly that this function calls BeginMenu("Options") twice.
+        // In a real code-base using it would make senses to use this feature from very different code locations.
+        menu("Options") { // <-- Append!
+            checkbox("SomeOption", ::check)
+        }
+
         menu("Disabled", false) { assert(false) { "Disabled" } }
         menuItem("Checked", selected = true)
         menuItem("Quit", "Alt+F4")

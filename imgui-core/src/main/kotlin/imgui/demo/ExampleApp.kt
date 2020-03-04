@@ -29,14 +29,13 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.api.demoDebugInformations.Companion.helpMarker
-import imgui.api.g
 import imgui.classes.TextFilter
+import imgui.demo.showExampleApp.*
 import imgui.dsl.collapsingHeader
 import imgui.dsl.menu
 import imgui.dsl.menuBar
 import imgui.dsl.treeNode
 import imgui.dsl.window
-import imgui.demo.showExampleApp.*
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -131,6 +130,12 @@ object ExampleApp {
 
         // Menu Bar
         menuBar {
+            menu("Foo") {
+                menu("AAA") {}
+                menu("BBB") {}
+                menu("AAA") {}
+                menu("BBB") {}
+            }
             menu("Menu") { MenuFile() }
 //            stop = true
 //            println("nav window name " + g.navWindow?.rootWindow?.name)

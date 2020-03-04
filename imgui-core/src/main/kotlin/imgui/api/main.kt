@@ -84,7 +84,7 @@ interface main {
         g.frameCount += 1
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
-        g.renderedMenusId.clear()
+        g.menusIdSubmittedThisFrame.clear()
 
         // Setup current font and draw list shared data
         io.fonts.locked = true
