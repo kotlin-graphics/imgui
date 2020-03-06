@@ -630,7 +630,7 @@ class Font {
                     0x0178 -> 159 // Ÿ
                     else -> i
                 }
-                else -> i // TODO
+                else -> i
             }
         }
     }

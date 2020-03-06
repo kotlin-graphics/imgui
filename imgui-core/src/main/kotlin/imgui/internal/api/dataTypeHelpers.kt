@@ -22,9 +22,8 @@ internal interface dataTypeHelpers {
 
     //    IMGUI_API const ImGuiDataTypeInfo*  DataTypeGetInfo(ImGuiDataType data_type);
 
-    /** DataTypeFormatString TODO clean if it's fine */
-    fun KMutableProperty0<*>.format(dataType: DataType, format: String/*, size: Int = 0*/): /*CharArray*/
-            String {
+    /** DataTypeFormatString */
+    fun KMutableProperty0<*>.format(dataType: DataType, format: String): String {
         val arg = when (val t = this()) {
             // we need to intervene since java printf cant handle %u
             is Ubyte -> t.i
@@ -34,10 +33,6 @@ internal interface dataTypeHelpers {
             else -> t // normal scalar
         }
         return format.format(style.locale, arg)
-        /*return when (size) {
-            0 -> string.toCharArray()
-            else -> string.toCharArray(CharArray(size))
-        }*/
     }
 
     fun <N : Number> dataTypeApplyOp(dataType: DataType, op: Char, value1: N, value2: N): N {
@@ -217,9 +212,8 @@ internal interface dataTypeHelpers {
                         FIXME: We don't bother handling support for legacy operators since they are a little too crappy.
                         Instead we may implement a proper expression evaluator in the future.                 */
                     //sscanf(buf, format, data_ptr)
-                    false
-                else -> false
-//            else TODO
+                    TODO()
+                else -> TODO()
 //            {
 //                // Small types need a 32-bit buffer to receive the result from scanf()
 //                int v32;
