@@ -47,7 +47,7 @@ private class ImGuiOpenGL2_Mac {
         // Setup window
         glfw {
             errorCallback = { error, description -> println("Glfw Error $error: $description") }
-            GLFW.glfwInit() // TODO remove glfw from module-info.class
+            GLFW.glfwInit()
             windowHint {
                 debug = DEBUG
                 context.version = "2.0"
