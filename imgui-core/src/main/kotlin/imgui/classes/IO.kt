@@ -76,7 +76,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
      *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
      *  (was called io.OptMacOSXBehaviors prior to 1.63) */
-    var configMacOSXBehaviors = false  // JVM TODO
+    var configMacOSXBehaviors = false
     /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
     var configInputTextCursorBlink = true
     /** Enable resizing of windows from their edges and from the lower-left corner.

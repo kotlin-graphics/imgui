@@ -180,7 +180,7 @@ interface cursorLayout {
         if (groupContainsPrevActiveId && g.activeId != g.activeIdPreviousFrame)
             window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.Deactivated
 
-        window.dc.groupStack.pop() // TODO last() on top -> pop?
+        window.dc.groupStack.pop()
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }
 
