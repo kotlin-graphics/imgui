@@ -16,9 +16,9 @@ ext{
     kotlin_version = '1.3.70'
     kotlintest_version = '3.4.2'
     kx = "com.github.kotlin-graphics"
-    uno_version = '0cf66d34a0e2c94e1184528c2fa1bf23c15ff936'
+    uno_version = '0871c4d547449eca2796590adb7545e7e2926c21'
     vkk_version = '326f36ec13234cc93056980f4fc59ab3b7c4574f'
-    gln_version = '40443438c4a1d3018f96c80dba4488d47ea2c777'
+    gln_version = '62fa6187b18dabbdc1b6ef68ce771ca9d8279133'
     gli_version = 'aadbe89bf42f801c2ea55c5a38a2e748f7acdf14'
     glm_version = '1b4ac18dd1a3c23440d3f33596688aac60bc0141'
     unsigned_version = '18131d0fe0b7465a145a4502d31452c5ae0e59a1'
