@@ -71,7 +71,7 @@ object imeListener : WindowProc() {
                 else -> "new character> ${w.i}".also { latestChange = w.i }
             }
             if (DEBUG) println("Ime composition/keyLast = latestChange: 0x${w.asHexString}, how: $how")
-            window.charCallback!!(w.i)
+            window.charCB!!(w.i)
             NULL
         }
         WM_IME_SETCONTEXT -> {

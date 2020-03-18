@@ -78,7 +78,7 @@ public class OpenGL3 {
         }
 
         // Create window with graphics context
-        window = new GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example", NULL, new Vec2i(30), true);
+        window = new GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example", null, new Vec2i(30), true);
         window.makeContextCurrent();
         glfw.setSwapInterval(VSync.ON);   // Enable vsync
 
