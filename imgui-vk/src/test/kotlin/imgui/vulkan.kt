@@ -3,11 +3,14 @@ package imgui
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 import uno.glfw.windowHint.Api
+import uno.requiredInstanceExtensions
+import uno.vulkanSupported
 import vkk.*
 import vkk._10.structs.*
 import vkk.entities.VkDebugReportCallback
 import vkk.entities.VkDescriptorPool
 import vkk.entities.VkPipelineCache
+import vkk.extensions.VkDebugReport
 import vkk.identifiers.Device
 import vkk.identifiers.Instance
 import vkk.identifiers.PhysicalDevice
@@ -257,7 +260,7 @@ fun setupVulkan(extensions: ArrayList<String>) {
             instance = Instance(createInfo)
 
             // Setup the debug report callback
-            val debugReportCi = DebugReportCallbackCreateInfo(flags = VkDebugReport.ERROR_BIT_EXT or VkDebugReport.WARNING_BIT_EXT or VkDebugReport.PERFORMANCE_WARNING_BIT_EXT)
+            val debugReportCi = DebugReportCallbackCreateInfo(flags = VkDebugReport.ERROR_BIT_EXT.i or VkDebugReport.WARNING_BIT_EXT.i or VkDebugReport.PERFORMANCE_WARNING_BIT_EXT.i)
             debugReport = instance.createDebugReportCallbackEXT(debugReportCi)
         } else
         // Create Vulkan Instance without any debug feature

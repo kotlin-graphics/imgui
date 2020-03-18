@@ -1,5 +1,4 @@
 plugins {
-    id 'maven'
     id 'java'
     id "org.jetbrains.kotlin.jvm"
     id "com.github.johnrengelman.shadow"
@@ -8,7 +7,7 @@ plugins {
 ext.moduleName = "${group}.imgui_vk"
 
 dependencies {
-    implementation "$kot-stdlib"
+    implementation "$kot-stdlib-jdk8"
     implementation project(':imgui-core'), project(':imgui-glfw')
     implementation "$kx:uno-sdk:$uno_version"
     implementation "${kx}.glm:glm:$glm_version"
@@ -23,10 +22,10 @@ dependencies {
         implementation base
         if(it == "-vulkan") return
         String natives = "$base:natives-$lwjgl_natives"
-        testRuntime natives
+        testRuntimeOnly natives
         shadow natives
     }
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
 task lightJar(type: Jar) {
@@ -35,6 +34,7 @@ task lightJar(type: Jar) {
     exclude 'extraFonts'
     inputs.property("moduleName", moduleName)
 //    manifest.attributes('Automatic-Module-Name': moduleName)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -76,8 +76,14 @@ compileTestKotlin {
 }
 
 compileJava {
+    dependsOn(':compileKotlin')
+    inputs.property("moduleName", moduleName)
     doFirst {
-        options.compilerArgs = ['--module-path', classpath.asPath,]
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+                '--patch-module', "$moduleName=${sourceSets["main"].output.asPath}"]
         classpath = files()
     }
 }
+
+jar { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }

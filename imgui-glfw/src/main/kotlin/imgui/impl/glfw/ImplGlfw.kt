@@ -14,11 +14,12 @@ import imgui.api.g
 import imgui.impl.*
 import imgui.windowsIme.imeListener
 import kool.cap
+import kool.lim
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import uno.glfw.*
-import uno.glfw.GlfwWindow.CursorStatus
+import uno.glfw.GlfwWindow.CursorMode
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import kotlin.collections.set
@@ -73,7 +74,7 @@ class ImplGlfw @JvmOverloads constructor(
             backendPlatformUserData = null
             setClipboardTextFn = { _, text ->  glfwSetClipboardString(clipboardUserData as Long, text) }
             getClipboardTextFn = { glfwGetClipboardString(clipboardUserData as Long) }
-            clipboardUserData = window.handle.L
+            clipboardUserData = window.handle.value
 
             if (Platform.get() == Platform.WINDOWS)
                 imeWindowHandle = window.hwnd
@@ -87,7 +88,7 @@ class ImplGlfw @JvmOverloads constructor(
         mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
         mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
         mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this. [JVM] TODO
-        // mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR)
+//         mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR)
         mouseCursors[MouseCursor.ResizeNS.i] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)
         mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
         mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
@@ -102,10 +103,10 @@ class ImplGlfw @JvmOverloads constructor(
         // [JVM] Chain GLFW callbacks: our callbacks will be installed in parallel with any other already existing
         if (installCallbacks) {
             // native callbacks will be added at the GlfwWindow creation via default parameter
-            window.mouseButtonCallbacks["imgui"] = mouseButtonCallback
-            window.scrollCallbacks["imgui"] = scrollCallback
-            window.keyCallbacks["imgui"] = keyCallback
-            window.charCallbacks["imgui"] = charCallback
+            window.mouseButtonCBs["imgui"] = mouseButtonCallback
+            window.scrollCBs["imgui"] = scrollCallback
+            window.keyCBs["imgui"] = keyCallback
+            window.charCBs["imgui"] = charCallback
             imeListener.install(window)
         }
     }
@@ -124,7 +125,7 @@ class ImplGlfw @JvmOverloads constructor(
         repeat(io.mouseDown.size) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it] || glfwGetMouseButton(window.handle.L, it) != 0
+            io.mouseDown[it] = mouseJustPressed[it] || glfwGetMouseButton(window.handle.value, it) != 0
             mouseJustPressed[it] = false
         }
 
@@ -142,19 +143,19 @@ class ImplGlfw @JvmOverloads constructor(
 
     private fun updateMouseCursor() {
 
-        if (io.configFlags has ConfigFlag.NoMouseCursorChange || window.cursorStatus == CursorStatus.Disabled)
+        if (io.configFlags has ConfigFlag.NoMouseCursorChange || window.cursorMode == CursorMode.disabled)
             return
 
         val imguiCursor = mouseCursor
         if (imguiCursor == MouseCursor.None || io.mouseDrawCursor)
         // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-            window.cursorStatus = CursorStatus.Hidden
+            window.cursorMode = CursorMode.hidden
         else {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
             window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL }
                     ?: mouseCursors[MouseCursor.Arrow.i])
-            window.cursorStatus = CursorStatus.Normal
+            window.cursorMode = CursorMode.normal
         }
     }
 
@@ -163,10 +164,10 @@ class ImplGlfw @JvmOverloads constructor(
         io.navInputs.fill(0f)
         if (io.configFlags has ConfigFlag.NavEnableGamepad) {
             // Update gamepad inputs
-            val buttons = window.joystick1Buttons ?: ByteBuffer.wrap(byteArrayOf())
-            val buttonsCount = buttons.cap
-            val axes = window.joystick1Axes ?: FloatBuffer.wrap(floatArrayOf())
-            val axesCount = axes.cap
+            val buttons = Joystick._1.buttons ?: ByteBuffer.allocate(0)
+            val buttonsCount = buttons.lim
+            val axes = Joystick._1.axes ?: FloatBuffer.allocate(0)
+            val axesCount = axes.lim
 
             fun mapButton(nav: NavInput, button: Int) {
                 if (buttonsCount > button && buttons[button] == GLFW_PRESS.b)
@@ -239,17 +240,17 @@ class ImplGlfw @JvmOverloads constructor(
         fun newFrame() = instance.newFrame()
         fun shutdown() = instance.shutdown()
 
-        val mouseButtonCallback: MouseButtonCallbackT = { button: Int, action: Int, _: Int ->
+        val mouseButtonCallback: MouseButtonCB = { button: Int, action: Int, _: Int ->
             if (action == GLFW_PRESS && button in 0..2)
                 mouseJustPressed[button] = true
         }
 
-        val scrollCallback: ScrollCallbackT = { offset: Vec2d ->
+        val scrollCallback: ScrollCB = { offset: Vec2d ->
             io.mouseWheelH += offset.x.f
             io.mouseWheel += offset.y.f
         }
 
-        val keyCallback: KeyCallbackT = { key: Int, _: Int, action: Int, _: Int ->
+        val keyCallback: KeyCB = { key: Int, _: Int, action: Int, _: Int ->
             with(io) {
                 if (key in keysDown.indices)
                     if (action == GLFW_PRESS)
@@ -268,6 +269,6 @@ class ImplGlfw @JvmOverloads constructor(
             }
         }
 
-        val charCallback: CharCallbackT = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
+        val charCallback: CharCB = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
     }
 }

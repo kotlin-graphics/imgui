@@ -17,6 +17,8 @@ import unsigned.Ulong
 import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
+@Suppress("UNCHECKED_CAST")
+
 /** Data type helpers */
 internal interface dataTypeHelpers {
 
