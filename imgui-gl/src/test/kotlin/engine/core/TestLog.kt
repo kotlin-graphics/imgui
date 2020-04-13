@@ -1,5 +1,7 @@
 package engine.core
 
+import kotlinx.coroutines.yield
+
 //-------------------------------------------------------------------------
 // ImGuiTestLog
 //-------------------------------------------------------------------------
@@ -45,5 +47,20 @@ class TestLog {
 //            }
 //            p = p_eol ? p_eol + 1 : NULL
 //        }
+    }
+}
+
+//-------------------------------------------------------------------------
+// ImGuiTestCoroutine
+//-------------------------------------------------------------------------
+
+// A coroutine function - ctx is an arbitrary context object
+typealias TestCoroutineFunc = suspend (ctx: Any) -> Unit
+
+val testCoroutineFunc: TestCoroutineFunc = { ctx: Any ->
+    val engine = ctx as TestEngine
+    while (!engine.testQueueCoroutineShouldExit) {
+        engine.processTestQueue()
+        yield()
     }
 }

@@ -12,6 +12,8 @@ import imgui.*
 import imgui.api.gImGui
 import imgui.classes.Context
 import imgui.internal.InputSource
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.system.exitProcess
 
 //-------------------------------------------------------------------------
@@ -170,9 +172,6 @@ fun TestEngine.useSimulatedInputs(): Boolean =
 
 fun TestEngine.processTestQueue() {
 
-    assert(callDepth == 0)
-    callDepth++
-
     // Avoid tracking scrolling in UI when running a single test
     val trackScrolling = testsQueue.size > 1 || (testsQueue.size == 1 && testsQueue[0].runFlags has TestRunFlag.CommandLine)
 
@@ -236,7 +235,6 @@ fun TestEngine.processTestQueue() {
     io.runningTests = false
 
     abort = false
-    callDepth--
     testsQueue.clear()
 
     //ImGuiContext& g = *engine->UiTestContext;
@@ -369,9 +367,8 @@ fun TestEngine.postNewFrame(ctx: Context) {
     if (toolSlowDown)
         sleepInMilliseconds(toolSlowDownMs)
 
-    // Process on-going queues
-    if (callDepth == 0)
-        processTestQueue()
+    // Process on-going queues in a coroutine
+    testQueueCoroutine = GlobalScope.launch { testCoroutineFunc(this) }
 }
 
 fun TestEngine.runTest(ctx: TestContext, userData: Any?) {

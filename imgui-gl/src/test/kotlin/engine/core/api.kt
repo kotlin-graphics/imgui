@@ -65,7 +65,6 @@ fun TestEngine.shutdownContext() {
     userDataBuffer = null
 //    userDataBufferSize = 0
 
-    assert(callDepth == 0)
     clearTests()
     clearLocateTasks()
 
@@ -410,7 +409,7 @@ infix fun TestEngine.showTestGroup(group: TestGroup) {
                 uiSelectedTest = test
 
             // Process queuing
-            if (callDepth == 0)
+            if (!io.runningTests)
                 if (queueTest)
                     queueTest(test, TestRunFlag.ManualRun.i)
                 else if (queueGuiFunc)

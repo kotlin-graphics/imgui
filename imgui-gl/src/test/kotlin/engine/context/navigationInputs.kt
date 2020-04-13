@@ -67,7 +67,7 @@ infix fun TestContext.navMoveTo(ref: TestRef) {
         val rectRel = Rect(item.rectFull)
         val win = item.window!!
         rectRel translate Vec2(-win.pos.x, -win.pos.y)
-        ImGui.setNavIDWithRectRel(item.id, item.navLayer, 0, rectRel)
+        ImGui.setNavIDWithRectRel(item.id, item.navLayer, 0, rectRel)  // Ben- Not sure why this is needed in the coroutine case but not otherwise?
         win scrollToBringRectIntoView item.rectFull
         while (g.navMoveRequest)
             yield()

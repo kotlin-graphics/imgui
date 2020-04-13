@@ -7,6 +7,7 @@ import imgui.ID
 import imgui.cStr
 import imgui.classes.Context
 import imgui.classes.TextFilter
+import kotlinx.coroutines.Job
 import unsigned.toULong
 import java.nio.ByteBuffer
 
@@ -42,11 +43,14 @@ class TestEngine {
     val testsAll = ArrayList<Test>()
     val testsQueue = ArrayList<TestRunTask>()
     var testContext: TestContext? = null
-    var callDepth = 0
     val locateTasks = ArrayList<TestLocateTask>()
     val gatherTask = TestGatherTask()
     var userDataBuffer: ByteBuffer? = null
     var userData: Any? = null
+
+    /** Coroutine to run the test queue */
+    var testQueueCoroutine: Job? = null
+    var testQueueCoroutineShouldExit = false // Flag to indicate that we are shutting down and the test queue coroutine should stop
 
     // Inputs
     var inputs = TestInputs()
@@ -66,12 +70,22 @@ class TestEngine {
     val perfDeltaTime1000 = MovingAverageDouble(1000)
     val perfDeltaTime2000 = MovingAverageDouble(2000)
 
-
     // Tools
     val captureTool = CaptureTool()
     var toolSlowDown = false
     var toolSlowDownMs = 100
 
     // Functions
-    fun destroy() = uiContextBlind?.destroy()
+    fun destroy(): Unit? {
+        if (testQueueCoroutine != null) {
+            // Run until the coroutine exits
+            testQueueCoroutineShouldExit = true
+//            while (TestQueueCoroutine->Run());
+            testQueueCoroutine!!.join()
+
+//            delete testQueueCoroutine
+            testQueueCoroutine = null
+        }
+        return uiContextBlind?.destroy()
+    }
 }
