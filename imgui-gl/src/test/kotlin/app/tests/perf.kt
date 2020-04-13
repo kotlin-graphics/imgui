@@ -3,7 +3,6 @@ package app.tests
 import engine.context.*
 import engine.core.TestEngine
 import engine.core.registerTest
-import gli_.has
 import gli_.hasnt
 import glm_.*
 import glm_.vec2.Vec2
@@ -11,9 +10,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.internal.*
 import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC
-import kool.getValue
 import kool.rem
-import kool.setValue
 import kotlin.math.cos
 import kotlin.math.sin
 
