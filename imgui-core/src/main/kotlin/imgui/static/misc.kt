@@ -32,7 +32,13 @@ import imgui.internal.classes.Window.Companion.resizeGripDef
 import kotlin.math.max
 import kotlin.math.min
 
-// Called by NewFrame()
+
+
+//-----------------------------------------------------------------------------
+// [SECTION] SETTINGS
+//-----------------------------------------------------------------------------
+
+/** Called by NewFrame() */
 fun updateSettings() {
     // Load settings on first frame (if not explicitly loaded manually before)
     if (!g.settingsLoaded) {
