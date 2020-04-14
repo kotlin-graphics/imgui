@@ -256,7 +256,8 @@ fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
     return b
 }
 
-/** Based on stb_to_utf8() from github.com/nothings/stb/ */
+/** Based on stb_to_utf8() from github.com/nothings/stb/
+ *  ~ImTextCharToUtf8   */
 fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
     if (c < 0x80) {
         buf[b + 0] = c.b
@@ -268,9 +269,14 @@ fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
         buf[b + 1] = (0x80 + (c and 0x3f)).b
         return 2
     }
-    if (c in 0xdc00..0xe000)
-        return 0
-    if (c in 0xd800..0xdc00) {
+    if (c < 0x10000) {
+        if (buf.size < 3) return 0
+        buf[0] = (0xe0 + (c ushr 12)).b
+        buf[1] = (0x80 + ((c ushr 6) and 0x3f)).b
+        buf[2] = (0x80 + (c and 0x3f)).b
+        return 3
+    }
+    if (c <= 0x10FFFF) {
         if (buf.size < b + 4) return 0
         buf[b + 0] = (0xf0 + (c ushr 18)).b
         buf[b + 1] = (0x80 + ((c ushr 12) and 0x3f)).b
@@ -278,13 +284,8 @@ fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
         buf[b + 3] = (0x80 + (c and 0x3f)).b
         return 4
     }
-    //else if (c < 0x10000) {
-    if (buf.size < b + 3) return 0
-    buf[b + 0] = (0xe0 + (c ushr 12)).b
-    buf[b + 1] = (0x80 + ((c ushr 6) and 0x3f)).b
-    buf[b + 2] = (0x80 + (c and 0x3f)).b
-    return 3
-//    }
+    // Invalid code point, the max unicode is 0x10FFFF
+    return 0
 }
 
 /** read one character. return input UTF-8 bytes count
@@ -328,6 +329,8 @@ fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.st
         c += spp() and 0x3f
         // utf-8 encodings of values used in surrogate pairs are invalid
         if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
+        // If ImWchar is 16bit, use replacement character U+FFFD instead
+        if (/*sizeof(ImWchar) == 2 &&*/ c >= 0x10000) c = UNICODE_CODEPOINT_INVALID
         return c to 4
     }
     return 0 to 0
@@ -342,8 +345,7 @@ fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, t
         t += bytes
         if (c == 0)
             break
-        if (c <= UNICODE_CODEPOINT_MAX)    // FIXME: Losing characters that don't fit in 2 bytes
-            buf[b++] = c.c
+        buf[b++] = c.c
     }
     if (b < buf.size) buf[b] = NUL
     textRemaining?.put(t)
@@ -360,7 +362,8 @@ fun CharArray.textStr(src: CharArray): Int {
     return i
 }
 
-/** return number of UTF-8 code-points (NOT bytes count) */
+/** return number of UTF-8 code-points (NOT bytes count)
+ *  ~ImTextCountCharsFromUtf8 */
 fun textCountCharsFromUtf8(text: ByteArray, textEnd: Int = text.size): Int {
     var charCount = 0
     var t = 0
@@ -369,8 +372,7 @@ fun textCountCharsFromUtf8(text: ByteArray, textEnd: Int = text.size): Int {
         t += bytes
         if (c == 0)
             break
-        if (c <= UNICODE_CODEPOINT_MAX)
-            charCount++
+        charCount++
     }
     return charCount
 }
@@ -405,8 +407,8 @@ fun textCountUtf8BytesFromStr(text: CharArray, textBegin: Int, textEnd: Int): In
 fun textCountUtf8BytesFromChar(c: Int) = when {
     c < 0x80 -> 1
     c < 0x800 -> 2
-    c in 0xdc00..0xe000 -> 0
-    c in 0xd800..0xdc00 -> 4
+    c < 0x10000 -> 3
+    c <= 0x10FFFF -> 4
     else -> 3
 }
 
