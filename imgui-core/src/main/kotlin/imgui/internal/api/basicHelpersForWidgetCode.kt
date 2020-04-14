@@ -26,6 +26,19 @@ import imgui.internal.classes.Window
 import imgui.static.navProcessItem
 import java.util.ArrayList
 
+//-----------------------------------------------------------------------------
+// [SECTION] LAYOUT
+//-----------------------------------------------------------------------------
+// - ItemSize()
+// - ItemAdd()
+// - SameLine()
+// - Indent()
+// - Unindent()
+// - BeginGroup()
+// - EndGroup()
+// Also see in imgui_widgets: tab bars, columns.
+//-----------------------------------------------------------------------------
+
 /** Basic Helpers for widget code */
 internal interface basicHelpersForWidgetCode {
 
@@ -205,7 +218,7 @@ internal interface basicHelpersForWidgetCode {
 
         val regionMax = if (size_ anyLessThan 0f) contentRegionMaxAbs else Vec2()
 
-        var size = Vec2(size_)
+        val size = Vec2(size_)
         if (size.x == 0f)
             size.x = defaultW
         else if (size.x < 0f)

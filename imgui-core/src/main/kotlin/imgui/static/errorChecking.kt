@@ -4,7 +4,11 @@ import imgui.ImGui.end
 import imgui.api.g
 import imgui.internal.classes.Window
 
-// Error Checking
+
+//-----------------------------------------------------------------------------
+// [SECTION] ERROR CHECKING
+//-----------------------------------------------------------------------------
+
 fun errorCheckEndFrame() {
 
     // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you
