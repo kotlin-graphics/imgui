@@ -15,8 +15,8 @@ class FontGlyphRangesBuilder {
     }
 
     fun clear() {
-        val sizeInBytes = (UNICODE_CODEPOINT_MAX + 1) / 8
-        usedChars = IntArray(sizeInBytes / Int.BYTES)
+        val maxUnicode = /*sizeof(ImWchar) == 2 ?*/ 0x10000 /*: 0x110000*/
+        usedChars = IntArray(maxUnicode / Int.BYTES)
     }
 
     /** Get bit n in the array */
@@ -45,8 +45,7 @@ class FontGlyphRangesBuilder {
 //            text += c_len;
 //            if (c_len == 0)
 //                break;
-//            if (c <= IM_UNICODE_CODEPOINT_MAX)
-//                AddChar((ImWchar)c);
+//            AddChar((ImWchar)c);
 //        }
 //    }
 

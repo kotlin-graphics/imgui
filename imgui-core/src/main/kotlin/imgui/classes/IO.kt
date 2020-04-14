@@ -1,15 +1,17 @@
 package imgui.classes
 
+import glm_.b
+import glm_.c
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
 import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
 import imgui.static.imeSetInputScreenPosFn_Win32
 import imgui.static.setClipboardTextFn_DefaultImpl
-import kool.Ptr
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 import uno.glfw.HWND
@@ -27,28 +29,40 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
     var configFlags: ConfigFlags = ConfigFlag.None.i
+
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
     var backendFlags: BackendFlags = BackendFlag.None.i
+
     /** Main display size, in pixels.   */
     var displaySize = Vec2i(-1)
+
     /** Time elapsed since last frame, in seconds.  */
     var deltaTime = 1f / 60f
+
     /** Minimum time between saving positions/sizes to .ini file, in seconds.   */
     var iniSavingRate = 5f
+
     /** Path to .ini file. Set NULL to disable automatic .ini loading/saving, if e.g. you want to manually load/save from memory. */
     var iniFilename: String? = "imgui.ini"
+
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
     var logFilename = "imgui_log.txt"
+
     /** Time for a double-click, in seconds.    */
     var mouseDoubleClickTime = 0.3f
+
     /** Distance threshold to stay in to validate a double-click, in pixels.    */
     var mouseDoubleClickMaxDist = 6f
+
     /** Distance threshold before considering we are dragging.   */
     var mouseDragThreshold = 6f
+
     /** Map of indices into the KeysDown[512] entries array which represent your "native" keyboard state.   */
     var keyMap = IntArray(Key.COUNT) { -1 }
+
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
     var keyRepeatDelay = 0.275f
+
     /** When holding a key/button, rate at which it repeats, in seconds.    */
     var keyRepeatRate = 0.05f
 
@@ -56,12 +70,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Font atlas: load, rasterize and pack one or more fonts into a single texture.    */
     val fonts = sharedFontAtlas ?: FontAtlas()
+
     /** Global scale all fonts  */
     var fontGlobalScale = 1f
+
     /** Allow user scaling text of individual window with CTRL+Wheel.   */
     var fontAllowUserScaling = false
+
     /** Font to use on NewFrame(). Use NULL to useMouseDragThreshold s Fonts->Fonts[0].    */
     var fontDefault: Font? = null
+
     /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
      *  This generally ends up in ImDrawData::FramebufferScale. */
     var displayFramebufferScale = Vec2(1f)
@@ -72,19 +90,24 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor). */
     var mouseDrawCursor = false
+
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
      *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
      *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
      *  (was called io.OptMacOSXBehaviors prior to 1.63) */
     var configMacOSXBehaviors = false  // JVM TODO
+
     /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
     var configInputTextCursorBlink = true
+
     /** Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be WindowFlag.ResizeFromAnySide flag) */
     var configWindowsResizeFromEdges = true
+
     /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
     var configWindowsMoveFromTitleBarOnly = false
+
     /** [BETA] Compact window memory usage when unused. Set to -1.0f to disable. */
     var configWindowsMemoryCompactTimer = 60f
 
@@ -96,10 +119,13 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window) + User data for back-end/wrappers to store their own stuff.
     var backendPlatformName: String? = null
     var backendRendererName: String? = null
+
     /** User data for platform back-end */
     var backendPlatformUserData: Any? = null
+
     /** User data for renderer back-end */
     var backendRendererUserData: Any? = null
+
     /** User data for non C++ programming language back-end */
     var backendLanguageUserData: Any? = null
 
@@ -117,6 +143,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
     val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
+
     /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
     var imeWindowHandle: HWND = HWND(MemoryUtil.NULL)
 
@@ -126,25 +153,34 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)  */
     var mousePos = Vec2(-Float.MAX_VALUE)
+
     /** Mouse buttons: 0=left, 1=right, 2=middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are
     using right button). Others buttons allows us to track if the mouse is being used by your application +
     available to user as a convenience via IsMouse** API.   */
     val mouseDown = BooleanArray(5)
+
     /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
     var mouseWheel = 0f
+
     /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
     var mouseWheelH = 0f
+
     /** Keyboard modifier pressed: Control  */
     var keyCtrl = false
+
     /** Keyboard modifier pressed: Shift    */
     var keyShift = false
+
     /** Keyboard modifier pressed: Alt  */
     var keyAlt = false
+
     /** Keyboard modifier pressed: Cmd/Super/Windows    */
     var keySuper = false
+
     /** Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys,
      *  so you can use your own defines/enums for keys).   */
     val keysDown = BooleanArray(512)
+
     /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
     val navInputs = FloatArray(NavInput.COUNT)
 
@@ -156,7 +192,34 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             inputQueueCharacters += c
     }
 
-//    IMGUI_API void  AddInputCharactersUTF8(const char* str);    // Queue new characters input from an UTF-8 string
+    /** UTF16 string use Surrogate to encode unicode > 0x10000, so we should save the Surrogate. */
+    fun addInputCharacterUTF16(c: Char) {
+        val ci = c.i
+        if (ci in 0xD800..0xDBFF)
+            surrogate = c
+        else {
+            var cp = c
+            if (ci in 0xDC00..0xDFFF) {
+//                if (sizeof(ImWchar) == 2)
+                cp = UNICODE_CODEPOINT_INVALID.c
+//                else
+//                    cp = ((ImWchar)(Surrogate - 0xD800) << 10) + (c - 0xDC00) + 0x10000;
+                surrogate = NUL
+            }
+            inputQueueCharacters += cp
+        }
+    }
+
+    /** Queue new characters input from an UTF-8 string */
+    fun addInputCharactersUTF8(utf8Chars: ByteArray) {
+        var p = 0
+        while (p < utf8Chars.size || utf8Chars[p] == 0.b) {
+            val (c, bytes) = textCharFromUtf8(utf8Chars)
+            p += bytes
+            if (c > 0)
+                inputQueueCharacters += c.c
+        }
+    }
 
     /** Clear the text input buffer manually */
     fun clearInputCharacters() = inputQueueCharacters.clear()
@@ -170,39 +233,53 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *  (in both cases, always pass on mouse inputs to imgui). (e.g. unclicked mouse is hovering over an imgui window,
      *  widget is active, mouse was clicked over an imgui window, etc.). */
     var wantCaptureMouse = false
+
     /** When io.wantCaptureKeyboard is true, imgui will use the keyboard inputs, do not dispatch them to your main game/application
      *  (in both cases, always pass keyboard inputs to imgui).
      *  (e.g. InputText active, or an imgui window is focused and navigation is enabled, etc.). */
     var wantCaptureKeyboard = false
+
     /** Mobile/console: when IO.wantTextInput is true, you may display an on-screen keyboard. This is set by ImGui when
      *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
+
     /** MousePos has been altered, back-end should reposition mouse on next frame.
      *  Set only when ConfigFlag.NavEnableSetMousePos flag is enabled in IO.configFlags.    */
     var wantSetMousePos = false
+
     /** When manual .ini load/save is active (io.IniFilename == NULL), this will be set to notify your application that
      *  you can call SaveIniSettingsToMemory() and save yourself. IMPORTANT: You need to clear io.WantSaveIniSettings yourself. */
     var wantSaveIniSettings = false
+
     /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
      *  use the WindowFlag.NoNavInputs flag.   */
     var navActive = false
+
     /** Directional navigation is visible and allowed (will handle KeyNavXXX events). */
     var navVisible = false
+
     /** Application framerate estimation, in frame per second. Solely for convenience. Rolling average estimation based
     on IO.DeltaTime over 120 frames */
     var framerate = 0f
+
     /** Number of active memory allocations */
     val metricsAllocs get() = Debug.instanceCounts
+
     /** Vertices output during last call to Render()    */
     var metricsRenderVertices = 0
+
     /** Indices output during last call to Render() = number of triangles * 3   */
     var metricsRenderIndices = 0
+
     /** Number of visible windows */
     var metricsRenderWindows = 0
+
     /** Number of active windows */
     var metricsActiveWindows = 0
+
     /** Number of active allocations, updated by MemAlloc/MemFree based on current context. May be off if you have multiple imgui contexts. */
     var metricsActiveAllocations = 0
+
     /** Mouse delta. Note that this is zero if either current or previous position are invalid (-FLOAT_MAX_VALUE), so a
     disappearing/reappearing mouse won't have a huge delta.   */
     var mouseDelta = Vec2()
@@ -214,36 +291,53 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Previous mouse position (note that MouseDelta is not necessary == MousePos-MousePosPrev, in case either position is invalid)   */
     var mousePosPrev = Vec2(-Float.MAX_VALUE)
+
     /** Position at time of clicking    */
     val mouseClickedPos = Array(5) { Vec2() }
+
     /** Time of last click (used to figure out double-click)    */
     val mouseClickedTime = DoubleArray(5)
+
     /** Mouse button went from !Down to Down    */
     val mouseClicked = BooleanArray(5)
+
     /** Has mouse button been double-clicked?    */
     val mouseDoubleClicked = BooleanArray(5)
+
     /** Mouse button went from Down to !Down    */
     val mouseReleased = BooleanArray(5)
+
     /** Track if button was clicked inside a dear imgui window. We don't request mouse capture from the application if click started outside ImGui bounds.   */
     var mouseDownOwned = BooleanArray(5)
+
     /** Track if button down was a double-click */
     var mouseDownWasDoubleClick = BooleanArray(5)
+
     /** Duration the mouse button has been down (0.0f == just clicked)  */
     val mouseDownDuration = FloatArray(5) { -1f }
+
     /** Previous time the mouse button has been down    */
     val mouseDownDurationPrev = FloatArray(5) { -1f }
+
     /** Maximum distance, absolute, on each axis, of how much mouse has traveled from the clicking point    */
     val mouseDragMaxDistanceAbs = Array(5) { Vec2() }
+
     /** Squared maximum distance of how much mouse has traveled from the clicking point */
     val mouseDragMaxDistanceSqr = FloatArray(5)
+
     /** Duration the keyboard key has been down (0.0f == just pressed)  */
     val keysDownDuration = FloatArray(512) { -1f }
+
     /** Previous duration the key has been down */
     val keysDownDurationPrev = FloatArray(512) { -1f }
 
     val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }
 
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
+
+    /** For AddInputCharacterUTF16 */
+    var surrogate = NUL
+
     /** Queue of _characters_ input (obtained by platform back-end). Fill using AddInputCharacter() helper. */
     val inputQueueCharacters = ArrayList<Char>()
 }
