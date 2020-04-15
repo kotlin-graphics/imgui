@@ -143,6 +143,8 @@ interface main {
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
         g.dragDropAcceptIdCurr = 0
         g.dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
+        g.dragDropWithinSource = false
+        g.dragDropWithinTarget = false
 
         // Update keyboard input state
         for (i in io.keysDownDuration.indices)
@@ -267,9 +269,9 @@ interface main {
 
         // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
 //        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount) {
-//            g.dragDropWithinSourceOrTarget = true
+//            g.DragDropWithinSource = true
 //            setTooltip("...")
-//            g.dragDropWithinSourceOrTarget = false
+//            g.dragDropWithinSource = false
 //        }
 
         // End frame

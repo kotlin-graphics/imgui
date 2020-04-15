@@ -13,6 +13,8 @@ internal interface dragAndDrop {
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false
 
+        assert(!g.dragDropWithinTarget)
+
         val window = g.currentWindow!!
         g.hoveredWindow.let { if (it == null || window.rootWindow != it.rootWindow) return false }
         assert(id != 0)
@@ -20,8 +22,10 @@ internal interface dragAndDrop {
             return false
         if (window.skipItems) return false
 
+        assert(!g.dragDropWithinTarget)
         g.dragDropTargetRect put bb
         g.dragDropTargetId = id
+        g.dragDropWithinTarget = true
         return true
     }
 

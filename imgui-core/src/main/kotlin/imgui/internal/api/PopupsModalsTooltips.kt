@@ -206,7 +206,7 @@ internal interface PopupsModalsTooltips {
      *  @param extraFlags WindowFlag   */
     fun beginTooltipEx(extraFlags: WindowFlags, tooltipFlags_: TooltipFlags) {
         var tooltipFlags = tooltipFlags_
-        if (g.dragDropWithinSourceOrTarget)        {
+        if (g.dragDropWithinSource || g.dragDropWithinTarget)        {
             // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
             // Whatever we do we want to call SetNextWindowPos() to enforce a tooltip position and disable clipping the tooltip without our display area, like regular tooltip do.
