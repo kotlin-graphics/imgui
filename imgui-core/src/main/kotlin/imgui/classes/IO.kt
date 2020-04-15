@@ -3,6 +3,7 @@ package imgui.classes
 import glm_.b
 import glm_.c
 import glm_.i
+import glm_.shl
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
@@ -186,28 +187,42 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     // Functions
 
-    /** Queue new character input */
+    /** Queue new character input
+     *
+     *  Pass in translated ASCII characters for text input.
+     * - with glfw you can get those from the callback set in glfwSetCharCallback()
+     * - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
     fun addInputCharacter(c: Char) {
-        if (c.i in 1..UNICODE_CODEPOINT_MAX)
-            inputQueueCharacters += c
+        val ci = c.i
+        inputQueueCharacters += when {
+            ci in 1..UNICODE_CODEPOINT_MAX -> c
+            else -> UNICODE_CODEPOINT_INVALID.c
+        }
     }
 
-    /** UTF16 string use Surrogate to encode unicode > 0x10000, so we should save the Surrogate. */
+    /** UTF16 strings use surrogate pairs to encode codepoints >= 0x10000, so
+     *  we should save the high surrogate. */
     fun addInputCharacterUTF16(c: Char) {
         val ci = c.i
-        if (ci in 0xD800..0xDBFF)
-            surrogate = c
-        else {
-            var cp = c
-            if (ci in 0xDC00..0xDFFF) {
-//                if (sizeof(ImWchar) == 2)
-                cp = UNICODE_CODEPOINT_INVALID.c
-//                else
-//                    cp = ((ImWchar)(Surrogate - 0xD800) << 10) + (c - 0xDC00) + 0x10000;
-                surrogate = NUL
-            }
-            inputQueueCharacters += cp
+        if ((ci and 0xFC00) == 0xD800) { // High surrogate, must save
+            if (inputQueueSurrogate != NUL)
+                inputQueueCharacters += '\uFFFD'
+            inputQueueSurrogate = c
+            return
         }
+
+        var cp = c
+        if (inputQueueSurrogate != NUL) {
+            when {
+                // Invalid low surrogate
+                (ci and 0xFC00) != 0xDC00 -> inputQueueCharacters += UNICODE_CODEPOINT_INVALID.c
+                // Codepoint will not fit in ImWchar (extra parenthesis around 0xFFFF somehow fixes -Wunreachable-code with Clang)
+                UNICODE_CODEPOINT_MAX == 0xFFFF -> cp = UNICODE_CODEPOINT_INVALID.c
+                else -> cp = (((inputQueueSurrogate - 0xD800) shl 10) + (c - 0xDC00).i + 0x10000).c
+            }
+            inputQueueSurrogate = NUL
+        }
+        inputQueueCharacters += cp
     }
 
     /** Queue new characters input from an UTF-8 string */
@@ -336,7 +351,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
 
     /** For AddInputCharacterUTF16 */
-    var surrogate = NUL
+    var inputQueueSurrogate = NUL
 
     /** Queue of _characters_ input (obtained by platform back-end). Fill using AddInputCharacter() helper. */
     val inputQueueCharacters = ArrayList<Char>()
