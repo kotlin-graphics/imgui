@@ -53,8 +53,8 @@ enum class ButtonFlag(val i: ButtonFlags) {
     /** don't override navigation focus when activated */
     NoNavFocus(1 shl 14),
 
-    /** don't report as hovered when navigated on */
-    NoHoveredOnNav(1 shl 15),
+    /** don't report as hovered when nav focus is on this item */
+    NoHoveredOnFocus(1 shl 15),
     MouseButtonLeft(1 shl 16),  // [Default] react on left mouse button
     MouseButtonRight(1 shl 17),  // react on right mouse button
     MouseButtonMiddle(1 shl 18),  // react on center mouse button

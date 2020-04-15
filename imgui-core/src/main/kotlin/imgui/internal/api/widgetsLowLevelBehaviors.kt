@@ -220,7 +220,7 @@ internal interface widgetsLowLevelBehaviors {
         /*  Gamepad/Keyboard navigation
             We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.         */
         if (g.navId == id && !g.navDisableHighlight && g.navDisableMouseHover && (g.activeId == 0 || g.activeId == id || g.activeId == window.moveId))
-            if (flags hasnt Bf.NoHoveredOnNav)
+            if (flags hasnt Bf.NoHoveredOnFocus)
                 hovered = true
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id

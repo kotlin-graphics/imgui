@@ -147,7 +147,7 @@ internal interface inputText {
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
         // We are only allowed to access the state if we are already the active widget.
-        val state = getInputTextState(id)
+        var state = getInputTextState(id)
 
         val focusRequested = focusableItemRegister(window, id)
         val focusRequestedByCode = focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterRegular == window.dc.focusCounterRegular
