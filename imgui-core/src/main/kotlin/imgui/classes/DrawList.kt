@@ -12,16 +12,12 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.font.Font
 import imgui.internal.*
-import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC
-import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX
-import imgui.internal.classes.DrawListSharedData
-import imgui.internal.classes.Rect
+import imgui.internal.classes.*
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
-import java.util.logging.Level
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -747,14 +743,24 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     /** Use precomputed angles for a 12 steps circle    */
-    fun pathArcToFast(center: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
+    fun pathArcToFast(center: Vec2, radius: Float, aMinOf12_: Int, aMaxOf12_: Int) {
 
+        var aMinOf12 = aMinOf12_
+        var aMaxOf12 = aMaxOf12_
         if (radius == 0f || aMinOf12 > aMaxOf12) {
             _path += center
             return
         }
+
+        // For legacy reason the PathArcToFast() always takes angles where 2*PI is represented by 12,
+        // but it is possible to set IM_DRAWLIST_ARCFAST_TESSELATION_MULTIPLIER to a higher value. This should compile to a no-op otherwise.
+        if(DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER != 1) {
+            aMinOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
+            aMaxOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
+        }
+
         for (a in aMinOf12..aMaxOf12) {
-            val c = _data.circleVtx12[a % _data.circleVtx12.size]
+            val c = _data.arcFastVtx[a % _data.arcFastVtx.size]
             _path += Vec2(center.x + c.x * radius, center.y + c.y * radius)
         }
     }

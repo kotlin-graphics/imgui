@@ -8,7 +8,6 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
 import imgui.internal.*
-import java.util.logging.Level
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -32,10 +31,13 @@ class DrawDataBuilder {
     }
 }
 
-// Helper function to calculate a circle's segment count given its radius and a "maximum error" value.
+// ImDrawList: Helper function to calculate a circle's segment count given its radius and a "maximum error" value.
 const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 12
 const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX = 512
 fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((glm.πf * 2f) / acos((_RAD - _MAXERROR) / _RAD)).i, DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+
+// ImDrawList: You may set this to higher values (e.g. 2 or 3) to increase tessellation of fast rounded corners path.
+var DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER = 1
 
 /** Data shared between all ImDrawList instances
  *  You may want to create your own instance of this if you want to use ImDrawList completely without ImGui. In that case, watch out for future changes to this structure.
@@ -64,7 +66,7 @@ class DrawListSharedData {
     // [Internal] Lookup tables
 
     // Lookup tables
-    val circleVtx12 = Array(12) {
+    val arcFastVtx = Array(12 * DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER) {
         // FIXME: Bake rounded corners fill/borders in atlas
         val a = it * 2 * glm.PIf / 12
         Vec2(cos(a), sin(a))
@@ -470,12 +472,13 @@ class Pool<T>(val placementNew: () -> T) {
 
     @Deprecated("just a placeholder to remind the different behaviour with the indices")
     fun remove(key: ID, p: T) = remove(key, getIndex(p))
+
     @Deprecated("just a placeholder to remind the different behaviour with the indices")
     fun remove(key: ID, idx: PoolIdx) {
         buf.removeAt(idx.i)
         map.remove(key)
         // update indices in map
-        map.replaceAll { _, i -> i - (i > idx).i}
+        map.replaceAll { _, i -> i - (i > idx).i }
     }
 //    void        Reserve(int capacity)
 //    { Buf.reserve(capacity); Map.Data.reserve(capacity); }
