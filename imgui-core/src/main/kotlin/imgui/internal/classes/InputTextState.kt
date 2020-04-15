@@ -12,12 +12,13 @@ import imgui.stb.te.key
 import imgui.stb.te.makeUndoReplace
 import org.lwjgl.system.Platform
 
-/** Internal state of the currently focused/edited text input box   */
+/** Internal state of the currently focused/edited text input box
+ *  For a given item ID, access with ImGui::GetInputTextState() */
 class InputTextState {
 
     /** widget id owning the text state */
     var id: ID = 0
-    var curLenA = 0 // we need to maintain our buffer length in both UTF-8 and wchar format. UTF-8 len is valid even if TextA is not.
+    var curLenA = 0 // we need to maintain our buffer length in both UTF-8 and wchar format. UTF-8 length is valid even if TextA is not.
     var curLenW = 0
 
     /** edit buffer, we need to persist but can't guarantee the persistence of the user-provided buffer. So we copy into own buffer.    */
