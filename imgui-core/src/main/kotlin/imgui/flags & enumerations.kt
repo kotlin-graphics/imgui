@@ -329,11 +329,13 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     /** private  */
     _NoHoldingActiveId(1 shl 20),
 
-    /** private  */
-    _PressedOnClick(1 shl 21),
+    /** private
+     *  Override button behavior to react on Click (default is Click+Release) */
+    _SelectOnClick(1 shl 21),
 
-    /** private  */
-    _PressedOnRelease(1 shl 22),
+    /** private
+     *  Override button behavior to react on Release (default is Click+Release) */
+    _SelectOnRelease(1 shl 22),
 
     /** private  */
     _DrawFillAvailWidth(1 shl 23),
