@@ -368,8 +368,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
     var dragDropActive = false
 
-    /** Set when within a BeginDragDropXXX/EndDragDropXXX block. */
-    var dragDropWithinSourceOrTarget = false
+    /** Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag source. */
+    var dragDropWithinSource = false
+
+    /** Set when within a BeginDragDropXXX/EndDragDropXXX block for a drag target. */
+    var dragDropWithinTarget = false
 
     var dragDropSourceFlags = DragDropFlag.None.i
 
