@@ -1,16 +1,15 @@
 package imgui.font
 
 
-import glm_.c
-import glm_.compareTo
-import glm_.glm
-import glm_.i
+import glm_.*
 import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.ImGui.io
+import imgui.UNICODE_CODEPOINT_MAX
 import imgui.api.g
 import imgui.classes.DrawList
+import imgui.has
 import imgui.internal.charIsBlankA
 import imgui.internal.charIsBlankW
 import imgui.internal.round
@@ -39,6 +38,7 @@ class Font {
     val indexAdvanceX = ArrayList<Float>()      // 12/16 // out //
 
     var fallbackAdvanceX = 0f                   // 4     // out // = FallbackGlyph->AdvanceX
+
     /** Height of characters, set during loading (don't change after loading)   */
     var fontSize = 0f                           // 4     // in  // <user set>
 
@@ -46,10 +46,12 @@ class Font {
 
     /** Sparse. Index glyphs by Unicode code-point. */
     val indexLookup = ArrayList<Int>()          // 12-16 // out //
+
     /** All glyphs. */
     val glyphs = ArrayList<FontGlyph>()         // 12-16 // out //
 
     var fallbackGlyph: FontGlyph? = null        // 4-8   // out // = FindGlyph(FontFallbackChar)
+
     /** Offset font rendering by xx pixels  */
     var displayOffset = Vec2()                  // 8     // in  // = (0,0)
 
@@ -57,10 +59,13 @@ class Font {
 
     /** What we has been loaded into    */
     lateinit var containerAtlas: FontAtlas      // 4-8   // out //
+
     /** Pointer within ContainerAtlas->ConfigData   */
     val configData = ArrayList<FontConfig>()    // 4-8   // in  //
+
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0                     // 2     // in  // ~ 1
+
     /** Replacement character if a glyph isn't found. Only set via SetFallbackChar()    */
     var fallbackChar = '?'                      // 2     // in  // = '?'
         /** ~SetFallbackChar */
@@ -68,18 +73,25 @@ class Font {
             field = value
             buildLookupTable()
         }
+
     /** Override a codepoint used for ellipsis rendering. */
     var ellipsisChar = '\uffff'                 // out //
 
     var dirtyLookupTables = true                // 1     // out //
+
     /** Base font scale, multiplied by the per-window font scale which you can adjust with SetWindowFontScale()   */
     var scale = 1f                              // 4     // in  // = 1.f
+
     /** Ascent: distance from top to bottom of e.g. 'A' [0..FontSize]   */
     var ascent = 0f                             // 4     // out
 
     var descent = 0f                            // 4     // out
+
     /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding between glyphs)    */
     var metricsTotalSurface = 0                 // 4     // out
+
+    /** 2 bytes if ImWchar=ImWchar16, 34 bytes if ImWchar==ImWchar32. Store 1-bit for each block of 4K codepoints that has one active glyph. This is mainly used to facilitate iterations accross all used codepoints. */
+    val used4kPagesMap = ByteArray((UNICODE_CODEPOINT_MAX + 1) / 4096 / 8)
 
     // @formatter:on
 
@@ -478,10 +490,15 @@ class Font {
         indexAdvanceX.clear()
         indexLookup.clear()
         dirtyLookupTables = false
+        used4kPagesMap.fill(0)
         growIndex(maxCodepoint + 1)
         glyphs.forEachIndexed { i, g ->
             indexAdvanceX[g.codepoint.i] = g.advanceX
             indexLookup[g.codepoint.i] = i
+
+            // Mark 4K page as used
+            val pageN = g.codepoint.i / 4096
+            used4kPagesMap[pageN shr 3] = used4kPagesMap[pageN shr 3] or (1 shl (pageN and 7))
         }
 
         // Create a glyph to handle TAB
@@ -580,6 +597,18 @@ class Font {
 
     fun setGlyphVisible(c: Char, visible: Boolean = true) {
         findGlyph(c)?.visible = visible
+    }
+
+    /** API is designed this way to avoid exposing the 4K page size
+     *  e.g. use with IsGlyphRangeUnused(0, 255) */
+    fun isGlyphRangeUnused(cBegin: Int, cLast: Int): Boolean {
+        val pageBegin = cBegin / 4096
+        val pageLast = cLast / 4096
+        for (pageN in pageBegin..pageLast)
+            if ((pageN ushr 3) < used4kPagesMap.size)
+                if (used4kPagesMap[pageN ushr 3] has (1 shl (pageN and 7)))
+                    return false
+        return true
     }
 
     fun setCurrent() {
