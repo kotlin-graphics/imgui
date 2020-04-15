@@ -33,7 +33,6 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
-import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderText
 import imgui.ImGui.selectable
 import imgui.ImGui.setNavIDWithRectRel
@@ -377,7 +376,7 @@ interface widgetsMenus {
                 popStyleColor()
             }
             if (selected)
-                renderCheckMark(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
+                window.drawList.renderCheckMark(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 
