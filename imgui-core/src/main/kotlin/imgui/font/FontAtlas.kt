@@ -6,18 +6,21 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
-import imgui.*
 import imgui.ImGui.style
+import imgui.MouseCursor
+import imgui.TextureID
 import imgui.internal.fileLoadToMemory
 import imgui.internal.round
 import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
+import imgui.wo
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
 import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
+import unsigned.toUInt
 import unsigned.toULong
 import java.nio.ByteBuffer
 import kotlin.math.floor
@@ -448,32 +451,45 @@ class FontAtlas {
         outUvMax.put((rect.x + rect.width) / texSize.x, (rect.y + rect.height) / texSize.y)
     }
 
+
     /** Helper: ImBoolVector. Store 1-bit per value.
      *  Note that Resize() currently clears the whole vector. */
-    class BoolVector {
-        var storage = IntArray(0)
-        infix fun resize(sz: Int) {
-            storage = IntArray((sz + 31) shr 5)
+    class BitVector(sz: Int) { // ~create
+        var storage = IntArray((sz + 31) ushr 5)
+
+        // Helpers: Bit arrays
+        infix fun IntArray.testBit(n: Int): Boolean {
+            val mask = 1 shl (n and 31); return (this[n ushr 5] and mask).bool; }
+
+        infix fun IntArray.clearBit(n: Int) {
+            val mask = 1 shl (n and 31); this[n ushr 5] = this[n ushr 5] wo mask; }
+
+        infix fun IntArray.setBit(n: Int) {
+            val mask = 1 shl (n and 31); this[n ushr 5] = this[n ushr 5] or mask; }
+
+        fun IntArray.setBitRange(n_: Int, n2: Int) {
+            var n = n_
+            while (n <= n2) {
+                val aMod = n and 31
+                val bMod = (if (n2 >= n + 31) 31 else n2 and 31) + 1
+                val mask = ((1L shl bMod) - 1).toUInt() wo ((1L shl aMod) - 1).toUInt()
+                this[n ushr 5] = this[n ushr 5] or mask
+                n = (n + 32) wo 31
+            }
         }
 
         fun clear() {
             storage = IntArray(0)
         }
 
-        operator fun get(n: Int): Boolean {
-            val off = n shr 5
-            val mask = 1 shl (n and 31)
-            return storage[off] has mask
-        }
+        infix fun testBit(n: Int): Boolean {
+            assert(n < storage.size shl 5); return storage testBit n; }
 
-        operator fun set(n: Int, v: Boolean) {
-            val off = (n shr 5)
-            val mask = 1 shl (n and 31)
-            storage[off] = when {
-                v -> storage[off] or mask
-                else -> storage[off] wo mask
-            }
-        }
+        infix fun setBit(n: Int) {
+            assert(n < storage.size shl 5); storage setBit n; }
+
+        infix fun clearBit(n: Int) {
+            assert(n < storage.size shl 5); storage clearBit n; }
 
         fun unpack(): ArrayList<Int> {
             val res = arrayListOf<Int>()
@@ -515,7 +531,7 @@ class FontAtlas {
         var glyphsCount = 0
 
         /** Glyph bit map (random access, 1-bit per codepoint. This will be a maximum of 8KB) */
-        val glyphsSet = BoolVector()
+        lateinit var glyphsSet: BitVector
 
         /** Glyph codepoints list (flattened version of GlyphsMap) */
         lateinit var glyphsList: ArrayList<Int>
@@ -538,7 +554,7 @@ class FontAtlas {
         var glyphsCount = 0
 
         /** This is used to resolve collision when multiple sources are merged into a same destination font. */
-        var glyphsSet = BoolVector()
+        var glyphsSet: BitVector? = null
     }
 
     // ImFontAtlas internals
@@ -598,13 +614,13 @@ class FontAtlas {
         for (srcIdx in srcTmpArray.indices) {
             val srcTmp = srcTmpArray[srcIdx]
             val dstTmp = dstTmpArray[srcTmp.dstIndex]
-            srcTmp.glyphsSet.resize(srcTmp.glyphsHighest + 1)
-            if (dstTmp.glyphsSet.storage.isEmpty())
-                dstTmp.glyphsSet.resize(dstTmp.glyphsHighest + 1)
+            srcTmp.glyphsSet = BitVector(srcTmp.glyphsHighest + 1)
+            if (dstTmp.glyphsSet == null)
+                dstTmp.glyphsSet = BitVector(dstTmp.glyphsHighest + 1)
 
             for (srcRange in srcTmp.srcRanges)
                 for (codepoint in srcRange) {
-                    if (dstTmp.glyphsSet[codepoint])   // Don't overwrite existing glyphs. We could make this an option for MergeMode (e.g. MergeOverwrite==true)
+                    if (dstTmp.glyphsSet!! testBit codepoint)   // Don't overwrite existing glyphs. We could make this an option for MergeMode (e.g. MergeOverwrite==true)
                         continue
                     if (!STBTruetype.stbtt_FindGlyphIndex(srcTmp.fontInfo, codepoint).bool)    // It is actually in the font?
                         continue
@@ -612,8 +628,8 @@ class FontAtlas {
                     // Add to avail set/counters
                     srcTmp.glyphsCount++
                     dstTmp.glyphsCount++
-                    srcTmp.glyphsSet[codepoint] = true
-                    dstTmp.glyphsSet[codepoint] = true
+                    srcTmp.glyphsSet setBit codepoint
+                    dstTmp.glyphsSet!! setBit codepoint
                     totalGlyphsCount++
                 }
         }
@@ -625,7 +641,7 @@ class FontAtlas {
             srcTmp.glyphsSet.clear()
             assert(srcTmp.glyphsList.size == srcTmp.glyphsCount)
         }
-        dstTmpArray.forEach { it.glyphsSet.clear() }
+        dstTmpArray.forEach { it.glyphsSet!!.clear() }
 //        dstTmpArray.clear()
 
         // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
