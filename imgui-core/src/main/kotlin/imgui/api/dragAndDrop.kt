@@ -104,6 +104,9 @@ interface dragAndDrop {
                 g.dragDropMouseButton = mouseButton
             }
 
+            g.dragDropSourceFrameCount = g.frameCount
+            g.dragDropWithinSource = true
+
             if (flags hasnt Ddf.SourceNoPreviewTooltip) {
                 /*  Target can request the Source to not display its tooltip (we use a dedicated flag to make this request explicit)
                     We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.                 */
@@ -157,12 +160,15 @@ interface dragAndDrop {
     /** Only call EndDragDropSource() if BeginDragDropSource() returns true!    */
     fun endDragDropSource() {
         assert(g.dragDropActive)
+        assert(g.dragDropWithinSource) { "Not after a BeginDragDropSource()?" }
 
         if (g.dragDropSourceFlags hasnt Ddf.SourceNoPreviewTooltip)
             endTooltip()
 
         // Discard the drag if have not called setDragDropPayload()
-        if (g.dragDropPayload.dataFrameCount == -1) clearDragDrop()
+        if (g.dragDropPayload.dataFrameCount == -1)
+            clearDragDrop()
+        g.dragDropWithinSource = false
     }
 
     /** Call after submitting an item that may receive an item.
@@ -181,13 +187,19 @@ interface dragAndDrop {
         if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect) return false
         g.hoveredWindow.let { if (it == null || window.rootWindow !== it.rootWindow) return false }
 
+        val displayRect = when {
+            window.dc.lastItemStatusFlags has ItemStatusFlag.HasDisplayRect -> window.dc.lastItemDisplayRect
+            else -> window.dc.lastItemRect
+        }
         var id = window.dc.lastItemId
         if (id == 0)
-            id = window.getIdFromRectangle(window.dc.lastItemRect)
+            id = window.getIdFromRectangle(displayRect) // [JVM] save to pass the reference
         if (g.dragDropPayload.sourceId == id) return false
 
-        g.dragDropTargetRect = window.dc.lastItemRect
+        assert(!g.dragDropWithinTarget)
+        g.dragDropTargetRect put displayRect
         g.dragDropTargetId = id
+        g.dragDropWithinTarget = true
         return true
     }
 
@@ -232,7 +244,11 @@ interface dragAndDrop {
 
     /** We don't really use/need this now, but added it for the sake of consistency and because we might need it later.
      *  Only call EndDragDropTarget() if BeginDragDropTarget() returns true!    */
-    fun endDragDropTarget() = assert(g.dragDropActive)
+    fun endDragDropTarget() {
+        assert(g.dragDropActive)
+        assert(g.dragDropWithinTarget)
+        g.dragDropWithinTarget = false
+    }
 
     /** ~GetDragDropPayload */
     val dragDropPayload: Payload?
