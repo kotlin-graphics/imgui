@@ -146,8 +146,8 @@ internal interface inputText {
         val hovered = itemHoverable(frameBb, id)
         if (hovered) g.mouseCursor = MouseCursor.TextInput
 
-        // NB: we are only allowed to access 'editState' if we are the active widget.
-        var state: InputTextState? = g.inputTextState.takeIf { it.id == id }
+        // We are only allowed to access the state if we are already the active widget.
+        val state = getInputTextState(id)
 
         val focusRequested = focusableItemRegister(window, id)
         val focusRequestedByCode = focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterRegular == window.dc.focusCounterRegular
@@ -888,6 +888,8 @@ internal interface inputText {
     }
 
     fun tempInputIsActive(id: ID): Boolean = g.activeId == id && g.tempInputId == id
+
+    fun getInputTextState(id: ID): InputTextState? = g.inputTextState.takeIf { it.id == id } // Get input text state if active
 
     companion object {
         /** Return false to discard a character.    */

@@ -23,7 +23,9 @@ import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import kotlin.collections.set
 
-
+// GLFW callbacks
+// - When calling Init with 'install_callbacks=true': GLFW callbacks will be installed for you. They will call user's previously installed callbacks, if any.
+// - When calling Init with 'install_callbacks=false': GLFW callbacks won't be installed. You will need to call those function yourself from your own GLFW callbacks.
 class ImplGlfw @JvmOverloads constructor(
         /** Main window */
         val window: GlfwWindow, installCallbacks: Boolean = true,
