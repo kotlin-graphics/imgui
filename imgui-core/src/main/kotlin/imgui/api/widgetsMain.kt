@@ -20,7 +20,6 @@ import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popID
 import imgui.ImGui.pushID
-import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
@@ -186,7 +185,7 @@ interface widgetsMain {
             window.drawList.addRectFilled(checkBb.min + pad, checkBb.max - pad, checkCol, style.frameRounding)
         } else if (v) {
             val pad = 1f max floor(squareSz / 6f)
-            renderCheckMark(checkBb.min + pad, checkCol, squareSz - pad * 2f)
+            window.drawList.renderCheckMark(checkBb.min + pad, checkCol, squareSz - pad * 2f)
         }
 
         if (g.logEnabled) logRenderedText(totalBb.min, if (v) "[x]" else "[ ]")

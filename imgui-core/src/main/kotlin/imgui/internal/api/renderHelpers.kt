@@ -248,24 +248,6 @@ internal interface renderHelpers {
             window.drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornerFlags)
     }
 
-    fun renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
-
-        val window = g.currentWindow!!
-
-        val thickness = glm.max(sz_ / 5f, 1f)
-        val sz = sz_ - thickness * 0.5f
-        pos += thickness * 0.25f
-
-        val third = sz / 3f
-        val bx = pos.x + third
-        val by = pos.y + sz - third * 0.5f
-        window.drawList.pathLineTo(Vec2(bx - third, by - third))
-        window.drawList.pathLineTo(Vec2(bx, by))
-
-        window.drawList.pathLineTo(Vec2(bx + third * 2, by - third * 2))
-        window.drawList.pathStroke(col, false, thickness)
-    }
-
     /** Navigation highlight
      * @param flags: NavHighlightFlag  */
     fun renderNavHighlight(bb: Rect, id: ID, flags: NavHighlightFlags = NavHighlightFlag.TypeDefault.i) {

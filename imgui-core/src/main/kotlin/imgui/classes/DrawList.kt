@@ -1175,6 +1175,22 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun renderBullet(pos: Vec2, col: Int) = addCircleFilled(pos, _data.fontSize * 0.2f, col, 8)
 
+    @Deprecated("placeholder: pos gets modified")
+    fun renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
+
+        val thickness = max(sz_ / 5f, 1f)
+        val sz = sz_ - thickness * 0.5f
+        pos += thickness * 0.25f
+
+        val third = sz / 3f
+        val bx = pos.x + third
+        val by = pos.y + sz - third * 0.5f
+        pathLineTo(Vec2(bx - third, by - third))
+        pathLineTo(Vec2(bx, by))
+        pathLineTo(Vec2(bx + third * 2f, by - third * 2f))
+        pathStroke(col, false, thickness)
+    }
+
     fun renderMouseCursor(pos: Vec2, scale: Float, mouseCursor: MouseCursor,
                           colFill: Int, colBorder: Int, colShadow: Int) {
         if (mouseCursor == MouseCursor.None)
