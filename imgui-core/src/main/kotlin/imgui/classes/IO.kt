@@ -193,9 +193,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      * - with glfw you can get those from the callback set in glfwSetCharCallback()
      * - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
     fun addInputCharacter(c: Char) {
-        val ci = c.i
-        inputQueueCharacters += when {
-            ci in 1..UNICODE_CODEPOINT_MAX -> c
+        inputQueueCharacters += when (val ci = c.i) {
+            in 1..UNICODE_CODEPOINT_MAX -> c
             else -> UNICODE_CODEPOINT_INVALID.c
         }
     }
