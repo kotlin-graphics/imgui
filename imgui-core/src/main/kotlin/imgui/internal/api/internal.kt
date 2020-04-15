@@ -61,6 +61,7 @@ internal interface internal {
                 g.navMousePosDirty = true
             g.navInitRequest = false
             g.navId = window?.navLastIds?.get(0) ?: 0 // Restore NavId
+            g.navFocusScopeId = 0
             g.navIdIsAlive = false
             g.navLayer = NavLayer.Main
             //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
