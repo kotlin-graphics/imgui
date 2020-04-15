@@ -1,5 +1,6 @@
 package imgui.demo.showExampleApp
 
+import gli_.hasnt
 import glm_.c
 import glm_.f
 import glm_.i
@@ -199,7 +200,7 @@ object StyleEditor {
                 radioButton("Opaque", alphaFlags == 0) { alphaFlags = 0 }; sameLine()
                 radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
                 radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) { alphaFlags = Cef.AlphaPreviewHalf.i }; sameLine()
-                helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.");
+                helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.")
 
                 child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
                     withItemWidth(-160) {
@@ -262,11 +263,22 @@ object StyleEditor {
                             }
                         treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
                             // Display all glyphs of the fonts in separate pages of 256 characters
-                            // Forcefully/dodgily make FindGlyph() return NULL on fallback, which isn't the default behavior.
-                            for (base in 0..UNICODE_CODEPOINT_MAX step 256) {
+                            var base = 0
+                            while (base <= UNICODE_CODEPOINT_MAX) {
+
+                                // Skip ahead if a large bunch of glyphs are not present in the font (test in chunks of 4k)
+                                // This is only a small optimization to reduce the number of iterations when IM_UNICODE_MAX_CODEPOINT is large.
+                                // (if ImWchar==ImWchar32 we will do at least about 272 queries here)
+                                if (base hasnt 4095 && font.isGlyphRangeUnused(base, base + 4095)) {
+                                    base += 4096 - 256
+                                    base += 256
+                                    continue
+                                }
+
                                 val count = (0 until 256).count { font.findGlyphNoFallback(base + it) != null }
                                 val s = if (count > 1) "glyphs" else "glyph"
                                 if (count > 0 && treeNode(Integer.valueOf(base), "U+%04X..U+%04X ($count $s)", base, base + 255)) {
+
                                     val cellSize = font.fontSize * 1
                                     val cellSpacing = style.itemSpacing.y
                                     val basePos = Vec2(cursorScreenPos)
@@ -298,6 +310,7 @@ object StyleEditor {
                                     dummy(Vec2((cellSize + cellSpacing) * 16, (cellSize + cellSpacing) * 16))
                                     treePop()
                                 }
+                                base += 256
                             }
                         }
                         treePop()
