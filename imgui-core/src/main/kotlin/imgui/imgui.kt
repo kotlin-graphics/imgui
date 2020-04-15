@@ -105,7 +105,7 @@ object Hook {
 }
 
 /** Last Unicode code point supported by this build. */
-const val UNICODE_CODEPOINT_MAX = 0xFFFF
+const val UNICODE_CODEPOINT_MAX = /*sizeof(ImWchar) == 2 ?*/ 0xFFFF /*: 0x10FFFF*/
 
 /** Standard invalid Unicode code point. */
 const val UNICODE_CODEPOINT_INVALID = 0xFFFD

@@ -329,8 +329,8 @@ fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.st
         c += spp() and 0x3f
         // utf-8 encodings of values used in surrogate pairs are invalid
         if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
-        // If ImWchar is 16bit, use replacement character U+FFFD instead
-        if (/*sizeof(ImWchar) == 2 &&*/ c >= 0x10000) c = UNICODE_CODEPOINT_INVALID
+        // If codepoint does not fit in ImWchar, use replacement character U+FFFD instead
+        if (c >= UNICODE_CODEPOINT_MAX) c = UNICODE_CODEPOINT_INVALID
         return c to 4
     }
     return 0 to 0
