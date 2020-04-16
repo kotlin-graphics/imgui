@@ -42,7 +42,9 @@ import java.util.ArrayList
 /** Basic Helpers for widget code */
 internal interface basicHelpersForWidgetCode {
 
-    /** Advance cursor given item size for layout.  */
+    /** Advance cursor given item size for layout.
+     *  Register minimum needed size so it can extend the bounding box used for auto-fit calculation.
+     *  See comments in ItemAdd() about how/why the size provided to ItemSize() vs ItemAdd() may often different. */
     fun itemSize(size: Vec2, textBaselineY: Float = -1f) {
 
         val window = currentWindow
@@ -77,9 +79,8 @@ internal interface basicHelpersForWidgetCode {
     fun itemSize(bb: Rect, textBaselineY: Float = -1f) = itemSize(bb.size, textBaselineY)
 
     /** Declare item bounding box for clipping and interaction.
-     *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over
-     *  available surface declare their minimum size requirement to ItemSize() and then use a larger region for
-     *  drawing/interaction, which is passed to ItemAdd().  */
+     *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over available surface
+     *  declare their minimum size requirement to ItemSize() and provide a larger region to ItemAdd() which is used drawing/interaction. */
     fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null): Boolean {
 
         val window = g.currentWindow!!
