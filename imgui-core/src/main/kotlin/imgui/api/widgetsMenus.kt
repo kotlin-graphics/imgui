@@ -236,7 +236,7 @@ interface widgetsMenus {
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
             val minW = window.dc.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
             val extraW = glm.max(0f, contentRegionAvail.x - minW)
-            val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
+            val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or Sf._SpanAvailWidth
             pressed = selectable(label, menuIsOpen, f or if (enabled) Sf.None else Sf.Disabled, Vec2(minW, 0f))
             val textCol = if (enabled) Col.Text else Col.TextDisabled
             window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
@@ -374,7 +374,7 @@ interface widgetsMenus {
             val shortcutW = if(shortcut.isNotEmpty()) calcTextSize(shortcut).x else 0f
             val minW = window.dc.menuColumns.declColumns(labelSize.x, shortcutW, floor(g.fontSize * 1.2f)) // Feedback for next frame
             val extraW = max(0f, contentRegionAvail.x - minW)
-            pressed = selectable(label, false, flags or Sf._DrawFillAvailWidth, Vec2(minW, 0f))
+            pressed = selectable(label, false, flags or Sf._SpanAvailWidth, Vec2(minW, 0f))
             if (shortcutW > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
                 renderText(pos + Vec2(window.dc.menuColumns.pos[1] + extraW, 0f), shortcut, false)

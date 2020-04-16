@@ -1,12 +1,10 @@
 package imgui.api
 
-import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.contentRegionMax
 import imgui.ImGui.contentRegionMaxAbs
 import imgui.ImGui.currentWindow
 import imgui.ImGui.itemAdd
@@ -57,21 +55,21 @@ interface widgetsSelectables {
         if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)  // FIXME-OPT: Avoid if vertically clipped.
             pushColumnsBackground()
 
+        // Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
         val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val size = Vec2(if (sizeArg.x != 0f) sizeArg.x else labelSize.x, if (sizeArg.y != 0f) sizeArg.y else labelSize.y)
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currLineTextBaseOffset
-        val bbInner = Rect(pos, pos + size)
         itemSize(size, 0f)
 
         // Fill horizontal space
         val maxX = if(flags has Sf.SpanAllColumns) windowContentRegionMax.x + window.pos.x else contentRegionMaxAbs.x
-        if (sizeArg.x == 0f || flags has Sf._DrawFillAvailWidth)
-            size.x = max(labelSize.x, maxX - window.windowPadding.x - pos.x) + window.windowPadding.x
+        if (sizeArg.x == 0f || flags has Sf._SpanAvailWidth)
+            size.x = max(labelSize.x, maxX - pos.x)
         val bbAlign = Rect(pos, pos + size)
 
-        // Selectables are meant to be tightly packed together with no click-gap, so we extend the box to cover spacing between selectable.
+        // Selectables are meant to be tightly packed together with no click-gap, so we extend their box to cover spacing between selectable.
         val bbEnlarged = Rect(bbAlign)
         val spacing = style.itemSpacing
         val spacingL = floor(spacing.x * 0.5f)
@@ -80,6 +78,8 @@ interface widgetsSelectables {
         bbEnlarged.min.y -= spacingU
         bbEnlarged.max.x += spacing.x - spacingL
         bbEnlarged.max.y += spacing.y - spacingU
+        //if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb_align.Min, bb_align.Max, IM_COL32(255, 0, 0, 255)); }
+        //if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb_enlarged.Min, bb_enlarged.Max, IM_COL32(0, 255, 0, 255)); }
 
         val itemAdd = when {
             flags has Sf.Disabled -> {
@@ -149,7 +149,6 @@ interface widgetsSelectables {
         if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && window.dc.itemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
 
-        //if (g.IO.KeyCtrl) { window->DrawList->AddRect(bb_align.Min, bb_align.Max, IM_COL32(0, 255, 0, 255)); }
         Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return pressed
     }
