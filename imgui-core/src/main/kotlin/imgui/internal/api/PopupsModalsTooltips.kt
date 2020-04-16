@@ -131,7 +131,7 @@ internal interface PopupsModalsTooltips {
             if (focusWindow?.wasActive == false && popupWindow != null)
                 focusTopMostWindowUnderOne(popupWindow)   // Fallback
             else {
-                if (g.navLayer == NavLayer.Menu && focusWindow != null)
+                if (g.navLayer == NavLayer.Main && focusWindow != null)
                     focusWindow = navRestoreLastChildNavWindow(focusWindow)
                 focusWindow(focusWindow)
             }
