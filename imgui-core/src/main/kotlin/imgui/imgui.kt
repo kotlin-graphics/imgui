@@ -104,10 +104,17 @@ object Hook {
     var log: ((ctx: Context, fmt: String) -> Unit)? = null
 }
 
-/** Last Unicode code point supported by this build. */
+
+// Helper: Unicode defines
+
+/** Last Unicode code point supported by this build.
+ *
+ *  Maximum Unicode code point supported by this build. */
 const val UNICODE_CODEPOINT_MAX = /*sizeof(ImWchar) == 2 ?*/ 0xFFFF /*: 0x10FFFF*/
 
-/** Standard invalid Unicode code point. */
+/** Standard invalid Unicode code point.
+ *
+ *  Invalid Unicode code point (standard value). */
 const val UNICODE_CODEPOINT_INVALID = 0xFFFD
 
 @JvmField
