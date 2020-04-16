@@ -33,6 +33,7 @@ import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
+import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.parseFormatTrimDecorations
 import imgui.ImGui.popFont
 import imgui.ImGui.popStyleColor
@@ -350,17 +351,19 @@ internal interface inputText {
         // Process other shortcuts/key-presses
         var cancelEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
-            state!!
+            state!! // ~IM_ASSERT(state != NULL);
+            assert(io.keyMods == mergedKeyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" } // We rarely do this check, but if anything let's do it here.
+
             val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-            val isShortcutKey = (if (isOsx) io.keySuper && !io.keyCtrl else io.keyCtrl && !io.keySuper) && !io.keyAlt && !io.keyShift
-            val isOsxShiftShortcut = isOsx && io.keySuper && io.keyShift && !io.keyCtrl && !io.keyAlt
+            val isOsxShiftShortcut = isOsx && io.keyMods == (KeyMod.Super or KeyMod.Shift)
             val isWordmoveKeyDown = if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
-            val isCtrlKeyOnly = io.keyCtrl && !io.keyShift && !io.keyAlt && !io.keySuper
-            val isShiftKeyOnly = io.keyShift && !io.keyCtrl && !io.keyAlt && !io.keySuper
+            val isCtrlKeyOnly = io.keyMods == KeyMod.Ctrl.i
+            val isShiftKeyOnly = io.keyMods == KeyMod.Shift.i
+            val isShortcutKey = io.keyMods == if(io.configMacOSXBehaviors) KeyMod.Super.i else KeyMod.Ctrl.i
 
             val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
             val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
