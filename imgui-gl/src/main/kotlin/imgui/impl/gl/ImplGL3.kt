@@ -46,15 +46,15 @@ class ImplGL3 : GLInterface {
 
         // query for GL version
         glVersion = when {
-            !OPENGL_ES2 -> glGetInteger(GL_MAJOR_VERSION) * 1000 + glGetInteger(GL_MINOR_VERSION)
-            else -> 2000 // GLES 2
+            !OPENGL_ES2 -> glGetInteger(GL_MAJOR_VERSION) * 100 + glGetInteger(GL_MINOR_VERSION) * 10
+            else -> 200 // GLES 2
         }
 
         // Setup back-end capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
 
         if (MAY_HAVE_DRAW_WITH_BASE_VERTEX)
-            if (glVersion >= 3200)
+            if (glVersion >= 320)
                 io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     }
 
@@ -188,7 +188,7 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && glVersion >= 3200)
+                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && glVersion >= 320)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
                             glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
