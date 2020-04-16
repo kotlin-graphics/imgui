@@ -266,7 +266,7 @@ internal interface widgets {
      *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on
      *          a scrollbar
      *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal. */
-    fun scrollbar(axis: Axis) {
+    infix fun scrollbar(axis: Axis) {
 
         val window = g.currentWindow!!
 
@@ -274,27 +274,21 @@ internal interface widgets {
         keepAliveID(id)
 
         // Calculate scrollbar bounding box
-        val outerRect = window.rect()
-        val innerRect = window.innerRect
-        val borderSize = window.windowBorderSize
-        val scrollbarSize = window.scrollbarSizes[axis xor 1]
-        assert(scrollbarSize > 0f)
-        val otherScrollbarSize = window.scrollbarSizes[axis]
-        var roundingCorners: DrawCornerFlags = if (otherScrollbarSize <= 0f) DrawCornerFlag.BotRight.i else 0
-        val bb = Rect()
+        val bb = window getScrollbarRect axis
+        var roundingCorners = DrawCornerFlag.None.i
         if (axis == Axis.X) {
-            bb.min.put(innerRect.min.x, max(outerRect.min.y, outerRect.max.y - borderSize - scrollbarSize))
-            bb.max.put(innerRect.max.x, outerRect.max.y)
             roundingCorners = roundingCorners or DrawCornerFlag.BotLeft
+            if (!window.scrollbar.y)
+                roundingCorners = roundingCorners or DrawCornerFlag.BotRight
         } else {
-            bb.min.put(max(outerRect.min.x, outerRect.max.x - borderSize - scrollbarSize), innerRect.min.y)
-            bb.max.put(outerRect.max.x, window.innerRect.max.y)
-            roundingCorners = roundingCorners or when {
-                window.flags has WindowFlag.NoTitleBar && window.flags hasnt WindowFlag.MenuBar -> DrawCornerFlag.TopRight.i
-                else -> 0
-            }
+            if (window.flags has WindowFlag.NoTitleBar && window.flags hasnt WindowFlag.MenuBar)
+                roundingCorners = roundingCorners or DrawCornerFlag.TopRight
+            if (!window.scrollbar.x)
+                roundingCorners = roundingCorners or DrawCornerFlag.BotRight
         }
-        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, innerRect.max[axis] - innerRect.min[axis], window.contentSize[axis] + window.windowPadding[axis] * 2f, roundingCorners)
+        val sizeAvail = window.innerRect.max[axis] - window.innerRect.min[axis]
+        val sizeContents = window.contentSize[axis] + window.windowPadding[axis] * 2f
+        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, sizeAvail, sizeContents, roundingCorners)
     }
 
     /** Vertical/Horizontal scrollbar
@@ -316,7 +310,7 @@ internal interface widgets {
         if (bbFrameWidth <= 0f || bbFrameHeight <= 0f)
             return false
 
-        // When we are too small, start hiding and disabling the grab (this reduce visual noise on very small window and facilitate using the resize grab)
+        // When we are too small, start hiding and disabling the grab (this reduce visual noise on very small window and facilitate using the window resize grab)
         var alpha = 1f
         if (axis == Axis.Y && bbFrameHeight < g.fontSize + style.framePadding.y * 2f)
             alpha = saturate((bbFrameHeight - g.fontSize) / (style.framePadding.y * 2f))
@@ -324,13 +318,12 @@ internal interface widgets {
             return false
 
         val allowInteraction = alpha >= 1f
-        val horizontal = axis == Axis.X
 
         val bb = Rect(bbFrame)
         bb.expand(Vec2(-clamp(floor((bbFrameWidth - 2f) * 0.5f), 0f, 3f), -clamp(floor((bbFrameHeight - 2f) * 0.5f), 0f, 3f)))
 
         // V denote the main, longer axis of the scrollbar (= height for a vertical scrollbar)
-        val scrollbarSizeV = if (horizontal) bb.width else bb.height
+        val scrollbarSizeV = if (axis == Axis.X) bb.width else bb.height
 
         // Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
         // But we maintain a minimum size in pixel to allow for the user to still aim inside.
@@ -344,10 +337,10 @@ internal interface widgets {
 
         val scrollMax = max(1f, sizeContentsV - sizeAvailV)
         var scrollRatio = saturate(scrollV / scrollMax)
-        var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
+        var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV  // Grab position in normalized space
         if (held && allowInteraction && grabHNorm < 1f) {
-            val scrollbarPosV = if (horizontal) bb.min.x else bb.min.y
-            val mousePosV = if (horizontal) io.mousePos.x else io.mousePos.y
+            val scrollbarPosV = bb.min[axis]
+            val mousePosV = io.mousePos[axis]
 
             // Click position in scrollbar normalized space (0.0f->1.0f)
             val clickedVNorm = saturate((mousePosV - scrollbarPosV) / scrollbarSizeV)
@@ -363,7 +356,7 @@ internal interface widgets {
                 }
             }
 
-            // Apply scroll
+            // Apply scroll (p_scroll_v will generally point on one member of window->Scroll)
             // It is ok to modify Scroll here because we are being called in Begin() after the calculation of ContentSize and before setting up our starting position
             val scrollVNorm = saturate((clickedVNorm - g.scrollbarClickDeltaToGrabCenter - grabHNorm * 0.5f) / (1f - grabHNorm))
             scrollV = round(scrollVNorm * scrollMax) //(win_size_contents_v - win_size_v));
@@ -378,14 +371,15 @@ internal interface widgets {
         }
 
         // Render
-        window.drawList.addRectFilled(bbFrame.min, bbFrame.max, Col.ScrollbarBg.u32, window.windowRounding, roundingCorners)
+        val bgCol = Col.ScrollbarBg.u32
         val grabCol = getColorU32(when {
             held -> Col.ScrollbarGrabActive
             hovered -> Col.ScrollbarGrabHovered
             else -> Col.ScrollbarGrab
         }, alpha)
-        val grabRect = when {
-            horizontal -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y, lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, bb.max.y)
+        window.drawList.addRectFilled(bbFrame.min, bbFrame.max, bgCol, window.windowRounding, roundingCorners)
+        val grabRect = when (axis) {
+            Axis.X -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y, lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, bb.max.y)
             else -> Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm), bb.max.x, lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels)
         }
         window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
@@ -393,6 +387,7 @@ internal interface widgets {
         return held
     }
 
+    // GetWindowScrollbarRect -> Window class
     // GetWindowScrollbarID -> Window class
 
     /** Horizontal/vertical separating line
