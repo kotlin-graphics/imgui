@@ -745,7 +745,9 @@ enum class KeyMod(val i: KeyModFlags) {
     Ctrl(1 shl 0),
     Shift(1 shl 1),
     Alt(1 shl 2),
-    Super(1 shl 3)
+    Super(1 shl 3);
+
+    infix fun or(b: KeyMod): KeyModFlags = i or b.i
 }
 
 typealias KeyModFlags = Int

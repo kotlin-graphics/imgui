@@ -249,6 +249,7 @@ fun navUpdate() {
         as a fallback if the direction fails to find a match     */
     if (g.navMoveDir != Dir.None) {
         g.navMoveRequest = true
+        g.navMoveRequestKeyMods = io.keyMods
         g.navMoveDirLast = g.navMoveDir
     }
     if (g.navMoveRequest && g.navId == 0) {
@@ -311,14 +312,14 @@ fun navUpdate() {
     g.navWindow.let {
         if (it != null) {
             val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
-            g.navScoringRectScreen.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
-        } else g.navScoringRectScreen put viewportRect
+            g.navScoringRect.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
+        } else g.navScoringRect put viewportRect
     }
-    g.navScoringRectScreen translateY navScoringRectOffsetY
-    g.navScoringRectScreen.min.x = min(g.navScoringRectScreen.min.x + 1f, g.navScoringRectScreen.max.x)
-    g.navScoringRectScreen.max.x = g.navScoringRectScreen.min.x
+    g.navScoringRect translateY navScoringRectOffsetY
+    g.navScoringRect.min.x = min(g.navScoringRect.min.x + 1f, g.navScoringRect.max.x)
+    g.navScoringRect.max.x = g.navScoringRect.min.x
     // Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous abs() calls in navScoreItem().
-    assert(!g.navScoringRectScreen.isInverted)
+    assert(!g.navScoringRect.isInverted)
     //g.OverlayDrawList.AddRect(g.NavScoringRectScreen.Min, g.NavScoringRectScreen.Max, IM_COL32(255,200,0,255)); // [DEBUG]
     g.navScoringCount = 0
     if (IMGUI_DEBUG_NAV_RECTS)
@@ -554,6 +555,8 @@ fun navUpdateMoveResult() {
         // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
         g.navJustMovedToId = result.id
         g.navJustMovedToFocusScopeId = result.focusScopeId
+
+        g.navJustMovedToKeyMods = g.navMoveRequestKeyMods
     }
     setNavIDWithRectRel(result.id, g.navLayer, result.focusScopeId, result.rectRel)
     g.navMoveFromClampedRefRect = false
@@ -637,7 +640,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     if (g.navLayer != window.dc.navLayerCurrent) return false
 
     // Current modified source rect (NB: we've applied max.x = min.x in navUpdate() to inhibit the effect of having varied item width)
-    val curr = Rect(g.navScoringRectScreen)
+    val curr = Rect(g.navScoringRect)
     g.navScoringCount++
 
     // When entering through a NavFlattened border, we consider child window items as fully clipped for scoring

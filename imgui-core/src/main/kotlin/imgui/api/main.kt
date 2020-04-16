@@ -47,16 +47,6 @@ interface main {
         get() = gImGui?.style
                 ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
-    val mergedKeyModFlags: KeyModFlags
-        get() {
-            var keyModFlags: KeyModFlags = KeyMod.None.i
-            if (ImGui.io.keyCtrl) keyModFlags = keyModFlags or KeyMod.Ctrl.i
-            if (ImGui.io.keyShift) keyModFlags = keyModFlags or KeyMod.Shift.i
-            if (ImGui.io.keyAlt) keyModFlags = keyModFlags or KeyMod.Alt.i
-            if (ImGui.io.keySuper) keyModFlags = keyModFlags or KeyMod.Super.i
-            return keyModFlags
-        }
-
     fun newFrame() {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
