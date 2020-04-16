@@ -16,6 +16,7 @@ import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
+import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
@@ -157,7 +158,7 @@ interface main {
                 }
                 else -> -1f
             }
-        // Update gamepad/keyboard directional navigation
+        // Update gamepad/keyboard navigation
         navUpdate()
 
         // Update mouse input state
