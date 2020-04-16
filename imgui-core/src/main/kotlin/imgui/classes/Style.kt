@@ -73,7 +73,7 @@ class Style {
     var colorButtonPosition = Dir.Right
     /** Alignment of button text when button is larger than text. Defaults to (0.5f, 0.5f) (centered).   */
     var buttonTextAlign = Vec2(0.5f)
-    /** Alignment of selectable text when selectable is larger than text. Defaults to (0,0) for top-left alignment. */
+    /** Alignment of selectable text. Defaults to (0.0f, 0.0f) (top-left aligned). It's generally important to keep this left-aligned if you want to lay multiple items on a same line. */
     var selectableTextAlign = Vec2()
     /** Window position are clamped to be visible within the display area or monitors by at least this amount.
      *  Only applies to regular windows.    */
