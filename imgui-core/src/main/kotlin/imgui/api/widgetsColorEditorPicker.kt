@@ -670,7 +670,7 @@ interface widgetsColorEditorPicker {
         if (alphaBar) {
             val alpha = saturate(col[3])
             val bar1Bb = Rect(bar1PosX, pickerPos.y, bar1PosX + barsWidth, pickerPos.y + svPickerSize)
-            renderColorRectWithAlphaCheckerboard(bar1Bb.min, bar1Bb.max, 0, bar1Bb.width / 2f, Vec2())
+            renderColorRectWithAlphaCheckerboard(drawList, bar1Bb.min, bar1Bb.max, 0, bar1Bb.width / 2f, Vec2())
             drawList.addRectFilledMultiColor(bar1Bb.min, bar1Bb.max, userCol32StripedOfAlpha, userCol32StripedOfAlpha, userCol32StripedOfAlpha wo COL32_A_MASK, userCol32StripedOfAlpha wo COL32_A_MASK)
             val bar1LineY = round(pickerPos.y + (1f - alpha) * svPickerSize)
             renderFrameBorder(bar1Bb.min, bar1Bb.max, 0f)
@@ -731,8 +731,8 @@ interface widgetsColorEditorPicker {
         }
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
-            renderColorRectWithAlphaCheckerboard(Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max, getColorU32(colRgb),
-                    gridStep, Vec2(-gridStep + off, off), rounding, Dcf.TopRight or Dcf.BotRight)
+            renderColorRectWithAlphaCheckerboard(window.drawList, Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max,
+                    getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, Dcf.TopRight or Dcf.BotRight)
             window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding,
                     Dcf.TopLeft or Dcf.BotLeft)
         } else {
@@ -740,7 +740,7 @@ interface widgetsColorEditorPicker {
                 if the source code had no alpha */
             val colSource = if (flags has Cef.AlphaPreview) colRgb else colRgbWithoutAlpha
             if (colSource.w < 1f)
-                renderColorRectWithAlphaCheckerboard(bbInner.min, bbInner.max, colSource.u32, gridStep, Vec2(off), rounding)
+                renderColorRectWithAlphaCheckerboard(window.drawList, bbInner.min, bbInner.max, colSource.u32, gridStep, Vec2(off), rounding)
             else
                 window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, Dcf.All.i)
         }
