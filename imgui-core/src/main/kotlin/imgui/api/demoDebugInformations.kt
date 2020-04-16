@@ -24,7 +24,6 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameCount
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
-import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
@@ -50,7 +49,6 @@ import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
-import imgui.ImGui.unindent
 import imgui.ImGui.windowDrawList
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
@@ -59,6 +57,7 @@ import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
+import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.Columns
@@ -67,6 +66,7 @@ import imgui.internal.classes.TabBar
 import imgui.internal.classes.Window
 import kool.BYTES
 import kool.lim
+import kool.rem
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -201,6 +201,46 @@ interface demoDebugInformations {
         text("${io.metricsAllocs} active allocations")
         separator()
 
+        // Helper functions to display common structures:
+        // - NodeDrawList()
+        // - NodeColumns()
+        // - NodeWindow()
+        // - NodeWindows()
+        // - NodeTabBar()
+        // - NodeStorage()
+        // -> Funcs objects
+
+        // Tools
+        treeNode("Tools") {
+
+            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
+            if (button("Item Picker.."))
+                debugStartItemPicker()
+            sameLine()
+            helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
+
+            checkbox("Show windows begin order", ::showWindowsBeginOrder)
+            checkbox("Show windows rectangles", ::showWindowsRects)
+            sameLine()
+            setNextItemWidth(fontSize * 12)
+            _i = showWindowsRectType.ordinal
+            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i, WRT.names.toTypedArray(), WRT.names.size, WRT.names.size)
+            showWindowsRectType = WRT.values()[_i]
+            if (showWindowsRects)
+                g.navWindow?.let { nav ->
+                    bulletText("'${nav.name}':")
+                    indent {
+                        for (rectN in WRT.values()) {
+                            val r = Funcs.getWindowRect(nav, rectN)
+                            text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, WRT.names[rectN.ordinal])
+                        }
+                    }
+                }
+            checkbox("Show mesh when hovering ImDrawCmd", ::showDrawcmdMesh)
+            checkbox("Show bounding boxes when hovering ImDrawCmd", ::showDrawcmdAabb)
+        }
+
+        // Contents
         Funcs.nodeWindows(g.windows, "Windows")
         //Funcs::NodeWindows(g.WindowsFocusOrder, "WindowsFocusOrder")
         if (treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
@@ -262,36 +302,6 @@ interface demoDebugInformations {
             text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
             text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
                     "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
-            treePop()
-        }
-
-        // Tools
-        if (treeNode("Tools")) {
-
-            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
-            if (button("Item Picker.."))
-                debugStartItemPicker()
-            sameLine()
-            helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
-
-            checkbox("Show windows begin order", Companion::showWindowsBeginOrder)
-            checkbox("Show windows rectangles", Companion::showWindowsRects)
-            sameLine()
-            setNextItemWidth(fontSize * 12)
-            _i = showWindowsRectType.ordinal
-            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i, WRT.names.toTypedArray(), WRT.names.size, WRT.names.size)
-            showWindowsRectType = WRT.values()[_i]
-            if (showWindowsRects)
-                g.navWindow?.let { nav ->
-                    bulletText("'${nav.name}':")
-                    indent()
-                    for (rectN in WRT.values()) {
-                        val r = Funcs.getWindowRect(nav, rectN)
-                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, WRT.names[rectN.ordinal])
-                    }
-                    unindent()
-                }
-            checkbox("Show details when hovering ImDrawCmd node", ::showDrawcmdDetails)
             treePop()
         }
 
@@ -435,6 +445,8 @@ interface demoDebugInformations {
         var showTablesRects = false
         var showTablesRectType = TRT.WorkRect
         var showDrawcmdDetails = true
+        var showDrawcmdMesh = true
+        var showDrawcmdAabb = true
 
         var showWindow = false
 
@@ -461,6 +473,35 @@ interface demoDebugInformations {
                     Rect(min, min + window.contentSize)
                 }
                 WRT.ContentRegionRect -> window.contentRegionRect
+            }
+
+            fun nodeDrawCmdShowMeshAndBoundingBox(window: Window?, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
+                                                  showMesh: Boolean, showAabb: Boolean) {
+                assert(showMesh || showAabb)
+                val fgDrawList = getForegroundDrawList(window) // Render additional visuals into the top-most draw list
+                val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
+
+                // Draw wire-frame version of all triangles
+                val clipRect = Rect(drawCmd.clipRect)
+                val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+                val backupFlags = fgDrawList.flags
+                fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                for (baseIdx in elemOffset until (elemOffset + drawCmd.elemCount) step 3) {
+                    val triangle = Array(3) { Vec2() }
+                    for (n in 0..2) {
+                        val p = drawList.vtxBuffer[idxBuffer?.get(baseIdx + n) ?: baseIdx + n].pos
+                        triangle[n] = p
+                        vtxsRect add p
+                    }
+                    if (showMesh)
+                        fgDrawList.addPolyline(triangle.toCollection(ArrayList()), COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
+                }
+                // Draw bounding boxes
+                if (showAabb) {
+                    fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255)) // In pink: clipping rectangle submitted to GPU
+                    fgDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(0, 255, 255, 255)) // In cyan: bounding box of triangles
+                }
+                fgDrawList.flags = backupFlags
             }
 
             fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
@@ -500,14 +541,8 @@ interface demoDebugInformations {
                             .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
-                    if (showDrawcmdDetails && fgDrawList != null && isItemHovered()) {
-                        val clipRect = Rect(cmd.clipRect)
-                        val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
-                        for (i in elemOffset until elemOffset + cmd.elemCount)
-                            vtxsRect add drawList.vtxBuffer[idxBuffer?.get(i) ?: i].pos
-                        fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255))
-                        fgDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(255, 255, 0, 255))
-                    }
+                    if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
+                        nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
                     if (!cmdNodeOpen) continue
 
                     // Calculate approximate coverage area (touched pixel count)
@@ -523,22 +558,8 @@ interface demoDebugInformations {
                     // Display vertex information summary. Hover to get all triangles drawn in wire-frame
                     string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
                     selectable(string)
-                    if (fgDrawList != null && isItemHovered() && showDrawcmdDetails) {
-                        // Draw wire-frame version of everything
-                        val backupFlags: DrawListFlags = fgDrawList.flags
-                        fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
-                        val clipRect = Rect(cmd.clipRect)
-                        fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255))
-                        for (baseIdx in elemOffset until (elemOffset + cmd.elemCount) step 3) {
-                            val triangles = Array(3) {
-                                Vec2(drawList.vtxBuffer[idxBuffer?.get(baseIdx + it) ?: (baseIdx + it)].pos)
-                            }
-                            // TODO crap solution .toCollection, if confined only here in debug we can still accept it,
-                            // otherwise consider overloading ::addPolyline with array input
-                            fgDrawList.addPolyline(triangles.toCollection(ArrayList()), COL32(255, 255, 0, 255), true, 1f)
-                        }
-                        fgDrawList.flags = backupFlags
-                    }
+                    if (isItemHovered() && fgDrawList != null)
+                        nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, elemOffset, true, false)
 
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
@@ -603,6 +624,12 @@ interface demoDebugInformations {
                     foregroundDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
                 if (!open)
                     return
+
+                if (!window.wasActive)
+                    textDisabled("Note: window is not currently visible.")
+                if (window.memoryCompacted)
+                    textDisabled("Note: some memory buffers have been compacted/freed.")
+
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
                 bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
