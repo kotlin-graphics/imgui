@@ -1,9 +1,9 @@
 package imgui.internal.api
 
 import glm_.b
+import glm_.bool
 import glm_.f
 import glm_.func.common.max
-import glm_.glm
 import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -16,7 +16,6 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.internal.*
-import imgui.internal.api.internal.Companion.alphaBlendColor
 import imgui.internal.classes.Rect
 import unsigned.toUInt
 import kotlin.math.max
@@ -202,50 +201,54 @@ internal interface renderHelpers {
         }
     }
 
-    /** NB: This is rather brittle and will show artifact when rounding this enabled if rounded corners overlap multiple cells.
-     *  Caller currently responsible for avoiding that.
-     *  I spent a non reasonable amount of time trying to getting this right for ColorButton with rounding + anti-aliasing +
-     *  ColorEditFlags.HalfAlphaPreview flag + various grid sizes and offsets, and eventually gave up...
-     *  probably more reasonable to disable rounding alltogether.   */
-    fun renderColorRectWithAlphaCheckerboard(pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float, gridOff: Vec2, rounding: Float = 0f,
-                                             roundingCornerFlags: Int = 0.inv()) {
-        val window = currentWindow
+    /** Helper for ColorPicker4()
+     *  NB: This is rather brittle and will show artifact when rounding this enabled if rounded corners overlap multiple cells. Caller currently responsible for avoiding that.
+     * Spent a non reasonable amount of time trying to getting this right for ColorButton with rounding+anti-aliasing+ImGuiColorEditFlags_HalfAlphaPreview flag + various grid sizes and offsets, and eventually gave up... probably more reasonable to disable rounding alltogether.
+     * FIXME: uses ImGui::GetColorU32
+     * [JVM] safe passing Vec2 instances */
+    fun renderColorRectWithAlphaCheckerboard(drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
+                                             gridOff: Vec2, rounding: Float = 0f, roundingCornersFlags: Int = -1) {
         if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
-            val colBg1 = getColorU32(alphaBlendColor(COL32(204, 204, 204, 255), col))
-            val colBg2 = getColorU32(alphaBlendColor(COL32(128, 128, 128, 255), col))
-            window.drawList.addRectFilled(pMin, pMax, colBg1, rounding, roundingCornerFlags)
+            val colBg1 = getColorU32(alphaBlendColors(COL32(204, 204, 204, 255), col))
+            val colBg2 = getColorU32(alphaBlendColors(COL32(128, 128, 128, 255), col))
+            drawList.addRectFilled(pMin, pMax, colBg1, rounding, roundingCornersFlags)
 
             var yi = 0
             var y = pMin.y + gridOff.y
             while (y < pMax.y) {
-                val y1 = glm.clamp(y, pMin.y, pMax.y)
-                val y2 = glm.min(y + gridStep, pMax.y)
-                if (y2 > y1) {
-                    var x = pMin.x + gridOff.x + (yi and 1) * gridStep
-                    while (x < pMax.x) {
-                        val x1 = glm.clamp(x, pMin.x, pMax.x)
-                        val x2 = glm.min(x + gridStep, pMax.x)
+                val y1 = clamp(y, pMin.y, pMax.y)
+                val y2 = min(y + gridStep, pMax.y)
+                if (y2 <= y1) {
+                    y += gridStep
+                    yi++
+                    continue
+                }
+                var x = pMin.x + gridOff.x + (yi and 1) * gridStep
+                while (x < pMax.x) {
+                    val x1 = clamp(x, pMin.x, pMax.x)
+                    val x2 = min(x + gridStep, pMax.x)
+                    if (x2 <= x1) {
                         x += gridStep * 2f
-                        if (x2 <= x1) continue
-                        var roundingCornersFlagsCell = 0
-                        if (y1 <= pMin.y) {
-                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.TopLeft
-                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.TopRight
-                        }
-                        if (y2 >= pMax.y) {
-                            if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.BotLeft
-                            if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.BotRight
-                        }
-                        roundingCornersFlagsCell = roundingCornersFlagsCell and roundingCornerFlags
-                        val r = if (roundingCornersFlagsCell != 0) rounding else 0f
-                        window.drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, r, roundingCornersFlagsCell)
+                        continue
                     }
+                    var roundingCornersFlagsCell = 0
+                    if (y1 <= pMin.y) {
+                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.TopLeft
+                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.TopRight
+                    }
+                    if (y2 >= pMax.y) {
+                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.BotLeft
+                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.BotRight
+                    }
+                    roundingCornersFlagsCell = roundingCornersFlagsCell and roundingCornersFlags
+                    drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, if (roundingCornersFlagsCell.bool) rounding else 0f, roundingCornersFlagsCell)
+                    x += gridStep * 2f
                 }
                 y += gridStep
                 yi++
             }
         } else
-            window.drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornerFlags)
+            drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornersFlags)
     }
 
     /** Navigation highlight
