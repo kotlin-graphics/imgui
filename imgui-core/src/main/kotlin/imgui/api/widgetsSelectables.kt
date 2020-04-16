@@ -40,6 +40,8 @@ interface widgetsSelectables {
 
     /** Tip: pass a non-visible label (e.g. "##dummy") then you can use the space to draw other text or image.
      *  But you need to make sure the ID is unique, e.g. enclose calls in PushID/PopID or use ##unique_id.
+     *  With this scheme, ImGuiSelectableFlags_SpanAllColumns and ImGuiSelectableFlags_AllowItemOverlap are also frequently used flags.
+     *  FIXME: Selectable() with (size.x == 0.0f) and (SelectableTextAlign.x > 0.0f) followed by SameLine() is currently not supported.
      *
      *  "bool selected" carry the selection state (read-only). Selectable() is clicked is returns true so you can modify
      *  your selection state.
@@ -64,13 +66,17 @@ interface widgetsSelectables {
         itemSize(size, 0f)
 
         // Fill horizontal space
-        val maxX = if(flags has Sf.SpanAllColumns) windowContentRegionMax.x + window.pos.x else contentRegionMaxAbs.x
+        val minX = if(flags has Sf.SpanAllColumns) window.contentRegionRect.min.x else pos.x
+        val maxX = if(flags has Sf.SpanAllColumns) window.contentRegionRect.max.x else contentRegionMaxAbs.x
         if (sizeArg.x == 0f || flags has Sf._SpanAvailWidth)
-            size.x = max(labelSize.x, maxX - pos.x)
-        val bbAlign = Rect(pos, pos + size)
+            size.x = max(labelSize.x, maxX - minX)
+
+        // Text stays at the submission position, but bounding box may be extended on both sides
+        val textMin = Vec2(pos)
+        val textMax = Vec2(minX + size.x, pos.y + size.y)
 
         // Selectables are meant to be tightly packed together with no click-gap, so we extend their box to cover spacing between selectable.
-        val bbEnlarged = Rect(bbAlign)
+        val bbEnlarged = Rect(minX, pos.y, textMax.x, textMax.y)
         val spacing = style.itemSpacing
         val spacingL = floor(spacing.x * 0.5f)
         val spacingU = floor(spacing.y * 0.5f)
@@ -142,7 +148,7 @@ interface widgetsSelectables {
             popColumnsBackground()
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        renderTextClipped(bbAlign.min, bbAlign.max, label, labelSize, style.selectableTextAlign, bbEnlarged)
+        renderTextClipped(textMin, textMax, label, labelSize, style.selectableTextAlign, bbEnlarged)
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
