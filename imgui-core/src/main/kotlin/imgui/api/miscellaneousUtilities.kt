@@ -78,6 +78,8 @@ interface miscellaneousUtilities {
                 val unclippedRect = window.clipRect
                 if (g.navMoveRequest)
                     unclippedRect add g.navScoringRect
+                if (g.navJustMovedToId != 0 && window.navLastIds[0] == g.navJustMovedToId)
+                    unclippedRect add Rect(window.pos + window.navRectRel[0].min, window.pos + window.navRectRel[0].max)
 
                 val pos = window.dc.cursorPos
                 var start = ((unclippedRect.min.y - pos.y) / itemsHeight).i
