@@ -149,6 +149,15 @@ fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): Int {
     return crc.inv()
 }
 
+// Helpers: Color Blending
+fun alphaBlendColors(colA: Int, colB: Int): Int {
+    val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255.f
+    val r = lerp((colA ushr COL32_R_SHIFT) and 0xFF, (colB ushr COL32_R_SHIFT) and 0xFF, t)
+    val g = lerp((colA ushr COL32_G_SHIFT) and 0xFF, (colB ushr COL32_G_SHIFT) and 0xFF, t)
+    val b = lerp((colA ushr COL32_B_SHIFT) and 0xFF, (colB ushr COL32_B_SHIFT) and 0xFF, t)
+    return COL32(r, g, b, 0xFF)
+}
+
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: Bit manipulation
 // -----------------------------------------------------------------------------------------------------------------
