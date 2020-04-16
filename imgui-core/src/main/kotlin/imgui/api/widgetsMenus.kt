@@ -166,6 +166,7 @@ interface widgetsMenus {
         endMenuBar()
 
         // When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
+        // FIXME: With this strategy we won't be able to restore a NULL focus.
         if (g.currentWindow == g.navWindow && g.navLayer == NavLayer.Main && !g.navAnyRequest)
             focusTopMostWindowUnderOne(g.navWindow)
 
