@@ -17,7 +17,7 @@ import imgui.internal.*
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
- *  [BETA API] API may evolve! */
+ *  - [BETA API] API may evolve! */
 interface dragAndDrop {
 
     /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
