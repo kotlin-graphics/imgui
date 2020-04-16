@@ -560,29 +560,38 @@ internal interface widgetsLowLevelBehaviors {
             return isOpen
         }
 
-        /*  Flags that affects opening behavior:
-                - 0 (default) .................... single-click anywhere to open
-                - OpenOnDoubleClick .............. double-click anywhere to open
-                - OpenOnArrow .................... single-click on arrow to open
-                - OpenOnDoubleClick|OpenOnArrow .. single-click on arrow or double-click anywhere to open   */
-        var buttonFlags: ButtonFlags = Bf.None.i
+        var buttonFlags = Bf.None.i
         if (flags has Tnf.AllowItemOverlap)
             buttonFlags = buttonFlags or Bf.AllowItemOverlap
-        buttonFlags = when {
-            flags has Tnf.OpenOnDoubleClick -> buttonFlags or Bf.PressedOnDoubleClick or (if (flags has Tnf.OpenOnArrow) Bf.PressedOnClickRelease else Bf.None)
-            else -> buttonFlags or Bf.PressedOnClickRelease
-        }
         if (!isLeaf)
             buttonFlags = buttonFlags or Bf.PressedOnDragDropHold
 
         // We allow clicking on the arrow section with keyboard modifiers held, in order to easily
         // allow browsing a tree while preserving selection with code implementing multi-selection patterns.
         // When clicking on the rest of the tree node we always disallow keyboard modifiers.
-        val hitPaddingX = style.touchExtraPadding.x
-        val arrowHitX1 = (textPos.x - textOffsetX) - hitPaddingX
-        val arrowHitX2 = (textPos.x - textOffsetX) + (g.fontSize + padding.x * 2f) + hitPaddingX
-        if (window !== g.hoveredWindow || !(io.mousePos.x >= arrowHitX1 && io.mousePos.x < arrowHitX2))
+        val arrowHitX1 = (textPos.x - textOffsetX) - style.touchExtraPadding.x
+        val arrowHitX2 = (textPos.x - textOffsetX) + (g.fontSize + padding.x * 2f) + style.touchExtraPadding.x
+        val isMouseXOverArrow = io.mousePos.x >= arrowHitX1 && io.mousePos.x < arrowHitX2
+        if (window !== g.hoveredWindow || !isMouseXOverArrow)
             buttonFlags = buttonFlags or Bf.NoKeyModifiers
+
+        // Open behaviors can be altered with the _OpenOnArrow and _OnOnDoubleClick flags.
+        // Some alteration have subtle effects (e.g. toggle on MouseUp vs MouseDown events) due to requirements for multi-selection and drag and drop support.
+        // - Single-click on label = Toggle on MouseUp (default)
+        // - Single-click on arrow = Toggle on MouseUp (when _OpenOnArrow=0)
+        // - Single-click on arrow = Toggle on MouseDown (when _OpenOnArrow=1)
+        // - Double-click on label = Toggle on MouseDoubleClick (when _OpenOnDoubleClick=1)
+        // - Double-click on arrow = Toggle on MouseDoubleClick (when _OpenOnDoubleClick=1 and _OpenOnArrow=0)
+        // This makes _OpenOnArrow have a subtle effect on _OpenOnDoubleClick: arrow click reacts on Down rather than Up.
+        // It is rather standard that arrow click react on Down rather than Up and we'd be tempted to make it the default
+        // (by removing the _OpenOnArrow test below), however this would have a perhaps surprising effect on CollapsingHeader()?
+        // So right now we are making this optional. May evolve later.
+        buttonFlags = buttonFlags or when {
+            isMouseXOverArrow && flags has Tnf.OpenOnArrow -> Bf.PressedOnClick
+            flags has Tnf.OpenOnDoubleClick -> Bf.PressedOnDoubleClick
+            else -> Bf.PressedOnClickRelease
+        }
+
 
         val selected = flags has Tnf.Selected
         val wasSelected = selected
@@ -594,7 +603,7 @@ internal interface widgetsLowLevelBehaviors {
                 if (flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick) || g.navActivateId == id)
                     toggled = true
                 if (flags has Tnf.OpenOnArrow)
-                    toggled = ((io.mousePos.x >= arrowHitX1 && io.mousePos.x < arrowHitX2) && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
+                    toggled = (isMouseXOverArrow && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
                 if (flags has Tnf.OpenOnDoubleClick && io.mouseDoubleClicked[0])
                     toggled = true
                 // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
