@@ -587,7 +587,7 @@ interface windows {
                 dc.navLayerCurrentMask = 1 shl NavLayer.Main
                 dc.navLayerActiveMask = dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0x00
-                dc.navFocusScopeIdCurrent = parentWindow?.dc?.navFocusScopeIdCurrent ?: 0
+                dc.navFocusScopeIdCurrent = if(flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = scrollMax.y > 0f
 
