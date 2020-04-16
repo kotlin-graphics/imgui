@@ -868,7 +868,8 @@ class Window(var context: Context,
                 targetY = contentSize.y + windowPadding.y * 2f
             scroll.y = targetY - crY * (sizeFull.y - scrollbarSizes.y - decorationUpHeight)
         }
-        scroll maxAssign 0f
+        scroll.x = floor(scroll.x max 0f)
+        scroll.y = floor(scroll.y max 0f)
         if (!collapsed && !skipItems) {
             scroll.x = glm.min(scroll.x, scrollMax.x)
             scroll.y = glm.min(scroll.y, scrollMax.y)
