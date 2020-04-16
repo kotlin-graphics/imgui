@@ -30,10 +30,10 @@ import kotlin.math.min
 internal interface plot {
 
     fun plotEx(plotType: PlotType, label: String, data: PlotArray, valuesOffset: Int, overlayText: String,
-               scaleMin_: Float, scaleMax_: Float, frameSize: Vec2) {
+               scaleMin_: Float, scaleMax_: Float, frameSize: Vec2): Int {
 
         val window = currentWindow
-        if (window.skipItems) return
+        if (window.skipItems) return -1
 
         var scaleMin = scaleMin_
         var scaleMax = scaleMax_
@@ -47,7 +47,7 @@ internal interface plot {
         val innerBb = Rect(frameBb.min + style.framePadding, frameBb.max - style.framePadding)
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, 0, frameBb)) return
+        if (!itemAdd(totalBb, 0, frameBb)) return -1
         val hovered = itemHoverable(innerBb, 0)
 
         // Determine scale from values if not specified
@@ -67,12 +67,12 @@ internal interface plot {
         renderFrame(frameBb.min, frameBb.max, Col.FrameBg.u32, true, style.frameRounding)
 
         val valuesCountMin = if (plotType == PlotType.Lines) 2 else 1
+        var idxHovered = -1
         if (valuesCount >= valuesCountMin) {
             val resW = min(frameSize.x.i, valuesCount) + if (plotType == PlotType.Lines) -1 else 0
             val itemCount = valuesCount + if (plotType == PlotType.Lines) -1 else 0
 
             // Tooltip on hover
-            var vHovered = -1
             if (hovered && io.mousePos in innerBb) {
                 val t = glm.clamp((io.mousePos.x - innerBb.min.x) / (innerBb.max.x - innerBb.min.x), 0f, 0.9999f)
                 val vIdx = (t * itemCount).i
@@ -84,7 +84,7 @@ internal interface plot {
                     PlotType.Lines -> setTooltip("$vIdx: %8.4g\n${vIdx + 1}: %8.4g", v0, v1)
                     PlotType.Histogram -> setTooltip("$vIdx: %8.4g", v0)
                 }
-                vHovered = vIdx
+                idxHovered = vIdx
             }
 
             val tStep = 1f / resW
@@ -111,10 +111,10 @@ internal interface plot {
                 val pos0 = innerBb.min.lerp(innerBb.max, tp0)
                 val pos1 = innerBb.min.lerp(innerBb.max, if (plotType == PlotType.Lines) tp1 else Vec2(tp1.x, histogramZeroLineT))
                 when (plotType) {
-                    PlotType.Lines -> window.drawList.addLine(pos0, pos1, if (vHovered == v1Idx) colHovered else colBase)
+                    PlotType.Lines -> window.drawList.addLine(pos0, pos1, if (idxHovered == v1Idx) colHovered else colBase)
                     PlotType.Histogram -> {
                         if (pos1.x >= pos0.x + 2f) pos1.x -= 1f
-                        window.drawList.addRectFilled(pos0, pos1, if (vHovered == v1Idx) colHovered else colBase)
+                        window.drawList.addRectFilled(pos0, pos1, if (idxHovered == v1Idx) colHovered else colBase)
                     }
                 }
                 t0 = t1
@@ -126,5 +126,9 @@ internal interface plot {
             renderTextClipped(Vec2(frameBb.min.x, frameBb.min.y + style.framePadding.y), frameBb.max, overlayText, null, Vec2(0.5f, 0f))
         if (labelSize.x > 0f)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, innerBb.min.y), label)
+
+        // Return hovered index or -1 if none are hovered.
+        // This is currently not exposed in the public API because we need a larger redesign of the whole thing, but in the short-term we are making it available in PlotEx().
+        return idxHovered
     }
 }
