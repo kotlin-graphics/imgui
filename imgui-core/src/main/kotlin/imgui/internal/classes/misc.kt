@@ -242,7 +242,7 @@ class MenuColumns {
     fun calcExtraSpace(availW: Float) = glm.max(0f, availW - width)
 }
 
-/** Result of a directional navigation move query result */
+/** Result of a gamepad/keyboard directional navigation move query result */
 class NavMoveResult {
     /** Best candidate window   */
     var window: Window? = null

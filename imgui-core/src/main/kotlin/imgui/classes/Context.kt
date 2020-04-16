@@ -135,7 +135,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var activeIdHasBeenEditedThisFrame = false
 
-    /** Active widget will want to read those directional navigation requests (e.g. can activate a button and move away from it) */
+    /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
     var activeIdUsingNavDirMask = 0
 
     /** Active widget will want to read those nav inputs. */

@@ -240,40 +240,33 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
 
     //------------------------------------------------------------------
-    // Output - Retrieve after calling NewFrame()
+    // Output - Updated by NewFrame() or EndFrame()/Render()
+    // (when reading from the io.WantCaptureMouse, io.WantCaptureKeyboard flags to dispatch your inputs, it is
+    //  generally easier and more correct to use their state BEFORE calling NewFrame(). See FAQ for details!)
     //------------------------------------------------------------------
 
-    /** When io.wantCaptureMouse is true, imgui will use the mouse inputs, do not dispatch them to your main game/application
-     *  (in both cases, always pass on mouse inputs to imgui). (e.g. unclicked mouse is hovering over an imgui window,
-     *  widget is active, mouse was clicked over an imgui window, etc.). */
+    /** Set when Dear ImGui will use mouse inputs, in this case do not dispatch them to your main game/application (either way, always pass on mouse inputs to imgui). (e.g. unclicked mouse is hovering over an imgui window, widget is active, mouse was clicked over an imgui window, etc.). */
     var wantCaptureMouse = false
 
-    /** When io.wantCaptureKeyboard is true, imgui will use the keyboard inputs, do not dispatch them to your main game/application
-     *  (in both cases, always pass keyboard inputs to imgui).
-     *  (e.g. InputText active, or an imgui window is focused and navigation is enabled, etc.). */
+    /** Set when Dear ImGui will use keyboard inputs, in this case do not dispatch them to your main game/application (either way, always pass keyboard inputs to imgui). (e.g. InputText active, or an imgui window is focused and navigation is enabled, etc.). */
     var wantCaptureKeyboard = false
 
-    /** Mobile/console: when IO.wantTextInput is true, you may display an on-screen keyboard. This is set by ImGui when
-     *  it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
+    /** Mobile/console: when set, you may display an on-screen keyboard. This is set by Dear ImGui when it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
 
-    /** MousePos has been altered, back-end should reposition mouse on next frame.
-     *  Set only when ConfigFlag.NavEnableSetMousePos flag is enabled in IO.configFlags.    */
+    /** MousePos has been altered, back-end should reposition mouse on next frame. Rarely used! Set only when ImGuiConfigFlags_NavEnableSetMousePos flag is enabled. */
     var wantSetMousePos = false
 
-    /** When manual .ini load/save is active (io.IniFilename == NULL), this will be set to notify your application that
-     *  you can call SaveIniSettingsToMemory() and save yourself. IMPORTANT: You need to clear io.WantSaveIniSettings yourself. */
+    /** When manual .ini load/save is active (io.IniFilename == NULL), this will be set to notify your application that you can call SaveIniSettingsToMemory() and save yourself. Important: clear io.WantSaveIniSettings yourself after saving! */
     var wantSaveIniSettings = false
 
-    /** Directional navigation is currently allowed (will handle KeyNavXXX events) = a window is focused and it doesn't
-     *  use the WindowFlag.NoNavInputs flag.   */
+    /** Keyboard/Gamepad navigation is currently allowed (will handle ImGuiKey_NavXXX events) = a window is focused and it doesn't use the ImGuiWindowFlags_NoNavInputs flag.   */
     var navActive = false
 
-    /** Directional navigation is visible and allowed (will handle KeyNavXXX events). */
+    /** Keyboard/Gamepad navigation is visible and allowed (will handle ImGuiKey_NavXXX events). */
     var navVisible = false
 
-    /** Application framerate estimation, in frame per second. Solely for convenience. Rolling average estimation based
-    on IO.DeltaTime over 120 frames */
+    /** Application framerate estimate, in frame per second. Solely for convenience. Rolling average estimation based on io.DeltaTime over 120 frames. */
     var framerate = 0f
 
     /** Number of active memory allocations */

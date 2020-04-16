@@ -519,7 +519,7 @@ enum class FocusedFlag(@JvmField val i: FocusedFlags) {
     RootWindow(1 shl 1),
 
     /** IsWindowFocused(): Return true if any window is focused.
-     *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use ImGui::GetIO().WantCaptureMouse instead. */
+     *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
     AnyWindow(1 shl 2),
     RootAndChildWindows(RootWindow or ChildWindows);
 
@@ -543,7 +543,7 @@ infix fun FocusedFlags.wo(b: FocusedFlag): FocusedFlags = and(b.i.inv())
 typealias HoveredFlags = Int
 
 /** Flags: for IsItemHovered(), IsWindowHovered() etc.
- *  Note: if you are trying to check whether your mouse should be dispatched to imgui or to your app, you should use the 'io.WantCaptureMouse' boolean for that. Please read the FAQ!
+ *  Note: if you are trying to check whether your mouse should be dispatched to Dear ImGui or to your app, you should use 'io.WantCaptureMouse' instead! Please read the FAQ!
  *  Note: windows with the ImGuiWindowFlags_NoInputs flag are ignored by IsWindowHovered() calls.*/
 enum class HoveredFlag(@JvmField val i: HoveredFlags) {
     /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
@@ -753,7 +753,7 @@ enum class KeyMod(val i: KeyModFlags) {
 typealias KeyModFlags = Int
 
 
-/** Gamepad/Keyboard directional navigation
+/** Gamepad/Keyboard navigation
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
  *  based on your io.keysDown[] + io.keyMap[] arrays.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling

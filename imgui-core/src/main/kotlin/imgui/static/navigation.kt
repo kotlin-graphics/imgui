@@ -633,7 +633,7 @@ fun navUpdateAnyRequestFlag() {
         assert(g.navWindow != null)
 }
 
-/** Scoring function for directional navigation. Based on https://gist.github.com/rygorous/6981057  */
+/** Scoring function for gamepad/keyboard directional navigation. Based on https://gist.github.com/rygorous/6981057  */
 fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
 
     val window = g.currentWindow!!
