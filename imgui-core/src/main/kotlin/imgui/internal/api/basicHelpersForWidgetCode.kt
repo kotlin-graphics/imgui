@@ -161,7 +161,7 @@ internal interface basicHelpersForWidgetCode {
     fun isClippedEx(bb: Rect, id: ID, clipEvenWhenLogged: Boolean): Boolean {
         val window = g.currentWindow!!
         if (!(bb overlaps window.clipRect))
-            if (id == 0 || id != g.activeId)
+            if (id == 0 || (id != g.activeId && id != g.navId))
                 if (clipEvenWhenLogged || !g.logEnabled)
                     return true
         return false
