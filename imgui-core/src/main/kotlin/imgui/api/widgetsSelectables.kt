@@ -7,6 +7,7 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.contentRegionMax
+import imgui.ImGui.contentRegionMaxAbs
 import imgui.ImGui.currentWindow
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -66,16 +67,14 @@ interface widgetsSelectables {
 
         // Fill horizontal space.
         val windowPadding = Vec2(window.windowPadding)
-        val maxX = if (flags has Sf.SpanAllColumns) windowContentRegionMax.x else contentRegionMax.x
-        val wDraw = labelSize.x max (window.pos.x + maxX - windowPadding.x - pos.x)
-        val sizeDraw = Vec2(
-                if (sizeArg.x != 0f && flags hasnt Sf._DrawFillAvailWidth) sizeArg.x else wDraw,
-                if (sizeArg.y != 0f) sizeArg.y else size.y)
+        val maxX = if (flags has Sf.SpanAllColumns) windowContentRegionMax.x + window.pos.x else contentRegionMaxAbs.x
+        val wDraw = labelSize.x max (maxX - windowPadding.x - pos.x)
+        val sizeDraw = Vec2(if (sizeArg.x != 0f && flags hasnt Sf._DrawFillAvailWidth) sizeArg.x else wDraw, size.y)
         val bb = Rect(pos, pos + sizeDraw)
         if (sizeArg.x == 0f || flags has Sf._DrawFillAvailWidth)
             bb.max.x += windowPadding.x
 
-        // Selectables are tightly packed together, we extend the box to cover spacing between selectable.
+        // Selectables are meant to be tightly packed together with no click-gap, so we extend the box to cover spacing between selectable.
         val spacing = style.itemSpacing
         val spacingL = floor(spacing.x * 0.5f)
         val spacingU = floor(spacing.y * 0.5f)
@@ -141,10 +140,8 @@ interface widgetsSelectables {
             renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         }
 
-        if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null) {
+        if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)
             popColumnsBackground()
-            bb.max.x -= contentRegionMax.x - maxX
-        }
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
         renderTextClipped(bbInner.min, bbInner.max, label, labelSize, style.selectableTextAlign, bb)
