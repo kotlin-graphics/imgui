@@ -70,28 +70,30 @@ interface widgetsSelectables {
         val maxX = if (flags has Sf.SpanAllColumns) windowContentRegionMax.x + window.pos.x else contentRegionMaxAbs.x
         val wDraw = labelSize.x max (maxX - windowPadding.x - pos.x)
         val sizeDraw = Vec2(if (sizeArg.x != 0f && flags hasnt Sf._DrawFillAvailWidth) sizeArg.x else wDraw, size.y)
-        val bb = Rect(pos, pos + sizeDraw)
+
+        val bbAlign = Rect(pos, pos + sizeDraw)
         if (sizeArg.x == 0f || flags has Sf._DrawFillAvailWidth)
-            bb.max.x += windowPadding.x
+            bbAlign.max.x += windowPadding.x
 
         // Selectables are meant to be tightly packed together with no click-gap, so we extend the box to cover spacing between selectable.
+        val bbEnlarged = Rect(bbAlign)
         val spacing = style.itemSpacing
         val spacingL = floor(spacing.x * 0.5f)
         val spacingU = floor(spacing.y * 0.5f)
-        bb.min.x -= spacingL
-        bb.min.y -= spacingU
-        bb.max.x += spacing.x - spacingL
-        bb.max.y += spacing.y - spacingU
+        bbEnlarged.min.x -= spacingL
+        bbEnlarged.min.y -= spacingU
+        bbEnlarged.max.x += spacing.x - spacingL
+        bbEnlarged.max.y += spacing.y - spacingU
 
         val itemAdd = when {
             flags has Sf.Disabled -> {
                 val backupItemFlags = window.dc.itemFlags
                 window.dc.itemFlags = window.dc.itemFlags or If.Disabled or If.NoNavDefaultFocus
-                itemAdd(bb, id).also {
+                itemAdd(bbEnlarged, id).also {
                     window.dc.itemFlags = backupItemFlags
                 }
             }
-            else -> itemAdd(bb, id)
+            else -> itemAdd(bbEnlarged, id)
         }
         if (!itemAdd) {
             if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)
@@ -112,7 +114,7 @@ interface widgetsSelectables {
 
         val wasSelected = selected
 
-        val (pressed, h, held) = buttonBehavior(bb, id, buttonFlags)
+        val (pressed, h, held) = buttonBehavior(bbEnlarged, id, buttonFlags)
         var hovered = h
 
         // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
@@ -136,21 +138,22 @@ interface widgetsSelectables {
             hovered = true
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
-            renderFrame(bb.min, bb.max, col.u32, false, 0f)
-            renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
+            renderFrame(bbEnlarged.min, bbEnlarged.max, col.u32, false, 0f)
+            renderNavHighlight(bbEnlarged, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         }
 
         if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)
             popColumnsBackground()
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        renderTextClipped(bbInner.min, bbInner.max, label, labelSize, style.selectableTextAlign, bb)
+        renderTextClipped(bbAlign.min, bbAlign.max, label, labelSize, style.selectableTextAlign, bbEnlarged)
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
         if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && window.dc.itemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
 
+        //if (g.IO.KeyCtrl) { window->DrawList->AddRect(bb_align.Min, bb_align.Max, IM_COL32(0, 255, 0, 255)); }
         Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return pressed
     }
