@@ -2,7 +2,8 @@ package imgui.api
 
 import imgui.ImGui.io
 
-/** Clipboard Utilities (also see the LogToClipboard() function to capture or output text data to the clipboard)    */
+/** Clipboard Utilities
+ *  - Also see the LogToClipboard() function to capture GUI into clipboard, or easily output text data to the clipboard. */
 interface clipboardUtilities {
 
     var clipboardText: String
