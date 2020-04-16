@@ -7,7 +7,6 @@ import imgui.*
 import imgui.ImGui.beginChild
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endChild
-import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
@@ -17,7 +16,6 @@ import imgui.classes.DrawList
 import imgui.classes.Storage
 import imgui.internal.classes.DrawListSharedData
 import imgui.internal.classes.Rect
-import imgui.internal.floor
 import imgui.WindowFlag as Wf
 
 /** Miscellaneous Utilities */
@@ -79,7 +77,7 @@ interface miscellaneousUtilities {
                 // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
                 val unclippedRect = window.clipRect
                 if (g.navMoveRequest)
-                    unclippedRect add g.navScoringRectScreen
+                    unclippedRect add g.navScoringRect
 
                 val pos = window.dc.cursorPos
                 var start = ((unclippedRect.min.y - pos.y) / itemsHeight).i

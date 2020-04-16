@@ -227,6 +227,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Just navigated to this focus scope id (result of a successfully MoveRequest). */
     var navJustMovedToFocusScopeId: ID = 0
 
+    var navJustMovedToKeyMods: KeyModFlags = KeyMod.None.i
+
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
 
@@ -234,7 +236,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navInputSource = InputSource.None
 
     /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
-    var navScoringRectScreen = Rect()
+    var navScoringRect = Rect()
 
     /** Metrics for debugging   */
     var navScoringCount = 0
@@ -281,6 +283,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** None / ForwardQueued / ForwardActive (this is used to navigate sibling parent menus from a child menu)  */
     var navMoveRequestForward = NavForward.None
+
+    var navMoveRequestKeyMods: KeyModFlags = KeyMod.None.i
 
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
     var navMoveDir = Dir.None
