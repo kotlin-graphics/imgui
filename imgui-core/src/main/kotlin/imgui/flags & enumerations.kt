@@ -738,6 +738,19 @@ operator fun IntArray.set(index: Key, value: Int) {
 
 operator fun IntArray.get(index: Key): Int = get(index.i)
 
+
+// To test io.KeyMods (which is a combination of individual fields io.KeyCtrl, io.KeyShift, io.KeyAlt set by user/back-end)
+enum class KeyMod(val i: KeyModFlags) {
+    None(0),
+    Ctrl(1 shl 0),
+    Shift(1 shl 1),
+    Alt(1 shl 2),
+    Super(1 shl 3)
+}
+
+typealias KeyModFlags = Int
+
+
 /** Gamepad/Keyboard directional navigation
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
  *  based on your io.keysDown[] + io.keyMap[] arrays.

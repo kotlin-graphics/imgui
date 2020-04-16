@@ -303,6 +303,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // [Private] ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
 
+    /** Key mods flags (same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags), updated by NewFrame() */
+    var keyMods: KeyModFlags = KeyMod.None.i
+
     /** Previous mouse position (note that MouseDelta is not necessary == MousePos-MousePosPrev, in case either position is invalid)   */
     var mousePosPrev = Vec2(-Float.MAX_VALUE)
 

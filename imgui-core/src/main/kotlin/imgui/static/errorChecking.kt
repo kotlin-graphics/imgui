@@ -1,6 +1,10 @@
 package imgui.static
 
 import imgui.ImGui.end
+import imgui.ImGui.io
+import imgui.ImGui.mergedKeyModFlags
+import imgui.KeyMod
+import imgui.KeyModFlags
 import imgui.api.g
 import imgui.internal.classes.Window
 
@@ -10,6 +14,10 @@ import imgui.internal.classes.Window
 //-----------------------------------------------------------------------------
 
 fun errorCheckEndFrame() {
+
+    // Verify that io.KeyXXX fields haven't been tampered with. Key mods shoudl not be modified between NewFrame() and EndFrame()
+    val expectedKeyModFlags = mergedKeyModFlags
+    assert(io.keyMods == expectedKeyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
     // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you
     // to always call End/EndChild even if Begin/BeginChild returns false! (this is unfortunately inconsistent with most other Begin* API).
