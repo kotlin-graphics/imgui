@@ -223,19 +223,21 @@ interface widgetsMenus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
-            val flags = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
-            pressed = selectable(label, menuIsOpen, flags, Vec2(w, 0f))
+            val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
+            pressed = selectable(label, menuIsOpen, f, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
                 to call sameLine() ourselves after the popStyleVar().   */
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
         } else {
             // Menu inside a menu
+            // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.
+            //  Only when they are other items sticking out we're going to add spacing, yet only register minimum width into the layout system.
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
-            val w = window.dc.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
-            val extraW = glm.max(0f, contentRegionAvail.x - w)
-            val flags = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
-            pressed = selectable(label, menuIsOpen, flags or if (enabled) Sf.None else Sf.Disabled, Vec2(w, 0f))
+            val minW = window.dc.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
+            val extraW = glm.max(0f, contentRegionAvail.x - minW)
+            val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or Sf._DrawFillAvailWidth
+            pressed = selectable(label, menuIsOpen, f or if (enabled) Sf.None else Sf.Disabled, Vec2(minW, 0f))
             val textCol = if (enabled) Col.Text else Col.TextDisabled
             window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
         }
@@ -366,11 +368,14 @@ interface widgetsMenus {
                 to call sameLine() ourselves after the popStyleVar().             */
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
         } else {
-            val shortcutSize = if (shortcut.isNotEmpty()) calcTextSize(shortcut) else Vec2()
-            val w = window.dc.menuColumns.declColumns(labelSize.x, shortcutSize.x, floor(g.fontSize * 1.2f)) // Feedback for next frame
-            val extraW = glm.max(0f, contentRegionAvail.x - w)
-            pressed = selectable(label, false, flags or Sf._DrawFillAvailWidth, Vec2(w, 0f))
-            if (shortcutSize.x > 0f) {
+            // Menu item inside a vertical menu
+            // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.
+            //  Only when they are other items sticking out we're going to add spacing, yet only register minimum width into the layout system.
+            val shortcutW = if(shortcut.isNotEmpty()) calcTextSize(shortcut).x else 0f
+            val minW = window.dc.menuColumns.declColumns(labelSize.x, shortcutW, floor(g.fontSize * 1.2f)) // Feedback for next frame
+            val extraW = max(0f, contentRegionAvail.x - minW)
+            pressed = selectable(label, false, flags or Sf._DrawFillAvailWidth, Vec2(minW, 0f))
+            if (shortcutW > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
                 renderText(pos + Vec2(window.dc.menuColumns.pos[1] + extraW, 0f), shortcut, false)
                 popStyleColor()
