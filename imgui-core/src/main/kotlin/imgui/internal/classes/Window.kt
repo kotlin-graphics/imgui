@@ -30,7 +30,6 @@ import imgui.internal.*
 import imgui.static.viewportRect
 import kool.cap
 import java.util.*
-import java.util.logging.Level
 import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
@@ -91,7 +90,7 @@ class Window(var context: Context,
     /** 0.0f = scroll so that target position is at top, 0.5f = scroll so that target position is centered  */
     var scrollTargetCenterRatio = Vec2(.5f)
 
-    /** Size taken by scrollbars on each axis */
+    /** Size taken by each scrollbars on their smaller axis. Pay attention! ScrollbarSizes.x == width of the vertical scrollbar, ScrollbarSizes.y = height of the horizontal scrollbar. */
     var scrollbarSizes = Vec2()
 
     /** Are scrollbars visible? */
@@ -644,7 +643,21 @@ class Window(var context: Context,
 
     // Internal API, Widgets
 
+    /** Return scrollbar rectangle, must only be called for corresponding axis if window->ScrollbarX/Y is set.
+     *  ~GetWindowScrollbarRect     */
+    infix fun getScrollbarRect(axis: Axis): Rect    {
+        val outerRect = rect()
+//        val innerRect = innerRect
+        val borderSize = windowBorderSize
+        val scrollbarSize = scrollbarSizes[axis xor 1] // (ScrollbarSizes.x = width of Y scrollbar; ScrollbarSizes.y = height of X scrollbar)
+        assert(scrollbarSize > 0f)
+        return when (axis) {
+            Axis.X -> Rect(innerRect.min.x, max(outerRect.min.y, outerRect.max.y - borderSize - scrollbarSize), innerRect.max.x, outerRect.max.y)
+            else -> Rect(max(outerRect.min.x, outerRect.max.x - borderSize - scrollbarSize), innerRect.min.y, outerRect.max.x, innerRect.max.y)
+        }
+    }
 
+    /** ~GetWindowScrollbarID */
     infix fun getScrollbarID(axis: Axis): ID =
             getIdNoKeepAlive(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
 
