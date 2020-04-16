@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 import java.util.Stack
 import java.util.logging.Level
 
-/** Draw callbacks for advanced uses.
+/** ImDrawCallback: Draw callbacks for advanced uses [configurable type: override in imconfig.h]
  *  NB: You most likely do NOT need to use draw callbacks just to create your own widget or customized UI rendering,
  *  you can poke into the draw list for that! Draw callback may be useful for example to:
  *      A) Change your GPU render state,
@@ -80,9 +80,9 @@ class DrawCmd {
     }
 }
 
-/** Vertex index
- *  (to allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end)
- *  (to use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h) */
+/** Vertex index, default to 16-bit
+ *  To allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end (recommended).
+ *  To use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h. */
 typealias DrawIdx = Int
 
 /** Vertex layout
