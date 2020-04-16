@@ -134,7 +134,7 @@ val getClipboardTextFn_DefaultImpl: (userData: Any?) -> String? = {
     clipboard.getData(DataFlavor.stringFlavor) as? String
 }
 
-val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { userData, text ->
+val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { _, text ->
     val clipboard = Toolkit.getDefaultToolkit().systemClipboard
     clipboard.setContents(StringSelection(text), null)
 }

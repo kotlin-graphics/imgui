@@ -459,7 +459,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tooltipOverrideCount = 0
 
     /** If no custom clipboard handler is defined   */
-    var privateClipboard = ""
+    var clipboardHandlerData = ""
 
     /** A list of menu IDs that were rendered at least once */
     val menusIdSubmittedThisFrame = ArrayList<ID>()
@@ -616,7 +616,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             currentTabBarStack.clear()
             shrinkWidthBuffer.clear()
 
-            privateClipboard = ""
+            clipboardHandlerData = ""
             g.menusIdSubmittedThisFrame.clear()
             inputTextState.textW = CharArray(0)
             inputTextState.initialTextA = ByteArray(0)
