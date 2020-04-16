@@ -16,8 +16,6 @@ import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
-import imgui.ImGui.loadIniSettingsFromDisk
-import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
@@ -67,7 +65,7 @@ interface main {
             Hook.preNewFrame!!(g)
 
         // Check and assert for various common IO and Configuration mistakes
-        newFrameSanityChecks()
+        errorCheckNewFrameSanityChecks()
 
         // Load settings on first frame, save settings when modified (after a delay)
         updateSettings()
@@ -244,8 +242,12 @@ interface main {
     fun endFrame() {
 
         assert(g.initialized)
-        if (g.frameCountEnded == g.frameCount) return   // Don't process endFrame() multiple times.
+
+        // Don't process endFrame() multiple times.
+        if (g.frameCountEnded == g.frameCount) return
         assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()?" }
+
+        errorCheckEndFrameSanityChecks()
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
@@ -255,8 +257,6 @@ interface main {
             io.imeSetInputScreenPosFn!!(1000, 1000)
             g.platformImeLastPos put g.platformImePos
         }
-
-        errorCheckEndFrame()
 
         // Hide implicit/fallback "Debug" window if it hasn't been used
         g.withinFrameScopeWithImplicitWindow = false
@@ -361,36 +361,4 @@ interface main {
             Platform.MACOSX -> g.drawData.clone()
             else -> g.drawData
         }.takeIf { it.valid }
-
-    companion object {
-
-        /** start a new Dear ImGui frame, you can submit any command from this point until NewFrame()/Render().  */
-        fun newFrameSanityChecks() {
-
-            /*  Check user data
-                (We pass an error message in the assert expression as a trick to get it visible to programmers who are not using a debugger,
-                as most assert handlers display their argument)         */
-            assert(g.initialized)
-            assert(io.deltaTime > 0f || g.frameCount == 0) { "Need a positive DeltaTime!" }
-            assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call Render() or EndFrame() at the end of the previous frame?" }
-            assert(io.displaySize.x >= 0f && io.displaySize.y >= 0f) { "Invalid DisplaySize value!" }
-            assert(io.fonts.fonts.isNotEmpty()) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
-            assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8() ?" }
-            assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
-            assert(style.circleSegmentMaxError > 0f) { "Invalid style setting!" }
-            assert(style.alpha in 0f..1f) { "Invalid style setting. Alpha cannot be negative (allows us to avoid a few clamps in color computations)!" }
-            assert(style.windowMinSize allGreaterThanEqual 1) { "Invalid style setting." }
-            assert(style.windowMenuButtonPosition == Dir.None || g.style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)
-            for (n in 0 until Key.COUNT)
-                assert(io.keyMap[n] >= -1 && io.keyMap[n] < io.keysDown.size) { "io.KeyMap[] contains an out of bound value (need to be 0..512, or -1 for unmapped key)" }
-
-            // Perform simple check: required key mapping (we intentionally do NOT check all keys to not pressure user into setting up everything, but Space is required and was only recently added in 1.60 WIP)
-            if (io.configFlags has Cf.NavEnableKeyboard)
-                assert(io.keyMap[Key.Space] != -1) { "ImGuiKey_Space is not mapped, required for keyboard navigation." }
-
-            // Perform simple check: the beta io.configWindowsResizeFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
-            if (io.configWindowsResizeFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
-                io.configWindowsResizeFromEdges = false
-        }
-    }
 }
