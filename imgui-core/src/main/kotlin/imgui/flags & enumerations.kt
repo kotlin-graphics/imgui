@@ -337,8 +337,8 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
      *  Override button behavior to react on Release (default is Click+Release) */
     _SelectOnRelease(1 shl 22),
 
-    /** Draw over all avail width even if we declared less for layout. FIXME: We may be able to remove this (added in 6251d379, 2bcafc86 for menus)  */
-    _DrawFillAvailWidth(1 shl 23),
+    /** Span all avail width even if we declared less for layout purpose. FIXME: We may be able to remove this (added in 6251d379, 2bcafc86 for menus)  */
+    _SpanAvailWidth(1 shl 23),
 
     /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
     _DrawHoveredWhenHeld(1 shl 24),
