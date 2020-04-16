@@ -34,7 +34,7 @@ internal interface internalColumnsAPI {
 
         val window = currentWindow
 
-        assert(columnsCount in 1..64) { "Maximum 64 columns" }
+        assert(columnsCount >= 1)
         assert(window.dc.currentColumns == null) { "Nested columns are currently not supported" }
 
         // Acquire storage for the columns set
