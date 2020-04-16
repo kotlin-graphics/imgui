@@ -65,15 +65,11 @@ interface widgetsSelectables {
         val bbInner = Rect(pos, pos + size)
         itemSize(size, 0f)
 
-        // Fill horizontal space.
-        val windowPadding = Vec2(window.windowPadding)
-        val maxX = if (flags has Sf.SpanAllColumns) windowContentRegionMax.x + window.pos.x else contentRegionMaxAbs.x
-        val wDraw = labelSize.x max (maxX - windowPadding.x - pos.x)
-        val sizeDraw = Vec2(if (sizeArg.x != 0f && flags hasnt Sf._DrawFillAvailWidth) sizeArg.x else wDraw, size.y)
-
-        val bbAlign = Rect(pos, pos + sizeDraw)
+        // Fill horizontal space
+        val maxX = if(flags has Sf.SpanAllColumns) windowContentRegionMax.x + window.pos.x else contentRegionMaxAbs.x
         if (sizeArg.x == 0f || flags has Sf._DrawFillAvailWidth)
-            bbAlign.max.x += windowPadding.x
+            size.x = max(labelSize.x, maxX - window.windowPadding.x - pos.x) + window.windowPadding.x
+        val bbAlign = Rect(pos, pos + size)
 
         // Selectables are meant to be tightly packed together with no click-gap, so we extend the box to cover spacing between selectable.
         val bbEnlarged = Rect(bbAlign)
