@@ -144,6 +144,7 @@ interface main {
         g.dragDropAcceptIdCurrRectSurface = Float.MAX_VALUE
         g.dragDropWithinSource = false
         g.dragDropWithinTarget = false
+        g.dragDropHoldJustPressedId = 0
 
         // Update keyboard input state
         // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
