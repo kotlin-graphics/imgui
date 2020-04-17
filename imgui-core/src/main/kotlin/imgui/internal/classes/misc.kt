@@ -284,6 +284,7 @@ class NextWindowData {
     val posPivotVal = Vec2()
     val sizeVal = Vec2()
     val contentSizeVal = Vec2()
+    val scrollVal = Vec2()
     var collapsedVal = false
 
     /** Valid if 'SetNextWindowSizeConstraint' is true  */

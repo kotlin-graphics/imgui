@@ -534,7 +534,7 @@ infix fun DrawListFlags.wo(b: DrawListFlag): DrawListFlags = and(b.i.inv())
 typealias NextWindowDataFlags = Int
 
 enum class NextWindowDataFlag {
-    None, HasPos, HasSize, HasContentSize, HasCollapsed, HasSizeConstraint, HasFocus, HasBgAlpha;
+    None, HasPos, HasSize, HasContentSize, HasCollapsed, HasSizeConstraint, HasFocus, HasBgAlpha, HasScroll;
 
     val i: NextWindowDataFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
