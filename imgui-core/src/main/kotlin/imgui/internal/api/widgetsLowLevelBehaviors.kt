@@ -48,6 +48,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 import imgui.internal.ButtonFlag as Bf
 
+const val DRAG_DROP_HOLD_TIMER = 0.7f
+
 /** Widgets low-level behaviors */
 internal interface widgetsLowLevelBehaviors {
 
@@ -147,8 +149,9 @@ internal interface widgetsLowLevelBehaviors {
             if (isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 hoveredId = id
-                if (calcTypematicRepeatAmount(g.hoveredIdTimer + 0.0001f - io.deltaTime, g.hoveredIdTimer + 0.0001f - io.deltaTime, 0.7f, 0f) != 0) {
+                if (calcTypematicRepeatAmount(g.hoveredIdTimer + 0.0001f - io.deltaTime, g.hoveredIdTimer + 0.0001f - io.deltaTime, DRAG_DROP_HOLD_TIMER, 0f) != 0) {
                     pressed = true
+                    g.dragDropHoldJustPressedId = id
                     focusWindow(window)
                 }
             }
@@ -600,16 +603,17 @@ internal interface widgetsLowLevelBehaviors {
         val (pressed, hovered, held) = buttonBehavior(interactBb, id, buttonFlags)
         var toggled = false
         if (!isLeaf) {
-            if (pressed) {
+            if (pressed && g.dragDropHoldJustPressedId != id) {
                 if (flags hasnt (Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick) || g.navActivateId == id)
                     toggled = true
                 if (flags has Tnf.OpenOnArrow)
                     toggled = (isMouseXOverArrow && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
                 if (flags has Tnf.OpenOnDoubleClick && io.mouseDoubleClicked[0])
                     toggled = true
-                // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
-                if (g.dragDropActive && isOpen)
-                    toggled = false
+            } else if (pressed && g.dragDropHoldJustPressedId == id) {
+                assert(buttonFlags has Bf.PressedOnDragDropHold)
+                if (!isOpen) // When using Drag and Drop "hold to open" we keep the node highlighted after opening, but never close it again.
+                    toggled = true
             }
 
             if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Left && isOpen) {
