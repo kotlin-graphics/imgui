@@ -137,7 +137,7 @@ interface dragAndDrop {
     /** Type is a user defined string. Types starting with '_' are reserved for dear imgui internal types.
      *  Data is held by imgui.
      *  Use 'cond' to choose to submit payload on drag start or every frame */
-    fun setDragDropPayload(type: String, data: Any, cond_: Cond = Cond.None): Boolean {
+    fun setDragDropPayload(type: String, data: Any?, cond_: Cond = Cond.None): Boolean {
         val payload = g.dragDropPayload
         val cond = if (cond_ == Cond.None) Cond.Always else cond_
 
