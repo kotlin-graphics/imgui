@@ -89,6 +89,7 @@ val IMGUI_ENABLE_TEST_ENGINE: Boolean
 @JvmField
 var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
 
+// TODO rename closer to cpp?
 object Hook {
 
     var preNewFrame: ((ctx: Context) -> Unit)? = null
@@ -100,6 +101,10 @@ object Hook {
 
     /** Register item label and status flags (optional) */
     var itemInfo: ((ctx: Context, id: ID, label: String, flags: ItemStatusFlags) -> Unit)? = null
+
+    var pushID: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?) -> Unit)? = null
+
+    var pushID2: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?, dataIdEnd: Int) -> Unit)? = null
 
     /** Custom log entry from user land into test log */
     var log: ((ctx: Context, fmt: String) -> Unit)? = null

@@ -1,5 +1,7 @@
 package imgui.internal.api
 
+import imgui.DataType
+import imgui.Hook
 import imgui.ID
 import imgui.api.g
 import imgui.internal.*
@@ -115,6 +117,7 @@ internal interface basicAccessors {
     /** Push a given id value ignoring the ID stack as a seed.
      *  Push given value at the top of the ID stack (whereas PushID combines old and new hashes) */
     fun pushOverrideID(id: ID) {
-        g.currentWindow!!.idStack.push(id)
+        g.currentWindow!!.idStack += id
+        Hook.pushID?.invoke(g, DataType._ID, id, null)
     }
 }
