@@ -586,10 +586,11 @@ internal interface widgetsLowLevelBehaviors {
         // It is rather standard that arrow click react on Down rather than Up and we'd be tempted to make it the default
         // (by removing the _OpenOnArrow test below), however this would have a perhaps surprising effect on CollapsingHeader()?
         // So right now we are making this optional. May evolve later.
+        // We set ImGuiButtonFlags_PressedOnClickRelease on OpenOnDoubleClick because we want the item to be active on the initial MouseDown in order for drag and drop to work.
         buttonFlags = buttonFlags or when {
-            isMouseXOverArrow && flags has Tnf.OpenOnArrow -> Bf.PressedOnClick
-            flags has Tnf.OpenOnDoubleClick -> Bf.PressedOnDoubleClick
-            else -> Bf.PressedOnClickRelease
+            isMouseXOverArrow && flags has Tnf.OpenOnArrow -> Bf.PressedOnClick.i
+            flags has Tnf.OpenOnDoubleClick -> Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
+            else -> Bf.PressedOnClickRelease.i
         }
 
 

@@ -203,6 +203,7 @@ object ShowDemoWindowWidgets {
     /* Trees */
     var baseFlags: TreeNodeFlags = Tnf.OpenOnArrow or Tnf.OpenOnDoubleClick or Tnf.SpanAvailWidth
     var alignLabelWithCurrentXposition = false
+    var testDragAndDrop = false
 
     /** Dumb representation of what may be user-side selection state. You may carry selection state inside or
      *  outside your objects in whatever format you see fit.    */
@@ -545,6 +546,7 @@ object ShowDemoWindowWidgets {
                 checkboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth", ::baseFlags, Tnf.SpanAvailWidth.i); sameLine(); helpMarker("Extend hit area to all available width instead of allowing more items to be layed out after the node.")
                 checkboxFlags("ImGuiTreeNodeFlags_SpanFullWidth", ::baseFlags, Tnf.SpanFullWidth.i)
                 checkbox("Align label with current X position", ::alignLabelWithCurrentXposition)
+                checkbox("Test tree node as drag source", ::testDragAndDrop)
                 text("Hello!")
                 if (alignLabelWithCurrentXposition) unindent(treeNodeToLabelSpacing)
 
@@ -562,6 +564,11 @@ object ShowDemoWindowWidgets {
                         // Items 0..2 are Tree Node
                         val nodeOpen = treeNodeEx(i.L, nodeFlags, "Selectable Node $i")
                         if (isItemClicked()) nodeClicked = i
+                        if (testDragAndDrop && beginDragDropSource()) {
+                            setDragDropPayload("_TREENODE", null)
+                            text("This is a drag and drop source")
+                            endDragDropSource()
+                        }
                         if (nodeOpen) {
                             bulletText("Blah blah\nBlah Blah")
                             treePop()
@@ -573,6 +580,11 @@ object ShowDemoWindowWidgets {
                         nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
                         treeNodeEx(i.L, nodeFlags, "Selectable Leaf $i")
                         if (isItemClicked()) nodeClicked = i
+                        if (testDragAndDrop && beginDragDropSource()) {
+                            setDragDropPayload("_TREENODE", null)
+                            text("This is a drag and drop source")
+                            endDragDropSource()
+                        }
                     }
                 }
                 if (nodeClicked != -1) {
@@ -1073,61 +1085,61 @@ object ShowDemoWindowWidgets {
             // Limits (as helper variables that we can take the address of)
             // Note that the SliderScalar function has a maximum usable range of half the natural type maximum, hence the /2 below.
             // @formatter:off
-            val s8_zero: Byte = 0.b;
-            val s8_one: Byte = 1.b;
-            val s8_fifty: Byte = 50.b;
-            val s8_min: Byte = (-128).b;
+            val s8_zero: Byte = 0.b
+            val s8_one: Byte = 1.b
+            val s8_fifty: Byte = 50.b
+            val s8_min: Byte = (-128).b
             val s8_max: Byte = 127.b
-            val u8_zero: Ubyte = Ubyte(0);
-            val u8_one: Ubyte = Ubyte(1);
-            val u8_fifty: Ubyte = Ubyte(50);
-            val u8_min: Ubyte = Ubyte(0);
+            val u8_zero: Ubyte = Ubyte(0)
+            val u8_one: Ubyte = Ubyte(1)
+            val u8_fifty: Ubyte = Ubyte(50)
+            val u8_min: Ubyte = Ubyte(0)
             val u8_max: Ubyte = Ubyte(255)
-            val s16_zero: Short = 0.s;
-            val s16_one: Short = 1.s;
-            val s16_fifty: Short = 50.s;
-            val s16_min: Short = (-32768).s;
+            val s16_zero: Short = 0.s
+            val s16_one: Short = 1.s
+            val s16_fifty: Short = 50.s
+            val s16_min: Short = (-32768).s
             val s16_max: Short = 32767.s
-            val u16_zero: Ushort = Ushort(0);
-            val u16_one = Ushort(1);
-            val u16_fifty: Ushort = Ushort(50);
-            val u16_min: Ushort = Ushort(0);
+            val u16_zero: Ushort = Ushort(0)
+            val u16_one = Ushort(1)
+            val u16_fifty: Ushort = Ushort(50)
+            val u16_min: Ushort = Ushort(0)
             val u16_max: Ushort = Ushort(65535)
-            val s32_zero: Int = 0;
-            val s32_one: Int = 1;
-            val s32_fifty: Int = 50;
-            val s32_min: Int = Int.MIN_VALUE / 2;
-            val s32_max: Int = Int.MAX_VALUE / 2;
-            val s32_hi_a = Int.MAX_VALUE / 2 - 100;
+            val s32_zero: Int = 0
+            val s32_one: Int = 1
+            val s32_fifty: Int = 50
+            val s32_min: Int = Int.MIN_VALUE / 2
+            val s32_max: Int = Int.MAX_VALUE / 2
+            val s32_hi_a = Int.MAX_VALUE / 2 - 100
             val s32_hi_b = Int.MAX_VALUE / 2
-            val u32_zero: Uint = Uint(0);
-            val u32_one: Uint = Uint(1);
-            val u32_fifty: Uint = Uint(50);
-            val u32_min: Uint = Uint(0);
-            val u32_max: Uint = Uint.MAX / 2;
-            val u32_hi_a = Uint.MAX / 2 - 100;
+            val u32_zero: Uint = Uint(0)
+            val u32_one: Uint = Uint(1)
+            val u32_fifty: Uint = Uint(50)
+            val u32_min: Uint = Uint(0)
+            val u32_max: Uint = Uint.MAX / 2
+            val u32_hi_a = Uint.MAX / 2 - 100
             val u32_hi_b: Uint = Uint.MAX / 2
-            val s64_zero: Long = 0L;
-            val s64_one: Long = 1L;
-            val s64_fifty: Long = 50L;
-            val s64_min: Long = Long.MIN_VALUE / 2;
-            val s64_max: Long = Long.MAX_VALUE / 2;
-            val s64_hi_a: Long = Long.MAX_VALUE / 2 - 100;
+            val s64_zero: Long = 0L
+            val s64_one: Long = 1L
+            val s64_fifty: Long = 50L
+            val s64_min: Long = Long.MIN_VALUE / 2
+            val s64_max: Long = Long.MAX_VALUE / 2
+            val s64_hi_a: Long = Long.MAX_VALUE / 2 - 100
             val s64_hi_b: Long = Long.MAX_VALUE / 2
-            val u64_zero: Ulong = Ulong(0);
-            val u64_one: Ulong = Ulong(1);
-            val u64_fifty: Ulong = Ulong(50);
-            val u64_min: Ulong = Ulong(0);
-            val u64_max: Ulong = Ulong.MAX / 2;
-            val u64_hi_a: Ulong = Ulong.MAX / 2 - 100;
+            val u64_zero: Ulong = Ulong(0)
+            val u64_one: Ulong = Ulong(1)
+            val u64_fifty: Ulong = Ulong(50)
+            val u64_min: Ulong = Ulong(0)
+            val u64_max: Ulong = Ulong.MAX / 2
+            val u64_hi_a: Ulong = Ulong.MAX / 2 - 100
             val u64_hi_b: Ulong = Ulong.MAX / 2
-            val f32_zero: Float = 0f;
-            val f32_one: Float = 1f;
-            val f32_lo_a: Float = -10_000_000_000f;
+            val f32_zero: Float = 0f
+            val f32_one: Float = 1f
+            val f32_lo_a: Float = -10_000_000_000f
             val f32_hi_a: Float = +10_000_000_000f
-            val f64_zero: Double = 0.0;
-            val f64_one: Double = 1.0;
-            val f64_lo_a: Double = -1_000_000_000_000_000.0;
+            val f64_zero: Double = 0.0
+            val f64_one: Double = 1.0
+            val f64_lo_a: Double = -1_000_000_000_000_000.0
             val f64_hi_a: Double = +1_000_000_000_000_000.0
 
             val dragSpeed = 0.2f
