@@ -97,6 +97,7 @@ internal interface dataTypeHelpers {
                 '-' -> (value1 as Double - value2 as Double) as N
                 else -> throw Error()
             }
+            else -> error("invalid, this is a private enum value")
         }
     }
 

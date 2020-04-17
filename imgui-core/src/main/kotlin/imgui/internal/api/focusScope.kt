@@ -1,5 +1,7 @@
 package imgui.internal.api
 
+import imgui.DataType
+import imgui.Hook
 import imgui.ID
 import imgui.api.g
 
@@ -12,6 +14,7 @@ interface focusScope {
             idStack += dc.navFocusScopeIdCurrent
             dc.navFocusScopeIdCurrent = id
         }
+        Hook.pushID?.invoke(g, DataType._ID, id, null)
     }
 
     fun popFocusScope() {

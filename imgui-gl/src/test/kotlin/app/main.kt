@@ -7,6 +7,7 @@ import glm_.parseInt
 import imgui.ConfigFlag
 import imgui.IMGUI_ENABLE_TEST_ENGINE
 import imgui.ImGui
+import imgui.api.g
 import imgui.api.gImGui
 import imgui.classes.Context
 import imgui.or
@@ -40,7 +41,7 @@ fun main(args: Array<String>) {
     Configuration.DEBUG.set(true)
     Configuration.DEBUG_MEMORY_ALLOCATOR.set(true)
 
-    IMGUI_ENABLE_TEST_ENGINE = true
+    g.testEngineHookItems = true
 
 //    #ifdef CMDLINE_ARGS
 //        if (argc == 1)
