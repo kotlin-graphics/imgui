@@ -150,6 +150,7 @@ interface windows {
             window.updateParentAndRootLinks(flags, parentWindow)
 
         // Process SetNextWindow***() calls
+        // (FIXME: Consider splitting the HasXXX flags into X/Y components
         var windowPosSetByApi = false
         var windowSizeXsetByApi = false
         var windowSizeYsetByApi = false
@@ -168,6 +169,16 @@ interface windows {
             windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
             windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
+        }
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasScroll) {
+            if (g.nextWindowData.scrollVal.x >= 0f) {
+                window.scrollTarget.x = g.nextWindowData.scrollVal.x
+                window.scrollTargetCenterRatio.x = 0f
+            }
+            if (g.nextWindowData.scrollVal.y >= 0f) {
+                window.scrollTarget.y = g.nextWindowData.scrollVal.y
+                window.scrollTargetCenterRatio.y = 0f
+            }
         }
         if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize)
             window.contentSizeExplicit put g.nextWindowData.contentSizeVal
@@ -587,7 +598,7 @@ interface windows {
                 dc.navLayerCurrentMask = 1 shl NavLayer.Main
                 dc.navLayerActiveMask = dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0x00
-                dc.navFocusScopeIdCurrent = if(flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
+                dc.navFocusScopeIdCurrent = if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = scrollMax.y > 0f
 
