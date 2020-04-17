@@ -58,6 +58,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Set within EndChild() */
     var withinEndChild = false
 
+    /** Will call test engine hooks ImGuiTestEngineHook_ItemAdd(), ImGuiTestEngineHook_ItemInfo(), ImGuiTestEngineHook_Log() */
+    var testEngineHookItems = false
+
+    /** Test engine user data */
+    var testEngine: Any? = null
+
 
     // Windows state
 

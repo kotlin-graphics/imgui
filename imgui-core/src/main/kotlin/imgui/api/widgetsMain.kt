@@ -262,9 +262,10 @@ interface widgetsMain {
 
         if (g.logEnabled)
             logRenderedText(totalBb.min, if (active) "(x)" else "( )")
-        if (labelSize.x > 0.0f)
+        if (labelSize.x > 0f)
             renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
         return pressed
     }
 
