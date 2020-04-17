@@ -61,6 +61,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Will call test engine hooks ImGuiTestEngineHook_ItemAdd(), ImGuiTestEngineHook_ItemInfo(), ImGuiTestEngineHook_Log() */
     var testEngineHookItems = false
 
+    var testEngineHookPushId: ID = 0
+
     /** Test engine user data */
     var testEngine: Any? = null
 

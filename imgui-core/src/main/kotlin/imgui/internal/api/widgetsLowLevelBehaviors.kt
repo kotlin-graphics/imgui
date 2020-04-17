@@ -721,9 +721,10 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     fun treePushOverrideID(id: ID) {
-        val window = currentWindow
+        val window = g.currentWindow!!
         indent()
         window.dc.treeDepth++
         window.idStack.push(id)
+        Hook.pushID?.invoke(g, DataType._ID, id, null)
     }
 }
