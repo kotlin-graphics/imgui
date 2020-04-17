@@ -405,6 +405,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Last time a target expressed a desire to accept the source */
     var dragDropAcceptFrameCount = -1
 
+    /** Set when holding a payload just made ButtonBehavior() return a press. */
+    var dragDropHoldJustPressedId: ID = 0
+
     /** We don't expose the ImVector<> directly, ImGuiPayload only holds pointer+size */
     var dragDropPayloadBufHeap = ByteBuffer.allocate(0)
 
