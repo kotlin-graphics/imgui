@@ -1,23 +1,30 @@
 package imgui.api
 
-import imgui.ImGui
+import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 import imgui.ImGui.style
-import imgui.api.g
+import imgui.internal.NextWindowDataFlag
+import imgui.internal.or
 
 /** Windows Scrolling */
 interface windowScrolling {
+
+    /** Use -1.0f on one axis to leave as-is */
+    fun setNextWindowScroll(scroll: Vec2) {
+        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasScroll
+        g.nextWindowData.scrollVal put scroll
+    }
 
     /** Scrolling amount [0..GetScrollMaxX()] */
     var scrollX: Float
         /** ~GetScrollX */
         get() = g.currentWindow!!.scroll.x
-        /**  ~ SetScrollX */
+        /**  ~SetScrollX */
         set(value) = with(currentWindow) { scrollTarget.x = value; scrollTargetCenterRatio.x = 0f }
 
     /** scrolling amount [0..GetScrollMaxY()] */
     var scrollY: Float
-        /** GetScrollY */
+        /** ~GetScrollY */
         get() = g.currentWindow!!.scroll.y
         /**  ~SetScrollY */
         set(value) = with(currentWindow) {
