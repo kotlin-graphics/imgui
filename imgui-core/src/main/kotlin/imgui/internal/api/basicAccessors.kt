@@ -118,6 +118,5 @@ internal interface basicAccessors {
      *  Push given value at the top of the ID stack (whereas PushID combines old and new hashes) */
     fun pushOverrideID(id: ID) {
         g.currentWindow!!.idStack += id
-        Hook.pushID?.invoke(g, DataType._ID, id, null)
     }
 }

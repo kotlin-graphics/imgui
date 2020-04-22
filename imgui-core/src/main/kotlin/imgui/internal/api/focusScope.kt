@@ -14,7 +14,6 @@ interface focusScope {
             idStack += dc.navFocusScopeIdCurrent
             dc.navFocusScopeIdCurrent = id
         }
-        Hook.pushID?.invoke(g, DataType._ID, id, null)
     }
 
     fun popFocusScope() {
