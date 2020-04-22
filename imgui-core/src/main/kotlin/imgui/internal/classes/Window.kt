@@ -267,6 +267,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hash(strID, end, seed)
         keepAliveID(id)
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo2?.invoke(g, DataType._String, id, strID, end)
         return id
     }
 
@@ -275,6 +277,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hash(System.identityHashCode(ptrID), seed)
         keepAliveID(id)
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo?.invoke(g, DataType._Pointer, id, ptrID)
         return id
     }
 
@@ -284,6 +288,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed)
         keepAliveID(id)
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo?.invoke(g, DataType._Pointer, id, intPtr)
         return id
     }
 
@@ -291,19 +297,39 @@ class Window(var context: Context,
         val seed = idStack.last()
         val id = hash(n, seed)
         keepAliveID(id)
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo?.invoke(g, DataType.Int, id, n)
         return id
     }
 
-    fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID = hash(strID, strID.length - strEnd, seed_ = idStack.last())
+    fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
+        val id = hash(strID, strID.length - strEnd, seed_ = idStack.last())
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo2?.invoke(g, DataType._String, id, strID, strEnd)
+        return id
+    }
 
-    fun getIdNoKeepAlive(ptrID: Any): ID = hash(System.identityHashCode(ptrID), seed = idStack.last())
+    fun getIdNoKeepAlive(ptrID: Any): ID {
+        val id = hash(System.identityHashCode(ptrID), seed = idStack.last())
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo?.invoke(g, DataType._Pointer, id, ptrID)
+        return id
+    }
 
     fun getIdNoKeepAlive(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
-        return hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
+        val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo?.invoke(g, DataType._Pointer, id, intPtr)
+        return id
     }
 
-    fun getIdNoKeepAlive(n: Int): ID = hash(n, seed = idStack.last())
+    fun getIdNoKeepAlive(n: Int): ID {
+        val id = hash(n, seed = idStack.last())
+        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+            Hook.idInfo?.invoke(g, DataType.Int, id, n)
+        return id
+    }
 
     private fun increase() {
         ptrId = Array(ptrId.size + 512) { i -> ptrId.getOrElse(i) { i } }

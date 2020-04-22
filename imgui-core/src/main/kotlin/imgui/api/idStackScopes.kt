@@ -1,7 +1,5 @@
 package imgui.api
 
-import imgui.DataType
-import imgui.Hook
 import imgui.ID
 
 /** ID stack/scopes
@@ -17,36 +15,16 @@ interface idStackScopes {
     fun pushID(ptrID: Any) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(ptrID) }
 
     /** push string into the ID stack (will hash string).  */
-    fun pushID(strID: String) {
-        val window = g.currentWindow!!
-        val id = window.getIdNoKeepAlive(strID)
-        window.idStack += id
-        Hook.pushID?.invoke(g, DataType._String, id, strID)
-    }
+    fun pushID(strID: String) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strID) }
 
     /** push string into the ID stack (will hash string).  */
-    fun pushID(strID: String, strIdEnd: Int) {
-        val window = g.currentWindow!!
-        val id = window.getIdNoKeepAlive(strID, strIdEnd)
-        window.idStack += id
-        Hook.pushID2?.invoke(g, DataType._String, id, strID, strIdEnd)
-    }
+    fun pushID(strID: String, strIdEnd: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strID, strIdEnd) }
 
     /** push pointer into the ID stack (will hash pointer).  */
-    fun pushID(intPtr: Long) {
-        val window = g.currentWindow!!
-        val id = window.getIdNoKeepAlive(intPtr)
-        window.idStack += id
-        Hook.pushID?.invoke(g, DataType._Pointer, id, intPtr)
-    }
+    fun pushID(intPtr: Long) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intPtr) }
 
     /** push integer into the ID stack (will hash integer). */
-    fun pushID(intId: Int) {
-        val window = g.currentWindow!!
-        val id = window.getIdNoKeepAlive(intId)
-        window.idStack += id
-        Hook.pushID?.invoke(g, DataType.Int, id, intId)
-    }
+    fun pushID(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
 
     /** pop from the ID stack. */
     fun popID() = g.currentWindow!!.idStack.pop()
