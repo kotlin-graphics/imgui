@@ -92,21 +92,28 @@ var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
 // TODO rename closer to cpp?
 object Hook {
 
+    /** ~ImGuiTestEngineHook_PreNewFrame */
     var preNewFrame: ((ctx: Context) -> Unit)? = null
 
+    /** ~ImGuiTestEngineHook_PostNewFrame */
     var postNewFrame: ((ctx: Context) -> Unit)? = null
 
-    /** Register item bounding box */
+    /** Register item bounding box
+     *  ~ImGuiTestEngineHook_ItemAdd */
     var itemAdd: ((ctx: Context, bb: Rect, id: ID) -> Unit)? = null
 
-    /** Register item label and status flags (optional) */
+    /** Register item label and status flags (optional)
+     *  ~ImGuiTestEngineHook_ItemInfo */
     var itemInfo: ((ctx: Context, id: ID, label: String, flags: ItemStatusFlags) -> Unit)? = null
 
-    var pushID: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?) -> Unit)? = null
+    /** ~ImGuiTestEngineHook_IdInfo */
+    var idInfo: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?) -> Unit)? = null
 
-    var pushID2: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?, dataIdEnd: Int) -> Unit)? = null
+    /** ~ImGuiTestEngineHook_IdInfo */
+    var idInfo2: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?, dataIdEnd: Int) -> Unit)? = null
 
-    /** Custom log entry from user land into test log */
+    /** Custom log entry from user land into test log
+     *  ~ImGuiTestEngineHook_Log */
     var log: ((ctx: Context, fmt: String) -> Unit)? = null
 }
 

@@ -725,6 +725,5 @@ internal interface widgetsLowLevelBehaviors {
         indent()
         window.dc.treeDepth++
         window.idStack.push(id)
-        Hook.pushID?.invoke(g, DataType._ID, id, null)
     }
 }
