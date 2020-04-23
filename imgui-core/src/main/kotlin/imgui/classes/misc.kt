@@ -118,53 +118,8 @@ class SizeCallbackData(
         /** Read-write.  Desired size, based on user's mouse position. Write to this field to restrain resizing.    */
         val desiredSize: Vec2 = Vec2())
 
-/** Helper: Key->Value storage
-Typically you don't have to worry about this since a storage is held within each Window.
-We use it to e.g. store collapse state for a tree (Int 0/1)
-This is optimized for efficient lookup (dichotomy into a contiguous buffer) and rare insertion (typically tied to user
-interactions aka max once a frame)
-Declare your own storage if:
-- You want to manipulate the open/close state of a particular sub-tree in your interface (tree node uses Int 0/1
-to store their state).
-- You want to store custom debug data easily without adding or editing structures in your code.
-Types are NOT stored, so it is up to you to make sure your Key don't collide with different types.  */
-class Storage {
 
-    val data = HashMap<ID, Int>()
-
-    // - Get***() functions find pair, never add/allocate. Pairs are sorted so a query is O(log N)
-    // - Set***() functions find pair, insertion on demand if missing.
-    // - Sorted insertion is costly, paid once. A typical frame shouldn't need to insert any new pair.
-
-    fun clear() = data.clear()
-
-    fun int(key: ID, defaultVal: Int = 0): Int = data[key] ?: defaultVal
-    operator fun set(key: ID, value: Int) = data.set(key, value)
-
-    fun bool(key: ID, defaultVal: Boolean = false): Boolean = data[key]?.bool ?: defaultVal
-    operator fun set(id: ID, value: Boolean) = data.set(id, value.i)
-
-    fun float(key: ID, defaultVal: Float = 0f): Float = data[key]?.let { glm.intBitsToFloat(it) } ?: defaultVal
-    operator fun set(key: ID, value: Float) = data.set(key, glm.floatBitsToInt(value))
-
-//    IMGUI_API void*     GetVoidPtr(ImGuiID key) const; // default_val is NULL
-//    IMGUI_API void      SetVoidPtr(ImGuiID key, void* val);
-
-    // - Get***Ref() functions finds pair, insert on demand if missing, return pointer. Useful if you intend to do Get+Set.
-    // - References are only valid until a new value is added to the storage. Calling a Set***() function or a Get***Ref() function invalidates the pointer.
-    // - A typical use case where this is convenient for quick hacking (e.g. add storage during a live Edit&Continue session if you can't modify existing struct)
-    //      float* pvar = ImGui::GetFloatRef(key); ImGui::SliderFloat("var", pvar, 0, 100.0f); some_var += *pvar;
-
-//    fun getIntRef(key: ID, defaultVal: Int = 0) {
-//        int(key, defaultVal)
-//    }
-//    IMGUI_API bool*     GetBoolRef(ImGuiID key, bool default_val = false);
-//    IMGUI_API float*    GetFloatRef(ImGuiID key, float default_val = 0.0f);
-//    IMGUI_API void**    GetVoidPtrRef(ImGuiID key, void* default_val = NULL);
-
-    /** Use on your own storage if you know only integer are being stored (open/close all tree nodes)   */
-    fun setAllInt(value: Int) = data.replaceAll { _, _ -> value }
-}
+// struct Storage [JVM] substituted by HashMap
 
 /** Helper: Growable text buffer for logging/accumulating text
  *  (this could be called 'ImGuiTextBuilder' / 'ImGuiStringBuilder') */
