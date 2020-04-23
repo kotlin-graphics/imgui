@@ -52,7 +52,6 @@ import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
-import imgui.classes.Storage
 import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
@@ -667,10 +666,10 @@ interface demoDebugInformations {
                 treePop()
             }
 
-            fun nodeStorage(storage: Storage, label: String) {
-                if (!treeNode(label, "$label: ${storage.data.size} entries, ${storage.data.size * 2 * Int.BYTES} bytes"))
+            fun nodeStorage(storage: HashMap<ID, Boolean>, label: String) {
+                if (!treeNode(label, "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes")) // [JVM] Boolean size is actually VM dependent
                     return
-                storage.data.forEach { (key, value) ->
+                storage.forEach { (key, value) ->
                     bulletText("Key 0x%08X Value { i: $value }".format(key)) // Important: we currently don't store a type, real value may not be integer.
                 }
                 treePop()

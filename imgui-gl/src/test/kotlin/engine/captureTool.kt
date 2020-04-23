@@ -444,7 +444,7 @@ class CaptureTool(captureFunc: ScreenCaptureFunc? = null) {
 
             ImGui.pushID(window)
             val curr = g.currentWindow!!
-            var selected = curr.stateStorage.bool(window.rootWindow!!.id, false)
+            var selected = curr.stateStorage[window.rootWindow!!.id] ?: false
 
             if (captureState == CaptureToolState.SelectRectUpdate)
                 selected = window.rect() in selectRect
