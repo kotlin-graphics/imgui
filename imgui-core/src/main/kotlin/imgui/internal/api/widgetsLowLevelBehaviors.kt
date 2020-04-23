@@ -698,18 +698,12 @@ internal interface widgetsLowLevelBehaviors {
             if (g.nextItemData.openCond == Cond.Always) {
                 isOpen = g.nextItemData.openVal
                 storage[id] = isOpen
-            } else {
+            } else
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
-                val storedValue = storage.int(id, -1)
-                if (storedValue  == -1) {
-                    isOpen = g.nextItemData.openVal
-                    storage[id] = isOpen
-                } else
-                    isOpen = storedValue != 0
-            }
+                isOpen = storage.getOrPut(id) { g.nextItemData.openVal }
         } else
-            isOpen = storage.int(id, if (flags has Tnf.DefaultOpen) 1 else 0) != 0 // TODO rename back
+            isOpen = storage[id] ?: flags has Tnf.DefaultOpen
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).

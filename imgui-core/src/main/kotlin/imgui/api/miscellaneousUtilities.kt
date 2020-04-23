@@ -13,7 +13,6 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.style
 import imgui.classes.DrawList
-import imgui.classes.Storage
 import imgui.internal.classes.DrawListSharedData
 import imgui.internal.classes.Rect
 import imgui.WindowFlag as Wf
@@ -53,7 +52,7 @@ interface miscellaneousUtilities {
     /** Useless on JVM with Enums */
     //IMGUI_API const char*   GetStyleColorName(ImGuiCol idx);
 
-    var stateStorage: Storage?
+    var stateStorage: HashMap<ID, Boolean>?
         /** ~GetStateStorage */
         get() = g.currentWindow!!.dc.stateStorage
         /** ~SetStateStorage */

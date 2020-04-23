@@ -28,6 +28,7 @@ import imgui.static.viewportRect
 import kool.cap
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -244,7 +245,7 @@ class Window(var context: Context,
 
     var itemWidthDefault = 0f
 
-    var stateStorage = Storage()
+    var stateStorage = HashMap<ID, Boolean>()
 
     val columnsStorage = ArrayList<Columns>()
 
