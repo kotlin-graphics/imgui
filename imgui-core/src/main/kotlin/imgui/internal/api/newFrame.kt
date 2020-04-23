@@ -6,10 +6,14 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
+import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
+import imgui.internal.classes.DockNode
+import imgui.internal.classes.Window
 import imgui.static.findHoveredWindow
 
 /** NewFrame */
@@ -76,6 +80,35 @@ internal interface newFrame {
 
         // Update io.WantTextInput flag, this is to allow systems without a keyboard (e.g. mobile, hand-held) to show a software keyboard if possible
         io.wantTextInput = if (g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
+    }
+
+    // StartMouseMovingWindow -> Window class
+
+    /** We use 'undock_floating_node == false' when dragging from title bar to allow moving groups of floating nodes without undocking them.
+     *  - undock_floating_node == true: when dragging from a floating node within a hierarchy, always undock the node.
+     * - undock_floating_node == false: when dragging from a floating node within a hierarchy, move root window. */
+    fun startMouseMovingWindowOrNode(window: Window, node: DockNode?, undockFloatingNode: Boolean) {
+        var canUndockNode = false
+        if (node?.visibleWindow?.flags?.hasnt(WindowFlag.NoMove) == true) {
+            // Can undock if:
+            // - part of a floating node hierarchy with more than one visible node (if only one is visible, we'll just move the whole hierarchy)
+            // - part of a dockspace node hierarchy (trivia: undocking from a fixed/central node will create a new node and copy windows)
+            val rootNode = dockNodeGetRootNode(node)
+            if (rootNode.onlyNodeWithWindows != node || rootNode.centralNode != null)   // -V1051 PVS-Studio thinks node should be root_node and is wrong about that.
+                if (undockFloatingNode || rootNode.isDockSpace())
+                    canUndockNode = true
+        }
+
+        val clicked = isMouseClicked(MouseButton.Left)
+        val dragging = isMouseDragging(MouseButton.Left, io.mouseDragThreshold * 1.7f)
+        if (canUndockNode && dragging) {
+            dockContextQueueUndockNode(g, node)
+            g.activeIdClickOffset = io.mouseClickedPos[0] - node!!.pos
+        }
+        else if (!canUndockNode && (clicked || dragging) && g.movingWindow !== window) {
+            window.startMouseMoving()
+            g.activeIdClickOffset = io.mouseClickedPos[0] - window.rootWindow!!.pos
+        }
     }
 
     /** Handle mouse moving window

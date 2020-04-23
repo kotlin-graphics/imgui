@@ -1,5 +1,6 @@
 package imgui.internal.classes
 
+import gli_.has
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -8,9 +9,67 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
 import imgui.internal.*
+import unsigned.toUInt
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
+
+//-----------------------------------------------------------------------------
+// Forward declarations
+//-----------------------------------------------------------------------------
+
+/** Helper: ImBoolVector. Store 1-bit per value.
+ *  Note that Resize() currently clears the whole vector. */
+class BitVector(sz: Int) { // ~create
+    var storage = IntArray((sz + 31) ushr 5)
+
+    // Helpers: Bit arrays
+    infix fun IntArray.testBit(n: Int): Boolean {
+        val mask = 1 shl (n and 31); return (this[n ushr 5] and mask).bool; }
+
+    infix fun IntArray.clearBit(n: Int) {
+        val mask = 1 shl (n and 31); this[n ushr 5] = this[n ushr 5] wo mask; }
+
+    infix fun IntArray.setBit(n: Int) {
+        val mask = 1 shl (n and 31); this[n ushr 5] = this[n ushr 5] or mask; }
+
+    fun IntArray.setBitRange(n_: Int, n2: Int) {
+        var n = n_
+        while (n <= n2) {
+            val aMod = n and 31
+            val bMod = (if (n2 >= n + 31) 31 else n2 and 31) + 1
+            val mask = ((1L shl bMod) - 1).toUInt() wo ((1L shl aMod) - 1).toUInt()
+            this[n ushr 5] = this[n ushr 5] or mask
+            n = (n + 32) wo 31
+        }
+    }
+
+    fun clear() {
+        storage = IntArray(0)
+    }
+
+    infix fun testBit(n: Int): Boolean {
+        assert(n < storage.size shl 5); return storage testBit n; }
+
+    infix fun setBit(n: Int) {
+        assert(n < storage.size shl 5); storage setBit n; }
+
+    infix fun clearBit(n: Int) {
+        assert(n < storage.size shl 5); storage clearBit n; }
+
+    fun unpack(): ArrayList<Int> {
+        val res = arrayListOf<Int>()
+        storage.forEachIndexed { index, entries32 ->
+            if (entries32 != 0)
+                for (bitN in 0..31)
+                    if (entries32 has (1 shl bitN))
+                        res += (index shl 5) + bitN
+        }
+        return res
+    }
+}
+
+// Rect -> Rect.kt
 
 /** Helper to build a ImDrawData instance */
 class DrawDataBuilder {
@@ -159,6 +218,8 @@ class Columns {
     fun getNormFrom(offset: Float): Float = offset / (offMaxX - offMinX)
 }
 
+// Context -> Context.kt
+
 /** Type information associated to one ImGuiDataType. Retrieve with DataTypeGetInfo(). */
 //class DataTypeInfo {
 //    /** Size in byte */
@@ -168,6 +229,8 @@ class Columns {
 //    /** Default scanf format for the type */
 //    lateinit var scanFmt: String
 //}
+
+// DockContext, DockNode, DockNodeSettings -> dock.kt
 
 /* Stacked storage data for BeginGroup()/EndGroup() */
 class GroupData {
@@ -280,11 +343,13 @@ class NextWindowData {
     var posCond = Cond.None
     var sizeCond = Cond.None
     var collapsedCond = Cond.None
+    var dockCond = Cond.None
     val posVal = Vec2()
     val posPivotVal = Vec2()
     val sizeVal = Vec2()
     val contentSizeVal = Vec2()
     val scrollVal = Vec2()
+    var posUndock = false
     var collapsedVal = false
 
     /** Valid if 'SetNextWindowSizeConstraint' is true  */
@@ -295,8 +360,12 @@ class NextWindowData {
     /** Override background alpha */
     var bgAlphaVal = Float.MAX_VALUE
 
-    /** *Always on* This is not exposed publicly, so we don't clear it. */
-    var menuBarOffsetMinVal = Vec2()
+    var viewportId: ID = 0
+    var dockId: ID = 0
+    var windowClass = WindowClass()
+
+    /** (Always on) This is not exposed publicly, so we don't clear it and it doesn't have a corresponding flag (could we? for consistency?) */
+    val menuBarOffsetMinVal = Vec2()
 
     fun clearFlags() {
         flags = NextWindowDataFlag.None.i
@@ -348,10 +417,13 @@ class StyleMod(val idx: StyleVar) {
     val floats = FloatArray(2)
 }
 
-/** Storage for one active tab item (sizeof() 26~32 bytes) */
+/** Storage for one active tab item (sizeof() 32~40 bytes) */
 class TabItem {
     var id: ID = 0
     var flags = TabItemFlag.None.i
+
+    /** When TabItem is part of a DockNode's TabBar, we hold on to a window. */
+    var window: Window? = null
     var lastFrameVisible = -1
 
     /** This allows us to infer an ordered list of the last activated tabs with little maintenance */
@@ -378,8 +450,22 @@ class TabItem {
  *  ~ CreateNewWindowSettings */
 class WindowSettings(val name: String = "") {
     var id: ID = hash(name)
-    var pos = Vec2()
-    var size = Vec2()
+
+    /** NB: Settings position are stored RELATIVE to the viewport! Whereas runtime ones are absolute positions. */
+    val pos = Vec2()
+    val size = Vec2()
+
+    val viewportPos = Vec2()
+    var viewportId: ID = 0
+
+    /** ID of last known DockNode (even if the DockNode is invisible because it has only 1 active window), or 0 if none. */
+    var dockId: ID = 0
+
+    /** ID of window class if specified */
+    var classId: ID = 0
+
+    /** Order of the last time the window was visible within its DockNode. This is used to reorder windows that are reappearing on the same frame. Same value between windows that were active and windows that were none are possible. */
+    var dockOrder = -1
     var collapsed = false
 }
 

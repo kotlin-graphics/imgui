@@ -487,7 +487,14 @@ enum class TabItemFlag(@JvmField val i: TabItemFlags) {
     // [Internal]
 
     /** Track whether p_open was set or not (we'll need this info on the next frame to recompute ContentWidth during layout) */
-    _NoCloseButton(1 shl 20);
+    _NoCloseButton(1 shl 20),
+
+    /** [Docking] Trailing tabs with the _Unsorted flag will be sorted based on the DockOrder of their Window. */
+    _Unsorted(1 shl 21),
+
+    /** [Docking] Display tab shape for docking preview (height is adjusted slightly to compensate for the yet missing tab bar) */
+    _Preview(1 shl 22);
+
 
     infix fun and(b: TabItemFlag): TabItemFlags = i and b.i
     infix fun and(b: TabItemFlags): TabItemFlags = i and b
@@ -588,6 +595,82 @@ infix fun HoveredFlags.xor(b: HoveredFlag): HoveredFlags = xor(b.i)
 infix fun HoveredFlags.has(b: HoveredFlag): Boolean = and(b.i) != 0
 infix fun HoveredFlags.hasnt(b: HoveredFlag): Boolean = and(b.i) == 0
 infix fun HoveredFlags.wo(b: HoveredFlag): HoveredFlags = and(b.i.inv())
+
+
+typealias DockNodeFlags = Int
+
+/** Flags for ImGui::DockSpace(), shared/inherited by child nodes.
+ *  (Some flags can be applied to individual nodes directly)
+ *  FIXME-DOCK: Also see ImGuiDockNodeFlagsPrivate_ which may involve using the WIP and internal DockBuilder api. */
+enum class DockNodeFlag(@JvmField val i: DockNodeFlags) {
+
+    None(0),
+
+    /** Shared       // Don't display the dockspace node but keep it alive. Windows docked into this dockspace node won't be undocked. */
+    KeepAliveOnly(1 shl 0),
+
+    /** Shared       // Disable Central Node (the node which can stay empty) */
+//    NoCentralNode(1 shl 1),
+
+    /** Shared       // Disable docking inside the Central Node, which will be always kept empty.  */
+    NoDockingInCentralNode(1 shl 2),
+
+    /** Shared       // Enable passthru dockspace: 1) DockSpace() will render a ImGuiCol_WindowBg background covering everything excepted the Central Node when empty. Meaning the host window should probably use SetNextWindowBgAlpha(0.0f) prior to Begin() when using this. 2) When Central Node is empty: let inputs pass-through + won't display a DockingEmptyBg background. See demo for details.  */
+    PassthruCentralNode(1 shl 3),
+
+    /** Shared/Local // Disable splitting the node into smaller nodes. Useful e.g. when embedding dockspaces into a main root one (the root one may have splitting disabled to reduce confusion). Note: when turned off, existing splits will be preserved. */
+    NoSplit(1 shl 4),
+
+    /** Shared/Local // Disable resizing node using the splitter/separators. Useful with programatically setup dockspaces.   */
+    NoResize(1 shl 5),
+
+    /** Shared/Local // Tab bar will automatically hide when there is a single window in the dock node.   */
+    AutoHideTabBar(1 shl 6),
+
+
+    // [Internal]
+
+    /** Local, Saved  // A dockspace is a node that occupy space within an existing user window. Otherwise the node is floating and create its own window. */
+    _DockSpace(1 shl 10),
+
+    /** Local, Saved  // The central node has 2 main properties: stay visible when empty, only use "remaining" spaces from its neighbor. */
+    _CentralNode(1 shl 11),
+
+    /** Local, Saved  // Tab bar is completely unavailable. No triangle in the corner to enable it back. */
+    _NoTabBar(1 shl 12),
+
+    /** Local, Saved  // Tab bar is hidden, with a triangle in the corner to show it again (NB: actual tab-bar instance may be destroyed as this is only used for single-window tab bar) */
+    _HiddenTabBar(1 shl 13),
+
+    /** Local, Saved  // Disable window/docking menu (that one that appears instead of the collapse button) */
+    _NoWindowMenuButton(1 shl 14),
+
+    /** Local, Saved  // */
+    _NoCloseButton(1 shl 15),
+
+    /** Local, Saved  // Disable any form of docking in this dockspace or individual node. (On a whole dockspace, this pretty much defeat the purpose of using a dockspace at all). Note: when turned on, existing docked nodes will be preserved. */
+    _NoDocking(1 shl 16),
+    _SharedFlagsInheritMask_(-1),
+    _LocalFlagsMask_(NoSplit or NoResize or AutoHideTabBar or _DockSpace or _CentralNode or _NoTabBar or _HiddenTabBar or _NoWindowMenuButton or _NoCloseButton or _NoDocking),
+    _LocalFlagsTransferMask_(_LocalFlagsMask_ wo _DockSpace),  // When splitting those flags are moved to the inheriting child, never duplicated
+    _SavedFlagsMask_(NoResize or _DockSpace or _CentralNode or _NoTabBar or _HiddenTabBar or _NoWindowMenuButton or _NoCloseButton or _NoDocking);
+
+    infix fun and(b: DockNodeFlag): DockNodeFlags = i and b.i
+    infix fun and(b: DockNodeFlags): DockNodeFlags = i and b
+    infix fun or(b: DockNodeFlag): DockNodeFlags = i or b.i
+    infix fun or(b: DockNodeFlags): DockNodeFlags = i or b
+    infix fun xor(b: DockNodeFlag): DockNodeFlags = i xor b.i
+    infix fun xor(b: DockNodeFlags): DockNodeFlags = i xor b
+    infix fun wo(b: DockNodeFlags): DockNodeFlags = and(b.inv())
+    infix fun wo(b: DockNodeFlag): DockNodeFlags = and(b.i.inv()) // TODO keep? others?
+}
+
+infix fun DockNodeFlags.and(b: DockNodeFlag): DockNodeFlags = and(b.i)
+infix fun DockNodeFlags.or(b: DockNodeFlag): DockNodeFlags = or(b.i)
+infix fun DockNodeFlags.xor(b: DockNodeFlag): DockNodeFlags = xor(b.i)
+infix fun DockNodeFlags.has(b: DockNodeFlag): Boolean = and(b.i) != 0
+infix fun DockNodeFlags.hasnt(b: DockNodeFlag): Boolean = and(b.i) == 0
+infix fun DockNodeFlags.wo(b: DockNodeFlag): DockNodeFlags = and(b.i.inv())
 
 
 typealias DragDropFlags = Int

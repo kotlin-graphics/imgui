@@ -754,7 +754,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // For legacy reason the PathArcToFast() always takes angles where 2*PI is represented by 12,
         // but it is possible to set IM_DRAWLIST_ARCFAST_TESSELATION_MULTIPLIER to a higher value. This should compile to a no-op otherwise.
-        if(DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER != 1) {
+        if (DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER != 1) {
             aMinOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
             aMaxOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
         }
@@ -901,7 +901,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         _splitter.clearFreeMemory(destroy)
         vtxBuffer.data.free()
         idxBuffer.free()
-        if(!destroy) {
+        if (!destroy) {
             vtxBuffer = DrawVert_Buffer(0)
             idxBuffer = IntBuffer(0)
         }
@@ -1222,6 +1222,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                 else -> Unit
             }
 
+    /** This is less wide than RenderArrow() and we use in dock nodes instead of the regular RenderArrow() to denote a change of functionality,
+     *  and because the saved space means that the left-most tab label can stay at exactly the same position as the label of a loose window.
+     *  [JVM] safe passing Vec2 instances */
+    fun renderArrowDockMenu(pMin: Vec2, sz: Float, col: Int) {
+        addRectFilled(pMin + Vec2(sz * .1f, sz * .15f), pMin + Vec2(sz * .7f, sz * .3f), col)
+        renderArrowPointingAt(pMin + Vec2(sz * .4f, sz * .85f), Vec2(sz * .3f, sz * .4f), Dir.Down, col)
+    }
+
     /** FIXME: Cleanup and move code to ImDrawList. */
     fun renderRectFilledRangeH(rect: Rect, col: Int, xStartNorm_: Float, xEndNorm_: Float, rounding_: Float) {
         var xStartNorm = xStartNorm_
@@ -1270,6 +1278,23 @@ class DrawList(sharedData: DrawListSharedData?) {
             }
         }
         pathFillConvex(col)
+    }
+
+    /** For CTRL+TAB within a docking node we need to render the dimming background in 8 steps
+     *  (Because the root node renders the background in one shot, in order to avoid flickering when a child dock node is not submitted) */
+    fun renderRectFilledWithHole(outer: Rect, inner: Rect, col: Int, rounding: Float) {
+        val fill_L = inner.min.x > outer.min.x
+        val fill_R = inner.max.x < outer.max.x
+        val fill_U = inner.min.y > outer.min.y
+        val fill_D = inner.max.y < outer.max.y
+        if (fill_L) addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding, (if (fill_U) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if (fill_D) DrawCornerFlag.None else DrawCornerFlag.BotLeft)
+        if (fill_R) addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding, (if (fill_U) DrawCornerFlag.None else DrawCornerFlag.TopRight) or if (fill_D) DrawCornerFlag.None else DrawCornerFlag.BotRight)
+        if (fill_U) addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding, (if (fill_L) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if (fill_R) DrawCornerFlag.None else DrawCornerFlag.TopRight)
+        if (fill_D) addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding, (if (fill_L) DrawCornerFlag.None else DrawCornerFlag.BotLeft) or if (fill_R) DrawCornerFlag.None else DrawCornerFlag.BotRight)
+        if (fill_L && fill_U) addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawCornerFlag.TopLeft.i)
+        if (fill_R && fill_U) addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawCornerFlag.TopRight.i)
+        if (fill_L && fill_D) addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawCornerFlag.BotLeft.i)
+        if (fill_R && fill_D) addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawCornerFlag.BotRight.i)
     }
 
     // Internal API, Shade functions

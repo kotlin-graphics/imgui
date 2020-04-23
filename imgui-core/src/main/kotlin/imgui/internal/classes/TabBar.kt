@@ -82,10 +82,7 @@ class TabBar {
     fun getTabName(tab: TabItem): String = tab.name
 
     val TabItem.name: String
-        get() {
-            assert(nameOffset in tabsNames.indices)
-            return tabsNames[nameOffset]
-        }
+        get() = window?.name ?: tabsNames[nameOffset]
 
     // Tab Bars
 

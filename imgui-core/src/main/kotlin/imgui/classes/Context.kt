@@ -29,7 +29,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var io = IO(sharedFontAtlas)
 
+    var platformIO = PlatformIO()
+
     var style = Style()
+
+    /** = g.IO.ConfigFlags at the time of NewFrame() */
+    var configFlagsCurrFrame = ConfigFlag.None.i
+    var configFlagsLastFrame = ConfigFlag.None.i
 
     lateinit var font: Font
 
@@ -46,6 +52,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var frameCount = 0
 
     var frameCountEnded = -1
+
+    var frameCountPlatformEnded = -1
 
     var frameCountRendered = -1
 
@@ -95,6 +103,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Will catch mouse inputs (for focus/move only)   */
     var hoveredRootWindow: Window? = null
+
+    /** Hovered window ignoring MovingWindow. Only set if MovingWindow is set. */
+    var hoveredWindowUnderMovingWindow: Window? = null
 
     /** Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow. */
     var movingWindow: Window? = null
@@ -201,6 +212,29 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Which level of BeginPopup() we are in (reset every frame)   */
     val beginPopupStack = Stack<PopupData>()
+
+    //------------------------------------------------------------------
+    // Viewports
+    //------------------------------------------------------------------
+
+    /** Active viewports (always 1+, and generally 1 unless multi-viewports are enabled). Each viewports hold their copy of ImDrawData. */
+    val viewports = ArrayList<ViewportP>()
+
+    /**  == CurrentViewport->DpiScale */
+    var currentDpiScale = 0f
+
+    /** We track changes of viewport (happening in Begin) so we can call Platform_OnChangedViewport() */
+    var currentViewport: ViewportP? = null
+    var mouseViewport: ViewportP? = null
+
+    /** Last known viewport that was hovered by mouse (even if we are not hovering any viewport any more) + honoring the _NoInputs flag. */
+    var mouseLastHoveredViewport: ViewportP? = null
+
+    /** Record of last focused platform window/viewport, when this changes we stamp the viewport as front-most */
+    var platformLastFocusedViewport: ID = 0
+
+    /** Every time the front-most window changes, we stamp its viewport with an incrementing counter */
+    var viewportFrontMostStampCount = 0
 
 
     //------------------------------------------------------------------
@@ -356,22 +390,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Render
     //------------------------------------------------------------------
 
-    /** Main ImDrawData instance to pass render information to the user */
-    var drawData = DrawData()
-
-    val drawDataBuilder = DrawDataBuilder()
-
     /** 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list) */
     var dimBgRatio = 0f
-
-    val backgroundDrawList: DrawList = DrawList(drawListSharedData).apply {
-        _ownerName = "##Background" // Give it a name for debugging
-    }
-
-    /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
-    val foregroundDrawList: DrawList = DrawList(drawListSharedData).apply {
-        _ownerName = "##Foreground" // Give it a name for debugging
-    }
 
     var mouseCursor = MouseCursor.Arrow
 
@@ -476,14 +496,23 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** A list of menu IDs that were rendered at least once */
     val menusIdSubmittedThisFrame = ArrayList<ID>()
 
-
+    //------------------------------------------------------------------
     // Platform support
+    //------------------------------------------------------------------
 
     /** Cursor position request to the OS Input Method Editor   */
     var platformImePos = Vec2(Float.MAX_VALUE)
 
     /** Last cursor position passed to the OS Input Method Editor   */
     var platformImeLastPos = Vec2(Float.MAX_VALUE)
+
+    var platformImePosViewport: ViewportP? = null
+
+    //------------------------------------------------------------------
+    // Extensions
+    // FIXME: We could provide an API to register one slot in an array held in ImGuiContext?
+    //------------------------------------------------------------------
+    var dockContext: DockContext? = null
 
     //------------------------------------------------------------------
     // Settings
