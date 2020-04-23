@@ -16,9 +16,16 @@ const val IMGUI_BUILD = 0
 
 /** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
 const val IMGUI_VERSION = "1.77 WIP"// build: $IMGUI_BUILD"
+
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
 const val IMGUI_VERSION_NUM = 17601
+
+/** Viewport WIP branch */
+var IMGUI_HAS_VIEWPORT = true
+
+/** Docking WIP branch */
+var IMGUI_HAS_DOCK = true
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -187,6 +194,7 @@ object ImGui :
         internal,
         // init in Context class
         newFrame,
+        vieports,
         settings,
         basicAccessors,
         basicHelpersForWidgetCode,
@@ -195,6 +203,7 @@ object ImGui :
         navigation,
         focusScope,
         inputs,
+        docking,
         imgui.internal.api.dragAndDrop,
         internalColumnsAPI,
         tabBars,
@@ -216,3 +225,6 @@ var DEBUG = true
 internal typealias stak = Stack
 
 fun IM_DEBUG_BREAK() {}
+
+// Internal Drag and Drop payload types. String starting with '_' are reserved for Dear ImGui.
+val IMGUI_PAYLOAD_TYPE_WINDOW = "_IMWINDOW"     // Payload == ImGuiWindow*

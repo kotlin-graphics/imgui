@@ -702,7 +702,7 @@ internal interface widgetsLowLevelBehaviors {
                 /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
                     are not saved persistently.                 */
                 val storedValue = storage.int(id, -1)
-                if (storedValue == -1) {
+                if (storedValue  == -1) {
                     isOpen = g.nextItemData.openVal
                     storage[id] = isOpen
                 } else

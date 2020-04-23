@@ -22,10 +22,7 @@ import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveID
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.classes.Context
-import imgui.classes.DrawList
-import imgui.classes.SizeCallbackData
-import imgui.classes.Storage
+import imgui.classes.*
 import imgui.internal.*
 import imgui.static.viewportRect
 import kool.cap
@@ -45,6 +42,24 @@ class Window(var context: Context,
 
     /** See enum WindowFlags */
     var flags = Wf.None.i
+
+    /** See enum WindowFlags */
+    var flagsPreviousFrame = Wf.None.i
+
+    /** Advanced users only. Set with SetNextWindowClass() */
+    var windowClass = WindowClass()
+
+    /** Always set in Begin(), only inactive windows may have a NULL value here */
+    var viewport: ViewportP? = null
+
+    /** We backup the viewport id (since the viewport may disappear or never be created if the window is inactive) */
+    var viewportId: ID = 0
+
+    /** We backup the viewport position (since the viewport may disappear or never be created if the window is inactive) */
+    val viewportPos = Vec2(Float.MAX_VALUE)
+
+    /** Reset to -1 every frame (index is guaranteed to be valid between NewFrame..EndFrame), only used in the Appearing frame of a tooltip/popup to enforce clamping to a given monitor */
+    var viewportAllowPlatformMonitorExtend = -1
 
     /** Position (always rounded-up to nearest pixel)    */
     var pos = Vec2()
@@ -95,6 +110,8 @@ class Window(var context: Context,
 
     /** Are scrollbars visible? */
     var scrollbar = Vec2bool()
+
+    var viewportOwned = false
 
     /** Set to true on Begin(), unless Collapsed  */
     var active = false
@@ -162,6 +179,9 @@ class Window(var context: Context,
     /** store acceptable condition flags for SetNextWindowCollapsed() use.   */
     var setWindowCollapsedAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
 
+    /** store acceptable condition flags for SetNextWindowDock() use. */
+    var setWindowDockAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
+
     /** store window position when using a non-zero Pivot (position set needs to be processed when we know the window size) */
     var setWindowPosVal = Vec2(Float.MAX_VALUE)
 
@@ -209,9 +229,15 @@ class Window(var context: Context,
     /** FIXME: This is currently confusing/misleading. It is essentially WorkRect but not handling of scrolling. We currently rely on it as right/bottom aligned sizing operation need some size to rely on. */
     var contentRegionRect = Rect()
 
+    val hitTestHoleSize = Vec2()
+    val hitTestHoleOffset = Vec2()
+
 
     /** Last frame number the window was Active. */
     var lastFrameActive = -1
+
+    /** Last frame number the window was made Focused. */
+    var lastFrameJustFocused = -1
 
     /** Last timestamp the window was Active (using float as we don't need high precision there) */
     var lastTimeActive = -1f
@@ -224,6 +250,8 @@ class Window(var context: Context,
 
     /** User scale multiplier per-window, via SetWindowFontScale() */
     var fontWindowScale = 1f
+
+    var fontDpiScale = 1f
 
     /** Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back) */
     var settingsOffset = -1
@@ -238,6 +266,9 @@ class Window(var context: Context,
 
     /** Point to ourself or first ancestor that is not a child window.  */
     var rootWindow: Window? = null
+
+    /** Point to ourself or first ancestor that is not a child window. Doesn't cross through dock nodes. We use this so IsWindowFocused() can behave consistently regardless of docking state. */
+    var rootWindowDockStop: Window? = null
 
     /** Point to ourself or first ancestor which will display TitleBgActive color when this window is active.   */
     var rootWindowForTitleBarHighlight: Window? = null
@@ -261,13 +292,36 @@ class Window(var context: Context,
     var memoryDrawListIdxCapacity = 0
     var memoryDrawListVtxCapacity = 0
 
+    // Docking
+
+    /** Which node are we docked into. Important: Prefer testing DockIsActive in many cases as this will still be set when the dock node is hidden. */
+    var dockNode: DockNode? = null
+
+    /** Which node are we owning (for parent windows) */
+    var dockNodeAsHost: DockNode? = null
+
+    /** Backup of last valid DockNode->ID, so single window remember their dock node id even when they are not bound any more */
+    var dockId: ID = 0
+    var dockTabItemStatusFlags = ItemStatusFlag.None.i
+    val dockTabItemRect = Rect()
+
+    /** Order of the last time the window was visible within its DockNode. This is used to reorder windows that are reappearing on the same frame. Same value between windows that were active and windows that were none are possible. */
+    var dockOrder = -1
+
+    /** When docking artifacts are actually visible. When this is set, DockNode is guaranteed to be != NULL. ~~ (DockNode != NULL) && (DockNode->Windows.Size > 1). */
+    var dockIsActive = false
+
+    /** Is our window visible this frame? ~~ is the corresponding tab selected? */
+    var dockTabIsVisible = false
+    var dockTabWantClose = false
+
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getID(strID: String, end: Int = 0): ID {
         // FIXME: ImHash with str_end doesn't behave same as with identical zero-terminated string, because of ### handling.
         val seed: ID = idStack.last()
         val id: ID = hash(strID, end, seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo2?.invoke(g, DataType._String, id, strID, end)
         return id
     }
@@ -277,7 +331,7 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hash(System.identityHashCode(ptrID), seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, ptrID)
         return id
     }
@@ -288,7 +342,7 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, intPtr)
         return id
     }
@@ -297,21 +351,21 @@ class Window(var context: Context,
         val seed = idStack.last()
         val id = hash(n, seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType.Int, id, n)
         return id
     }
 
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
         val id = hash(strID, strID.length - strEnd, seed_ = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo2?.invoke(g, DataType._String, id, strID, strEnd)
         return id
     }
 
     fun getIdNoKeepAlive(ptrID: Any): ID {
         val id = hash(System.identityHashCode(ptrID), seed = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, ptrID)
         return id
     }
@@ -319,14 +373,14 @@ class Window(var context: Context,
     fun getIdNoKeepAlive(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
         val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, intPtr)
         return id
     }
 
     fun getIdNoKeepAlive(n: Int): ID {
         val id = hash(n, seed = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType.Int, id, n)
         return id
     }
@@ -346,7 +400,7 @@ class Window(var context: Context,
     fun rect(): Rect = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
 
     fun calcFontSize(): Float {
-        var scale = g.fontBaseSize * fontWindowScale
+        var scale = g.fontBaseSize * fontWindowScale * fontDpiScale
         parentWindow?.let { scale *= it.fontWindowScale }
         return scale
     }
@@ -671,7 +725,7 @@ class Window(var context: Context,
 
     /** Return scrollbar rectangle, must only be called for corresponding axis if window->ScrollbarX/Y is set.
      *  ~GetWindowScrollbarRect     */
-    infix fun getScrollbarRect(axis: Axis): Rect    {
+    infix fun getScrollbarRect(axis: Axis): Rect {
         val outerRect = rect()
 //        val innerRect = innerRect
         val borderSize = windowBorderSize

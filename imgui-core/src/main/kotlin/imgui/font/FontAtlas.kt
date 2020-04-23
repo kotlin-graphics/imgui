@@ -9,6 +9,7 @@ import glm_.vec2.operators.times
 import imgui.ImGui.style
 import imgui.MouseCursor
 import imgui.TextureID
+import imgui.internal.classes.BitVector
 import imgui.internal.fileLoadToMemory
 import imgui.internal.round
 import imgui.internal.upperPowerOfTwo
@@ -449,58 +450,6 @@ class FontAtlas {
         assert(rect.isPacked) { "Make sure the rectangle has been packed " }
         outUvMin.put(rect.x / texSize.x, rect.y / texSize.y)
         outUvMax.put((rect.x + rect.width) / texSize.x, (rect.y + rect.height) / texSize.y)
-    }
-
-
-    /** Helper: ImBoolVector. Store 1-bit per value.
-     *  Note that Resize() currently clears the whole vector. */
-    class BitVector(sz: Int) { // ~create
-        var storage = IntArray((sz + 31) ushr 5)
-
-        // Helpers: Bit arrays
-        infix fun IntArray.testBit(n: Int): Boolean {
-            val mask = 1 shl (n and 31); return (this[n ushr 5] and mask).bool; }
-
-        infix fun IntArray.clearBit(n: Int) {
-            val mask = 1 shl (n and 31); this[n ushr 5] = this[n ushr 5] wo mask; }
-
-        infix fun IntArray.setBit(n: Int) {
-            val mask = 1 shl (n and 31); this[n ushr 5] = this[n ushr 5] or mask; }
-
-        fun IntArray.setBitRange(n_: Int, n2: Int) {
-            var n = n_
-            while (n <= n2) {
-                val aMod = n and 31
-                val bMod = (if (n2 >= n + 31) 31 else n2 and 31) + 1
-                val mask = ((1L shl bMod) - 1).toUInt() wo ((1L shl aMod) - 1).toUInt()
-                this[n ushr 5] = this[n ushr 5] or mask
-                n = (n + 32) wo 31
-            }
-        }
-
-        fun clear() {
-            storage = IntArray(0)
-        }
-
-        infix fun testBit(n: Int): Boolean {
-            assert(n < storage.size shl 5); return storage testBit n; }
-
-        infix fun setBit(n: Int) {
-            assert(n < storage.size shl 5); storage setBit n; }
-
-        infix fun clearBit(n: Int) {
-            assert(n < storage.size shl 5); storage clearBit n; }
-
-        fun unpack(): ArrayList<Int> {
-            val res = arrayListOf<Int>()
-            storage.forEachIndexed { index, entries32 ->
-                if (entries32 != 0)
-                    for (bitN in 0..31)
-                        if (entries32 has (1 shl bitN))
-                            res += (index shl 5) + bitN
-            }
-            return res
-        }
     }
 
     /** Temporary data for one source font (multiple source fonts can be merged into one destination ImFont)
