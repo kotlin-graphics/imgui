@@ -2,10 +2,10 @@ package imgui.internal.classes
 
 import glm_.vec2.Vec2
 import imgui.ID
-import imgui.classes.Storage
 import imgui.internal.*
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 /** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)
  *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
@@ -83,7 +83,7 @@ class WindowTempData {
 
     val childWindows = ArrayList<Window>()
     /** Current persistent per-window storage (store e.g. tree node open/close state) */
-    var stateStorage = Storage()
+    var stateStorage = HashMap<ID, Boolean>()
     /** Current columns set */
     var currentColumns: Columns? = null
 
