@@ -28,9 +28,11 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
+import imgui.ImGui.startMouseMovingWindowOrNode
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.*
+import imgui.internal.classes.DockNode
 import imgui.internal.classes.Rect
 import uno.kotlin.getValue
 import uno.kotlin.setValue
@@ -209,23 +211,30 @@ internal interface widgets {
         return pressed
     }
 
-    fun collapseButton(id: ID, pos: Vec2): Boolean {
+    /** The Collapse button also functions as a Dock Menu button. */
+    fun collapseButton(id: ID, pos: Vec2, dockNode: DockNode?): Boolean {
         val window = g.currentWindow!!
         val bb = Rect(pos, pos + g.fontSize + style.framePadding * 2f)
         itemAdd(bb, id)
         val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.None)
 
         // Render
+        //bool is_dock_menu = (window->DockNodeAsHost && !window->Collapsed);
+        val off = if(dockNode != null) Vec2(floor(-style.itemInnerSpacing.x * 0.5f) + 0.5f, 0f) else Vec2(0f)
         val bgCol = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
-        val textCol = Col.Text
+        val textCol = Col.Text.u32
         val center = bb.center
         if (hovered || held)
-            window.drawList.addCircleFilled(center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, bgCol.u32, 12)
-        window.drawList.renderArrow(bb.min + style.framePadding, textCol.u32, if (window.collapsed) Dir.Right else Dir.Down, 1f)
+            window.drawList.addCircleFilled(center + off + Vec2(0f, -0.5f), g.fontSize * 0.5f + 1f, bgCol.u32, 12)
+
+        if (dockNode != null)
+            window.drawList.renderArrowDockMenu(bb.min + style.framePadding, g.fontSize, textCol)
+        else
+            window.drawList.renderArrow(bb.min + style.framePadding, textCol, if(window.collapsed) Dir.Right else Dir.Down, 1f)
 
         // Switch to moving the window after mouse is moved beyond the initial drag threshold
         if (isItemActive && isMouseDragging(MouseButton.Left))
-            window.startMouseMoving()
+            startMouseMovingWindowOrNode(window, dockNode, true)
 
         return pressed
     }

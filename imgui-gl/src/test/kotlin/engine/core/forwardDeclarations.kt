@@ -204,7 +204,7 @@ fun TestEngine.processTestQueue() {
         ctx.uiContext = uiContextActive
         ctx.perfStressAmount = io.perfStressAmount
         ctx.runFlags = runTask.runFlags
-//        #ifdef IMGUI_HAS_DOCK
+//        #ifdef helpers.getIMGUI_HAS_DOCK
 //                ctx.HasDock = true
 //        #else
         ctx.hasDock = false

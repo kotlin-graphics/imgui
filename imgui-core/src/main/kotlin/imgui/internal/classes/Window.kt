@@ -10,21 +10,23 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import imgui.*
+import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
+import imgui.ImGui.isMouseDragging
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveID
+import imgui.ImGui.startMouseMovingWindowOrNode
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.*
 import imgui.internal.*
-import imgui.static.viewportRect
 import kool.cap
 import java.util.*
 import kotlin.collections.ArrayList
@@ -472,11 +474,14 @@ class Window(var context: Context,
     fun updateParentAndRootLinks(flags: WindowFlags, parentWindow: Window?) {
         this.parentWindow = parentWindow
         rootWindow = this
+        rootWindowDockStop = this
         rootWindowForTitleBarHighlight = this
         rootWindowForNav = this
         parentWindow?.let {
             if (flags has Wf._ChildWindow && flags hasnt Wf._Tooltip)
                 rootWindow = it.rootWindow
+            if (!dockIsActive && parentWindow.flags hasnt Wf._DockNodeHost)
+                rootWindowDockStop = parentWindow.rootWindowDockStop
             if (flags hasnt Wf._Modal && flags has (Wf._ChildWindow or Wf._Popup))
                 rootWindowForTitleBarHighlight = it.rootWindowForTitleBarHighlight
         }
@@ -507,17 +512,27 @@ class Window(var context: Context,
      *  If you want a window to never be focused, you may use the e.g. NoInputs flag.
      *  ~ IsWindowNavFocusable */
     val isNavFocusable: Boolean
-        get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
+        get() = active && this === rootWindowDockStop && flags hasnt Wf.NoNavFocus
 
-    /** ~GetWindowAllowedExtentRect */
-    fun getAllowedExtentRect(): Rect {
-        val padding = style.displaySafeAreaPadding
-        return viewportRect.apply {
-            expand(Vec2(
-                    if (width > padding.x * 2) -padding.x else 0f,
-                    if (height > padding.y * 2) -padding.y else 0f))
+    /** Note that this is used for popups, which can overlap the non work-area of individual viewports.
+     *  ~GetWindowAllowedExtentRect */
+    val allowedExtentRect: Rect
+        get() {
+            val rScreen = Rect()
+            if (viewportAllowPlatformMonitorExtend >= 0) {
+                // Extent with be in the frame of reference of the given viewport (so Min is likely to be negative here)
+                val monitor = g.platformIO.monitors[viewportAllowPlatformMonitorExtend]
+                rScreen.min put monitor.workPos
+                rScreen.max put (monitor.workPos + monitor.workSize)
+            } else {
+                // Use the full viewport area (not work area) for popups
+                rScreen.min put viewport!!.pos
+                rScreen.max put (viewport!!.pos + viewport!!.size)
+            }
+            val padding = style.displaySafeAreaPadding
+            rScreen expand Vec2(if (rScreen.width > padding.x * 2) -padding.x else 0f, if (rScreen.height > padding.y * 2) -padding.y else 0f)
+            return rScreen
         }
-    }
 
     /** ~ SetWindowPos */
     fun setPos(pos: Vec2, cond: Cond = Cond.None) {
@@ -629,7 +644,13 @@ class Window(var context: Context,
         g.navDisableHighlight = true
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
 
-        val canMoveWindow = flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove
+        var canMoveWindow = true
+        if (flags has Wf.NoMove || rootWindow!!.flags has Wf.NoMove)
+            canMoveWindow = false
+        dockNodeAsHost?.visibleWindow?.let {
+            if (it.flags has Wf.NoMove)
+                canMoveWindow = false
+        }
         if (canMoveWindow)
             g.movingWindow = this
     }
@@ -743,10 +764,13 @@ class Window(var context: Context,
             getIdNoKeepAlive(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
 
     /** 0..3: corners (Lower-right, Lower-left, Unused, Unused)
-     *  4..7: borders (Top, Right, Bottom, Left) */
+     *  4..7: borders (Top, Right, Bottom, Left)
+     *
+     *  ~GetWindowResizeID */
     infix fun getResizeID(n: Int): ID {
         assert(n in 0..7)
-        val id = hash("#RESIZE", 0, id)
+        var id = if(dockIsActive) dockNode!!.hostWindow!!.id else this.id
+        id = hash("#RESIZE", 0, id)
         return hash(intArrayOf(n), id)
     }
 
@@ -771,7 +795,7 @@ class Window(var context: Context,
                 pathStroke(Col.SeparatorActive.u32, false, 2f max borderSize) // Thicker than usual
             }
         }
-        if (style.frameBorderSize > 0f && flags hasnt Wf.NoTitleBar) {
+        if (style.frameBorderSize > 0f && flags hasnt Wf.NoTitleBar && !dockIsActive) {
             val y = pos.y + titleBarHeight - 1
             drawList.addLine(Vec2(pos.x + borderSize, y), Vec2(pos.x + size.x - borderSize, y), Col.Border.u32, style.frameBorderSize)
         }
@@ -780,7 +804,8 @@ class Window(var context: Context,
     /** ~RenderWindowDecorations
      *  Draw background and borders
      *  Draw and handle scrollbars */
-    fun renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
+    fun renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, handleBordersAndResizeGrips: Boolean,
+                          resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
 
         // Ensure that ScrollBar doesn't read last frame's SkipItems
         skipItems = false
@@ -797,23 +822,41 @@ class Window(var context: Context,
         } else {
             // Window background
             if (flags hasnt Wf.NoBackground) {
+
+                var isDockingTransparentPayload = false
+                if (g.dragDropActive && (g.frameCount - g.dragDropAcceptFrameCount) <= 1 && io.configDockingTransparentPayload)
+                    if (g.dragDropPayload.isDataType(IMGUI_PAYLOAD_TYPE_WINDOW) && (g.dragDropPayload.data as? Window) === this)
+                        isDockingTransparentPayload = true
+
                 var bgCol = getWindowBgColorIdxFromFlags(flags).u32
-                var overrideAlpha = false
-                val alpha = when {
-                    g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> {
+                if (viewportOwned) {
+                    // No alpha
+                    bgCol = bgCol or COL32_A_MASK
+                    if (isDockingTransparentPayload)
+                        viewport!!.alpha *= DOCKING_TRANSPARENT_PAYLOAD_ALPHA
+                } else {
+                    // Adjust alpha. For docking
+                    var overrideAlpha = false
+                    var alpha = 1f
+                    if (g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha) {
+                        alpha = g.nextWindowData.bgAlphaVal
                         overrideAlpha = true
-                        g.nextWindowData.bgAlphaVal
                     }
-                    else -> 1f
+                    if (isDockingTransparentPayload) {
+                        alpha *= DOCKING_TRANSPARENT_PAYLOAD_ALPHA // FIXME-DOCK: Should that be an override?
+                        overrideAlpha = true
+                    }
+                    if (overrideAlpha)
+                        bgCol = (bgCol wo COL32_A_MASK) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
                 }
-                if (overrideAlpha)
-                    bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
-                drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
-                        if (flags has Wf.NoTitleBar) DrawCornerFlag.All.i else DrawCornerFlag.Bot.i)
+                val f = if (flags has Wf.NoTitleBar) DrawCornerFlag.All else DrawCornerFlag.Bot
+                drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding, f.i)
             }
 
             // Title bar
-            if (flags hasnt Wf.NoTitleBar) {
+            // (when docked, DockNode are drawing their own title bar. Individual windows however do NOT set the _NoTitleBar flag,
+            // in order for their pos/size to be matching their undocking state.)
+            if (flags hasnt Wf.NoTitleBar && !dockIsActive) {
                 val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
                 drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, DrawCornerFlag.Top.i)
             }
@@ -828,12 +871,30 @@ class Window(var context: Context,
                     drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
             }
 
+            // Docking: Unhide tab bar (small triangle in the corner), drag from small triangle to quickly undock
+            val node = dockNode
+            if (dockIsActive && node!!.isHiddenTabBar && !node.isNoTabBar) {
+                val unhideSzDraw = floor(g.fontSize * 0.7f)
+                val unhideSzHit = floor(g.fontSize * 0.55f)
+                val p = node.pos
+                val r = Rect(p, p + unhideSzHit)
+                val (pressed, hovered, held) = buttonBehavior(r, getID("#UNHIDE"), ButtonFlag.FlattenChildren.i)
+                if (pressed)
+                    node.wantHiddenTabBarToggle = true
+                else if (held && isMouseDragging(MouseButton.Left))
+                    startMouseMovingWindowOrNode(this, node, true)
+
+                // FIXME-DOCK: Ideally we'd use ImGuiCol_TitleBgActive/ImGuiCol_TitleBg here, but neither is guaranteed to be visible enough at this sort of size..
+                val col = if ((held && hovered) || (node.isFocused && !hovered)) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
+                drawList.addTriangleFilled(p, p + Vec2(unhideSzDraw, 0f), p + Vec2(0f, unhideSzDraw), col.u32)
+            }
+
             // Scrollbars
             if (scrollbar.x) scrollbar(Axis.X)
             if (scrollbar.y) scrollbar(Axis.Y)
 
             // Render resize grips (after their input handling so we don't have a frame of latency)
-            if (flags hasnt Wf.NoResize)
+            if (handleBordersAndResizeGrips && flags hasnt Wf.NoResize)
                 repeat(resizeGripCount) { resizeGripN ->
                     val grip = resizeGripDef[resizeGripN]
                     val corner = pos.lerp(pos + size, grip.cornerPosN)
@@ -845,12 +906,16 @@ class Window(var context: Context,
                     }
                 }
 
-            // Borders
-            renderOuterBorders()
+            // Borders (for dock node host they will be rendered over after the tab bar)
+            if (handleBordersAndResizeGrips && dockNodeAsHost == null)
+                renderOuterBorders()
         }
     }
 
-    /** Render title text, collapse button, close button */
+    /** Render title text, collapse button, close button
+     *  When inside a dock node, this is handled in DockNodeUpdateTabBar() instead.
+     *
+     *  ~RenderWindowTitleBarContents */
     fun renderTitleBarContents(titleBarRect: Rect, name: String, pOpen: KMutableProperty0<Boolean>?) {
 
         val hasCloseButton = pOpen != null
@@ -884,7 +949,7 @@ class Window(var context: Context,
 
         // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
         if (hasCollapseButton)
-            if (collapseButton(getID("#COLLAPSE"), collapseButtonPos))
+            if (collapseButton(getID("#COLLAPSE"), collapseButtonPos, null))
                 wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
 
         // Close button
@@ -1002,6 +1067,14 @@ class Window(var context: Context,
             if (focusedRootWindow.flags has Wf._Popup && flags hasnt HoveredFlag.AllowWhenBlockedByPopup)
                 return false
         }
+
+        // Filter by viewport
+        if (viewport !== g.mouseViewport)
+            g.movingWindow.let {
+                if (it == null || rootWindow !== it.rootWindow)
+                    return false
+            }
+
         return true
     }
 
@@ -1020,7 +1093,15 @@ class Window(var context: Context,
                 // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
                 if (isPopup || isMenu)
                     sizeMin minAssign 4f
-                val sizeAutoFit = glm.clamp(sizeDesired, sizeMin, glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
+
+                // FIXME-VIEWPORT-WORKAREA: May want to use GetWorkSize() instead of Size depending on the type of windows?
+                val availSize = Vec2(viewport!!.size)
+                if (viewportOwned)
+                    availSize put Float.MAX_VALUE
+                val monitorIdx = viewportAllowPlatformMonitorExtend
+                if (monitorIdx >= 0 && monitorIdx < g.platformIO.monitors.size)
+                    availSize put g.platformIO.monitors[monitorIdx].workSize
+                val sizeAutoFit = glm.clamp(sizeDesired, sizeMin, sizeMin max (availSize - style.displaySafeAreaPadding * 2f))
 
                 // When the window cannot fit all contents (either because of constraints, either because screen is too small),
                 // we are growing the size on the other axis to compensate for expected scrollbar.
@@ -1038,29 +1119,36 @@ class Window(var context: Context,
     }
 
     /** AddWindowToDrawData */
-    infix fun addToDrawData(outList: ArrayList<DrawList>) {
+    infix fun addToDrawData(layer: Int) {
         io.metricsRenderWindows++
-        drawList addTo outList
-        dc.childWindows.filter { it.isActiveAndVisible }  // clipped children may have been marked not active
-                .forEach { it addToDrawData outList }
+        drawList addTo viewport!!.drawDataBuilder.layers[layer]
+        dc.childWindows.forEach {
+            if (it.isActiveAndVisible) // Clipped children may have been marked not active
+                it addToDrawData layer
+        }
     }
 
     /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)
      *  ~AddRootWindowToDrawData    */
     fun addToDrawData() {
         val layer = (flags has Wf._Tooltip).i
-        addToDrawData(g.drawDataBuilder.layers[layer])
+        addToDrawData(layer)
     }
 
     /** ~SetWindowConditionAllowFlags */
-    fun setConditionAllowFlags(flags: Int, enabled: Boolean) = if (enabled) {
-        setWindowPosAllowFlags = setWindowPosAllowFlags or flags
-        setWindowSizeAllowFlags = setWindowSizeAllowFlags or flags
-        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags or flags
-    } else {
-        setWindowPosAllowFlags = setWindowPosAllowFlags wo flags
-        setWindowSizeAllowFlags = setWindowSizeAllowFlags wo flags
-        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags wo flags
+    fun setConditionAllowFlags(flags: Int, enabled: Boolean) = when {
+        enabled -> {
+            setWindowPosAllowFlags = setWindowPosAllowFlags or flags
+            setWindowSizeAllowFlags = setWindowSizeAllowFlags or flags
+            setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags or flags
+            setWindowDockAllowFlags = setWindowDockAllowFlags or flags
+        }
+        else -> {
+            setWindowPosAllowFlags = setWindowPosAllowFlags wo flags
+            setWindowSizeAllowFlags = setWindowSizeAllowFlags wo flags
+            setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags wo flags
+            setWindowDockAllowFlags = setWindowDockAllowFlags wo flags
+        }
     }
 
     fun calcResizePosSizeFromAnyCorner(cornerTarget: Vec2, cornerNorm: Vec2, outPos: Vec2, outSize: Vec2) {
@@ -1105,9 +1193,9 @@ class Window(var context: Context,
 
         // Minimum size
         if (flags hasnt (Wf._ChildWindow or Wf.AlwaysAutoResize)) {
+            val windowForHeight = windowForTitleAndMenuHeight
             newSize maxAssign style.windowMinSize
-            // Reduce artifacts with very small windows
-            newSize.y = newSize.y max (titleBarHeight + menuBarHeight + (0f max (style.windowRounding - 1f)))
+            newSize.y = newSize.y max (windowForHeight.titleBarHeight + windowForHeight.menuBarHeight + 0f max (style.windowRounding - 1f)) // Reduce artifacts with very small windows
         }
         return newSize
     }
@@ -1128,12 +1216,39 @@ class Window(var context: Context,
         get() = when {
             flags has Wf._Popup -> "(Popup)"
             flags has Wf.MenuBar && name == "##MainMenuBar" -> "(Main menu bar)"
+            dockNodeAsHost != null -> "(Dock node)"
             else -> "(Untitled)"
         }
+
+    infix fun translate(delta: Vec2) {
+        pos plusAssign delta
+        clipRect translate delta
+        outerRectClipped translate delta
+        innerRect translate delta
+        dc.cursorPos plusAssign delta
+        dc.cursorStartPos plusAssign delta
+        dc.cursorMaxPos plusAssign delta
+        dc.lastItemRect translate delta
+        dc.lastItemDisplayRect translate delta
+    }
+
+    infix fun scale(scale: Float) {
+        val origin = viewport!!.pos
+        pos = floor((pos - origin) * scale + origin)
+        size = floor(size * scale)
+        sizeFull = floor(sizeFull * scale)
+        contentSize = floor(contentSize * scale)
+    }
 
     /** ~ IsWindowActiveAndVisible */
     val isActiveAndVisible: Boolean get() = active && !hidden
 
+    /** ~GetWindowForTitleDisplay */
+    val windowForTitleDisplay: Window?
+        get() = dockNodeAsHost?.visibleWindow ?: this
+
+    val windowForTitleAndMenuHeight: Window
+        get() = dockNodeAsHost?.visibleWindow ?: this
 
     /** ~StartLockWheelingWindow */
     fun startLockWheeling() {

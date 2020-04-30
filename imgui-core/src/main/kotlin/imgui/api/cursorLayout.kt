@@ -234,9 +234,11 @@ interface cursorLayout {
 
     /** cursor position in absolute screen coordinates [0..io.DisplaySize] (useful to work with ImDrawList API) */
     var cursorScreenPos: Vec2
-        /** ~GetCursorScreenPos */
+        /** cursor position in absolute screen coordinates (0..io.DisplaySize) or natural OS coordinates when using multiple viewport. Useful to work with ImDrawList API.
+         *  ~GetCursorScreenPos */
         get() = currentWindowRead!!.dc.cursorPos
-        /** ~SetCursorScreenPos */
+        /** cursor position in absolute screen coordinates (0..io.DisplaySize) or natural OS coordinates when using multiple viewport.
+         *  ~SetCursorScreenPos */
         set(value) = with(currentWindow.dc) {
             cursorPos put value
             cursorMaxPos maxAssign cursorPos

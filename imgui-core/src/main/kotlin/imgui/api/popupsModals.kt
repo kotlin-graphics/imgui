@@ -13,9 +13,11 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowHovered
+import imgui.ImGui.mainViewport
 import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
+import imgui.classes.ViewportP
 import imgui.internal.NavMoveFlag
 import imgui.internal.NextWindowDataFlag
 import imgui.internal.hasnt
@@ -106,10 +108,12 @@ interface popupsModals {
         }
         // Center modal windows by default
         // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
-        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasPos)
-            setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
+        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasPos) {
+            val viewport = if(window.wasActive) window.viewport!! else mainViewport as ViewportP // FIXME-VIEWPORT: What may be our reference viewport?
+            setNextWindowPos(viewport.mainRect.center, Cond.Appearing, Vec2(0.5f))
+        }
 
-        val flags = flags_ or Wf._Popup or Wf._Modal or Wf.NoCollapse or Wf.NoSavedSettings
+        val flags = flags_ or Wf._Popup or Wf._Modal or Wf.NoCollapse or Wf.NoSavedSettings or Wf.NoDocking
         val isOpen = begin(name, pOpen, flags)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
         if (!isOpen || pOpen?.get() == false) {
@@ -173,7 +177,7 @@ interface popupsModals {
                 break
             popupIdx--
         }
-        //IMGUI_DEBUG_LOG("CloseCurrentPopup %d -> %d\n", g.BeginPopupStack.Size - 1, popup_idx);
+        IMGUI_DEBUG_LOG_POPUP("CloseCurrentPopup ${g.beginPopupStack.lastIndex} -> $popupIdx")
         closePopupToLevel(popupIdx, true)
 
         /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.

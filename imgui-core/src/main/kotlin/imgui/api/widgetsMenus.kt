@@ -17,6 +17,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
+import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
@@ -38,6 +39,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setNextWindowViewport
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.classes.Rect
@@ -139,18 +141,38 @@ interface widgetsMenus {
         }
     }
 
-    /** Create and append to a full screen menu-bar.
-     *  For the main menu bar, which cannot be moved, we honor g.Style.DisplaySafeAreaPadding to ensure text can be visible on a TV set. */
+    /** Create and append to a full screen menu-bar. */
     fun beginMainMenuBar(): Boolean {
 
+        val viewport = g.viewports[0]
+        var menuBarWindow = findWindowByName("##MainMenuBar")
+
+        // For the main menu bar, which cannot be moved, we honor g.Style.DisplaySafeAreaPadding to ensure text can be visible on a TV set.
         g.nextWindowData.menuBarOffsetMinVal.put(style.displaySafeAreaPadding.x, max(style.displaySafeAreaPadding.y - style.framePadding.y, 0f))
-        setNextWindowPos(Vec2())
-        setNextWindowSize(Vec2(io.displaySize.x, g.nextWindowData.menuBarOffsetMinVal.y + g.fontBaseSize + style.framePadding.y))
+
+        // Get our rectangle at the top of the work area
+        if (menuBarWindow == null || menuBarWindow.beginCount == 0) {
+            // Set window position
+            // We don't attempt to calculate our height ahead, as it depends on the per-viewport font size. However menu-bar will affect the minimum window size so we'll get the right height.
+            val menuBarPos = viewport.pos + viewport.currWorkOffsetMin
+            val menuBarSize = Vec2(viewport.size.x - viewport.currWorkOffsetMin.x + viewport.currWorkOffsetMax.x, 1f)
+            setNextWindowPos(menuBarPos)
+            setNextWindowSize(menuBarSize)
+        }
+
+        // Create window
+        setNextWindowViewport(viewport.id) // Enforce viewport so we don't create our own viewport when ImGuiConfigFlags_ViewportsNoMerge is set.
         pushStyleVar(StyleVar.WindowRounding, 0f)
-        pushStyleVar(StyleVar.WindowMinSize, Vec2i())
-        val windowFlags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
+        pushStyleVar(StyleVar.WindowMinSize, Vec2i()) // Lift normal size constraint, however the presence of a menu-bar will give us the minimum height we want.
+        val windowFlags = Wf.NoDocking or Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val isOpen = begin("##MainMenuBar", null, windowFlags) && beginMenuBar()
         popStyleVar(2)
+
+        // Report our size into work area (for next frame) using actual window size
+        menuBarWindow = currentWindow
+        if (menuBarWindow.beginCount == 1)
+        viewport.currWorkOffsetMin.y += menuBarWindow.size.y
+
         g.nextWindowData.menuBarOffsetMinVal put 0f
         return when {
             !isOpen -> {

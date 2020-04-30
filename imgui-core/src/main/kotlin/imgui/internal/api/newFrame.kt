@@ -4,17 +4,23 @@ import glm_.f
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
+import imgui.ImGui.dockContextQueueUndockNode
+import imgui.ImGui.dockNodeGetRootNode
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
+import imgui.ImGui.isDragDropPayloadBeingAccepted
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
+import imgui.classes.ViewportFlag
+import imgui.classes.wo
 import imgui.internal.classes.DockNode
 import imgui.internal.classes.Window
 import imgui.static.findHoveredWindow
+import imgui.static.updateTryMergeWindowIntoHostViewport
 
 /** NewFrame */
 internal interface newFrame {
@@ -30,10 +36,12 @@ internal interface newFrame {
             - We also support the moved window toggling the NoInputs flag after moving has started in order
                 to be able to detect windows below it, which is useful for e.g. docking mechanisms. */
         findHoveredWindow()
+        assert(g.hoveredWindow == null || g.hoveredWindow === g.movingWindow || g.hoveredWindow!!.viewport === g.mouseViewport)
 
         fun nullate() {
             g.hoveredWindow = null
             g.hoveredRootWindow = null
+            g.hoveredWindowUnderMovingWindow = null
         }
 
         // Modal windows prevents cursor from hovering behind them.
@@ -95,15 +103,15 @@ internal interface newFrame {
             // - part of a dockspace node hierarchy (trivia: undocking from a fixed/central node will create a new node and copy windows)
             val rootNode = dockNodeGetRootNode(node)
             if (rootNode.onlyNodeWithWindows != node || rootNode.centralNode != null)   // -V1051 PVS-Studio thinks node should be root_node and is wrong about that.
-                if (undockFloatingNode || rootNode.isDockSpace())
+                if (undockFloatingNode || rootNode.isDockSpace)
                     canUndockNode = true
         }
 
         val clicked = isMouseClicked(MouseButton.Left)
         val dragging = isMouseDragging(MouseButton.Left, io.mouseDragThreshold * 1.7f)
         if (canUndockNode && dragging) {
-            dockContextQueueUndockNode(g, node)
-            g.activeIdClickOffset = io.mouseClickedPos[0] - node!!.pos
+            dockContextQueueUndockNode(g, node!!)
+            g.activeIdClickOffset = io.mouseClickedPos[0] - node.pos
         }
         else if (!canUndockNode && (clicked || dragging) && g.movingWindow !== window) {
             window.startMouseMoving()
@@ -132,9 +140,23 @@ internal interface newFrame {
                 if (movingWindow.pos.x.f != pos.x || movingWindow.pos.y.f != pos.y) {
                     movingWindow.markIniSettingsDirty()
                     movingWindow.setPos(pos, Cond.Always)
+                    if (movingWindow.viewportOwned) // Synchronize viewport immediately because some overlays may relies on clipping rectangle before we Begin() into the window.
+                        movingWindow.viewport!!.pos put pos
                 }
                 focusWindow(mov)
             } else {
+                // Try to merge the window back into the main viewport.
+                // This works because MouseViewport should be != MovingWindow->Viewport on release (as per code in UpdateViewports)
+                if (g.configFlagsCurrFrame has ConfigFlag.ViewportsEnable)
+                    updateTryMergeWindowIntoHostViewport(movingWindow, g.mouseViewport!!)
+
+                // Restore the mouse viewport so that we don't hover the viewport _under_ the moved window during the frame we released the mouse button.
+                if (!isDragDropPayloadBeingAccepted)
+                    g.mouseViewport = movingWindow.viewport
+
+                // Clear the NoInput window flag set by the Viewport system
+                movingWindow.viewport!!.apply { flags = flags wo ViewportFlag.NoInputs }
+
                 clearActiveID()
                 g.movingWindow = null
             }
@@ -157,14 +179,16 @@ internal interface newFrame {
         // Unless we just made a window/popup appear
         if (g.navWindow?.appearing == true) return
 
-        // Click to focus window and start moving (after we're done with all our widgets)
+        // Click on void to focus window and start moving
+        // (after we're done with all our widgets, so e.g. clicking on docking tab-bar which have set HoveredId already and not get us here!)
         if (io.mouseClicked[0]) {
-            val hovered = g.hoveredRootWindow
-            if (hovered != null) {
-                hovered.startMouseMoving()
-                if (io.configWindowsMoveFromTitleBarOnly && hovered.flags hasnt WindowFlag.NoTitleBar)
-                    if (io.mouseClickedPos[0] !in hovered.titleBarRect())
-                        g.movingWindow = null
+            val rootWindow = g.hoveredWindow?.rootWindowDockStop
+            if (rootWindow != null) {
+                g.hoveredWindow!!.startMouseMoving()
+                if (io.configWindowsMoveFromTitleBarOnly)
+                    if (rootWindow.flags hasnt WindowFlag.NoTitleBar || rootWindow.dockIsActive)
+                        if (io.mouseClickedPos[0] !in rootWindow.titleBarRect())
+                g.movingWindow = null
             } else if (g.navWindow != null && topMostPopupModal == null)
                 focusWindow()  // Clicking on void disable focus
         }

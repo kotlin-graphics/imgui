@@ -49,7 +49,7 @@ interface itemWidgetsUtilities {
                     /*  Special handling for the dummy item after Begin() which represent the title bar or tab.
                         When the window is collapsed (SkipItems==true) that last item will never be overwritten
                         so we need to detect the case.  */
-                    window.dc.lastItemId == window.moveId && window.writeAccessed -> false
+                    (window.dc.lastItemId == window.id || window.dc.lastItemId == window.moveId) && window.writeAccessed -> false
                     else -> true
                 }
             }
@@ -63,7 +63,19 @@ interface itemWidgetsUtilities {
 
     /** Is the last item focused for keyboard/gamepad navigation?   */
     val isItemFocused: Boolean
-        get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
+        get() {
+            val window = g.currentWindow!!
+
+            return when {
+                g.navId == 0 || g.navDisableHighlight || g.navId != window.dc.lastItemId -> false
+
+                // Special handling for the dummy item after Begin() which represent the title bar or tab.
+                // When the window is collapsed (SkipItems==true) that last item will never be overwritten so we need to detect the case.
+                window.dc.lastItemId == window.id && window.writeAccessed -> false
+
+                else -> true
+            }
+        }
 
     /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
     fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =

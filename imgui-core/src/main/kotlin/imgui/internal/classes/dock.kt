@@ -2,13 +2,58 @@ package imgui.internal.classes
 
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.classes.Storage
+import imgui.classes.WindowClass
 import imgui.internal.Axis
 
 
+val IMGUI_DOCK_SPLITTER_SIZE = 2f
+
+enum class DockRequestType {
+    None, Dock, Undock,
+
+    /** Split is the same as Dock but without a DockPayload */
+    Split
+}
+
+class DockRequest {
+    var type = DockRequestType.None
+
+    /** Destination/Target Window to dock into (may be a loose window or a DockNode, might be NULL in which case DockTargetNode cannot be NULL) */
+    var dockTargetWindow: Window? = null
+
+    /** Destination/Target Node to dock into */
+    var dockTargetNode: DockNode? = null
+
+    /** Source/Payload window to dock (may be a loose window or a DockNode), [Optional] */
+    var dockPayload: Window? = null
+    var dockSplitDir = Dir.None
+    var dockSplitRatio = .5f
+    var dockSplitOuter = false
+    var undockTargetWindow: Window? = null
+    var undockTargetNode: DockNode? = null
+}
+
+class DockPreviewData {
+    val futureNode = DockNode(0)
+    var isDropAllowed = false
+    var isCenterAvailable = false
+
+    /**  Hold your breath, grammar freaks.. */
+    var isSidesAvailable = false
+
+    /**  Set when hovered the drop rect (vs. implicit SplitDir==None when hovered the window) */
+    var isSplitDirExplicit = false
+    var splitNode: DockNode? = null
+    var splitDir = Dir.None
+    var splitRatio = 0f
+
+    /** May be slightly different from hit-testing drop rects used in DockNodeCalcDropRects() */
+    val dropRectsDraw = Array(Dir.COUNT + 1) { Rect() }
+}
+
 /** Docking system context */
 class DockContext {
-    val nodes = Storage()                      // Map ID -> ImGuiDockNode*: Active nodes
+    val nodes = HashMap<ID, DockNode>()                      // Map ID -> ImGuiDockNode*: Active nodes
     val requests = ArrayList<DockRequest>()
     val settingsNodes = ArrayList<DockNodeSettings>()
     var wantFullRebuild = false
@@ -52,10 +97,10 @@ class DockNode(
     var splitAxis = Axis.None
 
     /** [Root node only] */
-    val windowClass = WindowClass()
+    var windowClass = WindowClass()
 
 
-    var State = DockNodeState.Unknown
+    var state = DockNodeState.Unknown
 
     var hostWindow: Window? = null
 
@@ -85,6 +130,13 @@ class DockNode(
 
     /** [Leaf node only] Set when closing a specific tab/window. */
     var wantCloseTabId: ID = 0
+
+    // [JVM]
+    fun setAuthorities(authority: DataAuthority) {
+        authorityForPos = authority
+        authorityForSize = authority
+        authorityForViewport = authority
+    }
 
     var authorityForPos = DataAuthority.DockNode
     var authorityForSize = DataAuthority.DockNode
@@ -126,4 +178,20 @@ class DockNode(
     val isEmpty: Boolean get() = childNodes[0] == null && windows.isEmpty()
     val mergedFlags: DockNodeFlags get() = sharedFlags or localFlags
     fun rect() = Rect(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
+}
+
+/** Persistent Settings data, stored contiguously in SettingsNodes (sizeof() ~32 bytes) */
+class DockNodeSettings {
+    var id: ID = 0
+    var parentNodeId: ID = 0
+    var parentWindowId: ID = 0
+    var selectedWindowId: ID = 0
+    var splitAxis = Axis.None
+    var depth = 0
+
+    /** NB: We save individual flags one by one in ascii format (ImGuiDockNodeFlags_SavedFlagsMask_) */
+    var flags = DockNodeFlag.None.i
+    val pos = Vec2()
+    val size = Vec2()
+    val sizeRef = Vec2()
 }

@@ -7,6 +7,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.g
 import imgui.classes.DrawList
+import imgui.classes.WindowClass
 import imgui.font.Font
 import imgui.internal.*
 import unsigned.toUInt

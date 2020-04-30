@@ -1,32 +1,46 @@
 package imgui.impl.gl
 
-import glm_.L
 import gln.ShaderType.Companion.FRAGMENT_SHADER
 import gln.ShaderType.Companion.VERTEX_SHADER
-import gln.buffer.GlBufferDsl
 import gln.glf.semantic
-import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
 import gln.identifiers.GlShader
+import imgui.internal.DrawData
 import kool.IntBuffer
-import kool.adr
-import org.lwjgl.opengl.GL15C
-import org.lwjgl.opengl.GL30C
+import org.lwjgl.opengl.GL
 import org.lwjgl.system.Platform
-import java.nio.ByteBuffer
-import java.nio.IntBuffer
 
+
+// OpenGL Data
+
+//----------------------------------------
+// OpenGL    GLSL      GLSL
+// version   version   string
+//----------------------------------------
+//  2.0       110       "#version 110"
+//  2.1       120       "#version 120"
+//  3.0       130       "#version 130"
+//  3.1       140       "#version 140"
+//  3.2       150       "#version 150"
+//  3.3       330       "#version 330 core"
+//  4.0       400       "#version 400 core"
+//  4.1       410       "#version 410 core"
+//  4.2       420       "#version 410 core"
+//  4.3       430       "#version 430 core"
+//  ES 2.0    100       "#version 100"      = WebGL 1.0
+//  ES 3.0    300       "#version 300 es"   = WebGL 2.0
+//----------------------------------------
 
 /** Store GLSL version string so we can refer to it later in case we recreate shaders.
  * Note: GLSL version is NOT the same as GL version. Leave this to default if unsure. */
-var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
+var glslVersionString = ""
 
 /** Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2) */
 var glVersion = 0
 
 val vertexShader_glsl_120: String by lazy {
     """
-    #version $glslVersion
+    $glslVersionString
     uniform mat4 ProjMtx;
     attribute vec2 Position;
     attribute vec2 UV;
@@ -42,7 +56,7 @@ val vertexShader_glsl_120: String by lazy {
 
 val vertexShader_glsl_130: String by lazy {
     """
-    #version $glslVersion
+    $glslVersionString
     uniform mat4 ProjMtx;
     in vec2 Position;
     in vec2 UV;
@@ -56,9 +70,24 @@ val vertexShader_glsl_130: String by lazy {
     }"""
 }
 
+//const GLchar* vertex_shader_glsl_300_es =
+//"precision mediump float;\n"
+//"layout (location = 0) in vec2 Position;\n"
+//"layout (location = 1) in vec2 UV;\n"
+//"layout (location = 2) in vec4 Color;\n"
+//"uniform mat4 ProjMtx;\n"
+//"out vec2 Frag_UV;\n"
+//"out vec4 Frag_Color;\n"
+//"void main()\n"
+//"{\n"
+//"    Frag_UV = UV;\n"
+//"    Frag_Color = Color;\n"
+//"    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+//"}\n";
+
 val vertexShader_glsl_410_core: String by lazy {
     """
-    #version $glslVersion
+    $glslVersionString
     layout (location = ${semantic.attr.POSITION}) in vec2 Position;
     layout (location = ${semantic.attr.TEX_COORD}) in vec2 UV;
     layout (location = ${semantic.attr.COLOR}) in vec4 Color;
@@ -74,7 +103,7 @@ val vertexShader_glsl_410_core: String by lazy {
 
 val fragmentShader_glsl_120: String by lazy {
     """
-    #version $glslVersion
+    $glslVersionString
     uniform sampler2D Texture;
     varying vec2 Frag_UV;
     varying vec4 Frag_Color;
@@ -85,7 +114,7 @@ val fragmentShader_glsl_120: String by lazy {
 
 val fragmentShader_glsl_130: String by lazy {
     """
-    #version $glslVersion
+    $glslVersionString
     uniform sampler2D Texture;
     in vec2 Frag_UV;
     in vec4 Frag_Color;
@@ -95,9 +124,20 @@ val fragmentShader_glsl_130: String by lazy {
     }"""
 }
 
+//const GLchar* fragment_shader_glsl_300_es =
+//"precision mediump float;\n"
+//"uniform sampler2D Texture;\n"
+//"in vec2 Frag_UV;\n"
+//"in vec4 Frag_Color;\n"
+//"layout (location = 0) out vec4 Out_Color;\n"
+//"void main()\n"
+//"{\n"
+//"    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
+//"}\n";
+
 val fragmentShader_glsl_410_core: String by lazy {
     """
-    #version $glslVersion
+    $glslVersionString
     in vec2 Frag_UV;
     in vec4 Frag_Color;
     uniform sampler2D Texture;
@@ -107,8 +147,9 @@ val fragmentShader_glsl_410_core: String by lazy {
     }"""
 }
 
-fun createProgram(): GlProgram {
+fun createProgram(glslVersion: Int): GlProgram {
 
+    // Select shaders matching our GLSL versions
     val vertexShader: String
     val fragmentShader: String
     when {
@@ -126,6 +167,7 @@ fun createProgram(): GlProgram {
         }
     }
 
+    // Create shaders
     val vertHandle = GlShader.createFromSource(VERTEX_SHADER, vertexShader)
     val fragHandle = GlShader.createFromSource(FRAGMENT_SHADER, fragmentShader)
 
@@ -164,3 +206,61 @@ val bufferName = IntBuffer<Buffer>()
 val vaoName = IntBuffer(1)
 
 val fontTexture = IntBuffer(1)
+
+
+
+var IMPL_OPENGL_ES2 = false
+var IMPL_OPENGL_ES3 = false
+
+var MAY_HAVE_VTX_OFFSET = lazy { IMPL_OPENGL_ES2 || IMPL_OPENGL_ES3 || glVersion >= 320 }.value
+
+var CLIP_ORIGIN = false
+
+var POLYGON_MODE = true
+var SAMPLER_BINDING = lazy { glVersion >= 330 }.value
+var UNPACK_ROW_LENGTH = true
+
+
+interface GLInterface {
+
+    fun shutdown()
+    fun newFrame()
+    fun renderDrawData(drawData: DrawData)
+
+    // Called by Init/NewFrame/Shutdown
+    fun createFontsTexture(): Boolean
+    fun destroyFontsTexture()
+    fun createDeviceObjects(): Boolean
+    fun destroyDeviceObjects()
+}
+
+//class ImplBestGL: GLInterface {
+//    private val internalImpl: GLInterface
+//
+//    init {
+//        val caps = GL.getCapabilities()
+//        internalImpl = when {
+//            caps.OpenGL32 -> {
+//                glslVersionString = 150
+//                ImplGL3()
+//            }
+//            caps.OpenGL30 && Platform.get() != Platform.MACOSX -> {
+//                glslVersionString = 130
+//                ImplGL3()
+//            }
+//            caps.OpenGL20 -> {
+//                glslVersionString = 110
+//                if (Platform.get() == Platform.MACOSX) ImplGL2_mac() else ImplGL2()
+//            }
+//            else -> throw RuntimeException("OpenGL 2 is not present on this system!")
+//        }
+//    }
+//
+//    override fun shutdown() = internalImpl.shutdown()
+//    override fun newFrame() = internalImpl.newFrame()
+//    override fun renderDrawData(drawData: DrawData) = internalImpl.renderDrawData(drawData)
+//    override fun createFontsTexture() = internalImpl.createFontsTexture()
+//    override fun destroyFontsTexture() = internalImpl.destroyFontsTexture()
+//    override fun createDeviceObjects() = internalImpl.createDeviceObjects()
+//    override fun destroyDeviceObjects() = internalImpl.destroyDeviceObjects()
+//}

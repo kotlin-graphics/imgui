@@ -18,7 +18,7 @@ import imgui.internal.classes.Window
 import kool.free
 import kool.lim
 import kool.set
-import sliceAt
+import helpers.sliceAt
 import java.awt.Transparency
 import java.awt.image.*
 import java.io.File

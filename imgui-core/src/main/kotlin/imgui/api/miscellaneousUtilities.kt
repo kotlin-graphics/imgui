@@ -7,12 +7,15 @@ import imgui.*
 import imgui.ImGui.beginChild
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endChild
+import imgui.ImGui.io
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.style
 import imgui.classes.DrawList
+import imgui.classes.Viewport
+import imgui.classes.ViewportP
 import imgui.internal.classes.DrawListSharedData
 import imgui.internal.classes.Rect
 import imgui.WindowFlag as Wf
@@ -34,15 +37,23 @@ interface miscellaneousUtilities {
     val frameCount: Int
         get() = g.frameCount
 
-    /** this draw list will be the first rendering one. Useful to quickly draw shapes/text behind dear imgui contents.
+    /** get background draw list for the viewport associated to the current window. this draw list will be the first rendering one. Useful to quickly draw shapes/text behind dear imgui contents.
      *  ~GetBackgroundDrawList  */
     val backgroundDrawList: DrawList
-        get() = g.backgroundDrawList
+        get() = getBackgroundDrawList(g.currentWindow!!.viewport!!)
 
-    /** this draw list will be the last rendered one. Useful to quickly draw shapes/text over dear imgui contents.
+    /** get foreground draw list for the viewport associated to the current window. this draw list will be the last rendered one. Useful to quickly draw shapes/text over dear imgui contents.
      *  ~GetForegroundDrawList  */
     val foregroundDrawList: DrawList
-        get() = g.foregroundDrawList
+        get() = getForegroundDrawList(g.currentWindow!!.viewport!!)
+
+    /** get background draw list for the given viewport. this draw list will be the first rendering one. Useful to quickly draw shapes/text behind dear imgui contents. */
+    fun getBackgroundDrawList(viewport: Viewport): DrawList =
+            getViewportDrawList(viewport as ViewportP, 0, "##Background")
+
+    /** get foreground draw list for the given viewport. this draw list will be the last rendered one. Useful to quickly draw shapes/text over dear imgui contents. */
+    fun getForegroundDrawList(viewport: Viewport): DrawList =
+            getViewportDrawList(viewport as ViewportP, 1, "##Foreground")
 
     /** you may use this when creating your own ImDrawList instances.
      *  ~GetDrawListSharedData  */
@@ -111,4 +122,25 @@ interface miscellaneousUtilities {
 
     /** Always call EndChildFrame() regardless of BeginChildFrame() return values (which indicates a collapsed/clipped window)  */
     fun endChildFrame() = endChild()
+
+    companion object {
+
+        fun getViewportDrawList(viewport: ViewportP, drawlistNo: Int, drawlistName: String): DrawList {
+            // Create the draw list on demand, because they are not frequently used for all viewports
+            assert(drawlistNo < viewport.drawLists.size)
+            val drawList = viewport.drawLists[drawlistNo] ?: DrawList(g.drawListSharedData).also {
+                it._ownerName = drawlistName
+                viewport.drawLists[drawlistNo] = it
+            }
+
+            // Our ImDrawList system requires that there is always a command
+            if (viewport.lastFrameDrawLists[drawlistNo] != g.frameCount) {
+                drawList.clear()
+                drawList.pushTextureID(io.fonts.texID)
+                drawList.pushClipRect(viewport.pos, viewport.pos + viewport.size, false)
+                viewport.lastFrameDrawLists[drawlistNo] = g.frameCount
+            }
+            return drawList
+        }
+    }
 }

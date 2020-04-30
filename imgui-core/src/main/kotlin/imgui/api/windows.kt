@@ -6,19 +6,29 @@ import glm_.f
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.beginDockableDragDropSource
+import imgui.ImGui.beginDockableDragDropTarget
+import imgui.ImGui.beginDocked
 import imgui.ImGui.endColumns
 import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getWindowAlwaysWantOwnTabBar
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
+import imgui.ImGui.mainViewport
+import imgui.ImGui.markIniSettingsDirty
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.setWindowDock
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
+import imgui.classes.ViewportFlag
+import imgui.classes.hasnt
+import imgui.classes.or
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.static.*
@@ -110,6 +120,7 @@ interface windows {
 
         // Update Flags, LastFrameActive, BeginOrderXXX fields
         if (firstBeginOfTheFrame) {
+            window.flagsPreviousFrame = window.flags
             window.flags = flags
             window.lastFrameActive = currentFrame
             window.lastTimeActive = g.time.f
@@ -118,8 +129,27 @@ interface windows {
         } else
             flags = window.flags
 
+        // Docking
+        // (NB: during the frame dock nodes are created, it is possible that (window->DockIsActive == false) even though (window->DockNode->Windows.Size > 1)
+        assert(window.dockNode == null || window.dockNodeAsHost == null) { "Cannot be both" }
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasDock)
+            setWindowDock(window, g.nextWindowData.dockId, g.nextWindowData.dockCond)
+        if (firstBeginOfTheFrame) {
+            val hasDockNode = window.dockId != 0 || window.dockNode != null
+            val newAutoDockNode = !hasDockNode && getWindowAlwaysWantOwnTabBar(window)
+            if (hasDockNode || newAutoDockNode) {
+                beginDocked(window, pOpen)
+                flags = window.flags
+                if (window.dockIsActive)
+                    assert(window.dockNode != null)
+
+                // Docking currently override constraints
+                g.nextWindowData.flags = g.nextWindowData.flags wo NextWindowDataFlag.HasSizeConstraint
+            }
+        }
+
         // Parent window is latched only on the first call to Begin() of the frame, so further append-calls can be done from a different window stack
-        val parentWindowInStack = g.currentWindowStack.lastOrNull()
+        val parentWindowInStack = if (window.dockIsActive) window.dockNode!!.hostWindow else g.currentWindowStack.lastOrNull()
         val parentWindow = when {
             firstBeginOfTheFrame -> parentWindowInStack.takeIf { flags has (Wf._ChildWindow or Wf._Popup) }
             else -> window.parentWindow
@@ -184,6 +214,8 @@ interface windows {
             window.contentSizeExplicit put g.nextWindowData.contentSizeVal
         else if (firstBeginOfTheFrame)
             window.contentSizeExplicit put 0f
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasWindowClass)
+            window.windowClass = g.nextWindowData.windowClass
         if (g.nextWindowData.flags has NextWindowDataFlag.HasCollapsed)
             window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
         if (g.nextWindowData.flags has NextWindowDataFlag.HasFocus)
@@ -207,9 +239,11 @@ interface windows {
 
             // Update stored window name when it changes (which can _only_ happen with the "###" operator, so the ID would stay unchanged).
             // The title bar always display the 'name' parameter, so we only update the string storage if it needs to be visible to the end-user elsewhere.
-            var windowTitleVisibleElsewhere = false
-            if (g.navWindowingList.isNotEmpty() && window.flags hasnt Wf.NoNavFocus)   // Window titles visible when using CTRL+TAB
-                windowTitleVisibleElsewhere = true
+            val windowTitleVisibleElsewhere = when {
+                window.viewport?.window === window || window.dockIsActive -> true
+                g.navWindowingList.isNotEmpty() && window.flags hasnt Wf.NoNavFocus -> true   // Window titles visible when using CTRL+TAB
+                else -> false
+            }
             if (windowTitleVisibleElsewhere && !windowJustCreated && name != window.name) {
 //                val buf_len = (size_t)window->NameBufLen
 //                window->Name = ImStrdupcpy(window->Name, &buf_len, name)
@@ -250,24 +284,35 @@ interface windows {
             }
 
             // SELECT VIEWPORT
-            // FIXME-VIEWPORT: In the docking/viewport branch, this is the point where we select the current viewport (which may affect the style)
+            // We need to do this before using any style/font sizes, as viewport with a different DPI may affect font sizes.
+
+            updateSelectWindowViewport(window)
+            setCurrentViewport(window, window.viewport)
+            window.fontDpiScale = if (io.configFlags has ConfigFlag.DpiEnableScaleFonts) window.viewport!!.dpiScale else 1f
             setCurrentWindow(window)
+            flags = window.flags
 
             // LOCK BORDER SIZE AND PADDING FOR THE FRAME (so that altering them doesn't cause inconsistencies)
+            // We read Style data after the call to UpdateSelectWindowViewport() which might be swapping the style.
 
             window.windowBorderSize = when {
                 flags has Wf._ChildWindow -> style.childBorderSize
                 flags has (Wf._Popup or Wf._Tooltip) && flags hasnt Wf._Modal -> style.popupBorderSize
                 else -> style.windowBorderSize
             }
-            window.windowPadding put style.windowPadding
-            if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f)
+            if (!window.dockIsActive && flags has Wf._ChildWindow && flags hasnt (Wf.AlwaysUseWindowPadding or Wf._Popup) && window.windowBorderSize == 0f)
                 window.windowPadding.put(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
+            else
+                window.windowPadding put style.windowPadding
+
+            // Lock menu offset so size calculation can use it as menu-bar windows need a minimum size.
+            window.dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
+            window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
 
             /* Collapse window by double-clicking on title bar
             At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
             detection and drawing   */
-            if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse) {
+            if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse && !window.dockIsActive) {
                 /*  We don't use a regular button+id to test for double-click on title bar (mostly due to legacy reason, could be fixed),
                     so verify that we don't have items over the title bar.                 */
                 val titleBarRect = window.titleBarRect()
@@ -325,8 +370,8 @@ interface windows {
 
             /* ---------- POSITION ---------- */
 
+            // Popup first latch mouse position, will position itself when it appears next frame
             if (windowJustActivatedByUser) {
-                // Popup first latch mouse position, will position itself when it appears next frame
                 window.autoPosLastDirection = Dir.None
                 if (flags has Wf._Popup && !windowPosSetByApi)
                     window.pos put g.beginPopupStack.last().openPopupPos
@@ -353,23 +398,110 @@ interface windows {
             else if (flags has Wf._Tooltip && !windowPosSetByApi && !windowIsChildTooltip)
                 window.pos = findBestWindowPosForPopup(window)
 
+            // Late create viewport if we don't fit within our current host viewport.
+            if (window.viewportAllowPlatformMonitorExtend >= 0 && !window.viewportOwned && window.viewport!!.flags hasnt ViewportFlag.Minimized)
+                if (window.rect() !in window.viewport!!.mainRect) {
+                    // This is based on the assumption that the DPI will be known ahead (same as the DPI of the selection done in UpdateSelectWindowViewport)
+                    //ImGuiViewport* old_viewport = window->Viewport;
+                    window.viewport = addUpdateViewport(window, window.id, window.pos, window.size, ViewportFlag.NoFocusOnAppearing.i)
+
+                    // FIXME-DPI
+                    //IM_ASSERT(old_viewport->DpiScale == window->Viewport->DpiScale); // FIXME-DPI: Something went wrong
+                    setCurrentViewport(window, window.viewport)
+                    window.fontDpiScale = if (io.configFlags has ConfigFlag.DpiEnableScaleFonts) window.viewport!!.dpiScale else 1f
+                    setCurrentWindow(window)
+                }
+
+            var viewportRectChanged = false
+            if (window.viewportOwned) {
+                // Synchronize window --> viewport in most situations
+                // Synchronize viewport -> window in case the platform window has been moved or resized from the OS/WM
+                if (window.viewport!!.platformRequestMove) {
+                    window.pos put window.viewport!!.pos
+                    markIniSettingsDirty(/*window*/)
+                } else if (window.viewport!!.pos != window.pos) {
+                    viewportRectChanged = true
+                    window.viewport!!.pos put window.pos
+                }
+
+                if (window.viewport!!.platformRequestResize) {
+                    window.size put window.viewport!!.size
+                    window.sizeFull put window.viewport!!.size
+                    markIniSettingsDirty(/*window*/)
+                } else if (window.viewport!!.size != window.size) {
+                    viewportRectChanged = true
+                    window.viewport!!.size put window.size
+                }
+
+                // The viewport may have changed monitor since the global update in UpdateViewportsNewFrame()
+                // Either a SetNextWindowPos() call in the current frame or a SetWindowPos() call in the previous frame may have this effect.
+                if (viewportRectChanged)
+                    updateViewportPlatformMonitor(window.viewport!!)
+
+                // Update common viewport flags
+                var viewportFlags = window.viewport!!.flags wo (ViewportFlag.TopMost or ViewportFlag.NoTaskBarIcon or ViewportFlag.NoDecoration)
+                val isShortLivedFloatingWindow = flags has (Wf._ChildMenu or Wf._Tooltip or Wf._Popup)
+                if (flags has Wf._Tooltip)
+                    viewportFlags = viewportFlags or ViewportFlag.TopMost
+                if (io.configViewportsNoTaskBarIcon || isShortLivedFloatingWindow)
+                    viewportFlags = viewportFlags or ViewportFlag.NoTaskBarIcon
+                if (io.configViewportsNoDecoration || isShortLivedFloatingWindow)
+                    viewportFlags = viewportFlags or ViewportFlag.NoDecoration
+
+                // For popups and menus that may be protruding out of their parent viewport, we enable _NoFocusOnClick so that clicking on them
+                // won't steal the OS focus away from their parent window (which may be reflected in OS the title bar decoration).
+                // Setting _NoFocusOnClick would technically prevent us from bringing back to front in case they are being covered by an OS window from a different app,
+                // but it shouldn't be much of a problem considering those are already popups that are closed when clicking elsewhere.
+                if (isShortLivedFloatingWindow && flags hasnt Wf._Modal)
+                    viewportFlags = viewportFlags or (ViewportFlag.NoFocusOnAppearing or ViewportFlag.NoFocusOnClick)
+
+                // We can overwrite viewport flags using ImGuiWindowClass (advanced users)
+                // We don't default to the main viewport because.
+                window.viewport!!.parentViewportId = when {
+                    window.windowClass.parentViewportId != 0 -> window.windowClass.parentViewportId
+                    flags has (Wf._Popup or Wf._Tooltip) && parentWindowInStack != null -> parentWindowInStack.viewport!!.id
+                    io.configViewportsNoDefaultParent -> 0
+                    else -> IMGUI_VIEWPORT_DEFAULT_ID
+                }
+                if (window.windowClass.viewportFlagsOverrideSet != 0)
+                    viewportFlags = viewportFlags or window.windowClass.viewportFlagsOverrideSet
+                if (window.windowClass.viewportFlagsOverrideClear != 0)
+                    viewportFlags = viewportFlags wo window.windowClass.viewportFlagsOverrideClear
+
+                // We also tell the back-end that clearing the platform window won't be necessary, as our window is filling the viewport and we have disabled BgAlpha
+                viewportFlags = viewportFlags or ViewportFlag.NoRendererClear
+                window.viewport!!.flags = viewportFlags
+            }
+
             // Clamp position/size so window stays visible within its viewport or monitor
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
-            val viewportRect = viewportRect
+            // FIXME: Similar to code in GetWindowAllowedExtentRect()
+            var viewportRect = window.viewport!!.mainRect
             if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0) {
                 // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
                 val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
-                if (viewportRect.width > 0f && viewportRect.height > 0f)
-                    window.clampRect(viewportRect, clampPadding)
+                if (!window.viewportOwned && viewportRect.width > 0f && viewportRect.height > 0f)
+                    window.clampRect(window.viewport!!.workRect, clampPadding)
+                else if (window.viewportOwned && g.platformIO.monitors.isNotEmpty())
+                    if (window.viewport!!.platformMonitor == -1)
+                    // Fallback for "lost" window (e.g. a monitor disconnected): we move the window back over the main viewport
+                        window.setPos(g.viewports[0].pos + style.displayWindowPadding, Cond.Always)
+                    else {
+                        val monitor = g.platformIO.monitors[window.viewport!!.platformMonitor]
+                        window.clampRect(Rect(monitor.workPos, monitor.workPos + monitor.workSize), clampPadding)
+                    }
             }
             window.pos put floor(window.pos)
 
             // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)
             window.windowRounding = when {
-                flags has Wf._ChildWindow -> style.childRounding
+                window.viewportOwned || window.dockIsActive -> 0f
                 else -> when {
-                    flags has Wf._Popup && flags hasnt Wf._Modal -> style.popupRounding
-                    else -> style.windowRounding
+                    flags has Wf._ChildWindow -> style.childRounding
+                    else -> when {
+                        flags has Wf._Popup && flags hasnt Wf._Modal -> style.popupRounding
+                        else -> style.windowRounding
+                    }
                 }
             }
 
@@ -378,17 +510,19 @@ interface windows {
                 !windowJustActivatedByUser || flags has Wf.NoFocusOnAppearing -> false
                 else -> when {
                     flags has Wf._Popup -> true
-                    flags hasnt (Wf._ChildWindow or Wf._Tooltip) -> true
-                    else -> false
+                    else -> (window.dockIsActive || flags hasnt Wf._ChildWindow) && flags hasnt Wf._Tooltip
                 }
             }
+
+            // Decide if we are going to handle borders and resize grips
+            val handleBordersAndResizeGrips = window.dockNodeAsHost != null || !window.dockIsActive
 
             // Handle manual resize: Resize Grips, Borders, Gamepad
             var borderHeld = -1
             val resizeGripCol = IntArray(4)
             val resizeGripCount = if (io.configWindowsResizeFromEdges) 2 else 1 // Allow resize from lower-left if we have the mouse cursor feedback for it.
             val resizeGripDrawSize = floor(max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f))
-            if (!window.collapsed) {
+            if (handleBordersAndResizeGrips && !window.collapsed) {
                 val (borderHeld_, ret) = updateWindowManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
                 if (ret) {
                     useCurrentSizeForScrollbarX = true
@@ -397,6 +531,18 @@ interface windows {
                 borderHeld = borderHeld_
             }
             window.resizeBorderHeld = borderHeld
+
+            // Synchronize window --> viewport again and one last time (clamping and manual resize may have affected either)
+            if (window.viewportOwned) {
+                if (!window.viewport!!.platformRequestMove)
+                    window.viewport!!.pos put window.pos
+                if (!window.viewport!!.platformRequestResize)
+                    window.viewport!!.size put window.size
+                viewportRect = window.viewport!!.mainRect
+            }
+
+            // Save last known viewport position within the window itself (so it can be saved in .ini file and restored)
+            window.viewportPos put window.viewport!!.pos
 
             // SCROLLBAR VISIBILITY
 
@@ -437,6 +583,8 @@ interface windows {
                 titleBarRect = titleBarRect()
                 outerRectClipped = outerRect
                 outerRectClipped clipWith hostRect
+                if (window.dockIsActive)
+                    window.outerRectClipped.min.y += window.titleBarHeight
 
                 // Inner rectangle
                 // Not affected by window border size. Used by:
@@ -488,12 +636,12 @@ interface windows {
 
             // Setup draw list and outer clipping rectangle
             window.drawList.clear()
-            window.drawList.pushTextureId(g.font.containerAtlas.texID)
+            window.drawList.pushTextureID(g.font.containerAtlas.texID)
             pushClipRect(hostRect.min, hostRect.max, false)
 
-            // Draw modal window background (darkens what is behind them, all viewports)
+            // Draw modal or window list full viewport dimming background (for other viewports we'll render them in EndFrame)
             val dimBgForModal = flags has Wf._Modal && window === topMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
-            val dimBgForWindowList = g.navWindowingTargetAnim?.rootWindow === window
+            val dimBgForWindowList = g.navWindowingTargetAnim != null && (window === g.navWindowingTargetAnim!!.rootWindow || (g.navWindowingList.isNotEmpty() && window === g.navWindowingList[0] && g.navWindowingList[0].viewport !== g.navWindowingTargetAnim!!.viewport))
             if (dimBgForModal || dimBgForWindowList) {
                 val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
@@ -512,7 +660,8 @@ interface windows {
             // We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping child.
             // We also disabled this when we have dimming overlay behind this specific one child.
             // FIXME: More code may rely on explicit sorting of overlapping child window and would need to disable this somehow. Please get in contact if you are affected.
-            run {
+            val isUndockedOrDockedVisible = !window.dockIsActive || window.dockTabIsVisible
+            if (isUndockedOrDockedVisible) {
                 var renderDecorationsInParent = false
                 if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip)
                     if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0)
@@ -522,9 +671,8 @@ interface windows {
 
                 // Handle title bar, scrollbar, resize grips and resize borders
                 val windowToHighlight = g.navWindowingTarget ?: g.navWindow
-                val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
-                        ?: false)
-                window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
+                val titleBarIsHighlight = wantFocus || (windowToHighlight != null && (window.rootWindowForTitleBarHighlight == windowToHighlight.rootWindowForTitleBarHighlight || (window.dockNode != null && window.dockNode == windowToHighlight.dockNode)))
+                window.renderDecorations(titleBarRect, titleBarIsHighlight, handleBordersAndResizeGrips, resizeGripCount, resizeGripCol, resizeGripDrawSize)
 
                 if (renderDecorationsInParent)
                     window.drawList = window.drawListInst
@@ -603,8 +751,6 @@ interface windows {
                 dc.navHasScroll = scrollMax.y > 0f
 
                 dc.menuBarAppending = false
-                dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
-                dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
                 dc.menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
                 dc.treeDepth = 0
                 dc.treeJumpToParentOnPopMask = 0x00
@@ -637,9 +783,21 @@ interface windows {
                 navInitWindow(window, false)
             }
 
+            // Close requested by platform window
+            if (pOpen != null && window.viewport!!.platformRequestClose && window.viewport != mainViewport)
+                if (!window.dockIsActive || window.dockTabIsVisible) {
+                    window.viewport!!.platformRequestClose = false
+                    g.navWindowingToggleLayer = false // Assume user mapped PlatformRequestClose on ALT-F4 so we disable ALT for menu toggle. False positive not an issue.
+                    IMGUI_DEBUG_LOG_VIEWPORT("Window '${window.name}' PlatformRequestClose")
+                    pOpen.set(false)
+                }
+
             // Title bar
-            if (flags hasnt Wf.NoTitleBar)
+            if (flags hasnt Wf.NoTitleBar && !window.dockIsActive)
                 window.renderTitleBarContents(titleBarRect, name, pOpen)
+
+            // Clear hit test shape every frame
+            window.hitTestHoleSize put 0f
 
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
@@ -650,18 +808,45 @@ interface windows {
                 ImGui::LogToClipboard();
         */
 
+            if (io.configFlags has ConfigFlag.DockingEnable) {
+                // Docking: Dragging a dockable window (or any of its child) turns it into a drag and drop source.
+                // We need to do this _before_ we overwrite window->DC.LastItemId below because BeginDockableDragDropSource() also overwrites it.
+                if (g.movingWindow === window && io.configDockingWithShift == io.keyShift)
+                    if (window.rootWindow!!.flags hasnt Wf.NoDocking)
+                        beginDockableDragDropSource(window)
+
+                // Docking: Any dockable window can act as a target. For dock node hosts we call BeginDockableDragDropTarget() in DockNodeUpdate() instead.
+                if (g.dragDropActive && flags hasnt Wf.NoDocking)
+                    if (g.movingWindow == null || g.movingWindow!!.rootWindow !== window)
+                        if (window === window.rootWindow && window.flags hasnt Wf._DockNodeHost)
+                            beginDockableDragDropTarget(window)
+            }
+
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
-            window.dc.lastItemId = window.moveId
-            window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect)) ItemStatusFlag.HoveredRect.i else 0
-            window.dc.lastItemRect = titleBarRect
+            if (window.dockIsActive) {
+                window.dc.lastItemId = window.id
+                window.dc.lastItemStatusFlags = window.dockTabItemStatusFlags
+                window.dc.lastItemRect = window.dockTabItemRect
+            } else {
+                window.dc.lastItemId = window.moveId
+                window.dc.lastItemStatusFlags = when {
+                    isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false) -> ItemStatusFlag.HoveredRect
+                    else -> ItemStatusFlag.None
+                }.i
+                window.dc.lastItemRect put titleBarRect
+            }
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
                 Hook.itemAdd!!(g, window.dc.lastItemRect, window.dc.lastItemId)
-        } else   // Append
+        } else {
+            // Append
+            setCurrentViewport(window, window.viewport)
             setCurrentWindow(window)
+        }
 
-        pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
+        if (flags hasnt Wf._DockNodeHost)
+            pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 
         // Clear 'accessed' flag last thing (After PushClipRect which will set the flag. We want the flag to stay false when the default "Debug" window is unused)
         if (firstBeginOfTheFrame) window.writeAccessed = false
@@ -669,11 +854,21 @@ interface windows {
         window.beginCount++
         g.nextWindowData.clearFlags()
 
+        // When we are about to select this tab (which will only be visible on the _next frame_), flag it with a non-zero HiddenFramesCannotSkipItems.
+        // This will have the important effect of actually returning true in Begin() and not setting SkipItems, allowing an earlier submission of the window contents.
+        // This is analogous to regular windows being hidden from one frame.
+        // It is especially important as e.g. nested TabBars would otherwise generate flicker in the form of one empty frame, or focus requests won't be processed.
+        if (window.dockIsActive && !window.dockTabIsVisible)
+            if (window.lastFrameJustFocused == g.frameCount)
+                window.hiddenFramesCannotSkipItems = 1
+            else
+                window.hiddenFramesCanSkipItems = 1
+
         if (flags has Wf._ChildWindow) {
 
             // Child window can be out of sight and have "negative" clip windows.
             // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
-            assert(flags has Wf.NoTitleBar)
+            assert(flags has Wf.NoTitleBar || window.dockIsActive)
             if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)
                 if (window.outerRectClipped.min.x >= window.outerRectClipped.max.x || window.outerRectClipped.min.y >= window.outerRectClipped.max.y) // TODO anyGreaterThanEqual bugged
                     window.hiddenFramesCanSkipItems = 1
@@ -714,17 +909,26 @@ interface windows {
         assert(g.currentWindowStack.isNotEmpty())
 
         // Error checking: verify that user doesn't directly call End() on a child window.
-        if (window.flags has Wf._ChildWindow)
+        if (window.flags has Wf._ChildWindow && !window.dockIsActive)
             assert(g.withinEndChild) { "Must call EndChild() and not End()!" }
 
         // Close anything that is open
         if (window.dc.currentColumns != null)
             endColumns()
-        popClipRect()   // Inner window clip rectangle
+        if (window.flags hasnt Wf._DockNodeHost)   // Pop inner window clip rectangle
+            popClipRect()
 
         // Stop logging
         if (window.flags hasnt Wf._ChildWindow)    // FIXME: add more options for scope of logging
             logFinish()
+
+        // Docking: report contents sizes to parent to allow for auto-resize
+        window.dockNode?.let {
+            if (window.dockTabIsVisible)
+                it.hostWindow?.let { hostWindow ->          // FIXME-DOCK
+                    hostWindow.dc.cursorMaxPos = window.dc.cursorMaxPos + window.windowPadding - hostWindow.windowPadding
+                }
+        }
 
         // Pop from window stack
         g.currentWindowStack.pop()
@@ -732,5 +936,7 @@ interface windows {
             g.beginPopupStack.pop()
         errorCheckBeginEndCompareStacksSize(window, false)
         setCurrentWindow(g.currentWindowStack.lastOrNull())
+        g.currentWindow?.let { setCurrentViewport(it, it.viewport) }
+
     }
 }

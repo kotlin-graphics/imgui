@@ -1,8 +1,9 @@
-import imgui.strlen
+package helpers
+
 import kool.pos
 import java.nio.ByteBuffer
 
-val IMGUI_HAS_DOCK = false
+val IMGUI_HAS_DOCK = true
 val IMGUI_HAS_TABLE = false
 val IMGUI_DEBUG_TEST_ENGINE = true
 

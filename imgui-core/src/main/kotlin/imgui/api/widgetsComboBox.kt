@@ -121,7 +121,7 @@ interface widgetsComboBox {
                 val sizeExpected = it.calcExpectedSize()
                 if (flags has Cf.PopupAlignLeft)
                     it.autoPosLastDirection = Dir.Left
-                val rOuter = it.getAllowedExtentRect()
+                val rOuter = it.allowedExtentRect
                 val pos = findBestWindowPosForPopupEx(frameBb.bl, sizeExpected, it::autoPosLastDirection, rOuter, frameBb, PopupPositionPolicy.ComboBox)
                 setNextWindowPos(pos)
             }

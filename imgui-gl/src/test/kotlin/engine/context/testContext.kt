@@ -155,7 +155,7 @@ class TestContext {
     var runningTime = 0.0                     // Amount of wall clock time the Test has been running. Used by safety watchdog.
     var actionDepth = 0
     var abort = false
-    var hasDock = false                        // #ifdef IMGUI_HAS_DOCK
+    var hasDock = false                        // #ifdef helpers.getIMGUI_HAS_DOCK
     var captureArgs = CaptureArgs()
 
     // Commonly user exposed state for the ctx-> functions
@@ -200,7 +200,7 @@ class TestContext {
     // Menus
 
     // Docking
-//    #ifdef IMGUI_HAS_DOCK
+//    #ifdef helpers.getIMGUI_HAS_DOCK
 //    void DockWindowInto (const char * window_src, const char* window_dst, ImGuiDir split_dir = ImGuiDir_None)
 //    void DockMultiClear (const char * window_name, ...)
 //    void DockMultiSet (ImGuiID dock_id, const char* window_name, ...)

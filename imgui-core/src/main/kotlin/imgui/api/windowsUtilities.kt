@@ -7,6 +7,7 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.classes.DrawList
+import imgui.classes.Viewport
 import imgui.internal.NextWindowDataFlag
 import imgui.internal.or
 import imgui.FocusedFlag as Ff
@@ -35,8 +36,8 @@ interface windowsUtilities {
 
         val curr = g.currentWindow!!     // Not inside a Begin()/End()
         return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
-            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
-            Ff.RootWindow.i -> g.navWindow === curr.rootWindow
+            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindowDockStop === curr.rootWindowDockStop } ?: false
+            Ff.RootWindow.i -> g.navWindow === curr.rootWindowDockStop
             Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
             else -> g.navWindow === curr
         }
@@ -54,8 +55,8 @@ interface windowsUtilities {
             if (g.hoveredWindow == null)
                 return false
         } else when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
-            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
-            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindow) return false
+            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredWindow == null || g.hoveredWindow!!.rootWindowDockStop !== g.currentWindow!!.rootWindowDockStop) return false
+            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindowDockStop) return false
             Hf.ChildWindows.i -> g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
             else -> if (g.hoveredWindow !== g.currentWindow) return false
         }
@@ -71,6 +72,19 @@ interface windowsUtilities {
      *  ~GetWindowDrawList  */
     val windowDrawList: DrawList
         get() = currentWindow.drawList
+
+    /** get DPI scale currently associated to the current window's viewport.
+     *  ~GetWindowDpiScale */
+    val windowDpiScale: Float
+        get() = g.currentDpiScale
+
+    /** get viewport currently associated to the current window.
+     *  ~GetWindowViewport */
+    val windowViewport: Viewport
+        get() {
+            assert(/*g.currentViewport != null &&*/ g.currentViewport === g.currentWindow!!.viewport)
+            return g.currentViewport!!
+        }
 
     /** get current window position in screen space (useful if you want to do your own drawing via the DrawList api)
      *  ~GetWindowPos   */
@@ -93,25 +107,26 @@ interface windowsUtilities {
     // Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
 
     /** set next window position. call before Begin()   */
-    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
+    fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.None, pivot: Vec2 = Vec2()) {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasPos
             posVal put pos
             posPivotVal put pivot
-            posCond = cond
+            posCond = if(cond != Cond.None) cond else Cond.Always
+            posUndock = true
         }
     }
 
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
-    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
+    fun setNextWindowSize(size: Vec2, cond: Cond = Cond.None) {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasSize
             sizeVal put size
-            sizeCond = cond
+            sizeCond = if(cond != Cond.None) cond else Cond.Always
         }
     }
 
@@ -140,13 +155,13 @@ interface windowsUtilities {
     }
 
     /** Set next window collapsed state. call before Begin()    */
-    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
+    fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.None) {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasCollapsed
             collapsedVal = collapsed
-            collapsedCond = cond
+            collapsedCond = if(cond != Cond.None) cond else Cond.Always
         }
     }
 
@@ -163,6 +178,12 @@ interface windowsUtilities {
             flags = flags or NextWindowDataFlag.HasBgAlpha
             bgAlphaVal = alpha
         }
+    }
+
+    /** set next window viewport */
+    fun setNextWindowViewport(id: ID) {
+        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasViewport
+        g.nextWindowData.viewportId = id
     }
 
     /** (not recommended) set current window position - call within Begin()/End(). prefer using SetNextWindowPos(),

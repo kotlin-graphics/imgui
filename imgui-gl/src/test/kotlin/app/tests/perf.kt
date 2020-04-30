@@ -458,7 +458,7 @@ fun registerTests_Perf(e: TestEngine) {
         t.testFunc = perfCaptureFunc
     }
 
-//    #ifdef IMGUI_HAS_TABLE
+//    #ifdef helpers.getIMGUI_HAS_TABLE
 //        // ## Measure the cost of TableNextCell(), TableNextRow(): one table, many rows
 //        t = REGISTER_TEST("perf", "perf_stress_table_1");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)
@@ -512,7 +512,7 @@ fun registerTests_Perf(e: TestEngine) {
 //        ImGui::End();
 //    };
 //    t->TestFunc = PerfCaptureFunc;
-//    #endif // IMGUI_HAS_TABLE
+//    #endif // helpers.getIMGUI_HAS_TABLE
 
     // ## Measure the cost of simple ColorEdit4() calls (multi-component, group based widgets are quite heavy)
     e.registerTest("perf", "perf_stress_coloredit4").let { t ->

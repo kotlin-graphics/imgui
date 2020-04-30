@@ -3,6 +3,9 @@ package imgui.classes
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.destroyPlatformWindows
+import imgui.ImGui.dockContextInitialize
+import imgui.ImGui.dockContextShutdown
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.api.g
 import imgui.api.gImGui
@@ -10,6 +13,7 @@ import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.*
 import imgui.internal.classes.*
+import imgui.static.IMGUI_VIEWPORT_DEFAULT_ID
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -596,6 +600,43 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     fun initialize() {
         assert(!g.initialized && !g.settingsLoaded)
+
+        // Add .ini handle for ImGuiWindow type
+//        {
+//            ImGuiSettingsHandler ini_handler;
+//            ini_handler.TypeName = "Window";
+//            ini_handler.TypeHash = ImHashStr("Window");
+//            ini_handler.ReadOpenFn = WindowSettingsHandler_ReadOpen;
+//            ini_handler.ReadLineFn = WindowSettingsHandler_ReadLine;
+//            ini_handler.WriteAllFn = WindowSettingsHandler_WriteAll;
+//            g.SettingsHandlers.push_back(ini_handler);
+//        }
+//        #ifdef IMGUI_HAS_TABLE
+//                // Add .ini handle for ImGuiTable type
+//                {
+//                    ImGuiSettingsHandler ini_handler;
+//                    ini_handler.TypeName = "Table";
+//                    ini_handler.TypeHash = ImHashStr("Table");
+//                    ini_handler.ReadOpenFn = TableSettingsHandler_ReadOpen;
+//                    ini_handler.ReadLineFn = TableSettingsHandler_ReadLine;
+//                    ini_handler.WriteAllFn = TableSettingsHandler_WriteAll;
+//                    g.SettingsHandlers.push_back(ini_handler);
+//                }
+//        #endif // #ifdef IMGUI_HAS_TABLE
+
+        // Create default viewport
+        val viewport = ViewportP()
+        viewport.id = IMGUI_VIEWPORT_DEFAULT_ID
+        viewport.idx = 0
+        viewport.platformWindowCreated = true
+        g.viewports += viewport
+        g.platformIO.mainViewport = g.viewports[0] // Make it accessible in public-facing GetPlatformIO() immediately (before the first call to EndFrame)
+        g.platformIO.viewports += g.viewports[0]
+
+        // Extensions
+        assert(g.dockContext == null)
+        dockContextInitialize(g)
+
         g.initialized = true
     }
 
@@ -615,6 +656,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
      *  ~Shutdown(ImGuiContext* context)    */
     fun shutdown() {
 
+        val g = this
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
         if (g.fontAtlasOwnedByContext)
@@ -628,6 +670,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         if (g.settingsLoaded)
             io.iniFilename?.let(::saveIniSettingsToDisk)
 
+        // Destroy platform windows
+        val backupContext = gImGui
+        gImGui = this
+        destroyPlatformWindows()
+        gImGui = backupContext
+
+        // Shutdown extensions
+        assert(g.dockContext != null)
+        dockContextShutdown(g)
+
         // Clear everything else
         g.apply {
             windows.forEach { it.destroy() }
@@ -640,6 +692,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             navWindow = null
             hoveredWindow = null
             hoveredRootWindow = null
+            hoveredWindowUnderMovingWindow = null
             activeIdWindow = null
             activeIdPreviousFrameWindow = null
             movingWindow = null
@@ -649,9 +702,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             fontStack.clear()
             openPopupStack.clear()
             beginPopupStack.clear()
-            drawDataBuilder.clear()
-            backgroundDrawList.clearFreeMemory(destroy = true)
-            foregroundDrawList.clearFreeMemory(destroy = true)
+
+            currentViewport = null
+            mouseViewport = null
+            mouseLastHoveredViewport = null
+            viewports.forEach(ViewportP::destroy)
+            viewports.clear()
 
             tabBars.clear()
             currentTabBarStack.clear()

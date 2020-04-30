@@ -210,7 +210,7 @@ fun TestEngine.showTestWindow(pOpen: KMutableProperty0<Boolean>? = null) {
             ImGui.text("Configuration:")
             ImGui.checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
             ImGui.checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
-//            if (IMGUI_HAS_DOCK)
+//            if (helpers.getIMGUI_HAS_DOCK)
 //                ImGui.checkbox("io.ConfigDockingAlwaysTabBar", io::configDockingAlwaysTabBar)
         }
 

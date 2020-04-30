@@ -34,7 +34,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
     var backendFlags: BackendFlags = BackendFlag.None.i
 
-    /** Main display size, in pixels.   */
+    /** Main display size, in pixels.  This is for the default viewport.  */
     var displaySize = Vec2i(-1)
 
     /** Time elapsed since last frame, in seconds.  */
@@ -84,6 +84,33 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** For retina display or other situations where window coordinates are different from framebuffer coordinates.
      *  This generally ends up in ImDrawData::FramebufferScale. */
     var displayFramebufferScale = Vec2(1f)
+
+
+    // Docking options (when ImGuiConfigFlags_DockingEnable is set)
+
+    /** Simplified docking mode: disable window splitting, so docking is limited to merging multiple windows together into tab-bars. */
+    var configDockingNoSplit = false
+
+    /** Enable docking with holding Shift key (reduce visual noise, allows dropping in wider space) */
+    var configDockingWithShift = false
+
+    /** [BETA] [FIXME: This currently creates regression with auto-sizing and general overhead] Make every single floating window display within a docking node. */
+    var configDockingAlwaysTabBar = false
+
+    /** [BETA] Make window or viewport transparent when docking and only display docking boxes on the target viewport. Useful if rendering of multiple viewport cannot be synced. Best used with ConfigViewportsNoAutoMerge. */
+    var configDockingTransparentPayload = false
+
+
+    // Viewport options (when ImGuiConfigFlags_ViewportsEnable is set)
+
+    /** Set to make all floating imgui windows always create their own viewport. Otherwise, they are merged into the main host viewports when overlapping it. May also set ImGuiViewportFlags_NoAutoMerge on individual viewport. */
+    var configViewportsNoAutoMerge =     false
+    /** Disable default OS task bar icon flag for secondary viewports. When a viewport doesn't want a task bar icon, ImGuiViewportFlags_NoTaskBarIcon will be set on it. */
+    var configViewportsNoTaskBarIcon =   false
+    /** [BETA] Disable default OS window decoration flag for secondary viewports. When a viewport doesn't want window decorations, ImGuiViewportFlags_NoDecoration will be set on it. Enabling decoration can create subsequent issues at OS levels (e.g. minimum window size). */
+    var configViewportsNoDecoration =    true
+    /** Disable default OS parenting to main viewport for secondary viewports. By default, viewports are marked with ParentViewportId = <main_viewport>, expecting the platform back-end to setup a parent/child relationship between the OS windows (some back-end may ignore this). Set to true if you want the default to be 0, then all viewports will be top-level OS windows. */
+    var configViewportsNoDefaultParent = false
 
     //------------------------------------------------------------------
     // Miscellaneous options
@@ -141,12 +168,13 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 //    void*       (*MemAllocFn)(size_t sz);
 //    void        (*MemFreeFn)(void* ptr);
 //
-    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
-    // (default to use native imm32 api on Windows)
-    val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
-
-    /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
-    var imeWindowHandle: HWND = HWND(MemoryUtil.NULL)
+    // TODO remove
+//    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
+//    // (default to use native imm32 api on Windows)
+//    val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
+//
+//    /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
+//    var imeWindowHandle: HWND = HWND(MemoryUtil.NULL)
 
     //------------------------------------------------------------------
     // Input - Fill before calling NewFrame()
@@ -165,6 +193,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
     var mouseWheelH = 0f
+
+    /** (Optional) When using multiple viewports: viewport the OS mouse cursor is hovering _IGNORING_ viewports with the ImGuiViewportFlags_NoInputs flag, and _REGARDLESS_ of whether another viewport is focused. Set io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport if you can provide this info. If you don't imgui will infer the value using the rectangles and last focused time of the viewports it knows about (ignoring other OS windows). */
+    var mouseHoveredViewport: ID = 0
 
     /** Keyboard modifier pressed: Control  */
     var keyCtrl = false

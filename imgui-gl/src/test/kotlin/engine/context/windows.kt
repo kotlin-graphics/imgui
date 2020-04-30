@@ -138,7 +138,7 @@ fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
         mouseDown(0)
 
         // Disable docking
-//        #if IMGUI_HAS_DOCK
+//        #if helpers.getIMGUI_HAS_DOCK
 //        if (UiContext->IO.ConfigDockingWithShift)
 //        KeyUpMap(ImGuiKey_COUNT, ImGuiKeyModFlags_Shift)
 //        else
@@ -150,7 +150,7 @@ fun TestContext.windowMove(ref: TestRef, inputPos: Vec2, pivot: Vec2 = Vec2()) {
         yield()
 
         mouseUp()
-//        #if IMGUI_HAS_DOCK
+//        #if helpers.getIMGUI_HAS_DOCK
 //        KeyUpMap(ImGuiKey_COUNT, ImGuiKeyModFlags_Shift)
 //        #endif
     }

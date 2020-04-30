@@ -2,15 +2,17 @@ package imgui.api
 
 import glm_.max
 import imgui.*
+import imgui.ImGui.findWindowByName
 import imgui.ImGui.popID
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
+import imgui.internal.classes.PtrOrIndex
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
-import imgui.internal.classes.PtrOrIndex
 import kotlin.reflect.KMutableProperty0
 
-/** Tab Bars, Tabs */
+/** Tab Bars, Tabs
+ *  Note: Tabs are automatically created by the docking system. Use this to create tab bars/tabs yourself without docking being involved. */
 interface tabBarsTabs {
 
     /** create and append into a TabBar */
@@ -23,7 +25,7 @@ interface tabBarsTabs {
         val tabBar = g.tabBars.getOrAddByKey(id)
         val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerClipRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
-        return tabBar.beginEx(tabBarBb, flags or TabBarFlag._IsFocused)
+        return tabBar.beginEx(tabBarBb, flags or TabBarFlag._IsFocused, null)
     }
 
     /**  only call EndTabBar() if BeginTabBar() returns true! */
@@ -62,7 +64,7 @@ interface tabBarsTabs {
 
         val tabBar = g.currentTabBar
                 ?: error("BeginTabItem() Needs to be called between BeginTabBar() and EndTabBar()!")
-        return tabBar.tabItemEx(label, pOpen, flags).also {
+        return tabBar.tabItemEx(label, pOpen, flags, null).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
                 pushOverrideID(tab.id) // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
@@ -88,14 +90,21 @@ interface tabBarsTabs {
      *  For tab-bar: call after BeginTabBar() and before Tab submissions. Otherwise call with a window name.
      *  [Public] This is call is 100% optional but it allows to remove some one-frame glitches when a tab has been unexpectedly removed.
      *  To use it to need to call the function SetTabItemClosed() after BeginTabBar() and before any call to BeginTabItem() */
-    fun setTabItemClosed(tabOrDockedWindowLabel: String) {
+    fun setTabItemClosed(label: String) {
 
         val isWithinManualTabBar = g.currentTabBar?.flags?.hasnt(TabBarFlag._DockNode) == true
         if (isWithinManualTabBar) {
             val tabBar = g.currentTabBar!!
             assert(tabBar.wantLayout) { "Needs to be called AFTER BeginTabBar() and BEFORE the first call to BeginTabItem()" }
-            val tabId = tabBar calcTabID tabOrDockedWindowLabel
+            val tabId = tabBar calcTabID label
             tabBar removeTab tabId
+        } else findWindowByName(label)?.let { window ->
+            if (window.dockIsActive)
+                window.dockNode?.let { node ->
+                val tabId = node.tabBar!! calcTabID label
+                node.tabBar!! removeTab tabId
+                window.dockTabWantClose = true
+            }
         }
     }
 

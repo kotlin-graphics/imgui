@@ -4,6 +4,7 @@ import glm_.vec2.Vec2;
 import glm_.vec2.Vec2i;
 import glm_.vec4.Vec4;
 import imgui.Cond;
+import imgui.ConfigFlag;
 import imgui.ImGui;
 import imgui.MutableProperty0;
 import imgui.classes.IO;
@@ -12,7 +13,7 @@ import imgui.impl.gl.ImplGL3;
 import imgui.impl.glfw.ImplGlfw;
 
 import static imgui.ImguiKt.DEBUG;
-import static imgui.impl.gl.CommonGLKt.setGlslVersion;
+import static imgui.impl.gl.CommonGLKt.setGlslVersionString;
 
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
@@ -64,14 +65,14 @@ public class OpenGL3 {
         // Decide GL+GLSL versions
         if (Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
 
-            setGlslVersion(150);
+//            setGlslVersionString(150);
             windowHint.getContext().setVersion("3.2");
             windowHint.setProfile(core);     // 3.2+ only
             windowHint.setForwardComp(true); // Required on Mac
 
         } else {   // GL 3.0 + GLSL 130
 
-            setGlslVersion(130);
+//            setGlslVersionString(130);
             windowHint.getContext().setVersion("3.0");
             //profile = core      // 3.2+ only
             //forwardComp = true  // 3.0+ only
@@ -87,8 +88,12 @@ public class OpenGL3 {
 
         // Setup Dear ImGui context
         ctx = new Context();
-        //io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
-        //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
+        io.setConfigFlags(io.getConfigFlags() | ConfigFlag.NavEnableKeyboard.i);    // Enable Keyboard Controls
+        //io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad            // Enable Gamepad Controls
+        io.setConfigFlags(io.getConfigFlags() | ConfigFlag.DockingEnable.i);        // Enable Docking
+        io.setConfigFlags(io.getConfigFlags() | ConfigFlag.ViewportsEnable.i);      // Enable Multi-Viewport / Platform Windows
+        //io.ConfigViewportsNoAutoMerge = true;
+        //io.ConfigViewportsNoTaskBarIcon = true;
 
         // Setup Dear ImGui style
         imgui.styleColorsDark(null);

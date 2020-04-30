@@ -17,13 +17,17 @@ import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
+import imgui.ImGui.popClipRect
 import imgui.ImGui.popID
+import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushID
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g
+import imgui.classes.ViewportFlag
+import imgui.classes.hasnt
 import imgui.dsl.tooltip
 import imgui.internal.*
 import imgui.internal.classes.Rect
@@ -232,6 +236,16 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
     val posTarget = Vec2(Float.MAX_VALUE)
     val sizeTarget = Vec2(Float.MAX_VALUE)
 
+    // Clip mouse interaction rectangles within the viewport rectangle (in practice the narrowing is going to happen most of the time).
+    // - Not narrowing would mostly benefit the situation where OS windows _without_ decoration have a threshold for hovering when outside their limits.
+    //   This is however not the case with current back-ends under Win32, but a custom borderless window implementation would benefit from it.
+    // - When decoration are enabled we typically benefit from that distance, but then our resize elements would be conflicting with OS resize elements, so we also narrow.
+    // - Note that we are unable to tell if the platform setup allows hovering with a distance threshold (on Win32, decorated window have such threshold).
+    val viewport = window.viewport!!
+    val clipWithViewportRect = io.backendFlags hasnt BackendFlag.HasMouseHoveredViewport || io.mouseHoveredViewport != window.viewportId || viewport.flags hasnt ViewportFlag.NoDecoration
+    if (clipWithViewportRect)
+        pushClipRect(viewport.pos, viewport.pos + viewport.size, true) // Won't incur a draw command as we are not drawing here.
+
     // Resize grips and borders are on layer 1
     window.dc.navLayerCurrent = NavLayer.Menu
     window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
@@ -303,6 +317,8 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
         }
     }
     popID()
+    if (clipWithViewportRect)
+        popClipRect()
 
     // Restore nav layer
     window.dc.navLayerCurrent = NavLayer.Main
