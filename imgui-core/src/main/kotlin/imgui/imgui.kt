@@ -2,6 +2,7 @@ package imgui
 
 import glm_.i
 import imgui.api.*
+import imgui.api.docking
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
 import imgui.classes.Context
@@ -89,6 +90,13 @@ const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 /** Lock scrolled window (so it doesn't pick child windows that are scrolling through) for a certaint time, unless mouse moved. */
 const val WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER = 2f
 
+
+// Docking
+
+/** For use with io.ConfigDockingTransparentPayload. Apply to Viewport _or_ WindowBg in host viewport. */
+const val DOCKING_TRANSPARENT_PAYLOAD_ALPHA = 0.5f
+
+
 // Test engine hooks (imgui-test)
 val IMGUI_ENABLE_TEST_ENGINE: Boolean
     get() = g.testEngineHookItems
@@ -174,6 +182,7 @@ object ImGui :
         popupsModals,
         columns,
         tabBarsTabs,
+        docking,
         loggingCapture,
         dragAndDrop,
         clipping,
@@ -186,6 +195,7 @@ object ImGui :
         inputUtilitiesMouse,
         clipboardUtilities,
         settingsIniUtilities,
+        platformOS,
 
 //-----------------------------------------------------------------------------
 // Internal API
@@ -203,7 +213,8 @@ object ImGui :
         navigation,
         focusScope,
         inputs,
-        docking,
+        imgui.internal.api.docking,
+        dockingBuilder,
         imgui.internal.api.dragAndDrop,
         internalColumnsAPI,
         tabBars,
@@ -228,3 +239,11 @@ fun IM_DEBUG_BREAK() {}
 
 // Internal Drag and Drop payload types. String starting with '_' are reserved for Dear ImGui.
 val IMGUI_PAYLOAD_TYPE_WINDOW = "_IMWINDOW"     // Payload == ImGuiWindow*
+
+// Debug Logging
+fun IMGUI_DEBUG_LOG(fmt: String) = println("[%05d] $fmt".format(g.frameCount))
+
+// Debug Logging for selected systems. Remove the '((void)0) //' to enable.
+fun IMGUI_DEBUG_LOG_POPUP(string: String) = IMGUI_DEBUG_LOG(string)
+fun IMGUI_DEBUG_LOG_VIEWPORT(string: String) = IMGUI_DEBUG_LOG(string)
+fun IMGUI_DEBUG_LOG_DOCKING(string: String) = IMGUI_DEBUG_LOG(string)

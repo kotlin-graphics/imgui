@@ -729,7 +729,7 @@ fun registerTests_Misc(e: TestEngine) {
             ctx.itemOpen("Widgets")
             ctx.itemOpen("Layout")
             ctx.itemOpen("Popups & Modal windows")
-//        #if IMGUI_HAS_TABLE
+//        #if helpers.getIMGUI_HAS_TABLE
 //        ctx->ItemOpen("Tables & Columns")
 //        #else
             ctx.itemOpen("Columns")

@@ -161,12 +161,12 @@ interface widgetsTrees {
     }
 
     /** Set next TreeNode/CollapsingHeader open state.  */
-    fun setNextItemOpen(isOpen: Boolean, cond: Cond = Cond.Always) {
+    fun setNextItemOpen(isOpen: Boolean, cond: Cond = Cond.None) {
         if (g.currentWindow!!.skipItems) return
         g.nextItemData.apply {
             flags = flags or NextItemDataFlag.HasOpen
             openVal = isOpen
-            openCond = cond.takeUnless { it == Cond.None } ?: Cond.Always
+            openCond = if(cond != Cond.None) cond else Cond.Always
         }
     }
 }

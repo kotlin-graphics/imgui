@@ -1,16 +1,18 @@
 package examples
 
 
+import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
 import gln.glViewport
-import imgui.DEBUG
-import imgui.ImGui
+import imgui.*
 import imgui.classes.Context
+import imgui.classes.IO
 import imgui.impl.gl.ImplGL3
-import imgui.impl.gl.glslVersion
+import imgui.impl.gl.glslVersionString
 import imgui.impl.glfw.ImplGlfw
+import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
@@ -32,17 +34,16 @@ private class ImGuiOpenGL3 {
 
     val window: GlfwWindow
     val ctx: Context
+    val io: IO
+    val implGlfw: ImplGlfw
+    val implGl3: ImplGL3
 
-
+    // Our state
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
-    // Our state
     var showAnotherWindow = false
     var showDemo = true
     var counter = 0
-
-    val implGlfw: ImplGlfw
-    val implGl3: ImplGL3
 
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
 
@@ -59,13 +60,13 @@ private class ImGuiOpenGL3 {
                 // Decide GL+GLSL versions
                 when (Platform.get()) {
                     Platform.MACOSX -> {    // GL 3.2 + GLSL 150
-                        glslVersion = 150
+                        glslVersionString = "#version 150"
                         context.version = "3.2"
                         profile = core      // 3.2+ only
                         forwardComp = true  // Required on Mac
                     }
                     else -> {   // GL 3.0 + GLSL 130
-                        glslVersion = 130
+                        glslVersionString = "#version 130"
                         context.version = "3.0"
                         //profile = core      // 3.2+ only
                         //forwardComp = true  // 3.0+ only
@@ -76,6 +77,7 @@ private class ImGuiOpenGL3 {
 
         // Create window with graphics context
         window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
+        window.pos = Vec2i(500)
         window.makeContextCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
 
@@ -84,15 +86,27 @@ private class ImGuiOpenGL3 {
 
         // Setup Dear ImGui context
         ctx = Context()
-//        io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard  // Enable Keyboard Controls
-//        io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad   // Enable Gamepad Controls
+        io = ctx.io
+        io.configFlags = io.configFlags or ConfigFlag.NavEnableKeyboard     // Enable Keyboard Controls
+//        io.configFlags = io.configFlags or ConfigFlag.NavEnableGamepad    // Enable Gamepad Controls
+        io.configFlags = io.configFlags or ConfigFlag.DockingEnable         // Enable Docking
+        io.configFlags = io.configFlags or ConfigFlag.ViewportsEnable       // Enable Multi-Viewport / Platform Windows
+        //io.ConfigViewportsNoAutoMerge = true;
+        //io.ConfigViewportsNoTaskBarIcon = true;
 
         // Setup Dear ImGui style
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
 
+        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+        val style = ctx.style
+        if (io.configFlags has ConfigFlag.ViewportsEnable) {
+            style.windowRounding = 0f
+            style.colors[Col.WindowBg].w = 1f
+        }
+
         // Setup Platform/Renderer bindings
-        implGlfw = ImplGlfw(window, true)
+        implGlfw = ImplGlfw.initForOpenGL(window, true)
         implGl3 = ImplGL3()
 
 //        RemoteryGL.rmt_BindOpenGL()
@@ -123,6 +137,8 @@ private class ImGuiOpenGL3 {
             - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
             - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
             Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
+
+        // glfwWindowShouldClose
         window.loop(::mainLoop)
 
         implGl3.shutdown()
@@ -196,6 +212,16 @@ private class ImGuiOpenGL3 {
         glClear(GL_COLOR_BUFFER_BIT)
 
         implGl3.renderDrawData(ImGui.drawData!!)
+
+        // Update and Render additional Platform Windows
+        // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
+        //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+        if (io.configFlags has ConfigFlag.ViewportsEnable) {
+            val backupCurrentContext = glfw.currentContext
+            ImGui.updatePlatformWindows()
+            ImGui.renderPlatformWindowsDefault()
+            GLFW.glfwMakeContextCurrent(backupCurrentContext.L) // TODO uno
+        }
 
         if (DEBUG) checkError("mainLoop")
 

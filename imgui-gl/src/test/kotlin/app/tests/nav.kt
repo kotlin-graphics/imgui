@@ -208,7 +208,7 @@ fun registerTests_Nav(e: TestEngine) {
             val testCount = if (ctx.hasDock) 2 else 1
             for (testN in 0 until testCount) {
                 ctx.logDebug("TEST CASE $testN")
-//                #ifdef IMGUI_HAS_DOCK
+//                #ifdef helpers.getIMGUI_HAS_DOCK
 //                    ctx->DockMultiClear("Window 1", "Window 2", NULL)
 //                if (test_n == 1)
 //                    ctx->DockWindowInto("Window 1", "Window 2")
@@ -254,7 +254,7 @@ fun registerTests_Nav(e: TestEngine) {
             val testCount = if (ctx.hasDock) 2 else 1
             for (testN in 0 until testCount) {
                 ctx.logDebug("TEST CASE $testN")
-//                #ifdef IMGUI_HAS_DOCK
+//                #ifdef helpers.getIMGUI_HAS_DOCK
 //                    ctx->DockMultiClear("Window 1", "Window 2", NULL)
 //                if (test_n == 1)
 //                    ctx->DockWindowInto("Window 2", "Window 1")
@@ -306,7 +306,7 @@ fun registerTests_Nav(e: TestEngine) {
                 ctx.logDebug("TEST CASE $testN")
                 ctx.genericVars.bool1 = true
                 ctx.yieldFrames(2)
-//                #ifdef IMGUI_HAS_DOCK
+//                #ifdef helpers.getIMGUI_HAS_DOCK
 //                    ctx->DockMultiClear("Window 1", "Window 2", NULL)
 //                if (test_n == 1)
 //                    ctx->DockWindowInto("Window 2", "Window 1")
@@ -339,7 +339,7 @@ fun registerTests_Nav(e: TestEngine) {
             val testCount = if(ctx.hasDock) 2 else 1
             for (testN in 0 until testCount) {
                 ctx.logDebug("TEST CASE $testN")
-//                #ifdef IMGUI_HAS_DOCK
+//                #ifdef helpers.getIMGUI_HAS_DOCK
 //                    ctx->WindowRef(ImGuiTestRef())
 //                ctx->DockMultiClear("Dear ImGui Demo", "Hello, world!", NULL)
 //                if (test_n == 0)

@@ -1,10 +1,8 @@
 package imgui.demo.showExampleApp
 
-import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.COL32
-import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.backgroundDrawList
 import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
@@ -30,9 +28,7 @@ import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
-import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
-import imgui.ImGui.separator
 import imgui.ImGui.sliderInt
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -40,7 +36,7 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
 import imgui.MouseButton
-import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
 import imgui.dsl.button
 import imgui.internal.DrawCornerFlag
 import imgui.u32
@@ -216,9 +212,9 @@ object CustomRendering {
 
             if (beginTabItem("BG/FG draw lists")) {
                 checkbox("Draw in Background draw list", ::drawBg)
-                sameLine(); helpMarker("The Background draw list will be rendered below every Dear ImGui windows.")
+                sameLine(); metricsHelpMarker("The Background draw list will be rendered below every Dear ImGui windows.")
                 checkbox("Draw in Foreground draw list", ::drawFg)
-                sameLine(); helpMarker("The Foreground draw list will be rendered over every Dear ImGui windows.")
+                sameLine(); metricsHelpMarker("The Foreground draw list will be rendered over every Dear ImGui windows.")
                 val windowCenter = Vec2(windowPos.x + windowSize.x * 0.5f, windowPos.y + windowSize.y * 0.5f)
                 if (drawBg)
                     backgroundDrawList.addCircle(windowCenter, windowSize.x * 0.6f, COL32(255, 0, 0, 200), 0, 10f + 4)

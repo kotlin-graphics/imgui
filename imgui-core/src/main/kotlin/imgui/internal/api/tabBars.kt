@@ -42,7 +42,7 @@ internal interface tabBars {
         assert(width > 0f)
         val rounding = max(0f, min(style.tabRounding, width * 0.5f - 1f))
         val y1 = bb.min.y + 1f
-        val y2 = bb.max.y - 1f
+        val y2 = bb.max.y + if(flags has TabItemFlag._Preview) 0f else -1f
         drawList.apply {
             pathLineTo(Vec2(bb.min.x, y2))
             pathArcToFast(Vec2(bb.min.x + rounding, y1 + rounding), rounding, 6, 9)

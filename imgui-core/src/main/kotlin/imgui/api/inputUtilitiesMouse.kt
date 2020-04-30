@@ -10,6 +10,7 @@ import imgui.MOUSE_INVALID
 import imgui.MouseButton
 import imgui.MouseCursor
 import imgui.internal.classes.Rect
+
 /** Inputs Utilities: Mouse
  *  - To refer to a mouse button, you may use named enums in your code e.g. ImGuiMouseButton_Left, ImGuiMouseButton_Right.
  *  - You can also use regular integer: it is forever guaranteed that 0=Left, 1=Right, 2=Middle.
@@ -77,7 +78,11 @@ interface inputUtilitiesMouse {
 
         // Expand for touch input
         val rectForTouch = Rect(rectClipped.min - style.touchExtraPadding, rectClipped.max + style.touchExtraPadding)
-        return io.mousePos in rectForTouch
+        return when {
+            io.mousePos !in rectForTouch -> false
+            !g.mouseViewport!!.mainRect.overlaps(rectClipped) -> false
+            else -> true
+        }
     }
 
     /** by convention we use (-FLT_MAX,-FLT_MAX) to denote that there is no mouse available  */

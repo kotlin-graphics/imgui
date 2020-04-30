@@ -73,9 +73,16 @@ internal interface internal {
 
         // Passing NULL allow to disable keyboard focus
         if (window == null) return
+        window.lastFrameJustFocused = g.frameCount
+
+        // Select in dock node
+        window.dockNode?.tabBar?.let {
+            it.selectedTabId = window.id
+            it.nextSelectedTabId = window.id
+        }
 
         // Move the root window to the top of the pile
-        val focusFrontWindow = window.rootWindow!! // NB: In docking branch this is window->RootWindowDockStop
+        val focusFrontWindow = window.rootWindowDockStop!!
         val displayFrontWindow = window.rootWindow!!
 
         // Steal focus on active widgets
@@ -85,7 +92,7 @@ internal interface internal {
 
         // Bring to front
         focusFrontWindow.bringToFocusFront()
-        if ((window.flags or displayFrontWindow.flags) hasnt Wf.NoBringToFrontOnFocus)
+        if ((window.flags or focusFrontWindow.flags or displayFrontWindow.flags) hasnt Wf.NoBringToFrontOnFocus)
             displayFrontWindow.bringToDisplayFront()
     }
 
@@ -99,8 +106,12 @@ internal interface internal {
         for (i in startIdx downTo 0) {
             // We may later decide to test for different NoXXXInputs based on the active navigation input (mouse vs nav) but that may feel more confusing to the user.
             val window = g.windowsFocusOrder[i]
-            if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf._ChildWindow)
+            if (window !== ignoreWindow && window.wasActive && window.rootWindowDockStop === window)
                 if ((window.flags and (Wf.NoMouseInputs or Wf.NoNavInputs)) != (Wf.NoMouseInputs or Wf.NoNavInputs)) {
+                    // FIXME-DOCK: This is failing (lagging by one frame) for docked windows.
+                    // If A and B are docked into window and B disappear, at the NewFrame() call site window->NavLastChildNavWindow will still point to B.
+                    // We might leverage the tab order implicitly stored in window->DockNodeAsHost->TabBar (essentially the 'most_recently_selected_tab' code in tab bar will do that but on next update)
+                    // to tell which is the "previous" window. Or we may leverage 'LastFrameFocused/LastFrameJustFocused' and have this function handle child window itself?
                     focusWindow(navRestoreLastChildNavWindow(window))
                     return
                 }
@@ -130,7 +141,7 @@ internal interface internal {
     val defaultFont: Font
         get() = io.fontDefault ?: io.fonts.fonts[0]
 
-    fun getForegroundDrawList(window: Window?): DrawList = getForegroundDrawList(window.viewport)
+    fun getForegroundDrawList(window: Window): DrawList = getForegroundDrawList(window.viewport!!)
 
 
     val formatArgPattern: Pattern

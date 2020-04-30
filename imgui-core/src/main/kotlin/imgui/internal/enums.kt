@@ -1,6 +1,7 @@
 package imgui.internal
 
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2i
 import imgui.internal.classes.Rect
 
 
@@ -314,9 +315,21 @@ enum class Axis {
     infix fun xor(i: Int) = (ordinal - 1) xor i
 }
 
+operator fun Vec2i.get(axis: Axis): Int = when (axis) {
+    Axis.X -> x
+    Axis.Y -> y
+    else -> throw Error()
+}
+
 operator fun Vec2.get(axis: Axis): Float = when (axis) {
     Axis.X -> x
     Axis.Y -> y
+    else -> throw Error()
+}
+
+operator fun Vec2.set(axis: Axis, float: Float) = when (axis) {
+    Axis.X -> x = float
+    Axis.Y -> y = float
     else -> throw Error()
 }
 

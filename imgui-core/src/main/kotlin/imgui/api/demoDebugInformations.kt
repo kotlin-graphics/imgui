@@ -1,7 +1,6 @@
 package imgui.api
 
-import glm_.asHexString
-import glm_.f
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -11,13 +10,18 @@ import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.combo
 import imgui.ImGui.debugStartItemPicker
+import imgui.ImGui.dockNodeGetRootNode
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
+import imgui.ImGui.findWindowByID
+import imgui.ImGui.findWindowSettings
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
@@ -29,14 +33,18 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
+import imgui.ImGui.mainViewport
 import imgui.ImGui.popID
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushID
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
+import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
+import imgui.ImGui.showViewportThumbnails
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.styleColorsClassic
@@ -48,24 +56,25 @@ import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
-import imgui.classes.DrawList
-import imgui.classes.ListClipper
-import imgui.classes.Style
+import imgui.classes.*
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
+import imgui.dsl.smallButton
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
-import imgui.internal.classes.Columns
-import imgui.internal.classes.Rect
-import imgui.internal.classes.TabBar
-import imgui.internal.classes.Window
+import imgui.internal.classes.*
+import imgui.static.dockContextClearNodes
+import imgui.static.dockNodeGetDepth
+import imgui.static.dockNodeTreeFindNodeByPos
 import kool.BYTES
 import kool.lim
 import kool.rem
+import uno.kotlin.plusAssign
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -216,7 +225,7 @@ interface demoDebugInformations {
             if (button("Item Picker.."))
                 debugStartItemPicker()
             sameLine()
-            helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
+            metricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
 
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
@@ -242,8 +251,23 @@ interface demoDebugInformations {
         // Contents
         Funcs.nodeWindows(g.windows, "Windows")
         //Funcs::NodeWindows(g.WindowsFocusOrder, "WindowsFocusOrder")
-        if (treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
-            g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs.nodeDrawList(null, it, "DrawList") } }
+        if (treeNode("Viewpoer", "Viewports  (${g.viewports.size})")) {
+            indent(treeNodeToLabelSpacing) {
+                showViewportThumbnails()
+            }
+            val open = treeNode("Monitors", "Monitors (${g.platformIO.monitors.size})")
+            sameLine()
+            metricsHelpMarker("Dear ImGui uses monitor data:\n- to query DPI settings on a per monitor basis\n- to position popup/tooltips so they don't straddle monitors.")
+            if (open) {
+                g.platformIO.monitors.forEachIndexed { i, mon ->
+                    bulletText("Monitor #$i: DPI %.0f%%\n MainMin (%.0f,%.0f), MainMax (%.0f,%.0f), MainSize (%.0f,%.0f)\n WorkMin (%.0f,%.0f), WorkMax (%.0f,%.0f), WorkSize (%.0f,%.0f)",
+                            mon.dpiScale * 100f,
+                            mon.mainPos.x, mon.mainPos.y, mon.mainPos.x + mon.mainSize.x, mon.mainPos.y + mon.mainSize.y, mon.mainSize.x, mon.mainSize.y,
+                            mon.workPos.x, mon.workPos.y, mon.workPos.x + mon.workSize.x, mon.workPos.y + mon.workSize.y, mon.workSize.x, mon.workSize.y)
+                }
+                treePop()
+            }
+            g.viewports.forEach(Funcs::nodeViewport)
             treePop()
         }
 
@@ -275,17 +299,51 @@ interface demoDebugInformations {
 //        #endif // #define IMGUI_HAS_TABLE
 //
         // Details for Docking
-//        #ifdef IMGUI_HAS_DOCK
-//                if (ImGui::TreeNode("Docking"))
-//                {
-//                    ImGui::TreePop();
-//                }
-//        #endif // #define IMGUI_HAS_DOCK
+        if (treeNode("Docking")) {
+            val dc = g.dockContext!!
+            checkbox("Ctrl shows window dock info", ::showDockingNodes)
+
+            if (treeNode("Dock nodes")) {
+                smallButton("Clear settings") { dockContextClearNodes(g, 0, true) }
+                sameLine()
+                smallButton("Rebuild all") { dc.wantFullRebuild = true }
+                for (node in dc.nodes.values)
+                    if (node.isRootNode)
+                        Funcs.nodeDockNode(node, "Node")
+                treePop()
+            }
+
+            if (treeNode("Settings")) {
+                if (smallButton("Refresh"))
+                    TODO()//saveIniSettingsToMemory()
+                sameLine()
+                if (smallButton("Save to disk"))
+                    saveIniSettingsToDisk(io.iniFilename)
+                separator()
+                text("Docked Windows:")
+                for (setting in g.settingsWindows)
+                    if (setting.dockId != 0)
+                        bulletText("Window '${setting.name}' -> DockId %08X", setting.dockId)
+                separator()
+                text("Dock Nodes:")
+                for (setting in dc.settingsNodes) {
+                    val selectedTabName = when (setting.selectedWindowId) {
+                        0 -> null
+                        else -> findWindowByID(setting.selectedWindowId)?.name
+                                ?: findWindowSettings(setting.selectedWindowId)?.name
+                    }
+                    bulletText("Node %08X, Parent %08X, SelectedTab %08X ('${selectedTabName ?: if (setting.selectedWindowId != 0) "N/A" else ""}')", setting.id, setting.parentNodeId, setting.selectedWindowId)
+                }
+                treePop()
+            }
+            treePop()
+        }
 
         // Misc Details
         if (treeNode("Internal state")) {
             text("HoveredWindow: '${g.hoveredWindow?.name}'")
             text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+            text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")
             /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                 information or not                 */
             text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
@@ -301,6 +359,8 @@ interface demoDebugInformations {
             text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
             text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
                     "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
+            text("MouseViewport: 0x%08X (UserHovered 0x%08X, LastHovered 0x%08X)", g.mouseViewport!!.id, io.mouseHoveredViewport, g.mouseLastHoveredViewport?.id
+                    ?: 0)
             treePop()
         }
 
@@ -331,14 +391,28 @@ interface demoDebugInformations {
 //            }
 //        }
 //        #endif // #define IMGUI_HAS_TABLE
-//
-//        #ifdef IMGUI_HAS_DOCK
-//        // Overlay: Display Docking info
-//        if (show_docking_nodes && g.IO.KeyCtrl)
-//        {
-//        }
-//        #endif // #define IMGUI_HAS_DOCK
 
+        // Overlay: Display Docking info
+        if (showDockingNodes && io.keyCtrl)
+            for (node in g.dockContext!!.nodes.values) {
+                val rootNode = dockNodeGetRootNode(node)
+                val hoveredNode = dockNodeTreeFindNodeByPos(rootNode, io.mousePos)
+                if (hoveredNode != node)
+                    continue
+                val p = StringBuffer(64)
+                val overlayDrawList = node.hostWindow?.let(::getForegroundDrawList)
+                        ?: getForegroundDrawList(mainViewport as ViewportP)
+                p += "DockId: %X${if (node.isCentralNode) " *CentralNode*" else ""}\n".format(node.id)
+                p += "WindowClass: %08X\n".format(node.windowClass.classId)
+                p += "Size: (%.0f, %.0f)\n".format(node.size.x, node.size.y)
+                p += "SizeRef: (%.0f, %.0f)\n".format(node.sizeRef.x, node.sizeRef.y)
+                val depth = dockNodeGetDepth(node)
+                overlayDrawList.addRect(node.pos + 3 * depth, node.pos + node.size - 3 * depth, COL32(200, 100, 100, 255))
+                val pos = node.pos + 3 * depth
+                val buf = p.toString().toByteArray()
+                overlayDrawList.addRectFilled(pos - 1, pos + calcTextSize(buf, 0) + 1, COL32(200, 100, 100, 255))
+                overlayDrawList.addText(null, 0f, pos, COL32(255, 255, 255, 255), buf)
+            }
         end()
     }
 
@@ -377,7 +451,7 @@ interface demoDebugInformations {
             endCombo()
         }
         sameLine()
-        helpMarker("""
+        metricsHelpMarker("""
             - Load additional fonts with io.Fonts->AddFontFromFileTTF().
             - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
             - Read FAQ and documentation in misc/fonts/ for more details.
@@ -446,6 +520,7 @@ interface demoDebugInformations {
         var showDrawcmdDetails = true
         var showDrawcmdMesh = true
         var showDrawcmdAabb = true
+        var showDockingNodes = false
 
         var showWindow = false
 
@@ -474,7 +549,7 @@ interface demoDebugInformations {
                 WRT.ContentRegionRect -> window.contentRegionRect
             }
 
-            fun nodeDrawCmdShowMeshAndBoundingBox(window: Window?, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
+            fun nodeDrawCmdShowMeshAndBoundingBox(window: Window, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
                                                   showMesh: Boolean, showAabb: Boolean) {
                 assert(showMesh || showAabb)
                 val fgDrawList = getForegroundDrawList(window) // Render additional visuals into the top-most draw list
@@ -503,7 +578,7 @@ interface demoDebugInformations {
                 fgDrawList.flags = backupFlags
             }
 
-            fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
+            fun nodeDrawList(window: Window?, viewport: ViewportP?, drawList: DrawList, label: String) {
 
                 val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " +
                         "${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds")
@@ -514,8 +589,8 @@ interface demoDebugInformations {
                     if (nodeOpen) treePop()
                     return
                 }
-                val fgDrawList = getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
-                if (window != null && isItemHovered())
+                val fgDrawList = viewport?.let(::getForegroundDrawList)   // Render additional visuals into the top-most draw list
+                if (window != null && fgDrawList != null && isItemHovered())
                     fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
 
                 if (!nodeOpen)
@@ -541,7 +616,7 @@ interface demoDebugInformations {
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
+                        nodeDrawCmdShowMeshAndBoundingBox(window!!, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
                     if (!cmdNodeOpen) continue
 
                     // Calculate approximate coverage area (touched pixel count)
@@ -558,7 +633,7 @@ interface demoDebugInformations {
                     string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
                     selectable(string)
                     if (isItemHovered() && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, elemOffset, true, false)
+                        nodeDrawCmdShowMeshAndBoundingBox(window!!, drawList, cmd, elemOffset, true, false)
 
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
@@ -630,7 +705,7 @@ interface demoDebugInformations {
                     textDisabled("Note: some memory buffers have been compacted/freed.")
 
                 val flags = window.flags
-                nodeDrawList(window, window.drawList, "DrawList")
+                nodeDrawList(window, window.viewport, window.drawList, "DrawList")
                 bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
                         window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
                 val builder = StringBuilder()
@@ -644,6 +719,7 @@ interface demoDebugInformations {
                 if (flags has Wf.NoNavInputs) builder += "NoNavInputs"
                 if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
+                bulletText("WindowClassId: 0x%08X".format(window.windowClass.classId))
                 val xy = (if (window.scrollbar.x) "X" else "") + if (window.scrollbar.y) "Y" else ""
                 bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy", window.scroll.x, window.scrollMax.x, window.scroll.y, window.scrollMax.y)
                 val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
@@ -655,7 +731,17 @@ interface demoDebugInformations {
                     bulletText("NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)", window.navRectRel[0].min.x, window.navRectRel[0].min.y, window.navRectRel[0].max.x, window.navRectRel[0].max.y)
                 else
                     bulletText("NavRectRel[0]: <None>")
+                bulletText("Viewport: ${window.viewport?.idx ?: -1}${if (window.viewportOwned) " (Owned)" else ""}, ViewportId: 0x%08X, ViewportPos: (%.1f,%.1f)", window.viewportId, window.viewportPos.x, window.viewportPos.y)
+                bulletText("ViewportMonitor: ${window.viewport?.platformMonitor ?: -1}")
+                if (DEBUG)
+                    bulletText("DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive.i}, Vis: ${window.dockTabIsVisible.i}", window.dockId)
+                else
+                    bulletText("DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive}, Vis: ${window.dockTabIsVisible}", window.dockId)
+                if (window.dockNode != null || window.dockNodeAsHost != null)
+                    nodeDockNode(window.dockNodeAsHost
+                            ?: window.dockNode!!, if (window.dockNodeAsHost != null) "DockNodeAsHost" else "DockNode")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
+                if (window.rootWindowDockStop !== window.rootWindow) nodeWindow(window.rootWindowDockStop!!, "RootWindowDockStop")
                 window.parentWindow?.let { nodeWindow(it, "ParentWindow") }
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
                 if (window.columnsStorage.isNotEmpty() && treeNode("Columns", "Columns sets (${window.columnsStorage.size})")) {
@@ -665,6 +751,69 @@ interface demoDebugInformations {
                 nodeStorage(window.stateStorage, "Storage")
                 treePop()
             }
+
+            fun nodeViewport(viewport: ViewportP) {
+                setNextItemOpen(true, Cond.Once)
+                if (treeNode(viewport.id.L, "Viewport #${viewport.idx}, ID: 0x%08X, Parent: 0x%08X, Window: \"${viewport.window?.name ?: "N/A"}\"", viewport.id, viewport.parentViewportId)) {
+                    val flags = viewport.flags
+                    bulletText("Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f\nMonitor: %d, DpiScale: %.0f%%",
+                            viewport.pos.x, viewport.pos.y, viewport.size.x, viewport.size.y, viewport.workOffsetMin.x, viewport.workOffsetMin.y, viewport.workOffsetMax.x,
+                            viewport.workOffsetMax.y, viewport.platformMonitor, viewport.dpiScale * 100f)
+                    if (viewport.idx > 0) {
+                        sameLine()
+                        if (smallButton("Reset Pos")) {
+                            viewport.pos put 200f
+                            viewport.window?.pos?.put(200f)
+                        }
+                    }
+                    val a = if (flags has ViewportFlag.CanHostOtherWindows) " CanHostOtherWindows" else ""
+                    val b = if (flags has ViewportFlag.NoDecoration) " NoDecoration" else ""
+                    val c = if (flags has ViewportFlag.NoFocusOnAppearing) " NoFocusOnAppearing" else ""
+                    val d = if (flags has ViewportFlag.NoInputs) " NoInputs" else ""
+                    val e = if (flags has ViewportFlag.NoRendererClear) " NoRendererClear" else ""
+                    val f = if (flags has ViewportFlag.Minimized) " Minimized" else ""
+                    val g = if (flags has ViewportFlag.NoAutoMerge) " NoAutoMerge" else ""
+                    bulletText("Flags: 0x%04X =$a$b$c$d$e$f$g", viewport.flags)
+                    for (layer in viewport.drawDataBuilder.layers)
+                        for (drawList in layer)
+                            Funcs.nodeDrawList(null, viewport, drawList, "DrawList")
+                    treePop()
+                }
+            }
+
+            fun nodeDockNode(node: DockNode, label: String) {
+
+                val open = when {
+                    node.windows.isNotEmpty() -> treeNode(node.id.L, "$label 0x%04X${if (node.isVisible) "" else " (hidden)"}: ${node.windows.size} windows (vis: '${node.visibleWindow?.name}')", node.id)
+                    else -> treeNode(node.id.L, "$label 0x%04X${if (node.isVisible) "" else " (hidden)"}: ${if (node.splitAxis == Axis.X) "horizontal" else if (node.splitAxis == Axis.Y) "vertical" else "n/a"} split (vis: '${node.visibleWindow?.name}')", node.id)
+                }
+                if (open) {
+                    node.childNodes[0].also { assert(it == null || it.parentNode === node) }
+                    node.childNodes[1].also { assert(it == null || it.parentNode === node) }
+                    bulletText("Pos (%.0f,%.0f), Size (%.0f, %.0f) Ref (%.0f, %.0f)",
+                            node.pos.x, node.pos.y, node.size.x, node.size.y, node.sizeRef.x, node.sizeRef.y)
+                    nodeWindow(node.hostWindow, "HostWindow")
+                    nodeWindow(node.visibleWindow, "VisibleWindow")
+                    bulletText("SelectedTabID: 0x%08X, LastFocusedNodeID: 0x%08X", node.selectedTabId, node.lastFocusedNodeId)
+                    bulletText("Misc:${if (node.isDockSpace) " IsDockSpace" else ""}${if (node.isCentralNode) " IsCentralNode" else ""}${if (g.frameCount - node.lastFrameAlive < 2) " IsAlive" else ""}${if (g.frameCount - node.lastFrameActive < 2) " IsActive" else ""}")
+                    if (treeNode("flags", "LocalFlags: 0x%04X SharedFlags: 0x%04X", node.localFlags, node.sharedFlags)) {
+                        checkboxFlags("LocalFlags: NoDocking", node::localFlags, DockNodeFlag._NoDocking.i)
+                        checkboxFlags("LocalFlags: NoSplit", node::localFlags, DockNodeFlag.NoSplit.i)
+                        checkboxFlags("LocalFlags: NoResize", node::localFlags, DockNodeFlag.NoResize.i)
+                        checkboxFlags("LocalFlags: NoTabBar", node::localFlags, DockNodeFlag._NoTabBar.i)
+                        checkboxFlags("LocalFlags: HiddenTabBar", node::localFlags, DockNodeFlag._HiddenTabBar.i)
+                        checkboxFlags("LocalFlags: NoWindowMenuButton", node::localFlags, DockNodeFlag._NoWindowMenuButton.i)
+                        checkboxFlags("LocalFlags: NoCloseButton", node::localFlags, DockNodeFlag._NoCloseButton.i)
+                        treePop()
+                    }
+                    node.parentNode?.let { nodeDockNode(it, "ParentNode") }
+                    node.childNodes[0]?.let { nodeDockNode(it, "Child[0]") }
+                    node.childNodes[1]?.let { nodeDockNode(it, "Child[1]") }
+                    node.tabBar?.let(this@Funcs::nodeTabBar)
+                    treePop()
+                }
+            }
+
 
             fun nodeStorage(storage: HashMap<ID, Boolean>, label: String) {
                 if (!treeNode(label, "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes")) // [JVM] Boolean size is actually VM dependent
@@ -677,8 +826,15 @@ interface demoDebugInformations {
 
             fun nodeTabBar(tabBar: TabBar) {
                 // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
-                val string = "TabBar (${tabBar.tabs.size} tabs)${if (tabBar.prevFrameVisible < frameCount - 2) " *Inactive*" else ""}"
-                if (treeNode(tabBar, string)) {
+                val p = StringBuffer("TabBar (${tabBar.tabs.size} tabs)${if (tabBar.prevFrameVisible < frameCount - 2) " *Inactive*" else ""}")
+                if (tabBar.flags has TabBarFlag._DockNode) {
+                    p += "  { "
+                    var tabN = -1
+                    while (++tabN < tabBar.tabs.size min 3)
+                        p += "${if (tabN > 0) ", " else ""}'${tabBar.tabs[tabN].window!!.name}'"
+                    p += if (tabBar.tabs.size > 3) " ... }" else " } "
+                }
+                if (treeNode(tabBar, p.toString())) {
                     for (tabN in tabBar.tabs.indices) {
                         val tab = tabBar.tabs[tabN]
                         pushID(tab)
@@ -689,7 +845,7 @@ interface demoDebugInformations {
                             tabBar.queueChangeTabOrder(tab, +1)
                             sameLine()
                             val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
-                            val s = if (tab.nameOffset != -1) tabBar.getTabName(tab) else ""
+                            val s = if (tab.window != null || tab.nameOffset != -1) tabBar.getTabName(tab) else ""
                             text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
                             popID()
                         }
@@ -705,7 +861,7 @@ interface demoDebugInformations {
 
         /** Helper to display a little (?) mark which shows a tooltip when hovered.
          *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.txt)    */
-        fun helpMarker(desc: String) {
+        fun metricsHelpMarker(desc: String) {
             textDisabled("(?)")
             if (isItemHovered()) {
                 beginTooltip()

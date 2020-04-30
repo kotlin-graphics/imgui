@@ -4,15 +4,19 @@ import glm_.f
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
+import imgui.ImGui.dockContextUpdateDocking
+import imgui.ImGui.dockContextUpdateUndocking
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
+import imgui.ImGui.getBackgroundDrawList
+import imgui.ImGui.getColorU32
+import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
@@ -24,12 +28,15 @@ import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
+import imgui.classes.DrawList
 import imgui.classes.IO
 import imgui.classes.Style
+import imgui.classes.ViewportP
 import imgui.internal.*
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.static.*
-import org.lwjgl.system.Platform
-import imgui.ConfigFlag as Cf
+import kool.lim
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
 
@@ -56,7 +63,9 @@ interface main {
             Hook.preNewFrame!!(g)
 
         // Check and assert for various common IO and Configuration mistakes
+        g.configFlagsLastFrame = g.configFlagsCurrFrame
         errorCheckNewFrameSanityChecks()
+        g.configFlagsCurrFrame = g.io.configFlags
 
         // Load settings on first frame, save settings when modified (after a delay)
         updateSettings()
@@ -72,13 +81,19 @@ interface main {
         g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
         g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        io.framerate = if(g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size.f) else Float.MAX_VALUE
+        io.framerate = if (g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size.f) else Float.MAX_VALUE
+
+        updateViewportsNewFrame()
 
         // Setup current font and draw list shared data
+        // FIXME-VIEWPORT: the concept of a single ClipRectFullscreen is not ideal!
         io.fonts.locked = true
         setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
-        g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
+        val virtualSpace = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+        for (viewport in g.viewports)
+            virtualSpace add viewport.mainRect
+        g.drawListSharedData.clipRectFullscreen.put(virtualSpace.min.x, virtualSpace.min.y, virtualSpace.max.x, virtualSpace.max.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
         g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
         g.drawListSharedData.initialFlags = Dlf.None.i
@@ -89,16 +104,11 @@ interface main {
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
 
-        g.backgroundDrawList.clear()
-        g.backgroundDrawList.pushTextureId(io.fonts.texID)
-        g.backgroundDrawList.pushClipRectFullScreen()
-
-        g.foregroundDrawList.clear()
-        g.foregroundDrawList.pushTextureId(io.fonts.texID)
-        g.foregroundDrawList.pushClipRectFullScreen()
-
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
-        g.drawData.clear()
+        for (viewport in g.viewports) {
+            viewport.drawData = null
+            viewport.drawDataP.clear()
+        }
 
         // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
         if (g.dragDropActive && g.dragDropPayload.sourceId == g.activeId)
@@ -165,6 +175,10 @@ interface main {
         // Update mouse input state
         updateMouseInputs()
 
+        // Undocking
+        // (needs to be before UpdateMouseMovingWindowNewFrame so the window is already offset and following the mouse on the detaching frame)
+        dockContextUpdateUndocking(g)
+
         // Find hovered window
         // (needs to be before UpdateMouseMovingWindowNewFrame so we fill g.HoveredWindowUnderMovingWindow on the mouse release frame)
         updateHoveredWindowAndCaptureFlags()
@@ -182,6 +196,7 @@ interface main {
         g.wantCaptureKeyboardNextFrame = -1
         g.wantCaptureMouseNextFrame = -1
         g.platformImePos put 1f // OS Input Method Editor showing on top-left of our window by default
+        g.platformImePosViewport = null
 
         // Mouse wheel scrolling, scale
         updateMouseWheel()
@@ -213,6 +228,9 @@ interface main {
         g.beginPopupStack.clear()
         closePopupsOverWindow(g.navWindow, false)
 
+        // Docking
+        dockContextUpdateDocking(g)
+
         // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
         updateDebugToolItemPicker()
 
@@ -242,12 +260,15 @@ interface main {
         errorCheckEndFrameSanityChecks()
 
         // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
-            if (DEBUG)
-                Unit // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
-//            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
-            io.imeSetInputScreenPosFn!!(1000, 1000)
-            g.platformImeLastPos put g.platformImePos
+        g.platformIO.platform_SetImeInputPos?.let { setIme ->
+            if (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImePos - g.platformImeLastPos).lengthSqr > 0.0001f)
+                g.platformImePosViewport?.let { viewport ->
+                    if (viewport.platformWindowCreated) {
+                        setIme(viewport, g.platformImePos)
+                        g.platformImeLastPos put g.platformImePos
+                        g.platformImePosViewport = null
+                    }
+                }
         }
 
         // Hide implicit/fallback "Debug" window if it hasn't been used
@@ -258,9 +279,14 @@ interface main {
 
         end()
 
+        // Draw modal whitening background on _other_ viewports than the one the modal is one
+        endFrameDrawDimmedBackgrounds()
+
         // Show CTRL+TAB list window
         if (g.navWindowingTarget != null)
             navUpdateWindowingOverlay()
+
+        setCurrentViewport(null, null)
 
         // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
         if (g.dragDropActive) {
@@ -284,6 +310,9 @@ interface main {
 
         // Initiate moving window + handle left-click and right-click focus
         updateMouseMovingWindowEndFrame()
+
+        // Update user-facing viewport list (g.Viewports -> g.PlatformIO.Viewports after filtering out some)
+        updateViewportsEndFrame()
 
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because childs may not exist yet         */
@@ -314,43 +343,139 @@ interface main {
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
         io.metricsRenderWindows = 0
-        g.drawDataBuilder.clear()
 
-        // Add background ImDrawList
-        if (g.backgroundDrawList.vtxBuffer.hasRemaining())
-            g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
+        // Add background ImDrawList (for each active viewport)
+        for (viewport in g.viewports) {
+            viewport.drawDataBuilder.clear()
+            if (viewport.drawLists[0] != null)
+                getBackgroundDrawList(viewport) addTo viewport.drawDataBuilder.layers[0]
+        }
 
         // Add ImDrawList to render
         val windowsToRenderTopMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
                 g.navWindowingTarget?.let { g.navWindowingList[0] })
-        g.windows
-                .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
-                .forEach { it.addToDrawData() }
-        windowsToRenderTopMost
-                .filterNotNull()
-                .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
-                .forEach { it.addToDrawData() }
-        g.drawDataBuilder.flattenIntoSingleLayer()
+        g.windows.forEach {
+            if (it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1])
+                it.addToDrawData()
+        }
+        windowsToRenderTopMost.forEach {
+            if (it?.isActiveAndVisible == true) // NavWindowingTarget is always temporarily displayed as the top-most window
+                it.addToDrawData()
+        }
 
-        // Draw software mouse cursor if requested
-        if (io.mouseDrawCursor)
-            g.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
-        // Add foreground ImDrawList
-        if (g.foregroundDrawList.vtxBuffer.hasRemaining())
-            g.foregroundDrawList addTo g.drawDataBuilder.layers[0]
+        val mouseCursorOffset = Vec2()
+        val mouseCursorSize = Vec2()
+        val mouseCursorUv = Array(4) { Vec2() }
+        if (io.mouseDrawCursor && g.mouseCursor != MouseCursor.None)
+            io.fonts.getMouseCursorTexData(g.mouseCursor, mouseCursorOffset, mouseCursorSize, mouseCursorUv)
 
-        // Setup ImDrawData structure for end-user
-        g.drawData setup g.drawDataBuilder.layers[0]
-        io.metricsRenderVertices = g.drawData.totalVtxCount
-        io.metricsRenderIndices = g.drawData.totalIdxCount
+        // Setup ImDrawData structures for end-user
+        io.metricsRenderVertices = 0
+        io.metricsRenderIndices = 0
+        for (viewport in g.viewports) {
+
+            viewport.drawDataBuilder.flattenIntoSingleLayer()
+
+            // Draw software mouse cursor if requested by io.MouseDrawCursor flag
+            // (note we scale cursor by current viewport/monitor, however Windows 10 for its own hardware cursor seems to be using a different scale factor)
+            if (mouseCursorSize.x > 0f && mouseCursorSize.y > 0f) { // TODO glm
+                val scale = style.mouseCursorScale * viewport.dpiScale
+                if (viewport.mainRect overlaps Rect(io.mousePos, io.mousePos + Vec2(mouseCursorSize.x + 2, mouseCursorSize.y + 2) * scale))
+                    getForegroundDrawList(viewport).renderMouseCursor(io.mousePos, scale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
+            }
+
+            // Add foreground ImDrawList (for each active viewport)
+            if (viewport.drawLists[1] != null)
+                getForegroundDrawList(viewport) addTo viewport.drawDataBuilder.layers[0]
+
+            setupViewportDrawData(viewport, viewport.drawDataBuilder.layers[0])
+            io.metricsRenderVertices += viewport.drawData!!.totalVtxCount
+            io.metricsRenderIndices += viewport.drawData!!.totalIdxCount
+        }
     }
 
     /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
      *  ::newFrame()   */
     val drawData: DrawData?
-        get() = when (Platform.get()) {
-            Platform.MACOSX -> g.drawData.clone()
-            else -> g.drawData
-        }.takeIf { it.valid }
+        //        get() = when (Platform.get()) { TODO check
+//            Platform.MACOSX -> g.drawData.clone()
+//            else -> g.drawData
+//        }.takeIf { it.valid }
+        get() = g.viewports[0].drawDataP.takeIf { it.valid }
+
+    companion object {
+
+        fun endFrameDrawDimmedBackgrounds() {
+
+            // Draw modal whitening background on _other_ viewports than the one the modal is one
+            val modalWindow = topMostPopupModal
+            val dimBgForModal = modalWindow != null
+            val dimBgForWindowList = g.navWindowingTargetAnim != null
+            if (dimBgForModal || dimBgForWindowList)
+                for (viewport in g.viewports) {
+                    if (modalWindow != null && viewport === modalWindow.viewport)
+                        continue
+                    if (g.navWindowingList.isNotEmpty() && viewport === g.navWindowingList[0].viewport)
+                        continue
+                    val anim = g.navWindowingTargetAnim
+                    if (anim != null && viewport === anim.viewport)
+                        continue
+                    val drawList = getForegroundDrawList(viewport)
+                    val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
+                    drawList.addRectFilled(viewport.pos, viewport.pos + viewport.size, dimBgCol)
+                }
+
+            // Draw modal whitening background between CTRL-TAB list
+            if (dimBgForWindowList) {
+                // Choose a draw list that will be front-most across all our children
+                val window = g.navWindowingTargetAnim!!
+                val drawList = findFrontMostVisibleChildWindow(window.rootWindow!!).drawList
+                drawList.pushClipRectFullScreen()
+
+                // Docking: draw modal whitening background on other nodes of a same dock tree
+                if (window.rootWindowDockStop!!.dockIsActive)
+                    if (window.rootWindow !== window.rootWindowDockStop)
+                        drawList.renderRectFilledWithHole(window.rootWindow!!.rect(), window.rootWindowDockStop!!.rect(), getColorU32(Col.NavWindowingDimBg, g.dimBgRatio), style.windowRounding)
+
+                // Draw navigation selection/windowing rectangle border
+                var rounding = window.windowRounding max style.windowRounding
+                val bb = window.rect()
+                bb expand g.fontSize
+                if (window.viewport!!.mainRect in bb) { // If a window fits the entire viewport, adjust its highlight inward
+                    bb expand (-g.fontSize - 1f)
+                    rounding = window.windowRounding
+                }
+                drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), rounding, -1, 3f)
+                drawList.popClipRect()
+            }
+        }
+
+        fun findFrontMostVisibleChildWindow(window: Window): Window {
+            var n = window.dc.childWindows.lastIndex
+            while (n >= 0)
+                if (window.dc.childWindows[n].isActiveAndVisible)
+                    return findFrontMostVisibleChildWindow(window.dc.childWindows[n])
+                else n--
+            return window
+        }
+
+        fun setupViewportDrawData(viewport: ViewportP, drawLists: ArrayList<DrawList>) {
+            val drawData = viewport.drawDataP
+            viewport.drawData = drawData // Make publicly accessible
+            drawData.valid = true
+            drawData.cmdLists.clear()
+            if (drawLists.isNotEmpty())
+                drawData.cmdLists += drawLists
+            drawData.totalIdxCount = 0
+            drawData.totalVtxCount = 0
+            drawData.displayPos put viewport.pos
+            drawData.displaySize put viewport.size
+            drawData.framebufferScale put io.displayFramebufferScale // FIXME-VIEWPORT: This may vary on a per-monitor/viewport basis?
+            for (n in 0 until drawLists.size) {
+                drawData.totalVtxCount += drawLists[n].vtxBuffer.lim
+                drawData.totalIdxCount += drawLists[n].idxBuffer.lim
+            }
+        }
+    }
 }

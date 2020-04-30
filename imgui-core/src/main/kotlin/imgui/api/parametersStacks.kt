@@ -28,7 +28,7 @@ interface parametersStacks {
     fun pushFont(font: Font = defaultFont) {
         font.setCurrent()
         g.fontStack.push(font)
-        g.currentWindow!!.drawList.pushTextureId(font.containerAtlas.texID)
+        g.currentWindow!!.drawList.pushTextureID(font.containerAtlas.texID)
     }
 
     fun popFont() {

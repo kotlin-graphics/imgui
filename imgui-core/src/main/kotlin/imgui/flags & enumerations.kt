@@ -37,7 +37,7 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
      *  unless noScrollbar is also set.  */
     NoScrollWithMouse(1 shl 4),
 
-    /** Disable user collapsing window by double-clicking on it */
+    /** Disable user collapsing window by double-clicking on it. Also referred to as "window menu button" within a docking node. */
     NoCollapse(1 shl 5),
 
     /** Resize every window to its content every frame  */
@@ -88,6 +88,9 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
      *  to allow code to cancel the closure (with a confirmation popup, etc.) without flicker. */
     UnsavedDocument(1 shl 20),
 
+    /** Disable docking of this window */
+    NoDocking(1 shl 21),
+
     NoNav(NoNavInputs or NoNavFocus),
 
     NoDecoration(NoTitleBar or NoResize or NoScrollbar or NoCollapse),
@@ -112,7 +115,10 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
     _Modal(1 shl 27),
 
     /** Don't use! For internal use by BeginMenu()  */
-    _ChildMenu(1 shl 28);
+    _ChildMenu(1 shl 28),
+
+    /** Don't use! For internal use by Begin()/NewFrame() */
+    _DockNodeHost(1 shl 29);
 
     infix fun and(b: WindowFlag): WindowFlags = i and b.i
     infix fun and(b: WindowFlags): WindowFlags = i and b
@@ -979,11 +985,28 @@ enum class ConfigFlag(@JvmField val i: ConfigFlags) {
      *  You may want to honor requests from imgui by reading ::mouseCursor yourself instead. */
     NoMouseCursorChange(1 shl 5),
 
+    // [BETA] Docking
+
+    /** Docking enable flags. */
+    DockingEnable(1 shl 6),
+
+    // [BETA] Viewports
+    // When using viewports it is recommended that your default value for ImGuiCol_WindowBg is opaque (Alpha=1.0) so transition to a viewport won't be noticeable.
+
+    /** Viewport enable flags (require both ImGuiConfigFlags_PlatformHasViewports + ImGuiConfigFlags_RendererHasViewports set by the respective back-ends) */
+    ViewportsEnable(1 shl 10),
+
+    /** [BETA: Don't use] FIXME-DPI: Reposition and resize imgui windows when the DpiScale of a viewport changed (mostly useful for the main viewport hosting other window). Note that resizing the main window itself is up to your application. */
+    DpiEnableScaleViewports(1 shl 14),
+
+    /** [BETA: Don't use] FIXME-DPI: Request bitmap-scaled fonts to match DpiScale. This is a very low-quality workaround. The correct way to handle DPI is _currently_ to replace the atlas and/or fonts in the Platform_OnChangedViewport callback, but this is all early work in progress. */
+    DpiEnableScaleFonts(1 shl 15),
+
     /** JVM custom, request back-end to not read the mouse status allowing you to provide your own custom input */
-    NoMouseUpdate(1 shl 12),
+    NoMouseUpdate(1 shl 16),
 
     /** JVM custom */
-    NoKeyboardUpdate(1 shl 13),
+    NoKeyboardUpdate(1 shl 17),
 
     /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core Dear ImGui)     */
@@ -1029,7 +1052,18 @@ enum class BackendFlag(@JvmField val i: BackendFlags) {
     HasSetMousePos(1 shl 2),
 
     /** Back-end Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
-    RendererHasVtxOffset(1 shl 3);
+    RendererHasVtxOffset(1 shl 3),
+
+    // [BETA] Viewports
+
+    /** Back-end Platform supports multiple viewports. */
+    PlatformHasViewports(1 shl 10),
+
+    /** Back-end Platform supports setting io.MouseHoveredViewport to the viewport directly under the mouse _IGNORING_ viewports with the ImGuiViewportFlags_NoInputs flag and _REGARDLESS_ of whether another viewport is focused and may be capturing the mouse. This information is _NOT EASY_ to provide correctly with most high-level engines! Don't set this without studying how the examples/ back-end handle it! */
+    HasMouseHoveredViewport(1 shl 11),
+
+    /** Back-end Renderer supports multiple viewports. */
+    RendererHasViewports(1 shl 12);
 
     infix fun and(b: BackendFlag): BackendFlags = i and b.i
     infix fun and(b: BackendFlags): BackendFlags = i and b
@@ -1099,6 +1133,10 @@ enum class Col {
     TabActive,
     TabUnfocused,
     TabUnfocusedActive,
+    /** Preview overlay color when about to docking something */
+    DockingPreview,
+    /** Background color for empty node (e.g. CentralNode with no window docked into it) */
+    DockingEmptyBg,
     PlotLines,
     PlotLinesHovered,
     PlotHistogram,

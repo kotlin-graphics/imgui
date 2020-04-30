@@ -6,6 +6,8 @@ import glm_.vec4.Vec4
 import imgui.ImGui.io
 import imgui.TextureID
 import imgui.classes.DrawList
+import imgui.classes.Viewport
+import imgui.classes.ViewportP
 import imgui.logger
 import imgui.resize
 import kool.*
@@ -298,6 +300,9 @@ class DrawData {
     /** Amount of pixels for each unit of DisplaySize. Based on io.DisplayFramebufferScale. Generally (1,1) on normal display, (2,2) on OSX with Retina display. */
     var framebufferScale = Vec2()
 
+    /** Viewport carrying the ImDrawData instance, might be of use to the renderer (generally not). */
+    var ownerViewport: Viewport? = null
+
     // Functions
 
     /** The ImDrawList are owned by ImGuiContext! */
@@ -309,6 +314,7 @@ class DrawData {
         displayPos put 0f
         displaySize put 0f
         framebufferScale put 0f
+        ownerViewport = null
     }
 
     /** Helper to convert all buffers from indexed to non-indexed, in case you cannot render indexed.
@@ -351,22 +357,5 @@ class DrawData {
         ret.framebufferScale put framebufferScale
 
         return ret
-    }
-
-    /** ~SetupDrawData */
-    infix fun setup(drawLists: ArrayList<DrawList>) {
-        valid = true
-        cmdLists.clear()
-        if (drawLists.isNotEmpty())
-            cmdLists += drawLists
-        totalIdxCount = 0
-        totalVtxCount = 0
-        displayPos put 0f
-        displaySize put io.displaySize
-        framebufferScale put io.displayFramebufferScale
-        for (n in 0 until drawLists.size) {
-            totalVtxCount += drawLists[n].vtxBuffer.lim
-            totalIdxCount += drawLists[n].idxBuffer.lim
-        }
     }
 }

@@ -38,6 +38,38 @@ fun errorCheckNewFrameSanityChecks() {
     // Perform simple check: the beta io.ConfigWindowsResizeFromEdges option requires back-end to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
     if (io.configWindowsResizeFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
         io.configWindowsResizeFromEdges = false
+
+    // Perform simple check: error if Docking or Viewport are enabled _exactly_ on frame 1 (instead of frame 0 or later), which is a common error leading to loss of .ini data.
+    if (g.frameCount == 1 && io.configFlags has ConfigFlag.DockingEnable && g.configFlagsLastFrame hasnt ConfigFlag.DockingEnable)
+        assert(false) { "Please set DockingEnable before the first call to NewFrame()! Otherwise you will lose your .ini settings!" }
+    if (g.frameCount == 1 && io.configFlags has ConfigFlag.ViewportsEnable && g.configFlagsLastFrame hasnt ConfigFlag.ViewportsEnable)
+        assert(false) { "Please set ViewportsEnable before the first call to NewFrame()! Otherwise you will lose your .ini settings!" }
+
+    // Perform simple checks: multi-viewport and platform windows support
+    if (io.configFlags has ConfigFlag.ViewportsEnable) {
+        if (io.backendFlags has BackendFlag.PlatformHasViewports && io.backendFlags has BackendFlag.RendererHasViewports) {
+            assert(g.frameCount == 0 || g.frameCount == g.frameCountPlatformEnded) { "Forgot to call UpdatePlatformWindows() in main loop after EndFrame()? Check examples/ applications for reference." }
+            assert(g.platformIO.platform_CreateWindow != null) { "Platform init didn't install handlers?" }
+            assert(g.platformIO.platform_DestroyWindow != null) { "Platform init didn't install handlers?" }
+            assert(g.platformIO.platform_GetWindowPos != null) { "Platform init didn't install handlers?" }
+            assert(g.platformIO.platform_SetWindowPos != null) { "Platform init didn't install handlers?" }
+            assert(g.platformIO.platform_GetWindowSize != null) { "Platform init didn't install handlers?" }
+            assert(g.platformIO.platform_SetWindowSize != null) { "Platform init didn't install handlers?" }
+            assert(g.platformIO.monitors.isNotEmpty()) { "Platform init didn't setup Monitors list?" }
+            assert(g.viewports[0].platformUserData != null || g.viewports[0].platformHandle != null) { "Platform init didn't setup main viewport." }
+            if (io.configDockingTransparentPayload && io.configFlags has ConfigFlag.DockingEnable)
+                assert(g.platformIO.platform_SetWindowAlpha != null) { "Platform_SetWindowAlpha handler is required to use io.ConfigDockingTransparent!" }
+        } else
+        // Disable feature, our back-ends do not support it
+            io.configFlags = io.configFlags wo ConfigFlag.ViewportsEnable
+
+        // Perform simple checks on platform monitor data + compute a total bounding box for quick early outs
+        g.platformIO.monitors.forEach {
+            assert(it.mainSize.x > 0f && it.mainSize.y > 0f) { "Monitor bounds not setup properly." } // TODO glm
+            assert(it.workSize.x > 0f && it.workSize.y > 0f) { "Monitor bounds not setup properly. If you don't have work area information, just copy Min/Max into them." }
+            assert(it.dpiScale != 0f)
+        }
+    }
 }
 
 fun errorCheckEndFrameSanityChecks() {

@@ -7,7 +7,7 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.popID
 import imgui.ImGui.treePop
-import IMGUI_HAS_TABLE
+import helpers.IMGUI_HAS_TABLE
 import engine.core.TestRunFlag
 import engine.core.TestStatus
 import imgui.WindowFlag as Wf

@@ -81,7 +81,7 @@ class Style {
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
      *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */
     var displaySafeAreaPadding = Vec2(3)
-    /** Scale software rendered mouse cursor (when io.MouseDrawCursor is enabled). May be removed later.    */
+    /** Scale software rendered mouse cursor (when io.MouseDrawCursor is enabled). We apply per-monitor DPI scaling over this scale. May be removed later.    */
     var mouseCursorScale = 1f
     /** Enable anti-aliasing on lines/borders. Disable if you are really short on CPU/GPU.  */
     var antiAliasedLines = true

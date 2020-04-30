@@ -19,9 +19,9 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.*
-import imgui.internal.classes.Window
 import imgui.internal.classes.PopupData
 import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.static.navCalcPreferredRefPos
 import imgui.static.navRestoreLastChildNavWindow
 import uno.kotlin.getValue
@@ -35,7 +35,7 @@ internal interface PopupsModalsTooltips {
     fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: WindowFlags): Boolean {
 
         val parentWindow = g.currentWindow!!
-        var flags = flags_ or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf._ChildWindow
+        var flags = flags_ or Wf.NoTitleBar or Wf.NoResize or Wf.NoSavedSettings or Wf._ChildWindow or Wf.NoDocking
         flags = flags or (parentWindow.flags and Wf.NoMove.i)  // Inherit the NoMove flag
 
         // Size
@@ -49,7 +49,7 @@ internal interface PopupsModalsTooltips {
         setNextWindowSize(size)
 
         // Build up name. If you need to append to a same child from multiple location in the ID stack, use BeginChild(ImGuiID id) with a stable value.
-        val postfix = if(name.isEmpty()) "" else "_"
+        val postfix = if (name.isEmpty()) "" else "_"
         val title = "${parentWindow.name}/$name$postfix%08X".format(style.locale, id)
         val backupBorderSize = style.childBorderSize
         if (!border) style.childBorderSize = 0f
@@ -93,7 +93,7 @@ internal interface PopupsModalsTooltips {
         val popupRef = PopupData(popupId = id, window = null, sourceWindow = g.navWindow, openFrameCount = g.frameCount,
                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
                 openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
-//        println("" + g.openPopupStack.size +", "+currentStackSize)
+        IMGUI_DEBUG_LOG_POPUP("OpenPopupEx(0x%08X)".format(id))
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
         else {
@@ -121,6 +121,7 @@ internal interface PopupsModalsTooltips {
 
     fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
+        IMGUI_DEBUG_LOG_POPUP("ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=$restoreFocusToWindowUnderPopup")
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
         var focusWindow = g.openPopupStack[remaining].sourceWindow
         val popupWindow = g.openPopupStack[remaining].window
@@ -173,7 +174,7 @@ internal interface PopupsModalsTooltips {
             }
 
         if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
-            //IMGUI_DEBUG_LOG("ClosePopupsOverWindow(%s) -> ClosePopupToLevel(%d)\n", ref_window->Name, popup_count_to_keep);
+            IMGUI_DEBUG_LOG_POPUP("ClosePopupsOverWindow(\"${refWindow!!.name}\") -> ClosePopupToLevel($popupCountToKeep)")
             closePopupToLevel(popupCountToKeep, restoreFocusToWindowUnderPopup)
         }
     }
@@ -189,12 +190,12 @@ internal interface PopupsModalsTooltips {
             return false
         }
 
-        var flags =  flags_
+        var flags = flags_
         val name = when {
             flags has Wf._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
             else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
         }
-        flags = flags or Wf._Popup
+        flags = flags or Wf._Popup or Wf.NoDocking
         val isOpen = begin(name, null, flags)
         if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
             endPopup()
@@ -206,7 +207,7 @@ internal interface PopupsModalsTooltips {
      *  @param extraFlags WindowFlag   */
     fun beginTooltipEx(extraFlags: WindowFlags, tooltipFlags_: TooltipFlags) {
         var tooltipFlags = tooltipFlags_
-        if (g.dragDropWithinSource || g.dragDropWithinTarget)        {
+        if (g.dragDropWithinSource || g.dragDropWithinTarget) {
             // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
             // Whatever we do we want to call SetNextWindowPos() to enforce a tooltip position and disable clipping the tooltip without our display area, like regular tooltip do.
@@ -228,7 +229,8 @@ internal interface PopupsModalsTooltips {
                     windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
                 }
             }
-        val flags = Wf._Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
+        val flags = Wf._Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or
+                Wf.NoSavedSettings or Wf.AlwaysAutoResize or Wf.NoDocking
         begin(windowName, null, flags or extraFlags)
     }
 
@@ -242,15 +244,14 @@ internal interface PopupsModalsTooltips {
 
     fun findBestWindowPosForPopup(window: Window): Vec2 {
 
-        val rOuter = window.getAllowedExtentRect()
         if (window.flags has Wf._ChildMenu) {
             /*  Child menus typically request _any_ position within the parent menu item,
                 and then we move the new menu outside the parent bounds.
                 This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
-            assert(g.currentWindow === window)
-            val parentWindow = g.currentWindowStack[g.currentWindowStack.size - 2]
+            val parentWindow = window.parentWindow!!
             // We want some overlap to convey the relative depth of each menu (currently the amount of overlap is hard-coded to style.ItemSpacing.x).
             val horizontalOverlap = style.itemInnerSpacing.x
+            val rOuter = window.allowedExtentRect
             val rAvoid = parentWindow.run {
                 when {
                     dc.menuBarAppending -> Rect(-Float.MAX_VALUE, clipRect.min.y, Float.MAX_VALUE, clipRect.max.y) // Avoid parent menu-bar. If we wanted multi-line menu-bar, we may instead want to have the calling window setup e.g. a NextWindowData.PosConstraintAvoidRect field
@@ -260,6 +261,7 @@ internal interface PopupsModalsTooltips {
             return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
         }
         if (window.flags has Wf._Popup) {
+            val rOuter = window.allowedExtentRect
             val rAvoid = Rect(window.pos.x - 1, window.pos.y - 1, window.pos.x + 1, window.pos.y + 1)
             return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter, rAvoid)
         }
@@ -267,6 +269,7 @@ internal interface PopupsModalsTooltips {
             // Position tooltip (always follows mouse)
             val sc = style.mouseCursorScale
             val refPos = navCalcPreferredRefPos()
+            val rOuter = window.allowedExtentRect
             val rAvoid = when {
                 !g.navDisableHighlight && g.navDisableMouseHover && !(io.configFlags has ConfigFlag.NavEnableSetMousePos) ->
                     Rect(refPos.x - 16, refPos.y - 8, refPos.x + 16, refPos.y + 8)
@@ -282,8 +285,11 @@ internal interface PopupsModalsTooltips {
         return Vec2(window.pos)
     }
 
-    /** rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
-     *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it. */
+    /** r_avoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
+     *  r_outer = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it.
+     *  (r_outer is usually equivalent to the viewport rectangle minus padding, but when multi-viewports are enabled and monitor
+     *  information are available, it may represent the entire platform monitor from the frame of reference of the current viewport.
+     *  this allows us to have tooltips/popups displayed out of the parent viewport.) */
     fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
                                     policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
 

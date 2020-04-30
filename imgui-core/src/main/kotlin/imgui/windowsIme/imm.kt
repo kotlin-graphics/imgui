@@ -3,7 +3,9 @@ package imgui.windowsIme
 import glm_.BYTES
 import glm_.L
 import imgui.MINECRAFT_BEHAVIORS
+import kool.Adr
 import kool.BYTES
+import kool.adr
 import org.lwjgl.system.*
 import org.lwjgl.system.MemoryUtil.memGetLong
 import org.lwjgl.system.MemoryUtil.memPutLong
@@ -32,18 +34,19 @@ object imm {
     fun releaseContext(hwnd: HWND, himc: HIMC) = JNI.callPPI(hwnd.L, himc.L, ImmReleaseContext)
 
     // bit field for IMC_SETCOMPOSITIONWINDOW, IMC_SETCANDIDATEWINDOW
-    val CFS_DEFAULT = 0x0000
-    val CFS_RECT = 0x0001
-    val CFS_POINT = 0x0002
-    val CFS_FORCE_POSITION = 0x0020
-    val CFS_CANDIDATEPOS = 0x0040
-    val CFS_EXCLUDE = 0x0080
+    val CFS_DEFAULT = DWORD(0x0000)
+    val CFS_RECT = DWORD(0x0001)
+    val CFS_POINT = DWORD(0x0002)
+    val CFS_FORCE_POSITION = DWORD(0x0020)
+    val CFS_CANDIDATEPOS = DWORD(0x0040)
+    val CFS_EXCLUDE = DWORD(0x0080)
 }
 
 
 // TODO -> uno
 inline class HIMC(val L: Long)
 
+fun DWORD(i: Int) = DWORD(i.L)
 inline class DWORD(val L: Long) {
     companion object {
         val BYTES get() = Long.BYTES
@@ -97,34 +100,31 @@ class CANDIDATEFORM constructor(val adr: Long) {
  *      RECT  rcArea;
  * } COMPOSITIONFORM
  */
-class COMPOSITIONFORM constructor(val adr: Long) {
+class COMPOSITIONFORM constructor(val adr: Adr) {
 
     val buffer: ByteBuffer = MemoryUtil.memByteBuffer(adr, size)
 
     constructor() : this(MemoryUtil.nmemAlloc(size.L))
+    constructor(stack: MemoryStack) : this(stack.calloc(size).adr)
 
     var dwStyle: DWORD
-        get() = DWORD(memGetLong(adr + ofs.dwStyle))
-        set(value) = memPutLong(adr + ofs.dwStyle, value.L)
+        get() = DWORD(memGetLong(adr + ofs_dwStyle))
+        set(value) = memPutLong(adr + ofs_dwStyle, value.L)
 
-    var ptCurrentPos: POINT
-        get() = POINT(adr + ofs.ptCurrentPos)
-        set(value) = value.to(adr + ofs.ptCurrentPos)
+    var ptCurrentPos = POINT(adr + ofs_ptCurrentPos)
 
     var rcArea: RECT
-        get() = RECT(adr + ofs.rcArea)
-        set(value) = value.to(adr + ofs.rcArea)
+        get() = RECT(adr + ofs_rcArea)
+        set(value) = value.to(adr + ofs_rcArea)
 
     fun free() = MemoryUtil.nmemFree(adr)
 
     companion object {
         val size = 2 * Int.BYTES + POINT.size + RECT.size
-    }
 
-    object ofs {
-        val dwStyle = 0
-        val ptCurrentPos = dwStyle + POINT.size
-        val rcArea = ptCurrentPos + RECT.size
+        val ofs_dwStyle = 0
+        val ofs_ptCurrentPos = ofs_dwStyle + POINT.size
+        val ofs_rcArea = ofs_ptCurrentPos + RECT.size
     }
 }
 
@@ -138,17 +138,15 @@ class POINT constructor(val adr: Long) {
     val buffer: ByteBuffer = MemoryUtil.memByteBuffer(adr, size)
 
     var x: Long
-        get() = MemoryUtil.memGetLong(adr + ofs.x)
-        set(value) = MemoryUtil.memPutLong(adr + ofs.x, value)
+        get() = memGetLong(adr + ofs.x)
+        set(value) = memPutLong(adr + ofs.x, value)
     var y: Long
-        get() = MemoryUtil.memGetLong(adr + ofs.y)
-        set(value) = MemoryUtil.memPutLong(adr + ofs.y, value)
-
-    constructor() : this(MemoryUtil.nmemAlloc(size.L))
+        get() = memGetLong(adr + ofs.y)
+        set(value) = memPutLong(adr + ofs.y, value)
 
     fun to(adr: Long) {
-        MemoryUtil.memPutLong(adr + ofs.x, x)
-        MemoryUtil.memPutLong(adr + ofs.y, y)
+        memPutLong(adr + ofs.x, x)
+        memPutLong(adr + ofs.y, y)
     }
 
     companion object {
@@ -174,25 +172,25 @@ class RECT(val adr: Long) {
     val buffer: ByteBuffer = MemoryUtil.memByteBuffer(adr, size)
 
     var left: Long
-        get() = MemoryUtil.memGetLong(adr + ofs.left)
-        set(value) = MemoryUtil.memPutLong(adr + ofs.left, value)
+        get() = memGetLong(adr + ofs.left)
+        set(value) = memPutLong(adr + ofs.left, value)
     var top: Long
-        get() = MemoryUtil.memGetLong(adr + ofs.top)
-        set(value) = MemoryUtil.memPutLong(adr + ofs.top, value)
+        get() = memGetLong(adr + ofs.top)
+        set(value) = memPutLong(adr + ofs.top, value)
     var right: Long
-        get() = MemoryUtil.memGetLong(adr + ofs.right)
-        set(value) = MemoryUtil.memPutLong(adr + ofs.right, value)
+        get() = memGetLong(adr + ofs.right)
+        set(value) = memPutLong(adr + ofs.right, value)
     var bottom: Long
-        get() = MemoryUtil.memGetLong(adr + ofs.bottom)
-        set(value) = MemoryUtil.memPutLong(adr + ofs.bottom, value)
+        get() = memGetLong(adr + ofs.bottom)
+        set(value) = memPutLong(adr + ofs.bottom, value)
 
     constructor() : this(MemoryUtil.nmemAlloc(size.L))
 
     fun to(adr: Long) {
-        MemoryUtil.memPutLong(adr + ofs.left, left)
-        MemoryUtil.memPutLong(adr + ofs.top, top)
-        MemoryUtil.memPutLong(adr + ofs.right, right)
-        MemoryUtil.memPutLong(adr + ofs.bottom, bottom)
+        memPutLong(adr + ofs.left, left)
+        memPutLong(adr + ofs.top, top)
+        memPutLong(adr + ofs.right, right)
+        memPutLong(adr + ofs.bottom, bottom)
     }
 
     companion object {

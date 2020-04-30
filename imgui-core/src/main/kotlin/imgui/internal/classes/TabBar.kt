@@ -8,6 +8,7 @@ import imgui.*
 import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.beginCombo
 import imgui.ImGui.buttonBehavior
+import imgui.ImGui.dockContextQueueUndockWindow
 import imgui.ImGui.endCombo
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.io
@@ -42,22 +43,29 @@ import kotlin.reflect.KMutableProperty0
 /** Storage for a tab bar (sizeof() 92~96 bytes) */
 class TabBar {
     val tabs = ArrayList<TabItem>()
+
     /** Zero for tab-bars used by docking */
     var id: ID = 0
+
     /** Selected tab/window */
     var selectedTabId: ID = 0
     var nextSelectedTabId: ID = 0
+
     /** Can occasionally be != SelectedTabId (e.g. when previewing contents for CTRL+TAB preview) */
     var visibleTabId: ID = 0
     var currFrameVisible = -1
     var prevFrameVisible = -1
     var barRect = Rect()
+
     /** Record the height of contents submitted below the tab bar */
     var lastTabContentHeight = 0f
+
     /** Distance from BarRect.Min.x, locked during layout */
     var offsetMax = 0f
+
     /** Ideal offset if all tabs were visible and not clipped */
     var offsetMaxIdeal = 0f
+
     /** Distance from BarRect.Min.x, incremented with each BeginTabItem() call, not used if ImGuiTabBarFlags_Reorderable if set. */
     var offsetNextTab = 0f
     var scrollingAnim = 0f
@@ -69,25 +77,30 @@ class TabBar {
     var reorderRequestDir = 0
     var wantLayout = false
     var visibleTabWasSubmitted = false
+
     /** For BeginTabItem()/EndTabItem() */
     var lastTabItemIdx = -1
+
     /** style.FramePadding locked at the time of BeginTabBar() */
     var framePadding = Vec2()
+
     /** For non-docking tab bar we re-append names in a contiguous buffer. */
     val tabsNames = ArrayList<String>()
 
     val TabItem.order: Int
         get() = tabs.indexOf(this)
 
-    fun getTabName(tab: TabItem): String = tab.name
-
     val TabItem.name: String
         get() = window?.name ?: tabsNames[nameOffset]
+
+    // classic overload (for external usage)
+    infix fun getTabOrder(tab: TabItem): Int = tab.order
+    infix fun getTabName(tab: TabItem): String = tab.name
 
     // Tab Bars
 
     /** ~ beginTabBarEx */
-    fun beginEx(bb: Rect, flags__: TabBarFlags): Boolean {
+    fun beginEx(bb: Rect, flags__: TabBarFlags, dockNode: DockNode?): Boolean {
 
         val window = g.currentWindow!!
         if (window.skipItems) return false
@@ -100,8 +113,8 @@ class TabBar {
         g.currentTabBarStack += tabBarRef
         g.currentTabBar = this
         if (currFrameVisible == g.frameCount) {
-            //printf("[%05d] BeginTabBarEx already called this frame\n", g.FrameCount);
-            assert(false)
+            //IMGUI_DEBUG_LOG("BeginTabBarEx already called this frame\n", g.FrameCount);
+//            assert(false)
             return true
         }
 
@@ -128,7 +141,11 @@ class TabBar {
         // Draw separator
         val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
         val y = barRect.max.y - 1f
-        run {
+        if (dockNode != null) {
+            val separatorMinX = dockNode.pos.x + window.windowBorderSize
+            val separatorMaxX = dockNode.pos.x + dockNode.size.x - window.windowBorderSize
+            window.drawList.addLine(Vec2(separatorMinX, y), Vec2(separatorMaxX, y), col.u32, 1f)
+        } else {
             val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
             val separatorMaxX = barRect.max.x + floor(window.windowPadding.x * 0.5f)
             window.drawList.addLine(Vec2(separatorMinX, y), Vec2(separatorMaxX, y), col.u32, 1f)
@@ -143,9 +160,39 @@ class TabBar {
             else -> PtrOrIndex(this)
         }
 
-    fun findTabByID(tabId: ID): TabItem? = when (tabId) {
+    /** ~TabBarFindTabByID */
+    infix fun findTabByID(tabId: ID): TabItem? = when (tabId) {
         0 -> null
         else -> tabs.find { it.id == tabId }
+    }
+
+    /** FIXME: See references to #2304 in TODO.txt
+     *  ~tabBarFindMostRecentlySelectedTabForActiveWindow */
+    fun findMostRecentlySelectedTabForActiveWindow(): TabItem? {
+        var mostRecentlySelectedTab: TabItem? = null
+        tabs.forEach {
+            if (mostRecentlySelectedTab == null || mostRecentlySelectedTab!!.lastFrameSelected < it.lastFrameSelected)
+                if (it.window?.wasActive == true)
+                    mostRecentlySelectedTab = it
+        }
+        return mostRecentlySelectedTab
+    }
+
+    /** The purpose of this call is to register tab in advance so we can control their order at the time they appear.
+     *  Otherwise calling this is unnecessary as tabs are appending as needed by the BeginTabItem() function.
+     *  ~TabBarAddTab */
+    fun addTab(tabFlags: TabItemFlags, window: Window) {
+        assert(findTabByID(window.id) == null)
+        assert(g.currentTabBar !== this) { "Can't work while the tab bar is active as our tab doesn't have an X offset yet, in theory we could/should test something like (tab_bar->CurrFrameVisible < g.FrameCount) but we'd need to solve why triggers the commented early-out assert in BeginTabBarEx() (probably dock node going from implicit to explicit in same frame)" }
+
+        val newTab = TabItem()
+        newTab.id = window.id
+        newTab.flags = tabFlags
+        newTab.lastFrameVisible = currFrameVisible   // Required so BeginTabBar() doesn't ditch the tab
+        if (newTab.lastFrameVisible == -1)
+            newTab.lastFrameVisible = g.frameCount - 1
+        newTab.window = window                                // Required so tab bar layout can compute the tab width before tab submission
+        tabs += newTab
     }
 
     /** The *TabId fields be already set by the docking system _before_ the actual TabItem was created, so we clear them regardless.
@@ -159,7 +206,7 @@ class TabBar {
 
     /** Called on manual closure attempt
      *  ~ tabBarCloseTab     */
-    fun closeTab(tab: TabItem) {
+    infix fun closeTab(tab: TabItem) {
         if (visibleTabId == tab.id && tab.flags hasnt TabItemFlag.UnsavedDocument) {
             // This will remove a frame of lag for selecting another tab on closure.
             // However we don't run it in the case where the 'Unsaved' flag is set, so user gets a chance to fully undo the closure
@@ -179,7 +226,7 @@ class TabBar {
         reorderRequestDir = dir
     }
 
-    fun tabItemEx(label: String, pOpen_: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
+    fun tabItemEx(label: String, pOpen_: KMutableProperty0<Boolean>?, flags_: TabItemFlags, dockedWindow: Window?): Boolean {
 
         var pOpen = pOpen_
         var flags = flags_
@@ -226,10 +273,17 @@ class TabBar {
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
         tab.lastFrameVisible = g.frameCount
         tab.flags = flags
+        tab.window = dockedWindow
 
         // Append name with zero-terminator
-        tab.nameOffset = tabsNames.size
-        tabsNames += label
+        if (flags has TabBarFlag._DockNode) {
+            assert(tab.window != null)
+            tab.nameOffset = -1
+        } else {
+            assert(tab.window == null)
+            tab.nameOffset = tabsNames.size
+            tabsNames += label // Append name _with_ the zero-terminator.
+        }
 
         // If we are not reorderable, always reset offset based on submission order.
         // (We already handled layout and sizing using the previous known order, but sizing is not affected by order!)
@@ -251,7 +305,7 @@ class TabBar {
             visibleTabWasSubmitted = true
 
         // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
-        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing)
+        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing && dockedWindow == null)
             if (tabs.size == 1 && this.flags hasnt TabBarFlag.AutoSelectNewTabs)
                 tabContentsVisible = true
 
@@ -292,7 +346,7 @@ class TabBar {
 
         // Click to Select a tab
         var buttonFlags = ButtonFlag.PressedOnClick or ButtonFlag.AllowItemOverlap
-        if (g.dragDropActive)
+        if (g.dragDropActive && !g.dragDropPayload.isDataType(IMGUI_PAYLOAD_TYPE_WINDOW))
             buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
         if (pressed)
@@ -303,16 +357,57 @@ class TabBar {
         if (!held)
             setItemAllowOverlap()
 
-        // Drag and drop: re-order tabs
-        if (held && !tabAppearing && isMouseDragging(MouseButton.Left))
-            if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable)
-            // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
+        // Drag and drop a single floating window node moves it
+        val node = dockedWindow?.dockNode
+        val singleFloatingWindowNode = node?.isFloatingNode == true && node.windows.size == 1
+        if (held && singleFloatingWindowNode && isMouseDragging(MouseButton.Left, 0f))
+        // Move
+            dockedWindow!!.startMouseMoving()
+        else if (held && !tabAppearing && isMouseDragging(MouseButton.Left)) {
+            // Drag and drop: re-order tabs
+            var dragDistanceFromEdgeX = 0f
+            if (!g.dragDropActive && (flags has TabBarFlag.Reorderable || dockedWindow != null)) {
+                // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
                 if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
-                    if (this.flags has TabBarFlag.Reorderable)
+                    dragDistanceFromEdgeX = bb.min.x - io.mousePos.x
+                    if (flags has TabBarFlag.Reorderable)
                         queueChangeTabOrder(tab, -1)
-                } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x)
-                    if (this.flags has TabBarFlag.Reorderable)
+                } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x) {
+                    dragDistanceFromEdgeX = io.mousePos.x - bb.max.x
+                    if (flags has TabBarFlag.Reorderable)
                         queueChangeTabOrder(tab, +1)
+                }
+            }
+
+            // Extract a Dockable window out of it's tab bar
+            if (dockedWindow != null && dockedWindow.flags hasnt WindowFlag.NoMove) {
+                // We use a variable threshold to distinguish dragging tabs within a tab bar and extracting them out of the tab bar
+                var undockingTab = g.dragDropActive && g.dragDropPayload.sourceId == id
+
+                if (!undockingTab) { //&& (!g.IO.ConfigDockingWithShift || g.IO.KeyShift)
+                    val thresholdBase = g.fontSize
+                    //float threshold_base = g.IO.ConfigDockingWithShift ? g.FontSize * 0.5f : g.FontSize;
+                    val thresholdX = thresholdBase * 2.2f
+                    val thresholdY = thresholdBase * 1.5f + clamp((abs(io.mouseDragMaxDistanceAbs[0].x) - thresholdBase * 2f) * 0.2f, 0f, thresholdBase * 4f)
+                    //GetForegroundDrawList()->AddRect(ImVec2(bb.Min.x - threshold_x, bb.Min.y - threshold_y), ImVec2(bb.Max.x + threshold_x, bb.Max.y + threshold_y), IM_COL32_WHITE); // [DEBUG]
+
+                    val distanceFromEdgeY = max(bb.min.y - io.mousePos.y, io.mousePos.y - bb.max.y)
+                    if (distanceFromEdgeY >= thresholdY)
+                        undockingTab = true
+                    else if (dragDistanceFromEdgeX > thresholdX)
+                        if ((reorderRequestDir < 0 && tab.order == 0) || (reorderRequestDir > 0 && tab.order == tabs.lastIndex))
+                            undockingTab = true
+                }
+
+                if (undockingTab) {
+                    // Undock
+                    dockContextQueueUndockWindow(g, dockedWindow)
+                    g.movingWindow = dockedWindow
+                    g.activeId = g.movingWindow!!.moveId
+                    g.activeIdClickOffset.minusAssign(g.movingWindow!!.pos - bb.min)
+                }
+            }
+        }
 
 //        if (false)
 //            if (hovered && g.hoveredIdNotActiveTimer > 0.5f && bb.width < tab.widthContents)        {
@@ -447,7 +542,7 @@ class TabBar {
             // Refresh tab width immediately, otherwise changes of style e.g. style.FramePadding.x would noticeably lag in the tab bar.
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
-            val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
+            val hasCloseButton = tab.window?.hasCloseButton ?: tab.flags hasnt TabItemFlag._NoCloseButton
             tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
 
             widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.contentWidth
@@ -508,6 +603,12 @@ class TabBar {
         // Lock in visible tab
         visibleTabId = selectedTabId
         visibleTabWasSubmitted = false
+
+        // CTRL+TAB can override visible tab temporarily
+        if (g.navWindowingTarget?.dockNode?.tabBar === this) {
+            visibleTabId = g.navWindowingTarget!!.id
+            scrollTrackSelectedTabID = g.navWindowingTarget!!.id
+        }
 
         // Update scrolling
         if (scrollTrackSelectedTabID != 0)

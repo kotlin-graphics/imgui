@@ -106,7 +106,7 @@ class PlatformIO {
     var platform_SetWindowPos: Platform_SetWindowPos? = null                // . . U . .  // Set platform window position (given the upper-left corner of client area)
     var platform_GetWindowPos: Platform_GetWindowPos? = null                // N . . . .  //
     var platform_SetWindowSize: Platform_SetWindowSize? = null              // . . U . .  // Set platform window client area size (ignoring OS decorations such as OS title bar etc.)
-    var Platform_GetWindowSize: Platform_GetWindowSize? = null              // N . . . .  // Get platform window client area size
+    var platform_GetWindowSize: Platform_GetWindowSize? = null              // N . . . .  // Get platform window client area size
     var platform_SetWindowFocus: Platform_SetWindowFocus? = null            // N . . . .  // Move window to front and set input focus
     var platform_GetWindowFocus: Platform_GetWindowFocus? = null            // . . U . .  //
     var platform_GetWindowMinimized: Platform_GetWindowMinimized? = null    // N . . . .  // Get platform window minimized state. When minimized, we generally won't attempt to get/set size and contents will be culled more easily

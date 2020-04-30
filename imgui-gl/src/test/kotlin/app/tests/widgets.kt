@@ -875,7 +875,7 @@ fun registerTests_Widgets(e: TestEngine) {
         }
     }
 
-//    #ifdef IMGUI_HAS_DOCK
+//    #ifdef helpers.getIMGUI_HAS_DOCK
 //        // ## Test Dockspace within a TabItem
 //        t = REGISTER_TEST("widgets", "widgets_tabbar_dockspace");
 //    t->GuiFunc = [](ImGuiTestContext* ctx)

@@ -28,7 +28,7 @@ import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
-import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
 import imgui.classes.TextFilter
 import imgui.demo.showExampleApp.*
 import imgui.dsl.collapsingHeader
@@ -186,9 +186,9 @@ object ExampleApp {
 
                 checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
                 checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
-                sameLine(); helpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
+                sameLine(); metricsHelpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
-                sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
+                sameLine(); metricsHelpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
                 checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
                 if (io.configFlags has ConfigFlag.NoMouse) { // Create a way to restore this flag otherwise we could be stuck completely!
 
@@ -200,18 +200,18 @@ object ExampleApp {
                         io.configFlags = io.configFlags wo ConfigFlag.NoMouse
                 }
                 checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
-                sameLine(); helpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
+                sameLine(); metricsHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
-                sameLine(); helpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
+                sameLine(); metricsHelpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
                 checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)
-                sameLine(); helpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
+                sameLine(); metricsHelpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
-                sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+                sameLine(); metricsHelpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
                 separator()
             }
             treeNode("Backend Flags") {
-                helpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.\nHere we expose then as read-only fields to avoid breaking interactions with your back-end.")
+                metricsHelpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.\nHere we expose then as read-only fields to avoid breaking interactions with your back-end.")
                 val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying actual back-end flags.
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
@@ -221,14 +221,14 @@ object ExampleApp {
             }
 
             treeNode("Style") {
-                helpMarker("The same contents can be accessed in 'Tools->Style Editor' or by calling the ShowStyleEditor() function.")
+                metricsHelpMarker("The same contents can be accessed in 'Tools->Style Editor' or by calling the ShowStyleEditor() function.")
                 StyleEditor()
                 separator()
             }
 
             treeNode("Capture/Logging") {
                 textWrapped("The logging API redirects all text output so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded.")
-                helpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
+                metricsHelpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
                 logButtons()
                 textWrapped("You can also call ImGui::LogText() to output directly to the log without a visual output.")
                 if (button("Copy \"Hello, world!\" to clipboard")) {

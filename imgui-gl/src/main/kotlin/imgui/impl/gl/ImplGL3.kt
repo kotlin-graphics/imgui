@@ -1,31 +1,29 @@
 package imgui.impl.gl
 
 import glm_.L
-import glm_.f
 import glm_.glm
 import glm_.i
+import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import glm_.vec4.Vec4ub
-import gln.checkError
-import gln.glGetVec4i
-import gln.glScissor
-import gln.glViewport
+import gln.*
 import gln.glf.semantic
 import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
 import gln.identifiers.GlVertexArray
 import gln.uniform.glUniform
 import gln.vertexArray.glVertexAttribPointer
-import imgui.BackendFlag
-import imgui.DEBUG
+import imgui.*
 import imgui.ImGui.io
+import imgui.classes.Viewport
+import imgui.classes.ViewportFlag
+import imgui.classes.hasnt
 import imgui.impl.mat
 import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
-import imgui.or
 import kool.*
-import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL20C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
@@ -34,7 +32,7 @@ import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
 import org.lwjgl.system.Platform
 
-class ImplGL3 : GLInterface {
+class ImplGL3(glslVersion: Int? = null) : GLInterface {
 
     var program = GlProgram(0)
     var matUL = -1
@@ -42,23 +40,43 @@ class ImplGL3 : GLInterface {
     val buffers = GlBuffers<Buffer>()
     var vao = GlVertexArray()
 
-    init {
+    init { /* ~ImGui_ImplOpenGL3_Init */
 
-        // query for GL version
+        // Query for GL version (e.g. 320 for GL 3.2)
         glVersion = when {
-            !OPENGL_ES2 -> glGetInteger(GL_MAJOR_VERSION) * 100 + glGetInteger(GL_MINOR_VERSION) * 10
+            !IMPL_OPENGL_ES2 -> glGetInteger(GL_MAJOR_VERSION) * 100 + glGetInteger(GL_MINOR_VERSION) * 10
             else -> 200 // GLES 2
         }
 
         // Setup back-end capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
 
-        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX)
+        if (MAY_HAVE_VTX_OFFSET)
             if (glVersion >= 320)
                 io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+        io.backendFlags = io.backendFlags or BackendFlag.RendererHasViewports  // We can create multi-viewports on the Renderer side (optional)
+
+        // Store GLSL version string so we can refer to it later in case we recreate shaders.
+        // Note: GLSL version is NOT the same as GL version. Leave this to NULL if unsure.
+        glslVersionString = glslVersion?.toString() ?: "#version " + when {
+            IMPL_OPENGL_ES2 -> "100"
+            IMPL_OPENGL_ES3 -> "300 es"
+            else -> "130"
+        }
+
+        // Make a dummy GL call (we don't actually need the result)
+        // IF YOU GET A CRASH HERE: it probably means that you haven't initialized the OpenGL function loader used by this code.
+        // Desktop OpenGL 3/4 need a function loader. See the IMGUI_IMPL_OPENGL_LOADER_xxx explanation above.
+        glGetInteger(GL_TEXTURE_BINDING_2D)
+
+        if (io.configFlags has ConfigFlag.ViewportsEnable)
+            initPlatformInterface()
     }
 
-    override fun shutdown() = destroyDeviceObjects()
+    override fun shutdown() {
+        shutdownPlatformInterface()
+        destroyDeviceObjects()
+    }
 
     override fun newFrame() {
         if (program.isInvalid)
@@ -81,14 +99,19 @@ class ImplGL3 : GLInterface {
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
         // DisplayPos is (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
-        // TODO re-sync -> mat from drawData
-        val orthoProjection = glm.ortho(0f, io.displaySize.x.f, io.displaySize.y.f, 0f, mat)
+        val orthoProjection: Mat4 = glm.ortho(
+                left = drawData.displayPos.x,
+                right = drawData.displayPos.x + drawData.displaySize.x,
+                top = drawData.displayPos.y,
+                bottom = drawData.displayPos.y + drawData.displaySize.y, res = mat)
         glUseProgram(program.name)
+//        glUniform1i(g_AttribLocationTex, 0); moved to program creation
         glUniform(matUL, orthoProjection)
         if (SAMPLER_BINDING)
             glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
-        vao.bind()
+        if (!IMPL_OPENGL_ES2)
+            vao.bind()
 
         // Bind vertex/index buffers and setup attributes for ImDrawVert
         glBindBuffer(GL_ARRAY_BUFFER, buffers[Buffer.Vertex].name)
@@ -123,8 +146,10 @@ class ImplGL3 : GLInterface {
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
-        val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
-        val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
+        val lastVertexArrayObject = when {
+            IMPL_OPENGL_ES2 -> 0
+            else -> glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        }
         val lastPolygonMode = when {
             POLYGON_MODE -> glGetInteger(GL_POLYGON_MODE)
             else -> 0
@@ -141,12 +166,17 @@ class ImplGL3 : GLInterface {
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
-        var clipOriginLowerLeft = true
-        if (CLIP_ORIGIN && Platform.get() != Platform.MACOSX)
-            if (glGetInteger(GL_CLIP_ORIGIN) == GL20C.GL_UPPER_LEFT) // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
-                clipOriginLowerLeft = false
+        val clipOriginLowerLeft = when {
+            CLIP_ORIGIN && Platform.get() != Platform.MACOSX &&
+                    glGetInteger(GL_CLIP_ORIGIN) == GL20C.GL_UPPER_LEFT  // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
+            -> false
+            else -> true
+        }
 
         // Setup desired GL state
+        // Recreate the VAO every time (this is to easily allow multiple GL contexts to be rendered to. VAO are not shared among GL contexts)
+        // The renderer would actually work without any VAO bound, but then our VertexAttrib calls would overwrite the default one currently bound.
+        // [JVM] we actually skip this, if you use multiple GL contexts, notify us
         setupRenderState(drawData, fbWidth, fbHeight)
 
         // Will project scissor/clipping rectangles into framebuffer space
@@ -156,8 +186,6 @@ class ImplGL3 : GLInterface {
         // Render command lists
         for (cmdList in drawData.cmdLists) {
 
-            var idxBufferOffset = 0L
-
             // Upload vertex/index buffers
             nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW)
             nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW)
@@ -165,14 +193,14 @@ class ImplGL3 : GLInterface {
             for (cmd in cmdList.cmdBuffer) {
 
                 val userCB = cmd.userCallback
-                if (userCB != null) {
-                    // User callback, registered via ImDrawList::AddCallback()
-                    // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
+                if (userCB != null)
+                // User callback, registered via ImDrawList::AddCallback()
+                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
                     if (cmd.resetRenderState)
                         setupRenderState(drawData, fbWidth, fbHeight)
                     else
                         userCB(cmdList, cmd)
-                } else {
+                else {
                     // Project scissor/clipping rectangles into framebuffer space
                     val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
                     val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
@@ -188,13 +216,12 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && glVersion >= 320)
+                        if (MAY_HAVE_VTX_OFFSET && glVersion >= 320)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
                             glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
                     }
                 }
-                idxBufferOffset += cmd.elemCount * DrawIdx.BYTES
             }
         }
 
@@ -204,9 +231,9 @@ class ImplGL3 : GLInterface {
         if (SAMPLER_BINDING)
             glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
-        glBindVertexArray(lastVertexArray)
+        if (!IMPL_OPENGL_ES2)
+            glBindVertexArray(lastVertexArrayObject)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
         glBlendEquationSeparate(lastBlendEquationRgb, lastBlendEquationAlpha)
         glBlendFuncSeparate(lastBlendSrcRgb, lastBlendDstRgb, lastBlendSrcAlpha, lastBlendDstAlpha)
         if (lastEnableBlend) glEnable(GL_BLEND) else glDisable(GL_BLEND)
@@ -219,6 +246,8 @@ class ImplGL3 : GLInterface {
         glScissor(lastScissorBox)
     }
 
+    // (Optional) Called by Init/NewFrame/Shutdown
+
     /** Build texture atlas */
     override fun createFontsTexture(): Boolean {
 
@@ -229,7 +258,6 @@ class ImplGL3 : GLInterface {
 
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
-
         glGenTextures(fontTexture)
         glBindTexture(GL_TEXTURE_2D, fontTexture[0])
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
@@ -244,10 +272,7 @@ class ImplGL3 : GLInterface {
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
 
-        return when {
-            DEBUG -> checkError("mainLoop")
-            else -> true
-        }
+        return if(DEBUG) checkError("mainLoop") else true
     }
 
     override fun destroyFontsTexture() {
@@ -260,13 +285,16 @@ class ImplGL3 : GLInterface {
 
     override fun createDeviceObjects(): Boolean {
 
-        // Backup GL state [JVM] we have to save also program since we do the uniform mat and texture setup once here
+        // Backup GL state [JVM] we have to save also program since we do the uniform mat and texture setup only once, here
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
-        val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
+        val lastVertexArray = when {
+            IMPL_OPENGL_ES2 -> 0
+            else -> glGetInteger(GL_VERTEX_ARRAY_BINDING)
+        }
 
-        program = createProgram()
+        program = createProgram(glslVersion = 130)
         program.use {
             matUL = "ProjMtx".uniform
             "Texture".unit = semantic.sampler.DIFFUSE
@@ -283,12 +311,10 @@ class ImplGL3 : GLInterface {
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lastElementBuffer)
+        if (!IMPL_OPENGL_ES2)
+            glBindVertexArray(lastVertexArray)
 
-        return when {
-            DEBUG -> checkError("mainLoop")
-            else -> true
-        }
+        return if(DEBUG) checkError("mainLoop") else true
     }
 
     override fun destroyDeviceObjects() {
@@ -296,28 +322,10 @@ class ImplGL3 : GLInterface {
         vao.delete()
         buffers.delete()
 
-        if (program.isValid) program.delete()
+        if (program.isValid)
+            program.delete()
 
         destroyFontsTexture()
-    }
-
-    companion object {
-
-        var OPENGL_ES2 = false
-
-        var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
-
-        var POLYGON_MODE = true
-        var SAMPLER_BINDING = GL.getCapabilities().OpenGL33
-            set(value) {
-                //prevent crashes
-                field = value and GL.getCapabilities().OpenGL33
-            }
-        var UNPACK_ROW_LENGTH = true
-        var SINGLE_GL_CONTEXT = true
-
-        // #if defined(IMGUI_IMPL_OPENGL_ES2) || defined(IMGUI_IMPL_OPENGL_ES3) || !defined(GL_VERSION_3_2) -> false
-        var MAY_HAVE_DRAW_WITH_BASE_VERTEX = true
     }
 
     /*private fun debugSave(fbWidth: Int, fbHeight: Int) {
@@ -355,4 +363,26 @@ class ImplGL3 : GLInterface {
             buffer.free()
         }
     }*/
+
+
+    //--------------------------------------------------------------------------------------------------------
+    // MULTI-VIEWPORT / PLATFORM INTERFACE SUPPORT
+    // This is an _advanced_ and _optional_ feature, allowing the back-end to create and handle multiple viewports simultaneously.
+    // If you are new to dear imgui or creating a new binding for dear imgui, it is recommended that you completely ignore this section first..
+    //--------------------------------------------------------------------------------------------------------
+
+    fun renderWindow(viewport: Viewport, any: Any?) {
+        if (viewport.flags hasnt ViewportFlag.NoRendererClear) {
+            val clearColor = Vec4(0f, 0f, 0f, 1f)
+            glClearColor(clearColor)
+            glClear(GL_COLOR_BUFFER_BIT)
+        }
+        renderDrawData(viewport.drawData!!)
+    }
+
+    fun initPlatformInterface() {
+        ImGui.platformIO.renderer_RenderWindow = ::renderWindow
+    }
+
+    fun shutdownPlatformInterface() = ImGui.destroyPlatformWindows()
 }

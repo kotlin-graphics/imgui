@@ -80,7 +80,7 @@ fun main(args: Array<String>) {
 //    #ifdef IMGUI_HAS_VIEWPORT
 //    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 //    #endif
-//    #ifdef IMGUI_HAS_DOCK
+//    #ifdef helpers.getIMGUI_HAS_DOCK
 //            io.ConfigFlags | = ImGuiConfigFlags_DockingEnable
 //    //io.ConfigDockingTabBarOnSingleWindows = true;
 //    #endif
@@ -133,9 +133,9 @@ fun main(args: Array<String>) {
 
     // Branch name stored in annotation field by default
     // FIXME-TESTS: Obtain from git? maybe pipe from a batch-file?
-//    #if defined(IMGUI_HAS_DOCK)
+//    #if defined(helpers.getIMGUI_HAS_DOCK)
 //    strcpy(testIo.PerfAnnotation, "docking")
-//    #elif defined (IMGUI_HAS_TABLE)
+//    #elif defined (helpers.getIMGUI_HAS_TABLE)
 //    strcpy(testIo.PerfAnnotation, "tables")
 //    #else
     testIo.perfAnnotation = "master"

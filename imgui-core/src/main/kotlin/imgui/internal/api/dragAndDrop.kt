@@ -16,7 +16,7 @@ internal interface dragAndDrop {
         assert(!g.dragDropWithinTarget)
 
         val window = g.currentWindow!!
-        g.hoveredWindow.let { if (it == null || window.rootWindow != it.rootWindow) return false }
+        g.hoveredWindowUnderMovingWindow.let { if (it == null || window.rootWindow != it.rootWindow) return false }
         assert(id != 0)
         if (!isMouseHoveringRect(bb) || id == g.dragDropPayload.sourceId)
             return false

@@ -1,6 +1,6 @@
 package engine.core
 
-import IMGUI_DEBUG_TEST_ENGINE
+import helpers.IMGUI_DEBUG_TEST_ENGINE
 import engine.CaptureArgs
 import engine.context.TestActiveFunc
 import engine.context.recoverFromUiContextErrors

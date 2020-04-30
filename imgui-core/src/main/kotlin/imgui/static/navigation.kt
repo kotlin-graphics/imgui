@@ -25,6 +25,7 @@ import imgui.ImGui.isActiveIdUsingNavInput
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
@@ -36,6 +37,7 @@ import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
+import imgui.classes.ViewportP
 import imgui.internal.*
 import imgui.internal.classes.NavMoveResult
 import imgui.internal.classes.Rect
@@ -155,12 +157,13 @@ fun navUpdate() {
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
     if (NavInput.Cancel.isTest(InputReadMode.Pressed)) {
+        val nav = g.navWindow
         if (g.activeId != 0) {
             if (!isActiveIdUsingNavInput(NavInput.Cancel))
                 clearActiveID()
-        } else if (g.navWindow != null && g.navWindow!!.flags has Wf._ChildWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
+        } else if (nav != null && nav.flags has Wf._ChildWindow && nav.flags hasnt Wf._Popup && nav.parentWindow != null && nav !== nav.rootWindowDockStop) {
             // Exit child window
-            val childWindow = g.navWindow!!
+            val childWindow = nav
             val parentWindow = childWindow.parentWindow!!
             assert(childWindow.childId != 0)
             focusWindow(parentWindow)
@@ -177,8 +180,8 @@ fun navUpdate() {
             navRestoreLayer(NavLayer.Main)  // Leave the "menu" layer
         else {
             // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
-            if (g.navWindow != null && (g.navWindow!!.flags has Wf._Popup || g.navWindow!!.flags hasnt Wf._ChildWindow))
-                g.navWindow!!.navLastIds[0] = 0
+            if (nav != null && (nav.flags has Wf._Popup || nav.flags hasnt Wf._ChildWindow))
+                nav.navLastIds[0] = 0
             g.navFocusScopeId = 0
             g.navId = 0
         }
@@ -313,7 +316,7 @@ fun navUpdate() {
         if (it != null) {
             val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
             g.navScoringRect.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
-        } else g.navScoringRect put viewportRect
+        } else g.navScoringRect.put(0f, 0f, 0f, 0f)
     }
     g.navScoringRect translateY navScoringRectOffsetY
     g.navScoringRect.min.x = min(g.navScoringRect.min.x + 1f, g.navScoringRect.max.x)
@@ -359,8 +362,8 @@ fun navUpdateWindowing() {
     val startWindowingWithKeyboard = g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
-            g.navWindowingTarget = it.rootWindow // FIXME-DOCK: Will need to use RootWindowDockStop
-            g.navWindowingTargetAnim = it.rootWindow // FIXME-DOCK: Will need to use RootWindowDockStop
+            g.navWindowingTarget = it.rootWindowDockStop
+            g.navWindowingTargetAnim = it.rootWindowDockStop
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
@@ -434,7 +437,8 @@ fun navUpdateWindowing() {
     }
 
     // Apply final focus
-    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindow)) {
+    if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindowDockStop)) {
+        val previousViewport = g.navWindow?.viewport
         clearActiveID()
         g.navDisableHighlight = false
         g.navDisableMouseHover = true
@@ -447,6 +451,10 @@ fun navUpdateWindowing() {
         // If the window only has a menu layer, select it directly
         if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl NavLayer.Menu)
             g.navLayer = NavLayer.Menu
+
+        // Request OS level focus
+        if (applyFocusWindow!!.viewport !== previousViewport)
+            g.platformIO.platform_SetWindowFocus?.invoke(applyFocusWindow!!.viewport!!)
     }
     applyFocusWindow?.let { g.navWindowingTarget = null }
 
@@ -470,11 +478,14 @@ fun navUpdateWindowing() {
             }
             g.navDisableHighlight = false
             g.navDisableMouseHover = true
-            // When entering a regular menu bar with the Alt key, we always reinitialize the navigation ID.
+            // When entering a regular menu bar with the Alt key, we always reinitialize the navigation ID. It however persist on docking tab tabs.
             val newNavLayer = when {
                 it.dc.navLayerActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
                 else -> NavLayer.Main
             }
+            val preserveLayer1NavId = newNavWindow.dockNodeAsHost != null
+            if (newNavLayer == NavLayer.Menu && !preserveLayer1NavId)
+                g.navWindow!!.navLastIds[NavLayer.Menu] = 0
             navRestoreLayer(newNavLayer)
         }
 }
@@ -488,8 +499,9 @@ fun navUpdateWindowingOverlay() {
 
     if (g.navWindowingList.isEmpty())
         findWindowByName("###NavWindowingList")?.let { g.navWindowingList += it }
-    setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
-    setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
+    val viewport = /*g.NavWindow ? g.NavWindow->Viewport :*/ mainViewport as ViewportP
+    setNextWindowSizeConstraints(viewport.size * 0.2f, Vec2(Float.MAX_VALUE))
+    setNextWindowPos(viewport.pos + viewport.size * 0.5f, Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
     val flags = Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
     begin("###NavWindowingList", null, flags)
@@ -551,7 +563,7 @@ fun navUpdateMoveResult() {
 
     clearActiveID()
     g.navWindow = window
-    if (g.navId != result.id)    {
+    if (g.navId != result.id) {
         // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
         g.navJustMovedToId = result.id
         g.navJustMovedToFocusScopeId = result.focusScopeId
@@ -842,7 +854,7 @@ fun navCalcPreferredRefPos(): Vec2 {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
         val rectRel = g.navWindow!!.navRectRel[g.navLayer]
         val pos = g.navWindow!!.pos + Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width), rectRel.max.y - min(style.framePadding.y, rectRel.height))
-        val visibleRect = viewportRect
+        val visibleRect = g.navWindow!!.viewport!!.mainRect
         return glm.floor(glm.clamp(pos, visibleRect.min, visibleRect.max))   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
     }
 }
@@ -854,7 +866,7 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
     tailrec fun Window.getParent(): Window {
         val parent = parentWindow
         return when {
-            parent != null && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
+            parent != null && parent.rootWindowDockStop !== parent && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
             else -> this
         }
     }
@@ -864,7 +876,13 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
 
 /** Restore the last focused child.
  *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
-fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
+fun navRestoreLastChildNavWindow(window: Window): Window {
+    window.navLastChildNavWindow?.let { if (it.wasActive) return it }
+    window.dockNodeAsHost?.tabBar?.let { tabBar ->
+        tabBar.findMostRecentlySelectedTabForActiveWindow()?.let { return it.window!! }
+    }
+    return window
+}
 
 // FIXME-OPT O(N)
 fun findWindowFocusIndex(window: Window): Int {
@@ -877,7 +895,7 @@ fun findWindowFocusIndex(window: Window): Int {
     return -1
 }
 
-// static spare functions
+// spaiate
 
 fun navRestoreLayer(layer: NavLayer) {
 
@@ -885,8 +903,8 @@ fun navRestoreLayer(layer: NavLayer) {
     if (layer == NavLayer.Main)
         g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
     val window = g.navWindow!!
-    if (layer == NavLayer.Main && window.navLastIds[0] != 0)
-        setNavIDWithRectRel(window.navLastIds[0], layer, 0, window.navRectRel[0])
+    if (window.navLastIds[layer] != 0)
+        setNavIDWithRectRel(window.navLastIds[layer], layer, 0, g.navWindow!!.navRectRel[layer])
     else
         navInitWindow(window, true)
 }
