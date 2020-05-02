@@ -2,17 +2,20 @@ package imgui.demo.showExampleApp
 
 import gli_.has
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.Cond
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.setNextWindowViewport
 import imgui.ImGui.text
 import imgui.dsl.menuItem
 import imgui.dsl.popupContextWindow
 import imgui.dsl.window
+import imgui.or
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -24,17 +27,21 @@ object SimpleOverlay {
      *  of the screen to use */
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
+        // FIXME-VIEWPORT: Select a default viewport
         val DISTANCE = 10f
 
-        var flags = Wf.NoDecoration or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
         if (corner != -1) {
-            val windowPos = Vec2{ if (corner has it + 1) io.displaySize[it] - DISTANCE else DISTANCE }
+            val viewport = mainViewport
+            val workAreaPos = viewport.workPos   // Instead of using viewport->Pos we use GetWorkPos() to avoid menu bars, if any!
+            val workAreaSize = viewport.workSize
+            val windowPos = Vec2(workAreaPos.x + if (corner has 1) workAreaSize.x - DISTANCE else DISTANCE, workAreaPos.y + if (corner has 2) workAreaSize.y - DISTANCE else DISTANCE)
             val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
             setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
-            flags = flags or Wf.NoMove
+            setNextWindowViewport(viewport.id)
         }
         setNextWindowBgAlpha(0.35f)  // Transparent background
-        window("Example: Simple overlay", open, flags) {
+        val flags = Wf.NoDocking or Wf.NoTitleBar or Wf.NoResize or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
+        window("Example: Simple overlay", open, (if (corner != -1) Wf.NoMove else Wf.None) or flags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
             text("Mouse Position: " + when {

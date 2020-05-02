@@ -10,6 +10,7 @@ import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
 import imgui.ImGui.end
 import imgui.ImGui.fontSize
+import imgui.ImGui.indent
 import imgui.ImGui.io
 import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
@@ -28,7 +29,8 @@ import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
-import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
+import imgui.ImGui.unindent
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.TextFilter
 import imgui.demo.showExampleApp.*
 import imgui.dsl.collapsingHeader
@@ -43,8 +45,9 @@ object ExampleApp {
 
     object show {
         // Examples Apps (accessible from the "Examples" menu)
-        var documents = false
         var mainMenuBar = false
+        var documents = false
+        var dockspace = false
         var console = false
         var log = false
         var layout = false
@@ -73,6 +76,7 @@ object ExampleApp {
     var noNav = false
     var noBackground = false
     var noBringToFront = false
+    var noDocking = false
 
     var filter = TextFilter()
 
@@ -80,8 +84,9 @@ object ExampleApp {
 
         var open = open_
 
-        if (show.documents) Documents(show::documents)
         if (show.mainMenuBar) MainMenuBar()
+        if (show.dockspace) DockSpace(show::dockspace) // Process the Docking app first, as explicit DockSpace() nodes needs to be submitted early (read comments near the DockSpace function)
+        if (show.documents) Documents(show::documents) // Process the Document app next, as it may also use a DockSpace()
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
         if (show.layout) Layout(show::layout)
@@ -111,10 +116,12 @@ object ExampleApp {
         if (noNav) windowFlags = windowFlags or Wf.NoNav
         if (noBackground) windowFlags = windowFlags or Wf.NoBackground
         if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
+        if (noDocking) windowFlags = windowFlags or Wf.NoDocking
         if (noClose) open = null // Don't pass our bool* to Begin
-        /*  We specify a default position/size in case there's no data in the .ini file. Typically this isn't required!
-            We only do it to make the Demo applications a little more welcoming.         */
-        setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
+
+        // We specify a default position/size in case there's no data in the .ini file. Typically this isn't required! We only do it to make the Demo applications a little more welcoming.
+        val mainViewport = ImGui.mainViewport
+        setNextWindowPos(Vec2(mainViewport.workPos.x + 650, mainViewport.workPos.y + 20), Cond.FirstUseEver)
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
         // Main body of the Demo window starts here.
@@ -146,6 +153,7 @@ object ExampleApp {
                 menuItem("Simple overlay", "", show::simpleOverlay)
                 menuItem("Manipulating window titles", "", show::windowTitles)
                 menuItem("Custom rendering", "", show::customRendering)
+                menuItem("Dockspace", "", show::dockspace)
                 menuItem("Documents", "", show::documents)
             }
             menu("Tools") {
@@ -186,9 +194,9 @@ object ExampleApp {
 
                 checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
                 checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
-                sameLine(); metricsHelpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
+                sameLine(); helpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
-                sameLine(); metricsHelpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
+                sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
                 checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
                 if (io.configFlags has ConfigFlag.NoMouse) { // Create a way to restore this flag otherwise we could be stuck completely!
 
@@ -200,35 +208,69 @@ object ExampleApp {
                         io.configFlags = io.configFlags wo ConfigFlag.NoMouse
                 }
                 checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
-                sameLine(); metricsHelpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
-                checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
-                sameLine(); metricsHelpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
+                sameLine(); helpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
+
+                checkboxFlags("io.ConfigFlags: DockingEnable", io::configFlags, ConfigFlag.DockingEnable.i)
+                sameLine(); helpMarker(if(io.configDockingWithShift) "[beta] Use SHIFT to dock window into each others." else "[beta] Drag from title bar to dock windows into each others.")
+                if (io.configFlags has ConfigFlag.DockingEnable) {
+                    indent()
+                    checkbox("io.ConfigDockingNoSplit", io::configDockingNoSplit)
+                    sameLine(); helpMarker("Simplified docking mode: disable window splitting, so docking is limited to merging multiple windows together into tab-bars.")
+                    checkbox("io.ConfigDockingWithShift", io::configDockingWithShift)
+                    sameLine(); helpMarker("Enable docking when holding Shift only (allows to drop in wider space, reduce visual noise)")
+                    checkbox("io.ConfigDockingAlwaysTabBar", io::configDockingAlwaysTabBar)
+                    sameLine(); helpMarker("Create a docking node and tab-bar on single floating windows.")
+                    checkbox("io.ConfigDockingTransparentPayload", io::configDockingTransparentPayload)
+                    sameLine(); helpMarker("Make window or viewport transparent when docking and only display docking boxes on the target viewport. Useful if rendering of multiple viewport cannot be synced. Best used with ConfigViewportsNoAutoMerge.")
+                    unindent()
+                }
+
+                checkboxFlags("io.ConfigFlags: ViewportsEnable", io::configFlags, ConfigFlag.ViewportsEnable.i)
+                sameLine(); helpMarker("[beta] Enable beta multi-viewports support. See ImGuiPlatformIO for details.")
+                if (io.configFlags has ConfigFlag.ViewportsEnable) {
+                    indent()
+                    checkbox("io.ConfigViewportsNoAutoMerge", io::configViewportsNoAutoMerge)
+                    sameLine(); helpMarker("Set to make all floating imgui windows always create their own viewport. Otherwise, they are merged into the main host viewports when overlapping it.")
+                    checkbox("io.ConfigViewportsNoTaskBarIcon", io::configViewportsNoTaskBarIcon)
+                    sameLine(); helpMarker("Toggling this at runtime is normally unsupported (most platform back-ends won't refresh the task bar icon state right away).")
+                    checkbox("io.ConfigViewportsNoDecoration", io::configViewportsNoDecoration)
+                    sameLine(); helpMarker("Toggling this at runtime is normally unsupported (most platform back-ends won't refresh the decoration right away).")
+                    checkbox("io.ConfigViewportsNoDefaultParent", io::configViewportsNoDefaultParent)
+                    sameLine(); helpMarker("Toggling this at runtime is normally unsupported (most platform back-ends won't refresh the parenting right away).")
+                    unindent()
+                }
+
+                checkbox("io.ConfigInputTextCursorBlink", io::configInputTextCursorBlink)
+                sameLine(); helpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
                 checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)
-                sameLine(); metricsHelpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
+                sameLine(); helpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
-                sameLine(); metricsHelpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+                sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
                 separator()
             }
             treeNode("Backend Flags") {
-                metricsHelpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.\nHere we expose then as read-only fields to avoid breaking interactions with your back-end.")
+                helpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.\nHere we expose then as read-only fields to avoid breaking interactions with your back-end.")
                 val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying actual back-end flags.
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
                 checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos.i)
+                checkboxFlags("io.BackendFlags: PlatformHasViewports", backendFlags, BackendFlag.PlatformHasViewports.i)
+                checkboxFlags("io.BackendFlags: HasMouseHoveredViewport", backendFlags, BackendFlag.HasMouseHoveredViewport.i)
                 checkboxFlags("io.BackendFlags: RendererHasVtxOffset", backendFlags, BackendFlag.RendererHasVtxOffset.i)
+                checkboxFlags("io.BackendFlags: RendererHasViewports", backendFlags, BackendFlag.RendererHasViewports.i)
                 separator()
             }
 
             treeNode("Style") {
-                metricsHelpMarker("The same contents can be accessed in 'Tools->Style Editor' or by calling the ShowStyleEditor() function.")
+                helpMarker("The same contents can be accessed in 'Tools->Style Editor' or by calling the ShowStyleEditor() function.")
                 StyleEditor()
                 separator()
             }
 
             treeNode("Capture/Logging") {
                 textWrapped("The logging API redirects all text output so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded.")
-                metricsHelpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
+                helpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
                 logButtons()
                 textWrapped("You can also call ImGui::LogText() to output directly to the log without a visual output.")
                 if (button("Copy \"Hello, world!\" to clipboard")) {
@@ -250,6 +292,7 @@ object ExampleApp {
             checkbox("No nav", ::noNav); sameLine(300)
             checkbox("No background", ::noBackground)
             checkbox("No bring to front", ::noBringToFront)
+            checkbox("No docking", ::noDocking)
         }
 
         // All demo contents

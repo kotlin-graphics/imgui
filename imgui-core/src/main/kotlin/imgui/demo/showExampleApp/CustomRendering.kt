@@ -36,7 +36,7 @@ import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
 import imgui.MouseButton
-import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.dsl.button
 import imgui.internal.DrawCornerFlag
 import imgui.u32
@@ -212,9 +212,9 @@ object CustomRendering {
 
             if (beginTabItem("BG/FG draw lists")) {
                 checkbox("Draw in Background draw list", ::drawBg)
-                sameLine(); metricsHelpMarker("The Background draw list will be rendered below every Dear ImGui windows.")
+                sameLine(); helpMarker("The Background draw list will be rendered below every Dear ImGui windows.")
                 checkbox("Draw in Foreground draw list", ::drawFg)
-                sameLine(); metricsHelpMarker("The Foreground draw list will be rendered over every Dear ImGui windows.")
+                sameLine(); helpMarker("The Foreground draw list will be rendered over every Dear ImGui windows.")
                 val windowCenter = Vec2(windowPos.x + windowSize.x * 0.5f, windowPos.y + windowSize.y * 0.5f)
                 if (drawBg)
                     backgroundDrawList.addCircle(windowCenter, windowSize.x * 0.6f, COL32(255, 0, 0, 200), 0, 10f + 4)

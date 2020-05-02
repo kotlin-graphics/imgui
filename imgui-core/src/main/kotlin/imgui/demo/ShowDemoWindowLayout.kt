@@ -92,7 +92,7 @@ import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowWidth
-import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
 import imgui.demo.showExampleApp.MenuFile
 import imgui.dsl.child
@@ -177,7 +177,7 @@ object ShowDemoWindowLayout {
 
         treeNode("Child Windows") {
 
-            metricsHelpMarker("Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window.")
+            helpMarker("Use child windows to begin into a self-contained independent scrolling/clipping regions within a host window.")
             checkbox("Disable Mouse Wheel", ::disableMouseWheel)
             checkbox("Disable Menu", ::disableMenu)
 
@@ -249,28 +249,28 @@ object ShowDemoWindowLayout {
             // Use SetNextItemWidth() to set the width of a single upcoming item.
             // Use PushItemWidth()/PopItemWidth() to set the width of a group of items.
             text("SetNextItemWidth/PushItemWidth(100)")
-            sameLine(); metricsHelpMarker("Fixed width.")
+            sameLine(); helpMarker("Fixed width.")
             setNextItemWidth(100f)
             dragFloat("float##1", ::f)
 
             text("SetNextItemWidth/PushItemWidth(GetWindowWidth() * 0.5f)")
-            sameLine(); metricsHelpMarker("Half of window width.")
+            sameLine(); helpMarker("Half of window width.")
             setNextItemWidth(windowWidth * 0.5f)
             dragFloat("float##2", ::f)
 
             text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
-            sameLine(); metricsHelpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
+            sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
             setNextItemWidth(contentRegionAvail.x * 0.5f)
             dragFloat("float##3", ::f)
 
             text("SetNextItemWidth/PushItemWidth(-100)")
-            sameLine(); metricsHelpMarker("Align to right edge minus 100")
+            sameLine(); helpMarker("Align to right edge minus 100")
             setNextItemWidth(-100f)
             dragFloat("float##4", ::f)
 
             // Demonstrate using PushItemWidth to surround three items. Calling SetNextItemWidth() before each of them would have the same effect.
             text("SetNextItemWidth/PushItemWidth(-1)")
-            sameLine(); metricsHelpMarker("Align to right edge")
+            sameLine(); helpMarker("Align to right edge")
             pushItemWidth(-1)
 
             dragFloat("##float5a", ::f)
@@ -418,7 +418,7 @@ object ShowDemoWindowLayout {
 
         treeNode("Groups") {
 
-            metricsHelpMarker("BeginGroup() basically locks the horizontal position for new line. EndGroup() bundles the whole group so that you can use \"item\" functions such as IsItemHovered()/IsItemActive() or SameLine() etc. on the whole group.")
+            helpMarker("BeginGroup() basically locks the horizontal position for new line. EndGroup() bundles the whole group so that you can use \"item\" functions such as IsItemHovered()/IsItemActive() or SameLine() etc. on the whole group.")
             group {
                 group {
                     button("AAA")
@@ -460,19 +460,19 @@ object ShowDemoWindowLayout {
             run {
                 bulletText("Text baseline:")
                 sameLine()
-                metricsHelpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
+                helpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
                 indent {
 
                     text("KO Blahblah"); sameLine()
                     button("Some framed item"); sameLine()
-                    metricsHelpMarker("Baseline of button will look misaligned with text..")
+                    helpMarker("Baseline of button will look misaligned with text..")
 
                     // If your line starts with text, call AlignTextToFramePadding() to align text to upcoming widgets.
                     // Because we don't know what's coming after the Text() statement, we need to move the text baseline down by FramePadding.y
                     alignTextToFramePadding()
                     text("OK Blahblah"); sameLine()
                     button("Some framed item"); sameLine()
-                    metricsHelpMarker("We call AlignTextToFramePadding() to vertically align the text baseline by +FramePadding.y")
+                    helpMarker("We call AlignTextToFramePadding() to vertically align the text baseline by +FramePadding.y")
 
                     // SmallButton() uses the same vertical padding as Text
                     button("TEST##1"); sameLine()
@@ -557,11 +557,11 @@ object ShowDemoWindowLayout {
         treeNode("Scrolling") {
 
             // Vertical scroll functions
-            metricsHelpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.")
+            helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.")
 
             checkbox("Decoration", ::enableExtraDecorations)
             sameLine()
-            metricsHelpMarker("We expose this for testing because scrolling sometimes had issues with window decoration such as menu-bars.")
+            helpMarker("We expose this for testing because scrolling sometimes had issues with window decoration such as menu-bars.")
 
             checkbox("Track", ::enableTrack)
             pushItemWidth(100)
@@ -611,7 +611,7 @@ object ShowDemoWindowLayout {
 
             // Horizontal scroll functions
             spacing()
-            metricsHelpMarker("Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\nUsing the \"Scroll To Pos\" button above will make the discontinuity at edges visible: scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.")
+            helpMarker("Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\nUsing the \"Scroll To Pos\" button above will make the discontinuity at edges visible: scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.")
             pushID("##HorizontalScrolling")
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
@@ -639,7 +639,7 @@ object ShowDemoWindowLayout {
 
             // Miscellaneous Horizontal Scrolling Demo
 
-            metricsHelpMarker("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\nYou may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
+            helpMarker("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\nYou may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
             sliderInt("Lines", ::lines, 1, 15)
             pushStyleVar(StyleVar.FrameRounding, 3f)
             pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
@@ -689,7 +689,7 @@ object ShowDemoWindowLayout {
                 begin("Horizontal contents size demo window", ::showHorizontalContentsSizeDemoWindow, if (showHscrollbar) Wf.HorizontalScrollbar.i else Wf.None.i)
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(2, 0))
                 pushStyleVar(StyleVar.FramePadding, Vec2(2, 0))
-                metricsHelpMarker("Test of different widgets react and impact the work rectangle growing when horizontal scrolling is enabled.\n\nUse 'Metrics->Tools->Show windows rectangles' to visualize rectangles.")
+                helpMarker("Test of different widgets react and impact the work rectangle growing when horizontal scrolling is enabled.\n\nUse 'Metrics->Tools->Show windows rectangles' to visualize rectangles.")
                 checkbox("H-scrollbar", ::showHscrollbar)
                 checkbox("Button", ::showButton)            // Will grow contents size (unless explicitly overwritten)
                 checkbox("Tree nodes", ::showTreeNodes)    // Will grow contents size and display highlight over full width

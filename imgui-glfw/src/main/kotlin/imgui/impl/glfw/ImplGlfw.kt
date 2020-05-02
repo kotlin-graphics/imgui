@@ -492,7 +492,7 @@ class ImplGlfw @JvmOverloads constructor(
         val GetWindowLong by lazy { User32.getLibrary().getFunctionAddress("GetWindowLong") }
         val SetWindowLong by lazy { User32.getLibrary().getFunctionAddress("SetWindowLong") }
         fun getWindowLong(hWnd: HWND, nIndex: Int) = JNI.callPI(hWnd.L, nIndex, GetWindowLong)
-        fun setWindowLong(hWnd: HWND, nIndex: Int, dwNewLong: Long) = JNI.callPJI(hWnd.L, nIndex, dwNewLong, SetWindowLong)
+        fun setWindowLong(hWnd: HWND, nIndex: Int, dwNewLong: Int) = JNI.callPI(hWnd.L, nIndex, dwNewLong, SetWindowLong)
 
         fun showWindow(viewport: Viewport) {
 
@@ -505,7 +505,7 @@ class ImplGlfw @JvmOverloads constructor(
                     var exStyle = getWindowLong(hwnd, GWL_EXSTYLE)
                     exStyle = exStyle wo WS_EX_APPWINDOW
                     exStyle = exStyle or WS_EX_TOOLWINDOW
-                    setWindowLong(hwnd, GWL_EXSTYLE, exStyle.L)
+                    setWindowLong(hwnd, GWL_EXSTYLE, exStyle)
                 }
 
                 // GLFW hack: install hook for WM_NCHITTEST message handler

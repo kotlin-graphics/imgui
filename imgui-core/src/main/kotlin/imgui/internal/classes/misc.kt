@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.g
+import imgui.classes.Context
 import imgui.classes.DrawList
 import imgui.classes.WindowClass
 import imgui.font.Font

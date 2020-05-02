@@ -21,7 +21,7 @@ import imgui.ImGui.text
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
-import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
@@ -36,7 +36,7 @@ object PropertyEditor {
             return
         }
 
-        metricsHelpMarker("This example shows how you may implement a property editor using two columns.\n" +
+        helpMarker("This example shows how you may implement a property editor using two columns.\n" +
                 "All objects/fields data are dummies here.\n" +
                 "Remember that in many simple cases, you can use ImGui::SameLine(xxx) to position\n" +
                 "your cursor horizontally instead of using the Columns() API.")
