@@ -147,7 +147,40 @@ interface demoDebugInformations {
             text("Dear ImGui $version ($IMGUI_VERSION_NUM)")
             separator()
             text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.size}")
-            text("IMGUI_USE_BGRA_PACKED_COLOR: $USE_BGRA_PACKED_COLOR")
+            text("define: __cplusplus=%d", -1)
+            if (USE_BGRA_PACKED_COLOR)
+                text("define: IMGUI_USE_BGRA_PACKED_COLOR")
+//            ifdef _WIN32
+//                    ImGui::Text("define: _WIN32");
+//            #endif
+//            #ifdef _WIN64
+//                    ImGui::Text("define: _WIN64");
+//            #endif
+//            #ifdef __linux__
+//                    ImGui::Text("define: __linux__");
+//            #endif
+//            #ifdef __APPLE__
+//                    ImGui::Text("define: __APPLE__");
+//            #endif
+//            #ifdef _MSC_VER
+//                    ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
+//            #endif
+//            #ifdef __MINGW32__
+//                    ImGui::Text("define: __MINGW32__");
+//            #endif
+//            #ifdef __MINGW64__
+//                    ImGui::Text("define: __MINGW64__");
+//            #endif
+//            #ifdef __GNUC__
+//                    ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
+//            #endif
+//            #ifdef __clang_version__
+//                    ImGui::Text("define: __clang_version__=%s", __clang_version__);
+//            #endif
+            if (IMGUI_HAS_VIEWPORT)
+                text("define: IMGUI_HAS_VIEWPORT")
+            if (IMGUI_HAS_DOCK)
+                text("define: IMGUI_HAS_DOCK")
             separator()
             text("io.backendPlatformName: ${io.backendPlatformName}")
             text("io.backendRendererName: ${io.backendRendererName}")
@@ -159,7 +192,19 @@ interface demoDebugInformations {
             if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard) text(" NavNoCaptureKeyboard")
             if (io.configFlags has ConfigFlag.NoMouse) text(" NoMouse")
             if (io.configFlags has ConfigFlag.NoMouseCursorChange) text(" NoMouseCursorChange")
+            if (io.configFlags has ConfigFlag.DockingEnable) text(" DockingEnable")
+            if (io.configFlags has ConfigFlag.ViewportsEnable) text(" ViewportsEnable")
+            if (io.configFlags has ConfigFlag.DpiEnableScaleViewports) text(" DpiEnableScaleViewports")
+            if (io.configFlags has ConfigFlag.DpiEnableScaleFonts) text(" DpiEnableScaleFonts")
             if (io.mouseDrawCursor) text("io.mouseDrawCursor")
+            if (io.configViewportsNoAutoMerge) text("io.ConfigViewportsNoAutoMerge")
+            if (io.configViewportsNoTaskBarIcon) text("io.ConfigViewportsNoTaskBarIcon")
+            if (io.configViewportsNoDecoration) text("io.ConfigViewportsNoDecoration")
+            if (io.configViewportsNoDefaultParent) text("io.ConfigViewportsNoDefaultParent")
+            if (io.configDockingNoSplit) text("io.ConfigDockingNoSplit")
+            if (io.configDockingWithShift) text("io.ConfigDockingWithShift")
+            if (io.configDockingAlwaysTabBar) text("io.ConfigDockingAlwaysTabBar")
+            if (io.configDockingTransparentPayload) text("io.ConfigDockingTransparentPayload")
             if (io.configMacOSXBehaviors) text("io.configMacOSXBehaviors")
             if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
@@ -169,7 +214,10 @@ interface demoDebugInformations {
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
             if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
+            if (io.backendFlags has BackendFlag.PlatformHasViewports) text(" PlatformHasViewports")
+            if (io.backendFlags has BackendFlag.HasMouseHoveredViewport) text(" HasMouseHoveredViewport")
             if (io.backendFlags has BackendFlag.RendererHasVtxOffset) text(" RendererHasVtxOffset")
+            if (io.backendFlags has BackendFlag.RendererHasViewports) text(" RendererHasViewports")
             // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
@@ -225,7 +273,7 @@ interface demoDebugInformations {
             if (button("Item Picker.."))
                 debugStartItemPicker()
             sameLine()
-            metricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
+            helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
 
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
@@ -257,7 +305,7 @@ interface demoDebugInformations {
             }
             val open = treeNode("Monitors", "Monitors (${g.platformIO.monitors.size})")
             sameLine()
-            metricsHelpMarker("Dear ImGui uses monitor data:\n- to query DPI settings on a per monitor basis\n- to position popup/tooltips so they don't straddle monitors.")
+            helpMarker("Dear ImGui uses monitor data:\n- to query DPI settings on a per monitor basis\n- to position popup/tooltips so they don't straddle monitors.")
             if (open) {
                 g.platformIO.monitors.forEachIndexed { i, mon ->
                     bulletText("Monitor #$i: DPI %.0f%%\n MainMin (%.0f,%.0f), MainMax (%.0f,%.0f), MainSize (%.0f,%.0f)\n WorkMin (%.0f,%.0f), WorkMax (%.0f,%.0f), WorkSize (%.0f,%.0f)",
@@ -451,7 +499,7 @@ interface demoDebugInformations {
             endCombo()
         }
         sameLine()
-        metricsHelpMarker("""
+        helpMarker("""
             - Load additional fonts with io.Fonts->AddFontFromFileTTF().
             - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
             - Read FAQ and documentation in misc/fonts/ for more details.
@@ -861,7 +909,7 @@ interface demoDebugInformations {
 
         /** Helper to display a little (?) mark which shows a tooltip when hovered.
          *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.txt)    */
-        fun metricsHelpMarker(desc: String) {
+        fun helpMarker(desc: String) {
             textDisabled("(?)")
             if (isItemHovered()) {
                 beginTooltip()

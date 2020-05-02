@@ -31,7 +31,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
-import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.ListClipper
 import imgui.dsl.child
 import imgui.dsl.collapsingHeader
@@ -64,7 +64,7 @@ object ShowDemoWindowColumns {
 
         checkbox("Disable tree indentation", ::disableIndent)
         sameLine()
-        metricsHelpMarker("Disable the indenting of tree nodes so demo columns can use the full window width.")
+        helpMarker("Disable the indenting of tree nodes so demo columns can use the full window width.")
         if (disableIndent)
             pushStyleVar(StyleVar.IndentSpacing, 0f)
 

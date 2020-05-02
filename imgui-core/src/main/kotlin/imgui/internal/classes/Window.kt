@@ -658,7 +658,7 @@ class Window(var context: Context,
 
     // Internal API, Settings
 
-
+    /** ~MarkIniSettingsDirty(ImGuiWindow* window) */
     fun markIniSettingsDirty() {
         if (flags hasnt Wf.NoSavedSettings && g.settingsDirtyTimer <= 0f)
             g.settingsDirtyTimer = io.iniSavingRate

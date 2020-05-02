@@ -30,7 +30,7 @@ internal interface settings {
     }
 
     fun findWindowSettings(id: ID): WindowSettings? =
-            g.settingsWindows.firstOrNull { it.id == id }
+            g.settingsWindows.find { it.id == id }
 
     fun findOrCreateWindowSettings(name: String): WindowSettings =
             findWindowSettings(hash(name)) ?: createNewWindowSettings(name)

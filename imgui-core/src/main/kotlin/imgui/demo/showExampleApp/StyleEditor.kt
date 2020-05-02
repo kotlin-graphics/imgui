@@ -48,7 +48,7 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
-import imgui.api.demoDebugInformations.Companion.metricsHelpMarker
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.api.g
 import imgui.classes.Style
 import imgui.classes.TextFilter
@@ -123,7 +123,7 @@ object StyleEditor {
         sameLine()
         if (button("Revert Ref")) g.style = ref!!
         sameLine()
-        metricsHelpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export\" below to save them somewhere.")
+        helpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export\" below to save them somewhere.")
 
         separator()
 
@@ -165,9 +165,9 @@ object StyleEditor {
                     combo("ColorButtonPosition", ::_i, "Left\u0000Right\u0000")
                     style.colorButtonPosition = Dir.values().first { it.i == _i }
                 }
-                sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); metricsHelpMarker("Alignment applies when a button is larger than its text content.")
-                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); metricsHelpMarker("Alignment applies when a selectable is larger than its text content.")
-                text("Safe Area Padding"); sameLine(); metricsHelpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
+                sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
+                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
+                text("Safe Area Padding"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
                 sliderVec2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
                 endTabItem()
             }
@@ -200,7 +200,7 @@ object StyleEditor {
                 radioButton("Opaque", alphaFlags == 0) { alphaFlags = 0 }; sameLine()
                 radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
                 radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) { alphaFlags = Cef.AlphaPreviewHalf.i }; sameLine()
-                metricsHelpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.")
+                helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.")
 
                 child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
                     withItemWidth(-160) {
@@ -232,7 +232,7 @@ object StyleEditor {
 
             if (beginTabItem("Fonts")) {
                 val atlas = io.fonts
-                metricsHelpMarker("Read FAQ and docs/FONTS.txt for details on font loading.")
+                helpMarker("Read FAQ and docs/FONTS.txt for details on font loading.")
                 pushItemWidth(120)
                 atlas.fonts.forEachIndexed { i, font ->
                     pushID(font)
@@ -245,7 +245,7 @@ object StyleEditor {
                         popFont()
                         dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
                         sameLine()
-                        metricsHelpMarker("""
+                        helpMarker("""
                         |Note than the default embedded font is NOT meant to be scaled.
                         |
                         |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.
@@ -323,7 +323,7 @@ object StyleEditor {
                     image(atlas.texID, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
                 }
 
-                metricsHelpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.")
+                helpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.")
                 if (dragFloat("window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))    // scale only this window
                     setWindowFontScale(windowScale)
                 dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.2f") // scale everything

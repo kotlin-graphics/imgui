@@ -8,6 +8,7 @@ import imgui.*
 import imgui.ImGui.checkbox
 import imgui.ImGui.combo
 import imgui.ImGui.dragInt
+import imgui.ImGui.isWindowDocked
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setWindowSize
@@ -39,6 +40,8 @@ object ConstrainedResize {
         window("Example: Constrained Resize", open, flags) {
             val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
                     "Width 400-500", "Height 400-500", "Custom: Always Square", "Custom: Fixed Steps (100)")
+            if (isWindowDocked)
+                text("Warning: Sizing Constraints won't work if the window is docked!")
             button("200x200") { setWindowSize(Vec2(200)) }; sameLine()
             button("500x500") { setWindowSize(Vec2(500)) }; sameLine()
             button("800x200") { setWindowSize(Vec2(800, 200)) }
