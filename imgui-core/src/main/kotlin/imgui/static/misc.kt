@@ -33,7 +33,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 
-
 //-----------------------------------------------------------------------------
 // [SECTION] SETTINGS
 //-----------------------------------------------------------------------------
@@ -51,8 +50,11 @@ fun updateSettings() {
     if (g.settingsDirtyTimer > 0f) {
         g.settingsDirtyTimer -= io.deltaTime
         if (g.settingsDirtyTimer <= 0f) {
-            io.iniFilename?.let(::saveIniSettingsToDisk) ?: run {
-                io.wantSaveIniSettings = true  // Let user know they can call SaveIniSettingsToMemory(). user will need to clear io.WantSaveIniSettings themselves.
+            io.iniFilename.let {
+                if (it != null)
+                    saveIniSettingsToDisk(it)
+                else
+                    io.wantSaveIniSettings = true  // Let user know they can call SaveIniSettingsToMemory(). user will need to clear io.WantSaveIniSettings themselves.
             }
             g.settingsDirtyTimer = 0f
         }
@@ -364,9 +366,9 @@ fun updateTabFocus() {
     g.focusRequestNextWindow?.let { window ->
         g.focusRequestCurrWindow = window
         if (g.focusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
-            g.focusRequestCurrCounterRegular = modPositive(g.focusRequestNextCounterRegular, window.dc.focusCounterRegular+1)
+            g.focusRequestCurrCounterRegular = modPositive(g.focusRequestNextCounterRegular, window.dc.focusCounterRegular + 1)
         if (g.focusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
-            g.focusRequestCurrCounterTabStop = modPositive(g.focusRequestNextCounterTabStop, window.dc.focusCounterTabStop+1)
+            g.focusRequestCurrCounterTabStop = modPositive(g.focusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
         g.focusRequestNextWindow = null
         g.focusRequestNextCounterRegular = Int.MAX_VALUE
         g.focusRequestNextCounterTabStop = Int.MAX_VALUE
