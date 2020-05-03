@@ -12,6 +12,7 @@ import imgui.classes.WindowClass
 import imgui.font.Font
 import imgui.internal.*
 import unsigned.toUInt
+import java.lang.StringBuilder
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -412,7 +413,28 @@ class PopupData(
         /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
         var openMousePos: Vec2 = Vec2())
 
-//struct ImGuiSettingsHandler;        // Storage for one type registered in the .ini file
+/** Read: Called when entering into a new ini entry e.g. "[Window][Name]" */
+typealias ReadOpenFn = (ctx: Context, handler: SettingsHandler, name: String) -> Any
+
+/** Read: Called for every line of text within an ini entry */
+typealias ReadLineFn = (ctx: Context, handler: SettingsHandler, entry: Any, line: String) -> Unit
+
+/** Write: Output every entries into 'out_buf' */
+typealias WriteAllFn  = (ctx: Context, handler: SettingsHandler, outBuf: StringBuilder) -> Unit
+
+/** Storage for one type registered in the .ini file */
+class SettingsHandler {
+    /** Short description stored in .ini file. Disallowed characters: '[' ']' */
+    var typeName = ""
+    /** == ImHashStr(TypeName) */
+    var typeHash: ID = 0
+
+    lateinit var readOpenFn: ReadOpenFn
+    lateinit var readLineFn: ReadLineFn
+    lateinit var writeAllFn: WriteAllFn
+    var userData: Any? = null
+}
+
 /** Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable. */
 class StyleMod(val idx: StyleVar) {
     var ints = IntArray(2)

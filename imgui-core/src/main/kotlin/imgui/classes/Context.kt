@@ -14,6 +14,9 @@ import imgui.font.FontAtlas
 import imgui.internal.*
 import imgui.internal.classes.*
 import imgui.static.IMGUI_VIEWPORT_DEFAULT_ID
+import imgui.static.windowSettingsHandler_ReadLine
+import imgui.static.windowSettingsHandler_ReadOpen
+import imgui.static.windowSettingsHandler_WriteAll
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -530,6 +533,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** In memory .ini Settings for Window  */
     var settingsIniData = ""
 
+    /** List of .ini settings handlers */
+    val settingsHandlers = ArrayList<SettingsHandler>()
+
     /** ImGuiWindow .ini settings entries (parsed from the last loaded .ini file and maintained on saving) */
     val settingsWindows = ArrayList<WindowSettings>()
 
@@ -602,15 +608,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         assert(!g.initialized && !g.settingsLoaded)
 
         // Add .ini handle for ImGuiWindow type
-//        {
-//            ImGuiSettingsHandler ini_handler;
-//            ini_handler.TypeName = "Window";
-//            ini_handler.TypeHash = ImHashStr("Window");
-//            ini_handler.ReadOpenFn = WindowSettingsHandler_ReadOpen;
-//            ini_handler.ReadLineFn = WindowSettingsHandler_ReadLine;
-//            ini_handler.WriteAllFn = WindowSettingsHandler_WriteAll;
-//            g.SettingsHandlers.push_back(ini_handler);
-//        }
+        g.settingsHandlers += SettingsHandler().apply {
+            typeName = "Window"
+            typeHash = hash("Window")
+            readOpenFn = ::windowSettingsHandler_ReadOpen
+            readLineFn = ::windowSettingsHandler_ReadLine
+            writeAllFn = ::windowSettingsHandler_WriteAll
+        }
 //        #ifdef IMGUI_HAS_TABLE
 //                // Add .ini handle for ImGuiTable type
 //                {

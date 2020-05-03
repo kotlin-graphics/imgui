@@ -4,6 +4,7 @@ import imgui.ID
 import imgui.IMGUI_DEBUG_INI_SETTINGS
 import imgui.ImGui.io
 import imgui.api.g
+import imgui.internal.classes.SettingsHandler
 import imgui.internal.classes.WindowSettings
 import imgui.internal.hash
 
@@ -34,4 +35,9 @@ internal interface settings {
 
     fun findOrCreateWindowSettings(name: String): WindowSettings =
             findWindowSettings(hash(name)) ?: createNewWindowSettings(name)
+
+    fun findSettingsHandler(typeName: String): SettingsHandler? {
+        val typeHash = hash(typeName)
+        return g.settingsHandlers.find { it.typeHash == typeHash }
+    }
 }
