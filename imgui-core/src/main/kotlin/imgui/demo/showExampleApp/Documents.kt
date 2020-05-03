@@ -14,27 +14,35 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.colorEdit3
+import imgui.ImGui.combo
+import imgui.ImGui.dockSpace
 import imgui.ImGui.end
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.fontSize
+import imgui.ImGui.getID
+import imgui.ImGui.io
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.popID
+import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
+import imgui.ImGui.setNextWindowDockID
 import imgui.ImGui.setTabItemClosed
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
+import imgui.demo.showExampleApp.DockSpace.showDockingDisabledMessage
 import kotlin.reflect.KMutableProperty0
 
 //-----------------------------------------------------------------------------
@@ -53,8 +61,10 @@ class MyDocument(
 
     /** Copy of Open from last update. */
     var openPrev = open
+
     /** Set when the document has been modified */
     var dirty = false
+
     /** Set when the document */
     var wantClose = false
 
@@ -131,6 +141,17 @@ object Documents {
     }
 
     // Options
+    enum class Target {
+        None,
+
+        /** Create documents as local tab into a local tab bar */
+        Tab,
+
+        /** Create documents as regular windows, and create an embedded dockspace, */
+        DockSpaceAndWindow
+    }
+
+    var optTarget = Target.Tab
     var optReorderable = true
     var optFittingFlags: TabBarFlags = TabBarFlag.FittingPolicyDefault_.i
 
@@ -138,8 +159,15 @@ object Documents {
 
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
 
+        // When (opt_target == Target_DockSpaceAndWindow) there is the possibily that one of our child Document window (e.g. "Eggplant")
+        // that we emit gets docked into the same spot as the parent window ("Example: Documents").
+        // This would create a problematic feedback loop because selecting the "Eggplant" tab would make the "Example: Documents" tab
+        // not visible, which in turn would stop submitting the "Eggplant" window.
+        // We avoid this problem by submitting our documents window even if our parent window is not currently visible.
+        // Another solution may be to make the "Example: Documents" window use the ImGuiWindowFlags_NoDocking.
+
         val windowContentsVisible = begin("Example: Documents", pOpen, WindowFlag.MenuBar.i)
-        if (!windowContentsVisible) {
+        if (!windowContentsVisible && optTarget != Target.DockSpaceAndWindow) {
             end()
             return
         }
@@ -180,10 +208,21 @@ object Documents {
             popID()
         }
 
+        pushItemWidth(fontSize * 12)
+        _i = optTarget.ordinal
+        combo("Output", ::_i, "None\u0000TabBar+Tabs\u0000DockSpace+Window\u0000")
+        optTarget = Target.values()[_i]
+        popItemWidth()
+        var redockAll = false
+        if (optTarget == Target.Tab) {
+            sameLine(); checkbox("Reorderable Tabs", ::optReorderable); }
+        if (optTarget == Target.DockSpaceAndWindow) {
+            sameLine(); redockAll = button("Redock all"); }
+
         separator()
 
-        // Submit Tab Bar and Tabs
-        run {
+        // Tabs
+        if (optTarget == Target.Tab) {
             val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else TabBarFlag.None
             if (beginTabBar("##tabs", tabBarFlags)) {
                 if (optReorderable)
@@ -215,6 +254,44 @@ object Documents {
                 }
                 endTabBar()
             }
+        } else if (optTarget == Target.DockSpaceAndWindow) {
+            if (io.configFlags has ConfigFlag.DockingEnable) {
+                notifyOfDocumentsClosedElsewhere()
+
+                // Create a DockSpace node where any window can be docked
+                val dockspaceID = getID("MyDockSpace")
+                dockSpace(dockspaceID)
+
+                // Create Windows
+                for (doc in documents) {
+
+                    if (!doc.open)
+                        continue
+
+                    setNextWindowDockID(dockspaceID, if (redockAll) Cond.Always else Cond.FirstUseEver)
+                    val windowFlags = if (doc.dirty) WindowFlag.UnsavedDocument else WindowFlag.None
+                    val visible = begin(doc.name, doc::open, windowFlags.i)
+
+                    // Cancel attempt to close when unsaved add to save queue so we can display a popup.
+                    if (!doc.open && doc.dirty) {
+                        doc.open = true
+                        doc.doQueueClose()
+                    }
+
+                    doc.displayContextMenu()
+                    if (visible)
+                        doc.displayContents()
+
+                    end()
+                }
+            } else
+                showDockingDisabledMessage()
+        }
+
+        // Early out other contents
+        if (!windowContentsVisible) {
+            end()
+            return
         }
 
         // Update closing queue
