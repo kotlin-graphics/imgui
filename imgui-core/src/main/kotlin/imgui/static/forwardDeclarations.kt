@@ -4,15 +4,21 @@ import gli_.has
 import glm_.L
 import glm_.f
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.createNewWindowSettings
 import imgui.ImGui.findWindowSettings
 import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.classes.Window
+import imgui.classes.Context
 import imgui.internal.classes.Rect
+import imgui.internal.classes.SettingsHandler
+import imgui.internal.classes.Window
+import imgui.internal.classes.WindowSettings
 import imgui.internal.floor
+import imgui.internal.hash
 import imgui.windowsIme.COMPOSITIONFORM
 import imgui.windowsIme.DWORD
 import imgui.windowsIme.HIMC
@@ -122,6 +128,53 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
 /** ~GetViewportRect */
 val viewportRect: Rect
     get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
+
+//-----------------------------------------------------------------------------
+// Settings
+//-----------------------------------------------------------------------------
+
+fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings =
+        findWindowSettings(hash(name)) ?: createNewWindowSettings(name)
+
+fun windowSettingsHandler_ReadLine(ctx: Context, settingsHandler: SettingsHandler, entry: Any, line: String) {
+    val settings = entry as WindowSettings
+    when {
+        line.startsWith("Pos") -> settings.pos put line.substring(4).split(",")
+        line.startsWith("Size") -> settings.size put line.substring(5).split(",")
+        line.startsWith("Collapsed") -> settings.collapsed = line.substring(10).toBoolean()
+    }
+}
+
+fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: StringBuilder) {
+    // Gather data from windows that were active during this session
+    // (if a window wasn't opened in this session we preserve its settings)
+    val g = ctx
+    for (window in g.windows) {
+
+        if (window.flags has WindowFlag.NoSavedSettings)
+            continue
+
+        val settings = when {
+            window.settingsOffset != -1 -> g.settingsWindows[window.settingsOffset]
+            else -> findWindowSettings(window.id) ?: createNewWindowSettings(window.name).also {
+                window.settingsOffset = g.settingsWindows.indexOf(it)
+            }
+        }
+        assert(settings.id == window.id)
+        settings.pos put window.pos
+        settings.size put window.sizeFull
+        settings.collapsed = window.collapsed
+    }
+
+    // Write to text buffer
+    for (setting in g.settingsWindows)
+        // all numeric fields to ints to have full c++ compatibility
+        buf += """|[${handler.typeName}][${setting.name}]
+                  |Pos=${setting.pos.x.i},${setting.pos.y.i}
+                  |Size=${setting.size.x.i},${setting.size.y.i}
+                  |Collapsed=${setting.collapsed.i} 
+                  |""".trimMargin()
+}
 
 //-----------------------------------------------------------------------------
 // Platform dependent default implementations
