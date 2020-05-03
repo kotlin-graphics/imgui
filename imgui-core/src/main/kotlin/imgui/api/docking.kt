@@ -38,7 +38,7 @@ interface docking {
     /** Create an explicit dockspace node within an existing window. Also expose dock node flags and creates a CentralNode by default.
      *  The Central Node is always displayed even when empty and shrink/extend according to the requested size of its neighbors.
      *  DockSpace() needs to be submitted _before_ any window they can host. If you use a dockspace, submit it early in your app. */
-    fun dockSpace(id: ID, sizeArg: Vec2, flags_: DockNodeFlags = DockNodeFlag.None.i, windowClass: WindowClass? = null) {
+    fun dockSpace(id: ID, sizeArg: Vec2 = Vec2(), flags_: DockNodeFlags = DockNodeFlag.None.i, windowClass: WindowClass? = null) {
         val ctx = g
         val window = currentWindow
         if (g.io.configFlags hasnt ConfigFlag.DockingEnable)
