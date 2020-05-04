@@ -77,7 +77,7 @@ private class ImGuiOpenGL3 {
 
         // Create window with graphics context
         window = GlfwWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 OpenGL example")
-        window.pos = Vec2i(500)
+//        window.pos = Vec2i(500)
         window.makeContextCurrent()
         glfw.swapInterval = VSync.ON   // Enable vsync
 

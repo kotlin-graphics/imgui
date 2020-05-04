@@ -1,7 +1,6 @@
 package imgui.static
 
 import gli_.has
-import glm_.L
 import glm_.f
 import glm_.glm
 import glm_.i
@@ -15,18 +14,11 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
 import imgui.internal.classes.Rect
-import imgui.internal.classes.Window
 import imgui.internal.classes.SettingsHandler
 import imgui.internal.classes.Window
 import imgui.internal.classes.WindowSettings
 import imgui.internal.floor
 import imgui.internal.hash
-import imgui.windowsIme.COMPOSITIONFORM
-import imgui.windowsIme.DWORD
-import imgui.windowsIme.HIMC
-import imgui.windowsIme.imm
-import org.lwjgl.system.MemoryUtil
-import uno.glfw.HWND
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
@@ -178,9 +170,17 @@ fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandle
 fun windowSettingsHandler_ReadLine(ctx: Context, settingsHandler: SettingsHandler, entry: Any, line: String) {
     val settings = entry as WindowSettings
     when {
-        line.startsWith("Pos") -> settings.pos put line.substring(4).split(",")
-        line.startsWith("Size") -> settings.size put line.substring(5).split(",")
+        line.startsWith("Pos") -> settings.pos put line.substring(3 + 1).split(',')
+        line.startsWith("Size") -> settings.size put line.substring(4 + 1).split(',')
+        line.startsWith("ViewportId") -> settings.viewportId = line.substring(10 + 3 + 1).toInt(16) // ViewportId=0x
+        line.startsWith("ViewportPos") -> settings.viewportPos put line.substring(11 + 1).split(',')
         line.startsWith("Collapsed") -> settings.collapsed = line.substring(10).toBoolean()
+        line.startsWith("DockId") -> {   // "DockId=0x%X,%d" or "DockId=0x%X"
+            val values = line.substring(6 + 3).split(',')
+            settings.dockId = values[0].toInt(16)
+            settings.dockOrder = values.getOrNull(1)?.toInt(16) ?: -1
+        }
+        line.startsWith("ClassId") -> settings.classId = line.substring(7 + 3).toInt(16)
     }
 }
 
@@ -200,19 +200,39 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
             }
         }
         assert(settings.id == window.id)
-        settings.pos put window.pos
+        settings.pos put (window.pos - window.viewportPos)
         settings.size put window.sizeFull
+        settings.viewportId = window.viewportId
+        settings.viewportPos put window.viewportPos
+        assert(window.dockNode == null || window.dockNode!!.id == window.dockId)
+        settings.dockId = window.dockId
+        settings.classId = window.windowClass.classId
+        settings.dockOrder = window.dockOrder
         settings.collapsed = window.collapsed
     }
 
     // Write to text buffer
-    for (setting in g.settingsWindows)
+    for (settings in g.settingsWindows) {
         // all numeric fields to ints to have full c++ compatibility
-        buf += """|[${handler.typeName}][${setting.name}]
-                  |Pos=${setting.pos.x.i},${setting.pos.y.i}
-                  |Size=${setting.size.x.i},${setting.size.y.i}
-                  |Collapsed=${setting.collapsed.i} 
-                  |""".trimMargin()
+        buf += "[${handler.typeName}][${settings.name}]\n"
+        if (settings.viewportId != 0 && settings.viewportId != IMGUI_VIEWPORT_DEFAULT_ID) {
+            buf += "ViewportPos=${settings.viewportPos.x},${settings.viewportPos.y}\n"
+            buf += "ViewportId=0x%08X\n".format(settings.viewportId)
+        }
+        if (settings.pos.x != 0f || settings.pos.y != 0f || settings.viewportId == IMGUI_VIEWPORT_DEFAULT_ID)
+            buf += "Pos=${settings.pos.x.i},${settings.pos.y.i}\n"
+        if (settings.size.x != 0f || settings.size.y != 0f)
+            buf += "Size=${settings.size.x.i},${settings.size.y.i}\n"
+        buf += "Collapsed=${settings.collapsed.i}\n"
+        if (settings.dockId != 0) {
+            // Write DockId as 4 digits if possible. Automatic DockId are small numbers, but full explicit DockSpace() are full ImGuiID range.
+            buf += "DockId=0x%08X".format(settings.dockId)
+            buf += if (settings.dockOrder == -1) "\n" else ",${settings.dockOrder}\n"
+            if (settings.classId != 0)
+                buf += "ClassId=0x%08X\n".format(settings.classId)
+        }
+        buf += '\n'
+    }
 }
 
 //-----------------------------------------------------------------------------
