@@ -20,6 +20,7 @@ import imgui.classes.Context
 import imgui.internal.NextWindowDataFlag
 import imgui.internal.classes.*
 import imgui.internal.has
+import imgui.internal.hash
 import imgui.static.*
 import kotlin.reflect.KMutableProperty0
 
@@ -33,13 +34,13 @@ interface docking {
         g.dockContext = DockContext()
 
         // Add .ini handle for persistent docking data
-//        ImGuiSettingsHandler ini_handler
-//        ini_handler.TypeName = "Docking"
-//        ini_handler.TypeHash = ImHashStr("Docking")
-//        ini_handler.ReadOpenFn = DockSettingsHandler_ReadOpen
-//        ini_handler.ReadLineFn = DockSettingsHandler_ReadLine
-//        ini_handler.WriteAllFn = DockSettingsHandler_WriteAll
-//        g.SettingsHandlers.push_back(ini_handler)
+        g.settingsHandlers += SettingsHandler().apply {
+            typeName = "Docking"
+            typeHash = hash("Docking")
+            readOpenFn = ::dockSettingsHandler_ReadOpen
+            readLineFn = ::dockSettingsHandler_ReadLine
+            writeAllFn = ::dockSettingsHandler_WriteAll
+        }
     }
 
     fun dockContextShutdown(ctx: Context) {

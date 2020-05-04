@@ -33,8 +33,8 @@ interface settingsIniUtilities {
 
         var entryHandler: SettingsHandler? = null
         var entryData: Any? = null
-        for (i in lines.indices) {
-            val line = lines[i].trim()
+        for (l in lines) {
+            val line = l.trim()
             if (line.isNotEmpty() && line.isNotBlank()) {
                 // Skip new lines markers, then find end of the line
                 if (line[0] == '[' && line.last() == ']') {

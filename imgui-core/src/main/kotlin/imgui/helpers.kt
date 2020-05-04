@@ -26,6 +26,10 @@ operator fun StringBuilder.plusAssign(string: String) {
     append(string)
 }
 
+operator fun StringBuilder.plusAssign(char: Char) {
+    append(char)
+}
+
 const val NUL = '\u0000'
 
 /** Unique ID used by widgets (typically hashed from a stack of string) */

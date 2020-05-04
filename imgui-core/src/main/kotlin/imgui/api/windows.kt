@@ -370,7 +370,7 @@ interface windows {
 
             /* ---------- POSITION ---------- */
 
-            // Popup first latch mouse position, will position itself when it appears next frame
+            // Popup latch its initial position, will position itself when it appears next frame
             if (windowJustActivatedByUser) {
                 window.autoPosLastDirection = Dir.None
                 if (flags has Wf._Popup && !windowPosSetByApi)
@@ -418,7 +418,7 @@ interface windows {
                 // Synchronize viewport -> window in case the platform window has been moved or resized from the OS/WM
                 if (window.viewport!!.platformRequestMove) {
                     window.pos put window.viewport!!.pos
-                    markIniSettingsDirty(/*window*/)
+                    window.markIniSettingsDirty()
                 } else if (window.viewport!!.pos != window.pos) {
                     viewportRectChanged = true
                     window.viewport!!.pos put window.pos
@@ -427,7 +427,7 @@ interface windows {
                 if (window.viewport!!.platformRequestResize) {
                     window.size put window.viewport!!.size
                     window.sizeFull put window.viewport!!.size
-                    markIniSettingsDirty(/*window*/)
+                    window.markIniSettingsDirty()
                 } else if (window.viewport!!.size != window.size) {
                     viewportRectChanged = true
                     window.viewport!!.size put window.size
