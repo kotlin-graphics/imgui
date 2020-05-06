@@ -1,7 +1,6 @@
 import static org.gradle.internal.os.OperatingSystem.current
 
 plugins {
-    id 'maven'
     id 'java'
     id "org.jetbrains.kotlin.jvm"
     id "com.github.johnrengelman.shadow"
@@ -11,7 +10,7 @@ plugins {
 ext.moduleName = "${group}.imgui_openjfx"
 
 dependencies {
-    implementation "$kot-stdlib"
+    implementation "$kot-stdlib-jdk8"
     implementation project(':imgui-core')
     implementation "$kx:uno-sdk:$uno_version"
     implementation "${kx}.glm:glm:$glm_version"
@@ -23,11 +22,11 @@ dependencies {
 
     [""].each {
         String natives = "org.lwjgl:lwjgl$it:$lwjgl_version:natives-$lwjgl_natives"
-        runtime natives
+        runtimeOnly natives
         shadow natives
     }
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
 //javafx {
@@ -41,6 +40,7 @@ task lightJar(type: Jar) {
     exclude 'extraFonts'
     inputs.property("moduleName", moduleName)
 //    manifest.attributes('Automatic-Module-Name': moduleName)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -82,12 +82,17 @@ compileTestKotlin {
 }
 
 compileJava {
+    dependsOn(':compileKotlin')
+    inputs.property("moduleName", moduleName)
     doFirst {
 //        println("[$moduleName]classpath.asPath: $classpath.asPath")
         options.compilerArgs = [
                 '--module-path', classpath.asPath,
+                '--patch-module', "$moduleName=${sourceSets["main"].output.asPath}"
 //                '--add-modules', 'javafx.graphics',
         ]
         classpath = files()
     }
 }
+
+jar { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }

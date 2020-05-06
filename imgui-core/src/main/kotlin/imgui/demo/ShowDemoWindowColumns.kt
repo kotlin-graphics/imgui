@@ -98,7 +98,7 @@ object ShowDemoWindowColumns {
                 nextColumn()
                 text(names[i]); nextColumn()
                 text(paths[i]); nextColumn()
-                text("${isItemHovered().i}"); nextColumn() // TODO set back boolean (debugging)
+                text("${isItemHovered().i}"); nextColumn()
             }
             columns(1)
             separator()

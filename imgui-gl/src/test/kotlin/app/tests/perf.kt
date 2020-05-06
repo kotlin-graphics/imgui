@@ -916,7 +916,7 @@ fun registerTests_Perf(e: TestEngine) {
     }
 
     // ## Measure performance of drawlist text rendering
-//    val measureTextRenderingPerf = { ctx: TestContext -> TODO bug
+//    val measureTextRenderingPerf = { ctx: TestContext -> TODO kotlin bug
 //
 //        ImGui.setNextWindowSize(Vec2(300, 120), Cond.Always)
 //        ImGui.begin("Test Func", null, WindowFlag.NoSavedSettings.i)

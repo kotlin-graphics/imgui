@@ -52,6 +52,8 @@ import unsigned.Ulong
 import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
+@Suppress("UNCHECKED_CAST")
+
 /** Widgets: Sliders
  *  - CTRL+Click on any slider to turn them into an input box. Manually input values aren't clamped and can go off-bounds.
  *  - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision

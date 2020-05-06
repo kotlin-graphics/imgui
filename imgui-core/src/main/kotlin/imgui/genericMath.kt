@@ -14,6 +14,8 @@ import kotlin.times
 import kotlin.div
 import imgui.internal.lerp as ilerp
 
+@Suppress("UNCHECKED_CAST")
+
 infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
     this is Byte && other is Byte -> (this + other).b
     this is Ubyte && other is Ubyte -> (this + other).b
