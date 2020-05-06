@@ -6,10 +6,7 @@ import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4ub
-import gln.checkError
-import gln.glGetVec4i
-import gln.glScissor
-import gln.glViewport
+import gln.*
 import gln.glf.semantic
 import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
@@ -33,6 +30,7 @@ import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
 import org.lwjgl.system.Platform
+
 
 class ImplGL3 : GLInterface {
 
@@ -125,10 +123,7 @@ class ImplGL3 : GLInterface {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastVertexArray = glGetInteger(GL_VERTEX_ARRAY_BINDING)
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
-        val lastPolygonMode = when {
-            POLYGON_MODE -> glGetInteger(GL_POLYGON_MODE)
-            else -> 0
-        }
+        val lastPolygonMode = glGetVec2i(GL_POLYGON_MODE)[0]
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
         val lastBlendSrcRgb = glGetInteger(GL_BLEND_SRC_RGB)

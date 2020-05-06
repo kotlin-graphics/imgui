@@ -48,6 +48,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 import imgui.internal.ButtonFlag as Bf
 
+@Suppress("UNCHECKED_CAST")
+
 /** Widgets low-level behaviors */
 internal interface widgetsLowLevelBehaviors {
 
