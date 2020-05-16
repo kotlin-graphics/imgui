@@ -1316,7 +1316,7 @@ enum class Cond(@JvmField val i: CondFlags) {
     /** Set the variable    */
     Always(1 shl 0),
 
-    /** Set the variable once per runtime session (only the first call with succeed)    */
+    /** Set the variable once per runtime session (only the first call will succeed)    */
     Once(1 shl 1),
 
     /** Set the variable if the object/window has no persistently saved data (no entry in .ini file)    */
