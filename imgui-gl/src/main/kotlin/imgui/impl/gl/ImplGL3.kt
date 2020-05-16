@@ -77,12 +77,27 @@ class ImplGL3 : GLInterface {
         if (POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
+        // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
+        val clipOriginLowerLeft = when {
+            /*defined(GL_CLIP_ORIGIN) && */ Platform.get() != Platform.MACOSX &&
+                glGetInteger(GL_CLIP_ORIGIN) == GL_UPPER_LEFT -> false
+            else -> true
+        }
+
         // Setup viewport, orthographic projection matrix
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
         // DisplayPos is (0,0) for single viewport apps.
         glViewport(0, 0, fbWidth, fbHeight)
-        // TODO re-sync -> mat from drawData
-        val orthoProjection = glm.ortho(0f, io.displaySize.x.f, io.displaySize.y.f, 0f, mat)
+        val L = drawData.displayPos.x;
+        val R = drawData.displayPos.x + drawData.displaySize.x
+        var T = drawData.displayPos.y
+        var B = drawData.displayPos.y + drawData.displaySize.y
+        if (!clipOriginLowerLeft) { // Swap top and bottom if origin is upper left
+            val tmp = T
+            T = B
+            B = tmp
+        }
+        val orthoProjection = glm.ortho(L, R, B, T, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
         if (SAMPLER_BINDING)
@@ -141,10 +156,6 @@ class ImplGL3 : GLInterface {
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
-        var clipOriginLowerLeft = true
-        if (CLIP_ORIGIN && Platform.get() != Platform.MACOSX)
-            if (glGetInteger(GL_CLIP_ORIGIN) == GL20C.GL_UPPER_LEFT) // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
-                clipOriginLowerLeft = false
 
         // Setup desired GL state
         setupRenderState(drawData, fbWidth, fbHeight)
@@ -181,10 +192,7 @@ class ImplGL3 : GLInterface {
 
                     if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0f && clipRectW >= 0f) {
                         // Apply scissor/clipping rectangle
-                        if (clipOriginLowerLeft)
-                            glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
-                        else
-                            glScissor(clipRectX.i, clipRectY.i, clipRectZ.i, clipRectW.i) // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
+                        glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
