@@ -25,13 +25,16 @@ import imgui.WindowFlag as Wf
 
 /** Popups, Modals
  *  The properties of popups windows are:
- *  - They block normal mouse hovering detection outside them. (*)
+ *  - They block normal mouse hovering detection outside them. (*1)
  *  - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
+ *    Because hovering detection is disabled outside the popup, when clicking outside the click will not be seen by underlying widgets! (*1)
  *  - Their visibility state (~bool) is held internally by Dear ImGui instead of being held by the programmer as we are used to with regular Begin() calls.
- *      User can manipulate the visibility state by calling OpenPopup().
+ *    User can manipulate the visibility state by calling OpenPopup(), CloseCurrentPopup() etc.
  *  - We default to use the right mouse (ImGuiMouseButton_Right=1) for the Popup Context functions.
- *  (*) You can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even when normally blocked by a popup.
- *  Those three properties are connected. The library needs to hold their visibility state because it can close popups at any time. */
+ *  Those three properties are connected: we need to retain popup visibility state in the library because popups may be closed as any time.
+ *  (*1) You can bypass that restriction and detect hovering even when normally blocked by a popup.
+ *       To do this use the ImGuiHoveredFlags_AllowWhenBlockedByPopup when calling IsItemHovered() or IsWindowHovered().
+ *       This is what BeginPopupContextItem() and BeginPopupContextWindow() are doing already, allowing a right-click to reopen another popups without losing the click. */
 interface popupsModals {
 
     /** call to mark popup as open (don't call every frame!). popups are closed when user click outside, or if
