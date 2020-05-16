@@ -90,7 +90,7 @@ class Font {
     /** Total surface in pixels to get an idea of the font rasterization/texture cost (not exact, we approximate the cost of padding between glyphs)    */
     var metricsTotalSurface = 0                 // 4     // out
 
-    /** 2 bytes if ImWchar=ImWchar16, 34 bytes if ImWchar==ImWchar32. Store 1-bit for each block of 4K codepoints that has one active glyph. This is mainly used to facilitate iterations accross all used codepoints. */
+    /** 2 bytes if ImWchar=ImWchar16, 34 bytes if ImWchar==ImWchar32. Store 1-bit for each block of 4K codepoints that has one active glyph. This is mainly used to facilitate iterations across all used codepoints. */
     val used4kPagesMap = ByteArray((UNICODE_CODEPOINT_MAX + 1) / 4096 / 8)
 
     // @formatter:on

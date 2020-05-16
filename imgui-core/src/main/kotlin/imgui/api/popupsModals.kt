@@ -133,7 +133,7 @@ interface popupsModals {
         // Make all menus and popups wrap around for now, may need to expose that policy.
         navMoveRequestTryWrapping(window, NavMoveFlag.LoopY.i)
 
-        // Child-popups don't need to be layed out
+        // Child-popups don't need to be laid out
         assert(!g.withinEndChild)
         if (window.flags has Wf._ChildWindow)
             g.withinEndChild = true

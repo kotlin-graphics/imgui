@@ -405,7 +405,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                     dmX *= AA_SIZE
                     dmY *= AA_SIZE
 
-                    // Add temporary vertexes
+                    // Add temporary vertices
                     val outVtxIdx = tempPointsIdx + i2 * 2
                     temp[outVtxIdx + 0].x = points[i2].x + dmX
                     temp[outVtxIdx + 0].y = points[i2].y + dmY
@@ -422,7 +422,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                     idx1 = idx2
                 }
 
-                // Add vertexes
+                // Add vertices
                 for (i in 0 until points.size) {
                     vtxBuffer += points[i]; vtxBuffer += uv; vtxBuffer += col
                     vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += uv; vtxBuffer += colTrans
@@ -465,7 +465,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                     val dmInX = dmX * halfInnerThickness
                     val dmInY = dmY * halfInnerThickness
 
-                    // Add temporary vertexes
+                    // Add temporary vertices
                     val outVtxIdx = tempPointsIdx + i2 * 4
                     temp[outVtxIdx + 0].x = points[i2].x + dmOutX
                     temp[outVtxIdx + 0].y = points[i2].y + dmOutY
@@ -488,7 +488,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                     idx1 = idx2
                 }
 
-                // Add vertexes
+                // Add vertices
                 for (i in 0 until points.size) {
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 0]; vtxBuffer += uv; vtxBuffer += colTrans
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 1]; vtxBuffer += uv; vtxBuffer += col
@@ -991,7 +991,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-// On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superflous function calls to optimize debug/non-inlined builds.
+// On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
 // Those macros expects l-values.
 //    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
 //        val d2 = vX * vX + vY * vY
