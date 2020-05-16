@@ -62,10 +62,19 @@ internal interface tabBars {
     /** Render text label (with custom clipping) + Unsaved Document marker + Close Button logic
      *  We tend to lock style.FramePadding for a given tab-bar, hence the 'frame_padding' parameter.    */
     fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2,
-                                   label: ByteArray, tabId: ID, closeButtonId: ID): Boolean {
+                                   label: ByteArray, tabId: ID, closeButtonId: ID, isContentsVisible: Boolean): Boolean {
 
         val labelSize = calcTextSize(label, 0, hideTextAfterDoubleHash =  true)
-        if (bb.width <= 1f) return false
+        if (bb.width <= 1f)
+            return false
+
+        // In Style V2 we'll have full override of all colors per state (e.g. focused, selected)
+        // But right now if you want to alter text color of tabs this is what you need to do.
+//        #if 0
+//        const float backup_alpha = g.Style.Alpha;
+//        if (!is_contents_visible)
+//            g.Style.Alpha *= 0.7f;
+//        #endif
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
         val TAB_UNSAVED_MARKER = "*".toByteArray()
@@ -77,17 +86,17 @@ internal interface tabBars {
         }
         val textEllipsisClipBb = Rect(textPixelClipBb)
 
-        /*  Close Button
-            We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens
-            because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
-            'hovered' will be true when hovering the Tab but NOT when hovering the close button
-            'g.HoveredId==id' will be true when hovering the Tab including when hovering the close button
-            'g.ActiveId==close_button_id' will be true when we are holding on the close button, in which case both hovered booleans are false */
+        // Close Button
+        // We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
+        //  'hovered' will be true when hovering the Tab but NOT when hovering the close button
+        //  'g.HoveredId==id' will be true when hovering the Tab including when hovering the close button
+        //  'g.ActiveId==close_button_id' will be true when we are holding on the close button, in which case both hovered booleans are false
         var closeButtonPressed = false
         var closeButtonVisible = false
         if (closeButtonId != 0)
-            if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == closeButtonId)
-                closeButtonVisible = true
+            if (isContentsVisible || bb.width >= style.tabMinWidthForUnselectedCloseButton)
+                if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == closeButtonId)
+                    closeButtonVisible = true
         if (closeButtonVisible) {
             val closeButtonSz = g.fontSize
             pushStyleVar(StyleVar.FramePadding, framePadding)
@@ -108,6 +117,11 @@ internal interface tabBars {
         val ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x - 1f
         renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x,
                 ellipsisMaxX, label, textSizeIfKnown = labelSize)
+
+//        #if 0
+//        if (!is_contents_visible)
+//            g.Style.Alpha = backup_alpha;
+//        #endif
 
         return closeButtonPressed
     }
