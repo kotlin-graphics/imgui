@@ -290,53 +290,57 @@ class FontAtlas {
      *  Read docs/FONTS.txt for more details about using colorful icons.    */
     class CustomRect {
 
-        /** Input, User ID. Use < 0x110000 to map into a font glyph, >= 0x110000 for other/internal/custom texture data.   */
-        var id = 0xFFFFFFFF.i
-
-        /** Input, Desired rectangle width */
+        /** Input    // Desired rectangle dimension */
         var width = 0
 
-        /** Input, Desired rectangle height */
+        /** Input    // Desired rectangle dimension */
         var height = 0
 
-        /** Output, Packed width position in Atlas  */
+        /** Output   // Packed position in Atlas  */
         var x = 0xFFFF
 
-        /** Output, Packed height position in Atlas  */
+        /** Output   // Packed position in Atlas  */
         var y = 0xFFFF
 
-        /** Input, For custom font glyphs only (ID < 0x110000): glyph xadvance */
+        /** Input    // For custom font glyphs only (ID < 0x110000)   */
+        var glyphID = 0
+
+        /** Input    // For custom font glyphs only: glyph xadvance */
         var glyphAdvanceX = 0f
 
-        /** Input, For custom font glyphs only (ID < 0x110000): glyph display offset   */
+        /** Input    // For custom font glyphs only: glyph display offset   */
         var glyphOffset = Vec2()
 
-        /** Input, For custom font glyphs only (ID < 0x110000): target font    */
+        /** Input    // For custom font glyphs only: target font    */
         var font: Font? = null
 
         val isPacked: Boolean
             get() = x != 0xFFFF
     }
 
-    /** Id needs to be >= 0x110000. Id >= 0x80000000 are reserved for ImGui and DrawList   */
-    fun addCustomRectRegular(id: Int, width: Int, height: Int): Int {
-        // Breaking change on 2019/11/21 (1.74): ImFontAtlas::AddCustomRectRegular() now requires an ID >= 0x110000 (instead of >= 0x10000)
-        assert(id.toULong() >= 0x110000 && width in 0..0xFFFF && height in 0..0xFFFF)
+    // Note: this API may be redesigned later in order to support multi-monitor varying DPI settings.
+
+    fun addCustomRectRegular(width: Int, height: Int): Int {
+        assert(width in 1..0xFFFF)
+        assert(height in 1..0xFFFF)
         val r = CustomRect()
-        r.id = id
         r.width = width
         r.height = height
-        customRects.add(r)
+        customRects += r
         return customRects.lastIndex
     }
 
-    /** Id needs to be < 0x110000 to register a rectangle to map into a specific font.   */
     fun addCustomRectFontGlyph(font: Font, id: Int, width: Int, height: Int, advanceX: Float, offset: Vec2 = Vec2()): Int {
-        assert(width in 1..0xFFFF && height in 1..0xFFFF)
+//        #ifdef IMGUI_USE_WCHAR32
+//                IM_ASSERT(id <= IM_UNICODE_CODEPOINT_MAX);
+//        #endif
+//        IM_ASSERT(font != NULL);
+        assert(width in 1..0xFFFF)
+        assert(height in 1..0xFFFF)
         val r = CustomRect()
-        r.id = id
         r.width = width
         r.height = height
+        r.glyphID = id
         r.glyphAdvanceX = advanceX
         r.glyphOffset = offset
         r.font = font
@@ -363,7 +367,6 @@ class FontAtlas {
 
         assert(customRectIds[0] != -1)
         val r = customRects[customRectIds[0]]
-        assert(r.id == DefaultTexData.id)
         val pos = DefaultTexData.cursorDatas[cursor.i][0] + Vec2(r.x, r.y)
         val size = DefaultTexData.cursorDatas[cursor.i][1]
         outSize put size
@@ -815,12 +818,13 @@ class FontAtlas {
         return true
     }
 
-    /** Register default custom rectangles (this is called/shared by both the stb_truetype and the FreeType builder) */
+    /** Register default custom rectangles (this is called/shared by both the stb_truetype and the FreeType builder)
+     *  ~ImFontAtlasBuildInit */
     fun buildInit() {
         if (customRectIds[0] >= 0) return
         customRectIds[0] = when {
-            flags hasnt FontAtlasFlag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.id, DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
-            else -> addCustomRectRegular(DefaultTexData.id, 2, 2)
+            flags hasnt FontAtlasFlag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+            else -> addCustomRectRegular(2, 2)
         }
     }
 
@@ -861,6 +865,7 @@ class FontAtlas {
         packRects.free()
     }
 
+    /** ~ImFontAtlasBuildFinish */
     fun buildFinish() {
         // Render into our custom data block
         buildRenderDefaultTexData()
@@ -868,13 +873,14 @@ class FontAtlas {
         // Register custom rectangle glyphs
         for (r in customRects) {
             val font = r.font
-            if (font == null || r.id >= 0x110000) continue
+            if (font == null || r.glyphID == 0)
+                continue
 
             assert(font.containerAtlas === this)
             val uv0 = Vec2()
             val uv1 = Vec2()
             calcCustomRectUV(r, uv0, uv1)
-            font.addGlyph(r.id, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
+            font.addGlyph(r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
                     uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
@@ -897,7 +903,7 @@ class FontAtlas {
 
         assert(customRectIds[0] >= 0 && texPixelsAlpha8 != null)
         val r = customRects[customRectIds[0]]
-        assert(r.id == DefaultTexData.id && r.isPacked)
+        assert(r.isPacked)
 
         val w = texSize.x
         if (flags hasnt FontAtlasFlag.NoMouseCursors) {
@@ -947,7 +953,6 @@ class FontAtlas {
     object DefaultTexData {
         val wHalf = 108
         val h = 27
-        val id = 0x80000000.i
         val pixels = run {
             val s = StringBuilder()
             s += "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX-     XX          "
