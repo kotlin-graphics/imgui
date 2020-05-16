@@ -212,7 +212,7 @@ interface widgetsMenus {
             g.navWindow = window
 
         /*  The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child menu,
-            However the final position is going to be different! It is choosen by FindBestWindowPosForPopup().
+            However the final position is going to be different! It is chosen by FindBestWindowPosForPopup().
             e.g. Menus tend to overlap each other horizontally to amplify relative Z-ordering.         */
         val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
