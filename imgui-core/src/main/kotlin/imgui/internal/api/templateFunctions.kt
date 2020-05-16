@@ -164,7 +164,7 @@ internal interface templateFunctions {
         return true
     }
 
-    // FIXME: Move some of the code into SliderBehavior(). Current responsability is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+    // FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
     fun <N> sliderBehaviorT(bb: Rect, id: Int,
                             dataType: DataType, vPtr: KMutableProperty0<N>,
                             vMin: N, vMax: N, format: String,

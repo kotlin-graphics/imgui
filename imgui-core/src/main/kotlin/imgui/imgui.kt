@@ -79,7 +79,7 @@ const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
 /** Reduce visual noise by only highlighting the border after a certain time. */
 const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 
-/** Lock scrolled window (so it doesn't pick child windows that are scrolling through) for a certaint time, unless mouse moved. */
+/** Lock scrolled window (so it doesn't pick child windows that are scrolling through) for a certain time, unless mouse moved. */
 const val WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER = 2f
 
 // Test engine hooks (imgui-test)
