@@ -9,6 +9,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
+import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -19,6 +20,7 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
@@ -41,6 +43,7 @@ import imgui.ImGui.showFontSelector
 import imgui.ImGui.showStyleSelector
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
+import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
@@ -60,6 +63,7 @@ import imgui.dsl.tooltip
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
+import imgui.font.Font
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
 import imgui.WindowFlag as Wf
@@ -234,87 +238,10 @@ object StyleEditor {
                 val atlas = io.fonts
                 helpMarker("Read FAQ and docs/FONTS.txt for details on font loading.")
                 pushItemWidth(120)
-                atlas.fonts.forEachIndexed { i, font ->
+                for(font in atlas.fonts) {
                     pushID(font)
                     val name = font.configData.getOrNull(0)?.name ?: ""
-                    val fontDetailsOpened = treeNode(font, "Font $i: '$name', %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
-                    sameLine(); smallButton("Set as default") { io.fontDefault = font }
-                    if (fontDetailsOpened) {
-                        pushFont(font)
-                        text("The quick brown fox jumps over the lazy dog")
-                        popFont()
-                        dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
-                        sameLine()
-                        helpMarker("""
-                        |Note than the default embedded font is NOT meant to be scaled.
-                        |
-                        |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.
-                        |
-                        |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
-                        inputFloat("Font offset", font.displayOffset::y, 1f, 1f)
-                        text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
-                        text("Fallback character: '${font.fallbackChar}' (U+%04X)", font.fallbackChar)
-                        text("Ellipsis character: '${font.ellipsisChar}' (U+%04X)", font.ellipsisChar)
-                        val side = sqrt(font.metricsTotalSurface.f).i
-                        text("Texture Area: about ${font.metricsTotalSurface} px ~${side}x$side px")
-                        for (c in 0 until font.configDataCount)
-                            font.configData.getOrNull(c)?.let {
-                                bulletText("Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}")
-                            }
-                        treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
-                            // Display all glyphs of the fonts in separate pages of 256 characters
-                            var base = 0
-                            while (base <= UNICODE_CODEPOINT_MAX) {
-
-                                // Skip ahead if a large bunch of glyphs are not present in the font (test in chunks of 4k)
-                                // This is only a small optimization to reduce the number of iterations when IM_UNICODE_MAX_CODEPOINT is large.
-                                // (if ImWchar==ImWchar32 we will do at least about 272 queries here)
-                                if (base hasnt 4095 && font.isGlyphRangeUnused(base, base + 4095)) {
-                                    base += 4096 - 256
-                                    base += 256
-                                    continue
-                                }
-
-                                val count = (0 until 256).count { font.findGlyphNoFallback(base + it) != null }
-                                val s = if (count > 1) "glyphs" else "glyph"
-                                if (count > 0 && treeNode(Integer.valueOf(base), "U+%04X..U+%04X ($count $s)", base, base + 255)) {
-
-                                    val cellSize = font.fontSize * 1
-                                    val cellSpacing = style.itemSpacing.y
-                                    val basePos = Vec2(cursorScreenPos)
-                                    val drawList = windowDrawList
-                                    for (n in 0 until 256) {
-                                        val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                                                basePos.y + (n / 16) * (cellSize + cellSpacing))
-                                        val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
-                                        val glyph = font.findGlyphNoFallback((base + n).c)
-                                        drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50))
-                                        /*  We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion
-                                            functions available to generate a string.                                     */
-                                        if (glyph != null) {
-                                            font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)
-                                            if (isMouseHoveringRect(cellP1, cellP2))
-                                                tooltip {
-                                                    text("Codepoint: U+%04X", base + n)
-                                                    separator()
-                                                    if (DEBUG)
-                                                        text("Visible: ${glyph.visible}")
-                                                    else
-                                                        text("Visible: ${glyph.visible.i}")
-                                                    text("AdvanceX+1: %.1f", glyph.advanceX)
-                                                    text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
-                                                    text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
-                                                }
-                                        }
-                                    }
-                                    dummy(Vec2((cellSize + cellSpacing) * 16, (cellSize + cellSpacing) * 16))
-                                    treePop()
-                                }
-                                base += 256
-                            }
-                        }
-                        treePop()
-                    }
+                    nodeFont(font)
                     popID()
                 }
                 treeNode("Atlas texture", "Atlas texture (${atlas.texSize.x}x${atlas.texSize.y} pixels)") {
@@ -349,5 +276,90 @@ object StyleEditor {
             endTabBar()
         }
         popItemWidth()
+    }
+
+    /** [Internal] Display details for a single font, called by ShowStyleEditor(). */
+    fun nodeFont(font: Font) {
+        val fontDetailsOpened = treeNode(font, "Font: \"${font.configData.getOrElse(0) { "" }}\"\n%.2f px, " +
+                "${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
+        sameLine(); if (smallButton("Set as default")) io.fontDefault = font
+        if (!fontDetailsOpened)
+            return
+
+        pushFont(font)
+        text("The quick brown fox jumps over the lazy dog")
+        popFont()
+        dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")   // Scale only this font
+        sameLine(); helpMarker(
+                "Note than the default embedded font is NOT meant to be scaled.\n\n" +
+                        "Font are currently rendered into bitmaps at a given size at the time of building the atlas. " +
+                        "You may oversample them to get some flexibility with scaling. " +
+                        "You can also render at multiple sizes and select which one to use at runtime.\n\n" +
+                        "(Glimmer of hope: the atlas system will be rewritten in the future to make scaling more flexible.)")
+        inputFloat("Font offset", font.displayOffset::y, 1f, 1f, "%.0f")
+        text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
+        text("Fallback character: '${font.fallbackChar}' (U+%04X)", font.fallbackChar)
+        text("Ellipsis character: '${font.ellipsisChar}' (U+%04X)", font.ellipsisChar)
+        val surfaceSqrt = sqrt(font.metricsTotalSurface.f).i
+        text("Texture Area: about ${font.metricsTotalSurface} px ~${surfaceSqrt}x$surfaceSqrt px")
+        for (configI in 0 until font.configDataCount)
+            if (font.configData.isNotEmpty())
+                font.configData.getOrNull(configI)?.let { cfg ->
+                    bulletText("Input $configI: \'${cfg.name}\', Oversample: (${cfg.oversample.x},${cfg.oversample.y}), PixelSnapH: ${cfg.pixelSnapH}")
+                }
+        if (treeNode("Glyphs", "Glyphs (${font.glyphs.size})")) {
+            // Display all glyphs of the fonts in separate pages of 256 characters
+            val glyphCol = Col.Text.u32
+            var base = 0
+            while (base <= UNICODE_CODEPOINT_MAX) { //  step 256
+                // Skip ahead if a large bunch of glyphs are not present in the font (test in chunks of 4k)
+                // This is only a small optimization to reduce the number of iterations when IM_UNICODE_MAX_CODEPOINT is large.
+                // (if ImWchar==ImWchar32 we will do at least about 272 queries here)
+                if (base hasnt 4095 && font.isGlyphRangeUnused(base, base + 4095)) {
+                    base += 4096 /*- 256 + 256 */
+                    continue
+                }
+
+                val count = (0..255).count { font.findGlyphNoFallback((base + it).c) != null }
+                if (count <= 0) {
+                    base += 256
+                    continue
+                }
+                // TreenNode((void*)(intptr_t)base, ..)
+                if (!treeNode(Integer.valueOf(base), "U+%04X..U+%04X ($count ${if (count > 1) "glyphs" else "glyph"})", base, base + 255)) {
+                    base += 256
+                    continue
+                }
+                val cellSize = font.fontSize * 1
+                val cellSpacing = style.itemSpacing.y
+                val basePos = ImGui.cursorScreenPos // safe instance
+                val drawList = ImGui.windowDrawList
+                for (n in 0..255) {
+                    // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions available here
+                    // in order to generate a zero-terminated string.
+                    val cellP1 = Vec2 (basePos.x + (n % 16) * (cellSize + cellSpacing), basePos.y+(n / 16) * (cellSize+cellSpacing))
+                    val cellP2 = Vec2 (cellP1.x + cellSize, cellP1.y+cellSize)
+                    val glyph = font.findGlyphNoFallback((base+n).c)
+                    drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if(glyph != null) 100 else 50))
+                    if (glyph != null)
+                        font.renderChar(drawList, cellSize, cellP1, glyphCol, (base+n).c)
+                    if (glyph != null && ImGui.isMouseHoveringRect(cellP1, cellP2)) {
+                        beginTooltip()
+                        text("Codepoint: U+%04X", base + n)
+                        separator()
+                        text("Visible: ${glyph.visible.i}")
+                        text("AdvanceX: %.1f", glyph.advanceX)
+                        text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
+                        text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
+                        endTooltip()
+                    }
+                }
+                dummy(Vec2((cellSize + cellSpacing) * 16))
+                treePop()
+                base += 256
+            }
+            treePop()
+        }
+        treePop()
     }
 }
