@@ -76,10 +76,6 @@ object StyleEditor {
     // Default Styles Selector
     var styleIdx = 0
 
-    var windowBorder = false
-    var frameBorder = false
-    var popupBorder = false
-
     var outputDest = 0
     var outputOnlyModified = true
     var alphaFlags: ColorEditFlags = 0
@@ -87,8 +83,8 @@ object StyleEditor {
     var windowScale = 1f
 
     operator fun invoke(ref_: Style? = null) {
-        /*  You can pass in a reference ImGuiStyle structure to compare to, revert to and save to
-            (else it compares to the default style)         */
+        // You can pass in a reference ImGuiStyle structure to compare to, revert to and save to
+        // (without a reference style pointer, we will use one compared locally as a reference)
 
         // Default to using internal storage as reference
         if (init && ref_ == null) refSavedStyle = Style(style)
@@ -101,22 +97,22 @@ object StyleEditor {
 
         showFontSelector("Fonts##Selector")
 
-        // Simplified Settings
+        // Simplified Settings (expose floating-pointer border sizes as boolean representing 0.0f or 1.0f)
         if (sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f"))
             style.grabRounding = style.frameRounding    // Make GrabRounding always the same value as FrameRounding
         run {
-            windowBorder = style.windowBorderSize > 0f
-            if (checkbox("WindowBorder", ::windowBorder)) style.windowBorderSize = if (windowBorder) 1f else 0f
+            val border = booleanArrayOf(style.windowBorderSize > 0f)
+            if (checkbox("WindowBorder", border)) style.windowBorderSize = border[0].f
         }
         sameLine()
         run {
-            frameBorder = style.frameBorderSize > 0f
-            if (checkbox("FrameBorder", ::frameBorder)) style.frameBorderSize = if (frameBorder) 1f else 0f
+            val border = booleanArrayOf(style.frameBorderSize > 0f)
+            if (checkbox("FrameBorder", border)) style.frameBorderSize = border[0].f
         }
         sameLine()
         run {
-            popupBorder = style.popupBorderSize > 0f
-            if (checkbox("PopupBorder", ::popupBorder)) style.popupBorderSize = if (popupBorder) 1f else 0f
+            val border = booleanArrayOf(style.popupBorderSize > 0f)
+            if (checkbox("PopupBorder", border)) style.popupBorderSize = border[0].f
         }
 
         // Save/Revert button
@@ -127,7 +123,9 @@ object StyleEditor {
         sameLine()
         if (button("Revert Ref")) g.style = ref!!
         sameLine()
-        helpMarker("Save/Revert in local non-persistent storage. Default Colors definition are not affected. Use \"Export\" below to save them somewhere.")
+        helpMarker(
+                "Save/Revert in local non-persistent storage. Default Colors definition are not affected. " +
+                "Use \"Export\" below to save them somewhere.")
 
         separator()
 
@@ -169,9 +167,12 @@ object StyleEditor {
                     combo("ColorButtonPosition", ::_i, "Left\u0000Right\u0000")
                     style.colorButtonPosition = Dir.values().first { it.i == _i }
                 }
-                sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
-                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f"); sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
-                text("Safe Area Padding"); sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
+                sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
+                sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")
+                sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f")
+                sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
+                text("Safe Area Padding")
+                sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
                 sliderVec2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
                 endTabItem()
             }
@@ -188,7 +189,8 @@ object StyleEditor {
                         val col = style.colors[i]
                         val name = i.name
                         if (!outputOnlyModified || col != ref!!.colors[i])
-                            logText("colors[Col.%s.i] = Vec4(%.2f, %.2f, %.2f, %.2f)\n", name, col.x, col.y, col.z, col.w)
+                            logText("colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n",
+                                    " ".repeat(23 - name.length), col.x, col.y, col.z, col.w)
                     }
                     logFinish()
                 }
@@ -204,7 +206,10 @@ object StyleEditor {
                 radioButton("Opaque", alphaFlags == 0) { alphaFlags = 0 }; sameLine()
                 radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
                 radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) { alphaFlags = Cef.AlphaPreviewHalf.i }; sameLine()
-                helpMarker("In the color list:\nLeft-click on colored square to open color picker,\nRight-click to open edit options menu.")
+                helpMarker(
+                        "In the color list:\n" +
+                        "Left-click on colored square to open color picker,\n" +
+                        "Right-click to open edit options menu.")
 
                 child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
                     withItemWidth(-160) {
@@ -215,10 +220,8 @@ object StyleEditor {
                             withId(i) {
                                 colorEditVec4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
                                 if (style.colors[i] != ref!!.colors[i]) {
-                                    /*  Tips: in a real user application, you may want to merge and use an icon font into
-                                        the main font, so instead of "Save"/"Revert" you'd use icons.
-                                        Read the FAQ and docs/FONTS.txt about using icon fonts. It's really easy
-                                        and super convenient!  */
+                                    // Tips: in a real user application, you may want to merge and use an icon font into the main font,
+                                    // so instead of "Save"/"Revert" you'd use icons!
                                     sameLine(0f, style.itemInnerSpacing.x)
                                     if (button("Save")) ref!!.colors[i] = Vec4(style.colors[i])
                                     sameLine(0f, style.itemInnerSpacing.x)
@@ -251,9 +254,9 @@ object StyleEditor {
                 }
 
                 helpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.")
-                if (dragFloat("window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))    // scale only this window
+                if (dragFloat("window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))  // Scale only this window
                     setWindowFontScale(windowScale)
-                dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.2f") // scale everything
+                dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.2f") // Scale everything
                 popItemWidth()
 
                 endTabItem()
@@ -261,6 +264,7 @@ object StyleEditor {
 
             if (beginTabItem("Rendering")) {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
+                sameLine(); helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
                 dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
@@ -313,8 +317,8 @@ object StyleEditor {
             var base = 0
             while (base <= UNICODE_CODEPOINT_MAX) { //  step 256
                 // Skip ahead if a large bunch of glyphs are not present in the font (test in chunks of 4k)
-                // This is only a small optimization to reduce the number of iterations when IM_UNICODE_MAX_CODEPOINT is large.
-                // (if ImWchar==ImWchar32 we will do at least about 272 queries here)
+                // This is only a small optimization to reduce the number of iterations when IM_UNICODE_MAX_CODEPOINT
+                // is large // (if ImWchar==ImWchar32 we will do at least about 272 queries here)
                 if (base hasnt 4095 && font.isGlyphRangeUnused(base, base + 4095)) {
                     base += 4096 /*- 256 + 256 */
                     continue
@@ -335,8 +339,8 @@ object StyleEditor {
                 val basePos = ImGui.cursorScreenPos // safe instance
                 val drawList = ImGui.windowDrawList
                 for (n in 0..255) {
-                    // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions available here
-                    // in order to generate a zero-terminated string.
+                    // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
+                    // available here and thus cannot easily generate a zero-terminated UTF-8 encoded string.
                     val cellP1 = Vec2 (basePos.x + (n % 16) * (cellSize + cellSpacing), basePos.y+(n / 16) * (cellSize+cellSpacing))
                     val cellP2 = Vec2 (cellP1.x + cellSize, cellP1.y+cellSize)
                     val glyph = font.findGlyphNoFallback((base+n).c)

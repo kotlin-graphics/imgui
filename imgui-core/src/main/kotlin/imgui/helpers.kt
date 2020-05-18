@@ -34,6 +34,7 @@ typealias ID = Int
 /** User data to identify a texture */
 typealias TextureID = Int
 
+// Return false = pass
 typealias InputTextCallback = (InputTextCallbackData) -> Boolean
 typealias SizeCallback = (SizeCallbackData) -> Unit
 

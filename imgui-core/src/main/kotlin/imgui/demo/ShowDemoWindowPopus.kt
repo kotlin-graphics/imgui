@@ -55,7 +55,6 @@ object ShowDemoWindowPopups {
     var dontAskMeNextTime = false
 
     /* Modals */
-    var dummyOpen = true
     var item = 1
     var color = Vec4(0.4f, 0.7f, 0f, 0.5f)
 
@@ -64,30 +63,25 @@ object ShowDemoWindowPopups {
         if (!collapsingHeader("Popups & Modal windows"))
             return
 
-        /*  The properties of popups windows are:
-            - They block normal mouse hovering detection outside them. (*)
-            - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
-            - Their visibility state (~bool) is held internally by Dear ImGui instead of being held by the programmer as we are used to with regular Begin() calls.
-                User can manipulate the visibility state by calling OpenPopup().
-            (*) One can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even when normally blocked by a popup.
-            Those three properties are connected. The library needs to hold their visibility state because it can close popups at any time.
-
-            Typical use for regular windows:
-            bool my_tool_is_active = false; if (ImGui::Button("Open")) my_tool_is_active = true; [...] if (my_tool_is_active) Begin("My Tool", &my_tool_is_active) { [...] } End();
-            Typical use for popups:
-            if (ImGui::Button("Open")) ImGui::OpenPopup("MyPopup"); if (ImGui::BeginPopup("MyPopup") { [...] EndPopup(); }
-            With popups we have to go through a library call (here OpenPopup) to manipulate the visibility state.
-            This may be a bit confusing at first but it should quickly make sense. Follow on the examples below.
-         */
+        // The properties of popups windows are:
+        // - They block normal mouse hovering detection outside them. (*)
+        // - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
+        // - Their visibility state (~bool) is held internally by Dear ImGui instead of being held by the programmer as
+        //   we are used to with regular Begin() calls. User can manipulate the visibility state by calling OpenPopup().
+        // (*) One can use IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) to bypass it and detect hovering even
+        //     when normally blocked by a popup.
+        // Those three properties are connected. The library needs to hold their visibility state BECAUSE it can close
+        // popups at any time.
         treeNode("Popups") {
 
-            textWrapped("When a popup is active, it inhibits interacting with windows that are behind the popup. Clicking outside the popup closes it.")
+            textWrapped(
+                    "When a popup is active, it inhibits interacting with windows that are behind the popup. " +
+                    "Clicking outside the popup closes it.")
 
             val names = arrayOf("Bream", "Haddock", "Mackerel", "Pollock", "Tilefish")
 
-            /*  Simple selection popup
-                (If you want to show the current selection inside the Button itself, you may want to build a string
-                using the "###" operator to preserve a constant ID with a variable label)                 */
+            // Simple selection popup (if you want to show the current selection inside the Button itself,
+            // you may want to build a string using the "###" operator to preserve a constant ID with a variable label)
             if (button("Select..")) openPopup("my_select_popup")
             sameLine()
             textEx(names.getOrElse(selectedFish) { "<None>" })
@@ -130,7 +124,8 @@ object ShowDemoWindowPopups {
             //    if (IsItemHovered() && IsMouseReleased(0))
             //       OpenPopup(id);
             //    return BeginPopup(id);
-            // For more advanced uses you may want to replicate and cuztomize this code. This the comments inside BeginPopupContextItem() implementation.
+            // For more advanced uses you may want to replicate and customize this code.
+            // See details in BeginPopupContextItem().
             text("Value = %.3f (<-- right-click here)", value)
             popupContextItem("item context menu") {
                 if (selectable("Set to zero")) value = 0f
@@ -140,14 +135,16 @@ object ShowDemoWindowPopups {
                 }
             }
 
-            // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the Begin call.
-            // So here we will make it that clicking on the text field with the right mouse button (1) will toggle the visibility of the popup above.
+            // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the
+            // Begin() call. So here we will make it that clicking on the text field with the right mouse button (1)
+            // will toggle the visibility of the popup above.
             text("(You can also right-click me to open the same popup as above.)")
             openPopupOnItemClick("item context menu", MouseButton.Right)
 
-            // When used after an item that has an ID (here the Button), we can skip providing an ID to BeginPopupContextItem().
+            // When used after an item that has an ID (e.g.Button), we can skip providing an ID to BeginPopupContextItem().
             // BeginPopupContextItem() will use the last item ID as the popup ID.
-            // In addition here, we want to include your editable label inside the button label. We use the ### operator to override the ID (read FAQ about ID for details)
+            // In addition here, we want to include your editable label inside the button label.
+            // We use the ### operator to override the ID (read FAQ about ID for details)
             val text = "Button: ${name.cStr}###Button" // ### operator override id ignoring the preceding label
             button(text)
             popupContextItem {
@@ -160,7 +157,7 @@ object ShowDemoWindowPopups {
 
         treeNode("Modals") {
 
-            textWrapped("Modal windows are like popups but the user cannot close them by clicking outside the window.")
+            textWrapped("Modal windows are like popups but the user cannot close them by clicking outside.")
 
             if (button("Delete.."))
                 openPopup("Delete?")
@@ -200,9 +197,11 @@ object ShowDemoWindowPopups {
                 colorEdit4("color", color)
 
                 button("Add another modal..") { openPopup("Stacked 2") }
-                // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which will close the popup.
-                // Note that the visibility state of popups is owned by imgui, so the input value of the bool actually doesn't matter here.
-                if (beginPopupModal("Stacked 2", ::dummyOpen)) {
+                // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which
+                // will close the popup. Note that the visibility state of popups is owned by imgui, so the input value
+                // of the bool actually doesn't matter here.
+                val dummyOpen = booleanArrayOf(true)
+                if (beginPopupModal("Stacked 2", dummyOpen)) {
                     text("Hello from Stacked The Second!")
                     button("Close") { closeCurrentPopup() }
                     endPopup()
@@ -214,12 +213,12 @@ object ShowDemoWindowPopups {
         treeNode("Menus inside a regular window") {
             textWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!")
             separator()
-            /*  NB: As a quirk in this very specific example, we want to differentiate the parent of this menu from
-                the parent of the various popup menus above.
-                To do so we are encloding the items in a pushID()/popID() block to make them two different menusets.
-                If we don't, opening any popup above and hovering our menu here would open it. This is because once
-                a menu is active, we allow to switch to a sibling menu by just hovering on it, which is the desired
-                behavior for regular menus. */
+
+            // Note: As a quirk in this very specific example, we want to differentiate the parent of this menu from the
+            // parent of the various popup menus above. To do so we are encloding the items in a PushID()/PopID() block
+            // to make them two different menusets. If we don't, opening any popup above and hovering our menu here would
+            // open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it,
+            // which is the desired behavior for regular menus.
             withId("foo") {
                 menuItem("Menu item", "CTRL+M")
                 menu("Menu inside a regular window") { MenuFile() }
