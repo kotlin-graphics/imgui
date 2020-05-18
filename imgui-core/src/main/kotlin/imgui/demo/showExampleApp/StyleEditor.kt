@@ -4,6 +4,7 @@ import gli_.hasnt
 import glm_.c
 import glm_.f
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -253,10 +254,19 @@ object StyleEditor {
                     image(atlas.texID, Vec2(atlas.texSize), Vec2(), Vec2(1), tintCol, borderCol)
                 }
 
-                helpMarker("Those are old settings provided for convenience.\nHowever, the _correct_ way of scaling your UI is currently to reload your font at the designed size, rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.")
-                if (dragFloat("window scale", ::windowScale, 0.005f, 0.3f, 2f, "%.2f"))  // Scale only this window
-                    setWindowFontScale(windowScale)
-                dragFloat("global scale", io::fontGlobalScale, 0.005f, 0.3f, 2f, "%.2f") // Scale everything
+                // Post-baking font scaling. Note that this is NOT the nice way of scaling fonts, read below.
+                // (we enforce hard clamping manually as by default DragFloat/SliderFloat allows CTRL+Click text to get out of bounds).
+                val MIN_SCALE = 0.3f
+                val MAX_SCALE = 2f
+                helpMarker(
+                        "Those are old settings provided for convenience.\n" +
+                        "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, " +
+                        "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n" +
+                        "Using those settings here will give you poor quality results.")
+                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f"))  // Scale only this window
+                    setWindowFontScale(windowScale max  MIN_SCALE)
+                if(dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f")) // Scale everything
+                    io.fontGlobalScale = io.fontGlobalScale max MIN_SCALE
                 popItemWidth()
 
                 endTabItem()
