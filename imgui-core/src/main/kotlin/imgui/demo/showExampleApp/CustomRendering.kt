@@ -1,10 +1,8 @@
 package imgui.demo.showExampleApp
 
-import glm_.f
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.COL32
-import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.backgroundDrawList
 import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
@@ -30,9 +28,7 @@ import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
-import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
-import imgui.ImGui.separator
 import imgui.ImGui.sliderInt
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -70,13 +66,10 @@ object CustomRendering {
             return
         }
 
-        /*  Tip: If you do a lot of custom rendering, you probably want to use your own geometrical types and
-            benefit of overloaded operators, etc.
-            Define IM_VEC2_CLASS_EXTRA in imconfig.h to create implicit conversions between your types and
-            ImVec2/ImVec4.
-            ImGui defines overloaded operators but they are internal to imgui.cpp and not exposed outside
-            (to avoid messing with your types)
-            In this example we are not using the maths operators!   */
+        // Tip: If you do a lot of custom rendering, you probably want to use your own geometrical types and benefit of
+        // overloaded operators, etc. Define IM_VEC2_CLASS_EXTRA in imconfig.h to create implicit conversions between your
+        // types and ImVec2/ImVec4. Dear ImGui defines overloaded operators but they are internal to imgui.cpp and not
+        // exposed outside (to avoid messing with your types) In this example we are not using the maths operators!
         val drawList = windowDrawList
 
         if (beginTabBar("##TabBar")) {
@@ -90,17 +83,19 @@ object CustomRendering {
                 text("Gradients")
                 val gradientSize = Vec2(calcItemWidth(), frameHeight)
                 run {
-                    val p = cursorScreenPos
+                    val p0 = Vec2(cursorScreenPos)
+                    val p1 = Vec2(p0.x + gradientSize.x, p0.y + gradientSize.y)
                     val colA = Vec4(0f, 0f, 0f, 1f).u32
                     val colB = Vec4(1f).u32
-                    drawList.addRectFilledMultiColor(p, Vec2(p.x + gradientSize.x, p.y + gradientSize.y), colA, colB, colB, colA)
+                    drawList.addRectFilledMultiColor(p0, p1, colA, colB, colB, colA)
                     invisibleButton("##gradient1", gradientSize)
                 }
                 run {
-                    val p = cursorScreenPos
+                    val p0 = Vec2(cursorScreenPos)
+                    val p1 = Vec2(p0.x + gradientSize.x, p0.y + gradientSize.y)
                     val colA = Vec4(0f, 1f, 0f, 1f).u32
                     val colB = Vec4(1f, 0f, 0f, 1f).u32
-                    drawList.addRectFilledMultiColor(p, Vec2(p.x + gradientSize.x, p.y + gradientSize.y), colA, colB, colB, colA)
+                    drawList.addRectFilledMultiColor(p0, p1, colA, colB, colB, colA)
                     invisibleButton("##gradient2", gradientSize)
                 }
 
@@ -171,23 +166,24 @@ object CustomRendering {
                 }
                 text("Left-click and drag to add lines,\nRight-click to undo")
 
-                /*  Here we are using InvisibleButton() as a convenience to 1) advance the cursor and 2) allows us to use IsItemHovered()
-                    But you can also draw directly and poll mouse/keyboard by yourself. You can manipulate the cursor using GetCursorPos() and SetCursorPos().
-                    If you only use the ImDrawList API, you can notify the owner window of its extends by using SetCursorPos(max).
-                 */
-                val canvasPos = Vec2(cursorScreenPos)       // ImDrawList API uses screen coordinates!
-                val canvasSize = Vec2(contentRegionAvail)   // Resize canvas to what's available
-                if (canvasSize.x < 50.0f) canvasSize.x = 50.0f
-                if (canvasSize.y < 50.0f) canvasSize.y = 50.0f
-                drawList.addRectFilledMultiColor(canvasPos, canvasPos + canvasSize, getColorU32(50, 50, 50, 255), getColorU32(50, 50, 60, 255), getColorU32(60, 60, 70, 255), getColorU32(50, 50, 60, 255))
-                drawList.addRect(canvasPos, canvasPos + canvasSize, getColorU32(255, 255, 255, 255))
+                // Here we are using InvisibleButton() as a convenience to 1) advance the cursor and 2) allows us to use
+                // IsItemHovered(). But you can also draw directly and poll mouse/keyboard by yourself.
+                // You can manipulate the cursor using GetCursorPos() and SetCursorPos().
+                // If you only use the ImDrawList API, you can notify the owner window of its extends with SetCursorPos(max).
+                val canvasP = Vec2(cursorScreenPos)       // ImDrawList API uses screen coordinates!
+                val canvasSz = Vec2(contentRegionAvail)   // Resize canvas to what's available
+                if (canvasSz.x < 50f) canvasSz.x = 50f
+                if (canvasSz.y < 50f) canvasSz.y = 50f
+                drawList.addRectFilledMultiColor(canvasP, canvasP + canvasSz, getColorU32(50, 50, 50, 255), getColorU32(50, 50, 60, 255), getColorU32(60, 60, 70, 255), getColorU32(50, 50, 60, 255))
+                drawList.addRect(canvasP, canvasP + canvasSz, getColorU32(255, 255, 255, 255))
 
                 var addingPreview = false
-                invisibleButton("canvas", canvasSize)
-                val mousePosInCanvas = io.mousePos - canvasPos
+                invisibleButton("canvas", canvasSz)
+                val mousePosGlobal = io.mousePos
+                val mousePosCanvas = mousePosGlobal - canvasP
                 if (addingLine) {
                     addingPreview = true
-                    points += mousePosInCanvas
+                    points += mousePosCanvas
                     if (!isMouseDown(MouseButton.Left)) {
                         addingLine = false
                         addingPreview = false
@@ -195,7 +191,7 @@ object CustomRendering {
                 }
                 if (isItemHovered()) {
                     if (!addingLine and isMouseClicked(MouseButton.Left)) {
-                        points += mousePosInCanvas
+                        points += mousePosCanvas
                         addingLine = true
                     }
                     if (isMouseClicked(MouseButton.Right) and points.isNotEmpty()) {
@@ -205,9 +201,11 @@ object CustomRendering {
                         points.removeAt(points.lastIndex)
                     }
                 }
-                drawList.pushClipRect(canvasPos, canvasPos + canvasSize, true)
+
+                // Draw all lines in the canvas (with a clipping rectangle so they don't stray out of it).
+                drawList.pushClipRect(canvasP, canvasP + canvasSz, true)
                 for (i in 0 until points.lastIndex step 2)
-                    drawList.addLine(canvasPos + points[i], canvasPos + points[i + 1], getColorU32(255, 255, 0, 255), 2f)
+                    drawList.addLine(canvasP + points[i], canvasP + points[i + 1], getColorU32(255, 255, 0, 255), 2f)
                 drawList.popClipRect()
                 if (addingPreview)
                     points.removeAt(points.lastIndex)

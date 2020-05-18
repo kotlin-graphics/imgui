@@ -25,7 +25,8 @@ object MenuFile {
     var combo = 0
     var check = true
 
-    /** Note that shortcuts are currently provided for display only (future version will add flags to BeginMenu to process shortcuts) */
+    // Note that shortcuts are currently provided for display only
+    // (future version will add explicit flags to BeginMenu() to request processing shortcuts)
     operator fun invoke() {
 
         menuItem("(dummy menu)", "", false, false)

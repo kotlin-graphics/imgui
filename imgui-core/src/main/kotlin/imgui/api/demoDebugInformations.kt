@@ -102,7 +102,9 @@ interface demoDebugInformations {
     }
 
     fun showDemoWindow(open: KMutableProperty0<Boolean>) {
-        assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" } // Exceptionally add an extra assert here for people confused with initial dear imgui setup
+        // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
+        // Most ImGui functions would normally just crash if the context is missing.
+        assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" }
         ExampleApp(open)
     }
 
@@ -129,10 +131,11 @@ interface demoDebugInformations {
         if (showConfigInfo) {
 
             val copyToClipboard = button("Copy to clipboard")
-            beginChildFrame(getID("cfginfos"), Vec2(0, textLineHeightWithSpacing * 18), Wf.NoMove.i)
+            val childSize = Vec2(0f, ImGui.textLineHeightWithSpacing * 18)
+            beginChildFrame(getID("cfginfos"), childSize, Wf.NoMove.i)
             if (copyToClipboard) {
                 logToClipboard()
-                logText("```\n") // Back quotes will make the text appears without formatting when pasting to GitHub
+                logText("```\n") // Back quotes will make text appears without formatting when pasting on GitHub
             }
 
             text("Dear ImGui $version ($IMGUI_VERSION_NUM)")
@@ -347,8 +350,8 @@ interface demoDebugInformations {
     fun showStyleEditor(ref: Style? = null) = StyleEditor.invoke(ref)
 
     /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
-     *  Here we use the simplified combo() api that packs items into a single literal string. Useful for quick combo
-     *  boxes where the choices are known locally.
+     *  Here we use the simplified Combo() api that packs items into a single literal string.
+     *  Useful for quick combo boxes where the choices are known locally.
      *
      *  add style selector block (not a window), essentially a combo listing the default styles. */
     fun showStyleSelector(label: String) =
@@ -387,7 +390,9 @@ interface demoDebugInformations {
     /** Helper to display basic user controls. */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
-        bulletText("Click and drag on lower corner to resize window\n(double-click to auto fit window to its contents).")
+        bulletText(
+                "Click and drag on lower corner to resize window\n" +
+                        "(double-click to auto fit window to its contents).")
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         if (io.fontAllowUserScaling)
@@ -474,8 +479,10 @@ interface demoDebugInformations {
                 WRT.ContentRegionRect -> window.contentRegionRect
             }
 
-            fun nodeDrawCmdShowMeshAndBoundingBox(window: Window?, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
-                                                  showMesh: Boolean, showAabb: Boolean) {
+            fun nodeDrawCmdShowMeshAndBoundingBox(
+                    window: Window?, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
+                    showMesh: Boolean, showAabb: Boolean
+            ) {
                 assert(showMesh || showAabb)
                 val fgDrawList = getForegroundDrawList(window) // Render additional visuals into the top-most draw list
                 val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
