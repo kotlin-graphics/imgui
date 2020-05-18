@@ -43,6 +43,7 @@ fun errorCheckNewFrameSanityChecks() {
 fun errorCheckEndFrameSanityChecks() {
 
     // Verify that io.KeyXXX fields haven't been tampered with. Key mods should not be modified between NewFrame() and EndFrame()
+    // One possible reason leading to this assert is that your back-ends update inputs _AFTER_ NewFrame().
     val expectedKeyModFlags = mergedKeyModFlags
     assert(io.keyMods == expectedKeyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
