@@ -11,9 +11,9 @@ import imgui.dsl.window
 
 object WindowTitles {
 
-    /** Demonstrate using "##" and "###" in identifiers to manipulate ID generation.
-     *  This apply to regular items as well. Read FAQ section "How can I have multiple widgets with the same label?
-     *  Can I have widget without a label? (Yes). A primer on the purpose of labels/IDs." for details.   */
+    // Demonstrate using "##" and "###" in identifiers to manipulate ID generation.
+    // This apply to all regular items as well.
+    // Read FAQ section "How can I have multiple widgets with the same label?" for details.
     operator fun invoke() {
         /*  By default, Windows are uniquely identified by their title.
             You can use the "##" and "###" markers to manipulate the display/ID.

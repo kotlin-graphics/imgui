@@ -34,13 +34,11 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setScrollHereY
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
-import imgui.ImGui.textEx
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.classes.InputTextCallbackData
 import imgui.classes.TextFilter
 import imgui.dsl.popupContextItem
-import imgui.internal.textStr
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import java.util.*
@@ -50,9 +48,8 @@ import imgui.WindowFlag as Wf
 
 object Console {
 
-    /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
-     *  For the console example, here we are using a more C++ like approach of declaring a class to hold the data and
-     *  the functions.  */
+    // Demonstrate creating a simple console window, with scrolling, filtering, completion and history.
+    // For the console example, we are using a more C++ like approach of declaring a class to hold both data and functions.
     val console = ExampleAppConsole()
 
     operator fun invoke(open: KMutableProperty0<Boolean>) = console.draw("Example: Console", open)
@@ -60,7 +57,8 @@ object Console {
     class ExampleAppConsole {
         val inputBuf = ByteArray(256)
         val items = ArrayList<String>()
-        val commands = arrayListOf("HELP", "HISTORY", "CLEAR", "CLASSIFY") // "classify" is only here to provide an example of "C"+[tab] completing to "CL" and displaying matches.
+        // "CLASSIFY" is here to provide the test case where "C"+[tab] completes to "CL" and display multiple matches.
+        val commands = arrayListOf("HELP", "HISTORY", "CLEAR", "CLASSIFY")
         val history = ArrayList<String>()
         /** -1: new line, 0..History.Size-1 browsing history. */
         var historyPos = -1
@@ -88,12 +86,14 @@ object Console {
                 return
             }
 
-            /*  As a specific feature guaranteed by the library, after calling begin() the last Item represent the title bar.
-                So e.g. isItemHovered() will return true when hovering the title bar. */
+            // As a specific feature guaranteed by the library, after calling Begin() the last Item represent the title bar.
+            // So e.g. IsItemHovered() will return true when hovering the title bar.
             // Here we create a context menu only available from the title bar.
             popupContextItem { if (menuItem("Close Console")) open = false }
 
-            textWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
+            textWrapped(
+                    "This example implements a console with basic coloring, completion and history. A more elaborate " +
+                    "implementation may want to store entries along with extra data such as timestamp, emitter, etc.")
             textWrapped("Enter 'HELP' for help, press TAB to use text completion.")
 
             if (smallButton("Add Dummy Text")) {
@@ -123,6 +123,7 @@ object Console {
             filter.draw("Filter (\"incl,-excl\") (\"error\")", 180f)
             separator()
 
+            // Reserve enough left-over height for 1 separator + 1 input text
             val footerHeightToReserve = style.itemSpacing.y + frameHeightWithSpacing
             beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, Wf.HorizontalScrollbar.i)
 
@@ -132,17 +133,29 @@ object Console {
                 endPopup()
             }
 
-            // Display every line as a separate entry so we can change their color or add custom widgets. If you only want raw text you can use ImGui::TextUnformatted(log.begin(), log.end());
-            // NB- if you have thousands of entries this approach may be too inefficient and may require user-side clipping to only process visible items.
-            // You can seek and display only the lines that are visible using the ImGuiListClipper helper, if your elements are evenly spaced and you have cheap random access to the elements.
-            // To use the clipper we could replace the 'for (int i = 0; i < Items.Size; i++)' loop with:
-            //     ImGuiListClipper clipper(Items.Size);
-            //     while (clipper.Step())
+            // Display every line as a separate entry so we can change their color or add custom widgets.
+            // If you only want raw text you can use ImGui::TextUnformatted(log.begin(), log.end());
+            // NB- if you have thousands of entries this approach may be too inefficient and may require user-side clipping
+            // to only process visible items. The clipper will automatically measure the height of your first item and then
+            // "seek" to display only items in the visible area.
+            // To use the clipper we can replace your standard loop:
+            //      for (int i = 0; i < Items.Size; i++)
+            //   With:
+            //      ImGuiListClipper clipper(Items.Size);
+            //      while (clipper.Step())
             //         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-            // However, note that you can not use this code as is if a filter is active because it breaks the 'cheap random-access' property. We would need random-access on the post-filtered list.
-            // A typical application wanting coarse clipping and filtering may want to pre-compute an array of indices that passed the filtering test, recomputing this array when user changes the filter,
-            // and appending newly elements as they are inserted. This is left as a task to the user until we can manage to improve this example code!
-            // If your items are of variable size you may want to implement code similar to what ImGuiListClipper does. Or split your data into fixed height items to allow random-seeking into your list.
+            // - That your items are evenly spaced (same height)
+            // - That you have cheap random access to your elements (you can access them given their index,
+            //   without processing all the ones before)
+            // You cannot this code as-is if a filter is active because it breaks the 'cheap random-access' property.
+            // We would need random-access on the post-filtered list.
+            // A typical application wanting coarse clipping and filtering may want to pre-compute an array of indices
+            // or offsets of items that passed the filtering test, recomputing this array when user changes the filter,
+            // and appending newly elements as they are inserted. This is left as a task to the user until we can manage
+            // to improve this example code!
+            // If your items are of variable height:
+            // - Split them into same height items would be simpler and facilitate random-seeking into your list.
+            // - Consider using manual call to IsRectVisible() and skipping extraneous decoration from your items.
             pushStyleVar(StyleVar.ItemSpacing, Vec2(4, 1)) // Tighten spacing
             if (copyToClipboard)
                 logToClipboard()
@@ -151,17 +164,21 @@ object Console {
                 if (!filter.passFilter(i))
                     continue
 
-                // Normally you would store more information in your item (e.g. make Items[] an array of structure, store color/type etc.)
-                var popColor = false
+                // Normally you would store more information in your item than just a string.
+                // (e.g. make Items[] an array of structure, store color/type etc.)
+                var hasColor = false
+                var color: Vec4? = null
                 if ("[error]" in i) {
-                    pushStyleColor(Col.Text, Vec4(1f, 0.4f, 0.4f, 1f))
-                    popColor = true
+                    color = Vec4(1f, 0.4f, 0.4f, 1f)
+                    hasColor = true
                 } else if (i.startsWith("# ")) {
-                    pushStyleColor(Col.Text, Vec4(1f, 0.8f, 0.6f, 1f))
-                    popColor = true
+                    color = Vec4(1f, 0.8f, 0.6f, 1f)
+                    hasColor = true
                 }
+                if (hasColor)
+                    pushStyleColor(Col.Text, color!!)
                 textUnformatted(i)
-                if (popColor)
+                if (hasColor)
                     popStyleColor()
             }
             if (copyToClipboard)
@@ -174,8 +191,10 @@ object Console {
             endChild()
             separator()
 
+            // Command-line
             var reclaimFocus = false
-            if (inputText("Input", inputBuf, Itf.EnterReturnsTrue.i or Itf.CallbackCompletion.i or Itf.CallbackHistory.i, textEditCallbackStub, this)) {
+            val inputTextFlags = Itf.EnterReturnsTrue.i or Itf.CallbackCompletion.i or Itf.CallbackHistory
+            if (inputText("Input", inputBuf, inputTextFlags, textEditCallbackStub, this)) {
                 val s = inputBuf.cStr.trimEnd()
                 if(s.isNotEmpty())
                     execCommand(s)
@@ -192,7 +211,8 @@ object Console {
         fun execCommand(cmdLine: String) {
             addLog("# $cmdLine\n")
 
-            // Insert into history. First find match and delete it so it can be pushed to the back. This isn't trying to be smart or optimal.
+            // Insert into history. First find match and delete it so it can be pushed to the back.
+            // This isn't trying to be smart or optimal.
             historyPos = -1
             history -= cmdLine
             history += cmdLine
@@ -216,6 +236,7 @@ object Console {
             scrollToBottom = true
         }
 
+        // In C++11 you'd be better off using lambdas for this sort of forwarding callbacks
         val textEditCallbackStub: InputTextCallback = { data: InputTextCallbackData ->
             (data.userData as ExampleAppConsole).inputTextCallback(data)
         }
@@ -241,11 +262,14 @@ object Console {
                     when {
                         candidates.isEmpty() -> addLog("No match for \"%s\"!\n", word)
                         candidates.size == 1 -> {
+                            // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                             data.deleteChars(wordStart, wordEnd)
                             data.insertChars(data.cursorPos, candidates[0])
                             data.insertChars(data.cursorPos, " ")
                         }
                         else -> {
+                            // Multiple matches. Complete as much as we can..
+                            // So inputing "C"+Tab will complete to "CL" then display "CLEAR" and "CLASSIFY" as matches.
                             var matchLen = wordEnd - wordStart
                             while (true) {
                                 var c = 0.toChar()

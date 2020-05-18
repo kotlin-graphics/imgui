@@ -175,7 +175,8 @@ object ShowDemoWindowColumns {
 
         treeNode("Horizontal Scrolling") {
             setNextWindowContentSize(Vec2(1500f, 0f))
-            child("##ScrollingRegion", Vec2(0, fontSize * 20), false, WindowFlag.HorizontalScrollbar.i) {
+            val childSize = Vec2(0f, ImGui.fontSize * 20f)
+            child("##ScrollingRegion", childSize, false, WindowFlag.HorizontalScrollbar.i) {
                 columns(10)
                 val ITEMS_COUNT = 2000
                 val clipper = ListClipper(ITEMS_COUNT)  // Also demonstrate using the clipper for large list

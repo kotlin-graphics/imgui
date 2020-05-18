@@ -36,7 +36,6 @@ import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
-import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getID
 import imgui.ImGui.inputInt
@@ -189,7 +188,9 @@ object ShowDemoWindowLayout {
 
             // Child 1: no border, enable horizontal scrollbar
             run {
-                val windowFlags = Wf.HorizontalScrollbar or if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None
+                var windowFlags = Wf.HorizontalScrollbar.i
+                if (disableMouseWheel)
+                    windowFlags = windowFlags or Wf.NoScrollWithMouse
                 child("ChildL", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
                     for (i in 0..99) {
                         text("%04d: scrollable region", i)
@@ -202,7 +203,11 @@ object ShowDemoWindowLayout {
 
             // Child 2: rounded border
             run {
-                val windowFlags = (if (disableMouseWheel) Wf.NoScrollWithMouse else Wf.None) or if (disableMenu) Wf.None else Wf.MenuBar
+                var windowFlags = Wf.None.i
+                if (disableMouseWheel)
+                    windowFlags = windowFlags or Wf.NoScrollWithMouse
+                if (!disableMenu)
+                    windowFlags = windowFlags or Wf.MenuBar
                 withStyleVar(StyleVar.ChildRounding, 5f) {
                     child("ChildR", Vec2(0, 260), true, windowFlags) {
                         if (!disableMenu && beginMenuBar()) {
@@ -224,12 +229,13 @@ object ShowDemoWindowLayout {
 
             separator()
 
-            /*  Demonstrate a few extra things
-                - Changing ImGuiCol_ChildBg (which is transparent black in default styles)
-                - Using SetCursorPos() to position the child window (because the child window is an item from the POV of the parent window)
-                    You can also call SetNextWindowPos() to position the child window. The parent window will effectively layout from this position.
-                - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from the POV of the parent window)
-                    See "Widgets" -> "Querying Status (Active/Focused/Hovered etc.)" section for more details about this. */
+            // Demonstrate a few extra things
+            // - Changing ImGuiCol_ChildBg (which is transparent black in default styles)
+            // - Using SetCursorPos() to position child window (the child window is an item from the POV of parent window)
+            //   You can also call SetNextWindowPos() to position the child window. The parent window will effectively
+            //   layout from this position.
+            // - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from
+            //   the POV of the parent window). See 'Demo->Querying Status (Active/Focused/Hovered etc.)' for details.
             run {
                 cursorPosX += 10f
                 withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
@@ -248,6 +254,9 @@ object ShowDemoWindowLayout {
 
             // Use SetNextItemWidth() to set the width of a single upcoming item.
             // Use PushItemWidth()/PopItemWidth() to set the width of a group of items.
+            // In real code use you'll probably want to choose width values that are proportional to your font size
+            // e.g. Using '20.0f * GetFontSize()' as width instead of '200.0f', etc.
+
             text("SetNextItemWidth/PushItemWidth(100)")
             sameLine(); helpMarker("Fixed width.")
             setNextItemWidth(100f)
@@ -268,7 +277,8 @@ object ShowDemoWindowLayout {
             setNextItemWidth(-100f)
             dragFloat("float##4", ::f)
 
-            // Demonstrate using PushItemWidth to surround three items. Calling SetNextItemWidth() before each of them would have the same effect.
+            // Demonstrate using PushItemWidth to surround three items.
+            // Calling SetNextItemWidth() before each of them would have the same effect.
             text("SetNextItemWidth/PushItemWidth(-1)")
             sameLine(); helpMarker("Align to right edge")
             pushItemWidth(-1)
@@ -345,7 +355,8 @@ object ShowDemoWindowLayout {
             dummy(buttonSz); sameLine()
             button("B", buttonSz)
 
-            // Manually wrapping (we should eventually provide this as an automatic layout feature, but for now you can do it manually)
+            // Manually wrapping
+            // (we should eventually provide this as an automatic layout feature, but for now you can do it manually)
             text("Manually wrapping:")
             val buttonsCount = 20
             val windowVisibleX2 = windowPos.x + windowContentRegionMax.x
@@ -401,7 +412,8 @@ object ShowDemoWindowLayout {
                     checkbox(names0[n], opened, n)
                 }
 
-                // Passing a bool* to BeginTabItem() is similar to passing one to Begin(): the underlying bool will be set to false when the tab is closed.
+                // Passing a bool* to BeginTabItem() is similar to passing one to Begin():
+                // the underlying bool will be set to false when the tab is closed.
                 if (beginTabBar("MyTabBar", tabBarFlags)) {
                     for (n in opened.indices)
                         if (opened[n] && beginTabItem(names0[n], opened, n, TabItemFlag.None.i)) {
@@ -418,7 +430,10 @@ object ShowDemoWindowLayout {
 
         treeNode("Groups") {
 
-            helpMarker("BeginGroup() basically locks the horizontal position for new line. EndGroup() bundles the whole group so that you can use \"item\" functions such as IsItemHovered()/IsItemActive() or SameLine() etc. on the whole group.")
+            helpMarker(
+                    "BeginGroup() basically locks the horizontal position for new line. " +
+                            "EndGroup() bundles the whole group so that you can use \"item\" functions such as " +
+                            "IsItemHovered()/IsItemActive() or SameLine() etc. on the whole group.")
             group {
                 group {
                     button("AAA")
@@ -459,8 +474,9 @@ object ShowDemoWindowLayout {
 
             run {
                 bulletText("Text baseline:")
-                sameLine()
-                helpMarker("This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. Lines only composed of text or \"small\" widgets fit in less vertical spaces than lines with normal widgets.")
+                sameLine(); helpMarker(
+                    "This is testing the vertical alignment that gets applied on text to keep it aligned with widgets. " +
+                            "Lines only composed of text or \"small\" widgets use less vertical space than lines with framed widgets.")
                 indent {
 
                     text("KO Blahblah"); sameLine()
@@ -468,7 +484,8 @@ object ShowDemoWindowLayout {
                     helpMarker("Baseline of button will look misaligned with text..")
 
                     // If your line starts with text, call AlignTextToFramePadding() to align text to upcoming widgets.
-                    // Because we don't know what's coming after the Text() statement, we need to move the text baseline down by FramePadding.y
+                    // (because we don't know what's coming after the Text() statement, we need to move the text baseline
+                    // down by FramePadding.y ahead of time)
                     alignTextToFramePadding()
                     text("OK Blahblah"); sameLine()
                     button("Some framed item"); sameLine()
@@ -519,7 +536,7 @@ object ShowDemoWindowLayout {
                 bulletText("Misc items:")
                 indent {
 
-                    // SmallButton() sets FramePadding to zero. Text baseline is aligned to match baseline of previous Button
+                    // SmallButton() sets FramePadding to zero. Text baseline is aligned to match baseline of previous Button.
                     button("80x80", Vec2(80))
                     sameLine()
                     button("50x50", Vec2(50))
@@ -531,16 +548,26 @@ object ShowDemoWindowLayout {
                     // Tree
                     button("Button##1")
                     sameLine(0f, spacing)
-                    treeNode("Node##1") { for (i in 0..5) bulletText("Item $i..") } // Dummy tree data
+                    treeNode("Node##1") {
+                        // Dummy tree data
+                        for (i in 0..5)
+                            bulletText("Item $i..")
+                    }
 
-                    alignTextToFramePadding() // Vertically align text node a bit lower so it'll be vertically centered with upcoming widget. Otherwise you can use SmallButton (smaller fit).
-                    var nodeOpen = treeNode("Node##2") // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add child content.
+                    // Vertically align text node a bit lower so it'll be vertically centered with upcoming widget.
+                    // Otherwise you can use SmallButton() (smaller fit).
+                    alignTextToFramePadding()
+
+                    // Common mistake to avoid: if we want to SameLine after TreeNode we need to do it before we add
+                    // other contents below the node.
+                    val nodeOpen = treeNode("Node##2")
                     sameLine(0f, spacing); button("Button##2")
                     if (nodeOpen) {
+                        // Dummy tree data
                         for (i in 0..5)
                             bulletText("Item $i..")
                         treePop()
-                    } // Dummy tree data
+                    }
 
                     // Bullet
                     button("Button##3")
@@ -587,14 +614,15 @@ object ShowDemoWindowLayout {
                     textUnformatted(names1[i])
 
                     val childFlags = if (enableExtraDecorations) Wf.MenuBar else Wf.None
-                    val windowVisible = beginChild(getID(i.L), Vec2(childW, 200f), true, childFlags.i)
+                    val childId = getID(i.L)
+                    val childIsVisible = beginChild(childId, Vec2(childW, 200f), true, childFlags.i)
                     menuBar { textUnformatted("abc") }
                     if (scrollToOff)
                         scrollY = scrollToOffPx
                     if (scrollToPos)
                         setScrollFromPosY(cursorStartPos.y + scrollToPosPx, i * 0.25f)
                     // Avoid calling SetScrollHereY when running with culled items
-                    if (windowVisible)
+                    if (childIsVisible)
                         for (item in 0..99)
                             if (enableTrack && item == trackItem) {
                                 textColored(Vec4(1, 1, 0, 1), "Item %d", item)
@@ -611,17 +639,24 @@ object ShowDemoWindowLayout {
 
             // Horizontal scroll functions
             spacing()
-            helpMarker("Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\nUsing the \"Scroll To Pos\" button above will make the discontinuity at edges visible: scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.")
+            helpMarker(
+                    "Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\n" +
+                            "Using the \"Scroll To Pos\" button above will make the discontinuity at edges visible: " +
+                            "scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect " +
+                            "on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half " +
+                            "worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in " +
+                            "clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.")
             pushID("##HorizontalScrolling")
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
                 val childFlags = Wf.HorizontalScrollbar or if (enableExtraDecorations) Wf.AlwaysVerticalScrollbar else Wf.None
-                val windowVisible = beginChild(getID(i.L), Vec2(-100f, childHeight), true, childFlags)
+                val childId = getID(i.L)
+                val childIsVisible = beginChild(childId, Vec2(-100f, childHeight), true, childFlags)
                 if (scrollToOff)
                     scrollX = scrollToOffPx
                 if (scrollToPos)
                     setScrollFromPosX(cursorStartPos.x + scrollToPosPx, i * 0.25f)
-                if (windowVisible) // Avoid calling SetScrollHereY when running with culled items
+                if (childIsVisible) // Avoid calling SetScrollHereY when running with culled items
                     for (item in 0..99) {
                         if (enableTrack && item == trackItem) {
                             textColored(Vec4(1, 1, 0, 1), "Item $item")
@@ -639,16 +674,19 @@ object ShowDemoWindowLayout {
 
             // Miscellaneous Horizontal Scrolling Demo
 
-            helpMarker("Horizontal scrolling for a window has to be enabled explicitly via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\nYou may want to explicitly specify content width by calling SetNextWindowContentWidth() before Begin().")
+            helpMarker(
+                    "Horizontal scrolling for a window is enabled via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\n" +
+                            "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
             sliderInt("Lines", ::lines, 1, 15)
             pushStyleVar(StyleVar.FrameRounding, 3f)
             pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
-            beginChild("scrolling", Vec2(0, frameHeightWithSpacing * 7 + 30), true, Wf.HorizontalScrollbar.i)
+            val scrollingChildSize = Vec2(0f, ImGui.frameHeightWithSpacing * 7 + 30)
+            beginChild("scrolling", scrollingChildSize, true, Wf.HorizontalScrollbar.i)
             for (line in 0 until lines) {
-                /*  Display random stuff (for the sake of this trivial demo we are using basic button+sameLine.
-                    If you want to create your own time line for a real application you may be better off
-                    manipulating the cursor position yourself, aka using SetCursorPos/SetCursorScreenPos to position
-                    the widgets yourself. You may also want to use the lower-level ImDrawList API)  */
+                // Display random stuff. For the sake of this trivial demo we are using basic Button() + SameLine()
+                // If you want to create your own time line for a real application you may be better off manipulating
+                // the cursor position yourself, aka using SetCursorPos/SetCursorScreenPos to position the widgets
+                // yourself. You may also want to use the lower-level ImDrawList API.
                 val numButtons = 10 + (line * if (line has 1) 9 else 3)
                 for (n in 0 until numButtons) {
                     if (n > 0) sameLine()
@@ -668,13 +706,19 @@ object ShowDemoWindowLayout {
             endChild()
             popStyleVar(2)
             var scrollXDelta = 0f
-            smallButton("<<"); if (isItemActive) scrollXDelta = -io.deltaTime * 1000f; sameLine()
+            smallButton("<<")
+            if (isItemActive)
+                scrollXDelta = -io.deltaTime * 1000f
+            sameLine()
             text("Scroll from code"); sameLine()
-            smallButton(">>"); if (isItemActive) scrollXDelta = io.deltaTime * 1000f; sameLine()
+            smallButton(">>")
+            if (isItemActive)
+                scrollXDelta = io.deltaTime * 1000f
+            sameLine()
             text("%.0f/%.0f", _scrollX, scrollMaxX)
             if (scrollXDelta != 0f) {
-                /*  Demonstrate a trick: you can use begin() to set yourself in the context of another window (here
-                    we are already out of your child window) */
+                // Demonstrate a trick: you can use Begin to set yourself in the context of another window
+                // (here we are already out of your child window)
                 beginChild("scrolling")
                 scrollX += scrollXDelta
                 endChild()
@@ -751,14 +795,18 @@ object ShowDemoWindowLayout {
         }
 
         treeNode("Clipping") {
-            textWrapped("On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. The system is designed to try minimizing both execution and CPU/GPU rendering cost.")
+            textWrapped(
+                    "On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. " +
+                            "Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. " +
+                            "The system is designed to try minimizing both execution and CPU/GPU rendering cost.")
             dragVec2("size", size, 0.5f, 1f, 200f, "%.0f")
             textWrapped("(Click and drag)")
             val pos = Vec2(cursorScreenPos)
             val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
             invisibleButton("##dummy", size)
-            if (isItemActive && isMouseDragging(MouseButton.Left)) offset += io.mouseDelta
-            windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), COL32(90, 90, 120, 255))
+            if (isItemActive && isMouseDragging(MouseButton.Left))
+                offset += io.mouseDelta
+            windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), imgui.COL32_WHITE)
             windowDrawList.addText(font, fontSize * 2f, Vec2(pos.x + offset.x, pos.y + offset.y),
                     COL32(255, 255, 255, 255), "Line 1 hello\nLine 2 clip me!", 0f, clipRect)
         }

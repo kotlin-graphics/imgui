@@ -31,7 +31,7 @@ import imgui.WindowFlag as Wf
 
 object Layout {
 
-    var selectedChild = 0
+    var selected = 0
 
     /** Demonstrate create a window with multiple child windows.    */
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
@@ -46,35 +46,39 @@ object Layout {
                 }
             }
 
-            // left
-            beginChild("left pane", Vec2(150, 0), true)
-            for (i in 0..99)
-                if (selectable("MyObject $i", selectedChild == i))
-                    selectedChild = i
-            endChild()
+            // Left
+            run {
+                beginChild("left pane", Vec2(150, 0), true)
+                for (i in 0..99)
+                    if (selectable("MyObject $i", selected == i))
+                        selected = i
+                endChild()
+            }
             sameLine()
 
-            // right
-            beginGroup()
-            beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
-            text("MyObject: ${selectedChild}")
-            separator()
-            if (beginTabBar("##Tabs", TabBarFlag.None.i)) {
-                if (beginTabItem("Description")) {
-                    textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ")
-                    endTabItem()
+            // Right
+            run {
+                beginGroup()
+                beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
+                text("MyObject: ${selected}")
+                separator()
+                if (beginTabBar("##Tabs", TabBarFlag.None.i)) {
+                    if (beginTabItem("Description")) {
+                        textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ")
+                        endTabItem()
+                    }
+                    if (beginTabItem("Details")) {
+                        text("ID: 0123456789")
+                        endTabItem()
+                    }
+                    endTabBar()
                 }
-                if (beginTabItem("Details")) {
-                    text("ID: 0123456789")
-                    endTabItem()
-                }
-                endTabBar()
+                endChild()
+                button("Revert") {}
+                sameLine()
+                button("Save") {}
+                endGroup()
             }
-            endChild()
-            button("Revert") {}
-            sameLine()
-            button("Save") {}
-            endGroup()
         }
         end()
     }

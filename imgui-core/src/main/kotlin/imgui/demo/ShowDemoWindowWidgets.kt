@@ -29,8 +29,6 @@ import imgui.ImGui.colorEdit4
 import imgui.ImGui.colorPicker4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
-import imgui.ImGui.cursorPos
-import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragFloat2
 import imgui.ImGui.dragFloat3
@@ -135,7 +133,6 @@ import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
-import imgui.ImGui.windowDrawList
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
@@ -194,10 +191,10 @@ object ShowDemoWindowWidgets {
 
     enum class Element { Fire, Earth, Air, Water }
 
-    var currentElement = Element.Fire.ordinal
+    var elem = Element.Fire.ordinal
     val col1 = floatArrayOf(1f, 0f, 0.2f)
     val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
-    var listboxItemCurrent = 1
+    var itemCurrent = 1
 
 
     /* Trees */
@@ -205,8 +202,10 @@ object ShowDemoWindowWidgets {
     var alignLabelWithCurrentXposition = false
     var testDragAndDrop = false
 
-    /** Dumb representation of what may be user-side selection state. You may carry selection state inside or
-     *  outside your objects in whatever format you see fit.    */
+    // 'selection_mask' is dumb representation of what may be user-side selection state.
+    //  You may retain selection state inside or outside your objects in whatever format you see fit.
+    // 'node_clicked' is temporary storage of what node we have clicked to process selection at the end
+    /// of the loop. May be a pointer to your own node type, etc.
     var selectionMask = 1 shl 2
 
 
@@ -225,10 +224,10 @@ object ShowDemoWindowWidgets {
 
     /* Combo */
     var flags0: ComboFlags = 0
+    var itemCurrentIdx = 0
     var currentItem3 = 0
     var currentItem4 = 0
     var currentItem5 = 0
-    var currentItem6 = 0
 
     object FuncHolder {
         val itemGetter: (Array<String>, Int, KMutableProperty0<String>) -> Boolean = { items, idx, pStr ->
@@ -244,11 +243,7 @@ object ShowDemoWindowWidgets {
     var selected0 = -1
     val selected1 = BooleanArray(3)
     val selected2 = BooleanArray(16)
-    val selected3 = booleanArrayOf(
-            true, false, false, false,
-            false, true, false, false,
-            false, false, true, false,
-            false, false, false, true)
+    val selected3 = intArrayOf(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
     val selected4 = booleanArrayOf(true, false, true, false, true, false, true, false, true)
 
 
@@ -272,8 +267,12 @@ object ShowDemoWindowWidgets {
     val bufs = Array(6) { ByteArray(64) }
 
     object TextFilters {
+        // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i'
         val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
-            !(data.eventChar.i < 256 && data.eventChar in "imgui")
+            when {
+                data.eventChar.i < 256 && data.eventChar in "imgui" -> false
+                else -> true
+            }
         }
     }
 
@@ -299,7 +298,7 @@ object ShowDemoWindowWidgets {
     var refColorV = Vec4(1f, 0f, 1f, 0.5f)
     var displayMode = 0
     var pickerMode = 0
-    var colorStoredAsHsv = Vec4(0.23f, 1f, 1f, 1f)
+    var colorHsv = Vec4(0.23f, 1f, 1f, 1f)  // Stored as HSV!
 
 
     /* Range Widgets */
@@ -378,7 +377,10 @@ object ShowDemoWindowWidgets {
 
     var mode = Mode.Copy
 
-    val names = arrayOf("Bobby", "Beatrice", "Betty", "Brianna", "Barry", "Bernard", "Bibi", "Blaine", "Bryn")
+    val names = arrayOf(
+            "Bobby", "Beatrice", "Betty",
+            "Brianna", "Barry", "Bernard",
+            "Bibi", "Blaine", "Bryn")
     val itemNames = arrayOf("Item One", "Item Two", "Item Three", "Item Four", "Item Five")
 
 
@@ -428,7 +430,9 @@ object ShowDemoWindowWidgets {
                 }
             }
 
-            // Use AlignTextToFramePadding() to align text baseline to the baseline of framed elements (otherwise a Text+SameLine+Button sequence will have the text a little too high by default)
+            // Use AlignTextToFramePadding() to align text baseline to the baseline of framed widgets elements
+            // (otherwise a Text+SameLine+Button sequence will have the text a little too high by default!)
+            // See 'Demo->Layout->Text Baseline Alignment' for details.
             alignTextToFramePadding()
             text("Hold to repeat:")
             sameLine()
@@ -458,7 +462,7 @@ object ShowDemoWindowWidgets {
             run {
                 // Using the _simplified_ one-liner Combo() api here
                 // See "Combo" section for examples of how to use the more complete BeginCombo()/EndCombo() api.
-                val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
+                val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK")
                 combo("combo", ::currentItem0, items)
                 sameLine(); helpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n")
             }
@@ -467,25 +471,45 @@ object ShowDemoWindowWidgets {
                 // To wire InputText() with std::string or any other custom string type,
                 // see the "Text Input > Resize Callback" section of this demo, and the misc/cpp/imgui_stdlib.h file.
                 inputText("input text", str0)
-                sameLine(); helpMarker("USER:\nHold SHIFT or use mouse to select text.\nCTRL+Left/Right to word jump.\nCTRL+A or double-click to select all.\nCTRL+X,CTRL+C,CTRL+V clipboard.\nCTRL+Z,CTRL+Y undo/redo.\nESCAPE to revert.\n\nPROGRAMMER:\nYou can use the InputTextFlag.CallbackResize facility if you need to wire InputText() to a dynamic string type. See misc/cpp/imgui_stl.h for an example (this is not demonstrated in imgui_demo.cpp).")
+                sameLine(); helpMarker("""
+                    USER:
+                    Hold SHIFT or use mouse to select text.
+                    CTRL+Left/Right to word jump.
+                    CTRL+A or double-click to select all.
+                    CTRL+X,CTRL+C,CTRL+V clipboard.
+                    CTRL+Z,CTRL+Y undo/redo.
+                    ESCAPE to revert.
+                    
+                    PROGRAMMER:""".trimIndent() +
+                    "You can use the ImGuiInputTextFlags_CallbackResize facility if you need to wire InputText() " +
+                    "to a dynamic string type. See misc/cpp/imgui_stdlib.h for an example (this is not demonstrated " +
+                    "in imgui_demo.cpp).")
 
                 inputTextWithHint("input text (w/ hint)", "enter text here", str1)
 
                 inputInt("input int", ::i0)
-                sameLine(); helpMarker("You can apply arithmetic operators +,*,/ on numerical values.\n  e.g. [ 100 ], input \'*2\', result becomes [ 200 ]\nUse +- to subtract.\n")
+                sameLine(); helpMarker("""
+                    You can apply arithmetic operators +,*,/ on numerical values.
+                      e.g. [ 100 ], input \'*2\', result becomes [ 200 ]
+                    Use +- to subtract.""".trimIndent())
 
                 inputFloat("input float", ::f0, 0.01f, 1f, "%.3f")
 
                 inputDouble("input double", ::d0, 0.01, 1.0, "%.8f")
 
                 inputFloat("input scientific", ::f1, 0f, 0f, "%e")
-                sameLine(); helpMarker("You can input value using the scientific notation,\n  e.g. \"1e+8\" becomes \"100000000\".\n")
+                sameLine(); helpMarker(
+                    "You can input value using the scientific notation,\n" +
+                            "  e.g. \"1e+8\" becomes \"100000000\".")
 
                 inputFloat3("input float3", vec4a)
             }
             run {
                 dragInt("drag int", ::i1, 1f)
-                sameLine(); helpMarker("Click and drag to edit value.\nHold SHIFT/ALT for faster/slower edit.\nDouble-click or CTRL+click to input value.")
+                sameLine(); helpMarker("""
+                    Click and drag to edit value.
+                    Hold SHIFT/ALT for faster/slower edit.
+                    Double-click or CTRL+click to input value.""".trimIndent())
 
                 dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%")
 
@@ -504,29 +528,33 @@ object ShowDemoWindowWidgets {
                 // Using the format string to display a name instead of an integer.
                 // Here we completely omit '%d' from the format string, so it'll only display a name.
                 // This technique can also be used with DragInt().
-                val currentElementName = Element.values().getOrNull(currentElement)?.name ?: "Unknown"
-                sliderInt("slider enum", ::currentElement, 0, Element.values().lastIndex, currentElementName)
+                val elemName = Element.values().getOrNull(elem)?.name ?: "Unknown"
+                sliderInt("slider enum", ::elem, 0, Element.values().lastIndex, elemName)
                 sameLine(); helpMarker("Using the format string parameter to display a name instead of the underlying integer.")
             }
 
             run {
                 colorEdit3("color 1", col1)
-                sameLine(); helpMarker("Click on the colored square to open a color picker.\nRight-click on the colored square to show options.\nCTRL+click on individual component to input value.\n")
+                sameLine(); helpMarker("""
+                    Click on the colored square to open a color picker.
+                    Click and hold to use drag and drop.
+                    Right-click on the colored square to show options.
+                    CTRL+click on individual component to input value.""".trimIndent())
 
                 colorEdit4("color 2", col2)
             }
 
-            run {
-                val listboxItems = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
-                listBox("listbox\n(single select)", ::listboxItemCurrent, listboxItems, 4)
+            run { // List box
+                val items = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
+                listBox("listbox\n(single select)", ::itemCurrent, items, 4)
             }
         }
 
         treeNode("Trees") {
             treeNode("Basic trees") {
                 for (i in 0..4) {
-                    // Use SetNextItemOpen() so set the default state of a node to be open.
-                    // We could also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
+                    // Use SetNextItemOpen() so set the default state of a node to be open. We could
+                    // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
                     if (i == 0)
                         setNextItemOpen(true, Cond.Once)
 
@@ -540,7 +568,9 @@ object ShowDemoWindowWidgets {
 
             treeNode("Advanced, with Selectable nodes") {
 
-                helpMarker("This is a more typical looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
+                helpMarker(
+                        "This is a more typical looking tree with selectable nodes.\n" +
+                                "Click to select, CTRL+Click to toggle, click on arrows or double-click to open.")
                 checkboxFlags("ImGuiTreeNodeFlags_OpenOnArrow", ::baseFlags, Tnf.OpenOnArrow.i)
                 checkboxFlags("ImGuiTreeNodeFlags_OpenOnDoubleClick", ::baseFlags, Tnf.OpenOnDoubleClick.i)
                 checkboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth", ::baseFlags, Tnf.SpanAvailWidth.i); sameLine(); helpMarker("Extend hit area to all available width instead of allowing more items to be laid out after the node.")
@@ -555,7 +585,7 @@ object ShowDemoWindowWidgets {
                 var nodeClicked = -1
                 // Increase spacing to differentiate leaves from expanded contents.
                 for (i in 0..5) {
-                    // Disable the default open on single-click behavior and pass in Selected flag according to our selection state.
+                    // Disable the default "open on single-click behavior" + set in Selected flag according to our selection.
                     var nodeFlags = baseFlags
                     val isSelected = selectionMask has (1 shl i)
                     if (isSelected)
@@ -574,9 +604,9 @@ object ShowDemoWindowWidgets {
                             treePop()
                         }
                     } else {
-                        /*  Items 3..5 are Tree Leaves
-                            The only reason we use TreeNode at all is to allow selection of the leaf.
-                            Otherwise we can use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().    */
+                        // Items 3..5 are Tree Leaves
+                        // The only reason we use TreeNode at all is to allow selection of the leaf. Otherwise we can
+                        // use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().
                         nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
                         treeNodeEx(i.L, nodeFlags, "Selectable Leaf $i")
                         if (isItemClicked()) nodeClicked = i
@@ -587,16 +617,14 @@ object ShowDemoWindowWidgets {
                         }
                     }
                 }
-                if (nodeClicked != -1) {
-                    /*  Update selection state. Process outside of tree loop to avoid visual inconsistencies during
-                        the clicking-frame.                         */
-                    if (io.keyCtrl)
-                        selectionMask = selectionMask xor (1 shl nodeClicked)   // CTRL+click to toggle
-                    /*  Depending on selection behavior you want, this commented bit preserve selection when
-                        clicking on item that is part of the selection                         */
-                    else //if (!(selectionMask & (1 << nodeClicked)))
-                        selectionMask = (1 shl nodeClicked) // Click to single-select
-                }
+                if (nodeClicked != -1)
+                // Update selection state
+                // (process outside of tree loop to avoid visual inconsistencies during the clicking frame)
+                    selectionMask = when {
+                        io.keyCtrl -> selectionMask xor (1 shl nodeClicked)   // CTRL+click to toggle
+                        else -> //if (!(selectionMask & (1 << nodeClicked))) // Depending on selection behavior you want, may want to preserve selection when clicking on item that is part of the selection
+                            (1 shl nodeClicked) // Click to single-select
+                    }
                 if (alignLabelWithCurrentXposition) indent(treeNodeToLabelSpacing)
             }
         }
@@ -642,38 +670,39 @@ object ShowDemoWindowWidgets {
 
                 sliderFloat("Wrap width", ::wrapWidth, -20f, 600f, "%.0f")
 
-                text("Test paragraph 1:")
-                val pos = cursorScreenPos
-                val a = Vec2(pos.x + wrapWidth, pos.y)
-                val b = Vec2(pos.x + wrapWidth + 10, pos.y + textLineHeight)
-                windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
-                withTextWrapPos(cursorPos.x + wrapWidth) {
-                    text("The lazy dog is a good dog. This paragraph is made to fit within %.0f pixels. Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrapWidth)
-                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
-                }
+                val drawList = ImGui.windowDrawList
+                repeat(2) {
+                    text("Test paragraph $it:")
+                    val pos = ImGui.cursorScreenPos
+                    val markerMin = Vec2(pos.x + wrapWidth, pos.y)
+                    val markerMax = Vec2(pos.x + wrapWidth + 10, pos.y + ImGui.textLineHeight)
+                    withTextWrapPos(ImGui.cursorPos.x + wrapWidth) {
+                        if (it == 0)
+                            text("The lazy dog is a good dog. This paragraph should fit within %.0f pixels. Testing a 1 character word. The quick brown fox jumps over the lazy dog.", wrapWidth)
+                        if (it == 1)
+                            text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh")
 
-                text("Test paragraph 2:")
-                pos put cursorScreenPos
-                a.put(pos.x + wrapWidth, pos.y)
-                b.put(pos.x + wrapWidth + 10, pos.y + textLineHeight)
-                windowDrawList.addRectFilled(a, b, COL32(255, 0, 255, 255))
-                withTextWrapPos(cursorPos.x + wrapWidth) {
-                    text("aaaaaaaa bbbbbbbb, c cccccccc,dddddddd. d eeeeeeee   ffffffff. gggggggg!hhhhhhhh")
-                    windowDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
+                        // Draw actual text bounding box, following by marker of our expected limit (should not overlap!)
+                        drawList.addRect(ImGui.itemRectMin, ImGui.itemRectMax, COL32(255, 255, 0, 255))
+                        drawList.addRectFilled(markerMin, markerMax, COL32(255, 0, 255, 255))
+                    }
                 }
             }
             treeNode("UTF-8 text") {
-                /*  UTF-8 test with Japanese characters
-                    (Needs a suitable font, try Noto, or Arial Unicode, or M+ fonts. Read docs/FONTS.txt for details.)
-                    - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
-                    - For earlier compiler, you may be able to encode your sources as UTF-8 (e.g. Visual Studio save your file
-                        as 'UTF-8 without signature')
-                    - FOR THIS DEMO FILE ONLY, BECAUSE WE WANT TO SUPPORT OLD COMPILERS, WE ARE *NOT* INCLUDING RAW UTF-8 CHARACTERS IN THIS SOURCE FILE.
-                        Instead we are encoding a few strings with hexadecimal constants. Don't do this in your application!
-                        Please use u8"text in any language" in your application!
-                    Note that characters values are preserved even by inputText() if the font cannot be displayed,
-                    so you can safely copy & paste garbled characters into another application. */
-                textWrapped("CJK text will only appears if the font was loaded with the appropriate CJK character ranges. Call io.font.AddFontFromFileTTF() manually to load extra character ranges. Read docs/FONTS.txt for details.")
+                // UTF-8 test with Japanese characters
+                // (Needs a suitable font? Try "Google Noto" or "Arial Unicode". See docs/FONTS.txt for details.)
+                // - From C++11 you can use the u8"my text" syntax to encode literal strings as UTF-8
+                // - For earlier compiler, you may be able to encode your sources as UTF-8 (e.g. in Visual Studio, you
+                //   can save your source files as 'UTF-8 without signature').
+                // - FOR THIS DEMO FILE ONLY, BECAUSE WE WANT TO SUPPORT OLD COMPILERS, WE ARE *NOT* INCLUDING RAW UTF-8
+                //   CHARACTERS IN THIS SOURCE FILE. Instead we are encoding a few strings with hexadecimal constants.
+                //   Don't do this in your application! Please use u8"text in any language" in your application!
+                // Note that characters values are preserved even by InputText() if the font cannot be displayed,
+                // so you can safely copy & paste garbled characters into another application.
+                textWrapped(
+                        "CJK text will only appears if the font was loaded with the appropriate CJK character ranges. " +
+                                "Call io.Font->AddFontFromFileTTF() manually to load extra character ranges. " +
+                                "Read docs/FONTS.txt for details.")
                 // Normally we would use u8"blah blah" with the proper characters directly in the string.
                 text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)")
                 text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
@@ -683,42 +712,63 @@ object ShowDemoWindowWidgets {
 
         treeNode("Images") {
             textWrapped("Below we are displaying the font texture (which is the only texture we have access to in this demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover the texture for a zoomed view!")
-            /*  Here we are grabbing the font texture because that's the only one we have access to inside the demo
-                code.
-                Remember that textureId is just storage for whatever you want it to be, it is essentially a value
-                that will be passed to the render function inside the ImDrawCmd structure.
-                If you use one of the default imgui_impl_XXXX.cpp renderer, they all have comments at the top of
-                their file to specify what they expect to be stored in textureID.
-                (for example, the imgui_impl_glfw_gl3.cpp renderer expect a GLuint OpenGL texture identifier etc.)
-                If you decided that textureID = MyEngineTexture*, then you can pass your MyEngineTexture* pointers
-                to imgui.image(), and gather width/height through your own functions, etc.
-                Using showMetricsWindow() as a "debugger" to inspect the draw data that are being passed to your
-                render will help you debug issues if you are confused about this.
-                Consider using the lower-level drawList.addImage() API, via imgui.windowDrawList.addImage().    */
+            // Below we are displaying the font texture because it is the only texture we have access to inside the demo!
+            // Remember that ImTextureID is just storage for whatever you want it to be. It is essentially a value that
+            // will be passed to the rendering back-end via the ImDrawCmd structure.
+            // If you use one of the default imgui_impl_XXXX.cpp rendering back-end, they all have comments at the top
+            // of their respective source file to specify what they expect to be stored in ImTextureID, for example:
+            // - The imgui_impl_dx11.cpp renderer expect a 'ID3D11ShaderResourceView*' pointer
+            // - The imgui_impl_opengl3.cpp renderer expect a GLuint OpenGL texture identifier, etc.
+            // More:
+            // - If you decided that ImTextureID = MyEngineTexture*, then you can pass your MyEngineTexture* pointers
+            //   to ImGui::Image(), and gather width/height through your own functions, etc.
+            // - You can use ShowMetricsWindow() to inspect the draw data that are being passed to your renderer,
+            //   it will help you debug issues if you are confused about it.
+            // - Consider using the lower-level ImDrawList::AddImage() API, via ImGui::GetWindowDrawList()->AddImage().
+            // - Read https://github.com/ocornut/imgui/blob/master/docs/FAQ.md
+            // - Read https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
             val myTexId = io.fonts.texID
             val myTexSize = Vec2(io.fonts.texSize)
 
-            text("%.0fx%.0f", myTexSize.x, myTexSize.y)
-            val pos = Vec2(cursorScreenPos)
-            image(myTexId, myTexSize, Vec2(), Vec2(1), Vec4(1), Vec4(1, 1, 1, 0.5))
-            if (isItemHovered())
-                tooltip {
-                    val regionSz = 32f
-                    val region = io.mousePos - pos - regionSz * 0.5f
-                    region.x = if (region.x < 0f) 0f else if (region.x > myTexSize.x - regionSz) myTexSize.x - regionSz else region.x
-                    region.y = if (region.y < 0f) 0f else if (region.y > myTexSize.y - regionSz) myTexSize.y - regionSz else region.y
-                    val zoom = 4f
-                    text("Min: (%.2f, %.2f)", region.x, region.y)
-                    text("Max: (%.2f, %.2f)", region.x + regionSz, region.y + regionSz)
-                    val uv0 = Vec2(region.x / myTexSize.x, region.y / myTexSize.y)
-                    val uv1 = Vec2((region.x + regionSz) / myTexSize.x, (region.y + regionSz) / myTexSize.y)
-                    image(myTexId, Vec2(regionSz * zoom), uv0, uv1, Vec4(1), Vec4(1, 1, 1, 0.5))
-                }
+            run {
+                text("%.0fx%.0f", myTexSize.x, myTexSize.y)
+                val pos = ImGui.cursorScreenPos
+                val uvMin = Vec2(0f)                 // Top-left
+                val uvMax = Vec2(1f)                 // Lower-right
+                val tintCol = Vec4(1f)   // No tint
+                val borderCol = Vec4(1f, 1f, 1f, 0.5f) // 50% opaque white
+                image(myTexId, myTexSize, uvMin, uvMax, tintCol, borderCol)
+                if (isItemHovered())
+                    tooltip {
+                        val regionSz = 32f
+                        var regionX = io.mousePos.x - pos.x - regionSz * 0.5f
+                        var regionY = io.mousePos.y - pos.y - regionSz * 0.5f
+                        val zoom = 4f
+                        if (regionX < 0f)
+                            regionX = 0f
+                        else if (regionX > myTexSize.x - regionSz)
+                            regionX = myTexSize.x - regionSz
+                        if (regionY < 0f)
+                            regionY = 0f
+                        else if (regionY > myTexSize.y - regionSz)
+                            regionY = myTexSize.y - regionSz
+                        text("Min: (%.2f, %.2f)", regionX, regionY)
+                        text("Max: (%.2f, %.2f)", regionX + regionSz, regionY + regionSz)
+                        val uv0 = Vec2(regionX / myTexSize.x, regionY / myTexSize.y)
+                        val uv1 = Vec2((regionX + regionSz) / myTexSize.x, (regionY + regionSz) / myTexSize.y)
+                        image(myTexId, Vec2(regionSz * zoom), uv0, uv1, tintCol, borderCol)
+                    }
+            }
             textWrapped("And now some textured buttons..")
             for (i in 0..7)
                 withId(i) {
-                    val framePadding = -1 + i  // -1 = uses default padding
-                    if (imageButton(myTexId, Vec2(32, 32), Vec2(), 32 / myTexSize, framePadding, Vec4(0, 0, 0, 1)))
+                    val framePadding = -1 + i                             // -1 == uses default padding (style.FramePadding)
+                    val size = Vec2(32f)                     // Size of the image we want to make visible
+                    val uv0 = Vec2()                        // UV coordinates for lower-left
+                    val uv1 = 32f / myTexSize   // UV coordinates for (32,32) in our texture
+                    val bgCol = Vec4(0f, 0f, 0f, 1f)         // Black background
+                    val tintCol = Vec4(1f)       // No tint
+                    if (imageButton(myTexId, size, uv0, uv1, framePadding, bgCol, tintCol))
                         pressedCount++
                     sameLine()
                 }
@@ -735,40 +785,43 @@ object ShowDemoWindowWidgets {
             if (checkboxFlags("ComboFlag.NoPreview", ::flags0, ComboFlag.NoPreview.i))
                 flags0 = flags0 wo ComboFlag.NoArrowButton // Clear the other flag, as we cannot combine both
 
-            /*  General BeginCombo() API, you have full control over your selection data and display type.
-                (your selection data could be an index, a pointer to the object, an id for the object,
-                a flag stored in the object itself, etc.)                 */
+            // Using the generic BeginCombo() API, you have full control over how to display the combo contents.
+            // (your selection data could be an index, a pointer to the object, an id for the object, a flag intrusively
+            // stored in the object itself, etc.)
             val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
-            if (beginCombo("combo 1", items[0], flags0)) { // The second parameter is the label previewed before opening the combo.
-                items.forEachIndexed { i, it ->
-                    val isSelected = currentItem3 == i
+//            static int item_current_idx = 0;                    // Here our selection data is an index.
+            val comboLabel = items[itemCurrentIdx]  // Label to preview before opening the combo (technically could be anything)(
+            if (beginCombo("combo 1", comboLabel, flags0)) {
+                items.forEachIndexed { n, it ->
+                    val isSelected = itemCurrentIdx == n
                     if (selectable(it, isSelected))
-                        currentItem3 = i
+                        itemCurrentIdx = n
+
+                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                     if (isSelected)
-                    // Set the initial focus when opening the combo (scrolling + for keyboard navigation support in the upcoming navigation branch)
                         setItemDefaultFocus()
                 }
                 endCombo()
             }
 
             // Simplified one-liner Combo() API, using values packed in a single constant string
-            combo("combo 2 (one-liner)", ::currentItem4, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
+            combo("combo 2 (one-liner)", ::currentItem3, "aaaa\u0000bbbb\u0000cccc\u0000dddd\u0000eeee\u0000\u0000")
 
             /*  Simplified one-liner Combo() using an array of const char*
                 If the selection isn't within 0..count, Combo won't display a preview                 */
-            combo("combo 3 (array)", ::currentItem5, items)
+            combo("combo 3 (array)", ::currentItem4, items)
 
             // Simplified one-liner Combo() using an accessor function TODO
-            combo("combo 4 (function)", ::currentItem6, FuncHolder.itemGetter, items.toTypedArray())
+            combo("combo 4 (function)", ::currentItem5, FuncHolder.itemGetter, items.toTypedArray())
         }
 
         treeNode("Selectables") {
-            /*  Selectable() has 2 overloads:
-                - The one taking "bool selected" as a read-only selection information. When Selectable() has been
-                    clicked is returns true and you can alter selection state accordingly.
-                - The one taking "bool* p_selected" as a read-write selection information (convenient in some cases)
-                The earlier is more flexible, as in real application your selection may be stored in
-                a different manner (in flags within objects, as an external list, etc). */
+            // Selectable() has 2 overloads:
+            // - The one taking "bool selected" as a read-only selection information.
+            //   When Selectable() has been clicked it returns true and you can alter selection state accordingly.
+            // - The one taking "bool* p_selected" as a read-write selection information (convenient in some cases)
+            // The earlier is more flexible, as in real application your selection may be stored in many different ways
+            // and not necessarily inside a bool value (e.g. in flags within objects, as an external list, etc).
             treeNode("Basic") {
                 selectable("1. I am selectable", selection0, 0)
                 selectable("2. I am selectable", selection0, 1)
@@ -792,7 +845,8 @@ object ShowDemoWindowWidgets {
                     }
             }
             treeNode("Rendering more text into the same line") {
-                // Using the Selectable() override that takes "bool* p_selected" parameter and toggle your booleans automatically.
+                // Using the Selectable() override that takes "bool* p_selected" parameter,
+                // this function toggle your bool value automatically.
                 selectable("main.c", selected1, 0); sameLine(300); text(" 2,345 bytes")
                 selectable("Hello.cpp", selected1, 1); sameLine(300); text("12,345 bytes")
                 selectable("Hello.h", selected1, 2); sameLine(300); text(" 2,345 bytes")
@@ -808,20 +862,27 @@ object ShowDemoWindowWidgets {
             treeNode("Grid") {
                 for (i in 0 until 16)
                     withId(i) {
-                        if (selectable("Sailor", selected3, i, 0, Vec2(50))) {
-                            // Note: We _unnecessarily_ test for both x/y and i here only to silence some static analyzer. The second part of each test is unnecessary.
+                        if (selectable("Sailor", selected3[i] != 0, 0, Vec2(50))) {
+                            // Toggle
+                            selected3[i] = if (selected3[i] == 0) 1 else 0
+
+                            // Note: We _unnecessarily_ test for both x/y and i here only to silence some static analyzer.
+                            // The second part of each test is unnecessary.
                             val x = i % 4
                             val y = i / 4
-                            if (x > 0) selected3[i - 1] = selected3[i - 1] xor true
-                            if (x < 3 && i < 15) selected3[i + 1] = selected3[i + 1] xor true
-                            if (y > 0 && i > 3) selected3[i - 4] = selected3[i - 4] xor true
-                            if (y < 3 && i < 12) selected3[i + 4] = selected3[i + 4] xor true
+                            if (x > 0) selected3[i - 1] = selected3[i - 1] xor 1
+                            if (x < 3 && i < 15) selected3[i + 1] = selected3[i + 1] xor 1
+                            if (y > 0 && i > 3) selected3[i - 4] = selected3[i - 4] xor 1
+                            if (y < 3 && i < 12) selected3[i + 4] = selected3[i + 4] xor 1
                         }
                         if ((i % 4) < 3) sameLine()
                     }
             }
             treeNode("Alignment") {
-                helpMarker("By default, Selectables uses style.SelectableTextAlign but it can be overridden on a per-item basis using PushStyleVar().  You'll probably want to always keep your default situation to left-align otherwise it becomes difficult to layout multiple items on a same line")
+                helpMarker(
+                        "By default, Selectables uses style.SelectableTextAlign but it can be overridden on a per-item " +
+                                "basis using PushStyleVar(). You'll probably want to always keep your default situation to " +
+                                "left-align otherwise it becomes difficult to layout multiple items on a same line")
                 for (y in 0..2)
                     for (x in 0..2) {
                         val alignment = Vec2(x / 2f, y / 2f)
@@ -865,19 +926,23 @@ object ShowDemoWindowWidgets {
 
             treeNode("Resize Callback") {
                 // To wire InputText() with std::string or any other custom string type,
-                // you can use the ImGuiInputTextFlags_CallbackResize flag + create a custom ImGui::InputText() wrapper using your preferred type.
-                // See misc/cpp/imgui_stdlib.h for an implementation of this using std::string.
-                helpMarker("Demonstrate using ImGuiInputTextFlags_CallbackResize to wire your resizable string type to InputText().\n\nSee misc/cpp/imgui_stdlib.h for an implementation of this for std::string.")
+                // you can use the ImGuiInputTextFlags_CallbackResize flag + create a custom ImGui::InputText() wrapper
+                // using your preferred type. See misc/cpp/imgui_stdlib.h for an implementation of this using std::string.
+                helpMarker(
+                        "Using ImGuiInputTextFlags_CallbackResize to wire your custom string type to InputText().\n\n" +
+                                "See misc/cpp/imgui_stdlib.h for an implementation of this for std::string.")
 
                 // For this demo we are using ImVector as a string container.
-                // Note that because we need to store a terminating zero character, our size/capacity are 1 more than usually reported by a typical string class.
+                // Note that because we need to store a terminating zero character, our size/capacity are 1 more
+                // than usually reported by a typical string class.
                 Funcs0.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), 0)
                 text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
             }
         }
 
         // Plot/Graph widgets are currently fairly limited.
-        // Consider writing your own plotting widget, or using a third-party one (see "Wiki->Useful Widgets", or github.com/ocornut/imgui/issues/2747)
+        // Consider writing your own plotting widget, or using a third-party one
+        // (for third-party Plot widgets, see 'Wiki->Useful Widgets' or https://github.com/ocornut/imgui/labels/plot%2Fgraph)
         treeNode("Plots Widgets") {
 
             checkbox("Animate", ::animate)
@@ -885,12 +950,13 @@ object ShowDemoWindowWidgets {
             val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
             plotLines("Frame Times", arr)
 
-            /*  Create a dummy array of contiguous float values to plot
-                Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
-                and the sizeof() of your structure in the Stride parameter.
-             */
-            if (!animate || refreshTime == 0.0) refreshTime = time
-            while (refreshTime < time) { // Create dummy data at fixed 60 hz rate for the demo
+            // Create a dummy array of contiguous float values to plot
+            // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
+            // and the sizeof() of your structure in the "stride" parameter.
+
+            if (!animate || refreshTime == 0.0)
+                refreshTime = time
+            while (refreshTime < time) { // Create dummy data at fixed 60 Hz rate for the demo
                 values0[valuesOffset] = cos(phase)
                 valuesOffset = (valuesOffset + 1) % values0.size
                 phase += 0.1f * valuesOffset
@@ -902,10 +968,11 @@ object ShowDemoWindowWidgets {
                 val overlay = "avg ${values0.average()}"
                 plotLines("Lines", values0, valuesOffset, overlay, -1f, 1f, Vec2(0f, 80f))
             }
-            plotHistogram("Histogram", arr, 0, "", 0f, 1f, Vec2(0, 80))
+            plotHistogram("Histogram", arr, 0, "", 0f, 1f, Vec2(0, 80f))
 
             // Use functions to generate output
-            // FIXME: This is rather awkward because current plot API only pass in indices. We probably want an API passing floats and user provide sample rate/count.
+            // FIXME: This is rather awkward because current plot API only pass in indices.
+            // We probably want an API passing floats and user provide sample rate/count.
             separator()
             withItemWidth(100) { combo("func", ::funcType, "Sin\u0000Saw\u0000") }
             sameLine()
@@ -951,7 +1018,9 @@ object ShowDemoWindowWidgets {
             if (!optionsMenu) miscFlags = miscFlags or Cef.NoOptions
 
             text("Color widget:")
-            sameLine(); helpMarker("Click on the colored square to open a color picker.\nCTRL+click on individual component to input value.\n")
+            sameLine(); helpMarker(
+                "Click on the colored square to open a color picker.\n" +
+                        "CTRL+click on individual component to input value.\n")
             colorEdit3("MyColor##1", color, miscFlags)
 
             text("Color widget HSV with Alpha:")
@@ -961,7 +1030,10 @@ object ShowDemoWindowWidgets {
             colorEdit4("MyColor##2f", color, Cef.Float or miscFlags)
 
             text("Color button with Picker:")
-            sameLine(); helpMarker("With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\nWith the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only be used for the tooltip and picker popup.")
+            sameLine(); helpMarker(
+                "With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\n" +
+                        "With the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only " +
+                        "be used for the tooltip and picker popup.")
             colorEdit4("MyColor##3", color, Cef.NoInputs or Cef.NoLabel or miscFlags)
 
             text("Color button with Custom Picker Popup:")
@@ -997,11 +1069,12 @@ object ShowDemoWindowWidgets {
                         withId(n) {
                             if ((n % 8) != 0)
                                 sameLine(0f, style.itemSpacing.y)
-                            if (colorButton("##palette", c, Cef.NoAlpha or Cef.NoPicker or Cef.NoTooltip, Vec2(20, 20)))
+                            val paletteButtonFlags = Cef.NoAlpha or Cef.NoPicker or Cef.NoTooltip
+                            if (colorButton("##palette", c, paletteButtonFlags, Vec2(20)))
                                 color.put(c.x, c.y, c.z, color.w) // Preserve alpha!
 
-                            // Allow user to drop colors into each palette entry
-                            // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
+                            // Allow user to drop colors into each palette entry. Note that ColorButton() is already a
+                            // drag source by default, unless specifying the ImGuiColorEditFlags_NoDragDrop flag.
                             if (beginDragDropTarget()) {
                                 acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
                                     for (i in 0..2) savedPalette[n][i] = (it.data!! as Vec3).array[i]
@@ -1032,7 +1105,10 @@ object ShowDemoWindowWidgets {
                 }
             }
             combo("Display Mode", ::displayMode, "Auto/Current\u0000None\u0000RGB Only\u0000HSV Only\u0000Hex Only\u0000")
-            sameLine(); helpMarker("ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
+            sameLine(); helpMarker(
+                "ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, " +
+                        "but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex " +
+                        "if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
             combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
             sameLine(); helpMarker("User can right-click the picker to change mode.")
             var flags = miscFlags
@@ -1047,8 +1123,12 @@ object ShowDemoWindowWidgets {
             if (displayMode == 4) flags = flags or Cef.DisplayHEX
             colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
-            text("Programmatically set defaults:")
-            sameLine(); helpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\nWe don't have Push/Pop functions because you can force options on a per-widget basis if needed, and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid encouraging you to persistently save values that aren't forward-compatible.")
+            text("Set defaults in code:")
+            sameLine(); helpMarker(
+                "SetColorEditOptions() is designed to allow you to set boot-time default.\n" +
+                        "We don't have Push/Pop functions because you can force options on a per-widget basis if needed," +
+                        "and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid" +
+                        "encouraging you to persistently save values that aren't forward-compatible.")
             if (button("Default: Uint8 + HSV + Hue Bar"))
                 setColorEditOptions(Cef.Uint8 or Cef.DisplayHSV or Cef.PickerHueBar)
             if (button("Default: Float + HDR + Hue Wheel"))
@@ -1057,11 +1137,14 @@ object ShowDemoWindowWidgets {
             // HSV encoded support (to avoid RGB<>HSV round trips and singularities when S==0 or V==0)
             spacing()
             text("HSV encoded colors")
-            sameLine(); helpMarker("By default, colors are given to ColorEdit and ColorPicker in RGB, but ImGuiColorEditFlags_InputHSV allows you to store colors as HSV and pass them to ColorEdit and ColorPicker as HSV. This comes with the added benefit that you can manipulate hue values with the picker even when saturation or value are zero.")
+            sameLine(); helpMarker(
+                "By default, colors are given to ColorEdit and ColorPicker in RGB, but ImGuiColorEditFlags_InputHSV" +
+                        "allows you to store colors as HSV and pass them to ColorEdit and ColorPicker as HSV. This comes with the" +
+                        "added benefit that you can manipulate hue values with the picker even when saturation or value are zero.")
             text("Color widget with InputHSV:")
-            colorEdit4("HSV shown as RGB##1", colorStoredAsHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
-            colorEdit4("HSV shown as HSV##1", colorStoredAsHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
-            dragVec4("Raw HSV values", colorStoredAsHsv, 0.01f, 0f, 1f)
+            colorEdit4("HSV shown as RGB##1", colorHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
+            colorEdit4("HSV shown as HSV##1", colorHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
+            dragVec4("Raw HSV values", colorHsv, 0.01f, 0f, 1f)
         }
 
         treeNode("Range Widgets") {
@@ -1070,20 +1153,23 @@ object ShowDemoWindowWidgets {
         }
 
         treeNode("Data Types") {
-            /*  The DragScalar/InputScalar/SliderScalar functions allow various data types: signed/unsigned int/long long and float/double
-                To avoid polluting the public API with all possible combinations, we use the ImGuiDataType enum to pass the type,
-                and passing all arguments by address.
-                This is the reason the test code below creates local variables to hold "zero" "one" etc. for each types.
-                In practice, if you frequently use a given type that is not covered by the normal API entry points, you can wrap it
-                yourself inside a 1 line function which can take typed argument as value instead of void*, and then pass their address
-                to the generic function. For example:
-                bool MySliderU64(const char *label, u64* value, u64 min = 0, u64 max = 0, const char* format = "%lld") {
-                    return SliderScalar(label, ImGuiDataType_U64, value, &min, &max, format);
-                }
-             */
+            // DragScalar/InputScalar/SliderScalar functions allow various data types
+            // - signed/unsigned
+            // - 8/16/32/64-bits
+            // - integer/float/double
+            // To avoid polluting the public API with all possible combinations, we use the ImGuiDataType enum
+            // to pass the type, and passing all arguments by pointer.
+            // This is the reason the test code below creates local variables to hold "zero" "one" etc. for each types.
+            // In practice, if you frequently use a given type that is not covered by the normal API entry points,
+            // you can wrap it yourself inside a 1 line function which can take typed argument as value instead of void*,
+            // and then pass their address to the generic function. For example:
+            //   bool MySliderU64(const char *label, u64* value, u64 min = 0, u64 max = 0, const char* format = "%lld")
+            //   {
+            //      return SliderScalar(label, ImGuiDataType_U64, value, &min, &max, format);
+            //   }
 
-            // Limits (as helper variables that we can take the address of)
-            // Note that the SliderScalar function has a maximum usable range of half the natural type maximum, hence the /2 below.
+            // Setup limits (as helper variables so we can take their address, as explained above)
+            // Note: SliderScalar() functions have a maximum usable range of half the natural type maximum, hence the /2.
             // @formatter:off
             val s8_zero: Byte = 0.b
             val s8_one: Byte = 1.b
@@ -1308,13 +1394,11 @@ object ShowDemoWindowWidgets {
 
                     // Our buttons are both drag sources and drag targets here!
                     if (beginDragDropSource(DragDropFlag.None)) {
-                        setDragDropPayload("DND_DEMO_CELL", n)        // Set payload to carry the index of our item (could be anything)
-                        when (mode) {
-                            // Display preview (could be anything, e.g. when dragging an image we could decide to display the filename and a small preview of the image, etc.)
-                            Mode.Copy -> text("Copy $name")
-                            Mode.Move -> text("Move $name")
-                            Mode.Swap -> text("Swap $name")
-                        }
+                        // Set payload to carry the index of our item (could be anything)
+                        setDragDropPayload("DND_DEMO_CELL", n)
+                        // Display preview (could be anything, e.g. when dragging an image we could decide to display
+                        // the filename and a small preview of the image, etc.)
+                        text("$mode $name")
                         endDragDropSource()
                     }
                     if (beginDragDropTarget()) {
@@ -1342,7 +1426,9 @@ object ShowDemoWindowWidgets {
 
             treeNode("Drag to reorder items (simple)") {
                 // Simple reordering
-                helpMarker("We don't use the drag and drop api at all here! Instead we query when the item is held but not hovered, and order items accordingly.")
+                helpMarker(
+                        "We don't use the drag and drop api at all here! " +
+                                "Instead we query when the item is held but not hovered, and order items accordingly.")
                 itemNames.forEachIndexed { n, item ->
                     selectable(item)
 
@@ -1359,10 +1445,15 @@ object ShowDemoWindowWidgets {
         }
 
         treeNode("Querying Status (Active/Focused/Hovered etc.)") {
-            // Submit an item (various types available) so we can query their status in the following block.
-            combo("Item Type", ::itemType, "Text${NUL}Button${NUL}Button (w/ repeat)${NUL}Checkbox${NUL}SliderFloat${NUL}InputText${NUL}InputFloat${NUL}InputFloat3${NUL}ColorEdit4${NUL}MenuItem${NUL}TreeNode${NUL}TreeNode (w/ double-click)${NUL}ListBox${NUL}", 20)
+            // Select an item type
+            val itemNames = arrayOf(
+                    "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputFloat",
+                    "InputFloat3", "ColorEdit4", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "ListBox")
+            combo("Item Type", ::itemType, itemNames, itemNames.size)
             sameLine()
             helpMarker("Testing how various types of items are interacting with the IsItemXXX functions.")
+
+            // Submit selected item item so we can query their status in the code following it.
             val ret = when (itemType) {
                 0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
                 1 -> button("ITEM: Button")   // Testing button
@@ -1380,10 +1471,10 @@ object ShowDemoWindowWidgets {
                 else -> false
             }
 
-            // Display the value of IsItemHovered() and other common item state functions.
+            // Display the values of IsItemHovered() and other common item state functions.
             // Note that the ImGuiHoveredFlags_XXX flags can be combined.
             // Because BulletText is an item itself and that would affect the output of IsItemXXX functions,
-            // we query every state in a single call to avoid storing them and to simplify the code
+            // we query every state in a single call to avoid storing them and to simplify the code.
             if (DEBUG)
                 bulletText("""
                     Return value = $ret
@@ -1429,7 +1520,7 @@ object ShowDemoWindowWidgets {
 
             checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAChildWindow)
             if (embedAllInsideAChildWindow)
-                beginChild("outer_child", Vec2(0, fontSize * 20), true)
+                beginChild("outer_child", Vec2(0, fontSize * 20f), true)
 
             // Testing IsWindowFocused() function with its various flags.
             // Note that the ImGuiFocusedFlags_XXX flags can be combined.
@@ -1460,9 +1551,8 @@ object ShowDemoWindowWidgets {
 
             inputText("dummy", dummyStr, Itf.ReadOnly.i)
 
-            /*  Calling IsItemHovered() after begin returns the hovered status of the title bar.
-                This is useful in particular if you want to create a context menu (with BeginPopupContextItem)
-                associated to the title bar of a window.                 */
+            // Calling IsItemHovered() after begin returns the hovered status of the title bar.
+            // This is useful in particular if you want to create a context menu associated to the title bar of a window.
             checkbox("Hovered/Active tests after Begin() for title bar testing", ::testWindow)
             if (testWindow) {
                 begin("Title bar Hovered/Active tests", ::testWindow)
