@@ -1089,7 +1089,7 @@ fun dockNodePreviewDockRender(hostWindow: Window, hostNode: DockNode?, rootPaylo
     // In case the two windows involved are on different viewports, we will draw the overlay on each of them.
     val overlayDrawLists = mutableListOf(getForegroundDrawList(hostWindow.viewport!!))
     if (hostWindow.viewport !== rootPayload.viewport && !isTransparentPayload)
-        overlayDrawLists.add(getForegroundDrawList(rootPayload.viewport!!))
+        overlayDrawLists += getForegroundDrawList(rootPayload.viewport!!)
 
     // Draw main preview rectangle
     val overlayColTabs = Col.TabActive.u32
