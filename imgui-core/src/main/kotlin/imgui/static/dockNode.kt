@@ -1087,11 +1087,9 @@ fun dockNodePreviewDockRender(hostWindow: Window, hostNode: DockNode?, rootPaylo
     val isTransparentPayload = io.configDockingTransparentPayload
 
     // In case the two windows involved are on different viewports, we will draw the overlay on each of them.
-    var overlayDrawListsCount = 0
-    val overlayDrawLists = ArrayList<DrawList>()
-    overlayDrawLists[overlayDrawListsCount++] = getForegroundDrawList(hostWindow.viewport!!)
+    val overlayDrawLists = mutableListOf(getForegroundDrawList(hostWindow.viewport!!))
     if (hostWindow.viewport !== rootPayload.viewport && !isTransparentPayload)
-        overlayDrawLists[overlayDrawListsCount++] = getForegroundDrawList(rootPayload.viewport!!)
+        overlayDrawLists.add(getForegroundDrawList(rootPayload.viewport!!))
 
     // Draw main preview rectangle
     val overlayColTabs = Col.TabActive.u32
@@ -1117,15 +1115,12 @@ fun dockNodePreviewDockRender(hostWindow: Window, hostNode: DockNode?, rootPaylo
         val tabBarRect = Rect()
         dockNodeCalcTabBarLayout(data.futureNode, null, tabBarRect, null)
         val tabPos = Vec2(tabBarRect.min)
-        hostNode!!.tabBar.let {
-            if (it != null)
-                tabPos.x += when {
-                    // We don't use OffsetNewTab because when using non-persistent-order tab bar it is incremented with each Tab submission.
-                    !hostNode.isHiddenTabBar && !hostNode.isNoTabBar -> it.offsetMax + style.itemInnerSpacing.x
-                    else -> style.itemInnerSpacing.x + tabItemCalcSize(hostNode.windows[0].name, hostNode.windows[0].hasCloseButton).x
-                }
-            else if (hostWindow.flags hasnt Wf._DockNodeHost)
-                tabPos.x += style.itemInnerSpacing.x + tabItemCalcSize(hostWindow.name, hostWindow.hasCloseButton).x // Account for slight offset which will be added when changing from title bar to tab bar
+        hostNode?.tabBar?.let {
+            tabPos.x += when {
+                // We don't use OffsetNewTab because when using non-persistent-order tab bar it is incremented with each Tab submission.
+                !hostNode.isHiddenTabBar && !hostNode.isNoTabBar -> it.offsetMax + style.itemInnerSpacing.x
+                else -> style.itemInnerSpacing.x + tabItemCalcSize(hostNode.windows[0].name, hostNode.windows[0].hasCloseButton).x
+            } // Account for slight offset which will be added when changing from title bar to tab bar
         }
 
         // Draw tab shape/label preview (payload may be a loose window or a host window carrying multiple tabbed windows)
@@ -1142,8 +1137,7 @@ fun dockNodePreviewDockRender(hostWindow: Window, hostNode: DockNode?, rootPaylo
             val tabSize = tabItemCalcSize(payload.name, payload.hasCloseButton)
             val tabBb = Rect(tabPos.x, tabPos.y, tabPos.x + tabSize.x, tabPos.y + tabSize.y)
             tabPos.x += tabSize.x + style.itemInnerSpacing.x
-            for (overlayN in 0 until overlayDrawListsCount) {
-                val drawList = overlayDrawLists[overlayN]
+            for (drawList in overlayDrawLists) {
                 val tabFlags = TabItemFlag._Preview or if (payload.flags has Wf.UnsavedDocument) TabItemFlag.UnsavedDocument else TabItemFlag.None
                 if (tabBb !in tabBarRect)
                     drawList.pushClipRect(tabBarRect.min, tabBarRect.max)
@@ -1163,8 +1157,7 @@ fun dockNodePreviewDockRender(hostWindow: Window, hostNode: DockNode?, rootPaylo
             val drawRIn = Rect(drawR)
             drawRIn expand -2f
             val overlayCol = if (data.splitDir == dir && data.isSplitDirExplicit) overlayColDropHovered else overlayColDrop
-            for (overlayN in 0 until overlayDrawListsCount) {
-                val drawList = overlayDrawLists[overlayN]
+            for (drawList in overlayDrawLists) {
                 val center = floor(drawRIn.center)
                 drawList.addRectFilled(drawR.min, drawR.max, overlayCol, overlayRounding)
                 drawList.addRect(drawRIn.min, drawRIn.max, overlayColLines, overlayRounding)
