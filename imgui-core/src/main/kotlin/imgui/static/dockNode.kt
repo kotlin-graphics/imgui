@@ -1115,13 +1115,16 @@ fun dockNodePreviewDockRender(hostWindow: Window, hostNode: DockNode?, rootPaylo
         val tabBarRect = Rect()
         dockNodeCalcTabBarLayout(data.futureNode, null, tabBarRect, null)
         val tabPos = Vec2(tabBarRect.min)
-        hostNode?.tabBar?.let {
-            tabPos.x += when {
-                // We don't use OffsetNewTab because when using non-persistent-order tab bar it is incremented with each Tab submission.
-                !hostNode.isHiddenTabBar && !hostNode.isNoTabBar -> it.offsetMax + style.itemInnerSpacing.x
-                else -> style.itemInnerSpacing.x + tabItemCalcSize(hostNode.windows[0].name, hostNode.windows[0].hasCloseButton).x
-            } // Account for slight offset which will be added when changing from title bar to tab bar
-        }
+        if (hostNode?.tabBar != null) {
+            hostNode.tabBar?.let {
+                tabPos.x += when {
+                    // We don't use OffsetNewTab because when using non-persistent-order tab bar it is incremented with each Tab submission.
+                    !hostNode.isHiddenTabBar && !hostNode.isNoTabBar -> it.offsetMax + style.itemInnerSpacing.x
+                    else -> style.itemInnerSpacing.x + tabItemCalcSize(hostNode.windows[0].name, hostNode.windows[0].hasCloseButton).x
+                }
+            }
+        } else if (hostWindow.flags hasnt Wf._DockNodeHost)
+            tabPos.x += style.itemInnerSpacing.x + tabItemCalcSize(hostWindow.name, hostWindow.hasCloseButton).x // Account for slight offset which will be added when changing from title bar to tab bar
 
         // Draw tab shape/label preview (payload may be a loose window or a host window carrying multiple tabbed windows)
         rootPayload.dockNodeAsHost?.let {

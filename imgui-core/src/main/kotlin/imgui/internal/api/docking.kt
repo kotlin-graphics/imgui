@@ -341,9 +341,10 @@ interface docking {
         val payloadWindow = payload.data as Window
         acceptDragDropPayload(IMGUI_PAYLOAD_TYPE_WINDOW, DragDropFlag.AcceptBeforeDelivery or DragDropFlag.AcceptNoDrawDefaultRect)?.let {
             // Select target node
+            var allowNullTargetNode = false
             val node: DockNode? = window.dockNodeAsHost?.let {
                 dockNodeTreeFindNodeByPos(window.dockNodeAsHost!!, g.io.mousePos)
-            } ?: window.dockNode
+            } ?: window.dockNode ?: (null.also {allowNullTargetNode = true})
 
             val explicitTargetRect = node?.let { n -> n.tabBar?.let { t -> if (!n.isHiddenTabBar && !n.isNoTabBar) Rect(t.barRect) else null } }
                     ?: Rect(window.pos, window.pos + Vec2(window.size.x, frameHeight))
@@ -352,7 +353,7 @@ interface docking {
             // Preview docking request and find out split direction/ratio
             //const bool do_preview = true;     // Ignore testing for payload->IsPreview() which removes one frame of delay, but breaks overlapping drop targets within the same window.
             val doPreview = payload.preview || payload.delivery
-            if (doPreview) {
+            if (doPreview && (node != null || allowNullTargetNode)) {
                 val splitInner = DockPreviewData()
                 val splitOuter = DockPreviewData()
                 var splitData = splitInner
