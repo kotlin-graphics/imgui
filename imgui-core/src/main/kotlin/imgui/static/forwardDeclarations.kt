@@ -78,7 +78,9 @@ fun findHoveredWindow() {
     g.hoveredRootWindow = g.hoveredWindow?.rootWindow
 }
 
-fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).apply {
+// ApplyWindowSettings -> Window class
+
+fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
     //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
 
@@ -95,14 +97,9 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
             //  Retrieve settings from .ini file
             settingsOffset = g.settingsWindows.indexOf(settings)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-            pos put settings.pos
-            collapsed = settings.collapsed
-            if (settings.size allGreaterThan 0f)
-                size put settings.size
+            applySettings(settings)
         }
     }
-    sizeFull = floor(size)
-    this.size put sizeFull
     dc.cursorMaxPos put pos // So first call to CalcContentSize() doesn't return crazy values
     dc.cursorStartPos put pos
 
