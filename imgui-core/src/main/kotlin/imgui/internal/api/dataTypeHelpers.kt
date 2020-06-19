@@ -103,15 +103,19 @@ internal interface dataTypeHelpers {
 
     /** User can input math operators (e.g. +100) to edit a numerical values.
      *  NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess.. */
-    fun dataTypeApplyOpFromText(buf: String, initialValueBuf: ByteArray, dataType: DataType, pData: IntArray,
-                                format: String? = null): Boolean {
+    fun dataTypeApplyOpFromText(
+            buf: String, initialValueBuf: ByteArray, dataType: DataType, pData: IntArray,
+            format: String? = null
+    ): Boolean {
         _i = pData[0]
         return dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::_i, format)
                 .also { pData[0] = _i }
     }
 
-    fun dataTypeApplyOpFromText(buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
-                                dataPtr: KMutableProperty0<*>, format: String? = null): Boolean {
+    fun dataTypeApplyOpFromText(
+            buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
+            pData: KMutableProperty0<*>, format: String? = null
+    ): Boolean {
 
         val buf = buf_.replace(Regex("\\s+"), "")
                 .replace("$NUL", "")
@@ -125,101 +129,96 @@ internal interface dataTypeHelpers {
             Instead you can use +-100 to subtract from an existing value     */
         val op = buf.getOrNull(1)?.get(0)
 
-        return when (buf_[0]) {
-            NUL -> false
-            else -> when (dataType) {
-                DataType.Int -> {
-                    val fmt = format ?: "%d"
-                    var v by dataPtr as KMutableProperty0<Int>
-                    val dataBackup = v
-                    val arg0i = try {
-                        buf[0].format(style.locale, fmt).i
-                    } catch (_: Exception) {
-                        return false
-                    }
+        // Copy the value in an opaque buffer so we can compare at the end of the function if it changed at all.
+        val dataBackup = pData()
 
-                    v = when (op) {
-                        '+' -> {    // Add (use "+-" to subtract)
-                            val arg1i = buf[2].format(style.locale, "%d").i
-                            (arg0i + arg1i).i
-                        }
-                        '*' -> {    // Multiply
-                            val arg1f = buf[2].format(style.locale, "%f").f
-                            (arg0i * arg1f).i
-                        }
-                        '/' -> {    // Divide
-                            val arg1f = buf[2].format(style.locale, "%f").f
-                            when (arg1f) {
-                                0f -> arg0i
-                                else -> (arg0i / arg1f).i
-                            }
-                        }
-                        else -> try { // Assign constant
-                            buf[1].format(style.locale, fmt).i
-                        } catch (_: Exception) {
-                            arg0i
-                        }
-                    }
-                    dataBackup != v
+        if (buf_[0] == NUL) // TODO check me
+            return false
+
+        when (dataType) {
+            DataType.Int -> {
+                val fmt = format ?: "%d"
+                var v by pData as KMutableProperty0<Int>
+                val arg0i = try {
+                    buf[0].format(style.locale, fmt).i
+                } catch (_: Exception) {
+                    return false
                 }
-                DataType.Float -> {
-                    // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in [JVM] not true
-                    val fmt = format ?: "%f"
-                    var v by dataPtr as KMutableProperty0<Float>
-                    val dataBackup = v
-                    val arg0f = try {
-                        initialValueBuf[0].format(style.locale, fmt).f
+                v = when (op) {
+                    '+' -> {    // Add (use "+-" to subtract)
+                        val arg1i = buf[2].format(style.locale, "%d").i
+                        (arg0i + arg1i).i
+                    }
+                    '*' -> {    // Multiply
+                        val arg1f = buf[2].format(style.locale, "%f").f
+                        (arg0i * arg1f).i
+                    }
+                    // Divide
+                    '/' -> when (val arg1f = buf[2].format(style.locale, "%f").f) {
+                        0f -> arg0i
+                        else -> (arg0i / arg1f).i
+                    }
+                    else -> try { // Assign constant
+                        buf[1].format(style.locale, fmt).i
                     } catch (_: Exception) {
-                        return false
+                        arg0i
                     }
-                    val arg1f = try {
-                        buf.getOrElse(2) { buf[0] }.format(style.locale, fmt).f
-                    } catch (_: Exception) {
-                        return false
-                    }
-                    v = when (op) {
-                        '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
-                        '*' -> arg0f * arg1f    // Multiply
-                        '/' -> when (arg1f) {   // Divide
-                            0f -> arg0f
-                            else -> arg0f / arg1f
-                        }
-                        else -> arg1f           // Assign constant
-                    }
-                    dataBackup != v
                 }
-                DataType.Double -> {
-                    val fmt = format ?: "%f"
-                    var v by dataPtr as KMutableProperty0<Double>
-                    val dataBackup = v
-                    val arg0f = try {
-                        buf[0].format(style.locale, fmt).d
-                    } catch (_: Exception) {
-                        return false
-                    }
-                    val arg1f = try {
-                        buf[2].format(style.locale, fmt).d
-                    } catch (_: Exception) {
-                        return false
-                    }
-                    v = when (op) {
-                        '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
-                        '*' -> arg0f * arg1f    // Multiply
-                        '/' -> when (arg1f) {   // Divide
-                            0.0 -> arg0f
-                            else -> arg0f / arg1f
-                        }
-                        else -> arg1f           // Assign constant
-                    }
-                    dataBackup != v
+            }
+            DataType.Float -> {
+                // For floats we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in [JVM] not true
+                val fmt = format ?: "%f"
+                var v by pData as KMutableProperty0<Float>
+                val arg0f = try {
+                    initialValueBuf[0].format(style.locale, fmt).f
+                } catch (_: Exception) {
+                    return false
                 }
-                DataType.Uint, DataType.Long, DataType.Ulong ->
-                    /*  Assign constant
-                        FIXME: We don't bother handling support for legacy operators since they are a little too crappy.
-                        Instead we may implement a proper expression evaluator in the future.                 */
-                    //sscanf(buf, format, data_ptr)
-                    false
-                else -> false
+                val arg1f = try {
+                    buf.getOrElse(2) { buf[0] }.format(style.locale, fmt).f
+                } catch (_: Exception) {
+                    return false
+                }
+                v = when (op) {
+                    '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
+                    '*' -> arg0f * arg1f    // Multiply
+                    '/' -> when (arg1f) {   // Divide
+                        0f -> arg0f
+                        else -> arg0f / arg1f
+                    }
+                    else -> arg1f           // Assign constant
+                }
+            }
+            DataType.Double -> {
+                val fmt = format ?: "%f"
+                var v by pData as KMutableProperty0<Double>
+                val arg0f = try {
+                    buf[0].format(style.locale, fmt).d
+                } catch (_: Exception) {
+                    return false
+                }
+                val arg1f = try {
+                    buf[2].format(style.locale, fmt).d
+                } catch (_: Exception) {
+                    return false
+                }
+                v = when (op) {
+                    '+' -> arg0f + arg1f    // Add (use "+-" to subtract)
+                    '*' -> arg0f * arg1f    // Multiply
+                    '/' -> when (arg1f) {   // Divide
+                        0.0 -> arg0f
+                        else -> arg0f / arg1f
+                    }
+                    else -> arg1f           // Assign constant
+                }
+            }
+            DataType.Uint, DataType.Long, DataType.Ulong ->
+                /*  Assign constant
+                    FIXME: We don't bother handling support for legacy operators since they are a little too crappy.
+                    Instead we may implement a proper expression evaluator in the future.                 */
+                //sscanf(buf, format, data_ptr)
+                return false
+            else -> return false
 //            else TODO
 //            {
 //                // Small types need a 32-bit buffer to receive the result from scanf()
@@ -236,8 +235,85 @@ internal interface dataTypeHelpers {
 //                else
 //                IM_ASSERT(0);
 //            }
-            }
         }
+        return dataBackup != pData()
     }
 
+    fun dataTypeClamp(dataType: DataType, pV: KMutableProperty0<*>, vMin: Any, vMax: Any): Number? {
+        return when (dataType) {
+            DataType.Ubyte -> {
+                val v by pV as KMutableProperty0<Ubyte>
+                when {
+                    v < vMin as Ubyte -> vMin
+                    v > vMax as Ubyte -> vMax
+                    else -> null
+                }
+            }
+            DataType.Short -> {
+                val v by pV as KMutableProperty0<Short>
+                when {
+                    v < vMin as Short -> vMin
+                    v > vMax as Short -> vMax
+                    else -> null
+                }
+            }
+            DataType.Ushort -> {
+                val v by pV as KMutableProperty0<Ushort>
+                when {
+                    v < vMin as Ushort -> vMin
+                    v > vMax as Ushort -> vMax
+                    else -> null
+                }
+            }
+            DataType.Int -> {
+                val v by pV as KMutableProperty0<Int>
+                when {
+                    v < vMin as Int -> vMin
+                    v > vMax as Int -> vMax
+                    else -> null
+                }
+            }
+            DataType.Uint -> {
+                val v by pV as KMutableProperty0<Uint>
+                when {
+                    v < vMin as Uint -> vMin
+                    v > vMax as Uint -> vMax
+                    else -> null
+                }
+            }
+            DataType.Long -> {
+                val v by pV as KMutableProperty0<Long>
+                when {
+                    v < vMin as Long -> vMin
+                    v > vMax as Long -> vMax
+                    else -> null
+                }
+            }
+            DataType.Ulong -> {
+                val v by pV as KMutableProperty0<Ulong>
+                when {
+                    v < vMin as Ulong -> vMin
+                    v > vMax as Ulong -> vMax
+                    else -> null
+                }
+            }
+            DataType.Float -> {
+                val v by pV as KMutableProperty0<Float>
+                when {
+                    v < vMin as Float -> vMin
+                    v > vMax as Float -> vMax
+                    else -> null
+                }
+            }
+            DataType.Double -> {
+                val v by pV as KMutableProperty0<Double>
+                when {
+                    v < vMin as Double -> vMin
+                    v > vMax as Double -> vMax
+                    else -> null
+                }
+            }
+            else -> error("invalid")
+        }
+    }
 }
