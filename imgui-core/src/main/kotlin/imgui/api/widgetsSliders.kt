@@ -186,8 +186,9 @@ interface widgetsSliders {
             }
         }
 
+        // Our current specs do NOT clamp when using CTRL+Click manual input, but we should eventually add a flag for that..
         if (tempInputIsActive || tempInputStart)
-            return tempInputScalar(frameBb, id, label, DataType.Float, pData, format)
+            return tempInputScalar(frameBb, id, label, DataType.Float, pData, format)// , p_min, p_max)
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg

@@ -14,6 +14,7 @@ dependencies {
     implementation "${kx}.glm:glm:$glm_version"
     implementation "$kx:kool:$kool_version"
     implementation "$kx:kotlin-unsigned:$unsigned_version"
+    implementation "net.objecthunter:exp4j:0.4.8"
 
     ["", "-jemalloc", "-stb"].each {
         String base = "org.lwjgl:lwjgl$it:$lwjgl_version"

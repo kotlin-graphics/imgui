@@ -20,6 +20,7 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.clipboardText
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dataTypeApplyOpFromText
+import imgui.ImGui.dataTypeClamp
 import imgui.ImGui.dummy
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
@@ -863,9 +864,25 @@ internal interface inputText {
     }
 
     /** Create text input in place of another active widget (e.g. used when doing a CTRL+Click on drag/slider widgets)
-     *  FIXME: Facilitate using this in variety of other situations. */
-    fun tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType,
-                        pData: KMutableProperty0<*>, format_: String): Boolean {
+     *  FIXME: Facilitate using this in variety of other situations.
+     *
+     *  Note that Drag/Slider functions are currently NOT forwarding the min/max values clamping values!
+     *  This is intended: this way we allow CTRL+Click manual input to set a value out of bounds, for maximum flexibility.
+     *  However this may not be ideal for all uses, as some user code may break on out of bound values.
+     *  In the future we should add flags to Slider/Drag to specify how to enforce min/max values with CTRL+Click.
+     *  See GitHub issues #1829 and #3209
+     *  In the meanwhile, you can easily "wrap" those functions to enforce clamping, using wrapper functions, e.g.
+     *    bool SliderFloatClamp(const char* label, float* v, float v_min, float v_max)
+     *    {
+     *       float v_backup = *v;
+     *       if (!SliderFloat(label, v, v_min, v_max))
+     *          return false;
+     *       *v = ImClamp(*v, v_min, v_max);
+     *       return v_backup != *v;
+     *    }
+     */
+    fun tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String,
+                        pClampMin: KMutableProperty0<*>? = null, pClampMax: KMutableProperty0<*>? = null): Boolean {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -881,9 +898,20 @@ internal interface inputText {
             else -> Itf.CharsDecimal
         }
         val buf = dataBuf.toByteArray(32)
-        var valueChanged = tempInputText(bb, id, label, dataBuf.toByteArray(), flags)
+        var valueChanged = false
+        if(tempInputText(bb, id, label, dataBuf.toByteArray(), flags))
         if (valueChanged) {
-            valueChanged = dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
+            // Backup old value
+            val data_backup = pData()
+
+            // Apply new value (or operations) then clamp
+            dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
+            val clamp = when {
+                pClampMin != null && pClampMax != null -> dataTypeClamp(dataType, pData, pClampMin, pClampMax)
+                else -> null
+            }
+            // Only mark as edited if new value is different
+            valueChanged = pData != clamp
             if (valueChanged)
                 markItemEdited(id)
         }
