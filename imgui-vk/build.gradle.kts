@@ -24,7 +24,8 @@ dependencies {
     }
     listOf("", "-glfw", "-opengl", "-remotery", "-vulkan").forEach {
         implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}")
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}:natives-$lwjglNatives")
+        if (it != "-vulkan")
+            implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}:natives-$lwjglNatives")
     }
 }
 
