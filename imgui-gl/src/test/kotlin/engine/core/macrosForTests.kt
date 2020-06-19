@@ -149,8 +149,8 @@ fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/
         if (!result) {
             if (ctx.runFlags hasnt TestRunFlag.NoTestFunc)
                 test.status = TestStatus.Error
-
-            val sf = StackWalker.getInstance().walk { it.findFirst().get() }
+// TODO jdk8 doesnt have StackWalker
+//            val sf = StackWalker.getInstance().walk { it.findFirst().get() }
 //            System.err.printf("KO Class: ${sf.declaringClass.simpleName}, Method: %-7s, Line: ${sf.lineNumber}%n", sf.methodName)
 //            val display_value_expr = (value_expr != NULL) && (result == false)
 //            if (file) {
@@ -165,7 +165,8 @@ fun TestEngineHook_Check(/*file: String? = null, func: String = "", line: Int,*/
 //                ctx->LogError("KO '%s'", expr)
 //            }
         } else if (flags hasnt TestCheckFlag.SilentSuccess) {
-            val sf = StackWalker.getInstance().walk { it.findFirst().get() }
+            // TODO jdk8 doesnt have StackWalker
+//            val sf = StackWalker.getInstance().walk { it.findFirst().get() }
 //            System.err.printf("OK Class: ${sf.declaringClass.simpleName}, Method: %-7s, Line: ${sf.lineNumber}%n", sf.methodName)
 //            if (file)
 //                ctx->LogInfo("OK %s:%d '%s'", file_without_path, line, expr)
