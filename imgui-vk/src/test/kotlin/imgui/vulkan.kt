@@ -3,10 +3,9 @@ package imgui
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 import uno.glfw.windowHint.Api
-import uno.requiredInstanceExtensions
-import uno.vulkanSupported
+import uno.vk.requiredInstanceExtensions
+import uno.vk.vulkanSupported
 import vkk.*
-import vkk._10.structs.*
 import vkk.entities.VkDebugReportCallback
 import vkk.entities.VkDescriptorPool
 import vkk.entities.VkPipelineCache
@@ -15,6 +14,9 @@ import vkk.identifiers.Device
 import vkk.identifiers.Instance
 import vkk.identifiers.PhysicalDevice
 import vkk.identifiers.Queue
+import vkk.vk10.physicalDevices
+import vkk.vk10.queueFamilyProperties
+import vkk.vk10.structs.*
 import kotlin.system.exitProcess
 
 lateinit var instance: Instance
@@ -261,7 +263,8 @@ fun setupVulkan(extensions: ArrayList<String>) {
 
             // Setup the debug report callback
             val debugReportCi = DebugReportCallbackCreateInfo(flags = VkDebugReport.ERROR_BIT_EXT.i or VkDebugReport.WARNING_BIT_EXT.i or VkDebugReport.PERFORMANCE_WARNING_BIT_EXT.i)
-            debugReport = instance.createDebugReportCallbackEXT(debugReportCi)
+            TODO()
+//            debugReport = instance.createDebugReportCallbackEXT(debugReportCi)
         } else
         // Create Vulkan Instance without any debug feature
             instance = Instance(createInfo)
@@ -269,56 +272,60 @@ fun setupVulkan(extensions: ArrayList<String>) {
 
     // Select GPU
     run {
-        val gpus = instance.enumeratePhysicalDevices
+        TODO()
+//        val gpus = instance.physicalDevices
 
         // If a number >1 of GPUs got reported, you should find the best fit GPU for your purpose
         // e.g. VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU if available, or with the greatest memory available, etc.
         // for sake of simplicity we'll just take the first one, assuming it has a graphics queue family.
-        physicalDevice = gpus[0]
+//        physicalDevice = gpus[0]
     }
 
     // Select graphics queue family
     run {
-        val queues = physicalDevice.queueFamilyProperties
-        for (i in queues.indices)
-            if (queues[i].queueFlags has VkQueueFlag.GRAPHICS_BIT) {
-                queueFamily = i
-                break
-            }
-        assert(queueFamily != -1)
+        TODO()
+//        val queues = physicalDevice.queueFamilyProperties
+//        for (i in queues.indices)
+//            if (queues[i].queueFlags has VkQueueFlag.GRAPHICS_BIT) {
+//                queueFamily = i
+//                break
+//            }
+//        assert(queueFamily != -1)
     }
 
     // Create Logical Device (with 1 queue)
     run {
-        val queueInfo = DeviceQueueCreateInfo(
-                queueFamilyIndex = queueFamily,
-                queuePriority = 1f)
-        val createInfo = DeviceCreateInfo(
-                queueCreateInfo = queueInfo,
-                enabledExtensionNames = listOf("VK_KHR_swapchain"))
-        device = physicalDevice createDevice createInfo
-        queue = device.getQueue(queueFamily)
+        TODO()
+//        val queueInfo = DeviceQueueCreateInfo(
+//                queueFamilyIndex = queueFamily,
+//                queuePriority = 1f)
+//        val createInfo = DeviceCreateInfo(
+//                queueCreateInfo = queueInfo,
+//                enabledExtensionNames = listOf("VK_KHR_swapchain"))
+//        device = physicalDevice createDevice createInfo
+//        queue = device.getQueue(queueFamily)
     }
 
     // Create Descriptor Pool
     run {
-        val poolSizes = arrayOf(
-                DescriptorPoolSize(VkDescriptorType.SAMPLER, 1000),
-                DescriptorPoolSize(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1000),
-                DescriptorPoolSize(VkDescriptorType.SAMPLED_IMAGE, 1000),
-                DescriptorPoolSize(VkDescriptorType.STORAGE_IMAGE, 1000),
-                DescriptorPoolSize(VkDescriptorType.UNIFORM_TEXEL_BUFFER, 1000),
-                DescriptorPoolSize(VkDescriptorType.STORAGE_TEXEL_BUFFER, 1000),
-                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER, 1000),
-                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER, 1000),
-                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER_DYNAMIC, 1000),
-                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER_DYNAMIC, 1000),
-                DescriptorPoolSize(VkDescriptorType.INPUT_ATTACHMENT, 1000))
-        val poolInfo = DescriptorPoolCreateInfo(
-                flags = VkDescriptorPoolCreate.FREE_DESCRIPTOR_SET_BIT.i,
-                maxSets = 1000 * poolSizes.size,
-                poolSizes = poolSizes)
-        descriptorPool = device createDescriptorPool poolInfo
+        TODO()
+//        val poolSizes = arrayOf(
+//                DescriptorPoolSize(VkDescriptorType.SAMPLER, 1000),
+//                DescriptorPoolSize(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1000),
+//                DescriptorPoolSize(VkDescriptorType.SAMPLED_IMAGE, 1000),
+//                DescriptorPoolSize(VkDescriptorType.STORAGE_IMAGE, 1000),
+//                DescriptorPoolSize(VkDescriptorType.UNIFORM_TEXEL_BUFFER, 1000),
+//                DescriptorPoolSize(VkDescriptorType.STORAGE_TEXEL_BUFFER, 1000),
+//                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER, 1000),
+//                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER, 1000),
+//                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER_DYNAMIC, 1000),
+//                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER_DYNAMIC, 1000),
+//                DescriptorPoolSize(VkDescriptorType.INPUT_ATTACHMENT, 1000))
+//        val poolInfo = DescriptorPoolCreateInfo(
+//                flags = VkDescriptorPoolCreate.FREE_DESCRIPTOR_SET_BIT.i,
+//                maxSets = 1000 * poolSizes.size,
+//                poolSizes = poolSizes)
+//        descriptorPool = device createDescriptorPool poolInfo
     }
 }
 //
