@@ -19,6 +19,9 @@ dependencies {
         implementation("org.openjfx:javafx-$it:11:$platform")
     }
 
+    val kx = "com.github.kotlin-graphics"
+    implementation("$kx:glm:${findProperty("glmVersion")}")
+
     val lwjglNatives = when (current()) {
         WINDOWS -> "windows"
         LINUX -> "linux"
