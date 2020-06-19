@@ -80,18 +80,19 @@ internal interface inputText {
      *  (FIXME: Rather confusing and messy function, among the worse part of our codebase, expecting to rewrite a V2 at some point.. Partly because we are
      *  doing UTF8 > U16 > UTF8 conversions on the go to easily internal interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
-    fun inputTextEx(label: String, hint: String?, buf_: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
-                    callback: InputTextCallback? = null, callbackUserData: Any? = null): Boolean {
+    fun inputTextEx(
+            label: String, hint: String?, buf_: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
+            callback: InputTextCallback? = null, callbackUserData: Any? = null
+    ): Boolean {
 
         var buf = buf_
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        // Can't use both together (they both use up/down keys)
-        assert(!(flags has Itf.CallbackHistory && flags has Itf._Multiline))
-        // Can't use both together (they both use tab key)
-        assert(!(flags has Itf.CallbackCompletion && flags has Itf.AllowTabInput))
+        assert(buf.isNotEmpty())
+        assert(!(flags has Itf.CallbackHistory && flags has Itf._Multiline)) { "Can't use both together (they both use up/down keys)" }
+        assert(!(flags has Itf.CallbackCompletion && flags has Itf.AllowTabInput)) { "Can't use both together (they both use tab key)" }
 
         val RENDER_SELECTION_WHEN_INACTIVE = false
         val isMultiline = flags has Itf._Multiline
@@ -364,7 +365,7 @@ internal interface inputText {
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
             val isCtrlKeyOnly = io.keyMods == KeyMod.Ctrl.i
             val isShiftKeyOnly = io.keyMods == KeyMod.Shift.i
-            val isShortcutKey = io.keyMods == if(io.configMacOSXBehaviors) KeyMod.Super.i else KeyMod.Ctrl.i
+            val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) KeyMod.Super.i else KeyMod.Ctrl.i
 
             val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
             val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
@@ -881,8 +882,10 @@ internal interface inputText {
      *       return v_backup != *v;
      *    }
      */
-    fun tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String,
-                        pClampMin: KMutableProperty0<*>? = null, pClampMax: KMutableProperty0<*>? = null): Boolean {
+    fun tempInputScalar(
+            bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String,
+            pClampMin: KMutableProperty0<*>? = null, pClampMax: KMutableProperty0<*>? = null
+    ): Boolean {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -899,22 +902,22 @@ internal interface inputText {
         }
         val buf = dataBuf.toByteArray(32)
         var valueChanged = false
-        if(tempInputText(bb, id, label, dataBuf.toByteArray(), flags))
-        if (valueChanged) {
-            // Backup old value
-            val data_backup = pData()
+        if (tempInputText(bb, id, label, dataBuf.toByteArray(), flags))
+            if (valueChanged) {
+                // Backup old value
+                val data_backup = pData()
 
-            // Apply new value (or operations) then clamp
-            dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
-            val clamp = when {
-                pClampMin != null && pClampMax != null -> dataTypeClamp(dataType, pData, pClampMin, pClampMax)
-                else -> null
+                // Apply new value (or operations) then clamp
+                dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
+                val clamp = when {
+                    pClampMin != null && pClampMax != null -> dataTypeClamp(dataType, pData, pClampMin, pClampMax)
+                    else -> null
+                }
+                // Only mark as edited if new value is different
+                valueChanged = pData != clamp
+                if (valueChanged)
+                    markItemEdited(id)
             }
-            // Only mark as edited if new value is different
-            valueChanged = pData != clamp
-            if (valueChanged)
-                markItemEdited(id)
-        }
         return valueChanged
     }
 
@@ -1003,9 +1006,11 @@ internal interface inputText {
             return lineCount to s
         }
 
-        fun inputTextCalcTextSizeW(text: CharArray, textBegin: Int, textEnd: Int,
-                                   remaining: KMutableProperty0<Int>? = null, outOffset: Vec2? = null,
-                                   stopOnNewLine: Boolean = false): Vec2 {
+        fun inputTextCalcTextSizeW(
+                text: CharArray, textBegin: Int, textEnd: Int,
+                remaining: KMutableProperty0<Int>? = null, outOffset: Vec2? = null,
+                stopOnNewLine: Boolean = false
+        ): Vec2 {
 
             val font = g.font
             val lineHeight = g.fontSize
