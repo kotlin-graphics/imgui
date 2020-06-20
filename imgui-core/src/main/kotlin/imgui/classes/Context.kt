@@ -10,9 +10,7 @@ import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.*
 import imgui.internal.classes.*
-import imgui.static.windowSettingsHandler_ReadLine
-import imgui.static.windowSettingsHandler_ReadOpen
-import imgui.static.windowSettingsHandler_WriteAll
+import imgui.static.*
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -578,6 +576,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.settingsHandlers += SettingsHandler().apply{
             typeName = "Window"
             typeHash = hash("Window")
+            clearAllFn = ::windowSettingsHandler_ClearAll
+            applyAllFn = ::windowSettingsHandler_ApplyAll
             readOpenFn = ::windowSettingsHandler_ReadOpen
             readLineFn = ::windowSettingsHandler_ReadLine
             writeAllFn = ::windowSettingsHandler_WriteAll

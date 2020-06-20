@@ -18,6 +18,13 @@ internal interface settings {
 
     // MarkIniSettingsDirty(ImGuiWindow* window) -> Window class
 
+    fun clearIniSettings() {
+        g.settingsIniData = ""
+        for (handler in g.settingsHandlers)
+            handler.clearAllFn?.invoke(g, handler)
+        g.settingsWindows.clear()
+    }
+
     fun createNewWindowSettings(name_: String): WindowSettings {
         val name = when {
             // Skip to the "###" marker if any. We don't skip past to match the behavior of GetID()

@@ -26,7 +26,8 @@ interface settingsIniUtilities {
     fun loadIniSettingsFromMemory(lines: List<String>) {
 
         assert(g.initialized)
-        assert(!g.settingsLoaded && g.frameCount == 0)
+        //IM_ASSERT(!g.WithinFrameScope && "Cannot be called between NewFrame() and EndFrame()");
+//        assert(!g.settingsLoaded && g.frameCount == 0)
 
         // For user convenience, we allow passing a non zero-terminated string (hence the ini_size parameter).
         // For our convenience and to make the code simpler, we'll also write zero-terminators within the buffer. So let's create a writable copy..
@@ -54,6 +55,10 @@ interface settingsIniUtilities {
             }
         }
         g.settingsLoaded = true
+
+        // Call post-read handlers
+        for (handler in g.settingsHandlers)
+            handler.applyAllFn?.invoke(g, handler)
     }
 
     /** this is automatically called (if io.IniFilename is not empty) a few seconds after any modification that should be reflected in the .ini file (and also by DestroyContext). */
