@@ -13,6 +13,7 @@ import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.clearIniSettings
 import imgui.ImGui.combo
 import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.end
@@ -287,6 +288,9 @@ interface demoDebugInformations {
 
         // Settings
         treeNode("Settings") {
+            if (smallButton("Clear"))
+                clearIniSettings()
+            sameLine()
             if (smallButton("Save to disk"))
                 saveIniSettingsToDisk(io.iniFilename)
             sameLine()
