@@ -343,6 +343,13 @@ class PopupData(
         /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
         var openMousePos: Vec2 = Vec2())
 
+
+/** Clear all settings data */
+typealias ClearAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
+
+/** Read: Called after reading (in registration order) */
+typealias ApplyAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
+
 /** Read: Called when entering into a new ini entry e.g. "[Window][Name]" */
 typealias ReadOpenFn = (ctx: Context, handler: SettingsHandler, name: String) -> Any
 
@@ -359,6 +366,8 @@ class SettingsHandler {
     /** == ImHashStr(TypeName) */
     var typeHash: ID = 0
 
+    var clearAllFn: ClearAllFn? = null
+    var applyAllFn: ApplyAllFn? = null
     lateinit var readOpenFn: ReadOpenFn
     lateinit var readLineFn: ReadLineFn
     lateinit var writeAllFn: WriteAllFn
@@ -404,6 +413,8 @@ class WindowSettings(val name: String = "") {
     var pos = Vec2()
     var size = Vec2()
     var collapsed = false
+    /** Set when loaded from .ini data (to enable merging/loading .ini data into an already running context) */
+    var wantApply = false
 }
 
 //-----------------------------------------------------------------------------
@@ -502,7 +513,7 @@ class Pool<T>(val placementNew: () -> T) {
         buf.removeAt(idx.i)
         map.remove(key)
         // update indices in map
-        map.replaceAll { _, i -> i - (i > idx).i }
+        map.replaceAll { (s, i) -> i - (i > idx).i }
     }
 //    void        Reserve(int capacity)
 //    { Buf.reserve(capacity); Map.Data.reserve(capacity); }
