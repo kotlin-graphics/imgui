@@ -215,6 +215,7 @@ fun dockContextProcessDock(ctx: Context, req: DockRequest) {
 }
 
 fun dockContextProcessUndockWindow(ctx: Context, window: Window, clearPersistentDockingRef: Boolean = true) {
+    IMGUI_DEBUG_LOG_DOCKING("DockContextProcessUndockWindow window '${window.name}', clear_persistent_docking_ref = ${clearPersistentDockingRef.i}")
     val dockNode = window.dockNode
     if (dockNode != null)
         dockNodeRemoveWindow(dockNode, window, if (clearPersistentDockingRef) 0 else window.dockId)
@@ -228,6 +229,7 @@ fun dockContextProcessUndockWindow(ctx: Context, window: Window, clearPersistent
 
 fun dockContextProcessUndockNode(ctx: Context, node_: DockNode) {
     var node = node_
+    IMGUI_DEBUG_LOG_DOCKING("DockContextProcessUndockNode node %08X".format(node.id))
     assert(node.isLeafNode)
     assert(node.windows.size >= 1)
 
