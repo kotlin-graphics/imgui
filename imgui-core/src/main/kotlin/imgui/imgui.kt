@@ -244,6 +244,9 @@ val IMGUI_PAYLOAD_TYPE_WINDOW = "_IMWINDOW"     // Payload == ImGuiWindow*
 fun IMGUI_DEBUG_LOG(fmt: String) = println("[%05d] $fmt".format(g.frameCount))
 
 // Debug Logging for selected systems. Remove the '((void)0) //' to enable.
+//fun IMGUI_DEBUG_LOG_POPUP(string: String) = Unit
+//fun IMGUI_DEBUG_LOG_VIEWPORT(string: String) = Unit
+//fun IMGUI_DEBUG_LOG_DOCKING(string: String) = Unit
 fun IMGUI_DEBUG_LOG_POPUP(string: String) = IMGUI_DEBUG_LOG(string)
 fun IMGUI_DEBUG_LOG_VIEWPORT(string: String) = IMGUI_DEBUG_LOG(string)
 fun IMGUI_DEBUG_LOG_DOCKING(string: String) = IMGUI_DEBUG_LOG(string)
