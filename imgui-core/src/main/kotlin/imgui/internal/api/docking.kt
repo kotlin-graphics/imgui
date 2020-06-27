@@ -341,18 +341,11 @@ interface docking {
         val payloadWindow = payload.data as Window
         acceptDragDropPayload(IMGUI_PAYLOAD_TYPE_WINDOW, DragDropFlag.AcceptBeforeDelivery or DragDropFlag.AcceptNoDrawDefaultRect)?.let {
             // Select target node
-            var node: DockNode? = null
             var allowNullTargetNode = false
-            window.dockNodeAsHost.let { host ->
-                if (host != null)
-                    node = dockNodeTreeFindNodeByPos(host, io.mousePos)
-                else window.dockNode.let {
-                    if (it != null) // && window->DockIsActive)
-                        node = it
-                    else
-                        allowNullTargetNode = true // Dock into a regular window
-                }
-            }
+            val node: DockNode? = window.dockNodeAsHost?.let {
+                dockNodeTreeFindNodeByPos(window.dockNodeAsHost!!, g.io.mousePos)
+            } ?: window.dockNode ?: (null.also {allowNullTargetNode = true})
+
             val explicitTargetRect = node?.let { n -> n.tabBar?.let { t -> if (!n.isHiddenTabBar && !n.isNoTabBar) Rect(t.barRect) else null } }
                     ?: Rect(window.pos, window.pos + Vec2(window.size.x, frameHeight))
             val isExplicitTarget = io.configDockingWithShift || isMouseHoveringRect(explicitTargetRect.min, explicitTargetRect.max)
