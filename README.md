@@ -107,21 +107,15 @@ Dear ImGui allows you create elaborate tools as well as very short-lived ones. O
 
 ### Demo
 
-You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within minutes. If you don't, let me know!
+You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within minutes. If you can't, let me know!
 
 OpenGL Kotlin:
 
-- [lwjgl](imgui-gl/src/test/kotlin/imgui/examples/opengl3.kt) 
-- [jogl](imgui-jogl/src/test/kotlin/imgui/examples/JoglGL3.kt) (currently not-maintained)
+- [lwjgl](imgui-gl/src/test/kotlin/examples/opengl3.kt) 
 
 OpenGL Java:
 
 - [lwjgl](imgui-gl/src/test/java/imgui/examples/OpenGL3.java) 
-
-Vulkan Kotlin:
-
-- [lwjgl](imgui-vk/src/test/kotlin/imgui/vulkan.kt) (broken, to fix)
-
 
 You should refer to those also to learn how to use the imgui library.
 
