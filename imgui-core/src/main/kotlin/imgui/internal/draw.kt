@@ -65,7 +65,7 @@ class DrawCmd {
      *  (e.g. changing shader/blending settings before an Image call). */
     var resetRenderState = false
 
-    var userCallbackData: ByteBuffer? = null
+    var userCallbackData: Any? = null
 //    void*           UserCallbackData;       // The draw callback code can access this.
 
     infix fun put(drawCmd: DrawCmd) {
