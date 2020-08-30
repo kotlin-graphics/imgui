@@ -13,9 +13,9 @@ dependencies {
     val kx = "com.github.kotlin-graphics"
     implementation("$kx:kotlin-unsigned:${findProperty("unsignedVersion")}")
     implementation("$kx:kool:${findProperty("koolVersion")}")
-    implementation("$kx:glm:${findProperty("glmVersion")}")
+    api("$kx:glm:${findProperty("glmVersion")}")
     implementation("$kx:gli:${findProperty("gliVersion")}")
-    implementation("$kx:uno-sdk:${findProperty("unoVersion")}")
+    api("$kx:uno-sdk:${findProperty("unoVersion")}")
 
     val lwjglNatives = when (current()) {
         WINDOWS -> "windows"
