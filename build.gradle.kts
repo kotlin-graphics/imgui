@@ -21,6 +21,9 @@ allprojects {
 
     group = "com.github.kotlin_graphics"
 
+    java.sourceCompatibility = JavaVersion.VERSION_1_8
+    java.targetCompatibility = JavaVersion.VERSION_1_8
+
     dependencies {
 
         implementation(kotlin("stdlib-jdk8"))
