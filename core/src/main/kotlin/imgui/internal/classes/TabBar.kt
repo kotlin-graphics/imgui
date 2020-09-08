@@ -341,7 +341,7 @@ class TabBar {
         tab.window = dockedWindow
 
         // Append name with zero-terminator
-        if (flags has TabBarFlag._DockNode) {
+        if (this.flags has TabBarFlag._DockNode) {
             assert(tab.window != null)
             tab.nameOffset = -1
         } else {
@@ -920,4 +920,3 @@ class TabBar {
         }
     }
 }
-
