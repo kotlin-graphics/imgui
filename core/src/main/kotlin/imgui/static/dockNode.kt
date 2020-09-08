@@ -823,8 +823,9 @@ fun dockNodeUpdateTabBar(node: DockNode, hostWindow: Window) {
             if (tabBar.flags has TabBarFlag.NoCloseWithMiddleMouseButton)
                 tabItemFlags = tabItemFlags or TabItemFlag.NoCloseWithMiddleMouseButton
 
-            val tabOpen = ::_b
-            tabOpen.set(false)
+            val tabOpen = ::_b.also {
+                it.set(true)
+            }
             tabBar.tabItemEx(window.name, if (window.hasCloseButton) tabOpen else null, tabItemFlags, window)
             if (!tabOpen())
                 node.wantCloseTabId = window.id
