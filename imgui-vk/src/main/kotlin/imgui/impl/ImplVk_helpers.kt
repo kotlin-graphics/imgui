@@ -72,7 +72,7 @@ package imgui.impl
 //    //    printf("[vulkan] avail_modes[%d] = %d\n", avail_i, avail_modes[avail_i]);
 //
 //    for (request in requestModes)
-//        for (avail in availModes.buffer.toIntArray()) // TODO IntBuffer iterator()
+//        for (avail in availModes.buffer.toIntArray())
 //            if (request.i == avail)
 //                return request
 //

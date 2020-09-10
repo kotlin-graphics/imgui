@@ -37,6 +37,7 @@ import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
 import imgui.internal.ButtonFlag as Bf
 
+@Suppress("UNCHECKED_CAST")
 
 /** Widgets: Input with Keyboard
  *  - If you want to use InputText() with std::string or any custom dynamic string type, see cpp/imgui_stdlib.h and comments in imgui_demo.cpp.

@@ -16,8 +16,8 @@ import imgui.internal.classes.Rect
 import imgui.internal.has
 import imgui.internal.hash
 import imgui.stb.te
-import io.kotlintest.matchers.floats.shouldBeGreaterThan
-import io.kotlintest.matchers.floats.shouldBeLessThan
+import io.kotest.matchers.floats.shouldBeGreaterThan
+import io.kotest.matchers.floats.shouldBeLessThan
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldNotBe
 import imgui.WindowFlag as Wf
