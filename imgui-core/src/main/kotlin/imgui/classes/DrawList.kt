@@ -834,7 +834,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
     /** Your rendering function must check for 'UserCallback' in ImDrawCmd and call the function instead of rendering
     triangles.  */
-    fun addCallback(callback: DrawCallback, callbackData: ByteBuffer? = null) {
+    fun addCallback(callback: DrawCallback, callbackData: Any? = null) {
         var currentCmd = cmdBuffer.peek()
         if (currentCmd == null || currentCmd.elemCount != 0 || currentCmd.userCallback != null) {
             addDrawCmd()

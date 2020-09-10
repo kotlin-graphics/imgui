@@ -532,4 +532,28 @@ public class Jdsl {
         block.run();
         imgui.endChildFrame();
     }
+
+    // Columns
+
+    public static void columns(String strId, int columnsCount, int flags, Runnable block) {
+        imgui.beginColumns(strId, columnsCount, flags);
+        try {
+            block.run();
+        } finally {
+            imgui.endColumns();
+        }
+    }
+
+    // listBox
+
+    public static void listBox(String label, Vec2 sizeArg, Runnable block) {
+        if (imgui.listBoxHeader(label, sizeArg))
+            try {
+                block.run();
+            } finally {
+                imgui.listBoxFooter();
+            }
+    }
+
+    // focusScope TODO
 }

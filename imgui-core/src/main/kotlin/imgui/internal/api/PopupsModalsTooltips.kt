@@ -106,11 +106,8 @@ internal interface PopupsModalsTooltips {
                 g.openPopupStack[currentStackSize].openFrameCount = popupRef.openFrameCount
             else {
                 // Close child popups if any
-                if (g.openPopupStack.size > currentStackSize + 1) // ~resize
-                    for (i in currentStackSize + 1 until g.openPopupStack.size)
-                        g.openPopupStack.pop()
-                else if (g.openPopupStack.size < currentStackSize + 1)
-                    TODO()
+                for (i in currentStackSize + 1 until g.openPopupStack.size) g.openPopupStack.pop() // ~resize
+                for (i in g.openPopupStack.size until currentStackSize + 1) g.openPopupStack += PopupData() // ~resize
                 g.openPopupStack[currentStackSize] = popupRef
             }
             /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup

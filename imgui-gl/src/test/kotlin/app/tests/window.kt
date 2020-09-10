@@ -8,8 +8,8 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import io.kotlintest.matchers.floats.shouldBeGreaterThan
-import io.kotlintest.matchers.floats.shouldBeLessThan
+import io.kotest.matchers.floats.shouldBeGreaterThan
+import io.kotest.matchers.floats.shouldBeLessThan
 import io.kotlintest.shouldBe
 import kotlin.math.abs
 import imgui.WindowFlag as Wf

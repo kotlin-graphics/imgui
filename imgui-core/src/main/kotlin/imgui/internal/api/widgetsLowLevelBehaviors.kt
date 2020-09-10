@@ -48,6 +48,8 @@ import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 import imgui.internal.ButtonFlag as Bf
 
+@Suppress("UNCHECKED_CAST")
+
 const val DRAG_DROP_HOLD_TIMER = 0.7f
 
 /** Widgets low-level behaviors */

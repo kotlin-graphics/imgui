@@ -118,6 +118,7 @@ object dsl {
         }
     }
 
+    // ~private
     fun _push(idx: Col, col: Any) {
         if (col is Int)
             pushStyleColor(idx, col)
@@ -572,7 +573,7 @@ object dsl {
         }
     }
 
-    // Columns TODO -> jDsl
+    // Columns
 
     inline fun columns(strId: String = "", columnsCount: Int,
                        flags: ColumnsFlags = ColumnsFlag.None.i, block: () -> Unit) {
@@ -584,7 +585,7 @@ object dsl {
         }
     }
 
-    // Columns TODO -> jDsl, TODO others
+    // listBox
 
     inline fun listBox(label: String, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
         if (listBoxHeader(label, sizeArg))
@@ -594,4 +595,6 @@ object dsl {
                 listBoxFooter()
             }
     }
+
+    // focusScope TODO
 }
