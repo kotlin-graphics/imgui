@@ -758,7 +758,7 @@ object ShowDemoWindowWidgets {
                 If the selection isn't within 0..count, Combo won't display a preview                 */
             combo("combo 3 (array)", ::currentItem5, items)
 
-            // Simplified one-liner Combo() using an accessor function TODO
+            // Simplified one-liner Combo() using an accessor function
             combo("combo 4 (function)", ::currentItem6, FuncHolder.itemGetter, items.toTypedArray())
         }
 

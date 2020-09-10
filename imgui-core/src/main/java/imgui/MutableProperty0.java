@@ -1,8 +1,8 @@
 package imgui;
 
 import kotlin.reflect.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+//import org.jetbrains.annotations.NotNull;
+//import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -19,7 +19,7 @@ public class MutableProperty0<T> implements KMutableProperty0<T> {
         this.t = t;
     }
 
-    @NotNull
+//    @NotNull
     @Override
     public Setter<T> getSetter() {
         return null;
@@ -30,7 +30,7 @@ public class MutableProperty0<T> implements KMutableProperty0<T> {
         this.t = t;
     }
 
-    @NotNull
+//    @NotNull
     @Override
     public KProperty0.Getter<T> getGetter() {
         return null;
@@ -41,7 +41,7 @@ public class MutableProperty0<T> implements KMutableProperty0<T> {
         return t;
     }
 
-    @Nullable
+//    @Nullable
     @Override
     public Object getDelegate() {
         return null;
@@ -82,47 +82,51 @@ public class MutableProperty0<T> implements KMutableProperty0<T> {
         return false;
     }
 
-    @NotNull
+//    @NotNull
     @Override
     public String getName() {
         return null;
     }
 
-    @NotNull
+//    @NotNull
     @Override
     public List<KParameter> getParameters() {
         return null;
     }
 
-    @NotNull
+//    @NotNull
     @Override
     public KType getReturnType() {
         return null;
     }
 
-    @NotNull
+//    @NotNull
     @Override
     public List<KTypeParameter> getTypeParameters() {
         return null;
     }
 
-    @Nullable
+//    @Nullable
     @Override
     public KVisibility getVisibility() {
         return null;
     }
 
     @Override
-    public T call(@NotNull Object... objects) {
+    public T call(
+//            @NotNull
+                    Object... objects) {
         return null;
     }
 
     @Override
-    public T callBy(@NotNull Map<KParameter, ?> map) {
+    public T callBy(
+//            @NotNull
+                    Map<KParameter, ?> map) {
         return null;
     }
 
-    @NotNull
+//    @NotNull
     @Override
     public List<Annotation> getAnnotations() {
         return null;

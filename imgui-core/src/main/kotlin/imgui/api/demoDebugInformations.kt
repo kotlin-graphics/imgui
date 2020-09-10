@@ -66,6 +66,7 @@ import imgui.internal.classes.Window
 import kool.BYTES
 import kool.lim
 import kool.rem
+import java.nio.ByteBuffer
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -530,7 +531,7 @@ interface demoDebugInformations {
                     if (cb == null && cmd.elemCount == 0)
                         continue
                     if (cb != null) {
-                        bulletText("Callback %s, UserData %s", cb.toString(), String(cmd.userCallbackData!!.array()))
+                        bulletText("Callback %s, UserData %s", cb.toString(), String((cmd.userCallbackData as ByteBuffer).array()))
                         continue
                     }
 
