@@ -164,8 +164,6 @@ val Vec4.u32: Int
         return out or (F32_TO_INT8_SAT(w) shl COL32_A_SHIFT)
     }
 
-infix fun Int.wo(i: Int) = and(i.inv())
-
 var imeInProgress = false
 //    var imeLastKey = 0
 

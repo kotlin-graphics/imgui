@@ -38,6 +38,8 @@ allprojects {
         components { withModule<ModularKotlinRule>(kotlin("stdlib")) }
         components { withModule<ModularKotlinRule>(kotlin("stdlib-jdk8")) }
 
+        implementation(platform("org.lwjgl:lwjgl-bom:${findProperty("lwjglVersion")}"))
+
         testImplementation("io.kotest:kotest-runner-junit5-jvm:${findProperty("kotestVersion")}")
         testImplementation("io.kotest:kotest-assertions-core-jvm:${findProperty("kotestVersion")}")
     }
