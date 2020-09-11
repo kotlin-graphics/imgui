@@ -178,7 +178,7 @@ interface widgetsInputWithKeyboard {
         if (flags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
             flags = flags or Itf.CharsDecimal
         flags = flags or Itf.AutoSelectAll
-        flags = flags or Itf._NoMarkEdited  // We call MarkItemEdited() ourselve by comparing the actual data rather than the string.
+        flags = flags or Itf._NoMarkEdited  // We call MarkItemEdited() ourselves by comparing the actual data rather than the string.
 
         if (step != null) {
             val buttonSize = frameHeight

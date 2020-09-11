@@ -87,7 +87,7 @@ class InputTextCallbackData {
 
             if (!isResizable) return
 
-            // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the midly similar code (until we remove the U16 buffer alltogether!)
+            // Contrary to STB_TEXTEDIT_INSERTCHARS() this is working in the UTF8 buffer, hence the mildly similar code (until we remove the U16 buffer altogether!)
             val editState = g.inputTextState
             assert(editState.id != 0 && g.activeId == editState.id)
             assert(buf === editState.textA)

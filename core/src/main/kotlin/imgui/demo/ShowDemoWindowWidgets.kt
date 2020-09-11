@@ -342,7 +342,7 @@ object ShowDemoWindowWidgets {
             false
         }
 
-        // Tip: Because ImGui:: is a namespace you would typicall add your own function into the namespace in your own source files.
+        // Tip: Because ImGui:: is a namespace you would typically add your own function into the namespace in your own source files.
         // For example, you may add a function called ImGui::InputText(const char* label, MyString* my_str).
         val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: ItemFlags) -> Boolean =
                 { label, myStr, size, flags ->
@@ -543,7 +543,7 @@ object ShowDemoWindowWidgets {
                 helpMarker("This is a more typical looking tree with selectable nodes.\nClick to select, CTRL+Click to toggle, click on arrows or double-click to open.")
                 checkboxFlags("ImGuiTreeNodeFlags_OpenOnArrow", ::baseFlags, Tnf.OpenOnArrow.i)
                 checkboxFlags("ImGuiTreeNodeFlags_OpenOnDoubleClick", ::baseFlags, Tnf.OpenOnDoubleClick.i)
-                checkboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth", ::baseFlags, Tnf.SpanAvailWidth.i); sameLine(); helpMarker("Extend hit area to all available width instead of allowing more items to be layed out after the node.")
+                checkboxFlags("ImGuiTreeNodeFlags_SpanAvailWidth", ::baseFlags, Tnf.SpanAvailWidth.i); sameLine(); helpMarker("Extend hit area to all available width instead of allowing more items to be laid out after the node.")
                 checkboxFlags("ImGuiTreeNodeFlags_SpanFullWidth", ::baseFlags, Tnf.SpanFullWidth.i)
                 checkbox("Align label with current X position", ::alignLabelWithCurrentXposition)
                 checkbox("Test tree node as drag source", ::testDragAndDrop)
@@ -821,7 +821,7 @@ object ShowDemoWindowWidgets {
                     }
             }
             treeNode("Alignment") {
-                helpMarker("By default, Selectables uses style.SelectableTextAlign but it can be overriden on a per-item basis using PushStyleVar().  You'll probably want to always keep your default situation to left-align otherwise it becomes difficult to layout multiple items on a same line")
+                helpMarker("By default, Selectables uses style.SelectableTextAlign but it can be overridden on a per-item basis using PushStyleVar().  You'll probably want to always keep your default situation to left-align otherwise it becomes difficult to layout multiple items on a same line")
                 for (y in 0..2)
                     for (x in 0..2) {
                         val alignment = Vec2(x / 2f, y / 2f)
@@ -865,7 +865,7 @@ object ShowDemoWindowWidgets {
 
             treeNode("Resize Callback") {
                 // To wire InputText() with std::string or any other custom string type,
-                // you can use the ImGuiInputTextFlags_CallbackResize flag + create a custom ImGui::InputText() wrapper using your prefered type.
+                // you can use the ImGuiInputTextFlags_CallbackResize flag + create a custom ImGui::InputText() wrapper using your preferred type.
                 // See misc/cpp/imgui_stdlib.h for an implementation of this using std::string.
                 helpMarker("Demonstrate using ImGuiInputTextFlags_CallbackResize to wire your resizable string type to InputText().\n\nSee misc/cpp/imgui_stdlib.h for an implementation of this for std::string.")
 
