@@ -104,9 +104,10 @@ allprojects {
     }
 
     artifacts {
-        archives(dokkaJavadocJar)
-        if (name != "vk")
+        if (name != "vk") {
+            archives(dokkaJavadocJar)
             archives(dokkaHtmlJar)
+        }
         archives(sourceJar)
     }
 
