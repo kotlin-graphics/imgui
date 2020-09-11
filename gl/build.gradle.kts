@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm")
 }
 
-val moduleName = "$group.gl"
+val moduleName = "$group.${rootProject.name}.gl"
 
 dependencies {
 
@@ -19,7 +19,7 @@ dependencies {
     implementation("$kx:glm:${findProperty("glmVersion")}")
     implementation("$kx:gli:${findProperty("gliVersion")}")
     implementation("$kx:gln:${findProperty("glnVersion")}")
-    implementation("${kx}.uno-sdk:uno-core:${findProperty("unoVersion")}")
+    implementation("${kx}.uno-sdk:core:${findProperty("unoVersion")}")
 
     val lwjglNatives = when (current()) {
         WINDOWS -> "windows"

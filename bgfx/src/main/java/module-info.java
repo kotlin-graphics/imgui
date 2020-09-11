@@ -1,4 +1,4 @@
-module com.github.kotlin_graphics.imgui_bgfx {
+module com.github.kotlin_graphics.imgui.bgfx {
 
     requires kotlin.stdlib;
 
