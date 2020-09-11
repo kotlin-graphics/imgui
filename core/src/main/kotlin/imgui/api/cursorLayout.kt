@@ -19,7 +19,7 @@ import imgui.internal.LayoutType as Lt
 /** Cursor / Layout
  *  - By "cursor" we mean the current output position.
  *  - The typical widget behavior is to output themselves at the current cursor position, then move the cursor one line down.
- *  - You can call SameLine() between widgets to undo the last carriage return and output at the right of the preceeding widget.
+ *  - You can call SameLine() between widgets to undo the last carriage return and output at the right of the preceding widget.
  *  - Attention! We currently have inconsistencies between window-local and absolute positions we will aim to fix with future API:
  *    Window-local coordinates:   SameLine(), GetCursorPos(), SetCursorPos(), GetCursorStartPos(), GetContentRegionMax(), GetWindowContentRegion*(), PushTextWrapPos()
  *    Absolute coordinate:        GetCursorScreenPos(), SetCursorScreenPos(), all ImDrawList:: functions.   */

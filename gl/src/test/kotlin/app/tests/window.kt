@@ -333,7 +333,7 @@ fun registerTests_Window(e: TestEngine) {
         }
     }
 
-    // ## Test that ScrollMax values are correctly zero (we had/have bugs where they are seldomly == BorderSize)
+    // ## Test that ScrollMax values are correctly zero (we had/have bugs where they are seldom == BorderSize)
     e.registerTest("window", "window_scroll_002").let { t ->
         t.flags = t.flags or TestFlag.NoAutoFinish
         t.guiFunc = { ctx: TestContext ->
