@@ -249,6 +249,7 @@ class TabBar {
             nextSelectedTabId = id
 
         // Lock visibility
+        // (Note: tab_contents_visible != tab_selected... because CTRL+TAB operations may preview some tabs without selecting them!)
         var tabContentsVisible = visibleTabId == id
         if (tabContentsVisible)
             visibleTabWasSubmitted = true
@@ -353,7 +354,7 @@ class TabBar {
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) window.getID(id + 1) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId)
+        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId, tabContentsVisible)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)

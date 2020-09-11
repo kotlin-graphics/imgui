@@ -69,6 +69,8 @@ class Style {
     var tabRounding = 4f
     /** Thickness of border around tabs. */
     var tabBorderSize = 0f
+    /** Minimum width for close button to appears on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected. */
+    var tabMinWidthForUnselectedCloseButton = 0f
     /** Side of the color button in the ColorEdit4 widget (left/right). Defaults to ImGuiDir_Right. */
     var colorButtonPosition = Dir.Right
     /** Alignment of button text when button is larger than text. Defaults to (0.5f, 0.5f) (centered).   */
@@ -162,6 +164,8 @@ class Style {
         grabMinSize = floor(grabMinSize * scaleFactor)
         grabRounding = floor(grabRounding * scaleFactor)
         tabRounding = floor(tabRounding * scaleFactor)
+        if (tabMinWidthForUnselectedCloseButton != Float.MAX_VALUE)
+            tabMinWidthForUnselectedCloseButton = floor(tabMinWidthForUnselectedCloseButton * scaleFactor)
         displayWindowPadding = floor(displayWindowPadding * scaleFactor)
         displaySafeAreaPadding = floor(displaySafeAreaPadding * scaleFactor)
         mouseCursorScale = floor(mouseCursorScale * scaleFactor)
