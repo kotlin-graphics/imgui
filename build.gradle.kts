@@ -52,15 +52,16 @@ allprojects {
 
     tasks {
 
-        dokkaHtml {
-            dokkaSourceSets.configureEach {
-                sourceLink {
-                    localDirectory.set(file("src/main/kotlin"))
-                    remoteUrl.set(URL("https://github.com/kotlin-graphics/glm/tree/master/src/main/kotlin"))
-                    remoteLineSuffix.set("#L")
+        if (name != "vk")
+            dokkaHtml {
+                dokkaSourceSets.configureEach {
+                    sourceLink {
+                        localDirectory.set(file("src/main/kotlin"))
+                        remoteUrl.set(URL("https://github.com/kotlin-graphics/glm/tree/master/src/main/kotlin"))
+                        remoteLineSuffix.set("#L")
+                    }
                 }
             }
-        }
 
         withType<KotlinCompile>().all {
             kotlinOptions {
@@ -104,7 +105,8 @@ allprojects {
 
     artifacts {
         archives(dokkaJavadocJar)
-        archives(dokkaHtmlJar)
+        if (name != "vk")
+            archives(dokkaHtmlJar)
         archives(sourceJar)
     }
 
