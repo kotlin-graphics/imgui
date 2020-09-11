@@ -287,7 +287,7 @@ interface main {
         updateMouseMovingWindowEndFrame()
 
         /*  Sort the window list so that all child windows are after their parent
-            We cannot do that on FocusWindow() because childs may not exist yet         */
+            We cannot do that on FocusWindow() because children may not exist yet         */
         g.windowsTempSortBuffer.clear()
         g.windowsTempSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf._ChildWindow }  // if a child is active its parent will add it

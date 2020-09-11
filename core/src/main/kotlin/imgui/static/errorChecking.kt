@@ -42,7 +42,7 @@ fun errorCheckNewFrameSanityChecks() {
 
 fun errorCheckEndFrameSanityChecks() {
 
-    // Verify that io.KeyXXX fields haven't been tampered with. Key mods shoudl not be modified between NewFrame() and EndFrame()
+    // Verify that io.KeyXXX fields haven't been tampered with. Key mods should not be modified between NewFrame() and EndFrame()
     val expectedKeyModFlags = mergedKeyModFlags
     assert(io.keyMods == expectedKeyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
