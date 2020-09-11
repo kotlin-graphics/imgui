@@ -19,6 +19,7 @@ import imgui.ImGui.keepAliveID
 import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setTooltip
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
@@ -272,11 +273,11 @@ interface main {
         }
 
         // Drag and Drop: Fallback for source tooltip. This is not ideal but better than nothing.
-//        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount) {
-//            g.DragDropWithinSource = true
-//            setTooltip("...")
-//            g.dragDropWithinSource = false
-//        }
+        if (g.dragDropActive && g.dragDropSourceFrameCount < g.frameCount && g.dragDropSourceFlags hasnt DragDropFlag.SourceNoPreviewTooltip) {
+            g.dragDropWithinSource = true
+            setTooltip("...")
+            g.dragDropWithinSource = false
+        }
 
         // End frame
         g.withinFrameScope = false
