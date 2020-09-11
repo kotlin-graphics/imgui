@@ -17,14 +17,15 @@ dependencies {
     implementation("$kx:glm:${findProperty("glmVersion")}")
     implementation("$kx:uno-sdk:${findProperty("unoVersion")}")
 
-    val lwjglNatives = when (current()) {
+    val lwjglNatives = "natives-" + when (current()) {
         WINDOWS -> "windows"
-            LINUX -> "linux"
-            else -> "macos"
+        LINUX -> "linux"
+        else -> "macos"
     }
     listOf("", "-glfw", "-opengl", "-remotery").forEach {
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}")
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}:natives-$lwjglNatives")
+        implementation("org.lwjgl", "lwjgl$it")
+        if (it != "-jawt")
+            runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
 }
 

@@ -3,14 +3,12 @@ package engine
 import com.github.ajalt.mordant.AnsiColorCode
 import com.github.ajalt.mordant.TermColors
 import gli_.has
-import glm_.L
-import glm_.b
-import glm_.d
-import glm_.i
+import glm_.*
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.classes.InputTextCallbackData
 import imgui.internal.ItemFlag
+import imgui.wo
 import io.kotest.matchers.shouldBe
 import org.lwjgl.system.Platform
 import unsigned.toUInt

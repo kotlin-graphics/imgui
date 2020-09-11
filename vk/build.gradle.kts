@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm")
 }
 
-val moduleName = "$group.vk"
+val moduleName = "$group.${rootProject.name}.vk"
 
 dependencies {
 

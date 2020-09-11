@@ -1,7 +1,7 @@
 import org.gradle.internal.os.OperatingSystem.*
 
 
-val moduleName = "$group.bgfx"
+val moduleName = "$group.${rootProject.name}.bgfx"
 
 dependencies {
 
@@ -12,17 +12,15 @@ dependencies {
     implementation("$kx:glm:${findProperty("glmVersion")}")
     implementation("$kx:kool:${findProperty("koolVersion")}")
 
-    val lwjglNatives = when (current()) {
+    val lwjglNatives = "natives-" + when (current()) {
         WINDOWS -> "windows"
         LINUX -> "linux"
         else -> "macos"
     }
     listOf("", "-glfw", "-bgfx", "-stb").forEach {
-        val base = "org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}"
-        implementation(base)
-        val natives = "$base:natives-$lwjglNatives"
-        testRuntimeOnly(natives)
-        shadow(natives)
+        implementation("org.lwjgl", "lwjgl$it")
+        if (it != "-jawt")
+            runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
 
 //    testImplementation group: 'junit', name: 'junit', version: '4.12'

@@ -4,6 +4,7 @@ import glm_.glm
 import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
+import glm_.wo
 import imgui.*
 import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.buttonBehavior
@@ -26,8 +27,8 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
-import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.classes.Rect
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0

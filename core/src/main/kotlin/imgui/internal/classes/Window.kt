@@ -2,10 +2,7 @@ package imgui.internal.classes
 
 import gli_.has
 import gli_.hasnt
-import glm_.f
-import glm_.glm
-import glm_.i
-import glm_.max
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i

@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-val moduleName = "$group.openjfx"
+val moduleName = "$group.${rootProject.name}.openjfx"
 
 dependencies {
 
