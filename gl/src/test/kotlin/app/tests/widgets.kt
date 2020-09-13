@@ -11,9 +11,9 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.gImGui
-import imgui.internal.ItemStatusFlag
+import imgui.internal.sections.ItemStatusFlag
 import imgui.internal.classes.Rect
-import imgui.internal.has
+import imgui.internal.sections.has
 import imgui.internal.hash
 import imgui.stb.te
 import io.kotest.matchers.floats.shouldBeGreaterThan
@@ -21,7 +21,7 @@ import io.kotest.matchers.floats.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import imgui.WindowFlag as Wf
-import imgui.internal.ButtonFlag as Bf
+import imgui.internal.sections.ButtonFlag as Bf
 
 //-------------------------------------------------------------------------
 // Tests: Widgets

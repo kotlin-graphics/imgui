@@ -1,8 +1,12 @@
-package imgui.internal
+package imgui.internal.sections
 
 import glm_.vec2.Vec2
 import imgui.internal.classes.Rect
 
+
+//-----------------------------------------------------------------------------
+// [SECTION] Misc flags, enums and data structures
+//-----------------------------------------------------------------------------
 
 enum class ButtonFlag(val i: ButtonFlags) {
 

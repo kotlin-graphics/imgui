@@ -7,8 +7,8 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.classes.DrawList
-import imgui.internal.NextWindowDataFlag
-import imgui.internal.or
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.or
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 

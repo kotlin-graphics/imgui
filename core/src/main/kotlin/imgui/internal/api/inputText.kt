@@ -55,6 +55,8 @@ import imgui.internal.*
 import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.Rect
+import imgui.internal.sections.Axis
+import imgui.internal.sections.InputSource
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag

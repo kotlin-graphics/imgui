@@ -453,6 +453,8 @@ class FontAtlas {
     }
 
 
+    // Helper: ImBitArray
+
     /** Helper: ImBoolVector. Store 1-bit per value.
      *  Note that Resize() currently clears the whole vector. */
     class BitVector(sz: Int) { // ~create

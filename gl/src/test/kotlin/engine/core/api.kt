@@ -7,9 +7,9 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.classes.Context
 import imgui.classes.TextFilter
-import imgui.internal.Axis
-import imgui.internal.ItemStatusFlags
-import imgui.internal.NavLayer
+import imgui.internal.sections.Axis
+import imgui.internal.sections.ItemStatusFlags
+import imgui.internal.sections.NavLayer
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import kool.free

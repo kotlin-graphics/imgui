@@ -26,10 +26,11 @@ import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.classes.IO
 import imgui.classes.Style
 import imgui.internal.*
+import imgui.internal.sections.or
 import imgui.static.*
 import org.lwjgl.system.Platform
 import imgui.WindowFlag as Wf
-import imgui.internal.DrawListFlag as Dlf
+import imgui.internal.sections.DrawListFlag as Dlf
 
 @Suppress("UNCHECKED_CAST")
 

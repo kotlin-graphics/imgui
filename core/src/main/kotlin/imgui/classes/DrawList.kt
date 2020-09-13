@@ -13,6 +13,7 @@ import imgui.api.g
 import imgui.font.Font
 import imgui.internal.*
 import imgui.internal.classes.*
+import imgui.internal.sections.*
 import kool.*
 import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign

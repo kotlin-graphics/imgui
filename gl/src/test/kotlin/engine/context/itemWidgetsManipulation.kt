@@ -5,10 +5,10 @@ import engine.core.*
 import imgui.ID
 import imgui.Key
 import imgui.MouseButton
-import imgui.internal.InputSource
-import imgui.internal.has
-import imgui.internal.hasnt
-import imgui.internal.ItemStatusFlag as Isf
+import imgui.internal.sections.InputSource
+import imgui.internal.sections.has
+import imgui.internal.sections.hasnt
+import imgui.internal.sections.ItemStatusFlag as Isf
 
 // [JVM]
 fun TestContext.itemAction(action: TestAction, ref: String, actionArg: Int? = null) = itemAction(action, TestRef(path = ref), actionArg)

@@ -17,7 +17,7 @@ import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemVisible
 import imgui.classes.Context
-import imgui.internal.*
+import imgui.internal.sections.InputSource
 
 //-------------------------------------------------------------------------
 // ImGuiTestContext

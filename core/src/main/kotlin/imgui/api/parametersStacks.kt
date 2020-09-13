@@ -17,7 +17,11 @@ import imgui.font.Font
 import imgui.internal.*
 import imgui.internal.classes.ColorMod
 import imgui.internal.classes.StyleMod
-import imgui.internal.ItemFlag as If
+import imgui.internal.sections.NextItemDataFlag
+import imgui.internal.sections.has
+import imgui.internal.sections.or
+import imgui.internal.sections.wo
+import imgui.internal.sections.ItemFlag as If
 
 /** Parameters stacks */
 interface parametersStacks {

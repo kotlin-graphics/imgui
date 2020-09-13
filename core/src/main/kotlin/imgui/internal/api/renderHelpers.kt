@@ -17,6 +17,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.*
 import unsigned.toUInt
 import kotlin.math.max
 

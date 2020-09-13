@@ -6,7 +6,7 @@ import glm_.vec2.Vec2
 import imgui.ImGui
 import imgui.Key
 import imgui.NavInput
-import imgui.internal.InputSource
+import imgui.internal.sections.InputSource
 import imgui.internal.classes.Rect
 
 infix fun TestContext.setInputMode(inputMode: InputSource) {

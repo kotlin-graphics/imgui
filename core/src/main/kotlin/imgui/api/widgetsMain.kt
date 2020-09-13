@@ -29,10 +29,14 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.has
+import imgui.internal.sections.or
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
-import imgui.internal.ButtonFlag as Bf
+import imgui.internal.sections.ButtonFlag as Bf
 
 
 // @formatter:off

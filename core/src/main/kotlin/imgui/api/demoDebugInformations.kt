@@ -65,6 +65,9 @@ import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.*
+import imgui.internal.sections.DrawListFlag
+import imgui.internal.sections.WindowSettings
+import imgui.internal.sections.wo
 import kool.BYTES
 import kool.lim
 import kool.rem

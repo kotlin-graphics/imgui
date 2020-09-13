@@ -15,11 +15,10 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
 import imgui.internal.classes.Rect
-import imgui.internal.classes.SettingsHandler
 import imgui.internal.classes.Window
-import imgui.internal.classes.WindowSettings
-import imgui.internal.floor
 import imgui.internal.hash
+import imgui.internal.sections.SettingsHandler
+import imgui.internal.sections.WindowSettings
 import imgui.windowsIme.COMPOSITIONFORM
 import imgui.windowsIme.DWORD
 import imgui.windowsIme.HIMC

@@ -4,9 +4,9 @@ import engine.context.logEx
 import glm_.func.common.min
 import imgui.ID
 import imgui.classes.Context
-import imgui.internal.ItemStatusFlag
-import imgui.internal.ItemStatusFlags
-import imgui.internal.NavLayer
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.ItemStatusFlags
+import imgui.internal.sections.NavLayer
 import imgui.internal.classes.Rect
 
 //-------------------------------------------------------------------------

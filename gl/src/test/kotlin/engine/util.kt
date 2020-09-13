@@ -7,8 +7,7 @@ import glm_.*
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.classes.InputTextCallbackData
-import imgui.internal.ItemFlag
-import imgui.wo
+import imgui.internal.sections.ItemFlag
 import io.kotest.matchers.shouldBe
 import org.lwjgl.system.Platform
 import unsigned.toUInt

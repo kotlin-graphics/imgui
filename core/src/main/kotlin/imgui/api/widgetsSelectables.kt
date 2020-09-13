@@ -20,16 +20,19 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNavId
 import imgui.ImGui.style
-import imgui.ImGui.windowContentRegionMax
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.NavHighlightFlag
+import imgui.internal.sections.hasnt
+import imgui.internal.sections.or
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
-import imgui.internal.ButtonFlag as Bf
-import imgui.internal.ItemFlag as If
+import imgui.internal.sections.ButtonFlag as Bf
+import imgui.internal.sections.ItemFlag as If
 
 /** Widgets: Selectables
  *  - A selectable highlights when hovered, and can display another color when selected.

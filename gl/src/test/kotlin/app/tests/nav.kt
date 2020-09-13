@@ -6,8 +6,8 @@ import engine.core.TestEngine
 import engine.core.registerTest
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.internal.InputSource
-import imgui.internal.NavLayer
+import imgui.internal.sections.InputSource
+import imgui.internal.sections.NavLayer
 import io.kotest.matchers.shouldBe
 import kool.getValue
 import kool.setValue

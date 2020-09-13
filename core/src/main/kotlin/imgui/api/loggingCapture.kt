@@ -10,7 +10,7 @@ import imgui.ImGui.pushID
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.sliderInt
-import imgui.internal.LogType
+import imgui.internal.sections.LogType
 import java.io.File
 import java.io.FileWriter
 

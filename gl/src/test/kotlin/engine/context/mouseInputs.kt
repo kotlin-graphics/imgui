@@ -7,11 +7,10 @@ import glm_.wo
 import imgui.ID
 import imgui.clamp
 import imgui.hasnt
-import imgui.internal.NavLayer
+import imgui.internal.sections.NavLayer
 import imgui.internal.bezierCalc
 import imgui.internal.classes.Rect
 import imgui.internal.lengthSqr
-import imgui.wo
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt

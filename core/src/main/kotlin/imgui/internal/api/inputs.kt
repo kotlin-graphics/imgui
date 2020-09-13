@@ -2,10 +2,8 @@ package imgui.internal.api
 
 import gli_.has
 import imgui.*
-import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.api.g
-import imgui.internal.InputReadMode
 
 /** Inputs
  *  FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions. */
