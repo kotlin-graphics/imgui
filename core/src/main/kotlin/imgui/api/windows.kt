@@ -74,15 +74,7 @@ interface windows {
 
         // Find or create
         var windowJustCreated = false
-        val window = findWindowByName(name) ?: run {
-            // Any condition flag will do since we are creating a new window here.
-            val sizeOnFirstUse = when {
-                g.nextWindowData.flags has NextWindowDataFlag.HasSize -> Vec2(g.nextWindowData.sizeVal)
-                else -> Vec2()
-            }
-            windowJustCreated = true
-            createNewWindow(name, sizeOnFirstUse, flags)
-        }
+        val window = findWindowByName(name) ?: createNewWindow(name, flags).also { windowJustCreated = true }
 
         // Automatically disable manual moving/resizing when NoInputs is set
         if ((flags and Wf.NoInputs) == Wf.NoInputs.i)

@@ -91,10 +91,9 @@ internal interface inputText {
         val window = currentWindow
         if (window.skipItems) return false
 
-        // Can't use both together (they both use up/down keys)
-        assert(!(flags has Itf.CallbackHistory && flags has Itf._Multiline))
-        // Can't use both together (they both use tab key)
-        assert(!(flags has Itf.CallbackCompletion && flags has Itf.AllowTabInput))
+        assert(buf.isNotEmpty())
+        assert(!(flags has Itf.CallbackHistory && flags has Itf._Multiline)) { "Can't use both together (they both use up/down keys)" }
+        assert(!(flags has Itf.CallbackCompletion && flags has Itf.AllowTabInput)) { "Can't use both together (they both use tab key)" }
 
         val RENDER_SELECTION_WHEN_INACTIVE = false
         val isMultiline = flags has Itf._Multiline
