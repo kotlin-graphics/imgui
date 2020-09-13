@@ -23,6 +23,9 @@ import imgui.api.g
 import imgui.internal.classes.ColumnData
 import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.sections.ColumnsFlag
+import imgui.internal.sections.ColumnsFlags
+import imgui.internal.sections.hasnt
 import kotlin.math.max
 import kotlin.math.min
 

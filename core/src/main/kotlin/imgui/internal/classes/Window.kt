@@ -23,6 +23,7 @@ import imgui.classes.Context
 import imgui.classes.DrawList
 import imgui.classes.SizeCallbackData
 import imgui.internal.*
+import imgui.internal.sections.*
 import imgui.static.viewportRect
 import kool.cap
 import java.util.*

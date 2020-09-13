@@ -9,7 +9,7 @@ import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
-import imgui.internal.NavLayer
+import imgui.internal.sections.NavLayer
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
 import imgui.internal.hash

@@ -22,7 +22,7 @@ import kotlin.reflect.KMutableProperty0
 fun ASSERT_PARANOID(value: Boolean) = assert(value)
 
 //-----------------------------------------------------------------------------
-// Generic helpers
+// [SECTION] Generic helpers
 //-----------------------------------------------------------------------------
 
 /** Unsaturated, for display purpose    */
@@ -44,7 +44,7 @@ fun round(f: Float): Float = (f + 0.5f).i.f
 
 
 // -----------------------------------------------------------------------------------------------------------------
-// Helpers: Misc
+// Helpers: Hashing
 // -----------------------------------------------------------------------------------------------------------------
 fun fileLoadToMemory(filename: String): CharArray? =
         ClassLoader.getSystemResourceAsStream(filename)?.use { s ->

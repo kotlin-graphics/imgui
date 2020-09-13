@@ -1,11 +1,9 @@
 package imgui.internal.api
 
-import imgui.DataType
-import imgui.Hook
 import imgui.ID
 import imgui.api.g
-import imgui.internal.*
 import imgui.internal.classes.Window
+import imgui.internal.sections.*
 
 /** Basic Accessors */
 internal interface basicAccessors {

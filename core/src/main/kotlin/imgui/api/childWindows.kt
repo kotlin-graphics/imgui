@@ -10,10 +10,10 @@ import imgui.ImGui.end
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.renderNavHighlight
-import imgui.internal.Axis
-import imgui.internal.NavHighlightFlag
+import imgui.internal.sections.Axis
+import imgui.internal.sections.NavHighlightFlag
 import imgui.internal.classes.Rect
-import imgui.internal.shl
+import imgui.internal.sections.shl
 import imgui.WindowFlag as Wf
 
 

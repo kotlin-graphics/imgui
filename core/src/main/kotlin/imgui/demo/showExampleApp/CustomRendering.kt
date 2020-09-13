@@ -38,7 +38,7 @@ import imgui.ImGui.windowSize
 import imgui.MouseButton
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.dsl.button
-import imgui.internal.DrawCornerFlag
+import imgui.internal.sections.DrawCornerFlag
 import imgui.u32
 import kotlin.reflect.KMutableProperty0
 

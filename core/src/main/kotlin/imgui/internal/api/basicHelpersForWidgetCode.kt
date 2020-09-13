@@ -19,11 +19,13 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.api.g
+import imgui.has
 import imgui.internal.*
 import imgui.internal.api.internal.Companion.shrinkWidthItemComparer
 import imgui.internal.classes.Rect
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
+import imgui.internal.sections.*
 import imgui.static.navProcessItem
 import java.util.ArrayList
 

@@ -14,6 +14,7 @@ import imgui.classes.Payload
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.*
+import imgui.internal.sections.*
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
