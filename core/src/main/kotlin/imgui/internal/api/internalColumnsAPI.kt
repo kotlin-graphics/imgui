@@ -194,7 +194,7 @@ internal interface internalColumnsAPI {
         columns.splitter.setCurrentChannel(window.drawList, 0)
         val cmdSize = window.drawList.cmdBuffer.size
         pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
-        assert(cmdSize == window.drawList.cmdBuffer.size) { "Being in channel 0 this should not have created an ImDrawCmd" }
+        assert(cmdSize >= window.drawList.cmdBuffer.size) { "Being in channel 0 this should not have created an ImDrawCmd" }
     }
 
     fun popColumnsBackground() {
