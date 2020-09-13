@@ -312,6 +312,10 @@ interface demoDebugInformations {
 //                g.settingsTables.forEach(Funcs::nodeTableSettings)
 //            }
 //            #endif
+
+//            #ifdef IMGUI_HAS_DOCK
+//            #endif
+
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
             }
