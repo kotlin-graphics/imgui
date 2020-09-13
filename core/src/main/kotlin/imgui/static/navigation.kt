@@ -26,6 +26,8 @@ import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.navInitWindow
+import imgui.ImGui.navMoveRequestButNoResultYet
+import imgui.ImGui.navMoveRequestForward
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
@@ -633,6 +635,64 @@ fun navUpdateAnyRequestFlag() {
     if (g.navAnyRequest)
         assert(g.navWindow != null)
 }
+
+
+fun navEndFrame()  {
+
+    // Show CTRL+TAB list window
+    if (g.navWindowingTarget != null)
+        navUpdateWindowingOverlay()
+
+    // Perform wrap-around in menus
+    val window = g.navWrapRequestWindow
+    val moveFlags: NavMoveFlags = g.navWrapRequestFlags
+    if (window != null && g.navWindow === window && navMoveRequestButNoResultYet() &&
+            g.navMoveRequestForward == NavForward.None && g.navLayer == NavLayer.Main) {
+
+        assert(moveFlags != 0) // No points calling this with no wrapping
+        val bbRel = Rect(window.navRectRel[0])
+
+        var clipDir = g.navMoveDir
+        if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
+            bbRel.max.x = max(window.sizeFull.x, window.contentSize.x + window.windowPadding.x * 2f) - window.scroll.x
+            bbRel.min.x = bbRel.max.x
+
+            if (moveFlags has NavMoveFlag.WrapX) {
+                bbRel.translateY(-bbRel.height)
+                clipDir = Dir.Up
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+        if (g.navMoveDir == Dir.Right && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
+            bbRel.max.x = -window.scroll.x
+            bbRel.min.x = bbRel.max.x
+            if (moveFlags has NavMoveFlag.WrapX) {
+                bbRel.translateY(+bbRel.height)
+                clipDir = Dir.Down
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+        if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
+            bbRel.max.y = max(window.sizeFull.y, window.contentSize.y + window.windowPadding.y * 2f) - window.scroll.y
+            bbRel.min.y = bbRel.max.y
+            if (moveFlags has NavMoveFlag.WrapY) {
+                bbRel.translateX(-bbRel.width)
+                clipDir = Dir.Left
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+        if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
+            bbRel.max.y = -window.scroll.y
+            bbRel.min.y = bbRel.max.y
+            if (moveFlags has NavMoveFlag.WrapY) {
+                bbRel.translateX(+bbRel.width)
+                clipDir = Dir.Right
+            }
+            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+        }
+    }
+}
+
 
 /** Scoring function for gamepad/keyboard directional navigation. Based on https://gist.github.com/rygorous/6981057  */
 fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
