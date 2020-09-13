@@ -100,15 +100,19 @@ internal interface dataTypeHelpers {
 
     /** User can input math operators (e.g. +100) to edit a numerical values.
      *  NB: This is _not_ a full expression evaluator. We should probably add one and replace this dumb mess.. */
-    fun dataTypeApplyOpFromText(buf: String, initialValueBuf: ByteArray, dataType: DataType, pData: IntArray,
-                                format: String? = null): Boolean {
+    fun dataTypeApplyOpFromText(
+            buf: String, initialValueBuf: ByteArray, dataType: DataType, pData: IntArray,
+            format: String? = null,
+    ): Boolean {
         _i = pData[0]
         return dataTypeApplyOpFromText(buf, initialValueBuf, dataType, ::_i, format)
                 .also { pData[0] = _i }
     }
 
-    fun dataTypeApplyOpFromText(buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
-                                dataPtr: KMutableProperty0<*>, format: String? = null): Boolean {
+    fun dataTypeApplyOpFromText(
+            buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
+            dataPtr: KMutableProperty0<*>, format: String? = null,
+    ): Boolean {
 
         val buf = buf_.replace(Regex("\\s+"), "")
                 .replace("$NUL", "")
@@ -118,8 +122,8 @@ internal interface dataTypeHelpers {
                 .replace("$NUL", "")
                 .split(Regex("-+\\*/"))
 
-        /*  We don't support '-' op because it would conflict with inputing negative value.
-            Instead you can use +-100 to subtract from an existing value     */
+        // We don't support '-' op because it would conflict with inputing negative value.
+        // Instead you can use +-100 to subtract from an existing value
         val op = buf.getOrNull(1)?.get(0)
 
         return when (buf_[0]) {
@@ -236,4 +240,29 @@ internal interface dataTypeHelpers {
         }
     }
 
+    fun <N>dataTypeClamp(dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N): Boolean
+            where N : Number, N : Comparable<N> = when (dataType) {
+        DataType.Byte -> clampBehaviorT(pData as KMutableProperty0<Byte>, pMin as Byte, pMax as Byte)
+        DataType.Ubyte -> clampBehaviorT(pData as KMutableProperty0<Ubyte>, pMin as Ubyte, pMax as Ubyte)
+        DataType.Short -> clampBehaviorT(pData as KMutableProperty0<Short>, pMin as Short, pMax as Short)
+        DataType.Ushort -> clampBehaviorT(pData as KMutableProperty0<Ushort>, pMin as Ushort, pMax as Ushort)
+        DataType.Int -> clampBehaviorT(pData as KMutableProperty0<Int>, pMin as Int, pMax as Int)
+        DataType.Uint -> clampBehaviorT(pData as KMutableProperty0<Uint>, pMin as Uint, pMax as Uint)
+        DataType.Long -> clampBehaviorT(pData as KMutableProperty0<Long>, pMin as Long, pMax as Long)
+        DataType.Ulong -> clampBehaviorT(pData as KMutableProperty0<Ulong>, pMin as Ulong, pMax as Ulong)
+        DataType.Float -> clampBehaviorT(pData as KMutableProperty0<Float>, pMin as Float, pMax as Float)
+        DataType.Double -> clampBehaviorT<Double>(pData as KMutableProperty0<Double>, pMin as Double, pMax as Double)
+        else -> error("invalid")
+    }
+
+    fun <N> clampBehaviorT(pV: KMutableProperty0<N>, vMin: N, vMax: N): Boolean where N : Number, N : Comparable<N> {
+        var v by pV
+        return when {
+            v < vMin -> {
+                v = vMin; true; }
+            v > vMax -> {
+                v = vMax; true; }
+            else -> false
+        }
+    }
 }
