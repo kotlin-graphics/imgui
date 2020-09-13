@@ -33,9 +33,11 @@ import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
 /** Storage for one window */
-class Window(var context: Context,
-             /** Window name, owned by the window. */
-             var name: String) {
+class Window(
+        var context: Context,
+        /** Window name, owned by the window. */
+        var name: String
+) {
 
     /** == ImHashStr(Name) */
     val id: ID = hash(name)
@@ -264,7 +266,7 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hash(strID, end, seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo2?.invoke(g, DataType._String, id, strID, end)
         return id
     }
@@ -274,7 +276,7 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hash(System.identityHashCode(ptrID), seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, ptrID)
         return id
     }
@@ -285,7 +287,7 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, intPtr)
         return id
     }
@@ -294,21 +296,21 @@ class Window(var context: Context,
         val seed = idStack.last()
         val id = hash(n, seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType.Int, id, n)
         return id
     }
 
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
         val id = hash(strID, strID.length - strEnd, seed_ = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo2?.invoke(g, DataType._String, id, strID, strEnd)
         return id
     }
 
     fun getIdNoKeepAlive(ptrID: Any): ID {
         val id = hash(System.identityHashCode(ptrID), seed = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, ptrID)
         return id
     }
@@ -316,14 +318,14 @@ class Window(var context: Context,
     fun getIdNoKeepAlive(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
         val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType._Pointer, id, intPtr)
         return id
     }
 
     fun getIdNoKeepAlive(n: Int): ID {
         val id = hash(n, seed = idStack.last())
-        if(IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
+        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id)
             Hook.idInfo?.invoke(g, DataType.Int, id, n)
         return id
     }
@@ -668,7 +670,7 @@ class Window(var context: Context,
 
     /** Return scrollbar rectangle, must only be called for corresponding axis if window->ScrollbarX/Y is set.
      *  ~GetWindowScrollbarRect     */
-    infix fun getScrollbarRect(axis: Axis): Rect    {
+    infix fun getScrollbarRect(axis: Axis): Rect {
         val outerRect = rect()
 //        val innerRect = innerRect
         val borderSize = windowBorderSize
@@ -1083,6 +1085,15 @@ class Window(var context: Context,
         g.wheelingWindow = this
         g.wheelingWindowRefMousePos put io.mousePos
         g.wheelingWindowTimer = WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER
+    }
+
+    /** ~CreateNewWindow */
+    infix fun applySettings(settings: WindowSettings) {
+        pos put floor(Vec2(settings.pos))
+        if (settings.size allGreaterThan 0f)
+            sizeFull put floor(Vec2(settings.size))
+        size put sizeFull
+        collapsed = settings.collapsed
     }
 
     companion object {

@@ -168,6 +168,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     /**
      * @param pMin = upper-left
      * @param pMax = lower-right
+     *
+     * TODO pMin and pMax not safe
      */
     fun addRectFilledMultiColor(pMin: Vec2, pMax: Vec2, colUprLeft: Int, colUprRight: Int, colBotRight: Int, colBotLeft: Int) {
 

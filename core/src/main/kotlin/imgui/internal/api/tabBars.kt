@@ -65,7 +65,16 @@ internal interface tabBars {
                                    label: ByteArray, tabId: ID, closeButtonId: ID, isContentsVisible: Boolean): Boolean {
 
         val labelSize = calcTextSize(label, 0, hideTextAfterDoubleHash =  true)
-        if (bb.width <= 1f) return false
+        if (bb.width <= 1f)
+            return false
+
+        // In Style V2 we'll have full override of all colors per state (e.g. focused, selected)
+        // But right now if you want to alter text color of tabs this is what you need to do.
+//        #if 0
+//        const float backup_alpha = g.Style.Alpha;
+//        if (!is_contents_visible)
+//            g.Style.Alpha *= 0.7f;
+//        #endif
 
         // In Style V2 we'll have full override of all colors per state (e.g. focused, selected)
         // But right now if you want to alter text color of tabs this is what you need to do.
@@ -83,12 +92,11 @@ internal interface tabBars {
         }
         val textEllipsisClipBb = Rect(textPixelClipBb)
 
-        /*  Close Button
-            We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens
-            because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
-            'hovered' will be true when hovering the Tab but NOT when hovering the close button
-            'g.HoveredId==id' will be true when hovering the Tab including when hovering the close button
-            'g.ActiveId==close_button_id' will be true when we are holding on the close button, in which case both hovered booleans are false */
+        // Close Button
+        // We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
+        //  'hovered' will be true when hovering the Tab but NOT when hovering the close button
+        //  'g.HoveredId==id' will be true when hovering the Tab including when hovering the close button
+        //  'g.ActiveId==close_button_id' will be true when we are holding on the close button, in which case both hovered booleans are false
         var closeButtonPressed = false
         var closeButtonVisible = false
         if (closeButtonId != 0)

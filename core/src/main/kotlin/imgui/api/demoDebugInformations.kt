@@ -2,6 +2,7 @@ package imgui.api
 
 import glm_.asHexString
 import glm_.f
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -12,6 +13,7 @@ import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
+import imgui.ImGui.clearIniSettings
 import imgui.ImGui.combo
 import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.end
@@ -24,6 +26,7 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameCount
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
+import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.logFinish
@@ -34,6 +37,7 @@ import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushID
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
+import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
@@ -46,7 +50,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
-import imgui.ImGui.textLineHeightWithSpacing
+import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
@@ -59,10 +63,7 @@ import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
-import imgui.internal.classes.Columns
-import imgui.internal.classes.Rect
-import imgui.internal.classes.TabBar
-import imgui.internal.classes.Window
+import imgui.internal.classes.*
 import kool.BYTES
 import kool.lim
 import kool.rem
@@ -286,6 +287,30 @@ interface demoDebugInformations {
 //                }
 //        #endif // #define IMGUI_HAS_DOCK
 
+        // Settings
+        treeNode("Settings") {
+            if (smallButton("Clear"))
+                clearIniSettings()
+            sameLine()
+            if (smallButton("Save to disk"))
+                saveIniSettingsToDisk(io.iniFilename)
+            sameLine()
+            if (io.iniFilename != null)
+                text("\"${io.iniFilename}\"")
+            else
+                textUnformatted("<NULL>")
+            text("SettingsDirtyTimer %.2f", g.settingsDirtyTimer)
+            treeNode("SettingsHandlers", "Settings handlers: (${g.settingsHandlers.size})") {
+                g.settingsHandlers.forEach { textUnformatted(it.typeName) }
+            }
+            treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
+                g.settingsWindows.forEach(Funcs::nodeWindowSettings)
+            }
+            treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
+                inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
+            }
+        }
+
         // Misc Details
         if (treeNode("Internal state")) {
             text("HoveredWindow: '${g.hoveredWindow?.name}'")
@@ -351,7 +376,7 @@ interface demoDebugInformations {
     fun showStyleEditor(ref: Style? = null) = StyleEditor.invoke(ref)
 
     /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
-     *  Here we use the simplified combo() api that packs items into a single literal string.
+     *  Here we use the simplified Combo() api that packs items into a single literal string.
      *  Useful for quick combo boxes where the choices are known locally.
      *
      *  add style selector block (not a window), essentially a combo listing the default styles. */
@@ -682,6 +707,10 @@ interface demoDebugInformations {
                 }
                 treePop()
             }
+
+            fun nodeWindowSettings(settings: WindowSettings) =
+                    text("0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " +
+                            "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}", settings.id)
 
             fun nodeTabBar(tabBar: TabBar) {
                 // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.

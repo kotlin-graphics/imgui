@@ -10,6 +10,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
+import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -20,6 +21,7 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
@@ -42,6 +44,7 @@ import imgui.ImGui.showFontSelector
 import imgui.ImGui.showStyleSelector
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
+import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
@@ -193,8 +196,8 @@ object StyleEditor {
                         val col = style.colors[i]
                         val name = i.name
                         if (!outputOnlyModified || col != ref!!.colors[i])
-                            logText("colors[Col.%s.i] = Vec4(%.2f, %.2f, %.2f, %.2f)\n",
-                                    name, col.x, col.y, col.z, col.w)
+                            logText("colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n",
+                                   " ".repeat(23 - name.length), col.x, col.y, col.z, col.w)
                     }
                     logFinish()
                 }

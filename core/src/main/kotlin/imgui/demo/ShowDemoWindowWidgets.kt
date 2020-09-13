@@ -28,8 +28,6 @@ import imgui.ImGui.colorEdit4
 import imgui.ImGui.colorPicker4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
-import imgui.ImGui.cursorPos
-import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragFloat2
 import imgui.ImGui.dragFloat3
@@ -134,7 +132,6 @@ import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
-import imgui.ImGui.windowDrawList
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
@@ -270,7 +267,10 @@ object ShowDemoWindowWidgets {
     object TextFilters {
         // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i'
         val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
-            !(data.eventChar.i < 256 && data.eventChar in "imgui")
+            when {
+                data.eventChar.i < 256 && data.eventChar in "imgui" -> false
+                else -> true
+            }
         }
     }
 
@@ -542,7 +542,7 @@ object ShowDemoWindowWidgets {
                 colorEdit4("color 2", col2)
             }
 
-            run {
+            run { // List box
                 val items = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
                 listBox("listbox\n(single select)", ::itemCurrent, items, 4)
             }
@@ -876,10 +876,13 @@ object ShowDemoWindowWidgets {
                     }
             }
             treeNode("Alignment") {
-                helpMarker("""
+                helpMarker(
+                        """
                     By default, Selectables uses style.SelectableTextAlign but it can be overridden on a per-item 
-                    basis using PushStyleVar(). You'll probably want to always keep your default situation to 
-                    left-align otherwise it becomes difficult to layout multiple items on a same line""".trimIndent())
+                    " +
+                                "basis using PushStyleVar(). You'll probably want to always keep your default situation to 
+                    " +
+                                "left-align otherwise it becomes difficult to layout multiple items on a same line""".trimIndent())
                 for (y in 0..2)
                     for (x in 0..2) {
                         val alignment = Vec2(x / 2f, y / 2f)
@@ -1168,7 +1171,6 @@ object ShowDemoWindowWidgets {
 
             // Setup limits (as helper variables so we can take their address, as explained above)
             // Note: SliderScalar() functions have a maximum usable range of half the natural type maximum, hence the /2.
-
             // @formatter:off
             val s8_zero: Byte = 0.b
             val s8_one: Byte = 1.b
@@ -1400,10 +1402,7 @@ object ShowDemoWindowWidgets {
                         // Display preview (could be anything, e.g. when dragging an image we could decide to display
                         // the filename and a small preview of the image, etc.)
                         when (mode) {
-                            Mode.Copy -> text("Copy $name")
-                            Mode.Move -> text("Move $name")
-                            Mode.Swap -> text("Swap $name")
-                        }
+                        text("$mode $name")
                         endDragDropSource()
                     }
                     if (beginDragDropTarget()) {

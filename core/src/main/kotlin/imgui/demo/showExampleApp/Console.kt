@@ -48,8 +48,8 @@ import imgui.WindowFlag as Wf
 
 object Console {
 
-    /** Demonstrating creating a simple console window, with scrolling, filtering, completion and history.
-     *  For the console example, we are using a more C++ like approach of declaring a class to hold data and functions.  */
+    // Demonstrate creating a simple console window, with scrolling, filtering, completion and history.
+    // For the console example, we are using a more C++ like approach of declaring a class to hold both data and functions.
     val console = ExampleAppConsole()
 
     operator fun invoke(open: KMutableProperty0<Boolean>) = console.draw("Example: Console", open)
@@ -57,7 +57,6 @@ object Console {
     class ExampleAppConsole {
         val inputBuf = ByteArray(256)
         val items = ArrayList<String>()
-
         // "CLASSIFY" is here to provide the test case where "C"+[tab] completes to "CL" and display multiple matches.
         val commands = arrayListOf("HELP", "HISTORY", "CLEAR", "CLASSIFY")
         val history = ArrayList<String>()
@@ -260,6 +259,7 @@ object Console {
                         candidates.isEmpty() -> addLog("No match for \"%s\"!\n", word)
                         // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                         candidates.size == 1 -> {
+                            // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                             data.deleteChars(wordStart, wordEnd)
                             data.insertChars(data.cursorPos, candidates[0])
                             data.insertChars(data.cursorPos, " ")
@@ -267,6 +267,8 @@ object Console {
                         // Multiple matches. Complete as much as we can..
                         // So inputing "C"+Tab will complete to "CL" then display "CLEAR" and "CLASSIFY" as matches.
                         else -> {
+                            // Multiple matches. Complete as much as we can..
+                            // So inputing "C"+Tab will complete to "CL" then display "CLEAR" and "CLASSIFY" as matches.
                             var matchLen = wordEnd - wordStart
                             while (true) {
                                 var c = 0.toChar()
