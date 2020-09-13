@@ -8,6 +8,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
+import imgui.ImGui.findOrCreateWindowSettings
 import imgui.ImGui.findWindowByID
 import imgui.ImGui.findWindowSettings
 import imgui.ImGui.io
@@ -136,18 +137,11 @@ fun windowSettingsHandler_ClearAll(ctx: Context, handler: SettingsHandler) {
     g.settingsWindows.clear()
 }
 
-/** Apply to existing windows (if any) */
-fun windowSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
-    val g = ctx
-    for (settings in g.settingsWindows)
-    if (settings.wantApply) {
-        findWindowByID(settings.id)?.applySettings(settings)
-        settings.wantApply = false
-    }
-}
-
 fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings {
-    val settings = findWindowSettings(hash(name)) ?: createNewWindowSettings(name)
+    val settings = findOrCreateWindowSettings(name)
+    val id = settings.id
+    settings.clear() // Clear existing if recycling previous entry
+    settings.id = id
     settings.wantApply = true
     return settings
 }
@@ -159,6 +153,16 @@ fun windowSettingsHandler_ReadLine(ctx: Context, settingsHandler: SettingsHandle
         line.startsWith("Size") -> settings.size put line.substring(5).split(",")
         line.startsWith("Collapsed") -> settings.collapsed = line.substring(10).toBoolean()
     }
+}
+
+/** Apply to existing windows (if any) */
+fun windowSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
+    val g = ctx
+    for (settings in g.settingsWindows)
+        if (settings.wantApply) {
+            findWindowByID(settings.id)?.applySettings(settings)
+            settings.wantApply = false
+        }
 }
 
 fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: StringBuilder) {
