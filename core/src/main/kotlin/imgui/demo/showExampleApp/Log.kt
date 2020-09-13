@@ -47,14 +47,17 @@ object Log {
         // We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.
         setNextWindowSize(Vec2(500, 400), Cond.FirstUseEver)
         begin("Example: Log", pOpen)
-        if (smallButton("[Debug] Add 5 entries"))
+        if (smallButton("[Debug] Add 5 entries")) {
+            val categories = arrayOf("info", "warn", "error")
+            val words = arrayOf("Bumfuzzled", "Cattywampus", "Snickersnee", "Abibliophobia", "Absquatulate", "Nincompoop", "Pauciloquent")
             for (n in 0..4) {
-                val categories = arrayOf("info", "warn", "error")
-                val words = arrayOf("Bumfuzzled", "Cattywampus", "Snickersnee", "Abibliophobia", "Absquatulate", "Nincompoop", "Pauciloquent")
-                log.addLog("[%05d] [%s] Hello, current time is %.1f, here's a word: '%s'\n",
-                        g.frameCount, categories[counter % categories.size], g.time, words[counter % words.size])
+                val category = categories[counter % categories.size]
+                val word = words[counter % words.size]
+                log.addLog("[%05d] [$category] Hello, current time is %.1f, here's a word: '$word'\n",
+                        g.frameCount, g.time)
                 counter++
             }
+        }
         end()
 
         // Actually call in the regular Log helper (which will Begin() into the same window as we just did)
@@ -70,10 +73,10 @@ object Log {
         val buf = StringBuilder()
         val filter = TextFilter()
 
-        /** Index to lines offset. We maintain this with AddLog() calls, allowing us to have a random access on lines */
+        /** Index to lines offset. We maintain this with AddLog() calls. */
         val lineOffsets = ArrayList<Int>()
 
-        /** Keep scrolling if already at the bottom */
+        /** Keep scrolling if already at the bottom. */
         var autoScroll = true
 
         init {
@@ -124,8 +127,8 @@ object Log {
             if (filter.isActive())
             // In this example we don't use the clipper when Filter is enabled.
             // This is because we don't have a random access on the result on our filter.
-            // A real application processing logs with ten of thousands of entries may want to store the result of search/filter.
-            // especially if the filtering function is not trivial (e.g. reg-exp).
+            // A real application processing logs with ten of thousands of entries may want to store the result of
+            // search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
                 for (line_no in 0 until lineOffsets.size) {
                     val line = buf.subSequence(lineOffsets[line_no], if (line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
                     if (filter.passFilter(line))
@@ -134,13 +137,17 @@ object Log {
             else {
                 // The simplest and easy way to display the entire buffer:
                 //   ImGui::TextUnformatted(buf_begin, buf_end);
-                // And it'll just work. TextUnformatted() has specialization for large blob of text and will fast-forward to skip non-visible lines.
-                // Here we instead demonstrate using the clipper to only process lines that are within the visible area.
-                // If you have tens of thousands of items and their processing cost is non-negligible, coarse clipping them on your side is recommended.
-                // Using ImGuiListClipper requires A) random access into your data, and B) items all being the  same height,
+                // And it'll just work. TextUnformatted() has specialization for large blob of text and will fast-forward
+                // to skip non-visible lines. Here we instead demonstrate using the clipper to only process lines that are
+                // within the visible area.
+                // If you have tens of thousands of items and their processing cost is non-negligible, coarse clipping them
+                // on your side is recommended. Using ImGuiListClipper requires
+                // - A) random access into your data
+                // - B) items all being the  same height,
                 // both of which we can handle since we an array pointing to the beginning of each line of text.
-                // When using the filter (in the block of code above) we don't have random access into the data to display anymore, which is why we don't use the clipper.
-                // Storing or skimming through the search result would make it possible (and would be recommended if you want to search through tens of thousands of entries)
+                // When using the filter (in the block of code above) we don't have random access into the data to display
+                // anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
+                // it possible (and would be recommended if you want to search through tens of thousands of entries).
                 val clipper = ListClipper(lineOffsets.size)
                 while (clipper.step())
                     for (lineNo in clipper.display) {

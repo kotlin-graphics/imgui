@@ -3,8 +3,8 @@ package imgui.font
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.ImGui
-import imgui.NUL
 import kool.free
+import uno.kotlin.NUL
 import java.nio.ByteBuffer
 
 

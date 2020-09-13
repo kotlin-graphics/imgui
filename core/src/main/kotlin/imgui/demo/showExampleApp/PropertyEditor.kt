@@ -36,10 +36,11 @@ object PropertyEditor {
             return
         }
 
-        helpMarker("This example shows how you may implement a property editor using two columns.\n" +
-                "All objects/fields data are dummies here.\n" +
-                "Remember that in many simple cases, you can use ImGui::SameLine(xxx) to position\n" +
-                "your cursor horizontally instead of using the Columns() API.")
+        helpMarker("""
+                This example shows how you may implement a property editor using two columns.
+                All objects/fields data are dummies here.
+                Remember that in many simple cases, you can use ImGui::SameLine(xxx) to position
+                your cursor horizontally instead of using the Columns() API.""".trimIndent())
 
         pushStyleVar(StyleVar.FramePadding, Vec2(2))
         columns(2)
@@ -58,9 +59,7 @@ object PropertyEditor {
     fun showDummyObject(prefix: String, uid: Int) {
         //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
         pushID(uid)
-        /*  Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree
-            lines equal high.             */
-        alignTextToFramePadding()
+        alignTextToFramePadding() // Text and Tree nodes are less high than framed widgets, here we add vertical spacing to make the tree lines equal high.
         val nodeOpen = treeNode("Object", "${prefix}_$uid")
         nextColumn()
         alignTextToFramePadding()
@@ -74,7 +73,8 @@ object PropertyEditor {
                 else {
                     // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
                     alignTextToFramePadding()
-                    treeNodeEx("Field", Tnf.Leaf or Tnf.NoTreePushOnOpen or Tnf.Bullet, "Field_$i")
+                    val flags = Tnf.Leaf or Tnf.NoTreePushOnOpen or Tnf.Bullet
+                    treeNodeEx("Field", flags, "Field_$i")
                     nextColumn()
                     pushItemWidth(-1)
                     if (i >= 5)
@@ -91,5 +91,5 @@ object PropertyEditor {
         popID()
     }
 
-    val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)
+    val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f)
 }

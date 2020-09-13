@@ -10,6 +10,7 @@ import imgui.internal.F32_TO_INT8_SAT
 import imgui.internal.textStrToUtf8
 import kool.*
 import org.lwjgl.system.MemoryUtil
+import uno.kotlin.NUL
 import java.nio.IntBuffer
 import java.util.logging.FileHandler
 import java.util.logging.Level
@@ -25,8 +26,6 @@ internal var ptrId: Array<Int> = Array(512) { it }
 operator fun StringBuilder.plusAssign(string: String) {
     append(string)
 }
-
-const val NUL = '\u0000'
 
 /** Unique ID used by widgets (typically hashed from a stack of string) */
 typealias ID = Int

@@ -6,9 +6,9 @@ import engine.KeyState
 import glm_.vec2.Vec2
 import imgui.ID
 import imgui.Key
-import imgui.NUL
 import imgui.NavInput
 import imgui.classes.IO
+import uno.kotlin.NUL
 
 //-------------------------------------------------------------------------
 // Types

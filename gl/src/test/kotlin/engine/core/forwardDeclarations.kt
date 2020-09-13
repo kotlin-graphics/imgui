@@ -13,6 +13,7 @@ import imgui.*
 import imgui.api.gImGui
 import imgui.classes.Context
 import imgui.internal.InputSource
+import uno.kotlin.NUL
 import kotlin.system.exitProcess
 
 //-------------------------------------------------------------------------

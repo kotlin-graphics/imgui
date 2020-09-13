@@ -89,7 +89,7 @@ object ShowDemoWindowMisc {
                         sameLine()
                         text("b$i")
                     }
-                text("Mouse dbl-clicked:")
+                text("Mouse dblclick:")
                 for (i in io.mouseDown.indices)
                     if (isMouseDoubleClicked(MouseButton of i)) {
                         sameLine()
@@ -155,7 +155,7 @@ object ShowDemoWindowMisc {
                 inputText("3", buf0)
                 pushAllowKeyboardFocus(false)
                 inputText("4 (tab skip)", buf0)
-                //SameLine(); ShowHelperMarker("Use PushAllowKeyboardFocus(bool)\nto disable tabbing through certain widgets.");
+                //SameLine(); ShowHelperMarker("Use PushAllowKeyboardFocus(bool) to disable tabbing through certain widgets.");
                 popAllowKeyboardFocus()
                 inputText("5", buf0)
             }
@@ -195,20 +195,13 @@ object ShowDemoWindowMisc {
 
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
-                MouseButton.values().filter { it != MouseButton.None }.forEach { button ->
-                    if (DEBUG)
-                        text("""
-                            |isMouseDragging(${button.ordinal}):
-                            |  w/ default threshold: ${isMouseDragging(button).i}
-                            |  w/ zero threshold: ${isMouseDragging(button, 0f).i}
-                            |  w/ large threshold: ${isMouseDragging(button, 20f).i}""".trimMargin())
-                    else
-                        text("""
-                            |isMouseDragging($button):
-                            |  w/ default threshold: ${isMouseDragging(button)}
-                            |  w/ zero threshold: ${isMouseDragging(button, 0f)}
-                            |  w/ large threshold: ${isMouseDragging(button, 20f)}""".trimMargin())
-                }
+                for(button in MouseButton.values())
+                    if (button != MouseButton.None) {
+                        text("IsMouseDragging(${button.i}):")
+                        text("  w/ default threshold: ${isMouseDragging(button).i},")
+                        text("  w/ zero threshold: ${isMouseDragging(button, 0f).i},")
+                        text("  w/ large threshold: ${isMouseDragging(button, 20f)},")
+                    }
                 button("Drag Me")
                 if (isItemActive)
                     foregroundDrawList.addLine(io.mouseClickedPos[0], io.mousePos, Col.Button.u32, 4f) // Draw a line between the button and the mouse cursor
@@ -222,9 +215,13 @@ object ShowDemoWindowMisc {
             }
 
             treeNode("Mouse cursors") {
-                text("Current mouse cursor = $mouseCursor")
+                val current = mouseCursor
+                text("Current mouse cursor = ${current.i}: $current")
                 text("Hover to see mouse cursors:")
-                sameLine(); helpMarker("Your application can render a different mouse cursor based on what GetMouseCursor() returns. If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, otherwise your backend needs to handle it.")
+                sameLine(); helpMarker(
+                    "Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
+                    "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
+                    "otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.COUNT) {
                     bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
                     if (isItemHovered() || isItemFocused)
