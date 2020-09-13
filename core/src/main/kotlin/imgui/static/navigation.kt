@@ -40,13 +40,14 @@ import imgui.internal.*
 import imgui.internal.classes.NavMoveResult
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.sections.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import imgui.WindowFlag as Wf
-import imgui.internal.ItemFlag as If
+import imgui.internal.sections.ItemFlag as If
 
 fun navUpdate() {
 

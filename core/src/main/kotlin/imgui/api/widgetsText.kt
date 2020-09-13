@@ -17,7 +17,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
-import imgui.internal.TextFlag
+import imgui.internal.sections.TextFlag
 import imgui.internal.formatString
 
 

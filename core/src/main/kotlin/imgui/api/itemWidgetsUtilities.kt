@@ -5,7 +5,10 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.isMouseClicked
-import imgui.internal.*
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.has
+import imgui.internal.sections.hasnt
 import imgui.HoveredFlag as Hf
 
 /** Item/Widgets Utilities

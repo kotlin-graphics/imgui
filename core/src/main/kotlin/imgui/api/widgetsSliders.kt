@@ -42,7 +42,7 @@ import imgui.ImGui.tempInputIsActive
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
-import imgui.internal.SliderFlag
+import imgui.internal.sections.SliderFlag
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue

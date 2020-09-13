@@ -5,7 +5,7 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.end
 import imgui.ImGui.text
 import imgui.has
-import imgui.internal.TooltipFlag
+import imgui.internal.sections.TooltipFlag
 import imgui.WindowFlag as Wf
 
 /** Tooltips

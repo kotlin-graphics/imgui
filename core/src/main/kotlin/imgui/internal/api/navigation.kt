@@ -9,7 +9,7 @@ import imgui.ImGui.io
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.*
+import imgui.internal.sections.*
 import imgui.static.navUpdateAnyRequestFlag
 import kotlin.math.max
 

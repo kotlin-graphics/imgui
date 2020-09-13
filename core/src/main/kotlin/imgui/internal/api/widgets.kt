@@ -30,8 +30,11 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
 import imgui.api.g
+import imgui.has
+import imgui.hasnt
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.math.max

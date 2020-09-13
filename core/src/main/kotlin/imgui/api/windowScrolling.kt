@@ -3,8 +3,8 @@ package imgui.api
 import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 import imgui.ImGui.style
-import imgui.internal.NextWindowDataFlag
-import imgui.internal.or
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.or
 
 /** Windows Scrolling */
 interface windowScrolling {

@@ -4,9 +4,9 @@ import imgui.ID
 import imgui.IMGUI_DEBUG_INI_SETTINGS
 import imgui.ImGui.io
 import imgui.api.g
-import imgui.internal.classes.SettingsHandler
-import imgui.internal.classes.WindowSettings
 import imgui.internal.hash
+import imgui.internal.sections.SettingsHandler
+import imgui.internal.sections.WindowSettings
 
 /** Settings */
 internal interface settings {

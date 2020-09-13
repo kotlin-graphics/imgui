@@ -6,7 +6,7 @@ import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isKeyPressed
-import imgui.internal.InputReadMode
+import imgui.internal.sections.InputReadMode
 
 
 //-----------------------------------------------------------------------------

@@ -18,10 +18,12 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.api.g
+import imgui.has
 import imgui.internal.*
 import imgui.internal.classes.Window
 import imgui.internal.classes.PopupData
 import imgui.internal.classes.Rect
+import imgui.internal.sections.*
 import imgui.static.navCalcPreferredRefPos
 import imgui.static.navRestoreLastChildNavWindow
 import uno.kotlin.getValue

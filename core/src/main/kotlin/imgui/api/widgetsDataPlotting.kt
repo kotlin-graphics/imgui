@@ -2,7 +2,7 @@ package imgui.api
 
 import glm_.vec2.Vec2
 import imgui.ImGui.plotEx
-import imgui.internal.PlotType
+import imgui.internal.sections.PlotType
 
 interface widgetsDataPlotting {
 

@@ -31,7 +31,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.api.g
 import imgui.internal.F32_TO_INT8_SAT
-import imgui.internal.TooltipFlag
+import imgui.internal.sections.TooltipFlag
 
 /** Color */
 internal interface color {

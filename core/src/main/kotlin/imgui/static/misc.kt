@@ -29,6 +29,7 @@ import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.classes.Window.Companion.resizeGripDef
+import imgui.internal.sections.*
 import kotlin.math.max
 import kotlin.math.min
 

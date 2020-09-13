@@ -36,6 +36,9 @@ import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.api.g
 import imgui.internal.*
+import imgui.internal.sections.ButtonFlag
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.or
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
