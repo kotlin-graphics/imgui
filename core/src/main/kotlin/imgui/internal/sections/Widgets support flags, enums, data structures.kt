@@ -5,165 +5,8 @@ import imgui.internal.classes.Rect
 
 
 //-----------------------------------------------------------------------------
-// [SECTION] Misc flags, enums and data structures
+// [SECTION] Widgets support: flags, enums, data structures
 //-----------------------------------------------------------------------------
-
-enum class ButtonFlag(val i: ButtonFlags) {
-
-    None(0),
-
-    /** hold to repeat  */
-    Repeat(1 shl 0),
-
-    /** return true on click (mouse down event) */
-    PressedOnClick(1 shl 1),
-
-    /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
-    PressedOnClickRelease(1 shl 2),
-
-    /** return true on click + release even if the release event is not done while hovering the item */
-    PressedOnClickReleaseAnywhere(1 shl 3),
-
-    /** return true on release (default requires click+release) */
-    PressedOnRelease(1 shl 4),
-
-    /** return true on double-click (default requires click+release) */
-    PressedOnDoubleClick(1 shl 5),
-
-    /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
-    PressedOnDragDropHold(1 shl 6),
-
-    /** allow interactions even if a child window is overlapping */
-    FlattenChildren(1 shl 7),
-
-    /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
-    AllowItemOverlap(1 shl 8),
-
-    /** disable automatically closing parent popup on press // [UNUSED] */
-    DontClosePopups(1 shl 9),
-
-    /** disable interactions */
-    Disabled(1 shl 10),
-
-    /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
-    AlignTextBaseLine(1 shl 11),
-
-    /** disable mouse interaction if a key modifier is held */
-    NoKeyModifiers(1 shl 12),
-
-    /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
-    NoHoldingActiveId(1 shl 13),
-
-    /** don't override navigation focus when activated */
-    NoNavFocus(1 shl 14),
-
-    /** don't report as hovered when nav focus is on this item */
-    NoHoveredOnFocus(1 shl 15),
-    MouseButtonLeft(1 shl 16),  // [Default] react on left mouse button
-    MouseButtonRight(1 shl 17),  // react on right mouse button
-    MouseButtonMiddle(1 shl 18),  // react on center mouse button
-
-    MouseButtonMask_(MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
-    MouseButtonShift_(16),
-    MouseButtonDefault_(MouseButtonLeft.i),
-    PressedOnMask_(PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold),
-    PressedOnDefault_(PressedOnClickRelease.i);
-
-    infix fun and(b: ButtonFlag): ButtonFlags = i and b.i
-    infix fun and(b: ButtonFlags): ButtonFlags = i and b
-    infix fun or(b: ButtonFlag): ButtonFlags = i or b.i
-    infix fun or(b: ButtonFlags): ButtonFlags = i or b
-    infix fun xor(b: ButtonFlag): ButtonFlags = i xor b.i
-    infix fun xor(b: ButtonFlags): ButtonFlags = i xor b
-    infix fun wo(b: ButtonFlags): ButtonFlags = and(b.inv())
-}
-
-infix fun ButtonFlags.and(b: ButtonFlag): ButtonFlags = and(b.i)
-infix fun ButtonFlags.or(b: ButtonFlag): ButtonFlags = or(b.i)
-infix fun ButtonFlags.xor(b: ButtonFlag): ButtonFlags = xor(b.i)
-infix fun ButtonFlags.has(b: ButtonFlag): Boolean = and(b.i) != 0
-infix fun ButtonFlags.hasnt(b: ButtonFlag): Boolean = and(b.i) == 0
-infix fun ButtonFlags.wo(b: ButtonFlag): ButtonFlags = and(b.i.inv())
-
-typealias ButtonFlags = Int
-
-
-enum class SliderFlag { None, Vertical }
-
-
-enum class DragFlag { None, Vertical }
-
-
-typealias ColumnsFlags = Int
-
-/** Flags: for Columns(), BeginColumns() */
-enum class ColumnsFlag {
-
-    None,
-
-    /** Disable column dividers */
-    NoBorder,
-
-    /** Disable resizing columns when clicking on the dividers  */
-    NoResize,
-
-    /** Disable column width preservation when adjusting columns    */
-    NoPreserveWidths,
-
-    /** Disable forcing columns to fit within window    */
-    NoForceWithinWindow,
-
-    /** (WIP) Restore pre-1.51 behavior of extending the parent window contents size but _without affecting the columns
-     *  width at all_. Will eventually remove.  */
-    GrowParentContentsSize;
-
-    val i: ColumnsFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
-
-    infix fun and(b: ColumnsFlag): ColumnsFlags = i and b.i
-    infix fun and(b: ColumnsFlags): ColumnsFlags = i and b
-    infix fun or(b: ColumnsFlag): ColumnsFlags = i or b.i
-    infix fun or(b: ColumnsFlags): ColumnsFlags = i or b
-    infix fun xor(b: ColumnsFlag): ColumnsFlags = i xor b.i
-    infix fun xor(b: ColumnsFlags): ColumnsFlags = i xor b
-    infix fun wo(b: ColumnsFlags): ColumnsFlags = and(b.inv())
-}
-
-infix fun ColumnsFlags.and(b: ColumnsFlag): ColumnsFlags = and(b.i)
-infix fun ColumnsFlags.or(b: ColumnsFlag): ColumnsFlags = or(b.i)
-infix fun ColumnsFlags.xor(b: ColumnsFlag): ColumnsFlags = xor(b.i)
-infix fun ColumnsFlags.has(b: ColumnsFlag): Boolean = and(b.i) != 0
-infix fun ColumnsFlags.hasnt(b: ColumnsFlag): Boolean = and(b.i) == 0
-infix fun ColumnsFlags.wo(b: ColumnsFlag): ColumnsFlags = and(b.i.inv())
-
-
-typealias SeparatorFlags = Int
-
-enum class SeparatorFlag {
-    None,
-
-    /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
-    Horizontal,
-    Vertical,
-    SpanAllColumns;
-
-    val i: SeparatorFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
-
-    infix fun and(b: SeparatorFlag): SeparatorFlags = i and b.i
-    infix fun and(b: SeparatorFlags): SeparatorFlags = i and b
-    infix fun or(b: SeparatorFlag): SeparatorFlags = i or b.i
-    infix fun or(b: SeparatorFlags): SeparatorFlags = i or b
-    infix fun xor(b: SeparatorFlag): SeparatorFlags = i xor b.i
-    infix fun xor(b: SeparatorFlags): SeparatorFlags = i xor b
-    infix fun wo(b: SeparatorFlags): SeparatorFlags = and(b.inv())
-}
-
-infix fun SeparatorFlags.and(b: SeparatorFlag): SeparatorFlags = and(b.i)
-infix fun SeparatorFlags.or(b: SeparatorFlag): SeparatorFlags = or(b.i)
-infix fun SeparatorFlags.xor(b: SeparatorFlag): SeparatorFlags = xor(b.i)
-infix fun SeparatorFlags.has(b: SeparatorFlag): Boolean = and(b.i) != 0
-infix fun SeparatorFlags.hasnt(b: SeparatorFlag): Boolean = and(b.i) == 0
-infix fun SeparatorFlags.wo(b: SeparatorFlag): SeparatorFlags = and(b.i.inv())
-
 
 typealias ItemFlags = Int
 
@@ -252,6 +95,123 @@ infix fun ItemStatusFlags.xor(b: ItemStatusFlag): ItemStatusFlags = xor(b.i)
 infix fun ItemStatusFlags.has(b: ItemStatusFlag): Boolean = and(b.i) != 0
 infix fun ItemStatusFlags.hasnt(b: ItemStatusFlag): Boolean = and(b.i) == 0
 infix fun ItemStatusFlags.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
+
+
+enum class ButtonFlag(val i: ButtonFlags) {
+
+    None(0),
+
+    /** hold to repeat  */
+    Repeat(1 shl 0),
+
+    /** return true on click (mouse down event) */
+    PressedOnClick(1 shl 1),
+
+    /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
+    PressedOnClickRelease(1 shl 2),
+
+    /** return true on click + release even if the release event is not done while hovering the item */
+    PressedOnClickReleaseAnywhere(1 shl 3),
+
+    /** return true on release (default requires click+release) */
+    PressedOnRelease(1 shl 4),
+
+    /** return true on double-click (default requires click+release) */
+    PressedOnDoubleClick(1 shl 5),
+
+    /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
+    PressedOnDragDropHold(1 shl 6),
+
+    /** allow interactions even if a child window is overlapping */
+    FlattenChildren(1 shl 7),
+
+    /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
+    AllowItemOverlap(1 shl 8),
+
+    /** disable automatically closing parent popup on press // [UNUSED] */
+    DontClosePopups(1 shl 9),
+
+    /** disable interactions */
+    Disabled(1 shl 10),
+
+    /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
+    AlignTextBaseLine(1 shl 11),
+
+    /** disable mouse interaction if a key modifier is held */
+    NoKeyModifiers(1 shl 12),
+
+    /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
+    NoHoldingActiveId(1 shl 13),
+
+    /** don't override navigation focus when activated */
+    NoNavFocus(1 shl 14),
+
+    /** don't report as hovered when nav focus is on this item */
+    NoHoveredOnFocus(1 shl 15),
+    MouseButtonLeft(1 shl 16),  // [Default] react on left mouse button
+    MouseButtonRight(1 shl 17),  // react on right mouse button
+    MouseButtonMiddle(1 shl 18),  // react on center mouse button
+
+    MouseButtonMask_(MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
+    MouseButtonShift_(16),
+    MouseButtonDefault_(MouseButtonLeft.i),
+    PressedOnMask_(PressedOnClick or PressedOnClickRelease or PressedOnClickReleaseAnywhere or PressedOnRelease or PressedOnDoubleClick or PressedOnDragDropHold),
+    PressedOnDefault_(PressedOnClickRelease.i);
+
+    infix fun and(b: ButtonFlag): ButtonFlags = i and b.i
+    infix fun and(b: ButtonFlags): ButtonFlags = i and b
+    infix fun or(b: ButtonFlag): ButtonFlags = i or b.i
+    infix fun or(b: ButtonFlags): ButtonFlags = i or b
+    infix fun xor(b: ButtonFlag): ButtonFlags = i xor b.i
+    infix fun xor(b: ButtonFlags): ButtonFlags = i xor b
+    infix fun wo(b: ButtonFlags): ButtonFlags = and(b.inv())
+}
+
+infix fun ButtonFlags.and(b: ButtonFlag): ButtonFlags = and(b.i)
+infix fun ButtonFlags.or(b: ButtonFlag): ButtonFlags = or(b.i)
+infix fun ButtonFlags.xor(b: ButtonFlag): ButtonFlags = xor(b.i)
+infix fun ButtonFlags.has(b: ButtonFlag): Boolean = and(b.i) != 0
+infix fun ButtonFlags.hasnt(b: ButtonFlag): Boolean = and(b.i) == 0
+infix fun ButtonFlags.wo(b: ButtonFlag): ButtonFlags = and(b.i.inv())
+
+typealias ButtonFlags = Int
+
+
+enum class SliderFlag { None, Vertical }
+
+
+enum class DragFlag { None, Vertical }
+
+
+
+typealias SeparatorFlags = Int
+
+enum class SeparatorFlag {
+    None,
+
+    /** Axis default to current layout type, so generally Horizontal unless e.g. in a menu bar  */
+    Horizontal,
+    Vertical,
+    SpanAllColumns;
+
+    val i: SeparatorFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+
+    infix fun and(b: SeparatorFlag): SeparatorFlags = i and b.i
+    infix fun and(b: SeparatorFlags): SeparatorFlags = i and b
+    infix fun or(b: SeparatorFlag): SeparatorFlags = i or b.i
+    infix fun or(b: SeparatorFlags): SeparatorFlags = i or b
+    infix fun xor(b: SeparatorFlag): SeparatorFlags = i xor b.i
+    infix fun xor(b: SeparatorFlags): SeparatorFlags = i xor b
+    infix fun wo(b: SeparatorFlags): SeparatorFlags = and(b.inv())
+}
+
+infix fun SeparatorFlags.and(b: SeparatorFlag): SeparatorFlags = and(b.i)
+infix fun SeparatorFlags.or(b: SeparatorFlag): SeparatorFlags = or(b.i)
+infix fun SeparatorFlags.xor(b: SeparatorFlag): SeparatorFlags = xor(b.i)
+infix fun SeparatorFlags.has(b: SeparatorFlag): Boolean = and(b.i) != 0
+infix fun SeparatorFlags.hasnt(b: SeparatorFlag): Boolean = and(b.i) == 0
+infix fun SeparatorFlags.wo(b: SeparatorFlag): SeparatorFlags = and(b.i.inv())
+
 
 
 typealias TextFlags = Int
