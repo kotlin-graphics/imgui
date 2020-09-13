@@ -156,9 +156,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)  */
     var mousePos = Vec2(-Float.MAX_VALUE)
 
-    /** Mouse buttons: 0=left, 1=right, 2=middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are
-    using right button). Others buttons allows us to track if the mouse is being used by your application +
-    available to user as a convenience via IsMouse** API.   */
+    /** Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear ImGui mostly uses left
+     *  and right buttons. Others buttons allows us to track if the mouse is being used by your application + available
+     *  to user as a convenience via IsMouse** API.   */
     val mouseDown = BooleanArray(5)
 
     /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
