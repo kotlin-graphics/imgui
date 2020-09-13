@@ -16,6 +16,7 @@ import imgui.static.setClipboardTextFn_DefaultImpl
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 import uno.glfw.HWND
+import uno.kotlin.NUL
 
 /** -----------------------------------------------------------------------------
  *  IO

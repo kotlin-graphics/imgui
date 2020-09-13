@@ -20,6 +20,8 @@ import imgui.WindowFlag as Wf
 
 object ConstrainedResize {
 
+    val testDesc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
+            "Width 400-500", "Height 400-500", "Custom: Always Square", "Custom: Fixed Steps (100)")
     var autoResize = false
     var type = 0
     var displayLines = 10
@@ -37,13 +39,11 @@ object ConstrainedResize {
         }
         val flags: WindowFlags = if (autoResize) Wf.AlwaysAutoResize.i else 0
         window("Example: Constrained Resize", open, flags) {
-            val desc = listOf("Resize vertical only", "Resize horizontal only", "Width > 100, Height > 100",
-                    "Width 400-500", "Height 400-500", "Custom: Always Square", "Custom: Fixed Steps (100)")
             button("200x200") { setWindowSize(Vec2(200)) }; sameLine()
             button("500x500") { setWindowSize(Vec2(500)) }; sameLine()
             button("800x200") { setWindowSize(Vec2(800, 200)) }
             withItemWidth(200) {
-                combo("Constraint", ::type, desc)
+                combo("Constraint", ::type, testDesc)
                 dragInt("Lines", ::displayLines, 0.2f, 1, 100)
             }
             checkbox("Auto-resize", ::autoResize)
@@ -52,8 +52,8 @@ object ConstrainedResize {
         }
     }
 
-    /** Helper functions to demonstrate programmatic constraints    */
     object CustomConstraints {
+        // Helper functions to demonstrate programmatic constraints
         val square: SizeCallback = { it.desiredSize put (it.desiredSize.x max it.desiredSize.y) }
         val step: SizeCallback = {
             val step = (it.userData as Int).f

@@ -11,6 +11,7 @@ import imgui.stb.te
 import imgui.stb.te.key
 import imgui.stb.te.makeUndoReplace
 import org.lwjgl.system.Platform
+import uno.kotlin.NUL
 
 /** Internal state of the currently focused/edited text input box
  *  For a given item ID, access with ImGui::GetInputTextState() */

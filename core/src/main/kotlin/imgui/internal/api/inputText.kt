@@ -58,6 +58,7 @@ import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag
 import imgui.stb.te.paste
+import uno.kotlin.NUL
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
 import uno.kotlin.setValue

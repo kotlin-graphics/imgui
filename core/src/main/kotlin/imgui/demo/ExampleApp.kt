@@ -93,13 +93,11 @@ object ExampleApp {
         if (show.windowTitles) WindowTitles()
         if (show.customRendering) CustomRendering(show::customRendering)
         if (show.metrics) showMetricsWindow(show::metrics)
+        if (show.about) showAboutWindow(show::about)
         if (show.styleEditor)
             window("Style Editor", show::styleEditor) {
                 StyleEditor()
             }
-
-        if (show.about)
-            showAboutWindow(show::about)
 
         var windowFlags = 0
         if (noTitlebar) windowFlags = windowFlags or Wf.NoTitleBar
@@ -112,8 +110,8 @@ object ExampleApp {
         if (noBackground) windowFlags = windowFlags or Wf.NoBackground
         if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
         if (noClose) open = null // Don't pass our bool* to Begin
-        /*  We specify a default position/size in case there's no data in the .ini file. Typically this isn't required!
-            We only do it to make the Demo applications a little more welcoming.         */
+        // We specify a default position/size in case there's no data in the .ini file.
+        // We only do it to make the demo applications a little more welcoming, but typically this isn't required.
         setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
@@ -123,10 +121,13 @@ object ExampleApp {
             return
         }
 
-        // Most "big" widgets share a common width settings by default.
-        //pushItemWidth(windowWidth * 0.65f)    // Use 2/3 of the space for widgets and 1/3 for labels (default)
-        // Use fixed width for labels (by passing a negative value), the rest goes to widgets. We choose a width proportional to our font size.
-        pushItemWidth(fontSize * -12)
+        // Most "big" widgets share a common width settings by default. See 'Demo->Layout->Widgets Width' for details.
+
+        // e.g. Use 2/3 of the space for widgets and 1/3 for labels (default)
+        //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
+
+        // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
+        pushItemWidth(fontSize * -12);
 
         // Menu Bar
         menuBar {
@@ -190,8 +191,9 @@ object ExampleApp {
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
                 sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
                 checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
-                if (io.configFlags has ConfigFlag.NoMouse) { // Create a way to restore this flag otherwise we could be stuck completely!
 
+                // The "NoMouse" option above can get us stuck with a disable mouse! Provide an alternative way to fix it:
+                if (io.configFlags has ConfigFlag.NoMouse) {
                     if ((time.f % 0.4f) < 0.2f) {
                         sameLine()
                         text("<<PRESS SPACE TO DISABLE>>")
@@ -207,12 +209,16 @@ object ExampleApp {
                 sameLine(); helpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
-                sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor for you. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+                sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor itself. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
                 separator()
             }
             treeNode("Backend Flags") {
-                helpMarker("Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.\nHere we expose then as read-only fields to avoid breaking interactions with your back-end.")
-                val backendFlags = intArrayOf(io.backendFlags) // Make a local copy to avoid modifying actual back-end flags.
+                helpMarker("""
+                    Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.
+                    Here we expose then as read-only fields to avoid breaking interactions with your back-end.""".trimIndent())
+
+                // Make a local copy to avoid modifying actual back-end flags.
+                val backendFlags = intArrayOf(io.backendFlags)
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
                 checkboxFlags("io.BackendFlags: HasSetMousePos", backendFlags, BackendFlag.HasSetMousePos.i)
@@ -227,10 +233,12 @@ object ExampleApp {
             }
 
             treeNode("Capture/Logging") {
-                textWrapped("The logging API redirects all text output so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded.")
-                helpMarker("Try opening any of the contents below in this window and then click one of the \"Log To\" button.")
+                textWrapped("""
+                    The logging API redirects all text output so you can easily capture the content of a window or a block. Tree nodes can be automatically expanded.
+                    Try opening any of the contents below in this window and then click one of the \"Log To\" button.""".trimIndent())
                 logButtons()
-                textWrapped("You can also call ImGui::LogText() to output directly to the log without a visual output.")
+
+                helpMarker("You can also call ImGui::LogText() to output directly to the log without a visual output.")
                 if (button("Copy \"Hello, world!\" to clipboard")) {
                     logToClipboard()
                     logText("%s", "Hello, world!")

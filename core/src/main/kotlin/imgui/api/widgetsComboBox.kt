@@ -33,6 +33,7 @@ import imgui.internal.*
 import imgui.internal.classes.Rect
 import kool.getValue
 import kool.setValue
+import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
@@ -147,8 +148,8 @@ interface widgetsComboBox {
     fun endCombo() = endPopup()
 
     /** Combo box helper allowing to pass an array of strings.  */
-    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, itemsCount: Int = items.size,
-              heightInItems: Int = -1) = combo(label, currentItem, items.toList(), heightInItems)
+    fun combo(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean =
+            combo(label, currentItem, items.toList(), heightInItems)
 
     /** Combo box helper allowing to pass all items in a single string literal holding multiple zero-terminated items "item1\0item2\0" */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {

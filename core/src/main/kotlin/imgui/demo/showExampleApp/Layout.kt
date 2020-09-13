@@ -21,6 +21,8 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.TabBarFlag
 import imgui.dsl.button
+import imgui.dsl.child
+import imgui.dsl.group
 import imgui.dsl.menu
 import imgui.dsl.menuBar
 import imgui.dsl.menuItem
@@ -31,7 +33,7 @@ import imgui.WindowFlag as Wf
 
 object Layout {
 
-    var selectedChild = 0
+    var selected = 0
 
     /** Demonstrate create a window with multiple child windows.    */
     operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
@@ -46,35 +48,37 @@ object Layout {
                 }
             }
 
-            // left
-            beginChild("left pane", Vec2(150, 0), true)
-            for (i in 0..99)
-                if (selectable("MyObject $i", selectedChild == i))
-                    selectedChild = i
-            endChild()
+            // Left
+            child("left pane", Vec2(150, 0), true) {
+                for (i in 0..99) {
+                    val label = "MyObject $i"
+                    if (selectable(label, selected == i))
+                        selected = i
+                }
+            }
             sameLine()
 
-            // right
-            beginGroup()
-            beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
-            text("MyObject: ${selectedChild}")
-            separator()
-            if (beginTabBar("##Tabs", TabBarFlag.None.i)) {
-                if (beginTabItem("Description")) {
-                    textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ")
-                    endTabItem()
+            // Right
+            group {
+                beginChild("item view", Vec2(0, -frameHeightWithSpacing)) // Leave room for 1 line below us
+                text("MyObject: $selected")
+                separator()
+                if (beginTabBar("##Tabs", TabBarFlag.None.i)) {
+                    if (beginTabItem("Description")) {
+                        textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ")
+                        endTabItem()
+                    }
+                    if (beginTabItem("Details")) {
+                        text("ID: 0123456789")
+                        endTabItem()
+                    }
+                    endTabBar()
                 }
-                if (beginTabItem("Details")) {
-                    text("ID: 0123456789")
-                    endTabItem()
-                }
-                endTabBar()
+                endChild()
+                button("Revert") {}
+                sameLine()
+                button("Save") {}
             }
-            endChild()
-            button("Revert") {}
-            sameLine()
-            button("Save") {}
-            endGroup()
         }
         end()
     }

@@ -4,6 +4,7 @@ import glm_.b
 import glm_.glm
 import imgui.*
 import imgui.api.g
+import uno.kotlin.NUL
 import kotlin.math.max
 
 /** Shared state of InputText(), passed as an argument to your callback when a ImGuiInputTextFlags_Callback* flag is used.

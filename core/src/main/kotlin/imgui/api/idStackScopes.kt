@@ -35,5 +35,6 @@ interface idStackScopes {
 
     fun getID(ptrID: Any): ID = g.currentWindow!!.getID(ptrID)
 
+    /** ~ImGui::GetID((void*)(intptr_t)i) */
     fun getID(intPtr: Long): ID = g.currentWindow!!.getID(intPtr)
 }
