@@ -18,6 +18,14 @@ class WindowSettings(val name: String = "") {
     var collapsed = false
     /** Set when loaded from .ini data (to enable merging/loading .ini data into an already running context) */
     var wantApply = false
+
+    fun clear() {
+        id = hash(name)
+        pos put 0f
+        size put 0f
+        collapsed = false
+        wantApply = false
+    }
 }
 
 /** Storage for one type registered in the .ini file */
@@ -28,9 +36,10 @@ class SettingsHandler {
     var typeHash: ID = 0
 
     var clearAllFn: ClearAllFn? = null
+    var readInitFn: ReadInitFn? = null
+    var readOpenFn: ReadOpenFn? = null
+    var readLineFn: ReadLineFn? = null
     var applyAllFn: ApplyAllFn? = null
-    lateinit var readOpenFn: ReadOpenFn
-    lateinit var readLineFn: ReadLineFn
-    lateinit var writeAllFn: WriteAllFn
+    var writeAllFn: WriteAllFn? = null
     var userData: Any? = null
 }
