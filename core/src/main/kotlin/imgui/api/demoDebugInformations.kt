@@ -584,7 +584,7 @@ interface demoDebugInformations {
 
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
 
-                    var string = ("DrawCmd: %4d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
+                    var string = ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
                             .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
