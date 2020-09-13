@@ -26,7 +26,7 @@ import imgui.internal.*
 import kotlin.math.max
 import kotlin.math.min
 
-/** Internal Columns API (this is not exposed because we will encourage transitioning to the Tables api) */
+/** Internal Columns API (this is not exposed because we will encourage transitioning to the Tables API) */
 internal interface internalColumnsAPI {
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */

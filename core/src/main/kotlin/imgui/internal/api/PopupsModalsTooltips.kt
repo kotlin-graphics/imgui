@@ -176,7 +176,7 @@ internal interface PopupsModalsTooltips {
     }
 
     /** return true if the popup is open at the current begin-ed level of the popup stack.
-     *  Test for id within current popup stack level (currently begin-ed into); this doesn't scan the whole popup stack! */
+     *  Test for id at current popup stack level (currently begin-ed into); this doesn't scan the whole popup stack! */
     fun isPopupOpen(id: ID) = g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
 
     fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
