@@ -3,12 +3,12 @@ package imgui.internal.api
 import glm_.*
 import imgui.DataType
 import imgui.ImGui.style
-import imgui.NUL
 import imgui._i
 import imgui.api.*
 import imgui.cStr
 import imgui.internal.addClampOverflow
 import imgui.internal.subClampOverflow
+import uno.kotlin.NUL
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import unsigned.Ubyte

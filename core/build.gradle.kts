@@ -8,6 +8,7 @@ val moduleName = "$group.core"
 
 dependencies {
 
+    implementation(kotlin("stdlib-jdk7"))
     implementation(kotlin("reflect"))
 
     val kx = "com.github.kotlin-graphics"

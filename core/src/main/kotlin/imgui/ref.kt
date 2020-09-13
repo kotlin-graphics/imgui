@@ -1,5 +1,6 @@
 package imgui
 
+import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 
 

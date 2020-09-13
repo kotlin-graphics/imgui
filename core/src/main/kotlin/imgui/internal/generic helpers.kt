@@ -9,6 +9,7 @@ import imgui.*
 import imgui.api.g
 import kool.BYTES
 import kool.rem
+import uno.kotlin.NUL
 import unsigned.toBigInt
 import unsigned.toUInt
 import java.math.BigInteger
