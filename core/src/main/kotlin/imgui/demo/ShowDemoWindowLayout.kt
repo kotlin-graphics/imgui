@@ -37,7 +37,6 @@ import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
-import imgui.ImGui.frameHeightWithSpacing
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getID
 import imgui.ImGui.inputInt
@@ -681,7 +680,7 @@ object ShowDemoWindowLayout {
             sliderInt("Lines", ::lines, 1, 15)
             pushStyleVar(StyleVar.FrameRounding, 3f)
             pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
-            val scrollingChildSize = Vec2(0, frameHeightWithSpacing * 7 + 30)
+            val scrollingChildSize = Vec2(0f, ImGui.frameHeightWithSpacing * 7 + 30)
             beginChild("scrolling", scrollingChildSize, true, Wf.HorizontalScrollbar.i)
             for (line in 0 until lines) {
                 // Display random stuff. For the sake of this trivial demo we are using basic Button() + SameLine()
@@ -807,7 +806,7 @@ object ShowDemoWindowLayout {
             invisibleButton("##dummy", size)
             if (isItemActive && isMouseDragging(MouseButton.Left))
                 offset += io.mouseDelta
-            windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), COL32(90, 90, 120, 255))
+            windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), imgui.COL32_WHITE)
             windowDrawList.addText(font, fontSize * 2f, Vec2(pos.x + offset.x, pos.y + offset.y),
                     COL32_WHITE, "Line 1 hello\nLine 2 clip me!", 0f, clipRect)
         }

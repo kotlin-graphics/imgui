@@ -92,10 +92,11 @@ object ExampleApp {
         if (show.simpleOverlay) SimpleOverlay(show::simpleOverlay)
         if (show.windowTitles) WindowTitles()
         if (show.customRendering) CustomRendering(show::customRendering)
+
         if (show.metrics) showMetricsWindow(show::metrics)
         if (show.about) showAboutWindow(show::about)
         if (show.styleEditor)
-            window("Style Editor", show::styleEditor) {
+            window("Dear ImGui Style Editor", show::styleEditor) {
                 StyleEditor()
             }
 

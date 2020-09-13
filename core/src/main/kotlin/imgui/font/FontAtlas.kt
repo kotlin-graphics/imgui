@@ -291,16 +291,16 @@ class FontAtlas {
      *  Note: this API may be redesigned later in order to support multi-monitor varying DPI settings. */
     class CustomRect {
 
-        /** Input, Desired rectangle width */
+        /** Input    // Desired rectangle dimension */
         var width = 0
 
-        /** Input, Desired rectangle height */
+        /** Input    // Desired rectangle dimension */
         var height = 0
 
-        /** Output, Packed width position in Atlas  */
+        /** Output   // Packed position in Atlas  */
         var x = 0xFFFF
 
-        /** Output, Packed height position in Atlas  */
+        /** Output   // Packed position in Atlas  */
         var y = 0xFFFF
 
         /** Input, For custom font glyphs only (ID < 0x110000) */
@@ -324,12 +324,17 @@ class FontAtlas {
         val r = CustomRect()
         r.width = width
         r.height = height
-        customRects.add(r)
+        customRects += r
         return customRects.lastIndex
     }
 
     fun addCustomRectFontGlyph(font: Font, id: Int, width: Int, height: Int, advanceX: Float, offset: Vec2 = Vec2()): Int {
-        assert(width in 1..0xFFFF && height in 1..0xFFFF)
+//        #ifdef IMGUI_USE_WCHAR32
+//                IM_ASSERT(id <= IM_UNICODE_CODEPOINT_MAX);
+//        #endif
+//        IM_ASSERT(font != NULL);
+        assert(width in 1..0xFFFF)
+        assert(height in 1..0xFFFF)
         val r = CustomRect()
         r.width = width
         r.height = height
@@ -811,7 +816,8 @@ class FontAtlas {
         return true
     }
 
-    /** Register default custom rectangles (this is called/shared by both the stb_truetype and the FreeType builder) */
+    /** Register default custom rectangles (this is called/shared by both the stb_truetype and the FreeType builder)
+     *  ~ImFontAtlasBuildInit */
     fun buildInit() {
         if (customRectIds[0] >= 0) return
         customRectIds[0] = when {
@@ -865,7 +871,8 @@ class FontAtlas {
         // Register custom rectangle glyphs
         for (r in customRects) {
             val font = r.font
-            if (font == null || r.glyphID == 0) continue
+            if (font == null || r.glyphID == 0)
+                continue
 
             assert(font.containerAtlas === this)
             val uv0 = Vec2()

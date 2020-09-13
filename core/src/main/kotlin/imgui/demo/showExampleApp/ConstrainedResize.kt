@@ -25,6 +25,14 @@ object ConstrainedResize {
     var autoResize = false
     var type = 0
     var displayLines = 10
+    val testDesc = listOf(
+            "Resize vertical only",
+            "Resize horizontal only",
+            "Width > 100, Height > 100",
+            "Width 400-500",
+            "Height 400-500",
+            "Custom: Always Square",
+            "Custom: Fixed Steps (100)")
 
     /** Demonstrate creating a window with custom resize constraints.   */
     operator fun invoke(open: KMutableProperty0<Boolean>) {

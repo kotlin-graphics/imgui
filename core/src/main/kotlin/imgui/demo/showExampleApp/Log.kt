@@ -53,8 +53,7 @@ object Log {
             for (n in 0..4) {
                 val category = categories[counter % categories.size]
                 val word = words[counter % words.size]
-                log.addLog("[%05d] [$category] Hello, current time is %.1f, here's a word: '$word'\n",
-                        g.frameCount, g.time)
+                log.addLog("[%05d] [$category] Hello, current time is %.1f, here's a word: '$word'\n", g.frameCount, g.time)
                 counter++
             }
         }

@@ -8,6 +8,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
+import imgui.ImGui.findWindowByID
 import imgui.ImGui.findWindowSettings
 import imgui.ImGui.io
 import imgui.ImGui.style
@@ -78,7 +79,9 @@ fun findHoveredWindow() {
     g.hoveredRootWindow = g.hoveredWindow?.rootWindow
 }
 
-fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).apply {
+// ApplyWindowSettings -> Window class
+
+fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
     //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
 
@@ -95,14 +98,9 @@ fun createNewWindow(name: String, size: Vec2, flags: Int) = Window(g, name).appl
             //  Retrieve settings from .ini file
             settingsOffset = g.settingsWindows.indexOf(settings)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-            pos put settings.pos
-            collapsed = settings.collapsed
-            if (settings.size allGreaterThan 0f)
-                size put settings.size
+            applySettings(settings)
         }
     }
-    sizeFull = floor(size)
-    this.size put sizeFull
     dc.cursorMaxPos put pos // So first call to CalcContentSize() doesn't return crazy values
     dc.cursorStartPos put pos
 
@@ -133,8 +131,27 @@ val viewportRect: Rect
 // Settings
 //-----------------------------------------------------------------------------
 
-fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings =
-        findWindowSettings(hash(name)) ?: createNewWindowSettings(name)
+fun windowSettingsHandler_ClearAll(ctx: Context, handler: SettingsHandler) {
+    val g = ctx
+    g.windows.forEach { it.settingsOffset = -1 }
+    g.settingsWindows.clear()
+}
+
+/** Apply to existing windows (if any) */
+fun windowSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
+    val g = ctx
+    for (settings in g.settingsWindows)
+    if (settings.wantApply) {
+        findWindowByID(settings.id)?.applySettings(settings)
+        settings.wantApply = false
+    }
+}
+
+fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings {
+    val settings = findWindowSettings(hash(name)) ?: createNewWindowSettings(name)
+    settings.wantApply = true
+    return settings
+}
 
 fun windowSettingsHandler_ReadLine(ctx: Context, settingsHandler: SettingsHandler, entry: Any, line: String) {
     val settings = entry as WindowSettings

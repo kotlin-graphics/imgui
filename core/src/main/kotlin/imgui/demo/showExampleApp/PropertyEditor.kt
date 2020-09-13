@@ -36,7 +36,8 @@ object PropertyEditor {
             return
         }
 
-        helpMarker("""
+        helpMarker(
+                """
                 This example shows how you may implement a property editor using two columns.
                 All objects/fields data are dummies here.
                 Remember that in many simple cases, you can use ImGui::SameLine(xxx) to position
@@ -55,6 +56,8 @@ object PropertyEditor {
         popStyleVar()
         end()
     }
+
+    val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)
 
     fun showDummyObject(prefix: String, uid: Int) {
         //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.

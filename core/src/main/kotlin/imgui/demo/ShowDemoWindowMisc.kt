@@ -206,12 +206,16 @@ object ShowDemoWindowMisc {
                 if (isItemActive)
                     foregroundDrawList.addLine(io.mouseClickedPos[0], io.mousePos, Col.Button.u32, 4f) // Draw a line between the button and the mouse cursor
 
-                // Drag operations gets "unlocked" when the mouse has moved past a certain threshold (the default threshold is stored in io.MouseDragThreshold)
-                // You can request a lower or higher threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta()
+                // Drag operations gets "unlocked" when the mouse has moved past a certain threshold
+                // (the default threshold is stored in io.MouseDragThreshold). You can request a lower or higher
+                // threshold using the second parameter of IsMouseDragging() and GetMouseDragDelta().
                 val valueRaw = getMouseDragDelta(MouseButton.Left, 0f)
                 val valueWithLockThreshold = getMouseDragDelta(MouseButton.Left)
                 val mouseDelta = io.mouseDelta
-                text("GetMouseDragDelta(0):\n  w/ default threshold: (%.1f, %.1f),\n  w/ zero threshold: (%.1f, %.1f)\nMouseDelta: (%.1f, %.1f)", valueWithLockThreshold.x, valueWithLockThreshold.y, valueRaw.x, valueRaw.y, mouseDelta.x, mouseDelta.y)
+                text("GetMouseDragDelta(0):")
+                text("  w/ default threshold: (%.1f, %.1f)", valueWithLockThreshold.x, valueWithLockThreshold.y)
+                text("  w/ zero threshold: (%.1f, %.1f)", valueRaw.x, valueRaw.y)
+                text("io.MouseDelta: (%.1f, %.1f)", mouseDelta.x, mouseDelta.y)
             }
 
             treeNode("Mouse cursors") {
