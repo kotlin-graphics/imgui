@@ -32,6 +32,11 @@ interface settingsIniUtilities {
         // For user convenience, we allow passing a non zero-terminated string (hence the ini_size parameter).
         // For our convenience and to make the code simpler, we'll also write zero-terminators within the buffer. So let's create a writable copy..
 
+        // Call pre-read handlers
+        // Some types will clear their data (e.g. dock information) some types will allow merge/override (window)
+        for (handler in g.settingsHandlers)
+            handler.readInitFn?.invoke(g, handler)
+
         var entryHandler: SettingsHandler? = null
         var entryData: Any? = null
         for (i in lines.indices) {
@@ -51,7 +56,7 @@ interface settingsIniUtilities {
                     }
                 } else if (entryHandler != null && entryData != null)
                 // Let type handler parse the line
-                    entryHandler.readLineFn(g, entryHandler, entryData, line)
+                    entryHandler.readLineFn!!(g, entryHandler, entryData, line)
             }
         }
         g.settingsLoaded = true
@@ -78,7 +83,7 @@ interface settingsIniUtilities {
         g.settingsDirtyTimer = 0f
         val buf = StringBuilder()
         for (handler in g.settingsHandlers)
-            handler.writeAllFn(g, handler, buf)
+            handler.writeAllFn!!(g, handler, buf)
         g.settingsIniData = buf.toString()
         return g.settingsIniData
     }

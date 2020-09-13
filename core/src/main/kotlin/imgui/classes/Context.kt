@@ -592,9 +592,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             typeName = "Window"
             typeHash = hash("Window")
             clearAllFn = ::windowSettingsHandler_ClearAll
-            applyAllFn = ::windowSettingsHandler_ApplyAll
             readOpenFn = ::windowSettingsHandler_ReadOpen
             readLineFn = ::windowSettingsHandler_ReadLine
+            applyAllFn = ::windowSettingsHandler_ApplyAll
             writeAllFn = ::windowSettingsHandler_WriteAll
         }
 
