@@ -340,7 +340,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         if (points.size < 2) return
 
-        val uv = Vec2(_data.texUvWhitePixel)
+        val opaqueUv = Vec2(_data.texUvWhitePixel)
 
         var count = points.size
         if (!closed)
@@ -427,29 +427,30 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 // Add vertices
                 for (i in 0 until points.size) {
-                    vtxBuffer += points[i]; vtxBuffer += uv; vtxBuffer += col
-                    vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += uv; vtxBuffer += colTrans
-                    vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += uv; vtxBuffer += colTrans
+                    vtxBuffer += points[i]; vtxBuffer += opaqueUv; vtxBuffer += col
+                    vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
+                    vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
                     _vtxWritePtr += 3
                 }
             } else {
                 val halfInnerThickness = (thickness - AA_SIZE) * 0.5f
                 if (!closed) {
+                    val pointsLast = points.lastIndex
                     temp[tempPointsIdx + 0] = points[0] + temp[0] * (halfInnerThickness + AA_SIZE)
                     temp[tempPointsIdx + 1] = points[0] + temp[0] * (halfInnerThickness)
                     temp[tempPointsIdx + 2] = points[0] - temp[0] * (halfInnerThickness)
                     temp[tempPointsIdx + 3] = points[0] - temp[0] * (halfInnerThickness + AA_SIZE)
-                    temp[tempPointsIdx + (points.size - 1) * 4 + 0] = points[points.size - 1] + temp[points.size - 1] * (halfInnerThickness + AA_SIZE)
-                    temp[tempPointsIdx + (points.size - 1) * 4 + 1] = points[points.size - 1] + temp[points.size - 1] * halfInnerThickness
-                    temp[tempPointsIdx + (points.size - 1) * 4 + 2] = points[points.size - 1] - temp[points.size - 1] * halfInnerThickness
-                    temp[tempPointsIdx + (points.size - 1) * 4 + 3] = points[points.size - 1] - temp[points.size - 1] * (halfInnerThickness + AA_SIZE)
+                    temp[tempPointsIdx + pointsLast * 4 + 0] = points[pointsLast] + temp[pointsLast] * (halfInnerThickness + AA_SIZE)
+                    temp[tempPointsIdx + pointsLast * 4 + 1] = points[pointsLast] + temp[pointsLast] * halfInnerThickness
+                    temp[tempPointsIdx + pointsLast * 4 + 2] = points[pointsLast] - temp[pointsLast] * halfInnerThickness
+                    temp[tempPointsIdx + pointsLast * 4 + 3] = points[pointsLast] - temp[pointsLast] * (halfInnerThickness + AA_SIZE)
                 }
 
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
                 var idx1 = _vtxCurrentIdx
                 for (i1 in 0 until count) {
-                    val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
-                    val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else idx1 + 4
+                    val i2 = if ((i1 + 1) == points.size) 0 else (i1 + 1) // i2 is the second point of the line segment
+                    val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else (idx1 + 4) // Vertex index for end of segment
 
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
@@ -493,10 +494,10 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 // Add vertices
                 for (i in 0 until points.size) {
-                    vtxBuffer += temp[tempPointsIdx + i * 4 + 0]; vtxBuffer += uv; vtxBuffer += colTrans
-                    vtxBuffer += temp[tempPointsIdx + i * 4 + 1]; vtxBuffer += uv; vtxBuffer += col
-                    vtxBuffer += temp[tempPointsIdx + i * 4 + 2]; vtxBuffer += uv; vtxBuffer += col
-                    vtxBuffer += temp[tempPointsIdx + i * 4 + 3]; vtxBuffer += uv; vtxBuffer += colTrans
+                    vtxBuffer += temp[tempPointsIdx + i * 4 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
+                    vtxBuffer += temp[tempPointsIdx + i * 4 + 1]; vtxBuffer += opaqueUv; vtxBuffer += col
+                    vtxBuffer += temp[tempPointsIdx + i * 4 + 2]; vtxBuffer += opaqueUv; vtxBuffer += col
+                    vtxBuffer += temp[tempPointsIdx + i * 4 + 3]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
                     _vtxWritePtr += 4
                 }
             }
@@ -526,10 +527,10 @@ class DrawList(sharedData: DrawListSharedData?) {
                 dX *= thickness * 0.5f
                 dY *= thickness * 0.5f
 
-                vtxBuffer += p1.x + dY; vtxBuffer += p1.y - dX; vtxBuffer += uv; vtxBuffer += col
-                vtxBuffer += p2.x + dY; vtxBuffer += p2.y - dX; vtxBuffer += uv; vtxBuffer += col
-                vtxBuffer += p2.x - dY; vtxBuffer += p2.y + dX; vtxBuffer += uv; vtxBuffer += col
-                vtxBuffer += p1.x - dY; vtxBuffer += p1.y + dX; vtxBuffer += uv; vtxBuffer += col
+                vtxBuffer += p1.x + dY; vtxBuffer += p1.y - dX; vtxBuffer += opaqueUv; vtxBuffer += col
+                vtxBuffer += p2.x + dY; vtxBuffer += p2.y - dX; vtxBuffer += opaqueUv; vtxBuffer += col
+                vtxBuffer += p2.x - dY; vtxBuffer += p2.y + dX; vtxBuffer += opaqueUv; vtxBuffer += col
+                vtxBuffer += p1.x - dY; vtxBuffer += p1.y + dX; vtxBuffer += opaqueUv; vtxBuffer += col
                 _vtxWritePtr += 4
 
                 idxBuffer += _vtxCurrentIdx; idxBuffer += _vtxCurrentIdx + 1; idxBuffer += _vtxCurrentIdx + 2
