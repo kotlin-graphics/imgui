@@ -257,9 +257,8 @@ interface main {
 
         end()
 
-        // Show CTRL+TAB list window
-        if (g.navWindowingTarget != null)
-            navUpdateWindowingOverlay()
+        // Update navigation: CTRL+Tab, wrap-around requests
+        navEndFrame()
 
         // Drag and Drop: Elapse payload (if delivered, or if source stops being submitted)
         if (g.dragDropActive) {

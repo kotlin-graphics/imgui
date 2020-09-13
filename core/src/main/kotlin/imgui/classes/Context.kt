@@ -8,8 +8,9 @@ import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
-import imgui.internal.*
+import imgui.internal.DrawData
 import imgui.internal.classes.*
+import imgui.internal.hash
 import imgui.internal.sections.*
 import imgui.static.*
 import java.io.File
@@ -318,6 +319,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
 
+    /** Window which requested trying nav wrap-around. */
+    var navWrapRequestWindow: Window? = null
+
+    /** Wrap-around operation flags. */
+    var navWrapRequestFlags: NavMoveFlags = NavMoveFlag.None.i
+
 
     // Navigation: Windowing (CTRL+TAB for list, or Menu button + keys or directional pads to move/resize)
 
@@ -581,7 +588,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         assert(!g.initialized && !g.settingsLoaded)
 
         // Add .ini handle for ImGuiWindow type
-        g.settingsHandlers += SettingsHandler().apply{
+        g.settingsHandlers += SettingsHandler().apply {
             typeName = "Window"
             typeHash = hash("Window")
             clearAllFn = ::windowSettingsHandler_ClearAll
