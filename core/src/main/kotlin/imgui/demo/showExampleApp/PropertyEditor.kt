@@ -57,8 +57,6 @@ object PropertyEditor {
         end()
     }
 
-    val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f, 0f, 0f, 0f)
-
     fun showDummyObject(prefix: String, uid: Int) {
         //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
         pushID(uid)
