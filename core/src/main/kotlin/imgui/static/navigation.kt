@@ -486,8 +486,8 @@ fun navUpdateWindowingOverlay() {
 
     if (g.navWindowingTimer < NAV_WINDOWING_LIST_APPEAR_DELAY) return
 
-    if (g.navWindowingList.isEmpty())
-        findWindowByName("###NavWindowingList")?.let { g.navWindowingList += it }
+    if (g.navWindowingListWindow == null)
+        g.navWindowingListWindow = findWindowByName("###NavWindowingList")
     setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
     setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)

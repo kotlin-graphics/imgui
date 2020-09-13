@@ -214,6 +214,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Focused item for navigation */
     var navId: ID = 0
 
+    /** Identify a selection scope (selection code often wants to "clear other items" when landing on an item of the selection set) */
     var navFocusScopeId = 0
 
     /** ~~ (g.activeId == 0) && NavInput.Activate.isPressed() ? navId : 0, also set when calling activateItem() */
@@ -279,8 +280,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navInitRequestFromMove = false
 
+    /** Init request result (first item of the window, or one for which SetItemDefaultFocus() was called) */
     var navInitResultId: ID = 0
 
+    /** Init request result rectangle (relative to parent window) */
     var navInitResultRectRel = Rect()
 
     /** Set by manual scrolling, if we scroll to a point where NavId isn't visible we reset navigation from visible items   */
@@ -315,15 +318,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navMoveResultOther = NavMoveResult()
 
 
-    // Navigation: Windowing (CTRL+TAB, holding Menu button + directional pads to move/resize)
+    // Navigation: Windowing (CTRL+TAB for list, or Menu button + keys or directional pads to move/resize)
 
-    /** When selecting a window (holding Menu+FocusPrev/Next, or equivalent of CTRL-TAB) this window is temporarily displayed top-most.   */
+    /** Target window when doing CTRL+Tab (or Pad Menu + FocusPrev/Next), this window is temporarily displayed top-most! */
     var navWindowingTarget: Window? = null
 
-    /** Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0f */
+    /** Record of last valid NavWindowingTarget until DimBgRatio and NavWindowingHighlightAlpha becomes 0.0f, so the fade-out can stay on it. */
     var navWindowingTargetAnim: Window? = null
 
-    val navWindowingList = ArrayList<Window>()
+    /** Internal window actually listing the CTRL+Tab contents */
+    var navWindowingListWindow: Window? = null
 
     var navWindowingTimer = 0f
 
@@ -508,8 +512,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Capture/Logging
     //------------------------------------------------------------------
 
+    /** Currently capturing */
     var logEnabled = false
 
+    /** Capture target */
     var logType = LogType.None
 
     /** If != NULL log to stdout/ file  */
@@ -530,6 +536,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Debug Tools
 
+    /** Item picker is active (started with DebugStartItemPicker()) */
     var debugItemPickerActive = false
 
     /** Will call IM_DEBUG_BREAK() when encountering this id */
