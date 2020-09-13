@@ -183,6 +183,7 @@ interface windowsUtilities {
      *
      *  set font scale. Adjust IO.FontGlobalScale if you want to scale all windows. This is an old API! For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes(). */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
+        assert(scale > 0f)
         fontWindowScale = scale
         g.drawListSharedData.fontSize = calcFontSize()
         g.fontSize = g.drawListSharedData.fontSize
