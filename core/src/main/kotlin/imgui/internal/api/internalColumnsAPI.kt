@@ -20,9 +20,9 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setColumnOffset
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.classes.ColumnData
 import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.sections.ColumnData
 import imgui.internal.sections.ColumnsFlag
 import imgui.internal.sections.ColumnsFlags
 import imgui.internal.sections.hasnt

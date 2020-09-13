@@ -15,7 +15,7 @@ import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
 import imgui.internal.*
-import imgui.internal.classes.Columns
+import imgui.internal.sections.Columns
 import imgui.internal.sections.ColumnsFlags
 import imgui.internal.sections.has
 import imgui.internal.sections.hasnt
