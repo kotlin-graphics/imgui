@@ -111,8 +111,7 @@ internal interface dataTypeHelpers {
 
     fun dataTypeApplyOpFromText(
             buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
-            pData: KMutableProperty0<*>, format: String? = null
-    ,
+            pData: KMutableProperty0<*>, format: String? = null,
     ): Boolean {
 
         val buf = buf_.replace(Regex("\\s+"), "")
@@ -216,28 +215,12 @@ internal interface dataTypeHelpers {
                     Instead we may implement a proper expression evaluator in the future.                 */
                 //sscanf(buf, format, data_ptr)
                 return false
-            else -> return false
-//            else TODO
-//            {
-//                // Small types need a 32-bit buffer to receive the result from scanf()
-//                int v32;
-//                sscanf(buf, format, &v32);
-//                if (data_type == ImGuiDataType_S8)
-//                *(ImS8*)data_ptr = (ImS8)ImClamp(v32, (int)IM_S8_MIN, (int)IM_S8_MAX);
-//                else if (data_type == ImGuiDataType_U8)
-//                *(ImU8*)data_ptr = (ImU8)ImClamp(v32, (int)IM_U8_MIN, (int)IM_U8_MAX);
-//                else if (data_type == ImGuiDataType_S16)
-//                *(ImS16*)data_ptr = (ImS16)ImClamp(v32, (int)IM_S16_MIN, (int)IM_S16_MAX);
-//                else if (data_type == ImGuiDataType_U16)
-//                *(ImU16*)data_ptr = (ImU16)ImClamp(v32, (int)IM_U16_MIN, (int)IM_U16_MAX);
-//                else
-//                IM_ASSERT(0);
-//            }
-            }
+            else -> error("invalid")
         }
+        return dataBackup != pData()
     }
 
-    fun <N>dataTypeClamp(dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N): Boolean
+    fun <N> dataTypeClamp(dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N): Boolean
             where N : Number, N : Comparable<N> = when (dataType) {
         DataType.Byte -> clampBehaviorT(pData as KMutableProperty0<Byte>, pMin as Byte, pMax as Byte)
         DataType.Ubyte -> clampBehaviorT(pData as KMutableProperty0<Ubyte>, pMin as Ubyte, pMax as Ubyte)

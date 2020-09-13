@@ -50,6 +50,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
+import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
@@ -306,6 +307,11 @@ interface demoDebugInformations {
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(Funcs::nodeWindowSettings)
             }
+//            #ifdef IMGUI_HAS_TABLE
+//            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
+//                g.settingsTables.forEach(Funcs::nodeTableSettings)
+//            }
+//            #endif
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
             }

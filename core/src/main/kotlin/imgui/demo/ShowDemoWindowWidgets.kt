@@ -28,6 +28,8 @@ import imgui.ImGui.colorEdit4
 import imgui.ImGui.colorPicker4
 import imgui.ImGui.columns
 import imgui.ImGui.combo
+import imgui.ImGui.cursorPos
+import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragFloat2
 import imgui.ImGui.dragFloat3
@@ -132,6 +134,7 @@ import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.ImGui.vSliderFloat
 import imgui.ImGui.vSliderInt
+import imgui.ImGui.windowDrawList
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
@@ -1402,7 +1405,10 @@ object ShowDemoWindowWidgets {
                         // Display preview (could be anything, e.g. when dragging an image we could decide to display
                         // the filename and a small preview of the image, etc.)
                         when (mode) {
-                        text("$mode $name")
+                            Mode.Copy -> text("Copy $name")
+                            Mode.Move -> text("Move $name")
+                            Mode.Swap -> text("Swap $name")
+                        }
                         endDragDropSource()
                     }
                     if (beginDragDropTarget()) {

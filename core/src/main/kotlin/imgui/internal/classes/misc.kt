@@ -513,7 +513,7 @@ class Pool<T>(val placementNew: () -> T) {
         buf.removeAt(idx.i)
         map.remove(key)
         // update indices in map
-        map.replaceAll { (s, i) -> i - (i > idx).i }
+        map.replaceAll { _, i -> i - (i > idx).i }
     }
 //    void        Reserve(int capacity)
 //    { Buf.reserve(capacity); Map.Data.reserve(capacity); }

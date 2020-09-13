@@ -34,9 +34,6 @@ object SimpleOverlay {
             windowFlags = windowFlags or Wf.NoMove
         }
         setNextWindowBgAlpha(0.35f)  // Transparent background
-        var windowFlags = Wf.NoDecoration or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
-        if(corner != -1)
-            windowFlags = windowFlags or Wf.NoMove
         window("Example: Simple overlay", open, windowFlags) {
             text("Simple overlay\nin the corner of the screen.\n(right-click to change position)")
             separator()
