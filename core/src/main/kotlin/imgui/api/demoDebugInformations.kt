@@ -476,7 +476,8 @@ interface demoDebugInformations {
 
         /** Tables Rect Type */
         enum class TRT {
-            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect, ColumnsContentHeadersUsed, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
+            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect,
+            ColumnsContentHeadersIdeal, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
 
             companion object {
                 val names = WRT.values().map { it.name }
