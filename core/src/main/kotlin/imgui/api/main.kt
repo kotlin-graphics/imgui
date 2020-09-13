@@ -13,14 +13,12 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
-import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
-import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
@@ -30,7 +28,6 @@ import imgui.classes.Style
 import imgui.internal.*
 import imgui.static.*
 import org.lwjgl.system.Platform
-import imgui.ConfigFlag as Cf
 import imgui.WindowFlag as Wf
 import imgui.internal.DrawListFlag as Dlf
 
@@ -324,7 +321,7 @@ interface main {
         // Add ImDrawList to render
         val windowsToRenderTopMost = arrayOf(
                 g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-                g.navWindowingTarget?.let { g.navWindowingList[0] })
+                g.navWindowingTarget?.let { g.navWindowingListWindow })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
                 .forEach { it.addToDrawData() }
