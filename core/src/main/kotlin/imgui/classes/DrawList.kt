@@ -108,7 +108,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         _clipRectStack += cr
         _cmdHeader.clipRect put cr
-        updateClipRect()
+        _onChangedClipRect()
     }
 
     fun pushClipRectFullScreen() = pushClipRect(Vec2(_data.clipRectFullscreen), Vec2(_data.clipRectFullscreen.z, _data.clipRectFullscreen.w))
@@ -116,19 +116,19 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun popClipRect() {
         _clipRectStack.pop()
         _cmdHeader.clipRect put (_clipRectStack.lastOrNull() ?: _data.clipRectFullscreen)
-        updateClipRect()
+        _onChangedClipRect()
     }
 
     fun pushTextureId(textureId: TextureID) {
         _textureIdStack += textureId
         _cmdHeader.textureId = textureId
-        updateTextureID()
+        _onChangedTextureID()
     }
 
     fun popTextureId() {
         _textureIdStack.pop()
         _cmdHeader.textureId = _textureIdStack.lastOrNull() ?: 0
-        updateTextureID()
+        _onChangedTextureID()
     }
 
 
@@ -1050,7 +1050,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** Initialize before use in a new frame. We always have a command ready in the buffer. */
-    fun resetForNewFrame() {
+    fun _resetForNewFrame() {
 
         // Verify that the ImDrawCmd fields we want to memcmp() are contiguous in memory.
         // (those should be IM_STATIC_ASSERT() in theory but with our pre C++11 setup the whole check doesn't compile with GCC)
@@ -1075,7 +1075,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     /** @param destroy useful to declare if this is a memory release or not */
-    fun clearFreeMemory(destroy: Boolean = false) {
+    fun _clearFreeMemory(destroy: Boolean = false) {
         cmdBuffer.clear()
         // we dont assign because it wont create a new instance for sure
         if (destroy) {
@@ -1101,7 +1101,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Pop trailing draw command (used before merging or presenting to user)
      *  Note that this leaves the ImDrawList in a state unfit for further commands,
      *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
-    fun popUnusedDrawCmd() {
+    fun _popUnusedDrawCmd() {
         if (cmdBuffer.isEmpty())
             return
         val currCmd = cmdBuffer.last()
@@ -1113,7 +1113,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     to perform any check so we always have a command ready in the stack.
     The cost of figuring out if a new command has to be added or if we can merge is paid in those Update**
     functions only. */
-    fun updateClipRect() {
+    fun _onChangedClipRect() {
         // If current command is used with different settings we need to add a new command
         val currCmd = cmdBuffer.last()
         if ((currCmd.elemCount != 0 && currCmd.clipRect != _cmdHeader.clipRect) || currCmd.userCallback != null) {
@@ -1131,7 +1131,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         currCmd.clipRect put _cmdHeader.clipRect
     }
 
-    fun updateTextureID() {
+    fun _onChangedTextureID() {
 
         // If current command is used with different settings we need to add a new command
         val currCmd = cmdBuffer.last()
@@ -1159,7 +1159,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // Remove trailing command if unused.
         // Technically we could return directly instead of popping, but this make things looks neat in Metrics window as well.
-        popUnusedDrawCmd()
+        _popUnusedDrawCmd()
         if (cmdBuffer.empty()) return
 
         /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.

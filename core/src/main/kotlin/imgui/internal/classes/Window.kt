@@ -185,7 +185,7 @@ class Window(
     fun destroy() {
         assert(drawList === drawListInst)
         columnsStorage.forEach { it.destroy() }
-        drawListInst.clearFreeMemory(true)
+        drawListInst._clearFreeMemory(true)
     }
 
     // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
@@ -537,7 +537,7 @@ class Window(
         memoryDrawListIdxCapacity = drawList.idxBuffer.cap
         memoryDrawListVtxCapacity = drawList.vtxBuffer.cap
         idStack.clear()
-        drawList.clearFreeMemory()
+        drawList._clearFreeMemory()
         dc.apply {
             childWindows.clear()
             itemFlagsStack.clear()
