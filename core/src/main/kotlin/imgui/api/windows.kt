@@ -320,10 +320,10 @@ interface windows {
 
             /* ---------- POSITION ---------- */
 
+            // Popup latch its initial position, will position itself when it appears next frame
             if (windowJustActivatedByUser) {
-                // Popup first latch mouse position, will position itself when it appears next frame
                 window.autoPosLastDirection = Dir.None
-                if (flags has Wf._Popup && !windowPosSetByApi)
+                if (flags has Wf._Popup && flags hasnt Wf._Modal && !windowPosSetByApi) // FIXME: BeginPopup() could use SetNextWindowPos()
                     window.pos put g.beginPopupStack.last().openPopupPos
             }
 
