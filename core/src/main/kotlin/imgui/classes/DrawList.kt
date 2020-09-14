@@ -1102,7 +1102,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // If current command is used with different settings we need to add a new command
         val currCmd = cmdBuffer.last()
-        if (currCmd == null || (currCmd.elemCount != 0 && currCmd.textureId != currentTextureId!!) || currCmd.userCallback != null) {
+        if ((currCmd.elemCount != 0 && currCmd.textureId != currentTextureId!!) || currCmd.userCallback != null) {
             addDrawCmd()
             return
         }
