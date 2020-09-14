@@ -21,6 +21,7 @@ import imgui.ImGui.popID
 import imgui.ImGui.pushID
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setNextWindowBgAlpha
+import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g
@@ -266,7 +267,10 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
             // Resize from any of the four corners
             // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
             // Corner of the window corresponding to our corner grip
-            val cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPosN)
+            var cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPosN)
+            val clampMin = Vec2 { if (grip.cornerPosN[it] == 1f) style.displayWindowPadding[it] else -Float.MAX_VALUE }
+            val clampMax = Vec2 { if (grip.cornerPosN[it] == 0f) io.displaySize[it] - style.displayWindowPadding[it] else Float.MAX_VALUE }
+            cornerTarget = glm.clamp(cornerTarget, clampMin, clampMax)
             window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPosN, posTarget, sizeTarget)
         }
         if (resizeGripN == 0 || held || hovered)
@@ -282,7 +286,7 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
                 borderHeld = borderN
         }
         if (held) {
-            val borderTarget = Vec2(window.pos)
+            var borderTarget = Vec2(window.pos)
             val borderPosN = when (borderN) {
                 0 -> {
                     borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
@@ -302,6 +306,9 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
                 }
                 else -> Vec2(0, 0)
             }
+            val clampMin = Vec2 { if (borderN == it + 1) style.displayWindowPadding[it] else -Float.MAX_VALUE }
+            val clampMax = Vec2 { if (borderN == (if (it == 0) 3 else 0)) io.displaySize[it] - style.displayWindowPadding[it] else Float.MAX_VALUE }
+            borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
             window.calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
         }
     }
@@ -321,6 +328,7 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
         if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
             val NAV_RESIZE_SPEED = 600f
             navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
+            navResizeDelta put glm.clamp(navResizeDelta, style.displayWindowPadding - window.pos - window.size, Vec2(Float.MAX_VALUE))
             g.navWindowingToggleLayer = false
             g.navDisableMouseHover = true
             resizeGripCol[0] = Col.ResizeGripActive.u32
