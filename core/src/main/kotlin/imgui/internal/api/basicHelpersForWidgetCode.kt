@@ -243,11 +243,16 @@ internal interface basicHelpersForWidgetCode {
 
         if (wrapPosX_ < 0f) return 0f
 
-        val window = g.currentWindow!!
         var wrapPosX = wrapPosX_
-        if (wrapPosX == 0f)
+        val window = g.currentWindow!!
+        if (wrapPosX == 0f) {
+            // We could decide to setup a default wrapping max point for auto-resizing windows,
+            // or have auto-wrap (with unspecified wrapping pos) behave as a ContentSize extending function?
+            //if (window->Hidden && (window->Flags & ImGuiWindowFlags_AlwaysAutoResize))
+            //    wrap_pos_x = ImMax(window->WorkRect.Min.x + g.FontSize * 10.0f, window->WorkRect.Max.x);
+            //else
             wrapPosX = window.workRect.max.x
-        else if (wrapPosX > 0f)
+        } else if (wrapPosX > 0f)
             wrapPosX += window.pos.x - window.scroll.x // wrap_pos_x is provided is window local space
 
         return glm.max(wrapPosX - pos.x, 1f)
