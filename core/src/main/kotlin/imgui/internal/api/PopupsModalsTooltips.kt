@@ -107,10 +107,9 @@ internal interface PopupsModalsTooltips {
             if (g.openPopupStack[currentStackSize].popupId == id && g.openPopupStack[currentStackSize].openFrameCount == g.frameCount - 1)
                 g.openPopupStack[currentStackSize].openFrameCount = popupRef.openFrameCount
             else {
-                // Close child popups if any
-                for (i in currentStackSize + 1 until g.openPopupStack.size) g.openPopupStack.pop() // ~resize
-                for (i in g.openPopupStack.size until currentStackSize + 1) g.openPopupStack += PopupData() // ~resize
-                g.openPopupStack[currentStackSize] = popupRef
+                // Close child popups if any, then flag popup for open/reopen
+                closePopupToLevel(currentStackSize, false)
+                g.openPopupStack += popupRef
             }
             /*  When reopening a popup we first refocus its parent, otherwise if its parent is itself a popup
                 it would get closed by closePopupsOverWindow().  This is equivalent to what ClosePopupToLevel() does. */
@@ -121,6 +120,8 @@ internal interface PopupsModalsTooltips {
     fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
+
+        // Trim open popup stack
         var focusWindow = g.openPopupStack[remaining].sourceWindow
         val popupWindow = g.openPopupStack[remaining].window
         for (i in remaining until g.openPopupStack.size) // resize(remaining)
@@ -178,8 +179,11 @@ internal interface PopupsModalsTooltips {
     }
 
     /** return true if the popup is open at the current begin-ed level of the popup stack.
+     *
      *  Test for id at current popup stack level (currently begin-ed into); this doesn't scan the whole popup stack! */
     fun isPopupOpen(id: ID) = g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
+
+    fun isPopupOpenAtAnyLevel(id: ID): Boolean = g.openPopupStack.any { it.popupId == id }
 
     fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
 

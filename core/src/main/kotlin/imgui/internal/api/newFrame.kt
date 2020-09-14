@@ -7,6 +7,7 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.isPopupOpenAtAnyLevel
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
@@ -124,15 +125,20 @@ internal interface newFrame {
         // Unless we just made a window/popup appear
         if (g.navWindow?.appearing == true) return
 
-        // Click to focus window and start moving (after we're done with all our widgets)
+        // Click on empty space to focus window and start moving (after we're done with all our widgets)
         if (io.mouseClicked[0]) {
-            val hovered = g.hoveredRootWindow
-            if (hovered != null) {
-                hovered.startMouseMoving()
-                if (io.configWindowsMoveFromTitleBarOnly && hovered.flags hasnt WindowFlag.NoTitleBar)
-                    if (io.mouseClickedPos[0] !in hovered.titleBarRect())
+            // Handle the edge case of a popup being closed while clicking in its empty space.
+            // If we try to focus it, FocusWindow() > ClosePopupsOverWindow() will accidentally close any parent popups because they are not linked together any more.
+            val rootWindow = g.hoveredRootWindow
+            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpenAtAnyLevel(rootWindow.popupId)
+
+            if (rootWindow != null && !isClosedPopup) {
+                g.hoveredWindow!!.startMouseMoving()
+                if (io.configWindowsMoveFromTitleBarOnly && rootWindow.flags hasnt WindowFlag.NoTitleBar)
+                    if (io.mouseClickedPos[0] !in rootWindow.titleBarRect())
                         g.movingWindow = null
-            } else if (g.navWindow != null && topMostPopupModal == null)
+            }
+            else if (rootWindow != null && g.navWindow != null && topMostPopupModal == null)
                 focusWindow()  // Clicking on void disable focus
         }
 
