@@ -24,78 +24,30 @@ import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf
 
-/** Popups, Modals
- *  The properties of popups windows are:
- *  - They block normal mouse hovering detection outside them. (*1)
- *  - Unless modal, they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
- *    Because hovering detection is disabled outside the popup, when clicking outside the click will not be seen by underlying widgets! (*1)
- *  - Their visibility state (~bool) is held internally by Dear ImGui instead of being held by the programmer as we are used to with regular Begin() calls.
- *    User can manipulate the visibility state by calling OpenPopup(), CloseCurrentPopup() etc.
- *  - We default to use the right mouse (ImGuiMouseButton_Right=1) for the Popup Context functions.
- *  Those three properties are connected: we need to retain popup visibility state in the library because popups may be closed as any time.
- *  (*1) You can bypass that restriction and detect hovering even when normally blocked by a popup.
- *      To do this use the ImGuiHoveredFlags_AllowWhenBlockedByPopup when calling IsItemHovered() or IsWindowHovered().
- *      This is what BeginPopupContextItem() and BeginPopupContextWindow() are doing already, allowing a right-click to reopen another popups without losing the click.
- *  - The BeginPopupContextXXX functions are essentially helpers to do an OpenPopup() in some condition + BeginPopup(). */
+/** Popups, Modals */
 interface popupsModals {
 
-    /** call to mark popup as open (don't call every frame!). popups are closed when user click outside, or if
-     *  CloseCurrentPopup() is called within a BeginPopup()/EndPopup() block. By default, Selectable()/MenuItem() are
-     *  calling CloseCurrentPopup(). Popup identifiers are relative to the current ID-stack (so OpenPopup and BeginPopup
-     *  needs to be at the same level).   */
-    fun openPopup(strId: String) = openPopupEx(g.currentWindow!!.getID(strId))
 
-    /** return true if the popup is open, and you can start outputting to it. only call EndPopup() if BeginPopup() returns true!    */
-    fun beginPopup(strId: String, flags_: WindowFlags = 0): Boolean {
+    //  - They block normal mouse hovering detection (and therefore most mouse interactions) behind them.
+    //  - If not modal: they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
+    //  - Their visibility state (~bool) is held internally instead of being held by the programmer as we are used to with regular Begin*() calls.
+    //  - The 3 properties above are related: we need to retain popup visibility state in the library because popups may be closed as any time.
+    //  - You can bypass the hovering restriction by using ImGuiHoveredFlags_AllowWhenBlockedByPopup when calling IsItemHovered() or IsWindowHovered().
+    //  - IMPORTANT: Popup identifiers are relative to the current ID stack, so OpenPopup and BeginPopup generally needs to be at the same level of the stack.
+    //    This is sometimes leading to confusing mistakes. May rework this in the future.
+    // Popups: begin/end functions
+    //  - BeginPopup(): query popup state, if open start appending into the window. Call EndPopup() afterwards. ImGuiWindowFlags are forwarded to the window.
+    //  - BeginPopupModal(): block every interactions behind the window, cannot be closed by user, add a dimming background, has a title bar.
+
+
+    /** return true if the popup is open, and you can start outputting to it. */
+    fun beginPopup(strId: String, flags_: WindowFlags = Wf.None.i): Boolean {
         if (g.openPopupStack.size <= g.beginPopupStack.size) {    // Early out for performance
             g.nextWindowData.clearFlags()    // We behave like Begin() and need to consume those values
             return false
         }
         val flags = flags_ or Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings
         return beginPopupEx(g.currentWindow!!.getID(strId), flags)
-    }
-
-    /** This is a helper to handle the simplest case of associating one named popup to one given widget.
-     *  - You can pass a NULL str_id to use the identifier of the last item.
-     *  - You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
-     *  - This is essentially the same as calling OpenPopupContextItem() + BeginPopupEx() but written to avoid
-     *    computing the ID twice because BeginPopupContextXXX functions are called very frequently.
-     *
-     *  helper to open and begin popup when clicked on last item. if you can pass an empty strId only if the previous
-     *  item had an id. If you want to use that on a non-interactive item such as text() you need to pass in an explicit
-     *  id here. read comments in .cpp! */
-    fun beginPopupContextItem(strId: String = "", mouseButton: MouseButton = MouseButton.Right): Boolean {
-        val window = currentWindow
-        if (window.skipItems) return false
-        // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
-        val id = if (strId.isNotEmpty()) window.getID(strId) else window.dc.lastItemId
-        assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
-        if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
-            openPopupEx(id)
-        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
-    }
-
-    /** Helper to open and begin popup when clicked on current window.  */
-    fun beginPopupContextWindow(
-            strId: String = "", mouseButton: MouseButton = MouseButton.Right,
-            alsoOverItems: Boolean = true,
-    ): Boolean {
-        val window = g.currentWindow!!
-        val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
-        if (isMouseReleased(mouseButton) && isWindowHovered(Hf.AllowWhenBlockedByPopup))
-            if (alsoOverItems || !isAnyItemHovered)
-                openPopupEx(id)
-        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
-    }
-
-    /** helper to open and begin popup when clicked in void (where there are no imgui windows). */
-    fun beginPopupContextVoid(strId: String = "", mouseButton: MouseButton = MouseButton.Right): Boolean {
-        val window = g.currentWindow!!
-        val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
-        if (isMouseReleased(mouseButton) && !isWindowHovered(Hf.AnyWindow))
-            if (topMostPopupModal == null)
-                openPopupEx(id)
-        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
@@ -152,8 +104,19 @@ interface popupsModals {
         g.withinEndChild = false
     }
 
+
+    // Popups: open/close functions
+    //  - OpenPopup(): set popup state to open.
+    //  - If not modal: they can be closed by clicking anywhere outside them, or by pressing ESCAPE.
+    //  - CloseCurrentPopup(): use inside the BeginPopup()/EndPopup() scope to close manually.
+    //  - CloseCurrentPopup() is called by default by Selectable()/MenuItem() when activated (FIXME: need some options).
+
+
+    /** call to mark popup as open (don't call every frame!). */
+    fun openPopup(strId: String) = openPopupEx(g.currentWindow!!.getID(strId))
+
     /** helper to open popup when clicked on last item. return true when just opened. (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)   */
-    fun openPopupContextItem(strId: String = "", mouseButton: MouseButton = MouseButton.Right) =
+    fun openPopupContextItem(strId: String = "", mouseButton: MouseButton = MouseButton.Right): Boolean =
             with(g.currentWindow!!) {
                 if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
                     // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
@@ -164,12 +127,7 @@ interface popupsModals {
                 } else false
             }
 
-    /** Return true if the popup is open at the current BeginPopup() level of the popup stack */
-    fun isPopupOpen(strId: String) = g.openPopupStack.size > g.beginPopupStack.size &&
-            g.openPopupStack[g.beginPopupStack.size].popupId == g.currentWindow!!.getID(strId)
-
-    /** close the popup we have begin-ed into. clicking on a MenuItem or Selectable automatically close
-     *  the current popup.  */
+    /** cmanually close the popup we have begin-ed into.  */
     fun closeCurrentPopup() {
 
         var popupIdx = g.beginPopupStack.lastIndex
@@ -194,5 +152,62 @@ interface popupsModals {
             To improve this usage pattern, we avoid nav highlight for a single frame in the parent window.
             Similarly, we could avoid mouse hover highlight in this window but it is less visually problematic. */
         g.navWindow?.dc?.navHideHighlightOneFrame = true
+    }
+
+    /** Return true if the popup is open at the current BeginPopup() level of the popup stack */
+    fun isPopupOpen(strId: String) = g.openPopupStack.size > g.beginPopupStack.size &&
+            g.openPopupStack[g.beginPopupStack.size].popupId == g.currentWindow!!.getID(strId)
+
+
+    // Popups: open+begin combined functions helpers
+    //  - Helpers to do OpenPopup+BeginPopup where the Open action is triggered by e.g. hovering an item and right-clicking.
+    //  - They are convenient to easily create context menus, hence the name.
+
+
+    /** This is a helper to handle the simplest case of associating one named popup to one given widget.
+     *  - You can pass a NULL str_id to use the identifier of the last item.
+     *  - You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
+     *  - This is essentially the same as calling OpenPopupContextItem() + BeginPopup() but written to avoid
+     *    computing the ID twice because BeginPopupContextXXX functions are called very frequently.
+     *
+     *  open+begin popup when clicked on last item. if you can pass a NULL str_id only if the previous item had an id.
+     *  If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here.
+     *  read comments in .cpp! */
+    fun beginPopupContextItem(strId: String = "", mouseButton: MouseButton = MouseButton.Right): Boolean {
+        val window = currentWindow
+        if (window.skipItems) return false
+        // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
+        val id = if (strId.isNotEmpty()) window.getID(strId) else window.dc.lastItemId
+        assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
+        if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))
+            openPopupEx(id)
+        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
+    }
+
+    /** Helper to open and begin popup when clicked on current window.
+     *
+     *  open+begin popup when clicked on current window.*/
+    fun beginPopupContextWindow(
+            strId: String = "", mouseButton: MouseButton = MouseButton.Right,
+            alsoOverItems: Boolean = true,
+    ): Boolean {
+        val window = g.currentWindow!!
+        val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
+        if (isMouseReleased(mouseButton) && isWindowHovered(Hf.AllowWhenBlockedByPopup))
+            if (alsoOverItems || !isAnyItemHovered)
+                openPopupEx(id)
+        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
+    }
+
+    /** helper to open and begin popup when clicked in void (where there are no imgui windows).
+     *
+     *  open+begin popup when clicked in void (where there are no windows). */
+    fun beginPopupContextVoid(strId: String = "", mouseButton: MouseButton = MouseButton.Right): Boolean {
+        val window = g.currentWindow!!
+        val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
+        if (isMouseReleased(mouseButton) && !isWindowHovered(Hf.AnyWindow))
+            if (topMostPopupModal == null)
+                openPopupEx(id)
+        return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 }
