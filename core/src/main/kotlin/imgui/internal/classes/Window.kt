@@ -875,11 +875,11 @@ class Window(
     }
 
     /** ~ClampWindowRect */
-    fun clampRect(viewportRect: Rect, padding: Vec2) {
+    infix fun clampRect(visibilityRect: Rect) {
         val sizeForClamping = Vec2(size)
         if (io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar)
             sizeForClamping.y = titleBarHeight
-        pos put glm.clamp(pos, viewportRect.min + padding - sizeForClamping, viewportRect.max - padding)
+        pos put glm.clamp(pos, visibilityRect.min - sizeForClamping, visibilityRect.max)
     }
 
     //-------------------------------------------------------------------------
