@@ -115,7 +115,7 @@ class Window(
     /** Set during the frame where the window is appearing (or re-appearing)    */
     var appearing = false
 
-    /** Do not display (== (HiddenFrames*** > 0)) */
+    /** Do not display (== HiddenFrames*** > 0) */
     var hidden = false
 
     /** Set on the "Debug##Default" window. */
