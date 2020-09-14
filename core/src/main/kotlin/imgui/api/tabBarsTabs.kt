@@ -86,8 +86,11 @@ interface tabBarsTabs {
 
     /** notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars).
      *  For tab-bar: call after BeginTabBar() and before Tab submissions. Otherwise call with a window name.
+     *
      *  [Public] This is call is 100% optional but it allows to remove some one-frame glitches when a tab has been unexpectedly removed.
-     *  To use it to need to call the function SetTabItemClosed() after BeginTabBar() and before any call to BeginTabItem() */
+     *  To use it to need to call the function SetTabItemClosed() after BeginTabBar() and before any call to BeginTabItem().
+     * Tabs closed by the close button will automatically be flagged to avoid this issue.
+     * FIXME: We should aim to support calling SetTabItemClosed() after the tab submission (for next frame) */
     fun setTabItemClosed(tabOrDockedWindowLabel: String) {
 
         val isWithinManualTabBar = g.currentTabBar?.flags?.hasnt(TabBarFlag._DockNode) == true
