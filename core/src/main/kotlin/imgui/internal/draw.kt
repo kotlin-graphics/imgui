@@ -206,7 +206,7 @@ class DrawListSplitter {
         if (_count <= 1) return
 
         setCurrentChannel(drawList, 0)
-        drawList.popUnusedDrawCmd()
+        drawList._popUnusedDrawCmd()
 
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
@@ -254,8 +254,8 @@ class DrawListSplitter {
                 drawList.idxBuffer[idxWrite++] = ch._idxBuffer[j]
         }
         drawList._idxWritePtr = idxWrite
-        drawList.updateClipRect() // We call this instead of AddDrawCmd(), so that empty channels won't produce an extra draw call.
-        drawList.updateTextureID()
+        drawList._onChangedClipRect() // We call this instead of AddDrawCmd(), so that empty channels won't produce an extra draw call.
+        drawList._onChangedTextureID()
         _count = 1
     }
 
