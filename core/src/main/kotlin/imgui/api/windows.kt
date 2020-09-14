@@ -481,7 +481,7 @@ interface windows {
             /* ---------- DRAWING ---------- */
 
             // Setup draw list and outer clipping rectangle
-            window.drawList.clear()
+            window.drawList.resetForNewFrame()
             window.drawList.pushTextureId(g.font.containerAtlas.texID)
             pushClipRect(hostRect.min, hostRect.max, false)
 
