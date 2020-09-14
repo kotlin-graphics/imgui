@@ -64,23 +64,12 @@ interface columns {
         }
 
         popItemWidth()
-
-        // Next column
-        if (++columns.current == columns.count)
-            columns.current = 0
-
-        // As a small optimization, to avoid doing PopClipRect() + SetCurrentChannel() + PushClipRect()
-        // (which would needlessly attempt to update commands in the wrong channel, then pop or overwrite them),
-        // We use a shortcut: we override ClipRect in window and drawlist's CmdHeader + SetCurrentChannel().
-        val column = columns.columns[columns.current]
-        window.clipRect put column.clipRect
-        window.drawList._cmdHeader.clipRect put column.clipRect.toVec4()
-        //PopClipRect();
+        popClipRect()
 
         val columnPadding = style.itemSpacing.x
         with(window) {
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
-            if (columns.current > 0) {
+            if (++columns.current < columns.count) {
                 // Columns 1+ ignore IndentX (by canceling it out)
                 // FIXME-COLUMNS: Unnecessary, could be locked?
                 dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + columnPadding
@@ -90,6 +79,7 @@ interface columns {
                 // Column 0 honor IndentX
                 dc.columnsOffset = (columnPadding - window.windowPadding.x) max 0f
                 columns.splitter.setCurrentChannel(window.drawList, 1)
+                columns.current = 0
                 columns.lineMinY = columns.lineMaxY
             }
             dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)
@@ -97,7 +87,7 @@ interface columns {
             dc.currLineSize.y = 0f
             dc.currLineTextBaseOffset = 0f
         }
-//        pushColumnClipRect(columns.current)
+        pushColumnClipRect(columns.current)     // FIXME-COLUMNS: Could it be an overwrite?
 
         // FIXME-COLUMNS: Share code with BeginColumns() - move code on columns setup.
         val offset0 = getColumnOffset(columns.current)

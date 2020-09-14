@@ -191,11 +191,6 @@ internal interface internalColumnsAPI {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
         if (columns.count == 1) return
-
-        // Set cmd header ahead to avoid SetCurrentChannel+PushClipRect doing an unnecessary AddDrawCmd/Pop
-        //if (window->DrawList->Flags & ImDrawListFlags_Debug) IMGUI_DEBUG_LOG("PushColumnsBackground()\n");
-        window.drawList._cmdHeader.clipRect = columns.hostClipRect.toVec4()
-
         columns.splitter.setCurrentChannel(window.drawList, 0)
         val cmdSize = window.drawList.cmdBuffer.size
         pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
@@ -206,12 +201,6 @@ internal interface internalColumnsAPI {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
         if (columns.count == 1) return
-
-        // Set cmd header ahead to avoid SetCurrentChannel+PushClipRect doing an unnecessary AddDrawCmd/Pop
-        //if (window->DrawList->Flags & ImDrawListFlags_Debug) IMGUI_DEBUG_LOG("PopColumnsBackground()\n");
-        val popClipRect = window.drawList._clipRectStack[window.drawList._clipRectStack.size - 2]
-        window.drawList._cmdHeader.clipRect put popClipRect
-
         columns.splitter.setCurrentChannel(window.drawList, columns.current + 1)
         popClipRect()
     }
