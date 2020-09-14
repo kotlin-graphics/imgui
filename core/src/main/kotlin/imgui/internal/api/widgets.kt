@@ -3,6 +3,7 @@ package imgui.internal.api
 import glm_.func.common.max
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcItemSize
@@ -30,8 +31,6 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.has
-import imgui.hasnt
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
@@ -388,6 +387,34 @@ internal interface widgets {
         window.drawList.addRectFilled(grabRect.min, grabRect.max, grabCol, style.scrollbarRounding)
 
         return held
+    }
+
+    /** ImageButton() is flawed as 'id' is always derived from 'texture_id' (see #2464 #1390)
+     *  We provide this internal helper to write your own variant while we figure out how to redesign the public ImageButton() API. */
+    fun imageButtonEx(
+            id: ID, textureId: TextureID, size: Vec2, uv0: Vec2, uv1: Vec2, padding: Vec2, bgCol: Vec4, tintCol: Vec4,
+    ): Boolean {
+
+        val window = currentWindow
+        if (window.skipItems)
+            return false
+
+        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding * 2)
+
+        itemSize(bb)
+        if (!itemAdd(bb, id))
+            return false
+        val (pressed, hovered, held) = buttonBehavior(bb, id)
+
+        // Render
+        val col = getColorU32(if(held && hovered) Col.ButtonActive else if(hovered) Col.ButtonHovered else Col.Button)
+        renderNavHighlight(bb, id)
+        renderFrame(bb.min, bb.max, col, true, clamp(min(padding.x, padding.y), 0f, style.frameRounding))
+        if (bgCol.w > 0f)
+            window.drawList.addRectFilled(bb.min + padding, bb.max - padding, bgCol.u32)
+        window.drawList.addImage(textureId, bb.min + padding, bb.max - padding, uv0, uv1, tintCol.u32)
+
+        return pressed
     }
 
     // GetWindowScrollbarRect -> Window class
