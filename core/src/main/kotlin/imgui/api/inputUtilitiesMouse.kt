@@ -41,6 +41,8 @@ interface inputUtilitiesMouse {
         return false
     }
 
+    fun isMouseReleased(button: Int): Boolean = isMouseReleased(MouseButton of button)
+
     /** did mouse button released? (went from Down to !Down) */
     fun isMouseReleased(button: MouseButton): Boolean {
         if (button == MouseButton.None)

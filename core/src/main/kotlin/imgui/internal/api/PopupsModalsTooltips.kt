@@ -86,10 +86,15 @@ internal interface PopupsModalsTooltips {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(id: ID) {
+    fun openPopupEx(id: ID, popupFlags: PopupFlags = PopupFlag.None.i) {
 
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.beginPopupStack.size
+
+        if (popupFlags has PopupFlag.NoOpenOverExistingPopup)
+            if (isPopupOpen(0, PopupFlag.AnyPopupId.i))
+                return
+
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupData(popupId = id, window = null, sourceWindow = g.navWindow, openFrameCount = g.frameCount,
