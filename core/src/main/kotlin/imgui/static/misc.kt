@@ -216,7 +216,10 @@ fun updateMouseWheel() {
 
 /** Handle resize for: Resize Grips, Borders, Gamepad
  * @return [JVM] borderHelf to Boolean   */
-fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int, resizeGripCol: IntArray): Pair<Int, Boolean> {
+fun updateWindowManualResize(
+        window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
+        resizeGripCol: IntArray, visibilityRect: Rect,
+): Pair<Int, Boolean> {
 
     var borderHeld = borderHeld_
 
@@ -268,8 +271,8 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
             // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
             // Corner of the window corresponding to our corner grip
             var cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPosN)
-            val clampMin = Vec2 { if (grip.cornerPosN[it] == 1f) style.displayWindowPadding[it] else -Float.MAX_VALUE }
-            val clampMax = Vec2 { if (grip.cornerPosN[it] == 0f) io.displaySize[it] - style.displayWindowPadding[it] else Float.MAX_VALUE }
+            val clampMin = Vec2 { if (grip.cornerPosN[it] == 1f) visibilityRect.min[it] else -Float.MAX_VALUE }
+            val clampMax = Vec2 { if (grip.cornerPosN[it] == 0f) visibilityRect.max[it] else Float.MAX_VALUE }
             cornerTarget = glm.clamp(cornerTarget, clampMin, clampMax)
             window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPosN, posTarget, sizeTarget)
         }
@@ -306,8 +309,8 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
                 }
                 else -> Vec2(0, 0)
             }
-            val clampMin = Vec2 { if (borderN == it + 1) style.displayWindowPadding[it] else -Float.MAX_VALUE }
-            val clampMax = Vec2 { if (borderN == (if (it == 0) 3 else 0)) io.displaySize[it] - style.displayWindowPadding[it] else Float.MAX_VALUE }
+            val clampMin = Vec2 { if (borderN == it + 1) visibilityRect.min[it] else -Float.MAX_VALUE }
+            val clampMax = Vec2 { if (borderN == (if (it == 0) 3 else 0)) visibilityRect.max[it] else Float.MAX_VALUE }
             borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
             window.calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
         }
@@ -328,7 +331,7 @@ fun updateWindowManualResize(window: Window, sizeAutoFit: Vec2, borderHeld_: Int
         if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
             val NAV_RESIZE_SPEED = 600f
             navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
-            navResizeDelta put glm.clamp(navResizeDelta, style.displayWindowPadding - window.pos - window.size, Vec2(Float.MAX_VALUE))
+            navResizeDelta put glm.max(navResizeDelta, visibilityRect.min - window.pos - window.size)
             g.navWindowingToggleLayer = false
             g.navDisableMouseHover = true
             resizeGripCol[0] = Col.ResizeGripActive.u32
