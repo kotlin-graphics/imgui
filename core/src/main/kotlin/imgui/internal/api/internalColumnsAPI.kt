@@ -22,6 +22,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.*
+import imgui.internal.classes.Window
 import imgui.internal.sections.ColumnData
 import imgui.internal.sections.ColumnsFlag
 import imgui.internal.sections.ColumnsFlags
@@ -31,6 +32,18 @@ import kotlin.math.min
 
 /** Internal Columns API (this is not exposed because we will encourage transitioning to the Tables API) */
 internal interface internalColumnsAPI {
+
+
+    /** [Internal] Small optimization to avoid calls to PopClipRect/SetCurrentChannel/PushClipRect in sequences,
+     * they would meddle many times with the underlying ImDrawCmd.
+     * Instead, we do a preemptive overwrite of clipping rectangle _without_ altering the command-buffer and let
+     * the subsequent single call to SetCurrentChannel() does it things once. */
+    fun setWindowClipRectBeforeSetChannel(window: Window, clipRect: Rect) {
+        val clipRectVec4 = clipRect.toVec4()
+        window.clipRect put clipRect
+        window.drawList._cmdHeader.clipRect = clipRectVec4 // safe, new instance
+        window.drawList._clipRectStack[window.drawList._clipRectStack.lastIndex] put clipRectVec4
+    }
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
     fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {
@@ -57,7 +70,7 @@ internal interface internalColumnsAPI {
 
             hostCursorPosY = window.dc.cursorPos.y
             hostCursorMaxPosX = window.dc.cursorMaxPos.x
-            hostClipRect put window.clipRect
+            hostInitialClipRect put window.clipRect
             hostWorkRect put window.workRect
 
             // Set state for first column
@@ -191,18 +204,21 @@ internal interface internalColumnsAPI {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
         if (columns.count == 1) return
+
+        // Optimization: avoid SetCurrentChannel() + PushClipRect()
+        columns.hostBackupClipRect put window.clipRect
+        setWindowClipRectBeforeSetChannel(window, columns.hostInitialClipRect)
         columns.splitter.setCurrentChannel(window.drawList, 0)
-        val cmdSize = window.drawList.cmdBuffer.size
-        pushClipRect(columns.hostClipRect.min, columns.hostClipRect.max, false)
-        assert(cmdSize >= window.drawList.cmdBuffer.size) { "Being in channel 0 this should not have created an ImDrawCmd" }
     }
 
     fun popColumnsBackground() {
         val window = currentWindowRead!!
         val columns = window.dc.currentColumns!!
         if (columns.count == 1) return
+
+        // Optimization: avoid PopClipRect() + SetCurrentChannel()
+        setWindowClipRectBeforeSetChannel(window, columns.hostBackupClipRect)
         columns.splitter.setCurrentChannel(window.drawList, columns.current + 1)
-        popClipRect()
     }
 
     fun getColumnsID(strId: String, columnsCount: Int): ID {
