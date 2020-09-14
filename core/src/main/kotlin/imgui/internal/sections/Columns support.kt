@@ -85,7 +85,10 @@ class Columns {
     var hostCursorMaxPosX = 0f
 
     /** Backup of ClipRect at the time of BeginColumns() */
-    var hostClipRect = Rect()
+    var hostInitialClipRect = Rect()
+
+    /** Backup of ClipRect during PushColumnsBackground()/PopColumnsBackground() */
+    var hostBackupClipRect = Rect()
 
     /** Backup of WorkRect at the time of BeginColumns() */
     var hostWorkRect = Rect()
