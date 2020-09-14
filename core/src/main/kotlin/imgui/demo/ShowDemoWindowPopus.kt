@@ -148,7 +148,7 @@ object ShowDemoWindowPopups {
             // Begin() call. So here we will make it that clicking on the text field with the right mouse button (1)
             // will toggle the visibility of the popup above.
             text("(You can also right-click me to open the same popup as above.)")
-            openPopupContextItem("item context menu", MouseButton.Right)
+            openPopupContextItem("item context menu", MouseButton.Right.i)
 
             // When used after an item that has an ID (e.g.Button), we can skip providing an ID to BeginPopupContextItem().
             // BeginPopupContextItem() will use the last item ID as the popup ID.
