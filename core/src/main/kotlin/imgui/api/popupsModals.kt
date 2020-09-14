@@ -16,6 +16,7 @@ import imgui.ImGui.isWindowHovered
 import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.topMostPopupModal
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.hasnt
@@ -92,7 +93,8 @@ interface popupsModals {
         val window = g.currentWindow!!
         val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
         if (isMouseReleased(mouseButton) && !isWindowHovered(Hf.AnyWindow))
-            openPopupEx(id)
+            if (topMostPopupModal == null)
+                openPopupEx(id)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
 
