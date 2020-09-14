@@ -952,7 +952,17 @@ class DrawList(sharedData: DrawListSharedData?) {
         // TODO check
 //        resetForNewFrame()
 //        _splitter.clearFreeMemory(destroy)
+    }
 
+    /** Pop trailing draw command (used before merging or presenting to user)
+     *  Note that this leaves the ImDrawList in a state unfit for further commands,
+     *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
+    fun popUnusedDrawCmd() {
+        if (cmdBuffer.isEmpty())
+            return
+        val currCmd = cmdBuffer.last()
+        if (currCmd.elemCount == 0 && currCmd.userCallback == null)
+            cmdBuffer.pop()
     }
 
     /** Reserve space for a number of vertices and indices.
@@ -1147,14 +1157,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** AddDrawListToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
 
+        // Remove trailing command if unused.
+        // Technically we could return directly instead of popping, but this make things looks neat in Metrics window as well.
+        popUnusedDrawCmd()
         if (cmdBuffer.empty()) return
-
-        // Remove trailing command if unused
-        val currCmd = cmdBuffer.last()
-        if (currCmd.elemCount == 0 && currCmd.userCallback == null) {
-            cmdBuffer.pop()
-            if (cmdBuffer.empty()) return
-        }
 
         /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
             May trigger for you if you are using PrimXXX functions incorrectly.   */

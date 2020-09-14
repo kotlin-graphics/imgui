@@ -202,12 +202,11 @@ class DrawListSplitter {
 
     infix fun merge(drawList: DrawList) {
 
-        // Note that we never use or rely on channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
+        // Note that we never use or rely on _Channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
         if (_count <= 1) return
 
         setCurrentChannel(drawList, 0)
-        if (drawList.cmdBuffer.lastOrNull()?.elemCount == 0)
-            drawList.cmdBuffer.pop()
+        drawList.popUnusedDrawCmd()
 
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
@@ -215,9 +214,13 @@ class DrawListSplitter {
         var lastCmd = if (_count > 0 && drawList.cmdBuffer.isNotEmpty()) drawList.cmdBuffer.last() else null
         var idxOffset = lastCmd?.run { idxOffset + elemCount } ?: 0
         for (i in 1 until _count) {
+
             val ch = _channels[i]
+
+            // Equivalent of PopUnusedDrawCmd() for this channel's cmdbuffer and except we don't need to test for UserCallback.
             if (ch._cmdBuffer.lastOrNull()?.elemCount == 0)
                 ch._cmdBuffer.pop()
+
             if (ch._cmdBuffer.isNotEmpty() && lastCmd != null) {
                 val nextCmd = ch._cmdBuffer[0]
                 if (lastCmd headerCompare nextCmd && lastCmd.userCallback == null && nextCmd.userCallback == null) {
