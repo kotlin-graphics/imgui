@@ -64,7 +64,7 @@ class Window(
     /** Window padding at the time of Begin(). */
     var windowPadding = Vec2()
 
-    /** Window rounding at the time of Begin().   */
+    /** Window rounding at the time of Begin(). May be clamped lower to avoid rendering artifacts with title bar, menu bar etc.   */
     var windowRounding = 0f
 
     /** Window border size at the time of Begin().    */
