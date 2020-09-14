@@ -12,7 +12,6 @@ import imgui.internal.floor
 class Rect {
     /** Upper-left  */
     var min = Vec2()
-
     /** Lower-right */
     var max = Vec2()
 
@@ -57,16 +56,12 @@ class Rect {
     val size get() = max - min
     val width get() = max.x - min.x
     val height get() = max.y - min.y
-
     /** Top-left    */
     val tl get() = Vec2(min)
-
     /** Top-right   */
     val tr get() = Vec2(max.x, min.y)
-
     /** Bottom-left */
     val bl get() = Vec2(min.x, max.y)
-
     /** Bottom-right    */
     val br get() = Vec2(max)
 
@@ -139,7 +134,7 @@ class Rect {
     }
 
     val isInverted get() = min.x > max.x || min.y > max.y
-    fun toVec4(): Vec4 = Vec4(min, max)
+    val isFinite get() = min.x != Float.MAX_VALUE
 
     fun put(min: Vec2, max: Vec2) {
         this.min put min
