@@ -859,7 +859,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     triangles.  */
     fun addCallback(callback: DrawCallback, callbackData: Any? = null) {
         var currCmd = cmdBuffer.last()
-        if (currCmd.elemCount != 0 || currCmd.userCallback != null) {
+        assert(currCmd.userCallback == null)
+        if (currCmd.elemCount != 0) {
             addDrawCmd()
             currCmd = cmdBuffer.last()
         }
@@ -1116,10 +1117,11 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun _onChangedClipRect() {
         // If current command is used with different settings we need to add a new command
         val currCmd = cmdBuffer.last()
-        if ((currCmd.elemCount != 0 && currCmd.clipRect != _cmdHeader.clipRect) || currCmd.userCallback != null) {
+        if (currCmd.elemCount != 0 && currCmd.clipRect != _cmdHeader.clipRect) {
             addDrawCmd()
             return
         }
+        assert(currCmd.userCallback == null)
 
         // Try to merge with previous command if it matches, else use current command
         val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
@@ -1135,10 +1137,11 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // If current command is used with different settings we need to add a new command
         val currCmd = cmdBuffer.last()
-        if ((currCmd.elemCount != 0 && currCmd.textureId != _cmdHeader.textureId) || currCmd.userCallback != null) {
+        if (currCmd.elemCount != 0 && currCmd.textureId != _cmdHeader.textureId) {
             addDrawCmd()
             return
         }
+        assert(currCmd.userCallback == null)
 
         val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
         if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
