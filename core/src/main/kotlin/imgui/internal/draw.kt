@@ -182,10 +182,11 @@ class DrawListSplitter {
             if (i < oldChannelsCount)
                 _channels[i].resize0()
             if (_channels[i]._cmdBuffer.isEmpty())
-                _channels[i]._cmdBuffer.add(DrawCmd().apply {
+                _channels[i]._cmdBuffer += DrawCmd().apply {
                     clipRect put drawList._clipRectStack.last()
                     textureId = drawList._textureIdStack.last()
-                })
+                    vtxOffset = drawList._vtxCurrentOffset
+                }
         }
     }
 
