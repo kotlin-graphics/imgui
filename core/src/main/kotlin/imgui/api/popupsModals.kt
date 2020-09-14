@@ -69,12 +69,14 @@ interface popupsModals {
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
             return false
         }
-        // Center modal windows by default
+
+        // Center modal windows by default for increased visibility
+        // (this won't really last as settings will kick in, and is mostly for backward compatibility. user may do the same themselves)
         // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
         if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasPos)
-            setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Appearing, Vec2(0.5f))
+            setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.FirstUseEver, Vec2(0.5f))
 
-        val flags = flags_ or Wf._Popup or Wf._Modal or Wf.NoCollapse or Wf.NoSavedSettings
+        val flags = flags_ or Wf._Popup or Wf._Modal or Wf.NoCollapse
         val isOpen = begin(name, pOpen, flags)
         // NB: isOpen can be 'false' when the popup is completely clipped (e.g. zero size display)
         if (!isOpen || pOpen?.get() == false) {
