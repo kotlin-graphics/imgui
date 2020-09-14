@@ -6,8 +6,12 @@ import imgui.ImGui.currentWindow
 /** Clipping */
 interface clipping {
 
-    /** When using this function it is sane to ensure that float are perfectly rounded to integer values, to that e.g.
-    (int)(max.x-min.x) in user's render produce correct result. */
+    /** Push a clipping rectangle for both ImGui logic (hit-testing etc.) and low-level ImDrawList rendering.
+     *  - When using this function it is sane to ensure that float are perfectly rounded to integer values,
+     *    so that e.g. (int)(max.x-min.x) in user's render produce correct result.
+     *  - If the code here changes, may need to update code of functions like NextColumn() and PushColumnClipRect():
+     *    some frequently called functions which to modify both channels and clipping simultaneously tend to use a more
+     *    specialized code path to added extraneous updates of the underlying ImDrawCmd. */
     fun pushClipRect(clipRectMin: Vec2, clipRectMax: Vec2, intersectWithCurrentClipRect: Boolean) {
         currentWindow.apply {
             drawList.pushClipRect(clipRectMin, clipRectMax, intersectWithCurrentClipRect)
