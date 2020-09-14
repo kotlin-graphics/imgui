@@ -359,6 +359,7 @@ interface windows {
             window.pos put floor(window.pos)
 
             // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)
+            // Large values tend to lead to variety of artifacts and are not recommended.
             window.windowRounding = when {
                 flags has Wf._ChildWindow -> style.childRounding
                 else -> when {
@@ -366,6 +367,10 @@ interface windows {
                     else -> style.windowRounding
                 }
             }
+
+            // For windows with title bar or menu bar, we clamp to FrameHeight(FontSize + FramePadding.y * 2.0f) to completely hide artifacts.
+            //if ((window->Flags & ImGuiWindowFlags_MenuBar) || !(window->Flags & ImGuiWindowFlags_NoTitleBar))
+            //    window->WindowRounding = ImMin(window->WindowRounding, g.FontSize + style.FramePadding.y * 2.0f);
 
             // Apply window focus (new and reactivated windows are moved to front)
             val wantFocus = when {
