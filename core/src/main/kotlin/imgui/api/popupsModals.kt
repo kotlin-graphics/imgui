@@ -34,7 +34,8 @@ import imgui.WindowFlag as Wf
  *  Those three properties are connected: we need to retain popup visibility state in the library because popups may be closed as any time.
  *  (*1) You can bypass that restriction and detect hovering even when normally blocked by a popup.
  *      To do this use the ImGuiHoveredFlags_AllowWhenBlockedByPopup when calling IsItemHovered() or IsWindowHovered().
- *      This is what BeginPopupContextItem() and BeginPopupContextWindow() are doing already, allowing a right-click to reopen another popups without losing the click. */
+ *      This is what BeginPopupContextItem() and BeginPopupContextWindow() are doing already, allowing a right-click to reopen another popups without losing the click.
+ *  - The BeginPopupContextXXX functions are essentially helpers to do an OpenPopup() in some condition + BeginPopup(). */
 interface popupsModals {
 
     /** call to mark popup as open (don't call every frame!). popups are closed when user click outside, or if
@@ -54,8 +55,11 @@ interface popupsModals {
     }
 
     /** This is a helper to handle the simplest case of associating one named popup to one given widget.
-     *  You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
-     *  You can pass a NULL str_id to use the identifier of the last item.
+     *  - You can pass a NULL str_id to use the identifier of the last item.
+     *  - You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
+     *  - This is essentially the same as calling OpenPopupContextItem() + BeginPopupEx() but written to avoid
+     *    computing the ID twice because BeginPopupContextXXX functions are called very frequently.
+     *
      *  helper to open and begin popup when clicked on last item. if you can pass an empty strId only if the previous
      *  item had an id. If you want to use that on a non-interactive item such as text() you need to pass in an explicit
      *  id here. read comments in .cpp! */
@@ -71,9 +75,12 @@ interface popupsModals {
     }
 
     /** Helper to open and begin popup when clicked on current window.  */
-    fun beginPopupContextWindow(strId: String = "", mouseButton: MouseButton = MouseButton.Right
-                                , alsoOverItems: Boolean = true): Boolean {
-        val id = currentWindow.getID(if (strId.isEmpty()) "window_context" else strId)
+    fun beginPopupContextWindow(
+            strId: String = "", mouseButton: MouseButton = MouseButton.Right,
+            alsoOverItems: Boolean = true,
+    ): Boolean {
+        val window = g.currentWindow!!
+        val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
         if (isMouseReleased(mouseButton) && isWindowHovered(Hf.AllowWhenBlockedByPopup))
             if (alsoOverItems || !isAnyItemHovered)
                 openPopupEx(id)
@@ -82,7 +89,8 @@ interface popupsModals {
 
     /** helper to open and begin popup when clicked in void (where there are no imgui windows). */
     fun beginPopupContextVoid(strId: String = "", mouseButton: MouseButton = MouseButton.Right): Boolean {
-        val id = currentWindow.getID(if (strId.isEmpty()) "window_context" else strId)
+        val window = g.currentWindow!!
+        val id = window.getID(if (strId.isEmpty()) "window_context" else strId)
         if (isMouseReleased(mouseButton) && !isWindowHovered(Hf.AnyWindow))
             openPopupEx(id)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
@@ -142,8 +150,7 @@ interface popupsModals {
         g.withinEndChild = false
     }
 
-    /** Helper to open popup when clicked on last item.  (note: actually triggers on the mouse _released_ event to be
-     *  consistent with popup behaviors). return true when just opened.   */
+    /** helper to open popup when clicked on last item. return true when just opened. (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)   */
     fun openPopupContextItem(strId: String = "", mouseButton: MouseButton = MouseButton.Right) =
             with(g.currentWindow!!) {
                 if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
@@ -155,6 +162,7 @@ interface popupsModals {
                 } else false
             }
 
+    /** Return true if the popup is open at the current BeginPopup() level of the popup stack */
     fun isPopupOpen(strId: String) = g.openPopupStack.size > g.beginPopupStack.size &&
             g.openPopupStack[g.beginPopupStack.size].popupId == g.currentWindow!!.getID(strId)
 
