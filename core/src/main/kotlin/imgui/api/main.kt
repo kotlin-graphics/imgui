@@ -88,11 +88,11 @@ interface main {
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
             g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
 
-        g.backgroundDrawList.clear()
+        g.backgroundDrawList.resetForNewFrame()
         g.backgroundDrawList.pushTextureId(io.fonts.texID)
         g.backgroundDrawList.pushClipRectFullScreen()
 
-        g.foregroundDrawList.clear()
+        g.foregroundDrawList.resetForNewFrame()
         g.foregroundDrawList.pushTextureId(io.fonts.texID)
         g.foregroundDrawList.pushClipRectFullScreen()
 

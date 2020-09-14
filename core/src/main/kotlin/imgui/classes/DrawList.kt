@@ -44,7 +44,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** Draw commands. Typically 1 command = 1 GPU draw call, unless the command is a callback.    */
-    var cmdBuffer = Stack<DrawCmd>()
+    val cmdBuffer = Stack<DrawCmd>()
 
     /** Index buffer. Each command consume ImDrawCmd::ElemCount of those    */
     var idxBuffer = IntBuffer(0)
@@ -58,7 +58,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
-    var flags: DrawListFlags = 0
+    var flags: DrawListFlags = DrawListFlag.None.i
 
     /** Pointer to shared draw data (you can use ImGui::drawListSharedData to get the one from current ImGui context) */
     var _data: DrawListSharedData = sharedData ?: DrawListSharedData()
@@ -839,10 +839,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Your rendering function must check for 'UserCallback' in ImDrawCmd and call the function instead of rendering
     triangles.  */
     fun addCallback(callback: DrawCallback, callbackData: Any? = null) {
-        var currCmd = cmdBuffer.lastOrNull()
-        if (currCmd == null || currCmd.elemCount != 0 || currCmd.userCallback != null) {
+        var currCmd = cmdBuffer.last()
+        if (currCmd.elemCount != 0 || currCmd.userCallback != null) {
             addDrawCmd()
-            currCmd = cmdBuffer.last()!!
+            currCmd = cmdBuffer.last()
         }
 
         currCmd.userCallback = callback
@@ -885,9 +885,12 @@ class DrawList(sharedData: DrawListSharedData?) {
     // [Internal helpers]
     // NB: all primitives needs to be reserved via PrimReserve() beforehand!
     // -----------------------------------------------------------------------------------------------------------------
-    fun clear() {
+
+    /** Initialize before use in a new frame. We always have a command ready in the buffer. */
+    fun resetForNewFrame() {
         cmdBuffer.clear()
-        idxBuffer = idxBuffer.resize(0) // we dont assign because it wont create a new instance for sure
+        // we dont assign because it wont create a new instance for sure
+        idxBuffer = idxBuffer.resize(0)
         vtxBuffer = vtxBuffer.resize(0)
         flags = _data.initialFlags
         _vtxCurrentOffset = 0
@@ -898,17 +901,31 @@ class DrawList(sharedData: DrawListSharedData?) {
         _textureIdStack.clear()
         _path.clear()
         _splitter.clear()
+        cmdBuffer += DrawCmd()
     }
 
+    /** @param destroy useful to declare if this is a memory release or not */
     fun clearFreeMemory(destroy: Boolean = false) {
-        clear()
-        _splitter.clearFreeMemory(destroy)
-        vtxBuffer.data.free()
-        idxBuffer.free()
-        if(!destroy) {
-            vtxBuffer = DrawVert_Buffer(0)
-            idxBuffer = IntBuffer(0)
+        cmdBuffer.clear()
+        // we dont assign because it wont create a new instance for sure
+        if(destroy) {
+            vtxBuffer.data.free()
+            idxBuffer.free()
+        } else {
+            idxBuffer = idxBuffer.resize(0)
+            vtxBuffer = vtxBuffer.resize(0)
         }
+        _vtxCurrentIdx = 0
+        _vtxWritePtr = 0
+        _idxWritePtr = 0
+        _clipRectStack.clear()
+        _textureIdStack.clear()
+        _path.clear()
+        _splitter.clearFreeMemory()
+        // TODO check
+//        resetForNewFrame()
+//        _splitter.clearFreeMemory(destroy)
+
     }
 
     /** Reserve space for a number of vertices and indices.
@@ -1061,9 +1078,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     functions only. */
     fun updateClipRect() {
         // If current command is used with different settings we need to add a new command
-        val currClipRect = Vec4(currentClipRect)
-        val currCmd = cmdBuffer.lastOrNull()
-        if (currCmd == null || (currCmd.elemCount != 0 && currCmd.clipRect != currClipRect) || currCmd.userCallback != null) {
+        val currClipRect = currentClipRect // [JVM] careful, no copy
+        val currCmd = cmdBuffer.last()
+        if ((currCmd.elemCount != 0 && currCmd.clipRect != currClipRect) || currCmd.userCallback != null) {
             addDrawCmd()
             return
         }
@@ -1084,7 +1101,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun updateTextureID() {
 
         // If current command is used with different settings we need to add a new command
-        val currCmd = if (cmdBuffer.isNotEmpty()) cmdBuffer.last() else null
+        val currCmd = cmdBuffer.last()
         if (currCmd == null || (currCmd.elemCount != 0 && currCmd.textureId != currentTextureId!!) || currCmd.userCallback != null) {
             addDrawCmd()
             return
