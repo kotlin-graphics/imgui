@@ -259,8 +259,13 @@ class DrawListSplitter {
         if (drawList.cmdBuffer.isEmpty() || drawList.cmdBuffer.last().userCallback != null)
             drawList.addDrawCmd()
 
-        drawList._onChangedClipRect() // We call this instead of AddDrawCmd(), so that empty channels won't produce an extra draw call.
-        drawList._onChangedTextureID()
+        // If current command is used with different settings we need to add a new command
+        val currCmd = drawList.cmdBuffer.last()
+        if (currCmd.elemCount == 0)
+            currCmd headerCopy drawList._cmdHeader // Copy ClipRect, TextureId, VtxOffset
+        else if (!currCmd.headerCompare(drawList._cmdHeader))
+            drawList.addDrawCmd()
+
         _count = 1
     }
 
@@ -279,6 +284,13 @@ class DrawListSplitter {
         drawList.idxBuffer.free()
         drawList.idxBuffer = imgui.IntBuffer(_channels[idx]._idxBuffer)
         drawList._idxWritePtr = drawList.idxBuffer.lim
+
+        // If current command is used with different settings we need to add a new command
+        val currCmd = drawList.cmdBuffer.last()
+        if (currCmd.elemCount == 0)
+            currCmd headerCopy drawList._cmdHeader // Copy ClipRect, TextureId, VtxOffset
+        else if (!currCmd.headerCompare(drawList._cmdHeader))
+            drawList.addDrawCmd()
     }
 }
 
