@@ -1123,10 +1123,11 @@ class DrawList(sharedData: DrawListSharedData?) {
         assert(currCmd.userCallback == null)
 
         // Try to merge with previous command if it matches, else use current command
-        val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
-        if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
-            cmdBuffer.pop()
-            return
+        cmdBuffer.getOrNull(cmdBuffer.lastIndex - 1)?.let { prevCmd ->
+            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+                cmdBuffer.pop()
+                return
+            }
         }
 
         currCmd.clipRect put _cmdHeader.clipRect
@@ -1142,10 +1143,11 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
         assert(currCmd.userCallback == null)
 
-        val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
-        if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
-            cmdBuffer.pop()
-            return
+        cmdBuffer.getOrNull(cmdBuffer.lastIndex - 1)?.let { prevCmd ->
+            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+                cmdBuffer.pop()
+                return
+            }
         }
 
         currCmd.textureId = _cmdHeader.textureId
