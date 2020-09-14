@@ -354,7 +354,8 @@ interface windows {
                 // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
                 val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
                 if (viewportRect.width > 0f && viewportRect.height > 0f)
-                    window.clampRect(viewportRect, clampPadding)
+                    window.
+                    clampRect(viewportRect, clampPadding)
             }
             window.pos put floor(window.pos)
 
