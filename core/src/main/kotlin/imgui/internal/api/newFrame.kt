@@ -7,7 +7,7 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.isPopupOpenAtAnyLevel
+import imgui.ImGui.isPopupOpen
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
@@ -130,7 +130,7 @@ internal interface newFrame {
             // Handle the edge case of a popup being closed while clicking in its empty space.
             // If we try to focus it, FocusWindow() > ClosePopupsOverWindow() will accidentally close any parent popups because they are not linked together any more.
             val rootWindow = g.hoveredRootWindow
-            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpenAtAnyLevel(rootWindow.popupId)
+            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpen(rootWindow.popupId, PopupFlag.AnyPopupLevel.i)
 
             if (rootWindow != null && !isClosedPopup) {
                 g.hoveredWindow!!.startMouseMoving()

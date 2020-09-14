@@ -19,10 +19,10 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.has
-import imgui.internal.*
-import imgui.internal.classes.Window
 import imgui.internal.classes.PopupData
 import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
+import imgui.internal.floor
 import imgui.internal.sections.*
 import imgui.static.navCalcPreferredRefPos
 import imgui.static.navRestoreLastChildNavWindow
@@ -51,7 +51,7 @@ internal interface PopupsModalsTooltips {
         setNextWindowSize(size)
 
         // Build up name. If you need to append to a same child from multiple location in the ID stack, use BeginChild(ImGuiID id) with a stable value.
-        val postfix = if(name.isEmpty()) "" else "_"
+        val postfix = if (name.isEmpty()) "" else "_"
         val title = "${parentWindow.name}/$name$postfix%08X".format(style.locale, id)
         val backupBorderSize = style.childBorderSize
         if (!border) style.childBorderSize = 0f
@@ -178,16 +178,24 @@ internal interface PopupsModalsTooltips {
         }
     }
 
-    /** return true if the popup is open at the current begin-ed level of the popup stack.
+    /** Supported flags: ImGuiPopupFlags_AnyPopupId, ImGuiPopupFlags_AnyPopupLevel
      *
      *  Test for id at the current BeginPopup() level of the popup stack (this doesn't scan the whole popup stack!) */
-    fun isPopupOpen(id: ID) = g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
-
-    fun isPopupOpenAtAnyLevel(id: ID): Boolean = g.openPopupStack.any { it.popupId == id }
-
-    /** Return true if any popup is open at the current BeginPopup() level of the popup stack
-     *  This may be used to e.g. test for another popups already opened in the same frame to handle popups priorities at the same level. */
-    fun isAnyPopupOpen(): Boolean = g.openPopupStack.size > g.beginPopupStack.size
+    fun isPopupOpen(id: ID, popupFlags: PopupFlags = PopupFlag.None.i): Boolean = when {
+        popupFlags has PopupFlag.AnyPopupId -> {
+            // Return true if any popup is open at the current BeginPopup() level of the popup stack
+            // This may be used to e.g. test for another popups already opened to handle popups priorities at the same level.
+            assert(id == 0)
+            when {
+                popupFlags has PopupFlag.AnyPopupLevel -> g.openPopupStack.isNotEmpty()
+                else -> g.openPopupStack.size > g.beginPopupStack.size
+            }
+        }
+        // Return true if the popup is open anywhere in the popup stack
+        popupFlags has PopupFlag.AnyPopupLevel -> g.openPopupStack.any { it.popupId == id }
+        // Return true if the popup is open at the current BeginPopup() level of the popup stack (this is the most-common query)
+        else -> g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
+    }
 
     /** Attention! BeginPopup() adds default flags which BeginPopupEx()! */
     fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
@@ -197,7 +205,7 @@ internal interface PopupsModalsTooltips {
             return false
         }
 
-        var flags =  flags_
+        var flags = flags_
         val name = when {
             flags has Wf._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginPopupStack.size)    // Recycle windows based on depth
             else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
@@ -214,7 +222,7 @@ internal interface PopupsModalsTooltips {
      *  @param extraFlags WindowFlag   */
     fun beginTooltipEx(extraFlags: WindowFlags, tooltipFlags_: TooltipFlags) {
         var tooltipFlags = tooltipFlags_
-        if (g.dragDropWithinSource || g.dragDropWithinTarget)        {
+        if (g.dragDropWithinSource || g.dragDropWithinTarget) {
             // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
             // Whatever we do we want to call SetNextWindowPos() to enforce a tooltip position and disable clipping the tooltip without our display area, like regular tooltip do.
@@ -292,8 +300,10 @@ internal interface PopupsModalsTooltips {
 
     /** rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
      *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it. */
-    fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
-                                    policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
+    fun findBestWindowPosForPopupEx(
+            refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
+            policy: PopupPositionPolicy = PopupPositionPolicy.Default,
+    ): Vec2 {
 
         var lastDir by lastDirPtr
         val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)

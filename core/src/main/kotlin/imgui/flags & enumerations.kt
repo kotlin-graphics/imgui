@@ -302,6 +302,35 @@ infix fun TreeNodeFlags.hasnt(b: TreeNodeFlag): Boolean = and(b.i) == 0
 infix fun TreeNodeFlags.wo(b: TreeNodeFlag): TreeNodeFlags = and(b.i.inv())
 
 
+typealias PopupFlags = Int
+
+/** Flags for IsPopupOpen() function. */
+enum class PopupFlag(@JvmField val i: PopupFlags) {
+
+    None                    (0),
+    /** For IsPopupOpen(): ignore the ImGuiID parameter and test for any popup. */
+    AnyPopupId              (1 shl 7),
+    /** For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level) */
+    AnyPopupLevel           (1 shl 8),
+    AnyPopup                (AnyPopupId or AnyPopupLevel);
+
+    infix fun and(b: PopupFlag): PopupFlags = i and b.i
+    infix fun and(b: PopupFlags): PopupFlags = i and b
+    infix fun or(b: PopupFlag): PopupFlags = i or b.i
+    infix fun or(b: PopupFlags): PopupFlags = i or b
+    infix fun xor(b: PopupFlag): PopupFlags = i xor b.i
+    infix fun xor(b: PopupFlags): PopupFlags = i xor b
+    infix fun wo(b: PopupFlags): PopupFlags = and(b.inv())
+}
+
+infix fun PopupFlags.and(b: PopupFlag): PopupFlags = and(b.i)
+infix fun PopupFlags.or(b: PopupFlag): PopupFlags = or(b.i)
+infix fun PopupFlags.xor(b: PopupFlag): PopupFlags = xor(b.i)
+infix fun PopupFlags.has(b: PopupFlag): Boolean = and(b.i) != 0
+infix fun PopupFlags.hasnt(b: PopupFlag): Boolean = and(b.i) == 0
+infix fun PopupFlags.wo(b: PopupFlag): PopupFlags = and(b.i.inv())
+
+
 typealias SelectableFlags = Int
 
 /** Flags for ImGui::Selectable()   */

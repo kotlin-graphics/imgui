@@ -212,4 +212,19 @@ interface popupsModals {
                 openPopupEx(id)
         return beginPopupEx(id, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)
     }
+
+
+    // Popups: test function
+    //  - IsPopupOpen(): return true if the popup is open at the current BeginPopup() level of the popup stack.
+    //  - IsPopupOpen() with ImGuiPopupFlags_AnyPopupId: return true if any popup is open at the current BeginPopup() level of the popup stack.
+    //  - IsPopupOpen() with ImGuiPopupFlags_AnyPopupId + ImGuiPopupFlags_AnyPopupLevel: return true if any popup is open.
+
+
+    /** return true if the popup is open. */
+    fun isPopupOpen(strId: String, popupFlags: PopupFlags = PopupFlag.None.i): Boolean {
+        val id = if (popupFlags has PopupFlag.AnyPopupId) 0 else g.currentWindow!!.getID(strId)
+        if (popupFlags has PopupFlag.AnyPopupLevel && id != 0)
+            assert(false) { "Cannot use IsPopupOpen() with a string id and ImGuiPopupFlags_AnyPopupLevel." } // But non-string version is legal and used internally
+        return isPopupOpen(id, popupFlags)
+    }
 }
