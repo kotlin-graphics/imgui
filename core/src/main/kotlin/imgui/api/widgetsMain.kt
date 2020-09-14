@@ -1,5 +1,6 @@
 package imgui.api
 
+import glm_.L
 import glm_.glm
 import glm_.max
 import glm_.vec2.Vec2
@@ -15,6 +16,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
+import imgui.ImGui.imageButtonEx
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
@@ -123,30 +125,13 @@ interface widgetsMain {
         val window = currentWindow
         if (window.skipItems) return false
 
-        /*  Default to using texture ID as ID. User can still push string/integer prefixes.
-            We could hash the size/uv to create a unique ID but that would prevent the user from animating UV.         */
-        pushID(Integer.valueOf(userTextureId))
+        // Default to using texture ID as ID. User can still push string/integer prefixes.
+        pushID(userTextureId.L)
         val id = window.getID("#image")
         popID()
 
-        val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding * 2)
-        val imageBb = Rect(window.dc.cursorPos + padding, window.dc.cursorPos + padding + size)
-        itemSize(bb)
-        if (!itemAdd(bb, id))
-            return false
-
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
-
-        // Render
-        val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
-        renderNavHighlight(bb, id)
-        renderFrame(bb.min, bb.max, col.u32, true, glm.clamp(glm.min(padding.x, padding.y), 0f, style.frameRounding))
-        if (bgCol.w > 0f)
-            window.drawList.addRectFilled(imageBb.min, imageBb.max, getColorU32(bgCol))
-        window.drawList.addImage(userTextureId, imageBb.min, imageBb.max, uv0, uv1, getColorU32(tintCol))
-
-        return pressed
+        val padding = if(framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
+        return imageButtonEx(id, userTextureId, size, uv0, uv1, padding, bgCol, tintCol)
     }
 
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
