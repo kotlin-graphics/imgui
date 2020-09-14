@@ -206,7 +206,8 @@ internal interface widgetsLowLevelBehaviors {
                 }
                 if (flags has Bf.PressedOnRelease && mouseButtonReleased != -1) {
                     // Repeat mode trumps on release behavior
-                    if (!(flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay))
+                    val hasRepeatedAtLeastOnce = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay
+                    if (!hasRepeatedAtLeastOnce)
                         pressed = true
                     clearActiveID()
                 }
