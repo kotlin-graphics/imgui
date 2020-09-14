@@ -144,18 +144,21 @@ internal interface basicHelpersForWidgetCode {
             g.navDisableMouseHover || !window.isContentHoverable(HoveredFlag.None) -> false
             window.dc.itemFlags has ItemFlag.Disabled -> false
             else -> {
-                hoveredId = id
+                // We exceptionally allow this function to be called with id==0 to allow using it for easy high-level
+                // hover test in widgets code. We could also decide to split this function is two.
+                if (id != 0) {
+                    hoveredId = id
 
-                // [DEBUG] Item Picker tool!
-                // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
-                // the cost of this tool near-zero. We can get slightly better call-stack and support picking non-hovered
-                // items if we perform the test in ItemAdd(), but that would incur a small runtime cost.
-                // #define IMGUI_DEBUG_TOOL_ITEM_PICKER_EX in imconfig.h if you want this check to also be performed in ItemAdd().
-                if (g.debugItemPickerActive && g.hoveredIdPreviousFrame == id)
-                    foregroundDrawList.addRect(bb.min, bb.max, COL32(255, 255, 0, 255))
-                if (g.debugItemPickerBreakId == id)
-                    IM_DEBUG_BREAK()
-
+                    // [DEBUG] Item Picker tool!
+                    // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
+                    // the cost of this tool near-zero. We can get slightly better call-stack and support picking non-hovered
+                    // items if we perform the test in ItemAdd(), but that would incur a small runtime cost.
+                    // #define IMGUI_DEBUG_TOOL_ITEM_PICKER_EX in imconfig.h if you want this check to also be performed in ItemAdd().
+                    if (g.debugItemPickerActive && g.hoveredIdPreviousFrame == id)
+                        foregroundDrawList.addRect(bb.min, bb.max, COL32(255, 255, 0, 255))
+                    if (g.debugItemPickerBreakId == id)
+                        IM_DEBUG_BREAK()
+                }
                 true
             }
         }
