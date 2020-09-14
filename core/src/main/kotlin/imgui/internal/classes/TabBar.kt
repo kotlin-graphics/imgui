@@ -373,7 +373,7 @@ class TabBar {
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
         if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered())
-            if (this.flags hasnt TabBarFlag.NoTooltip)
+            if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
                 setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
         return tabContentsVisible
