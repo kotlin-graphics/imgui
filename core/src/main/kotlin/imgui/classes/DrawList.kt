@@ -910,8 +910,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         ASSERT_PARANOID(idxCount >= 0 && vtxCount >= 0)
         if (DrawIdx.BYTES == 2 && _vtxCurrentIdx + vtxCount >= (1 shl 16) && flags has DrawListFlag.AllowVtxOffset) {
             _cmdHeader.vtxOffset = vtxBuffer.rem
-            _vtxCurrentIdx = 0
-            addDrawCmd()
+            _onChangedVtxOffset()
         }
 
         cmdBuffer.last().elemCount += idxCount
@@ -1150,6 +1149,19 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
 
         currCmd.textureId = _cmdHeader.textureId
+    }
+
+    fun _onChangedVtxOffset() {
+        // We don't need to compare curr_cmd->VtxOffset != _CmdHeader.VtxOffset because we know it'll be different at the time we call this.
+        _vtxCurrentIdx = 0
+        val currCmd = cmdBuffer.last()
+        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset)
+        if (currCmd.elemCount != 0) {
+            addDrawCmd()
+            return
+        }
+        assert(currCmd.userCallback == null)
+        currCmd.vtxOffset = _cmdHeader.vtxOffset
     }
 
 
