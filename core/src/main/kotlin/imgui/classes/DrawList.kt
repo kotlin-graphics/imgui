@@ -900,71 +900,6 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun channelsSetCurrent(idx: Int) = _splitter.setCurrentChannel(this, idx)
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // [Internal helpers]
-    // NB: all primitives needs to be reserved via PrimReserve() beforehand!
-    // -----------------------------------------------------------------------------------------------------------------
-
-    /** Initialize before use in a new frame. We always have a command ready in the buffer. */
-    fun resetForNewFrame() {
-
-        // Verify that the ImDrawCmd fields we want to memcmp() are contiguous in memory.
-        // (those should be IM_STATIC_ASSERT() in theory but with our pre C++11 setup the whole check doesn't compile with GCC)
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID))
-
-        cmdBuffer.clear()
-        // we dont assign because it wont create a new instance for sure
-        idxBuffer = idxBuffer.resize(0)
-        vtxBuffer = vtxBuffer.resize(0)
-        flags = _data.initialFlags
-        _cmdHeader = DrawCmd()
-        _vtxCurrentIdx = 0
-        _vtxWritePtr = 0
-        _idxWritePtr = 0
-        _clipRectStack.clear()
-        _textureIdStack.clear()
-        _path.clear()
-        _splitter.clear()
-        cmdBuffer += DrawCmd()
-    }
-
-    /** @param destroy useful to declare if this is a memory release or not */
-    fun clearFreeMemory(destroy: Boolean = false) {
-        cmdBuffer.clear()
-        // we dont assign because it wont create a new instance for sure
-        if (destroy) {
-            vtxBuffer.data.free()
-            idxBuffer.free()
-        } else {
-            idxBuffer = idxBuffer.resize(0)
-            vtxBuffer = vtxBuffer.resize(0)
-        }
-        flags = DrawListFlag.None.i
-        _vtxCurrentIdx = 0
-        _vtxWritePtr = 0
-        _idxWritePtr = 0
-        _clipRectStack.clear()
-        _textureIdStack.clear()
-        _path.clear()
-        _splitter.clearFreeMemory()
-        // TODO check
-//        resetForNewFrame()
-//        _splitter.clearFreeMemory(destroy)
-    }
-
-    /** Pop trailing draw command (used before merging or presenting to user)
-     *  Note that this leaves the ImDrawList in a state unfit for further commands,
-     *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
-    fun popUnusedDrawCmd() {
-        if (cmdBuffer.isEmpty())
-            return
-        val currCmd = cmdBuffer.last()
-        if (currCmd.elemCount == 0 && currCmd.userCallback == null)
-            cmdBuffer.pop()
-    }
-
     /** Reserve space for a number of vertices and indices.
      *  You must finish filling your reserved data before calling PrimReserve() again, as it may reallocate or
      *  submit the intermediate results. PrimUnreserve() can be used to release unused allocations.    */
@@ -1107,6 +1042,71 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun primVtx(pos: Vec2, uv: Vec2, col: Int) {
         primWriteIdx(_vtxCurrentIdx)
         primWriteVtx(pos, uv, col)
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // [Internal helpers]
+    // NB: all primitives needs to be reserved via PrimReserve() beforehand!
+    // -----------------------------------------------------------------------------------------------------------------
+
+    /** Initialize before use in a new frame. We always have a command ready in the buffer. */
+    fun resetForNewFrame() {
+
+        // Verify that the ImDrawCmd fields we want to memcmp() are contiguous in memory.
+        // (those should be IM_STATIC_ASSERT() in theory but with our pre C++11 setup the whole check doesn't compile with GCC)
+//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
+//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
+//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID))
+
+        cmdBuffer.clear()
+        // we dont assign because it wont create a new instance for sure
+        idxBuffer = idxBuffer.resize(0)
+        vtxBuffer = vtxBuffer.resize(0)
+        flags = _data.initialFlags
+        _cmdHeader = DrawCmd()
+        _vtxCurrentIdx = 0
+        _vtxWritePtr = 0
+        _idxWritePtr = 0
+        _clipRectStack.clear()
+        _textureIdStack.clear()
+        _path.clear()
+        _splitter.clear()
+        cmdBuffer += DrawCmd()
+    }
+
+    /** @param destroy useful to declare if this is a memory release or not */
+    fun clearFreeMemory(destroy: Boolean = false) {
+        cmdBuffer.clear()
+        // we dont assign because it wont create a new instance for sure
+        if (destroy) {
+            vtxBuffer.data.free()
+            idxBuffer.free()
+        } else {
+            idxBuffer = idxBuffer.resize(0)
+            vtxBuffer = vtxBuffer.resize(0)
+        }
+        flags = DrawListFlag.None.i
+        _vtxCurrentIdx = 0
+        _vtxWritePtr = 0
+        _idxWritePtr = 0
+        _clipRectStack.clear()
+        _textureIdStack.clear()
+        _path.clear()
+        _splitter.clearFreeMemory()
+        // TODO check
+//        resetForNewFrame()
+//        _splitter.clearFreeMemory(destroy)
+    }
+
+    /** Pop trailing draw command (used before merging or presenting to user)
+     *  Note that this leaves the ImDrawList in a state unfit for further commands,
+     *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
+    fun popUnusedDrawCmd() {
+        if (cmdBuffer.isEmpty())
+            return
+        val currCmd = cmdBuffer.last()
+        if (currCmd.elemCount == 0 && currCmd.userCallback == null)
+            cmdBuffer.pop()
     }
 
     /** Our scheme may appears a bit unusual, basically we want the most-common calls AddLine AddRect etc. to not have
