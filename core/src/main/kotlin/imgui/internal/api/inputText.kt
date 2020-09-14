@@ -968,7 +968,7 @@ internal interface inputText {
 
                 // Turn a-z into A-Z
                 if (flags has Itf.CharsUppercase && c in 'a'..'z')
-                    c += 'A' - 'a'
+                    c =  c + ('A' - 'a')
 
                 if (flags has Itf.CharsNoBlank && c.isBlankW)
                     return false
