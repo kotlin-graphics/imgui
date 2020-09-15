@@ -417,10 +417,9 @@ interface main {
                 for (viewport in g.viewports) {
                     if (modalWindow != null && viewport === modalWindow.viewport)
                         continue
-                    if (g.navWindowingList.isNotEmpty() && viewport === g.navWindowingList[0].viewport)
+                    if (viewport === g.navWindowingListWindow?.viewport)
                         continue
-                    val anim = g.navWindowingTargetAnim
-                    if (anim != null && viewport === anim.viewport)
+                    if (viewport === g.navWindowingTargetAnim?.viewport)
                         continue
                     val drawList = getForegroundDrawList(viewport)
                     val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
