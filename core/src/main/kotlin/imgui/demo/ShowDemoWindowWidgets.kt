@@ -1405,9 +1405,9 @@ object ShowDemoWindowWidgets {
                         // Display preview (could be anything, e.g. when dragging an image we could decide to display
                         // the filename and a small preview of the image, etc.)
                         when (mode) {
-                            Mode.Copy -> text("Copy ${names[n]}")
-                            Mode.Move -> text("Move ${names[n]}")
-                            Mode.Swap -> text("Swap ${names[n]}")
+                            Mode.Copy -> text("Copy $name")
+                            Mode.Move -> text("Move $name")
+                            Mode.Swap -> text("Swap $name")
                         }
                         endDragDropSource()
                     }
