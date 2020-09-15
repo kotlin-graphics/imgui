@@ -13,6 +13,7 @@ import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.frameHeight
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.saveIniSettingsToMemory
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
@@ -38,9 +39,11 @@ interface docking {
         g.settingsHandlers += SettingsHandler().apply {
             typeName = "Docking"
             typeHash = hash("Docking")
-            applyAllFn = ::dockSettingsHandler_ApplyAll
+            clearAllFn = ::dockSettingsHandler_ClearAll
+            readInitFn = ::dockSettingsHandler_ClearAll // Also clear on read
             readOpenFn = ::dockSettingsHandler_ReadOpen
             readLineFn = ::dockSettingsHandler_ReadLine
+            applyAllFn = ::dockSettingsHandler_ApplyAll
             writeAllFn = ::dockSettingsHandler_WriteAll
         }
     }
@@ -50,11 +53,13 @@ interface docking {
         g.dockContext = null
     }
 
-    /** This function also acts as a defacto test to make sure we can rebuild from scratch without a glitch */
+    /** This function also acts as a defacto test to make sure we can rebuild from scratch without a glitch
+     * [DEBUG] This function also acts as a defacto test to make sure we can rebuild from scratch without a glitch
+     * (Different from DockSettingsHandler_ClearAll() + DockSettingsHandler_ApplyAll() because this reuses current settings!) */
     fun dockContextRebuildNodes(ctx: Context) {
         IMGUI_DEBUG_LOG_DOCKING("DockContextRebuild()")
         val dc = ctx.dockContext!!
-//        saveIniSettingsToMemory() TODO
+        saveIniSettingsToMemory()
         val rootID = 0 // Rebuild all
         dockContextClearNodes(ctx, rootID, false)
         dockContextBuildNodesFromSettings(ctx, dc.settingsNodes)
