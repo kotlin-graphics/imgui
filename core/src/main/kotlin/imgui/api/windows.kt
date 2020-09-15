@@ -633,15 +633,17 @@ interface windows {
             pushClipRect(hostRect.min, hostRect.max, false)
 
             // Draw modal or window list full viewport dimming background (for other viewports we'll render them in EndFrame)
+            val windowWindowList = g.navWindowingListWindow
             val dimBgForModal = flags has Wf._Modal && window === topMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
-            val dimBgForWindowList = g.navWindowingTargetAnim != null && (window === g.navWindowingTargetAnim!!.rootWindow || (g.navWindowingList.isNotEmpty() && window === g.navWindowingList[0] && g.navWindowingList[0].viewport !== g.navWindowingTargetAnim!!.viewport))
+            val target = g.navWindowingTargetAnim
+            val dimBgForWindowList = target != null && (window === target.rootWindow || (window === windowWindowList && windowWindowList.viewport !== target.viewport))
             if (dimBgForModal || dimBgForWindowList) {
                 val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
             }
 
             // Draw navigation selection/windowing rectangle background
-            if (dimBgForWindowList && window == g.navWindowingTargetAnim!!.rootWindow) {
+            if (dimBgForWindowList && window === target!!.rootWindow) {
                 val bb = window.rect()
                 bb expand g.fontSize
                 if (viewportRect !in bb) // Avoid drawing if the window covers all the viewport anyway
