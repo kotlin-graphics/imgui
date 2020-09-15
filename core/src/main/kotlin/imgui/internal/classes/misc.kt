@@ -417,14 +417,17 @@ class PopupData(
 /** Clear all settings data */
 typealias ClearAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
 
-/** Read: Called after reading (in registration order) */
-typealias ApplyAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
+/** Read: Called before reading (in registration order) */
+typealias ReadInitFn = (ctx: Context, handler: SettingsHandler) -> Unit
 
 /** Read: Called when entering into a new ini entry e.g. "[Window][Name]" */
 typealias ReadOpenFn = (ctx: Context, handler: SettingsHandler, name: String) -> Any?
 
 /** Read: Called for every line of text within an ini entry */
 typealias ReadLineFn = (ctx: Context, handler: SettingsHandler, entry: Any, line: String) -> Unit
+
+/** Read: Called after reading (in registration order) */
+typealias ApplyAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
 
 /** Write: Output every entries into 'out_buf' */
 typealias WriteAllFn  = (ctx: Context, handler: SettingsHandler, outBuf: StringBuilder) -> Unit
@@ -437,9 +440,10 @@ class SettingsHandler {
     var typeHash: ID = 0
 
     var clearAllFn: ClearAllFn? = null
-    var applyAllFn: ApplyAllFn? = null
+    var readInitFn: ReadInitFn? = null
     lateinit var readOpenFn: ReadOpenFn
     lateinit var readLineFn: ReadLineFn
+    var applyAllFn: ApplyAllFn? = null
     lateinit var writeAllFn: WriteAllFn
     var userData: Any? = null
 }
