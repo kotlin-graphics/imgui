@@ -7,6 +7,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
+import imgui.ImGui.findOrCreateWindowSettings
 import imgui.ImGui.findWindowByID
 import imgui.ImGui.findWindowSettings
 import imgui.ImGui.io
@@ -115,6 +116,7 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
     // Default/arbitrary window position. Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
     pos = mainViewport.pos + 60
+    viewportPos put mainViewport.pos
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt WindowFlag.NoSavedSettings) {
@@ -122,7 +124,6 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
             //  Retrieve settings from .ini file
             settingsOffset = g.settingsWindows.indexOf(setting)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-            viewportPos put mainViewport.pos
             applySettings(setting)
         }
     }
@@ -142,6 +143,9 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
     if (flags has WindowFlag.NoBringToFrontOnFocus)
         g.windows.add(0, this) // Quite slow but rare and only once
     else g.windows += this
+
+    for (handler in g.settingsHandlers)
+        handler.applyAllFn?.invoke(g, handler)
 }
 
 // CheckStacksSize, CalcNextScrollFromScrollTargetAndClamp and AddWindowToSortBuffer are Window class methods
@@ -173,7 +177,10 @@ fun windowSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
 }
 
 fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings {
-    val settings = findWindowSettings(hash(name)) ?: createNewWindowSettings(name)
+    val settings = findOrCreateWindowSettings(name)
+    val id = settings.id
+    settings.clear()
+    settings.id = id
     settings.wantApply = true
     return settings
 }

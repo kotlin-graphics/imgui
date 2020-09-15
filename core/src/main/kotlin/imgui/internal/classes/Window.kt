@@ -15,6 +15,7 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.keepAliveID
+import imgui.ImGui.mainViewport
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
@@ -1257,13 +1258,16 @@ class Window(
         g.wheelingWindowTimer = WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER
     }
 
-    /** ~CreateNewWindow */
+    /** ~ApplyWindowSettings */
     infix fun applySettings(settings: WindowSettings) {
+        viewportPos put mainViewport.pos
         pos put floor(Vec2(settings.pos))
         if (settings.size allGreaterThan 0f)
             sizeFull put floor(Vec2(settings.size))
         size put sizeFull
         collapsed = settings.collapsed
+        dockId = settings.dockId
+        dockOrder = settings.dockOrder
     }
 
     companion object {

@@ -1,9 +1,6 @@
 package imgui.api
 
 import glm_.*
-import glm_.asHexString
-import glm_.f
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -45,6 +42,7 @@ import imgui.ImGui.pushID
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.saveIniSettingsToDisk
+import imgui.ImGui.saveIniSettingsToMemory
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemOpen
@@ -69,7 +67,6 @@ import imgui.classes.*
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
-import imgui.dsl.smallButton
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
@@ -77,7 +74,6 @@ import imgui.internal.classes.*
 import imgui.static.dockContextClearNodes
 import imgui.static.dockNodeGetDepth
 import imgui.static.dockNodeTreeFindNodeByPos
-import imgui.internal.classes.*
 import kool.BYTES
 import kool.lim
 import kool.rem
@@ -358,43 +354,17 @@ interface demoDebugInformations {
 //        #endif // #define IMGUI_HAS_TABLE
 //
         // Details for Docking
-        if (treeNode("Docking")) {
+        if (treeNode("Dock nodes")) {
+
             val dc = g.dockContext!!
             checkbox("Ctrl shows window dock info", ::showDockingNodes)
 
-            if (treeNode("Dock nodes")) {
-                smallButton("Clear settings") { dockContextClearNodes(g, 0, true) }
-                sameLine()
-                smallButton("Rebuild all") { dc.wantFullRebuild = true }
-                for (node in dc.nodes.values)
-                    if (node.isRootNode)
-                        Funcs.nodeDockNode(node, "Node")
-                treePop()
-            }
-
-            if (treeNode("Settings")) {
-                if (smallButton("Refresh"))
-                    TODO()//saveIniSettingsToMemory()
-                sameLine()
-                if (smallButton("Save to disk"))
-                    saveIniSettingsToDisk(io.iniFilename)
-                separator()
-                text("Docked Windows:")
-                for (setting in g.settingsWindows)
-                    if (setting.dockId != 0)
-                        bulletText("Window '${setting.name}' -> DockId %08X", setting.dockId)
-                separator()
-                text("Dock Nodes:")
-                for (setting in dc.settingsNodes) {
-                    val selectedTabName = when (setting.selectedWindowId) {
-                        0 -> null
-                        else -> findWindowByID(setting.selectedWindowId)?.name
-                                ?: findWindowSettings(setting.selectedWindowId)?.name
-                    }
-                    bulletText("Node %08X, Parent %08X, SelectedTab %08X ('${selectedTabName ?: if (setting.selectedWindowId != 0) "N/A" else ""}')", setting.id, setting.parentNodeId, setting.selectedWindowId)
-                }
-                treePop()
-            }
+            if (smallButton("Clear nodes")) dockContextClearNodes(g, 0, true)
+            sameLine()
+            if (smallButton("Rebuild all")) dc.wantFullRebuild = true
+            for (node in dc.nodes.values)
+                if (node.isRootNode)
+                    Funcs.nodeDockNode(node, "Node")
             treePop()
         }
 
@@ -402,6 +372,9 @@ interface demoDebugInformations {
         treeNode("Settings") {
             if (smallButton("Clear"))
                 clearIniSettings()
+            sameLine()
+            if (smallButton("Save to memory"))
+                saveIniSettingsToMemory()
             sameLine()
             if (smallButton("Save to disk"))
                 saveIniSettingsToDisk(io.iniFilename)
@@ -412,10 +385,26 @@ interface demoDebugInformations {
                 textUnformatted("<NULL>")
             text("SettingsDirtyTimer %.2f", g.settingsDirtyTimer)
             treeNode("SettingsHandlers", "Settings handlers: (${g.settingsHandlers.size})") {
-                g.settingsHandlers.forEach { textUnformatted(it.typeName) }
+                g.settingsHandlers.forEach { bulletText(it.typeName) }
             }
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(Funcs::nodeWindowSettings)
+            }
+            treeNode("SettingsDocking", "Settings packed data: Docking") {
+                text("In SettingsWindows:")
+                for (settings in g.settingsWindows)
+                    if (settings.dockId != 0)
+                        bulletText("Window '${settings.name}' -> DockId %08X", settings.dockId)
+                text("In SettingsNodes:")
+                for (settings in g.dockContext!!.settingsNodes) {
+                    var selectedTabName: String? = null
+                    if (settings.selectedWindowId != 0)
+                        findWindowByID(settings.selectedWindowId)?.let { selectedTabName = it.name }
+                                ?: findWindowSettings(settings.selectedWindowId)?.let { selectedTabName = it.name }
+                    val name = selectedTabName ?: if(settings.selectedWindowId != 0) "N/A" else ""
+                    bulletText("Node %08X, Parent %08X, SelectedTab %08X ('$name')",
+                            settings.id, settings.parentNodeId, settings.selectedWindowId)
+                }
             }
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
