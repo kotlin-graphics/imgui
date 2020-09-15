@@ -502,6 +502,19 @@ class WindowSettings(val name: String = "") {
     var collapsed = false
     /** Set when loaded from .ini data (to enable merging/loading .ini data into an already running context) */
     var wantApply = false
+
+    fun clear() {
+        id = 0
+        pos put 0f
+        size put 0f
+        viewportPos put 0f
+        viewportId = 0
+        dockId = 0
+        classId = 0
+        dockOrder = -1
+        collapsed = false
+        wantApply = false
+    }
 }
 
 //-----------------------------------------------------------------------------

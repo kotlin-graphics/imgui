@@ -137,7 +137,9 @@ interface dockingBuilder {
         }
     }
 
-    /** Remove all split/hierarchy. All remaining docked windows will be re-docked to the root. */
+    /** Remove all split/hierarchy. All remaining docked windows will be re-docked to the remaining root node (node_id).
+     *
+     *  root_id = 0 to remove all, root_id != 0 to remove child of given node. */
     fun dockBuilderRemoveNodeChildNodes(rootId: ID) {
 
         val ctx = g

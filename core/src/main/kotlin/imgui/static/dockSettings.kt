@@ -60,6 +60,14 @@ fun dockSettingsFindNodeSettings(ctx: Context, id: ID): DockNodeSettings? =
         // FIXME-OPT
         ctx.dockContext!!.settingsNodes.find { it.id == id }
 
+fun dockSettingsHandler_ApplyAll(ctx: Context, settingsHandler: SettingsHandler) {
+    // Prune settings at boot time only
+    val dc = ctx.dockContext!!
+    if (ctx.windows.isEmpty())
+        dockContextPruneUnusedSettingsNodes(ctx)
+    dockContextBuildNodesFromSettings(ctx, dc.settingsNodes)
+}
+
 fun dockSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): Any? =
         if (name == "Data") 1 else null
 

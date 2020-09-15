@@ -38,6 +38,7 @@ interface docking {
         g.settingsHandlers += SettingsHandler().apply {
             typeName = "Docking"
             typeHash = hash("Docking")
+            applyAllFn = ::dockSettingsHandler_ApplyAll
             readOpenFn = ::dockSettingsHandler_ReadOpen
             readLineFn = ::dockSettingsHandler_ReadLine
             writeAllFn = ::dockSettingsHandler_WriteAll
@@ -47,12 +48,6 @@ interface docking {
     fun dockContextShutdown(ctx: Context) {
         val g = ctx
         g.dockContext = null
-    }
-
-    fun dockContextOnLoadSettings(ctx: Context) {
-        val dc = ctx.dockContext!!
-        dockContextPruneUnusedSettingsNodes(ctx)
-        dockContextBuildNodesFromSettings(ctx, dc.settingsNodes)
     }
 
     /** This function also acts as a defacto test to make sure we can rebuild from scratch without a glitch */
