@@ -390,6 +390,13 @@ interface demoDebugInformations {
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(Funcs::nodeWindowSettings)
             }
+//            #ifdef IMGUI_HAS_TABLE
+//            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
+//                g.settingsTables.forEach(Funcs::nodeTableSettings)
+//            }
+//            #endif
+
+//            #ifdef IMGUI_HAS_DOCK
             treeNode("SettingsDocking", "Settings packed data: Docking") {
                 text("In SettingsWindows:")
                 for (settings in g.settingsWindows)
@@ -406,6 +413,8 @@ interface demoDebugInformations {
                             settings.id, settings.parentNodeId, settings.selectedWindowId)
                 }
             }
+//            #endif
+
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
             }
