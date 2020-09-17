@@ -1,4 +1,3 @@
-import org.gradle.api.attributes.LibraryElements.JAR
 import org.gradle.api.attributes.LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URL
@@ -10,12 +9,6 @@ plugins {
     id("org.jetbrains.dokka") version "1.4.0"
     id("com.github.johnrengelman.shadow") version "6.0.0"
 //    idea
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    maven("https://jitpack.io")
 }
 
 allprojects {

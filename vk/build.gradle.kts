@@ -21,7 +21,7 @@ dependencies {
     }
     listOf("", "-glfw", "-opengl", "-remotery", "-vulkan").forEach {
         implementation("org.lwjgl", "lwjgl$it")
-        if (it != "-vulkan")
+        if(it != "-vulkan")
             runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
 }
