@@ -1,9 +1,5 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-plugins {
-    kotlin("jvm")
-}
-
 dependencies {
 
     implementation(project(":core"))
@@ -18,20 +14,14 @@ dependencies {
     implementation("$kx:vkk:${findProperty("vkkVersion")}")
     implementation("$kx:uno-sdk:${findProperty("unoVersion")}")
 
-    val lwjglNatives = when (current()) {
+    val lwjglNatives = "natives-" + when (current()) {
         WINDOWS -> "windows"
         LINUX -> "linux"
         else -> "macos"
     }
     listOf("", "-glfw", "-opengl", "-remotery", "-vulkan").forEach {
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}")
-        if (it != "-vulkan")
-            implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}:natives-$lwjglNatives")
+        implementation("org.lwjgl", "lwjgl$it")
+        if (it != "-jawt")
+            runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    maven("https://jitpack.io")
 }

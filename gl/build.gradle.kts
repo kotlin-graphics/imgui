@@ -1,9 +1,5 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-plugins {
-    kotlin("jvm")
-}
-
 dependencies {
 
     implementation(project(":core"))
@@ -19,23 +15,17 @@ dependencies {
     implementation("$kx:gln:${findProperty("glnVersion")}")
     implementation("${kx}.uno-sdk:core:${findProperty("unoVersion")}")
 
-    val lwjglNatives = when (current()) {
+    val lwjglNatives = "natives-" + when (current()) {
         WINDOWS -> "windows"
         LINUX -> "linux"
         else -> "macos"
     }
     listOf("", "-jemalloc", "-glfw", "-opengl", "-remotery", "-stb").forEach {
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}")
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}:natives-$lwjglNatives")
+        implementation("org.lwjgl", "lwjgl$it")
+        runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
 
     testImplementation("com.github.ajalt:mordant:1.2.1")
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    maven("https://jitpack.io")
 }
 
 //task lightJar(type: Jar) {

@@ -1,9 +1,5 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-plugins {
-    kotlin("jvm")
-}
-
 dependencies {
 
     implementation(kotlin("stdlib-jdk7"))
@@ -16,13 +12,13 @@ dependencies {
     implementation("$kx:gli:${findProperty("gliVersion")}")
     api("$kx:uno-sdk:${findProperty("unoVersion")}")
 
-    val lwjglNatives = when (current()) {
+    val lwjglNatives = "natives-" + when (current()) {
         WINDOWS -> "windows"
         LINUX -> "linux"
         else -> "macos"
     }
     listOf("", "-jemalloc", "-stb").forEach {
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}")
-        implementation("org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}:natives-$lwjglNatives")
+        implementation("org.lwjgl", "lwjgl$it")
+        runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
 }

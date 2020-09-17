@@ -1,9 +1,5 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-plugins {
-    kotlin("jvm")
-}
-
 dependencies {
 
     implementation(project(":core"))
@@ -22,13 +18,6 @@ dependencies {
     }
     listOf("", "-glfw", "-opengl", "-remotery").forEach {
         implementation("org.lwjgl", "lwjgl$it")
-        if (it != "-jawt")
-            runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
+        runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    maven("https://jitpack.io")
 }

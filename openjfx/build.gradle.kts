@@ -16,22 +16,13 @@ dependencies {
     val kx = "com.github.kotlin-graphics"
     implementation("$kx:glm:${findProperty("glmVersion")}")
 
-    val lwjglNatives = when (current()) {
+    val lwjglNatives = "natives-" + when (current()) {
         WINDOWS -> "windows"
         LINUX -> "linux"
         else -> "macos"
     }
-    listOf("").forEach {
-        val natives = "org.lwjgl:lwjgl$it:${findProperty("lwjglVersion")}:natives-$lwjglNatives"
-        runtimeOnly(natives)
-        shadow(natives)
-    }
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    maven("https://jitpack.io")
+    implementation("org.lwjgl", "lwjgl")
+    runtimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
 }
 
 //task lightJar(type: Jar) {

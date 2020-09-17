@@ -16,17 +16,10 @@ dependencies {
     }
     listOf("", "-glfw", "-bgfx", "-stb").forEach {
         implementation("org.lwjgl", "lwjgl$it")
-        if (it != "-jawt")
-            runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
+        runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
 
 //    testImplementation group: 'junit', name: 'junit', version: '4.12'
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    maven("https://jitpack.io")
 }
 
 //task lightJar(type: Jar) {
