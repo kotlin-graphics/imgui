@@ -27,16 +27,10 @@ allprojects {
 
     group = "com.github.kotlin_graphics"
 
-    java { modularity.inferModulePath.set(true) }
-
     dependencies {
 
         implementation(kotlin("stdlib"))
         implementation(kotlin("stdlib-jdk8"))
-
-        attributesSchema.attribute(LIBRARY_ELEMENTS_ATTRIBUTE).compatibilityRules.add(ModularJarCompatibilityRule::class)
-        components { withModule<ModularKotlinRule>(kotlin("stdlib")) }
-        components { withModule<ModularKotlinRule>(kotlin("stdlib-jdk8")) }
 
         implementation(platform("org.lwjgl:lwjgl-bom:${findProperty("lwjglVersion")}"))
 
@@ -65,10 +59,10 @@ allprojects {
 
         withType<KotlinCompile>().all {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "1.8"
                 freeCompilerArgs += listOf("-Xinline-classes", "-Xopt-in=kotlin.RequiresOptIn")
             }
-            sourceCompatibility = "11"
+            sourceCompatibility = "1.8"
         }
 
         withType<Test> { useJUnitPlatform() }
@@ -127,43 +121,5 @@ allprojects {
     }
 
     // == Add access to the 'modular' variant of kotlin("stdlib"): Put this into a buildSrc plugin and reuse it in all your subprojects
-    configurations.all {
-        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 11)
-        val n = name.toLowerCase()
-        if (n.endsWith("compileclasspath") || n.endsWith("runtimeclasspath"))
-            attributes.attribute(LIBRARY_ELEMENTS_ATTRIBUTE, objects.named("modular-jar"))
-        if (n.endsWith("compile") || n.endsWith("runtime"))
-            isCanBeConsumed = false
-    }
-}
-
-abstract class ModularJarCompatibilityRule : AttributeCompatibilityRule<LibraryElements> {
-    override fun execute(details: CompatibilityCheckDetails<LibraryElements>): Unit = details.run {
-        if (producerValue?.name == JAR && consumerValue?.name == "modular-jar")
-            compatible()
-    }
-}
-
-abstract class ModularKotlinRule : ComponentMetadataRule {
-
-    @javax.inject.Inject
-    abstract fun getObjects(): ObjectFactory
-
-    override fun execute(ctx: ComponentMetadataContext) {
-        val id = ctx.details.id
-        listOf("compile", "runtime").forEach { baseVariant ->
-            ctx.details.addVariant("${baseVariant}Modular", baseVariant) {
-                attributes {
-                    attribute(LIBRARY_ELEMENTS_ATTRIBUTE, getObjects().named("modular-jar"))
-                }
-                withFiles {
-                    removeAllFiles()
-                    addFile("${id.name}-${id.version}-modular.jar")
-                }
-                withDependencies {
-                    clear() // 'kotlin-stdlib-common' and  'annotations' are not modules and are also not needed
-                }
-            }
-        }
-    }
+    configurations.all { attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 8) }
 }

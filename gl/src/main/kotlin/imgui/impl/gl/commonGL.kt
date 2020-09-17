@@ -1,20 +1,12 @@
 package imgui.impl.gl
 
-import glm_.L
 import gln.ShaderType.Companion.FRAGMENT_SHADER
 import gln.ShaderType.Companion.VERTEX_SHADER
-import gln.buffer.GlBufferDsl
 import gln.glf.semantic
-import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
 import gln.identifiers.GlShader
 import kool.IntBuffer
-import kool.adr
-import org.lwjgl.opengl.GL15C
-import org.lwjgl.opengl.GL30C
 import org.lwjgl.system.Platform
-import java.nio.ByteBuffer
-import java.nio.IntBuffer
 
 
 /** Store GLSL version string so we can refer to it later in case we recreate shaders.

@@ -4,8 +4,6 @@ plugins {
     kotlin("jvm")
 }
 
-val moduleName = "$group.glfw"
-
 dependencies {
 
     implementation(project(":core"))
@@ -33,14 +31,4 @@ repositories {
     mavenCentral()
     jcenter()
     maven("https://jitpack.io")
-}
-
-
-tasks.compileJava {
-    // this is needed because we have a separate compile step in this example with the 'module-info.java' is in 'main/java' and the Kotlin code is in 'main/kotlin'
-    options.compilerArgs = listOf("--patch-module", "$moduleName=${sourceSets.main.get().output.asPath}")
-}
-
-tasks {
-    compileKotlin.get().destinationDir = compileJava.get().destinationDir
 }
