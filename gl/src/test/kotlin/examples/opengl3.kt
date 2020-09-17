@@ -7,10 +7,13 @@ import gln.glClearColor
 import gln.glViewport
 import imgui.DEBUG
 import imgui.ImGui
+import imgui.api.widgetsComboBox
+import imgui.api.widgetsComboBox.ComboFilterState
 import imgui.classes.Context
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
+import imgui.toByteArray
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
 import org.lwjgl.opengl.GL11.glClear
@@ -45,6 +48,14 @@ private class ImGuiOpenGL3 {
     val implGl3: ImplGL3
 
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
+
+//    val hints = arrayOf("AnimGraphNode_CopyBone", "ce skipaa", "ce skipscreen", "ce skipsplash", "ce skipsplashscreen",
+//            "client_unit.cpp", "letrograd", "level", "leveler", "MacroCallback.cpp", "Miskatonic university", "MockAI.h",
+//            "MockGameplayTasks.h", "MovieSceneColorTrack.cpp", "r.maxfps", "r.maxsteadyfps", "reboot", "rescale", "reset",
+//            "resource", "restart", "retrocomputer", "retrograd", "return", "slomo 10", "SVisualLoggerLogsList.h",
+//            "The Black Knight")
+//    val s = ComboFilterState()
+//    val buf = hints[0].toByteArray(128)
 
     init {
         //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true) // for native leaks
@@ -156,6 +167,9 @@ private class ImGuiOpenGL3 {
             run {
 
                 begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
+
+//                if(comboFilter("my combofilter", buf, hints, s) )
+//                    println("picking occured")
 
                 text("This is some useful text.")                // Display some text (you can use a format strings too)
                 checkbox("Demo Window", ::showDemo)             // Edit bools storing our window open/close state
