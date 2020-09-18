@@ -630,6 +630,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         if (g.settingsLoaded)
             io.iniFilename?.let(::saveIniSettingsToDisk)
 
+        // Notify hooked test engine, if any
+        if(IMGUI_ENABLE_TEST_ENGINE)
+            Hook.shutdown!!.invoke(this)
+
         // Clear everything else
         g.apply {
             windows.forEach { it.destroy() }
