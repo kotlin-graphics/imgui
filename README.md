@@ -229,7 +229,7 @@ dependencies {
     This example gets the OpenGL needed modules.
      */
     ["gl", "glfw", "core"].each {
-        implementation "com.github.kotlin-graphics.imgui:imgui-$it:-SNAPSHOT"
+        implementation "com.github.kotlin-graphics.imgui:$it:-SNAPSHOT"
     }
 	
     switch ( OperatingSystem.current() ) {
