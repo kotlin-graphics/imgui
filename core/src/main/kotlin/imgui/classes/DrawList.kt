@@ -365,13 +365,12 @@ class DrawList(sharedData: DrawListSharedData?) {
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
 
-            val integerThickness = thickness.i
+            // The -0.5f here is to better match the geometry-based code, and also shift the transition point from one
+            // width texture to another off the integer values (where it will be less noticeable)
+            val integerThickness = (thickness - 0.5f).i max 1
 
             // Do we want to draw this line using a texture?
-            val useTextures = flags has DrawListFlag.TexturedAALines &&
-                    integerThickness >= 1 &&
-                    integerThickness <= _data.font!!.containerAtlas.aaLineMaxWidth &&
-                    io.keyShift // FIXME-AALINES: Remove this debug code
+            val useTextures = flags has DrawListFlag.TexturedAALines && integerThickness <= DRAWLIST_TEX_AA_LINES_WIDTH_MAX
 
             ASSERT_PARANOID(!useTextures || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoAALines.i) {
                 "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_TexturedAALines unless ImFontAtlasFlags_NoAALines is off"
