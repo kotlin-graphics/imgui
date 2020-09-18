@@ -149,7 +149,7 @@ object StyleEditor {
                 sliderFloat("WindowBorderSize", style::windowBorderSize, 0f, 1f, "%.0f")
                 sliderFloat("ChildBorderSize", style::childBorderSize, 0f, 1f, "%.0f")
                 sliderFloat("PopupBorderSize", style::popupBorderSize, 0f, 1f, "%.0f")
-                sliderFloat("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.0f")
+                sliderFloat("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.1f")
                 sliderFloat("TabBorderSize", style::tabBorderSize, 0f, 1f, "%.0f")
                 text("Rounding")
                 sliderFloat("WindowRounding", style::windowRounding, 0f, 12f, "%.0f")
