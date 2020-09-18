@@ -371,14 +371,16 @@ class DrawList(sharedData: DrawListSharedData?) {
             val integerThickness = thickness.i
             val fractionalThickness = thickness - integerThickness
 
-            // Do we want to draw this line using a texture? (for now, only draw integer-width lines using textures
-            // to avoid issues with the way scaling occurs)
+            // Do we want to draw this line using a texture?
+            // - For now, only draw integer-width lines using textures to avoid issues with the way scaling occurs,
+            //      could be improved.
+            // - If AA_SIZE is not 1.0f we cannot use the texture path.
             val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex &&
-                    integerThickness < DRAWLIST_TEX_AA_LINES_WIDTH_MAX &&
-                    fractionalThickness >= -0.00001f && fractionalThickness <= 0.00001f
+                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX &&
+                    fractionalThickness <= 0.00001f
 
-            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoAntiAliasedLines.i) {
-                "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTexData unless ImFontAtlasFlags_NoAALines is off"
+            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) {
+                "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off"
             }
 
             val idxCount = if (useTexture) count * 6 else (count * if (thickLine) 18 else 12)
@@ -390,7 +392,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             // Temporary buffer
             // The first <points_count> items are normals at each line point, then after that there are either 2 or 4
             // temp points for each line point
-            val temp = Array(points.size * if (thickLine && !useTexture) 5 else 3) { Vec2() }
+            val temp = Array(points.size * if (useTexture || !thickLine) 3 else 5) { Vec2() }
             val tempPointsIdx = points.size
 
             // Calculate normals (tangents) for each line segment
@@ -422,7 +424,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // for the line itself, plus one pixel for AA
                 // We don't use AA_SIZE here because the +1 is tied to the generated texture and so alternate values
                 // won't work without changes to that code
-                val halfDrawSize = if (useTexture) thickness * 0.5f + 1 else 1f
+                val halfDrawSize = if (useTexture) thickness * 0.5f + 1 else AA_SIZE
 
                 // If line is not closed, the first and last points need to be generated differently as there are no normals to blend
                 if (!closed) {
@@ -483,9 +485,9 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // Add vertices for each point on the line
                 if (useTexture) {
                     // If we're using textures we only need to emit the left/right edge vertices
-                    val texUVs = _data.texUvAALines[integerThickness]
+                    val texUVs = _data.texUvLines[integerThickness]
                     if (fractionalThickness != 0f) {
-                        val texUVs1 = _data.texUvAALines[integerThickness + 1]
+                        val texUVs1 = _data.texUvLines[integerThickness + 1]
                         texUVs.x = texUVs.x + (texUVs1.x - texUVs.x) * fractionalThickness // inlined ImLerp()
                         texUVs.y = texUVs.y + (texUVs1.y - texUVs.y) * fractionalThickness
                         texUVs.z = texUVs.z + (texUVs1.z - texUVs.z) * fractionalThickness

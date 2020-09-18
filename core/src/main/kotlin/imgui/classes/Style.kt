@@ -117,15 +117,17 @@ class Style {
     /** Scale software rendered mouse cursor (when io.MouseDrawCursor is enabled). May be removed later.    */
     var mouseCursorScale = 1f
 
-    /** Enable anti-aliased on lines/borders. Disable if you are really tight on CPU/GPU.
+    /** Enable anti-aliased on lines/borders. Disable if you are really tight on CPU/GPU. Latched at the beginning of the frame (copied to ImDrawList).
      *
      *  Draw anti-aliased lines using textures where possible. */
     var antiAliasedLines = true
 
-    /** Enable anti-aliased lines/borders using textures where possible. Requires back-end to render with bilinear filtering. */
+    /** Enable anti-aliased lines/borders using textures where possible. Require back-end to render with
+     *  bilinear filtering. Latched at the beginning of the frame (copied to ImDrawList). */
     var antiAliasedLinesUseTex = true
 
-    /**  Enable anti-aliased on filled shapes (rounded rectangles, circles, etc.).. Disable if you are really tight on CPU/GPU.  */
+    /**  Enable anti-aliased on filled shapes (rounded rectangles, circles, etc.).. Disable if you are really tight
+     *  on CPU/GPU. Latched at the beginning of the frame (copied to ImDrawList). */
     var antiAliasedFill = true
 
     /** Tessellation tolerance when using pathBezierCurveTo() without a specific number of segments.
