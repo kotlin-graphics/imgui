@@ -10,11 +10,7 @@ import glm_.vec4.Vec4
 import imgui.ImGui.style
 import imgui.MouseCursor
 import imgui.TextureID
-import imgui.internal.ASSERT_PARANOID
-import imgui.internal.fileLoadToMemory
-import imgui.internal.round
-import imgui.internal.sections.DRAWLIST_TEX_AA_LINES_WIDTH_MAX
-import imgui.internal.upperPowerOfTwo
+import imgui.internal.*
 import imgui.stb.*
 import kool.*
 import kool.lib.isNotEmpty
@@ -162,6 +158,7 @@ class FontAtlas {
         configData.clear()
         customRects.clear()
         packIdMouseCursors = -1
+        packIdAALines = -1
     }
 
     /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
@@ -410,8 +407,9 @@ class FontAtlas {
         /** Don't build software mouse cursors into the atlas (save a little texture memory) */
         NoMouseCursors,
 
-        /** Don't build anti-aliased line textures into the atlas */
-        NoAALines;
+        /** Don't build anti-aliased line textures into the atlas (save a little texture memory). They will be rendered
+         * using polygons (a little bit more expensive) */
+        NoAntiAliasedLines;
 
         val i = if (ordinal == 0) 0 else 1 shl ordinal
     }
@@ -462,6 +460,9 @@ class FontAtlas {
     /** Configuration data */
     private val configData = ArrayList<FontConfig>()
 
+    /** UVs for anti-aliased line textures */
+    val texUvAALines = Array(DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 1) { Vec4() }
+
 
     // [Internal] Packing data
 
@@ -469,10 +470,7 @@ class FontAtlas {
     private var packIdMouseCursors = -1
 
     /** Custom texture rectangle ID for anti-aliased lines */
-    private var aaLineRectId = 0
-
-    /** UVs for anti-aliased line textures */
-    val texUvAALines = ArrayList<Vec4>()
+    private var packIdAALines = -1
 
 
     private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
@@ -986,29 +984,28 @@ class FontAtlas {
     companion object {
         fun buildRegisterAALineCustomRects(atlas: FontAtlas) {
 
-            if (atlas.flags has Flag.NoAALines.i)
+            if (atlas.flags has Flag.NoAntiAliasedLines.i)
                 return
 
-            // The "max_width + 2" here is to give space for the end caps, whilst height (IM_DRAWLIST_TEX_AA_LINES_WIDTH_MAX+1) is to accommodate the fact we have a zero-width row
-            val maxWidth = DRAWLIST_TEX_AA_LINES_WIDTH_MAX // The maximum line width we want to generate
-            atlas.aaLineRectId = atlas.addCustomRectRegular(maxWidth + 2, DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 1)
+            // The +2 here is to give space for the end caps, whilst height +1 is to accommodate the fact we have a zero-width row
+            atlas.packIdAALines = atlas.addCustomRectRegular(DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 2, DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 1)
         }
 
         fun buildRenderAALinesTexData(atlas: FontAtlas) {
-            assert(atlas.texPixelsAlpha8 != null && atlas.texUvAALines.isEmpty())
+            assert(atlas.texPixelsAlpha8 != null)
 
-            if (atlas.flags has Flag.NoAALines.i)
+            if (atlas.flags has Flag.NoAntiAliasedLines.i)
                 return
 
-            val r = atlas.customRects[atlas.aaLineRectId]
+            val r = atlas.getCustomRectByIndex(atlas.packIdAALines)
             assert(r.isPacked)
 
             // This generates a triangular shape in the texture, with the various line widths stacked on top of each other to allow interpolation between them
             val w = atlas.texSize.x
             for (n in 0 until DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 1) { // +1 because of the zero-width row
+                // Each line consists of at least two empty pixels at the ends, with a line of solid pixels in the middle
                 val y = n
                 val lineWidth = n
-                // Each line consists of at least two empty pixels at the ends, with a line of solid pixels in the middle
                 val padLeft = (r.width - lineWidth) / 2
                 val padRight = r.width - (padLeft + lineWidth)
 
@@ -1038,7 +1035,7 @@ class FontAtlas {
                 val uv1 = Vec2()
                 atlas.calcCustomRectUV(lineRect, uv0, uv1)
                 val halfV = (uv0.y + uv1.y) * 0.5f // Calculate a constant V in the middle of the row to avoid sampling artifacts
-                atlas.texUvAALines += Vec4(uv0.x, halfV, uv1.x, halfV)
+                atlas.texUvAALines[n].put(uv0.x, halfV, uv1.x, halfV)
             }
         }
     }
