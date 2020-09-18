@@ -846,7 +846,7 @@ fun registerTests_Perf(e: TestEngine) {
                         val start = Vec2(center.x + sin(r) * lineLen * 0.5f, center.y + cos(r) * lineLen * 0.5f)
                         val end = Vec2(center.x - sin(r) * lineLen * 0.5f, center.y - cos(r) * lineLen * 0.5f)
 
-                        drawList.addLine(start, end, COL32(255, 255, 255, 255), lineWidth1)
+                        drawList.addLine(start, end, COL32(255), lineWidth1)
                     }
 
                     ImGui.cursorPosY = cursorPos.y + i * lineSpacing.y
@@ -900,7 +900,7 @@ fun registerTests_Perf(e: TestEngine) {
                         val topLeft = Vec2(center.x - lineLen * 0.5f, center.y - lineLen * 0.5f)
                         val bottomRight = Vec2(center.x + lineLen * 0.5f, center.y + lineLen * 0.5f)
 
-                        drawList.addRect(topLeft, bottomRight, COL32(255, 255, 255, 255), 0f, DrawCornerFlag.All.i, cellLineWidth)
+                        drawList.addRect(topLeft, bottomRight, COL32(255), 0f, DrawCornerFlag.All.i, cellLineWidth)
 
                         ImGui.cursorPos = Vec2(cursorPos.x + (j + 0.5f) * lineSpacing.x - 16f, cursorPos.y + (i + 0.5f) * lineSpacing.y - ImGui.textLineHeight * 0.5f)
                         ImGui.text("%.2f", cellLineWidth)
