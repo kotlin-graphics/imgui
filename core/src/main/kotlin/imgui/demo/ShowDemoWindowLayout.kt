@@ -3,6 +3,7 @@ package imgui.demo
 import gli_.has
 import glm_.L
 import glm_.f
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import glm_.wo
@@ -113,7 +114,7 @@ object ShowDemoWindowLayout {
     /* Child regions */
     var disableMouseWheel = false
     var disableMenu = false
-    var line = 50
+    var offsetX = 0
 
 
     /* Widgets Width */
@@ -180,23 +181,14 @@ object ShowDemoWindowLayout {
             checkbox("Disable Mouse Wheel", ::disableMouseWheel)
             checkbox("Disable Menu", ::disableMenu)
 
-            var gotoLine = button("Goto")
-            sameLine()
-            withItemWidth(100) {
-                gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
-            }
-
             // Child 1: no border, enable horizontal scrollbar
             run {
                 var windowFlags = Wf.HorizontalScrollbar.i
                 if (disableMouseWheel)
                     windowFlags = windowFlags or Wf.NoScrollWithMouse
                 child("ChildL", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
-                    for (i in 0..99) {
+                    for (i in 0..99)
                         text("%04d: scrollable region", i)
-                        if (gotoLine && line == i) setScrollHereY()
-                    }
-                    if (gotoLine && line >= 100) setScrollHereY()
                 }
             }
             sameLine()
@@ -237,15 +229,20 @@ object ShowDemoWindowLayout {
             // - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from
             //   the POV of the parent window). See 'Demo->Querying Status (Active/Focused/Hovered etc.)' for details.
             run {
-                cursorPosX += 10f
+                setNextItemWidth(100f)
+                dragInt("Offset X", ::offsetX, 1f, -1000, 1000)
+
+                ImGui.cursorPosX += offsetX
                 withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
                     beginChild("Red", Vec2(200, 100), true, Wf.None.i)
                     for (n in 0..49)
                         text("Some test $n")
                     endChild()
                 }
-                val childRectMin = itemRectMin
-                val childRectMax = itemRectMax
+                val childIsHovered = ImGui.isItemHovered()
+                val childRectMin = ImGui.itemRectMin
+                val childRectMax = ImGui.itemRectMax
+                text("Hovered: ${childIsHovered.i}")
                 text("Rect of child window is: (%.0f,%.0f) (%.0f,%.0f)", childRectMin.x, childRectMin.y, childRectMax.x, childRectMax.y)
             }
         }
@@ -586,8 +583,6 @@ object ShowDemoWindowLayout {
             helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.")
 
             checkbox("Decoration", ::enableExtraDecorations)
-            sameLine()
-            helpMarker("We expose this for testing because scrolling sometimes had issues with window decoration such as menu-bars.")
 
             checkbox("Track", ::enableTrack)
             pushItemWidth(100)
