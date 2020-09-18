@@ -149,7 +149,7 @@ object StyleEditor {
                 sliderFloat("WindowBorderSize", style::windowBorderSize, 0f, 1f, "%.0f")
                 sliderFloat("ChildBorderSize", style::childBorderSize, 0f, 1f, "%.0f")
                 sliderFloat("PopupBorderSize", style::popupBorderSize, 0f, 1f, "%.0f")
-                sliderFloat("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.1f")
+                sliderFloat("FrameBorderSize", style::frameBorderSize, 0f, 1f, "%.0f")
                 sliderFloat("TabBorderSize", style::tabBorderSize, 0f, 1f, "%.0f")
                 text("Rounding")
                 sliderFloat("WindowRounding", style::windowRounding, 0f, 12f, "%.0f")
@@ -278,7 +278,7 @@ object StyleEditor {
             if (beginTabItem("Rendering")) {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
                 sameLine(); helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
-                checkbox("Anti-aliased lines use texture data", style::antiAliasedLinesUseTexData)
+                checkbox("Anti-aliased lines use texture", style::antiAliasedLinesUseTex)
                 sameLine(); helpMarker("Faster lines using texture data. Requires texture to use bilinear sampling (not nearest).")
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)

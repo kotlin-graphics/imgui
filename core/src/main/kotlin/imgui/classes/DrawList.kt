@@ -359,7 +359,6 @@ class DrawList(sharedData: DrawListSharedData?) {
         val opaqueUv = Vec2(_data.texUvWhitePixel)
 
         val count = if (closed) points.size else points.lastIndex // The number of line segments we need to draw
-
         val thickLine = thickness > 1f
 
         if (flags has DrawListFlag.AntiAliasedLines) {
@@ -369,14 +368,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
             // Thicknesses <1.0 should behave like thickness 1.0
             thickness = thickness max 1f
-
             val integerThickness = thickness.i
             val fractionalThickness = thickness - integerThickness
 
             // Do we want to draw this line using a texture?
-            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTexData && integerThickness < DRAWLIST_TEX_AA_LINES_WIDTH_MAX
+            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex && integerThickness < DRAWLIST_TEX_AA_LINES_WIDTH_MAX
 
-            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoAALines.i) {
+            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoAntiAliasedLines.i) {
                 "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTexData unless ImFontAtlasFlags_NoAALines is off"
             }
 
@@ -412,7 +410,11 @@ class DrawList(sharedData: DrawListSharedData?) {
 
             // If we are drawing a one-pixel-wide line without a texture, or a textured line of any width,
             // we only need 2 or 3 vertices per point
-            if (!thickLine || useTexture) {
+            if (useTexture || !thickLine) {
+
+                // [PATH 1] Texture-based lines (thick or non-thick)
+                // [PATH 2] Non texture-based lines (non-thick)
+
                 // The width of the geometry we need to draw - this is essentially <thickness> pixels
                 // for the line itself, plus one pixel for AA
                 // We don't use AA_SIZE here because the +1 is tied to the generated texture and so alternate values
@@ -478,33 +480,34 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // Add vertices for each point on the line
                 if (useTexture) {
                     // If we're using textures we only need to emit the left/right edge vertices
-                    val texUVs = when(fractionalThickness) {
-                        // Fast path for pure integer widths
-                        0f -> _data.texUvAALines[integerThickness]
-                        else -> {
-                            // Calculate UV by interpolating between the two nearest integer line widths
-                            val texUvs0 = _data.texUvAALines[integerThickness]
-                            val texUvs1 = _data.texUvAALines[integerThickness + 1]
-                            texUvs0.lerp(texUvs1, fractionalThickness)
-                        }
+                    val texUVs = _data.texUvAALines[integerThickness]
+                    if (fractionalThickness != 0f) {
+                        val texUVs1 = _data.texUvAALines[integerThickness + 1]
+                        texUVs.x = texUVs.x + (texUVs1.x - texUVs.x) * fractionalThickness // inlined ImLerp()
+                        texUVs.y = texUVs.y + (texUVs1.y - texUVs.y) * fractionalThickness
+                        texUVs.z = texUVs.z + (texUVs1.z - texUVs.z) * fractionalThickness
+                        texUVs.w = texUVs.w + (texUVs1.w - texUVs.w) * fractionalThickness
                     }
 
+                    val texUV0 = Vec2(texUVs.x, texUVs.y)
+                    val texUV1 = Vec2(texUVs.z, texUVs.w)
+
                     for (i in 0 until points.size) {
-                        vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += Vec2(texUVs.x, texUVs.y); vtxBuffer += col // Left-side outer edge
-                        vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += Vec2(texUVs.z, texUVs.y); vtxBuffer += col // Right-side outer edge
+                        vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += texUV0; vtxBuffer += col // Left-side outer edge
+                        vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += texUV1; vtxBuffer += col // Right-side outer edge
                         _vtxWritePtr += 2
                     }
                 } else
-                // If we're not using a texture, we need the centre vertex as well
+                // If we're not using a texture, we need the center vertex as well
                     for (i in 0 until points.size) {
-                        vtxBuffer += points[i]; vtxBuffer += opaqueUv; vtxBuffer += col // Centre of line
+                        vtxBuffer += points[i]; vtxBuffer += opaqueUv; vtxBuffer += col // Center of line
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Left-side outer edge
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Right-side outer edge
                         _vtxWritePtr += 3
                     }
             } else {
-                // For untextured lines that are greater than a pixel in width, we need to draw the solid line core and
-                // thus require four vertices per point
+                // [PATH 2] Non texture-based lines (thick): we need to draw the solid line core and thus require
+                // four vertices per point
                 val halfInnerThickness = (thickness - AA_SIZE) * 0.5f
 
                 // If line is not closed, the first and last points need to be generated differently as there are
@@ -582,7 +585,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             }
             _vtxCurrentIdx += vtxCount
         } else {
-            // Non texture-based, Non anti-aliased lines
+            // [PATH 4] Non texture-based, Non anti-aliased lines
             val idxCount = count * 6
             val vtxCount = count * 4      // FIXME-OPT: Not sharing edges
             primReserve(idxCount, vtxCount)
