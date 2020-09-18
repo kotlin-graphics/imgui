@@ -420,10 +420,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // [PATH 1] Texture-based lines (thick or non-thick)
                 // [PATH 2] Non texture-based lines (non-thick)
 
-                // The width of the geometry we need to draw - this is essentially <thickness> pixels
-                // for the line itself, plus one pixel for AA
-                // We don't use AA_SIZE here because the +1 is tied to the generated texture and so alternate values
-                // won't work without changes to that code
+                // The width of the geometry we need to draw - this is essentially <thickness> pixels for
+                // the line itself, plus "one pixel" for AA.
+                // - In the texture-based path, we don't use AA_SIZE here because the +1 is tied
+                //   to the generated texture (see ImFontAtlasBuildRenderLinesTexData() function),
+                //   and so alternate values won't work without changes to that code.
+                // - In the non texture-based paths, we would allow AA_SIZE to potentially be != 1.0f with a patch
+                //   (e.g. fringe_scale patch to allow scaling geometry while preserving one-screen-pixel AA fringe).
                 val halfDrawSize = if (useTexture) thickness * 0.5f + 1 else AA_SIZE
 
                 // If line is not closed, the first and last points need to be generated differently as there are no normals to blend
