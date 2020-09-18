@@ -620,6 +620,7 @@ class Font {
 
         val atlas = g.font.containerAtlas
         g.drawListSharedData.texUvWhitePixel put atlas.texUvWhitePixel
+        g.drawListSharedData.texUvLines = atlas.texUvLines
         g.drawListSharedData.font = g.font
         g.drawListSharedData.fontSize = g.fontSize
     }

@@ -123,8 +123,7 @@ internal interface internal {
         val atlas = g.font.containerAtlas
         g.drawListSharedData.also {
             it.texUvWhitePixel = atlas.texUvWhitePixel
-            it.texUvAALines.clear()
-            it.texUvAALines += atlas.texUvAALines
+            it.texUvLines = atlas.texUvLines
             it.font = g.font
             it.fontSize = g.fontSize
         }

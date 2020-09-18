@@ -279,7 +279,7 @@ object StyleEditor {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
                 sameLine(); helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
                 checkbox("Anti-aliased lines use texture", style::antiAliasedLinesUseTex)
-                sameLine(); helpMarker("Faster lines using texture data. Requires texture to use bilinear sampling (not nearest).")
+                sameLine(); helpMarker("Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
                 dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
