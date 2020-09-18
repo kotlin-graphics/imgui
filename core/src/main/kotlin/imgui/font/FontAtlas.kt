@@ -989,8 +989,8 @@ class FontAtlas {
             if (atlas.flags has Flag.NoAALines.i)
                 return
 
-            val maxWidth = DRAWLIST_TEX_AA_LINES_WIDTH_MAX // The maximum line width we want to generate
             // The "max_width + 2" here is to give space for the end caps, whilst height (IM_DRAWLIST_TEX_AA_LINES_WIDTH_MAX+1) is to accommodate the fact we have a zero-width row
+            val maxWidth = DRAWLIST_TEX_AA_LINES_WIDTH_MAX // The maximum line width we want to generate
             atlas.aaLineRectId = atlas.addCustomRectRegular(maxWidth + 2, DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 1)
         }
 
