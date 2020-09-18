@@ -258,7 +258,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
         if (numSegments == 12)
-            pathArcToFast(center, radius - 0.5f, 0, 12)
+            pathArcToFast(center, radius - 0.5f, 0, 12 - 1)
         else
             pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         pathStroke(col, true, thickness)
@@ -284,7 +284,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
         if (numSegments == 12)
-            pathArcToFast(center, radius, 0, 12)
+            pathArcToFast(center, radius, 0, 12 - 1)
         else
             pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
