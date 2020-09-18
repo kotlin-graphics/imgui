@@ -10,6 +10,7 @@ import glm_.vec4.Vec4
 import imgui.ImGui.style
 import imgui.MouseCursor
 import imgui.TextureID
+import imgui.internal.ASSERT_PARANOID
 import imgui.internal.fileLoadToMemory
 import imgui.internal.round
 import imgui.internal.sections.DRAWLIST_TEX_AA_LINES_WIDTH_MAX
@@ -317,6 +318,19 @@ class FontAtlas {
 
         val isPacked: Boolean
             get() = x != 0xFFFF
+
+        constructor()
+
+        constructor(r: CustomRect) {
+            width = r.width
+            height = r.height
+            x = r.x
+            y = r.y
+            glyphID = r.glyphID
+            glyphAdvanceX = r.glyphAdvanceX
+            glyphOffset put r.glyphOffset
+            font = r.font
+        }
     }
 
     fun addCustomRectRegular(width: Int, height: Int): Int {
@@ -454,8 +468,8 @@ class FontAtlas {
     /** Custom texture rectangle ID for white pixel and mouse cursors */
     private var packIdMouseCursors = -1
 
-    /** Custom texture rectangle IDs for anti-aliased lines */
-    private val aaLineRectIds = ArrayList<Int>()
+    /** Custom texture rectangle ID for anti-aliased lines */
+    private var aaLineRectId = 0
 
     /** UVs for anti-aliased line textures */
     val texUvAALines = ArrayList<Vec4>()
@@ -846,9 +860,6 @@ class FontAtlas {
         buildRegisterAALineCustomRects(this)
     }
 
-    // This is called/shared by both the stb_truetype and the FreeType builder.
-    val AA_LINE_TEX_HEIGHT = 1 // Technically we only need 1 pixel in the ideal case but this can be increased if necessary to give a border to avoid sampling artifacts
-
     fun buildSetupFont(font: Font, fontConfig: FontConfig, ascent: Float, descent: Float) {
         if (!fontConfig.mergeMode)
             font.apply {
@@ -974,19 +985,13 @@ class FontAtlas {
 
     companion object {
         fun buildRegisterAALineCustomRects(atlas: FontAtlas) {
-            if (atlas.aaLineRectIds.isNotEmpty())
-                return
 
             if (atlas.flags has Flag.NoAALines.i)
                 return
 
-            for (n in 0 until DRAWLIST_TEX_AA_LINES_WIDTH_MAX) {
-                // The "width + 3" here is interesting. +2 is to give space for the end caps, but the remaining +1 is
-                // because (empirically) to match the behavior of the untextured render path we need to draw lines one
-                // pixel wider.
-                val width = n + 1 // The line width this entry corresponds to
-                atlas.aaLineRectIds += atlas.addCustomRectRegular(width + 3, atlas.AA_LINE_TEX_HEIGHT)
-            }
+            val maxWidth = DRAWLIST_TEX_AA_LINES_WIDTH_MAX // The maximum line width we want to generate
+            // The "max_width + 2" here is to give space for the end caps, whilst height (IM_DRAWLIST_TEX_AA_LINES_WIDTH_MAX+1) is to accommodate the fact we have a zero-width row
+            atlas.aaLineRectId = atlas.addCustomRectRegular(maxWidth + 2, DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 1)
         }
 
         fun buildRenderAALinesTexData(atlas: FontAtlas) {
@@ -995,28 +1000,44 @@ class FontAtlas {
             if (atlas.flags has Flag.NoAALines.i)
                 return
 
+            val r = atlas.customRects[atlas.aaLineRectId]
+            assert(r.isPacked)
+
+            // This generates a triangular shape in the texture, with the various line widths stacked on top of each other to allow interpolation between them
             val w = atlas.texSize.x
+            for (n in 0 until DRAWLIST_TEX_AA_LINES_WIDTH_MAX + 1) { // +1 because of the zero-width row
+                val y = n
+                val lineWidth = n
+                // Each line consists of at least two empty pixels at the ends, with a line of solid pixels in the middle
+                val padLeft = (r.width - lineWidth) / 2
+                val padRight = r.width - (padLeft + lineWidth)
 
-            for (n in 0 until DRAWLIST_TEX_AA_LINES_WIDTH_MAX) {
-                assert(atlas.aaLineRectIds.size > n)
-                val r = atlas.customRects[atlas.aaLineRectIds[n]]
-                assert(r.isPacked)
+                // Make sure we're inside the texture bounds before we start writing pixels
+                ASSERT_PARANOID(padLeft + lineWidth + padRight == r.width)
+                ASSERT_PARANOID(y < r.height)
 
-                // We fill as many lines as we were given, to allow for >1 lines being used to work around sampling weirdness
-                for (y in 0 until r.height) {
-                    // Each line consists of two empty pixels at the ends, with a line of solid pixels in the middle
-                    var idx = r.x + (r.y + y) * w
-                    val ptr = atlas.texPixelsAlpha8!!
-                    ptr[idx++] = 0.b
-                    for (x in 0 until r.width - 2)
-                        ptr[idx++] = 0xFF.b
+                // Write each slice
+                val ptr = atlas.texPixelsAlpha8!!
+                var idx = r.x + (r.y + y) * w
+                for (x in 0 until padLeft)
                     ptr[idx++] = 0
+                for (x in 0 until lineWidth)
+                    ptr[idx++] = 0xFF
+                for (x in 0 until padRight)
+                    ptr[idx++] = 0
+
+                // Calculate UVs for this line
+                val lineRect = CustomRect(r).also {
+                    it.x += padLeft - 1
+                    it.width = lineWidth + 2
+                    it.y += y
+                    it.height = 1
                 }
 
                 val uv0 = Vec2()
                 val uv1 = Vec2()
-                atlas.calcCustomRectUV(r, uv0, uv1)
-                val halfV = (uv0.y + uv1.y) * 0.5f // Calculate a constant V in the middle of the texture as we want a horizontal slice (with some padding either side to avoid sampling artifacts)
+                atlas.calcCustomRectUV(lineRect, uv0, uv1)
+                val halfV = (uv0.y + uv1.y) * 0.5f // Calculate a constant V in the middle of the row to avoid sampling artifacts
                 atlas.texUvAALines += Vec4(uv0.x, halfV, uv1.x, halfV)
             }
         }
