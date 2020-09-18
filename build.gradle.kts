@@ -76,6 +76,11 @@ allprojects {
 //        }
     }
 
+    java {
+        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+    }
+
     val dokkaJavadocJar by tasks.register<Jar>("dokkaJavadocJar") {
         dependsOn(tasks.dokkaJavadoc)
         from(tasks.dokkaJavadoc.get().outputDirectory.get())
