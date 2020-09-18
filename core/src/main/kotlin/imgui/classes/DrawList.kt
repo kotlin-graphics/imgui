@@ -11,6 +11,7 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.font.Font
+import imgui.font.FontAtlas
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
@@ -355,9 +356,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         val opaqueUv = Vec2(_data.texUvWhitePixel)
 
-        var count = points.size
-        if (!closed)
-            count = points.lastIndex
+        val count = if (closed) points.size else points.lastIndex // The number of line segments we need to draw
 
         val thickLine = thickness > 1f
 
@@ -366,16 +365,31 @@ class DrawList(sharedData: DrawListSharedData?) {
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
 
-            val idxCount = count * if (thickLine) 18 else 12
-            val vtxCount = points.size * if (thickLine) 4 else 3
+            val integerThickness = thickness.i
+
+            // Do we want to draw this line using a texture?
+            val useTextures = flags has DrawListFlag.TexturedAALines &&
+                    integerThickness >= 1 &&
+                    integerThickness <= _data.font!!.containerAtlas.aaLineMaxWidth &&
+                    io.keyShift // FIXME-AALINES: Remove this debug code
+
+            ASSERT_PARANOID(!useTextures || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoAALines.i) {
+                "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_TexturedAALines unless ImFontAtlasFlags_NoAALines is off"
+            }
+
+            val idxCount = if (useTextures) count * 6 else (count * if (thickLine) 18 else 12)
+            val vtxCount = if (useTextures) points.size * 2 else (points.size * if (thickLine) 4 else 3)
             primReserve(idxCount, vtxCount)
             vtxBuffer.pos = _vtxWritePtr
             idxBuffer.pos = _idxWritePtr
 
             // Temporary buffer
-            val temp = Array(points.size * if (thickLine) 5 else 3) { Vec2() }
+            // The first <points_count> items are normals at each line point, then after that there are either 2 or 4
+            // temp points for each line point
+            val temp = Array(points.size * if (thickLine && !useTextures) 5 else 3) { Vec2() }
             val tempPointsIdx = points.size
 
+            // Calculate normals (tangents) for each line segment
             for (i1 in 0 until count) {
                 val i2 = if (i1 + 1 == points.size) 0 else i1 + 1
                 var dx = points[i2].x - points[i1].x
@@ -390,21 +404,32 @@ class DrawList(sharedData: DrawListSharedData?) {
                 temp[i1].x = dy
                 temp[i1].y = -dx
             }
-            if (!closed) temp[points.size - 1] = temp[points.size - 2]
+            if (!closed)
+                temp[points.size - 1] = temp[points.size - 2]
 
-            if (!thickLine) {
+            // If we are drawing a one-pixel-wide line without a texture, or a textured line of any width,
+            // we only need 2 or 3 vertices per point
+            if (!thickLine || useTextures) {
+                // The width of the geometry we need to draw
+                val halfDrawSize = AA_SIZE + if (!thickLine) 0f else thickness * 0.5f
+
+                // If line is not closed, the first and last points need to be generated differently as there are no normals to blend
                 if (!closed) {
-                    temp[tempPointsIdx + 0] = points[0] + temp[0] * AA_SIZE
-                    temp[tempPointsIdx + 1] = points[0] - temp[0] * AA_SIZE
-                    temp[tempPointsIdx + (points.size - 1) * 2 + 0] = points[points.size - 1] + temp[points.size - 1] * AA_SIZE
-                    temp[tempPointsIdx + (points.size - 1) * 2 + 1] = points[points.size - 1] - temp[points.size - 1] * AA_SIZE
+                    temp[tempPointsIdx + 0] = points[0] + temp[0] * halfDrawSize
+                    temp[tempPointsIdx + 1] = points[0] - temp[0] * halfDrawSize
+                    temp[tempPointsIdx + (points.size - 1) * 2 + 0] = points[points.size - 1] + temp[points.size - 1] * halfDrawSize
+                    temp[tempPointsIdx + (points.size - 1) * 2 + 1] = points[points.size - 1] - temp[points.size - 1] * halfDrawSize
                 }
 
+                // Generate the indices to form a number of triangles for each line segment, and the vertices for the
+                // line edges
+                // This takes points n and n+1 and writes into n+1, with the first point in a closed line being
+                // generated from the final one (as n+1 wraps)
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
-                var idx1 = _vtxCurrentIdx
-                for (i1 in 0 until count) {
-                    val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
-                    val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else idx1 + 3
+                var idx1 = _vtxCurrentIdx // Vertex index for start of line segment
+                for (i1 in 0 until count) { // i1 is the first point of the line segment
+                    val i2 = if (i1 + 1 == points.size) 0 else i1 + 1 // i2 is the second point of the line segment
+                    val idx2 = if (i1 + 1 == points.size) _vtxCurrentIdx else (idx1 + if (useTextures) 2 else 3) // Vertex index for end of segment
 
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
@@ -418,35 +443,57 @@ class DrawList(sharedData: DrawListSharedData?) {
                         dmX *= invLensq
                         dmY *= invLensq
                     }
-                    dmX *= AA_SIZE
-                    dmY *= AA_SIZE
+                    dmX *= halfDrawSize // dm_x, dm_y are offset to the outer edge of the AA area
+                    dmY *= halfDrawSize
 
-                    // Add temporary vertices
+                    // Add temporary vertices for the outer edges
                     val outVtxIdx = tempPointsIdx + i2 * 2
                     temp[outVtxIdx + 0].x = points[i2].x + dmX
                     temp[outVtxIdx + 0].y = points[i2].y + dmY
                     temp[outVtxIdx + 1].x = points[i2].x - dmX
                     temp[outVtxIdx + 1].y = points[i2].y - dmY
 
-                    // Add indexes
-                    idxBuffer += idx2 + 0; idxBuffer += idx1 + 0; idxBuffer += idx1 + 2
-                    idxBuffer += idx1 + 2; idxBuffer += idx2 + 2; idxBuffer += idx2 + 0
-                    idxBuffer += idx2 + 1; idxBuffer += idx1 + 1; idxBuffer += idx1 + 0
-                    idxBuffer += idx1 + 0; idxBuffer += idx2 + 0; idxBuffer += idx2 + 1
-                    _idxWritePtr += 12
-
+                    if (useTextures) {
+                        // Add indices for two triangles
+                        idxBuffer += idx2 + 0; idxBuffer += idx1 + 0; idxBuffer += idx1 + 1 // Right tri
+                        idxBuffer += idx2 + 1; idxBuffer += idx1 + 1; idxBuffer += idx2 + 0 // Left tri
+                        _idxWritePtr += 6
+                    } else {
+                        // Add indices for four triangles
+                        idxBuffer += idx2 + 0; idxBuffer += idx1 + 0; idxBuffer += idx1 + 2 // Right tri 1
+                        idxBuffer += idx1 + 2; idxBuffer += idx2 + 2; idxBuffer += idx2 + 0 // Right tri 1
+                        idxBuffer += idx2 + 1; idxBuffer += idx1 + 1; idxBuffer += idx1 + 0 // Left tri 1
+                        idxBuffer += idx1 + 0; idxBuffer += idx2 + 0; idxBuffer += idx2 + 1 // Left tri 1
+                        _idxWritePtr += 12
+                    }
                     idx1 = idx2
                 }
 
-                // Add vertices
-                for (i in 0 until points.size) {
-                    vtxBuffer += points[i]; vtxBuffer += opaqueUv; vtxBuffer += col
-                    vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
-                    vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
-                    _vtxWritePtr += 3
-                }
+                // Add vertices for each point on the line
+                if (useTextures) {
+                    // If we're using textures we only need to emit the left/right edge vertices
+                    val texUVs = _data.texUvAALines[integerThickness - 1]
+
+                    for (i in 0 until points.size) {
+                        vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += Vec2(texUVs.x, texUVs.y); vtxBuffer += col // Left-side outer edge
+                        vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += Vec2(texUVs.z, texUVs.y); vtxBuffer += col // Right-side outer edge
+                        _vtxWritePtr += 2
+                    }
+                } else
+                // If we're not using a texture, we need the centre vertex as well
+                    for (i in 0 until points.size) {
+                        vtxBuffer += points[i]; vtxBuffer += opaqueUv; vtxBuffer += col // Centre of line
+                        vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Left-side outer edge
+                        vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Right-side outer edge
+                        _vtxWritePtr += 3
+                    }
             } else {
+                // For untextured lines that are greater than a pixel in width, we need to draw the solid line core and
+                // thus require four vertices per point
                 val halfInnerThickness = (thickness - AA_SIZE) * 0.5f
+
+                // If line is not closed, the first and last points need to be generated differently as there are
+                // no normals to blend
                 if (!closed) {
                     val pointsLast = points.lastIndex
                     temp[tempPointsIdx + 0] = points[0] + temp[0] * (halfInnerThickness + AA_SIZE)
@@ -459,9 +506,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                     temp[tempPointsIdx + pointsLast * 4 + 3] = points[pointsLast] - temp[pointsLast] * (halfInnerThickness + AA_SIZE)
                 }
 
+                // Generate the indices to form a number of triangles for each line segment, and the vertices for
+                // the line edges
+                // This takes points n and n+1 and writes into n+1, with the first point in a closed line
+                // being generated from the final one (as n+1 wraps)
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
-                var idx1 = _vtxCurrentIdx
-                for (i1 in 0 until count) {
+                var idx1 = _vtxCurrentIdx // Vertex index for start of line segment
+                for (i1 in 0 until count) { // i1 is the first point of the line segment
                     val i2 = if ((i1 + 1) == points.size) 0 else (i1 + 1) // i2 is the second point of the line segment
                     val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else (idx1 + 4) // Vertex index for end of segment
 
@@ -516,7 +567,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             }
             _vtxCurrentIdx += vtxCount
         } else {
-            // Non Anti-aliased Stroke
+            // Non texture-based, Non anti-aliased lines
             val idxCount = count * 6
             val vtxCount = count * 4      // FIXME-OPT: Not sharing edges
             primReserve(idxCount, vtxCount)

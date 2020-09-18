@@ -1,6 +1,7 @@
 package imgui.demo
 
 import glm_.f
+import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -24,6 +25,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.showAboutWindow
 import imgui.ImGui.showMetricsWindow
 import imgui.ImGui.showUserGuide
+import imgui.ImGui.sliderFloat
 import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
@@ -36,8 +38,14 @@ import imgui.dsl.menu
 import imgui.dsl.menuBar
 import imgui.dsl.treeNode
 import imgui.dsl.window
+import imgui.internal.sections.or
+import imgui.internal.sections.wo
+import kool.lim
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
+import imgui.internal.sections.DrawListFlag as Dlf
 
 object ExampleApp {
 
@@ -74,7 +82,9 @@ object ExampleApp {
     var noBackground = false
     var noBringToFront = false
 
+    var baseRot = 0f
     var filter = TextFilter()
+    var lineWidth = 1f
 
     operator fun invoke(open_: KMutableProperty0<Boolean>?) {
 
@@ -116,6 +126,66 @@ object ExampleApp {
         setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
+        // Test lines
+
+        if (begin("Lines")) {
+            val drawList = ImGui.windowDrawList
+
+            val numCols = 16
+            val numRows = 3
+            val lineLen = 64.0f
+            val lineSpacing = 128.0f
+
+            sliderFloat("Base rotation", ::baseRot, 0f, 360f)
+            sliderFloat("Line width", ::lineWidth, 1f, 10f)
+
+            val windowPos = ImGui.windowPos // careful, no copy
+            val cursorPos = ImGui.cursorPos // careful, no copy
+            val basePos = Vec2(windowPos.x + cursorPos.x + lineSpacing * 0.5f, windowPos.y + cursorPos.y)
+
+            for (i in 0 until numRows) {
+                val name = when (i) {
+                    0 -> {
+                        drawList.flags = drawList.flags wo Dlf.AntiAliasedLines
+                        "No AA"
+                    }
+                    1 -> {
+                        drawList.flags = drawList.flags or Dlf.AntiAliasedLines
+                        drawList.flags = drawList.flags wo Dlf.TexturedAALines
+                        "AA no texturing"
+                    }
+                    2 -> {
+                        drawList.flags = drawList.flags or Dlf.AntiAliasedLines
+                        drawList.flags = drawList.flags or Dlf.TexturedAALines
+                        "AA with texturing"
+                    }
+                    else -> ""
+                }
+
+                val initialVtxCount = drawList.vtxBuffer.size
+                val initialIdxCount = drawList.idxBuffer.lim
+
+                for (j in 0 until numCols) {
+                    val r = baseRot * glm.πf / 180f + (j * glm.πf * 0.5f) / (numCols - 1)
+
+                    val center = Vec2(basePos.x + lineSpacing * (j * 0.5f), basePos.y + lineSpacing * (i + 0.5f))
+                    val start = Vec2(center.x + sin(r) * lineLen * 0.5f, center.y + cos(r) * lineLen * 0.5f)
+                    val end = Vec2(center.x - sin(r) * lineLen * 0.5f, center.y - cos(r) * lineLen * 0.5f)
+
+                    drawList.addLine(start, end, COL32(255), lineWidth)
+                }
+
+                ImGui.cursorPosY = cursorPos.y + i * lineSpacing
+                text("$name - ${drawList.vtxBuffer.size - initialVtxCount} vertices, ${drawList.idxBuffer.lim - initialIdxCount} indices")
+            }
+
+            ImGui.cursorPosY = cursorPos.y + numRows * lineSpacing
+
+            //ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+            //ImGui::Image(ImGui::GetFont()->ContainerAtlas->TexID, ImVec2((float)ImGui::GetFont()->ContainerAtlas->TexWidth, (float)ImGui::GetFont()->ContainerAtlas->TexHeight));
+        }
+        end()
+
         // Main body of the Demo window starts here.
         if (!begin("Dear ImGui Demo", open, windowFlags)) {
             end()   // Early out if the window is collapsed, as an optimization.
@@ -128,7 +198,7 @@ object ExampleApp {
         //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
-        pushItemWidth(fontSize * -12);
+        pushItemWidth(fontSize * -12)
 
         // Menu Bar
         menuBar {
@@ -211,6 +281,7 @@ object ExampleApp {
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
                 sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor itself. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+                text("Also see Style->Rendering for rendering options.")
                 separator()
             }
             treeNode("Backend Flags") {

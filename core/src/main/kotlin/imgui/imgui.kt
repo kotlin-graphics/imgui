@@ -36,10 +36,11 @@ val COL32_A_SHIFT = 24
 @JvmField
 val COL32_A_MASK = 0xFF000000.i
 
+fun COL32(i: Int) = COL32(i, i, i, i)
 fun COL32(r: Int, g: Int, b: Int, a: Int) = (a shl COL32_A_SHIFT) or (b shl COL32_B_SHIFT) or (g shl COL32_G_SHIFT) or (r shl COL32_R_SHIFT)
 
 @JvmField
-val COL32_WHITE = COL32(255, 255, 255, 255) // Opaque white = 0xFFFFFFFF
+val COL32_WHITE = COL32(255) // Opaque white = 0xFFFFFFFF
 
 @JvmField
 val COL32_BLACK = COL32(0, 0, 0, 255)       // Opaque black

@@ -20,6 +20,7 @@ import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
 fun ASSERT_PARANOID(value: Boolean) = assert(value)
+fun ASSERT_PARANOID(value: Boolean, lazyMessage: () -> Any) = assert(value, lazyMessage)
 
 //-----------------------------------------------------------------------------
 // [SECTION] Generic helpers

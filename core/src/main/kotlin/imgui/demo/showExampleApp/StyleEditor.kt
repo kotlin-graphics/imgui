@@ -281,6 +281,7 @@ object StyleEditor {
             if (beginTabItem("Rendering")) {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
                 sameLine(); helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
+                checkbox("Use textures for anti-aliased lines", style::texturedAntiAliasedLines)
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
                 dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
