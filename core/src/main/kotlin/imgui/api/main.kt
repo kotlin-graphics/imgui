@@ -85,14 +85,12 @@ interface main {
         var flags = Dlf.None.i
         if (style.antiAliasedLines)
             flags = flags or Dlf.AntiAliasedLines
-        if (style.texturedAntiAliasedLines)
-            flags = flags or Dlf.TexturedAALines
+        if (style.antiAliasedLinesUseTexData && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoAALines.i)
+            flags = flags or Dlf.AntiAliasedLinesUseTexData
         if (style.antiAliasedFill)
             flags = flags or Dlf.AntiAliasedFill
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
             flags = flags or Dlf.AllowVtxOffset
-        if (style.texturedAntiAliasedLines && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoAALines.i)
-            flags = flags or Dlf.TexturedAALines
         g.drawListSharedData.initialFlags = flags
 
         g.backgroundDrawList._resetForNewFrame()

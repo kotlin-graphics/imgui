@@ -10,7 +10,6 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
-import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -21,7 +20,6 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
-import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
@@ -44,7 +42,6 @@ import imgui.ImGui.showFontSelector
 import imgui.ImGui.showStyleSelector
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
-import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
@@ -281,7 +278,8 @@ object StyleEditor {
             if (beginTabItem("Rendering")) {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
                 sameLine(); helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
-                checkbox("Use textures for anti-aliased lines", style::texturedAntiAliasedLines)
+                checkbox("Anti-aliased lines use texture data", style::antiAliasedLinesUseTexData)
+                sameLine(); helpMarker("Faster lines using texture data. Requires texture to use bilinear sampling (not nearest).")
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
                 dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
