@@ -371,8 +371,11 @@ class DrawList(sharedData: DrawListSharedData?) {
             val integerThickness = thickness.i
             val fractionalThickness = thickness - integerThickness
 
-            // Do we want to draw this line using a texture?
-            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex && integerThickness < DRAWLIST_TEX_AA_LINES_WIDTH_MAX
+            // Do we want to draw this line using a texture? (for now, only draw integer-width lines using textures
+            // to avoid issues with the way scaling occurs)
+            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex &&
+                    integerThickness < DRAWLIST_TEX_AA_LINES_WIDTH_MAX &&
+                    fractionalThickness >= -0.00001f && fractionalThickness <= 0.00001f
 
             ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoAntiAliasedLines.i) {
                 "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTexData unless ImFontAtlasFlags_NoAALines is off"
@@ -419,7 +422,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // for the line itself, plus one pixel for AA
                 // We don't use AA_SIZE here because the +1 is tied to the generated texture and so alternate values
                 // won't work without changes to that code
-                val halfDrawSize = if(useTexture) thickness * 0.5f + 1 else 1f
+                val halfDrawSize = if (useTexture) thickness * 0.5f + 1 else 1f
 
                 // If line is not closed, the first and last points need to be generated differently as there are no normals to blend
                 if (!closed) {
