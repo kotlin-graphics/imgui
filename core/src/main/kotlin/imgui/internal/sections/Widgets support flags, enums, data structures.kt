@@ -479,7 +479,7 @@ enum class DrawListFlag(val i: DrawListFlags) {
     AllowVtxOffset(1 shl 2),
 
     /** Should anti-aliased lines be drawn using textures where possible? */
-    TexturedAALines(1 shl 3);
+    AntiAliasedLinesUseTexData(1 shl 3);
 
     infix fun and(b: DrawListFlag): DrawListFlags = i and b.i
     infix fun and(b: DrawListFlags): DrawListFlags = i and b

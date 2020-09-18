@@ -123,7 +123,7 @@ class Style {
     var antiAliasedLines = true
 
     /** Draw anti-aliased lines using textures where possible. */
-    var texturedAntiAliasedLines = true
+    var antiAliasedLinesUseTexData = true
 
     /**  Enable anti-aliased on filled shapes (rounded rectangles, circles, etc.).. Disable if you are really tight on CPU/GPU.  */
     var antiAliasedFill = true

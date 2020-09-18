@@ -402,10 +402,8 @@ class FontAtlas {
         val i = if (ordinal == 0) 0 else 1 shl ordinal
     }
 
-    companion object {
-        infix fun Int.has(flag: Flag) = and(flag.i) != 0
-        infix fun Int.hasnt(flag: Flag) = and(flag.i) == 0
-    }
+    infix fun Int.has(flag: Flag) = and(flag.i) != 0
+    infix fun Int.hasnt(flag: Flag) = and(flag.i) == 0
 
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
     var locked = false
@@ -585,7 +583,6 @@ class FontAtlas {
         assert(configData.isNotEmpty())
 
         buildInit()
-        buildRegisterAALineCustomRects()
 
         // Clear atlas
         texID = 0
@@ -846,26 +843,11 @@ class FontAtlas {
                 flags hasnt Flag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
                 else -> addCustomRectRegular(2, 2)
             }
+        buildRegisterAALineCustomRects(this)
     }
 
     // This is called/shared by both the stb_truetype and the FreeType builder.
     val AA_LINE_TEX_HEIGHT = 1 // Technically we only need 1 pixel in the ideal case but this can be increased if necessary to give a border to avoid sampling artifacts
-
-    fun buildRegisterAALineCustomRects() {
-        if (aaLineRectIds.isNotEmpty())
-            return
-
-        if (flags has Flag.NoAALines)
-            return
-
-        val max = DRAWLIST_TEX_AA_LINES_WIDTH_MAX
-
-        for (n in 0 until max) {
-            val width = n + 1 // The line width this entry corresponds to
-            // The "width + 3" here is interesting - +2 is to give space for the end caps, but the remaining +1 is because (empirically) to match the behaviour of the untextured render path we need to draw lines one pixel wider
-            aaLineRectIds += addCustomRectRegular(width + 3, AA_LINE_TEX_HEIGHT)
-        }
-    }
 
     fun buildSetupFont(font: Font, fontConfig: FontConfig, ascent: Float, descent: Float) {
         if (!fontConfig.mergeMode)
@@ -904,49 +886,13 @@ class FontAtlas {
         packRects.free()
     }
 
-    fun buildAALinesTexData() {
-        assert(texPixelsAlpha8 != null && texUvAALines.isEmpty())
-
-        if (flags has Flag.NoAALines)
-        return
-
-        val w = texSize.x
-        val max = DRAWLIST_TEX_AA_LINES_WIDTH_MAX
-
-        for (n in 0 until max) {
-            assert(aaLineRectIds.size > n)
-            val r = customRects[aaLineRectIds[n]]
-            assert(r.isPacked)
-
-            // We fill as many lines as we were given, to allow for >1 lines being used to work around sampling weirdness
-            for (y in 0 until r.height) {
-                var idx = r.x + (r.y + y) * w
-                val ptr = texPixelsAlpha8!!
-
-                // Each line consists of two empty pixels at the ends, with a line of solid pixels in the middle
-                ptr[idx++] = 0.b
-                for (x in 0 until r.width - 2)
-                    ptr[idx++] = 0xFF.b
-                ptr[idx++] = 0
-            }
-
-            val uv0 = Vec2()
-            val uv1 = Vec2()
-            calcCustomRectUV(r, uv0, uv1)
-            val halfV = (uv0.y + uv1.y) * 0.5f // Calculate a constant V in the middle of the texture as we want a horizontal slice (with some padding either side to avoid sampling artifacts)
-            texUvAALines += Vec4(uv0.x, halfV, uv1.x, halfV)
-        }
-    }
-
     /** ~ImFontAtlasBuildFinish
+     *
      *  This is called/shared by both the stb_truetype and the FreeType builder. */
     fun buildFinish() {
         // Render into our custom data blocks
-        assert(texPixelsAlpha8 != null)
         buildRenderDefaultTexData()
-
-        // Render anti-aliased line textures
-        buildAALinesTexData()
+        buildRenderAALinesTexData(this)
 
         // Register custom rectangle glyphs
         for (r in customRects) {
@@ -1026,6 +972,55 @@ class FontAtlas {
         }
     }
 
+    companion object {
+        fun buildRegisterAALineCustomRects(atlas: FontAtlas) {
+            if (atlas.aaLineRectIds.isNotEmpty())
+                return
+
+            if (atlas.flags has Flag.NoAALines.i)
+                return
+
+            for (n in 0 until DRAWLIST_TEX_AA_LINES_WIDTH_MAX) {
+                // The "width + 3" here is interesting. +2 is to give space for the end caps, but the remaining +1 is
+                // because (empirically) to match the behavior of the untextured render path we need to draw lines one
+                // pixel wider.
+                val width = n + 1 // The line width this entry corresponds to
+                atlas.aaLineRectIds += atlas.addCustomRectRegular(width + 3, atlas.AA_LINE_TEX_HEIGHT)
+            }
+        }
+
+        fun buildRenderAALinesTexData(atlas: FontAtlas) {
+            assert(atlas.texPixelsAlpha8 != null && atlas.texUvAALines.isEmpty())
+
+            if (atlas.flags has Flag.NoAALines.i)
+                return
+
+            val w = atlas.texSize.x
+
+            for (n in 0 until DRAWLIST_TEX_AA_LINES_WIDTH_MAX) {
+                assert(atlas.aaLineRectIds.size > n)
+                val r = atlas.customRects[atlas.aaLineRectIds[n]]
+                assert(r.isPacked)
+
+                // We fill as many lines as we were given, to allow for >1 lines being used to work around sampling weirdness
+                for (y in 0 until r.height) {
+                    // Each line consists of two empty pixels at the ends, with a line of solid pixels in the middle
+                    var idx = r.x + (r.y + y) * w
+                    val ptr = atlas.texPixelsAlpha8!!
+                    ptr[idx++] = 0.b
+                    for (x in 0 until r.width - 2)
+                        ptr[idx++] = 0xFF.b
+                    ptr[idx++] = 0
+                }
+
+                val uv0 = Vec2()
+                val uv1 = Vec2()
+                atlas.calcCustomRectUV(r, uv0, uv1)
+                val halfV = (uv0.y + uv1.y) * 0.5f // Calculate a constant V in the middle of the texture as we want a horizontal slice (with some padding either side to avoid sampling artifacts)
+                atlas.texUvAALines += Vec4(uv0.x, halfV, uv1.x, halfV)
+            }
+        }
+    }
 
     /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
         The white texels on the top left are the ones we'll use everywhere in Dear ImGui to render filled shapes.     */
