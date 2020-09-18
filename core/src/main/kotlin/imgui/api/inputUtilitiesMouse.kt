@@ -52,7 +52,7 @@ interface inputUtilitiesMouse {
     }
 
 
-    /** did mouse button double-clicked? A double-click returns false in IsMouseClicked(). uses io.MouseDoubleClickTime.    */
+    /** did mouse button double-clicked? (note that a double-click will also report IsMouseClicked() == true) */
     fun isMouseDoubleClicked(button: MouseButton): Boolean {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
