@@ -12,6 +12,7 @@ import imgui.MouseCursor
 import imgui.TextureID
 import imgui.internal.fileLoadToMemory
 import imgui.internal.round
+import imgui.internal.sections.DRAWLIST_TEX_AA_LINES_WIDTH_MAX
 import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
 import kool.*
@@ -455,11 +456,8 @@ class FontAtlas {
     /** Custom texture rectangle ID for white pixel and mouse cursors */
     private var packIdMouseCursors = -1
 
-    /** Maximum line width to build anti-aliased textures for */
-    var aaLineMaxWidth = 8
-
     /** Custom texture rectangle IDs for anti-aliased lines */
-    val aaLineRectIds = ArrayList<Int>()
+    private val aaLineRectIds = ArrayList<Int>()
 
     /** UVs for anti-aliased line textures */
     val texUvAALines = ArrayList<Vec4>()
@@ -860,7 +858,7 @@ class FontAtlas {
         if (flags has Flag.NoAALines)
             return
 
-        val max = aaLineMaxWidth
+        val max = DRAWLIST_TEX_AA_LINES_WIDTH_MAX
 
         for (n in 0 until max) {
             val width = n + 1 // The line width this entry corresponds to
@@ -913,7 +911,7 @@ class FontAtlas {
         return
 
         val w = texSize.x
-        val max = aaLineMaxWidth
+        val max = DRAWLIST_TEX_AA_LINES_WIDTH_MAX
 
         for (n in 0 until max) {
             assert(aaLineRectIds.size > n)
