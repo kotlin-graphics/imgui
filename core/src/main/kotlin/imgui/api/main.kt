@@ -85,7 +85,7 @@ interface main {
         var flags = Dlf.None.i
         if (style.antiAliasedLines)
             flags = flags or Dlf.AntiAliasedLines
-        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoAntiAliasedLines.i)
+        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i)
             flags = flags or Dlf.AntiAliasedLinesUseTex
         if (style.antiAliasedFill)
             flags = flags or Dlf.AntiAliasedFill

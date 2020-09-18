@@ -62,7 +62,7 @@ class DrawListSharedData {
     val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
 
     /** UV of anti-aliased lines in the atlas */
-    val texUvAALines = ArrayList<Vec4>()
+    lateinit var texUvLines: Array<Vec4>
 
     fun setCircleSegmentMaxError_(maxError: Float) {
         if (circleSegmentMaxError == maxError)
