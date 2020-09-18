@@ -365,12 +365,13 @@ class DrawList(sharedData: DrawListSharedData?) {
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
 
-            // The -0.5f here is to better match the geometry-based code, and also shift the transition point from one
-            // width texture to another off the integer values (where it will be less noticeable)
-            val integerThickness = (thickness - 0.5f).i max 1
+            // The thick_line test is an attempt to compensate for the way half_draw_size gets calculated later,
+            // which special-cases 1.0f width lines
+            val integerThickness = if(thickLine) max(thickness.i, 1) else 2
+            val fractionalThickness = if(thickLine) thickness - integerThickness else 0f
 
             // Do we want to draw this line using a texture?
-            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTexData && integerThickness <= DRAWLIST_TEX_AA_LINES_WIDTH_MAX
+            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTexData && integerThickness < DRAWLIST_TEX_AA_LINES_WIDTH_MAX
 
             ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoAALines.i) {
                 "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTexData unless ImFontAtlasFlags_NoAALines is off"
@@ -409,8 +410,11 @@ class DrawList(sharedData: DrawListSharedData?) {
             // If we are drawing a one-pixel-wide line without a texture, or a textured line of any width,
             // we only need 2 or 3 vertices per point
             if (!thickLine || useTexture) {
-                // The width of the geometry we need to draw
-                val halfDrawSize = AA_SIZE + if (!thickLine) 0f else thickness * 0.5f
+                // The width of the geometry we need to draw - this is essentially <thickness> pixels
+                // for the line itself, plus one pixel for AA
+                // We don't use AA_SIZE here because the +1 is tied to the generated texture and so alternate values
+                // won't work without changes to that code
+                val halfDrawSize = thickness * 0.5f + 1
 
                 // If line is not closed, the first and last points need to be generated differently as there are no normals to blend
                 if (!closed) {
@@ -471,7 +475,16 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // Add vertices for each point on the line
                 if (useTexture) {
                     // If we're using textures we only need to emit the left/right edge vertices
-                    val texUVs = _data.texUvAALines[integerThickness - 1]
+                    val texUVs = when(fractionalThickness) {
+                        // Fast path for pure integer widths
+                        0f -> _data.texUvAALines[integerThickness]
+                        else -> {
+                            // Calculate UV by interpolating between the two nearest integer line widths
+                            val texUvs0 = _data.texUvAALines[integerThickness]
+                            val texUvs1 = _data.texUvAALines[integerThickness + 1]
+                            texUvs0.lerp(texUvs1, fractionalThickness)
+                        }
+                    }
 
                     for (i in 0 until points.size) {
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += Vec2(texUVs.x, texUVs.y); vtxBuffer += col // Left-side outer edge
