@@ -986,6 +986,10 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Large mesh support (when enabled)
         ASSERT_PARANOID(idxCount >= 0 && vtxCount >= 0)
         if (DrawIdx.BYTES == 2 && _vtxCurrentIdx + vtxCount >= (1 shl 16) && flags has DrawListFlag.AllowVtxOffset) {
+            // FIXME: In theory we should be testing that vtx_count <64k here.
+            // In practice, RenderText() relies on reserving ahead for a worst case scenario so it is currently useful
+            // for us to not make that check until we rework the text functions to handle clipping and
+            // large horizontal lines better.
             _cmdHeader.vtxOffset = vtxBuffer.rem
             _onChangedVtxOffset()
         }
@@ -1234,7 +1238,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // We don't need to compare curr_cmd->VtxOffset != _CmdHeader.VtxOffset because we know it'll be different at the time we call this.
         _vtxCurrentIdx = 0
         val currCmd = cmdBuffer.last()
-        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset)
+//        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset) // See #3349
         if (currCmd.elemCount != 0) {
             addDrawCmd()
             return
