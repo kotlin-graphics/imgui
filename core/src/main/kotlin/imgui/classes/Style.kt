@@ -122,8 +122,8 @@ class Style {
      *  Draw anti-aliased lines using textures where possible. */
     var antiAliasedLines = true
 
-    /** Draw anti-aliased lines using textures where possible. */
-    var antiAliasedLinesUseTexData = true
+    /** Enable anti-aliased lines/borders using textures where possible. Requires back-end to render with bilinear filtering. */
+    var antiAliasedLinesUseTex = true
 
     /**  Enable anti-aliased on filled shapes (rounded rectangles, circles, etc.).. Disable if you are really tight on CPU/GPU.  */
     var antiAliasedFill = true

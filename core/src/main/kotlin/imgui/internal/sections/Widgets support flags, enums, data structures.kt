@@ -475,11 +475,11 @@ enum class DrawListFlag(val i: DrawListFlags) {
     /** Enable anti-aliased edge around filled shapes (rounded rectangles, circles). */
     AntiAliasedFill(1 shl 1),
 
-    /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
-    AllowVtxOffset(1 shl 2),
-
     /** Should anti-aliased lines be drawn using textures where possible? */
-    AntiAliasedLinesUseTexData(1 shl 3);
+    AntiAliasedLinesUseTex(1 shl 2),
+
+    /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
+    AllowVtxOffset(1 shl 3);
 
     infix fun and(b: DrawListFlag): DrawListFlags = i and b.i
     infix fun and(b: DrawListFlags): DrawListFlags = i and b

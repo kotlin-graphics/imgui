@@ -85,8 +85,8 @@ interface main {
         var flags = Dlf.None.i
         if (style.antiAliasedLines)
             flags = flags or Dlf.AntiAliasedLines
-        if (style.antiAliasedLinesUseTexData && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoAALines.i)
-            flags = flags or Dlf.AntiAliasedLinesUseTexData
+        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoAntiAliasedLines.i)
+            flags = flags or Dlf.AntiAliasedLinesUseTex
         if (style.antiAliasedFill)
             flags = flags or Dlf.AntiAliasedFill
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)

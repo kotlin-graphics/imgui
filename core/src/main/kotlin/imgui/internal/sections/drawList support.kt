@@ -25,10 +25,6 @@ fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((g
 /** ImDrawList: You may set this to higher values (e.g. 2 or 3) to increase tessellation of fast rounded corners path. */
 var DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER = 1
 
-/** The maximum line width to build anti-aliased textures for (note that this needs to be one greater than the maximum
- *  line width you want to be able to draw using the textured path) */
-var DRAWLIST_TEX_AA_LINES_WIDTH_MAX = 65
-
 /** Data shared between all ImDrawList instances
  *  You may want to create your own instance of this if you want to use ImDrawList completely without ImGui. In that case, watch out for future changes to this structure.
  *  Data shared among multiple draw lists (typically owned by parent ImGui context, but you may create one yourself) */
@@ -66,7 +62,7 @@ class DrawListSharedData {
     val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
 
     /** UV of anti-aliased lines in the atlas */
-    var texUvAALines = ArrayList<Vec4>()
+    val texUvAALines = ArrayList<Vec4>()
 
     fun setCircleSegmentMaxError_(maxError: Float) {
         if (circleSegmentMaxError == maxError)
