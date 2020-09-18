@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-//val moduleName = "$group.openjfx"
+val moduleName = "$group.openjfx"
 
 dependencies {
 
@@ -28,7 +28,7 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
 }
 
-//tasks.compileJava {
-//    // this is needed because we have a separate compile step in this example with the 'module-info.java' is in 'main/java' and the Kotlin code is in 'main/kotlin'
-//    options.compilerArgs = listOf("--patch-module", "$moduleName=${sourceSets.main.get().output.asPath}")
-//}
+tasks.compileJava {
+    // this is needed because we have a separate compile step in this example with the 'module-info.java' is in 'main/java' and the Kotlin code is in 'main/kotlin'
+    options.compilerArgs = listOf("--patch-module", "$moduleName=${sourceSets.main.get().output.asPath}")
+}

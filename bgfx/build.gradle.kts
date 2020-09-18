@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-//val moduleName = "$group.${rootProject.name}.bgfx"
+val moduleName = "$group.bgfx"
 
 dependencies {
 
@@ -24,7 +24,7 @@ dependencies {
 //    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
-//tasks.compileJava {
-//    // this is needed because we have a separate compile step in this example with the 'module-info.java' is in 'main/java' and the Kotlin code is in 'main/kotlin'
-//    options.compilerArgs = listOf("--patch-module", "$moduleName=${sourceSets.main.get().output.asPath}")
-//}
+tasks.compileJava {
+    // this is needed because we have a separate compile step in this example with the 'module-info.java' is in 'main/java' and the Kotlin code is in 'main/kotlin'
+    options.compilerArgs = listOf("--patch-module", "$moduleName=${sourceSets.main.get().output.asPath}")
+}
