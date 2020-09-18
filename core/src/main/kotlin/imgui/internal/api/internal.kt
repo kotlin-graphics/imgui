@@ -9,10 +9,10 @@ import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
-import imgui.internal.sections.NavLayer
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
 import imgui.internal.hash
+import imgui.internal.sections.NavLayer
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
 import java.util.*
@@ -121,9 +121,12 @@ internal interface internal {
         g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
 
         val atlas = g.font.containerAtlas
-        g.drawListSharedData.texUvWhitePixel = atlas.texUvWhitePixel
-        g.drawListSharedData.font = g.font
-        g.drawListSharedData.fontSize = g.fontSize
+        g.drawListSharedData.also {
+            it.texUvWhitePixel = atlas.texUvWhitePixel
+            it.texUvAALines = atlas.texUvAALines
+            it.font = g.font
+            it.fontSize = g.fontSize
+        }
     }
 
     /** ~GetDefaultFont */

@@ -774,7 +774,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toByteArray()
                 getForegroundDrawList(window).apply {
                     addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                    addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                    addText(io.fontDefault, 13f, cand.min, COL32(255), buf)
                 }
             }
         }

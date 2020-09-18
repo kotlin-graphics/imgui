@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
+import glm_.vec4.Vec4
 import imgui.ImGui.style
 import imgui.MouseCursor
 import imgui.TextureID
@@ -13,7 +14,6 @@ import imgui.internal.fileLoadToMemory
 import imgui.internal.round
 import imgui.internal.upperPowerOfTwo
 import imgui.stb.*
-import imgui.wo
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
@@ -21,7 +21,6 @@ import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
 import unsigned.toUInt
-import unsigned.toULong
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -160,7 +159,7 @@ class FontAtlas {
         }
         configData.clear()
         customRects.clear()
-        customRectIds.fill(-1)
+        packIdMouseCursors = -1
     }
 
     /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
@@ -346,7 +345,10 @@ class FontAtlas {
         return customRects.lastIndex // Return index
     }
 
-    fun getCustomRectByIndex(index: Int) = customRects.getOrNull(index)
+    fun getCustomRectByIndex(index: Int): CustomRect {
+        assert(index >= 0)
+        return customRects[index]
+    }
 
     // Internals
 
@@ -361,10 +363,10 @@ class FontAtlas {
 
         if (cursor == MouseCursor.None) return false
 
-        if (flags has FontAtlasFlag.NoMouseCursors) return false
+        if (flags has Flag.NoMouseCursors) return false
 
-        assert(customRectIds[0] != -1)
-        val r = customRects[customRectIds[0]]
+        assert(packIdMouseCursors != -1)
+        val r = getCustomRectByIndex(packIdMouseCursors)
         val pos = DefaultTexData.cursorDatas[cursor.i][0] + Vec2(r.x, r.y)
         val size = DefaultTexData.cursorDatas[cursor.i][1]
         outSize put size
@@ -383,27 +385,32 @@ class FontAtlas {
     // Members
     //-------------------------------------------
 
-    /** Flags: for ImFontAtlas */
-    enum class FontAtlasFlag {
+    /** Flags: for ImFontAtlas build */
+    enum class Flag {
         None,
 
         /** Don't round the height to next power of two */
         NoPowerOfTwoHeight,
 
-        /** Don't build software mouse cursors into the atlas   */
-        NoMouseCursors;
+        /** Don't build software mouse cursors into the atlas (save a little texture memory) */
+        NoMouseCursors,
+
+        /** Don't build anti-aliased line textures into the atlas */
+        NoAALines;
 
         val i = if (ordinal == 0) 0 else 1 shl ordinal
     }
 
-    infix fun Int.has(flag: FontAtlasFlag) = and(flag.i) != 0
-    infix fun Int.hasnt(flag: FontAtlasFlag) = and(flag.i) == 0
+    companion object {
+        infix fun Int.has(flag: Flag) = and(flag.i) != 0
+        infix fun Int.hasnt(flag: Flag) = and(flag.i) == 0
+    }
 
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
     var locked = false
 
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags = FontAtlasFlag.None.i
+    var flags = Flag.None.i
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
@@ -439,11 +446,24 @@ class FontAtlas {
     /** Rectangles for packing custom texture data into the atlas.  */
     private val customRects = ArrayList<CustomRect>()
 
-    /** Internal data   */
+    /** Configuration data */
     private val configData = ArrayList<FontConfig>()
 
-    /** Identifiers of custom texture rectangle used by FontAtlas/DrawList  */
-    private val customRectIds = intArrayOf(-1)
+
+    // [Internal] Packing data
+
+    /** Custom texture rectangle ID for white pixel and mouse cursors */
+    private var packIdMouseCursors = -1
+
+    /** Maximum line width to build anti-aliased textures for */
+    var aaLineMaxWidth = 8
+
+    /** Custom texture rectangle IDs for anti-aliased lines */
+    val aaLineRectIds = ArrayList<Int>()
+
+    /** UVs for anti-aliased line textures */
+    val texUvAALines = ArrayList<Vec4>()
+
 
     private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
         assert(texSize.x > 0 && texSize.y > 0) { "Font atlas needs to be built before we can calculate UV coordinates" }
@@ -567,6 +587,7 @@ class FontAtlas {
         assert(configData.isNotEmpty())
 
         buildInit()
+        buildRegisterAALineCustomRects()
 
         // Clear atlas
         texID = 0
@@ -737,7 +758,7 @@ class FontAtlas {
 
         // 7. Allocate texture
         texSize.y = when {
-            flags has FontAtlasFlag.NoPowerOfTwoHeight -> texSize.y + 1
+            flags has Flag.NoPowerOfTwoHeight -> texSize.y + 1
             else -> texSize.y.upperPowerOfTwo
         }
         texUvScale = 1f / Vec2(texSize)
@@ -818,13 +839,33 @@ class FontAtlas {
         return true
     }
 
-    /** Register default custom rectangles (this is called/shared by both the stb_truetype and the FreeType builder)
-     *  ~ImFontAtlasBuildInit */
+    /** ~ImFontAtlasBuildInit
+     *  Note: this is called / shared by both the stb_truetype and the FreeType builder */
     fun buildInit() {
-        if (customRectIds[0] >= 0) return
-        customRectIds[0] = when {
-            flags hasnt FontAtlasFlag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
-            else -> addCustomRectRegular(2, 2)
+        // Register texture region for mouse cursors or standard white pixels
+        if (packIdMouseCursors < 0)
+            packIdMouseCursors = when {
+                flags hasnt Flag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+                else -> addCustomRectRegular(2, 2)
+            }
+    }
+
+    // This is called/shared by both the stb_truetype and the FreeType builder.
+    val AA_LINE_TEX_HEIGHT = 1 // Technically we only need 1 pixel in the ideal case but this can be increased if necessary to give a border to avoid sampling artifacts
+
+    fun buildRegisterAALineCustomRects() {
+        if (aaLineRectIds.isNotEmpty())
+            return
+
+        if (flags has Flag.NoAALines)
+            return
+
+        val max = aaLineMaxWidth
+
+        for (n in 0 until max) {
+            val width = n + 1 // The line width this entry corresponds to
+            // The "width + 3" here is interesting - +2 is to give space for the end caps, but the remaining +1 is because (empirically) to match the behaviour of the untextured render path we need to draw lines one pixel wider
+            aaLineRectIds += addCustomRectRegular(width + 3, AA_LINE_TEX_HEIGHT)
         }
     }
 
@@ -865,10 +906,49 @@ class FontAtlas {
         packRects.free()
     }
 
-    /** ~ImFontAtlasBuildFinish */
+    fun buildAALinesTexData() {
+        assert(texPixelsAlpha8 != null && texUvAALines.isEmpty())
+
+        if (flags has Flag.NoAALines)
+        return
+
+        val w = texSize.x
+        val max = aaLineMaxWidth
+
+        for (n in 0 until max) {
+            assert(aaLineRectIds.size > n)
+            val r = customRects[aaLineRectIds[n]]
+            assert(r.isPacked)
+
+            // We fill as many lines as we were given, to allow for >1 lines being used to work around sampling weirdness
+            for (y in 0 until r.height) {
+                var idx = r.x + (r.y + y) * w
+                val ptr = texPixelsAlpha8!!
+
+                // Each line consists of two empty pixels at the ends, with a line of solid pixels in the middle
+                ptr[idx++] = 0.b
+                for (x in 0 until r.width - 2)
+                    ptr[idx++] = 0xFF.b
+                ptr[idx++] = 0
+            }
+
+            val uv0 = Vec2()
+            val uv1 = Vec2()
+            calcCustomRectUV(r, uv0, uv1)
+            val halfV = (uv0.y + uv1.y) * 0.5f // Calculate a constant V in the middle of the texture as we want a horizontal slice (with some padding either side to avoid sampling artifacts)
+            texUvAALines += Vec4(uv0.x, halfV, uv1.x, halfV)
+        }
+    }
+
+    /** ~ImFontAtlasBuildFinish
+     *  This is called/shared by both the stb_truetype and the FreeType builder. */
     fun buildFinish() {
-        // Render into our custom data block
+        // Render into our custom data blocks
+        assert(texPixelsAlpha8 != null)
         buildRenderDefaultTexData()
+
+        // Render anti-aliased line textures
+        buildAALinesTexData()
 
         // Register custom rectangle glyphs
         for (r in customRects) {
@@ -902,12 +982,11 @@ class FontAtlas {
     /** ~ImFontAtlasBuildRenderDefaultTexData */
     fun buildRenderDefaultTexData() {
 
-        assert(customRectIds[0] >= 0 && texPixelsAlpha8 != null)
-        val r = customRects[customRectIds[0]]
+        val r = getCustomRectByIndex(packIdMouseCursors)
         assert(r.isPacked)
 
         val w = texSize.x
-        if (flags hasnt FontAtlasFlag.NoMouseCursors) {
+        if (flags hasnt Flag.NoMouseCursors) {
             // Render/copy pixels
             assert(r.width == DefaultTexData.wHalf * 2 + 1 && r.height == DefaultTexData.h)
             var n = 0
@@ -920,6 +999,7 @@ class FontAtlas {
                     n++
                 }
         } else {
+            // Render 4 white pixels
             assert(r.width == 2 && r.height == 2)
             val offset = r.x.i + r.y.i * w
             with(texPixelsAlpha8!!) {

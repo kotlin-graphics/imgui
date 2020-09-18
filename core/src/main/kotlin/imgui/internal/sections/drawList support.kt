@@ -61,6 +61,9 @@ class DrawListSharedData {
     /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
     val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
 
+    /** UV of anti-aliased lines in the atlas */
+    var texUvAALines = ArrayList<Vec4>()
+
     fun setCircleSegmentMaxError_(maxError: Float) {
         if (circleSegmentMaxError == maxError)
             return
