@@ -350,7 +350,9 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
      *  We avoid using the ImVec2 math operators here to reduce cost to a minimum for debug/non-inlined builds. */
-    fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness: Float) {
+    fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness_: Float) {
+
+        var thickness = thickness_
 
         if (points.size < 2) return
 
@@ -365,10 +367,11 @@ class DrawList(sharedData: DrawListSharedData?) {
             val AA_SIZE = 1f
             val colTrans = col wo COL32_A_MASK
 
-            // The thick_line test is an attempt to compensate for the way half_draw_size gets calculated later,
-            // which special-cases 1.0f width lines
-            val integerThickness = if(thickLine) max(thickness.i, 1) else 2
-            val fractionalThickness = if(thickLine) thickness - integerThickness else 0f
+            // Thicknesses <1.0 should behave like thickness 1.0
+            thickness = thickness max 1f
+
+            val integerThickness = thickness.i
+            val fractionalThickness = thickness - integerThickness
 
             // Do we want to draw this line using a texture?
             val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTexData && integerThickness < DRAWLIST_TEX_AA_LINES_WIDTH_MAX
@@ -414,7 +417,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // for the line itself, plus one pixel for AA
                 // We don't use AA_SIZE here because the +1 is tied to the generated texture and so alternate values
                 // won't work without changes to that code
-                val halfDrawSize = thickness * 0.5f + 1
+                val halfDrawSize = if(useTexture) thickness * 0.5f + 1 else 1f
 
                 // If line is not closed, the first and last points need to be generated differently as there are no normals to blend
                 if (!closed) {
