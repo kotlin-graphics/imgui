@@ -18,7 +18,7 @@ const val IMGUI_BUILD = 0
 const val IMGUI_VERSION = "1.77"// build: $IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 17700
+const val IMGUI_VERSION_NUM = 17701
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -89,32 +89,50 @@ val IMGUI_ENABLE_TEST_ENGINE: Boolean
 @JvmField
 var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
 
+
+//-----------------------------------------------------------------------------
+// [SECTION] Test Engine Hooks (imgui_test_engine)
+//-----------------------------------------------------------------------------
+
 // TODO rename closer to cpp?
+
+typealias Hook_Shutdown = (Context) -> Unit
+typealias Hook_PreNewFrame = (Context) -> Unit
+typealias Hook_PostNewFrame = (Context) -> Unit
+typealias Hook_ItemAdd = (Context, Rect, ID) -> Unit
+typealias Hook_ItemInfo = (Context, ID, String, ItemStatusFlags) -> Unit
+typealias Hook_IdInfo = (Context, DataType, ID, Any?) -> Unit
+typealias Hook_IdInfo2 = (Context, DataType, ID, Any?, Int) -> Unit
+typealias Hook_Log = (Context, String) -> Unit
+
 object Hook {
 
+    /** ~ImGuiTestEngineHook_Shutdown */
+    var shutdown: Hook_Shutdown? = null
+
     /** ~ImGuiTestEngineHook_PreNewFrame */
-    var preNewFrame: ((ctx: Context) -> Unit)? = null
+    var preNewFrame: Hook_PreNewFrame? = null
 
     /** ~ImGuiTestEngineHook_PostNewFrame */
-    var postNewFrame: ((ctx: Context) -> Unit)? = null
+    var postNewFrame: Hook_PostNewFrame? = null
 
     /** Register item bounding box
      *  ~ImGuiTestEngineHook_ItemAdd */
-    var itemAdd: ((ctx: Context, bb: Rect, id: ID) -> Unit)? = null
+    var itemAdd: Hook_ItemAdd? = null
 
     /** Register item label and status flags (optional)
      *  ~ImGuiTestEngineHook_ItemInfo */
-    var itemInfo: ((ctx: Context, id: ID, label: String, flags: ItemStatusFlags) -> Unit)? = null
+    var itemInfo: Hook_ItemInfo? = null
 
     /** ~ImGuiTestEngineHook_IdInfo */
-    var idInfo: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?) -> Unit)? = null
+    var idInfo: Hook_IdInfo? = null
 
     /** ~ImGuiTestEngineHook_IdInfo */
-    var idInfo2: ((ctx: Context, dataType: DataType, id: ID, dataId: Any?, dataIdEnd: Int) -> Unit)? = null
+    var idInfo2: Hook_IdInfo2? = null
 
     /** Custom log entry from user land into test log
      *  ~ImGuiTestEngineHook_Log */
-    var log: ((ctx: Context, fmt: String) -> Unit)? = null
+    var log: Hook_Log? = null
 }
 
 
