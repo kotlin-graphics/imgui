@@ -27,9 +27,9 @@ import imgui.ImGui.pushClipRect
 import imgui.ImGui.setWindowDock
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
-import imgui.classes.ViewportFlag
 import imgui.classes.hasnt
 import imgui.classes.or
+import imgui.classes.wo
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
@@ -37,6 +37,7 @@ import imgui.static.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
+import imgui.classes.ViewportFlag as Vf
 import imgui.internal.sections.ItemFlag as If
 import imgui.internal.sections.LayoutType as Lt
 
@@ -393,11 +394,11 @@ interface windows {
                 window.pos = findBestWindowPosForPopup(window)
 
             // Late create viewport if we don't fit within our current host viewport.
-            if (window.viewportAllowPlatformMonitorExtend >= 0 && !window.viewportOwned && window.viewport!!.flags hasnt ViewportFlag.Minimized)
+            if (window.viewportAllowPlatformMonitorExtend >= 0 && !window.viewportOwned && window.viewport!!.flags hasnt Vf.Minimized)
                 if (window.rect() !in window.viewport!!.mainRect) {
                     // This is based on the assumption that the DPI will be known ahead (same as the DPI of the selection done in UpdateSelectWindowViewport)
                     //ImGuiViewport* old_viewport = window->Viewport;
-                    window.viewport = addUpdateViewport(window, window.id, window.pos, window.size, ViewportFlag.NoFocusOnAppearing.i)
+                    window.viewport = addUpdateViewport(window, window.id, window.pos, window.size, Vf.NoFocusOnAppearing.i)
 
                     // FIXME-DPI
                     //IM_ASSERT(old_viewport->DpiScale == window->Viewport->DpiScale); // FIXME-DPI: Something went wrong
@@ -433,21 +434,22 @@ interface windows {
                     updateViewportPlatformMonitor(window.viewport!!)
 
                 // Update common viewport flags
-                var viewportFlags = window.viewport!!.flags wo (ViewportFlag.TopMost or ViewportFlag.NoTaskBarIcon or ViewportFlag.NoDecoration)
+                val viewportFlagsToClear = Vf.TopMost or Vf.NoTaskBarIcon or Vf.NoDecoration or Vf.NoRendererClear
+                var viewportFlags = window.viewport!!.flags wo viewportFlagsToClear
                 val isShortLivedFloatingWindow = flags has (Wf._ChildMenu or Wf._Tooltip or Wf._Popup)
                 if (flags has Wf._Tooltip)
-                    viewportFlags = viewportFlags or ViewportFlag.TopMost
+                    viewportFlags = viewportFlags or Vf.TopMost
                 if (io.configViewportsNoTaskBarIcon || isShortLivedFloatingWindow)
-                    viewportFlags = viewportFlags or ViewportFlag.NoTaskBarIcon
+                    viewportFlags = viewportFlags or Vf.NoTaskBarIcon
                 if (io.configViewportsNoDecoration || isShortLivedFloatingWindow)
-                    viewportFlags = viewportFlags or ViewportFlag.NoDecoration
+                    viewportFlags = viewportFlags or Vf.NoDecoration
 
                 // For popups and menus that may be protruding out of their parent viewport, we enable _NoFocusOnClick so that clicking on them
                 // won't steal the OS focus away from their parent window (which may be reflected in OS the title bar decoration).
                 // Setting _NoFocusOnClick would technically prevent us from bringing back to front in case they are being covered by an OS window from a different app,
                 // but it shouldn't be much of a problem considering those are already popups that are closed when clicking elsewhere.
                 if (isShortLivedFloatingWindow && flags hasnt Wf._Modal)
-                    viewportFlags = viewportFlags or (ViewportFlag.NoFocusOnAppearing or ViewportFlag.NoFocusOnClick)
+                    viewportFlags = viewportFlags or (Vf.NoFocusOnAppearing or Vf.NoFocusOnClick)
 
                 // We can overwrite viewport flags using ImGuiWindowClass (advanced users)
                 // We don't default to the main viewport because.
@@ -463,7 +465,9 @@ interface windows {
                     viewportFlags = viewportFlags wo window.windowClass.viewportFlagsOverrideClear
 
                 // We also tell the back-end that clearing the platform window won't be necessary, as our window is filling the viewport and we have disabled BgAlpha
-                viewportFlags = viewportFlags or ViewportFlag.NoRendererClear
+                if (flags hasnt Wf.NoBackground)
+                    viewportFlags = viewportFlags wo Vf.NoRendererClear
+
                 window.viewport!!.flags = viewportFlags
             }
 
