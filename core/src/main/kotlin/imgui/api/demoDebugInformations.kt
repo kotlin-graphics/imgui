@@ -642,11 +642,10 @@ interface demoDebugInformations {
             }
 
             fun nodeDrawCmdShowMeshAndBoundingBox(
-                    window: Window, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
+                    fgDrawList: DrawList, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
                     showMesh: Boolean, showAabb: Boolean,
             ) {
                 assert(showMesh || showAabb)
-                val fgDrawList = getForegroundDrawList(window) // Render additional visuals into the top-most draw list
                 val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
 
                 // Draw wire-frame version of all triangles
@@ -672,6 +671,7 @@ interface demoDebugInformations {
                 fgDrawList.flags = backupFlags
             }
 
+            /** Note that both 'window' and 'viewport' may be NULL here. Viewport is generally null of destroyed popups which previously owned a viewport. */
             fun nodeDrawList(window: Window?, viewport: ViewportP?, drawList: DrawList, label: String) {
 
                 val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " +
@@ -710,7 +710,7 @@ interface demoDebugInformations {
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(window!!, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
+                        nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
                     if (!cmdNodeOpen) continue
 
                     // Calculate approximate coverage area (touched pixel count)
@@ -727,7 +727,7 @@ interface demoDebugInformations {
                     string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
                     selectable(string)
                     if (isItemHovered() && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(window!!, drawList, cmd, elemOffset, true, false)
+                        nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, true, false)
 
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
