@@ -21,15 +21,7 @@ dependencies {
         LINUX -> "linux"
         else -> "macos"
     }
+
     implementation("org.lwjgl", "lwjgl")
     runtimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
 }
-
-//task lightJar(type: Jar) {
-//    archiveClassifier = 'light'
-//    from sourceSets.main.output
-//    exclude 'extraFonts'
-//    inputs.property("moduleName", moduleName)
-////    manifest.attributes('Automatic-Module-Name': moduleName)
-//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//}

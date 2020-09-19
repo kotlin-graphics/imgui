@@ -28,13 +28,6 @@ dependencies {
     testImplementation("com.github.ajalt:mordant:1.2.1")
 }
 
-//task lightJar(type: Jar) {
-//    archiveClassifier = 'light'
-//    from sourceSets.main.output
-//    exclude 'extraFonts'
-//    inputs.property("moduleName", moduleName)
-//    manifest {
-//        attributes('Automatic-Module-Name': moduleName)
-//    }
-//    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//}
+tasks {
+    compileKotlin.get().destinationDir = compileJava.get().destinationDir
+}

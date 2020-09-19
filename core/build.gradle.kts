@@ -2,7 +2,7 @@ import org.gradle.internal.os.OperatingSystem.*
 
 dependencies {
 
-    implementation(kotlin("stdlib-jdk7"))
+    implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
     val kx = "com.github.kotlin-graphics"
@@ -21,4 +21,8 @@ dependencies {
         implementation("org.lwjgl", "lwjgl$it")
         runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
+}
+
+tasks {
+    compileKotlin.get().destinationDir = compileJava.get().destinationDir
 }
