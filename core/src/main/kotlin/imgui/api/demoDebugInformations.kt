@@ -71,6 +71,10 @@ import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.*
+import imgui.internal.sections.Axis
+import imgui.internal.sections.DrawListFlag
+import imgui.internal.sections.WindowSettings
+import imgui.internal.sections.wo
 import imgui.static.dockContextClearNodes
 import imgui.static.dockNodeGetDepth
 import imgui.static.dockNodeTreeFindNodeByPos
@@ -354,6 +358,7 @@ interface demoDebugInformations {
 //        #endif // #define IMGUI_HAS_TABLE
 //
         // Details for Docking
+//        #ifdef IMGUI_HAS_DOCK
         if (treeNode("Dock nodes")) {
 
             val dc = g.dockContext!!
@@ -367,6 +372,7 @@ interface demoDebugInformations {
                     Funcs.nodeDockNode(node, "Node")
             treePop()
         }
+//        #endif // #define IMGUI_HAS_DOCK
 
         // Settings
         treeNode("Settings") {
@@ -473,6 +479,7 @@ interface demoDebugInformations {
 //        }
 //        #endif // #define IMGUI_HAS_TABLE
 
+//        #ifdef IMGUI_HAS_DOCK
         // Overlay: Display Docking info
         if (showDockingNodes && io.keyCtrl)
             for (node in g.dockContext!!.nodes.values) {
@@ -494,6 +501,7 @@ interface demoDebugInformations {
                 overlayDrawList.addRectFilled(pos - 1, pos + calcTextSize(buf, 0) + 1, COL32(200, 100, 100, 255))
                 overlayDrawList.addText(null, 0f, pos, COL32(255, 255, 255, 255), buf)
             }
+//        #endif // #define IMGUI_HAS_DOCK
         end()
     }
 

@@ -3,7 +3,7 @@ package imgui.internal.classes
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.classes.WindowClass
-import imgui.internal.Axis
+import imgui.internal.sections.Axis
 
 
 val IMGUI_DOCK_SPLITTER_SIZE = 2f

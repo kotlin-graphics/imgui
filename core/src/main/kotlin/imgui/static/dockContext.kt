@@ -11,8 +11,8 @@ import imgui.ImGui.findWindowSettings
 import imgui.ImGui.markIniSettingsDirty
 import imgui.api.gImGui
 import imgui.classes.Context
-import imgui.internal.Axis
 import imgui.internal.classes.*
+import imgui.internal.sections.Axis
 
 // ImGuiDockContext
 

@@ -3,9 +3,9 @@ package imgui.classes
 import glm_.vec2.Vec2
 import imgui.ID
 import imgui.internal.DrawData
-import imgui.internal.classes.DrawDataBuilder
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.sections.DrawDataBuilder
 
 typealias ViewportFlags = Int
 

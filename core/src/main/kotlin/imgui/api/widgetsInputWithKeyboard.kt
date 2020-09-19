@@ -30,12 +30,12 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
 import imgui.ImGui.textEx
-import imgui.internal.or
+import imgui.internal.sections.or
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
 import imgui.InputTextFlag as Itf
-import imgui.internal.ButtonFlag as Bf
+import imgui.internal.sections.ButtonFlag as Bf
 
 @Suppress("UNCHECKED_CAST")
 

@@ -14,11 +14,11 @@ import imgui.ImGui.setNavId
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
-import imgui.internal.NextItemDataFlag
+import imgui.internal.sections.NextItemDataFlag
 import imgui.max
 import imgui.internal.classes.itemHoveredDataBackup
 import imgui.internal.formatString
-import imgui.internal.or
+import imgui.internal.sections.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 

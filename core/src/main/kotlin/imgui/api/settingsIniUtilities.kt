@@ -1,7 +1,7 @@
 package imgui.api
 
 import imgui.ImGui.findSettingsHandler
-import imgui.internal.classes.SettingsHandler
+import imgui.internal.sections.SettingsHandler
 import java.io.File
 import java.nio.file.Paths
 

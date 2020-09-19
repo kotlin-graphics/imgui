@@ -40,7 +40,7 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputIsActive
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
-import imgui.internal.DragFlag
+import imgui.internal.sections.DragFlag
 import imgui.internal.classes.Rect
 import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue

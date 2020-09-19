@@ -15,11 +15,11 @@ import imgui.ImGui.scaleWindowsInViewport
 import imgui.ImGui.translateWindowsInViewport
 import imgui.api.g
 import imgui.classes.*
-import imgui.internal.NextWindowDataFlag
+import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.has
-import imgui.internal.hasnt
+import imgui.internal.sections.has
+import imgui.internal.sections.hasnt
 
 // Viewports
 

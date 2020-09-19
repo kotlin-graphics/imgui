@@ -6,16 +6,11 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.g
-import imgui.classes.Context
-import imgui.classes.DrawList
 import imgui.classes.WindowClass
-import imgui.font.Font
-import imgui.internal.*
+import imgui.internal.DrawListSplitter
+import imgui.internal.floor
+import imgui.internal.sections.*
 import unsigned.toUInt
-import java.lang.StringBuilder
-import kotlin.math.acos
-import kotlin.math.cos
-import kotlin.math.sin
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -74,80 +69,9 @@ class BitVector(sz: Int) { // ~create
 
 // Rect -> Rect.kt
 
-/** Helper to build a ImDrawData instance */
-class DrawDataBuilder {
-    /** Global layers for: regular, tooltip */
-    val layers = Array(2) { ArrayList<DrawList>() }
-
-    fun clear() = layers.forEach { it.clear() }
-
-    fun flattenIntoSingleLayer() {
-        val size = layers.map { it.size }.count()
-        layers[0].ensureCapacity(size)
-        for (layerN in 1 until layers.size) {
-            val layer = layers[layerN]
-            if (layer.isEmpty()) continue
-            layers[0].addAll(layer)
-            layer.clear()
-        }
-    }
-}
-
-// ImDrawList: Helper function to calculate a circle's segment count given its radius and a "maximum error" value.
-const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 12
-const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX = 512
-fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((glm.πf * 2f) / acos((_RAD - _MAXERROR) / _RAD)).i, DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
-
-// ImDrawList: You may set this to higher values (e.g. 2 or 3) to increase tessellation of fast rounded corners path.
-var DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER = 1
-
-/** Data shared between all ImDrawList instances
- *  You may want to create your own instance of this if you want to use ImDrawList completely without ImGui. In that case, watch out for future changes to this structure.
- *  Data shared among multiple draw lists (typically owned by parent ImGui context, but you may create one yourself) */
-class DrawListSharedData {
-    /** UV of white pixel in the atlas  */
-    var texUvWhitePixel = Vec2()
-
-    /** Current/default font (optional, for simplified AddText overload) */
-    var font: Font? = null
-
-    /** Current/default font size (optional, for simplified AddText overload) */
-    var fontSize = 0f
-
-    var curveTessellationTol = 0f
-
-    /** Number of circle segments to use per pixel of radius for AddCircle() etc */
-    var circleSegmentMaxError = 0f
-
-    /** Value for pushClipRectFullscreen() */
-    var clipRectFullscreen = Vec4(-8192f, -8192f, 8192f, 8192f)
-
-    /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
-    var initialFlags = DrawListFlag.None.i
-
-    // [Internal] Lookup tables
-
-    // Lookup tables
-    val arcFastVtx = Array(12 * DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER) {
-        // FIXME: Bake rounded corners fill/borders in atlas
-        val a = it * 2 * glm.PIf / 12
-        Vec2(cos(a), sin(a))
-    }
-
-    /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
-    val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
-
-    fun setCircleSegmentMaxError_(maxError: Float) {
-        if (circleSegmentMaxError == maxError)
-            return
-        circleSegmentMaxError = maxError
-        for (i in circleSegmentCounts.indices) {
-            val radius = i + 1f
-            val segmentCount = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError)
-            circleSegmentCounts[i] = segmentCount min 255
-        }
-    }
-}
+//-----------------------------------------------------------------------------
+// [SECTION] ImDrawList support -> section.`drawList support`.kt
+//-----------------------------------------------------------------------------
 
 /** Stacked color modifier, backup of modified data so we can restore it    */
 class ColorMod(val col: Col, value: Vec4) {
@@ -395,6 +319,19 @@ class NextItemData {
     }
 }
 
+class ShrinkWidthItem(var index: Int, var width: Float)
+class PtrOrIndex(
+        /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
+        val ptr: TabBar?,
+        /** Usually index in a main pool. */
+        val index: PoolIdx) {
+
+    constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
+
+    constructor(index: PoolIdx) : this(null, index)
+}
+
+
 /* Storage for current popup stack  */
 class PopupData(
         /** Set on OpenPopup()  */
@@ -413,40 +350,6 @@ class PopupData(
         /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
         var openMousePos: Vec2 = Vec2())
 
-
-/** Clear all settings data */
-typealias ClearAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
-
-/** Read: Called before reading (in registration order) */
-typealias ReadInitFn = (ctx: Context, handler: SettingsHandler) -> Unit
-
-/** Read: Called when entering into a new ini entry e.g. "[Window][Name]" */
-typealias ReadOpenFn = (ctx: Context, handler: SettingsHandler, name: String) -> Any?
-
-/** Read: Called for every line of text within an ini entry */
-typealias ReadLineFn = (ctx: Context, handler: SettingsHandler, entry: Any, line: String) -> Unit
-
-/** Read: Called after reading (in registration order) */
-typealias ApplyAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
-
-/** Write: Output every entries into 'out_buf' */
-typealias WriteAllFn  = (ctx: Context, handler: SettingsHandler, outBuf: StringBuilder) -> Unit
-
-/** Storage for one type registered in the .ini file */
-class SettingsHandler {
-    /** Short description stored in .ini file. Disallowed characters: '[' ']' */
-    var typeName = ""
-    /** == ImHashStr(TypeName) */
-    var typeHash: ID = 0
-
-    var clearAllFn: ClearAllFn? = null
-    var readInitFn: ReadInitFn? = null
-    lateinit var readOpenFn: ReadOpenFn
-    lateinit var readLineFn: ReadLineFn
-    var applyAllFn: ApplyAllFn? = null
-    lateinit var writeAllFn: WriteAllFn
-    var userData: Any? = null
-}
 
 /** Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable. */
 class StyleMod(val idx: StyleVar) {
@@ -479,63 +382,11 @@ class TabItem {
     var contentWidth = 0f
 }
 
-/** Storage for a window .ini settings (we keep one of those even if the actual window wasn't instanced during this session)
- *
- *  Because we never destroy or rename ImGuiWindowSettings, we can store the names in a separate buffer easily.
- *  [JVM] We prefer keeping the `name` variable
- *
- *  ~ CreateNewWindowSettings */
-class WindowSettings(val name: String = "") {
-    var id: ID = hash(name)
 
-    /** NB: Settings position are stored RELATIVE to the viewport! Whereas runtime ones are absolute positions. */
-    val pos = Vec2()
-    val size = Vec2()
-
-    val viewportPos = Vec2()
-    var viewportId: ID = 0
-
-    /** ID of last known DockNode (even if the DockNode is invisible because it has only 1 active window), or 0 if none. */
-    var dockId: ID = 0
-
-    /** ID of window class if specified */
-    var classId: ID = 0
-
-    /** Order of the last time the window was visible within its DockNode. This is used to reorder windows that are reappearing on the same frame. Same value between windows that were active and windows that were none are possible. */
-    var dockOrder = -1
-    var collapsed = false
-    /** Set when loaded from .ini data (to enable merging/loading .ini data into an already running context) */
-    var wantApply = false
-
-    fun clear() {
-        id = 0
-        pos put 0f
-        size put 0f
-        viewportPos put 0f
-        viewportId = 0
-        dockId = 0
-        classId = 0
-        dockOrder = -1
-        collapsed = false
-        wantApply = false
-    }
-}
 
 //-----------------------------------------------------------------------------
 // Tabs
 //-----------------------------------------------------------------------------
-
-class ShrinkWidthItem(var index: Int, var width: Float)
-class PtrOrIndex(
-        /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
-        val ptr: TabBar?,
-        /** Usually index in a main pool. */
-        val index: PoolIdx) {
-
-    constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
-
-    constructor(index: PoolIdx) : this(null, index)
-}
 
 /** Helper: ImPool<>
  *  Basic keyed storage for contiguous instances, slow/amortized insertion, O(1) indexable, O(Log N) queries by ID over a dense/hot buffer,

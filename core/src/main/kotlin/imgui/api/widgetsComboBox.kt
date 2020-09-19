@@ -29,15 +29,18 @@ import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
+import imgui.has
+import imgui.hasnt
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
 import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
 import imgui.WindowFlag as Wf
-import imgui.internal.DrawCornerFlag as Dcf
+import imgui.internal.sections.DrawCornerFlag as Dcf
 
 /** Widgets: Combo Box
  *  - The BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it, by creating e.g. Selectable() items.

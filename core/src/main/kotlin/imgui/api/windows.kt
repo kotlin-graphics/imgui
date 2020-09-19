@@ -32,12 +32,13 @@ import imgui.classes.hasnt
 import imgui.classes.or
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.*
 import imgui.static.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
-import imgui.internal.ItemFlag as If
-import imgui.internal.LayoutType as Lt
+import imgui.internal.sections.ItemFlag as If
+import imgui.internal.sections.LayoutType as Lt
 
 
 /** - Begin() = push window to the stack and start appending to it. End() = pop window from the stack.

@@ -16,8 +16,8 @@ import imgui.ImGui.style
 import imgui.classes.DrawList
 import imgui.classes.Viewport
 import imgui.classes.ViewportP
-import imgui.internal.classes.DrawListSharedData
 import imgui.internal.classes.Rect
+import imgui.internal.sections.DrawListSharedData
 import imgui.WindowFlag as Wf
 
 /** Miscellaneous Utilities */

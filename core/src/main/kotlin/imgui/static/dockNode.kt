@@ -56,6 +56,7 @@ import imgui.classes.DrawList
 import imgui.hasnt
 import imgui.internal.*
 import imgui.internal.classes.*
+import imgui.internal.sections.*
 import imgui.WindowFlag as Wf
 
 // ImGuiDockNode

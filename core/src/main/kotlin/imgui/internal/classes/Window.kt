@@ -25,6 +25,8 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.*
 import imgui.internal.*
+import imgui.internal.sections.*
+import imgui.static.viewportRect
 import kool.cap
 import java.util.*
 import kotlin.collections.ArrayList

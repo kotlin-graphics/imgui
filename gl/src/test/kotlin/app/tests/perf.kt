@@ -9,7 +9,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.internal.*
-import imgui.internal.classes.DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC
+import imgui.internal.sections.*
 import kool.rem
 import kotlin.math.cos
 import kotlin.math.sin

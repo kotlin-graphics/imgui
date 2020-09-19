@@ -12,14 +12,14 @@ import imgui.ImGui.pushID
 import imgui.ImGui.splitterBehavior
 import imgui.api.g
 import imgui.classes.Context
-import imgui.internal.Axis
 import imgui.internal.classes.DataAuthority
 import imgui.internal.classes.DockNode
 import imgui.internal.classes.IMGUI_DOCK_SPLITTER_SIZE
 import imgui.internal.classes.Rect
 import imgui.internal.floor
-import imgui.internal.get
-import imgui.internal.set
+import imgui.internal.sections.Axis
+import imgui.internal.sections.set
+import imgui.internal.sections.get
 
 // ImGuiDockNode tree manipulations
 

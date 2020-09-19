@@ -37,6 +37,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
 import unsigned.Ubyte
@@ -46,7 +47,7 @@ import unsigned.Ushort
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
-import imgui.internal.ButtonFlag as Bf
+import imgui.internal.sections.ButtonFlag as Bf
 
 @Suppress("UNCHECKED_CAST")
 
@@ -273,11 +274,13 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
-                     format: String, power: Float, flag: DragFlag): Boolean =
+                     format: String, power: Float, flag: DragFlag
+    ): Boolean =
             withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, power, flag) }
 
     fun <N : Number> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
-                                  pMax: Number?, format: String, power: Float, flag: DragFlag): Boolean {
+                                  pMax: Number?, format: String, power: Float, flag: DragFlag
+    ): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])

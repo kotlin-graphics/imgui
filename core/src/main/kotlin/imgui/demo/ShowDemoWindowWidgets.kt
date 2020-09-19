@@ -151,7 +151,7 @@ import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
 import imgui.dsl.withTextWrapPos
-import imgui.internal.ItemFlags
+import imgui.internal.sections.ItemFlags
 import imgui.or
 import kool.BYTES
 import unsigned.Ubyte
