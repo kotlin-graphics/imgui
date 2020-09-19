@@ -15,6 +15,14 @@ enum class DockRequestType {
     Split
 }
 
+/** Docking system context */
+class DockContext {
+    val nodes = HashMap<ID, DockNode>()                      // Map ID -> ImGuiDockNode*: Active nodes
+    val requests = ArrayList<DockRequest>()
+    val nodesSettings = ArrayList<DockNodeSettings>()
+    var wantFullRebuild = false
+}
+
 class DockRequest {
     var type = DockRequestType.None
 
@@ -49,14 +57,6 @@ class DockPreviewData {
 
     /** May be slightly different from hit-testing drop rects used in DockNodeCalcDropRects() */
     val dropRectsDraw = Array(Dir.COUNT + 1) { Rect() }
-}
-
-/** Docking system context */
-class DockContext {
-    val nodes = HashMap<ID, DockNode>()                      // Map ID -> ImGuiDockNode*: Active nodes
-    val requests = ArrayList<DockRequest>()
-    val settingsNodes = ArrayList<DockNodeSettings>()
-    var wantFullRebuild = false
 }
 
 /** Store the source authority (dock node vs window) of a field */

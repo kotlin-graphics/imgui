@@ -270,10 +270,10 @@ fun dockContextPruneUnusedSettingsNodes(ctx: Context) {
     val dc = ctx.dockContext!!
     assert(g.windows.isEmpty())
 
-    val pool = HashMap<ID, DockContextPruneNodeData>(dc.settingsNodes.size)
+    val pool = HashMap<ID, DockContextPruneNodeData>(dc.nodesSettings.size)
 
     // Count child nodes and compute RootID
-    dc.settingsNodes.forEach {
+    dc.nodesSettings.forEach {
         val parentData = if (it.parentNodeId != 0) pool[it.parentNodeId] else null
         pool.getOrPut(it.id) { DockContextPruneNodeData() }.rootId = parentData?.rootId ?: it.id
         if (it.parentNodeId != 0)
@@ -282,7 +282,7 @@ fun dockContextPruneUnusedSettingsNodes(ctx: Context) {
 
     // Count reference to dock ids from dockspaces
     // We track the 'auto-DockNode <- manual-Window <- manual-DockSpace' in order to avoid 'auto-DockNode' being ditched by DockContextPruneUnusedSettingsNodes()
-    dc.settingsNodes.forEach {
+    dc.nodesSettings.forEach {
         if (it.parentWindowId != 0)
             findWindowSettings(it.parentWindowId)?.let { windowSettings ->
                 if (windowSettings.dockId != 0)
@@ -303,7 +303,7 @@ fun dockContextPruneUnusedSettingsNodes(ctx: Context) {
     }
 
     // Prune
-    for (setting in dc.settingsNodes) {
+    for (setting in dc.nodesSettings) {
         val data = pool[setting.id]!!
         if (data.countWindows > 1)
             continue

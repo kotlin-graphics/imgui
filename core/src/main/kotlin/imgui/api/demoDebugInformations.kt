@@ -405,12 +405,13 @@ interface demoDebugInformations {
 
 //            #ifdef IMGUI_HAS_DOCK
             treeNode("SettingsDocking", "Settings packed data: Docking") {
+                val dc = g.dockContext!!
                 text("In SettingsWindows:")
                 for (settings in g.settingsWindows)
                     if (settings.dockId != 0)
                         bulletText("Window '${settings.name}' -> DockId %08X", settings.dockId)
                 text("In SettingsNodes:")
-                for (settings in g.dockContext!!.settingsNodes) {
+                for (settings in dc.nodesSettings) {
                     var selectedTabName: String? = null
                     if (settings.selectedWindowId != 0)
                         findWindowByID(settings.selectedWindowId)?.let { selectedTabName = it.name }
@@ -482,8 +483,9 @@ interface demoDebugInformations {
 
 //        #ifdef IMGUI_HAS_DOCK
         // Overlay: Display Docking info
-        if (showDockingNodes && io.keyCtrl)
-            for (node in g.dockContext!!.nodes.values) {
+        if (showDockingNodes && io.keyCtrl) {
+            val dc = g.dockContext!!
+            for (node in dc.nodes.values) {
                 val rootNode = dockNodeGetRootNode(node)
                 val hoveredNode = dockNodeTreeFindNodeByPos(rootNode, io.mousePos)
                 if (hoveredNode != node)
@@ -502,6 +504,7 @@ interface demoDebugInformations {
                 overlayDrawList.addRectFilled(pos - 1, pos + calcTextSize(buf, 0) + 1, COL32(200, 100, 100, 255))
                 overlayDrawList.addText(null, 0f, pos, COL32(255, 255, 255, 255), buf)
             }
+        }
 //        #endif // #define IMGUI_HAS_DOCK
         end()
     }

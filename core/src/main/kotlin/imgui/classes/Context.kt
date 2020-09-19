@@ -521,7 +521,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Extensions
     // FIXME: We could provide an API to register one slot in an array held in ImGuiContext?
     //------------------------------------------------------------------
-    var dockContext: DockContext? = null
+    val dockContext = DockContext()
 
     //------------------------------------------------------------------
     // Settings
@@ -645,7 +645,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         g.platformIO.viewports += g.viewports[0]
 
         // Extensions
-        assert(g.dockContext == null)
         dockContextInitialize(g)
 
         g.initialized = true
@@ -688,7 +687,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         gImGui = backupContext
 
         // Shutdown extensions
-        assert(g.dockContext != null)
         dockContextShutdown(g)
 
         // Clear everything else
