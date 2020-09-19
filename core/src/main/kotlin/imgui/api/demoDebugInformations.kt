@@ -72,6 +72,7 @@ import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.*
 import imgui.internal.sections.Axis
+import imgui.internal.sections.Columns
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.WindowSettings
 import imgui.internal.sections.wo
