@@ -58,22 +58,22 @@ fun dockSettingsRemoveNodeReferences(nodeIds: Array<ID>) {
 
 fun dockSettingsFindNodeSettings(ctx: Context, id: ID): DockNodeSettings? =
         // FIXME-OPT
-        ctx.dockContext!!.settingsNodes.find { it.id == id }
+        ctx.dockContext!!.nodesSettings.find { it.id == id }
 
 /** Clear settings data */
 fun dockSettingsHandler_ClearAll(ctx: Context, settingsHandler: SettingsHandler) {
     val dc = ctx.dockContext!!
-    dc.settingsNodes.clear()
+    dc.nodesSettings.clear()
     dockContextClearNodes(ctx, 0, true)
 }
 
-/** Recreate dones based on settings data */
+/** Recreate nodes based on settings data */
 fun dockSettingsHandler_ApplyAll(ctx: Context, settingsHandler: SettingsHandler) {
     // Prune settings at boot time only
     val dc = ctx.dockContext!!
     if (ctx.windows.isEmpty())
         dockContextPruneUnusedSettingsNodes(ctx)
-    dockContextBuildNodesFromSettings(ctx, dc.settingsNodes)
+    dockContextBuildNodesFromSettings(ctx, dc.nodesSettings)
     dockContextBuildAddWindowsToNodes(ctx, 0)
 }
 
@@ -161,12 +161,11 @@ fun dockSettingsHandler_ReadLine(ctx: Context, settingsHandler: SettingsHandler,
         node.selectedWindowId == chunk.substring(8 + 1 + 2).toInt(16)
         next()
     }
-    val dc = ctx.dockContext!!
     if (node.parentNodeId != 0)
         dockSettingsFindNodeSettings(ctx, node.parentNodeId)?.let { parentSettings ->
             node.depth = parentSettings.depth + 1
         }
-    dc.settingsNodes += node
+    ctx.dockContext!!.nodesSettings += node
 }
 
 fun dockSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: StringBuilder) {
@@ -178,17 +177,17 @@ fun dockSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: St
 
     // Gather settings data
     // (unlike our windows settings, because nodes are always built we can do a full rewrite of the SettingsNode buffer)
-    dc.settingsNodes.clear()
-    dc.settingsNodes.ensureCapacity(dc.nodes.size)
+    dc.nodesSettings.clear()
+    dc.nodesSettings.ensureCapacity(dc.nodes.size)
     for (node in dc.nodes.values)
         if (node.isRootNode)
             dockSettingsHandler_DockNodeToSettings(dc, node, 0)
 
-    val maxDepth = dc.settingsNodes.maxBy { it.depth }?.depth ?: 0
+    val maxDepth = dc.nodesSettings.maxBy { it.depth }?.depth ?: 0
 
     // Write to text buffer
     buf += "[${handler.typeName}][Data]\n"
-    for (nodeSettings in dc.settingsNodes) {
+    for (nodeSettings in dc.nodesSettings) {
         val lineStartPos = buf.length
         buf += " ".repeat(nodeSettings.depth * 2) + if (nodeSettings.flags has DockNodeFlag._DockSpace) "DockSpace" else "DockNode " + " ".repeat((maxDepth - nodeSettings.depth) * 2)  // Text align nodes to facilitate looking at .ini file
         buf += " ID=0x${nodeSettings.id.asHexString}"
@@ -251,7 +250,7 @@ fun dockSettingsHandler_DockNodeToSettings(dc: DockContext, node: DockNode, dept
     nodeSettings.pos put node.pos
     nodeSettings.size put node.size
     nodeSettings.sizeRef put node.sizeRef
-    dc.settingsNodes += nodeSettings
+    dc.nodesSettings += nodeSettings
     node.childNodes[0]?.let { dockSettingsHandler_DockNodeToSettings(dc, it, depth + 1) }
     node.childNodes[1]?.let { dockSettingsHandler_DockNodeToSettings(dc, it, depth + 1) }
 }

@@ -33,8 +33,6 @@ interface docking {
 
     fun dockContextInitialize(ctx: Context) {
         val g = ctx
-        assert(g.dockContext == null)
-        g.dockContext = DockContext()
 
         // Add .ini handle for persistent docking data
         g.settingsHandlers += SettingsHandler().apply {
@@ -49,9 +47,9 @@ interface docking {
         }
     }
 
+    /** [JVM] dummy */
     fun dockContextShutdown(ctx: Context) {
         val g = ctx
-        g.dockContext = null
     }
 
     /** This function also acts as a defacto test to make sure we can rebuild from scratch without a glitch
@@ -63,7 +61,7 @@ interface docking {
         saveIniSettingsToMemory()
         val rootID = 0 // Rebuild all
         dockContextClearNodes(ctx, rootID, false)
-        dockContextBuildNodesFromSettings(ctx, dc.settingsNodes)
+        dockContextBuildNodesFromSettings(ctx, dc.nodesSettings)
         dockContextBuildAddWindowsToNodes(ctx, rootID)
     }
 
