@@ -497,8 +497,8 @@ fun navUpdateWindowingOverlay() {
 
     if (g.navWindowingTimer < NAV_WINDOWING_LIST_APPEAR_DELAY) return
 
-    if (g.navWindowingList.isEmpty())
-        findWindowByName("###NavWindowingList")?.let { g.navWindowingList += it }
+    if (g.navWindowingListWindow == null)
+        g.navWindowingListWindow = findWindowByName("###NavWindowingList")
     val viewport = /*g.NavWindow ? g.NavWindow->Viewport :*/ mainViewport as ViewportP
     setNextWindowSizeConstraints(viewport.size * 0.2f, Vec2(Float.MAX_VALUE))
     setNextWindowPos(viewport.pos + viewport.size * 0.5f, Cond.Always, Vec2(0.5f))
@@ -895,7 +895,7 @@ fun findWindowFocusIndex(window: Window): Int {
     return -1
 }
 
-// spaiate
+// unpaired
 
 fun navRestoreLayer(layer: NavLayer) {
 

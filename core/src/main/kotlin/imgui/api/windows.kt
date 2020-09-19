@@ -234,7 +234,7 @@ interface windows {
             // The title bar always display the 'name' parameter, so we only update the string storage if it needs to be visible to the end-user elsewhere.
             val windowTitleVisibleElsewhere = when {
                 window.viewport?.window === window || window.dockIsActive -> true
-                g.navWindowingList.isNotEmpty() && window.flags hasnt Wf.NoNavFocus -> true   // Window titles visible when using CTRL+TAB
+                g.navWindowingListWindow != null && window.flags hasnt Wf.NoNavFocus -> true   // Window titles visible when using CTRL+TAB
                 else -> false
             }
             if (windowTitleVisibleElsewhere && !windowJustCreated && name != window.name) {

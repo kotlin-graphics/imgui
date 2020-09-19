@@ -291,7 +291,9 @@ class Window(
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
 
+    /** Set when window extraneous data have been garbage collected */
     var memoryCompacted = false
+    /** Backup of last idx/vtx count, so when waking up the window we can preallocate and avoid iterative alloc/copy */
     var memoryDrawListIdxCapacity = 0
     var memoryDrawListVtxCapacity = 0
 
