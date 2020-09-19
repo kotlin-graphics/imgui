@@ -36,11 +36,12 @@ import imgui.classes.ViewportP
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.sections.or
 import imgui.static.*
 import org.lwjgl.system.Platform
 import kool.lim
 import imgui.WindowFlag as Wf
-import imgui.internal.DrawListFlag as Dlf
+import imgui.internal.sections.DrawListFlag as Dlf
 
 @Suppress("UNCHECKED_CAST")
 

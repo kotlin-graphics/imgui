@@ -16,9 +16,12 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.classes.Columns
+import imgui.internal.sections.ColumnsFlags
+import imgui.internal.sections.has
+import imgui.internal.sections.hasnt
 import kotlin.math.max
 import kotlin.math.min
-import imgui.internal.ColumnsFlag as Cf
+import imgui.internal.sections.ColumnsFlag as Cf
 
 /** Columns
  *  - You can also use SameLine(pos_x) to mimic simplified columns.

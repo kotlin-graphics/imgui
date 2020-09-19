@@ -67,9 +67,12 @@ import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.has
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
-import imgui.internal.DrawCornerFlag as Dcf
+import imgui.internal.sections.DrawCornerFlag as Dcf
 
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be

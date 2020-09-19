@@ -2,7 +2,7 @@ package imgui.internal.classes
 
 import glm_.vec2.Vec2
 import imgui.ID
-import imgui.internal.*
+import imgui.internal.sections.*
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap

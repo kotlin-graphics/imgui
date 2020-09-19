@@ -12,8 +12,10 @@ import imgui.ImGui.separatorEx
 import imgui.ImGui.style
 import imgui.internal.classes.GroupData
 import imgui.internal.classes.Rect
-import imgui.internal.*
-import imgui.internal.LayoutType as Lt
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.SeparatorFlag
+import imgui.internal.sections.or
+import imgui.internal.sections.LayoutType as Lt
 
 
 /** Cursor / Layout
@@ -33,7 +35,7 @@ interface cursorLayout {
             return
 
         // Those flags should eventually be overridable by the user
-        val flags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else imgui.internal.SeparatorFlag.Horizontal
+        val flags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
         separatorEx(flags or SeparatorFlag.SpanAllColumns)
     }
 

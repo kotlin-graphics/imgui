@@ -6,11 +6,11 @@ import glm_.max
 import imgui.*
 import imgui.api.g
 import imgui.classes.Context
-import imgui.internal.Axis
 import imgui.internal.classes.DockContext
 import imgui.internal.classes.DockNode
 import imgui.internal.classes.DockNodeSettings
-import imgui.internal.classes.SettingsHandler
+import imgui.internal.sections.Axis
+import imgui.internal.sections.SettingsHandler
 
 // Settings
 

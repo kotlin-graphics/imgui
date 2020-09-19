@@ -18,9 +18,9 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setNextWindowViewport
 import imgui.classes.Viewport
 import imgui.classes.WindowClass
-import imgui.internal.NextWindowDataFlag
 import imgui.internal.floor
-import imgui.internal.or
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.or
 import imgui.static.dockContextAddNode
 import imgui.static.dockContextFindNodeByID
 import imgui.static.dockNodeUpdate

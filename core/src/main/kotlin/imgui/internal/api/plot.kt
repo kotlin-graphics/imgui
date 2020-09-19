@@ -20,7 +20,7 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setTooltip
 import imgui.ImGui.style
 import imgui.api.widgetsDataPlotting.Companion.PlotArray
-import imgui.internal.PlotType
+import imgui.internal.sections.PlotType
 import imgui.internal.classes.Rect
 import imgui.internal.lerp
 import imgui.internal.saturate

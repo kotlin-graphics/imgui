@@ -19,10 +19,11 @@ import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.api.g
 import imgui.classes.Context
-import imgui.internal.NextWindowDataFlag
 import imgui.internal.classes.*
-import imgui.internal.has
 import imgui.internal.hash
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.SettingsHandler
+import imgui.internal.sections.has
 import imgui.static.*
 import kotlin.reflect.KMutableProperty0
 

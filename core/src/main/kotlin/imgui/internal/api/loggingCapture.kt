@@ -1,7 +1,7 @@
 package imgui.internal.api
 
 import imgui.api.g
-import imgui.internal.LogType
+import imgui.internal.sections.LogType
 
 /** Logging/Capture */
 internal interface loggingCapture {

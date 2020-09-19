@@ -18,9 +18,9 @@ import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.classes.ViewportP
-import imgui.internal.NavMoveFlag
-import imgui.internal.NextWindowDataFlag
-import imgui.internal.hasnt
+import imgui.internal.sections.NavMoveFlag
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.hasnt
 import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf
 import imgui.WindowFlag as Wf

@@ -15,6 +15,7 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.internal.lerp
+import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
 import java.util.*
@@ -29,7 +30,8 @@ internal interface templateFunctions {
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls) */
     fun <N> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>,
                           vSpeed_: Float, vMin: N, vMax: N,
-                          format: String, power: Float, flag: DragFlag): Boolean where N : Number, N : Comparable<N> {
+                          format: String, power: Float, flag: DragFlag
+    ): Boolean where N : Number, N : Comparable<N> {
 
         var v by vPtr
 

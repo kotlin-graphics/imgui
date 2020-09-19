@@ -11,9 +11,9 @@ import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
-import imgui.internal.*
 import imgui.internal.classes.*
-import imgui.static.IMGUI_VIEWPORT_DEFAULT_ID
+import imgui.internal.hash
+import imgui.internal.sections.*
 import imgui.static.*
 import java.io.File
 import java.nio.ByteBuffer

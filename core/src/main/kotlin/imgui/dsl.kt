@@ -74,8 +74,8 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.font.Font
-import imgui.internal.ColumnsFlag
-import imgui.internal.ColumnsFlags
+import imgui.internal.sections.ColumnsFlag
+import imgui.internal.sections.ColumnsFlags
 import kotlin.reflect.KMutableProperty0
 
 /** twin brother of dsl_ */
