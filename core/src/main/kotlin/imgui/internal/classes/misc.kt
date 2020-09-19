@@ -78,72 +78,7 @@ class ColorMod(val col: Col, value: Vec4) {
     val backupValue = Vec4(value)
 }
 
-/** Storage data for a single column */
-class ColumnData {
-    /** Column start offset, normalized 0f (far left) -> 1f (far right) */
-    var offsetNorm = 0f
-    var offsetNormBeforeResize = 0f
 
-    /** Not exposed */
-    var flags: ColumnsFlags = 0
-    var clipRect = Rect()
-}
-
-/** Storage data for a columns set */
-class Columns {
-    var id: ID = 0
-    var flags: ColumnsFlags = ColumnsFlag.None.i
-    var isFirstFrame = false
-    var isBeingResized = false
-    var current = 0
-    var count = 1
-
-    /** Offsets from HostWorkRect.Min.x */
-    var offMinX = 0f
-
-    /** Offsets from HostWorkRect.Min.x */
-    var offMaxX = 0f
-
-    /** Backup of CursorPos at the time of BeginColumns() */
-    var hostCursorPosY = 0f
-
-    /** Backup of CursorMaxPos at the time of BeginColumns() */
-    var hostCursorMaxPosX = 0f
-
-    /** Backup of ClipRect at the time of BeginColumns() */
-    var hostClipRect = Rect()
-
-    /** Backup of WorkRect at the time of BeginColumns() */
-    var hostWorkRect = Rect()
-    var lineMinY = 0f
-    var lineMaxY = 0f
-    val columns = ArrayList<ColumnData>()
-    val splitter = DrawListSplitter()
-
-    fun destroy() = splitter.clearFreeMemory(destroy = true)
-
-    fun clear() {
-        id = 0
-        flags = ColumnsFlag.None.i
-        isFirstFrame = false
-        isBeingResized = false
-        current = 0
-        count = 1
-        offMaxX = 0f
-        offMinX = 0f
-        hostCursorPosY = 0f
-        hostCursorMaxPosX = 0f
-        lineMaxY = 0f
-        lineMinY = 0f
-        columns.clear()
-    }
-
-    /** ~GetColumnOffsetFromNorm    */
-    infix fun getOffsetFrom(offsetNorm: Float): Float = offsetNorm * (offMaxX - offMinX)
-
-    /** ~GetColumnNormFromOffset    */
-    fun getNormFrom(offset: Float): Float = offset / (offMaxX - offMinX)
-}
 
 // Context -> Context.kt
 
