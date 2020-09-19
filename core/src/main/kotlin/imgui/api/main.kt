@@ -24,6 +24,7 @@ import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
+import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
