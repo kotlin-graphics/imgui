@@ -13,7 +13,7 @@ import imgui.internal.*
 import imgui.static.navUpdateAnyRequestFlag
 import kotlin.math.max
 
-/** Navigation */
+/** Gamepad/Keyboard Navigation */
 internal interface navigation {
 
     fun navInitWindow(window: Window, forceReinit: Boolean) {

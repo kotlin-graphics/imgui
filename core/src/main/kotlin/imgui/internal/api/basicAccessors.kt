@@ -10,7 +10,8 @@ import imgui.internal.classes.Window
 /** Basic Accessors */
 internal interface basicAccessors {
 
-    /** ~GetItemID */
+    /** ~GetItemID
+     *  Get ID of last item (~~ often same ImGui::GetID(label) beforehand) */
     val itemID: ID
         get() = g.currentWindow!!.dc.lastItemId
 
@@ -115,7 +116,7 @@ internal interface basicAccessors {
     }
 
     /** Push a given id value ignoring the ID stack as a seed.
-     *  Push given value at the top of the ID stack (whereas PushID combines old and new hashes) */
+     *  Push given value as-is at the top of the ID stack (whereas PushID combines old and new hashes) */
     fun pushOverrideID(id: ID) {
         g.currentWindow!!.idStack += id
     }
