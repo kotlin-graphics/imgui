@@ -190,6 +190,7 @@ internal interface PopupsModalsTooltips {
      *  This may be used to e.g. test for another popups already opened in the same frame to handle popups priorities at the same level. */
     fun isAnyPopupOpen(): Boolean = g.openPopupStack.size > g.beginPopupStack.size
 
+    /** Attention! BeginPopup() adds default flags which BeginPopupEx()! */
     fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
 
         if (!isPopupOpen(id)) {
