@@ -308,6 +308,51 @@ infix fun TreeNodeFlags.hasnt(b: TreeNodeFlag): Boolean = and(b.i) == 0
 infix fun TreeNodeFlags.wo(b: TreeNodeFlag): TreeNodeFlags = and(b.i.inv())
 
 
+typealias PopupFlags = Int
+
+/** Flags for OpenPopup*(), BeginPopupContext*(), IsPopupOpen() functions.
+ *  - To be backward compatible with older API which took an 'int mouse_button = 1' argument, we need to treat
+ *    small flags values as a mouse button index, so we encode the mouse button in the first few bits of the flags.
+ *    It is therefore guaranteed to be legal to pass a mouse button index in ImGuiPopupFlags.
+ *  - For the same reason, we exceptionally default the ImGuiPopupFlags argument of BeginPopupContextXXX functions to 1 instead of 0. */
+enum class PopupFlag(@JvmField val i: PopupFlags) {
+
+    None                    (0),
+    /** For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left) */
+    MouseButtonLeft         (0),
+    /** For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right) */
+    MouseButtonRight        (1),
+    /** For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle) */
+    MouseButtonMiddle       (2),
+    MouseButtonMask_        (0x1F),
+    MouseButtonDefault_     (1),
+    /** For OpenPopup*(), BeginPopupContext*(): don't open if there's already a popup at the same level of the popup stack */
+    NoOpenOverExistingPopup (1 shl 5),
+    /** For BeginPopupContextWindow(): don't return true when hovering items, only when hovering empty space */
+    NoOpenOverItems         (1 shl 6),
+    /** For IsPopupOpen(): ignore the ImGuiID parameter and test for any popup. */
+    AnyPopupId              (1 shl 7),
+    /** For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level) */
+    AnyPopupLevel           (1 shl 8),
+    AnyPopup                (AnyPopupId or AnyPopupLevel);
+
+    infix fun and(b: PopupFlag): PopupFlags = i and b.i
+    infix fun and(b: PopupFlags): PopupFlags = i and b
+    infix fun or(b: PopupFlag): PopupFlags = i or b.i
+    infix fun or(b: PopupFlags): PopupFlags = i or b
+    infix fun xor(b: PopupFlag): PopupFlags = i xor b.i
+    infix fun xor(b: PopupFlags): PopupFlags = i xor b
+    infix fun wo(b: PopupFlags): PopupFlags = and(b.inv())
+}
+
+infix fun PopupFlags.and(b: PopupFlag): PopupFlags = and(b.i)
+infix fun PopupFlags.or(b: PopupFlag): PopupFlags = or(b.i)
+infix fun PopupFlags.xor(b: PopupFlag): PopupFlags = xor(b.i)
+infix fun PopupFlags.has(b: PopupFlag): Boolean = and(b.i) != 0
+infix fun PopupFlags.hasnt(b: PopupFlag): Boolean = and(b.i) == 0
+infix fun PopupFlags.wo(b: PopupFlag): PopupFlags = and(b.i.inv())
+
+
 typealias SelectableFlags = Int
 
 /** Flags for ImGui::Selectable()   */
