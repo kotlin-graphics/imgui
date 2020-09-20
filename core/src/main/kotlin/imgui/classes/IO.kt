@@ -125,6 +125,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
      *  (was called io.OptMacOSXBehaviors prior to 1.63) */
     var configMacOSXBehaviors = false
+
     /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
     var configInputTextCursorBlink = true
 
@@ -183,9 +184,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)  */
     var mousePos = Vec2(-Float.MAX_VALUE)
 
-    /** Mouse buttons: 0=left, 1=right, 2=middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are
-    using right button). Others buttons allows us to track if the mouse is being used by your application +
-    available to user as a convenience via IsMouse** API.   */
+    /** Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear ImGui mostly uses left
+     *  and right buttons. Others buttons allows us to track if the mouse is being used by your application + available
+     *  to user as a convenience via IsMouse** API.   */
     val mouseDown = BooleanArray(5)
 
     /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
@@ -224,19 +225,24 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      * - with glfw you can get those from the callback set in glfwSetCharCallback()
      * - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
     fun addInputCharacter(c: Char) {
-        inputQueueCharacters += when (val ci = c.i) {
-            in 1..UNICODE_CODEPOINT_MAX -> c
-            else -> UNICODE_CODEPOINT_INVALID.c
-        }
+        if (c != NUL)
+            inputQueueCharacters += when (c.i) {
+                in 1..UNICODE_CODEPOINT_MAX -> c
+                else -> UNICODE_CODEPOINT_INVALID.c
+            }
     }
 
     /** UTF16 strings use surrogate pairs to encode codepoints >= 0x10000, so
      *  we should save the high surrogate. */
     fun addInputCharacterUTF16(c: Char) {
+
+        if (c == NUL && inputQueueSurrogate == NUL)
+            return
+
         val ci = c.i
         if ((ci and 0xFC00) == 0xD800) { // High surrogate, must save
             if (inputQueueSurrogate != NUL)
-                inputQueueCharacters += '\uFFFD'
+                inputQueueCharacters += UNICODE_CODEPOINT_INVALID.c
             inputQueueSurrogate = c
             return
         }
@@ -261,7 +267,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         while (p < utf8Chars.size || utf8Chars[p] == 0.b) {
             val (c, bytes) = textCharFromUtf8(utf8Chars)
             p += bytes
-            if (c > 0)
+            if (c != 0)
                 inputQueueCharacters += c.c
         }
     }
