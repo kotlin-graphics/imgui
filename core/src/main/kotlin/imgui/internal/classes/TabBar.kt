@@ -357,6 +357,11 @@ class TabBar {
             nextSelectedTabId = id
         val hovered = hovered_ || g.hoveredId == id
 
+        // Transfer active id window so the active id is not owned by the dock host (as StartMouseMovingWindow()
+        // will only do it on the drag). This allows FocusWindow() to be more conservative in how it clears active id.
+        if (held && dockedWindow != null && g.activeId == id && g.activeIdIsJustActivated)
+            g.activeIdWindow = dockedWindow
+
         // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
         if (!held)
             setItemAllowOverlap()
