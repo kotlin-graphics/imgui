@@ -593,6 +593,13 @@ class Window(
         this.collapsed = collapsed
     }
 
+    /** ~SetWindowHitTestHole */
+    fun setHitTestHole(pos: Vec2, size: Vec2) {
+        assert(hitTestHoleSize.x == 0f) { "We don't support multiple holes/hit test filters" }
+        hitTestHoleSize put size
+        hitTestHoleOffset put (pos - this.pos)
+    }
+
 
     // Garbage collection
 

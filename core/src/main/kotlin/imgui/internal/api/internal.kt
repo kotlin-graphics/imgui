@@ -71,28 +71,22 @@ internal interface internal {
         // Close popups if any
         closePopupsOverWindow(window, false)
 
-        // Passing NULL allow to disable keyboard focus
-        if (window == null) return
-        window.lastFrameJustFocused = g.frameCount
-
-        // Select in dock node
-        window.dockNode?.tabBar?.let {
-            it.selectedTabId = window.id
-            it.nextSelectedTabId = window.id
-        }
-
         // Move the root window to the top of the pile
-        val focusFrontWindow = window.rootWindowDockStop!!
-        val displayFrontWindow = window.rootWindow!!
+        assert(window == null || window.rootWindow != null)
+        val focusFrontWindow = window?.rootWindow // NB: In docking branch this is window->RootWindowDockStop
+        val displayFrontWindow = window?.rootWindow
 
         // Steal focus on active widgets
-        if (focusFrontWindow.flags has Wf._Popup) // FIXME: This statement may be unnecessary? Need further testing before removing it..
-            if (g.activeId != 0 && g.activeIdWindow != null && g.activeIdWindow!!.rootWindow != focusFrontWindow)
-                clearActiveID()
+        if (g.activeId != 0 && g.activeIdWindow?.rootWindow !== focusFrontWindow)
+            clearActiveID()
+
+        // Passing NULL allow to disable keyboard focus
+        if (window == null)
+            return
 
         // Bring to front
-        focusFrontWindow.bringToFocusFront()
-        if ((window.flags or focusFrontWindow.flags or displayFrontWindow.flags) hasnt Wf.NoBringToFrontOnFocus)
+        focusFrontWindow!!.bringToFocusFront()
+        if ((window.flags or focusFrontWindow.flags or displayFrontWindow!!.flags) hasnt Wf.NoBringToFrontOnFocus)
             displayFrontWindow.bringToDisplayFront()
     }
 

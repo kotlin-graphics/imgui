@@ -57,48 +57,10 @@ internal interface navigation {
 
     fun navMoveRequestTryWrapping(window: Window, moveFlags: NavMoveFlags) {
 
-        if (g.navWindow !== window || !navMoveRequestButNoResultYet() || g.navMoveRequestForward != NavForward.None || g.navLayer != NavLayer.Main)
-            return
-        assert(moveFlags != 0) // No points calling this with no wrapping
-        val bbRel = window.navRectRel[0]
-
-        var clipDir = g.navMoveDir
-        if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
-            bbRel.min.x = max(window.sizeFull.x, window.contentSize.x + window.windowPadding.x * 2f) - window.scroll.x
-            bbRel.max.x = bbRel.min.x
-            if (moveFlags has NavMoveFlag.WrapX) {
-                bbRel translateY -bbRel.height
-                clipDir = Dir.Up
-            }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
-        }
-        if (g.navMoveDir == Dir.Right && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
-            bbRel.min.x = -window.scroll.x
-            bbRel.max.x = -window.scroll.x
-            if (moveFlags has NavMoveFlag.WrapX) {
-                bbRel translateY +bbRel.height
-                clipDir = Dir.Down
-            }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
-        }
-        if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.min.y = max(window.sizeFull.y, window.contentSize.y + window.windowPadding.y * 2f) - window.scroll.y
-            bbRel.max.y = bbRel.min.y
-            if (moveFlags has NavMoveFlag.WrapY) {
-                bbRel translateX -bbRel.width
-                clipDir = Dir.Left
-            }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
-        }
-        if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.min.y = -window.scroll.y
-            bbRel.max.y = -window.scroll.y
-            if (moveFlags has NavMoveFlag.WrapY) {
-                bbRel translateX +bbRel.width
-                clipDir = Dir.Right
-            }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
-        }
+        // Navigation wrap-around logic is delayed to the end of the frame because this operation is only valid after entire
+        // popup is assembled and in case of appended popups it is not clear which EndPopup() call is final.
+        g.navWrapRequestWindow = window
+        g.navWrapRequestFlags = moveFlags
     }
 
     fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?

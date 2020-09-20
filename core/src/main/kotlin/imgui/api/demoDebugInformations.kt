@@ -16,6 +16,8 @@ import imgui.ImGui.checkboxFlags
 import imgui.ImGui.clearIniSettings
 import imgui.ImGui.combo
 import imgui.ImGui.debugStartItemPicker
+import imgui.ImGui.dockContextClearNodes
+import imgui.ImGui.dockNodeGetDepth
 import imgui.ImGui.dockNodeGetRootNode
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
@@ -76,8 +78,6 @@ import imgui.internal.sections.Columns
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.WindowSettings
 import imgui.internal.sections.wo
-import imgui.static.dockContextClearNodes
-import imgui.static.dockNodeGetDepth
 import imgui.static.dockNodeTreeFindNodeByPos
 import kool.BYTES
 import kool.lim
@@ -362,7 +362,7 @@ interface demoDebugInformations {
 //        #ifdef IMGUI_HAS_DOCK
         if (treeNode("Dock nodes")) {
 
-            val dc = g.dockContext!!
+            val dc = g.dockContext
             checkbox("Ctrl shows window dock info", ::showDockingNodes)
 
             if (smallButton("Clear nodes")) dockContextClearNodes(g, 0, true)
@@ -405,7 +405,7 @@ interface demoDebugInformations {
 
 //            #ifdef IMGUI_HAS_DOCK
             treeNode("SettingsDocking", "Settings packed data: Docking") {
-                val dc = g.dockContext!!
+                val dc = g.dockContext
                 text("In SettingsWindows:")
                 for (settings in g.settingsWindows)
                     if (settings.dockId != 0)
@@ -484,7 +484,7 @@ interface demoDebugInformations {
 //        #ifdef IMGUI_HAS_DOCK
         // Overlay: Display Docking info
         if (showDockingNodes && io.keyCtrl) {
-            val dc = g.dockContext!!
+            val dc = g.dockContext
             for (node in dc.nodes.values) {
                 val rootNode = dockNodeGetRootNode(node)
                 val hoveredNode = dockNodeTreeFindNodeByPos(rootNode, io.mousePos)

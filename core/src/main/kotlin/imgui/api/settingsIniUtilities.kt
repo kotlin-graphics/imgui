@@ -56,7 +56,7 @@ interface settingsIniUtilities {
                     }
                 } else if (entryHandler != null && entryData != null)
                 // Let type handler parse the line
-                    entryHandler.readLineFn(g, entryHandler, entryData, line)
+                    entryHandler.readLineFn!!(g, entryHandler, entryData, line)
             }
         }
         g.settingsLoaded = true
@@ -83,7 +83,7 @@ interface settingsIniUtilities {
         g.settingsDirtyTimer = 0f
         val buf = StringBuilder()
         for (handler in g.settingsHandlers)
-            handler.writeAllFn(g, handler, buf)
+            handler.writeAllFn!!(g, handler, buf)
         g.settingsIniData = buf.toString()
         return g.settingsIniData
     }

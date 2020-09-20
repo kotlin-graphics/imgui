@@ -4,6 +4,7 @@ import glm_.asHexString
 import glm_.i
 import glm_.max
 import imgui.*
+import imgui.ImGui.dockContextClearNodes
 import imgui.api.g
 import imgui.classes.Context
 import imgui.internal.classes.DockContext
@@ -58,11 +59,11 @@ fun dockSettingsRemoveNodeReferences(nodeIds: Array<ID>) {
 
 fun dockSettingsFindNodeSettings(ctx: Context, id: ID): DockNodeSettings? =
         // FIXME-OPT
-        ctx.dockContext!!.nodesSettings.find { it.id == id }
+        ctx.dockContext.nodesSettings.find { it.id == id }
 
 /** Clear settings data */
 fun dockSettingsHandler_ClearAll(ctx: Context, settingsHandler: SettingsHandler) {
-    val dc = ctx.dockContext!!
+    val dc = ctx.dockContext
     dc.nodesSettings.clear()
     dockContextClearNodes(ctx, 0, true)
 }
@@ -70,7 +71,7 @@ fun dockSettingsHandler_ClearAll(ctx: Context, settingsHandler: SettingsHandler)
 /** Recreate nodes based on settings data */
 fun dockSettingsHandler_ApplyAll(ctx: Context, settingsHandler: SettingsHandler) {
     // Prune settings at boot time only
-    val dc = ctx.dockContext!!
+    val dc = ctx.dockContext
     if (ctx.windows.isEmpty())
         dockContextPruneUnusedSettingsNodes(ctx)
     dockContextBuildNodesFromSettings(ctx, dc.nodesSettings)
@@ -165,13 +166,13 @@ fun dockSettingsHandler_ReadLine(ctx: Context, settingsHandler: SettingsHandler,
         dockSettingsFindNodeSettings(ctx, node.parentNodeId)?.let { parentSettings ->
             node.depth = parentSettings.depth + 1
         }
-    ctx.dockContext!!.nodesSettings += node
+    ctx.dockContext.nodesSettings += node
 }
 
 fun dockSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: StringBuilder) {
 
     val g = ctx
-    val dc = g.dockContext!!
+    val dc = g.dockContext
     if (g.io.configFlags hasnt ConfigFlag.DockingEnable)
         return
 

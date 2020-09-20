@@ -62,6 +62,7 @@ class ImplGL3(glslVersion: Int? = null) : GLInterface {
         glslVersionString = glslVersion?.toString() ?: "#version " + when {
             IMPL_OPENGL_ES2 -> "100"
             IMPL_OPENGL_ES3 -> "300 es"
+            Platform.get() == Platform.MACOSX -> "150"
             else -> "130"
         }
 

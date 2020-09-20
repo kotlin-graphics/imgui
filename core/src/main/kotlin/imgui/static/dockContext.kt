@@ -56,14 +56,14 @@ fun dockContextAddNode(ctx: Context, id_: ID): DockNode {
     // We don't set node->LastFrameAlive on construction. Nodes are always created at all time to reflect .ini settings!
     IMGUI_DEBUG_LOG_DOCKING("DockContextAddNode 0x%08X".format(id))
     val node = DockNode(id)
-    ctx.dockContext!!.nodes[node.id] = node
+    ctx.dockContext.nodes[node.id] = node
     return node
 }
 
 fun dockContextRemoveNode(ctx: Context, node: DockNode, mergeSiblingIntoParentNode: Boolean) {
 
     val g = ctx
-    val dc = ctx.dockContext!!
+    val dc = ctx.dockContext
 
     IMGUI_DEBUG_LOG_DOCKING("DockContextRemoveNode 0x%08X".format(node.id))
     assert(dockContextFindNodeByID(ctx, node.id) === node)
@@ -88,7 +88,7 @@ fun dockContextRemoveNode(ctx: Context, node: DockNode, mergeSiblingIntoParentNo
 }
 
 fun dockContextQueueNotifyRemovedNode(ctx: Context, node: DockNode) {
-    ctx.dockContext!!.requests.forEach {
+    ctx.dockContext.requests.forEach {
         if (it.dockTargetNode === node)
             it.type = DockRequestType.None
     }
@@ -267,7 +267,7 @@ class DockContextPruneNodeData {
 /** Garbage collect unused nodes (run once at init time) */
 fun dockContextPruneUnusedSettingsNodes(ctx: Context) {
     val g = ctx
-    val dc = ctx.dockContext!!
+    val dc = ctx.dockContext
     assert(g.windows.isEmpty())
 
     val pool = HashMap<ID, DockContextPruneNodeData>(dc.nodesSettings.size)
@@ -321,7 +321,7 @@ fun dockContextPruneUnusedSettingsNodes(ctx: Context) {
     }
 }
 
-fun dockContextFindNodeByID(ctx: Context, id: ID): DockNode? = ctx.dockContext!!.nodes[id]
+fun dockContextFindNodeByID(ctx: Context, id: ID): DockNode? = ctx.dockContext.nodes[id]
 
 fun dockContextBindNodeToWindow(ctx: Context, window: Window): DockNode? {
 
@@ -363,13 +363,6 @@ fun dockContextBindNodeToWindow(ctx: Context, window: Window): DockNode? {
     dockNodeAddWindow(node, window, true)
     assert(node === window.dockNode)
     return node
-}
-
-/** Use root_id==0 to clear all */
-fun dockContextClearNodes(ctx: Context, rootId: ID, clearPersistentDockingReferences: Boolean) {
-    assert(ctx === gImGui)
-    dockBuilderRemoveNodeDockedWindows(rootId, clearPersistentDockingReferences)
-    dockBuilderRemoveNodeChildNodes(rootId)
 }
 
 fun dockContextBuildNodesFromSettings(ctx: Context, nodeSettings: ArrayList<DockNodeSettings>) {

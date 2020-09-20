@@ -112,9 +112,9 @@ fun dockNodeTreeMerge(ctx: Context, parentNode: DockNode, mergeLeadChild: DockNo
             ?: DockNodeFlag.None.i) and DockNodeFlag._LocalFlagsTransferMask_)
 
     if (child0 != null)
-        ctx.dockContext!!.nodes -= child0.id
+        ctx.dockContext.nodes -= child0.id
     if (child1 != null)
-        ctx.dockContext!!.nodes -= child1.id
+        ctx.dockContext.nodes -= child1.id
 }
 
 /** Update Pos/Size for a node hierarchy (don't affect child Windows yet)

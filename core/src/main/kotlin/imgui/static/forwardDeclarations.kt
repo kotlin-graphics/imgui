@@ -42,12 +42,6 @@ fun setCurrentWindow(window: Window?) {
     g.drawListSharedData.fontSize = g.fontSize
 }
 
-fun setWindowHitTestHole(window: Window, pos: Vec2, size: Vec2) {
-    assert(window.hitTestHoleSize.x == 0f) { "We don't support multiple holes/hit test filters" }
-    window.hitTestHoleSize put size
-    window.hitTestHoleOffset put (pos - window.pos)
-}
-
 /** Find window given position, search front-to-back
 FIXME: Note that we have an inconsequential lag here: OuterRectClipped is updated in Begin(), so windows moved programmatically
 with SetWindowPos() and not SetNextWindowPos() will have that rectangle lagging by a frame at the time FindHoveredWindow() is
@@ -171,20 +165,10 @@ fun windowSettingsHandler_ClearAll(ctx: Context, handler: SettingsHandler) {
     g.settingsWindows.clear()
 }
 
-/** Apply to existing windows (if any) */
-fun windowSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
-    val g = ctx
-    for (settings in g.settingsWindows)
-    if (settings.wantApply) {
-        findWindowByID(settings.id)?.applySettings(settings)
-        settings.wantApply = false
-    }
-}
-
 fun windowSettingsHandler_ReadOpen(ctx: Context, settingsHandler: SettingsHandler, name: String): WindowSettings {
     val settings = findOrCreateWindowSettings(name)
     val id = settings.id
-    settings.clear()
+    settings.clear() // Clear existing if recycling previous entry
     settings.id = id
     settings.wantApply = true
     return settings
@@ -205,6 +189,16 @@ fun windowSettingsHandler_ReadLine(ctx: Context, settingsHandler: SettingsHandle
         }
         line.startsWith("ClassId") -> settings.classId = line.substring(7 + 3).toInt(16)
     }
+}
+
+/** Apply to existing windows (if any) */
+fun windowSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
+    val g = ctx
+    for (settings in g.settingsWindows)
+        if (settings.wantApply) {
+            findWindowByID(settings.id)?.applySettings(settings)
+            settings.wantApply = false
+        }
 }
 
 fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: StringBuilder) {

@@ -115,7 +115,7 @@ object glyphRanges {
         get() = arrayOf(
                 *default, // Basic Latin + Latin Supplement
                 IntRange(0x3131, 0x3163), // Korean alphabets
-                IntRange(0xAC00, 0xD79D)) // Korean characters
+                IntRange(0xAC00, 0xD7A3)) // Korean characters
 
     /** Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs  */
     val japanese: Array<IntRange> by lazy {

@@ -3,6 +3,7 @@ package imgui.internal.api
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
+import imgui.ImGui.dockNodeGetDepth
 import imgui.ImGui.dockNodeGetRootNode
 import imgui.ImGui.dockSpace
 import imgui.ImGui.findOrCreateWindowSettings
@@ -108,10 +109,10 @@ interface dockingBuilder {
         dockContextRemoveNode(ctx, node, true)
     }
 
-    fun dockBuilderRemoveNodeDockedWindows(rootId: ID, clearPersistentDockingReferences: Boolean = true) {
+    fun dockBuilderRemoveNodeDockedWindows(rootId: ID, clearSettingsRefs: Boolean = true) {
         // Clear references in settings
         val ctx = g
-        if (clearPersistentDockingReferences)
+        if (clearSettingsRefs)
             for (setting in g.settingsWindows) {
                 var wantRemoval = rootId == 0 || setting.dockId == rootId
                 if (!wantRemoval && setting.dockId != 0)
@@ -130,8 +131,8 @@ interface dockingBuilder {
             val wantRemoval = rootId == 0 || (dock != null && dockNodeGetRootNode(dock).id == rootId) || (host != null && host.id == rootId)
             if (wantRemoval) {
                 val backupDockId = window.dockId
-                dockContextProcessUndockWindow(ctx, window, clearPersistentDockingReferences)
-                if (!clearPersistentDockingReferences)
+                dockContextProcessUndockWindow(ctx, window, clearSettingsRefs)
+                if (!clearSettingsRefs)
                     assert(window.dockId == backupDockId)
             }
         }
@@ -143,7 +144,7 @@ interface dockingBuilder {
     fun dockBuilderRemoveNodeChildNodes(rootId: ID) {
 
         val ctx = g
-        val dc = ctx.dockContext!!
+        val dc = ctx.dockContext
 
         val rootNode = if (rootId != 0) dockContextFindNodeByID(ctx, rootId) else null
         if (rootId != 0 && rootNode == null)
