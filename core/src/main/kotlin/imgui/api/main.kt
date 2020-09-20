@@ -29,10 +29,8 @@ import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
-import imgui.classes.DrawList
-import imgui.classes.IO
-import imgui.classes.Style
-import imgui.classes.ViewportP
+import imgui.classes.*
+import imgui.has
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -459,6 +457,13 @@ interface main {
         }
 
         fun setupViewportDrawData(viewport: ViewportP, drawLists: ArrayList<DrawList>) {
+            // When minimized, we report draw_data->DisplaySize as zero to be consistent with non-viewport mode,
+            // and to allow applications/back-ends to easily skip rendering.
+            // FIXME: Note that we however do NOT attempt to report "zero drawlist / vertices" into the ImDrawData structure.
+            // This is because the work has been done already, and its wasted! We should fix that and add optimizations for
+            // it earlier in the pipeline, rather than pretend to hide the data at the end of the pipeline.
+            val isMinimized = viewport.flags has ViewportFlag.Minimized
+
             val drawData = viewport.drawDataP
             viewport.drawData = drawData // Make publicly accessible
             drawData.valid = true
@@ -468,7 +473,8 @@ interface main {
             drawData.totalIdxCount = 0
             drawData.totalVtxCount = 0
             drawData.displayPos put viewport.pos
-            drawData.displaySize put viewport.size
+            if(isMinimized) drawData.displaySize put 0f
+            else drawData.displaySize put viewport.size
             drawData.framebufferScale put io.displayFramebufferScale // FIXME-VIEWPORT: This may vary on a per-monitor/viewport basis?
             for (n in 0 until drawLists.size) {
                 drawData.totalVtxCount += drawLists[n].vtxBuffer.lim
