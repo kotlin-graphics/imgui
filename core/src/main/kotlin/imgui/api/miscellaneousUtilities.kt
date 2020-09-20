@@ -135,7 +135,7 @@ interface miscellaneousUtilities {
 
             // Our ImDrawList system requires that there is always a command
             if (viewport.lastFrameDrawLists[drawlistNo] != g.frameCount) {
-                drawList.resetForNewFrame()
+                drawList._resetForNewFrame()
                 drawList.pushTextureID(io.fonts.texID)
                 drawList.pushClipRect(viewport.pos, viewport.pos + viewport.size, false)
                 viewport.lastFrameDrawLists[drawlistNo] = g.frameCount

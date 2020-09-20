@@ -12,7 +12,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.font.Font
 import imgui.internal.*
-import imgui.internal.classes.*
+import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import kool.*
 import org.lwjgl.system.MemoryUtil
@@ -66,9 +66,6 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Pointer to owner window's name for debugging    */
     var _ownerName = ""
 
-    /** [Internal] Always 0 unless 'Flags & ImDrawListFlags_AllowVtxOffset'. */
-    var _vtxCurrentOffset = 0
-
     /** [Internal] Generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0. */
     var _vtxCurrentIdx = 0
 
@@ -86,6 +83,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** [Internal] current path building    */
     val _path = ArrayList<Vec2>()
 
+    /** [Internal] Template of active commands. Fields should match those of CmdBuffer.back(). */
+    var _cmdHeader: DrawCmd = DrawCmd()
+
     /** [Internal] for channels api (note: prefer using your own persistent instance of ImDrawListSplitter!) */
     val _splitter = DrawListSplitter()
 
@@ -96,8 +96,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pushClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false) {
 
         val cr = Vec4(crMin, crMax)
-        if (intersectWithCurrentClipRect && _clipRectStack.isNotEmpty()) {
-            val current = _clipRectStack.last()
+        if (intersectWithCurrentClipRect) {
+            val current = _cmdHeader.clipRect // [JVM] careful, no copy
             if (cr.x < current.x) cr.x = current.x
             if (cr.y < current.y) cr.y = current.y
             if (cr.z > current.z) cr.z = current.z
@@ -107,20 +107,29 @@ class DrawList(sharedData: DrawListSharedData?) {
         cr.w = cr.y max cr.w
 
         _clipRectStack += cr
-        updateClipRect()
+        _cmdHeader.clipRect put cr
+        _onChangedClipRect()
     }
 
     fun pushClipRectFullScreen() = pushClipRect(Vec2(_data.clipRectFullscreen), Vec2(_data.clipRectFullscreen.z, _data.clipRectFullscreen.w))
 
     fun popClipRect() {
-        assert(_clipRectStack.isNotEmpty())
         _clipRectStack.pop()
-        updateClipRect()
+        _cmdHeader.clipRect put (_clipRectStack.lastOrNull() ?: _data.clipRectFullscreen)
+        _onChangedClipRect()
     }
 
-    fun pushTextureID(textureId: TextureID) = _textureIdStack.push(textureId).run { updateTextureID() }
+    fun pushTextureID(textureId: TextureID) {
+        _textureIdStack += textureId
+        _cmdHeader.textureId = textureId
+        _onChangedTextureID()
+    }
 
-    fun popTextureId() = _textureIdStack.pop().also { updateTextureID() }
+    fun popTextureId() {
+        _textureIdStack.pop()
+        _cmdHeader.textureId = _textureIdStack.lastOrNull() ?: 0
+        _onChangedTextureID()
+    }
 
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -304,14 +313,18 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addText(pos: Vec2, col: Int, text: String) = addText(g.font, g.fontSize, pos, col, text)
 
-    fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
-                wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
+    fun addText(
+            font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
+            wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null,
+    ) {
         val bytes = text.toByteArray()
         addText(font, fontSize, pos, col, bytes, 0, bytes.size, wrapWidth, cpuFineClipRect)
     }
 
-    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int = 0,
-                textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
+    fun addText(
+            font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int = 0,
+            textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null,
+    ) {
 
         if ((col and COL32_A_MASK) == 0) return
 
@@ -322,9 +335,9 @@ class DrawList(sharedData: DrawListSharedData?) {
         val font = font_ ?: _data.font!!
         val fontSize = if (fontSize_ == 0f) _data.fontSize else fontSize_
 
-        assert(font.containerAtlas.texID == _textureIdStack.last()) { "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font_" }
+        assert(font.containerAtlas.texID == _cmdHeader.textureId) { "Use high-level ImGui::pushFont() or low-level DrawList::pushTextureId() to change font_" }
 
-        val clipRect = Vec4(_clipRectStack.last())
+        val clipRect = Vec4(_cmdHeader.clipRect)
         cpuFineClipRect?.let {
             clipRect.x = clipRect.x max cpuFineClipRect.x
             clipRect.y = clipRect.y max cpuFineClipRect.y
@@ -663,12 +676,14 @@ class DrawList(sharedData: DrawListSharedData?) {
     // - "uv_min" and "uv_max" represent the normalized texture coordinates to use for those corners. Using (0,0)->(1,1) texture coordinates will generally display the entire texture.
     // -----------------------------------------------------------------------------------------------------------------
 
-    fun addImage(userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
-                 uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE) {
+    fun addImage(
+            userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
+            uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
+    ) {
 
         if (col hasnt COL32_A_MASK) return
 
-        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        val pushTextureId = userTextureId != _cmdHeader.textureId
         if (pushTextureId) pushTextureID(userTextureId)
 
         primReserve(6, 4)
@@ -677,13 +692,15 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (pushTextureId) popTextureId()
     }
 
-    fun addImageQuad(userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
-                     uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
-                     uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE) {
+    fun addImageQuad(
+            userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
+            uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
+            uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
+    ) {
 
         if (col hasnt COL32_A_MASK) return
 
-        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        val pushTextureId = userTextureId != _cmdHeader.textureId
         if (pushTextureId)
             pushTextureID(userTextureId)
 
@@ -694,8 +711,10 @@ class DrawList(sharedData: DrawListSharedData?) {
             popTextureId()
     }
 
-    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float,
-                        roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i) {
+    fun addImageRounded(
+            userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float,
+            roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i,
+    ) {
         if (col hasnt COL32_A_MASK) return
 
         if (rounding <= 0f || roundingCorners hasnt DrawCornerFlag.All) {
@@ -840,7 +859,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     triangles.  */
     fun addCallback(callback: DrawCallback, callbackData: Any? = null) {
         var currCmd = cmdBuffer.last()
-        if (currCmd.elemCount != 0 || currCmd.userCallback != null) {
+        assert(currCmd.userCallback == null)
+        if (currCmd.elemCount != 0) {
             addDrawCmd()
             currCmd = cmdBuffer.last()
         }
@@ -854,9 +874,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     Otherwise primitives are merged into the same draw-call as much as possible */
     fun addDrawCmd() {
         val drawCmd = DrawCmd().apply {
-            clipRect put currentClipRect
-            textureId = currentTextureId
-            vtxOffset = _vtxCurrentOffset
+            clipRect put _cmdHeader.clipRect    // Same as calling ImDrawCmd_HeaderCopy()
+            textureId = _cmdHeader.textureId
+            vtxOffset = _cmdHeader.vtxOffset
             idxOffset = idxBuffer.rem
         }
         assert(drawCmd.clipRect.x <= drawCmd.clipRect.z && drawCmd.clipRect.y <= drawCmd.clipRect.w)
@@ -881,53 +901,6 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun channelsSetCurrent(idx: Int) = _splitter.setCurrentChannel(this, idx)
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // [Internal helpers]
-    // NB: all primitives needs to be reserved via PrimReserve() beforehand!
-    // -----------------------------------------------------------------------------------------------------------------
-
-    /** Initialize before use in a new frame. We always have a command ready in the buffer. */
-    fun resetForNewFrame() {
-        cmdBuffer.clear()
-        // we dont assign because it wont create a new instance for sure
-        idxBuffer = idxBuffer.resize(0)
-        vtxBuffer = vtxBuffer.resize(0)
-        flags = _data.initialFlags
-        _vtxCurrentOffset = 0
-        _vtxCurrentIdx = 0
-        _vtxWritePtr = 0
-        _idxWritePtr = 0
-        _clipRectStack.clear()
-        _textureIdStack.clear()
-        _path.clear()
-        _splitter.clear()
-        cmdBuffer += DrawCmd()
-    }
-
-    /** @param destroy useful to declare if this is a memory release or not */
-    fun clearFreeMemory(destroy: Boolean = false) {
-        cmdBuffer.clear()
-        // we dont assign because it wont create a new instance for sure
-        if(destroy) {
-            vtxBuffer.data.free()
-            idxBuffer.free()
-        } else {
-            idxBuffer = idxBuffer.resize(0)
-            vtxBuffer = vtxBuffer.resize(0)
-        }
-        _vtxCurrentIdx = 0
-        _vtxWritePtr = 0
-        _idxWritePtr = 0
-        _clipRectStack.clear()
-        _textureIdStack.clear()
-        _path.clear()
-        _splitter.clearFreeMemory()
-        // TODO check
-//        resetForNewFrame()
-//        _splitter.clearFreeMemory(destroy)
-
-    }
-
     /** Reserve space for a number of vertices and indices.
      *  You must finish filling your reserved data before calling PrimReserve() again, as it may reallocate or
      *  submit the intermediate results. PrimUnreserve() can be used to release unused allocations.    */
@@ -936,9 +909,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Large mesh support (when enabled)
         ASSERT_PARANOID(idxCount >= 0 && vtxCount >= 0)
         if (DrawIdx.BYTES == 2 && _vtxCurrentIdx + vtxCount >= (1 shl 16) && flags has DrawListFlag.AllowVtxOffset) {
-            _vtxCurrentOffset = vtxBuffer.rem
-            _vtxCurrentIdx = 0
-            addDrawCmd()
+            _cmdHeader.vtxOffset = vtxBuffer.rem
+            _onChangedVtxOffset()
         }
 
         cmdBuffer.last().elemCount += idxCount
@@ -1072,59 +1044,126 @@ class DrawList(sharedData: DrawListSharedData?) {
         primWriteVtx(pos, uv, col)
     }
 
+    // -----------------------------------------------------------------------------------------------------------------
+    // [Internal helpers]
+    // NB: all primitives needs to be reserved via PrimReserve() beforehand!
+    // -----------------------------------------------------------------------------------------------------------------
+
+    /** Initialize before use in a new frame. We always have a command ready in the buffer. */
+    fun _resetForNewFrame() {
+
+        // Verify that the ImDrawCmd fields we want to memcmp() are contiguous in memory.
+        // (those should be IM_STATIC_ASSERT() in theory but with our pre C++11 setup the whole check doesn't compile with GCC)
+//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
+//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
+//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID))
+
+        cmdBuffer.clear()
+        // we dont assign because it wont create a new instance for sure
+        idxBuffer = idxBuffer.resize(0)
+        vtxBuffer = vtxBuffer.resize(0)
+        flags = _data.initialFlags
+        _cmdHeader = DrawCmd()
+        _vtxCurrentIdx = 0
+        _vtxWritePtr = 0
+        _idxWritePtr = 0
+        _clipRectStack.clear()
+        _textureIdStack.clear()
+        _path.clear()
+        _splitter.clear()
+        cmdBuffer += DrawCmd()
+    }
+
+    /** @param destroy useful to declare if this is a memory release or not */
+    fun _clearFreeMemory(destroy: Boolean = false) {
+        cmdBuffer.clear()
+        // we dont assign because it wont create a new instance for sure
+        if (destroy) {
+            vtxBuffer.data.free()
+            idxBuffer.free()
+        } else {
+            idxBuffer = idxBuffer.resize(0)
+            vtxBuffer = vtxBuffer.resize(0)
+        }
+        flags = DrawListFlag.None.i
+        _vtxCurrentIdx = 0
+        _vtxWritePtr = 0
+        _idxWritePtr = 0
+        _clipRectStack.clear()
+        _textureIdStack.clear()
+        _path.clear()
+        _splitter.clearFreeMemory()
+        // TODO check
+//        resetForNewFrame()
+//        _splitter.clearFreeMemory(destroy)
+    }
+
+    /** Pop trailing draw command (used before merging or presenting to user)
+     *  Note that this leaves the ImDrawList in a state unfit for further commands,
+     *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
+    fun _popUnusedDrawCmd() {
+        if (cmdBuffer.isEmpty())
+            return
+        val currCmd = cmdBuffer.last()
+        if (currCmd.elemCount == 0 && currCmd.userCallback == null)
+            cmdBuffer.pop()
+    }
+
     /** Our scheme may appears a bit unusual, basically we want the most-common calls AddLine AddRect etc. to not have
     to perform any check so we always have a command ready in the stack.
     The cost of figuring out if a new command has to be added or if we can merge is paid in those Update**
     functions only. */
-    fun updateClipRect() {
+    fun _onChangedClipRect() {
         // If current command is used with different settings we need to add a new command
-        val currClipRect = currentClipRect // [JVM] careful, no copy
         val currCmd = cmdBuffer.last()
-        if ((currCmd.elemCount != 0 && currCmd.clipRect != currClipRect) || currCmd.userCallback != null) {
+        if (currCmd.elemCount != 0 && currCmd.clipRect != _cmdHeader.clipRect) {
             addDrawCmd()
             return
         }
+        assert(currCmd.userCallback == null)
 
         // Try to merge with previous command if it matches, else use current command
-        if (currCmd.elemCount == 0 && cmdBuffer.size > 1) {
-            val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
-            if (prevCmd.clipRect == currClipRect && prevCmd.vtxOffset == _vtxCurrentOffset &&
-                    prevCmd.textureId == currentTextureId && prevCmd.userCallback == null) {
-                cmdBuffer.pop()
-                return
-            }
-        }
-
-        currCmd.clipRect put currClipRect
-    }
-
-    fun updateTextureID() {
-
-        // If current command is used with different settings we need to add a new command
-        val currCmd = cmdBuffer.last()
-        if (currCmd == null || (currCmd.elemCount != 0 && currCmd.textureId != currentTextureId!!) || currCmd.userCallback != null) {
-            addDrawCmd()
+        val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
+        if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+            cmdBuffer.pop()
             return
         }
 
-        if (currCmd.elemCount == 0 && cmdBuffer.size > 1) {
-            val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
-            if (prevCmd.textureId == currentTextureId && prevCmd.clipRect == currentClipRect
-                    && prevCmd.vtxOffset == _vtxCurrentOffset && prevCmd.userCallback == null) {
-                cmdBuffer.pop()
-                return
-            }
-        }
-
-        currCmd.textureId = currentTextureId
+        currCmd.clipRect put _cmdHeader.clipRect
     }
 
+    fun _onChangedTextureID() {
 
-    // Macros
-    val currentClipRect: Vec4
-        get() = _clipRectStack.lastOrNull() ?: _data.clipRectFullscreen
-    val currentTextureId: TextureID?
-        get() = _textureIdStack.lastOrNull()
+        // If current command is used with different settings we need to add a new command
+        val currCmd = cmdBuffer.last()
+        if (currCmd.elemCount != 0 && currCmd.textureId != _cmdHeader.textureId) {
+            addDrawCmd()
+            return
+        }
+        assert(currCmd.userCallback == null)
+
+        val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
+        if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+            cmdBuffer.pop()
+            return
+        }
+
+        currCmd.textureId = _cmdHeader.textureId
+    }
+
+    fun _onChangedVtxOffset() {
+        // We don't need to compare curr_cmd->VtxOffset != _CmdHeader.VtxOffset because we know it'll be different at the time we call this.
+        _vtxCurrentIdx = 0
+        val currCmd = cmdBuffer.last()
+        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset)
+        if (currCmd.elemCount != 0) {
+            addDrawCmd()
+            return
+        }
+        assert(currCmd.userCallback == null)
+        currCmd.vtxOffset = _cmdHeader.vtxOffset
+    }
+
 
     //-------------------------------------------------------------------------
     // [SECTION] FORWARD DECLARATIONS
@@ -1133,14 +1172,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** AddDrawListToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
 
+        // Remove trailing command if unused.
+        // Technically we could return directly instead of popping, but this make things looks neat in Metrics window as well.
+        _popUnusedDrawCmd()
         if (cmdBuffer.empty()) return
-
-        // Remove trailing command if unused
-        val currCmd = cmdBuffer.last()
-        if (currCmd.elemCount == 0 && currCmd.userCallback == null) {
-            cmdBuffer.pop()
-            if (cmdBuffer.empty()) return
-        }
 
         /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
             May trigger for you if you are using PrimXXX functions incorrectly.   */
@@ -1220,8 +1255,10 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathStroke(col, false, thickness)
     }
 
-    fun renderMouseCursor(pos: Vec2, scale: Float, mouseCursor: MouseCursor,
-                          colFill: Int, colBorder: Int, colShadow: Int) {
+    fun renderMouseCursor(
+            pos: Vec2, scale: Float, mouseCursor: MouseCursor,
+            colFill: Int, colBorder: Int, colShadow: Int,
+    ) {
         if (mouseCursor == MouseCursor.None)
             return
 
@@ -1332,8 +1369,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     //-----------------------------------------------------------------------------
 
     /** Generic linear color gradient, write to RGB fields, leave A untouched.  */
-    fun shadeVertsLinearColorGradientKeepAlpha(vertStart: Int, vertEnd: Int, gradientP0: Vec2,
-                                               gradientP1: Vec2, col0: Int, col1: Int) {
+    fun shadeVertsLinearColorGradientKeepAlpha(
+            vertStart: Int, vertEnd: Int, gradientP0: Vec2,
+            gradientP1: Vec2, col0: Int, col1: Int,
+    ) {
         val gradientExtent = gradientP1 - gradientP0
         val gradientInvLength2 = 1f / gradientExtent.lengthSqr
         for (i in vertStart until vertEnd) {

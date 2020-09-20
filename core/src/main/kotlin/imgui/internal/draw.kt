@@ -12,7 +12,6 @@ import imgui.logger
 import imgui.resize
 import kool.*
 import kool.lib.indices
-import java.nio.ByteBuffer
 import java.util.Stack
 import java.util.logging.Level
 
@@ -25,23 +24,20 @@ import java.util.logging.Level
  *  If you want to override the signature of ImDrawCallback, you can simply use e.g. '#define ImDrawCallback MyDrawCallback' (in imconfig.h) + update rendering back-end accordingly. */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
-/** A single draw command within a parent ImDrawList (generally maps to 1 GPU draw call, unless it is a callback)
- *
- *  Typically, 1 command = 1 gpu draw call (unless command is a callback)
- *
- *  Pre 1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields. When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset'
- *  is enabled, those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.*/
+// Typically, 1 command = 1 GPU draw call (unless command is a callback)
+// - VtxOffset/IdxOffset: When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset' is enabled,
+//   those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
+//   Pre-1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields.
+// - The ClipRect/TextureId/VtxOffset fields must be contiguous as we memcmp() them together (this is asserted for).
 class DrawCmd {
 
+    // Also ensure our padding fields are zeroed
     constructor()
 
     constructor(drawCmd: DrawCmd) {
         put(drawCmd)
     }
 
-    /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
-     *  vtx_buffer[] array, indices in idx_buffer[].    */
-    var elemCount = 0
 
     /** Clipping rectangle (x1, y1, x2, y2). Subtract ImDrawData->DisplayPos to get clipping rectangle in "viewport" coordinates */
     var clipRect = Vec4()
@@ -50,12 +46,16 @@ class DrawCmd {
     Ignore if never using images or multiple fonts atlas.   */
     var textureId: TextureID? = null
 
-    /** Start offset in vertex buffer. Pre-1.71 or without ImGuiBackendFlags_RendererHasVtxOffset: always 0.
-     *  With ImGuiBackendFlags_RendererHasVtxOffset: may be >0 to support meshes larger than 64K vertices with 16-bit indices. */
+    /** Start offset in vertex buffer. ImGuiBackendFlags_RendererHasVtxOffset: always 0, otherwise may be >0 to support
+     *  meshes larger than 64K vertices with 16-bit indices. */
     var vtxOffset = 0
 
     /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
     var idxOffset = 0
+
+    /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
+     *  vtx_buffer[] array, indices in idx_buffer[].    */
+    var elemCount = 0
 
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
@@ -80,6 +80,19 @@ class DrawCmd {
         resetRenderState = drawCmd.resetRenderState
         userCallbackData = drawCmd.userCallbackData
     }
+
+    // Compare ClipRect, TextureId and VtxOffset with a single memcmp()
+//    #define ImDrawCmd_HeaderSize                        (IM_OFFSETOF(ImDrawCmd, VtxOffset) + sizeof(unsigned int))
+
+    /** Compare ClipRect, TextureId, VtxOffset */
+    infix fun headerCompare(other: DrawCmd): Boolean = clipRect == other.clipRect && textureId == other.textureId && vtxOffset == other.vtxOffset
+
+    /** Copy ClipRect, TextureId, VtxOffset */
+    infix fun headerCopy(other: DrawCmd) {
+        clipRect put other.clipRect
+        textureId = other.textureId
+        vtxOffset = other.vtxOffset
+    }
 }
 
 /** Vertex index, default to 16-bit
@@ -93,7 +106,8 @@ typealias DrawIdx = Int
 class DrawVert(
         var pos: Vec2 = Vec2(),
         var uv: Vec2 = Vec2(),
-        var col: Int = 0) {
+        var col: Int = 0,
+) {
 
     companion object {
         val size = 2 * Vec2.size + Int.BYTES
@@ -184,26 +198,17 @@ class DrawListSplitter {
             if (i < oldChannelsCount)
                 _channels[i].resize0()
             if (_channels[i]._cmdBuffer.isEmpty())
-                _channels[i]._cmdBuffer.add(DrawCmd().apply {
-                    clipRect put drawList._clipRectStack.last()
-                    textureId = drawList._textureIdStack.last()
-                })
+                _channels[i]._cmdBuffer += DrawCmd().apply { headerCopy(drawList._cmdHeader) } // Copy ClipRect, TextureId, VtxOffset
         }
-    }
-
-    companion object {
-        fun canMergeDrawCommands(a: DrawCmd, b: DrawCmd): Boolean = a.clipRect == b.clipRect &&
-                a.textureId == b.textureId && a.vtxOffset == b.vtxOffset && a.userCallback == null && b.userCallback == null
     }
 
     infix fun merge(drawList: DrawList) {
 
-        // Note that we never use or rely on channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
+        // Note that we never use or rely on _Channels.Size because it is merely a buffer that we never shrink back to 0 to keep all sub-buffers ready for use.
         if (_count <= 1) return
 
         setCurrentChannel(drawList, 0)
-        if (drawList.cmdBuffer.lastOrNull()?.elemCount == 0)
-            drawList.cmdBuffer.pop()
+        drawList._popUnusedDrawCmd()
 
         // Calculate our final buffer sizes. Also fix the incorrect IdxOffset values in each command.
         var newCmdBufferCount = 0
@@ -211,14 +216,21 @@ class DrawListSplitter {
         var lastCmd = if (_count > 0 && drawList.cmdBuffer.isNotEmpty()) drawList.cmdBuffer.last() else null
         var idxOffset = lastCmd?.run { idxOffset + elemCount } ?: 0
         for (i in 1 until _count) {
+
             val ch = _channels[i]
+
+            // Equivalent of PopUnusedDrawCmd() for this channel's cmdbuffer and except we don't need to test for UserCallback.
             if (ch._cmdBuffer.lastOrNull()?.elemCount == 0)
                 ch._cmdBuffer.pop()
-            if (ch._cmdBuffer.isNotEmpty() && lastCmd != null && canMergeDrawCommands(lastCmd, ch._cmdBuffer[0])) {
-                // Merge previous channel last draw command with current channel first draw command if matching.
-                lastCmd.elemCount += ch._cmdBuffer[0].elemCount
-                idxOffset += ch._cmdBuffer[0].elemCount
-                ch._cmdBuffer.clear()//remove(ch._cmdBuffer.data); // FIXME-OPT: Improve for multiple merges.
+
+            if (ch._cmdBuffer.isNotEmpty() && lastCmd != null) {
+                val nextCmd = ch._cmdBuffer[0]
+                if (lastCmd headerCompare nextCmd && lastCmd.userCallback == null && nextCmd.userCallback == null) {
+                    // Merge previous channel last draw command with current channel first draw command if matching.
+                    lastCmd.elemCount += nextCmd.elemCount
+                    idxOffset += nextCmd.elemCount
+                    ch._cmdBuffer.clear() // FIXME-OPT: Improve for multiple merges.
+                }
             }
             if (ch._cmdBuffer.isNotEmpty())
                 lastCmd = ch._cmdBuffer.last()
@@ -244,14 +256,25 @@ class DrawListSplitter {
                 drawList.idxBuffer[idxWrite++] = ch._idxBuffer[j]
         }
         drawList._idxWritePtr = idxWrite
-        drawList.updateClipRect() // We call this instead of AddDrawCmd(), so that empty channels won't produce an extra draw call.
-        drawList.updateTextureID()
+
+        // Ensure there's always a non-callback draw command trailing the command-buffer
+        if (drawList.cmdBuffer.isEmpty() || drawList.cmdBuffer.last().userCallback != null)
+            drawList.addDrawCmd()
+
+        // If current command is used with different settings we need to add a new command
+        val currCmd = drawList.cmdBuffer.last()
+        if (currCmd.elemCount == 0)
+            currCmd headerCopy drawList._cmdHeader // Copy ClipRect, TextureId, VtxOffset
+        else if (!currCmd.headerCompare(drawList._cmdHeader))
+            drawList.addDrawCmd()
+
         _count = 1
     }
 
     fun setCurrentChannel(drawList: DrawList, idx: Int) {
         assert(idx in 0 until _count)
         if (_current == idx) return
+
         // Overwrite ImVector (12/16 bytes), four times. This is merely a silly optimization instead of doing .swap()
         _channels[_current]._cmdBuffer.clear()
         _channels[_current]._cmdBuffer.addAll(drawList.cmdBuffer)
@@ -263,6 +286,13 @@ class DrawListSplitter {
         drawList.idxBuffer.free()
         drawList.idxBuffer = imgui.IntBuffer(_channels[idx]._idxBuffer)
         drawList._idxWritePtr = drawList.idxBuffer.lim
+
+        // If current command is used with different settings we need to add a new command
+        val currCmd = drawList.cmdBuffer.last()
+        if (currCmd.elemCount == 0)
+            currCmd headerCopy drawList._cmdHeader // Copy ClipRect, TextureId, VtxOffset
+        else if (!currCmd.headerCompare(drawList._cmdHeader))
+            drawList.addDrawCmd()
     }
 }
 
