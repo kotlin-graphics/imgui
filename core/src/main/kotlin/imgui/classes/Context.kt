@@ -11,6 +11,7 @@ import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.internal.DrawData
 import imgui.internal.classes.*
 import imgui.internal.hash
 import imgui.internal.sections.*
@@ -355,6 +356,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavMoveResult()
 
+    /** Window which requested trying nav wrap-around. */
+    var navWrapRequestWindow: Window? = null
+
+    /** Wrap-around operation flags. */
+    var navWrapRequestFlags: NavMoveFlags = NavMoveFlag.None.i
+
 
     // Navigation: Windowing (CTRL+TAB for list, or Menu button + keys or directional pads to move/resize)
 
@@ -617,9 +624,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             typeName = "Window"
             typeHash = hash("Window")
             clearAllFn = ::windowSettingsHandler_ClearAll
-            applyAllFn = ::windowSettingsHandler_ApplyAll
             readOpenFn = ::windowSettingsHandler_ReadOpen
             readLineFn = ::windowSettingsHandler_ReadLine
+            applyAllFn = ::windowSettingsHandler_ApplyAll
             writeAllFn = ::windowSettingsHandler_WriteAll
         }
 //        #ifdef IMGUI_HAS_TABLE

@@ -18,6 +18,7 @@ import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.classes.Context
 import imgui.internal.classes.*
 import imgui.internal.hash
@@ -52,12 +53,19 @@ interface docking {
         val g = ctx
     }
 
+    /** Use root_id==0 to clear all */
+    fun dockContextClearNodes(ctx: Context, rootId: ID, clearSettingsRefs: Boolean) {
+        assert(ctx === gImGui)
+        ImGui.dockBuilderRemoveNodeDockedWindows(rootId, clearSettingsRefs)
+        dockBuilderRemoveNodeChildNodes(rootId)
+    }
+
     /** This function also acts as a defacto test to make sure we can rebuild from scratch without a glitch
      * [DEBUG] This function also acts as a defacto test to make sure we can rebuild from scratch without a glitch
      * (Different from DockSettingsHandler_ClearAll() + DockSettingsHandler_ApplyAll() because this reuses current settings!) */
     fun dockContextRebuildNodes(ctx: Context) {
         IMGUI_DEBUG_LOG_DOCKING("DockContextRebuild()")
-        val dc = ctx.dockContext!!
+        val dc = ctx.dockContext
         saveIniSettingsToMemory()
         val rootID = 0 // Rebuild all
         dockContextClearNodes(ctx, rootID, false)
@@ -69,7 +77,7 @@ interface docking {
     fun dockContextUpdateUndocking(ctx: Context) {
 
         val g = ctx
-        val dc = ctx.dockContext!!
+        val dc = ctx.dockContext
         if (g.io.configFlags hasnt ConfigFlag.DockingEnable) {
             if (dc.nodes.isNotEmpty() || dc.requests.isNotEmpty())
                 dockContextClearNodes(ctx, 0, true)
@@ -106,7 +114,7 @@ interface docking {
     /** Docking context update function, called by NewFrame() */
     fun dockContextUpdateDocking(ctx: Context) {
         val g = ctx
-        val dc = ctx.dockContext!!
+        val dc = ctx.dockContext
         if (g.io.configFlags hasnt ConfigFlag.DockingEnable)
             return
 
@@ -144,18 +152,18 @@ interface docking {
         req.dockSplitDir = splitDir
         req.dockSplitRatio = splitRatio
         req.dockSplitOuter = splitOuter
-        ctx.dockContext!!.requests += req
+        ctx.dockContext.requests += req
     }
 
     fun dockContextQueueUndockWindow(ctx: Context, window: Window) {
-        ctx.dockContext!!.requests += DockRequest().apply {
+        ctx.dockContext.requests += DockRequest().apply {
             type = DockRequestType.Undock
             undockTargetWindow = window
         }
     }
 
     fun dockContextQueueUndockNode(ctx: Context, node: DockNode) {
-        ctx.dockContext!!.requests += DockRequest().apply {
+        ctx.dockContext.requests += DockRequest().apply {
             type = DockRequestType.Undock
             undockTargetNode = node
         }
@@ -182,6 +190,16 @@ interface docking {
         while (node!!.parentNode != null)
             node = node.parentNode
         return node
+    }
+
+    fun dockNodeGetDepth(node_: DockNode): Int {
+        var depth = 0
+        var node: DockNode? = node_
+        while (node!!.parentNode != null) {
+            node = node.parentNode
+            depth++
+        }
+        return depth
     }
 
     /** ~GetWindowDockNode */

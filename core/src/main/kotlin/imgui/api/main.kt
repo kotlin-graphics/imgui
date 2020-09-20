@@ -282,12 +282,8 @@ interface main {
 
         end()
 
-        // Draw modal whitening background on _other_ viewports than the one the modal is one
-        endFrameDrawDimmedBackgrounds()
-
-        // Show CTRL+TAB list window
-        if (g.navWindowingTarget != null)
-            navUpdateWindowingOverlay()
+        // Update navigation: CTRL+Tab, wrap-around requests
+        navEndFrame()
 
         setCurrentViewport(null, null)
 

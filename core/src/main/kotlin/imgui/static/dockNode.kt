@@ -490,8 +490,8 @@ fun dockNodeUpdate(node: DockNode) {
         val centralHole = Rect(centralNode!!.pos, centralNode.pos + centralNode.size)
         centralHole expand Vec2(-WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS, -WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
         if (centralNodeHole && !centralHole.isInverted) {
-            setWindowHitTestHole(hostWindow!!, centralHole.min, centralHole.max - centralHole.min)
-            setWindowHitTestHole(hostWindow.parentWindow!!, centralHole.min, centralHole.max - centralHole.min)
+            hostWindow!!.setHitTestHole(centralHole.min, centralHole.max - centralHole.min)
+            hostWindow.parentWindow!!.setHitTestHole(centralHole.min, centralHole.max - centralHole.min)
         }
     }
 
@@ -1279,16 +1279,6 @@ fun dockNodeCalcDropRectsAndTestMousePos(parent: Rect, dir: Dir, outR: Rect, out
 }
 
 fun dockNodeGetHostWindowTitle(node: DockNode): String = "##DockNode_%02X".format(node.id)
-
-fun dockNodeGetDepth(node_: DockNode): Int {
-    var depth = 0
-    var node: DockNode? = node_
-    while (node!!.parentNode != null) {
-        node = node.parentNode
-        depth++
-    }
-    return depth
-}
 
 fun dockNodeGetTabOrder(window: Window): Int {
     val tabBar = window.dockNode!!.tabBar ?: return -1

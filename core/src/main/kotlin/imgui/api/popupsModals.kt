@@ -135,7 +135,8 @@ interface popupsModals {
         assert(g.beginPopupStack.isNotEmpty())
 
         // Make all menus and popups wrap around for now, may need to expose that policy.
-        navMoveRequestTryWrapping(window, NavMoveFlag.LoopY.i)
+        if (g.navWindow === window)
+            navMoveRequestTryWrapping(window, NavMoveFlag.LoopY.i)
 
         // Child-popups don't need to be laid out
         assert(!g.withinEndChild)
