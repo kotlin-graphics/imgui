@@ -21,7 +21,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
-import imgui.ImGui.openPopupOnItemClick
+import imgui.ImGui.openPopupContextItem
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -128,7 +128,7 @@ object ShowDemoWindowPopups {
         treeNode("Context menus") {
 
             // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
-            //    if (IsItemHovered() && IsMouseReleased(0))
+            //    if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
             //       OpenPopup(id);
             //    return BeginPopup(id);
             // For more advanced uses you may want to replicate and customize this code.
@@ -142,11 +142,11 @@ object ShowDemoWindowPopups {
                 }
             }
 
-            // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the
+            // We can also use OpenPopupContextItem() which is the same as BeginPopupContextItem() but without the
             // Begin() call. So here we will make it that clicking on the text field with the right mouse button (1)
             // will toggle the visibility of the popup above.
             text("(You can also right-click me to open the same popup as above.)")
-            openPopupOnItemClick("item context menu", MouseButton.Right)
+            openPopupContextItem("item context menu", MouseButton.Right)
 
             // When used after an item that has an ID (e.g.Button), we can skip providing an ID to BeginPopupContextItem().
             // BeginPopupContextItem() will use the last item ID as the popup ID.

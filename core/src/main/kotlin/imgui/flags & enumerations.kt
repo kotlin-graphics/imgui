@@ -490,6 +490,9 @@ enum class TabItemFlag(@JvmField val i: TabItemFlags) {
     /** Don't call PushID(tab->ID)/PopID() on BeginTabItem()/EndTabItem() */
     NoPushId(1 shl 3),
 
+    /** Disable tooltip for the given tab */
+    NoTooltip(1 shl 4),
+
     // [Internal]
 
     /** Track whether p_open was set or not (we'll need this info on the next frame to recompute ContentWidth during layout) */

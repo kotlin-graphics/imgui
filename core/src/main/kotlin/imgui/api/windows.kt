@@ -228,6 +228,7 @@ interface windows {
             window.hasCloseButton = pOpen != null
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)
             for (i in 1 until window.idStack.size) window.idStack.pop()  // resize 1
+            window.drawList._resetForNewFrame()
 
             // Restore buffer capacity when woken from a compacted state, to avoid
             if (window.memoryCompacted)
@@ -639,7 +640,7 @@ interface windows {
             /* ---------- DRAWING ---------- */
 
             // Setup draw list and outer clipping rectangle
-            window.drawList._resetForNewFrame()
+            assert(window.drawList.cmdBuffer.size == 1 && window.drawList.cmdBuffer[0].elemCount == 0)
             window.drawList.pushTextureID(g.font.containerAtlas.texID)
             pushClipRect(hostRect.min, hostRect.max, false)
 

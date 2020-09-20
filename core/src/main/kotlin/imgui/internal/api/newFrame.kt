@@ -12,6 +12,7 @@ import imgui.ImGui.isDragDropPayloadBeingAccepted
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.isPopupOpenAtAnyLevel
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
@@ -182,15 +183,22 @@ internal interface newFrame {
         // Click on void to focus window and start moving
         // (after we're done with all our widgets, so e.g. clicking on docking tab-bar which have set HoveredId already and not get us here!)
         if (io.mouseClicked[0]) {
-            val rootWindow = g.hoveredWindow?.rootWindowDockStop
-            if (rootWindow != null) {
-                g.hoveredWindow!!.startMouseMoving()
+            // Handle the edge case of a popup being closed while clicking in its empty space.
+            // If we try to focus it, FocusWindow() > ClosePopupsOverWindow() will accidentally close any parent popups because they are not linked together any more.
+            val hoveredWindow = g.hoveredWindow
+            val rootWindow = hoveredWindow?.rootWindowDockStop
+            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpenAtAnyLevel(rootWindow.popupId)
+
+            if (rootWindow != null && !isClosedPopup) {
+                hoveredWindow.startMouseMoving()
                 if (io.configWindowsMoveFromTitleBarOnly)
                     if (rootWindow.flags hasnt WindowFlag.NoTitleBar || rootWindow.dockIsActive)
                         if (io.mouseClickedPos[0] !in rootWindow.titleBarRect())
-                g.movingWindow = null
-            } else if (g.navWindow != null && topMostPopupModal == null)
-                focusWindow()  // Clicking on void disable focus
+                            g.movingWindow = null
+            }
+            else if (rootWindow != null && g.navWindow != null && topMostPopupModal == null)
+                // Clicking on void disable focus
+                focusWindow()
         }
 
         /*  With right mouse button we close popups without changing focus based on where the mouse is aimed
