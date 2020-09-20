@@ -172,8 +172,8 @@ class ViewportP : Viewport() {
 
     override fun destroy() {
         super.destroy()
-        drawLists[0]?.clearFreeMemory(true)
-        drawLists[1]?.clearFreeMemory(true)
+        drawLists[0]?._clearFreeMemory(true)
+        drawLists[1]?._clearFreeMemory(true)
     }
 
     val mainRect get() = Rect(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
