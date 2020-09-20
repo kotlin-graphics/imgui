@@ -18,6 +18,7 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
+import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
@@ -26,6 +27,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setItemDefaultFocus
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setTooltip
 import imgui.ImGui.text
 import imgui.ImGui.textEx
@@ -168,6 +170,10 @@ object ShowDemoWindowPopups {
 
             if (button("Delete.."))
                 openPopup("Delete?")
+
+            // Always center this window when appearing
+            val center = Vec2(io.displaySize * 0.5f)
+            setNextWindowPos(center, Cond.Appearing, Vec2(0.5f))
 
             popupModal("Delete?", null, Wf.AlwaysAutoResize.i) {
 
