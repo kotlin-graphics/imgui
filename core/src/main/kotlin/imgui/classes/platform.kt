@@ -154,7 +154,7 @@ class PlatformMonitor {
     val mainPos = Vec2()
     val mainSize = Vec2()
 
-    // (Optional) Coordinates without task bars / side bars / menu bars. imgui uses this to avoid positioning popups/tooltips inside this region.
+    // Coordinates without task bars / side bars / menu bars. Used to avoid positioning popups/tooltips inside this region. If you don't have this info, please copy the value for MainPos/MainSize.
     val workPos = Vec2()
     val workSize = Vec2()
 

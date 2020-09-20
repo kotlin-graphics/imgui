@@ -6,6 +6,7 @@ import imgui.ImGui.io
 import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.style
 import imgui.api.g
+import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 
 
@@ -65,8 +66,8 @@ fun errorCheckNewFrameSanityChecks() {
 
         // Perform simple checks on platform monitor data + compute a total bounding box for quick early outs
         g.platformIO.monitors.forEach {
-            assert(it.mainSize.x > 0f && it.mainSize.y > 0f) { "Monitor bounds not setup properly." } // TODO glm
-            assert(it.workSize.x > 0f && it.workSize.y > 0f) { "Monitor bounds not setup properly. If you don't have work area information, just copy Min/Max into them." }
+            assert(it.mainSize anyGreaterThan 0f) { "Monitor main bounds not setup properly." }
+            assert(Rect(it.workPos, it.workPos + it.workSize) in Rect(it.mainPos, it.mainPos + it.mainSize)) {"Monitor work bounds not setup properly. If you don't have work area information, just copy MainPos/MainSize into them."}
             assert(it.dpiScale != 0f)
         }
     }

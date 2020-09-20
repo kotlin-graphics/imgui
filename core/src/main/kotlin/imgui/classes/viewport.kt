@@ -120,11 +120,13 @@ open class Viewport {
 
     open fun destroy() = assert(platformUserData == null && rendererUserData == null)
 
-    /** Access work-area rectangle */
-    val workPos get() = Vec2(pos.x + workOffsetMin.x, pos.y + workOffsetMin.y)
+    // Access work-area rectangle with GetWorkXXX functions (see comments above)
+
+    val center get() = pos + size * 0.5f
+    val workPos get() = pos + workOffsetMin
 
     /** This not clamped */
-    val workSize get() = Vec2(size.x - workOffsetMin.x + workOffsetMax.x, size.y - workOffsetMin.y + workOffsetMax.y)
+    val workSize get() = size - workOffsetMin + workOffsetMax
 }
 
 /** ImGuiViewport Private/Internals fields (cardinal sin: we are using inheritance!)
