@@ -105,7 +105,7 @@ fun updateMouseInputs() {
                     }
                     if (deltaFromClickPos.lengthSqr < io.mouseDoubleClickMaxDist * io.mouseDoubleClickMaxDist)
                         mouseDoubleClicked[i] = true
-                    mouseClickedTime[i] = -Double.MAX_VALUE    // so the third click isn't turned into a double-click
+                    mouseClickedTime[i] = -io.mouseDoubleClickTime * 2.0 // Mark as "old enough" so the third click isn't turned into a double-click
                 } else
                     mouseClickedTime[i] = g.time
                 mouseClickedPos[i] put mousePos
