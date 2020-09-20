@@ -190,7 +190,7 @@ interface windowsUtilities {
      *  as this may incur tearing and side-effects. */
     fun setWindowPos(pos: Vec2, cond: Cond = Cond.None) = currentWindowRead!!.setPos(pos, cond)
 
-    /** (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0,0) to force an auto-fit.
+    /** (not recommended) set current window size - call within Begin()/End(). set to ImVec2(0, 0) to force an auto-fit.
      *  prefer using SetNextWindowSize(), as this may incur tearing and minor side-effects. */
     fun setWindowSize(size: Vec2, cond: Cond = Cond.None) = g.currentWindow!!.setSize(size, cond)
 
