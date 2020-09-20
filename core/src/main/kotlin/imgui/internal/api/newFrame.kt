@@ -12,7 +12,7 @@ import imgui.ImGui.isDragDropPayloadBeingAccepted
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.isPopupOpenAtAnyLevel
+import imgui.ImGui.isPopupOpen
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
@@ -187,7 +187,7 @@ internal interface newFrame {
             // If we try to focus it, FocusWindow() > ClosePopupsOverWindow() will accidentally close any parent popups because they are not linked together any more.
             val hoveredWindow = g.hoveredWindow
             val rootWindow = hoveredWindow?.rootWindowDockStop
-            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpenAtAnyLevel(rootWindow.popupId)
+            val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpen(rootWindow.popupId, PopupFlag.AnyPopupLevel.i)
 
             if (rootWindow != null && !isClosedPopup) {
                 hoveredWindow.startMouseMoving()

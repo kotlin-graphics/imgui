@@ -23,6 +23,7 @@ import imgui.internal.*
 import imgui.internal.classes.PopupData
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.floor
 import imgui.internal.sections.*
 import imgui.static.navCalcPreferredRefPos
 import imgui.static.navRestoreLastChildNavWindow
@@ -86,10 +87,15 @@ internal interface PopupsModalsTooltips {
      *  level).
      *  One open popup per level of the popup hierarchy (NB: when assigning we reset the Window member of ImGuiPopupRef
      *  to NULL)    */
-    fun openPopupEx(id: ID) {
+    fun openPopupEx(id: ID, popupFlags: PopupFlags = PopupFlag.None.i) {
 
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.beginPopupStack.size
+
+        if (popupFlags has PopupFlag.NoOpenOverExistingPopup)
+            if (isPopupOpen(0, PopupFlag.AnyPopupId.i))
+                return
+
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()
         val popupRef = PopupData(popupId = id, window = null, sourceWindow = g.navWindow, openFrameCount = g.frameCount,
@@ -179,16 +185,24 @@ internal interface PopupsModalsTooltips {
         }
     }
 
-    /** return true if the popup is open at the current begin-ed level of the popup stack.
+    /** Supported flags: ImGuiPopupFlags_AnyPopupId, ImGuiPopupFlags_AnyPopupLevel
      *
      *  Test for id at the current BeginPopup() level of the popup stack (this doesn't scan the whole popup stack!) */
-    fun isPopupOpen(id: ID) = g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
-
-    fun isPopupOpenAtAnyLevel(id: ID): Boolean = g.openPopupStack.any { it.popupId == id }
-
-    /** Return true if any popup is open at the current BeginPopup() level of the popup stack
-     *  This may be used to e.g. test for another popups already opened in the same frame to handle popups priorities at the same level. */
-    fun isAnyPopupOpen(): Boolean = g.openPopupStack.size > g.beginPopupStack.size
+    fun isPopupOpen(id: ID, popupFlags: PopupFlags = PopupFlag.None.i): Boolean = when {
+        popupFlags has PopupFlag.AnyPopupId -> {
+            // Return true if any popup is open at the current BeginPopup() level of the popup stack
+            // This may be used to e.g. test for another popups already opened to handle popups priorities at the same level.
+            assert(id == 0)
+            when {
+                popupFlags has PopupFlag.AnyPopupLevel -> g.openPopupStack.isNotEmpty()
+                else -> g.openPopupStack.size > g.beginPopupStack.size
+            }
+        }
+        // Return true if the popup is open anywhere in the popup stack
+        popupFlags has PopupFlag.AnyPopupLevel -> g.openPopupStack.any { it.popupId == id }
+        // Return true if the popup is open at the current BeginPopup() level of the popup stack (this is the most-common query)
+        else -> g.openPopupStack.size > g.beginPopupStack.size && g.openPopupStack[g.beginPopupStack.size].popupId == id
+    }
 
     /** Attention! BeginPopup() adds default flags which BeginPopupEx()! */
     fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
@@ -298,8 +312,10 @@ internal interface PopupsModalsTooltips {
      *  (r_outer is usually equivalent to the viewport rectangle minus padding, but when multi-viewports are enabled and monitor
      *  information are available, it may represent the entire platform monitor from the frame of reference of the current viewport.
      *  this allows us to have tooltips/popups displayed out of the parent viewport.) */
-    fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
-                                    policy: PopupPositionPolicy = PopupPositionPolicy.Default): Vec2 {
+    fun findBestWindowPosForPopupEx(
+            refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect, rAvoid: Rect,
+            policy: PopupPositionPolicy = PopupPositionPolicy.Default,
+    ): Vec2 {
 
         var lastDir by lastDirPtr
         val basePosClamped = glm.clamp(refPos, rOuter.min, rOuter.max - size)

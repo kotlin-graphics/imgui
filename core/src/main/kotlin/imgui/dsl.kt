@@ -469,8 +469,8 @@ object dsl {
             }
     }
 
-    inline fun popupContextItem(strId: String = "", mouseButton: MouseButton = MouseButton.Right, block: () -> Unit) {
-        if (beginPopupContextItem(strId, mouseButton)) {
+    inline fun popupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i, block: () -> Unit) {
+        if (beginPopupContextItem(strId, popupFlags)) {
             try {
                 block()
             } finally {
@@ -479,9 +479,8 @@ object dsl {
         }
     }
 
-    inline fun popupContextWindow(strId: String = "", mouseButton: MouseButton = MouseButton.Right,
-                                  alsoOverItems: Boolean = true, block: () -> Unit) {
-        if (beginPopupContextWindow(strId, mouseButton, alsoOverItems))
+    inline fun popupContextWindow(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i, block: () -> Unit) {
+        if (beginPopupContextWindow(strId, popupFlags))
             try {
                 block()
             } finally {
@@ -489,8 +488,8 @@ object dsl {
             }
     }
 
-    inline fun popupContextVoid(strId: String = "", mouseButton: MouseButton = MouseButton.Right, block: () -> Unit) {
-        if (beginPopupContextVoid(strId, mouseButton))
+    inline fun popupContextVoid(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i, block: () -> Unit) {
+        if (beginPopupContextVoid(strId, popupFlags))
             try {
                 block()
             } finally {
