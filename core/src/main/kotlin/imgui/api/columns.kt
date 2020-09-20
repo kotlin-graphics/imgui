@@ -13,6 +13,7 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.sections.Columns
@@ -63,23 +64,28 @@ interface columns {
             return
         }
 
+        // Next column
+        if (++columns.current == columns.count)
+            columns.current = 0
+
         popItemWidth()
-        popClipRect()
+
+        // Optimization: avoid PopClipRect() + SetCurrentChannel() + PushClipRect()
+        // (which would needlessly attempt to update commands in the wrong channel, then pop or overwrite them),
+        val column = columns.columns[columns.current]
+        setWindowClipRectBeforeSetChannel(window, column.clipRect)
+        columns.splitter.setCurrentChannel(window.drawList, columns.current + 1)
 
         val columnPadding = style.itemSpacing.x
         with(window) {
             columns.lineMaxY = max(columns.lineMaxY, dc.cursorPos.y)
-            if (++columns.current < columns.count) {
+            if (columns.current > 0) {
                 // Columns 1+ ignore IndentX (by canceling it out)
                 // FIXME-COLUMNS: Unnecessary, could be locked?
                 dc.columnsOffset = getColumnOffset(columns.current) - dc.indent + columnPadding
-                columns.splitter.setCurrentChannel(window.drawList, columns.current + 1)
             } else {
-                // New row/line
-                // Column 0 honor IndentX
+                // New row/line: column 0 honor IndentX.
                 dc.columnsOffset = (columnPadding - window.windowPadding.x) max 0f
-                columns.splitter.setCurrentChannel(window.drawList, 1)
-                columns.current = 0
                 columns.lineMinY = columns.lineMaxY
             }
             dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)
@@ -87,7 +93,6 @@ interface columns {
             dc.currLineSize.y = 0f
             dc.currLineTextBaseOffset = 0f
         }
-        pushColumnClipRect(columns.current)     // FIXME-COLUMNS: Could it be an overwrite?
 
         // FIXME-COLUMNS: Share code with BeginColumns() - move code on columns setup.
         val offset0 = getColumnOffset(columns.current)

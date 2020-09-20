@@ -833,7 +833,7 @@ internal interface inputText {
             popFont()
 
         // Log as text
-        if (g.logEnabled && !(isPassword && !isDisplayingHint))
+        if (g.logEnabled && (!isPassword || isDisplayingHint))
             logRenderedText(drawPos, String(bufDisplay, 0, bufDisplayEnd), bufDisplayEnd)
 
         if (labelSize.x > 0)
@@ -953,20 +953,24 @@ internal interface inputText {
             // Generic named filters
             if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
 
+                // Allow 0-9 . - + * /
                 if (flags has Itf.CharsDecimal)
                     if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/')
                         return false
 
+                // Allow 0-9 . - + * / e E
                 if (flags has Itf.CharsScientific)
                     if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/' && c != 'e' && c != 'E')
                         return false
 
+                // Allow 0-9 a-F A-F
                 if (flags has Itf.CharsHexadecimal)
                     if (c !in '0'..'9' && c !in 'a'..'f' && c !in 'A'..'F')
                         return false
 
+                // Turn a-z into A-Z
                 if (flags has Itf.CharsUppercase && c in 'a'..'z')
-                    c = c + ('A' - 'a') // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
+                    c =  c + ('A' - 'a')
 
                 if (flags has Itf.CharsNoBlank && c.isBlankW)
                     return false

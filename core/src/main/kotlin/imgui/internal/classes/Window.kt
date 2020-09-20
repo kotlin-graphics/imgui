@@ -137,7 +137,7 @@ class Window(
     /** Set during the frame where the window is appearing (or re-appearing)    */
     var appearing = false
 
-    /** Do not display (== (HiddenFrames*** > 0)) */
+    /** Do not display (== HiddenFrames*** > 0) */
     var hidden = false
 
     /** Set on the "Debug##Default" window. */
@@ -1003,12 +1003,12 @@ class Window(
         }
     }
 
-    fun clampRect(rect: Rect, padding: Vec2) {
-        val sizeForClamping = when {
-            io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar -> Vec2(size.x, titleBarHeight)
-            else -> size
-        }
-        pos = glm.min(rect.max - padding, glm.max(pos + sizeForClamping, rect.min + padding) - sizeForClamping)
+    /** ~ClampWindowRect */
+    fun clampRect(viewportRect: Rect, padding: Vec2) {
+        val sizeForClamping = Vec2(size)
+        if (io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar)
+            sizeForClamping.y = titleBarHeight
+        pos put glm.clamp(pos, viewportRect.min + padding - sizeForClamping, viewportRect.max - padding)
     }
 
     //-------------------------------------------------------------------------
