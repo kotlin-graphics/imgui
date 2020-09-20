@@ -20,7 +20,6 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
 import imgui.ImGui.mainViewport
-import imgui.ImGui.markIniSettingsDirty
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
@@ -285,7 +284,8 @@ interface windows {
 
             updateSelectWindowViewport(window)
             setCurrentViewport(window, window.viewport)
-            window.fontDpiScale = if (io.configFlags has ConfigFlag.DpiEnableScaleFonts) window.viewport!!.dpiScale else 1f
+            val viewport = window.viewport!!
+            window.fontDpiScale = if (io.configFlags has ConfigFlag.DpiEnableScaleFonts) viewport.dpiScale else 1f
             setCurrentWindow(window)
             flags = window.flags
 
@@ -396,8 +396,8 @@ interface windows {
                 window.pos = findBestWindowPosForPopup(window)
 
             // Late create viewport if we don't fit within our current host viewport.
-            if (window.viewportAllowPlatformMonitorExtend >= 0 && !window.viewportOwned && window.viewport!!.flags hasnt Vf.Minimized)
-                if (window.rect() !in window.viewport!!.mainRect) {
+            if (window.viewportAllowPlatformMonitorExtend >= 0 && !window.viewportOwned && viewport.flags hasnt Vf.Minimized)
+                if (window.rect() !in viewport.mainRect) {
                     // This is based on the assumption that the DPI will be known ahead (same as the DPI of the selection done in UpdateSelectWindowViewport)
                     //ImGuiViewport* old_viewport = window->Viewport;
                     window.viewport = addUpdateViewport(window, window.id, window.pos, window.size, Vf.NoFocusOnAppearing.i)
@@ -405,7 +405,7 @@ interface windows {
                     // FIXME-DPI
                     //IM_ASSERT(old_viewport->DpiScale == window->Viewport->DpiScale); // FIXME-DPI: Something went wrong
                     setCurrentViewport(window, window.viewport)
-                    window.fontDpiScale = if (io.configFlags has ConfigFlag.DpiEnableScaleFonts) window.viewport!!.dpiScale else 1f
+                    window.fontDpiScale = if (io.configFlags has ConfigFlag.DpiEnableScaleFonts) viewport.dpiScale else 1f
                     setCurrentWindow(window)
                 }
 
@@ -413,31 +413,31 @@ interface windows {
             if (window.viewportOwned) {
                 // Synchronize window --> viewport in most situations
                 // Synchronize viewport -> window in case the platform window has been moved or resized from the OS/WM
-                if (window.viewport!!.platformRequestMove) {
-                    window.pos put window.viewport!!.pos
+                if (viewport.platformRequestMove) {
+                    window.pos put viewport.pos
                     window.markIniSettingsDirty()
-                } else if (window.viewport!!.pos != window.pos) {
+                } else if (viewport.pos != window.pos) {
                     viewportRectChanged = true
-                    window.viewport!!.pos put window.pos
+                    viewport.pos put window.pos
                 }
 
-                if (window.viewport!!.platformRequestResize) {
-                    window.size put window.viewport!!.size
-                    window.sizeFull put window.viewport!!.size
+                if (viewport.platformRequestResize) {
+                    window.size put viewport.size
+                    window.sizeFull put viewport.size
                     window.markIniSettingsDirty()
-                } else if (window.viewport!!.size != window.size) {
+                } else if (viewport.size != window.size) {
                     viewportRectChanged = true
-                    window.viewport!!.size put window.size
+                    viewport.size put window.size
                 }
 
                 // The viewport may have changed monitor since the global update in UpdateViewportsNewFrame()
                 // Either a SetNextWindowPos() call in the current frame or a SetWindowPos() call in the previous frame may have this effect.
                 if (viewportRectChanged)
-                    updateViewportPlatformMonitor(window.viewport!!)
+                    updateViewportPlatformMonitor(viewport)
 
                 // Update common viewport flags
                 val viewportFlagsToClear = Vf.TopMost or Vf.NoTaskBarIcon or Vf.NoDecoration or Vf.NoRendererClear
-                var viewportFlags = window.viewport!!.flags wo viewportFlagsToClear
+                var viewportFlags = viewport.flags wo viewportFlagsToClear
                 val isShortLivedFloatingWindow = flags has (Wf._ChildMenu or Wf._Tooltip or Wf._Popup)
                 if (flags has Wf._Tooltip)
                     viewportFlags = viewportFlags or Vf.TopMost
@@ -455,7 +455,7 @@ interface windows {
 
                 // We can overwrite viewport flags using ImGuiWindowClass (advanced users)
                 // We don't default to the main viewport because.
-                window.viewport!!.parentViewportId = when {
+                viewport.parentViewportId = when {
                     window.windowClass.parentViewportId != 0 -> window.windowClass.parentViewportId
                     flags has (Wf._Popup or Wf._Tooltip) && parentWindowInStack != null -> parentWindowInStack.viewport!!.id
                     io.configViewportsNoDefaultParent -> 0
@@ -470,25 +470,32 @@ interface windows {
                 if (flags hasnt Wf.NoBackground)
                     viewportFlags = viewportFlags wo Vf.NoRendererClear
 
-                window.viewport!!.flags = viewportFlags
+                viewport.flags = viewportFlags
             }
+
+            // Calculate the range of allowed position for that window (to be movable and visible past safe area padding)
+            // When clamping to stay visible, we will enforce that window->Pos stays inside of visibility_rect.
+            val viewportRect = Rect(viewport.mainRect)
+            val viewportWorkRect = Rect(viewport.workRect)
+            val visibilityPadding = style.displayWindowPadding max style.displaySafeAreaPadding
+            val visibilityRect = Rect(viewportWorkRect.min + visibilityPadding, viewportWorkRect.max - visibilityPadding)
 
             // Clamp position/size so window stays visible within its viewport or monitor
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
             // FIXME: Similar to code in GetWindowAllowedExtentRect()
-            var viewportRect = window.viewport!!.mainRect
             if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0) {
                 // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
-                val clampPadding = style.displayWindowPadding max style.displaySafeAreaPadding
                 if (!window.viewportOwned && viewportRect.width > 0f && viewportRect.height > 0f)
-                    window.clampRect(window.viewport!!.workRect, clampPadding)
+                    window clampRect visibilityRect
                 else if (window.viewportOwned && g.platformIO.monitors.isNotEmpty())
-                    if (window.viewport!!.platformMonitor == -1)
+                    if (viewport.platformMonitor == -1)
                     // Fallback for "lost" window (e.g. a monitor disconnected): we move the window back over the main viewport
                         window.setPos(g.viewports[0].pos + style.displayWindowPadding, Cond.Always)
                     else {
-                        val monitor = g.platformIO.monitors[window.viewport!!.platformMonitor]
-                        window.clampRect(Rect(monitor.workPos, monitor.workPos + monitor.workSize), clampPadding)
+                        val monitor = g.platformIO.monitors[viewport.platformMonitor]
+                        visibilityRect.min = monitor.workPos + visibilityPadding
+                        visibilityRect.max = monitor.workPos + monitor.workSize - visibilityPadding
+                        window clampRect visibilityRect
                     }
             }
             window.pos put floor(window.pos)
@@ -528,7 +535,7 @@ interface windows {
             val resizeGripCount = if (io.configWindowsResizeFromEdges) 2 else 1 // Allow resize from lower-left if we have the mouse cursor feedback for it.
             val resizeGripDrawSize = floor(max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f))
             if (handleBordersAndResizeGrips && !window.collapsed) {
-                val (borderHeld_, ret) = updateWindowManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol)
+                val (borderHeld_, ret) = updateWindowManualResize(window, sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol, visibilityRect)
                 if (ret) {
                     useCurrentSizeForScrollbarX = true
                     useCurrentSizeForScrollbarY = true
@@ -539,15 +546,15 @@ interface windows {
 
             // Synchronize window --> viewport again and one last time (clamping and manual resize may have affected either)
             if (window.viewportOwned) {
-                if (!window.viewport!!.platformRequestMove)
-                    window.viewport!!.pos put window.pos
-                if (!window.viewport!!.platformRequestResize)
-                    window.viewport!!.size put window.size
-                viewportRect = window.viewport!!.mainRect
+                if (!viewport.platformRequestMove)
+                    viewport.pos put window.pos
+                if (!viewport.platformRequestResize)
+                    viewport.size put window.size
+                viewportRect put viewport.mainRect
             }
 
             // Save last known viewport position within the window itself (so it can be saved in .ini file and restored)
-            window.viewportPos put window.viewport!!.pos
+            window.viewportPos put viewport.pos
 
             // SCROLLBAR VISIBILITY
 
@@ -791,9 +798,9 @@ interface windows {
             }
 
             // Close requested by platform window
-            if (pOpen != null && window.viewport!!.platformRequestClose && window.viewport != mainViewport)
+            if (pOpen != null && viewport.platformRequestClose && window.viewport != mainViewport)
                 if (!window.dockIsActive || window.dockTabIsVisible) {
-                    window.viewport!!.platformRequestClose = false
+                    viewport.platformRequestClose = false
                     g.navWindowingToggleLayer = false // Assume user mapped PlatformRequestClose on ALT-F4 so we disable ALT for menu toggle. False positive not an issue.
                     IMGUI_DEBUG_LOG_VIEWPORT("Window '${window.name}' PlatformRequestClose")
                     pOpen.set(false)
