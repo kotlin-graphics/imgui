@@ -173,8 +173,11 @@ object ShowDemoWindowPopups {
                 openPopup("Delete?")
 
             // Always center this window when appearing
-            val viewport = mainViewport
-            setNextWindowPos(viewport.center, Cond.Appearing, Vec2(0.5f))
+            val center = mainViewport.center
+            //ImVec2 parent_pos = ImGui::GetWindowPos();
+            //ImVec2 parent_size = ImGui::GetWindowSize();
+            //ImVec2 center(parent_pos.x + parent_size.x * 0.5f, parent_pos.y + parent_size.y * 0.5f)
+            setNextWindowPos(center, Cond.Appearing, Vec2(0.5f))
 
             popupModal("Delete?", null, Wf.AlwaysAutoResize.i) {
 
