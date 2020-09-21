@@ -135,9 +135,15 @@ internal interface newFrame {
 
             if (rootWindow != null && !isClosedPopup) {
                 g.hoveredWindow!!.startMouseMoving()
+
+                // Cancel moving if clicked outside of title bar
                 if (io.configWindowsMoveFromTitleBarOnly && rootWindow.flags hasnt WindowFlag.NoTitleBar)
                     if (io.mouseClickedPos[0] !in rootWindow.titleBarRect())
                         g.movingWindow = null
+
+                // Cancel moving if clicked over an item which was disabled or inhibited by popups
+                if (g.hoveredId == 0 && g.hoveredIdDisabled)
+                    g.movingWindow = null
             }
             else if (rootWindow == null && g.navWindow != null && topMostPopupModal == null)
                 focusWindow()  // Clicking on void disable focus
