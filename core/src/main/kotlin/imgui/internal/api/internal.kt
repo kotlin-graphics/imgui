@@ -75,9 +75,12 @@ internal interface internal {
         val focusFrontWindow = window?.rootWindow // NB: In docking branch this is window->RootWindowDockStop
         val displayFrontWindow = window?.rootWindow
 
-        // Steal focus on active widgets
+        // Steal active widgets. Some of the cases it triggers includes:
+        // - Focus a window while an InputText in another window is active, if focus happens before the old InputText can run.
+        // - When using Nav to activate menu items (due to timing of activating on press->new window appears->losing ActiveId)
         if (g.activeId != 0 && g.activeIdWindow?.rootWindow !== focusFrontWindow)
-            clearActiveID()
+            if (!g.activeIdNoClearOnFocusLoss)
+                clearActiveID()
 
         // Passing NULL allow to disable keyboard focus
         if (window == null)
