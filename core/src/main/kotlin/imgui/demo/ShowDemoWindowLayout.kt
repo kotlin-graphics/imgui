@@ -166,7 +166,7 @@ object ShowDemoWindowLayout {
 
     operator fun invoke() {
 
-        if (!collapsingHeader("Layout"))
+        if (!collapsingHeader("Layout & Scrolling"))
             return
 
         treeNode("Child Windows") {
