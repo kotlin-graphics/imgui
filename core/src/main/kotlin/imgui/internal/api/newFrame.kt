@@ -141,8 +141,8 @@ internal interface newFrame {
                     if (io.mouseClickedPos[0] !in rootWindow.titleBarRect())
                         g.movingWindow = null
 
-                // Cancel moving if clicked over an item which was disabled or inhibited by popups
-                if (g.hoveredId == 0 && g.hoveredIdDisabled)
+                // Cancel moving if clicked over an item which was disabled or inhibited by popups (note that we know HoveredId == 0 already)
+                if (g.hoveredIdDisabled)
                     g.movingWindow = null
             }
             else if (rootWindow == null && g.navWindow != null && topMostPopupModal == null)
