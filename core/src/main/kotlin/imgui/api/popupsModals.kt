@@ -119,7 +119,10 @@ interface popupsModals {
     /** call to mark popup as open (don't call every frame!). */
     fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) = openPopupEx(g.currentWindow!!.getID(strId), popupFlags)
 
-    /** helper to open popup when clicked on last item. return true when just opened. (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)   */
+    /** helper to open popup when clicked on last item. return true when just opened.
+     *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
+     *
+     *  Open a popup if mouse is released over the item */
     fun openPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean =
             with(g.currentWindow!!) {
                 val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
