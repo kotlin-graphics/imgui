@@ -71,7 +71,8 @@ internal interface internalColumnsAPI {
             hostCursorPosY = window.dc.cursorPos.y
             hostCursorMaxPosX = window.dc.cursorMaxPos.x
             hostInitialClipRect put window.clipRect
-            hostWorkRect put window.workRect
+            hostBackupParentWorkRect put window.parentWorkRect
+            window.parentWorkRect put window.workRect
 
             // Set state for first column
             // We aim so that the right-most column will have the same clipping width as other after being clipped by parent ClipRect
@@ -183,7 +184,8 @@ internal interface internalColumnsAPI {
         columns.isBeingResized = isBeingResized
 
         window.apply {
-            workRect put columns.hostWorkRect
+            workRect put window.parentWorkRect
+            parentWorkRect put columns.hostBackupParentWorkRect
             dc.currentColumns = null
             dc.columnsOffset = 0f
             dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)

@@ -69,8 +69,8 @@ interface widgetsSelectables {
         itemSize(size, 0f)
 
         // Fill horizontal space
-        val minX = if(flags has Sf.SpanAllColumns) window.contentRegionRect.min.x else pos.x
-        val maxX = if(flags has Sf.SpanAllColumns) window.contentRegionRect.max.x else contentRegionMaxAbs.x
+        val minX = if(flags has Sf.SpanAllColumns) window.parentWorkRect.min.x else pos.x
+        val maxX = if(flags has Sf.SpanAllColumns) window.parentWorkRect.max.x else window.workRect.max.x
         if (sizeArg.x == 0f || flags has Sf._SpanAvailWidth)
             size.x = max(labelSize.x, maxX - minX)
 
