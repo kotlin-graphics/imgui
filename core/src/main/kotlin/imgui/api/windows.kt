@@ -564,7 +564,7 @@ interface windows {
                         floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
                         floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
-
+                parentWorkRect put workRect
 
                 // [LEGACY] Content Region
                 // FIXME-OBSOLETE: window->ContentRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
