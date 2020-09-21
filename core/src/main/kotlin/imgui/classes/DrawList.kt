@@ -1422,6 +1422,21 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathFillConvex(col)
     }
 
+    fun renderRectFilledWithHole(drawList: DrawList, outer: Rect, inner: Rect, col: Int, rounding: Float) {
+        val fillL = inner.min.x > outer.min.x
+        val fillR = inner.max.x < outer.max.x
+        val fillU = inner.min.y > outer.min.y
+        val fillD = inner.max.y < outer.max.y
+        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding, (if(fillU) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if(fillD) DrawCornerFlag.None else DrawCornerFlag.BotLeft)
+        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding, (if(fillU) DrawCornerFlag.None else DrawCornerFlag.TopRight) or if(fillD) DrawCornerFlag.None else DrawCornerFlag.BotRight)
+        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding, (if(fillL) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if(fillR) DrawCornerFlag.None else DrawCornerFlag.TopRight)
+        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding, (if(fillL) DrawCornerFlag.None else DrawCornerFlag.BotLeft) or if(fillR) DrawCornerFlag.None else DrawCornerFlag.BotRight)
+        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawCornerFlag.TopLeft.i)
+        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawCornerFlag.TopRight.i)
+        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawCornerFlag.BotLeft.i)
+        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawCornerFlag.BotRight.i)
+    }
+
     // Internal API, Shade functions
     //-----------------------------------------------------------------------------
     // Shade functions (write over already created vertices)
