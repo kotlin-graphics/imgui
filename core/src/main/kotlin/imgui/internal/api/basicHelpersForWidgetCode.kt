@@ -112,6 +112,7 @@ internal interface basicHelpersForWidgetCode {
             g.debugItemPickerBreakId = 0
         }
 
+        // Equivalent to calling SetLastItemData()
         val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
             lastItemRect = bb
@@ -173,6 +174,14 @@ internal interface basicHelpersForWidgetCode {
                 if (clipEvenWhenLogged || !g.logEnabled)
                     return true
         return false
+    }
+
+    /** This is also inlined in ItemAdd()
+     *  Note: if ImGuiItemStatusFlags_HasDisplayRect is set, user needs to set window->DC.LastItemDisplayRect! */
+    fun setLastItemData(window: Window, itemId: ID, itemFlags: ItemStatusFlags, itemRect: Rect) {
+        window.dc.lastItemId = itemId
+        window.dc.lastItemStatusFlags = itemFlags
+        window.dc.lastItemRect put itemRect
     }
 
     /** Return true if focus is requested
