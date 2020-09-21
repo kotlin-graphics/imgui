@@ -2,7 +2,7 @@ package imgui.demo.showExampleApp
 
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import imgui.COL32
+import imgui.*
 import imgui.ImGui.backgroundDrawList
 import imgui.ImGui.begin
 import imgui.ImGui.beginTabBar
@@ -10,7 +10,6 @@ import imgui.ImGui.beginTabItem
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.checkbox
 import imgui.ImGui.colorEdit4
-import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
@@ -21,11 +20,10 @@ import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
-import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseClicked
-import imgui.ImGui.isMouseDown
+import imgui.ImGui.openPopupContextItem
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
@@ -35,11 +33,10 @@ import imgui.ImGui.text
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.ImGui.windowSize
-import imgui.MouseButton
 import imgui.api.demoDebugInformations.Companion.helpMarker
-import imgui.dsl.button
+import imgui.dsl.menuItem
+import imgui.internal.sections.ButtonFlag
 import imgui.internal.sections.DrawCornerFlag
-import imgui.u32
 import kotlin.reflect.KMutableProperty0
 
 object CustomRendering {
@@ -53,7 +50,14 @@ object CustomRendering {
     val colf = Vec4(1.0f, 1.0f, 0.4f, 1.0f)
 
     var addingLine = false
-    val points = ArrayList<Vec2>()
+
+    class ItemLine(val p0: Vec2, val p1: Vec2) {
+        constructor(p: Vec2) : this(Vec2(p), Vec2(p))
+    }
+
+    val lines = ArrayList<ItemLine>()
+    val scrolling = Vec2()
+    var showGrid = true
 
     var drawBg = true
     var drawFg = true
@@ -70,13 +74,13 @@ object CustomRendering {
         // overloaded operators, etc. Define IM_VEC2_CLASS_EXTRA in imconfig.h to create implicit conversions between your
         // types and ImVec2/ImVec4. Dear ImGui defines overloaded operators but they are internal to imgui.cpp and not
         // exposed outside (to avoid messing with your types) In this example we are not using the maths operators!
-        val drawList = windowDrawList
 
         if (beginTabBar("##TabBar")) {
 
             if (beginTabItem("Primitives")) {
 
                 pushItemWidth(-fontSize * 10)
+                val drawList = windowDrawList
 
                 // Draw gradients
                 // (note that those are currently exacerbating our sRGB/Linear issues)
@@ -156,59 +160,89 @@ object CustomRendering {
 
             if (beginTabItem("Canvas")) {
 
-                button("Clear") { points.clear() }
-                if (points.size >= 2) {
-                    sameLine()
-                    button("Undo") {
-                        points.removeAt(points.lastIndex)
-                        points.removeAt(points.lastIndex)
-                    }
-                }
-                text("Left-click and drag to add lines,\nRight-click to undo")
+                checkbox("Show grid", ::showGrid)
+                text("Mouse Left: drag to add lines,\nMouse Right: drag to scroll, click for context menu.")
 
-                // Here we are using InvisibleButton() as a convenience to 1) advance the cursor and 2) allows us to use
-                // IsItemHovered(). But you can also draw directly and poll mouse/keyboard by yourself.
-                // You can manipulate the cursor using GetCursorPos() and SetCursorPos().
-                // If you only use the ImDrawList API, you can notify the owner window of its extends with SetCursorPos(max).
-                val canvasP = Vec2(cursorScreenPos)       // ImDrawList API uses screen coordinates!
-                val canvasSz = Vec2(contentRegionAvail)   // Resize canvas to what's available
+                // Typically you would use a BeginChild()/EndChild() pair to benefit from a clipping region + own scrolling.
+                // Here we demonstrate that this can be replaced by simple offsetting + custom drawing + PushClipRect/PopClipRect() calls.
+                // To use a child window instead we could use, e.g:
+                //      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));      // Disable padding
+                //      ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(50, 50, 50, 255));  // Set a background color
+                //      ImGui::BeginChild("canvas", ImVec2(0.0f, 0.0f), true, ImGuiWindowFlags_NoMove);
+                //      ImGui::PopStyleColor();
+                //      ImGui::PopStyleVar();
+                //      [...]
+                //      ImGui::EndChild();
+
+                // Using InvisibleButton() as a convenience 1) it will advance the layout cursor and 2) allows us to use IsItemHovered()/IsItemActive()
+                val canvasP0 = Vec2(ImGui.cursorScreenPos)      // ImDrawList API uses screen coordinates!
+                val canvasSz = Vec2(ImGui.contentRegionAvail)   // Resize canvas to what's available
                 if (canvasSz.x < 50f) canvasSz.x = 50f
                 if (canvasSz.y < 50f) canvasSz.y = 50f
-                drawList.addRectFilledMultiColor(canvasP, canvasP + canvasSz, getColorU32(50, 50, 50, 255), getColorU32(50, 50, 60, 255), getColorU32(60, 60, 70, 255), getColorU32(50, 50, 60, 255))
-                drawList.addRect(canvasP, canvasP + canvasSz, getColorU32(255, 255, 255, 255))
+                val canvasP1 = canvasP0 + canvasSz
 
-                var addingPreview = false
-                invisibleButton("canvas", canvasSz)
-                val mousePosGlobal = io.mousePos
-                val mousePosCanvas = mousePosGlobal - canvasP
+                // Draw border and background color
+                val drawList = ImGui.windowDrawList
+                drawList.addRectFilled(canvasP0, canvasP1, COL32(50, 50, 50, 255))
+                drawList.addRect(canvasP0, canvasP1, COL32(255, 255, 255, 255))
+
+                // This will catch our interactions
+                invisibleButton("canvas", canvasSz, ButtonFlag.MouseButtonLeft or ButtonFlag.MouseButtonRight)
+                val isHovered = ImGui.isItemHovered() // Hovered
+                val isActive = ImGui.isItemActive   // Held
+                val origin = canvasP0 + scrolling // Lock scrolled origin
+                val mousePosInCanvas = io.mousePos - origin
+
+                // Add first and second point
+                if (isHovered && !addingLine && ImGui.isMouseClicked(MouseButton.Left)) {
+                    lines += ItemLine(mousePosInCanvas)
+                    addingLine = true
+                }
                 if (addingLine) {
-                    addingPreview = true
-                    points += mousePosCanvas
-                    if (!isMouseDown(MouseButton.Left)) {
+                    lines.last().p1 put mousePosInCanvas
+                    if (!ImGui.isMouseDown(MouseButton.Left))
                         addingLine = false
-                        addingPreview = false
-                    }
-                }
-                if (isItemHovered()) {
-                    if (!addingLine and isMouseClicked(MouseButton.Left)) {
-                        points += mousePosCanvas
-                        addingLine = true
-                    }
-                    if (isMouseClicked(MouseButton.Right) and points.isNotEmpty()) {
-                        addingLine = false
-                        addingPreview = false
-                        points.removeAt(points.lastIndex)
-                        points.removeAt(points.lastIndex)
-                    }
                 }
 
-                // Draw all lines in the canvas (with a clipping rectangle so they don't stray out of it).
-                drawList.pushClipRect(canvasP, canvasP + canvasSz, true)
-                for (i in 0 until points.lastIndex step 2)
-                    drawList.addLine(canvasP + points[i], canvasP + points[i + 1], getColorU32(255, 255, 0, 255), 2f)
+                // Pan (using zero mouse threshold)
+                if (isActive && ImGui.isMouseDragging(MouseButton.Right, 0f))
+                    scrolling += io.mouseDelta
+
+                // Context menu (under default mouse threshold)
+                // We intentionally use the same button to demonstrate using mouse drag threshold. Some may feel panning should rely on same threshold.
+                val dragDelta = getMouseDragDelta(MouseButton.Right)
+                if (dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
+                    openPopupContextItem("context")
+                dsl.popup("context") {
+                    if (addingLine)
+                        lines.pop()
+                    addingLine = false
+                    menuItem("Remove one", "", false, lines.isNotEmpty()) { lines.pop() }
+                    menuItem("Remove all", "", false, lines.isNotEmpty()) { lines.clear() }
+                }
+
+                // Draw grid + all lines in the canvas
+                drawList.pushClipRect(canvasP0, canvasP1, true)
+                if (showGrid) {
+                    val GRID_STEP = 64f
+                    var x = scrolling.x % GRID_STEP
+                    while (x < canvasSz.x) {
+                        drawList.addLine(Vec2(canvasP0.x + x, canvasP0.y), Vec2(canvasP0.x + x, canvasP1.y), COL32(200, 200, 200, 40))
+                        x += GRID_STEP
+                    }
+                    var y = scrolling.y % GRID_STEP
+                    while (y < canvasSz.y) {
+                        drawList.addLine(Vec2(canvasP0.x, canvasP0.y + y), Vec2(canvasP1.x, canvasP0.y + y), COL32(200, 200, 200, 40))
+                        y += GRID_STEP
+                    }
+                }
+                for (line in lines) {
+                    val a = Vec2(origin.x + line.p0.x, origin.y + line.p0.y)
+                    val b = Vec2(origin.x + line.p1.x, origin.y + line.p1.y)
+                    drawList.addLine(a, b, COL32(255, 255, 0, 255), 2f)
+                }
                 drawList.popClipRect()
-                if (addingPreview)
-                    points.removeAt(points.lastIndex)
+
                 endTabItem()
             }
 
