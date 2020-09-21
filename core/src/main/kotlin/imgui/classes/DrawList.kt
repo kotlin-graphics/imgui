@@ -137,6 +137,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     // Primitives
     // - For rectangular primitives, "p_min" and "p_max" represent the upper-left and lower-right corners.
     // - For circle primitives, use "num_segments == 0" to automatically calculate tessellation (preferred).
+    //   In older versions (until Dear ImGui 1.77) the AddCircle functions defaulted to num_segments == 12.
     //   In future versions we will use textures to provide cheaper and higher-quality circles.
     //   Use AddNgon() and AddNgonFilled() functions if you need to guaranteed a specific number of sides.
     // -----------------------------------------------------------------------------------------------------------------
@@ -238,7 +239,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathFillConvex(col)
     }
 
-    fun addCircle(center: Vec2, radius: Float, col: Int, numSegments_: Int = 12, thickness: Float = 1f) {
+    fun addCircle(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0, thickness: Float = 1f) {
 
         if (col hasnt COL32_A_MASK || radius <= 0f) return
 
@@ -264,7 +265,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathStroke(col, true, thickness)
     }
 
-    fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 12) {
+    fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0) {
 
         if (col hasnt COL32_A_MASK || radius <= 0f) return
 
