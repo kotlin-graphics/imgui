@@ -93,16 +93,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Window being drawn into    */
     var currentWindow: Window? = null
 
-    /** Will catch mouse inputs */
+    /** Window the mouse is hovering. Will typically catch mouse inputs. */
     var hoveredWindow: Window? = null
+
+    /** == HoveredWindow ? HoveredWindow->RootWindow : NULL, merely a shortcut to avoid null test in some situation. */
+    var hoveredRootWindow: Window? = null
 
     /** Hovered window ignoring MovingWindow. Only set if MovingWindow is set. */
     var hoveredWindowUnderMovingWindow: Window? = null
 
-    /** Will catch mouse inputs (for focus/move only)   */
-    var hoveredRootWindow: Window? = null
-
-    /** Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow. */
+    /** Track the window we clicked on (in order to preserve focus). The actual window that is moved is generally MovingWindow->RootWindow. */
     var movingWindow: Window? = null
 
     /** Track the window we started mouse-wheeling on. Until a timer elapse or mouse has moved, generally keep scrolling the same window even if during the course of scrolling the mouse ends up hovering a child window. */
