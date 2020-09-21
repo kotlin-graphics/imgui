@@ -21,6 +21,7 @@ import uno.kotlin.plusAssign
 import uno.stb.stb
 import unsigned.toUInt
 import java.nio.ByteBuffer
+import java.nio.CharBuffer
 import kotlin.math.floor
 import kotlin.math.sqrt
 
@@ -387,7 +388,7 @@ class FontAtlas {
         // JVM border
         outUv[0] = pos * texUvScale
         outUv[1] = (pos + size) * texUvScale
-        pos.x += DefaultTexData.wHalf + 1
+        pos.x += DefaultTexData.w + 1
         // JVM fill
         outUv[2] = pos * texUvScale
         outUv[3] = (pos + size) * texUvScale
@@ -853,7 +854,7 @@ class FontAtlas {
         // Register texture region for mouse cursors or standard white pixels
         if (packIdMouseCursors < 0)
             packIdMouseCursors = when {
-                flags hasnt Flag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+                flags hasnt Flag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.w * 2 + 1, DefaultTexData.h)
                 else -> addCustomRectRegular(2, 2)
             }
 
@@ -940,6 +941,23 @@ class FontAtlas {
         }
     }
 
+    fun buildRender1bppRectFromString(x: Int, y: Int, w: Int, h: Int,
+                                      inStr: CharArray, inMarkerChar: Char, inMarkerPixelValue: Byte) {
+        assert(x >= 0 && x + w <= texSize.x)
+        assert(y >= 0 && y + h <= texSize.y)
+        val outPixel = texPixelsAlpha8!!
+        var ptr = x + y * texSize.x
+        var ptr2 = 0
+        var offY = 0
+        while (offY < h) {
+            for (offX in 0 until w)
+                outPixel[ptr + offX] = if(inStr[offX] == inMarkerChar) inMarkerPixelValue else 0x00
+            offY++
+            ptr += texSize.x
+            ptr2 += w
+        }
+    }
+
     /** ~ImFontAtlasBuildRenderDefaultTexData */
     fun buildRenderDefaultTexData() {
 
@@ -949,16 +967,11 @@ class FontAtlas {
         val w = texSize.x
         if (flags hasnt Flag.NoMouseCursors) {
             // Render/copy pixels
-            assert(r.width == DefaultTexData.wHalf * 2 + 1 && r.height == DefaultTexData.h)
-            var n = 0
-            for (y in 0 until DefaultTexData.h)
-                for (x in 0 until DefaultTexData.wHalf) {
-                    val offset0 = r.x + x + (r.y + y) * w
-                    val offset1 = offset0 + DefaultTexData.wHalf + 1
-                    texPixelsAlpha8!![offset0] = if (DefaultTexData.pixels[n] == '.') 0xFF.b else 0x00.b
-                    texPixelsAlpha8!![offset1] = if (DefaultTexData.pixels[n] == 'X') 0xFF.b else 0x00.b
-                    n++
-                }
+            assert(r.width == DefaultTexData.w * 2 + 1 && r.height == DefaultTexData.h)
+            val xForWhite = r.x
+            val xForBlack = r.x + DefaultTexData.w + 1
+            buildRender1bppRectFromString(xForWhite, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, '.', 0xFF.b)
+            buildRender1bppRectFromString(xForBlack, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, 'X', 0xFF.b)
         } else {
             // Render 4 white pixels
             assert(r.width == 2 && r.height == 2)
@@ -1022,10 +1035,10 @@ class FontAtlas {
         }
     }
 
-    /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
-        The white texels on the top left are the ones we'll use everywhere in Dear ImGui to render filled shapes.     */
+    // A work of art lies ahead! (. = white layer, X = black layer, others are blank)
+    // The 2x2 white texels on the top left are the ones we'll use everywhere in Dear ImGui to render filled shapes.
     object DefaultTexData {
-        val wHalf = 108
+        val w = 108 // Actual texture will be 2 times that + 1 spacing.
         val h = 27
         val pixels = run {
             val s = StringBuilder()
