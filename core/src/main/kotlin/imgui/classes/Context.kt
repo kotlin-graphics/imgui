@@ -96,6 +96,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Will catch mouse inputs */
     var hoveredWindow: Window? = null
 
+    /** Hovered window ignoring MovingWindow. Only set if MovingWindow is set. */
+    var hoveredWindowUnderMovingWindow: Window? = null
+
     /** Will catch mouse inputs (for focus/move only)   */
     var hoveredRootWindow: Window? = null
 
@@ -646,6 +649,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             navWindow = null
             hoveredWindow = null
             hoveredRootWindow = null
+            hoveredWindowUnderMovingWindow = null
             activeIdWindow = null
             activeIdPreviousFrameWindow = null
             movingWindow = null

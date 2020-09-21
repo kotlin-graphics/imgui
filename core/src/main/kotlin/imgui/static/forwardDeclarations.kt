@@ -48,6 +48,7 @@ called, aka before the next Begin(). Moving window isn't affected..    */
 fun findHoveredWindow() {
 
     var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoMouseInputs }
+    var hoveredWindowIgnoringMovingWindow: Window? = null
 
     val paddingRegular = style.touchExtraPadding // [JVM] careful, no copy
     val paddingForResizeFromEdges = when { // [JVM] careful, no copy
@@ -79,10 +80,19 @@ fun findHoveredWindow() {
             if (Rect(holePos, holePos + holeSize).contains(io.mousePos))
                 continue
         }
+
+        if (hoveredWindow == null)
+            hoveredWindow = window
+        val moving = g.movingWindow
+        if (hoveredWindowIgnoringMovingWindow == null && (moving == null || window.rootWindow != moving.rootWindow))
+            hoveredWindowIgnoringMovingWindow = window
+        if (hoveredWindow != null && hoveredWindowIgnoringMovingWindow != null)
+            break
     }
 
     g.hoveredWindow = hoveredWindow
     g.hoveredRootWindow = g.hoveredWindow?.rootWindow
+    g.hoveredWindowUnderMovingWindow = hoveredWindow
 }
 
 // ApplyWindowSettings -> Window class
