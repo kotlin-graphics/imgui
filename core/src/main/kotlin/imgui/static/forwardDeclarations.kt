@@ -55,8 +55,7 @@ fun findHoveredWindow() {
         else -> paddingRegular
     }
 
-    for (i in g.windows.lastIndex downTo 0) {
-        val window = g.windows[i]
+    for (window in g.windows.asReversed()) {
         if (!window.active || window.hidden)
             continue
         if (window.flags has Wf.NoMouseInputs)
