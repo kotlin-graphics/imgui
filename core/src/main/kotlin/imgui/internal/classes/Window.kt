@@ -32,7 +32,6 @@ import kotlin.collections.HashMap
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
-
 /** Storage for one window */
 class Window(
         var context: Context,
@@ -200,8 +199,13 @@ class Window(
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()
 
-    /** Cover the whole scrolling region, shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward). */
+    /** Initially covers the whole scrolling region. Reduced by containers e.g columns/tables when active.
+     * Shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward). */
     var workRect = Rect()
+
+    /** Backup of WorkRect before entering a container such as columns/tables. Used by e.g. SpanAllColumns functions
+     *  to easily access. Stacked containers are responsible for maintaining this. // FIXME-WORKRECT: Could be a stack? */
+    val parentWorkRect = Rect()
 
     /** Current clipping/scissoring rectangle, evolve as we are using PushClipRect(), etc. == DrawList->clip_rect_stack.back(). */
     var clipRect = Rect()
@@ -1130,3 +1134,4 @@ class Window(
 
     override fun toString() = name
 }
+
