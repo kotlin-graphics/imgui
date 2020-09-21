@@ -30,6 +30,9 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     /** [BETA] Represent a mixed/indeterminate value, generally multi-selection where values differ. Currently only supported by Checkbox() (later should support all sorts of widgets) */
     MixedValue(1 shl 6),  // false
 
+    /** [ALPHA] Allow hovering interactions but underlying value is not changed. */
+    ReadOnly(1 shl 7),  // false
+
     Default_(0);
 
     infix fun and(b: ItemFlag): ItemFlags = i and b.i
