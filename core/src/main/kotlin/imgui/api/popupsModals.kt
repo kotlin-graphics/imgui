@@ -17,6 +17,7 @@ import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.topMostPopupModal
+import imgui.internal.sections.IMGUI_DEBUG_LOG_POPUP
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.hasnt
@@ -149,7 +150,7 @@ interface popupsModals {
                 break
             popupIdx--
         }
-        //IMGUI_DEBUG_LOG("CloseCurrentPopup %d -> %d\n", g.BeginPopupStack.Size - 1, popup_idx);
+        IMGUI_DEBUG_LOG_POPUP("CloseCurrentPopup ${g.beginPopupStack.lastIndex} -> $popupIdx")
         closePopupToLevel(popupIdx, true)
 
         /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.

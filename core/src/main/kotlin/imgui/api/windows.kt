@@ -259,9 +259,13 @@ interface windows {
             if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f)
                 window.windowPadding.put(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
 
-            /* Collapse window by double-clicking on title bar
-            At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
-            detection and drawing   */
+            // Lock menu offset so size calculation can use it as menu-bar windows need a minimum size.
+            window.dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
+            window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
+
+            // Collapse window by double-clicking on title bar
+            // At this point we don't have a clipping rectangle setup yet, so we can use the title bar area
+            // for hit detection and drawing
             if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse) {
                 /*  We don't use a regular button+id to test for double-click on title bar (mostly due to legacy reason, could be fixed),
                     so verify that we don't have items over the title bar.                 */
@@ -605,8 +609,6 @@ interface windows {
                 dc.navHasScroll = scrollMax.y > 0f
 
                 dc.menuBarAppending = false
-                dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
-                dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
                 dc.menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
                 dc.treeDepth = 0
                 dc.treeJumpToParentOnPopMask = 0x00
