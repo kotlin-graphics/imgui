@@ -97,10 +97,10 @@ object Console {
                             "implementation may want to store entries along with extra data such as timestamp, emitter, etc.")
             textWrapped("Enter 'HELP' for help, press TAB to use text completion.")
 
-            if (smallButton("Add Dummy Text")) {
+            if (smallButton("Add Debug Text")) {
                 addLog("%d some text", items.size); addLog("some more text"); addLog("display very important message here!"); }
             sameLine()
-            if (smallButton("Add Dummy Error"))
+            if (smallButton("Add Debug Error"))
                 addLog("[error] something went wrong")
             sameLine()
             if (smallButton("Clear"))

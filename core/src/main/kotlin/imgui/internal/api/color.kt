@@ -138,10 +138,10 @@ internal interface color {
                 if (selectable("##selectable", false, 0, pickerSize)) // By default, Selectable() is closing popup
                     g.colorEditOptions = (g.colorEditOptions wo Cef._PickerMask) or (pickerFlags and Cef._PickerMask)
                 cursorScreenPos = backupPos
-                val dummyRefCol = Vec4()
-                for (i in 0..2) dummyRefCol[i] = refCol[i]
-                if (pickerFlags hasnt Cef.NoAlpha) dummyRefCol[3] = refCol[3]
-                colorPicker4("##dummypicker", dummyRefCol, pickerFlags)
+                val previewingRefCol = Vec4()
+                for (i in 0..2) previewingRefCol[i] = refCol[i]
+                if (pickerFlags hasnt Cef.NoAlpha) previewingRefCol[3] = refCol[3]
+                colorPicker4("##previewing_picker", previewingRefCol, pickerFlags)
                 popID()
             }
             popItemWidth()
