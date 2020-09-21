@@ -41,7 +41,7 @@ import imgui.internal.sections.ItemFlag as If
 interface widgetsSelectables {
 
 
-    /** Tip: pass a non-visible label (e.g. "##dummy") then you can use the space to draw other text or image.
+    /** Tip: pass a non-visible label (e.g. "##hello") then you can use the space to draw other text or image.
      *  But you need to make sure the ID is unique, e.g. enclose calls in PushID/PopID or use ##unique_id.
      *  With this scheme, ImGuiSelectableFlags_SpanAllColumns and ImGuiSelectableFlags_AllowItemOverlap are also frequently used flags.
      *  FIXME: Selectable() with (size.x == 0.0f) and (SelectableTextAlign.x > 0.0f) followed by SameLine() is currently not supported.

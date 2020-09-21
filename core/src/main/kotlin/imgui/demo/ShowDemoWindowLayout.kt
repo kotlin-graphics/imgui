@@ -545,7 +545,7 @@ object ShowDemoWindowLayout {
                     button("Button##1")
                     sameLine(0f, spacing)
                     treeNode("Node##1") {
-                        // Dummy tree data
+                        // Placeholder tree data
                         for (i in 0..5)
                             bulletText("Item $i..")
                     }
@@ -559,7 +559,7 @@ object ShowDemoWindowLayout {
                     val nodeOpen = treeNode("Node##2")
                     sameLine(0f, spacing); button("Button##2")
                     if (nodeOpen) {
-                        // Dummy tree data
+                        // Placeholder tree data
                         for (i in 0..5)
                             bulletText("Item $i..")
                         treePop()
@@ -798,7 +798,7 @@ object ShowDemoWindowLayout {
             textWrapped("(Click and drag)")
             val pos = Vec2(cursorScreenPos)
             val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
-            invisibleButton("##dummy", size)
+            invisibleButton("##empty", size)
             if (isItemActive && isMouseDragging(MouseButton.Left))
                 offset += io.mouseDelta
             windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), imgui.COL32_WHITE)

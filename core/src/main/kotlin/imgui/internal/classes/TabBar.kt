@@ -198,7 +198,8 @@ class TabBar {
 
         val id = calcTabID(label)
 
-        // If the user called us with *p_open == false, we early out and don't render. We make a dummy call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
+        // If the user called us with *p_open == false, we early out and don't render.
+        // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
         Hook.itemInfo?.invoke(g, id, label, window.dc.lastItemStatusFlags)
         if (pOpen?.get() == false) {
             pushItemFlag(ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus, true)
