@@ -332,6 +332,7 @@ interface demoDebugInformations {
         if (treeNode("Internal state")) {
             text("HoveredWindow: '${g.hoveredWindow?.name}'")
             text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+            text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")
             /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                 information or not                 */
             text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)

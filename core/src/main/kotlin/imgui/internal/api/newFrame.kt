@@ -31,13 +31,14 @@ internal interface newFrame {
         fun nullate() {
             g.hoveredWindow = null
             g.hoveredRootWindow = null
+            g.hoveredWindowUnderMovingWindow = null
         }
 
-        // Modal windows prevents cursor from hovering behind them.
+        // Modal windows prevents mouse from hovering behind them.
         val modalWindow = topMostPopupModal
-        if (modalWindow != null)
-            if (g.hoveredRootWindow?.isChildOf(modalWindow) == false)
-                nullate()
+        val hovered = g.hoveredRootWindow
+        if (modalWindow != null && hovered != null && !hovered.isChildOf(modalWindow))
+            nullate()
         // Disabled mouse?
         if (io.configFlags has ConfigFlag.NoMouse)
             nullate()
