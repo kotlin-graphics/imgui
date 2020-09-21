@@ -122,7 +122,7 @@ interface popupsModals {
     /** helper to open popup when clicked on last item. return true when just opened.
      *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
      *
-     *  Open a popup if mouse is released over the item */
+     *  Open a popup if mouse button is released over the item */
     fun openPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean =
             with(g.currentWindow!!) {
                 val mouseButton = popupFlags and PopupFlag.MouseButtonMask_

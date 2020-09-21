@@ -23,6 +23,7 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
+import imgui.ImGui.isMouseReleased
 import imgui.ImGui.openPopupContextItem
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -57,7 +58,8 @@ object CustomRendering {
 
     val lines = ArrayList<ItemLine>()
     val scrolling = Vec2()
-    var showGrid = true
+    var optEnableGrid = true
+    var optEnableContextMenu = true
 
     var drawBg = true
     var drawFg = true
@@ -162,7 +164,8 @@ object CustomRendering {
 
             if (beginTabItem("Canvas")) {
 
-                checkbox("Show grid", ::showGrid)
+                checkbox("Enable grid", ::optEnableGrid)
+                checkbox("Enable context menu", ::optEnableContextMenu)
                 text("Mouse Left: drag to add lines,\nMouse Right: drag to scroll, click for context menu.")
 
                 // Typically you would use a BeginChild()/EndChild() pair to benefit from a clipping region + own scrolling.
@@ -207,13 +210,15 @@ object CustomRendering {
                 }
 
                 // Pan (using zero mouse threshold)
-                if (isActive && ImGui.isMouseDragging(MouseButton.Right, 0f))
+                // Pan (we use a zero mouse threshold when there's no context menu)
+                // You may decide to make that threshold dynamic based on whether the mouse is hovering something etc.
+                val mouseThresholdForPan = if(optEnableContextMenu) -1f else 0f
+                if (isActive && ImGui.isMouseDragging(MouseButton.Right, mouseThresholdForPan))
                     scrolling += io.mouseDelta
 
                 // Context menu (under default mouse threshold)
-                // We intentionally use the same button to demonstrate using mouse drag threshold. Some may feel panning should rely on same threshold.
                 val dragDelta = getMouseDragDelta(MouseButton.Right)
-                if (dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
+                if (optEnableContextMenu && isMouseReleased(MouseButton.Right) && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
                     openPopupContextItem("context")
                 dsl.popup("context") {
                     if (addingLine)
@@ -225,7 +230,7 @@ object CustomRendering {
 
                 // Draw grid + all lines in the canvas
                 drawList.pushClipRect(canvasP0, canvasP1, true)
-                if (showGrid) {
+                if (optEnableGrid) {
                     val GRID_STEP = 64f
                     var x = scrolling.x % GRID_STEP
                     while (x < canvasSz.x) {
