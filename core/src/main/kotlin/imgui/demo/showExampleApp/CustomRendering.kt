@@ -84,21 +84,22 @@ object CustomRendering {
 
                 // Draw gradients
                 // (note that those are currently exacerbating our sRGB/Linear issues)
+                // Calling ImGui::GetColorU32() multiplies the given colors by the current Style Alpha, but you may pass the IM_COL32() directly as well..
                 text("Gradients")
                 val gradientSize = Vec2(calcItemWidth(), frameHeight)
                 run {
                     val p0 = cursorScreenPos
                     val p1 = p0 + gradientSize
-                    val colA = Vec4(0f, 0f, 0f, 1f).u32
-                    val colB = Vec4(1f).u32
+                    val colA = getColorU32(COL32(0, 0, 0, 255))
+                    val colB = getColorU32(COL32(255))
                     drawList.addRectFilledMultiColor(p0, p1, colA, colB, colB, colA)
                     invisibleButton("##gradient1", gradientSize)
                 }
                 run {
                     val p0 = cursorScreenPos
                     val p1 = p0 + gradientSize
-                    val colA = Vec4(0f, 1f, 0f, 1f).u32
-                    val colB = Vec4(1f, 0f, 0f, 1f).u32
+                    val colA = getColorU32(COL32(0, 255, 0, 255))
+                    val colB = getColorU32(COL32(255, 0, 0, 255))
                     drawList.addRectFilledMultiColor(p0, p1, colA, colB, colB, colA)
                     invisibleButton("##gradient2", gradientSize)
                 }
@@ -113,6 +114,7 @@ object CustomRendering {
                 if (sliderInt("Circle segments", ::circleSegmentsOverrideV, 3, 40))
                     circleSegmentsOverride = true
                 colorEdit4("Color", colf)
+
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
                 val spacing = 10f
@@ -131,7 +133,7 @@ object CustomRendering {
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersAll, th); x += sz + spacing  // Square with all rounded corners
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
                         addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col, th); x += sz + spacing      // Triangle
-                        addTriangle(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col, th); x += sz * 0.4f + spacing // Thin triangle
+//                        addTriangle(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col, th); x += sz * 0.4f + spacing // Thin triangle
                         addLine(Vec2(x, y), Vec2(x + sz, y), col, th); x += sz + spacing  // Horizontal line (note: drawing a filled rectangle will be faster!)
                         addLine(Vec2(x, y), Vec2(x, y + sz), col, th); x += spacing       // Vertical line (note: drawing a filled rectangle will be faster!)
                         addLine(Vec2(x, y), Vec2(x + sz, y + sz), col, th); x += sz + spacing  // Diagonal line
@@ -147,13 +149,13 @@ object CustomRendering {
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f); x += sz + spacing  // Square with all rounded corners
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersTlBr); x += sz + spacing  // Square with two rounded corners
                     addTriangleFilled(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col); x += sz + spacing      // Triangle
-                    addTriangleFilled(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col); x += sz * 0.4f + spacing // Thin triangle
+//                    addTriangleFilled(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col); x += sz * 0.4f + spacing // Thin triangle
                     addRectFilled(Vec2(x, y), Vec2(x + sz, y + thickness), col); x += sz + spacing  // Horizontal line (faster than AddLine, but only handle integer thickness)
                     addRectFilled(Vec2(x, y), Vec2(x + thickness, y + sz), col); x += spacing * 2f  // Vertical line (faster than AddLine, but only handle integer thickness)
                     addRectFilled(Vec2(x, y), Vec2(x + 1, y + 1), col); x += sz            // Pixel (faster than AddLine)
                 }
-                dummy(Vec2((sz + spacing) * 9.8f, (sz + spacing) * 3))
 
+                dummy(Vec2((sz + spacing) * 8.8f, (sz + spacing) * 3))
                 popItemWidth()
                 endTabItem()
             }
