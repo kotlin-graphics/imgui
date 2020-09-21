@@ -925,7 +925,7 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
 
 /** Restore the last focused child.
  *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
-fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
+fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow?.takeIf { it.wasActive } ?: window
 
 // FIXME-OPT O(N)
 fun findWindowFocusIndex(window: Window): Int {

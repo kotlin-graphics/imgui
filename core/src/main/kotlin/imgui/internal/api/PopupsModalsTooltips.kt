@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -100,7 +101,8 @@ internal interface PopupsModalsTooltips {
         val popupRef = PopupData(popupId = id, window = null, sourceWindow = g.navWindow, openFrameCount = g.frameCount,
                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
                 openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
-//        println("" + g.openPopupStack.size +", "+currentStackSize)
+
+        IMGUI_DEBUG_LOG_POPUP("OpenPopupEx(0x%08X)", id)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
         else {
@@ -124,6 +126,7 @@ internal interface PopupsModalsTooltips {
 
     fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
+        IMGUI_DEBUG_LOG_POPUP("ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=${restoreFocusToWindowUnderPopup.i}")
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
 
         // Trim open popup stack
@@ -178,7 +181,7 @@ internal interface PopupsModalsTooltips {
             }
 
         if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
-            //IMGUI_DEBUG_LOG("ClosePopupsOverWindow(%s) -> ClosePopupToLevel(%d)\n", ref_window->Name, popup_count_to_keep);
+            IMGUI_DEBUG_LOG_POPUP("ClosePopupsOverWindow(\"${refWindow!!.name}\") -> ClosePopupToLevel($popupCountToKeep)")
             closePopupToLevel(popupCountToKeep, restoreFocusToWindowUnderPopup)
         }
     }

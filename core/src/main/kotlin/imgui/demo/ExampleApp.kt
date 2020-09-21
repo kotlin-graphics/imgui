@@ -51,8 +51,8 @@ object ExampleApp {
 
     object show {
         // Examples Apps (accessible from the "Examples" menu)
-        var documents = false
         var mainMenuBar = false
+        var documents = false
         var console = false
         var log = false
         var layout = false
@@ -90,8 +90,8 @@ object ExampleApp {
 
         var open = open_
 
-        if (show.documents) Documents(show::documents)
         if (show.mainMenuBar) MainMenuBar()
+        if (show.documents) Documents(show::documents)
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
         if (show.layout) Layout(show::layout)
