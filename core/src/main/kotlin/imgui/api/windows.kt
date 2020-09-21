@@ -643,6 +643,9 @@ interface windows {
             if (flags hasnt Wf.NoTitleBar)
                 window.renderTitleBarContents(titleBarRect, name, pOpen)
 
+            // Clear hit test shape every frame
+            window.hitTestHoleSize put 0
+
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
             // Maybe we can support CTRL+C on every element?
