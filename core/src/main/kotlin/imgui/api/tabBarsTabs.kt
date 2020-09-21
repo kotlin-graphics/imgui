@@ -88,17 +88,17 @@ interface tabBarsTabs {
      *  For tab-bar: call after BeginTabBar() and before Tab submissions. Otherwise call with a window name.
      *
      *  [Public] This is call is 100% optional but it allows to remove some one-frame glitches when a tab has been unexpectedly removed.
-     *  To use it to need to call the function SetTabItemClosed() after BeginTabBar() and before any call to BeginTabItem().
-     * Tabs closed by the close button will automatically be flagged to avoid this issue.
-     * FIXME: We should aim to support calling SetTabItemClosed() after the tab submission (for next frame) */
+     *  To use it to need to call the function SetTabItemClosed() between BeginTabBar() and EndTabBar().
+     *  Tabs closed by the close button will automatically be flagged to avoid this issue. */
     fun setTabItemClosed(tabOrDockedWindowLabel: String) {
 
         val isWithinManualTabBar = g.currentTabBar?.flags?.hasnt(TabBarFlag._DockNode) == true
         if (isWithinManualTabBar) {
             val tabBar = g.currentTabBar!!
-            assert(tabBar.wantLayout) { "Needs to be called AFTER BeginTabBar() and BEFORE the first call to BeginTabItem()" }
             val tabId = tabBar calcTabID tabOrDockedWindowLabel
-            tabBar removeTab tabId
+            tabBar.findTabByID(tabId)?.let {
+                it.wantClose = true // Will be processed by next call to TabBarLayout()
+            }
         }
     }
 
