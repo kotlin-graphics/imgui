@@ -302,7 +302,7 @@ fun updateWindowManualResize(
                 borderHeld = borderN
         }
         if (held) {
-            val borderTarget = Vec2(window.pos)
+            var borderTarget = Vec2(window.pos)
             val borderPosN = when (borderN) {
                 0 -> {
                     borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS

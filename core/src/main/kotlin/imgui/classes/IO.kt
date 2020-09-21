@@ -382,6 +382,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
 
+    /** Touch/Pen pressure (0.0f to 1.0f, should be >0.0f only when MouseDown[0] == true). Helper storage currently unused by Dear ImGui. */
+    var penPressure = 0f
+
     /** For AddInputCharacterUTF16 */
     var inputQueueSurrogate = NUL
 
