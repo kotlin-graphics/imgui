@@ -1152,7 +1152,8 @@ object ShowDemoWindowWidgets {
         }
 
         treeNode("Range Widgets") {
-            dragFloatRange2("range", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%")
+            dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%")
+            dragIntRange2("range int", ::beginI, ::endI, 5f, 0, 1000, "Min: %d units", "Max: %d units")
             dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %d units", "Max: %d units")
         }
 

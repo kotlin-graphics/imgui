@@ -40,8 +40,8 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputIsActive
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
-import imgui.internal.sections.DragFlag
 import imgui.internal.classes.Rect
+import imgui.internal.sections.DragFlag
 import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
@@ -108,12 +108,18 @@ interface widgetsDrags {
 
         var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
-        var valueChanged = dragFloat("##min", vCurrentMinPtr, vSpeed, min, max, format, power)
+        if (min == max) {
+            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
+        var valueChanged = dragScalar("##min", DataType.Float, vCurrentMinPtr, vSpeed, min, max, format, power)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
+
         min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         max = if (vMin >= vMax) Float.MAX_VALUE else vMax
-        valueChanged = dragFloat("##max", vCurrentMaxPtr, vSpeed, min, max, formatMax, power) || valueChanged
+        if (min == max) {
+            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
+        val f = if (formatMax.isNotEmpty()) formatMax else format
+        valueChanged = dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, min, max, f, power) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -167,12 +173,18 @@ interface widgetsDrags {
 
         var min = if (vMin >= vMax) Int.MIN_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
+        if (min == max) {
+            min = Int.MAX_VALUE; max = Int.MIN_VALUE; } // Lock edit
         var valueChanged = dragInt("##min", vCurrentMinPtr, vSpeed, min, max, format)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
+
         min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         max = if (vMin >= vMax) Int.MAX_VALUE else vMax
-        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, min, max, formatMax) || valueChanged
+        if (min == max) {
+            min = Int.MAX_VALUE; max = Int.MIN_VALUE; } // Lock edit
+        val f = if (formatMax.isNotEmpty()) formatMax else format
+        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, min, max, f) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -210,7 +222,7 @@ interface widgetsDrags {
 
         val id = window.getID(label)
         val w = calcItemWidth()
-        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
@@ -240,7 +252,7 @@ interface widgetsDrags {
                 setActiveID(id, window)
                 setFocusID(id, window)
                 focusWindow(window)
-                g.activeIdUsingNavDirMask  = (1 shl Dir.Left) or (1 shl Dir.Right)
+                g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
                 if (focusRequested || (clicked && io.keyCtrl) || doubleClicked || g.navInputId == id) {
                     tempInputStart = true
                     focusableItemUnregister(window)
@@ -302,7 +314,7 @@ interface widgetsDrags {
         popID()
 
         val labelEnd = findRenderedTextEnd(label)
-        if (0 != labelEnd)        {
+        if (0 != labelEnd) {
             sameLine(0f, style.itemInnerSpacing.x)
             textEx(label, labelEnd)
         }
