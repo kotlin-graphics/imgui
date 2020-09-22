@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-val moduleName = "$group.core"
+val moduleName = "$group.${rootProject.name}.core"
 
 dependencies {
 

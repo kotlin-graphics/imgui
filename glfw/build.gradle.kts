@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-val moduleName = "$group.glfw"
+val moduleName = "$group.${rootProject.name}.glfw"
 
 dependencies {
 
