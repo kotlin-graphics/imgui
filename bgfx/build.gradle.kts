@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-val moduleName = "$group.bgfx"
+val moduleName = "$group.${rootProject.name}.bgfx"
 
 dependencies {
 
