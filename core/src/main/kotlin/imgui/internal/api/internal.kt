@@ -15,6 +15,7 @@ import imgui.internal.hash
 import imgui.internal.sections.NavLayer
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
+import uno.kotlin.NUL
 import java.util.*
 import java.util.regex.Pattern
 import imgui.WindowFlag as Wf
@@ -153,6 +154,21 @@ internal interface internal {
             i = matcher.end()
         }
         return 0
+    }
+
+    /** We don't use strchr() because our strings are usually very short and often start with '%' */
+    fun parseFormatFindStart2(fmt_: String): Int {
+        var fmt = StringPointer(fmt_)
+        var c = fmt[0]
+        while (c != NUL) {
+            if (c == '%' && fmt[1] != '%')
+                return fmt()
+            else if (c == '%')
+                fmt++
+            fmt++
+            c = fmt[0]
+        }
+        return fmt()
     }
 
     fun parseFormatFindEnd(fmt: String, i_: Int = 0): Int {
