@@ -269,7 +269,7 @@ interface widgetsDrags {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
 
         // Drag behavior
-        val valueChanged = dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, power, DragFlag.None)
+        val valueChanged = dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, power, DragFlag.None.i)
         if (valueChanged)
             markItemEdited(id)
 

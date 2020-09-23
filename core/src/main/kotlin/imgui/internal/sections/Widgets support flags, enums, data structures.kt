@@ -186,7 +186,27 @@ infix fun ButtonFlags.wo(b: ButtonFlag): ButtonFlags = and(b.i.inv())
 typealias ButtonFlags = Int
 
 
-enum class SliderFlag { None, Vertical }
+typealias SliderFlags = Int
+
+enum class SliderFlag { None, Vertical;
+
+    val i: SliderFlags = ordinal
+
+    infix fun and(b: SliderFlag): SliderFlags = i and b.i
+    infix fun and(b: SliderFlags): SliderFlags = i and b
+    infix fun or(b: SliderFlag): SliderFlags = i or b.i
+    infix fun or(b: SliderFlags): SliderFlags = i or b
+    infix fun xor(b: SliderFlag): SliderFlags = i xor b.i
+    infix fun xor(b: SliderFlags): SliderFlags = i xor b
+    infix fun wo(b: SliderFlags): SliderFlags = and(b.inv())
+}
+
+infix fun SliderFlags.and(b: SliderFlag): SliderFlags = and(b.i)
+infix fun SliderFlags.or(b: SliderFlag): SliderFlags = or(b.i)
+infix fun SliderFlags.xor(b: SliderFlag): SliderFlags = xor(b.i)
+infix fun SliderFlags.has(b: SliderFlag): Boolean = and(b.i) != 0
+infix fun SliderFlags.hasnt(b: SliderFlag): Boolean = and(b.i) == 0
+infix fun SliderFlags.wo(b: SliderFlag): SliderFlags = and(b.i.inv())
 
 
 typealias DragFlags = Int
