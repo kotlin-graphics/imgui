@@ -14,20 +14,20 @@ import imgui.internal.lerp as ilerp
 
 @Suppress("UNCHECKED_CAST")
 
-infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
-    this is Byte && other is Byte -> (this + other).b
-    this is Ubyte && other is Ubyte -> (this + other).b
-    this is Short && other is Short -> (this + other).s
-    this is Ushort && other is Ushort -> (this + other).s
-    this is Int && other is Int -> this + other
-    this is Uint && other is Uint -> this + other
-    this is Long && other is Long -> this + other
-    this is Ulong && other is Ulong -> this + other
-    this is Float && other is Float -> this + other
-    this is Double && other is Double -> this + other
-    this is BigInteger && other is BigInteger -> this + other
-    else -> error("Invalid operand types")
-} as N
+//infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
+//    this is Byte && other is Byte -> (this + other).b
+//    this is Ubyte && other is Ubyte -> (this + other).b
+//    this is Short && other is Short -> (this + other).s
+//    this is Ushort && other is Ushort -> (this + other).s
+//    this is Int && other is Int -> this + other
+//    this is Uint && other is Uint -> this + other
+//    this is Long && other is Long -> this + other
+//    this is Ulong && other is Ulong -> this + other
+//    this is Float && other is Float -> this + other
+//    this is Double && other is Double -> this + other
+//    this is BigInteger && other is BigInteger -> this + other
+//    else -> error("Invalid operand types")
+//} as N
 
 infix operator fun <Type> Type.minus(other: Type): Type
         where Type : Number, Type : Comparable<Type> = when {
@@ -235,35 +235,4 @@ fun <Type, N> max(n: N, t: Type): Type
     is Float -> if (n.f > t) n.f else t
     is Double -> if (n.d > t) n.d else t
     else -> error("invalid")
-} as Type
-
-fun <Type, FloatType> Type.asFloatType(): FloatType
-        where Type : Number, Type : Comparable<Type>,
-              FloatType : Number, FloatType : Comparable<FloatType> = when (this) {
-    is Byte, is Ubyte, is Short, is Ushort, is Int, is Uint, is Float -> f
-    is Long, is Ulong, is Double -> f
-    else -> error("invalid")
-} as FloatType
-
-infix operator fun <Type> Type.times(other: Float): Type
-        where Type : Number, Type : Comparable<Type> = when (this) {
-    is Byte -> this * other
-    is Short -> this * other
-    is Int -> this * other
-    is Long -> this * other
-    is Float -> this * other
-    is Double -> this * other
-    is Ubyte, is Ushort, is Uint, is Ulong -> f * other
-    else -> error("Invalid operand types")
-} as Type
-
-infix operator fun <Type> Float.div(other: Type): Type
-        where Type : Number, Type : Comparable<Type> = when(other) {
-    is Byte -> this * other
-    is Short -> this * other
-    is Int -> this * other
-    is Long -> this * other
-    is Float -> this * other
-    is Double -> this * other
-    else -> error("Invalid operand types")
 } as Type
