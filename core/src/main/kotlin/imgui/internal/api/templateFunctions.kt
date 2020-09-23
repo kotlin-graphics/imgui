@@ -19,10 +19,8 @@ import imgui.internal.saturate
 import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
-import unsigned.Ubyte
 import unsigned.Uint
 import unsigned.Ulong
-import unsigned.Ushort
 import java.util.*
 import kotlin.math.pow
 import kotlin.reflect.KMutableProperty0
@@ -32,42 +30,26 @@ import kotlin.reflect.KMutableProperty0
  *  e.g. " extern template IMGUI_API float RoundScalarWithFormatT<float, float>(const char* format, ImGuiDataType data_type, float v); " */
 internal interface templateFunctions {
 
-    /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls) */
-    fun <N> dragBehaviorT(dataType: DataType, vPtr: KMutableProperty0<N>,
-                          vSpeed_: Float, vMin: N, vMax: N,
-                          format: String, power: Float, flag: DragFlag
-    ): Boolean where N : Number, N : Comparable<N> {
+    /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
+     *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
+    fun dragBehaviorT(
+            dataType: DataType, v: KMutableProperty0<Int>, vSpeed_: Float, vMin: Int, vMax: Int,
+            format: String, power: Float, flags: DragFlags,
+    ): Boolean {
 
-        var v by vPtr
-
-        val axis = if (flag == DragFlag.Vertical) Axis.Y else Axis.X
-
-        val isDecimal: Boolean
-        val maxDecimal: Any = when (dataType) {
-            DataType.Float -> {
-                isDecimal = true
-                Float.MAX_VALUE
-            }
-            DataType.Double -> {
-                isDecimal = true
-                Double.MAX_VALUE
-            }
-            else -> {
-                isDecimal = false
-            }
-        }
-
-        val range = vMax - vMin
+        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isPower = power != 1f && isDecimal && isClamped && (range.f < Float.MAX_VALUE)
+        val isPower = power != 1f && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
         val isLocked = vMin > vMax
         if (isLocked)
             return false
 
         // Default tweak speed
-        var vSpeed = vSpeed_
-        if (vSpeed == 0f && isClamped && range < maxDecimal as N)
-            vSpeed = range.f * g.dragSpeedDefaultRatio
+        var vSpeed = when {
+            vSpeed_ == 0f && isClamped && vMax - vMin < Float.MAX_VALUE -> (vMax - vMin) * g.dragSpeedDefaultRatio
+            else -> vSpeed_
+        }
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
@@ -88,11 +70,110 @@ internal interface templateFunctions {
         if (axis == Axis.Y)
             adjustDelta = -adjustDelta
 
-        /*  Clear current value on activation
-            Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction,
-            so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.             */
+        // Clear current value on activation
+        // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
         val isJustActivated = g.activeIdIsJustActivated
-        val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v >= vMax && adjustDelta > 0f) || (v <= vMin && adjustDelta < 0f))
+        val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
+        val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
+        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
+            g.dragCurrentAccum = 0f
+            g.dragCurrentAccumDirty = false
+        } else if (adjustDelta != 0.0f) {
+            g.dragCurrentAccum += adjustDelta
+            g.dragCurrentAccumDirty = true
+        }
+
+        if (!g.dragCurrentAccumDirty)
+            return false
+
+        var vCur = v()
+        var vOldRefForAccumRemainder = 0f
+
+        if (isPower) {
+            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
+            val vOldNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
+            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
+            vCur = vMin + (saturate(vNewNormCurved).pow(power)).i * (vMax - vMin)
+            vOldRefForAccumRemainder = vOldNormCurved
+        } else
+            vCur += g.dragCurrentAccum.i
+
+        // Round to user desired precision based on format string
+        vCur = roundScalarWithFormatT(format, dataType, vCur)
+
+        // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
+        g.dragCurrentAccumDirty = false
+        g.dragCurrentAccum -= when {
+            isPower -> {
+                val vCurNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
+                vCurNormCurved - vOldRefForAccumRemainder
+            }
+            else -> (vCur - v()).f
+        }
+
+        // Lose zero sign for float/double
+        if (vCur == -0)
+            vCur = 0
+
+        // Clamp values (+ handle overflow/wrap-around for integer types)
+        if (v() != vCur && isClamped) {
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
+                vCur = vMin
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
+                vCur = vMax
+        }
+
+        // Apply result
+        if (v() == vCur)
+            return false
+        v(vCur)
+        return true
+    }
+
+    /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
+     *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
+    fun dragBehaviorT(
+            dataType: DataType, v: KMutableProperty0<Uint>, vSpeed_: Float, vMin: Uint, vMax: Uint,
+            format: String, power: Float, flags: DragFlags,
+    ): Boolean {
+
+        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isClamped = vMin < vMax
+        val isPower = power != 1f && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
+        val isLocked = vMin > vMax
+        if (isLocked)
+            return false
+
+        // Default tweak speed
+        var vSpeed = when {
+            vSpeed_ == 0f && isClamped && (vMax - vMin < Float.MAX_VALUE) -> (vMax - vMin).f * g.dragSpeedDefaultRatio
+            else -> vSpeed_
+        }
+
+        // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
+        var adjustDelta = 0f
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+            adjustDelta = io.mouseDelta[axis]
+            if (io.keyAlt)
+                adjustDelta *= 1f / 100f
+            if (io.keyShift)
+                adjustDelta *= 10f
+        } else if (g.activeIdSource == InputSource.Nav) {
+            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
+        }
+        adjustDelta *= vSpeed
+
+        // For vertical drag we currently assume that Up=higher value (like we do with vertical sliders). This may become a parameter.
+        if (axis == Axis.Y)
+            adjustDelta = -adjustDelta
+
+        // Clear current value on activation
+        // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
+        val isJustActivated = g.activeIdIsJustActivated
+        val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
         val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
         if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
             g.dragCurrentAccum = 0f
@@ -105,78 +186,58 @@ internal interface templateFunctions {
         if (!g.dragCurrentAccumDirty)
             return false
 
-        var vCur = v
-        var vOldRefForAccumRemainder: Number = when (dataType) {
-            DataType.Long, DataType.Ulong, DataType.Double -> 0.0
-            else -> 0f
-        }
+        var vCur = v()
+        var vOldRefForAccumRemainder = 0f
 
-        if (isPower)
-        // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-            when (dataType) {
-                DataType.Byte, DataType.Ubyte, DataType.Short, DataType.Ushort, DataType.Int, DataType.Uint, DataType.Float -> {
-                    val vOldNormCurved = glm.pow((vCur - vMin).f / range.f, 1f / power)
-                    val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / range.f
-                    vCur = vMin + glm.pow(saturate(vNewNormCurved), power).`as`(v) * range
-                    vOldRefForAccumRemainder = vOldNormCurved
-                }
-                else -> {
-                    val vOldNormCurved = glm.pow((vCur - vMin).d / range.d, 1.0 / power)
-                    val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / range.d
-                    vCur = vMin + glm.pow(saturate(vNewNormCurved.f), power).`as`(v) * range
-                    vOldRefForAccumRemainder = vOldNormCurved
-                }
-            }
-        else
+        if (isPower) {
+            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
+            val vOldNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
+            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin).f
+            vCur = vMin + saturate(vNewNormCurved).pow(power).ui * (vMax - vMin)
+            vOldRefForAccumRemainder = vOldNormCurved
+        } else
             vCur += g.dragCurrentAccum
 
         // Round to user desired precision based on format string
-        vCur = roundScalarWithFormat(format, vCur)
+        vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
         g.dragCurrentAccum -= when {
-            isPower -> when (dataType) {
-                DataType.Byte, DataType.Ubyte, DataType.Short, DataType.Ushort, DataType.Int, DataType.Uint, DataType.Float -> {
-                    val vCurNormCurved = glm.pow((vCur - vMin).f / range.f, 1f / power)
-                    vCurNormCurved - vOldRefForAccumRemainder as Float
-                }
-                else -> {
-                    val vCurNormCurved = glm.pow((vCur - vMin).d / range.d, 1.0 / power)
-                    (vCurNormCurved - vOldRefForAccumRemainder as Double).f
-                }
+            isPower -> {
+                val vCurNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
+                (vCurNormCurved - vOldRefForAccumRemainder).f
             }
-            else -> (vCur.asSigned - v.asSigned).f
+            else -> (vCur.v - v().v).f
         }
 
         // Lose zero sign for float/double
-        when (v) {
-            is Float -> if (vCur == -0f) vCur = 0f as N
-            is Double -> if (vCur == -0.0) vCur = 0.0 as N
-        }
-
+        if (vCur.v == -0)
+            vCur.v = 0
 
         // Clamp values (+ handle overflow/wrap-around for integer types)
-        if (v != vCur && isClamped) {
-            if (vCur < vMin || (vCur > v && adjustDelta < 0f && !isDecimal))
+        if (v() != vCur && isClamped) {
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
                 vCur = vMin
-            if (vCur > vMax || (vCur < v && adjustDelta > 0f && !isDecimal))
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
                 vCur = vMax
         }
 
         // Apply result
-        if (v == vCur)
+        if (v() == vCur)
             return false
-        v = vCur
+        v(vCur)
         return true
     }
 
     // FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
-    fun <N> sliderBehaviorT(bb: Rect, id: Int,
-                            dataType: DataType, vPtr: KMutableProperty0<N>,
-                            vMin: N, vMax: N, format: String,
-                            power: Float, flag: SliderFlag = SliderFlag.None,
-                            outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> {
+    fun <N> sliderBehaviorT(
+            bb: Rect, id: Int,
+            dataType: DataType, vPtr: KMutableProperty0<N>,
+            vMin: N, vMax: N, format: String,
+            power: Float, flag: SliderFlag = SliderFlag.None,
+            outGrabBb: Rect,
+    ): Boolean where N : Number, N : Comparable<N> {
 
         var v by vPtr
 
@@ -411,9 +472,11 @@ internal interface templateFunctions {
 
 
     // This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
-    fun <Type, SignedType, FloatType> dragBehaviorT(dataType: DataType, v: KMutableProperty0<Type>, vSpeed_: Float,
-                                                    vMin: Type, vMax: Type, format: String, power: Float,
-                                                    flags: DragFlags): Boolean
+    fun <Type, SignedType, FloatType> dragBehaviorT(
+            dataType: DataType, v: KMutableProperty0<Type>, vSpeed_: Float,
+            vMin: Type, vMax: Type, format: String, power: Float,
+            flags: DragFlags,
+    ): Boolean
             where Type : Number, Type : Comparable<Type>,
                   SignedType : Number, SignedType : Comparable<SignedType>,
                   FloatType : Number, FloatType : Comparable<FloatType> {
@@ -480,11 +543,11 @@ internal interface templateFunctions {
                 is Long, is Ulong, is Double -> ((vCur - vMin).d / (vMax - vMin).d).pow(1.0 / power)
                 else -> ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
             } as FloatType
-            val vNewNormCurved: FloatType = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-            v_cur = v_min + (SIGNEDTYPE) ImPow (ImSaturate((float) v_new_norm_curved), power) * (v_max-v_min);
-            v_old_ref_for_accum_remainder = vOldNormCurved;
+            val vNewNormCurved: FloatType = vOldNormCurved + g.dragCurrentAccum.div<Type, FloatType>(vMax - vMin)
+            vCur = vMin + saturate(vNewNormCurved.f).pow(power) * (vMax - vMin)
+            v_old_ref_for_accum_remainder = vOldNormCurved
         } else {
-            v_cur += (SIGNEDTYPE) g . DragCurrentAccum;
+            v_cur += (SIGNEDTYPE) g . DragCurrentAccum
         }
 
 //        // Round to user desired precision based on format string
@@ -516,58 +579,31 @@ internal interface templateFunctions {
 //        if ( * v == v_cur)
 //        return false;
 //        *v = v_cur;
-        return true;
+        return true
     }
 
-    fun <Type, FloatType> sliderCalcRatioFromValueT(dataType: DataType, v: Type, vMin: Type, vMax: Type,
-                                                    power: Float, linearZeroPos: Float): Float
-            where Type : Number, Type : Comparable<Type>,
-                  FloatType : Number, FloatType : Comparable<FloatType> {
-
-        if (vMin == vMax) return 0f
-
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
-        val vClamped: Type = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
-        return when {
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f: Float = 1f - ((vClamped - vMin) / (min(0, vMax) - vMin)).f
-                    (1f - glm.pow(f, 1f / power)) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(0, vMin)) / (vMax - max(0, vMin))).f
-                    linearZeroPos + glm.pow(f, 1f / power) * (1f - linearZeroPos)
-                }
-            }
-            // Linear slider
-            else -> ((vClamped - vMin).asFloatType<Type, FloatType>() / (vMax - vMin).asFloatType()).f
+    /** template<TYPE = Int, SIGNEDTYPE = Int> */
+    fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Int): Int {
+        val fmtStart = parseFormatFindStart2(fmt)
+        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+            return v
+        val vStr = fmt.substring(fmtStart).format(v)
+        return when (dataType) {
+            DataType.Float, DataType.Double -> vStr.d.i
+            else -> vStr.i
         }
     }
 
-    fun <Type> roundScalarWithFormat(format: String, dataType: DataType, v: Type): Type
-            where Type : Number, Type : Comparable<Type> {
-
-        val fmtStart = parseFormatFindStart2(format)
-        if (format[fmtStart] != '%' || format[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+    /** template<TYPE = Uint, SIGNEDTYPE = Int> */
+    fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Uint): Uint {
+        val fmtStart = parseFormatFindStart2(fmt)
+        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
             return v
-        val p = format.substring(fmtStart).format(v)
+        val vStr = fmt.substring(fmtStart).format(v.v)
         return when (dataType) {
-            DataType.Float, DataType.Double -> {
-                val pd = p.d
-                if (v is Float) pd.f else pd
-            }
-            else -> when (v) {
-                is Byte -> p.b
-                is Ubyte -> p.ub
-                is Short -> p.s
-                is Ushort -> p.us
-                is Int -> p.i
-                is Uint -> p.ui
-                is Long -> p.L
-                is Ulong -> p.ul
-                else -> error("")
-            }
-        } as Type
+            DataType.Float, DataType.Double -> vStr.d.ui
+            else -> vStr.ui
+        }
     }
 
     companion object {
