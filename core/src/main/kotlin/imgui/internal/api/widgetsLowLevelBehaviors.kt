@@ -279,12 +279,11 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
-                     format: String, power: Float, flag: DragFlag
-    ): Boolean = withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, power, flag) }
+                     format: String, power: Float, flags: DragFlags): Boolean =
+            withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, power, flags) }
 
     fun <N : Number> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
-                                  pMax: Number?, format: String, power: Float, flag: DragFlag
-    ): Boolean {
+                                  pMax: Number?, format: String, power: Float, flags: DragFlags): Boolean {
 
         if (g.activeId == id)
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
@@ -299,77 +298,46 @@ internal interface widgetsLowLevelBehaviors {
 
         var v by pV
 
-        return when (dataType) {
-            DataType.Byte -> {
-                _i = (v as Byte).i
-                val min = pMin?.let { it as Byte } ?: Byte.MIN_VALUE
-                val max = pMax?.let { it as Byte } ?: Byte.MAX_VALUE
-                dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flag)
-                        .also { v = _i.b as N }
+        return when (v) {
+            is Byte -> {
+                _i = v.i
+                val min = pMin ?: Byte.MIN_VALUE
+                val max = pMax ?: Byte.MAX_VALUE
+                dragBehaviorT(DataType.Int, ::_i, vSpeed, min.i, max.i, format, power, flags).also {
+                    if (it)
+                        v = _i.b as N
+                }
             }
-//                DataType.Ubyte -> {
-//                    _i = (v as Ubyte).v.i
-//                    val min = vMin?.let { it as Ubyte } ?: Ub
-//                    val max = vMax?.let { it as Ubyte } ?: Byte.MAX_VALUE
-//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
-//                            .also { v = _i.b as N }
-//                }
-            DataType.Short -> {
-                _i = (v as Short).i
-                val min = pMin?.let { it as Short } ?: Short.MIN_VALUE
-                val max = pMax?.let { it as Short } ?: Short.MAX_VALUE
-                dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flag)
-                        .also { v = _i.s as N }
-            }
-//                is Ubyte -> {
-//                    _i = v.i
-//                    val min = vMin?.i ?: Ubyte.MIN_VALUE
-//                    val max = vMax?.i ?: Ubyte.MAX_VALUE
-//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
-//                            .also { (v as Ubyte).v = _i.b }
-//                }
-            DataType.Int -> {
-                _i = v as Int
-                val min = pMin?.let { it as Int } ?: Int.MIN_VALUE
-                val max = pMax?.let { it as Int } ?: Int.MAX_VALUE
-                dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flag)
-                        .also { v = _i as N }
-            }
-//                is Ubyte -> {
-//                    _i = v.i
-//                    val min = vMin?.i ?: Ubyte.MIN_VALUE
-//                    val max = vMax?.i ?: Ubyte.MAX_VALUE
-//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
-//                            .also { (v as Ubyte).v = _i.b }
-//                }
-            DataType.Long -> {
-                _L = v as Long
-                val min = pMin?.let { it as Long } ?: Long.MIN_VALUE
-                val max = pMax?.let { it as Long } ?: Long.MAX_VALUE
-                dragBehaviorT(dataType, ::_L, vSpeed, min.L, max.L, format, power, flag)
-                        .also { v = _L as N }
-            }
-//                is Ubyte -> {
-//                    _i = v.i
-//                    val min = vMin?.i ?: Ubyte.MIN_VALUE
-//                    val max = vMax?.i ?: Ubyte.MAX_VALUE
-//                    dragBehaviorT(dataType, ::_i, vSpeed, min.i, max.i, format, power, flags)
-//                            .also { (v as Ubyte).v = _i.b }
-//                }
-            DataType.Float -> {
-                _f = v as Float
-                val min = pMin?.let { it as Float } ?: Float.MIN_VALUE
-                val max = pMax?.let { it as Float } ?: Float.MAX_VALUE
-                dragBehaviorT(dataType, ::_f, vSpeed, min.f, max.f, format, power, flag)
-                        .also { v = _f as N }
-            }
-            DataType.Double -> {
-                _d = v as Double
-                val min = pMin?.let { it as Double } ?: Double.MIN_VALUE
-                val max = pMax?.let { it as Double } ?: Double.MAX_VALUE
-                dragBehaviorT(dataType, ::_d, vSpeed, min.d, max.d, format, power, flag)
-                        .also { v = _d as N }
-            }
+//            is Ubyte -> {
+//                _i = v.i
+//                dragBehaviorT < ImU32, ImS32, float>(ImGuiDataType_U32, &v32, v_speed, p_min ? *(const ImU8*) p_min : IM_U8_MIN, p_max ? *(const ImU8*)p_max  : IM_U8_MAX, format, power, flags); if (r) * (ImU8 *) p_v =(ImU8) v32; return r; }
+//                    case ImGuiDataType_S16: {
+//                ImS32 v32 =(ImS32) * (ImS16 *) p_v; bool r = DragBehaviorT < ImS32, ImS32, float>(ImGuiDataType_S32, &v32, v_speed, p_min ? *(const ImS16*)p_min : IM_S16_MIN, p_max ? *(const ImS16*)p_max : IM_S16_MAX, format, power, flags); if (r) * (ImS16 *) p_v =(ImS16) v32; return r; }
+//            case ImGuiDataType_U16 :    { ImU32 v32 =(ImU32) * (ImU16 *) p_v; bool r = DragBehaviorT < ImU32, ImS32, float>(ImGuiDataType_U32, &v32, v_speed, p_min ? *(const ImU16*)p_min : IM_U16_MIN, p_max ? *(const ImU16*)p_max : IM_U16_MAX, format, power, flags); if (r) * (ImU16 *) p_v =(ImU16) v32; return r; }
+//                    case ImGuiDataType_S32:    return DragBehaviorT<ImS32, ImS32, float>(data_type, (ImS32 *) p_v, v_speed, p_min ? * (const ImS32 *) p_min : IM_S32_MIN
+//                , p_max ?
+//                *(const ImS32 *) p_max : IM_S32_MAX
+//                , format, power, flags);
+//            case ImGuiDataType_U32 :    return DragBehaviorT<ImU32, ImS32, float>(data_type, (ImU32 *) p_v, v_speed, p_min ? * (const ImU32 *) p_min : IM_U32_MIN
+//                , p_max ?
+//                *(const ImU32 *) p_max : IM_U32_MAX
+//                , format, power, flags);
+//            case ImGuiDataType_S64 :    return DragBehaviorT<ImS64, ImS64, double>(data_type, (ImS64 *) p_v, v_speed, p_min ? * (const ImS64 *) p_min : IM_S64_MIN
+//                , p_max ?
+//                *(const ImS64 *) p_max : IM_S64_MAX
+//                , format, power, flags);
+//            case ImGuiDataType_U64 :    return DragBehaviorT<ImU64, ImS64, double>(data_type, (ImU64 *) p_v, v_speed, p_min ? * (const ImU64 *) p_min : IM_U64_MIN
+//                , p_max ?
+//                *(const ImU64 *) p_max : IM_U64_MAX
+//                , format, power, flags);
+//            case ImGuiDataType_Float :  return DragBehaviorT<float, float, float>(data_type, (float *) p_v, v_speed, p_min ? * (const float *) p_min : - FLT_MAX
+//                ,   p_max ?
+//                *(const float *) p_max : FLT_MAX
+//                ,    format, power, flags);
+//            case ImGuiDataType_Double : return DragBehaviorT<double, double, double>(data_type, (double *) p_v, v_speed, p_min ? * (const double *) p_min : - DBL_MAX
+//                ,   p_max ?
+//                *(const double *) p_max : DBL_MAX
+//                ,    format, power, flags);
             else -> error("Invalid") // ~IM_ASSERT(0); return false;
         }
     }
