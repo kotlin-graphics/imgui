@@ -19,6 +19,7 @@ import imgui.internal.sections.*
 import unsigned.Uint
 import unsigned.Ulong
 import kotlin.math.abs
+import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.reflect.KMutableProperty0
 
@@ -35,10 +36,8 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun dragBehaviorT(
-            dataType: DataType, v: KMutableProperty0<Int>, vSpeed_: Float, vMin: Int, vMax: Int,
-            format: String, power: Float, flags: DragFlags,
-    ): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Int>, vSpeed_: Float, vMin: Int, vMax: Int,
+                      format: String, power: Float, flags: DragFlags): Boolean {
 
         val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -135,10 +134,8 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun dragBehaviorT(
-            dataType: DataType, v: KMutableProperty0<Uint>, vSpeed_: Float, vMin: Uint, vMax: Uint,
-            format: String, power: Float, flags: DragFlags,
-    ): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Uint>, vSpeed_: Float, vMin: Uint, vMax: Uint,
+                      format: String, power: Float, flags: DragFlags): Boolean {
 
         val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -235,10 +232,8 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun dragBehaviorT(
-            dataType: DataType, v: KMutableProperty0<Long>, vSpeed_: Float, vMin: Long, vMax: Long,
-            format: String, power: Float, flags: DragFlags,
-    ): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Long>, vSpeed_: Float, vMin: Long, vMax: Long,
+                      format: String, power: Float, flags: DragFlags): Boolean {
 
         val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -335,10 +330,8 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Ulong, typename Long, FLOATTYPE = Double> */
-    fun dragBehaviorT(
-            dataType: DataType, v: KMutableProperty0<Ulong>, vSpeed_: Float, vMin: Ulong, vMax: Ulong,
-            format: String, power: Float, flags: DragFlags,
-    ): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Ulong>, vSpeed_: Float, vMin: Ulong, vMax: Ulong,
+                      format: String, power: Float, flags: DragFlags): Boolean {
 
         val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -435,10 +428,8 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
-    fun dragBehaviorT(
-            dataType: DataType, v: KMutableProperty0<Float>, vSpeed_: Float, vMin: Float, vMax: Float,
-            format: String, power: Float, flags: DragFlags,
-    ): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Float>, vSpeed_: Float, vMin: Float, vMax: Float,
+                      format: String, power: Float, flags: DragFlags): Boolean {
 
         val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -535,10 +526,8 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
-    fun dragBehaviorT(
-            dataType: DataType, v: KMutableProperty0<Double>, vSpeed_: Float, vMin: Double, vMax: Double,
-            format: String, power: Float, flags: DragFlags,
-    ): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Double>, vSpeed_: Float, vMin: Double, vMax: Double,
+                      format: String, power: Float, flags: DragFlags): Boolean {
 
         val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
@@ -635,14 +624,13 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun sliderBehaviorT(
-            bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Int>, vMin: Int, vMax: Int,
-            format: String, power: Float, flags: SliderFlags, outGrabBb: Rect,
-    ): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Int>, vMin: Int, vMax: Int,
+                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 1f && isDecimal
+        val isLogarithmic = power == 0f && isDecimal
+        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -665,6 +653,13 @@ internal interface templateFunctions {
             }
             // Same sign
             else -> if (vMin < 0f) 1f else 0f
+        }
+
+        var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
+        if (isLogarithmic) {
+            // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
+            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
         }
 
         // Process interacting with the slider
@@ -691,7 +686,7 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0 || isPower) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -712,7 +707,63 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew: Int
+                var vNew = when {
+                    isLogarithmic -> when {
+                        // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
+                        clickedT <= 0f -> vMin
+                        clickedT >= 1f -> vMax
+                        else -> {
+                            val flipped = vMax < vMin
+
+                            // Fudge min/max to avoid getting silly results close to zero
+                            var vMinFudged = when {
+                                abs(vMin.f) < logarithmicZeroEpsilon -> if(vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                                    else -> vMin.f
+                            }
+                            var vMaxFudged = when {
+                                abs(vMax.f) < logarithmicZeroEpsilon -> if(vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                                    else -> vMax.f
+                            }
+
+                            // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+                            if (vMin == 0 && vMax < 0f)
+                                vMinFudged = -logarithmicZeroEpsilon
+                            else if (vMax == 0 && vMin < 0f)
+                                vMaxFudged = -logarithmicZeroEpsilon
+
+                            if (flipped) {
+                                val t = vMinFudged
+                                vMinFudged = vMaxFudged
+                                vMaxFudged = t
+                            }
+
+                            val clickedTWithFlip = if(flipped) 1f - clickedT else clickedT
+
+                            when {
+                                vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
+                                    val zeroPoint = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
+                                    when {
+                                        // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                                        clickedTWithFlip == zeroPoint -> 0
+                                        clickedTWithFlip < zeroPoint -> {
+                                            val pow = (-vMinFudged / logarithmicZeroEpsilon).pow(1f - (clickedTWithFlip / zeroPoint))
+                                            (-(logarithmicZeroEpsilon * pow)).i
+                                        }
+                                        else -> {
+                                            val pow = (vMaxFudged / logarithmicZeroEpsilon).pow((clickedTWithFlip - zeroPoint) / (1f - zeroPoint))
+                                            (logarithmicZeroEpsilon * pow).i
+                                        }
+                                    }
+                                }
+                                // Entirely negative slider
+                                vMin < 0f || vMax < 0f -> {
+                                    (TYPE)-(-vMaxFudged * ImPow(-vMinFudged / -vMaxFudged, (FLOATTYPE)(1.0f - clickedTWithFlip)))
+                                }
+                                else
+                                v_new = (TYPE)(vMinFudged * ImPow(vMaxFudged / vMinFudged, (FLOATTYPE)clicked_t_with_flip))
+                            }
+                        }
+                    }
                 if (isPower)
                 // Account for power curve scale on both sides of the zero
                     if (clickedT < linearZeroPos) {
@@ -740,7 +791,7 @@ internal interface templateFunctions {
                     val vNewOffRound = (vNewOffF + 0.5f).i
                     vNew = vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
                 }
-
+                }
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
 
@@ -771,14 +822,13 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun sliderBehaviorT(
-            bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Uint>, vMin: Uint, vMax: Uint,
-            format: String, power: Float, flags: SliderFlags, outGrabBb: Rect,
-    ): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Uint>, vMin: Uint, vMax: Uint,
+                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 1f && isDecimal
+        val isLogarithmic = power == 0f && isDecimal
+        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -903,14 +953,13 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun sliderBehaviorT(
-            bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Long>, vMin: Long, vMax: Long,
-            format: String, power: Float, flags: SliderFlags, outGrabBb: Rect,
-    ): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Long>, vMin: Long, vMax: Long,
+                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 1f && isDecimal
+        val isLogarithmic = power == 0f && isDecimal
+        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1036,14 +1085,13 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Ulong, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun sliderBehaviorT(
-            bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Ulong>, vMin: Ulong, vMax: Ulong,
-            format: String, power: Float, flags: SliderFlags, outGrabBb: Rect,
-    ): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Ulong>, vMin: Ulong, vMax: Ulong,
+                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 1f && isDecimal
+        val isLogarithmic = power == 0f && isDecimal
+        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1169,14 +1217,13 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
-    fun sliderBehaviorT(
-            bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Float>, vMin: Float, vMax: Float,
-            format: String, power: Float, flags: SliderFlags, outGrabBb: Rect,
-    ): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Float>, vMin: Float, vMax: Float,
+                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 1f && isDecimal
+        val isLogarithmic = power == 0f && isDecimal
+        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1302,14 +1349,13 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
-    fun sliderBehaviorT(
-            bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Double>, vMin: Double, vMax: Double,
-            format: String, power: Float, flags: SliderFlags, outGrabBb: Rect,
-    ): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Double>, vMin: Double, vMax: Double,
+                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isPower = power != 1f && isDecimal
+        val isLogarithmic = power == 0f && isDecimal
+        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1395,22 +1441,21 @@ internal interface templateFunctions {
                     }
                 // Linear slider
                 else if (isDecimal)
-                        vNew = lerp(vMin, vMax, clickedT)
-                    else {
-                        // For integer values we want the clicking position to match the grab box so we round above
-                        // This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                        val vNewOffF =(vMax - vMin) * clickedT
-                        val vNewOffFloor = vNewOffF
-                        val vNewOffRound = vNewOffF + 0.5
+                    vNew = lerp(vMin, vMax, clickedT)
+                else {
+                    // For integer values we want the clicking position to match the grab box so we round above
+                    // This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+                    val vNewOffF = (vMax - vMin) * clickedT
+                    val vNewOffFloor = vNewOffF
+                    val vNewOffRound = vNewOffF + 0.5
                     vNew = vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
-                    }
+                }
 
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
-                if (v() != vNew)
-                {
+                if (v() != vNew) {
                     v(vNew)
                     valueChanged = true
                 }
@@ -1434,17 +1479,63 @@ internal interface templateFunctions {
         return valueChanged
     }
 
-    /** template<TYPE = Int, FLOATTYPE = Float> */
-    fun sliderCalcRatioFromValueT(
-            dataType: DataType, v: Int, vMin: Int, vMax: Int,
-            power: Float, linearZeroPos: Float,
-    ): Float {
+    /** Convert a value v in the output space of a slider into a parametric position on the slider itself
+     *  template<TYPE = Int, FLOATTYPE = Float> */
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Int, vMin_: Int, vMax_: Int, power: Float,
+                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float): Float {
+
+        var vMin = vMin_
+        var vMax = vMax_
+
         if (vMin == vMax)
             return 0f
 
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isLogarithmic = power == 0f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
+            isLogarithmic -> {
+                val flipped = vMax < vMin
+
+                if (flipped) { // Handle the case where the range is backwards
+                    val t = vMin
+                    vMin = vMax
+                    vMax = t
+                }
+
+                // Fudge min/max to avoid getting close to log(0)
+                var vMinFudged = when {
+                    abs(vMin.f) < logarithmicZeroEpsilon -> if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                    else -> vMin.f
+                }
+                var vMaxFudged = when {
+                    abs(vMax.f) < logarithmicZeroEpsilon -> if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                    else -> vMax.f
+                }
+
+                // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+                if (vMin == 0 && vMax < 0f)
+                    vMinFudged = -logarithmicZeroEpsilon
+                else if (vMax == 0 && vMin < 0f)
+                    vMaxFudged = -logarithmicZeroEpsilon
+
+                val result = when {
+                    vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
+                    vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
+                    (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
+                        val zeroPoint = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        when {
+                            v == 0 -> zeroPoint // Special case for exactly zero
+                            v < 0f -> (1f - ln(-vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * zeroPoint
+                            else -> zeroPoint + ln(vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPoint)
+                        }
+                    }
+                    // Entirely negative slider
+                    (vMin < 0f) || (vMax < 0f) -> 1f - ln(-vClamped.f / -vMaxFudged) / ln(-vMinFudged / -vMaxFudged)
+                    else -> ln(vClamped.f / vMinFudged) / ln(vMaxFudged / vMinFudged)
+                }
+                if (flipped) 1f - result else result
+            }
             isPower -> when {
                 vClamped < 0f -> {
                     val f = 1f - ((vClamped - vMin) / (min(0, vMax) - vMin)).f
@@ -1460,22 +1551,68 @@ internal interface templateFunctions {
         }
     }
 
-    /** template<TYPE = Uint, FLOATTYPE = Float> */
-    fun sliderCalcRatioFromValueT(
-            dataType: DataType, v: Uint, vMin: Uint, vMax: Uint,
-            power: Float, linearZeroPos: Float,
-    ): Float {
+    /** Convert a value v in the output space of a slider into a parametric position on the slider itself
+     *  template<TYPE = Uint, FLOATTYPE = Float> */
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Uint, vMin_: Uint, vMax_: Uint, power: Float,
+                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float): Float {
+
+        var vMin = vMin_
+        var vMax = vMax_
+
         if (vMin == vMax)
             return 0f
 
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isLogarithmic = power == 0f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - ((vClamped - vMin) / (min(Uint(0), vMax) - vMin)).f
-                    1f - f.pow(1f / power) * linearZeroPos
+            isLogarithmic -> {
+                val flipped = vMax < vMin
+
+                if (flipped) { // Handle the case where the range is backwards
+                    val t = vMin
+                    vMin = vMax
+                    vMax = t
                 }
+
+                // Fudge min/max to avoid getting close to log(0)
+                val vMinFudged = when {
+                    abs(vMin.f) < logarithmicZeroEpsilon -> /*if (vMin < 0f) -logarithmicZeroEpsilon else */logarithmicZeroEpsilon
+                    else -> vMin.f
+                }
+                val vMaxFudged = when {
+                    abs(vMax.f) < logarithmicZeroEpsilon -> /*if (vMax < 0f) -logarithmicZeroEpsilon else */logarithmicZeroEpsilon
+                    else -> vMax.f
+                }
+
+                // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+//                if (vMin.v == 0 && vMax < 0f)
+//                    vMinFudged = -logarithmicZeroEpsilon
+//                else if (vMax.v == 0 && vMin < 0f)
+//                    vMaxFudged = -logarithmicZeroEpsilon
+
+                val result = when {
+                    vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
+                    vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
+//                    (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
+//                        val zeroPoint = - vMin.f / ( vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+//                        when {
+//                            v.v == 0 -> zeroPoint // Special case for exactly zero
+//                            v < 0f -> (1f - ln(- vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * zeroPoint
+//                            else -> zeroPoint + ln( vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPoint)
+//                        }
+//                    }
+                    // Entirely negative slider
+//                    vMin < Uint(0) || vMax < Uint(0) -> 1f - (float)(ImLog(-(FLOATTYPE) v_clamped / - v_max_fudged) / ImLog(-vMinFudged / -vMaxFudged))
+                    else -> ln(vClamped.f / vMinFudged) / ln(vMaxFudged / vMinFudged)
+                }
+                if (flipped) 1f - result else result
+            }
+            isPower -> when {
+//                vClamped < 0f -> {
+//                    val f = 1f - ((vClamped - vMin) / (min(Uint(0), vMax) - vMin)).f
+//                    1f - f.pow(1f / power) * linearZeroPos
+//                }
                 else -> {
                     val f = ((vClamped - max(Uint(0), vMin)) / (vMax - max(Uint(0), vMin))).f
                     linearZeroPos + f.pow(1f / power) * (1f - linearZeroPos)
@@ -1486,17 +1623,63 @@ internal interface templateFunctions {
         }
     }
 
-    /** template<TYPE = Long, FLOATTYPE = Double> */
-    fun sliderCalcRatioFromValueT(
-            dataType: DataType, v: Long, vMin: Long, vMax: Long,
-            power: Float, linearZeroPos: Float,
-    ): Float {
+    /** Convert a value v in the output space of a slider into a parametric position on the slider itself
+     *  template<TYPE = Long, FLOATTYPE = Double> */
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Long, vMin_: Long, vMax_: Long, power: Float,
+                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float): Float {
+
+        var vMin = vMin_
+        var vMax = vMax_
+
         if (vMin == vMax)
             return 0f
 
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isLogarithmic = power == 0f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
+            isLogarithmic -> {
+                val flipped = vMax < vMin
+
+                if (flipped) { // Handle the case where the range is backwards
+                    val t = vMin
+                    vMin = vMax
+                    vMax = t
+                }
+
+                // Fudge min/max to avoid getting close to log(0)
+                var vMinFudged = when {
+                    abs(vMin.d) < logarithmicZeroEpsilon -> if (vMin < 0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                    else -> vMin
+                }.d
+                var vMaxFudged = when {
+                    abs(vMax.d) < logarithmicZeroEpsilon -> if (vMax < 0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                    else -> vMax
+                }.d
+
+                // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+                if (vMin == 0L && vMax < 0L)
+                    vMinFudged = -logarithmicZeroEpsilon.d
+                else if (vMax == 0L && vMin < 0L)
+                    vMaxFudged = -logarithmicZeroEpsilon.d
+
+                val result = when {
+                    vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
+                    vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
+                    (vMin * vMax) < 0L -> { // Range crosses zero, so split into two portions
+                        val zeroPoint = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        when {
+                            v == 0L -> zeroPoint // Special case for exactly zero
+                            v < 0L -> (1f - (ln(-vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)).f) * zeroPoint
+                            else -> zeroPoint + ((ln(vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon)).f * (1f - zeroPoint))
+                        }
+                    }
+                    // Entirely negative slider
+                    (vMin < 0L || vMax < 0L) -> 1f - (ln(-vClamped.f / -vMaxFudged) / ln(-vMinFudged / -vMaxFudged)).f
+                    else -> (ln(vClamped.f / vMinFudged) / ln(vMaxFudged / vMinFudged)).f
+                }
+                if (flipped) 1f - result else result
+            }
             isPower -> when {
                 vClamped < 0f -> {
                     val f = 1f - ((vClamped - vMin) / (min(0L, vMax) - vMin)).f
@@ -1512,17 +1695,64 @@ internal interface templateFunctions {
         }
     }
 
-    /** template<TYPE = Ulong, FLOATTYPE = Double> */
-    fun sliderCalcRatioFromValueT(
-            dataType: DataType, v: Ulong, vMin: Ulong, vMax: Ulong,
-            power: Float, linearZeroPos: Float,
-    ): Float {
+    /** Convert a value v in the output space of a slider into a parametric position on the slider itself
+     *  template<TYPE = Ulong, FLOATTYPE = Double> */
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Ulong, vMin_: Ulong, vMax_: Ulong, power: Float,
+                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float): Float {
+
+        var vMin = vMin_
+        var vMax = vMax_
         if (vMin == vMax)
             return 0f
 
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isLogarithmic = power == 0f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
+            isLogarithmic -> {
+                val flipped = vMax < vMin
+
+                if (flipped) { // Handle the case where the range is backwards
+                    val t = vMin
+                    vMin = vMax
+                    vMax = t
+                }
+
+                // Fudge min/max to avoid getting close to log(0)
+                val vMinFudged = when {
+                    abs(vMin.d) < logarithmicZeroEpsilon -> /*if(vMin < 0) -logarithmicZeroEpsilon else */logarithmicZeroEpsilon
+                    else -> vMin
+                }.d
+                val vMaxFudged = when {
+                    abs(vMax.d) < logarithmicZeroEpsilon -> /*if(vMax < 0) -logarithmicZeroEpsilon else */logarithmicZeroEpsilon
+                    else -> vMax
+                }.d
+
+                // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+//                if (vMin.v == 0L && (v_max < 0.0f))
+//                    vMinFudged = -logarithmic_zero_epsilon;
+//                else if ((v_max == 0.0f) && (v_min < 0.0f))
+//                    vMaxFudged = -logarithmic_zero_epsilon;
+
+                val result = when {
+                    vClamped <= vMinFudged.ul -> 0f // Workaround for values that are in-range but below our fudge
+                    vClamped >= vMaxFudged.ul -> 1f // Workaround for values that are in-range but above our fudge
+//                    else if ((v_min * v_max) < 0.0f) // Range crosses zero, so split into two portions
+//                    {
+//                        float zero_point =(-(float) v_min) / ((float) v_max -(float) v_min) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+//                        if (v == 0.0f)
+//                            result = zero_point // Special case for exactly zero
+//                        else if (v < 0.0f)
+//                            result = (1.0f - (float)(ImLog(-(FLOATTYPE) v_clamped / logarithmic_zero_epsilon) / ImLog(-vMinFudged / logarithmic_zero_epsilon))) * zero_point
+//                        else
+//                            result = zero_point + ((float)(ImLog((FLOATTYPE) v_clamped / logarithmic_zero_epsilon) / ImLog(vMaxFudged / logarithmic_zero_epsilon)) * (1.0f - zero_point))
+//                    }
+//                    else if ((v_min < 0.0f) || (v_max < 0.0f)) // Entirely negative slider
+//                        result = 1.0f - (float)(ImLog(-(FLOATTYPE) v_clamped / - v_max_fudged) / ImLog(-vMinFudged / -vMaxFudged))
+                    else -> (ln(vClamped.d / vMinFudged) / ln(vMaxFudged / vMinFudged)).f
+                }
+                if (flipped) 1f - result else result
+            }
             isPower -> when {
                 vClamped < 0f -> {
                     val f = 1f - ((vClamped - vMin) / (min(Ulong(0), vMax) - vMin)).f
@@ -1538,17 +1768,62 @@ internal interface templateFunctions {
         }
     }
 
-    /** template<TYPE = Float, FLOATTYPE = Float> */
-    fun sliderCalcRatioFromValueT(
-            dataType: DataType, v: Float, vMin: Float, vMax: Float,
-            power: Float, linearZeroPos: Float,
-    ): Float {
+    /** Convert a value v in the output space of a slider into a parametric position on the slider itself
+     *  template<TYPE = Float, FLOATTYPE = Float> */
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Float, vMin_: Float, vMax_: Float, power: Float,
+                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float): Float {
+
+        var vMin = vMin_
+        var vMax = vMax_
         if (vMin == vMax)
             return 0f
 
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isLogarithmic = power == 0f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
+            isLogarithmic -> {
+                val flipped = vMax < vMin
+
+                if (flipped) { // Handle the case where the range is backwards
+                    val t = vMin
+                    vMin = vMax
+                    vMax = t
+                }
+
+                // Fudge min/max to avoid getting close to log(0)
+                var vMinFudged = when {
+                    abs(vMin) < logarithmicZeroEpsilon -> if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                    else -> vMin
+                }
+                var vMaxFudged = when {
+                    abs(vMax) < logarithmicZeroEpsilon -> if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                    else -> vMax
+                }
+
+                // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+                if (vMin == 0f && vMax < 0f)
+                    vMinFudged = -logarithmicZeroEpsilon
+                else if (vMax == 0f && vMin < 0f)
+                    vMaxFudged = -logarithmicZeroEpsilon
+
+                val result = when {
+                    vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
+                    vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
+                    (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
+                        val zeroPoint = -vMin / (vMax - vMin) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        when {
+                            v == 0f -> zeroPoint // Special case for exactly zero
+                            v < 0f -> (1f - ln(-vClamped / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * zeroPoint
+                            else -> zeroPoint + (ln(vClamped / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPoint))
+                        }
+                    }
+                    // Entirely negative slider
+                    vMin < 0f || vMax < 0f -> 1f - ln(-vClamped / -vMaxFudged) / ln(-vMinFudged / -vMaxFudged)
+                    else -> ln(vClamped / vMinFudged) / ln(vMaxFudged / vMinFudged)
+                }
+                if (flipped) 1f - result else result
+            }
             isPower -> when {
                 vClamped < 0f -> {
                     val f = 1f - (vClamped - vMin) / (min(0f, vMax) - vMin)
@@ -1564,17 +1839,62 @@ internal interface templateFunctions {
         }
     }
 
-    /** template<TYPE = Double, FLOATTYPE = Double> */
-    fun sliderCalcRatioFromValueT(
-            dataType: DataType, v: Double, vMin: Double, vMax: Double,
-            power: Float, linearZeroPos: Float,
-    ): Float {
+    /** Convert a value v in the output space of a slider into a parametric position on the slider itself
+     *  template<TYPE = Double, FLOATTYPE = Double> */
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Double, vMin_: Double, vMax_: Double, power: Float,
+                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float): Float {
+
+        var vMin = vMin_
+        var vMax = vMax_
         if (vMin == vMax)
             return 0f
 
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isLogarithmic = power == 0f && (dataType == DataType.Float || dataType == DataType.Double)
+        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
+            isLogarithmic -> {
+                val flipped = vMax < vMin
+
+                if (flipped) { // Handle the case where the range is backwards
+                    val t = vMin
+                    vMin = vMax
+                    vMax = t
+                }
+
+                // Fudge min/max to avoid getting close to log(0)
+                var vMinFudged = when {
+                    abs(vMin) < logarithmicZeroEpsilon -> (if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
+                    else -> vMin
+                }
+                var vMaxFudged = when {
+                    abs(vMax) < logarithmicZeroEpsilon -> (if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
+                    else -> vMax
+                }
+
+                // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+                if (vMin == 0.0 && vMax < 0f)
+                    vMinFudged = -logarithmicZeroEpsilon.d
+                else if (vMax == 0.0 && vMin < 0f)
+                    vMaxFudged = -logarithmicZeroEpsilon.d
+
+                val result = when {
+                    vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
+                    vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
+                    (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
+                        val zeroPoint = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        when {
+                            v == 0.0 -> zeroPoint // Special case for exactly zero
+                            v < 0f -> (1f - (ln(-vClamped / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)).f) * zeroPoint
+                            else -> zeroPoint + (ln(vClamped / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon)).f * (1f - zeroPoint)
+                        }
+                    }
+                    // Entirely negative slider
+                    vMin < 0f || vMax < 0f -> 1f - (ln(-vClamped / -vMaxFudged) / ln(-vMinFudged / -vMaxFudged)).f
+                    else -> (ln(vClamped / vMinFudged) / ln(vMaxFudged / vMinFudged)).f
+                }
+                if (flipped) 1f - result else result
+            }
             isPower -> when {
                 vClamped < 0f -> {
                     val f = 1f - ((vClamped - vMin) / (min(0.0, vMax) - vMin)).f
@@ -1593,7 +1913,7 @@ internal interface templateFunctions {
     /** template<TYPE = Int, SIGNEDTYPE = Int> */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Int): Int {
         val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val vStr = fmt.substring(fmtStart).format(v)
         return when (dataType) {
@@ -1605,7 +1925,7 @@ internal interface templateFunctions {
     /** template<TYPE = Uint, SIGNEDTYPE = Int> */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Uint): Uint {
         val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val vStr = fmt.substring(fmtStart).format(v.v)
         return when (dataType) {
@@ -1617,7 +1937,7 @@ internal interface templateFunctions {
     /** template<TYPE = Long, SIGNEDTYPE = Long> */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Long): Long {
         val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val vStr = fmt.substring(fmtStart).format(v)
         return when (dataType) {
@@ -1629,7 +1949,7 @@ internal interface templateFunctions {
     /** template<TYPE = Ulong, SIGNEDTYPE = Long> */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Ulong): Ulong {
         val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val vStr = fmt.substring(fmtStart).format(v.v)
         return when (dataType) {
@@ -1641,7 +1961,7 @@ internal interface templateFunctions {
     /** template<TYPE = Float, SIGNEDTYPE = Float> */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Float): Float {
         val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val vStr = fmt.substring(fmtStart).format(v)
         return when (dataType) {
@@ -1653,7 +1973,7 @@ internal interface templateFunctions {
     /** template<TYPE = Double, SIGNEDTYPE = Double> */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Double): Double {
         val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt[fmtStart + 0] != '%' || fmt[fmtStart + 1] == '%') // Don't apply if the value is not visible in the format string
+        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val vStr = fmt.substring(fmtStart).format(v)
         return when (dataType) {

@@ -143,7 +143,8 @@ interface widgetsSliders {
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun <N> sliderScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N,
-                         format_: String? = null, power: Float = 1f): Boolean where N : Number, N : Comparable<N> {
+                         format_: String? = null, power: Float = 1f): Boolean
+            where N : Number, N : Comparable<N> {
 
         val window = currentWindow
         if (window.skipItems) return false
@@ -198,7 +199,7 @@ interface widgetsSliders {
 
         // Slider behavior
         val grabBb = Rect()
-        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.None, grabBb)
+        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.None.i, grabBb)
         if (valueChanged)
             markItemEdited(id)
 
@@ -303,7 +304,7 @@ interface widgetsSliders {
         renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, style.frameRounding)
         // Slider behavior
         val grabBb = Rect()
-        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.Vertical, grabBb)
+        val valueChanged = sliderBehavior(frameBb, id, dataType, pData, pMin, pMax, format, power, SliderFlag.Vertical.i, grabBb)
 
         if (valueChanged)
             markItemEdited(id)
