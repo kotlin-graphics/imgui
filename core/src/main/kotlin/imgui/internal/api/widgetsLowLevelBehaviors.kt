@@ -417,14 +417,14 @@ internal interface widgetsLowLevelBehaviors {
             DataType.Short -> {
                 _i = v.i
                 sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, power, flags, outGrabBb).also {
-                    if(it)
+                    if (it)
                         v = _i.s as N
                 }
             }
             DataType.Ushort -> {
                 _ui.v = v.i
-                sliderBehaviorT(bb, id, dataType, ::_ui, pMin.ui, pMax.ui, format, power, flags, outGrabBb) .also {
-                    if(it)
+                sliderBehaviorT(bb, id, dataType, ::_ui, pMin.ui, pMax.ui, format, power, flags, outGrabBb).also {
+                    if (it)
                         (v as Ushort).v = _ui.s
                 }
             }
