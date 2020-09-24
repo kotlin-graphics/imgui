@@ -706,92 +706,91 @@ internal interface templateFunctions {
                 }
             }
 
-            if (setNewValue) {
-                var vNew = when {
-                    isLogarithmic -> when {
-                        // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
-                        clickedT <= 0f -> vMin
-                        clickedT >= 1f -> vMax
-                        else -> {
-                            val flipped = vMax < vMin
+            fun calcLogarithmic(): Int = when {
+                // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
+                clickedT <= 0f -> vMin
+                clickedT >= 1f -> vMax
+                else -> {
+                    val flipped = vMax < vMin
 
-                            // Fudge min/max to avoid getting silly results close to zero
-                            var vMinFudged = when {
-                                abs(vMin.f) < logarithmicZeroEpsilon -> if(vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                                    else -> vMin.f
-                            }
-                            var vMaxFudged = when {
-                                abs(vMax.f) < logarithmicZeroEpsilon -> if(vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                                    else -> vMax.f
-                            }
+                    // Fudge min/max to avoid getting silly results close to zero
+                    var vMinFudged = when {
+                        abs(vMin.f) < logarithmicZeroEpsilon -> if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                        else -> vMin.f
+                    }
+                    var vMaxFudged = when {
+                        abs(vMax.f) < logarithmicZeroEpsilon -> if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                        else -> vMax.f
+                    }
 
-                            // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-                            if (vMin == 0 && vMax < 0f)
-                                vMinFudged = -logarithmicZeroEpsilon
-                            else if (vMax == 0 && vMin < 0f)
-                                vMaxFudged = -logarithmicZeroEpsilon
+                    // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+                    if (vMin == 0 && vMax < 0f)
+                        vMinFudged = -logarithmicZeroEpsilon
+                    else if (vMax == 0 && vMin < 0f)
+                        vMaxFudged = -logarithmicZeroEpsilon
 
-                            if (flipped) {
-                                val t = vMinFudged
-                                vMinFudged = vMaxFudged
-                                vMaxFudged = t
-                            }
+                    if (flipped) {
+                        val t = vMinFudged
+                        vMinFudged = vMaxFudged
+                        vMaxFudged = t
+                    }
 
-                            val clickedTWithFlip = if(flipped) 1f - clickedT else clickedT
+                    val clickedTWithFlip = if (flipped) 1f - clickedT else clickedT
 
+                    when {
+                        vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
+                            val zeroPoint = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
                             when {
-                                vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
-                                    val zeroPoint = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
-                                    when {
-                                        // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                                        clickedTWithFlip == zeroPoint -> 0
-                                        clickedTWithFlip < zeroPoint -> {
-                                            val pow = (-vMinFudged / logarithmicZeroEpsilon).pow(1f - (clickedTWithFlip / zeroPoint))
-                                            (-(logarithmicZeroEpsilon * pow)).i
-                                        }
-                                        else -> {
-                                            val pow = (vMaxFudged / logarithmicZeroEpsilon).pow((clickedTWithFlip - zeroPoint) / (1f - zeroPoint))
-                                            (logarithmicZeroEpsilon * pow).i
-                                        }
-                                    }
-                                }
-                                // Entirely negative slider
-                                vMin < 0f || vMax < 0f -> {
-                                    (TYPE)-(-vMaxFudged * ImPow(-vMinFudged / -vMaxFudged, (FLOATTYPE)(1.0f - clickedTWithFlip)))
-                                }
-                                else
-                                v_new = (TYPE)(vMinFudged * ImPow(vMaxFudged / vMinFudged, (FLOATTYPE)clicked_t_with_flip))
+                                clickedTWithFlip == zeroPoint -> 0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                                clickedTWithFlip < zeroPoint -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - clickedTWithFlip / zeroPoint)).i
+                                else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((clickedTWithFlip - zeroPoint) / (1f - zeroPoint))).i
                             }
                         }
+                        // Entirely negative slider
+                        vMin < 0 || vMax < 0f -> -(-vMaxFudged * (-vMinFudged / -vMaxFudged).pow(1f - clickedTWithFlip)).i
+                        else -> (vMinFudged * (vMaxFudged / vMinFudged).pow(clickedTWithFlip)).i
                     }
-                if (isPower)
+                }
+            }
+
+            fun calcPower(): Int = when {
                 // Account for power curve scale on both sides of the zero
-                    if (clickedT < linearZeroPos) {
-                        // Negative: rescale to the negative range before powering
-                        var a = 1f - (clickedT / linearZeroPos)
-                        a = a pow power
-                        vNew = lerp(vMax min 0, vMin, a)
-                    } else {
-                        // Positive: rescale to the positive range before powering
-                        var a = when {
-                            abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
-                            else -> clickedT
-                        }
-                        a = a pow power
-                        vNew = lerp(vMin max 0, vMax, a)
+                clickedT < linearZeroPos -> {
+                    // Negative: rescale to the negative range before powering
+                    var a = 1f - (clickedT / linearZeroPos)
+                    a = a pow power
+                    lerp(min(vMax, 0), vMin, a)
+                }
+                else -> {
+                    // Positive: rescale to the positive range before powering
+                    var a = when {
+                        abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
+                        else -> clickedT
                     }
-                // Linear slider
-                else if (isDecimal)
-                    vNew = lerp(vMin, vMax, clickedT)
-                else {
+                    a = a pow power
+                    lerp(max(vMin, 0), vMax, a)
+                }
+            }
+
+            fun calcLinear(): Int = when {
+                isDecimal -> lerp(vMin, vMax, clickedT)
+                else -> {
                     // For integer values we want the clicking position to match the grab box so we round above
                     // This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                     val vNewOffF = (vMax - vMin) * clickedT
                     val vNewOffFloor = vNewOffF.i
                     val vNewOffRound = (vNewOffF + 0.5f).i
-                    vNew = vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
+                    vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
                 }
+            }
+
+            if (setNewValue) {
+                var vNew = when {
+                    isLogarithmic -> calcLogarithmic()
+                    isPower -> calcPower()
+                    else -> calcLinear() // Linear slider
                 }
+
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
 
@@ -807,7 +806,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -852,6 +851,14 @@ internal interface templateFunctions {
             // Same sign
             else -> if (vMin < 0f) 1f else 0f
         }
+
+        var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
+        if (isLogarithmic) {
+            // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
+            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            logarithmicZeroEpsilon = 0.1f.pow(decimalPrecision.f)
+        }
+
         // Process interacting with the slider
         var valueChanged = false
         if (g.activeId == id) {
@@ -873,7 +880,7 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0 || isPower) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -893,34 +900,89 @@ internal interface templateFunctions {
                 }
             }
 
-            if (setNewValue) {
-                var vNew: Uint
-                if (isPower)
-                // Account for power curve scale on both sides of the zero
-                    if (clickedT < linearZeroPos) {
-                        // Negative: rescale to the negative range before powering
-                        var a = 1f - (clickedT / linearZeroPos)
-                        a = a pow power
-                        vNew = lerp(min(vMax, Uint(0)), vMin, a)
-                    } else {
-                        // Positive: rescale to the positive range before powering
-                        var a = when {
-                            abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
-                            else -> clickedT
-                        }
-                        a = a pow power
-                        vNew = lerp(max(vMin, Uint(0)), vMax, a)
+            fun calcLogarithmic(): Uint = when {
+                // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
+                clickedT <= 0f -> vMin
+                clickedT >= 1f -> vMax
+                else -> {
+                    val flipped = vMax < vMin
+
+                    // Fudge min/max to avoid getting silly results close to zero
+                    var vMinFudged = when {
+                        abs(vMin.f) < logarithmicZeroEpsilon -> /*if(vMin < 0f) -logarithmicZeroEpsilon else*/ logarithmicZeroEpsilon
+                        else -> vMin.f
                     }
-                // Linear slider
-                else if (isDecimal)
-                    vNew = lerp(vMin, vMax, clickedT)
-                else {
+                    var vMaxFudged = when {
+                        abs(vMax.f) < logarithmicZeroEpsilon -> /*if(vMax < 0f) -logarithmicZeroEpsilon else*/ logarithmicZeroEpsilon
+                        else -> vMax.f
+                    }
+
+                    // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+//                    if (vMin == 0f && (v_max < 0.0f))
+//                        vMinFudged = -logarithmic_zero_epsilon
+//                    else if ((v_max == 0.0f) && (v_min < 0.0f))
+//                        vMaxFudged = -logarithmic_zero_epsilon
+
+                    if (flipped) {
+                        val t = vMinFudged
+                        vMinFudged = vMaxFudged
+                        vMaxFudged = t
+                    }
+
+                    val clickedTWithFlip = if (flipped) 1f - clickedT else clickedT
+
+//                    if ((v_min * v_max) < 0.0f) // Range crosses zero, so we have to do this in two parts
+//                    {
+//                        float zero_point =(-(float) ImMin (v_min, v_max)) / ImAbs((float)v_max-(float)v_min) // The zero point in parametric space
+//                        if (clicked_t_with_flip == zero_point)
+//                            v_new = (TYPE)0.0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+//                        else if (clicked_t_with_flip < zero_point)
+//                        v_new = (TYPE) - (logarithmic_zero_epsilon * ImPow(-vMinFudged / logarithmic_zero_epsilon, (FLOATTYPE)(1.0f - (clicked_t_with_flip / zero_point))))
+//                    else
+//                        v_new = (TYPE)(logarithmic_zero_epsilon * ImPow(vMaxFudged / logarithmic_zero_epsilon, (FLOATTYPE)((clicked_t_with_flip - zero_point) / (1.0f - zero_point))))
+//                    } else if ((v_min < 0.0f) || (v_max < 0.0f)) // Entirely negative slider
+//                        v_new = (TYPE) - (-vMaxFudged * ImPow(-vMinFudged / -vMaxFudged, (FLOATTYPE)(1.0f - clicked_t_with_flip)))
+//                    else
+                    Uint(vMinFudged * (vMaxFudged / vMinFudged).pow(clickedTWithFlip))
+                }
+            }
+
+            fun calcPower(): Uint = when {
+                // Account for power curve scale on both sides of the zero
+                clickedT < linearZeroPos -> {
+                    // Negative: rescale to the negative range before powering
+                    var a = 1f - (clickedT / linearZeroPos)
+                    a = a pow power
+                    lerp(min(vMax, Uint(0)), vMin, a)
+                }
+                else -> {
+                    // Positive: rescale to the positive range before powering
+                    var a = when {
+                        abs(linearZeroPos - 1f) > 1e-6f -> (clickedT - linearZeroPos) / (1f - linearZeroPos)
+                        else -> clickedT
+                    }
+                    a = a pow power
+                    lerp(max(vMin, Uint(0)), vMax, a)
+                }
+            }
+
+            fun calcLinear(): Uint = when {
+                isDecimal -> lerp(vMin, vMax, clickedT)
+                else -> {
                     // For integer values we want the clicking position to match the grab box so we round above
                     // This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                     val vNewOffF = (vMax - vMin).f * clickedT
                     val vNewOffFloor = Uint(vNewOffF)
                     val vNewOffRound = Uint(vNewOffF + 0.5f)
-                    vNew = vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
+                    vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
+                }
+            }
+
+            if (setNewValue) {
+                var vNew = when {
+                    isLogarithmic -> calcLogarithmic()
+                    isPower -> calcPower()
+                    else -> calcLinear() // Linear slider
                 }
 
                 // Round to user desired precision based on format string
@@ -938,7 +1000,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         } else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
