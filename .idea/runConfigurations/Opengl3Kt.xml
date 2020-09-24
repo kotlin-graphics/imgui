@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Opengl3Kt" type="JetRunConfigurationType" nameIsGenerated="true">
-    <module name="imgui.gl.test" />
+    <module name="imgui.gl" />
     <option name="VM_PARAMETERS" value="-ea" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
