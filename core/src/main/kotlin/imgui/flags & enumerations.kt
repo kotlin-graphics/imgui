@@ -1293,6 +1293,37 @@ infix fun ColorEditFlags.hasnt(b: ColorEditFlag): Boolean = and(b.i) == 0
 infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
 
 
+typealias DragSliderFlags = Int
+
+/** Flags for configuring drag/slider widgets */
+enum class DragSliderFlag(val i: DragSliderFlags) {
+    /** We treat anything < this as being potentially a (float) power term from the previous API that has got miscast
+     *  to this enum, and trigger an assert */
+    AnythingBelowThisMightBeAPowerTerm(8),
+
+    /** Should this widget be orientated vertically? */
+    Vertical(1 shl 3),
+
+    /** Should this widget be logarithmic? (linear otherwise) */
+    Logarithmic(1 shl 4);
+
+    infix fun and(b: DragSliderFlag): DragSliderFlags = i and b.i
+    infix fun and(b: DragSliderFlags): DragSliderFlags = i and b
+    infix fun or(b: DragSliderFlag): DragSliderFlags = i or b.i
+    infix fun or(b: DragSliderFlags): DragSliderFlags = i or b
+    infix fun xor(b: DragSliderFlag): DragSliderFlags = i xor b.i
+    infix fun xor(b: DragSliderFlags): DragSliderFlags = i xor b
+    infix fun wo(b: DragSliderFlags): DragSliderFlags = and(b.inv())
+}
+
+infix fun DragSliderFlags.and(b: DragSliderFlag): DragSliderFlags = and(b.i)
+infix fun DragSliderFlags.or(b: DragSliderFlag): DragSliderFlags = or(b.i)
+infix fun DragSliderFlags.xor(b: DragSliderFlag): DragSliderFlags = xor(b.i)
+infix fun DragSliderFlags.has(b: DragSliderFlag): Boolean = and(b.i) != 0
+infix fun DragSliderFlags.hasnt(b: DragSliderFlag): Boolean = and(b.i) == 0
+infix fun DragSliderFlags.wo(b: DragSliderFlag): DragSliderFlags = and(b.i.inv())
+
+
 /** Identify a mouse button.
  *  Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for convenience. */
 enum class MouseButton {
