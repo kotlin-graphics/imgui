@@ -220,6 +220,7 @@ object ImGui :
         renderHelpers,
         widgets,
         widgetsLowLevelBehaviors,
+        internalImplementationsExposedFunctions,
         templateFunctions,
         dataTypeHelpers,
         inputText,
