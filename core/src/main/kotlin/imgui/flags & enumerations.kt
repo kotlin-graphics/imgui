@@ -1313,8 +1313,11 @@ enum class DragFlag(val i: DragFlags) {
     /** Clamp value to min/max bounds (if any) when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
     ClampOnInput(1 shl 4),
 
-    /** Should this widget be logarithmic? (linear otherwise) */
+    /** Make the widget logarithmic (linear otherwise) */
     Logarithmic(1 shl 5),
+
+    /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
+    NoRoundToFormat(1 shl 6),
 
     /** [Private] Should this widget be orientated vertically? */
     _Vertical(1 shl 20);
@@ -1348,8 +1351,11 @@ enum class SliderFlag(val i: SliderFlags) {
     /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
     ClampOnInput(1 shl 4),
 
-    /** Should this widget be logarithmic? (linear otherwise) */
+    /** Make the widget logarithmic (linear otherwise) */
     Logarithmic(1 shl 4),
+
+    /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
+    NoRoundToFormat(1 shl 6),
 
     /** [Private] Should this widget be orientated vertically? */
     _Vertical(1 shl 20);

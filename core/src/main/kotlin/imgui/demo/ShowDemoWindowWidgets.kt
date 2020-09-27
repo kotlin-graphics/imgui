@@ -1164,11 +1164,14 @@ object ShowDemoWindowWidgets {
             sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
             checkboxFlags("ImGuiDragFlags_Logarithmic", ::dragFlags, DragFlag.Logarithmic.i)
             sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
+            checkboxFlags("ImGuiDragFlags_NoRoundToFormat", ::dragFlags, DragFlag.NoRoundToFormat.i)
+            sameLine(); helpMarker("Disable rounding underlying value to match precision of the format string (e.g. %.3f values are rounded to those 3 digits).")
 
-            dragFloat("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%f", dragFlags)
-            dragFloat("DragFloat (0 -> +inf)", ::dragF, 0.005f, 0f, Float.MAX_VALUE, "%f", dragFlags)
-            dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%f", dragFlags)
-            dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%f", dragFlags)
+            text("Underlying float value: %f", dragF)
+            dragFloat("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%.3f", dragFlags)
+            dragFloat("DragFloat (0 -> +inf)", ::dragF, 0.005f, 0f, Float.MAX_VALUE, "%.3f", dragFlags)
+            dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%.3f", dragFlags)
+            dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%.3f", dragFlags)
             dragInt("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", dragFlags)
 
             // Demonstrate using advanced flags for SliderXXX functions
@@ -1176,9 +1179,12 @@ object ShowDemoWindowWidgets {
             sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
             checkboxFlags("ImGuiSliderFlags_Logarithmic", ::sliderFlags, SliderFlag.Logarithmic.i)
             sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
+            checkboxFlags("ImGuiSliderFlags_NoRoundToFormat", ::sliderFlags, SliderFlag.NoRoundToFormat.i)
+            sameLine(); helpMarker("Disable rounding underlying value to match precision of the format string (e.g. %.3f values are rounded to those 3 digits).")
 
-            sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "", sliderFlags)
-            sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "", sliderFlags)
+            text("Underlying float value: %f", sliderF)
+            sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", sliderFlags)
+            sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%.3f", sliderFlags)
         }
 
         treeNode("Range Widgets") {
