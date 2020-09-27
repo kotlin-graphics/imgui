@@ -279,15 +279,15 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
-                     format: String, power: Float, flags: DragSliderFlags): Boolean =
+                     format: String, power: Float, flags: DragFlags): Boolean =
             withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, power, flags) }
 
     fun <N> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
-                         pMax: Number?, format: String, power: Float, flags: DragSliderFlags): Boolean
+                         pMax: Number?, format: String, power: Float, flags: DragFlags): Boolean
             where N : Number, N : Comparable<N> {
 
-        assert(flags == 0 || flags >= DragSliderFlag.AnythingBelowThisMightBeAPowerTerm.i) {
-            "Invalid ImGuiDragSliderFlags flags - has a power term been mistakenly cast to flags?"
+        assert(flags == 0 || flags >= DragFlag._AnythingBelowThisMightBeAPowerTerm.i) {
+            "Invalid ImGuiDragFlags flags - has a power term been mistakenly cast to flags?"
         }
 
         if (g.activeId == id)
@@ -378,11 +378,11 @@ internal interface widgetsLowLevelBehaviors {
      *  So e.g. an integer Slider between INT_MAX-10 and INT_MAX will fail, but an integer Slider between INT_MAX/2-10 and INT_MAX/2 will be ok.
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String, power: Float,
-                       flags: DragSliderFlags, outGrabBb: Rect) =
+                       flags: SliderFlags, outGrabBb: Rect) =
             sliderBehavior(bb, id, pV, 0, pMin, pMax, format, power, flags, outGrabBb)
 
     fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, pMin: Float, pMax: Float, format: String,
-                       power: Float, flags: DragSliderFlags, outGrabBb: Rect): Boolean =
+                       power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean =
             withFloat(pV, ptr) {
                 sliderBehavior(bb, id, DataType.Float, it, pMin, pMax, format, power, flags, outGrabBb)
             }
@@ -395,8 +395,12 @@ internal interface widgetsLowLevelBehaviors {
 //            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
 
     fun <N> sliderBehavior(bb: Rect, id: ID, dataType: DataType, pV: KMutableProperty0<N>, pMin: N, pMax: N,
-                           format: String, power: Float, flags: DragSliderFlags, outGrabBb: Rect): Boolean
+                           format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean
             where N : Number, N : Comparable<N> {
+
+        assert(flags == 0 || flags >= SliderFlag._AnythingBelowThisMightBeAPowerTerm.i) {
+            "Invalid ImGuiSliderFlags flags - has a power term been mistakenly cast to flags?"
+        }
 
         if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly)
             return false

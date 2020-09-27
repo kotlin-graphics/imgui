@@ -687,7 +687,8 @@ fun registerTests_Perf(e: TestEngine) {
                 ImGui.sliderFloat("Line width", ::lineWidth0, 1f, 10f)
                 ImGui.sliderFloat("Radius", ::radius, 1f, maxRadius)
                 ImGui.sliderInt("Segments", ::segmentCountManual, 1, 512)
-                ImGui.dragFloat("Circle segment Max Error", ImGui.style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f", 1f)
+                // TODO
+//                ImGui.dragFloat("Circle segment Max Error", ImGui.style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f", 1f)
                 ImGui.checkbox("No anti-aliasing", ::noAA)
                 ImGui.sameLine()
                 ImGui.checkbox("Overdraw", ::overdraw)

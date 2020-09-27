@@ -1293,35 +1293,64 @@ infix fun ColorEditFlags.hasnt(b: ColorEditFlag): Boolean = and(b.i) == 0
 infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
 
 
-typealias DragSliderFlags = Int
+typealias DragFlags = Int
 
-/** Flags for configuring drag/slider widgets */
-enum class DragSliderFlag(val i: DragSliderFlags) {
-    /** We treat anything < this as being potentially a (float) power term from the previous API that has got miscast
-     *  to this enum, and trigger an assert */
-    AnythingBelowThisMightBeAPowerTerm(8),
-
+/** Flags for DragFloat(), DragInt() etc. */
+enum class DragFlag(val i: DragFlags) {
+    None                     (0),
+    /** We treat anything < this as being potentially a (float) power term from the previous API that 
+     *  has got miscast to this enum, and trigger an assert */
+    _AnythingBelowThisMightBeAPowerTerm (8),     
     /** Should this widget be orientated vertically? */
-    Vertical(1 shl 3),
-
+    Vertical                 (1 shl 3),           
     /** Should this widget be logarithmic? (linear otherwise) */
-    Logarithmic(1 shl 4);
+    Logarithmic              (1 shl 4);
 
-    infix fun and(b: DragSliderFlag): DragSliderFlags = i and b.i
-    infix fun and(b: DragSliderFlags): DragSliderFlags = i and b
-    infix fun or(b: DragSliderFlag): DragSliderFlags = i or b.i
-    infix fun or(b: DragSliderFlags): DragSliderFlags = i or b
-    infix fun xor(b: DragSliderFlag): DragSliderFlags = i xor b.i
-    infix fun xor(b: DragSliderFlags): DragSliderFlags = i xor b
-    infix fun wo(b: DragSliderFlags): DragSliderFlags = and(b.inv())
+    infix fun and(b: DragFlag): DragFlags = i and b.i
+    infix fun and(b: DragFlags): DragFlags = i and b
+    infix fun or(b: DragFlag): DragFlags = i or b.i
+    infix fun or(b: DragFlags): DragFlags = i or b
+    infix fun xor(b: DragFlag): DragFlags = i xor b.i
+    infix fun xor(b: DragFlags): DragFlags = i xor b
+    infix fun wo(b: DragFlags): DragFlags = and(b.inv())
 }
 
-infix fun DragSliderFlags.and(b: DragSliderFlag): DragSliderFlags = and(b.i)
-infix fun DragSliderFlags.or(b: DragSliderFlag): DragSliderFlags = or(b.i)
-infix fun DragSliderFlags.xor(b: DragSliderFlag): DragSliderFlags = xor(b.i)
-infix fun DragSliderFlags.has(b: DragSliderFlag): Boolean = and(b.i) != 0
-infix fun DragSliderFlags.hasnt(b: DragSliderFlag): Boolean = and(b.i) == 0
-infix fun DragSliderFlags.wo(b: DragSliderFlag): DragSliderFlags = and(b.i.inv())
+infix fun DragFlags.and(b: DragFlag): DragFlags = and(b.i)
+infix fun DragFlags.or(b: DragFlag): DragFlags = or(b.i)
+infix fun DragFlags.xor(b: DragFlag): DragFlags = xor(b.i)
+infix fun DragFlags.has(b: DragFlag): Boolean = and(b.i) != 0
+infix fun DragFlags.hasnt(b: DragFlag): Boolean = and(b.i) == 0
+infix fun DragFlags.wo(b: DragFlag): DragFlags = and(b.i.inv())
+
+typealias SliderFlags = Int
+
+/** Flags for SliderFloat(), SliderInt() etc. */
+enum class SliderFlag(val i: SliderFlags)
+{
+    None                   (0),
+    /** We treat anything < this as being potentially a (float) power term from the previous API that 
+     * has got miscast to this enum, and trigger an assert */
+    _AnythingBelowThisMightBeAPowerTerm (8),
+    /** Should this widget be orientated vertically? */
+    Vertical               (1 shl 3),           
+    /** Should this widget be logarithmic? (linear otherwise) */
+    Logarithmic            (1 shl 4);
+
+    infix fun and(b: SliderFlag): SliderFlags = i and b.i
+    infix fun and(b: SliderFlags): SliderFlags = i and b
+    infix fun or(b: SliderFlag): SliderFlags = i or b.i
+    infix fun or(b: SliderFlags): SliderFlags = i or b
+    infix fun xor(b: SliderFlag): SliderFlags = i xor b.i
+    infix fun xor(b: SliderFlags): SliderFlags = i xor b
+    infix fun wo(b: SliderFlags): SliderFlags = and(b.inv())
+}
+
+infix fun SliderFlags.and(b: SliderFlag): SliderFlags = and(b.i)
+infix fun SliderFlags.or(b: SliderFlag): SliderFlags = or(b.i)
+infix fun SliderFlags.xor(b: SliderFlag): SliderFlags = xor(b.i)
+infix fun SliderFlags.has(b: SliderFlag): Boolean = and(b.i) != 0
+infix fun SliderFlags.hasnt(b: SliderFlag): Boolean = and(b.i) == 0
+infix fun SliderFlags.wo(b: SliderFlag): SliderFlags = and(b.i.inv())
 
 
 /** Identify a mouse button.
