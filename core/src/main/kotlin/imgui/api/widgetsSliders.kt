@@ -9,11 +9,15 @@ import glm_.vec3.Vec3i
 import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
-import imgui.ImGui.sliderScalarInternal
-import imgui.ImGui.sliderScalarNInternal
-import imgui.ImGui.vSliderScalarInternal
+import imgui.ImGui.format
+import imgui.internal.classes.Rect
+import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
+import unsigned.Ubyte
+import unsigned.Uint
+import unsigned.Ulong
+import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")
@@ -123,20 +127,128 @@ interface widgetsSliders {
      *  Use power != 1.0f for non-linear sliders.
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders
      *
-     *  Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a slider,
-     *  they are all required.
-     *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand
-     *  how to use this function directly. */
-    fun <N> sliderScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N,
-                         format: String? = null, flags: DragFlags = 0): Boolean
-            where N : Number, N : Comparable<N> =
-            sliderScalarInternal(label, dataType, pData, pMin, pMax, format, 1f, flags)
+     *  Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a slider, they are all required.
+     *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
+    fun <N> sliderScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>,
+                         pMin: N? = null, pMax: N? = null, format_: String? = null, flags: SliderFlags = 0): Boolean
+            where N : Number, N : Comparable<N> {
+
+        val window = ImGui.currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getID(label)
+        val w = ImGui.calcItemWidth()
+
+        val labelSize = ImGui.calcTextSize(label, hideTextAfterDoubleHash = true)
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + ImGui.style.framePadding.y * 2f))
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) ImGui.style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+
+        ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
+        if (!ImGui.itemAdd(totalBb, id, frameBb))
+            return false
+
+        // Default format string when passing NULL
+        val format = when {
+            format_ == null -> when (dataType) {
+                DataType.Float, DataType.Double -> "%f"
+                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
+            }
+            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
+            else -> format_
+        }
+
+        // Tabbing or CTRL-clicking on Slider turns it into an input box
+        val hovered = ImGui.itemHoverable(frameBb, id)
+        var tempInputIsActive = ImGui.tempInputIsActive(id)
+        if (!tempInputIsActive) {
+            val focusRequested = ImGui.focusableItemRegister(window, id)
+            val clicked = hovered && ImGui.io.mouseClicked[0]
+            if (focusRequested || clicked || g.navActivateId == id || g.navInputId == id) {
+                ImGui.setActiveID(id, window)
+                ImGui.setFocusID(id, window)
+                ImGui.focusWindow(window)
+                g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
+                if (focusRequested || (clicked && ImGui.io.keyCtrl) || g.navInputId == id) {
+                    tempInputIsActive = true
+                    ImGui.focusableItemUnregister(window)
+                }
+            }
+        }
+
+        // Our current specs do NOT clamp when using CTRL+Click manual input, but we should eventually add a flag for that..
+        if (tempInputIsActive)
+            return ImGui.tempInputScalar(frameBb, id, label, DataType.Float, pData, format)// , p_min, p_max)
+
+        // Draw frame
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        ImGui.renderNavHighlight(frameBb, id)
+        ImGui.renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, ImGui.style.frameRounding)
+
+        // Slider behavior
+        val grabBb = Rect()
+        val valueChanged = ImGui.sliderBehavior(frameBb, id, dataType, pData, pMin!!, pMax!!, format, flags, grabBb)
+        if (valueChanged)
+            ImGui.markItemEdited(id)
+
+        // Render grab
+        if (grabBb.max.x > grabBb.min.x)
+            window.drawList.addRectFilled(grabBb.min, grabBb.max, ImGui.getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), ImGui.style.grabRounding)
+
+        // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
+        val value = format.format(ImGui.style.locale, when (val data = pData()) {
+            is Ubyte -> data.v
+            is Ushort -> data.v
+            is Uint -> data.v
+            is Ulong -> data.v
+            else -> data
+        })
+        ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
+
+        if (labelSize.x > 0f)
+            ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
+
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
+        return valueChanged
+    }
 
     /** Add multiple sliders on 1 line for compact edition of multiple components */
-    fun <N> sliderScalarN(label: String, dataType: DataType, pData: Any, components: Int, pMin: N, pMax: N,
-                          format: String? = null, flags: DragFlags = 0): Boolean
-            where N : Number, N : Comparable<N> =
-            sliderScalarNInternal(label, dataType, pData, components, pMin, pMax, format, 1f, flags)
+    fun <N> sliderScalarN(label: String, dataType: DataType, pData: Any, components: Int,
+                          pMin: N? = null, pMax: N? = null, format: String? = null, flags: SliderFlags = 0): Boolean
+            where N : Number, N : Comparable<N> {
+
+        val window = ImGui.currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        ImGui.beginGroup()
+        ImGui.pushID(label)
+        ImGui.pushMultiItemsWidths(components, ImGui.calcItemWidth())
+        for (i in 0 until components) {
+            ImGui.pushID(i)
+            if (i > 0)
+                ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
+            valueChanged = when (dataType) {
+                DataType.Int -> withInt(pData as IntArray, i) {
+                    sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, flags)
+                }
+                DataType.Float -> withFloat(pData as FloatArray, i) {
+                    sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, flags)
+                }
+                else -> error("invalid")
+            } || valueChanged
+            ImGui.popID()
+            ImGui.popItemWidth()
+        }
+        ImGui.popID()
+
+        val labelEnd = ImGui.findRenderedTextEnd(label)
+        if (0 != labelEnd) {
+            ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
+            ImGui.textEx(label, labelEnd)
+        }
+        ImGui.endGroup()
+        return valueChanged
+    }
 
     fun <N> vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<N>, vMin: Float, vMax: Float,
                          format: String = "%.3f", flags: DragFlags = 0): Boolean
@@ -148,8 +260,63 @@ interface widgetsSliders {
             where N : Number, N : Comparable<N> =
             vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format, flags)
 
-    fun <N> vSliderScalar(label: String, size: Vec2, dataType: DataType, pData: KMutableProperty0<N>, pMin: N, pMax: N,
-                          format_: String? = null, flags: DragFlags = 0): Boolean
-            where N : Number, N : Comparable<N> =
-            vSliderScalarInternal(label, size, dataType, pData, pMin, pMax, format_, 1f, flags)
+    /** Internal implementation */
+    fun <N> vSliderScalar(label: String, size: Vec2, dataType: DataType, pData: KMutableProperty0<N>,
+                          pMin: N? = null, pMax: N? = null, format_: String? = null, flags: SliderFlags = 0): Boolean
+            where N : Number, N : Comparable<N> {
+
+        val window = ImGui.currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getID(label)
+
+        val labelSize = ImGui.calcTextSize(label, hideTextAfterDoubleHash = true)
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
+        val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) ImGui.style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+
+        ImGui.itemSize(bb, ImGui.style.framePadding.y)
+        if (!ImGui.itemAdd(frameBb, id)) return false
+
+        // Default format string when passing NULL
+        val format = when {
+            format_ == null -> when (dataType) {
+                DataType.Float, DataType.Double -> "%f"
+                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
+            }
+            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
+            else -> format_
+        }
+        val hovered = ImGui.itemHoverable(frameBb, id)
+        if ((hovered && ImGui.io.mouseClicked[0]) || g.navActivateId == id || g.navInputId == id) {
+            ImGui.setActiveID(id, window)
+            ImGui.setFocusID(id, window)
+            ImGui.focusWindow(window)
+            g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
+        }
+
+        // Draw frame
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        ImGui.renderNavHighlight(frameBb, id)
+        ImGui.renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, ImGui.style.frameRounding)
+        // Slider behavior
+        val grabBb = Rect()
+        val valueChanged = ImGui.sliderBehavior(frameBb, id, dataType, pData, pMin!!, pMax!!, format, flags or SliderFlag._Vertical.i, grabBb)
+
+        if (valueChanged)
+            ImGui.markItemEdited(id)
+
+        // Render grab
+        if (grabBb.max.y > grabBb.min.y)
+            window.drawList.addRectFilled(grabBb.min, grabBb.max, ImGui.getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab), ImGui.style.grabRounding)
+
+        /*  Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
+            For the vertical slider we allow centered text to overlap the frame padding         */
+        val value = pData.format(dataType, format)
+        val posMin = Vec2(frameBb.min.x, frameBb.min.y + ImGui.style.framePadding.y)
+        ImGui.renderTextClipped(posMin, frameBb.max, value, null, Vec2(0.5f, 0f))
+        if (labelSize.x > 0f)
+            ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
+
+        return valueChanged
+    }
 }
