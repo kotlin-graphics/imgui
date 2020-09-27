@@ -1310,8 +1310,11 @@ enum class DragFlag(val i: DragFlags) {
      *  that has got miscast to this enum, and will trigger an assert if needed. */
     InvalidMask_(0x7000000F),
 
+    /** Clamp value to min/max bounds (if any) when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
+    ClampOnInput(1 shl 4),
+
     /** Should this widget be logarithmic? (linear otherwise) */
-    Logarithmic(1 shl 4),
+    Logarithmic(1 shl 5),
 
     /** [Private] Should this widget be orientated vertically? */
     _Vertical(1 shl 20);
@@ -1341,6 +1344,9 @@ enum class SliderFlag(val i: SliderFlags) {
     /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API that
      *  has got miscast to this enum, and will trigger an assert if needed. */
     InvalidMask_(0x7000000F),
+
+    /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
+    ClampOnInput(1 shl 4),
 
     /** Should this widget be logarithmic? (linear otherwise) */
     Logarithmic(1 shl 4),
