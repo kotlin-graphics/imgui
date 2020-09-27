@@ -159,6 +159,7 @@ object StyleEditor {
                 sliderFloat("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
                 sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0f, 12f, "%.0f")
                 sliderFloat("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
+                sliderFloat("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
                 sliderFloat("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
