@@ -21,6 +21,7 @@ import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
+import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
 import imgui.static.patchFormatStringFloatToInt
@@ -36,6 +37,7 @@ import kotlin.reflect.KMutableProperty0
  *      accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
  *  - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
  *      e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
+ *  - Format string may also be set to NULL or use the default format ("%f" or "%d").
  *  - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
  *      For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
  *  - Use v_min < v_max to clamp edits to given limits. Note that CTRL+Click manual input can override those limits. */
@@ -254,9 +256,11 @@ interface widgetsDrags {
             }
         }
 
-        // Our current specs do NOT clamp when using CTRL+Click manual input, but we should eventually add a flag for that..
-        if (tempInputIsActive)
-            return ImGui.tempInputScalar(frameBb, id, label, dataType, pData, format) // , p_min, p_max)
+        if (tempInputIsActive) {
+            // Only clamp CTRL+Click input when ImGuiDragFlags_ClampInput is set
+            val isClampInput = flags hasnt DragFlag.ClampOnInput
+            return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput }, pMax.takeIf { isClampInput })
+        }
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg

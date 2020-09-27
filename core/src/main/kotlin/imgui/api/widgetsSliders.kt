@@ -10,6 +10,7 @@ import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.format
+import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
@@ -25,6 +26,7 @@ import kotlin.reflect.KMutableProperty0
 /** Widgets: Sliders
  *  - CTRL+Click on any slider to turn them into an input box. Manually input values aren't clamped and can go off-bounds.
  *  - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision
+ *  - Format string may also be set to NULL or use the default format ("%f" or "%d").
  *      e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.   */
 interface widgetsSliders {
 
@@ -175,9 +177,11 @@ interface widgetsSliders {
             }
         }
 
-        // Our current specs do NOT clamp when using CTRL+Click manual input, but we should eventually add a flag for that..
-        if (tempInputIsActive)
-            return ImGui.tempInputScalar(frameBb, id, label, DataType.Float, pData, format)// , p_min, p_max)
+        if (tempInputIsActive) {
+            // Only clamp CTRL+Click input when ImGuiSliderFlags_ClampInput is set
+            val isClampInput = flags hasnt SliderFlag.ClampOnInput
+            return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput }, pMax.takeIf { isClampInput })
+        }
 
         // Draw frame
         val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
