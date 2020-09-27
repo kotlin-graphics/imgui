@@ -239,9 +239,10 @@ interface widgetsDrags {
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         val hovered = ImGui.itemHoverable(frameBb, id)
-        var tempInputIsActive = ImGui.tempInputIsActive(id)
+        val tempInputAllowed = flags hasnt DragFlag.NoInput
+        var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = ImGui.focusableItemRegister(window, id)
+            val focusRequested = tempInputAllowed && ImGui.focusableItemRegister(window, id)
             val clicked = hovered && ImGui.io.mouseClicked[0]
             val doubleClicked = hovered && ImGui.io.mouseDoubleClicked[0]
             if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
@@ -249,7 +250,7 @@ interface widgetsDrags {
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
-                if (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navInputId == id) {
+                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navInputId == id)) {
                     tempInputIsActive = true
                     ImGui.focusableItemUnregister(window)
                 }
