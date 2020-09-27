@@ -312,24 +312,31 @@ typealias PopupFlags = Int
  *  - Multiple buttons currently cannot be combined/or-ed in those functions (we could allow it later). */
 enum class PopupFlag(@JvmField val i: PopupFlags) {
 
-    None                    (0),
+    None(0),
+
     /** For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left) */
-    MouseButtonLeft         (0),
+    MouseButtonLeft(0),
+
     /** For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right) */
-    MouseButtonRight        (1),
+    MouseButtonRight(1),
+
     /** For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle) */
-    MouseButtonMiddle       (2),
-    MouseButtonMask_        (0x1F),
-    MouseButtonDefault_     (1),
+    MouseButtonMiddle(2),
+    MouseButtonMask_(0x1F),
+    MouseButtonDefault_(1),
+
     /** For OpenPopup*(), BeginPopupContext*(): don't open if there's already a popup at the same level of the popup stack */
-    NoOpenOverExistingPopup (1 shl 5),
+    NoOpenOverExistingPopup(1 shl 5),
+
     /** For BeginPopupContextWindow(): don't return true when hovering items, only when hovering empty space */
-    NoOpenOverItems         (1 shl 6),
+    NoOpenOverItems(1 shl 6),
+
     /** For IsPopupOpen(): ignore the ImGuiID parameter and test for any popup. */
-    AnyPopupId              (1 shl 7),
+    AnyPopupId(1 shl 7),
+
     /** For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level) */
-    AnyPopupLevel           (1 shl 8),
-    AnyPopup                (AnyPopupId or AnyPopupLevel);
+    AnyPopupLevel(1 shl 8),
+    AnyPopup(AnyPopupId or AnyPopupLevel);
 
     infix fun and(b: PopupFlag): PopupFlags = i and b.i
     infix fun and(b: PopupFlags): PopupFlags = i and b
@@ -1297,14 +1304,17 @@ typealias DragFlags = Int
 
 /** Flags for DragFloat(), DragInt() etc. */
 enum class DragFlag(val i: DragFlags) {
-    None                     (0),
-    /** We treat anything < this as being potentially a (float) power term from the previous API that 
-     *  has got miscast to this enum, and trigger an assert */
-    _AnythingBelowThisMightBeAPowerTerm (8),     
-    /** Should this widget be orientated vertically? */
-    Vertical                 (1 shl 3),           
+    None(0),
+
+    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API
+     *  that has got miscast to this enum, and will trigger an assert if needed. */
+    InvalidMask_(0x7000000F),
+
     /** Should this widget be logarithmic? (linear otherwise) */
-    Logarithmic              (1 shl 4);
+    Logarithmic(1 shl 4),
+
+    /** [Private] Should this widget be orientated vertically? */
+    _Vertical(1 shl 20);
 
     infix fun and(b: DragFlag): DragFlags = i and b.i
     infix fun and(b: DragFlags): DragFlags = i and b
@@ -1325,16 +1335,18 @@ infix fun DragFlags.wo(b: DragFlag): DragFlags = and(b.i.inv())
 typealias SliderFlags = Int
 
 /** Flags for SliderFloat(), SliderInt() etc. */
-enum class SliderFlag(val i: SliderFlags)
-{
-    None                   (0),
-    /** We treat anything < this as being potentially a (float) power term from the previous API that 
-     * has got miscast to this enum, and trigger an assert */
-    _AnythingBelowThisMightBeAPowerTerm (8),
-    /** Should this widget be orientated vertically? */
-    Vertical               (1 shl 3),           
+enum class SliderFlag(val i: SliderFlags) {
+    None(0),
+
+    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API that
+     *  has got miscast to this enum, and will trigger an assert if needed. */
+    InvalidMask_(0x7000000F),
+
     /** Should this widget be logarithmic? (linear otherwise) */
-    Logarithmic            (1 shl 4);
+    Logarithmic(1 shl 4),
+
+    /** [Private] Should this widget be orientated vertically? */
+    _Vertical(1 shl 20);
 
     infix fun and(b: SliderFlag): SliderFlags = i and b.i
     infix fun and(b: SliderFlags): SliderFlags = i and b

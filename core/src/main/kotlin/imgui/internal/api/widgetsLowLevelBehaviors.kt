@@ -286,8 +286,8 @@ internal interface widgetsLowLevelBehaviors {
                          pMax: Number?, format: String, power: Float, flags: DragFlags): Boolean
             where N : Number, N : Comparable<N> {
 
-        assert(flags == 0 || flags >= DragFlag._AnythingBelowThisMightBeAPowerTerm.i) {
-            "Invalid ImGuiDragFlags flags - has a power term been mistakenly cast to flags?"
+        assert(flags == 1 || flags hasnt DragFlag.InvalidMask_.i) {
+            "Invalid ImGuiDragFlags flags! Has a power term been mistakenly cast to flags?"
         }
 
         if (g.activeId == id)
@@ -398,8 +398,8 @@ internal interface widgetsLowLevelBehaviors {
                            format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean
             where N : Number, N : Comparable<N> {
 
-        assert(flags == 0 || flags >= SliderFlag._AnythingBelowThisMightBeAPowerTerm.i) {
-            "Invalid ImGuiSliderFlags flags - has a power term been mistakenly cast to flags?"
+        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) {
+            "Invalid ImGuiSliderFlags flag! Has a power term been mistakenly cast to flags?"
         }
 
         if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly)
