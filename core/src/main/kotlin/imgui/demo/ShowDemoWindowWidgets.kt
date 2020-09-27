@@ -300,6 +300,12 @@ object ShowDemoWindowWidgets {
     var displayMode = 0
     var pickerMode = 0
     var colorHsv = Vec4(0.23f, 1f, 1f, 1f)  // Stored as HSV!
+    var dragFlags: DragFlags = DragFlag.None.i
+    var dragF = 0.5f
+    var dragI = 50
+    var sliderFlags: SliderFlags = SliderFlag.None.i
+    var sliderF = 0.5f
+    var sliderI = 50
 
 
     /* Range Widgets */
@@ -1150,6 +1156,29 @@ object ShowDemoWindowWidgets {
             colorEdit4("HSV shown as RGB##1", colorHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
             colorEdit4("HSV shown as HSV##1", colorHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
             dragVec4("Raw HSV values", colorHsv, 0.01f, 0f, 1f)
+        }
+
+        treeNode("Drag/Slider Flags") {
+            // Demonstrate using advanced flags for DragXXX functions
+            checkboxFlags("ImGuiDragFlags_ClampOnInput", ::dragFlags, DragFlag.ClampOnInput.i)
+            sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
+            checkboxFlags("ImGuiDragFlags_Logarithmic", ::dragFlags, DragFlag.Logarithmic.i)
+            sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
+
+            dragFloat("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%f", dragFlags)
+            dragFloat("DragFloat (0 -> +inf)", ::dragF, 0.005f, 0f, Float.MAX_VALUE, "%f", dragFlags)
+            dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%f", dragFlags)
+            dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%f", dragFlags)
+            dragInt("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", dragFlags)
+
+            // Demonstrate using advanced flags for SliderXXX functions
+            checkboxFlags("ImGuiSliderFlags_ClampOnInput", ::sliderFlags, SliderFlag.ClampOnInput.i)
+            sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
+            checkboxFlags("ImGuiSliderFlags_Logarithmic", ::sliderFlags, SliderFlag.Logarithmic.i)
+            sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
+
+            sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "", sliderFlags)
+            sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "", sliderFlags)
         }
 
         treeNode("Range Widgets") {
