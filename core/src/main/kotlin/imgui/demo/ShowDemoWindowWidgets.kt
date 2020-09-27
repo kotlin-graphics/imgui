@@ -1166,6 +1166,8 @@ object ShowDemoWindowWidgets {
             sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
             checkboxFlags("ImGuiDragFlags_NoRoundToFormat", ::dragFlags, DragFlag.NoRoundToFormat.i)
             sameLine(); helpMarker("Disable rounding underlying value to match precision of the format string (e.g. %.3f values are rounded to those 3 digits).")
+            checkboxFlags("ImGuiDragFlags_NoInput", ::dragFlags, DragFlag.NoInput.i)
+            sameLine(); helpMarker("Disable CTRL+Click or Enter key allowing to input text directly into the widget.")
 
             text("Underlying float value: %f", dragF)
             dragFloat("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%.3f", dragFlags)
@@ -1181,6 +1183,8 @@ object ShowDemoWindowWidgets {
             sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
             checkboxFlags("ImGuiSliderFlags_NoRoundToFormat", ::sliderFlags, SliderFlag.NoRoundToFormat.i)
             sameLine(); helpMarker("Disable rounding underlying value to match precision of the format string (e.g. %.3f values are rounded to those 3 digits).")
+            checkboxFlags("ImGuiSliderFlags_NoInput", ::sliderFlags, SliderFlag.NoInput.i)
+            sameLine(); helpMarker("Disable CTRL+Click or Enter key allowing to input text directly into the widget.")
 
             text("Underlying float value: %f", sliderF)
             sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", sliderFlags)

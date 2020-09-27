@@ -161,16 +161,17 @@ interface widgetsSliders {
 
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         val hovered = ImGui.itemHoverable(frameBb, id)
-        var tempInputIsActive = ImGui.tempInputIsActive(id)
+        val tempInputAllowed = flags hasnt SliderFlag.NoInput
+        var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = ImGui.focusableItemRegister(window, id)
+            val focusRequested = tempInputAllowed && ImGui.focusableItemRegister(window, id)
             val clicked = hovered && ImGui.io.mouseClicked[0]
             if (focusRequested || clicked || g.navActivateId == id || g.navInputId == id) {
                 ImGui.setActiveID(id, window)
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
-                if (focusRequested || (clicked && ImGui.io.keyCtrl) || g.navInputId == id) {
+                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || g.navInputId == id)) {
                     tempInputIsActive = true
                     ImGui.focusableItemUnregister(window)
                 }
