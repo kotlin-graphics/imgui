@@ -36,14 +36,13 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Int>, vSpeed_: Float, vMin: Int, vMax: Int,
-                      format: String, power: Float, flags: DragFlags): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Int>, vSpeed_: Float,
+                      vMin: Int, vMax: Int, format: String, flags: DragFlags): Boolean {
 
-        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && !isLogarithmic && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
         val isLocked = vMin > vMax
         if (isLocked)
             return false
@@ -81,8 +80,7 @@ internal interface templateFunctions {
         // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
         val isJustActivated = g.activeIdIsJustActivated
         val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
-        val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
-        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
+        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
             g.dragCurrentAccum = 0f
             g.dragCurrentAccumDirty = false
         } else if (adjustDelta != 0.0f) {
@@ -103,17 +101,10 @@ internal interface templateFunctions {
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power,  /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, flags)
             vOldRefForAccumRemainder = vOldParametric
-        } else if (isPower) {
-            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-            val vOldNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
-            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-            vCur = vMin + (saturate(vNewNormCurved).pow(power)).i * (vMax - vMin)
-            vOldRefForAccumRemainder = vOldNormCurved
         } else
             vCur += g.dragCurrentAccum.i
 
@@ -125,13 +116,8 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
-            }
-            isPower -> {
-                val vCurNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
-                vCurNormCurved - vOldRefForAccumRemainder
             }
             else -> (vCur - v()).f
         }
@@ -157,14 +143,13 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Uint>, vSpeed_: Float, vMin: Uint, vMax: Uint,
-                      format: String, power: Float, flags: DragFlags): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Uint>, vSpeed_: Float,
+                      vMin: Uint, vMax: Uint, format: String, flags: DragFlags): Boolean {
 
-        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && !isLogarithmic && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
         val isLocked = vMin > vMax
         if (isLocked)
             return false
@@ -202,8 +187,7 @@ internal interface templateFunctions {
         // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
         val isJustActivated = g.activeIdIsJustActivated
         val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
-        val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
-        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
+        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
             g.dragCurrentAccum = 0f
             g.dragCurrentAccumDirty = false
         } else if (adjustDelta != 0f) {
@@ -224,17 +208,10 @@ internal interface templateFunctions {
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power,  /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, flags)
             vOldRefForAccumRemainder = vOldParametric
-        } else if (isPower) {
-            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-            val vOldNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
-            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin).f
-            vCur = vMin + saturate(vNewNormCurved).pow(power).ui * (vMax - vMin)
-            vOldRefForAccumRemainder = vOldNormCurved
         } else
             vCur += g.dragCurrentAccum
 
@@ -246,13 +223,8 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
-            }
-            isPower -> {
-                val vCurNormCurved = ((vCur - vMin).f / (vMax - vMin).f).pow(1f / power)
-                (vCurNormCurved - vOldRefForAccumRemainder).f
             }
             else -> (vCur.v - v().v).f
         }
@@ -278,14 +250,13 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Long>, vSpeed_: Float, vMin: Long, vMax: Long,
-                      format: String, power: Float, flags: DragFlags): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Long>, vSpeed_: Float,
+                      vMin: Long, vMax: Long, format: String, flags: DragFlags): Boolean {
 
-        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && !isLogarithmic && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
         val isLocked = vMin > vMax
         if (isLocked)
             return false
@@ -323,8 +294,7 @@ internal interface templateFunctions {
         // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
         val isJustActivated = g.activeIdIsJustActivated
         val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
-        val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
-        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
+        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
             g.dragCurrentAccum = 0f
             g.dragCurrentAccumDirty = false
         } else if (adjustDelta != 0f) {
@@ -345,17 +315,10 @@ internal interface templateFunctions {
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power,  /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, flags)
             vOldRefForAccumRemainder = vOldParametric.d
-        } else if (isPower) {
-            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-            val vOldNormCurved = ((vCur - vMin).d / (vMax - vMin).d).pow(1.0 / power)
-            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-            vCur = vMin + (saturate(vNewNormCurved.f).pow(power)).L * (vMax - vMin)
-            vOldRefForAccumRemainder = vOldNormCurved
         } else
             vCur += g.dragCurrentAccum.L
 
@@ -367,13 +330,8 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
-            }
-            isPower -> {
-                val vCurNormCurved = ((vCur - vMin).d / (vMax - vMin).d).pow(1.0 / power)
-                (vCurNormCurved - vOldRefForAccumRemainder).f
             }
             else -> (vCur - v()).f
         }
@@ -399,14 +357,13 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Ulong, typename Long, FLOATTYPE = Double> */
-    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Ulong>, vSpeed_: Float, vMin: Ulong, vMax: Ulong,
-                      format: String, power: Float, flags: DragFlags): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Ulong>, vSpeed_: Float,
+                      vMin: Ulong, vMax: Ulong, format: String, flags: DragFlags): Boolean {
 
-        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && !isLogarithmic && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
         val isLocked = vMin > vMax
         if (isLocked)
             return false
@@ -444,8 +401,7 @@ internal interface templateFunctions {
         // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
         val isJustActivated = g.activeIdIsJustActivated
         val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
-        val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
-        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
+        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
             g.dragCurrentAccum = 0f
             g.dragCurrentAccumDirty = false
         } else if (adjustDelta != 0f) {
@@ -466,17 +422,10 @@ internal interface templateFunctions {
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power,  /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, flags)
             vOldRefForAccumRemainder = vOldParametric.d
-        } else if (isPower) {
-            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-            val vOldNormCurved = ((vCur - vMin).d / (vMax - vMin).d).pow(1.0 / power)
-            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin).v
-            vCur = vMin + (saturate(vNewNormCurved.f).pow(power)).ul * (vMax - vMin)
-            vOldRefForAccumRemainder = vOldNormCurved
         } else
             vCur += g.dragCurrentAccum.ul
 
@@ -488,13 +437,8 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
-            }
-            isPower -> {
-                val vCurNormCurved = ((vCur - vMin).d / (vMax - vMin).d).pow(1.0 / power)
-                (vCurNormCurved - vOldRefForAccumRemainder).f
             }
             else -> (vCur.v - v().v).f
         }
@@ -520,14 +464,13 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
-    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Float>, vSpeed_: Float, vMin: Float, vMax: Float,
-                      format: String, power: Float, flags: DragFlags): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Float>, vSpeed_: Float,
+                      vMin: Float, vMax: Float, format: String, flags: DragFlags): Boolean {
 
-        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && !isLogarithmic && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
         val isLocked = (vMin > vMax)
         if (isLocked)
             return false
@@ -565,8 +508,7 @@ internal interface templateFunctions {
         // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
         val isJustActivated = g.activeIdIsJustActivated
         val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
-        val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
-        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
+        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
             g.dragCurrentAccum = 0f
             g.dragCurrentAccumDirty = false
         } else if (adjustDelta != 0f) {
@@ -587,17 +529,10 @@ internal interface templateFunctions {
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power,  /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, flags)
             vOldRefForAccumRemainder = vOldParametric
-        } else if (isPower) {
-            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-            val vOldNormCurved = ((vCur - vMin) / (vMax - vMin)).pow(1f / power)
-            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-            vCur = vMin + saturate(vNewNormCurved).pow(power) * (vMax - vMin)
-            vOldRefForAccumRemainder = vOldNormCurved
         } else
             vCur += g.dragCurrentAccum
 
@@ -609,13 +544,8 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
                 vNewParametric - vOldRefForAccumRemainder
-            }
-            isPower -> {
-                val vCurNormCurved = ((vCur - vMin) / (vMax - vMin)).pow(1f / power)
-                vCurNormCurved - vOldRefForAccumRemainder
             }
             else -> vCur - v()
         }
@@ -641,14 +571,13 @@ internal interface templateFunctions {
 
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
-    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Double>, vSpeed_: Float, vMin: Double, vMax: Double,
-                      format: String, power: Float, flags: DragFlags): Boolean {
+    fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Double>, vSpeed_: Float,
+                      vMin: Double, vMax: Double, format: String, flags: DragFlags): Boolean {
 
-        val axis = if (flags has DragFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && !isLogarithmic && isDecimal && isClamped && vMax - vMin < Float.MAX_VALUE
         val isLocked = vMin > vMax
         if (isLocked)
             return false
@@ -686,8 +615,7 @@ internal interface templateFunctions {
         // Avoid altering values and clamping when we are _already_ past the limits and heading in the same direction, so e.g. if range is 0..255, current value is 300 and we are pushing to the right side, keep the 300.
         val isJustActivated = g.activeIdIsJustActivated
         val isAlreadyPastLimitsAndPushingOutward = isClamped && ((v() >= vMax && adjustDelta > 0f) || (v() <= vMin && adjustDelta < 0f))
-        val isDragDirectionChangeWithPower = isPower && ((adjustDelta < 0 && g.dragCurrentAccum > 0) || (adjustDelta > 0 && g.dragCurrentAccum < 0))
-        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward || isDragDirectionChangeWithPower) {
+        if (isJustActivated || isAlreadyPastLimitsAndPushingOutward) {
             g.dragCurrentAccum = 0f
             g.dragCurrentAccumDirty = false
         } else if (adjustDelta != 0f) {
@@ -708,17 +636,10 @@ internal interface templateFunctions {
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power,  /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, flags)
             vOldRefForAccumRemainder = vOldParametric.d
-        } else if (isPower) {
-            // Offset + round to user desired precision, with a curve on the v_min..v_max range to get more precision on one side of the range
-            val vOldNormCurved = ((vCur - vMin) / (vMax - vMin)).pow(1.0 / power)
-            val vNewNormCurved = vOldNormCurved + g.dragCurrentAccum / (vMax - vMin)
-            vCur = vMin + saturate(vNewNormCurved.f).pow(power) * (vMax - vMin)
-            vOldRefForAccumRemainder = vOldNormCurved
         } else
             vCur += g.dragCurrentAccum.d
 
@@ -730,13 +651,8 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                // We pass 0.0f as linear_zero_pos because we know we are never in power mode here and so don't need it
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, power, /*linear_zero_pos*/ 0f, logarithmicZeroEpsilon, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
-            }
-            isPower -> {
-                val vCurNormCurved = ((vCur - vMin) / (vMax - vMin)).pow(1.0 / power)
-                (vCurNormCurved - vOldRefForAccumRemainder).f
             }
             else -> (vCur - v()).f
         }
@@ -762,13 +678,12 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Int>, vMin: Int, vMax: Int,
-                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Int>,
+                        vMin: Int, vMax: Int, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
-        val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -780,18 +695,6 @@ internal interface templateFunctions {
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = bb.min[axis] + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0.0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            // Different sign
-            isPower && vMin * vMax < 0f -> {
-                val linearDistMinTo0 = (if (vMin >= 0) vMin.f else -vMin.f).pow(1f / power)
-                val linearDistMaxTo0 = (if (vMax >= 0) vMax.f else -vMax.f).pow(1f / power)
-                (linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)).f
-            }
-            // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
@@ -824,9 +727,9 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    if (decimalPrecision > 0 || isPower) {
+                    if (decimalPrecision > 0) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
                             delta /= 10f
@@ -845,7 +748,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
@@ -862,7 +765,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -877,13 +780,12 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Uint>, vMin: Uint, vMax: Uint,
-                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Uint>,
+                        vMin: Uint, vMax: Uint, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
-        val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -895,18 +797,6 @@ internal interface templateFunctions {
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = bb.min[axis] + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0.0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            // Different sign
-            isPower && vMin * vMax < 0f -> {
-                val linearDistMinTo0 = (if (vMin >= 0) vMin.f else -vMin.f).pow(1f / power)
-                val linearDistMaxTo0 = (if (vMax >= 0) vMax.f else -vMax.f).pow(1f / power)
-                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
-            }
-            // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
@@ -936,9 +826,9 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    if (decimalPrecision > 0 || isPower) {
+                    if (decimalPrecision > 0) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
                             delta /= 10f
@@ -957,7 +847,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
@@ -974,7 +864,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         } else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -989,13 +879,12 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Long>, vMin: Long, vMax: Long,
-                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Long>,
+                        vMin: Long, vMax: Long, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
-        val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1007,18 +896,6 @@ internal interface templateFunctions {
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = bb.min[axis] + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0.0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            // Different sign
-            isPower && vMin * vMax < 0f -> {
-                val linearDistMinTo0 = (if (vMin >= 0) vMin.d else -vMin.d).pow(1.0 / power)
-                val linearDistMaxTo0 = (if (vMax >= 0) vMax.d else -vMax.d).pow(1.0 / power)
-                (linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)).f
-            }
-            // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
@@ -1048,9 +925,9 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    if (decimalPrecision > 0 || isPower) {
+                    if (decimalPrecision > 0) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
                             delta /= 10f
@@ -1069,7 +946,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
@@ -1086,7 +963,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1101,13 +978,12 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Ulong, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Ulong>, vMin: Ulong, vMax: Ulong,
-                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Ulong>,
+                        vMin: Ulong, vMax: Ulong, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
-        val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1119,18 +995,6 @@ internal interface templateFunctions {
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = bb.min[axis] + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0.0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            // Different sign
-            isPower && vMin * vMax < 0f -> {
-                val linearDistMinTo0 = (if (vMin >= 0) vMin.d else -vMin.d).pow(1.0 / power)
-                val linearDistMaxTo0 = (if (vMax >= 0) vMax.d else -vMax.d).pow(1.0 / power)
-                (linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)).f
-            }
-            // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
@@ -1161,9 +1025,9 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    if (decimalPrecision > 0 || isPower) {
+                    if (decimalPrecision > 0) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
                             delta /= 10f
@@ -1182,7 +1046,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
@@ -1199,7 +1063,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         } else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1214,13 +1078,12 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Float>, vMin: Float, vMax: Float,
-                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Float>,
+                        vMin: Float, vMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
-        val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1232,18 +1095,6 @@ internal interface templateFunctions {
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = bb.min[axis] + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0.0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            // Different sign
-            isPower && vMin * vMax < 0f -> {
-                val linearDistMinTo0 = (if (vMin >= 0) vMin.f else -vMin.f).pow(1f / power)
-                val linearDistMaxTo0 = (if (vMax >= 0) vMax.f else -vMax.f).pow(1f / power)
-                linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)
-            }
-            // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
@@ -1273,9 +1124,9 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    if (decimalPrecision > 0 || isPower) {
+                    if (decimalPrecision > 0) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
                             delta /= 10f
@@ -1294,7 +1145,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
@@ -1311,7 +1162,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1326,13 +1177,12 @@ internal interface templateFunctions {
 
     /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Double>, vMin: Double, vMax: Double,
-                        format: String, power: Float, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Double>,
+                        vMin: Double, vMax: Double, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
-        val axis = if (flags has SliderFlag.Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
-        val isPower = power != 1f && isDecimal && !isLogarithmic
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
@@ -1344,18 +1194,6 @@ internal interface templateFunctions {
         val sliderUsableSz = sliderSz - grabSz
         val sliderUsablePosMin = bb.min[axis] + grabPadding + grabSz * 0.5f
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
-
-        // For power curve sliders that cross over sign boundary we want the curve to be symmetric around 0.0f
-        val linearZeroPos = when {   // 0.0->1.0f
-            // Different sign
-            isPower && vMin * vMax < 0f -> {
-                val linearDistMinTo0 = (if (vMin >= 0) vMin else -vMin).pow(1.0 / power)
-                val linearDistMaxTo0 = (if (vMax >= 0) vMax else -vMax).pow(1.0 / power)
-                (linearDistMinTo0 / (linearDistMinTo0 + linearDistMaxTo0)).f
-            }
-            // Same sign
-            else -> if (vMin < 0f) 1f else 0f
-        }
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
@@ -1385,9 +1223,9 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (delta != 0f) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
-                    if (decimalPrecision > 0 || isPower) {
+                    if (decimalPrecision > 0) {
                         delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
                             delta /= 10f
@@ -1406,7 +1244,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
                 vNew = roundScalarWithFormatT(format, dataType, vNew)
@@ -1423,7 +1261,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, power, linearZeroPos, logarithmicZeroEpsilon, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1439,8 +1277,8 @@ internal interface templateFunctions {
     /** Convert a value v in the output space of a slider into a parametric position on the slider itself
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Int, FLOATTYPE = Float> */
-    fun sliderCalcRatioFromValueT(dataType: DataType, v: Int, vMin_: Int, vMax_: Int, power: Float,
-                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Int, vMin_: Int, vMax_: Int,
+                                  logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1449,7 +1287,6 @@ internal interface templateFunctions {
             return 0f
 
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
             isLogarithmic -> {
@@ -1494,16 +1331,6 @@ internal interface templateFunctions {
                 }
                 if (flipped) 1f - result else result
             }
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - ((vClamped - vMin) / (min(0, vMax) - vMin)).f
-                    1f - f.pow(1f / power) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(0, vMin)) / (vMax - max(0, vMin))).f
-                    linearZeroPos + f.pow(1f / power) * (1f - linearZeroPos)
-                }
-            }
             // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
@@ -1512,8 +1339,8 @@ internal interface templateFunctions {
     /** Convert a value v in the output space of a slider into a parametric position on the slider itself
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Uint, FLOATTYPE = Float> */
-    fun sliderCalcRatioFromValueT(dataType: DataType, v: Uint, vMin_: Uint, vMax_: Uint, power: Float,
-                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Uint, vMin_: Uint, vMax_: Uint,
+                                  logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1522,7 +1349,6 @@ internal interface templateFunctions {
             return 0f
 
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
             isLogarithmic -> {
@@ -1567,16 +1393,6 @@ internal interface templateFunctions {
                 }
                 if (flipped) 1f - result else result
             }
-            isPower -> when {
-//                vClamped < 0f -> {
-//                    val f = 1f - ((vClamped - vMin) / (min(Uint(0), vMax) - vMin)).f
-//                    1f - f.pow(1f / power) * linearZeroPos
-//                }
-                else -> {
-                    val f = ((vClamped - max(Uint(0), vMin)) / (vMax - max(Uint(0), vMin))).f
-                    linearZeroPos + f.pow(1f / power) * (1f - linearZeroPos)
-                }
-            }
             // Linear slider
             else -> (vClamped - vMin).f / (vMax - vMin).f
         }
@@ -1585,8 +1401,8 @@ internal interface templateFunctions {
     /** Convert a value v in the output space of a slider into a parametric position on the slider itself
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Long, FLOATTYPE = Double> */
-    fun sliderCalcRatioFromValueT(dataType: DataType, v: Long, vMin_: Long, vMax_: Long, power: Float,
-                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Long, vMin_: Long, vMax_: Long,
+                                  logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1595,7 +1411,6 @@ internal interface templateFunctions {
             return 0f
 
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
             isLogarithmic -> {
@@ -1640,16 +1455,6 @@ internal interface templateFunctions {
                 }
                 if (flipped) 1f - result else result
             }
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - ((vClamped - vMin) / (min(0L, vMax) - vMin)).f
-                    1f - f.pow(1f / power) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(0L, vMin)) / (vMax - max(0L, vMin))).f
-                    linearZeroPos + f.pow(1f / power) * (1f - linearZeroPos)
-                }
-            }
             // Linear slider
             else -> ((vClamped - vMin).d / (vMax - vMin).d).f
         }
@@ -1658,8 +1463,8 @@ internal interface templateFunctions {
     /** Convert a value v in the output space of a slider into a parametric position on the slider itself
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Ulong, FLOATTYPE = Double> */
-    fun sliderCalcRatioFromValueT(dataType: DataType, v: Ulong, vMin_: Ulong, vMax_: Ulong, power: Float,
-                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Ulong, vMin_: Ulong, vMax_: Ulong,
+                                  logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1667,7 +1472,6 @@ internal interface templateFunctions {
             return 0f
 
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
             isLogarithmic -> {
@@ -1714,16 +1518,6 @@ internal interface templateFunctions {
                 }
                 if (flipped) 1f - result else result
             }
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - ((vClamped - vMin) / (min(Ulong(0), vMax) - vMin)).f
-                    1f - f.pow(1f / power) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(Ulong(0), vMin)) / (vMax - max(Ulong(0), vMin))).f
-                    linearZeroPos + f.pow(1f / power) * (1f - linearZeroPos)
-                }
-            }
             // Linear slider
             else -> ((vClamped - vMin).d / (vMax - vMin).d).f
         }
@@ -1732,8 +1526,8 @@ internal interface templateFunctions {
     /** Convert a value v in the output space of a slider into a parametric position on the slider itself
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Float, FLOATTYPE = Float> */
-    fun sliderCalcRatioFromValueT(dataType: DataType, v: Float, vMin_: Float, vMax_: Float, power: Float,
-                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Float, vMin_: Float, vMax_: Float,
+                                  logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1741,7 +1535,6 @@ internal interface templateFunctions {
             return 0f
 
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
             isLogarithmic -> {
@@ -1786,16 +1579,6 @@ internal interface templateFunctions {
                 }
                 if (flipped) 1f - result else result
             }
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - (vClamped - vMin) / (min(0f, vMax) - vMin)
-                    1f - f.pow(1f / power) * linearZeroPos
-                }
-                else -> {
-                    val f = (vClamped - max(0f, vMin)) / (vMax - max(0f, vMin))
-                    linearZeroPos + f.pow(1f / power) * (1f - linearZeroPos)
-                }
-            }
             // Linear slider
             else -> (vClamped - vMin) / (vMax - vMin)
         }
@@ -1804,8 +1587,8 @@ internal interface templateFunctions {
     /** Convert a value v in the output space of a slider into a parametric position on the slider itself
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Double, FLOATTYPE = Double> */
-    fun sliderCalcRatioFromValueT(dataType: DataType, v: Double, vMin_: Double, vMax_: Double, power: Float,
-                                  linearZeroPos: Float, logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
+    fun sliderCalcRatioFromValueT(dataType: DataType, v: Double, vMin_: Double, vMax_: Double,
+                                  logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1813,7 +1596,6 @@ internal interface templateFunctions {
             return 0f
 
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
         val vClamped = if (vMin < vMax) clamp(v, vMin, vMax) else clamp(v, vMax, vMin)
         return when {
             isLogarithmic -> {
@@ -1858,16 +1640,6 @@ internal interface templateFunctions {
                 }
                 if (flipped) 1f - result else result
             }
-            isPower -> when {
-                vClamped < 0f -> {
-                    val f = 1f - ((vClamped - vMin) / (min(0.0, vMax) - vMin)).f
-                    1f - f.pow(1f / power) * linearZeroPos
-                }
-                else -> {
-                    val f = ((vClamped - max(0.0, vMin)) / (vMax - max(0.0, vMin))).f
-                    linearZeroPos + f.pow(1f / power) * (1f - linearZeroPos)
-                }
-            }
             // Linear slider
             else -> ((vClamped - vMin).d / (vMax - vMin).d).f
         }
@@ -1875,7 +1647,7 @@ internal interface templateFunctions {
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Int, FLOATTYPE = Float> */
-    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Int, vMax: Int, power: Float, linearZeroPos: Float,
+    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Int, vMax: Int,
                                   logarithmicZeroEpsilon: Float, flags: SliderFlags): Int {
 
         if (vMin == vMax)
@@ -1883,7 +1655,6 @@ internal interface templateFunctions {
 
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
 
         fun calcLogarithmic(): Int = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -1932,24 +1703,6 @@ internal interface templateFunctions {
 
         return when {
             isLogarithmic -> calcLogarithmic()
-            isPower -> when {
-                // Account for power curve scale on both sides of the zero
-                t < linearZeroPos -> {
-                    // Negative: rescale to the negative range before powering
-                    var a = 1f - (t / linearZeroPos)
-                    a = a pow power
-                    lerp(min(vMax, 0), vMin, a)
-                }
-                else -> {
-                    // Positive: rescale to the positive range before powering
-                    var a = when {
-                        abs(linearZeroPos - 1f) > 1e-6f -> (t - linearZeroPos) / (1f - linearZeroPos)
-                        else -> t
-                    }
-                    a = a pow power
-                    lerp(max(vMin, 0), vMax, a)
-                }
-            }
             else -> when {
                 // Linear slider
                 isDecimal -> lerp(vMin, vMax, t)
@@ -1967,7 +1720,7 @@ internal interface templateFunctions {
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Uint, FLOATTYPE = Float> */
-    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Uint, vMax: Uint, power: Float, linearZeroPos: Float,
+    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Uint, vMax: Uint,
                                   logarithmicZeroEpsilon: Float, flags: SliderFlags): Uint {
 
         if (vMin == vMax)
@@ -1975,7 +1728,6 @@ internal interface templateFunctions {
 
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
 
         fun calcLogarithmic(): Uint = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -2024,24 +1776,6 @@ internal interface templateFunctions {
 
         return when {
             isLogarithmic -> calcLogarithmic()
-            isPower -> when {
-                // Account for power curve scale on both sides of the zero
-                t < linearZeroPos -> {
-                    // Negative: rescale to the negative range before powering
-                    var a = 1f - (t / linearZeroPos)
-                    a = a pow power
-                    lerp(min(vMax, Uint(0)), vMin, a)
-                }
-                else -> {
-                    // Positive: rescale to the positive range before powering
-                    var a = when {
-                        abs(linearZeroPos - 1f) > 1e-6f -> (t - linearZeroPos) / (1f - linearZeroPos)
-                        else -> t
-                    }
-                    a = a pow power
-                    lerp(max(vMin, Uint(0)), vMax, a)
-                }
-            }
             else -> when { // Linear slider
                 isDecimal -> lerp(vMin, vMax, t)
                 else -> {
@@ -2058,7 +1792,7 @@ internal interface templateFunctions {
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Long, FLOATTYPE = Double> */
-    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Long, vMax: Long, power: Float, linearZeroPos: Float,
+    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Long, vMax: Long,
                                   logarithmicZeroEpsilon: Float, flags: SliderFlags): Long {
 
         if (vMin == vMax)
@@ -2066,7 +1800,6 @@ internal interface templateFunctions {
 
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
 
         fun calcLogarithmic(): Long = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -2115,24 +1848,6 @@ internal interface templateFunctions {
 
         return when {
             isLogarithmic -> calcLogarithmic()
-            isPower -> when {
-                // Account for power curve scale on both sides of the zero
-                t < linearZeroPos -> {
-                    // Negative: rescale to the negative range before powering
-                    var a = 1f - t / linearZeroPos
-                    a = a pow power
-                    lerp(min(vMax, 0L), vMin, a)
-                }
-                else -> {
-                    // Positive: rescale to the positive range before powering
-                    var a = when {
-                        abs(linearZeroPos - 1f) > 1e-6f -> (t - linearZeroPos) / (1f - linearZeroPos)
-                        else -> t
-                    }
-                    a = a pow power
-                    lerp(max(vMin, 0L), vMax, a)
-                }
-            }
             else -> when {
                 // Linear slider
                 isDecimal -> lerp(vMin, vMax, t)
@@ -2150,7 +1865,7 @@ internal interface templateFunctions {
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Ulong, FLOATTYPE = Double> */
-    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Ulong, vMax: Ulong, power: Float, linearZeroPos: Float,
+    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Ulong, vMax: Ulong,
                                   logarithmicZeroEpsilon: Float, flags: SliderFlags): Ulong {
 
         if (vMin == vMax)
@@ -2158,7 +1873,6 @@ internal interface templateFunctions {
 
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
 
         fun calcLogarithmic(): Ulong = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -2207,24 +1921,6 @@ internal interface templateFunctions {
         }
         return when {
             isLogarithmic -> calcLogarithmic()
-            isPower -> when {
-                // Account for power curve scale on both sides of the zero
-                t < linearZeroPos -> {
-                    // Negative: rescale to the negative range before powering
-                    var a = 1f - t / linearZeroPos
-                    a = a pow power
-                    lerp(min(vMax, Ulong(0)), vMin, a)
-                }
-                else -> {
-                    // Positive: rescale to the positive range before powering
-                    var a = when {
-                        abs(linearZeroPos - 1f) > 1e-6f -> (t - linearZeroPos) / (1f - linearZeroPos)
-                        else -> t
-                    }
-                    a = a pow power
-                    lerp(max(vMin, Ulong(0)), vMax, a)
-                }
-            }
             else -> when { // Linear slider
                 isDecimal -> lerp(vMin, vMax, t)
                 else -> {
@@ -2241,7 +1937,7 @@ internal interface templateFunctions {
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Float, FLOATTYPE = Float> */
-    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Float, vMax: Float, power: Float, linearZeroPos: Float,
+    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Float, vMax: Float,
                                   logarithmicZeroEpsilon: Float, flags: SliderFlags): Float {
 
         if (vMin == vMax)
@@ -2249,7 +1945,6 @@ internal interface templateFunctions {
 
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
 
         fun calcLogarithmic(): Float = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -2298,24 +1993,6 @@ internal interface templateFunctions {
 
         return when {
             isLogarithmic -> calcLogarithmic()
-            isPower -> when {
-                // Account for power curve scale on both sides of the zero
-                t < linearZeroPos -> {
-                    // Negative: rescale to the negative range before powering
-                    var a = 1f - t / linearZeroPos
-                    a = a pow power
-                    lerp(min(vMax, 0f), vMin, a)
-                }
-                else -> {
-                    // Positive: rescale to the positive range before powering
-                    var a = when {
-                        abs(linearZeroPos - 1f) > 1e-6f -> (t - linearZeroPos) / (1f - linearZeroPos)
-                        else -> t
-                    }
-                    a = a pow power
-                    lerp(max(vMin, 0f), vMax, a)
-                }
-            }
             else -> when { // Linear slider
                 isDecimal -> lerp(vMin, vMax, t)
                 else -> {
@@ -2332,7 +2009,7 @@ internal interface templateFunctions {
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Double, FLOATTYPE = Double> */
-    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Double, vMax: Double, power: Float, linearZeroPos: Float,
+    fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Double, vMax: Double,
                                   logarithmicZeroEpsilon: Float, flags: SliderFlags): Double {
 
         if (vMin == vMax)
@@ -2340,7 +2017,6 @@ internal interface templateFunctions {
 
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isLogarithmic = flags has SliderFlag.Logarithmic && (dataType == DataType.Float || dataType == DataType.Double)
-        val isPower = power != 1f && (dataType == DataType.Float || dataType == DataType.Double) && !isLogarithmic
 
         fun calcIsLogarithmic(): Double = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -2351,12 +2027,12 @@ internal interface templateFunctions {
 
                 // Fudge min/max to avoid getting silly results close to zero
                 var vMinFudged = when {
-                    abs(vMin) < logarithmicZeroEpsilon -> (if(vMin < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
-                        else -> vMin
+                    abs(vMin) < logarithmicZeroEpsilon -> (if (vMin < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
+                    else -> vMin
                 }
                 var vMaxFudged = when {
-                    abs(vMax) < logarithmicZeroEpsilon -> (if(vMax < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
-                        else -> vMax
+                    abs(vMax) < logarithmicZeroEpsilon -> (if (vMax < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
+                    else -> vMax
                 }
 
                 if (flipped) {
@@ -2369,7 +2045,7 @@ internal interface templateFunctions {
                 if (vMax == 0.0 && vMin < 0.0)
                     vMaxFudged = -logarithmicZeroEpsilon.d
 
-                val tWithFlip = if(flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
+                val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
 
                 when {
                     vMin * vMax < 0.0 -> { // Range crosses zero, so we have to do this in two parts
@@ -2389,35 +2065,17 @@ internal interface templateFunctions {
 
         return when {
             isLogarithmic -> calcIsLogarithmic()
-            isPower -> when {
-                // Account for power curve scale on both sides of the zero
-                t < linearZeroPos -> {
-                    // Negative: rescale to the negative range before powering
-                    var a = 1f - t / linearZeroPos
-                    a = a pow power
-                    lerp(min(vMax, 0.0), vMin, a)
-                }
+            else -> when {
+                isDecimal -> lerp(vMin, vMax, t)
                 else -> {
-                    // Positive: rescale to the positive range before powering
-                    var a = when {
-                        abs(linearZeroPos - 1f) > 1e-6f -> (t - linearZeroPos) / (1f - linearZeroPos)
-                        else -> t
-                    }
-                    a = a pow power
-                    lerp(max(vMin, 0.0), vMax, a)
+                    // For integer values we want the clicking position to match the grab box so we round above
+                    // This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+                    val vNewOffF = (vMax - vMin) * t
+                    val vNewOffFloor = vNewOffF
+                    val vNewOffRound = vNewOffF + 0.5
+                    vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
                 }
             }
-        else -> when {
-            isDecimal -> lerp(vMin, vMax, t)
-            else -> {
-                // For integer values we want the clicking position to match the grab box so we round above
-                // This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                val vNewOffF = (vMax - vMin) * t
-                val vNewOffFloor = vNewOffF
-                val vNewOffRound = vNewOffF + 0.5
-                vMin + if (vNewOffFloor < vNewOffRound) vNewOffRound else vNewOffFloor
-            }
-        }
         }
     }
 

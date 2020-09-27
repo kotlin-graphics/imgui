@@ -12,11 +12,9 @@ import imgui.*
 import imgui.ImGui.beginGroup
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.currentWindow
-import imgui.ImGui.dragFloatRange2Internal
-import imgui.ImGui.dragScalarInternal
-import imgui.ImGui.dragScalarNInternal
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.format
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushID
@@ -24,6 +22,8 @@ import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.ImGui.textEx
+import imgui.internal.classes.Rect
+import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 
@@ -80,8 +80,39 @@ interface widgetsDrags {
 
     fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
                         vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
-                        formatMax: String = format, flags: DragFlags = 0): Boolean =
-            dragFloatRange2Internal(label, vCurrentMinPtr, vCurrentMaxPtr, vSpeed, vMin, vMax, format, formatMax, 1f, flags)
+                        formatMax: String = format, flags: DragFlags = 0): Boolean {
+
+        val vCurrentMin by vCurrentMinPtr
+        val vCurrentMax by vCurrentMaxPtr
+        val window = ImGui.currentWindow
+        if (window.skipItems) return false
+
+        ImGui.pushID(label)
+        ImGui.beginGroup()
+        ImGui.pushMultiItemsWidths(2, ImGui.calcItemWidth())
+
+        var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
+        var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
+        if (min == max) {
+            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
+        var valueChanged = dragScalar("##min", DataType.Float, vCurrentMinPtr, vSpeed, min, max, format, flags)
+        ImGui.popItemWidth()
+        ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
+
+        min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
+        max = if (vMin >= vMax) Float.MAX_VALUE else vMax
+        if (min == max) {
+            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
+        val f = if (formatMax.isNotEmpty()) formatMax else format
+        valueChanged = dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, min, max, f, flags) || valueChanged
+        ImGui.popItemWidth()
+        ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
+
+        ImGui.textEx(label, ImGui.findRenderedTextEnd(label))
+        ImGui.endGroup()
+        ImGui.popID()
+        return valueChanged
+    }
 
     /** If v_min >= v_max we have no bound
      *
@@ -166,32 +197,128 @@ interface widgetsDrags {
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
     fun dragScalar(label: String, pData: FloatArray, vSpeed: Float, pMin: Float? = null, pMax: Float? = null,
                    format: String? = null, flags: DragFlags = 0): Boolean =
-            dragScalarInternal(label, pData, vSpeed, pMin, pMax, format, 1f, flags)
+            dragScalar(label, pData, vSpeed, pMin, pMax, format, flags)
 
     /** If vMin >= vMax we have no bound  */
     fun dragScalar(label: String, pData: FloatArray, ptr: Int = 0, vSpeed: Float, pMin: Float? = null,
                    pMax: Float? = null, format: String? = null, flags: DragFlags = 0): Boolean =
             withFloat(pData, ptr) {
-                dragScalarInternal(label, DataType.Float, it, vSpeed, pMin, pMax, format, 1f, flags)
+                dragScalar(label, DataType.Float, it, vSpeed, pMin, pMax, format, flags)
             }
 
-    /** Internal implementation - see below for entry points
-     *
-     *  Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data.
-     *  For a Drag widget, p_min and p_max are optional.
-     *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand
-     *  how to use this function directly. */
+    /** ote: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget, p_min and p_max are optional.
+     *  Read code of e.g. DragFloat(), DragInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
     fun <N> dragScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>, vSpeed: Float,
-                       pMin: N? = null, pMax: N? = null, format: String? = null, flags: DragFlags = 0): Boolean
-            where N : Number, N : Comparable<N> =
-            dragScalarInternal(label, dataType, pData, vSpeed, pMin, pMax, format, 1f, flags)
+                       pMin: N? = null, pMax: N? = null, format_: String? = null, flags: DragFlags = 0): Boolean
+            where N : Number, N : Comparable<N> {
+
+        val window = ImGui.currentWindow
+        if (window.skipItems) return false
+
+        val id = window.getID(label)
+        val w = ImGui.calcItemWidth()
+        val labelSize = ImGui.calcTextSize(label, hideTextAfterDoubleHash = true)
+        val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
+        val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
+
+        ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
+        if (!ImGui.itemAdd(totalBb, id, frameBb))
+            return false
+
+        // Default format string when passing NULL
+        val format = when {
+            format_ == null -> when (dataType) {
+                DataType.Float, DataType.Double -> "%f"
+                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
+            }
+            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
+            else -> format_
+        }
+
+        // Tabbing or CTRL-clicking on Drag turns it into an input box
+        val hovered = ImGui.itemHoverable(frameBb, id)
+        var tempInputIsActive = ImGui.tempInputIsActive(id)
+        if (!tempInputIsActive) {
+            val focusRequested = ImGui.focusableItemRegister(window, id)
+            val clicked = hovered && ImGui.io.mouseClicked[0]
+            val doubleClicked = hovered && ImGui.io.mouseDoubleClicked[0]
+            if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
+                ImGui.setActiveID(id, window)
+                ImGui.setFocusID(id, window)
+                ImGui.focusWindow(window)
+                g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
+                if (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navInputId == id) {
+                    tempInputIsActive = true
+                    ImGui.focusableItemUnregister(window)
+                }
+            }
+        }
+
+        // Our current specs do NOT clamp when using CTRL+Click manual input, but we should eventually add a flag for that..
+        if (tempInputIsActive)
+            return ImGui.tempInputScalar(frameBb, id, label, dataType, pData, format) // , p_min, p_max)
+
+        // Draw frame
+        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        ImGui.renderNavHighlight(frameBb, id)
+        ImGui.renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, ImGui.style.frameRounding)
+
+        // Drag behavior
+        val valueChanged = ImGui.dragBehavior(id, dataType, pData, vSpeed, pMin, pMax, format, flags)
+        if (valueChanged)
+            ImGui.markItemEdited(id)
+
+        // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
+        val value = pData.format(dataType, format)
+        ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
+
+        if (labelSize.x > 0f)
+            ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
+
+        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
+        return valueChanged
+    }
 
     /** Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget,
      *  p_min and p_max are optional.
      *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand
      *  how to use this function directly. */
-    fun <N> dragScalarN(label: String, dataType: DataType, v: Any, components: Int, vSpeed: Float, vMin: N? = null,
-                        vMax: N? = null, format: String? = null, flags: DragFlags): Boolean
-            where N : Number, N : Comparable<N> =
-            dragScalarNInternal(label, dataType, v, components, vSpeed, vMin, vMax, format, 1f, flags)
+    fun <N> dragScalarN(label: String, dataType: DataType, v: Any, components: Int, vSpeed: Float,
+                        vMin: N? = null, vMax: N? = null, format: String? = null, flags: DragFlags = 0): Boolean
+            where N : Number, N : Comparable<N> {
+
+        val window = ImGui.currentWindow
+        if (window.skipItems) return false
+
+        var valueChanged = false
+        ImGui.beginGroup()
+        ImGui.pushID(label)
+        ImGui.pushMultiItemsWidths(components, ImGui.calcItemWidth())
+        for (i in 0 until components) {
+            ImGui.pushID(i)
+            if (i > 0)
+                ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
+            when (dataType) {
+                DataType.Int -> withInt(v as IntArray, i) {
+                    valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, flags) or valueChanged
+                }
+                DataType.Float -> withFloat(v as FloatArray, i) {
+                    valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, flags) or valueChanged
+                }
+                else -> error("invalid")
+            }
+            ImGui.popID()
+            ImGui.popItemWidth()
+        }
+        ImGui.popID()
+
+        val labelEnd = ImGui.findRenderedTextEnd(label)
+        if (0 != labelEnd) {
+            ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
+            ImGui.textEx(label, labelEnd)
+        }
+
+        ImGui.endGroup()
+        return valueChanged
+    }
 }
