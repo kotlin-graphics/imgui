@@ -1245,11 +1245,10 @@ object ShowDemoWindowWidgets {
             dragScalar("drag u32", DataType.Uint, ::u32_v, dragSpeed, u32_zero.takeIf { dragClamp }, u32_fifty.takeIf { dragClamp }, "%d ms")
             dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
             dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
-            //TODO
-//            dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", 1f)
-//            dragScalar("drag float ^2", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", 2f); sameLine(); helpMarker("You can use the 'power' parameter to increase tweaking precision on one side of the range.")
-//            dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams", 1f)
-//            dragScalar("drag double ^2", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", 2f)
+            dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f")
+            dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", DragFlag.Logarithmic.i)
+            dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams")
+            dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", DragFlag.Logarithmic.i)
 
             text("Sliders")
             sliderScalar("slider s8 full", DataType.Byte, ::s8_v, s8_min, s8_max, "%d")
@@ -1269,12 +1268,11 @@ object ShowDemoWindowWidgets {
             sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, u64_hi_a, u64_hi_b, "%d ms")
             sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, u64_min, u64_max, "%d ms")
             sliderScalar("slider float low", DataType.Float, ::f32_v, f32_zero, f32_one)
-            // TODO
-//            sliderScalar("slider float low^2", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", 2f)
+            sliderScalar("slider float low log", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", DragFlag.Logarithmic.i)
             sliderScalar("slider float high", DataType.Float, ::f32_v, f32_lo_a, f32_hi_a, "%e")
-//            sliderScalar("slider double low", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f grams", 1f)
-//            sliderScalar("slider double low^2", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", 2f)
-//            sliderScalar("slider double high", DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams", 1f)
+            sliderScalar("slider double low", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f grams")
+            sliderScalar("slider double low log", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", DragFlag.Logarithmic.i)
+            sliderScalar("slider double high", DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams")
 
             text("Inputs")
             checkbox("Show step buttons", ::inputsStep)
