@@ -109,7 +109,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.i
 
         // Round to user desired precision based on format string
-        vCur = roundScalarWithFormatT(format, dataType, vCur)
+        if (flags hasnt DragFlag.NoRoundToFormat)
+            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -216,7 +217,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum
 
         // Round to user desired precision based on format string
-        vCur = roundScalarWithFormatT(format, dataType, vCur)
+        if (flags hasnt DragFlag.NoRoundToFormat)
+            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -323,7 +325,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.L
 
         // Round to user desired precision based on format string
-        vCur = roundScalarWithFormatT(format, dataType, vCur)
+        if (flags hasnt DragFlag.NoRoundToFormat)
+            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -430,7 +433,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.ul
 
         // Round to user desired precision based on format string
-        vCur = roundScalarWithFormatT(format, dataType, vCur)
+        if (flags hasnt DragFlag.NoRoundToFormat)
+            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -537,7 +541,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum
 
         // Round to user desired precision based on format string
-        vCur = roundScalarWithFormatT(format, dataType, vCur)
+        if (flags hasnt DragFlag.NoRoundToFormat)
+            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -644,7 +649,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.d
 
         // Round to user desired precision based on format string
-        vCur = roundScalarWithFormatT(format, dataType, vCur)
+        if (flags hasnt DragFlag.NoRoundToFormat)
+            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -751,7 +757,8 @@ internal interface templateFunctions {
                 var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
-                vNew = roundScalarWithFormatT(format, dataType, vNew)
+                if (flags hasnt SliderFlag.NoRoundToFormat)
+                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -850,7 +857,8 @@ internal interface templateFunctions {
                 var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
-                vNew = roundScalarWithFormatT(format, dataType, vNew)
+                if (flags hasnt SliderFlag.NoRoundToFormat)
+                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -949,7 +957,8 @@ internal interface templateFunctions {
                 var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
-                vNew = roundScalarWithFormatT(format, dataType, vNew)
+                if (flags hasnt SliderFlag.NoRoundToFormat)
+                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1049,7 +1058,8 @@ internal interface templateFunctions {
                 var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
-                vNew = roundScalarWithFormatT(format, dataType, vNew)
+                if (flags hasnt SliderFlag.NoRoundToFormat)
+                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1148,7 +1158,8 @@ internal interface templateFunctions {
                 var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
-                vNew = roundScalarWithFormatT(format, dataType, vNew)
+                if (flags hasnt SliderFlag.NoRoundToFormat)
+                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1247,7 +1258,8 @@ internal interface templateFunctions {
                 var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, flags)
 
                 // Round to user desired precision based on format string
-                vNew = roundScalarWithFormatT(format, dataType, vNew)
+                if (flags hasnt SliderFlag.NoRoundToFormat)
+                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
