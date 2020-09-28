@@ -1355,7 +1355,7 @@ enum class SliderFlag(val i: SliderFlags) {
     ClampOnInput(1 shl 4),
 
     /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
-    Logarithmic(1 shl 4),
+    Logarithmic(1 shl 5),
 
     /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
     NoRoundToFormat(1 shl 6),
