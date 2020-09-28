@@ -208,6 +208,7 @@ class Style {
         scrollbarRounding = floor(scrollbarRounding * scaleFactor)
         grabMinSize = floor(grabMinSize * scaleFactor)
         grabRounding = floor(grabRounding * scaleFactor)
+        logSliderDeadzone = floor(logSliderDeadzone * scaleFactor)
         tabRounding = floor(tabRounding * scaleFactor)
         if (tabMinWidthForUnselectedCloseButton != Float.MAX_VALUE)
             tabMinWidthForUnselectedCloseButton = floor(tabMinWidthForUnselectedCloseButton * scaleFactor)

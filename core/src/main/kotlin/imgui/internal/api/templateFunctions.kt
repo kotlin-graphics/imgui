@@ -94,17 +94,19 @@ internal interface templateFunctions {
         var vCur = v()
         var vOldRefForAccumRemainder = 0f
 
+        assert(DragFlag.Logarithmic.i == SliderFlag.Logarithmic.i)
+
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        val zeroDeadzoneSize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
+        val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             vOldRefForAccumRemainder = vOldParametric
         } else
             vCur += g.dragCurrentAccum.i
@@ -118,7 +120,7 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
             }
             else -> (vCur - v()).f
@@ -203,17 +205,19 @@ internal interface templateFunctions {
         var vCur = v()
         var vOldRefForAccumRemainder = 0f
 
+        assert(DragFlag.Logarithmic.i == SliderFlag.Logarithmic.i)
+
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        val zeroDeadzoneSize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
+        val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             vOldRefForAccumRemainder = vOldParametric
         } else
             vCur += g.dragCurrentAccum
@@ -227,7 +231,7 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
             }
             else -> (vCur.v - v().v).f
@@ -312,17 +316,19 @@ internal interface templateFunctions {
         var vCur = v()
         var vOldRefForAccumRemainder = 0.0
 
+        assert(DragFlag.Logarithmic.i == SliderFlag.Logarithmic.i)
+
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        val zeroDeadzoneSize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
+        val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             vOldRefForAccumRemainder = vOldParametric.d
         } else
             vCur += g.dragCurrentAccum.L
@@ -336,7 +342,7 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
             }
             else -> (vCur - v()).f
@@ -421,17 +427,19 @@ internal interface templateFunctions {
         var vCur = v()
         var vOldRefForAccumRemainder = 0.0
 
+        assert(DragFlag.Logarithmic.i == SliderFlag.Logarithmic.i)
+
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        val zeroDeadzoneSize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
+        val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             vOldRefForAccumRemainder = vOldParametric.d
         } else
             vCur += g.dragCurrentAccum.ul
@@ -445,7 +453,7 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
             }
             else -> (vCur.v - v().v).f
@@ -530,17 +538,19 @@ internal interface templateFunctions {
         var vCur = v()
         var vOldRefForAccumRemainder = 0f
 
+        assert(DragFlag.Logarithmic.i == SliderFlag.Logarithmic.i)
+
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        val zeroDeadzoneSize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
+        val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             vOldRefForAccumRemainder = vOldParametric
         } else
             vCur += g.dragCurrentAccum
@@ -554,7 +564,7 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                 vNewParametric - vOldRefForAccumRemainder
             }
             else -> vCur - v()
@@ -639,17 +649,19 @@ internal interface templateFunctions {
         var vCur = v()
         var vOldRefForAccumRemainder = 0.0
 
+        assert(DragFlag.Logarithmic.i == SliderFlag.Logarithmic.i)
+
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        val zeroDeadzoneSize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
+        val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
-            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            val vOldParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             val vNewParametric = vOldParametric + g.dragCurrentAccum
-            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            vCur = sliderCalcValueFromRatioT(dataType, vNewParametric, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             vOldRefForAccumRemainder = vOldParametric.d
         } else
             vCur += g.dragCurrentAccum.d
@@ -663,7 +675,7 @@ internal interface templateFunctions {
         g.dragCurrentAccum -= when {
             isLogarithmic -> {
                 // Convert to parametric space, apply delta, convert back
-                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                val vNewParametric = sliderCalcRatioFromValueT(dataType, vCur, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                 (vNewParametric - vOldRefForAccumRemainder).f
             }
             else -> (vCur - v()).f
@@ -688,7 +700,7 @@ internal interface templateFunctions {
         return true
     }
 
-    /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+    /** FIXME: Move more of the code into SliderBehavior().
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
     fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Int>,
                         vMin: Int, vMax: Int, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
@@ -709,12 +721,12 @@ internal interface templateFunctions {
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        var zeroDeadzoneSize = 0f // Only valid when is_logarithmic is true
+        var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
-            zeroDeadzoneSize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
+            zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
 
         // Process interacting with the slider
@@ -736,53 +748,50 @@ internal interface templateFunctions {
                     setNewValue = true
                 }
             else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (axis == Axis.X) delta2.x else -delta2.y
 
                 if (g.activeIdIsJustActivated) {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
-
-                if (delta != 0f) {
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                if (inputDelta != 0f) {
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
-                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
+                        inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
-                            delta /= 10f
+                            inputDelta /= 10f
                     } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
-                        delta = (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
+                        inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
-                        delta /= 100f
+                        inputDelta /= 100f
                     if (NavInput.TweakFast.isDown())
-                        delta *= 10f
+                        inputDelta *= 10f
 
-                    g.sliderCurrentAccum += delta
+                    g.sliderCurrentAccum += inputDelta
                     g.sliderCurrentAccumDirty = true
-
-                    delta = g.sliderCurrentAccum
                 }
+
+                val delta = g.sliderCurrentAccum
 
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (g.sliderCurrentAccumDirty) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
-                    setNewValue = true
                     if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f)) { // This is to avoid applying the saturation when already past the limits
                         setNewValue = false
                         g.sliderCurrentAccum = 0f // If pushing up against the limits, don't continue to accumulate
-                    }
-                    else {
+                    } else {
+                        setNewValue = true
                         val oldClickedT = clickedT
-
                         clickedT = saturate(clickedT + delta)
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
-                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                         if (flags hasnt SliderFlag.NoRoundToFormat)
                             vNew = roundScalarWithFormatT(format, dataType, vNew)
-                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                         g.sliderCurrentAccum -= when {
                             delta > 0 -> min(newClickedT - oldClickedT, delta)
@@ -793,7 +802,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                 // Round to user desired precision based on format string
                 if (flags hasnt SliderFlag.NoRoundToFormat)
@@ -811,7 +820,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -824,7 +833,7 @@ internal interface templateFunctions {
         return valueChanged
     }
 
-    /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+    /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
     fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Uint>,
                         vMin: Uint, vMax: Uint, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
@@ -869,46 +878,43 @@ internal interface templateFunctions {
                     setNewValue = true
                 }
             else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (axis == Axis.X) delta2.x else -delta2.y
 
                 if (g.activeIdIsJustActivated) {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
 
-                if (delta != 0f) {
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                if (inputDelta != 0f) {
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
-                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
+                        inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
-                            delta /= 10f
+                            inputDelta /= 10f
                     } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
-                        delta = (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
+                        inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
-                        delta /= 100f
+                        inputDelta /= 100f
                     if (NavInput.TweakFast.isDown())
-                        delta *= 10f
+                        inputDelta *= 10f
 
-                    g.sliderCurrentAccum += delta
+                    g.sliderCurrentAccum += inputDelta
                     g.sliderCurrentAccumDirty = true
-
-                    delta = g.sliderCurrentAccum
                 }
 
+                val delta = g.sliderCurrentAccum
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (g.sliderCurrentAccumDirty) {
                     clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
 
-                    setNewValue = true
                     if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f)) { // This is to avoid applying the saturation when already past the limits
                         setNewValue = false
                         g.sliderCurrentAccum = 0f // If pushing up against the limits, don't continue to accumulate
-                    }
-                    else {
+                    } else {
+                        setNewValue = true
                         val oldClickedT = clickedT
-
                         clickedT = saturate(clickedT + delta)
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
@@ -959,7 +965,7 @@ internal interface templateFunctions {
         return valueChanged
     }
 
-    /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+    /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
     fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Long>,
                         vMin: Long, vMax: Long, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
@@ -980,12 +986,12 @@ internal interface templateFunctions {
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        var zeroDeadzoneSize = 0f // Only valid when is_logarithmic is true
+        var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
-            zeroDeadzoneSize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
+            zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
 
         // Process interacting with the slider
@@ -1004,53 +1010,51 @@ internal interface templateFunctions {
                     setNewValue = true
                 }
             else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (axis == Axis.X) delta2.x else -delta2.y
 
                 if (g.activeIdIsJustActivated) {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
 
-                if (delta != 0f) {
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                if (inputDelta != 0f) {
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
-                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
+                        inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
-                            delta /= 10f
+                            inputDelta /= 10f
                     } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
-                        delta = (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
+                        inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
-                        delta /= 100f
+                        inputDelta /= 100f
                     if (NavInput.TweakFast.isDown())
-                        delta *= 10f
+                        inputDelta *= 10f
 
-                    g.sliderCurrentAccum += delta
+                    g.sliderCurrentAccum += inputDelta
                     g.sliderCurrentAccumDirty = true
-
-                    delta = g.sliderCurrentAccum
                 }
+
+                val delta = g.sliderCurrentAccum
 
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (g.sliderCurrentAccumDirty) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
-                    setNewValue = true
                     if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f)) { // This is to avoid applying the saturation when already past the limits
                         setNewValue = false
                         g.sliderCurrentAccum = 0f // If pushing up against the limits, don't continue to accumulate
-                    }
-                    else {
+                    } else {
+                        setNewValue = true
                         val oldClickedT = clickedT
-
                         clickedT = saturate(clickedT + delta)
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
-                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                         if (flags hasnt SliderFlag.NoRoundToFormat)
                             vNew = roundScalarWithFormatT(format, dataType, vNew)
-                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                         g.sliderCurrentAccum -= when {
                             delta > 0 -> min(newClickedT - oldClickedT, delta)
@@ -1063,7 +1067,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                 // Round to user desired precision based on format string
                 if (flags hasnt SliderFlag.NoRoundToFormat)
@@ -1081,7 +1085,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1094,7 +1098,7 @@ internal interface templateFunctions {
         return valueChanged
     }
 
-    /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+    /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Ulong, SIGNEDTYPE = Long, FLOATTYPE = Double> */
     fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Ulong>,
                         vMin: Ulong, vMax: Ulong, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
@@ -1115,12 +1119,12 @@ internal interface templateFunctions {
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        var zeroDeadzoneSize = 0f // Only valid when is_logarithmic is true
+        var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
-            zeroDeadzoneSize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
+            zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
 
 
@@ -1140,52 +1144,51 @@ internal interface templateFunctions {
                     setNewValue = true
                 }
             else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (axis == Axis.X) delta2.x else -delta2.y
+
                 if (g.activeIdIsJustActivated) {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
 
-                if (delta != 0f) {
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                if (inputDelta != 0f) {
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
-                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
+                        inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
-                            delta /= 10f
+                            inputDelta /= 10f
                     } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
-                        delta = (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
+                        inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
-                        delta /= 100f
+                        inputDelta /= 100f
                     if (NavInput.TweakFast.isDown())
-                        delta *= 10f
+                        inputDelta *= 10f
 
-                    g.sliderCurrentAccum += delta
+                    g.sliderCurrentAccum += inputDelta
                     g.sliderCurrentAccumDirty = true
-
-                    delta = g.sliderCurrentAccum
                 }
+
+                val delta = g.sliderCurrentAccum
 
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (g.sliderCurrentAccumDirty) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
-                    setNewValue = true
                     if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f)) { // This is to avoid applying the saturation when already past the limits
                         setNewValue = false
                         g.sliderCurrentAccum = 0f // If pushing up against the limits, don't continue to accumulate
-                    }
-                    else{
+                    } else {
+                        setNewValue = true
                         val oldClickedT = clickedT
-
                         clickedT = saturate(clickedT + delta)
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
-                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                         if (flags hasnt SliderFlag.NoRoundToFormat)
                             vNew = roundScalarWithFormatT(format, dataType, vNew)
-                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                         g.sliderCurrentAccum -= when {
                             delta > 0 -> min(newClickedT - oldClickedT, delta)
@@ -1198,7 +1201,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                 // Round to user desired precision based on format string
                 if (flags hasnt SliderFlag.NoRoundToFormat)
@@ -1216,7 +1219,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         } else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1229,7 +1232,7 @@ internal interface templateFunctions {
         return valueChanged
     }
 
-    /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+    /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
     fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Float>,
                         vMin: Float, vMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
@@ -1250,12 +1253,12 @@ internal interface templateFunctions {
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        var zeroDeadzoneSize = 0f // Only valid when is_logarithmic is true
+        var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
-            zeroDeadzoneSize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
+            zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
 
         // Process interacting with the slider
@@ -1274,52 +1277,51 @@ internal interface templateFunctions {
                     setNewValue = true
                 }
             else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (axis == Axis.X) delta2.x else -delta2.y
+
                 if (g.activeIdIsJustActivated) {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
 
-                if (delta != 0f) {
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                if (inputDelta != 0f) {
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
-                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
+                        inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
-                            delta /= 10f
+                            inputDelta /= 10f
                     } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
-                        delta = (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
+                        inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
-                        delta /= 100f
+                        inputDelta /= 100f
                     if (NavInput.TweakFast.isDown())
-                        delta *= 10f
+                        inputDelta *= 10f
 
-                    g.sliderCurrentAccum += delta
+                    g.sliderCurrentAccum += inputDelta
                     g.sliderCurrentAccumDirty = true
-
-                    delta = g.sliderCurrentAccum
                 }
+
+                val delta = g.sliderCurrentAccum
 
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (g.sliderCurrentAccumDirty) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
-                    setNewValue = true
                     if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f)) { // This is to avoid applying the saturation when already past the limits
                         setNewValue = false
                         g.sliderCurrentAccum = 0f // If pushing up against the limits, don't continue to accumulate
-                    }
-                    else{
+                    } else {
+                        setNewValue = true
                         val oldClickedT = clickedT
-
                         clickedT = saturate(clickedT + delta)
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
-                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                         if (flags has SliderFlag.NoRoundToFormat)
                             vNew = roundScalarWithFormatT(format, dataType, vNew)
-                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                         g.sliderCurrentAccum -= when {
                             delta > 0 -> min(newClickedT - oldClickedT, delta)
@@ -1332,7 +1334,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                 // Round to user desired precision based on format string
                 if (flags hasnt SliderFlag.NoRoundToFormat)
@@ -1350,7 +1352,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1363,7 +1365,7 @@ internal interface templateFunctions {
         return valueChanged
     }
 
-    /** FIXME: Move some of the code into SliderBehavior(). Current responsibility is larger than what the equivalent DragBehaviorT<> does, we also do some rendering, etc.
+    /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
     fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Double>,
                         vMin: Double, vMax: Double, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
@@ -1384,12 +1386,12 @@ internal interface templateFunctions {
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        var zeroDeadzoneSize = 0f // Only valid when is_logarithmic is true
+        var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
-            zeroDeadzoneSize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
+            zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
 
         // Process interacting with the slider
@@ -1408,54 +1410,52 @@ internal interface templateFunctions {
                     setNewValue = true
                 }
             else if (g.activeIdSource == InputSource.Nav) {
-                val delta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
-                var delta = if (axis == Axis.X) delta2.x else -delta2.y
+
                 if (g.activeIdIsJustActivated) {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
 
-                if (delta != 0f) {
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                if (inputDelta != 0f) {
                     val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
-                        delta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
+                        inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
-                            delta /= 10f
+                            inputDelta /= 10f
                     } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
-                        delta = (if (delta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
+                        inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
-                        delta /= 100f
+                        inputDelta /= 100f
                     if (NavInput.TweakFast.isDown())
-                        delta *= 10f
+                        inputDelta *= 10f
 
-                    g.sliderCurrentAccum += delta
+                    g.sliderCurrentAccum += inputDelta
                     g.sliderCurrentAccumDirty = true
-
-                    delta = g.sliderCurrentAccum
                 }
+
+                val delta = g.sliderCurrentAccum
 
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (g.sliderCurrentAccumDirty) {
-                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                    clickedT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
-                    setNewValue = true
                     if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f)) { // This is to avoid applying the saturation when already past the limits
                         setNewValue = false
                         g.sliderCurrentAccum = 0f // If pushing up against the limits, don't continue to accumulate
-                    }
-                    else
-                    {
+                    } else {
+                        setNewValue = true
                         val oldClickedT = clickedT
-
                         clickedT = saturate(clickedT + delta)
 
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
-                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
                         if (flags hasnt SliderFlag.NoRoundToFormat)
                             vNew = roundScalarWithFormatT(format, dataType, vNew)
-                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                        val newClickedT = sliderCalcRatioFromValueT(dataType, vNew, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                         g.sliderCurrentAccum -= when {
                             delta > 0 -> min(newClickedT - oldClickedT, delta)
@@ -1468,7 +1468,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+                var vNew = sliderCalcValueFromRatioT(dataType, clickedT, vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
 
                 // Round to user desired precision based on format string
                 if (flags hasnt SliderFlag.NoRoundToFormat)
@@ -1486,7 +1486,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         else {
             // Output grab position so it can be displayed by the caller
-            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneSize, flags)
+            var grabT = sliderCalcRatioFromValueT(dataType, v(), vMin, vMax, logarithmicZeroEpsilon, zeroDeadzoneHalfsize, flags)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1503,7 +1503,7 @@ internal interface templateFunctions {
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Int, FLOATTYPE = Float> */
     fun sliderCalcRatioFromValueT(dataType: DataType, v: Int, vMin_: Int, vMax_: Int, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Float {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1543,11 +1543,13 @@ internal interface templateFunctions {
                     vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
                     vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
                     (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
-                        val zeroPoint = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointCenter = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
                         when {
-                            v == 0 -> zeroPoint // Special case for exactly zero
-                            v < 0f -> (1f - ln(-vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * (zeroPoint - zeroDeadzoneSize)
-                            else -> zeroPoint + zeroDeadzoneSize + ln(vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPoint)
+                            v == 0 -> zeroPointCenter // Special case for exactly zero
+                            v < 0f -> (1f - ln(-vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * zeroPointSnapL
+                            else -> zeroPointSnapR + ln(vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPointSnapR)
                         }
                     }
                     // Entirely negative slider
@@ -1565,7 +1567,7 @@ internal interface templateFunctions {
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Uint, FLOATTYPE = Float> */
     fun sliderCalcRatioFromValueT(dataType: DataType, v: Uint, vMin_: Uint, vMax_: Uint, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Float {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1627,7 +1629,7 @@ internal interface templateFunctions {
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Long, FLOATTYPE = Double> */
     fun sliderCalcRatioFromValueT(dataType: DataType, v: Long, vMin_: Long, vMax_: Long, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Float {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1667,11 +1669,13 @@ internal interface templateFunctions {
                     vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
                     vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
                     (vMin * vMax) < 0L -> { // Range crosses zero, so split into two portions
-                        val zeroPoint = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointCenter = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
                         when {
-                            v == 0L -> zeroPoint // Special case for exactly zero
-                            v < 0L -> (1f - (ln(-vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)).f) * (zeroPoint - zeroDeadzoneSize)
-                            else -> zeroPoint + zeroDeadzoneSize + ((ln(vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon)).f * (1f - zeroPoint))
+                            v == 0L -> zeroPointCenter // Special case for exactly zero
+                            v < 0L -> (1f - (ln(-vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)).f) * zeroPointSnapL
+                            else -> zeroPointSnapR + ((ln(vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon)).f * (1f - zeroPointSnapR))
                         }
                     }
                     // Entirely negative slider
@@ -1689,7 +1693,7 @@ internal interface templateFunctions {
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Ulong, FLOATTYPE = Double> */
     fun sliderCalcRatioFromValueT(dataType: DataType, v: Ulong, vMin_: Ulong, vMax_: Ulong, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Float {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1752,7 +1756,7 @@ internal interface templateFunctions {
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Float, FLOATTYPE = Float> */
     fun sliderCalcRatioFromValueT(dataType: DataType, v: Float, vMin_: Float, vMax_: Float, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Float {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1791,11 +1795,13 @@ internal interface templateFunctions {
                     vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
                     vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
                     (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
-                        val zeroPoint = -vMin / (vMax - vMin) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointCenter = -vMin / (vMax - vMin) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
                         when {
-                            v == 0f -> zeroPoint // Special case for exactly zero
-                            v < 0f -> (1f - ln(-vClamped / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * (zeroPoint - zeroDeadzoneSize)
-                            else -> zeroPoint + zeroDeadzoneSize + (ln(vClamped / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPoint))
+                            v == 0f -> zeroPointCenter // Special case for exactly zero
+                            v < 0f -> (1f - ln(-vClamped / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * zeroPointSnapL
+                            else -> zeroPointSnapR + (ln(vClamped / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPointSnapR))
                         }
                     }
                     // Entirely negative slider
@@ -1813,7 +1819,7 @@ internal interface templateFunctions {
      *  (the logical opposite of SliderCalcValueFromRatioT)
      *  template<TYPE = Double, FLOATTYPE = Double> */
     fun sliderCalcRatioFromValueT(dataType: DataType, v: Double, vMin_: Double, vMax_: Double, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Float {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Float {
 
         var vMin = vMin_
         var vMax = vMax_
@@ -1852,11 +1858,13 @@ internal interface templateFunctions {
                     vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
                     vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
                     (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
-                        val zeroPoint = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointCenter = -vMin.f / (vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
                         when {
-                            v == 0.0 -> zeroPoint // Special case for exactly zero
-                            v < 0f -> (1f - (ln(-vClamped / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)).f) * (zeroPoint - zeroDeadzoneSize)
-                            else -> zeroPoint + zeroDeadzoneSize + (ln(vClamped / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon)).f * (1f - (zeroPoint + zeroDeadzoneSize))
+                            v == 0.0 -> zeroPointCenter // Special case for exactly zero
+                            v < 0f -> (1f - (ln(-vClamped / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)).f) * zeroPointSnapL
+                            else -> zeroPointSnapR + (ln(vClamped / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon)).f * (1f - zeroPointSnapR)
                         }
                     }
                     // Entirely negative slider
@@ -1873,7 +1881,7 @@ internal interface templateFunctions {
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Int, FLOATTYPE = Float> */
     fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Int, vMax: Int, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Int {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Int {
 
         if (vMin == vMax)
             return 0
@@ -1912,13 +1920,13 @@ internal interface templateFunctions {
 
                 when {
                     vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPoint = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
-                        val zeroP = zeroPoint + zeroDeadzoneSize
-                        val zeroM = zeroPoint - zeroDeadzoneSize
-                        when (tWithFlip) {
-                            zeroPoint -> 0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            in zeroM..zeroP -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroM)).i
-                            else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroP) / (1f - zeroP))).i
+                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                        when {
+                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroPointSnapL)).i
+                            else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR))).i
                         }
                     }
                     // Entirely negative slider
@@ -1948,7 +1956,7 @@ internal interface templateFunctions {
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Uint, FLOATTYPE = Float> */
     fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Uint, vMax: Uint, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Uint {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Uint {
 
         if (vMin == vMax)
             return Uint(0)
@@ -2020,7 +2028,7 @@ internal interface templateFunctions {
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Long, FLOATTYPE = Double> */
     fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Long, vMax: Long, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Long {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Long {
 
         if (vMin == vMax)
             return 0L
@@ -2059,13 +2067,13 @@ internal interface templateFunctions {
 
                 when {
                     vMin * vMax < 0L -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPoint = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
-                        val zeroP = zeroPoint + zeroDeadzoneSize
-                        val zeroM = zeroPoint - zeroDeadzoneSize
-                        when(tWithFlip) {
-                            zeroPoint -> 0L // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            in zeroM..zeroP -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1.0 - tWithFlip / zeroM)).L
-                            else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroP) / (1f - zeroP)).d)).L
+                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                        when {
+                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0L // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow((1f - tWithFlip / zeroPointSnapL).d)).L
+                            else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR)).d)).L
                         }
                     }
                     // Entirely negative slider
@@ -2095,7 +2103,7 @@ internal interface templateFunctions {
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Ulong, FLOATTYPE = Double> */
     fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Ulong, vMax: Ulong, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Ulong {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Ulong {
 
         if (vMin == vMax)
             return Ulong(0)
@@ -2167,7 +2175,7 @@ internal interface templateFunctions {
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Float, FLOATTYPE = Float> */
     fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Float, vMax: Float, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Float {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Float {
 
         if (vMin == vMax)
             return 0f
@@ -2206,13 +2214,13 @@ internal interface templateFunctions {
 
                 when {
                     vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPoint = -(vMin min vMax).f / abs(vMax - vMin) // The zero point in parametric space
-                        val zeroP = zeroPoint + zeroDeadzoneSize
-                        val zeroM = zeroPoint - zeroDeadzoneSize
-                        when(tWithFlip) {
-                            zeroPoint -> 0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            in zeroM..zeroP -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroM))
-                            else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroP) / (1f - zeroP))
+                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax - vMin) // The zero point in parametric space
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                        when {
+                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroPointSnapL))
+                            else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR))
                         }
                     }
                     // Entirely negative slider
@@ -2241,7 +2249,7 @@ internal interface templateFunctions {
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of SliderCalcRatioFromValueT)
      *  template<TYPE = Double, FLOATTYPE = Double> */
     fun sliderCalcValueFromRatioT(dataType: DataType, t: Float, vMin: Double, vMax: Double, logarithmicZeroEpsilon: Float,
-                                  zeroDeadzoneSize: Float, flags: SliderFlags): Double {
+                                  zeroDeadzoneHalfsize: Float, flags: SliderFlags): Double {
 
         if (vMin == vMax)
             return 0.0
@@ -2280,13 +2288,13 @@ internal interface templateFunctions {
 
                 when {
                     vMin * vMax < 0.0 -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPoint = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
-                        val zeroP = zeroPoint + zeroDeadzoneSize
-                        val zeroM = zeroPoint - zeroDeadzoneSize
-                        when(tWithFlip) {
-                            zeroPoint -> 0.0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            in zeroM..zeroP -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow((1f - tWithFlip / zeroM).d))
-                            else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroP) / (1f - zeroP)).d)
+                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
+                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                        when {
+                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0.0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow((1f - tWithFlip / zeroPointSnapL).d))
+                            else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR)).d)
                         }
                     }
                     // Entirely negative slider
