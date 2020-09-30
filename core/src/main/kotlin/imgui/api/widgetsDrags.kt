@@ -80,6 +80,7 @@ interface widgetsDrags {
             dragScalarN(label, DataType.Float, v to _fa, 4, vSpeed, vMin, vMax, format, flags)
                     .also { v put _fa }
 
+    /** NB: You likely want to specify the ImGuiDragFlags_ClampOnInput when using this. */
     fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
                         vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                         formatMax: String = format, flags: DragFlags = 0): Boolean {
@@ -93,20 +94,18 @@ interface widgetsDrags {
         ImGui.beginGroup()
         ImGui.pushMultiItemsWidths(2, ImGui.calcItemWidth())
 
-        var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
-        var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
-        if (min == max) {
-            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
-        var valueChanged = dragScalar("##min", DataType.Float, vCurrentMinPtr, vSpeed, min, max, format, flags)
+        val minMin = if (vMin >= vMax) -Float.MAX_VALUE else vMin
+        val minMax = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
+        val minFlags = flags or if(minMin == minMax) DragFlag._ReadOnly else DragFlag.None
+        var valueChanged = dragScalar("##min", DataType.Float, vCurrentMinPtr, vSpeed, minMin, minMax, format, minFlags)
         ImGui.popItemWidth()
         ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
 
-        min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
-        max = if (vMin >= vMax) Float.MAX_VALUE else vMax
-        if (min == max) {
-            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
-        val f = if (formatMax.isNotEmpty()) formatMax else format
-        valueChanged = dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, min, max, f, flags) || valueChanged
+        val maxMin = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
+        val maxMax = if (vMin >= vMax) Float.MAX_VALUE else vMax
+        val maxFlags = flags or if(maxMin == maxMax) DragFlag._ReadOnly else DragFlag.None
+        val fmt = if (formatMax.isNotEmpty()) formatMax else format
+        valueChanged = dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags) || valueChanged
         ImGui.popItemWidth()
         ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
 
@@ -154,6 +153,7 @@ interface widgetsDrags {
             dragScalarN(label, DataType.Int, v to _ia, 4, vSpeed, vMin, vMax, format, flags)
                     .also { v put _ia }
 
+    /** NB: You likely want to specify the ImGuiDragFlags_ClampOnInput when using this. */
     fun dragIntRange2(label: String, vCurrentMinPtr: KMutableProperty0<Int>, vCurrentMaxPtr: KMutableProperty0<Int>,
                       vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d",
                       formatMax: String = format, flags: DragFlags = 0): Boolean {
@@ -167,20 +167,18 @@ interface widgetsDrags {
         beginGroup()
         pushMultiItemsWidths(2, calcItemWidth())
 
-        var min = if (vMin >= vMax) Int.MIN_VALUE else vMin
-        var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
-        if (min == max) {
-            min = Int.MAX_VALUE; max = Int.MIN_VALUE; } // Lock edit
-        var valueChanged = dragInt("##min", vCurrentMinPtr, vSpeed, min, max, format, flags)
+        val minMin = if (vMin >= vMax) Int.MIN_VALUE else vMin
+        val minMax = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
+        val minFlags = flags or if(minMin == minMax) DragFlag._ReadOnly else DragFlag.None
+        var valueChanged = dragInt("##min", vCurrentMinPtr, vSpeed, minMin, minMax, format, minFlags)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
-        min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
-        max = if (vMin >= vMax) Int.MAX_VALUE else vMax
-        if (min == max) {
-            min = Int.MAX_VALUE; max = Int.MIN_VALUE; } // Lock edit
+        val maxMin = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
+        val maxMax = if (vMin >= vMax) Int.MAX_VALUE else vMax
+        val maxFlags = flags or if(maxMin == maxMax) DragFlag._ReadOnly else DragFlag.None
         val fmt = if (formatMax.isNotEmpty()) formatMax else format
-        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, min, max, fmt, flags) || valueChanged
+        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
