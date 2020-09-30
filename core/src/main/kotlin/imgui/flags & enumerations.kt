@@ -1323,7 +1323,9 @@ enum class DragFlag(val i: DragFlags) {
     NoInput(1 shl 7),
 
     /** [Private] Should this widget be orientated vertically? */
-    _Vertical(1 shl 20);
+    _Vertical(1 shl 20),
+
+    _ReadOnly(1 shl 21);
 
     infix fun and(b: DragFlag): DragFlags = i and b.i
     infix fun and(b: DragFlags): DragFlags = i and b
@@ -1364,7 +1366,9 @@ enum class SliderFlag(val i: SliderFlags) {
     NoInput(1 shl 7),
 
     /** [Private] Should this widget be orientated vertically? */
-    _Vertical(1 shl 20);
+    _Vertical(1 shl 20),
+
+    _ReadOnly(1 shl 21);
 
     infix fun and(b: SliderFlag): SliderFlags = i and b.i
     infix fun and(b: SliderFlags): SliderFlags = i and b

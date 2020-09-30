@@ -849,9 +849,6 @@ internal interface templateFunctions {
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isLocked = vMin > vMax
-        if (isLocked)
-            return false
 
         // Default tweak speed
         var vSpeed = when {
@@ -958,9 +955,6 @@ internal interface templateFunctions {
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isLocked = vMin > vMax
-        if (isLocked)
-            return false
 
         // Default tweak speed
         var vSpeed = when {
@@ -1067,9 +1061,6 @@ internal interface templateFunctions {
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isLocked = vMin > vMax
-        if (isLocked)
-            return false
 
         // Default tweak speed
         var vSpeed = when {
@@ -1176,9 +1167,6 @@ internal interface templateFunctions {
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isLocked = vMin > vMax
-        if (isLocked)
-            return false
 
         // Default tweak speed
         var vSpeed = when {
@@ -1285,9 +1273,6 @@ internal interface templateFunctions {
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isLocked = (vMin > vMax)
-        if (isLocked)
-            return false
 
         // Default tweak speed
         var vSpeed = when {
@@ -1394,9 +1379,6 @@ internal interface templateFunctions {
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
         val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
-        val isLocked = vMin > vMax
-        if (isLocked)
-            return false
 
         // Default tweak speed
         var vSpeed = when {
