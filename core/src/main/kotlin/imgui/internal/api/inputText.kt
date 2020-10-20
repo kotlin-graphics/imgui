@@ -867,20 +867,10 @@ internal interface inputText {
         return valueChanged
     }
 
-    /** Note that Drag/Slider functions are currently NOT forwarding the min/max values clamping values!
+    /** Note that Drag/Slider functions are only forwarding the min/max values clamping values if the
+     *  ImGuiSliderFlags_ClampOnInput / ImGuiSliderFlags_ClampOnInput flag is set!
      *  This is intended: this way we allow CTRL+Click manual input to set a value out of bounds, for maximum flexibility.
-     *  However this may not be ideal for all uses, as some user code may break on out of bound values.
-     *  In the future we should add flags to Slider/Drag to specify how to enforce min/max values with CTRL+Click.
-     *  See GitHub issues #1829 and #3209
-     *  In the meanwhile, you can easily "wrap" those functions to enforce clamping, using wrapper functions, e.g.
-     *    bool SliderFloatClamp(const char* label, float* v, float v_min, float v_max)
-     *    {
-     *       float v_backup = *v;
-     *       if (!SliderFloat(label, v, v_min, v_max))
-     *          return false;
-     *       *v = ImClamp(*v, v_min, v_max);
-     *       return v_backup != *v;
-     *    } */
+     *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
     fun <N> tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
                             format_: String, clampMin: N? = null, clampMax: N? = null,): Boolean
             where N : Number, N: Comparable<N> {
