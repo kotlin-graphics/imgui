@@ -22,7 +22,3 @@ dependencies {
         runtimeOnly("org.lwjgl", "lwjgl$it", classifier = lwjglNatives)
     }
 }
-
-tasks {
-    compileKotlin.get().destinationDir = compileJava.get().destinationDir
-}

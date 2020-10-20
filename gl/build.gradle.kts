@@ -27,7 +27,3 @@ dependencies {
 
     testImplementation("com.github.ajalt:mordant:1.2.1")
 }
-
-tasks {
-    compileKotlin.get().destinationDir = compileJava.get().destinationDir
-}
