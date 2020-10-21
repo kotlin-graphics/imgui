@@ -24,8 +24,10 @@ class InputTextCallbackData {
 
     /** One ImGuiInputTextFlags_Callback*    // Read-only */
     var eventFlag: InputTextFlags = 0
+
     /** What user passed to InputText()      // Read-only */
     var flags: InputTextFlags = 0
+
     /** What user passed to InputText()      // Read-only */
     var userData: Any? = null
 
@@ -36,22 +38,31 @@ class InputTextCallbackData {
     /** Character input                     Read-write   [CharFilter] Replace character with another one, or set to zero to drop.
      *                                      return 1 is equivalent to setting EventChar=0; */
     var eventChar = NUL
+
     /** Key pressed (Up/Down/TAB)           Read-only    [Completion,History] */
     var eventKey = Key.Tab
+
     /** Text buffer                 Read-write   [Resize] Can replace pointer / [Completion,History,Always] Only write to pointed data, don't replace the actual pointer! */
     var buf = ByteArray(0)
+
     /** [JVM], current buf pointer */
     var bufPtr = 0
+
     /** Text length (in bytes)        Read-write   [Resize,Completion,History,Always] */
     var bufTextLen = 0
+
     /** Buffer size (in bytes) = capacity + 1    Read-only    [Resize,Completion,History,Always] */
     var bufSize = 0
+
     /** Set if you modify Buf/BufTextLen!  Write        [Completion,History,Always] */
     var bufDirty = false
+
     /** Read-write   [Completion,History,Always] */
     var cursorPos = 0
+
     /** Read-write   [Completion,History,Always] == to SelectionEnd when no selection) */
     var selectionStart = 0
+
     /** Read-write   [Completion,History,Always] */
     var selectionEnd = 0
 
@@ -83,7 +94,7 @@ class InputTextCallbackData {
     fun insertChars(pos: Int, newText: ByteArray, newTextEnd: Int = -1) {
 
         val isResizable = flags has InputTextFlag.CallbackResize
-        val newTextLen = if(newTextEnd != -1) newTextEnd else newText.strlen()
+        val newTextLen = if (newTextEnd != -1) newTextEnd else newText.strlen()
         if (newTextLen + bufTextLen >= bufSize) {
 
             if (!isResizable) return
@@ -113,6 +124,16 @@ class InputTextCallbackData {
         selectionStart = cursorPos
         bufDirty = true
         bufTextLen += newTextLen
+    }
+
+    fun selectAll() {
+        selectionStart = 0
+        selectionEnd = bufTextLen
+    }
+
+    fun clearSelection() {
+        selectionEnd = bufTextLen
+        selectionStart = selectionEnd
     }
 
     val hasSelection: Boolean
