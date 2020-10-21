@@ -286,6 +286,7 @@ internal interface inputText {
 
             backupCurrentTextLength = state!!.curLenA
             state.apply {
+                edited = false
                 bufCapacityA = buf.size
                 userFlags = flags
                 userCallback = callback
@@ -531,6 +532,7 @@ internal interface inputText {
                             eventFlag = Itf.CallbackHistory
                             eventKey = Key.DownArrow
                         }
+                        flags has Itf.CallbackEdit && state.edited -> eventFlag = Itf.CallbackEdit
                         flags has Itf.CallbackAlways -> eventFlag = Itf.CallbackAlways
                     }
 
