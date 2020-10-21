@@ -202,6 +202,10 @@ enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flag
      *  You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stl.h for an example of using this) */
     CallbackResize(1 shl 18),
 
+    /** Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to
+     *  manipulate the underlying buffer while focus is active) */
+    CallbackEdit(1 shl 19),
+
     // [Internal]
 
     /** For internal use by InputTextMultiline()    */
