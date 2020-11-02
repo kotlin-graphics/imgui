@@ -22,10 +22,9 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
-import imgui.ImGui.foregroundDrawList
-import imgui.ImGui.frameCount
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
+import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -33,8 +32,10 @@ import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.popID
+import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushID
+import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.saveIniSettingsToDisk
@@ -54,6 +55,7 @@ import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.classes.DrawList
@@ -65,7 +67,9 @@ import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
-import imgui.internal.classes.*
+import imgui.internal.classes.Rect
+import imgui.internal.classes.TabBar
+import imgui.internal.classes.Window
 import imgui.internal.sections.Columns
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.WindowSettings
@@ -166,7 +170,10 @@ interface demoDebugInformations {
             if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
             if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
-            if (io.configWindowsMemoryCompactTimer >= 0f) text("io.ConfigWindowsMemoryCompactTimer = %.1ff", io.configWindowsMemoryCompactTimer)
+            if (io.configWindowsMemoryCompactTimer >= 0f) text(
+                "io.ConfigWindowsMemoryCompactTimer = %.1ff",
+                io.configWindowsMemoryCompactTimer
+            )
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
@@ -174,9 +181,17 @@ interface demoDebugInformations {
             if (io.backendFlags has BackendFlag.RendererHasVtxOffset) text(" RendererHasVtxOffset")
             // @formatter:on
             separator()
-            text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
+            text(
+                "io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
+                io.fonts.flags
+            )
             text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
-            text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
+            text(
+                "io.displayFramebufferScale: %.2f,%.2f".format(
+                    io.displayFramebufferScale.x,
+                    io.displayFramebufferScale.y
+                )
+            )
             separator()
             text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
             text("style.windowBorderSize: %.2f", style.windowBorderSize)
@@ -242,7 +257,16 @@ interface demoDebugInformations {
                     indent {
                         for (rectN in WRT.values()) {
                             val r = Funcs.getWindowRect(nav, rectN)
-                            text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, WRT.names[rectN.ordinal])
+                            text(
+                                "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s",
+                                r.min.x,
+                                r.min.y,
+                                r.max.x,
+                                r.max.y,
+                                r.width,
+                                r.height,
+                                WRT.names[rectN.ordinal]
+                            )
                         }
                     }
                 }
@@ -323,31 +347,58 @@ interface demoDebugInformations {
 //            #ifdef IMGUI_HAS_DOCK
 //            #endif
 
-            treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
+            treeNode(
+                "SettingsIniData",
+                "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes"
+            ) {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
             }
         }
 
         // Misc Details
         if (treeNode("Internal state")) {
-            text("HoveredWindow: '${g.hoveredWindow?.name}'")
-            text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
-            text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")
-            /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
-                information or not                 */
-            text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
-            text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
-            text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
-            text("MovingWindow: '${g.movingWindow?.name}'")
-            text("NavWindow: '${g.navWindow?.name}'")
-            text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
-            text("NavInputSource: ${g.navInputSource}")
-            text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
-            text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
-            text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
-            text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
-            text("DragDrop: ${g.dragDropActive}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" " +
-                    "(${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
+
+            text("WINDOWING")
+            indent {
+                text("HoveredWindow: '${g.hoveredWindow?.name}'")
+                text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+                text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")
+                /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
+                    information or not                 */
+                text("MovingWindow: '${g.movingWindow?.name ?: "NULL"}'")
+            }
+
+            text("ITEMS")
+            indent {
+                text(
+                    "ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}",
+                    g.activeId, g.activeIdPreviousFrame, g.activeIdTimer
+                )
+                text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
+                text(
+                    "HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}",
+                    g.hoveredId,
+                    g.hoveredIdPreviousFrame,
+                    g.hoveredIdTimer
+                ) // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
+                text(
+                    "DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)",
+                    g.dragDropPayload.sourceId
+                )
+            }
+
+            text("NAV,FOCUS")
+            indent {
+                text("NavWindow: '${g.navWindow?.name}'")
+                text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
+                text("NavInputSource: ${g.navInputSource}")
+                text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
+                text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.navActivateId, g.navInputId)
+                text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
+                text("NavFocusScopeId = 0x%08X", g.navFocusScopeId)
+                text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
+            }
+
             treePop()
         }
 
@@ -399,14 +450,14 @@ interface demoDebugInformations {
      *
      *  add style selector block (not a window), essentially a combo listing the default styles. */
     fun showStyleSelector(label: String) =
-            if (combo(label, Companion::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
-                when (styleIdx) {
-                    0 -> styleColorsClassic()
-                    1 -> styleColorsDark()
-                    2 -> styleColorsLight()
-                }
-                true
-            } else false
+        if (combo(label, Companion::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
+            when (styleIdx) {
+                0 -> styleColorsClassic()
+                1 -> styleColorsDark()
+                2 -> styleColorsLight()
+            }
+            true
+        } else false
 
     /** Demo helper function to select among loaded fonts.
      *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
@@ -424,19 +475,23 @@ interface demoDebugInformations {
             endCombo()
         }
         sameLine()
-        helpMarker("""
+        helpMarker(
+            """
             - Load additional fonts with io.Fonts->AddFontFromFileTTF().
             - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
             - Read FAQ and documentation in misc/fonts/ for more details.
-            - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
+            - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame()."""
+        )
     }
 
     /** Helper to display basic user controls. */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
-        bulletText("""
+        bulletText(
+            """
             Click and drag on lower corner to resize window
-            (double-click to auto fit window to its contents).""".trimIndent())
+            (double-click to auto fit window to its contents).""".trimIndent()
+        )
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
         if (io.fontAllowUserScaling)
@@ -525,8 +580,8 @@ interface demoDebugInformations {
             }
 
             fun nodeDrawCmdShowMeshAndBoundingBox(
-                    window: Window?, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
-                    showMesh: Boolean, showAabb: Boolean,
+                window: Window?, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
+                showMesh: Boolean, showAabb: Boolean,
             ) {
                 assert(showMesh || showAabb)
                 val fgDrawList = getForegroundDrawList(window) // Render additional visuals into the top-most draw list
@@ -536,7 +591,8 @@ interface demoDebugInformations {
                 val clipRect = Rect(drawCmd.clipRect)
                 val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
                 val backupFlags = fgDrawList.flags
-                fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                fgDrawList.flags =
+                    fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
                 for (baseIdx in elemOffset until (elemOffset + drawCmd.elemCount) step 3) {
                     val triangle = Array(3) { Vec2() }
                     for (n in 0..2) {
@@ -545,20 +601,35 @@ interface demoDebugInformations {
                         vtxsRect add p
                     }
                     if (showMesh)
-                        fgDrawList.addPolyline(triangle.toCollection(ArrayList()), COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
+                        fgDrawList.addPolyline(
+                            triangle.toCollection(ArrayList()),
+                            COL32(255, 255, 0, 255),
+                            true,
+                            1f
+                        ) // In yellow: mesh triangles
                 }
                 // Draw bounding boxes
                 if (showAabb) {
-                    fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255)) // In pink: clipping rectangle submitted to GPU
-                    fgDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(0, 255, 255, 255)) // In cyan: bounding box of triangles
+                    fgDrawList.addRect(
+                        floor(clipRect.min),
+                        floor(clipRect.max),
+                        COL32(255, 0, 255, 255)
+                    ) // In pink: clipping rectangle submitted to GPU
+                    fgDrawList.addRect(
+                        floor(vtxsRect.min),
+                        floor(vtxsRect.max),
+                        COL32(0, 255, 255, 255)
+                    ) // In cyan: bounding box of triangles
                 }
                 fgDrawList.flags = backupFlags
             }
 
             fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
 
-                val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " +
-                        "${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds")
+                val nodeOpen = treeNode(
+                    drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " +
+                            "${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds"
+                )
                 if (drawList === windowDrawList) {
                     sameLine()
                     // Can't display stats for active draw list! (we don't have the data double-buffered)
@@ -566,7 +637,8 @@ interface demoDebugInformations {
                     if (nodeOpen) treePop()
                     return
                 }
-                val fgDrawList = getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
+                val fgDrawList =
+                    getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
                 if (window != null && isItemHovered())
                     fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
 
@@ -582,18 +654,30 @@ interface demoDebugInformations {
                     if (cb == null && cmd.elemCount == 0)
                         continue
                     if (cb != null) {
-                        bulletText("Callback %s, UserData %s", cb.toString(), String((cmd.userCallbackData as ByteBuffer).array()))
+                        bulletText(
+                            "Callback %s, UserData %s",
+                            cb.toString(),
+                            String((cmd.userCallbackData as ByteBuffer).array())
+                        )
                         continue
                     }
 
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
 
-                    var string = ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
+                    var string =
+                        ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
                             .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
+                        nodeDrawCmdShowMeshAndBoundingBox(
+                            window,
+                            drawList,
+                            cmd,
+                            elemOffset,
+                            showDrawcmdMesh,
+                            showDrawcmdAabb
+                        )
                     if (!cmdNodeOpen) continue
 
                     // Calculate approximate coverage area (touched pixel count)
@@ -607,7 +691,10 @@ interface demoDebugInformations {
                     }
 
                     // Display vertex information summary. Hover to get all triangles drawn in wire-frame
-                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
+                    string =
+                        "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(
+                            totalArea
+                        )
                     selectable(string)
                     if (isItemHovered() && fgDrawList != null)
                         nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, elemOffset, true, false)
@@ -625,7 +712,7 @@ interface demoDebugInformations {
                                 triangles[n] put v.pos
                                 val name = if (n == 0) "Vert:" else "     "
                                 val s = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                                        .format(style.locale, idx_i++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                                    .format(style.locale, idx_i++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                                 s.toCharArray(buf, bufP)
                                 bufP += s.length
                             }
@@ -647,11 +734,27 @@ interface demoDebugInformations {
             }
 
             fun nodeColumns(columns: Columns) {
-                if (!treeNode(columns.id, "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X", columns.id, columns.flags))
+                if (!treeNode(
+                        columns.id,
+                        "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X",
+                        columns.id,
+                        columns.flags
+                    )
+                )
                     return
-                bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.offMaxX - columns.offMinX, columns.offMinX, columns.offMaxX)
+                bulletText(
+                    "Width: %.1f (MinX: %.1f, MaxX: %.1f)",
+                    columns.offMaxX - columns.offMinX,
+                    columns.offMinX,
+                    columns.offMaxX
+                )
                 columns.columns.forEachIndexed { i, c ->
-                    bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", i, c.offsetNorm, columns getOffsetFrom c.offsetNorm)
+                    bulletText(
+                        "Column %02d: OffsetNorm %.3f (= %.1f px)",
+                        i,
+                        c.offsetNorm,
+                        columns getOffsetFrom c.offsetNorm
+                    )
                 }
                 treePop()
             }
@@ -659,7 +762,8 @@ interface demoDebugInformations {
             fun nodeWindows(windows: ArrayList<Window>, label: String) {
                 if (!treeNode(label, "$label (${windows.size})"))
                     return
-                windows.forEach {
+                text("(In front-to-back order:)")
+                windows.asReversed().forEach { // Iterate front to back
                     withId(it) { nodeWindow(it, "Window") }
                 }
                 treePop()
@@ -670,21 +774,27 @@ interface demoDebugInformations {
                     bulletText("$label: NULL")
                     return
                 }
-                val open = treeNode(label, "$label '${window.name}', ${window.active || window.wasActive} @ 0x${window.hashCode().asHexString}")
-                if (isItemHovered() && window.wasActive)
-                    foregroundDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
+
+                val isActive = window.wasActive
+                val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else TreeNodeFlag.None
+                if (!isActive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
+                val open =
+                    treeNodeEx(label, treeNodeFlags.i, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
+                if (!isActive) popStyleColor()
+                if (isItemHovered() && isActive)
+                    getForegroundDrawList(window).addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
                 if (!open)
                     return
 
-                if (!window.wasActive)
-                    textDisabled("Note: window is not currently visible.")
                 if (window.memoryCompacted)
                     textDisabled("Note: some memory buffers have been compacted/freed.")
 
                 val flags = window.flags
                 nodeDrawList(window, window.drawList, "DrawList")
-                bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
-                        window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
+                bulletText(
+                    "Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
+                    window.size.x, window.size.y, window.contentSize.x, window.contentSize.y
+                )
                 val builder = StringBuilder()
                 if (flags has Wf._ChildWindow) builder += "Child "
                 if (flags has Wf._Tooltip) builder += "Tooltip "
@@ -697,20 +807,41 @@ interface demoDebugInformations {
                 if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
                 bulletText("Flags: 0x%08X ($builder..)", flags)
                 val xy = (if (window.scrollbar.x) "X" else "") + if (window.scrollbar.y) "Y" else ""
-                bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy", window.scroll.x, window.scrollMax.x, window.scroll.y, window.scrollMax.y)
+                bulletText(
+                    "Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy",
+                    window.scroll.x,
+                    window.scrollMax.x,
+                    window.scroll.y,
+                    window.scrollMax.y
+                )
                 val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
                 bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
                 bulletText("Appearing: ${window.appearing}, Hidden: ${window.hidden} (CanSkip ${window.hiddenFramesCanSkipItems} Cannot ${window.hiddenFramesCannotSkipItems}), SkipItems: ${window.skipItems}")
-                bulletText("NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X", window.navLastIds[0], window.navLastIds[1], window.dc.navLayerActiveMask)
+                bulletText(
+                    "NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X",
+                    window.navLastIds[0],
+                    window.navLastIds[1],
+                    window.dc.navLayerActiveMask
+                )
                 bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name}")
                 if (!window.navRectRel[0].isInverted)
-                    bulletText("NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)", window.navRectRel[0].min.x, window.navRectRel[0].min.y, window.navRectRel[0].max.x, window.navRectRel[0].max.y)
+                    bulletText(
+                        "NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)",
+                        window.navRectRel[0].min.x,
+                        window.navRectRel[0].min.y,
+                        window.navRectRel[0].max.x,
+                        window.navRectRel[0].max.y
+                    )
                 else
                     bulletText("NavRectRel[0]: <None>")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
                 window.parentWindow?.let { nodeWindow(it, "ParentWindow") }
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
-                if (window.columnsStorage.isNotEmpty() && treeNode("Columns", "Columns sets (${window.columnsStorage.size})")) {
+                if (window.columnsStorage.isNotEmpty() && treeNode(
+                        "Columns",
+                        "Columns sets (${window.columnsStorage.size})"
+                    )
+                ) {
                     window.columnsStorage.forEach(Funcs::nodeColumns)
                     treePop()
                 }
@@ -719,7 +850,11 @@ interface demoDebugInformations {
             }
 
             fun nodeStorage(storage: HashMap<ID, Boolean>, label: String) {
-                if (!treeNode(label, "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes")) // [JVM] Boolean size is actually VM dependent
+                if (!treeNode(
+                        label,
+                        "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes"
+                    )
+                ) // [JVM] Boolean size is actually VM dependent
                     return
                 storage.forEach { (key, value) ->
                     bulletText("Key 0x%08X Value { i: $value }".format(key)) // Important: we currently don't store a type, real value may not be integer.
@@ -728,13 +863,21 @@ interface demoDebugInformations {
             }
 
             fun nodeWindowSettings(settings: WindowSettings) =
-                    text("0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " +
-                            "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}", settings.id)
+                text(
+                    "0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " +
+                            "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}",
+                    settings.id
+                )
 
             fun nodeTabBar(tabBar: TabBar) {
                 // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
-                val string = "TabBar (${tabBar.tabs.size} tabs)${if (tabBar.prevFrameVisible < frameCount - 2) " *Inactive*" else ""}"
-                if (treeNode(tabBar, string)) {
+                val isActive = tabBar.prevFrameVisible >= ImGui.frameCount - 2
+                val string =
+                    "Tab Bar 0x%08X (${tabBar.tabs.size} tabs)${if (isActive) "" else " *Inactive*"}".format(tabBar.id)
+                if (!isActive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
+                val open = treeNode(tabBar, string)
+                if (!isActive) popStyleColor()
+                if (open) {
                     for (tabN in tabBar.tabs.indices) {
                         val tab = tabBar.tabs[tabN]
                         pushID(tab)
@@ -755,7 +898,8 @@ interface demoDebugInformations {
             }
         }
 
-        val selected = BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
+        val selected =
+            BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
 
         var styleIdx = -1
 
