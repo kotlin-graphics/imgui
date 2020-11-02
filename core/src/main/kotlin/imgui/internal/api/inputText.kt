@@ -930,7 +930,7 @@ internal interface inputText {
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
     fun <N> tempInputScalar(
         bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
-        format_: String, clampMin: N? = null, clampMax: N? = null, flags_: InputTextFlags = Itf.None.i
+        format_: String, clampMin: N? = null, clampMax: N? = null
     ): Boolean
             where N : Number, N : Comparable<N> {
 
@@ -943,12 +943,10 @@ internal interface inputText {
         val format = parseFormatTrimDecorations(format_)
         val dataBuf = pData.format(dataType, format).trim()
 
-        var flags = flags_ or Itf.AutoSelectAll or Itf._NoMarkEdited
-        flags = flags or when (dataType) {
+        val flags = Itf.AutoSelectAll or Itf._NoMarkEdited or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-
         var valueChanged = false
         if (tempInputText(bb, id, label, dataBuf.toByteArray(), flags)) {
             // Backup old value
