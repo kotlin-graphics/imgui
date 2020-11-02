@@ -400,7 +400,11 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
     _DrawHoveredWhenHeld(1 shl 24),
 
-    _SetNavIdOnHover(1 shl 25);
+    /** Set Nav/Focus ID on mouse hover (used by MenuItem) */
+    _SetNavIdOnHover(1 shl 25),
+
+    /** Disable padding each side with ItemSpacing * 0.5f */
+    _NoPadWithHalfSpacing(1 shl 26);
 
     infix fun and(b: SelectableFlag): SelectableFlags = i and b.i
     infix fun and(b: SelectableFlags): SelectableFlags = i and b
