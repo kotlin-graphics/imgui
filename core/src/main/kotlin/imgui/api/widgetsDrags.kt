@@ -262,9 +262,8 @@ interface widgetsDrags {
         if (tempInputIsActive) {
             // Only clamp CTRL+Click input when ImGuiSliderFlags_ClampInput is set
             val isClampInput = flags hasnt SliderFlag.ClampOnInput  && (pMin == null || pMax == null || pMin < pMax)
-            val isReadonly = flags has SliderFlag._ReadOnly && window.dc.itemFlags has ItemFlag.ReadOnly
             return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput },
-                pMax.takeIf { isClampInput }, if(isReadonly) InputTextFlag.ReadOnly.i else InputTextFlag.None.i)
+                pMax.takeIf { isClampInput })
         }
 
         // Draw frame
