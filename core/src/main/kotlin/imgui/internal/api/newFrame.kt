@@ -20,28 +20,21 @@ internal interface newFrame {
      *  we want to dispatch inputs to the right target (imgui vs imgui+app) */
     fun updateHoveredWindowAndCaptureFlags() {
 
-        /*  Find the window hovered by mouse:
-            - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.
-            - When moving a window we can skip the search, which also conveniently bypasses the fact that window.outerRectClipped
-                is lagging as this point of the frame.
-            - We also support the moved window toggling the NoInputs flag after moving has started in order
-                to be able to detect windows below it, which is useful for e.g. docking mechanisms. */
+        // Find the window hovered by mouse:
+        // - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.
+        // - When moving a window we can skip the search, which also conveniently bypasses the fact that window->WindowRectClipped is lagging as this point of the frame.
+        // - We also support the moved window toggling the NoInputs flag after moving has started in order to be able to detect windows below it, which is useful for e.g. docking mechanisms.
+        var clearHoveredWindows = false
         findHoveredWindow()
-
-        fun nullate() {
-            g.hoveredWindow = null
-            g.hoveredRootWindow = null
-            g.hoveredWindowUnderMovingWindow = null
-        }
 
         // Modal windows prevents mouse from hovering behind them.
         val modalWindow = topMostPopupModal
         val hovered = g.hoveredRootWindow
         if (modalWindow != null && hovered != null && !hovered.isChildOf(modalWindow))
-            nullate()
+            clearHoveredWindows = true
         // Disabled mouse?
         if (io.configFlags has ConfigFlag.NoMouse)
-            nullate()
+            clearHoveredWindows = true
 
         // We track click ownership. When clicked outside of a window the click is owned by the application and won't report hovering nor request capture even while dragging over our windows afterward.
         var mouseEarliestButtonDown = -1
@@ -60,7 +53,13 @@ internal interface newFrame {
         // FIXME: For patterns of drag and drop across OS windows, we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
         val mouseDraggingExternPayload = g.dragDropActive && g.dragDropSourceFlags has DragDropFlag.SourceExtern
         if (!mouseAvailToImgui && !mouseDraggingExternPayload)
-            nullate()
+            clearHoveredWindows = true
+
+        if(clearHoveredWindows) {
+            g.hoveredWindow = null
+            g.hoveredRootWindow = null
+            g.hoveredWindowUnderMovingWindow = null
+        }
 
         // Update io.WantCaptureMouse for the user application (true = dispatch mouse info to Dear ImGui, false = dispatch mouse info to imgui + app)
         if (g.wantCaptureMouseNextFrame != -1)
