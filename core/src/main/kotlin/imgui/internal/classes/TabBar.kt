@@ -314,7 +314,8 @@ class TabBar {
             setItemAllowOverlap()
 
         // Drag and drop: re-order tabs
-        if (held && !tabAppearing && isMouseDragging(MouseButton.Left))
+        val isDragging = held && !tabAppearing && isMouseDragging(MouseButton.Left)
+        if(isDragging)
             if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable)
             // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
                 if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
@@ -359,7 +360,7 @@ class TabBar {
             flags = flags or TabItemFlag.NoCloseWithMiddleMouseButton
 
         // Render tab label, process close button
-        val closeButtonId = if (pOpen?.get() == true) window.getID(id + 1) else 0
+        val closeButtonId = if (pOpen?.get() == true && !isDragging) window.getID(id + 1) else 0
         val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId, tabContentsVisible)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
