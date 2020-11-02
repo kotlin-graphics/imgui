@@ -610,18 +610,15 @@ internal interface widgetsLowLevelBehaviors {
 
         // Open behaviors can be altered with the _OpenOnArrow and _OnOnDoubleClick flags.
         // Some alteration have subtle effects (e.g. toggle on MouseUp vs MouseDown events) due to requirements for multi-selection and drag and drop support.
-        // - Single-click on label = Toggle on MouseUp (default)
-        // - Single-click on arrow = Toggle on MouseUp (when _OpenOnArrow=0)
+        // - Single-click on label = Toggle on MouseUp (default, when _OpenOnArrow=0)
+        // - Single-click on arrow = Toggle on MouseDown (when _OpenOnArrow=0)
         // - Single-click on arrow = Toggle on MouseDown (when _OpenOnArrow=1)
         // - Double-click on label = Toggle on MouseDoubleClick (when _OpenOnDoubleClick=1)
         // - Double-click on arrow = Toggle on MouseDoubleClick (when _OpenOnDoubleClick=1 and _OpenOnArrow=0)
-        // This makes _OpenOnArrow have a subtle effect on _OpenOnDoubleClick: arrow click reacts on Down rather than Up.
-        // It is rather standard that arrow click react on Down rather than Up and we'd be tempted to make it the default
-        // (by removing the _OpenOnArrow test below), however this would have a perhaps surprising effect on CollapsingHeader()?
-        // So right now we are making this optional. May evolve later.
+        // It is rather standard that arrow click react on Down rather than Up.
         // We set ImGuiButtonFlags_PressedOnClickRelease on OpenOnDoubleClick because we want the item to be active on the initial MouseDown in order for drag and drop to work.
         buttonFlags = buttonFlags or when {
-            isMouseXOverArrow && flags has Tnf.OpenOnArrow -> Bf.PressedOnClick.i
+            isMouseXOverArrow -> Bf.PressedOnClick.i
             flags has Tnf.OpenOnDoubleClick -> Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
             else -> Bf.PressedOnClickRelease.i
         }
