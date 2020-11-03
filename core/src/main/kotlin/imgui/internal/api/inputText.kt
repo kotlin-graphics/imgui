@@ -878,14 +878,14 @@ internal interface inputText {
             }
         }
 
+        if (isPassword && !isDisplayingHint)
+            popFont()
+
         if (isMultiline) {
             dummy(textSize + Vec2(0f, g.fontSize)) // Always add room to scroll an extra line
             endChild()
             endGroup()
         }
-
-        if (isPassword && !isDisplayingHint)
-            popFont()
 
         // Log as text
         if (g.logEnabled && (!isPassword || isDisplayingHint))
