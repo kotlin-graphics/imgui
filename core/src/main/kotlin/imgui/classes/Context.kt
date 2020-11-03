@@ -258,7 +258,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
     var navInputSource = InputSource.None
 
-    /** Rectangle used for scoring, in screen space. Based of window.dc.navRefRectRel[], modified for directional navigation scoring.  */
+    /** Rectangle used for scoring, in screen space. Based of window.NavRectRel[], modified for directional navigation scoring.  */
     var navScoringRect = Rect()
 
     /** Metrics for debugging   */
@@ -271,7 +271,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** == NavWindow->DC.FocusIdxTabCounter at time of NavId processing */
     var navIdTabCounter = Int.MAX_VALUE
 
-    /** Nav widget has been seen this frame ~~ NavRefRectRel is valid   */
+    /** Nav widget has been seen this frame ~~ NavRectRel is valid   */
     var navIdIsAlive = false
 
     /** When set we will update mouse position if (io.ConfigFlag & ConfigFlag.NavMoveMouse) if set (NB: this not enabled by default) */

@@ -646,10 +646,11 @@ class Window(
     infix fun scrollToBringRectIntoView(itemRect: Rect): Vec2 {
         val windowRect = Rect(innerRect.min - 1, innerRect.max + 1)
         //GetOverlayDrawList(window)->AddRect(window->Pos + window_rect_rel.Min, window->Pos + window_rect_rel.Max, IM_COL32_WHITE); // [DEBUG]
+
         val deltaScroll = Vec2()
         if (itemRect !in windowRect) {
             if (scrollbar.x && itemRect.min.x < windowRect.min.x)
-                setScrollFromPosX(itemRect.min.x - pos.x + style.itemSpacing.x, 0f)
+                setScrollFromPosX(itemRect.min.x - pos.x - style.itemSpacing.x, 0f)
             else if (scrollbar.x && itemRect.max.x >= windowRect.max.x)
                 setScrollFromPosX(itemRect.max.x - pos.x + style.itemSpacing.x, 1f)
             if (itemRect.min.y < windowRect.min.y)
