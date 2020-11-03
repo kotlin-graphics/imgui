@@ -63,15 +63,15 @@ fun navUpdate() {
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
 
     if (navGamepadActive)
-        if (g.io.navInputs[NavInput.Activate] > 0f || g.io.navInputs[NavInput.Input] > 0f ||
-                g.io.navInputs[NavInput.Cancel] > 0f || g.io.navInputs[NavInput.Menu] > 0f)
+        if (io.navInputs[NavInput.Activate] > 0f || io.navInputs[NavInput.Input] > 0f ||
+                io.navInputs[NavInput.Cancel] > 0f || io.navInputs[NavInput.Menu] > 0f)
             g.navInputSource = InputSource.NavGamepad
 
     // Update Keyboard->Nav inputs mapping
     if (navKeyboardActive) {
         fun navMapKey(key: Key, navInput: NavInput) {
-            if (isKeyDown(g.io.keyMap[key])) {
-                g.io.navInputs[navInput] = 1f
+            if (isKeyDown(io.keyMap[key])) {
+                io.navInputs[navInput] = 1f
                 g.navInputSource = InputSource.NavKeyboard
             }
         }
@@ -248,8 +248,7 @@ fun navUpdate() {
         else -> 0f
     }
 
-    /*  If we initiate a movement request and have no current navId, we initiate a InitDefautRequest that will be used
-        as a fallback if the direction fails to find a match     */
+    // If we initiate a movement request and have no current NavId, we initiate a InitDefautRequest that will be used as a fallback if the direction fails to find a match
     if (g.navMoveDir != Dir.None) {
         g.navMoveRequest = true
         g.navMoveRequestKeyMods = io.keyMods
