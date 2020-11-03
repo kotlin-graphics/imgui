@@ -345,7 +345,7 @@ interface windows {
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
             if (windowPosWithPivot)
             // Position given a pivot (e.g. for centering)
-                window.setPos(window.setWindowPosVal - window.sizeFull * window.setWindowPosPivot, Cond.None)
+                window.setPos(window.setWindowPosVal - window.size * window.setWindowPosPivot, Cond.None)
             else if (flags has Wf._ChildMenu)
                 window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf._Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
