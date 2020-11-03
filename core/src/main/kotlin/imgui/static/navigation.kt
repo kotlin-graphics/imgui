@@ -302,7 +302,7 @@ fun navUpdate() {
         if (window.navRectRel[g.navLayer] !in windowRectRel) {
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
-            window.navRectRel[g.navLayer] clipWith windowRectRel
+            window.navRectRel[g.navLayer] clipWithFull windowRectRel
             g.navFocusScopeId = 0
             g.navId = 0
         }
@@ -310,10 +310,8 @@ fun navUpdate() {
 
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
     g.navWindow.let {
-        if (it != null) {
-            val navRectRel = if (!it.navRectRel[g.navLayer].isInverted) Rect(it.navRectRel[g.navLayer]) else Rect(0f, 0f, 0f, 0f)
-            g.navScoringRect.put(navRectRel.min + it.pos, navRectRel.max + it.pos)
-        } else g.navScoringRect put viewportRect
+        val navRectRel = it?.run { Rect(navRectRel[g.navLayer]) } ?: Rect()
+        g.navScoringRect.put(it?.run { Rect(navRectRel.min + it.pos, navRectRel.max + it.pos) } ?: viewportRect)
     }
     g.navScoringRect translateY navScoringRectOffsetY
     g.navScoringRect.min.x = min(g.navScoringRect.min.x + 1f, g.navScoringRect.max.x)
