@@ -281,14 +281,10 @@ fun navUpdate() {
             // *Normal* Manual scroll with NavScrollXXX keys
             // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
             val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
-            if (scrollDir.x != 0f && it.scrollbar.x) {
+            if (scrollDir.x != 0f && it.scrollbar.x)
                 it setScrollX floor(it.scroll.x + scrollDir.x * scrollSpeed)
-                g.navMoveFromClampedRefRect = true
-            }
-            if (scrollDir.y != 0f) {
+            if (scrollDir.y != 0f)
                 it setScrollY floor(it.scroll.y + scrollDir.y * scrollSpeed)
-                g.navMoveFromClampedRefRect = true
-            }
         }
     }
 
@@ -297,8 +293,10 @@ fun navUpdate() {
     g.navMoveResultLocalVisibleSet.clear()
     g.navMoveResultOther.clear()
 
-    // When we have manually scrolled (without using navigation) and NavId becomes out of bounds, we project its bounding box to the visible area to restart navigation within visible items
-    if (g.navMoveRequest && g.navMoveFromClampedRefRect && g.navLayer == NavLayer.Main) {
+    // When using gamepad, we project the reference nav bounding box into window visible area.
+    // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
+    // (can't focus a visible object like we can with the mouse).
+    if (g.navMoveRequest && g.navInputSource == InputSource.NavGamepad && g.navLayer == NavLayer.Main) {
         val window = g.navWindow!!
         val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
         if (window.navRectRel[g.navLayer] !in windowRectRel) {
@@ -308,7 +306,6 @@ fun navUpdate() {
             g.navFocusScopeId = 0
             g.navId = 0
         }
-        g.navMoveFromClampedRefRect = false
     }
 
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
@@ -563,7 +560,6 @@ fun navUpdateMoveResult() {
         g.navJustMovedToKeyMods = g.navMoveRequestKeyMods
     }
     setNavIDWithRectRel(result.id, g.navLayer, result.focusScopeId, result.rectRel)
-    g.navMoveFromClampedRefRect = false
 }
 
 /** Handle PageUp/PageDown/Home/End keys */

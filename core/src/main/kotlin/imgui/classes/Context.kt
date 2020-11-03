@@ -298,9 +298,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Init request result rectangle (relative to parent window) */
     var navInitResultRectRel = Rect()
 
-    /** Set by manual scrolling, if we scroll to a point where NavId isn't visible we reset navigation from visible items   */
-    var navMoveFromClampedRefRect = false
-
     /** Move request for this frame */
     var navMoveRequest = false
 
