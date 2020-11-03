@@ -363,10 +363,9 @@ fun navUpdateWindowing() {
     var applyToggleLayer = false
 
     val modalWindow = topMostPopupModal
-    if (modalWindow != null) {
+    val allowWindowing = modalWindow == null
+    if (!allowWindowing)
         g.navWindowingTarget = null
-        return
-    }
 
     // Fade out
     if (g.navWindowingTargetAnim != null && g.navWindowingTarget == null) {
@@ -375,9 +374,8 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL-TAB or Square+L/R window selection
-    val startWindowingWithGamepad = g.navWindowingTarget == null && NavInput.Menu.isTest(InputReadMode.Pressed)
-    val startWindowingWithKeyboard =
-        g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
+    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu.isTest(InputReadMode.Pressed)
+    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootWindow // FIXME-DOCK: Will need to use RootWindowDockStop
