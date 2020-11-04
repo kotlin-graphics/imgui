@@ -20,7 +20,7 @@ internal interface navigation {
         var initForNav = false
         if (window.flags hasnt WindowFlag.NoNavInputs) if (window.flags hasnt WindowFlag._ChildWindow || window.flags has WindowFlag._Popup || window.navLastIds[0] == 0 || forceReinit) initForNav =
             true
-        IMGUI_DEBUG_LOG("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=$initForNav, window=\"${window.name}\", layer=${g.navLayer}")
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=$initForNav, window=\"${window.name}\", layer=${g.navLayer}")
         if (initForNav) {
             setNavID(0, g.navLayer, 0)
             g.navInitRequest = true
