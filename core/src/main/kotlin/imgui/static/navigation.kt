@@ -32,7 +32,7 @@ import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
 import imgui.ImGui.setNavIDWithRectRel
-import imgui.ImGui.setNavId
+import imgui.ImGui.setNavID
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
@@ -101,18 +101,8 @@ fun navUpdate() {
         }
 
     // Process navigation init request (select first/default focus)
-    // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
     if (g.navInitResultId != 0 && (!g.navDisableHighlight || g.navInitRequestFromMove))
-        g.navWindow?.let { nav ->
-            /*  Apply result from previous navigation init request (will typically select the first item,
-                unless setItemDefaultFocus() has been called)         */
-            //IMGUI_DEBUG_LOG("[Nav] Apply NavInitRequest result: 0x%08X Layer %d in \"%s\"\n", g.NavInitResultId, g.NavLayer, g.NavWindow->Name);
-            if (g.navInitRequestFromMove)
-                setNavIDWithRectRel(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
-            else
-                setNavId(g.navInitResultId, g.navLayer, 0)
-            nav.navRectRel[g.navLayer] = g.navInitResultRectRel
-        }
+        navUpdateInitResult()
     g.navInitRequest = false
     g.navInitRequestFromMove = false
     g.navInitResultId = 0
@@ -161,6 +151,7 @@ fun navUpdate() {
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
     if (NavInput.Cancel.isTest(InputReadMode.Pressed)) {
+        IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel")
         if (g.activeId != 0) {
             if (!isActiveIdUsingNavInput(NavInput.Cancel))
                 clearActiveID()
@@ -170,7 +161,7 @@ fun navUpdate() {
             val parentWindow = childWindow.parentWindow!!
             assert(childWindow.childId != 0)
             focusWindow(parentWindow)
-            setNavId(childWindow.childId, NavLayer.Main, 0)
+            setNavID(childWindow.childId, NavLayer.Main, 0)
             // Reassigning with same value, we're being explicit here.
             g.navIdIsAlive = false  // -V1048
             if (g.navDisableMouseHover)
@@ -248,11 +239,11 @@ fun navUpdate() {
         }
         g.navMoveDir = g.navMoveDir
     } else {
-        /*  Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with
-            a starting rectangle at the other side of the window)
-            (Preserve g.NavMoveRequestFlags, g.NavMoveClipDir which were set by the NavMoveRequestForward() function) */
+        // Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with a starting rectangle at the other side of the window)
+        // (Preserve g.NavMoveRequestFlags, g.NavMoveClipDir which were set by the NavMoveRequestForward() function)
         assert(g.navMoveDir != Dir.None && g.navMoveDir != Dir.None)
         assert(g.navMoveRequestForward == NavForward.ForwardQueued)
+        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}")
         g.navMoveRequestForward = NavForward.ForwardActive
     }
 
@@ -270,7 +261,7 @@ fun navUpdate() {
         g.navMoveDirLast = g.navMoveDir
     }
     if (g.navMoveRequest && g.navId == 0) {
-        //IMGUI_DEBUG_LOG("[Nav] NavInitRequest from move, window \"%s\", layer=%d\n", g.NavWindow->Name, g.NavLayer);
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${g.navWindow!!.name}\", layer=${g.navLayer}")
         g.navInitRequest = true
         g.navInitRequestFromMove = true
         // Reassigning with same value, we're being explicit here.
@@ -315,6 +306,7 @@ fun navUpdate() {
         val window = g.navWindow!!
         val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
         if (window.navRectRel[g.navLayer] !in windowRectRel) {
+            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel")
             val pad = window.calcFontSize() * 0.5f
             windowRectRel expand Vec2(
                 -min(windowRectRel.width, pad),
@@ -594,7 +586,21 @@ fun navUpdateMoveResult() {
 
         g.navJustMovedToKeyMods = g.navMoveRequestKeyMods
     }
+    IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
     setNavIDWithRectRel(result.id, g.navLayer, result.focusScopeId, result.rectRel)
+}
+
+fun navUpdateInitResult() {
+    // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
+    val nav = g.navWindow ?: return
+
+    // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
+    IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${nav.name}\"", g.navInitResultId)
+    if (g.navInitRequestFromMove)
+        setNavIDWithRectRel(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
+    else
+        setNavID(g.navInitResultId, g.navLayer, 0)
+    nav.navRectRel[g.navLayer] = g.navInitResultRectRel
 }
 
 /** Handle PageUp/PageDown/Home/End keys */
