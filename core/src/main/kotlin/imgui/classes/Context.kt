@@ -13,6 +13,7 @@ import imgui.internal.classes.*
 import imgui.internal.hash
 import imgui.internal.sections.*
 import imgui.static.*
+import uno.kotlin.NUL
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -510,6 +511,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Last cursor position passed to the OS Input Method Editor   */
     var platformImeLastPos = Vec2(Float.MAX_VALUE)
+
+    /** '.' or *localeconv()->decimal_point */
+    var platformLocaleDecimalPoint = '.'
+
 
     //------------------------------------------------------------------
     // Settings
