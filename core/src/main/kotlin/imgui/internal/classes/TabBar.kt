@@ -56,10 +56,10 @@ class TabBar {
     var barRect = Rect()
     /** Record the height of contents submitted below the tab bar */
     var lastTabContentHeight = 0f
-    /** Distance from BarRect.Min.x, locked during layout */
-    var offsetMax = 0f
-    /** Ideal offset if all tabs were visible and not clipped */
-    var offsetMaxIdeal = 0f
+    /** Actual width of all tabs (locked during layout) */
+    var widthAllTabs = 0f
+    /** Ideal width if all tabs were visible and not clipped */
+    var widthAllTabsIdeal = 0f
     /** Distance from BarRect.Min.x, incremented with each BeginTabItem() call, not used if ImGuiTabBarFlags_Reorderable if set. */
     var offsetNextTab = 0f
     var scrollingAnim = 0f
@@ -180,12 +180,35 @@ class TabBar {
             nextSelectedTabId = tab.id
     }
 
-    /** ~ tabBarQueueChangeTabOrder */
-    fun queueChangeTabOrder(tab: TabItem, dir: Int) {
+    /** ~TabBarQueueReorder */
+    fun queueReorder(tab: TabItem, dir: Int) {
         assert(dir == -1 || dir == +1)
         assert(reorderRequestTabId == 0)
         reorderRequestTabId = tab.id
         reorderRequestDir = dir
+    }
+
+    /** ~TabBarProcessReorder */
+    fun processReorder(): Boolean {
+        val tab1 = findTabByID(reorderRequestTabId) ?: return false
+
+        //IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_Reorderable); // <- this may happen when using debug tools
+        val tab2Order = tab1.order + reorderRequestDir
+        if (tab2Order < 0 || tab2Order >= tabs.size)
+            return false
+
+//        ImGuiTabItem* tab2 = &tab_bar->Tabs[tab2_order];
+//        ImGuiTabItem item_tmp = *tab1;
+//        *tab1 = *tab2;
+//        *tab2 = item_tmp;
+//        tab1 = tab2 = NULL;
+        val itemTmp = tabs[reorderRequestTabId]
+        tabs[reorderRequestTabId] = tabs[tab2Order]
+        tabs[tab2Order] = itemTmp
+
+        if (flags has TabBarFlag._SaveSettings)
+            markIniSettingsDirty()
+        return true
     }
 
     fun tabItemEx(label: String, pOpen_: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
@@ -323,10 +346,10 @@ class TabBar {
             // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
                 if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
                     if (this.flags has TabBarFlag.Reorderable)
-                        queueChangeTabOrder(tab, -1)
+                        queueReorder(tab, -1)
                 } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x)
                     if (this.flags has TabBarFlag.Reorderable)
-                        queueChangeTabOrder(tab, +1)
+                        queueReorder(tab, +1)
 
 //        if (false)
 //            if (hovered && g.hoveredIdNotActiveTimer > 0.5f && bb.width < tab.widthContents)        {
@@ -420,20 +443,8 @@ class TabBar {
 
         // Process order change request (we could probably process it when requested but it's just saner to do it in a single spot).
         if (reorderRequestTabId != 0) {
-            findTabByID(reorderRequestTabId)?.let { tab1 ->
-                //IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_Reorderable); // <- this may happen when using debug tools
-                val tab2_order = tab1.order + reorderRequestDir
-                if (tab2_order in tabs.indices) {
-                    val tab2 = tabs[tab2_order]
-                    val itemTmp = tab1
-                    tabs[tab1.order] = tab2 // *tab1 = *tab2
-                    tabs[tab2_order] = itemTmp // *tab2 = itemTmp
-                    if (tab2.id == selectedTabId)
-                        scrollTrackSelectedTabID = tab2.id
-                }
-                if (flags has TabBarFlag._SaveSettings)
-                    markIniSettingsDirty()
-            }
+            if (processReorder() && reorderRequestTabId == selectedTabId)
+                scrollTrackSelectedTabID = reorderRequestTabId
             reorderRequestTabId = 0
         }
 
@@ -500,11 +511,11 @@ class TabBar {
             offsetX += tab.width + style.itemInnerSpacing.x
             offsetXideal += tab.contentWidth + style.itemInnerSpacing.x
         }
-        offsetMax = (offsetX - style.itemInnerSpacing.x) max 0f
-        offsetMaxIdeal = (offsetXideal - style.itemInnerSpacing.x) max 0f
+        widthAllTabs = (offsetX - style.itemInnerSpacing.x) max 0f
+        widthAllTabsIdeal = (offsetXideal - style.itemInnerSpacing.x) max 0f
 
         // Horizontal scrolling buttons
-        val scrollingButtons = offsetMax > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
+        val scrollingButtons = widthAllTabs > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
         if (scrollingButtons)
             scrollingButtons()?.let { tabToSelect ->
                 // NB: Will alter BarRect.Max.x!
@@ -546,7 +557,7 @@ class TabBar {
         // Actual layout in host window (we don't do it in BeginTabBar() so as not to waste an extra frame)
         val window = g.currentWindow!!
         window.dc.cursorPos put barRect.min
-        itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
+        itemSize(Vec2(widthAllTabsIdeal, barRect.height), framePadding.y)
     }
 
     /** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.
@@ -562,10 +573,8 @@ class TabBar {
         }
     }
 
-    fun scrollClamp(scrolling_: Float): Float {
-        val scrolling = scrolling_ min (offsetMax - barRect.width)
-        return scrolling max 0f
-    }
+    /** ~TabBarScrollClamp */
+    fun scrollClamp(scrolling: Float): Float = (scrolling min (widthAllTabs - barRect.width)) max 0f
 
     fun scrollToTab(tab: TabItem) {
 

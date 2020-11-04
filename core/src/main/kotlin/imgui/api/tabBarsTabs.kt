@@ -5,9 +5,9 @@ import imgui.*
 import imgui.ImGui.popID
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
+import imgui.internal.classes.PtrOrIndex
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
-import imgui.internal.classes.PtrOrIndex
 import kotlin.reflect.KMutableProperty0
 
 /** Tab Bars, Tabs */
@@ -21,7 +21,10 @@ interface tabBarsTabs {
 
         val id = window.getID(strId)
         val tabBar = g.tabBars.getOrAddByKey(id)
-        val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerClipRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
+        val tabBarBb = Rect(window.dc.cursorPos.x,
+            window.dc.cursorPos.y,
+            window.innerClipRect.max.x,
+            window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
         return tabBar.beginEx(tabBarBb, flags or TabBarFlag._IsFocused)
     }
@@ -38,13 +41,11 @@ interface tabBarsTabs {
 
         // Restore the last visible height if no tab is visible, this reduce vertical flicker/movement when a tabs gets removed without calling SetTabItemClosed().
         val tabBarAppearing = tabBar.prevFrameVisible + 1 < g.frameCount
-        if (tabBar.visibleTabWasSubmitted || tabBar.visibleTabId == 0 || tabBarAppearing)
-            tabBar.lastTabContentHeight = (window.dc.cursorPos.y - tabBar.barRect.max.y) max 0f
-        else
-            window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.lastTabContentHeight
+        if (tabBar.visibleTabWasSubmitted || tabBar.visibleTabId == 0 || tabBarAppearing) tabBar.lastTabContentHeight =
+            (window.dc.cursorPos.y - tabBar.barRect.max.y) max 0f
+        else window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.lastTabContentHeight
 
-        if (tabBar.flags hasnt TabBarFlag._DockNode)
-            popID()
+        if (tabBar.flags hasnt TabBarFlag._DockNode) popID()
 
         g.currentTabBarStack.pop()
         g.currentTabBar = g.currentTabBarStack.lastOrNull()?.tabBar
@@ -52,7 +53,7 @@ interface tabBarsTabs {
 
     /** create a Tab. Returns true if the Tab is selected. */
     fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemFlags = 0) =
-            withBoolean(pOpen, index) { beginTabItem(label, it, flags) }
+        withBoolean(pOpen, index) { beginTabItem(label, it, flags) }
 
     /** create a Tab. Returns true if the Tab is selected. */
     fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0): Boolean {
@@ -60,8 +61,7 @@ interface tabBarsTabs {
         val window = g.currentWindow!!
         if (window.skipItems) return false
 
-        val tabBar = g.currentTabBar
-                ?: error("BeginTabItem() Needs to be called between BeginTabBar() and EndTabBar()!")
+        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
         return tabBar.tabItemEx(label, pOpen, flags).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
@@ -76,12 +76,10 @@ interface tabBarsTabs {
         val window = g.currentWindow!!
         if (window.skipItems) return
 
-        val tabBar = g.currentTabBar
-                ?: error("Needs to be called between BeginTabBar() and EndTabBar()!") // FIXME-ERRORHANDLING
+        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
         assert(tabBar.lastTabItemIdx >= 0)
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
-        if (tab.flags hasnt TabItemFlag.NoPushId)
-            window.idStack.pop()
+        if (tab.flags hasnt TabItemFlag.NoPushId) window.idStack.pop()
     }
 
     /** notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars).
