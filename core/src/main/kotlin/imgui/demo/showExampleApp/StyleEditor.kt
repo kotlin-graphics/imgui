@@ -278,9 +278,13 @@ object StyleEditor {
 
             if (beginTabItem("Rendering")) {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
-                sameLine(); helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
+                sameLine()
+                helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
+
                 checkbox("Anti-aliased lines use texture", style::antiAliasedLinesUseTex)
-                sameLine(); helpMarker("Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
+                sameLine()
+                helpMarker("Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
+
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
                 dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
@@ -292,12 +296,13 @@ object StyleEditor {
                     setNextWindowPos(ImGui.cursorScreenPos)
                     tooltip {
                         val p = ImGui.cursorScreenPos
+                        val drawList = ImGui.windowDrawList
                         val RAD_MIN = 10f
                         val RAD_MAX = 80f
                         var offX = 10f
                         for (n in 0..6) {
                             val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n.f /(7f - 1f)
-                            ImGui.windowDrawList.addCircle(Vec2(p.x+offX+rad, p.y+RAD_MAX), rad, Col.Text.u32, 0)
+                            drawList.addCircle(Vec2(p.x+offX+rad, p.y+RAD_MAX), rad, Col.Text.u32, 0)
                             offX += 10f + rad * 2f
                         }
                         ImGui.dummy(Vec2(offX, RAD_MAX * 2f))
