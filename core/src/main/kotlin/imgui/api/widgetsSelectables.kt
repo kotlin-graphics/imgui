@@ -17,7 +17,7 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setItemAllowOverlap
-import imgui.ImGui.setNavId
+import imgui.ImGui.setNavID
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.classes.Rect
@@ -127,7 +127,7 @@ interface widgetsSelectables {
         if (pressed || (hovered && flags has Sf._SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
                 g.navDisableHighlight = true
-                setNavId(id, window.dc.navLayerCurrent, window.dc.navFocusScopeIdCurrent)
+                setNavID(id, window.dc.navLayerCurrent, window.dc.navFocusScopeIdCurrent)
             }
         if (pressed)
             markItemEdited(id)
