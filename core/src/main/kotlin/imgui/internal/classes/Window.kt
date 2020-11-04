@@ -613,32 +613,42 @@ class Window(
 
 
     /** ~SetScrollX(ImGuiWindow* window, float new_scroll_x) */
-    infix fun setScrollX(newScrollX: Float) {
-        scrollTarget.x = newScrollX
+    infix fun setScrollX(scrollX: Float) {
+        scrollTarget.x = scrollX
         scrollTargetCenterRatio.x = 0f
     }
 
     /** ~SetScrollY(ImGuiWindow* window, float new_scroll_y) */
-    infix fun setScrollY(newScrollY: Float) {
-        scrollTarget.y = newScrollY
+    infix fun setScrollY(scrollY: Float) {
+        scrollTarget.y = scrollY
         scrollTargetCenterRatio.y = 0f
     }
 
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.
      *
-     *  Note that a local position will vary depending on initial scroll value
-     *  We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size */
-    fun setScrollFromPosX(localX: Float, centerXratio: Float) {
-        assert(centerXratio in 0f..1f)
-        scrollTarget.x = floor(localX + scroll.x)
-        scrollTargetCenterRatio.x = centerXratio
+     *  Note that a local position will vary depending on initial scroll value,
+     *  This is a little bit confusing so bear with us:
+     *   - local_pos = (absolution_pos - window->Pos)
+     *   - So local_x/local_y are 0.0f for a position at the upper-left corner of a window,
+     *     and generally local_x/local_y are >(padding+decoration) && <(size-padding-decoration) when in the visible area.
+     *   - They mostly exists because of legacy API.
+     *  Following the rules above, when trying to work with scrolling code, consider that:
+     *   - SetScrollFromPosY(0.0f) == SetScrollY(0.0f + scroll.y) == has no effect!
+     *   - SetScrollFromPosY(-scroll.y) == SetScrollY(-scroll.y + scroll.y) == SetScrollY(0.0f) == reset scroll. Of course writing SetScrollY(0.0f) directly then makes more sense
+     *  We store a target position so centering and clamping can occur on the next frame when we are guaranteed to have a known window size
+     *
+     *  ~SetScrollFromPosX(ImGuiWindow* window, float local_x, float center_x_ratio) */
+    fun setScrollFromPosX(localX: Float, centerXRatio: Float) {
+        assert(centerXRatio in 0f..1f)
+        scrollTarget.x = floor(localX + scroll.x) // Convert local position to scroll offset
+        scrollTargetCenterRatio.x = centerXRatio
     }
 
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
-    fun setScrollFromPosY(localY_: Float, centerYRatio: Float = 0.5f) {
+    fun setScrollFromPosY(localY_: Float, centerYRatio: Float) {
         assert(centerYRatio in 0f..1f)
         val localY = localY_ - (titleBarHeight + menuBarHeight) // FIXME: Would be nice to have a more standardized access to our scrollable/client rect
-        scrollTarget.y = floor(localY + scroll.y)
+        scrollTarget.y = floor(localY + scroll.y) // Convert local position to scroll offset
         scrollTargetCenterRatio.y = centerYRatio
     }
 
@@ -908,15 +918,15 @@ class Window(
     fun calcNextScrollFromScrollTargetAndClamp(): Vec2 {
         val scroll = Vec2(scroll)
         if (scrollTarget.x < Float.MAX_VALUE) {
-            val crX = scrollTargetCenterRatio.x
-            val targetX = scrollTarget.x
-            scroll.x = targetX - crX * (sizeFull.x - scrollbarSizes.x)
+            val centerXRatio = scrollTargetCenterRatio.x
+            val scrollTargetX = scrollTarget.x
+            scroll.x = scrollTargetX - centerXRatio * (sizeFull.x - scrollbarSizes.x)
         }
         if (scrollTarget.y < Float.MAX_VALUE) {
             val decorationUpHeight = titleBarHeight + menuBarHeight
-            val crY = scrollTargetCenterRatio.y
-            val targetY = scrollTarget.y
-            scroll.y = targetY - crY * (sizeFull.y - scrollbarSizes.y - decorationUpHeight)
+            val centerYRatio = scrollTargetCenterRatio.y
+            val scrollTargetY = scrollTarget.y
+            scroll.y = scrollTargetY - centerYRatio * (sizeFull.y - scrollbarSizes.y - decorationUpHeight)
         }
         scroll.x = floor(scroll.x max 0f)
         scroll.y = floor(scroll.y max 0f)
