@@ -79,7 +79,7 @@ class InputTextCallbackData {
             buf[dst++] = c
             c = buf.getOrElse(src++) { 0.b }
         }
-        if (cursorPos + bytesCount >= pos)
+        if (cursorPos >= pos + bytesCount)
             cursorPos -= bytesCount
         else if (cursorPos >= pos)
             cursorPos = pos
