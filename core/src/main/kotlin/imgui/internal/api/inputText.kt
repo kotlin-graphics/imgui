@@ -930,9 +930,12 @@ internal interface inputText {
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
     fun <N> tempInputScalar(
         bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
-        format_: String, clampMin: N? = null, clampMax: N? = null
+        format_: String, clampMin_: N? = null, clampMax_: N? = null
     ): Boolean
             where N : Number, N : Comparable<N> {
+
+        var clampMin = clampMin_
+        var clampMax = clampMax_
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -954,8 +957,14 @@ internal interface inputText {
 
             // Apply new value (or operations) then clamp
             dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
-            if (clampMin != null || clampMax != null)
+            if (clampMin != null && clampMax != null) {
+                if (clampMin > clampMax) {
+                    val t = clampMin
+                    clampMin = clampMax
+                    clampMax = t
+                }
                 dataTypeClamp(dataType, pData, clampMin, clampMax)
+            }
 
             // Only mark as edited if new value is different
             valueChanged = dataBackup != pData
