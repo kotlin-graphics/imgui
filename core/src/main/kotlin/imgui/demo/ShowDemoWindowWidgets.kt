@@ -555,7 +555,7 @@ object ShowDemoWindowWidgets {
                     Hold SHIFT/ALT for faster/slower edit.
                     Double-click or CTRL+click to input value.""".trimIndent())
 
-                dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%")
+                dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%", SliderFlag.ClampOnInput.i)
 
                 dragFloat("drag float", ::f2, 0.005f)
                 dragFloat("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
@@ -1360,6 +1360,14 @@ object ShowDemoWindowWidgets {
             sliderScalar("slider double low", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f grams")
             sliderScalar("slider double low log", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", SliderFlag.Logarithmic.i)
             sliderScalar("slider double high", DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams")
+
+            text("Sliders (reverse)")
+            sliderScalar("slider s8 reverse",    DataType.Byte,   ::s8_v,  s8_max,    s8_min, "%d")
+            sliderScalar("slider u8 reverse",    DataType.Ubyte,   ::u8_v,  u8_max,    u8_min, "%u")
+            sliderScalar("slider s32 reverse",   DataType.Int,  ::s32_v, s32_fifty, s32_zero, "%d")
+            sliderScalar("slider u32 reverse",   DataType.Uint,  ::u32_v, u32_fifty, u32_zero, "%u")
+            sliderScalar("slider s64 reverse",   DataType.Long,  ::s64_v, s64_fifty, s64_zero, "%I64d")
+            sliderScalar("slider u64 reverse",   DataType.Ulong,  ::u64_v, u64_fifty, u64_zero, "%I64u ms")
 
             text("Inputs")
             checkbox("Show step buttons", ::inputsStep)
