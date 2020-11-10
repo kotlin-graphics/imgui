@@ -2,6 +2,7 @@ package imgui.internal.api
 
 import glm_.glm
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -343,10 +344,22 @@ internal interface PopupsModalsTooltips {
             if (n != -1 && dir == lastDir) continue  // Already tried this direction?
             val availW = (if (dir == Dir.Left) rAvoid.min.x else rOuter.max.x) - if (dir == Dir.Right) rAvoid.max.x else rOuter.min.x
             val availH = (if (dir == Dir.Up) rAvoid.min.y else rOuter.max.y) - if (dir == Dir.Down) rAvoid.max.y else rOuter.min.y
-            if (availW < size.x || availH < size.y) continue
+
+            // There is no point in switching left/right sides when popup height exceeds available height or top/bottom
+            // sides when popup width exceeds available width.
+            if (availH < size.y && (dir == Dir.Up || dir == Dir.Down))
+                continue
+            else if (availW < size.x && (dir == Dir.Left || dir == Dir.Right))
+                continue
+
             val pos = Vec2(
                     if (dir == Dir.Left) rAvoid.min.x - size.x else if (dir == Dir.Right) rAvoid.max.x else basePosClamped.x,
                     if (dir == Dir.Up) rAvoid.min.y - size.y else if (dir == Dir.Down) rAvoid.max.y else basePosClamped.y)
+
+            // Clamp top-left (or top-right for RTL languages in the future) corner of popup to remain visible.
+            pos.x = pos.x max rOuter.min.x
+            pos.y = pos.y max rOuter.min.y
+
             lastDir = dir
             return pos
         }
