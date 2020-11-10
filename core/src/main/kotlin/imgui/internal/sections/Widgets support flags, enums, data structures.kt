@@ -427,7 +427,7 @@ operator fun IntArray.set(index: NavLayer, int: Int) = set(index.ordinal, int)
 infix fun Int.shl(layer: NavLayer): Int = shl(layer.ordinal)
 
 
-enum class PopupPositionPolicy { Default, ComboBox }
+enum class PopupPositionPolicy { Default, ComboBox, Tooltip }
 
 
 typealias DrawCornerFlags = Int
