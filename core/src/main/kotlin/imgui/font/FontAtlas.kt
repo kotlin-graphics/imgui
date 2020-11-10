@@ -12,6 +12,7 @@ import imgui.MouseCursor
 import imgui.TextureID
 import imgui.internal.*
 import imgui.stb.*
+import imgui.toByteArray
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
@@ -21,7 +22,6 @@ import uno.kotlin.plusAssign
 import uno.stb.stb
 import unsigned.toUInt
 import java.nio.ByteBuffer
-import java.nio.CharBuffer
 import kotlin.math.floor
 import kotlin.math.sqrt
 
@@ -73,23 +73,23 @@ class FontAtlas {
     }
 
     /** Load embedded ProggyClean.ttf at size 13, disable oversampling  */
-    fun addFontDefault(): Font {
-        val fontCfg = FontConfig()
-        fontCfg.oversample put 1
-        fontCfg.pixelSnapH = true
-        return addFontDefault(fontCfg)
-    }
+    fun addFontDefault(fontCfgTemplate: FontConfig? = null): Font {
 
-    fun addFontDefault(fontCfg: FontConfig): Font {
-
-        if (fontCfg.sizePixels <= 0f) fontCfg.sizePixels = 13f
-        if (fontCfg.name.isEmpty()) fontCfg.name = "ProggyClean.ttf, ${fontCfg.sizePixels.i}px"
+        val fontCfg = fontCfgTemplate ?: FontConfig()
+        if (fontCfgTemplate == null) {
+            fontCfg.oversample put 1
+            fontCfg.pixelSnapH = true
+        }
+        if (fontCfg.sizePixels <= 0f)
+            fontCfg.sizePixels = 13f * 1f
+        if (fontCfg.name == "")
+            formatString(fontCfg.name.toByteArray(32), "ProggyClean.ttf, ${fontCfg.sizePixels.i}px")
         fontCfg.ellipsisChar = '\u0085'
+        fontCfg.glyphOffset.y = 1f * floor(fontCfg.sizePixels / 13f)  // Add +1 offset per 13 units
 
         val ttfCompressedBase85 = proggyCleanTtfCompressedDataBase85
         val glyphRanges = fontCfg.glyphRanges.takeIf { it.isNotEmpty() } ?: glyphRanges.default
         return addFontFromMemoryCompressedBase85TTF(ttfCompressedBase85, fontCfg.sizePixels, fontCfg, glyphRanges)
-                .apply { displayOffset.y = 1f }
     }
 
     fun addFontFromFileTTF(filename: String, sizePixels: Float, fontCfg: FontConfig = FontConfig(),
