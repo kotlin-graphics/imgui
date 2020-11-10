@@ -94,8 +94,9 @@ class ImplGL3 : GLInterface {
         val orthoProjection = glm.ortho(L, R, B, T, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
-        if (SAMPLER_BINDING)
-            glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
+        if (!OPENGL_ES2 && !OPENGL_ES3)
+            if(glVersion > 320)
+                glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
         vao.bind()
 
@@ -128,7 +129,7 @@ class ImplGL3 : GLInterface {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = when {
-            SAMPLER_BINDING -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
+            !OPENGL_ES2 && !OPENGL_ES3 && glVersion > 320 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -200,8 +201,9 @@ class ImplGL3 : GLInterface {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if (SAMPLER_BINDING)
-            glBindSampler(0, lastSampler)
+        if (!OPENGL_ES2 && !OPENGL_ES3)
+            if(glVersion > 320)
+                glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
@@ -303,15 +305,11 @@ class ImplGL3 : GLInterface {
     companion object {
 
         var OPENGL_ES2 = false
+        var OPENGL_ES3 = false
 
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
         var POLYGON_MODE = true
-        var SAMPLER_BINDING = GL.getCapabilities().OpenGL33
-            set(value) {
-                //prevent crashes
-                field = value and GL.getCapabilities().OpenGL33
-            }
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
 
