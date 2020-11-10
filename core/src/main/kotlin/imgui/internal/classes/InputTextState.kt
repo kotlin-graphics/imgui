@@ -251,48 +251,54 @@ class InputTextState {
         STB_TEXTEDIT_K_* symbols)     */
     object K {
         /** keyboard input to move cursor left  */
-        val LEFT = 0x20000
+        val LEFT = 0x200000
 
         /** keyboard input to move cursor right */
-        val RIGHT = 0x20001
+        val RIGHT = 0x200001
 
         /** keyboard input to move cursor up    */
-        val UP = 0x20002
+        val UP = 0x200002
 
         /** keyboard input to move cursor down  */
-        val DOWN = 0x20003
+        val DOWN = 0x200003
 
         /** keyboard input to move cursor to start of line  */
-        val LINESTART = 0x20004
+        val LINESTART = 0x200004
 
         /** keyboard input to move cursor to end of line    */
-        val LINEEND = 0x20005
+        val LINEEND = 0x200005
 
         /** keyboard input to move cursor to start of text  */
-        val TEXTSTART = 0x20006
+        val TEXTSTART = 0x200006
 
         /** keyboard input to move cursor to end of text    */
-        val TEXTEND = 0x20007
+        val TEXTEND = 0x200007
 
         /** keyboard input to delete selection or character under cursor    */
-        val DELETE = 0x20008
+        val DELETE = 0x200008
 
         /** keyboard input to delete selection or character left of cursor  */
-        val BACKSPACE = 0x20009
+        val BACKSPACE = 0x200009
 
         /** keyboard input to perform undo  */
-        val UNDO = 0x2000A
+        val UNDO = 0x20000A
 
         /** keyboard input to perform redo  */
-        val REDO = 0x2000B
+        val REDO = 0x20000B
 
         /** keyboard input to move cursor left one word */
-        val WORDLEFT = 0x2000C
+        val WORDLEFT = 0x20000C
 
         /** keyboard input to move cursor right one word    */
-        val WORDRIGHT = 0x2000D
+        val WORDRIGHT = 0x20000D
 
-        val SHIFT = 0x40000
+        /** keyboard input to move cursor up a page */
+        val PGUP = 0x20000E
+
+        /** keyboard input to move cursor down a page */
+        val PGDOWN = 0x20000F
+
+        val SHIFT = 0x400000
     }
 
     /** stb_textedit internally allows for a single undo record to do addition and deletion, but somehow, calling
