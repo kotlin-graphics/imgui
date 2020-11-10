@@ -284,7 +284,6 @@ internal interface inputText {
                 val glyph = g.font.findGlyph('*')!!
                 fontSize = g.font.fontSize
                 scale = g.font.scale
-                displayOffset = g.font.displayOffset
                 ascent = g.font.ascent
                 descent = g.font.descent
                 containerAtlas = g.font.containerAtlas
