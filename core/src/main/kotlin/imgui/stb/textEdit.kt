@@ -3,6 +3,7 @@ package imgui.stb
 import gli_.has
 import glm_.c
 import glm_.i
+import glm_.wo
 import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
 
@@ -433,6 +434,10 @@ object te {
          *  insert mode, copy this value in/out of the app state */
         var insertMode = false
 
+        /** page size in number of row.
+         *  this value MUST be set to >0 for pageup or pagedown in multilines documents. */
+        var rowCountPerPage = 0
+
         /////////////////////
         //
         // private data
@@ -496,6 +501,7 @@ object te {
             initialized = true
             singleLine = isSingleLine
             insertMode = false
+            rowCountPerPage = 0
         }
 
         /** API initialize */
@@ -932,13 +938,16 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
             }
 
             K.DOWN,
-            K.DOWN or K.SHIFT -> {
+            K.DOWN or K.SHIFT,
+            K.PGDOWN,
+            K.PGDOWN or K.SHIFT -> {
                 val find = FindState()
                 val row = Row()
-    //                int i
                 val sel = key has K.SHIFT
+                val isPage = (key wo K.SHIFT) == K.PGDOWN
+                val rowCount = if(isPage) stb.rowCountPerPage else 1
 
-                if (stb.singleLine)
+                if (!isPage && stb.singleLine)
                 // on windows, up&down in single-line behave like left&right
                     key(K.RIGHT or (key and K.SHIFT))
                 else {
@@ -952,14 +961,18 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     findCharpos(find, stb.cursor, stb.singleLine)
 
                     // now find character position down a row
-                    if (find.length != 0) {
+                    for (j in 0 until rowCount) {
+                        val goalX = if(stb.hasPreferredX) stb.preferredX else find.x
+                        val start = find.firstChar + find.length
+
+                        if (find.length == 0)
+                            break
 
                         // [DEAR IMGUI]
                         // going down while being on the last line shouldn't bring us to that line end
                         if (getChar(find.firstChar + find.length - 1) == NEWLINE) {
 
-                            val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
-                            val start = find.firstChar + find.length
+                            // now find character position down a row
                             stb.cursor = start
                             layoutRow(row, stb.cursor)
                             var x = row.x0
@@ -977,18 +990,26 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                             stb.preferredX = goalX
 
                             if (sel) stb.selectEnd = stb.cursor
+
+                            // go to next line
+                            find.firstChar = find.firstChar + find.length
+                            find.length = row.numChars
                         }
                     }
                 }
             }
 
             K.UP,
-            K.UP or K.SHIFT -> {
+            K.UP or K.SHIFT,
+            K.PGUP,
+            K.PGUP or K.SHIFT -> {
                 val find = FindState()
                 val row = Row()
                 val sel = key has K.SHIFT
+                val isPage = (key wo K.SHIFT) == K.PGUP
+                val rowCount = if(isPage) stb.rowCountPerPage else 1
 
-                if (stb.singleLine)
+                if (!isPage && stb.singleLine)
                 // on windows, up&down become left&right
                     key(K.LEFT or (key and K.SHIFT))
                 else {
@@ -1001,10 +1022,14 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                     clamp()
                     findCharpos(find, stb.cursor, stb.singleLine)
 
-                    // can only go up if there's a previous row
-                    if (find.prevFirst != find.firstChar) {
+                    for (j in 0 until rowCount) {
+                        val goalX = if(stb.hasPreferredX) stb.preferredX else find.x
+
+                        // can only go up if there's a previous row
+                        if (find.prevFirst == find.firstChar)
+                            break
+
                         // now find character position up a row
-                        val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
                         stb.cursor = find.prevFirst
                         layoutRow(row, stb.cursor)
                         var x = row.x0
@@ -1026,6 +1051,14 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
 
                         if (sel)
                             stb.selectEnd = stb.cursor
+
+                        // go to previous line
+                        // (we need to scan previous line the hard way. maybe we could expose this as a new API function?)
+                        var prevScan = if(find.prevFirst > 0) find.prevFirst - 1 else 0
+                        while (prevScan > 0 && getChar(prevScan - 1) != NEWLINE)
+                            --prevScan
+                        find.firstChar = find.prevFirst
+                        find.prevFirst = prevScan
                     }
                 }
             }
@@ -1127,10 +1160,6 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
                 stb.selectEnd = stb.cursor
                 stb.hasPreferredX = false
             }
-
-            // @TODO:
-            //    STB_TEXTEDIT_K_PGUP      - move cursor up a page
-            //    STB_TEXTEDIT_K_PGDOWN    - move cursor down a page
 
             else -> {
                 val c = keyToText(key)
