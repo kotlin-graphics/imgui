@@ -94,9 +94,8 @@ class ImplGL3 : GLInterface {
         val orthoProjection = glm.ortho(L, R, B, T, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
-        if (!OPENGL_ES2 && !OPENGL_ES3)
-            if(glVersion > 320)
-                glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
+            glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
         vao.bind()
 
@@ -129,7 +128,7 @@ class ImplGL3 : GLInterface {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = when {
-            !OPENGL_ES2 && !OPENGL_ES3 && glVersion > 320 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
+            !OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -201,8 +200,7 @@ class ImplGL3 : GLInterface {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if (!OPENGL_ES2 && !OPENGL_ES3)
-            if(glVersion > 320)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
                 glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
@@ -306,6 +304,12 @@ class ImplGL3 : GLInterface {
 
         var OPENGL_ES2 = false
         var OPENGL_ES3 = false
+
+        // Desktop GL 3.2+ has glDrawElementsBaseVertex() which GL ES and WebGL don't have.
+        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
+
+        // Desktop GL 3.3+ has glBindSampler()
+        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
 
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
