@@ -354,7 +354,7 @@ object te {
                             undoRec[i].charStorage += n
                 }
                 // now move all the redo records towards the end of the buffer; the first one is at 'redo_point'
-                // {DEAR IMGUI]
+                // [DEAR IMGUI]
                 val moveSize = UNDOSTATECOUNT - redoPoint - 1
                 for (i in 0 until moveSize)
                     undoRec[UNDOSTATECOUNT - 1 - i] = undoRec[UNDOSTATECOUNT - 2 - i]
@@ -953,29 +953,31 @@ static int stb_textedit_move_to_word_next( STB_TEXTEDIT_STRING *str, int c )
 
                     // now find character position down a row
                     if (find.length != 0) {
-                        val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
-                        val start = find.firstChar + find.length
-                        stb.cursor = start
-                        layoutRow(row, stb.cursor)
-                        var x = row.x0
-                        for (i in 0 until row.numChars) {
-                            val dx = getWidth(start, i)
-    //                        #ifdef STB_TEXTEDIT_GETWIDTH_NEWLINE
-                            if (dx == GETWIDTH_NEWLINE)
-                                break
-    //                        #endif
-                            x += dx
-                            if (x > goalX)
-                                break
-                            ++stb.cursor
+
+                        // [DEAR IMGUI]
+                        // going down while being on the last line shouldn't bring us to that line end
+                        if (getChar(find.firstChar + find.length - 1) == NEWLINE) {
+
+                            val goalX = if (stb.hasPreferredX) stb.preferredX else find.x
+                            val start = find.firstChar + find.length
+                            stb.cursor = start
+                            layoutRow(row, stb.cursor)
+                            var x = row.x0
+                            for (i in 0 until row.numChars) {
+                                val dx =
+                                    getWidth(start, i) //                        #ifdef STB_TEXTEDIT_GETWIDTH_NEWLINE
+                                if (dx == GETWIDTH_NEWLINE) break //                        #endif
+                                x += dx
+                                if (x > goalX) break
+                                ++stb.cursor
+                            }
+                            clamp()
+
+                            stb.hasPreferredX = true
+                            stb.preferredX = goalX
+
+                            if (sel) stb.selectEnd = stb.cursor
                         }
-                        clamp()
-
-                        stb.hasPreferredX = true
-                        stb.preferredX = goalX
-
-                        if (sel)
-                            stb.selectEnd = stb.cursor
                     }
                 }
             }
