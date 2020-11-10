@@ -4,7 +4,6 @@ import gli_.hasnt
 import glm_.c
 import glm_.f
 import glm_.i
-import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -22,7 +21,6 @@ import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
-import imgui.ImGui.inputFloat
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
@@ -97,14 +95,13 @@ object StyleEditor {
         var ref = ref_ ?: refSavedStyle
 
         pushItemWidth(windowWidth * 0.55f)
-        if (showStyleSelector("Colors##Selector"))
-            refSavedStyle = Style(style)
+        if (showStyleSelector("Colors##Selector")) refSavedStyle = Style(style)
 
         showFontSelector("Fonts##Selector")
 
         // Simplified Settings (expose floating-pointer border sizes as boolean representing 0.0f or 1.0f)
-        if (sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f"))
-            style.grabRounding = style.frameRounding    // Make GrabRounding always the same value as FrameRounding
+        if (sliderFloat("FrameRounding", style::frameRounding, 0f, 12f, "%.0f")) style.grabRounding =
+            style.frameRounding    // Make GrabRounding always the same value as FrameRounding
         run {
             border = style.windowBorderSize > 0f
             if (checkbox("WindowBorder", ::border)) style.windowBorderSize = border.f
@@ -129,8 +126,7 @@ object StyleEditor {
         if (button("Revert Ref")) g.style = ref!!
         sameLine()
         helpMarker(
-                "Save/Revert in local non-persistent storage. Default Colors definition are not affected. " +
-                        "Use \"Export\" below to save them somewhere.")
+            "Save/Revert in local non-persistent storage. Default Colors definition are not affected. " + "Use \"Export\" below to save them somewhere.")
 
         separator()
 
@@ -165,8 +161,9 @@ object StyleEditor {
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
                 run {
                     _i = style.windowMenuButtonPosition.i + 1
-                    if (combo("WindowMenuButtonPosition", ::_i, "None${NUL}Left${NUL}Right${NUL}"))
-                        style.windowMenuButtonPosition = Dir.values().first { it.i == _i - 1 }
+                    if (combo("WindowMenuButtonPosition", ::_i,
+                            "None${NUL}Left${NUL}Right${NUL}")
+                    ) style.windowMenuButtonPosition = Dir.values().first { it.i == _i - 1 }
                 }
                 run {
                     _i = style.colorButtonPosition.i
@@ -178,7 +175,8 @@ object StyleEditor {
                 sliderVec2("SelectableTextAlign", style.selectableTextAlign, 0f, 1f, "%.2f")
                 sameLine(); helpMarker("Alignment applies when a selectable is larger than its text content.")
                 text("Safe Area Padding")
-                sameLine(); helpMarker("Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
+                sameLine(); helpMarker(
+                    "Adjust if you cannot see the edges of your screen (e.g. on a TV where scaling has not been configured).")
                 sliderVec2("DisplaySafeAreaPadding", style.displaySafeAreaPadding, 0f, 30f, "%.0f")
                 endTabItem()
             }
@@ -186,17 +184,15 @@ object StyleEditor {
             if (beginTabItem("Colors")) {
 
                 button("Export") {
-                    if (outputDest == 0)
-                        logToClipboard()
-                    else
-                        logToTTY()
+                    if (outputDest == 0) logToClipboard()
+                    else logToTTY()
                     logText("val colors = ImGui.style.colors\n")
                     for (i in Col.values()) {
                         val col = style.colors[i]
                         val name = i.name
-                        if (!outputOnlyModified || col != ref!!.colors[i])
-                            logText("colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n",
-                                    " ".repeat(23 - name.length), col.x, col.y, col.z, col.w)
+                        if (!outputOnlyModified || col != ref!!.colors[i]) logText(
+                            "colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n", " ".repeat(23 - name.length), col.x,
+                            col.y, col.z, col.w)
                     }
                     logFinish()
                 }
@@ -211,22 +207,23 @@ object StyleEditor {
 
                 radioButton("Opaque", alphaFlags == Cef.None.i) { alphaFlags = Cef.None.i }; sameLine()
                 radioButton("Alpha", alphaFlags == Cef.AlphaPreview.i) { alphaFlags = Cef.AlphaPreview.i }; sameLine()
-                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) { alphaFlags = Cef.AlphaPreviewHalf.i }; sameLine()
+                radioButton("Both", alphaFlags == Cef.AlphaPreviewHalf.i) {
+                    alphaFlags = Cef.AlphaPreviewHalf.i
+                }; sameLine()
                 helpMarker("""
                     In the color list:
                     Left-click on colored square to open color picker,
                     Right-click to open edit options menu.""".trimIndent())
 
-                child("#colors", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
+                child("#colors", Vec2(), true,
+                    Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar or Wf._NavFlattened) {
                     withItemWidth(-160) {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name
-                            if (!filter.passFilter(name))
-                                continue
+                            if (!filter.passFilter(name)) continue
                             withId(i) {
                                 colorEditVec4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
-                                if (style.colors[i] != ref!!.colors[i]) {
-                                    // Tips: in a real user application, you may want to merge and use an icon font into the main font,
+                                if (style.colors[i] != ref!!.colors[i]) { // Tips: in a real user application, you may want to merge and use an icon font into the main font,
                                     // so instead of "Save"/"Revert" you'd use icons!
                                     // Read the FAQ and docs/FONTS.txt about using icon fonts. It's really easy and super convenient!
                                     sameLine(0f, style.itemInnerSpacing.x)
@@ -264,13 +261,13 @@ object StyleEditor {
                 val MIN_SCALE = 0.3f
                 val MAX_SCALE = 2f
                 helpMarker(
-                        "Those are old settings provided for convenience.\n" +
-                                "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, " +
-                                "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n" +
-                                "Using those settings here will give you poor quality results.")
-                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.ClampOnInput.i)) // Scale only this window
+                    "Those are old settings provided for convenience.\n" + "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, " + "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n" + "Using those settings here will give you poor quality results.")
+                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f",
+                        SliderFlag.ClampOnInput.i)
+                ) // Scale only this window
                     setWindowFontScale(windowScale)
-                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.ClampOnInput.i) // Scale everything
+                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f",
+                    SliderFlag.ClampOnInput.i) // Scale everything
                 popItemWidth()
 
                 endTabItem()
@@ -279,11 +276,13 @@ object StyleEditor {
             if (beginTabItem("Rendering")) {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
                 sameLine()
-                helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
+                helpMarker(
+                    "When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
 
                 checkbox("Anti-aliased lines use texture", style::antiAliasedLinesUseTex)
                 sameLine()
-                helpMarker("Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
+                helpMarker(
+                    "Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
 
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
@@ -301,15 +300,16 @@ object StyleEditor {
                         val RAD_MAX = 80f
                         var offX = 10f
                         for (n in 0..6) {
-                            val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n.f /(7f - 1f)
-                            drawList.addCircle(Vec2(p.x+offX+rad, p.y+RAD_MAX), rad, Col.Text.u32, 0)
+                            val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n.f / (7f - 1f)
+                            drawList.addCircle(Vec2(p.x + offX + rad, p.y + RAD_MAX), rad, Col.Text.u32, 0)
                             offX += 10f + rad * 2f
                         }
                         ImGui.dummy(Vec2(offX, RAD_MAX * 2f))
                     }
                 }
                 ImGui.sameLine()
-                helpMarker("When drawing circle primitives with \"num_segments == 0\" tesselation will be calculated automatically.")
+                helpMarker(
+                    "When drawing circle primitives with \"num_segments == 0\" tesselation will be calculated automatically.")
 
                 /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                     But application code could have a toggle to switch between zero and non-zero.             */
@@ -325,7 +325,9 @@ object StyleEditor {
 
     fun nodeFont(font: Font) {
         val name = font.configData.getOrNull(0)?.name ?: ""
-        val fontDetailsOpened = treeNode(font, "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
+        val fontDetailsOpened = treeNode(font,
+            "Font \\\"$name\\\"\\n%.2f px, %.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)",
+            font.fontSize)
         sameLine(); smallButton("Set as default") { io.fontDefault = font }
         if (fontDetailsOpened) {
             pushFont(font)
@@ -339,18 +341,18 @@ object StyleEditor {
                         |Font are currently rendered into bitmaps at a given size at the time of building the atlas. You may oversample them to get some flexibility with scaling. You can also render at multiple sizes and select which one to use at runtime.
                         |
                         |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
-            inputFloat("Font offset", font.displayOffset::y, 1f, 1f)
             text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
             text("Fallback character: '${font.fallbackChar}' (U+%04X)", font.fallbackChar)
             text("Ellipsis character: '${font.ellipsisChar}' (U+%04X)", font.ellipsisChar)
             val side = sqrt(font.metricsTotalSurface.f).i
             text("Texture Area: about ${font.metricsTotalSurface} px ~${side}x$side px")
-            for (c in 0 until font.configDataCount)
-                font.configData.getOrNull(c)?.let {
-                    bulletText("Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}")
-                }
-            treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
-                // Display all glyphs of the fonts in separate pages of 256 characters
+            for (c in 0 until font.configDataCount) font.configData.getOrNull(c)?.let {
+                bulletText(
+                    "Input $c: '${it.name}', Oversample: ${it.oversample}, PixelSnapH: ${it.pixelSnapH}, Offset: (%.1f,%.1f)",
+                    it.glyphOffset.x, it.glyphOffset.y)
+            }
+            treeNode("Glyphs",
+                "Glyphs (${font.glyphs.size})") { // Display all glyphs of the fonts in separate pages of 256 characters
                 var base = 0
                 while (base <= UNICODE_CODEPOINT_MAX) {
 
@@ -373,26 +375,23 @@ object StyleEditor {
                         val drawList = windowDrawList
                         for (n in 0 until 256) {
                             val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing),
-                                    basePos.y + (n / 16) * (cellSize + cellSpacing))
+                                basePos.y + (n / 16) * (cellSize + cellSpacing))
                             val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
                             val glyph = font.findGlyphNoFallback((base + n).c)
-                            drawList.addRect(cellP1, cellP2, COL32(255, 255, 255, if (glyph != null) 100 else 50))
-                            // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
+                            drawList.addRect(cellP1, cellP2, COL32(255, 255, 255,
+                                if (glyph != null) 100 else 50)) // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
                             // available here and thus cannot easily generate a zero-terminated UTF-8 encoded string.
                             if (glyph != null) {
                                 font.renderChar(drawList, cellSize, cellP1, Col.Text.u32, (base + n).c)
-                                if (isMouseHoveringRect(cellP1, cellP2))
-                                    tooltip {
-                                        text("Codepoint: U+%04X", base + n)
-                                        separator()
-                                        if (DEBUG)
-                                            text("Visible: ${glyph.visible}")
-                                        else
-                                            text("Visible: ${glyph.visible.i}")
-                                        text("AdvanceX+1: %.1f", glyph.advanceX)
-                                        text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
-                                        text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
-                                    }
+                                if (isMouseHoveringRect(cellP1, cellP2)) tooltip {
+                                    text("Codepoint: U+%04X", base + n)
+                                    separator()
+                                    if (DEBUG) text("Visible: ${glyph.visible}")
+                                    else text("Visible: ${glyph.visible.i}")
+                                    text("AdvanceX+1: %.1f", glyph.advanceX)
+                                    text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
+                                    text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
+                                }
                             }
                         }
                         dummy(Vec2((cellSize + cellSpacing) * 16, (cellSize + cellSpacing) * 16))
