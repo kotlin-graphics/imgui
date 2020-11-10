@@ -50,27 +50,38 @@ interface widgetsText {
         popStyleColor()
     }
 
-//    IMGUI_API void          TextColoredV(const ImVec4& col, const char* fmt, va_list args)  IM_FMTLIST(2);
+    fun textColoredV(col: Vec4, fmt: String, vararg args: Any) = dsl.withStyleColor(Col.Text, col) {
+        if (fmt == "%s")
+            TODO()
+//            textEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+        else
+            text(fmt, *args)
+    }
 
     /** shortcut for:
      *      pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
      *      text(fmt, ...)
      *      popStyleColor() */
-    fun textDisabled(fmt: String, vararg args: Any) {
-        pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        text(fmt, args)
-        popStyleColor()
+    fun textDisabled(fmt: String, vararg args: Any) = dsl.withStyleColor(Col.Text, style.colors[Col.TextDisabled]) {
+        if (fmt == "%s")
+            TODO()
+//            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+        else
+            text(fmt, *args)
     }
 
     /** shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an
      *  auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using
      *  SetNextWindowSize().    */
     fun textWrapped(fmt: String, vararg args: Any) {
-
         val needBackup = g.currentWindow!!.dc.textWrapPos < 0f  // Keep existing wrap position is one ia already set
         if (needBackup)
             pushTextWrapPos(0f)
-        text(fmt, *args)
+        if (fmt == "%s")
+            TODO()
+//            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+        else
+            text(fmt, *args)
         if (needBackup)
             popTextWrapPos()
     }
