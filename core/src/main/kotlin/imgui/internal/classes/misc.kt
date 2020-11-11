@@ -265,7 +265,7 @@ class TabItem {
     /** Width currently displayed */
     var width = 0f
 
-    /** Width of actual contents, stored during BeginTabItem() call */
+    /** Width of label, stored during BeginTabItem() call */
     var contentWidth = 0f
 
     /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
