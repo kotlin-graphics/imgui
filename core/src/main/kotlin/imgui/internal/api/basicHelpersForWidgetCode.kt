@@ -308,26 +308,29 @@ internal interface basicHelpersForWidgetCode {
             mx
         }
 
-    /** Shrink excess width from a set of item, by removing width from the larger items first. */
-    fun shrinkWidths(items: ArrayList<ShrinkWidthItem>, widthExcess_: Float) {
+    /** Shrink excess width from a set of item, by removing width from the larger items first.
+     *  Set items Width to -1.0f to disable shrinking this item. */
+    fun shrinkWidths(items: ArrayList<ShrinkWidthItem>, ptr: Int, count: Int, widthExcess_: Float) {
         var widthExcess = widthExcess_
-        val count = items.size
         if (count == 1) {
-            items[0].width = (items[0].width - widthExcess) max 1f
+            if (items[ptr].width >= 0f)
+                items[ptr].width = (items[ptr].width - widthExcess) max 1f
             return
         }
-        items.sortWith(shrinkWidthItemComparer)
+        items.subList(ptr, ptr + count).sortWith(shrinkWidthItemComparer)
         var countSameWidth = 1
         while (widthExcess > 0f && countSameWidth < count) {
-            while (countSameWidth < count && items[0].width <= items[countSameWidth].width)
+            while (countSameWidth < count && items[ptr].width <= items[countSameWidth].width)
                 countSameWidth++
             val maxWidthToRemovePerItem = when {
-                countSameWidth < count -> items[0].width - items[countSameWidth].width
-                else -> items[0].width - 1f
+                countSameWidth < count && items[ptr + countSameWidth].width >= 0f -> items[ptr].width - items[ptr + countSameWidth].width
+                else -> items[ptr].width - 1f
             }
+            if (maxWidthToRemovePerItem <= 0f)
+                break
             val widthToRemovePerItem = (widthExcess / countSameWidth) min maxWidthToRemovePerItem
             for (itemN in 0 until countSameWidth)
-                items[itemN].width -= widthToRemovePerItem
+                items[ptr + itemN].width -= widthToRemovePerItem
             widthExcess -= widthToRemovePerItem * countSameWidth
         }
 
