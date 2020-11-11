@@ -564,13 +564,8 @@ class TabBar {
         val arrowButtonSize = Vec2(g.fontSize - 2f, g.fontSize + style.framePadding.y * 2f)
         val scrollingButtonsWidth = arrowButtonSize.x * 2f
 
-        val backupCursorPos = Vec2(window.dc.cursorPos) //window->DrawList->AddRect(ImVec2(tab_bar->BarRect.Max.x - scrolling_buttons_width, tab_bar->BarRect.Min.y), ImVec2(tab_bar->BarRect.Max.x, tab_bar->BarRect.Max.y), IM_COL32(255,0,0,255));
-
-        val availBarRect = Rect(barRect)
-        val wantClipRect = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(scrollingButtonsWidth, 0f)) !in availBarRect
-        if (wantClipRect) pushClipRect(barRect.min, barRect.max + Vec2(style.itemInnerSpacing.x, 0f), true)
-
-        var tabToSelect: TabItem? = null
+        val backupCursorPos = Vec2(window.dc.cursorPos)
+        //window->DrawList->AddRect(ImVec2(tab_bar->BarRect.Max.x - scrolling_buttons_width, tab_bar->BarRect.Min.y), ImVec2(tab_bar->BarRect.Max.x, tab_bar->BarRect.Max.y), IM_COL32(255,0,0,255));
 
         var selectDir = 0
         val arrowCol = Vec4(style.colors[Col.Text])
@@ -581,26 +576,27 @@ class TabBar {
         val backupRepeatDelay = io.keyRepeatDelay
         val backupRepeatRate = io.keyRepeatRate
         io.keyRepeatDelay = 0.25f
-        io.keyRepeatRate = 0.20f
-        window.dc.cursorPos.put(barRect.max.x - scrollingButtonsWidth, barRect.min.y)
+        io.keyRepeatRate = 0.2f
+        val x = barRect.min.x max (barRect.max.x - scrollingButtonsWidth)
+        window.dc.cursorPos.put(x, barRect.min.y)
         if (arrowButtonEx("##<", Dir.Left, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat)) selectDir = -1
-        window.dc.cursorPos.put(barRect.max.x - scrollingButtonsWidth + arrowButtonSize.x, barRect.min.y)
+        window.dc.cursorPos.put(x + arrowButtonSize.x, barRect.min.y)
         if (arrowButtonEx("##>", Dir.Right, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat)) selectDir = +1
         popStyleColor(2)
         io.keyRepeatRate = backupRepeatRate
         io.keyRepeatDelay = backupRepeatDelay
 
-        if (wantClipRect) popClipRect()
+        var tabToScrollTo: TabItem? = null
 
         if (selectDir != 0) findTabByID(selectedTabId)?.let { tabItem ->
             val selectedOrder = tabItem.order
             val targetOrder = selectedOrder + selectDir
-            tabToSelect = tabs[if (targetOrder in tabs.indices) targetOrder else selectedOrder] // If we are at the end of the list, still scroll to make our tab visible
+            tabToScrollTo = tabs[if (targetOrder in tabs.indices) targetOrder else selectedOrder] // If we are at the end of the list, still scroll to make our tab visible
         }
         window.dc.cursorPos put backupCursorPos
         barRect.max.x -= scrollingButtonsWidth + 1f
 
-        return tabToSelect
+        return tabToScrollTo
     }
 
     /** ~TabBarTabListPopupButton */
