@@ -48,6 +48,7 @@ import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
 import imgui.ImGui.nextColumn
+import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -97,6 +98,7 @@ import imgui.dsl.child
 import imgui.dsl.group
 import imgui.dsl.indent
 import imgui.dsl.menuBar
+import imgui.dsl.popup
 import imgui.dsl.popupContextItem
 import imgui.dsl.tabBar
 import imgui.dsl.treeNode
@@ -138,8 +140,8 @@ object ShowDemoWindowLayout {
     val opened = BooleanArray(4) { true } // Persistent user state
 
     /* TabItem Button */
-    var nextId = 0
-    val tabsList = ArrayList<Int>()
+    var nextTabId = 0
+    val activeTabs = ArrayList<Int>()
     var tabBarFlags1: TabBarFlags = TabBarFlag.Reorderable or TabBarFlag.FittingPolicyResizeDown
     var showLeadingButton = true
     var showTrailingButton = true
@@ -431,13 +433,12 @@ object ShowDemoWindowLayout {
                 separator()
             }
 
-            treeNode("TabItem Button") {
+            treeNode("TabItemButton & Leading/Trailing flags") {
 
-                if (nextId == 0) // Initialize with a default tab
+                if (nextTabId == 0) // Initialize with a default tab
                     for (i in 0..8)
-                        tabsList += nextId++
+                        activeTabs += nextTabId++
 
-                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags1, TabBarFlag.Reorderable.i)
                 checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton.i)
                 if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags1, TabBarFlag.FittingPolicyResizeDown.i))
                     tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
@@ -446,56 +447,38 @@ object ShowDemoWindowLayout {
 
                 checkbox("Show Leading TabItemButton()", ::showLeadingButton)
                 checkbox("Show Trailing TabItemButton()", ::showTrailingButton)
-                checkbox("Enable Leading/Trailing TabItem()", ::enablePosition)
 
                 tabBar("MyTabBar", tabBarFlags1) {
-                    if (showLeadingButton) {
-                        if (tabItemButton("+", TabItemFlag.Leading or TabItemFlag.NoTooltip))
-                            tabsList += nextId++
-                        if (ImGui.isItemHovered())
-                            setTooltip("Add a new TabItem() in the tab bar")
-
-                        // Popup Context also works with TabItemButton
-                        popupContextItem {
-                            text("I'm a popup!")
-                            if (button("Close"))
-                                closeCurrentPopup()
-                        }
+                    // Demo Leading Tabs: click the "?" button to open a menu
+                    // Note that it is possible to submit regular non-button tabs with Leading/Trailing flags,
+                    // or Button without Leading/Trailing flags... but they tend to make more sense together.
+                    if (showLeadingButton && tabItemButton("?", TabItemFlag.Leading or TabItemFlag.NoTooltip))
+                        openPopup("MyHelpMenu")
+                    popup("MyHelpMenu") {
+                        selectable("Hello!")
                     }
 
-                    var closeCurrentTab = false
-                    if (showTrailingButton) {
-                        if (tabItemButton("X", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
-                            closeCurrentTab = true
-                        if (ImGui.isItemHovered())
-                            setTooltip("Close the currently selected TabItem()")
-                    }
+                    // Demo Trailing Tabs: click the "+" button to add a new tab (in your app you may want to use a font icon instead of the "+")
+                    if (showTrailingButton && tabItemButton("+", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
+                        activeTabs += nextTabId++
 
+                    // Submit our regular tabs
                     var n = 0
-                    while (n < tabsList.size) {
-                        val mod = tabsList[n] % 3
-                        var flags = if(mod == 0) TabItemFlag.None.i else if(mod == 1) TabItemFlag.Leading.i else TabItemFlag.Trailing.i
-                        if (!enablePosition)
-                            flags = 0
+                    while (n < activeTabs.size) {
 
-                        val name = "%04d".format(tabsList[n])
                         var open = true
                         _b = open
-                        if (beginTabItem(name, ::_b, flags)) {
+                        val name = "%04d".format(activeTabs[n])
+                        if (beginTabItem(name, ::_b, TabItemFlag.None.i)) {
                             open = _b
                             text("This is the $name tab!")
                             endTabItem()
-
-                            if (closeCurrentTab) {
-                                open = false
-                                setTabItemClosed(name)
-                            }
                         }
 
                         if (!open)
-                            tabsList.removeAt(n)
+                            activeTabs.removeAt(n)
                         else
-                            ++n
+                           n++
                     }
                 }
                 separator()
