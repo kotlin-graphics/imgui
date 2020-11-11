@@ -12,8 +12,6 @@ import imgui.*
 import imgui.ImGui.format
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
-import imgui.internal.sections.ItemFlag
-import imgui.internal.sections.has
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
@@ -221,8 +219,8 @@ interface widgetsSliders {
         }
 
         if (tempInputIsActive) {
-            // Only clamp CTRL+Click input when ImGuiSliderFlags_ClampInput is set
-            val isClampInput = flags hasnt SliderFlag.ClampOnInput
+            // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
+            val isClampInput = flags hasnt SliderFlag.AlwaysClamp
             return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput },
                 pMax.takeIf { isClampInput })
         }
