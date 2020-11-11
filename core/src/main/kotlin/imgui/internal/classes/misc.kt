@@ -188,7 +188,7 @@ class NextItemData {
     }
 }
 
-class ShrinkWidthItem(var index: Int, var width: Float) {
+class ShrinkWidthItem(var index: Int = 0, var width: Float = 0f) {
     infix fun put(other: ShrinkWidthItem) {
         index = other.index
         width = other.width
