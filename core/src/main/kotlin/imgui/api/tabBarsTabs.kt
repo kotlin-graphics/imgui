@@ -62,6 +62,8 @@ interface tabBarsTabs {
         if (window.skipItems) return false
 
         val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
+        assert(flags hasnt TabItemFlag._Button) { "BeginTabItem() Can't be used with button flags, use TabItemButton() instead!" }
+
         return tabBar.tabItemEx(label, pOpen, flags).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
@@ -80,6 +82,17 @@ interface tabBarsTabs {
         assert(tabBar.lastTabItemIdx >= 0)
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
         if (tab.flags hasnt TabItemFlag.NoPushId) window.idStack.pop()
+    }
+
+    /** create a Tab behaving like a button */
+    fun tabItemButton(label: String, flags: TabItemFlags = TabItemFlag.None.i): Boolean {
+
+        val window = g.currentWindow!!
+        if (window.skipItems)
+            return false
+
+        val tabBar = g.currentTabBar ?: error("TabItemButton() needs to be called between BeginTabBar() and EndTabBar()!")
+        return tabBar.tabItemEx(label, null, flags or TabItemFlag._Button or TabItemFlag.NoReorder)
     }
 
     /** notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars).

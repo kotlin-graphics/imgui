@@ -1,5 +1,6 @@
 package imgui.internal.classes
 
+import glm_.has
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -71,8 +72,11 @@ class TabBar {
     /** Ideal width if all tabs were visible and not clipped */
     var widthAllTabsIdeal = 0f
 
-    /** Distance from BarRect.Min.x, incremented with each BeginTabItem() call, not used if ImGuiTabBarFlags_Reorderable if set. */
-    var offsetNextTab = 0f
+    /**  Total width used by leading button */
+    var leadingWidth = 0f
+
+    /**  Total width used by trailing button */
+    var trailingWidth = 0f
     var scrollingAnim = 0f
     var scrollingTarget = 0f
     var scrollingTargetDistToVisibility = 0f
@@ -179,6 +183,7 @@ class TabBar {
     /** Called on manual closure attempt
      *  ~ tabBarCloseTab     */
     fun closeTab(tab: TabItem) {
+        assert(tab.flags hasnt TabItemFlag._Button)
         if (tab.flags hasnt TabItemFlag.UnsavedDocument) { // This will remove a frame of lag for selecting another tab on closure.
             // However we don't run it in the case where the 'Unsaved' flag is set, so user gets a chance to fully undo the closure
             tab.wantClose = true
@@ -201,17 +206,22 @@ class TabBar {
 
     /** ~TabBarProcessReorder */
     fun processReorder(): Boolean {
-        val tab1 = findTabByID(reorderRequestTabId) ?: return false
+        val tab1 = findTabByID(reorderRequestTabId)
+        if (tab1 == null || tab1.flags has TabItemFlag.NoReorder) return false
 
         //IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_Reorderable); // <- this may happen when using debug tools
         val tab2Order = tab1.order + reorderRequestDir
         if (tab2Order < 0 || tab2Order >= tabs.size) return false
 
+        // Reordered TabItem must share the same position flags than target
+        val tab2 = tabs[tab2Order]
+        if (tab2.flags has TabItemFlag.NoReorder) return false
+        if ((tab1.flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) != (tab2.flags and (TabItemFlag.Leading or TabItemFlag.Trailing))) return false
+
         //        ImGuiTabItem* tab2 = &tab_bar->Tabs[tab2_order];
         //        ImGuiTabItem item_tmp = *tab1;
         //        *tab1 = *tab2;
         //        *tab2 = item_tmp;
-        //        tab1 = tab2 = NULL;
         val itemTmp = tabs[reorderRequestTabId]
         tabs[reorderRequestTabId] = tabs[tab2Order]
         tabs[tab2Order] = itemTmp
@@ -241,6 +251,8 @@ class TabBar {
             return false
         }
 
+        assert(pOpen == null || pOpen() && flags hasnt TabItemFlag._Button) { "TabItemButton should not have visible content" }
+
         // Store into ImGuiTabItemFlags_NoCloseButton, also honor ImGuiTabItemFlags_NoCloseButton passed by user (although not documented)
         if (flags has TabItemFlag._NoCloseButton) pOpen = null
         else if (pOpen == null) flags = flags or TabItemFlag._NoCloseButton
@@ -263,6 +275,7 @@ class TabBar {
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
         val tabBarFocused = this.flags has TabBarFlag._IsFocused
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
+        val isTabButton = flags has TabItemFlag._Button
         tab.lastFrameVisible = g.frameCount
         tab.flags = flags
 
@@ -270,17 +283,10 @@ class TabBar {
         tab.nameOffset = tabsNames.size
         tabsNames += label
 
-        // If we are not reorderable, always reset offset based on submission order.
-        // (We already handled layout and sizing using the previous known order, but sizing is not affected by order!)
-        if (!tabAppearing && this.flags hasnt TabBarFlag.Reorderable) {
-            tab.offset = offsetNextTab
-            offsetNextTab += tab.width + style.itemInnerSpacing.x
-        }
-
         // Update selected tab
-        if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0) if (!tabBarAppearing || selectedTabId == 0) nextSelectedTabId = id  // New tabs gets activated
+        if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0) if (!tabBarAppearing || selectedTabId == 0) if (!isTabButton) nextSelectedTabId = id  // New tabs gets activated
         if (flags has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
-            nextSelectedTabId = id
+            if (!isTabButton) nextSelectedTabId = id
 
         // Lock visibility
         // (Note: tab_contents_visible != tab_selected... because CTRL+TAB operations may preview some tabs without selecting them!)
@@ -296,6 +302,7 @@ class TabBar {
             pushItemFlag(ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus, true)
             itemAdd(Rect(), id)
             popItemFlag()
+            if (isTabButton) return false
             return tabContentsVisible
         }
 
@@ -305,14 +312,18 @@ class TabBar {
         val backupMainCursorPos = Vec2(window.dc.cursorPos)
 
         // Layout
-        size.x = tab.width
-        window.dc.cursorPos = barRect.min + Vec2(floor(tab.offset) - scrollingAnim, 0f)
+        size.x = tab.width //if (is_tab_button && (tab_bar->Flags & ImGuiTabBarFlags_FittingPolicyResizeDown))
+        val x = if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing)) tab.offset else floor(tab.offset) - scrollingAnim
+        window.dc.cursorPos = barRect.min + Vec2(x, 0f)
         val pos = Vec2(window.dc.cursorPos)
         val bb = Rect(pos, pos + size)
 
         // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an extra draw call (temporary in the case of vertical animation)
-        val wantClipRect = bb.min.x < barRect.min.x || bb.max.x > barRect.max.x
-        if (wantClipRect) pushClipRect(Vec2(bb.min.x max barRect.min.x, bb.min.y - 1), Vec2(barRect.max.x, bb.max.y), true)
+        // If TabBar fitting policy is scroll, then just clip through the BarRect
+        val offsetLeading = if(flags has TabItemFlag.Leading) 0f else leadingWidth
+        val offsetTrailing = if(flags has (TabItemFlag.Trailing or TabItemFlag.Leading)) 0f else trailingWidth // Leading buttons will be clipped by BarRect.Max.x, trailing buttons will be clipped at BarRect.Minx + LeadingsWidth
+        val wantClipRect = (bb.min.x < barRect.min.x + offsetLeading) || (bb.max.x + offsetTrailing > barRect.max.x)
+        if (wantClipRect) pushClipRect(Vec2(bb.min.x max barRect.min.x + offsetLeading, bb.min.y - 1), Vec2(barRect.max.x - offsetTrailing, bb.max.y), true)
 
         val backupCursorMaxPos = Vec2(window.dc.cursorMaxPos)
         itemSize(bb.size, style.framePadding.y)
@@ -325,10 +336,10 @@ class TabBar {
         }
 
         // Click to Select a tab
-        var buttonFlags = ButtonFlag.PressedOnClick or ButtonFlag.AllowItemOverlap
+        var buttonFlags = (if(isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
         if (g.dragDropActive) buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
-        if (pressed) nextSelectedTabId = id
+        if (pressed && !isTabButton) nextSelectedTabId = id
         val hovered = hovered_ || g.hoveredId == id
 
         // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
@@ -368,7 +379,9 @@ class TabBar {
 
         // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
         val hoveredUnblocked = isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)
-        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || isMouseReleased(MouseButton.Right))) nextSelectedTabId = id
+        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || isMouseReleased(MouseButton.Right)))
+            if (!isTabButton)
+                nextSelectedTabId = id
 
         if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton) flags = flags or TabItemFlag.NoCloseWithMiddleMouseButton
 
@@ -388,7 +401,8 @@ class TabBar {
         // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
         if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered()) if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip) setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
-        return tabContentsVisible
+        assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)){"TabItemButton should not be selected"}
+        return if (isTabButton) pressed else tabContentsVisible
     }
 
     /** This is called only once a frame before by the first call to ItemTab()
@@ -400,6 +414,7 @@ class TabBar {
 
         // Garbage collect by compacting list
         var tabDstN = 0
+        var needSortTrailingOrLeading = false
         for (tabSrcN in tabs.indices) {
             val tab = tabs[tabSrcN]
             if (tab.lastFrameVisible < prevFrameVisible || tab.wantClose) { // Remove tab
@@ -409,9 +424,17 @@ class TabBar {
                 continue
             }
             if (tabDstN != tabSrcN) tabs[tabDstN] = tabs[tabSrcN]
+
+            tabs[tabDstN].indexDuringLayout = tabDstN
+            if (tabDstN > 0 && (tabs[tabDstN].flags has TabItemFlag.Leading && tabs[tabDstN - 1].flags hasnt TabItemFlag.Leading)) needSortTrailingOrLeading = true
+            if (tabDstN > 0 && tabs[tabDstN - 1].flags has TabItemFlag.Trailing && tabs[tabDstN].flags hasnt TabItemFlag.Trailing)
+            needSortTrailingOrLeading = true
+
             tabDstN++
         }
         if (tabs.size != tabDstN) for (i in tabDstN until tabs.size) tabs.pop()
+
+        if (needSortTrailingOrLeading) tabs.sortWith(tabItemComparerByPositionAndIndex)
 
         // Setup next selected tab
         var scrollTrackSelectedTabID: ID = 0
@@ -429,13 +452,16 @@ class TabBar {
 
         // Tab List Popup
         val tabListPopupButton = flags has TabBarFlag.TabListPopupButton
-        if (tabListPopupButton) tabListPopupButton()?.let { tabToSelect -> // NB: Will alter BarRect.Max.x!
+        if (tabListPopupButton) tabListPopupButton()?.let { tabToSelect -> // NB: Will alter BarRect.Min.x!
             selectedTabId = tabToSelect.id
             scrollTrackSelectedTabID = tabToSelect.id
         }
 
         // Compute ideal widths
-        g.shrinkWidthBuffer.clear() // it will automatically resized in the following for loop
+        g.shrinkWidthBuffer.clear() // [JVM] it will automatically resized in the following for loop
+        var tabNShrinkable = 0                       // ..but buttons won't shrink
+        leadingWidth = 0f
+        trailingWidth = 0f
         var widthTotalContents = 0f
         var mostRecentlySelectedTab: TabItem? = null
         var foundSelectedTabID = false
@@ -443,7 +469,7 @@ class TabBar {
             val tab = tabs[tabN]
             assert(tab.lastFrameVisible >= prevFrameVisible)
 
-            if (mostRecentlySelectedTab == null || mostRecentlySelectedTab.lastFrameSelected < tab.lastFrameSelected) mostRecentlySelectedTab = tab
+            if (mostRecentlySelectedTab == null || mostRecentlySelectedTab.lastFrameSelected < tab.lastFrameSelected) if (tab.flags hasnt TabItemFlag._Button) mostRecentlySelectedTab = tab
             if (tab.id == selectedTabId) foundSelectedTabID = true
 
             // Refresh tab width immediately, otherwise changes of style e.g. style.FramePadding.x would noticeably lag in the tab bar.
@@ -452,17 +478,20 @@ class TabBar {
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
             tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
 
-            widthTotalContents += (if (tabN > 0) style.itemInnerSpacing.x else 0f) + tab.contentWidth
-
-            // Store data so we can build an array sorted by width if we need to shrink tabs down
-            g.shrinkWidthBuffer += ShrinkWidthItem(tabN, tab.contentWidth)
+            val width = tab.contentWidth
+            if (tab.flags has TabItemFlag.Leading) leadingWidth += width + g.style.itemInnerSpacing.x
+            else if (tab.flags has TabItemFlag.Trailing) trailingWidth += width + g.style.itemInnerSpacing.x
+            else {
+                widthTotalContents += width + if (tabNShrinkable > 0) style.itemInnerSpacing.x else 0f // Store data so we can build an array sorted by width if we need to shrink tabs down
+                g.shrinkWidthBuffer += ShrinkWidthItem(tabN, tab.contentWidth)
+                tabNShrinkable++
+            }
         }
 
         // Compute width
-        val initialOffsetX = 0f // g.Style.ItemInnerSpacing.x;
-        val widthAvail = (barRect.width - initialOffsetX) max 0f
+        val widthAvail = (barRect.width - leadingWidth - trailingWidth) max 0f
         val widthExcess = if (widthAvail < widthTotalContents) widthTotalContents - widthAvail else 0f
-        if (widthExcess > 0f && flags has TabBarFlag.FittingPolicyResizeDown) { // If we don't have enough room, resize down the largest tabs first
+        if (widthExcess > 0f && flags hasnt TabBarFlag.FittingPolicyScroll) { // If we don't have enough room, resize down the largest tabs first
             shrinkWidths(g.shrinkWidthBuffer, widthExcess)
             for (tabN in tabs.indices) tabs[g.shrinkWidthBuffer[tabN].index].width = floor(g.shrinkWidthBuffer[tabN].width)
         } else {
@@ -474,23 +503,36 @@ class TabBar {
         }
 
         // Layout all active tabs
-        var offsetX = initialOffsetX
-        var offsetXideal = offsetX
-        offsetNextTab = offsetX // This is used by non-reorderable tab bar where the submission order is always honored.
+        var offsetXButtonLeading = 0f;
+        var offsetXButtonTrailing = barRect.width - trailingWidth + g.style.itemInnerSpacing.x
+        var offsetXRegular = leadingWidth
+        var offsetXIdeal = offsetXRegular
         for (tab in tabs) {
-            tab.offset = offsetX
-            if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id) scrollTrackSelectedTabID = tab.id
-            offsetX += tab.width + style.itemInnerSpacing.x
-            offsetXideal += tab.contentWidth + style.itemInnerSpacing.x
+            val width = tab.width + g.style.itemInnerSpacing.x
+            if (tab.flags has TabItemFlag.Leading) {
+                tab.offset = offsetXButtonLeading
+                offsetXButtonLeading += width
+            } else if (tab.flags has TabItemFlag.Trailing) {
+                tab.offset = offsetXButtonTrailing
+                offsetXButtonTrailing += width
+            } else {
+                tab.offset = offsetXRegular
+                if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id) scrollTrackSelectedTabID = tab.id
+                offsetXRegular += width
+                offsetXIdeal += tab.contentWidth + g.style.itemInnerSpacing.x
+            }
         }
-        widthAllTabs = (offsetX - style.itemInnerSpacing.x) max 0f
-        widthAllTabsIdeal = (offsetXideal - style.itemInnerSpacing.x) max 0f
+        widthAllTabs = (offsetXRegular - style.itemInnerSpacing.x + trailingWidth) max 0f
+        widthAllTabsIdeal = (offsetXIdeal - style.itemInnerSpacing.x + trailingWidth) max 0f
 
         // Horizontal scrolling buttons
         val scrollingButtons = widthAllTabs > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
-        if (scrollingButtons) scrollingButtons()?.let { tabToSelect -> // NB: Will alter BarRect.Max.x!
-            selectedTabId = tabToSelect.id
-            scrollTrackSelectedTabID = selectedTabId
+        if (scrollingButtons) scrollingButtons()?.let { scrollTrackSelectedTab -> // NB: Will alter BarRect.Max.x and each trailing tab->Offset
+            if (scrollTrackSelectedTab.flags has TabItemFlag._Button) scrollTrackSelectedTabID = scrollTrackSelectedTab.id
+            else {
+                selectedTabId = scrollTrackSelectedTab.id
+                scrollTrackSelectedTabID = selectedTabId
+            }
         }
 
         // If we have lost the selected tab, select the next most recently active one
@@ -523,6 +565,9 @@ class TabBar {
         val window = g.currentWindow!!
         window.dc.cursorPos put barRect.min
         itemSize(Vec2(widthAllTabsIdeal, barRect.height), framePadding.y)
+
+        window.drawList.addRect(barRect.min, barRect.min + Vec2(leadingWidth, barRect.height), COL32(255, 0, 0, 255))
+        window.drawList.addRect(barRect.max - Vec2(trailingWidth, barRect.height), barRect.max, COL32(0, 255, 0, 255))
     }
 
     /** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.
@@ -542,9 +587,11 @@ class TabBar {
     fun scrollClamp(scrolling: Float): Float = (scrolling min (widthAllTabs - barRect.width)) max 0f
 
     fun scrollToTab(tab: TabItem) {
+        if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing)) return
 
         val margin = g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
         val order = tab.order
+
         val tabX1 = tab.offset + if (order > 0) -margin else 0f
         val tabX2 = tab.offset + tab.width + if (order + 1 < tabs.size) margin else 1f
         scrollingTargetDistToVisibility = 0f
@@ -565,8 +612,7 @@ class TabBar {
         val arrowButtonSize = Vec2(g.fontSize - 2f, g.fontSize + style.framePadding.y * 2f)
         val scrollingButtonsWidth = arrowButtonSize.x * 2f
 
-        val backupCursorPos = Vec2(window.dc.cursorPos)
-        //window->DrawList->AddRect(ImVec2(tab_bar->BarRect.Max.x - scrolling_buttons_width, tab_bar->BarRect.Min.y), ImVec2(tab_bar->BarRect.Max.x, tab_bar->BarRect.Max.y), IM_COL32(255,0,0,255));
+        val backupCursorPos = Vec2(window.dc.cursorPos) //window->DrawList->AddRect(ImVec2(tab_bar->BarRect.Max.x - scrolling_buttons_width, tab_bar->BarRect.Min.y), ImVec2(tab_bar->BarRect.Max.x, tab_bar->BarRect.Max.y), IM_COL32(255,0,0,255));
 
         var selectDir = 0
         val arrowCol = Vec4(style.colors[Col.Text])
@@ -590,12 +636,26 @@ class TabBar {
         var tabToScrollTo: TabItem? = null
 
         if (selectDir != 0) findTabByID(selectedTabId)?.let { tabItem ->
-            val selectedOrder = tabItem.order
-            val targetOrder = selectedOrder + selectDir
-            tabToScrollTo = tabs[if (targetOrder in tabs.indices) targetOrder else selectedOrder] // If we are at the end of the list, still scroll to make our tab visible
+            var selectedOrder = tabItem.order
+            var targetOrder = selectedOrder + selectDir
+
+            // Skip tab item buttons until another tab item is found or end is reached
+            while (tabToScrollTo == null) { // If we are at the end of the list, still scroll to make our tab visible
+                tabToScrollTo = tabs[if (targetOrder in tabs.indices) targetOrder else selectedOrder]
+
+                // Cross through buttons
+                // (even if first/last item is a button, return it so we can update the scroll)
+                if (tabToScrollTo!!.flags has TabItemFlag._Button) {
+                    targetOrder += selectDir
+                    selectedOrder += selectDir
+                    tabToScrollTo = if (targetOrder <= 0 || targetOrder >= tabs.size) tabToScrollTo else null
+                }
+            }
         }
         window.dc.cursorPos put backupCursorPos
+
         barRect.max.x -= scrollingButtonsWidth + 1f
+        for (tab in tabs) if (tab.flags has TabItemFlag.Trailing) tab.offset -= scrollingButtonsWidth + 1f
 
         return tabToScrollTo
     }
@@ -620,7 +680,9 @@ class TabBar {
 
         var tabToSelect: TabItem? = null
         if (open) {
-            tabs.forEach { tab ->
+            for (tab in tabs) {
+                if (tab.flags has TabItemFlag._Button) continue
+
                 if (selectable(tab.name, selectedTabId == id)) tabToSelect = tab
             }
             endCombo()
@@ -633,6 +695,13 @@ class TabBar {
 
     companion object {
         fun calcMaxTabWidth() = g.fontSize * 20f
+
+        val tabItemComparerByPositionAndIndex = Comparator<TabItem> { a, b ->
+            val aPosition = if (a.flags has TabItemFlag.Leading) 0 else if (a.flags has TabItemFlag.Trailing) 2 else 1
+            val b_position = if (b.flags has TabItemFlag.Leading) 0 else if (b.flags has TabItemFlag.Trailing) 2 else 1
+            if (aPosition != b_position) aPosition - b_position
+            else a.indexDuringLayout - b.indexDuringLayout
+        }
     }
 }
 

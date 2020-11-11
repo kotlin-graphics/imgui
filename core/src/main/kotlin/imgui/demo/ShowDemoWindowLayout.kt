@@ -19,6 +19,7 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
+import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
@@ -69,12 +70,14 @@ import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereX
 import imgui.ImGui.setScrollHereY
+import imgui.ImGui.setTabItemClosed
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
+import imgui.ImGui.tabItemButton
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textLineHeight
@@ -94,6 +97,8 @@ import imgui.dsl.child
 import imgui.dsl.group
 import imgui.dsl.indent
 import imgui.dsl.menuBar
+import imgui.dsl.popupContextItem
+import imgui.dsl.tabBar
 import imgui.dsl.treeNode
 import imgui.dsl.withClipRect
 import imgui.dsl.withId
@@ -128,9 +133,18 @@ object ShowDemoWindowLayout {
 
 
     /* Tabs */
-    var tabBarFlags: TabBarFlags = TabBarFlag.Reorderable.i
+    var tabBarFlags0: TabBarFlags = TabBarFlag.Reorderable.i
     val names0 = arrayOf("Artichoke", "Beetroot", "Celery", "Daikon")
     val opened = BooleanArray(4) { true } // Persistent user state
+
+    /* TabItem Button */
+    var nextId = 0
+    val tabsList = ArrayList<Int>()
+    var tabBarFlags1: TabBarFlags = TabBarFlag.Reorderable or TabBarFlag.FittingPolicyResizeDown
+    var showLeadingButton = true
+    var showTrailingButton = true
+    var enablePosition = false
+
 
     /** Text Baseline Alignment */
     var spacing = style.itemInnerSpacing.x
@@ -385,16 +399,16 @@ object ShowDemoWindowLayout {
 
             treeNode("Advanced & Close Button") {
                 // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
-                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags, TabBarFlag.Reorderable.i)
-                checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags, TabBarFlag.AutoSelectNewTabs.i)
-                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags, TabBarFlag.TabListPopupButton.i)
-                checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags, TabBarFlag.NoCloseWithMiddleMouseButton.i)
-                if (tabBarFlags hasnt TabBarFlag.FittingPolicyMask_)
-                    tabBarFlags = tabBarFlags or TabBarFlag.FittingPolicyDefault_
-                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags, TabBarFlag.FittingPolicyResizeDown.i))
-                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
-                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags, TabBarFlag.FittingPolicyScroll.i))
-                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags0, TabBarFlag.Reorderable.i)
+                checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags0, TabBarFlag.AutoSelectNewTabs.i)
+                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags0, TabBarFlag.TabListPopupButton.i)
+                checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags0, TabBarFlag.NoCloseWithMiddleMouseButton.i)
+                if (tabBarFlags0 hasnt TabBarFlag.FittingPolicyMask_)
+                    tabBarFlags0 = tabBarFlags0 or TabBarFlag.FittingPolicyDefault_
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags0, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags0 = tabBarFlags0 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags0, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags0 = tabBarFlags0 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
 
                 // Tab Bar
                 for (n in opened.indices) {
@@ -404,7 +418,7 @@ object ShowDemoWindowLayout {
 
                 // Passing a bool* to BeginTabItem() is similar to passing one to Begin():
                 // the underlying bool will be set to false when the tab is closed.
-                if (beginTabBar("MyTabBar", tabBarFlags)) {
+                if (beginTabBar("MyTabBar", tabBarFlags0)) {
                     for (n in opened.indices)
                         if (opened[n] && beginTabItem(names0[n], opened, n, TabItemFlag.None.i)) {
                             text("This is the ${names0[n]} tab!")
@@ -413,6 +427,76 @@ object ShowDemoWindowLayout {
                             endTabItem()
                         }
                     endTabBar()
+                }
+                separator()
+            }
+
+            treeNode("TabItem Button") {
+
+                if (nextId == 0) // Initialize with a default tab
+                    for (i in 0..8)
+                        tabsList += nextId++
+
+                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags1, TabBarFlag.Reorderable.i)
+                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton.i)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags1, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags1, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll.i)
+
+                checkbox("Show Leading TabItemButton()", ::showLeadingButton)
+                checkbox("Show Trailing TabItemButton()", ::showTrailingButton)
+                checkbox("Enable Leading/Trailing TabItem()", ::enablePosition)
+
+                tabBar("MyTabBar", tabBarFlags1) {
+                    if (showLeadingButton) {
+                        if (tabItemButton("+", TabItemFlag.Leading or TabItemFlag.NoTooltip))
+                            tabsList += nextId++
+                        if (ImGui.isItemHovered())
+                            setTooltip("Add a new TabItem() in the tab bar")
+
+                        // Popup Context also works with TabItemButton
+                        popupContextItem {
+                            text("I'm a popup!")
+                            if (button("Close"))
+                                closeCurrentPopup()
+                        }
+                    }
+
+                    var closeCurrentTab = false
+                    if (showTrailingButton) {
+                        if (tabItemButton("X", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
+                            closeCurrentTab = true
+                        if (ImGui.isItemHovered())
+                            setTooltip("Close the currently selected TabItem()")
+                    }
+
+                    var n = 0
+                    while (n < tabsList.size) {
+                        val mod = tabsList[n] % 3
+                        var flags = if(mod == 0) TabItemFlag.None.i else if(mod == 1) TabItemFlag.Leading.i else TabItemFlag.Trailing.i
+                        if (!enablePosition)
+                            flags = 0
+
+                        val name = "%04d".format(tabsList[n])
+                        var open = true
+                        _b = open
+                        if (beginTabItem(name, ::_b, flags)) {
+                            open = _b
+                            text("This is the $name tab!")
+                            endTabItem()
+
+                            if (closeCurrentTab) {
+                                open = false
+                                setTabItemClosed(name)
+                            }
+                        }
+
+                        if (!open)
+                            tabsList.removeAt(n)
+                        else
+                            ++n
+                    }
                 }
                 separator()
             }
