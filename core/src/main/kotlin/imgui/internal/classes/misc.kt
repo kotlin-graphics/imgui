@@ -188,7 +188,12 @@ class NextItemData {
     }
 }
 
-class ShrinkWidthItem(var index: Int, var width: Float)
+class ShrinkWidthItem(var index: Int, var width: Float) {
+    infix fun put(other: ShrinkWidthItem) {
+        index = other.index
+        width = other.width
+    }
+}
 class PtrOrIndex(
         /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
         val ptr: TabBar?,
