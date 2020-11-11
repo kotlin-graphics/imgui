@@ -84,7 +84,7 @@ interface tabBarsTabs {
         if (tab.flags hasnt TabItemFlag.NoPushId) window.idStack.pop()
     }
 
-    /** create a Tab behaving like a button */
+    /** create a Tab behaving like a button. return true when clicked. cannot be selected in the tab bar. */
     fun tabItemButton(label: String, flags: TabItemFlags = TabItemFlag.None.i): Boolean {
 
         val window = g.currentWindow!!

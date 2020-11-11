@@ -439,28 +439,33 @@ object ShowDemoWindowLayout {
                     for (i in 0..2)
                         activeTabs += nextTabId++
 
+                // TabItemButton() and Leading/Trailing flags are distinct features which we will demo together.
+                // (It is possible to submit regular tabs with Leading/Trailing flags, or TabItemButton tabs without Leading/Trailing flags...
+                // but they tend to make more sense together)
+                checkbox("Show Leading TabItemButton()", ::showLeadingButton)
+                checkbox("Show Trailing TabItemButton()", ::showTrailingButton)
+
+                // Expose some other flags which are useful to showcase how they interact with Leading/Trailing tabs
                 checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton.i)
                 if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags1, TabBarFlag.FittingPolicyResizeDown.i))
                     tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
                 if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags1, TabBarFlag.FittingPolicyScroll.i))
                     tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll.i)
 
-                checkbox("Show Leading TabItemButton()", ::showLeadingButton)
-                checkbox("Show Trailing TabItemButton()", ::showTrailingButton)
-
                 tabBar("MyTabBar", tabBarFlags1) {
-                    // Demo Leading Tabs: click the "?" button to open a menu
-                    // Note that it is possible to submit regular non-button tabs with Leading/Trailing flags,
-                    // or Button without Leading/Trailing flags... but they tend to make more sense together.
-                    if (showLeadingButton && tabItemButton("?", TabItemFlag.Leading or TabItemFlag.NoTooltip))
-                        openPopup("MyHelpMenu")
+                    // Demo a Leading TabItemButton(): click the "?" button to open a menu
+                    if (showLeadingButton)
+                        if(tabItemButton("?", TabItemFlag.Leading or TabItemFlag.NoTooltip))
+                            openPopup("MyHelpMenu")
                     popup("MyHelpMenu") {
                         selectable("Hello!")
                     }
 
                     // Demo Trailing Tabs: click the "+" button to add a new tab (in your app you may want to use a font icon instead of the "+")
-                    if (showTrailingButton && tabItemButton("+", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
-                        activeTabs += nextTabId++
+                    // Note that we submit it before the regular tabs, but because of the ImGuiTabItemFlags_Trailing flag it will always appear at the end.
+                    if (showTrailingButton)
+                        if(tabItemButton("+", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
+                            activeTabs += nextTabId++ // Add new tab
 
                     // Submit our regular tabs
                     var n = 0
