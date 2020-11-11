@@ -24,7 +24,7 @@ import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
 import imgui.ImGui.isMouseReleased
-import imgui.ImGui.openPopupContextItem
+import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
@@ -215,7 +215,7 @@ object CustomRendering {
                 // Context menu (under default mouse threshold)
                 val dragDelta = getMouseDragDelta(MouseButton.Right)
                 if (optEnableContextMenu && isMouseReleased(MouseButton.Right) && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
-                    openPopupContextItem("context")
+                    openPopupOnItemClick("context")
                 dsl.popup("context") {
                     if (addingLine) {
                         points.pop()
