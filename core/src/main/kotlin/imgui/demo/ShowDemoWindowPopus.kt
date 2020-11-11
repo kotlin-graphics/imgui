@@ -22,7 +22,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
-import imgui.ImGui.openPopupContextItem
+import imgui.ImGui.openPopupOnItemClick
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -144,11 +144,11 @@ object ShowDemoWindowPopups {
                 }
             }
 
-            // We can also use OpenPopupContextItem() which is the same as BeginPopupContextItem() but without the
+            // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the
             // Begin() call. So here we will make it that clicking on the text field with the right mouse button (1)
             // will toggle the visibility of the popup above.
             text("(You can also right-click me to open the same popup as above.)")
-            openPopupContextItem("item context menu", MouseButton.Right.i)
+            openPopupOnItemClick("item context menu", MouseButton.Right.i)
 
             // When used after an item that has an ID (e.g.Button), we can skip providing an ID to BeginPopupContextItem().
             // BeginPopupContextItem() will use the last item ID as the popup ID.
