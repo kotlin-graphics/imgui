@@ -100,7 +100,7 @@ internal interface tabBars {
         var closeButtonPressed = false
         var closeButtonVisible = false
         if (closeButtonId != 0)
-            if (isContentsVisible || bb.width >= style.tabMinWidthForUnselectedCloseButton)
+            if (isContentsVisible || bb.width >= style.tabMinWidthForCloseButton)
                 if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == tabId || g.activeId == closeButtonId)
                     closeButtonVisible = true
         if (closeButtonVisible) {
