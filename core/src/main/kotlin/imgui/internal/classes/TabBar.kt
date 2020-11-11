@@ -550,16 +550,21 @@ class TabBar {
         for (section in sections)
             widthAllTabsIdeal += section.width + section.spacing
 
-        // We want to know here if we'll need the scrolling buttons, to adjust available width with resizable leading/trailing
-        val scrollingButtons = widthAllTabsIdeal > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
-        val scrollingButtonsWidth = if(scrollingButtons) tabBarScrollingButtonSize.x * 2f else 0f
+        // Horizontal scrolling buttons
+        // (Note that TabBarScrollButtons() will alter BarRect.Max.x)
+        if ((widthAllTabsIdeal > barRect.width && tabs.size > 1) && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll)
+            scrollingButtons()?.let { scrollTrackSelectedTab ->
+                scrollTrackSelectedTabID = scrollTrackSelectedTab.id
+                if (scrollTrackSelectedTab.flags hasnt TabItemFlag._Button)
+                    selectedTabId = scrollTrackSelectedTabID
+            }
 
         // Compute width
-        // FIXME: This is a mess, couldn't TabBarScrollingButtons() just be called earlier?
-        val centralSectionIsVisible = sections[0].widthWithSpacing + sections[2].widthWithSpacing < barRect.width - scrollingButtonsWidth
+        // FIXME: This is a mess
+        val centralSectionIsVisible = sections[0].widthWithSpacing + sections[2].widthWithSpacing < barRect.width
         val widthExcess = when {
             centralSectionIsVisible -> (sections[1].widthWithSpacing - (barRect.width - sections[0].widthWithSpacing - sections[2].widthWithSpacing)) max 0f
-            else -> (sections[0].widthWithSpacing + sections[2].widthWithSpacing) - (barRect.width - scrollingButtonsWidth)
+            else -> (sections[0].widthWithSpacing + sections[2].widthWithSpacing) - barRect.width
         }
 
         if (widthExcess > 0f && (flags has TabBarFlag.FittingPolicyResizeDown || !centralSectionIsVisible)) {
@@ -603,7 +608,7 @@ class TabBar {
             // FIXME: The +1.0f is in TabBarScrollingButtons()
             val section = sections[sectionN]
             if (sectionN == 2)
-                nextTabOffset = (barRect.width - section.width - if (scrollingButtons) scrollingButtonsWidth + 1f else 0f) min nextTabOffset
+                nextTabOffset = (barRect.width - section.width) min nextTabOffset
 
             for (tabN in 0 until section.tabCount) {
                 val tab = tabs[section.tabStartIndex + tabN]
@@ -613,14 +618,6 @@ class TabBar {
             widthAllTabs += section.widthWithSpacing max 0f
             nextTabOffset += section.spacing
         }
-
-        // Horizontal scrolling buttons
-        if (scrollingButtons)
-            scrollingButtons()?.let { scrollTrackSelectedTab -> // NB: Will alter BarRect.Max.x
-                scrollTrackSelectedTabID = scrollTrackSelectedTab.id
-                if (scrollTrackSelectedTab.flags hasnt TabItemFlag._Button)
-                    selectedTabId = scrollTrackSelectedTabID
-            }
 
         // If we have lost the selected tab, select the next most recently active one
         if (!foundSelectedTabID) selectedTabId = 0
