@@ -83,19 +83,20 @@ class TabBar {
     /** Number of tabs submitted this frame. */
     var tabsActiveCount = 0
 
-    val sections = Array(3) { Section() }
-
     var wantLayout = false
     var visibleTabWasSubmitted = false
-
-    /** Index of last BeginTabItem() tab for use by EndTabItem()  */
-    var lastTabItemIdx = -1
 
     /** Set to true when a new tab item or button has been added to the tab bar during last frame */
     var tabsAddedNew = false
 
+    /** Index of last BeginTabItem() tab for use by EndTabItem()  */
+    var lastTabItemIdx = -1
+
     /** style.FramePadding locked at the time of BeginTabBar() */
     var framePadding = Vec2()
+
+    /** Layout sections: Leading, Central, Trailing */
+    val sections = Array(3) { Section() }
 
     /** For non-docking tab bar we re-append names in a contiguous buffer. */
     val tabsNames = ArrayList<String>()
@@ -112,16 +113,22 @@ class TabBar {
         }
 
     class Section {
+
+        /** Index of first tab in this section. */
         var tabStartIndex = 0
+
+        /** Number of tabs in this section. */
         var tabCount = 0
+
+        /** Width of this section (after shrinking down) */
         var width = 0f
         var widthIdeal = 0f
 
-        /**  Horizontal ItemInnerSpacing, used by Leading/Trailing section, to correctly offset from Central section */
-        var innerSpacing = 0f
+        /** Horizontal spacing at the end of the section. */
+        var spacing = 0f
 
         val widthWithSpacing: Float
-            get() = width + innerSpacing
+            get() = width + spacing
     }
 
     // Tab Bars
@@ -143,9 +150,9 @@ class TabBar {
             return true
         }
 
-        // When toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
-        if (flags_ has TabBarFlag.Reorderable != flags has TabBarFlag.Reorderable || tabsAddedNew)
-            if(tabs.size > 1)
+        // Ensure correct ordering when toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
+        if (flags_ has TabBarFlag.Reorderable != flags has TabBarFlag.Reorderable || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
+            if (tabs.size > 1)
                 tabs.sortBy(TabItem::beginOrder)
         tabsAddedNew = false
 
@@ -340,11 +347,11 @@ class TabBar {
         // Leading buttons will be clipped by BarRect.Max.x, Trailing buttons will be clipped at BarRect.Min.x + LeadingsWidth (+ spacing if there are some buttons), and central tabs will be clipped inbetween
         val offsetTrailing = when {
             flags has (TabItemFlag.Trailing or TabItemFlag.Leading) -> 0f
-            else -> sections[2].width + sections[1].innerSpacing
+            else -> sections[2].width + sections[1].spacing
         }
         val offsetLeading = when {
             flags has TabItemFlag.Leading -> 0f
-            else -> sections[0].width + sections[0].innerSpacing
+            else -> sections[0].width + sections[0].spacing
         }
         val wantClipRect = (bb.min.x < barRect.min.x + offsetLeading) || (bb.max.x > barRect.max.x - offsetTrailing)
         if (wantClipRect) pushClipRect(Vec2(bb.min.x max barRect.min.x + offsetLeading, bb.min.y - 1), Vec2(barRect.max.x - offsetTrailing, bb.max.y), true)
@@ -435,8 +442,9 @@ class TabBar {
         wantLayout = false
 
         // Garbage collect by compacting list
+        // Detect if we need to sort out tab list (e.g. in rare case where a tab changed section)
         var tabDstN = 0
-        var needSortTrailingOrLeading = false
+        var needSortBySection = false
         sections.onEach { it.tabCount = 0 }
         for (tabSrcN in tabs.indices) {
             val tab = tabs[tabSrcN]
@@ -450,40 +458,39 @@ class TabBar {
             if (tabDstN != tabSrcN)
                 tabs[tabDstN] = tabs[tabSrcN]
 
+            // We will need sorting if tabs have changed section (e.g. moved from one of Leading/Central/Trailing to another)
             val prevTab = tabs[tabDstN - 1]
-            val currTabSectionN = when {
-                tab.flags has TabItemFlag.Leading -> 0
-                tab.flags has TabItemFlag.Trailing -> 2
-                else -> 1
-            }
-            val prevTabSectionN = when {
-                prevTab.flags has TabItemFlag.Leading -> 0
-                prevTab.flags has TabItemFlag.Trailing -> 2
-                else -> 1
-            }
+            val currTabSectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+            val prevTabSectionN = if (prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
 
             // We will need sorting if either current tab is leading (section_n == 0), but not the previous one,
             // or if the current is not trailing (section_n == 2), but the previous one is.
             if (tabDstN > 0 && currTabSectionN == 0 && prevTabSectionN != 0)
-                needSortTrailingOrLeading = true
+                needSortBySection = true
             if (tabDstN > 0 && prevTabSectionN == 2 && currTabSectionN != 2)
-                needSortTrailingOrLeading = true
+                needSortBySection = true
 
             sections[currTabSectionN].tabCount++
 
             tabDstN++
         }
-        if (tabs.size != tabDstN) for (i in tabDstN until tabs.size) tabs.pop()
+        if (tabs.size != tabDstN)
+            for (i in tabDstN until tabs.size)
+                tabs.pop()
 
-        if (needSortTrailingOrLeading) tabs.sortWith(tabItemComparerBySection)
+        if (needSortBySection)
+            tabs.sortWith(tabItemComparerBySection)
 
+        // Calculate spacing between sections
+        sections[0].spacing = if(sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
+        sections[1].spacing = if(sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
+        sections[2].spacing = 0f
         sections[0].tabStartIndex = 0
         sections[1].tabStartIndex = sections[0].tabStartIndex + sections[0].tabCount
         sections[2].tabStartIndex = sections[1].tabStartIndex + sections[1].tabCount
-
-        sections[0].innerSpacing = if(sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
-        sections[1].innerSpacing = if(sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
-        sections[2].innerSpacing = 0f
+        sections[0].width = 0f
+        sections[1].width = 0f
+        sections[2].width = 0f
 
         // Setup next selected tab
         var scrollTrackSelectedTabID: ID = 0
@@ -506,19 +513,11 @@ class TabBar {
             scrollTrackSelectedTabID = tabToSelect.id
         }
 
-        // Reserve shrink buffer for maximum possible number of tabs
-        g.shrinkWidthBuffer.clear() // [JVM] it will automatically resized in the following for loop
-        g.shrinkWidthBuffer.ensureCapacity(tabs.size) // [JVM] it will automatically resized in the following for loop
-
         // Compute ideal widths
-        sections.forEach {
-            it.width = 0f
-            it.widthIdeal = 0f
-        }
-        val tabMaxWidth = calcMaxTabWidth()
-
         var mostRecentlySelectedTab: TabItem? = null
         var foundSelectedTabID = false
+        g.shrinkWidthBuffer.clear() // [JVM] it will automatically resized in the following for loop
+        g.shrinkWidthBuffer.ensureCapacity(tabs.size)
         for (tabN in tabs.indices) {
             val tab = tabs[tabN]
             assert(tab.lastFrameVisible >= prevFrameVisible)
@@ -536,62 +535,59 @@ class TabBar {
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
             tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
 
-            val sectionN = when {
-                tab.flags has TabItemFlag.Leading -> 0
-                tab.flags has TabItemFlag.Trailing -> 2
-                else -> 1
-            }
+            val sectionN = if(tab.flags has TabItemFlag.Leading) 0 else if(tab.flags has TabItemFlag.Trailing) 2 else 1
             val section = sections[sectionN]
-            val width = tab.contentWidth min tabMaxWidth
-            section.width = section.width + width + if(tabN > section.tabStartIndex) g.style.itemInnerSpacing.x else 0f
-            section.widthIdeal = section.width
+            section.width = tab.contentWidth + if (tabN > section.tabStartIndex) g.style.itemInnerSpacing.x else 0f
 
             // Store data so we can build an array sorted by width if we need to shrink tabs down
             g.shrinkWidthBuffer += ShrinkWidthItem(tabN, tab.contentWidth)
 
-            assert(width > 0f)
-            tab.width = width
+            assert(tab.contentWidth > 0f)
+            tab.width = tab.contentWidth
         }
 
         widthAllTabsIdeal = 0f
-        for(section in sections)
-            widthAllTabsIdeal += section.widthIdeal + section.innerSpacing
+        for (section in sections)
+            widthAllTabsIdeal += section.width + section.spacing
 
         // We want to know here if we'll need the scrolling buttons, to adjust available width with resizable leading/trailing
         val scrollingButtons = widthAllTabsIdeal > barRect.width && tabs.size > 1 && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll
-        val scrollingButtonsWidth = tabBarScrollingButtonSize.x * 2f
+        val scrollingButtonsWidth = if(scrollingButtons) tabBarScrollingButtonSize.x * 2f else 0f
 
         // Compute width
-        val centralSectionIsVisible = sections[0].widthWithSpacing + sections[2].widthWithSpacing < barRect.width - if(scrollingButtons) scrollingButtonsWidth else 0f
+        // FIXME: This is a mess, couldn't TabBarScrollingButtons() just be called earlier?
+        val centralSectionIsVisible = sections[0].widthWithSpacing + sections[2].widthWithSpacing < barRect.width - scrollingButtonsWidth
         val widthExcess = when {
             centralSectionIsVisible -> (sections[1].widthWithSpacing - (barRect.width - sections[0].widthWithSpacing - sections[2].widthWithSpacing)) max 0f
-            else -> (sections[0].widthWithSpacing + sections[2].widthWithSpacing) - (barRect.width - if(scrollingButtons) scrollingButtonsWidth else 0f)
+            else -> (sections[0].widthWithSpacing + sections[2].widthWithSpacing) - (barRect.width - scrollingButtonsWidth)
         }
 
         if (widthExcess > 0f && (flags has TabBarFlag.FittingPolicyResizeDown || !centralSectionIsVisible)) {
             // All tabs are in the ShrinkWidthBuffer, but we will only resize leading/trailing or central tabs, so rearrange internal data
+            // FIXME: Why copying data, shouldn't we be able to call ShrinkWidths with the right offset and then use that in the loop below?
             if (centralSectionIsVisible)
-//                memmove(g.ShrinkWidthBuffer.Data, g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount, sizeof(ImGuiShrinkWidthItem) * tab_bar->Sections[1].TabCount); // Move central section tabs
+            //                memmove(g.ShrinkWidthBuffer.Data, g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount, sizeof(ImGuiShrinkWidthItem) * tab_bar->Sections[1].TabCount); // Move central section tabs
                 for (i in 0 until sections[1].tabCount) {
                     val dst = g.shrinkWidthBuffer[i]
                     val src = g.shrinkWidthBuffer[sections[0].tabCount + i]
                     dst put src
                 }
             else
-//               memmove(g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount, g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount + tab_bar->Sections[1].TabCount, sizeof(ImGuiShrinkWidthItem) * tab_bar->Sections[2].TabCount); // Replace central section tabs with trailing
+            //               memmove(g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount, g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount + tab_bar->Sections[1].TabCount, sizeof(ImGuiShrinkWidthItem) * tab_bar->Sections[2].TabCount); // Replace central section tabs with trailing
                 for (i in 0 until sections[2].tabCount) {
                     val dst = g.shrinkWidthBuffer[sections[0].tabCount + i]
                     val src = g.shrinkWidthBuffer[sections[0].tabCount + sections[1].tabCount + i]
+                    dst put src
                 }
-            val tabNShrinkable = if(centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
+            val tabNShrinkable = if (centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
 
             shrinkWidths(g.shrinkWidthBuffer, widthExcess)
 
-            // Update each section width with shrink values
+            // Update each section width with shrunk values
             for (tabN in 0 until tabNShrinkable) {
                 val shrinkedWidth = floor(g.shrinkWidthBuffer[tabN].width)
                 val tab = tabs[g.shrinkWidthBuffer[tabN].index]
-                val sectionN = if(tab.flags has TabItemFlag.Leading) 0 else if(tab.flags has TabItemFlag.Trailing) 2 else 1
+                val sectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
 
                 sections[sectionN].width -= tab.width - shrinkedWidth
                 tab.width = shrinkedWidth
@@ -603,30 +599,27 @@ class TabBar {
 
         widthAllTabs = 0f
         for (sectionN in 0..2) {
-            // TabBarScrollingButtons will alter BarRect.Max.x, so we need to anticipate BarRect width reduction
+            // TabBarScrollingButtons() will alter BarRect.Max.x, so we need to anticipate BarRect width reduction
+            // FIXME: The +1.0f is in TabBarScrollingButtons()
             val section = sections[sectionN]
             if (sectionN == 2)
-                nextTabOffset = (barRect.width - section.width - if(scrollingButtons) scrollingButtonsWidth + 1f else 0f) min nextTabOffset
+                nextTabOffset = (barRect.width - section.width - if (scrollingButtons) scrollingButtonsWidth + 1f else 0f) min nextTabOffset
 
             for (tabN in 0 until section.tabCount) {
                 val tab = tabs[section.tabStartIndex + tabN]
                 tab.offset = nextTabOffset
-                nextTabOffset += tab.width + if(tabN < section.tabCount - 1) g.style.itemInnerSpacing.x else 0f
+                nextTabOffset += tab.width + if (tabN < section.tabCount - 1) g.style.itemInnerSpacing.x else 0f
             }
             widthAllTabs += section.widthWithSpacing max 0f
-            nextTabOffset += section.innerSpacing
+            nextTabOffset += section.spacing
         }
 
         // Horizontal scrolling buttons
         if (scrollingButtons)
             scrollingButtons()?.let { scrollTrackSelectedTab -> // NB: Will alter BarRect.Max.x
-                scrollTrackSelectedTabID = when {
-                    scrollTrackSelectedTab.flags has TabItemFlag._Button -> scrollTrackSelectedTab.id
-                    else -> {
-                        selectedTabId = scrollTrackSelectedTab.id
-                        selectedTabId
-                    }
-                }
+                scrollTrackSelectedTabID = scrollTrackSelectedTab.id
+                if (scrollTrackSelectedTab.flags hasnt TabItemFlag._Button)
+                    selectedTabId = scrollTrackSelectedTabID
             }
 
         // If we have lost the selected tab, select the next most recently active one
@@ -686,7 +679,8 @@ class TabBar {
         val order = tab.order
 
         // Scrolling happens only in the central section (leading/trailing sections are not scrolling)
-        val scrollableWidth = barRect.width - sections[0].width - sections[2].width - sections[1].innerSpacing
+        // FIXME: This is all confusing.
+        val scrollableWidth = barRect.width - sections[0].width - sections[2].width - sections[1].spacing
 
         // We make all tabs positions all relative Sections[0].Width to make code simpler
         val tabX1 = tab.offset - sections[0].width + if (order > sections[0].tabCount - 1) -margin else 0f
