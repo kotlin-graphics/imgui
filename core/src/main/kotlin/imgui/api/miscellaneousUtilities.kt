@@ -67,11 +67,11 @@ interface miscellaneousUtilities {
      *  NB: Prefer using the ImGuiListClipper higher-level helper if you can! Read comments and instructions there on
      *  how those use this sort of pattern.
      *  NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX    */
-    fun calcListClipping(itemsCount: Int, itemsHeight: Float): IntRange {
+    fun calcListClipping(itemsCount: Int, itemsHeight: Float): Pair<Int, Int> {
         val window = g.currentWindow!!
         return when {
-            g.logEnabled -> 0 until itemsCount // If logging is active, do not perform any clipping
-            window.skipItems -> 0 until 0
+            g.logEnabled -> 0 to itemsCount // If logging is active, do not perform any clipping
+            window.skipItems -> 0 to 0
             else -> {
                 // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
                 val unclippedRect = window.clipRect
@@ -91,7 +91,7 @@ interface miscellaneousUtilities {
                     end++
                 start = glm.clamp(start, 0, itemsCount)
                 end = glm.clamp(end + 1, start, itemsCount)
-                start until end
+                start to end
             }
         }
     }
