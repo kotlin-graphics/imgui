@@ -1,6 +1,7 @@
 package imgui.internal.classes
 
 import glm_.has
+import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -46,6 +47,17 @@ import imgui.internal.sections.or
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
+class TabBarSection {
+    /** Number of tabs in this section. */
+    var tabCount = 0
+
+    /** Sum of width of tabs in this section (after shrinking down) */
+    var width = 0f
+
+    /** Horizontal spacing at the end of the section. */
+    var spacing = 0f
+}
+
 /** Storage for a tab bar (sizeof() 92~96 bytes) */
 class TabBar {
     val tabs = ArrayList<TabItem>()
@@ -76,6 +88,8 @@ class TabBar {
     var scrollingTarget = 0f
     var scrollingTargetDistToVisibility = 0f
     var scrollingSpeed = 0f
+    var scrollingRectMinX = 0f
+    var scrollingRectMaxX = 0f
     var flags: TabBarFlags = TabBarFlag.None.i
     var reorderRequestTabId: ID = 0
     var reorderRequestDir = 0
@@ -95,9 +109,6 @@ class TabBar {
     /** style.FramePadding locked at the time of BeginTabBar() */
     var framePadding = Vec2()
 
-    /** Layout sections: Leading, Central, Trailing */
-    val sections = Array(3) { Section() }
-
     /** For non-docking tab bar we re-append names in a contiguous buffer. */
     val tabsNames = ArrayList<String>()
 
@@ -111,21 +122,6 @@ class TabBar {
             assert(nameOffset in tabsNames.indices)
             return tabsNames[nameOffset]
         }
-
-    class Section {
-
-        /** Index of first tab in this section. */
-        var tabStartIndex = 0
-
-        /** Number of tabs in this section. */
-        var tabCount = 0
-
-        /** Sum of width of tabs in this section (after shrinking down) */
-        var width = 0f
-
-        /** Horizontal spacing at the end of the section. */
-        var spacing = 0f
-    }
 
     // Tab Bars
 
@@ -333,24 +329,17 @@ class TabBar {
         val backupMainCursorPos = Vec2(window.dc.cursorPos)
 
         // Layout
+        val isCentralSection = tab.flags hasnt (TabItemFlag.Leading or TabItemFlag.Trailing)
         size.x = tab.width
-        val x = if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing)) tab.offset else floor(tab.offset) - scrollingAnim
+        val x = if (isCentralSection) floor(tab.offset - scrollingAnim) else tab.offset
         window.dc.cursorPos = barRect.min + Vec2(x, 0f)
         val pos = Vec2(window.dc.cursorPos)
         val bb = Rect(pos, pos + size)
 
         // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an extra draw call (temporary in the case of vertical animation)
-        // Leading buttons will be clipped by BarRect.Max.x, Trailing buttons will be clipped at BarRect.Min.x + LeadingsWidth (+ spacing if there are some buttons), and central tabs will be clipped inbetween
-        val offsetTrailing = when {
-            flags has (TabItemFlag.Trailing or TabItemFlag.Leading) -> 0f
-            else -> sections[2].width + sections[1].spacing
-        }
-        val offsetLeading = when {
-            flags has TabItemFlag.Leading -> 0f
-            else -> sections[0].width + sections[0].spacing
-        }
-        val wantClipRect = (bb.min.x < barRect.min.x + offsetLeading) || (bb.max.x > barRect.max.x - offsetTrailing)
-        if (wantClipRect) pushClipRect(Vec2(bb.min.x max barRect.min.x + offsetLeading, bb.min.y - 1), Vec2(barRect.max.x - offsetTrailing, bb.max.y), true)
+        val wantClipRect = isCentralSection && (bb.min.x < scrollingRectMinX || bb.max.x > scrollingRectMaxX)
+        if (wantClipRect)
+            pushClipRect(Vec2(bb.min.x max scrollingRectMinX, bb.min.y - 1), Vec2(scrollingRectMaxX, bb.max.y), true)
 
         val backupCursorMaxPos = Vec2(window.dc.cursorMaxPos)
         itemSize(bb.size, style.framePadding.y)
@@ -441,7 +430,7 @@ class TabBar {
         // Detect if we need to sort out tab list (e.g. in rare case where a tab changed section)
         var tabDstN = 0
         var needSortBySection = false
-        sections.onEach { it.tabCount = 0 }
+        val sections = Array(3) { TabBarSection() } // Layout sections: Leading, Central, Trailing
         for (tabSrcN in tabs.indices) {
             val tab = tabs[tabSrcN]
             if (tab.lastFrameVisible < prevFrameVisible || tab.wantClose) {
@@ -478,15 +467,8 @@ class TabBar {
             tabs.sortWith(tabItemComparerBySection)
 
         // Calculate spacing between sections
-        sections[0].spacing = if(sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
-        sections[1].spacing = if(sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
-        sections[2].spacing = 0f
-        sections[0].tabStartIndex = 0
-        sections[1].tabStartIndex = sections[0].tabStartIndex + sections[0].tabCount
-        sections[2].tabStartIndex = sections[1].tabStartIndex + sections[1].tabCount
-        sections[0].width = 0f
-        sections[1].width = 0f
-        sections[2].width = 0f
+        sections[0].spacing = if (sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
+        sections[1].spacing = if (sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
 
         // Setup next selected tab
         var scrollTrackSelectedTabID: ID = 0
@@ -518,6 +500,7 @@ class TabBar {
 
         // Compute ideal tabs widths + store them into shrink buffer
         var mostRecentlySelectedTab: TabItem? = null
+        var currSectionN = -1
         var foundSelectedTabID = false
         for (tabN in tabs.indices) {
             val tab = tabs[tabN]
@@ -536,9 +519,10 @@ class TabBar {
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
             tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
 
-            val sectionN = if(tab.flags has TabItemFlag.Leading) 0 else if(tab.flags has TabItemFlag.Trailing) 2 else 1
+            val sectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
             val section = sections[sectionN]
-            section.width = tab.contentWidth + if (tabN > section.tabStartIndex) g.style.itemInnerSpacing.x else 0f
+            section.width += tab.contentWidth + if (sectionN == currSectionN) g.style.itemInnerSpacing.x else 0f
+            currSectionN = sectionN
 
             // Store data so we can build an array sorted by width if we need to shrink tabs down
             g.shrinkWidthBuffer[shrinkBufferIndexes[sectionN]++].apply {
@@ -576,8 +560,8 @@ class TabBar {
 
         // With ImGuiTabBarFlags_FittingPolicyScroll policy, we will only shrink leading/trailing if the central section is not visible anymore
         if (widthExcess > 0f && (flags has TabBarFlag.FittingPolicyResizeDown || !centralSectionIsVisible)) {
-            val shrinkDataCount = if(centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
-            val shrinkDataOffset = if(centralSectionIsVisible) sections[0].tabCount + sections[2].tabCount else 0
+            val shrinkDataCount = if (centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
+            val shrinkDataOffset = if (centralSectionIsVisible) sections[0].tabCount + sections[2].tabCount else 0
             shrinkWidths(g.shrinkWidthBuffer, shrinkDataOffset, shrinkDataCount, widthExcess)
 
             // Apply shrunk values into tabs and sections
@@ -594,22 +578,22 @@ class TabBar {
         }
 
         // Layout all active tabs
-        var nextTabOffset = 0f
-
+        var sectionTabIndex = 0
+        var tabOffset = 0f
         widthAllTabs = 0f
         for (sectionN in 0..2) {
-            // FIXME: The +1.0f is in TabBarScrollingButtons()
             val section = sections[sectionN]
             if (sectionN == 2)
-                nextTabOffset = (barRect.width - section.width) min nextTabOffset
+                tabOffset = min(max(0f, barRect.width - section.width), tabOffset)
 
             for (tabN in 0 until section.tabCount) {
-                val tab = tabs[section.tabStartIndex + tabN]
-                tab.offset = nextTabOffset
-                nextTabOffset += tab.width + if (tabN < section.tabCount - 1) g.style.itemInnerSpacing.x else 0f
+                val tab = tabs[sectionTabIndex + tabN]
+                tab.offset = tabOffset
+                tabOffset += tab.width + if (tabN < section.tabCount - 1) g.style.itemInnerSpacing.x else 0f
             }
             widthAllTabs += (section.width + section.spacing) max 0f
-            nextTabOffset += section.spacing
+            tabOffset += section.spacing
+            sectionTabIndex += section.tabCount
         }
 
         // If we have lost the selected tab, select the next most recently active one
@@ -626,7 +610,7 @@ class TabBar {
 
         // Update scrolling
         if (scrollTrackSelectedTabID != 0)
-            findTabByID(scrollTrackSelectedTabID)?.let(::scrollToTab)
+            findTabByID(scrollTrackSelectedTabID)?.let { scrollToTab(it, sections) }
         scrollingAnim = scrollClamp(scrollingAnim)
         scrollingTarget = scrollClamp(scrollingTarget)
         if (scrollingAnim != scrollingTarget) { // Scrolling speed adjust itself so we can always reach our target in 1/3 seconds.
@@ -636,6 +620,9 @@ class TabBar {
             val teleport = prevFrameVisible + 1 < g.frameCount || scrollingTargetDistToVisibility > 10f * g.fontSize
             scrollingAnim = if (teleport) scrollingTarget else linearSweep(scrollingAnim, scrollingTarget, io.deltaTime * scrollingSpeed)
         } else scrollingSpeed = 0f
+
+        scrollingRectMinX = barRect.min.x + sections[0].width + sections[0].spacing
+        scrollingRectMaxX = barRect.max.x - sections[2].width - sections[1].spacing
 
         // Clear name buffers
         if (flags hasnt TabBarFlag._DockNode) tabsNames.clear()
@@ -662,7 +649,8 @@ class TabBar {
     /** ~TabBarScrollClamp */
     fun scrollClamp(scrolling: Float): Float = (scrolling min (widthAllTabs - barRect.width)) max 0f
 
-    fun scrollToTab(tab: TabItem) {
+    /** ~TabBarScrollToTab */
+    fun scrollToTab(tab: TabItem, sections: Array<TabBarSection>) {
         if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing)) return
 
         val margin = g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
@@ -692,7 +680,7 @@ class TabBar {
 
         val window = g.currentWindow!!
 
-        val arrowButtonSize = tabBarScrollingButtonSize
+        val arrowButtonSize = Vec2(g.fontSize - 2f, g.fontSize + g.style.framePadding.y * 2f)
         val scrollingButtonsWidth = arrowButtonSize.x * 2f
 
         val backupCursorPos = Vec2(window.dc.cursorPos)
@@ -784,10 +772,6 @@ class TabBar {
             if (aSection != bSection) aSection - bSection
             else a.indexDuringLayout - b.indexDuringLayout
         }
-
-        /** ~GetTabBarScrollingButtonSize */
-        val tabBarScrollingButtonSize: Vec2
-            get() = Vec2(g.fontSize - 2f, g.fontSize + g.style.framePadding.y * 2f)
     }
 }
 

@@ -803,7 +803,8 @@ interface demoDebugInformations {
                     text("0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " + "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}",
                             settings.id)
 
-            fun nodeTabBar(tabBar: TabBar) { // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
+            fun nodeTabBar(tabBar: TabBar) {
+                // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
                 val isActive = tabBar.prevFrameVisible >= ImGui.frameCount - 2
                 val string = "Tab Bar 0x%08X (${tabBar.tabs.size} tabs)${if (isActive) "" else " *Inactive*"}".format(tabBar.id)
                 if (!isActive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
@@ -812,16 +813,8 @@ interface demoDebugInformations {
                 if (isActive && ImGui.isItemHovered()) {
                     val drawList = ImGui.foregroundDrawList
                     drawList.addRect(tabBar.barRect.min, tabBar.barRect.max, COL32(255, 255, 0, 255))
-                    if (tabBar.sections[0].width > 0f) {
-                        val p1 = Vec2(tabBar.barRect.min.x + tabBar.sections[0].width, tabBar.barRect.min.y)
-                        val p2 = Vec2(tabBar.barRect.min.x + tabBar.sections[0].width, tabBar.barRect.max.y)
-                        drawList.addLine(p1, p2, COL32(0, 255, 0, 255))
-                    }
-                    if (tabBar.sections[2].width > 0f) {
-                        val p1 = Vec2(tabBar.barRect.max.x - tabBar.sections[2].width, tabBar.barRect.min.y)
-                        val p2 = Vec2(tabBar.barRect.max.x - tabBar.sections[2].width, tabBar.barRect.max.y)
-                        drawList.addLine(p1, p2, COL32(0, 255, 0, 255))
-                    }
+                    drawList.addLine(Vec2(tabBar.scrollingRectMinX, tabBar.barRect.min.y), Vec2(tabBar.scrollingRectMinX, tabBar.barRect.max.y), COL32(0, 255, 0, 255))
+                    drawList.addLine(Vec2(tabBar.scrollingRectMaxX, tabBar.barRect.min.y), Vec2(tabBar.scrollingRectMaxX, tabBar.barRect.max.y), COL32(0, 255, 0, 255))
                 }
                 if (open) {
                     for (tabN in tabBar.tabs.indices) {
