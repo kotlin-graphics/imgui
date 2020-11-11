@@ -142,7 +142,7 @@ object ShowDemoWindowLayout {
     /* TabItem Button */
     var nextTabId = 0
     val activeTabs = ArrayList<Int>()
-    var tabBarFlags1: TabBarFlags = TabBarFlag.Reorderable or TabBarFlag.FittingPolicyResizeDown
+    var tabBarFlags1: TabBarFlags = TabBarFlag.AutoSelectNewTabs or TabBarFlag.Reorderable or TabBarFlag.FittingPolicyResizeDown
     var showLeadingButton = true
     var showTrailingButton = true
     var enablePosition = false
@@ -435,8 +435,8 @@ object ShowDemoWindowLayout {
 
             treeNode("TabItemButton & Leading/Trailing flags") {
 
-                if (nextTabId == 0) // Initialize with a default tab
-                    for (i in 0..8)
+                if (nextTabId == 0) // Initialize with some default tabs
+                    for (i in 0..2)
                         activeTabs += nextTabId++
 
                 checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton.i)
