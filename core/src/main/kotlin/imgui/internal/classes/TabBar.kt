@@ -120,15 +120,11 @@ class TabBar {
         /** Number of tabs in this section. */
         var tabCount = 0
 
-        /** Width of this section (after shrinking down) */
+        /** Sum of width of tabs in this section (after shrinking down) */
         var width = 0f
-        var widthIdeal = 0f
 
         /** Horizontal spacing at the end of the section. */
         var spacing = 0f
-
-        val widthWithSpacing: Float
-            get() = width + spacing
     }
 
     // Tab Bars
@@ -513,11 +509,16 @@ class TabBar {
             scrollTrackSelectedTabID = tabToSelect.id
         }
 
-        // Compute ideal widths
+        // Leading/Trailing tabs will be shrink only if central one aren't visible anymore, so layout the shrink data as: leading, trailing, central
+        // (whereas our tabs are stored as: leading, central, trailing)
+        val shrinkBufferIndexes = intArrayOf(0, sections[0].tabCount + sections[2].tabCount, sections[0].tabCount)
+        g.shrinkWidthBuffer.clear() // [JVM] it will automatically resized in the following for loop
+        for (i in tabs.indices)
+            g.shrinkWidthBuffer += ShrinkWidthItem()
+
+        // Compute ideal tabs widths + store them into shrink buffer
         var mostRecentlySelectedTab: TabItem? = null
         var foundSelectedTabID = false
-        g.shrinkWidthBuffer.clear() // [JVM] it will automatically resized in the following for loop
-        g.shrinkWidthBuffer.ensureCapacity(tabs.size)
         for (tabN in tabs.indices) {
             val tab = tabs[tabN]
             assert(tab.lastFrameVisible >= prevFrameVisible)
@@ -540,18 +541,22 @@ class TabBar {
             section.width = tab.contentWidth + if (tabN > section.tabStartIndex) g.style.itemInnerSpacing.x else 0f
 
             // Store data so we can build an array sorted by width if we need to shrink tabs down
-            g.shrinkWidthBuffer += ShrinkWidthItem(tabN, tab.contentWidth)
+            g.shrinkWidthBuffer[shrinkBufferIndexes[sectionN]++].apply {
+                index = tabN
+                width = tab.contentWidth
+            }
 
             assert(tab.contentWidth > 0f)
             tab.width = tab.contentWidth
         }
 
+        // Compute total ideal width (used for e.g. auto-resizing a window)
         widthAllTabsIdeal = 0f
         for (section in sections)
             widthAllTabsIdeal += section.width + section.spacing
 
         // Horizontal scrolling buttons
-        // (Note that TabBarScrollButtons() will alter BarRect.Max.x)
+        // (note that TabBarScrollButtons() will alter BarRect.Max.x)
         if ((widthAllTabsIdeal > barRect.width && tabs.size > 1) && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll)
             scrollingButtons()?.let { scrollTrackSelectedTab ->
                 scrollTrackSelectedTabID = scrollTrackSelectedTab.id
@@ -559,41 +564,30 @@ class TabBar {
                     selectedTabId = scrollTrackSelectedTabID
             }
 
-        // Compute width
-        // FIXME: This is a mess
-        val centralSectionIsVisible = sections[0].widthWithSpacing + sections[2].widthWithSpacing < barRect.width
+        // Shrink widths if full tabs don't fit in their allocated space
+        val section0W = sections[0].width + sections[0].spacing
+        val section1W = sections[1].width + sections[1].spacing
+        val section2W = sections[2].width + sections[2].spacing
+        val centralSectionIsVisible = section0W + section2W < barRect.width
         val widthExcess = when {
-            centralSectionIsVisible -> (sections[1].widthWithSpacing - (barRect.width - sections[0].widthWithSpacing - sections[2].widthWithSpacing)) max 0f
-            else -> (sections[0].widthWithSpacing + sections[2].widthWithSpacing) - barRect.width
+            centralSectionIsVisible -> (section1W - (barRect.width - section0W - section2W)) max 0f // Excess used to shrink central section
+            else -> section0W + section2W - barRect.width // Excess used to shrink leading/trailing section
         }
 
+        // With ImGuiTabBarFlags_FittingPolicyScroll policy, we will only shrink leading/trailing if the central section is not visible anymore
         if (widthExcess > 0f && (flags has TabBarFlag.FittingPolicyResizeDown || !centralSectionIsVisible)) {
-            // All tabs are in the ShrinkWidthBuffer, but we will only resize leading/trailing or central tabs, so rearrange internal data
-            // FIXME: Why copying data, shouldn't we be able to call ShrinkWidths with the right offset and then use that in the loop below?
-            if (centralSectionIsVisible)
-            //                memmove(g.ShrinkWidthBuffer.Data, g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount, sizeof(ImGuiShrinkWidthItem) * tab_bar->Sections[1].TabCount); // Move central section tabs
-                for (i in 0 until sections[1].tabCount) {
-                    val dst = g.shrinkWidthBuffer[i]
-                    val src = g.shrinkWidthBuffer[sections[0].tabCount + i]
-                    dst put src
-                }
-            else
-            //               memmove(g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount, g.ShrinkWidthBuffer.Data + tab_bar->Sections[0].TabCount + tab_bar->Sections[1].TabCount, sizeof(ImGuiShrinkWidthItem) * tab_bar->Sections[2].TabCount); // Replace central section tabs with trailing
-                for (i in 0 until sections[2].tabCount) {
-                    val dst = g.shrinkWidthBuffer[sections[0].tabCount + i]
-                    val src = g.shrinkWidthBuffer[sections[0].tabCount + sections[1].tabCount + i]
-                    dst put src
-                }
-            val tabNShrinkable = if (centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
+            val shrinkDataCount = if(centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
+            val shrinkDataOffset = if(centralSectionIsVisible) sections[0].tabCount + sections[2].tabCount else 0
+            shrinkWidths(g.shrinkWidthBuffer, shrinkDataOffset, shrinkDataCount, widthExcess)
 
-            shrinkWidths(g.shrinkWidthBuffer, widthExcess)
-
-            // Update each section width with shrunk values
-            for (tabN in 0 until tabNShrinkable) {
-                val shrinkedWidth = floor(g.shrinkWidthBuffer[tabN].width)
+            // Apply shrunk values into tabs and sections
+            for (tabN in shrinkDataOffset until shrinkDataOffset + shrinkDataCount) {
                 val tab = tabs[g.shrinkWidthBuffer[tabN].index]
-                val sectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+                val shrinkedWidth = floor(g.shrinkWidthBuffer[tabN].width)
+                if (shrinkedWidth < 0f)
+                    continue
 
+                val sectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
                 sections[sectionN].width -= tab.width - shrinkedWidth
                 tab.width = shrinkedWidth
             }
@@ -604,7 +598,6 @@ class TabBar {
 
         widthAllTabs = 0f
         for (sectionN in 0..2) {
-            // TabBarScrollingButtons() will alter BarRect.Max.x, so we need to anticipate BarRect width reduction
             // FIXME: The +1.0f is in TabBarScrollingButtons()
             val section = sections[sectionN]
             if (sectionN == 2)
@@ -615,7 +608,7 @@ class TabBar {
                 tab.offset = nextTabOffset
                 nextTabOffset += tab.width + if (tabN < section.tabCount - 1) g.style.itemInnerSpacing.x else 0f
             }
-            widthAllTabs += section.widthWithSpacing max 0f
+            widthAllTabs += (section.width + section.spacing) max 0f
             nextTabOffset += section.spacing
         }
 
