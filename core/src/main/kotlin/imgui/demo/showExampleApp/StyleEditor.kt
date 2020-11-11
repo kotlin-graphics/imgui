@@ -263,11 +263,11 @@ object StyleEditor {
                 helpMarker(
                     "Those are old settings provided for convenience.\n" + "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, " + "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n" + "Using those settings here will give you poor quality results.")
                 if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f",
-                        SliderFlag.ClampOnInput.i)
+                        SliderFlag.AlwaysClamp.i)
                 ) // Scale only this window
                     setWindowFontScale(windowScale)
                 dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f",
-                    SliderFlag.ClampOnInput.i) // Scale everything
+                    SliderFlag.AlwaysClamp.i) // Scale everything
                 popItemWidth()
 
                 endTabItem()
