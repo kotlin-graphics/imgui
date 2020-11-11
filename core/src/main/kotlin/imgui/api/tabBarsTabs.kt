@@ -91,7 +91,7 @@ interface tabBarsTabs {
         if (window.skipItems)
             return false
 
-        val tabBar = g.currentTabBar ?: error("TabItemButton() needs to be called between BeginTabBar() and EndTabBar()!")
+        val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
         return tabBar.tabItemEx(label, null, flags or TabItemFlag._Button or TabItemFlag.NoReorder)
     }
 

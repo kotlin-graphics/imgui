@@ -269,6 +269,9 @@ class TabItem {
     /** BeginTabItem() order, used to re-order tabs after toggling ImGuiTabBarFlags_Reorderable */
     var beginOrder = -1
 
+    /** Index only used during TabBarLayout() */
+    var indexDuringLayout = -1
+
     /** Marked as closed by SetTabItemClosed() */
     var wantClose = false
 }
