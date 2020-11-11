@@ -124,7 +124,7 @@ interface popupsModals {
      *
      *  Helper to open a popup if mouse button is released over the item
      *  - This is essentially the same as BeginPopupContextItem() but without the trailing BeginPopup() */
-    fun openPopupOnItemClick(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean =
+    fun openPopupOnItemClick(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i) =
             with(g.currentWindow!!) {
                 val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
                 if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
@@ -132,8 +132,7 @@ interface popupsModals {
                     val id = if (strId.isNotEmpty()) getID(strId) else dc.lastItemId
                     assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
                     openPopupEx(id, popupFlags)
-                    true
-                } else false
+                }
             }
 
     /** cmanually close the popup we have begin-ed into.  */
