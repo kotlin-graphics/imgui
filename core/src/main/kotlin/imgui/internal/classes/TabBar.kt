@@ -10,6 +10,7 @@ import imgui.ImGui.beginCombo
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.endCombo
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.getIDWithSeed
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
@@ -372,7 +373,7 @@ class TabBar {
         if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton) flags = flags or TabItemFlag.NoCloseWithMiddleMouseButton
 
         // Render tab label, process close button
-        val closeButtonId = if (pOpen?.get() == true) window.getID(id + 1) else 0
+        val closeButtonId = if (pOpen?.get() == true) getIDWithSeed("#CLOSE", -1, id) else 0
         val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId, tabContentsVisible)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
