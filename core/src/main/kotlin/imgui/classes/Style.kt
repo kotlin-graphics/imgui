@@ -98,7 +98,7 @@ class Style {
     var tabBorderSize = 0f
 
     /** Minimum width for close button to appears on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected. */
-    var tabMinWidthForUnselectedCloseButton = 0f
+    var tabMinWidthForCloseButton = 0f
 
     /** Side of the color button in the ColorEdit4 widget (left/right). Defaults to ImGuiDir_Right. */
     var colorButtonPosition = Dir.Right
@@ -210,8 +210,7 @@ class Style {
         grabRounding = floor(grabRounding * scaleFactor)
         logSliderDeadzone = floor(logSliderDeadzone * scaleFactor)
         tabRounding = floor(tabRounding * scaleFactor)
-        if (tabMinWidthForUnselectedCloseButton != Float.MAX_VALUE)
-            tabMinWidthForUnselectedCloseButton = floor(tabMinWidthForUnselectedCloseButton * scaleFactor)
+        tabMinWidthForCloseButton = if(tabMinWidthForCloseButton != Float.MAX_VALUE) floor(tabMinWidthForCloseButton * scaleFactor) else Float.MAX_VALUE
         displayWindowPadding = floor(displayWindowPadding * scaleFactor)
         displaySafeAreaPadding = floor(displaySafeAreaPadding * scaleFactor)
         mouseCursorScale = floor(mouseCursorScale * scaleFactor)
