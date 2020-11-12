@@ -128,9 +128,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Hovered widget  */
     var hoveredId: ID = 0
 
+    var hoveredIdPreviousFrame: ID = 0
+
     var hoveredIdAllowOverlap = false
 
-    var hoveredIdPreviousFrame: ID = 0
+    /** At least one widget passed the rect test, but has been discarded by disabled flag or popup inhibit.
+     *  May be true even if HoveredId == 0. */
+    var hoveredIdDisabled = false
 
     /** Measure contiguous hovering time */
     var hoveredIdTimer = 0f

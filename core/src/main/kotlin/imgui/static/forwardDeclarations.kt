@@ -89,9 +89,10 @@ fun findHoveredWindow() {
 
         if (hoveredWindow == null)
             hoveredWindow = window
-        if (hoveredWindowIgnoringMovingWindow == null && (g.movingWindow == null || window.rootWindow != g.movingWindow!!.rootWindow))
+        val moving = g.movingWindow
+        if (hoveredWindowIgnoringMovingWindow == null && (moving == null || window.rootWindow != moving.rootWindow))
             hoveredWindowIgnoringMovingWindow = window
-        if (hoveredWindowIgnoringMovingWindow != null)
+        if (hoveredWindow != null && hoveredWindowIgnoringMovingWindow != null)
             break
     }
 

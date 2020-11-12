@@ -242,6 +242,8 @@ internal interface widgetsLowLevelBehaviors {
                     setFocusID(id, window)
             }
         }
+
+        // Process while held
         var held = false
         if (g.activeId == id) {
             if (g.activeIdSource == InputSource.Mouse) {
@@ -256,6 +258,7 @@ internal interface widgetsLowLevelBehaviors {
                     val releaseIn = hovered && flags has Bf.PressedOnClickRelease
                     val releaseAnywhere = flags has Bf.PressedOnClickReleaseAnywhere
                     if ((releaseIn || releaseAnywhere) && !g.dragDropActive) {
+                        // Report as pressed when releasing the mouse (this is the most common path)
                         val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownWasDoubleClick[mouseButton]
                         val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton] >= io.keyRepeatDelay // Repeat mode trumps <on release>
                         if (!isDoubleClickRelease && !isRepeatingAlready)
@@ -266,6 +269,7 @@ internal interface widgetsLowLevelBehaviors {
                 if (flags hasnt Bf.NoNavFocus)
                     g.navDisableHighlight = true
             } else if (g.activeIdSource == InputSource.Nav)
+            // When activated using Nav, we hold on the ActiveID until activation button is released
                 if (g.navActivateDownId != id)
                     clearActiveID()
             if (pressed)
@@ -446,7 +450,7 @@ internal interface widgetsLowLevelBehaviors {
             }
             else -> throw Error()
         }
-                           }
+    }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
     fun splitterBehavior(bb: Rect, id: ID, axis: Axis,

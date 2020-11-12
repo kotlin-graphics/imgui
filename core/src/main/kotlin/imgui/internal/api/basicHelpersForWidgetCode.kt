@@ -19,15 +19,14 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.has
-import imgui.internal.*
 import imgui.internal.api.internal.Companion.shrinkWidthItemComparer
 import imgui.internal.classes.Rect
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
+import imgui.internal.floor
 import imgui.internal.sections.*
 import imgui.static.navProcessItem
-import java.util.ArrayList
+import java.util.*
 
 //-----------------------------------------------------------------------------
 // [SECTION] LAYOUT
@@ -56,7 +55,7 @@ internal interface basicHelpersForWidgetCode {
         // We increase the height in this function to accommodate for baseline offset.
         // In theory we should be offsetting the starting position (window->DC.CursorPos), that will be the topic of a larger refactor,
         // but since ItemSize() is not yet an API that moves the cursor (to handle e.g. wrapping) enlarging the height has the same effect.
-        val offsetToMatchBaselineY = if(textBaselineY >= 0f) 0f max (window.dc.currLineTextBaseOffset - textBaselineY) else 0f
+        val offsetToMatchBaselineY = if (textBaselineY >= 0f) 0f max (window.dc.currLineTextBaseOffset - textBaselineY) else 0f
         val lineHeight = window.dc.currLineSize.y max (size.y + offsetToMatchBaselineY)
 
         // Always align ourselves on pixel boundaries
@@ -121,7 +120,7 @@ internal interface basicHelpersForWidgetCode {
         g.nextItemData.flags = NextItemDataFlag.None.i
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
-            Hook.itemAdd!!(g,navBbArg ?: bb, id)
+            Hook.itemAdd!!(g, navBbArg ?: bb, id)
 
         // Clipping test
         if (isClippedEx(bb, id, false)) return false
@@ -141,8 +140,11 @@ internal interface basicHelpersForWidgetCode {
             g.hoveredWindow !== window -> false
             g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
             !isMouseHoveringRect(bb) -> false
-            g.navDisableMouseHover || !window.isContentHoverable(HoveredFlag.None) -> false
-            window.dc.itemFlags has ItemFlag.Disabled -> false
+            g.navDisableMouseHover -> false
+            !window.isContentHoverable(HoveredFlag.None) || window.dc.itemFlags has ItemFlag.Disabled -> {
+                g.hoveredIdDisabled = true
+                false
+            }
             else -> {
                 // We exceptionally allow this function to be called with id==0 to allow using it for easy high-level
                 // hover test in widgets code. We could also decide to split this function is two.

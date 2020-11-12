@@ -498,7 +498,7 @@ class TabBar {
         }
         if (tabs.size != tabDstN)
             for (i in tabDstN until tabs.size)
-                tabs.remove(tabs.last())
+                tabs.pop()
 
         // Setup next selected tab
         var scrollTrackSelectedTabID: ID = 0

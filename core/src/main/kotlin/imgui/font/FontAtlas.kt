@@ -756,8 +756,11 @@ class FontAtlas {
             if (srcTmp.glyphsCount == 0)
                 continue
 
+            // When merging fonts with MergeMode=true:
+            // - We can have multiple input fonts writing into a same destination font.
+            // - dst_font->ConfigData is != from cfg which is our source configuration.
             val cfg = configData[srcIdx]
-            val dstFont = cfg.dstFont!! // We can have multiple input fonts writing into a same destination font (when using MergeMode=true)
+            val dstFont = cfg.dstFont!!
 
             val fontScale = STBTruetype.stbtt_ScaleForPixelHeight(srcTmp.fontInfo, cfg.sizePixels)
             val (unscaledAscent, unscaledDescent, _) = stbtt_GetFontVMetrics(srcTmp.fontInfo)
@@ -768,21 +771,12 @@ class FontAtlas {
             val fontOff = Vec2(cfg.glyphOffset).apply { y += round(dstFont.ascent) }
 
             for (glyphIdx in 0 until srcTmp.glyphsCount) {
+                // Register glyph
                 val codepoint = srcTmp.glyphsList[glyphIdx]
                 val pc = srcTmp.packedChars[glyphIdx]
-
-                val charAdvanceXorg = pc.xAdvance
-                val charAdvanceXmod = glm.clamp(charAdvanceXorg, cfg.glyphMinAdvanceX, cfg.glyphMaxAdvanceX)
-                var charOffX = fontOff.x
-                if (charAdvanceXorg != charAdvanceXmod)
-                    charOffX += when {
-                        cfg.pixelSnapH -> floor((charAdvanceXmod - charAdvanceXorg) * 0.5f)
-                        else -> (charAdvanceXmod - charAdvanceXorg) * 0.5f
-                    }
-
-                // Register glyph
                 stbtt_GetPackedQuad(srcTmp.packedChars, texSize, glyphIdx, q)
-                dstFont.addGlyph(codepoint, q.x0 + charOffX, q.y0 + fontOff.y, q.x1 + charOffX, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, charAdvanceXmod)
+                dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
+                        q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
             }
         }
         bufPackedchars.free()
@@ -865,11 +859,12 @@ class FontAtlas {
             if (font == null || r.glyphID == 0)
                 continue
 
+            // Will ignore ImFontConfig settings: GlyphMinAdvanceX, GlyphMinAdvanceY, GlyphExtraSpacing, PixelSnapH
             assert(font.containerAtlas === this)
             val uv0 = Vec2()
             val uv1 = Vec2()
             calcCustomRectUV(r, uv0, uv1)
-            font.addGlyph(r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
+            font.addGlyph(null, r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
                     uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
