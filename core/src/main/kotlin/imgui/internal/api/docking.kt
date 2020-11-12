@@ -359,10 +359,24 @@ interface docking {
         val payloadWindow = payload.data as Window
         acceptDragDropPayload(IMGUI_PAYLOAD_TYPE_WINDOW, DragDropFlag.AcceptBeforeDelivery or DragDropFlag.AcceptNoDrawDefaultRect)?.let {
             // Select target node
+            var node: DockNode? = null
             var allowNullTargetNode = false
-            val node: DockNode? = window.dockNodeAsHost?.let {
-                dockNodeTreeFindNodeByPos(window.dockNodeAsHost!!, g.io.mousePos)
-            } ?: window.dockNode ?: (null.also {allowNullTargetNode = true})
+            val host = window.dockNodeAsHost
+            if (host != null) {
+                node = dockNodeTreeFindVisibleNodeByPos(host, g.io.mousePos)
+
+                // There is an edge case when docking into a dockspace which only has inactive nodes (because none of the windows are active)
+                // In this case we need to fallback into any leaf mode, possibly the central node.
+                if (node != null && node.isDockSpace && node.isRootNode)
+                    node = node.centralNode?.takeIf { node!!.isLeafNode }  // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
+                            ?: dockNodeTreeFindFallbackLeafNode(node)
+            }
+            else window.dockNode.let { dockNode ->
+                if (dockNode != null) // && window->DockIsActive)
+                    node = dockNode
+                else
+                    allowNullTargetNode = true // Dock into a regular window
+            }
 
             val explicitTargetRect = node?.let { n -> n.tabBar?.let { t -> if (!n.isHiddenTabBar && !n.isNoTabBar) Rect(t.barRect) else null } }
                     ?: Rect(window.pos, window.pos + Vec2(window.size.x, frameHeight))
