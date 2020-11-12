@@ -18,7 +18,6 @@ import imgui.ImGui.combo
 import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.dockContextClearNodes
 import imgui.ImGui.dockNodeGetDepth
-import imgui.ImGui.dockNodeGetRootNode
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
@@ -78,7 +77,6 @@ import imgui.internal.sections.Columns
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.WindowSettings
 import imgui.internal.sections.wo
-import imgui.static.dockNodeTreeFindVisibleNodeByPos
 import kool.BYTES
 import kool.lim
 import kool.rem
@@ -162,33 +160,33 @@ interface demoDebugInformations {
             text("define: __cplusplus=%d", -1)
             if (USE_BGRA_PACKED_COLOR)
                 text("define: IMGUI_USE_BGRA_PACKED_COLOR")
-//            ifdef _WIN32
-//                    ImGui::Text("define: _WIN32");
-//            #endif
-//            #ifdef _WIN64
-//                    ImGui::Text("define: _WIN64");
-//            #endif
-//            #ifdef __linux__
-//                    ImGui::Text("define: __linux__");
-//            #endif
-//            #ifdef __APPLE__
-//                    ImGui::Text("define: __APPLE__");
-//            #endif
-//            #ifdef _MSC_VER
-//                    ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
-//            #endif
-//            #ifdef __MINGW32__
-//                    ImGui::Text("define: __MINGW32__");
-//            #endif
-//            #ifdef __MINGW64__
-//                    ImGui::Text("define: __MINGW64__");
-//            #endif
-//            #ifdef __GNUC__
-//                    ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
-//            #endif
-//            #ifdef __clang_version__
-//                    ImGui::Text("define: __clang_version__=%s", __clang_version__);
-//            #endif
+            //            ifdef _WIN32
+            //                    ImGui::Text("define: _WIN32");
+            //            #endif
+            //            #ifdef _WIN64
+            //                    ImGui::Text("define: _WIN64");
+            //            #endif
+            //            #ifdef __linux__
+            //                    ImGui::Text("define: __linux__");
+            //            #endif
+            //            #ifdef __APPLE__
+            //                    ImGui::Text("define: __APPLE__");
+            //            #endif
+            //            #ifdef _MSC_VER
+            //                    ImGui::Text("define: _MSC_VER=%d", _MSC_VER);
+            //            #endif
+            //            #ifdef __MINGW32__
+            //                    ImGui::Text("define: __MINGW32__");
+            //            #endif
+            //            #ifdef __MINGW64__
+            //                    ImGui::Text("define: __MINGW64__");
+            //            #endif
+            //            #ifdef __GNUC__
+            //                    ImGui::Text("define: __GNUC__=%d", (int)__GNUC__);
+            //            #endif
+            //            #ifdef __clang_version__
+            //                    ImGui::Text("define: __clang_version__=%s", __clang_version__);
+            //            #endif
             if (IMGUI_HAS_VIEWPORT)
                 text("define: IMGUI_HAS_VIEWPORT")
             if (IMGUI_HAS_DOCK)
@@ -349,17 +347,17 @@ interface demoDebugInformations {
             treePop()
         }
 
-//        #ifdef IMGUI_HAS_TABLE
-//                if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
-//                {
-//                    for (int n = 0; n < g.Tables.GetSize(); n++)
-//                    Funcs::NodeTable(g.Tables.GetByIndex(n));
-//                    ImGui::TreePop();
-//                }
-//        #endif // #define IMGUI_HAS_TABLE
-//
+        //        #ifdef IMGUI_HAS_TABLE
+        //                if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
+        //                {
+        //                    for (int n = 0; n < g.Tables.GetSize(); n++)
+        //                    Funcs::NodeTable(g.Tables.GetByIndex(n));
+        //                    ImGui::TreePop();
+        //                }
+        //        #endif // #define IMGUI_HAS_TABLE
+        //
         // Details for Docking
-//        #ifdef IMGUI_HAS_DOCK
+        //        #ifdef IMGUI_HAS_DOCK
         treeNode("Dock nodes") {
             val dc = g.dockContext
             checkbox("List root nodes", ::rootNodesOnly)
@@ -368,11 +366,12 @@ interface demoDebugInformations {
             if (smallButton("Clear nodes")) dockContextClearNodes(g, 0, true)
             sameLine()
             if (smallButton("Rebuild all")) dc.wantFullRebuild = true
+            text("HoveredDockNode: 0x%08X", g.hoveredDockNode?.id ?: 0)
             for (node in dc.nodes.values)
                 if (!rootNodesOnly || node.isRootNode)
                     Funcs.nodeDockNode(node, "Node")
         }
-//        #endif // #define IMGUI_HAS_DOCK
+        //        #endif // #define IMGUI_HAS_DOCK
 
         // Settings
         treeNode("Settings") {
@@ -396,13 +395,13 @@ interface demoDebugInformations {
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(Funcs::nodeWindowSettings)
             }
-//            #ifdef IMGUI_HAS_TABLE
-//            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
-//                g.settingsTables.forEach(Funcs::nodeTableSettings)
-//            }
-//            #endif
+            //            #ifdef IMGUI_HAS_TABLE
+            //            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
+            //                g.settingsTables.forEach(Funcs::nodeTableSettings)
+            //            }
+            //            #endif
 
-//            #ifdef IMGUI_HAS_DOCK
+            //            #ifdef IMGUI_HAS_DOCK
             treeNode("SettingsDocking", "Settings packed data: Docking") {
                 val dc = g.dockContext
                 text("In SettingsWindows:")
@@ -415,12 +414,12 @@ interface demoDebugInformations {
                     if (settings.selectedWindowId != 0)
                         findWindowByID(settings.selectedWindowId)?.let { selectedTabName = it.name }
                                 ?: findWindowSettings(settings.selectedWindowId)?.let { selectedTabName = it.name }
-                    val name = selectedTabName ?: if(settings.selectedWindowId != 0) "N/A" else ""
+                    val name = selectedTabName ?: if (settings.selectedWindowId != 0) "N/A" else ""
                     bulletText("Node %08X, Parent %08X, SelectedTab %08X ('$name')",
                             settings.id, settings.parentNodeId, settings.selectedWindowId)
                 }
             }
-//            #endif
+            //            #endif
 
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
@@ -469,42 +468,36 @@ interface demoDebugInformations {
                 }
             }
 
-//        #ifdef IMGUI_HAS_TABLE
-//        // Overlay: Display Tables Rectangles
-//        if (show_tables_rects)
-//        {
-//            for (int table_n = 0; table_n < g.Tables.GetSize(); table_n++)
-//            {
-//                ImGuiTable* table = g.Tables.GetByIndex(table_n);
-//            }
-//        }
-//        #endif // #define IMGUI_HAS_TABLE
+        //        #ifdef IMGUI_HAS_TABLE
+        //        // Overlay: Display Tables Rectangles
+        //        if (show_tables_rects)
+        //        {
+        //            for (int table_n = 0; table_n < g.Tables.GetSize(); table_n++)
+        //            {
+        //                ImGuiTable* table = g.Tables.GetByIndex(table_n);
+        //            }
+        //        }
+        //        #endif // #define IMGUI_HAS_TABLE
 
-//        #ifdef IMGUI_HAS_DOCK
+        //        #ifdef IMGUI_HAS_DOCK
         // Overlay: Display Docking info
         if (showDockingNodes && io.keyCtrl) {
-            val dc = g.dockContext
-            for (node in dc.nodes.values) {
-                val rootNode = dockNodeGetRootNode(node)
-                val hoveredNode = dockNodeTreeFindVisibleNodeByPos(rootNode, io.mousePos)
-                if (hoveredNode != node)
-                    continue
-                val p = StringBuffer(64)
-                val overlayDrawList = node.hostWindow?.let(::getForegroundDrawList)
-                        ?: getForegroundDrawList(mainViewport as ViewportP)
-                p += "DockId: %X${if (node.isCentralNode) " *CentralNode*" else ""}\n".format(node.id)
-                p += "WindowClass: %08X\n".format(node.windowClass.classId)
-                p += "Size: (%.0f, %.0f)\n".format(node.size.x, node.size.y)
-                p += "SizeRef: (%.0f, %.0f)\n".format(node.sizeRef.x, node.sizeRef.y)
-                val depth = dockNodeGetDepth(node)
-                overlayDrawList.addRect(node.pos + 3 * depth, node.pos + node.size - 3 * depth, COL32(200, 100, 100, 255))
-                val pos = node.pos + 3 * depth
-                val buf = p.toString().toByteArray()
-                overlayDrawList.addRectFilled(pos - 1, pos + calcTextSize(buf, 0) + 1, COL32(200, 100, 100, 255))
-                overlayDrawList.addText(null, 0f, pos, COL32(255, 255, 255, 255), buf)
-            }
+            val node = g.hoveredDockNode!!
+            val p = StringBuffer(64)
+            val overlayDrawList = node.hostWindow?.let(::getForegroundDrawList)
+                    ?: getForegroundDrawList(mainViewport as ViewportP)
+            p += "DockId: %X${if (node.isCentralNode) " *CentralNode*" else ""}\n".format(node.id)
+            p += "WindowClass: %08X\n".format(node.windowClass.classId)
+            p += "Size: (%.0f, %.0f)\n".format(node.size.x, node.size.y)
+            p += "SizeRef: (%.0f, %.0f)\n".format(node.sizeRef.x, node.sizeRef.y)
+            val depth = dockNodeGetDepth(node)
+            overlayDrawList.addRect(node.pos + 3 * depth, node.pos + node.size - 3 * depth, COL32(200, 100, 100, 255))
+            val pos = node.pos + 3 * depth
+            val buf = p.toString().toByteArray()
+            overlayDrawList.addRectFilled(pos - 1, pos + calcTextSize(buf, 0) + 1, COL32(200, 100, 100, 255))
+            overlayDrawList.addText(null, 0f, pos, COL32(255, 255, 255, 255), buf)
         }
-//        #endif // #define IMGUI_HAS_DOCK
+        //        #endif // #define IMGUI_HAS_DOCK
         end()
     }
 
@@ -898,7 +891,7 @@ interface demoDebugInformations {
                     builder += if (node.isCentralNode) " IsCentralNode" else ""
                     builder += if (g.frameCount - node.lastFrameAlive < 2) " IsAlive" else ""
                     builder += if (g.frameCount - node.lastFrameActive < 2) " IsActive" else ""
-                    builder += if(node.wantLockSizeOnce) " WantLockSizeOnce" else ""
+                    builder += if (node.wantLockSizeOnce) " WantLockSizeOnce" else ""
                     bulletText(builder.toString())
                     if (treeNode("flags", "LocalFlags: 0x%04X SharedFlags: 0x%04X", node.localFlags, node.sharedFlags)) {
                         checkboxFlags("LocalFlags: NoDocking", node::localFlags, DockNodeFlag._NoDocking.i)
