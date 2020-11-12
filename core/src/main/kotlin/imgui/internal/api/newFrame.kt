@@ -45,11 +45,11 @@ internal interface newFrame {
             g.hoveredWindowUnderMovingWindow = null
         }
 
-        // Modal windows prevents cursor from hovering behind them.
+        // Modal windows prevents mouse from hovering behind them.
         val modalWindow = topMostPopupModal
-        if (modalWindow != null)
-            if (g.hoveredRootWindow?.isChildOf(modalWindow) == false)
-                nullate()
+        val hovered = g.hoveredRootWindow
+        if (modalWindow != null && hovered != null && !hovered.isChildOf(modalWindow))
+            nullate()
         // Disabled mouse?
         if (io.configFlags has ConfigFlag.NoMouse)
             nullate()
@@ -191,10 +191,16 @@ internal interface newFrame {
 
             if (rootWindow != null && !isClosedPopup) {
                 hoveredWindow.startMouseMoving()
+
+                // Cancel moving if clicked outside of title bar
                 if (io.configWindowsMoveFromTitleBarOnly)
                     if (rootWindow.flags hasnt WindowFlag.NoTitleBar || rootWindow.dockIsActive)
                         if (io.mouseClickedPos[0] !in rootWindow.titleBarRect())
                             g.movingWindow = null
+
+                // Cancel moving if clicked over an item which was disabled or inhibited by popups
+                if (g.hoveredId == 0 && g.hoveredIdDisabled)
+                    g.movingWindow = null
             }
             else if (rootWindow == null && g.navWindow != null && topMostPopupModal == null)
                 // Clicking on void disable focus

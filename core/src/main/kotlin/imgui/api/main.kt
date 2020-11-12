@@ -132,6 +132,7 @@ interface main {
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
+        g.hoveredIdDisabled = false
 
         // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
         if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)

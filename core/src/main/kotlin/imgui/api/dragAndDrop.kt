@@ -183,11 +183,15 @@ interface dragAndDrop {
      *  Also note how the HoveredWindow test is positioned differently in both functions (in both functions we optimize
      *  for the cheapest early out case)    */
     fun beginDragDropTarget(): Boolean {
-        if (!g.dragDropActive) return false
+        if (!g.dragDropActive)
+            return false
 
         val window = g.currentWindow!!
-        if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect) return false
-        g.hoveredWindowUnderMovingWindow.let { if (it == null || window.rootWindow !== it.rootWindow) return false }
+        if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect)
+            return false
+        val hoveredWindow = g.hoveredWindowUnderMovingWindow
+        if (hoveredWindow == null || window.rootWindow !== hoveredWindow.rootWindow)
+            return false
 
         val displayRect = when {
             window.dc.lastItemStatusFlags has ItemStatusFlag.HasDisplayRect -> window.dc.lastItemDisplayRect
@@ -196,7 +200,8 @@ interface dragAndDrop {
         var id = window.dc.lastItemId
         if (id == 0)
             id = window.getIdFromRectangle(displayRect) // [JVM] save to pass the reference
-        if (g.dragDropPayload.sourceId == id) return false
+        if (g.dragDropPayload.sourceId == id)
+            return false
 
         assert(!g.dragDropWithinTarget)
         g.dragDropTargetRect put displayRect

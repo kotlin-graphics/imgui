@@ -105,56 +105,62 @@ enum class ButtonFlag(val i: ButtonFlags) {
 
     None(0),
 
-    /** hold to repeat  */
-    Repeat(1 shl 0),
+    /** React on left mouse button (default) */
+    MouseButtonLeft(1 shl 0),
+
+    /** React on right mouse button */
+    MouseButtonRight(1 shl 1),
+
+    /** React on center mouse button */
+    MouseButtonMiddle(1 shl 2),
 
     /** return true on click (mouse down event) */
-    PressedOnClick(1 shl 1),
+    PressedOnClick(1 shl 4),
 
     /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
-    PressedOnClickRelease(1 shl 2),
+    PressedOnClickRelease(1 shl 5),
 
     /** return true on click + release even if the release event is not done while hovering the item */
-    PressedOnClickReleaseAnywhere(1 shl 3),
+    PressedOnClickReleaseAnywhere(1 shl 6),
 
     /** return true on release (default requires click+release) */
-    PressedOnRelease(1 shl 4),
+    PressedOnRelease(1 shl 7),
 
     /** return true on double-click (default requires click+release) */
-    PressedOnDoubleClick(1 shl 5),
+    PressedOnDoubleClick(1 shl 8),
 
     /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
-    PressedOnDragDropHold(1 shl 6),
+    PressedOnDragDropHold(1 shl 9),
+
+    /** hold to repeat  */
+    Repeat(1 shl 10),
 
     /** allow interactions even if a child window is overlapping */
-    FlattenChildren(1 shl 7),
+    FlattenChildren(1 shl 11),
 
     /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
-    AllowItemOverlap(1 shl 8),
+    AllowItemOverlap(1 shl 12),
 
     /** disable automatically closing parent popup on press // [UNUSED] */
-    DontClosePopups(1 shl 9),
+    DontClosePopups(1 shl 13),
 
     /** disable interactions */
-    Disabled(1 shl 10),
+    Disabled(1 shl 14),
 
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
-    AlignTextBaseLine(1 shl 11),
+    AlignTextBaseLine(1 shl 15),
 
     /** disable mouse interaction if a key modifier is held */
-    NoKeyModifiers(1 shl 12),
+    NoKeyModifiers(1 shl 16),
 
     /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
-    NoHoldingActiveId(1 shl 13),
+    NoHoldingActiveId(1 shl 17),
 
     /** don't override navigation focus when activated */
-    NoNavFocus(1 shl 14),
+    NoNavFocus(1 shl 18),
 
     /** don't report as hovered when nav focus is on this item */
-    NoHoveredOnFocus(1 shl 15),
-    MouseButtonLeft(1 shl 16),  // [Default] react on left mouse button
-    MouseButtonRight(1 shl 17),  // react on right mouse button
-    MouseButtonMiddle(1 shl 18),  // react on center mouse button
+    NoHoveredOnFocus(1 shl 19),
 
     MouseButtonMask_(MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
     MouseButtonShift_(16),
