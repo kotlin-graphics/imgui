@@ -148,19 +148,26 @@ fun dockNodeTreeUpdatePosSize(node: DockNode, pos: Vec2, size: Vec2, onlyWriteTo
         val sizeMinEach = floor(min(sizeAvail, g.style.windowMinSize[axis] * 2f) * 0.5f)
 
         // 2) Process locked absolute size (during a splitter resize we preserve the child of nodes not touching the splitter edge)
-        assert(!child0.wantLockSizeOnce || !child1.wantLockSizeOnce)
-        if (child0.wantLockSizeOnce) {
+        if (child0.wantLockSizeOnce && !child1.wantLockSizeOnce) {
             child0Size[axis] = (sizeAvail - 1f) min child0.size[axis]
             child0.sizeRef[axis] = child0Size[axis]
             child1Size[axis] = sizeAvail - child0Size[axis]
             child1.sizeRef[axis] = sizeAvail - child0Size[axis]
             assert(child0.sizeRef[axis] > 0f && child1.sizeRef[axis] > 0f)
-
-        } else if (child1.wantLockSizeOnce) {
+        } else if (child1.wantLockSizeOnce && !child0.wantLockSizeOnce) {
             child1Size[axis] = (sizeAvail -1f) min child1.size[axis]
             child1.sizeRef[axis] = child1Size[axis]
             child0Size[axis] = sizeAvail - child1Size[axis]
             child0.sizeRef[axis] = sizeAvail - child1Size[axis]
+            assert(child0.sizeRef[axis] > 0f && child1.sizeRef[axis] > 0f)
+        } else if (child0.wantLockSizeOnce && child1.wantLockSizeOnce) {
+            // FIXME-DOCK: We cannot honor the requested size, so apply ratio.
+            // Currently this path will only be taken if code programmatically sets WantLockSizeOnce
+            val ratio0 = child0Size[axis] / (child0Size[axis] + child1Size[axis])
+            child0Size[axis] = floor(sizeAvail * ratio0)
+            child0.sizeRef[axis] = child0Size[axis]
+            child1Size[axis] = sizeAvail - child0Size[axis]
+            child1.sizeRef[axis] = child1Size[axis]
             assert(child0.sizeRef[axis] > 0f && child1.sizeRef[axis] > 0f)
         }
 
