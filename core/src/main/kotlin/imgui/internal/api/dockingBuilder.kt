@@ -80,18 +80,20 @@ interface dockingBuilder {
      * - Dockspace node: calling DockBuilderSetNodePos() is unnecessary.
      * - If you intend to split a node immediately after creation using DockBuilderSplitNode(), make sure to call DockBuilderSetNodeSize() beforehand!
      *   For various reason, the splitting code currently needs a base size otherwise space may not be allocated as precisely as you would expect.
-     * - Use (id == 0) to let the system allocate a node identifier. */
+     * - Use (id == 0) to let the system allocate a node identifier.
+     * - Existing node with a same id will be removed. */
     fun dockBuilderAddNode(id: ID = 0, flags: DockNodeFlags = DockNodeFlag.None.i): ID {
         val ctx = g
-        var node: DockNode? = null
+        val node: DockNode?
+
+        if (id != 0)
+            dockBuilderRemoveNode(id)
+
         if (flags has DockNodeFlag._DockSpace) {
             dockSpace(id, Vec2(), (flags wo DockNodeFlag._DockSpace) or DockNodeFlag.KeepAliveOnly)
             node = dockContextFindNodeByID(ctx, id)
         } else {
-            if (id != 0)
-                node = dockContextFindNodeByID(ctx, id)
-            if (node == null)
-                node = dockContextAddNode(ctx, id)
+            node = dockContextAddNode(ctx, id)
             node.localFlags = flags
         }
         node!!.lastFrameAlive = ctx.frameCount   // Set this otherwise BeginDocked will undock during the same frame.
