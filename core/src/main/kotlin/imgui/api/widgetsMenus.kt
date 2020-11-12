@@ -87,7 +87,6 @@ interface widgetsMenus {
             cursorPos put cursorMaxPos
             layoutType = Lt.Horizontal
             navLayerCurrent = NavLayer.Menu
-            navLayerCurrentMask = 1 shl NavLayer.Menu
             menuBarAppending = true
         }
         alignTextToFramePadding()
@@ -135,7 +134,6 @@ interface widgetsMenus {
             endGroup() // Restore position on layer 0
             layoutType = Lt.Vertical
             navLayerCurrent = NavLayer.Main
-            navLayerCurrentMask = 1 shl NavLayer.Main
             menuBarAppending = false
         }
     }
