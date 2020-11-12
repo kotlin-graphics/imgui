@@ -94,10 +94,10 @@ interface docking {
             }
 
         // Process full rebuild
-//        #if 0
-//        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_C)))
-//            dc->WantFullRebuild = true
-//        #endif
+        //        #if 0
+        //        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_C)))
+        //            dc->WantFullRebuild = true
+        //        #endif
         if (dc.wantFullRebuild) {
             dockContextRebuildNodes(ctx)
             dc.wantFullRebuild = false
@@ -118,6 +118,17 @@ interface docking {
         if (g.io.configFlags hasnt ConfigFlag.DockingEnable)
             return
 
+        // Store hovered dock node. We could in theory use DockNodeTreeFindVisibleNodeByPos() on the root host dock node, but using ->DockNode is a good shortcut.
+        g.hoveredDockNode = null
+        g.hoveredWindowUnderMovingWindow?.let { hoveredWindow ->
+            hoveredWindow.dockNode?.let {
+                g.hoveredDockNode = it
+            }
+            hoveredWindow.dockNodeAsHost?.let {
+                g.hoveredDockNode = dockNodeTreeFindVisibleNodeByPos(it, g.io.mousePos)
+            }
+        }
+
         // Process Docking requests
         for (req in dc.requests)
             if (req.type == DockRequestType.Dock)
@@ -127,7 +138,7 @@ interface docking {
         // Create windows for each automatic docking nodes
         // We can have NULL pointers when we delete nodes, but because ID are recycled this should amortize nicely (and our node count will never be very high)
         for (node in dc.nodes.values)
-//            if (ImGuiDockNode* node = (ImGuiDockNode*)dc->Nodes.Data[n].val_p)
+        //            if (ImGuiDockNode* node = (ImGuiDockNode*)dc->Nodes.Data[n].val_p)
             if (node.isFloatingNode)
                 dockNodeUpdate(node)
     }
@@ -243,14 +254,14 @@ interface docking {
                 return
         }
 
-//        #if 0
-//        // Undock if the ImGuiDockNodeFlags_NoDockingInCentralNode got set
-//        if (node->IsCentralNode && (node->Flags & ImGuiDockNodeFlags_NoDockingInCentralNode))
-//        {
-//            DockContextProcessUndockWindow(ctx, window)
-//            return
-//        }
-//        #endif
+        //        #if 0
+        //        // Undock if the ImGuiDockNodeFlags_NoDockingInCentralNode got set
+        //        if (node->IsCentralNode && (node->Flags & ImGuiDockNodeFlags_NoDockingInCentralNode))
+        //        {
+        //            DockContextProcessUndockWindow(ctx, window)
+        //            return
+        //        }
+        //        #endif
 
         // Undock if our dockspace node disappeared
         // Note how we are testing for LastFrameAlive and NOT LastFrameActive. A DockSpace node can be maintained alive while being inactive with ImGuiDockNodeFlags_KeepAliveOnly.
@@ -359,24 +370,22 @@ interface docking {
         val payloadWindow = payload.data as Window
         acceptDragDropPayload(IMGUI_PAYLOAD_TYPE_WINDOW, DragDropFlag.AcceptBeforeDelivery or DragDropFlag.AcceptNoDrawDefaultRect)?.let {
             // Select target node
-            var node: DockNode? = null
-            var allowNullTargetNode = false
-            val host = window.dockNodeAsHost
-            if (host != null) {
-                node = dockNodeTreeFindVisibleNodeByPos(host, g.io.mousePos)
+            // (we should not assume that g.HoveredDockNode is != NULL when window is a host dock node: it depends on padding/spacing handled by DockNodeTreeFindVisibleNodeByPos)
+            var node = g.hoveredDockNode
+            val allowNullTargetNode = window.dockNode == null && window.dockNodeAsHost == null
 
-                // There is an edge case when docking into a dockspace which only has inactive nodes (because none of the windows are active)
-                // In this case we need to fallback into any leaf mode, possibly the central node.
-                if (node != null && node.isDockSpace && node.isRootNode)
-                    node = node.centralNode?.takeIf { node!!.isLeafNode }  // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
-                            ?: dockNodeTreeFindFallbackLeafNode(node)
-            }
-            else window.dockNode.let { dockNode ->
-                if (dockNode != null) // && window->DockIsActive)
-                    node = dockNode
-                else
-                    allowNullTargetNode = true // Dock into a regular window
-            }
+            // There is an edge case when docking into a dockspace which only has inactive nodes (because none of the windows are active)
+            // In this case we need to fallback into any leaf mode, possibly the central node.
+            if (window.dockNodeAsHost != null)
+                node?.let {
+                    if (it.isDockSpace && it.isRootNode) {
+                        val centralNode = it.centralNode
+                        node = when {
+                            centralNode != null && it.isLeafNode -> centralNode // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
+                            else -> dockNodeTreeFindFallbackLeafNode(it)
+                        }
+                    }
+                }
 
             val explicitTargetRect = node?.let { n -> n.tabBar?.let { t -> if (!n.isHiddenTabBar && !n.isNoTabBar) Rect(t.barRect) else null } }
                     ?: Rect(window.pos, window.pos + Vec2(window.size.x, frameHeight))

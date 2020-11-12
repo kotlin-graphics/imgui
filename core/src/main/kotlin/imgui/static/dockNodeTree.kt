@@ -321,7 +321,7 @@ fun dockNodeTreeFindVisibleNodeByPos(node: DockNode, pos: Vec2): DockNode? {
     if (!node.isVisible)
         return null
 
-    val dockSpacing = g.style.itemInnerSpacing.x // FIXME: Relation to DOCKING_SPLITTER_SIZE?
+    val dockSpacing = 0f //g.style.itemInnerSpacing.x // FIXME: Relation to DOCKING_SPLITTER_SIZE?
     val r = Rect(node.pos, node.pos + node.size)
     r expand dockSpacing * 0.5f
     val inside = pos in r
