@@ -6,8 +6,6 @@ import imgui.classes.WindowClass
 import imgui.internal.sections.Axis
 
 
-val IMGUI_DOCK_SPLITTER_SIZE = 2f
-
 enum class DockRequestType {
     None, Dock, Undock,
 

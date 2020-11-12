@@ -94,6 +94,7 @@ const val WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER = 2f
 
 /** For use with io.ConfigDockingTransparentPayload. Apply to Viewport _or_ WindowBg in host viewport. */
 const val DOCKING_TRANSPARENT_PAYLOAD_ALPHA = 0.5f
+const val DOCKING_SPLITTER_SIZE = 2f
 
 
 // Test engine hooks (imgui-test)

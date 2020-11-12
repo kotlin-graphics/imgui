@@ -14,7 +14,6 @@ import imgui.api.g
 import imgui.classes.Context
 import imgui.internal.classes.DataAuthority
 import imgui.internal.classes.DockNode
-import imgui.internal.classes.IMGUI_DOCK_SPLITTER_SIZE
 import imgui.internal.classes.Rect
 import imgui.internal.floor
 import imgui.internal.sections.Axis
@@ -56,7 +55,7 @@ fun dockNodeTreeSplit(ctx: Context, parentNode: DockNode, splitAxis: Axis, split
     parentNode.authorityForPos = DataAuthority.DockNode
     parentNode.authorityForSize = DataAuthority.DockNode
 
-    var sizeAvail = parentNode.size[splitAxis] - IMGUI_DOCK_SPLITTER_SIZE
+    var sizeAvail = parentNode.size[splitAxis] - DOCKING_SPLITTER_SIZE
     sizeAvail = sizeAvail max (g.style.windowMinSize[splitAxis] * 2f)
     assert(sizeAvail > 0f) { "If you created a node manually with DockBuilderAddNode(), you need to also call DockBuilderSetNodeSize() before splitting." }
     child0.sizeRef put parentNode.size
@@ -139,7 +138,7 @@ fun dockNodeTreeUpdatePosSize(node: DockNode, pos: Vec2, size: Vec2, onlyWriteTo
     val child0Size = Vec2(size)
     val child1Size = Vec2(size)
     if (child0.isVisible && child1.isVisible) {
-        val spacing = IMGUI_DOCK_SPLITTER_SIZE
+        val spacing = DOCKING_SPLITTER_SIZE
         val axis = node.splitAxis
         val sizeAvail = (size[axis] - spacing) max 0f
 
