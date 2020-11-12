@@ -113,6 +113,18 @@ interface docking {
         node.onlyNodeWithWindows = null
 
         assert(node.isRootNode)
+
+
+        // We need to handle the rare case were a central node is missing.
+        // This can happen if the node was first created manually with DockBuilderAddNode() but _without_ the ImGuiDockNodeFlags_Dockspace.
+        // Doing it correctly would set the _CentralNode flags, which would then propagate according to subsequent split.
+        // It would also be ambiguous to attempt to assign a central node while there are split nodes, so we wait until there's a single node remaining.
+        // The specific sub-property of _CentralNode we are interested in recovering here is the "Don't delete when empty" property,
+        // as it doesn't make sense for an empty dockspace to not have this property.
+        if (node.isLeafNode && !node.isCentralNode)
+            node.localFlags = node.localFlags or DockNodeFlag._CentralNode
+
+        // Update the node
         dockNodeUpdate(node)
 
         g.withinEndChild = true
