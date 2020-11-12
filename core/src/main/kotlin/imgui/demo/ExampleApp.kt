@@ -56,6 +56,7 @@ object ExampleApp {
         var mainMenuBar = false
         var documents = false
         var dockspace = false
+
         var console = false
         var log = false
         var layout = false
@@ -97,6 +98,7 @@ object ExampleApp {
         if (show.mainMenuBar) MainMenuBar()
         if (show.dockspace) DockSpace(show::dockspace) // Process the Docking app first, as explicit DockSpace() nodes needs to be submitted early (read comments near the DockSpace function)
         if (show.documents) Documents(show::documents) // Process the Document app next, as it may also use a DockSpace()
+
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
         if (show.layout) Layout(show::layout)

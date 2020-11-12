@@ -2,7 +2,6 @@ package imgui.static
 
 import gli_.has
 import glm_.f
-import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
@@ -17,7 +16,6 @@ import imgui.api.g
 import imgui.classes.Context
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.hash
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
 import imgui.windowsIme.COMPOSITIONFORM
@@ -29,6 +27,7 @@ import uno.glfw.HWND
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
+import imgui.WindowFlag as Wf
 
 
 //-------------------------------------------------------------------------
@@ -52,12 +51,12 @@ fun findHoveredWindow() {
     val movingWindowViewport = g.movingWindow?.viewport
     g.movingWindow?.viewport = g.mouseViewport
 
-    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt WindowFlag.NoMouseInputs }
+    var hoveredWindow = g.movingWindow?.takeIf { it.flags hasnt Wf.NoMouseInputs }
     var hoveredWindowIgnoringMovingWindow: Window? = null
 
-    val paddingRegular = Vec2(style.touchExtraPadding)
-    val paddingForResizeFromEdges = when {
-        io.configWindowsResizeFromEdges -> glm.max(style.touchExtraPadding, Vec2(WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS))
+    val paddingRegular = style.touchExtraPadding // [JVM] careful, no copy
+    val paddingForResizeFromEdges = when { // [JVM] careful, no copy
+        io.configWindowsResizeFromEdges -> style.touchExtraPadding max WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
         else -> paddingRegular
     }
 
@@ -65,7 +64,7 @@ fun findHoveredWindow() {
         val window = g.windows[i]
         if (!window.active || window.hidden)
             continue
-        if (window.flags has WindowFlag.NoMouseInputs)
+        if (window.flags has Wf.NoMouseInputs)
             continue
         assert(window.viewport != null)
         if (window.viewport !== g.mouseViewport)
@@ -73,14 +72,14 @@ fun findHoveredWindow() {
 
         // Using the clipped AABB, a child window will typically be clipped by its parent (not always)
         val bb = Rect(window.outerRectClipped)
-        if (window.flags has (WindowFlag._ChildWindow or WindowFlag.NoResize or WindowFlag.AlwaysAutoResize))
+        if (window.flags has (Wf._ChildWindow or Wf.NoResize or Wf.AlwaysAutoResize))
             bb expand paddingRegular
         else
             bb expand paddingForResizeFromEdges
         if (io.mousePos !in bb)
             continue
 
-        if (window.hitTestHoleSize.x != 0f) {
+        if (window.hitTestHoleSize.x != 0) {
             // FIXME: Consider generalizing hit-testing override (with more generic data, callback, etc.) (#1512)
             val holeBb = Rect(window.hitTestHoleOffset.x.f, window.hitTestHoleOffset.y.f,
                     (window.hitTestHoleOffset.x + window.hitTestHoleSize.x).f, (window.hitTestHoleOffset.y + window.hitTestHoleSize.y).f)
@@ -118,18 +117,18 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
     viewportPos put mainViewport.pos
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
-    if (flags hasnt WindowFlag.NoSavedSettings) {
-        findWindowSettings(id)?.let { setting ->
+    if (flags hasnt Wf.NoSavedSettings) {
+        findWindowSettings(id)?.let { settings ->
             //  Retrieve settings from .ini file
-            settingsOffset = g.settingsWindows.indexOf(setting)
+            settingsOffset = g.settingsWindows.indexOf(settings)
             setConditionAllowFlags(Cond.FirstUseEver.i, false)
-            applySettings(setting)
+            applySettings(settings)
         }
     }
     dc.cursorMaxPos put pos // So first call to CalcContentSize() doesn't return crazy values
     dc.cursorStartPos put pos
 
-    if (flags has WindowFlag.AlwaysAutoResize) {
+    if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2
         autoFitOnlyGrows = false
     } else {
@@ -139,7 +138,7 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
     }
 
     g.windowsFocusOrder += this
-    if (flags has WindowFlag.NoBringToFrontOnFocus)
+    if (flags has Wf.NoBringToFrontOnFocus)
         g.windows.add(0, this) // Quite slow but rare and only once
     else g.windows += this
 
@@ -207,7 +206,7 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
     val g = ctx
     for (window in g.windows) {
 
-        if (window.flags has WindowFlag.NoSavedSettings)
+        if (window.flags has Wf.NoSavedSettings)
             continue
 
         val settings = when {
@@ -230,7 +229,7 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
 
     // Write to text buffer
     for (settings in g.settingsWindows) {
-        // all numeric fields to ints to have full c++ compatibility
+    // all numeric fields to ints to have full c++ compatibility
         buf += "[${handler.typeName}][${settings.name}]\n"
         if (settings.viewportId != 0 && settings.viewportId != IMGUI_VIEWPORT_DEFAULT_ID) {
             buf += "ViewportPos=${settings.viewportPos.x},${settings.viewportPos.y}\n"

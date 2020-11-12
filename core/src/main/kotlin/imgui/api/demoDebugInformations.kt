@@ -360,8 +360,7 @@ interface demoDebugInformations {
 //
         // Details for Docking
 //        #ifdef IMGUI_HAS_DOCK
-        if (treeNode("Dock nodes")) {
-
+        treeNode("Dock nodes") {
             val dc = g.dockContext
             checkbox("List root nodes", ::rootNodesOnly)
             checkbox("Ctrl shows window dock info", ::showDockingNodes)
@@ -372,7 +371,6 @@ interface demoDebugInformations {
             for (node in dc.nodes.values)
                 if (!rootNodesOnly || node.isRootNode)
                     Funcs.nodeDockNode(node, "Node")
-            treePop()
         }
 //        #endif // #define IMGUI_HAS_DOCK
 

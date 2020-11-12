@@ -171,8 +171,7 @@ interface widgetsSliders {
 
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         val hovered = itemHoverable(frameBb, id)
-        val tempInputIsActive = tempInputIsActive(id)
-        var tempInputStart = false
+        var tempInputIsActive = tempInputIsActive(id)
         if (!tempInputIsActive) {
             val focusRequested = focusableItemRegister(window, id)
             val clicked = hovered && io.mouseClicked[0]
@@ -182,14 +181,14 @@ interface widgetsSliders {
                 focusWindow(window)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
                 if (focusRequested || (clicked && io.keyCtrl) || g.navInputId == id) {
-                    tempInputStart = true
+                    tempInputIsActive = true
                     focusableItemUnregister(window)
                 }
             }
         }
 
         // Our current specs do NOT clamp when using CTRL+Click manual input, but we should eventually add a flag for that..
-        if (tempInputIsActive || tempInputStart)
+        if (tempInputIsActive)
             return tempInputScalar(frameBb, id, label, DataType.Float, pData, format)// , p_min, p_max)
 
         // Draw frame

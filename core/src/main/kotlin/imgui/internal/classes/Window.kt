@@ -234,8 +234,10 @@ class Window(
     /** FIXME: This is currently confusing/misleading. It is essentially WorkRect but not handling of scrolling. We currently rely on it as right/bottom aligned sizing operation need some size to rely on. */
     var contentRegionRect = Rect()
 
-    val hitTestHoleSize = Vec2()
-    val hitTestHoleOffset = Vec2()
+    /** Define an optional rectangular hole where mouse will pass-through the window. */
+    val hitTestHoleSize = Vec2i()
+
+    val hitTestHoleOffset = Vec2i()
 
 
     /** Last frame number the window was Active. */
@@ -295,6 +297,7 @@ class Window(
 
     /** Set when window extraneous data have been garbage collected */
     var memoryCompacted = false
+
     /** Backup of last idx/vtx count, so when waking up the window we can preallocate and avoid iterative alloc/copy */
     var memoryDrawListIdxCapacity = 0
     var memoryDrawListVtxCapacity = 0
@@ -595,7 +598,7 @@ class Window(
 
     /** ~SetWindowHitTestHole */
     fun setHitTestHole(pos: Vec2, size: Vec2) {
-        assert(hitTestHoleSize.x == 0f) { "We don't support multiple holes/hit test filters" }
+        assert(hitTestHoleSize.x == 0) { "We don't support multiple holes/hit test filters" }
         hitTestHoleSize put size
         hitTestHoleOffset put (pos - this.pos)
     }

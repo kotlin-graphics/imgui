@@ -306,9 +306,9 @@ interface windows {
             window.dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
             window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
 
-            /* Collapse window by double-clicking on title bar
-            At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
-            detection and drawing   */
+            // Collapse window by double-clicking on title bar
+            // At this point we don't have a clipping rectangle setup yet, so we can use the title bar area
+            // for hit detection and drawing
             if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse && !window.dockIsActive) {
                 /*  We don't use a regular button+id to test for double-click on title bar (mostly due to legacy reason, could be fixed),
                     so verify that we don't have items over the title bar.                 */
@@ -811,7 +811,7 @@ interface windows {
                 window.renderTitleBarContents(titleBarRect, name, pOpen)
 
             // Clear hit test shape every frame
-            window.hitTestHoleSize put 0f
+            window.hitTestHoleSize put 0
 
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
