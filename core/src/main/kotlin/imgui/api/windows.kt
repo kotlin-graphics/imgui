@@ -24,6 +24,7 @@ import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.setWindowDock
+import imgui.ImGui.setLastItemData
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.classes.hasnt
@@ -641,7 +642,7 @@ interface windows {
             window.scrollMax.y = max(0f, window.contentSize.y + window.windowPadding.y * 2f - window.innerRect.height)
 
             // Apply scrolling
-            window.scroll = window.calcNextScrollFromScrollTargetAndClamp(true)
+            window.scroll = window.calcNextScrollFromScrollTargetAndClamp()
             window.scrollTarget put Float.MAX_VALUE
 
             /* ---------- DRAWING ---------- */
@@ -720,7 +721,7 @@ interface windows {
                         floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
                         floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
-
+                parentWorkRect put workRect
 
                 // [LEGACY] Content Region
                 // FIXME-OBSOLETE: window->ContentRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
@@ -838,17 +839,14 @@ interface windows {
 
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
-            if (window.dockIsActive) {
-                window.dc.lastItemId = window.id
-                window.dc.lastItemStatusFlags = window.dockTabItemStatusFlags
-                window.dc.lastItemRect = window.dockTabItemRect
-            } else {
-                window.dc.lastItemId = window.moveId
-                window.dc.lastItemStatusFlags = when {
+            if (window.dockIsActive)
+                setLastItemData(window, window.id, window.dockTabItemStatusFlags, window.dockTabItemRect)
+            else {
+                val itemFlags = when {
                     isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false) -> ItemStatusFlag.HoveredRect
                     else -> ItemStatusFlag.None
-                }.i
-                window.dc.lastItemRect put titleBarRect
+                }
+                setLastItemData(window, window.moveId, itemFlags.i, titleBarRect)
             }
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)

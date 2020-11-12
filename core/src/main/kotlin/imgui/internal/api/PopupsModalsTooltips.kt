@@ -74,7 +74,7 @@ internal interface PopupsModalsTooltips {
         if (g.navActivateId == id && flags hasnt Wf._NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
             focusWindow(childWindow)
             navInitWindow(childWindow, false)
-            setActiveID(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
+            setActiveID(id + 1, childWindow) // Steal ActiveId with another arbitrary id so that key-press won't activate child item
             g.activeIdSource = InputSource.Nav
         }
 

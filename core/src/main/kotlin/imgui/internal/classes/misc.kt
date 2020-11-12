@@ -110,7 +110,7 @@ class GroupData {
 /** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
  *  has overwritten the data.
  *  ¬ItemHoveredDataBackup, we optimize by using a function accepting a lambda */
-fun itemHoveredDataBackup(block: () -> Unit) {
+fun lastItemDataBackup(block: () -> Unit) {
     // backup
     var window = g.currentWindow!!
     val lastItemId = window.dc.lastItemId

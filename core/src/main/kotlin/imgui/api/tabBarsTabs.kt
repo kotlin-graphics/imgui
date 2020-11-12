@@ -35,7 +35,7 @@ interface tabBarsTabs {
         if (window.skipItems) return
 
         val tabBar = g.currentTabBar ?: error("Mismatched BeginTabBar()/EndTabBar()!")
-        if (tabBar.wantLayout)
+        if (tabBar.wantLayout) // Fallback in case no TabItem have been submitted
             tabBar.layout()
 
         // Restore the last visible height if no tab is visible, this reduce vertical flicker/movement when a tabs gets removed without calling SetTabItemClosed().

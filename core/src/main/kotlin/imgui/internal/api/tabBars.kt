@@ -15,7 +15,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
-import imgui.internal.classes.itemHoveredDataBackup
+import imgui.internal.classes.lastItemDataBackup
 import imgui.internal.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -106,7 +106,7 @@ internal interface tabBars {
         if (closeButtonVisible) {
             val closeButtonSz = g.fontSize
             pushStyleVar(StyleVar.FramePadding, framePadding)
-            itemHoveredDataBackup {
+            lastItemDataBackup {
                 if (closeButton(closeButtonId, Vec2(bb.max.x - framePadding.x * 2f - closeButtonSz, bb.min.y)))
                     closeButtonPressed = true
             }

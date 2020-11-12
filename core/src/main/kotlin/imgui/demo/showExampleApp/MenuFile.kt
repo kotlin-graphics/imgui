@@ -29,7 +29,7 @@ object MenuFile {
     // (future version will add explicit flags to BeginMenu() to request processing shortcuts)
     operator fun invoke() {
 
-        menuItem("(dummy menu)", "", false, false)
+        menuItem("(demo menu)", "", false, false)
         menuItem("New")
         menuItem("Open", "Ctrl+O")
         menu("Open Recent") {

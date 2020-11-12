@@ -138,8 +138,8 @@ class TabBar {
         framePadding put g.style.framePadding
 
         // Layout
-        itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
-        window.dc.cursorPos.x = barRect.min.x
+        // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
+        window.dc.cursorPos.put(barRect.min.x, barRect.max.y + style.itemSpacing.y)
 
         // Draw separator
         val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
@@ -242,7 +242,8 @@ class TabBar {
 
         val id = calcTabID(label)
 
-        // If the user called us with *p_open == false, we early out and don't render. We make a dummy call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
+        // If the user called us with *p_open == false, we early out and don't render.
+        // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
         Hook.itemInfo?.invoke(g, id, label, window.dc.lastItemStatusFlags)
         if (pOpen?.get() == false) {
             pushItemFlag(ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus, true)
@@ -638,6 +639,11 @@ class TabBar {
         // Clear name buffers
         if (flags hasnt TabBarFlag._DockNode)
             tabsNames.clear()
+
+        // Actual layout in host window (we don't do it in BeginTabBar() so as not to waste an extra frame)
+        val window = g.currentWindow!!
+        window.dc.cursorPos put barRect.min
+        itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
     }
 
     /** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.

@@ -288,7 +288,7 @@ object ShowDemoWindowWidgets {
     var optionsMenu = true
     var hdr = false
 
-    // Generate a dummy default palette. The palette will persist and can be edited.
+    // Generate a default palette. The palette will persist and can be edited.
     var savedPaletteInit = true
     var savedPalette = Array(32) { Vec4() }
     var backupColor = Vec4()
@@ -398,7 +398,7 @@ object ShowDemoWindowWidgets {
     val str = ByteArray(16)
     var currentItem4 = 1
     var embedAllInsideAChildWindow = false
-    var dummyStr = "This is a dummy field to be able to tab-out of the widgets above."
+    var unusedStr = "This widget is only here to be able to tab-out of the widgets above."
     var testWindow = false
 
     operator fun invoke() {
@@ -954,11 +954,11 @@ object ShowDemoWindowWidgets {
             val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
             plotLines("Frame Times", arr)
 
-            // Create a dummy array of contiguous float values to plot
+            // Fill an array of contiguous float values to plot
             // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
             // and the sizeof() of your structure in the "stride" parameter.
             if (!animate || refreshTime == 0.0) refreshTime = time
-            while (refreshTime < time) { // Create dummy data at fixed 60 Hz rate for the demo
+            while (refreshTime < time) { // Create data at fixed 60 Hz rate for the demo
                 values0[valuesOffset] = cos(phase)
                 valuesOffset = (valuesOffset + 1) % values0.size
                 phase += 0.1f * valuesOffset
@@ -1560,7 +1560,7 @@ object ShowDemoWindowWidgets {
             if (embedAllInsideAChildWindow)
                 endChild()
 
-            inputText("dummy", dummyStr, Itf.ReadOnly.i)
+            inputText("unused", unusedStr, Itf.ReadOnly.i)
 
             // Calling IsItemHovered() after begin returns the hovered status of the title bar.
             // This is useful in particular if you want to create a context menu associated to the title bar of a window.

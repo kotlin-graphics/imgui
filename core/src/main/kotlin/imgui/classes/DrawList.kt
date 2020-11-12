@@ -92,7 +92,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
-    fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) = pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
+    fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) =
+            pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
 
     fun pushClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false) {
 
@@ -113,6 +114,17 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun pushClipRectFullScreen() = pushClipRect(Vec2(_data.clipRectFullscreen), Vec2(_data.clipRectFullscreen.z, _data.clipRectFullscreen.w))
+
+    /** [JVM] */
+    inline fun withClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) =
+            withClipRect(rect.min, rect.max, intersectWithCurrentClipRect, block)
+
+    /** [JVM] */
+    inline fun withClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) {
+        pushClipRect(crMin, crMax, intersectWithCurrentClipRect)
+        this.block()
+        popClipRect()
+    }
 
     fun popClipRect() {
         _clipRectStack.pop()

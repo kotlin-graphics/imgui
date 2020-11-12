@@ -184,8 +184,8 @@ object ShowDemoWindowPopups {
                 text("All those beautiful files will be deleted.\nThis operation cannot be undone!\n\n")
                 separator()
 
-                //static int dummy_i = 0;
-                //ImGui::Combo("Combo", &dummy_i, "Delete\0Delete harder\0");
+                //static int unused_i = 0;
+                //ImGui::Combo("Combo", &unused_i, "Delete\0Delete harder\0");
 
                 withStyleVar(StyleVar.FramePadding, Vec2()) { checkbox("Don't ask me next time", ::dontAskMeNextTime) }
 
@@ -200,7 +200,7 @@ object ShowDemoWindowPopups {
 
                 if (beginMenuBar()) {
                     if (beginMenu("File")) {
-                        if (menuItem("Dummy menu item")) {
+                        if (menuItem("Some menu item")) {
                         }
                         endMenu()
                     }
@@ -217,8 +217,8 @@ object ShowDemoWindowPopups {
                 // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which
                 // will close the popup. Note that the visibility state of popups is owned by imgui, so the input value
                 // of the bool actually doesn't matter here.
-                val dummyOpen = booleanArrayOf(true)
-                if (beginPopupModal("Stacked 2", dummyOpen)) {
+                val unusedOpen = booleanArrayOf(true)
+                if (beginPopupModal("Stacked 2", unusedOpen)) {
                     text("Hello from Stacked The Second!")
                     button("Close") { closeCurrentPopup() }
                     endPopup()
