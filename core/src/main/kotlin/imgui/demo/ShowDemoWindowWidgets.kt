@@ -160,6 +160,7 @@ import unsigned.Ulong
 import unsigned.Ushort
 import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
@@ -240,11 +241,11 @@ object ShowDemoWindowWidgets {
     var selected0 = -1
     val selected1 = BooleanArray(3)
     val selected2 = BooleanArray(16)
-    val selected3 = intArrayOf(
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1)
+    val selected3 = arrayOf(
+            intArrayOf(1, 0, 0, 0),
+            intArrayOf(0, 1, 0, 0),
+            intArrayOf(0, 0, 1, 0),
+            intArrayOf(0, 0, 0, 1))
     val selected4 = booleanArrayOf(true, false, true, false, true, false, true, false, true)
 
 
@@ -908,23 +909,31 @@ object ShowDemoWindowWidgets {
                 columns(1)
             }
             treeNode("Grid") {
-                for (i in 0 until 16)
-                    withId(i) {
-                        if (selectable("Sailor", selected3[i] != 0, 0, Vec2(50))) {
-                            // Toggle
-                            selected3[i] = 1 - selected3[i] // ~!selected[i]
 
-                            // Note: We _unnecessarily_ test for both x/y and i here only to silence some static analyzer.
-                            // The second part of each test is unnecessary.
-                            val x = i % 4
-                            val y = i / 4
-                            if (x > 0) selected3[i - 1] = selected3[i - 1] xor 1
-                            if (x < 3 && i < 15) selected3[i + 1] = selected3[i + 1] xor 1
-                            if (y > 0 && i > 3) selected3[i - 4] = selected3[i - 4] xor 1
-                            if (y < 3 && i < 12) selected3[i + 4] = selected3[i + 4] xor 1
+                // Add in a bit of silly fun...
+                val time = ImGui.time
+                val winningState = selected3.all { it.all { it == 1 } } // If all cells are selected...
+                if (winningState)
+                    pushStyleVar(StyleVar.SelectableTextAlign, Vec2(0.5f + 0.5f * cos(time * 2f), 0.5f + 0.5f * sin(time * 3f)))
+
+                for (y in 0..3)
+                    for (x in 0..3) {
+                        if (x > 0)
+                            sameLine()
+                        pushID(y * 4 + x)
+                        if (selectable("Sailor", selected3[y][x] != 0, 0, Vec2(50))) {
+                            // Toggle clicked cell + toggle neighbors
+                            selected3[y][x] = selected3[y][x] xor 1
+                            if (x > 0) selected3[y][x - 1] = selected3[y][x - 1] xor 1
+                            if (x < 3) selected3[y][x + 1] = selected3[y][x + 1] xor 1
+                            if (y > 0) selected3[y - 1][x] = selected3[y - 1][x] xor 1
+                            if (y < 3) selected3[y + 1][x] = selected3[y + 1][x] xor 1
                         }
-                        if ((i % 4) < 3) sameLine()
+                        popID()
                     }
+
+                if (winningState)
+                    popStyleVar()
             }
             treeNode("Alignment") {
                 helpMarker(
