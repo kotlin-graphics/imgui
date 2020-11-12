@@ -363,13 +363,14 @@ interface demoDebugInformations {
         if (treeNode("Dock nodes")) {
 
             val dc = g.dockContext
+            checkbox("List root nodes", ::rootNodesOnly)
             checkbox("Ctrl shows window dock info", ::showDockingNodes)
 
             if (smallButton("Clear nodes")) dockContextClearNodes(g, 0, true)
             sameLine()
             if (smallButton("Rebuild all")) dc.wantFullRebuild = true
             for (node in dc.nodes.values)
-                if (node.isRootNode)
+                if (!rootNodesOnly || node.isRootNode)
                     Funcs.nodeDockNode(node, "Node")
             treePop()
         }
@@ -617,6 +618,7 @@ interface demoDebugInformations {
         var showDrawcmdMesh = true
         var showDrawcmdAabb = true
         var showDockingNodes = false
+        var rootNodesOnly = true
 
         var showWindow = false
 
