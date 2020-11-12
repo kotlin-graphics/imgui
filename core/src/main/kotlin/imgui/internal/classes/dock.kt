@@ -54,7 +54,7 @@ class DockPreviewData {
     var splitRatio = 0f
 
     /** May be slightly different from hit-testing drop rects used in DockNodeCalcDropRects() */
-    val dropRectsDraw = Array(Dir.COUNT + 1) { Rect() }
+    val dropRectsDraw = Array(Dir.COUNT + 1) { Rect(+Float.MAX_VALUE, +Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE) }
 }
 
 /** Store the source authority (dock node vs window) of a field */
