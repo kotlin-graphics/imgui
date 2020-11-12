@@ -119,7 +119,7 @@ internal interface tabBars {
             textPixelClipBb.max.x -= closeButtonSz
         }
 
-        // Label with ellipsis
+        // FIXME: if FramePadding is noticeably large, ellipsis_max_x will be wrong here (e.g. #3497), maybe for consistency that parameter of RenderTextEllipsis() shouldn't exist..
         val ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x - 1f
         renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x,
                 ellipsisMaxX, label, textSizeIfKnown = labelSize)
