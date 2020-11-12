@@ -1,11 +1,8 @@
 package imgui.api
 
-import glm_.L
-import glm_.glm
-import glm_.max
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
-import glm_.wo
 import imgui.*
 import imgui.ImGui.arrowButtonEx
 import imgui.ImGui.buttonBehavior
@@ -29,8 +26,11 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
-import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.floor
+import imgui.internal.lerp
+import imgui.internal.round
+import imgui.internal.saturate
 import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
@@ -127,7 +127,7 @@ interface widgetsMain {
         val id = window.getID("#image")
         popID()
 
-        val padding = if(framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
+        val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
         return imageButtonEx(id, userTextureId, size, uv0, uv1, padding, bgCol, tintCol)
     }
 
@@ -166,7 +166,8 @@ interface widgetsMain {
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
         val checkCol = Col.CheckMark.u32
-        if (window.dc.itemFlags has ItemFlag.MixedValue) {
+        val mixedValue = window.dc.itemFlags has ItemFlag.MixedValue
+        if (mixedValue) {
             // Undocumented tristate/mixed/indeterminate checkbox (#2644)
             val pad = Vec2(1f max floor(squareSz / 3.6f))
             window.drawList.addRectFilled(checkBb.min + pad, checkBb.max - pad, checkCol, style.frameRounding)
@@ -175,7 +176,7 @@ interface widgetsMain {
             window.drawList.renderCheckMark(checkBb.min + pad, checkCol, squareSz - pad * 2f)
         }
 
-        if (g.logEnabled) logRenderedText(totalBb.min, if (v) "[x]" else "[ ]")
+        if (g.logEnabled) logRenderedText(totalBb.min, if (mixedValue) "[~]" else if (v) "[x]" else "[ ]")
         if (labelSize.x > 0f)
             renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
@@ -186,13 +187,22 @@ interface widgetsMain {
 
     fun checkboxFlags(label: String, flags: IntArray, flagsValue: Int): Boolean {
         val v = booleanArrayOf((flags[0] and flagsValue) == flagsValue)
-        val pressed = checkbox(label, v)
-        if (pressed) {
-            if (v[0])
-                flags[0] = flags[0] or flagsValue
-            else
-                flags[0] = flags[0] wo flagsValue
+        val pressed = when {
+            !v[0] && flags[0] has flagsValue -> { // Mixed value (FIXME: find a way to expose neatly to Checkbox?)
+                val window = currentWindow
+                val backupItemFlags = window.dc.itemFlags
+                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
+                checkbox(label, v).also {
+                    window.dc.itemFlags = backupItemFlags
+                }
+            }
+            else -> checkbox(label, v) // Regular checkbox
         }
+        if (pressed)
+            flags[0] = when {
+                v[0] -> flags[0] or flagsValue
+                else -> flags[0] wo flagsValue
+            }
         return pressed
     }
 
