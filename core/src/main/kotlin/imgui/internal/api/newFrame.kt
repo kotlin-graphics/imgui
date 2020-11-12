@@ -110,14 +110,10 @@ internal interface newFrame {
 
         val clicked = isMouseClicked(MouseButton.Left)
         val dragging = isMouseDragging(MouseButton.Left, io.mouseDragThreshold * 1.7f)
-        if (canUndockNode && dragging) {
-            dockContextQueueUndockNode(g, node!!)
-            g.activeIdClickOffset = io.mouseClickedPos[0] - node.pos
-        }
-        else if (!canUndockNode && (clicked || dragging) && g.movingWindow !== window) {
+        if (canUndockNode && dragging)
+            dockContextQueueUndockNode(g, node!!)  // Will lead to DockNodeStartMouseMovingWindow() -> StartMouseMovingWindow() being called next frame
+        else if (!canUndockNode && (clicked || dragging) && g.movingWindow !== window)
             window.startMouseMoving()
-            g.activeIdClickOffset = io.mouseClickedPos[0] - window.rootWindow!!.pos
-        }
     }
 
     /** Handle mouse moving window

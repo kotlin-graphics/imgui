@@ -838,7 +838,7 @@ fun dockNodeUpdateTabBar(node: DockNode, hostWindow: Window) {
 
             // Update navigation ID on menu layer
             g.navWindow?.let {
-                if (it.rootWindowDockStop === window && window.dc.navLayerActiveMask hasnt (1 shl 1))
+                if (it.rootWindowDockStop === window && window.dc.navLayerActiveMask hasnt (1 shl NavLayer.Menu))
                     hostWindow.navLastIds[1] = window.id
             }
         }
@@ -962,11 +962,10 @@ fun dockNodeUpdateVisibleFlag(node: DockNode) {
 
 fun dockNodeStartMouseMovingWindow(node: DockNode, window: Window) {
     assert(node.wantMouseMove)
-    val backupActiveClickOffset = Vec2(g.activeIdClickOffset)
     window.startMouseMoving()
+    g.activeIdClickOffset = g.io.mouseClickedPos[0] - node.pos
     g.movingWindow = window // If we are docked into a non moveable root window, StartMouseMovingWindow() won't set g.MovingWindow. Override that decision.
     node.wantMouseMove = false
-    g.activeIdClickOffset = backupActiveClickOffset
 }
 
 fun dockNodeIsDropAllowedOne(payload: Window, hostWindow: Window): Boolean {

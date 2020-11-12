@@ -652,16 +652,14 @@ class Window(
 
     /** ~ StartMouseMovingWindow */
     fun startMouseMoving() {
-        /*  Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would
-            activate hover on other windows.
-            We _also_ call this when clicking in a window empty space when io.ConfigWindowsMoveFromTitleBarOnly is set,
-            but clear g.MovingWindow afterward.
-            This is because we want ActiveId to be set even when the window is not permitted to move.   */
+        // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
+        // We _also_ call this when clicking in a window empty space when io.ConfigWindowsMoveFromTitleBarOnly is set, but clear g.MovingWindow afterward.
+        // This is because we want ActiveId to be set even when the window is not permitted to move.
         focusWindow(this)
         setActiveID(moveId, this)
         g.navDisableHighlight = true
         g.activeIdNoClearOnFocusLoss = true
-        g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
+        g.activeIdClickOffset = io.mouseClickedPos[0] - rootWindow!!.pos
 
         var canMoveWindow = true
         if (flags has Wf.NoMove || rootWindow!!.flags has Wf.NoMove)
