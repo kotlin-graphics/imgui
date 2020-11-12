@@ -30,7 +30,7 @@ import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")
 
-/** Widgets: Drags
+/** Widgets: Drag Sliders
  *  - CTRL+Click on any drag box to turn them into an input box. Manually input values aren't clamped and can go off-bounds.
  *  - For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function argument
  *      is the same as 'float* v', the array syntax is just a way to document the number of elements that are expected to be
@@ -40,50 +40,52 @@ import kotlin.reflect.KMutableProperty0
  *  - Format string may also be set to NULL or use the default format ("%f" or "%d").
  *  - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
  *      For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
- *  - Use v_min < v_max to clamp edits to given limits. Note that CTRL+Click manual input can override those limits. */
+ *  - Use v_min < v_max to clamp edits to given limits. Note that CTRL+Click manual input can override those limits.
+ *  - We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it
+ *      easier to swap them. */
 interface widgetsDrags {
 
     /** If v_min >= v_max we have no bound */
     fun dragFloat(label: String, v: KMutableProperty0<Float>, vSpeed: Float = 1f, vMin: Float = 0f,
-                  vMax: Float = 0f, format: String? = "%.3f", flags: DragFlags = 0): Boolean =
+                  vMax: Float = 0f, format: String? = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalar(label, DataType.Float, v, vSpeed, vMin, vMax, format, flags)
 
     /** If v_min >= v_max we have no bound */
     fun dragFloat(label: String, v: FloatArray, ptr: Int, vSpeed: Float = 1f, vMin: Float = 0f,
-                  vMax: Float = 0f, format: String = "%.3f", flags: DragFlags = 0): Boolean =
+                  vMax: Float = 0f, format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             withFloat(v, ptr) { dragScalar(label, DataType.Float, it, vSpeed, vMin, vMax, format, flags) }
 
     fun dragFloat2(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                   format: String = "%.3f", flags: DragFlags = 0): Boolean =
+                   format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Float, v, 2, vSpeed, vMin, vMax, format, flags)
 
     fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                 format: String = "%.3f", flags: DragFlags = 0): Boolean =
+                 format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Float, v to _fa, 2, vSpeed, vMin, vMax, format, flags)
                     .also { v put _fa }
 
     fun dragFloat3(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                   format: String = "%.3f", flags: DragFlags = 0): Boolean =
+                   format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Float, v, 3, vSpeed, vMin, vMax, format, flags)
 
     fun dragVec3(label: String, v: Vec3, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                 format: String = "%.3f", flags: DragFlags = 0): Boolean =
+                 format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Float, v to _fa, 3, vSpeed, vMin, vMax, format, flags)
                     .also { v put _fa }
 
     fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                   format: String = "%.3f", flags: DragFlags = 0): Boolean =
+                   format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Float, v, 4, vSpeed, vMin, vMax, format, flags)
 
     fun dragVec4(label: String, v: Vec4, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
-                 format: String = "%.3f", flags: DragFlags = 0): Boolean =
+                 format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Float, v to _fa, 4, vSpeed, vMin, vMax, format, flags)
                     .also { v put _fa }
 
-    /** NB: You likely want to specify the ImGuiDragFlags_ClampOnInput when using this. */
+    /** NB: You likely want to specify the ImGuiSliderFlags_ClampOnInput when using this. */
     fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
                         vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
-                        formatMax: String = format, flags: DragFlags = 0): Boolean {
+                        formatMax: String = format, flags: SliderFlags = SliderFlag.None.i): Boolean {
 
         val vCurrentMin by vCurrentMinPtr
         val vCurrentMax by vCurrentMaxPtr
@@ -96,14 +98,14 @@ interface widgetsDrags {
 
         val minMin = if (vMin >= vMax) -Float.MAX_VALUE else vMin
         val minMax = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
-        val minFlags = flags or if(minMin == minMax) DragFlag._ReadOnly else DragFlag.None
+        val minFlags = flags or if(minMin == minMax) SliderFlag._ReadOnly else SliderFlag.None
         var valueChanged = dragScalar("##min", DataType.Float, vCurrentMinPtr, vSpeed, minMin, minMax, format, minFlags)
         ImGui.popItemWidth()
         ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
 
         val maxMin = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         val maxMax = if (vMin >= vMax) Float.MAX_VALUE else vMax
-        val maxFlags = flags or if(maxMin == maxMax) DragFlag._ReadOnly else DragFlag.None
+        val maxFlags = flags or if(maxMin == maxMax) SliderFlag._ReadOnly else SliderFlag.None
         val fmt = if (formatMax.isNotEmpty()) formatMax else format
         valueChanged = dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags) || valueChanged
         ImGui.popItemWidth()
@@ -119,44 +121,44 @@ interface widgetsDrags {
      *
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
     fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                format: String = "%d", flags: DragFlags = 0): Boolean =
+                format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format, flags) }
 
     fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                format: String = "%d", flags: DragFlags = 0): Boolean =
+                format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalar(label, DataType.Int, v, vSpeed, vMin, vMax, format, flags)
 
     fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                 format: String = "%d", flags: DragFlags = 0): Boolean =
+                 format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Int, v, 2, vSpeed, vMin, vMax, format, flags)
 
     fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                  format: String = "%d", flags: DragFlags = 0): Boolean =
+                  format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Int, v to _ia, 2, vSpeed, vMin, vMax, format, flags)
                     .also { v put _ia }
 
     fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                 format: String = "%d", flags: DragFlags = 0): Boolean =
+                 format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Int, v, 3, vSpeed, vMin, vMax, format, flags)
 
     fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                  format: String = "%d", flags: DragFlags = 0): Boolean =
+                  format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Int, v to _ia, 3, vSpeed, vMin, vMax, format, flags)
                     .also { v put _ia }
 
     fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                 format: String = "%d", flags: DragFlags = 0): Boolean =
+                 format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Int, v, 4, vSpeed, vMin, vMax, format, flags)
 
     fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                  format: String = "%d", flags: DragFlags = 0): Boolean =
+                  format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalarN(label, DataType.Int, v to _ia, 4, vSpeed, vMin, vMax, format, flags)
                     .also { v put _ia }
 
-    /** NB: You likely want to specify the ImGuiDragFlags_ClampOnInput when using this. */
+    /** NB: You likely want to specify the ImGuiSliderFlags_ClampOnInput when using this. */
     fun dragIntRange2(label: String, vCurrentMinPtr: KMutableProperty0<Int>, vCurrentMaxPtr: KMutableProperty0<Int>,
                       vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d",
-                      formatMax: String = format, flags: DragFlags = 0): Boolean {
+                      formatMax: String = format, flags: SliderFlags = SliderFlag.None.i): Boolean {
 
         val vCurrentMin by vCurrentMinPtr
         val vCurrentMax by vCurrentMaxPtr
@@ -169,14 +171,14 @@ interface widgetsDrags {
 
         val minMin = if (vMin >= vMax) Int.MIN_VALUE else vMin
         val minMax = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
-        val minFlags = flags or if(minMin == minMax) DragFlag._ReadOnly else DragFlag.None
+        val minFlags = flags or if(minMin == minMax) SliderFlag._ReadOnly else SliderFlag.None
         var valueChanged = dragInt("##min", vCurrentMinPtr, vSpeed, minMin, minMax, format, minFlags)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
         val maxMin = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         val maxMax = if (vMin >= vMax) Int.MAX_VALUE else vMax
-        val maxFlags = flags or if(maxMin == maxMax) DragFlag._ReadOnly else DragFlag.None
+        val maxFlags = flags or if(maxMin == maxMax) SliderFlag._ReadOnly else SliderFlag.None
         val fmt = if (formatMax.isNotEmpty()) formatMax else format
         valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags) || valueChanged
         popItemWidth()
@@ -196,12 +198,12 @@ interface widgetsDrags {
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
     fun dragScalar(label: String, pData: FloatArray, vSpeed: Float, pMin: Float? = null, pMax: Float? = null,
-                   format: String? = null, flags: DragFlags = 0): Boolean =
-            dragScalar(label, pData, vSpeed, pMin, pMax, format, flags)
+                   format: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean =
+            dragScalar(label, pData, 0, vSpeed, pMin, pMax, format, flags)
 
     /** If vMin >= vMax we have no bound  */
     fun dragScalar(label: String, pData: FloatArray, ptr: Int = 0, vSpeed: Float, pMin: Float? = null,
-                   pMax: Float? = null, format: String? = null, flags: DragFlags = 0): Boolean =
+                   pMax: Float? = null, format: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean =
             withFloat(pData, ptr) {
                 dragScalar(label, DataType.Float, it, vSpeed, pMin, pMax, format, flags)
             }
@@ -209,7 +211,7 @@ interface widgetsDrags {
     /** ote: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget, p_min and p_max are optional.
      *  Read code of e.g. DragFloat(), DragInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
     fun <N> dragScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>, vSpeed: Float,
-                       pMin: N? = null, pMax: N? = null, format_: String? = null, flags: DragFlags = 0): Boolean
+                       pMin: N? = null, pMax: N? = null, format_: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean
             where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow
@@ -237,7 +239,7 @@ interface widgetsDrags {
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         val hovered = ImGui.itemHoverable(frameBb, id)
-        val tempInputAllowed = flags hasnt DragFlag.NoInput
+        val tempInputAllowed = flags hasnt SliderFlag.NoInput
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
             val focusRequested = tempInputAllowed && ImGui.focusableItemRegister(window, id)
@@ -256,8 +258,8 @@ interface widgetsDrags {
         }
 
         if (tempInputIsActive) {
-            // Only clamp CTRL+Click input when ImGuiDragFlags_ClampInput is set
-            val isClampInput = flags hasnt DragFlag.ClampOnInput
+            // Only clamp CTRL+Click input when ImGuiSliderFlags_ClampInput is set
+            val isClampInput = flags hasnt SliderFlag.ClampOnInput
             return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput }, pMax.takeIf { isClampInput })
         }
 
@@ -287,7 +289,7 @@ interface widgetsDrags {
      *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand
      *  how to use this function directly. */
     fun <N> dragScalarN(label: String, dataType: DataType, v: Any, components: Int, vSpeed: Float,
-                        vMin: N? = null, vMax: N? = null, format: String? = null, flags: DragFlags = 0): Boolean
+                        vMin: N? = null, vMax: N? = null, format: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean
             where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow

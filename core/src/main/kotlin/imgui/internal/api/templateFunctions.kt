@@ -843,12 +843,12 @@ internal interface templateFunctions {
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
     fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Int>, vSpeed_: Float,
-                      vMin: Int, vMax: Int, format: String, flags: DragFlags): Boolean {
+                      vMin: Int, vMax: Int, format: String, flags: SliderFlags): Boolean {
 
-        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
 
         // Default tweak speed
         var vSpeed = when {
@@ -913,7 +913,7 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.i
 
         // Round to user desired precision based on format string
-        if (flags hasnt DragFlag.NoRoundToFormat)
+        if (flags hasnt SliderFlag.NoRoundToFormat)
             vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
@@ -949,12 +949,12 @@ internal interface templateFunctions {
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
     fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Uint>, vSpeed_: Float,
-                      vMin: Uint, vMax: Uint, format: String, flags: DragFlags): Boolean {
+                      vMin: Uint, vMax: Uint, format: String, flags: SliderFlags): Boolean {
 
-        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
 
         // Default tweak speed
         var vSpeed = when {
@@ -1019,7 +1019,7 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum
 
         // Round to user desired precision based on format string
-        if (flags hasnt DragFlag.NoRoundToFormat)
+        if (flags hasnt SliderFlag.NoRoundToFormat)
             vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
@@ -1055,12 +1055,12 @@ internal interface templateFunctions {
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
     fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Long>, vSpeed_: Float,
-                      vMin: Long, vMax: Long, format: String, flags: DragFlags): Boolean {
+                      vMin: Long, vMax: Long, format: String, flags: SliderFlags): Boolean {
 
-        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
 
         // Default tweak speed
         var vSpeed = when {
@@ -1125,7 +1125,7 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.L
 
         // Round to user desired precision based on format string
-        if (flags hasnt DragFlag.NoRoundToFormat)
+        if (flags hasnt SliderFlag.NoRoundToFormat)
             vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
@@ -1161,12 +1161,12 @@ internal interface templateFunctions {
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Ulong, typename Long, FLOATTYPE = Double> */
     fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Ulong>, vSpeed_: Float,
-                      vMin: Ulong, vMax: Ulong, format: String, flags: DragFlags): Boolean {
+                      vMin: Ulong, vMax: Ulong, format: String, flags: SliderFlags): Boolean {
 
-        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
 
         // Default tweak speed
         var vSpeed = when {
@@ -1231,7 +1231,7 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.ul
 
         // Round to user desired precision based on format string
-        if (flags hasnt DragFlag.NoRoundToFormat)
+        if (flags hasnt SliderFlag.NoRoundToFormat)
             vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
@@ -1267,12 +1267,12 @@ internal interface templateFunctions {
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
     fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Float>, vSpeed_: Float,
-                      vMin: Float, vMax: Float, format: String, flags: DragFlags): Boolean {
+                      vMin: Float, vMax: Float, format: String, flags: SliderFlags): Boolean {
 
-        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
 
         // Default tweak speed
         var vSpeed = when {
@@ -1337,7 +1337,7 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum
 
         // Round to user desired precision based on format string
-        if (flags hasnt DragFlag.NoRoundToFormat)
+        if (flags hasnt SliderFlag.NoRoundToFormat)
             vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
@@ -1373,12 +1373,12 @@ internal interface templateFunctions {
     /** This is called by DragBehavior() when the widget is active (held by mouse or being manipulated with Nav controls)
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
     fun dragBehaviorT(dataType: DataType, v: KMutableProperty0<Double>, vSpeed_: Float,
-                      vMin: Double, vMax: Double, format: String, flags: DragFlags): Boolean {
+                      vMin: Double, vMax: Double, format: String, flags: SliderFlags): Boolean {
 
-        val axis = if (flags has DragFlag._Vertical) Axis.Y else Axis.X
+        val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has DragFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
 
         // Default tweak speed
         var vSpeed = when {
@@ -1443,7 +1443,7 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.d
 
         // Round to user desired precision based on format string
-        if (flags hasnt DragFlag.NoRoundToFormat)
+        if (flags hasnt SliderFlag.NoRoundToFormat)
             vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
