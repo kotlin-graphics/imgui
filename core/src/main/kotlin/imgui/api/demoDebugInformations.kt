@@ -904,6 +904,8 @@ interface demoDebugInformations {
                         checkboxFlags("LocalFlags: NoDocking", node::localFlags, DockNodeFlag._NoDocking.i)
                         checkboxFlags("LocalFlags: NoSplit", node::localFlags, DockNodeFlag.NoSplit.i)
                         checkboxFlags("LocalFlags: NoResize", node::localFlags, DockNodeFlag.NoResize.i)
+                        checkboxFlags("LocalFlags: NoResizeX", node::localFlags, DockNodeFlag._NoResizeX.i)
+                        checkboxFlags("LocalFlags: NoResizeY", node::localFlags, DockNodeFlag._NoResizeY.i)
                         checkboxFlags("LocalFlags: NoTabBar", node::localFlags, DockNodeFlag._NoTabBar.i)
                         checkboxFlags("LocalFlags: HiddenTabBar", node::localFlags, DockNodeFlag._HiddenTabBar.i)
                         checkboxFlags("LocalFlags: NoWindowMenuButton", node::localFlags, DockNodeFlag._NoWindowMenuButton.i)
