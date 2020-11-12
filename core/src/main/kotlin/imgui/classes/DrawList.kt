@@ -1335,7 +1335,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun renderBullet(pos: Vec2, col: Int) = addCircleFilled(pos, _data.fontSize * 0.2f, col, 8)
 
-    @Deprecated("placeholder: pos gets modified")
+    @Deprecated("placeholder: pos gets modified!")
     fun renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
 
         val thickness = max(sz_ / 5f, 1f)
