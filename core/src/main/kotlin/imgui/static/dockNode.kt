@@ -52,7 +52,6 @@ import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.ImGui.text
 import imgui.api.g
-import imgui.classes.DrawList
 import imgui.hasnt
 import imgui.internal.*
 import imgui.internal.classes.*
@@ -1015,21 +1014,26 @@ fun dockNodePreviewDockSetup(hostWindow: Window, hostNode: DockNode?, rootPayloa
         assert(refNodeForRect.isVisible)
 
     // Filter, figure out where we are allowed to dock
-    val hostNodeFlags = hostNode?.mergedFlags ?: DockNodeFlag.None.i
+    val srcNodeFlags = rootPayloadAsHost?.mergedFlags ?: rootPayload.windowClass.dockNodeFlagsOverrideSet
+    val dstNodeFlags = hostNode?.mergedFlags ?: hostWindow.windowClass.dockNodeFlagsOverrideSet
     data.isCenterAvailable = true
     if (isOuterDocking)
         data.isCenterAvailable = false
-    else if (hostNode != null && hostNodeFlags has DockNodeFlag._NoDocking)
+    else if (dstNodeFlags has DockNodeFlag._NoDocking)
         data.isCenterAvailable = false
-    else if (hostNode != null && hostNodeFlags has DockNodeFlag.NoDockingInCentralNode && hostNode.isCentralNode)
+    else if (hostNode != null && dstNodeFlags has DockNodeFlag.NoDockingInCentralNode && hostNode.isCentralNode)
         data.isCenterAvailable = false
     else if ((hostNode == null || !hostNode.isEmpty) && rootPayloadAsHost?.isSplitNode == true && rootPayloadAsHost.onlyNodeWithWindows == null) // Is _visibly_ split?
         data.isCenterAvailable = false
+    else if (dstNodeFlags has DockNodeFlag._NoDockingOverMe || srcNodeFlags has DockNodeFlag._NoDockingOverOther)
+        data.isCenterAvailable = false
 
     data.isSidesAvailable = true
-    if ((hostNode != null && hostNodeFlags has DockNodeFlag.NoSplit) || io.configDockingNoSplit)
+    if (dstNodeFlags has DockNodeFlag.NoSplit || io.configDockingNoSplit)
         data.isSidesAvailable = false
     else if (!isOuterDocking && hostNode != null && hostNode.parentNode == null && hostNode.isCentralNode)
+        data.isSidesAvailable = false
+    else if (dstNodeFlags has DockNodeFlag._NoDockingSplitMe || srcNodeFlags has DockNodeFlag._NoDockingSplitOther)
         data.isSidesAvailable = false
 
     // Build a tentative future node (reuse same structure because it is practical. Shape will be readjusted when previewing a split)

@@ -704,10 +704,30 @@ enum class DockNodeFlag(@JvmField val i: DockNodeFlags) {
 
     /** Local, Saved  // Disable any form of docking in this dockspace or individual node. (On a whole dockspace, this pretty much defeat the purpose of using a dockspace at all). Note: when turned on, existing docked nodes will be preserved. */
     _NoDocking(1 shl 16),
+
+    /** [EXPERIMENTAL] Prevent another window/node from splitting this node. */
+    _NoDockingSplitMe        (1 shl 17),
+
+    /** [EXPERIMENTAL] Prevent this node from splitting another window/node. */
+    _NoDockingSplitOther      (1 shl 18),
+
+    /** [EXPERIMENTAL] Prevent another window/node to be docked over this node. */
+    _NoDockingOverMe          (1 shl 19),
+
+    /** [EXPERIMENTAL] Prevent this node to be docked over another window/node.*/
+    _NoDockingOverOther       (1 shl 20),
+
+    /** [EXPERIMENTAL] */
+    _NoResizeX                (1 shl 21),
+
+    /** [EXPERIMENTAL] */
+    _NoResizeY                (1 shl 22),
+
     _SharedFlagsInheritMask_(-1),
-    _LocalFlagsMask_(NoSplit or NoResize or AutoHideTabBar or _DockSpace or _CentralNode or _NoTabBar or _HiddenTabBar or _NoWindowMenuButton or _NoCloseButton or _NoDocking),
+    _NoResizeFlagsMask_       (NoResize or _NoResizeX or _NoResizeY),
+    _LocalFlagsMask_(NoSplit or _NoResizeFlagsMask_ or NoResize or AutoHideTabBar or _DockSpace or _CentralNode or _NoTabBar or _HiddenTabBar or _NoWindowMenuButton or _NoCloseButton or _NoDocking),
     _LocalFlagsTransferMask_(_LocalFlagsMask_ wo _DockSpace),  // When splitting those flags are moved to the inheriting child, never duplicated
-    _SavedFlagsMask_(NoResize or _DockSpace or _CentralNode or _NoTabBar or _HiddenTabBar or _NoWindowMenuButton or _NoCloseButton or _NoDocking);
+    _SavedFlagsMask_(_NoResizeFlagsMask_ or _DockSpace or _CentralNode or _NoTabBar or _HiddenTabBar or _NoWindowMenuButton or _NoCloseButton or _NoDocking);
 
     infix fun and(b: DockNodeFlag): DockNodeFlags = i and b.i
     infix fun and(b: DockNodeFlags): DockNodeFlags = i and b

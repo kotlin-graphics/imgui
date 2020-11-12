@@ -242,6 +242,6 @@ class WindowClass {
     /** Set to true to enforce single floating windows of this class always having their own docking node (equivalent of setting the global io.ConfigDockingAlwaysTabBar) */
     var dockingAlwaysTabBar = false
 
-    /** Set to true to allow windows of this class to be docked/merged with an unclassed window. */
+    /** Set to true to allow windows of this class to be docked/merged with an unclassed window. // FIXME-DOCK: Move to DockNodeFlags override? */
     var dockingAllowUnclassed = false
 }

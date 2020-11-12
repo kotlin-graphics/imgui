@@ -226,7 +226,9 @@ fun dockNodeTreeUpdateSplitter(node: DockNode) {
         bb.max[axis xor 1] += child1.size[axis xor 1]
         //if (g.IO.KeyCtrl) GetForegroundDrawList(g.CurrentWindow->Viewport)->AddRect(bb.Min, bb.Max, IM_COL32(255,0,255,255));
 
-        if ((child0.mergedFlags or child1.mergedFlags) has DockNodeFlag.NoResize) {
+        val mergedFlags = child0.mergedFlags or child1.mergedFlags
+        val noResizeAxisFlag = if(axis == Axis.X) DockNodeFlag._NoResizeX else DockNodeFlag._NoResizeY
+        if (mergedFlags has DockNodeFlag.NoResize || mergedFlags has noResizeAxisFlag) {
             val window = g.currentWindow!!
             window.drawList.addRectFilled(bb.min, bb.max, Col.Separator.u32, g.style.frameRounding)
         } else {
