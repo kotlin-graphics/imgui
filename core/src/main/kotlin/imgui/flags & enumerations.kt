@@ -318,24 +318,31 @@ typealias PopupFlags = Int
  *  - Multiple buttons currently cannot be combined/or-ed in those functions (we could allow it later). */
 enum class PopupFlag(@JvmField val i: PopupFlags) {
 
-    None                    (0),
+    None(0),
+
     /** For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left) */
-    MouseButtonLeft         (0),
+    MouseButtonLeft(0),
+
     /** For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right) */
-    MouseButtonRight        (1),
+    MouseButtonRight(1),
+
     /** For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle) */
-    MouseButtonMiddle       (2),
-    MouseButtonMask_        (0x1F),
-    MouseButtonDefault_     (1),
+    MouseButtonMiddle(2),
+    MouseButtonMask_(0x1F),
+    MouseButtonDefault_(1),
+
     /** For OpenPopup*(), BeginPopupContext*(): don't open if there's already a popup at the same level of the popup stack */
-    NoOpenOverExistingPopup (1 shl 5),
+    NoOpenOverExistingPopup(1 shl 5),
+
     /** For BeginPopupContextWindow(): don't return true when hovering items, only when hovering empty space */
-    NoOpenOverItems         (1 shl 6),
+    NoOpenOverItems(1 shl 6),
+
     /** For IsPopupOpen(): ignore the ImGuiID parameter and test for any popup. */
-    AnyPopupId              (1 shl 7),
+    AnyPopupId(1 shl 7),
+
     /** For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level) */
-    AnyPopupLevel           (1 shl 8),
-    AnyPopup                (AnyPopupId or AnyPopupLevel);
+    AnyPopupLevel(1 shl 8),
+    AnyPopup(AnyPopupId or AnyPopupLevel);
 
     infix fun and(b: PopupFlag): PopupFlags = i and b.i
     infix fun and(b: PopupFlags): PopupFlags = i and b
@@ -1432,6 +1439,93 @@ infix fun ColorEditFlags.xor(b: ColorEditFlag): ColorEditFlags = xor(b.i)
 infix fun ColorEditFlags.has(b: ColorEditFlag): Boolean = and(b.i) != 0
 infix fun ColorEditFlags.hasnt(b: ColorEditFlag): Boolean = and(b.i) == 0
 infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
+
+
+typealias DragFlags = Int
+
+/** Flags for DragFloat(), DragInt() etc. */
+enum class DragFlag(val i: DragFlags) {
+    None(0),
+
+    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API
+     *  that has got miscast to this enum, and will trigger an assert if needed. */
+    InvalidMask_(0x7000000F),
+
+    /** Clamp value to min/max bounds (if any) when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
+    ClampOnInput(1 shl 4),
+
+    /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
+    Logarithmic(1 shl 5),
+
+    /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
+    NoRoundToFormat(1 shl 6),
+
+    /** Disable CTRL+Click or Enter key allowing to input text directly into the widget */
+    NoInput(1 shl 7),
+
+    /** [Private] Should this widget be orientated vertically? */
+    _Vertical(1 shl 20),
+
+    _ReadOnly(1 shl 21);
+
+    infix fun and(b: DragFlag): DragFlags = i and b.i
+    infix fun and(b: DragFlags): DragFlags = i and b
+    infix fun or(b: DragFlag): DragFlags = i or b.i
+    infix fun or(b: DragFlags): DragFlags = i or b
+    infix fun xor(b: DragFlag): DragFlags = i xor b.i
+    infix fun xor(b: DragFlags): DragFlags = i xor b
+    infix fun wo(b: DragFlags): DragFlags = and(b.inv())
+}
+
+infix fun DragFlags.and(b: DragFlag): DragFlags = and(b.i)
+infix fun DragFlags.or(b: DragFlag): DragFlags = or(b.i)
+infix fun DragFlags.xor(b: DragFlag): DragFlags = xor(b.i)
+infix fun DragFlags.has(b: DragFlag): Boolean = and(b.i) != 0
+infix fun DragFlags.hasnt(b: DragFlag): Boolean = and(b.i) == 0
+infix fun DragFlags.wo(b: DragFlag): DragFlags = and(b.i.inv())
+
+typealias SliderFlags = Int
+
+/** Flags for SliderFloat(), SliderInt() etc. */
+enum class SliderFlag(val i: SliderFlags) {
+    None(0),
+
+    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API that
+     *  has got miscast to this enum, and will trigger an assert if needed. */
+    InvalidMask_(0x7000000F),
+
+    /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
+    ClampOnInput(1 shl 4),
+
+    /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
+    Logarithmic(1 shl 5),
+
+    /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
+    NoRoundToFormat(1 shl 6),
+
+    /** Disable CTRL+Click or Enter key allowing to input text directly into the widget */
+    NoInput(1 shl 7),
+
+    /** [Private] Should this widget be orientated vertically? */
+    _Vertical(1 shl 20),
+
+    _ReadOnly(1 shl 21);
+
+    infix fun and(b: SliderFlag): SliderFlags = i and b.i
+    infix fun and(b: SliderFlags): SliderFlags = i and b
+    infix fun or(b: SliderFlag): SliderFlags = i or b.i
+    infix fun or(b: SliderFlags): SliderFlags = i or b
+    infix fun xor(b: SliderFlag): SliderFlags = i xor b.i
+    infix fun xor(b: SliderFlags): SliderFlags = i xor b
+    infix fun wo(b: SliderFlags): SliderFlags = and(b.inv())
+}
+
+infix fun SliderFlags.and(b: SliderFlag): SliderFlags = and(b.i)
+infix fun SliderFlags.or(b: SliderFlag): SliderFlags = or(b.i)
+infix fun SliderFlags.xor(b: SliderFlag): SliderFlags = xor(b.i)
+infix fun SliderFlags.has(b: SliderFlag): Boolean = and(b.i) != 0
+infix fun SliderFlags.hasnt(b: SliderFlag): Boolean = and(b.i) == 0
+infix fun SliderFlags.wo(b: SliderFlag): SliderFlags = and(b.i.inv())
 
 
 /** Identify a mouse button.

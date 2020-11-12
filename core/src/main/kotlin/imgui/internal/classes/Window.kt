@@ -275,7 +275,7 @@ class Window(
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
 
-    /** Point to ourself or first ancestor that is not a child window.  */
+    /** Point to ourself or first ancestor that is not a child window == Top-level window. */
     var rootWindow: Window? = null
 
     /** Point to ourself or first ancestor that is not a child window. Doesn't cross through dock nodes. We use this so IsWindowFocused() can behave consistently regardless of docking state. */
@@ -461,7 +461,7 @@ class Window(
     /** ~BringWindowToDisplayFront */
     fun bringToDisplayFront() {
         val currentFrontWindow = g.windows.last()
-        if (currentFrontWindow === this || currentFrontWindow.rootWindow === this)
+        if (currentFrontWindow === this || currentFrontWindow.rootWindow === this) // Cheap early out (could be better)
             return
         for (i in g.windows.size - 2 downTo 0) // We can ignore the top-most window
             if (g.windows[i] === this) {

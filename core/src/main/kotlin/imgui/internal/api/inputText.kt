@@ -883,10 +883,9 @@ internal interface inputText {
      *       *v = ImClamp(*v, v_min, v_max);
      *       return v_backup != *v;
      *    } */
-    fun <N> tempInputScalar(
-            bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>, format_: String,
-            pClampMin: KMutableProperty0<N>? = null, pClampMax: KMutableProperty0<N>? = null,
-    ): Boolean where N : Number, N: Comparable<N> {
+    fun <N> tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
+                            format_: String, clampMin: N? = null, clampMax: N? = null,): Boolean
+            where N : Number, N: Comparable<N> {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -909,8 +908,8 @@ internal interface inputText {
 
             // Apply new value (or operations) then clamp
             dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
-            if (pClampMin != null && pClampMax != null)
-                dataTypeClamp(dataType, pData, pClampMin(), pClampMax())
+            if (clampMin != null || clampMax != null)
+                dataTypeClamp(dataType, pData, clampMin, clampMax)
 
             // Only mark as edited if new value is different
             valueChanged = dataBackup != pData

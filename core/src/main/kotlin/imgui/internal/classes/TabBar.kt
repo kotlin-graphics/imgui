@@ -486,13 +486,15 @@ class TabBar {
 
         wantLayout = false
 
-        // Garbage collect
+        // Garbage collect by compacting list
         var tabDstN = 0
         for (tabSrcN in tabs.indices) {
             val tab = tabs[tabSrcN]
-            if (tab.lastFrameVisible < prevFrameVisible) {
-                if (tab.id == selectedTabId)
-                    selectedTabId = 0
+            if (tab.lastFrameVisible < prevFrameVisible || tab.wantClose) {
+                // Remove tab
+                if (visibleTabId == tab.id) visibleTabId = 0
+                if (selectedTabId == tab.id) selectedTabId = 0
+                if (nextSelectedTabId == tab.id) nextSelectedTabId = 0
                 continue
             }
             if (tabDstN != tabSrcN)
@@ -750,7 +752,7 @@ class TabBar {
         arrowCol.w *= 0.5f
         pushStyleColor(Col.Text, arrowCol)
         pushStyleColor(Col.Button, Vec4())
-        val open = beginCombo("##v", null, ComboFlag.NoPreview.i)
+        val open = beginCombo("##v", null, ComboFlag.NoPreview or ComboFlag.HeightLargest)
         popStyleColor(2)
 
         var tabToSelect: TabItem? = null

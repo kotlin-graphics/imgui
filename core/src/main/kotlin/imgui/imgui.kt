@@ -19,7 +19,7 @@ const val IMGUI_BUILD = 0
 const val IMGUI_VERSION = "1.78 WIP"// build: $IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 17703
+const val IMGUI_VERSION_NUM = 17704
 
 /** Viewport WIP branch */
 var IMGUI_HAS_VIEWPORT = true
