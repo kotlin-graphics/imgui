@@ -1,6 +1,7 @@
 package imgui.api
 
 import glm_.f
+import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -30,13 +31,14 @@ import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.classes.*
+import imgui.font.FontAtlas
 import imgui.has
-import imgui.internal.*
+import imgui.internal.DrawData
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.lengthSqr
 import imgui.internal.sections.or
 import imgui.static.*
-import org.lwjgl.system.Platform
 import kool.lim
 import imgui.WindowFlag as Wf
 import imgui.internal.sections.DrawListFlag as Dlf
@@ -97,13 +99,16 @@ interface main {
         g.drawListSharedData.clipRectFullscreen.put(virtualSpace.min.x, virtualSpace.min.y, virtualSpace.max.x, virtualSpace.max.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
         g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
-        g.drawListSharedData.initialFlags = Dlf.None.i
+        var flags = Dlf.None.i
         if (style.antiAliasedLines)
-            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedLines
+            flags = flags or Dlf.AntiAliasedLines
+        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i)
+            flags = flags or Dlf.AntiAliasedLinesUseTex
         if (style.antiAliasedFill)
-            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedFill
+            flags = flags or Dlf.AntiAliasedFill
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
-            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
+            flags = flags or Dlf.AllowVtxOffset
+        g.drawListSharedData.initialFlags = flags
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
         for (viewport in g.viewports) {

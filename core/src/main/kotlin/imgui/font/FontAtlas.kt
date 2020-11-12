@@ -6,23 +6,21 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
+import glm_.vec4.Vec4
 import imgui.ImGui.style
 import imgui.MouseCursor
 import imgui.TextureID
 import imgui.internal.classes.BitVector
-import imgui.internal.fileLoadToMemory
-import imgui.internal.round
-import imgui.internal.upperPowerOfTwo
+import imgui.internal.*
 import imgui.stb.*
-import imgui.wo
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
+import org.lwjgl.system.libc.LibCString.nmemset
 import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
 import unsigned.toUInt
-import unsigned.toULong
 import java.nio.ByteBuffer
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -161,7 +159,8 @@ class FontAtlas {
         }
         configData.clear()
         customRects.clear()
-        customRectIds.fill(-1)
+        packIdMouseCursors = -1
+        packIdLines = -1
     }
 
     /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
@@ -318,6 +317,19 @@ class FontAtlas {
 
         val isPacked: Boolean
             get() = x != 0xFFFF
+
+        constructor()
+
+        constructor(r: CustomRect) {
+            width = r.width
+            height = r.height
+            x = r.x
+            y = r.y
+            glyphID = r.glyphID
+            glyphAdvanceX = r.glyphAdvanceX
+            glyphOffset put r.glyphOffset
+            font = r.font
+        }
     }
 
     fun addCustomRectRegular(width: Int, height: Int): Int {
@@ -347,7 +359,10 @@ class FontAtlas {
         return customRects.lastIndex // Return index
     }
 
-    fun getCustomRectByIndex(index: Int) = customRects.getOrNull(index)
+    fun getCustomRectByIndex(index: Int): CustomRect {
+        assert(index >= 0)
+        return customRects[index]
+    }
 
     // Internals
 
@@ -362,10 +377,10 @@ class FontAtlas {
 
         if (cursor == MouseCursor.None) return false
 
-        if (flags has FontAtlasFlag.NoMouseCursors) return false
+        if (flags has Flag.NoMouseCursors) return false
 
-        assert(customRectIds[0] != -1)
-        val r = customRects[customRectIds[0]]
+        assert(packIdMouseCursors != -1)
+        val r = getCustomRectByIndex(packIdMouseCursors)
         val pos = DefaultTexData.cursorDatas[cursor.i][0] + Vec2(r.x, r.y)
         val size = DefaultTexData.cursorDatas[cursor.i][1]
         outSize put size
@@ -384,27 +399,31 @@ class FontAtlas {
     // Members
     //-------------------------------------------
 
-    /** Flags: for ImFontAtlas */
-    enum class FontAtlasFlag {
+    /** Flags: for ImFontAtlas build */
+    enum class Flag {
         None,
 
         /** Don't round the height to next power of two */
         NoPowerOfTwoHeight,
 
-        /** Don't build software mouse cursors into the atlas   */
-        NoMouseCursors;
+        /** Don't build software mouse cursors into the atlas (save a little texture memory) */
+        NoMouseCursors,
+
+        /** Don't build thick line textures into the atlas (save a little texture memory). The AntiAliasedLinesUseTex
+         *  features uses them, otherwise they will be rendered using polygons (more expensive for CPU/GPU). */
+        NoBakedLines;
 
         val i = if (ordinal == 0) 0 else 1 shl ordinal
     }
 
-    infix fun Int.has(flag: FontAtlasFlag) = and(flag.i) != 0
-    infix fun Int.hasnt(flag: FontAtlasFlag) = and(flag.i) == 0
+    infix fun Int.has(flag: Flag) = and(flag.i) != 0
+    infix fun Int.hasnt(flag: Flag) = and(flag.i) == 0
 
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
     var locked = false
 
     /** Build flags (see ImFontAtlasFlags_) */
-    var flags = FontAtlasFlag.None.i
+    var flags = Flag.None.i
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
@@ -440,11 +459,21 @@ class FontAtlas {
     /** Rectangles for packing custom texture data into the atlas.  */
     private val customRects = ArrayList<CustomRect>()
 
-    /** Internal data   */
+    /** Configuration data */
     private val configData = ArrayList<FontConfig>()
 
-    /** Identifiers of custom texture rectangle used by FontAtlas/DrawList  */
-    private val customRectIds = intArrayOf(-1)
+    /** UVs for baked anti-aliased lines */
+    val texUvLines = Array(DRAWLIST_TEX_LINES_WIDTH_MAX + 1) { Vec4() }
+
+
+    // [Internal] Packing data
+
+    /** Custom texture rectangle ID for white pixel and mouse cursors */
+    private var packIdMouseCursors = -1
+
+    /** Custom texture rectangle ID for baked anti-aliased lines */
+    private var packIdLines = -1
+
 
     private fun customRectCalcUV(rect: CustomRect, outUvMin: Vec2, outUvMax: Vec2) {
         assert(texSize.x > 0 && texSize.y > 0) { "Font atlas needs to be built before we can calculate UV coordinates" }
@@ -684,7 +713,7 @@ class FontAtlas {
 
         // 7. Allocate texture
         texSize.y = when {
-            flags has FontAtlasFlag.NoPowerOfTwoHeight -> texSize.y + 1
+            flags has Flag.NoPowerOfTwoHeight -> texSize.y + 1
             else -> texSize.y.upperPowerOfTwo
         }
         texUvScale = 1f / Vec2(texSize)
@@ -765,14 +794,22 @@ class FontAtlas {
         return true
     }
 
-    /** Register default custom rectangles (this is called/shared by both the stb_truetype and the FreeType builder)
-     *  ~ImFontAtlasBuildInit */
+    /** ~ImFontAtlasBuildInit
+     *  Note: this is called / shared by both the stb_truetype and the FreeType builder */
     fun buildInit() {
-        if (customRectIds[0] >= 0) return
-        customRectIds[0] = when {
-            flags hasnt FontAtlasFlag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
-            else -> addCustomRectRegular(2, 2)
-        }
+        // Register texture region for mouse cursors or standard white pixels
+        if (packIdMouseCursors < 0)
+            packIdMouseCursors = when {
+                flags hasnt Flag.NoMouseCursors -> addCustomRectRegular(DefaultTexData.wHalf * 2 + 1, DefaultTexData.h)
+                else -> addCustomRectRegular(2, 2)
+            }
+
+        // Register texture region for thick lines
+        // The +2 here is to give space for the end caps, whilst height +1 is to accommodate the fact we have
+        // a zero-width row
+        if (packIdLines < 0)
+            if (flags hasnt Flag.NoBakedLines)
+                packIdLines = addCustomRectRegular(DRAWLIST_TEX_LINES_WIDTH_MAX + 2, DRAWLIST_TEX_LINES_WIDTH_MAX + 1)
     }
 
     fun buildSetupFont(font: Font, fontConfig: FontConfig, ascent: Float, descent: Float) {
@@ -812,10 +849,14 @@ class FontAtlas {
         packRects.free()
     }
 
-    /** ~ImFontAtlasBuildFinish */
+    /** ~ImFontAtlasBuildFinish
+     *
+     *  This is called/shared by both the stb_truetype and the FreeType builder. */
     fun buildFinish() {
-        // Render into our custom data block
+        // Render into our custom data blocks
+        assert(texPixelsAlpha8 != null)
         buildRenderDefaultTexData()
+        buildRenderLinesTexData(this)
 
         // Register custom rectangle glyphs
         for (r in customRects) {
@@ -849,12 +890,11 @@ class FontAtlas {
     /** ~ImFontAtlasBuildRenderDefaultTexData */
     fun buildRenderDefaultTexData() {
 
-        assert(customRectIds[0] >= 0 && texPixelsAlpha8 != null)
-        val r = customRects[customRectIds[0]]
+        val r = getCustomRectByIndex(packIdMouseCursors)
         assert(r.isPacked)
 
         val w = texSize.x
-        if (flags hasnt FontAtlasFlag.NoMouseCursors) {
+        if (flags hasnt Flag.NoMouseCursors) {
             // Render/copy pixels
             assert(r.width == DefaultTexData.wHalf * 2 + 1 && r.height == DefaultTexData.h)
             var n = 0
@@ -867,6 +907,7 @@ class FontAtlas {
                     n++
                 }
         } else {
+            // Render 4 white pixels
             assert(r.width == 2 && r.height == 2)
             val offset = r.x.i + r.y.i * w
             with(texPixelsAlpha8!!) {
@@ -895,6 +936,38 @@ class FontAtlas {
         }
     }
 
+    companion object {
+
+        fun buildRenderLinesTexData(atlas: FontAtlas) {
+
+            if (atlas.flags has Flag.NoBakedLines.i)
+                return
+
+            // This generates a triangular shape in the texture, with the various line widths stacked on top of each other to allow interpolation between them
+            val r = atlas.getCustomRectByIndex(atlas.packIdLines)
+            assert(r.isPacked)
+            for (n in 0 until DRAWLIST_TEX_LINES_WIDTH_MAX + 1) { // +1 because of the zero-width row { // +1 because of the zero-width row
+                // Each line consists of at least two empty pixels at the ends, with a line of solid pixels in the middle
+                val y = n
+                val lineWidth = n
+                val padLeft = (r.width - lineWidth) / 2
+                val padRight = r.width - (padLeft + lineWidth)
+
+                // Write each slice
+                assert(padLeft + lineWidth + padRight == r.width && y < r.height){"Make sure we're inside the texture bounds before we start writing pixels"}
+                val writePtr = atlas.texPixelsAlpha8!!.adr + r.x + (r.y + y) * atlas.texSize.x
+                nmemset(writePtr, 0x00, padLeft.L)
+                nmemset(writePtr + padLeft, 0xFF, lineWidth.L)
+                nmemset(writePtr + padLeft + lineWidth, 0x00, padRight.L)
+
+                // Calculate UVs for this line
+                val uv0 = Vec2(r.x + padLeft - 1, r.y + y) * atlas.texUvScale
+                val uv1 = Vec2(r.x + padLeft + lineWidth + 1, r.y + y + 1) * atlas.texUvScale
+                val halfV = (uv0.y + uv1.y) * 0.5f // Calculate a constant V in the middle of the row to avoid sampling artifacts
+                atlas.texUvLines[n].put(uv0.x, halfV, uv1.x, halfV)
+            }
+        }
+    }
 
     /*  A work of art lies ahead! (. = white layer, X = black layer, others are blank)
         The white texels on the top left are the ones we'll use everywhere in Dear ImGui to render filled shapes.     */

@@ -11,7 +11,6 @@ import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
-import imgui.internal.DrawData
 import imgui.internal.classes.*
 import imgui.internal.hash
 import imgui.internal.sections.*
@@ -685,16 +684,25 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
         if (g.settingsLoaded)
-            io.iniFilename?.let(::saveIniSettingsToDisk)
+            io.iniFilename?.let {
+                val backupContext = gImGui!!
+                this.setCurrent()
+                saveIniSettingsToDisk(it)
+                backupContext.setCurrent()
+            }
 
         // Destroy platform windows
         val backupContext = gImGui
-        gImGui = this
+        this.setCurrent()
         destroyPlatformWindows()
-        gImGui = backupContext
+        backupContext!!.setCurrent()
 
         // Shutdown extensions
         dockContextShutdown(g)
+
+        // Notify hooked test engine, if any
+        if(IMGUI_ENABLE_TEST_ENGINE)
+            Hook.shutdown!!.invoke(this)
 
         // Clear everything else
         g.apply {
