@@ -23,6 +23,7 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
+import imgui.ImGui.isMouseReleased
 import imgui.ImGui.openPopupContextItem
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -50,14 +51,10 @@ object CustomRendering {
     val colf = Vec4(1.0f, 1.0f, 0.4f, 1.0f)
 
     var addingLine = false
-
-    class ItemLine(val p0: Vec2, val p1: Vec2) {
-        constructor(p: Vec2) : this(Vec2(p), Vec2(p))
-    }
-
-    val lines = ArrayList<ItemLine>()
+    val points = ArrayList<Vec2>()
     val scrolling = Vec2()
-    var showGrid = true
+    var optEnableGrid = true
+    var optEnableContextMenu = true
 
     var drawBg = true
     var drawFg = true
@@ -162,7 +159,8 @@ object CustomRendering {
 
             if (beginTabItem("Canvas")) {
 
-                checkbox("Show grid", ::showGrid)
+                checkbox("Enable grid", ::optEnableGrid)
+                checkbox("Enable context menu", ::optEnableContextMenu)
                 text("Mouse Left: drag to add lines,\nMouse Right: drag to scroll, click for context menu.")
 
                 // Typically you would use a BeginChild()/EndChild() pair to benefit from a clipping region + own scrolling.
@@ -197,35 +195,40 @@ object CustomRendering {
 
                 // Add first and second point
                 if (isHovered && !addingLine && ImGui.isMouseClicked(MouseButton.Left)) {
-                    lines += ItemLine(mousePosInCanvas)
+                    points += mousePosInCanvas // TODO problems with same instance?
+                    points += mousePosInCanvas
                     addingLine = true
                 }
                 if (addingLine) {
-                    lines.last().p1 put mousePosInCanvas
+                    points.last() put mousePosInCanvas
                     if (!ImGui.isMouseDown(MouseButton.Left))
                         addingLine = false
                 }
 
                 // Pan (using zero mouse threshold)
-                if (isActive && ImGui.isMouseDragging(MouseButton.Right, 0f))
+                // Pan (we use a zero mouse threshold when there's no context menu)
+                // You may decide to make that threshold dynamic based on whether the mouse is hovering something etc.
+                val mouseThresholdForPan = if (optEnableContextMenu) -1f else 0f
+                if (isActive && ImGui.isMouseDragging(MouseButton.Right, mouseThresholdForPan))
                     scrolling += io.mouseDelta
 
                 // Context menu (under default mouse threshold)
-                // We intentionally use the same button to demonstrate using mouse drag threshold. Some may feel panning should rely on same threshold.
                 val dragDelta = getMouseDragDelta(MouseButton.Right)
-                if (dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
+                if (optEnableContextMenu && isMouseReleased(MouseButton.Right) && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
                     openPopupContextItem("context")
                 dsl.popup("context") {
-                    if (addingLine)
-                        lines.pop()
+                    if (addingLine) {
+                        points.pop()
+                        points.pop()
+                    }
                     addingLine = false
-                    menuItem("Remove one", "", false, lines.isNotEmpty()) { lines.pop() }
-                    menuItem("Remove all", "", false, lines.isNotEmpty()) { lines.clear() }
+                    menuItem("Remove one", "", false, points.isNotEmpty()) { points.pop(); points.pop(); }
+                    menuItem("Remove all", "", false, points.isNotEmpty()) { points.clear() }
                 }
 
                 // Draw grid + all lines in the canvas
                 drawList.pushClipRect(canvasP0, canvasP1, true)
-                if (showGrid) {
+                if (optEnableGrid) {
                     val GRID_STEP = 64f
                     var x = scrolling.x % GRID_STEP
                     while (x < canvasSz.x) {
@@ -238,10 +241,10 @@ object CustomRendering {
                         y += GRID_STEP
                     }
                 }
-                for (line in lines) {
-                    val a = Vec2(origin.x + line.p0.x, origin.y + line.p0.y)
-                    val b = Vec2(origin.x + line.p1.x, origin.y + line.p1.y)
-                    drawList.addLine(a, b, COL32(255, 255, 0, 255), 2f)
+                for (n in points.indices step 2) {
+                    val p0 = points[n]
+                    val p1 = points[n + 1]
+                    drawList.addLine(origin + p0, origin + p1, COL32(255, 255, 0, 255), 2f)
                 }
                 drawList.popClipRect()
 

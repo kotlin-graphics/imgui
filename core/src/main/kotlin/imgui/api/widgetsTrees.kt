@@ -16,7 +16,7 @@ import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.internal.sections.NextItemDataFlag
 import imgui.max
-import imgui.internal.classes.itemHoveredDataBackup
+import imgui.internal.classes.lastItemDataBackup
 import imgui.internal.formatString
 import imgui.internal.sections.or
 import kotlin.reflect.KMutableProperty0
@@ -152,7 +152,7 @@ interface widgetsTrees {
             val buttonPos = Vec2(
                     max(window.dc.lastItemRect.min.x, window.dc.lastItemRect.max.x - style.framePadding.x * 2f - buttonSize),
                     (window.dc.lastItemRect.min.y))
-            itemHoveredDataBackup {
+            lastItemDataBackup {
                 if (closeButton(window.getID(id + 1), buttonPos))
                     open.set(false)
             }

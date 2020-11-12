@@ -47,9 +47,9 @@ object PropertyEditor {
         columns(2)
         separator()
 
-        // Iterate dummy objects with dummy members (all the same data)
+        // Iterate placeholder objects (all the same data)
         for (objI in 0..2)
-            showDummyObject("Object", objI)
+            showPlaceholderObject("Object", objI)
 
         columns(1)
         separator()
@@ -57,7 +57,7 @@ object PropertyEditor {
         end()
     }
 
-    fun showDummyObject(prefix: String, uid: Int) {
+    fun showPlaceholderObject(prefix: String, uid: Int) {
         //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
         pushID(uid)
         alignTextToFramePadding() // Text and Tree nodes are less high than framed widgets, here we add vertical spacing to make the tree lines equal high.
@@ -70,7 +70,7 @@ object PropertyEditor {
             for (i in 0..7) {
                 pushID(i) // Use field index as identifier.
                 if (i < 2)
-                    showDummyObject("Child", 424242)
+                    showPlaceholderObject("Child", 424242)
                 else {
                     // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
                     alignTextToFramePadding()
@@ -79,9 +79,9 @@ object PropertyEditor {
                     nextColumn()
                     pushItemWidth(-1)
                     if (i >= 5)
-                        inputFloat("##value", dummyMembers, i, 1f)
+                        inputFloat("##value", placeholderMembers, i, 1f)
                     else
-                        dragFloat("##value", dummyMembers, i, 0.01f)
+                        dragFloat("##value", placeholderMembers, i, 0.01f)
                     popItemWidth()
                     nextColumn()
                 }
@@ -92,5 +92,5 @@ object PropertyEditor {
         popID()
     }
 
-    val dummyMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f)
+    val placeholderMembers = floatArrayOf(0f, 0f, 1f, 3.1416f, 100f, 999f)
 }
