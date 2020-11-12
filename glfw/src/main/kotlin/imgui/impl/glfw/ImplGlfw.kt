@@ -58,7 +58,7 @@ class ImplGlfw @JvmOverloads constructor(
             backendFlags = backendFlags or BackendFlag.HasMouseCursors      // We can honor GetMouseCursor() values (optional)
             backendFlags = backendFlags or BackendFlag.HasSetMousePos       // We can honor io.WantSetMousePos requests (optional, rarely used)
             backendFlags = backendFlags or BackendFlag.PlatformHasViewports // We can create multi-viewports on the Platform side (optional)
-            if (GLFW_HAS_GLFW_HOVERED && Platform.get() == Platform.WINDOWS)
+            if (GLFW_HAS_WINDOW_HOVERED && Platform.get() == Platform.WINDOWS)
                 backendFlags = backendFlags or BackendFlag.HasMouseHoveredViewport // We can set io.MouseHoveredViewport correctly (optional, not easy)
             backendPlatformName = "imgui_impl_glfw"
 
@@ -193,7 +193,7 @@ class ImplGlfw @JvmOverloads constructor(
             // rectangles and last focused time of every viewports it knows about. It will be unaware of other windows that may be sitting between or over your windows.
             // [GLFW] FIXME: This is currently only correct on Win32. See what we do below with the WM_NCHITTEST, missing an equivalent for other systems.
             // See https://github.com/glfw/glfw/issues/1236 if you want to help in making this a GLFW feature.
-            if (GLFW_HAS_GLFW_HOVERED && Platform.get() == Platform.WINDOWS)
+            if (GLFW_HAS_WINDOW_HOVERED && Platform.get() == Platform.WINDOWS)
                 if (glfwGetWindowAttrib(window.value, GLFW_HOVERED) != 0 && viewport.flags hasnt ViewportFlag.NoInputs)
                     io.mouseHoveredViewport = viewport.id
         }
@@ -480,7 +480,7 @@ class ImplGlfw @JvmOverloads constructor(
         fun destroyWindow(viewport: Viewport) {
             (viewport.platformUserData as? ViewportDataGlfw)?.let { data ->
                 if (data.windowOwned) {
-                    if (GLFW_HAS_GLFW_HOVERED && Platform.get() == Platform.WINDOWS) {
+                    if (GLFW_HAS_WINDOW_HOVERED && Platform.get() == Platform.WINDOWS) {
                         val hwnd = HWND(viewport.platformHandleRaw as Long)
                         TODO()
 //                    ::RemovePropA(hwnd, "IMGUI_VIEWPORT");
@@ -513,7 +513,7 @@ class ImplGlfw @JvmOverloads constructor(
                 }
 
                 // GLFW hack: install hook for WM_NCHITTEST message handler
-                if (GLFW_HAS_GLFW_HOVERED && Platform.get() == Platform.WINDOWS) {
+                if (GLFW_HAS_WINDOW_HOVERED && Platform.get() == Platform.WINDOWS) {
                     TODO()
 //                    SetPropA(hwnd, "IMGUI_VIEWPORT", viewport)
 //                    if (g_GlfwWndProc == NULL)

@@ -196,7 +196,7 @@ internal interface newFrame {
                         if (io.mouseClickedPos[0] !in rootWindow.titleBarRect())
                             g.movingWindow = null
             }
-            else if (rootWindow != null && g.navWindow != null && topMostPopupModal == null)
+            else if (rootWindow == null && g.navWindow != null && topMostPopupModal == null)
                 // Clicking on void disable focus
                 focusWindow()
         }

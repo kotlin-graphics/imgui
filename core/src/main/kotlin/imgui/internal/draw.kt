@@ -307,6 +307,10 @@ class DrawListSplitter {
  *  (NB: the style and the naming convention here is a little inconsistent, we currently preserve them for backward compatibility purpose,
  *  as this is one of the oldest structure exposed by the library! Basically, ImDrawList == CmdList)
  *  ----------------------------------------------------------------------------- */
+
+/** The maximum line width to bake anti-aliased textures for. Build atlas with ImFontAtlasFlags_NoBakedLines to disable baking. */
+var DRAWLIST_TEX_LINES_WIDTH_MAX = 63
+
 class DrawData {
 
     /** Only valid after Render() is called and before the next NewFrame() is called.   */

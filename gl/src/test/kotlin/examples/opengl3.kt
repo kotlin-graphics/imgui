@@ -1,7 +1,6 @@
 package examples
 
 
-import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import gln.checkError
 import gln.glClearColor
@@ -46,6 +45,14 @@ private class ImGuiOpenGL3 {
     var counter = 0
 
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
+
+//    val hints = arrayOf("AnimGraphNode_CopyBone", "ce skipaa", "ce skipscreen", "ce skipsplash", "ce skipsplashscreen",
+//            "client_unit.cpp", "letrograd", "level", "leveler", "MacroCallback.cpp", "Miskatonic university", "MockAI.h",
+//            "MockGameplayTasks.h", "MovieSceneColorTrack.cpp", "r.maxfps", "r.maxsteadyfps", "reboot", "rescale", "reset",
+//            "resource", "restart", "retrocomputer", "retrograd", "return", "slomo 10", "SVisualLoggerLogsList.h",
+//            "The Black Knight")
+//    val s = ComboFilterState()
+//    val buf = hints[0].toByteArray(128)
 
     init {
         //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true) // for native leaks
@@ -172,6 +179,9 @@ private class ImGuiOpenGL3 {
             run {
 
                 begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
+
+//                if(comboFilter("my combofilter", buf, hints, s) )
+//                    println("picking occured")
 
                 text("This is some useful text.")                // Display some text (you can use a format strings too)
                 checkbox("Demo Window", ::showDemo)             // Edit bools storing our window open/close state
