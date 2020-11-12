@@ -38,6 +38,7 @@ internal interface basicAccessors {
         }
         g.activeId = id
         g.activeIdAllowOverlap = false
+        g.activeIdNoClearOnFocusLoss = false
         g.activeIdWindow = window
         g.activeIdHasBeenEditedThisFrame = false
         if (id != 0) {
@@ -79,7 +80,7 @@ internal interface basicAccessors {
             g.navDisableHighlight = true
     }
 
-    fun clearActiveID() = setActiveID(0, null)
+    fun clearActiveID() = setActiveID(0, null) // g.ActiveId = 0;
 
     var hoveredId: ID
         /** ~GetHoveredID */

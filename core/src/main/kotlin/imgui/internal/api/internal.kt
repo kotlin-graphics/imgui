@@ -82,8 +82,9 @@ internal interface internal {
         // - Focus a window while an InputText in another window is active, if focus happens before the old InputText can run.
         // - When using Nav to activate menu items (due to timing of activating on press->new window appears->losing ActiveId)
         // - Using dock host items (tab, collapse button) can trigger this before we redirect the ActiveIdWindow toward the child window.
-        if (g.activeId != 0 && g.activeIdWindow?.rootWindow !== focusFrontWindow && !activeIdWindowIsDockNodeHost)
-            clearActiveID()
+        if (g.activeId != 0 && g.activeIdWindow?.rootWindow !== focusFrontWindow)
+            if (!g.activeIdNoClearOnFocusLoss && !activeIdWindowIsDockNodeHost)
+                clearActiveID()
 
         // Passing NULL allow to disable keyboard focus
         if (window == null)

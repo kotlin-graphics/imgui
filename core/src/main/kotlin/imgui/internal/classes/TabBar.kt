@@ -28,6 +28,7 @@ import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.selectable
+import imgui.ImGui.setActiveID
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setTooltip
 import imgui.ImGui.shrinkWidths
@@ -415,8 +416,9 @@ class TabBar {
                     // Undock
                     dockContextQueueUndockWindow(g, dockedWindow)
                     g.movingWindow = dockedWindow
-                    g.activeId = g.movingWindow!!.moveId
+                    setActiveID(dockedWindow.moveId, dockedWindow)
                     g.activeIdClickOffset.minusAssign(g.movingWindow!!.pos - bb.min)
+                    g.activeIdNoClearOnFocusLoss = true
                 }
             }
         }

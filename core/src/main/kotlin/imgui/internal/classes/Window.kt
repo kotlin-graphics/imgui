@@ -660,6 +660,7 @@ class Window(
         focusWindow(this)
         setActiveID(moveId, this)
         g.navDisableHighlight = true
+        g.activeIdNoClearOnFocusLoss = true
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
 
         var canMoveWindow = true

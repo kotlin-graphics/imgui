@@ -158,6 +158,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
 
+    /** Disable losing active id if the active id window gets unfocused. */
+    var activeIdNoClearOnFocusLoss = false
+
     /** Track whether the active id led to a press (this is to allow changing between PressOnClick and PressOnRelease without pressing twice). Used by range_select branch. */
     var activeIdHasBeenPressedBefore = false
 
