@@ -148,7 +148,8 @@ public class OpenGL3 {
         imgui.newFrame();
 
         imgui.text("Hello, world!");                                // Display some text (you can use a format string too)
-        imgui.sliderFloat("float", f, 0, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
+        // TODO
+//        imgui.sliderFloat("float", f, 0, 0f, 1f, "%.3f", 1f);       // Edit 1 float using a slider from 0.0f to 1.0f
         imgui.colorEdit3("clear color", clearColor, 0);               // Edit 3 floats representing a color
 
         imgui.checkbox("Demo Window", showDemo);                 // Edit bools storing our windows open/close state

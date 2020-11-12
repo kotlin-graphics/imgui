@@ -103,10 +103,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Window being drawn into    */
     var currentWindow: Window? = null
 
-    /** Will catch mouse inputs */
+    /** Window the mouse is hovering. Will typically catch mouse inputs. */
     var hoveredWindow: Window? = null
 
-    /** Will catch mouse inputs (for focus/move only)   */
+    /** == HoveredWindow ? HoveredWindow->RootWindow : NULL, merely a shortcut to avoid null test in some situation.   */
     var hoveredRootWindow: Window? = null
 
     /** Hovered window ignoring MovingWindow. Only set if MovingWindow is set. */
@@ -501,6 +501,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Initial/reference color at the time of opening the color picker. */
     val colorPickerRef = Vec4()
 
+    /** Accumulated slider delta when using navigation controls. */
+    var sliderCurrentAccum = 0f
+
+    /** Has the accumulated slider delta changed since last time we tried to apply it? */
+    var sliderCurrentAccumDirty = false
+
     var dragCurrentAccumDirty = false
 
     /** Accumulator for dragging modification. Always high-precision, not rounded by end-user precision settings */
@@ -710,7 +716,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         dockContextShutdown(g)
 
         // Notify hooked test engine, if any
-        if(IMGUI_ENABLE_TEST_ENGINE)
+        if (IMGUI_ENABLE_TEST_ENGINE)
             Hook.shutdown!!.invoke(this)
 
         // Clear everything else

@@ -187,13 +187,6 @@ infix fun ButtonFlags.wo(b: ButtonFlag): ButtonFlags = and(b.i.inv())
 typealias ButtonFlags = Int
 
 
-enum class SliderFlag { None, Vertical }
-
-
-enum class DragFlag { None, Vertical }
-
-
-
 typealias SeparatorFlags = Int
 
 enum class SeparatorFlag {

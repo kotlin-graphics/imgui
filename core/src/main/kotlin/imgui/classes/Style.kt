@@ -88,6 +88,9 @@ class Style {
     /** Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs. */
     var grabRounding = 0f
 
+    /** The size in pixels of the dead-zone around zero on logarithmic sliders that cross zero. */
+    var logSliderDeadzone = 4f
+
     /** Radius of upper corners of a tab. Set to 0.0f to have rectangular tabs. */
     var tabRounding = 4f
 
@@ -205,6 +208,7 @@ class Style {
         scrollbarRounding = floor(scrollbarRounding * scaleFactor)
         grabMinSize = floor(grabMinSize * scaleFactor)
         grabRounding = floor(grabRounding * scaleFactor)
+        logSliderDeadzone = floor(logSliderDeadzone * scaleFactor)
         tabRounding = floor(tabRounding * scaleFactor)
         if (tabMinWidthForUnselectedCloseButton != Float.MAX_VALUE)
             tabMinWidthForUnselectedCloseButton = floor(tabMinWidthForUnselectedCloseButton * scaleFactor)

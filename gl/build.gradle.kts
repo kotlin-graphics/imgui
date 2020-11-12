@@ -1,6 +1,6 @@
 import org.gradle.internal.os.OperatingSystem.*
 
-val moduleName = "$group.gl"
+val moduleName = "$group.${rootProject.name}.gl"
 
 dependencies {
 
