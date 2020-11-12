@@ -13,9 +13,9 @@ import imgui.classes.ViewportFlag
 import imgui.classes.ViewportP
 import imgui.classes.has
 import imgui.has
-import imgui.internal.ASSERT_PARANOID
 import imgui.internal.classes.Rect
 import imgui.internal.floor
+import imgui.internal.sections.ASSERT_PARANOID
 import imgui.static.IMGUI_VIEWPORT_DEFAULT_ID
 
 // Viewports

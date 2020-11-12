@@ -19,6 +19,7 @@ import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.classes.ViewportP
 import imgui.ImGui.topMostPopupModal
+import imgui.internal.sections.IMGUI_DEBUG_LOG_POPUP
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.hasnt

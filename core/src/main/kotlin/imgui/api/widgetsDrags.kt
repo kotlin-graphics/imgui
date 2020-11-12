@@ -40,8 +40,8 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputIsActive
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
-import imgui.internal.sections.DragFlag
 import imgui.internal.classes.Rect
+import imgui.internal.sections.DragFlag
 import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
@@ -57,8 +57,7 @@ import kotlin.reflect.KMutableProperty0
  *      e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
  *  - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1).
  *      For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
- *  - Use v_min < v_max to clamp edits to given limits. Note that CTRL+Click manual input can override those limits.
- *  - Use v_min > v_max to lock edits.  */
+ *  - Use v_min < v_max to clamp edits to given limits. Note that CTRL+Click manual input can override those limits. */
 interface widgetsDrags {
 
     /** If v_min >= v_max we have no bound */
@@ -109,12 +108,18 @@ interface widgetsDrags {
 
         var min = if (vMin >= vMax) -Float.MAX_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
-        var valueChanged = dragFloat("##min", vCurrentMinPtr, vSpeed, min, max, format, power)
+        if (min == max) {
+            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
+        var valueChanged = dragScalar("##min", DataType.Float, vCurrentMinPtr, vSpeed, min, max, format, power)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
+
         min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         max = if (vMin >= vMax) Float.MAX_VALUE else vMax
-        valueChanged = dragFloat("##max", vCurrentMaxPtr, vSpeed, min, max, formatMax, power) || valueChanged
+        if (min == max) {
+            min = Float.MAX_VALUE; max = -Float.MAX_VALUE; } // Lock edit
+        val f = if (formatMax.isNotEmpty()) formatMax else format
+        valueChanged = dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, min, max, f, power) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -168,12 +173,18 @@ interface widgetsDrags {
 
         var min = if (vMin >= vMax) Int.MIN_VALUE else vMin
         var max = if (vMin >= vMax) vCurrentMax else vMax min vCurrentMax
+        if (min == max) {
+            min = Int.MAX_VALUE; max = Int.MIN_VALUE; } // Lock edit
         var valueChanged = dragInt("##min", vCurrentMinPtr, vSpeed, min, max, format)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
+
         min = if (vMin >= vMax) vCurrentMin else vMin max vCurrentMin
         max = if (vMin >= vMax) Int.MAX_VALUE else vMax
-        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, min, max, formatMax) || valueChanged
+        if (min == max) {
+            min = Int.MAX_VALUE; max = Int.MIN_VALUE; } // Lock edit
+        val f = if (formatMax.isNotEmpty()) formatMax else format
+        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, min, max, f) || valueChanged
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
@@ -211,7 +222,7 @@ interface widgetsDrags {
 
         val id = window.getID(label)
         val w = calcItemWidth()
-        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
@@ -231,8 +242,7 @@ interface widgetsDrags {
 
         // Tabbing or CTRL-clicking on Drag turns it into an input box
         val hovered = itemHoverable(frameBb, id)
-        val tempInputIsActive = tempInputIsActive(id)
-        var tempInputStart = false
+        var tempInputIsActive = tempInputIsActive(id)
         if (!tempInputIsActive) {
             val focusRequested = focusableItemRegister(window, id)
             val clicked = hovered && io.mouseClicked[0]
@@ -241,16 +251,16 @@ interface widgetsDrags {
                 setActiveID(id, window)
                 setFocusID(id, window)
                 focusWindow(window)
-                g.activeIdUsingNavDirMask  = (1 shl Dir.Left) or (1 shl Dir.Right)
+                g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
                 if (focusRequested || (clicked && io.keyCtrl) || doubleClicked || g.navInputId == id) {
-                    tempInputStart = true
+                    tempInputIsActive = true
                     focusableItemUnregister(window)
                 }
             }
         }
 
         // Our current specs do NOT clamp when using CTRL+Click manual input, but we should eventually add a flag for that..
-        if (tempInputIsActive || tempInputStart)
+        if (tempInputIsActive)
             return tempInputScalar(frameBb, id, label, dataType, pData, format) // , p_min, p_max)
 
         // Draw frame
@@ -303,7 +313,7 @@ interface widgetsDrags {
         popID()
 
         val labelEnd = findRenderedTextEnd(label)
-        if (0 != labelEnd)        {
+        if (0 != labelEnd) {
             sameLine(0f, style.itemInnerSpacing.x)
             textEx(label, labelEnd)
         }
