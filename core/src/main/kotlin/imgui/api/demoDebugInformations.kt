@@ -893,7 +893,13 @@ interface demoDebugInformations {
                     nodeWindow(node.hostWindow, "HostWindow")
                     nodeWindow(node.visibleWindow, "VisibleWindow")
                     bulletText("SelectedTabID: 0x%08X, LastFocusedNodeID: 0x%08X", node.selectedTabId, node.lastFocusedNodeId)
-                    bulletText("Misc:${if (node.isDockSpace) " IsDockSpace" else ""}${if (node.isCentralNode) " IsCentralNode" else ""}${if (g.frameCount - node.lastFrameAlive < 2) " IsAlive" else ""}${if (g.frameCount - node.lastFrameActive < 2) " IsActive" else ""}")
+                    val builder = StringBuilder("Misc:")
+                    builder += if (node.isDockSpace) " IsDockSpace" else ""
+                    builder += if (node.isCentralNode) " IsCentralNode" else ""
+                    builder += if (g.frameCount - node.lastFrameAlive < 2) " IsAlive" else ""
+                    builder += if (g.frameCount - node.lastFrameActive < 2) " IsActive" else ""
+                    builder += if(node.wantLockSizeOnce) " WantLockSizeOnce" else ""
+                    bulletText(builder.toString())
                     if (treeNode("flags", "LocalFlags: 0x%04X SharedFlags: 0x%04X", node.localFlags, node.sharedFlags)) {
                         checkboxFlags("LocalFlags: NoDocking", node::localFlags, DockNodeFlag._NoDocking.i)
                         checkboxFlags("LocalFlags: NoSplit", node::localFlags, DockNodeFlag.NoSplit.i)

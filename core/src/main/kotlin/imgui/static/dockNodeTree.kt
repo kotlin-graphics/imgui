@@ -150,17 +150,15 @@ fun dockNodeTreeUpdatePosSize(node: DockNode, pos: Vec2, size: Vec2, onlyWriteTo
         // 2) Process locked absolute size (during a splitter resize we preserve the child of nodes not touching the splitter edge)
         assert(!child0.wantLockSizeOnce || !child1.wantLockSizeOnce)
         if (child0.wantLockSizeOnce) {
-            child0.wantLockSizeOnce = false
-            child0Size[axis] = child0.size[axis]
-            child0.sizeRef[axis] = child0.size[axis]
+            child0Size[axis] = (sizeAvail - 1f) min child0.size[axis]
+            child0.sizeRef[axis] = child0Size[axis]
             child1Size[axis] = sizeAvail - child0Size[axis]
             child1.sizeRef[axis] = sizeAvail - child0Size[axis]
             assert(child0.sizeRef[axis] > 0f && child1.sizeRef[axis] > 0f)
 
         } else if (child1.wantLockSizeOnce) {
-            child1.wantLockSizeOnce = false
-            child1Size[axis] = child1.size[axis]
-            child1.sizeRef[axis] = child1.size[axis]
+            child1Size[axis] = (sizeAvail -1f) min child1.size[axis]
+            child1.sizeRef[axis] = child1Size[axis]
             child0Size[axis] = sizeAvail - child1Size[axis]
             child0.sizeRef[axis] = sizeAvail - child1Size[axis]
             assert(child0.sizeRef[axis] > 0f && child1.sizeRef[axis] > 0f)
@@ -181,6 +179,9 @@ fun dockNodeTreeUpdatePosSize(node: DockNode, pos: Vec2, size: Vec2, onlyWriteTo
         }
         child1Pos[axis] += spacing + child0Size[axis]
     }
+    child0.wantLockSizeOnce = false
+    child1.wantLockSizeOnce = false
+
     if (child0.isVisible)
         dockNodeTreeUpdatePosSize(child0, child0Pos, child0Size)
     if (child1.isVisible)
