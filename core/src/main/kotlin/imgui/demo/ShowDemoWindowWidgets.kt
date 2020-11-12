@@ -263,7 +263,7 @@ object ShowDemoWindowWidgets {
         ${'\t'}lock cmpxchg8b eax
         
         """.trimIndent().toByteArray(1024 * 16)
-    var flags = Itf.AllowTabInput.i
+    var flags1 = Itf.AllowTabInput.i
 
     val bufs = Array(6) { ByteArray(64) }
 
@@ -300,10 +300,9 @@ object ShowDemoWindowWidgets {
     var displayMode = 0
     var pickerMode = 0
     var colorHsv = Vec4(0.23f, 1f, 1f, 1f)  // Stored as HSV!
-    var dragFlags: DragFlags = DragFlag.None.i
+    var flags2: SliderFlags = SliderFlag.None.i
     var dragF = 0.5f
     var dragI = 50
-    var sliderFlags: SliderFlags = SliderFlag.None.i
     var sliderF = 0.5f
     var sliderI = 50
 
@@ -913,10 +912,10 @@ object ShowDemoWindowWidgets {
                 /*  Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
                     and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.  */
                 helpMarker("You can use the InputTextFlag.CallbackResize facility if you need to wire InputTextMultiline() to a dynamic string type. See misc/cpp/imgui_stl.h for an example. (This is not demonstrated in imgui_demo.cpp because we don't want to include <string> in here)") // TODO fix bug, some '?' appear at the end of the line
-                checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags, Itf.ReadOnly.i)
-                checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags, Itf.AllowTabInput.i)
-                checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags, Itf.CtrlEnterForNewLine.i)
-                inputTextMultiline("##source", textMultiline, Vec2(-Float.MIN_VALUE, textLineHeight * 16), flags)
+                checkboxFlags("ImGuiInputTextFlags_ReadOnly", ::flags1, Itf.ReadOnly.i)
+                checkboxFlags("ImGuiInputTextFlags_AllowTabInput", ::flags1, Itf.AllowTabInput.i)
+                checkboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", ::flags1, Itf.CtrlEnterForNewLine.i)
+                inputTextMultiline("##source", textMultiline, Vec2(-Float.MIN_VALUE, textLineHeight * 16), flags1)
             }
 
             treeNode("Filtered Text Input") {
@@ -1159,40 +1158,32 @@ object ShowDemoWindowWidgets {
         }
 
         treeNode("Drag/Slider Flags") {
-            // Demonstrate using advanced flags for DragXXX functions
-            checkboxFlags("ImGuiDragFlags_ClampOnInput", ::dragFlags, DragFlag.ClampOnInput.i)
+            // Demonstrate using advanced flags for DragXXX and SliderXXX functions. Note that the flags are the same!
+            checkboxFlags("ImGuiSliderFlags_ClampOnInput", ::flags2, SliderFlag.ClampOnInput.i)
             sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
-            checkboxFlags("ImGuiDragFlags_Logarithmic", ::dragFlags, DragFlag.Logarithmic.i)
+            checkboxFlags("ImGuiSliderFlags_Logarithmic", ::flags2, SliderFlag.Logarithmic.i)
             sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
-            checkboxFlags("ImGuiDragFlags_NoRoundToFormat", ::dragFlags, DragFlag.NoRoundToFormat.i)
+            checkboxFlags("ImGuiSliderFlags_NoRoundToFormat", ::flags2, SliderFlag.NoRoundToFormat.i)
             sameLine(); helpMarker("Disable rounding underlying value to match precision of the format string (e.g. %.3f values are rounded to those 3 digits).")
-            checkboxFlags("ImGuiDragFlags_NoInput", ::dragFlags, DragFlag.NoInput.i)
+            checkboxFlags("ImGuiSliderFlags_NoInput", ::flags2, SliderFlag.NoInput.i)
             sameLine(); helpMarker("Disable CTRL+Click or Enter key allowing to input text directly into the widget.")
 
+            // Drags
             text("Underlying float value: %f", dragF)
-            dragFloat("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%.3f", dragFlags)
-            dragFloat("DragFloat (0 -> +inf)", ::dragF, 0.005f, 0f, Float.MAX_VALUE, "%.3f", dragFlags)
-            dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%.3f", dragFlags)
-            dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%.3f", dragFlags)
-            dragInt("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", dragFlags)
+            dragFloat("DragFloat (0 -> 1)", ::dragF, 0.005f, 0f, 1f, "%.3f", flags2)
+            dragFloat("DragFloat (0 -> +inf)", ::dragF, 0.005f, 0f, Float.MAX_VALUE, "%.3f", flags2)
+            dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%.3f", flags2)
+            dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%.3f", flags2)
+            dragInt("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", flags2)
 
-            // Demonstrate using advanced flags for SliderXXX functions
-            checkboxFlags("ImGuiSliderFlags_ClampOnInput", ::sliderFlags, SliderFlag.ClampOnInput.i)
-            sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
-            checkboxFlags("ImGuiSliderFlags_Logarithmic", ::sliderFlags, SliderFlag.Logarithmic.i)
-            sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
-            checkboxFlags("ImGuiSliderFlags_NoRoundToFormat", ::sliderFlags, SliderFlag.NoRoundToFormat.i)
-            sameLine(); helpMarker("Disable rounding underlying value to match precision of the format string (e.g. %.3f values are rounded to those 3 digits).")
-            checkboxFlags("ImGuiSliderFlags_NoInput", ::sliderFlags, SliderFlag.NoInput.i)
-            sameLine(); helpMarker("Disable CTRL+Click or Enter key allowing to input text directly into the widget.")
-
+            // Sliders
             text("Underlying float value: %f", sliderF)
-            sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", sliderFlags)
-            sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%.3f", sliderFlags)
+            sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", flags2)
+            sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%.3f", flags2)
         }
 
         treeNode("Range Widgets") {
-            dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", DragFlag.ClampOnInput.i)
+            dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", SliderFlag.ClampOnInput.i)
             dragIntRange2("range int", ::beginI, ::endI, 5f, 0, 1000, "Min: %d units", "Max: %d units")
             dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %d units", "Max: %d units")
         }
@@ -1285,9 +1276,9 @@ object ShowDemoWindowWidgets {
             dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
             dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
             dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f")
-            dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", DragFlag.Logarithmic.i)
+            dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", SliderFlag.Logarithmic.i)
             dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams")
-            dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", DragFlag.Logarithmic.i)
+            dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic.i)
 
             text("Sliders")
             sliderScalar("slider s8 full", DataType.Byte, ::s8_v, s8_min, s8_max, "%d")
@@ -1307,10 +1298,10 @@ object ShowDemoWindowWidgets {
             sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, u64_hi_a, u64_hi_b, "%d ms")
             sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, u64_min, u64_max, "%d ms")
             sliderScalar("slider float low", DataType.Float, ::f32_v, f32_zero, f32_one)
-            sliderScalar("slider float low log", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", DragFlag.Logarithmic.i)
+            sliderScalar("slider float low log", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", SliderFlag.Logarithmic.i)
             sliderScalar("slider float high", DataType.Float, ::f32_v, f32_lo_a, f32_hi_a, "%e")
             sliderScalar("slider double low", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f grams")
-            sliderScalar("slider double low log", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", DragFlag.Logarithmic.i)
+            sliderScalar("slider double low log", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", SliderFlag.Logarithmic.i)
             sliderScalar("slider double high", DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams")
 
             text("Inputs")

@@ -279,16 +279,16 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
-                     format: String, flags: DragFlags): Boolean =
+                     format: String, flags: SliderFlags): Boolean =
             withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, flags) }
 
     fun <N> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
-                         pMax: Number?, format: String, flags: DragFlags): Boolean
+                         pMax: Number?, format: String, flags: SliderFlags): Boolean
             where N : Number, N : Comparable<N> {
 
-        assert(flags == 1 || flags hasnt DragFlag.InvalidMask_.i) { """
+        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) { """
             Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
-            Invalid ImGuiDragFlags flags! Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiDragFlags_Logarithmic flags instead.""".trimIndent()
+            Invalid ImGuiSliderFlags flags! Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
         }
 
         if (g.activeId == id)
@@ -299,7 +299,7 @@ internal interface widgetsLowLevelBehaviors {
 
         if (g.activeId != id)
             return false
-        if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly || flags has DragFlag._ReadOnly)
+        if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
             return false
 
         var v by pV

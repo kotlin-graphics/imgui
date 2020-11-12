@@ -1441,58 +1441,12 @@ infix fun ColorEditFlags.hasnt(b: ColorEditFlag): Boolean = and(b.i) == 0
 infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
 
 
-typealias DragFlags = Int
-
-/** Flags for DragFloat(), DragInt() etc. */
-enum class DragFlag(val i: DragFlags) {
-    None(0),
-
-    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API
-     *  that has got miscast to this enum, and will trigger an assert if needed. */
-    InvalidMask_(0x7000000F),
-
-    /** Clamp value to min/max bounds (if any) when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
-    ClampOnInput(1 shl 4),
-
-    /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
-    Logarithmic(1 shl 5),
-
-    /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
-    NoRoundToFormat(1 shl 6),
-
-    /** Disable CTRL+Click or Enter key allowing to input text directly into the widget */
-    NoInput(1 shl 7),
-
-    /** [Private] Should this widget be orientated vertically? */
-    _Vertical(1 shl 20),
-
-    _ReadOnly(1 shl 21);
-
-    infix fun and(b: DragFlag): DragFlags = i and b.i
-    infix fun and(b: DragFlags): DragFlags = i and b
-    infix fun or(b: DragFlag): DragFlags = i or b.i
-    infix fun or(b: DragFlags): DragFlags = i or b
-    infix fun xor(b: DragFlag): DragFlags = i xor b.i
-    infix fun xor(b: DragFlags): DragFlags = i xor b
-    infix fun wo(b: DragFlags): DragFlags = and(b.inv())
-}
-
-infix fun DragFlags.and(b: DragFlag): DragFlags = and(b.i)
-infix fun DragFlags.or(b: DragFlag): DragFlags = or(b.i)
-infix fun DragFlags.xor(b: DragFlag): DragFlags = xor(b.i)
-infix fun DragFlags.has(b: DragFlag): Boolean = and(b.i) != 0
-infix fun DragFlags.hasnt(b: DragFlag): Boolean = and(b.i) == 0
-infix fun DragFlags.wo(b: DragFlag): DragFlags = and(b.i.inv())
-
 typealias SliderFlags = Int
 
-/** Flags for SliderFloat(), SliderInt() etc. */
+/** Flags for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
+ *  We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it easier to swap them. */
 enum class SliderFlag(val i: SliderFlags) {
     None(0),
-
-    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API that
-     *  has got miscast to this enum, and will trigger an assert if needed. */
-    InvalidMask_(0x7000000F),
 
     /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
     ClampOnInput(1 shl 4),
@@ -1505,6 +1459,10 @@ enum class SliderFlag(val i: SliderFlags) {
 
     /** Disable CTRL+Click or Enter key allowing to input text directly into the widget */
     NoInput(1 shl 7),
+
+    /** [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API that
+     *  has got miscast to this enum, and will trigger an assert if needed. */
+    InvalidMask_(0x7000000F),
 
     /** [Private] Should this widget be orientated vertically? */
     _Vertical(1 shl 20),
