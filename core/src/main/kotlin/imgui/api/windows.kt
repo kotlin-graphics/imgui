@@ -589,10 +589,8 @@ interface windows {
                     else -> contentSizeExplicit.y
                 })
 
-                /*  Setup drawing context
-                    (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold
-                    transient data only. Nowadays difference between window-> and window->DC-> is dubious.)
-                 */
+                // Setup drawing context
+                // (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold transient data only. Nowadays difference between window-> and window->DC-> is dubious.)
                 dc.indent = 0f + windowPadding.x - scroll.x
                 dc.groupOffset = 0f
                 dc.columnsOffset = 0f
@@ -607,7 +605,6 @@ interface windows {
                 dc.currLineTextBaseOffset = 0f
 
                 dc.navLayerCurrent = NavLayer.Main
-                dc.navLayerCurrentMask = 1 shl NavLayer.Main
                 dc.navLayerActiveMask = dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0x00
                 dc.navFocusScopeIdCurrent =
