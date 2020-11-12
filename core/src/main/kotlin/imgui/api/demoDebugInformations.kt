@@ -78,7 +78,7 @@ import imgui.internal.sections.Columns
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.WindowSettings
 import imgui.internal.sections.wo
-import imgui.static.dockNodeTreeFindNodeByPos
+import imgui.static.dockNodeTreeFindVisibleNodeByPos
 import kool.BYTES
 import kool.lim
 import kool.rem
@@ -486,7 +486,7 @@ interface demoDebugInformations {
             val dc = g.dockContext
             for (node in dc.nodes.values) {
                 val rootNode = dockNodeGetRootNode(node)
-                val hoveredNode = dockNodeTreeFindNodeByPos(rootNode, io.mousePos)
+                val hoveredNode = dockNodeTreeFindVisibleNodeByPos(rootNode, io.mousePos)
                 if (hoveredNode != node)
                     continue
                 val p = StringBuffer(64)

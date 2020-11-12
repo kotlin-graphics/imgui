@@ -317,11 +317,11 @@ fun dockNodeTreeUpdateSplitter(node: DockNode) {
         dockNodeTreeUpdateSplitter(child1)
 }
 
-fun dockNodeTreeFindNodeByPos(node: DockNode, pos: Vec2): DockNode? {
+fun dockNodeTreeFindVisibleNodeByPos(node: DockNode, pos: Vec2): DockNode? {
     if (!node.isVisible)
         return null
 
-    val dockSpacing = g.style.itemInnerSpacing.x
+    val dockSpacing = g.style.itemInnerSpacing.x // FIXME: Relation to DOCKING_SPLITTER_SIZE?
     val r = Rect(node.pos, node.pos + node.size)
     r expand dockSpacing * 0.5f
     val inside = pos in r
@@ -330,18 +330,8 @@ fun dockNodeTreeFindNodeByPos(node: DockNode, pos: Vec2): DockNode? {
 
     if (node.isLeafNode)
         return node
-    dockNodeTreeFindNodeByPos(node.childNodes[0]!!, pos)?.let { return it }
-    dockNodeTreeFindNodeByPos(node.childNodes[1]!!, pos)?.let { return it }
-
-    // There is an edge case when docking into a dockspace which only has inactive nodes (because none of the windows are active)
-    // In this case we need to fallback into any leaf mode, possibly the central node.
-    if (node.isDockSpace && node.isRootNode) {
-        node.centralNode?.let {
-            if (node.isLeafNode) // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
-                return it
-        }
-                ?: return dockNodeTreeFindFallbackLeafNode(node)
-    }
+    dockNodeTreeFindVisibleNodeByPos(node.childNodes[0]!!, pos)?.let { return it }
+    dockNodeTreeFindVisibleNodeByPos(node.childNodes[1]!!, pos)?.let { return it }
 
     return null
 }
