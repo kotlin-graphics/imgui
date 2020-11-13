@@ -316,6 +316,9 @@ class TabItem {
     /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
     var nameOffset = -1
 
+    /** BeginTabItem() order, used to re-order tabs after toggling ImGuiTabBarFlags_Reorderable */
+    var beginOrder = -1
+
     /** Marked as closed by SetTabItemClosed() */
     var wantClose = false
 }

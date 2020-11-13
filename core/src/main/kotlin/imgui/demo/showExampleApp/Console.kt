@@ -57,6 +57,7 @@ object Console {
     class ExampleAppConsole {
         val inputBuf = ByteArray(256)
         val items = ArrayList<String>()
+
         // "CLASSIFY" is here to provide the test case where "C"+[tab] completes to "CL" and display multiple matches.
         val commands = arrayListOf("HELP", "HISTORY", "CLEAR", "CLASSIFY")
         val history = ArrayList<String>()
@@ -92,19 +93,16 @@ object Console {
             // Here we create a context menu only available from the title bar.
             popupContextItem { if (menuItem("Close Console")) open = false }
 
-            textWrapped(
-                    "This example implements a console with basic coloring, completion and history. A more elaborate " +
-                            "implementation may want to store entries along with extra data such as timestamp, emitter, etc.")
+            textWrapped("This example implements a console with basic coloring, completion and history. A more elaborate " + "implementation may want to store entries along with extra data such as timestamp, emitter, etc.")
             textWrapped("Enter 'HELP' for help, press TAB to use text completion.")
 
             if (smallButton("Add Debug Text")) {
-                addLog("%d some text", items.size); addLog("some more text"); addLog("display very important message here!"); }
+                addLog("%d some text",
+                    items.size); addLog("some more text"); addLog("display very important message here!"); }
             sameLine()
-            if (smallButton("Add Debug Error"))
-                addLog("[error] something went wrong")
+            if (smallButton("Add Debug Error")) addLog("[error] something went wrong")
             sameLine()
-            if (smallButton("Clear"))
-                clearLog()
+            if (smallButton("Clear")) clearLog()
             sameLine()
             val copyToClipboard = smallButton("Copy")
             //var t = 0.0; if (ImGui.time - t > 0.02f) { t = ImGui.time; addLog("Spam %f", t); }
@@ -118,8 +116,7 @@ object Console {
             }
 
             // Options, Filter
-            if (button("Options"))
-                openPopup("Options")
+            if (button("Options")) openPopup("Options")
             sameLine()
             filter.draw("Filter (\"incl,-excl\") (\"error\")", 180f)
             separator()
@@ -129,8 +126,7 @@ object Console {
             beginChild("ScrollingRegion", Vec2(0, -footerHeightToReserve), false, Wf.HorizontalScrollbar.i)
 
             if (beginPopupContextWindow()) {
-                if (selectable("Clear"))
-                    clearLog()
+                if (selectable("Clear")) clearLog()
                 endPopup()
             }
 
@@ -158,29 +154,23 @@ object Console {
             // - Split them into same height items would be simpler and facilitate random-seeking into your list.
             // - Consider using manual call to IsRectVisible() and skipping extraneous decoration from your items.
             pushStyleVar(StyleVar.ItemSpacing, Vec2(4, 1)) // Tighten spacing
-            if (copyToClipboard)
-                logToClipboard()
+            if (copyToClipboard) logToClipboard()
 
             for (i in items) {
-                if (!filter.passFilter(i))
-                    continue
+                if (!filter.passFilter(i)) continue
 
                 // Normally you would store more information in your item than just a string.
                 // (e.g. make Items[] an array of structure, store color/type etc.)
                 var color: Vec4? = null
                 if ("[error]" in i) color = Vec4(1f, 0.4f, 0.4f, 1f)
                 else if (i.startsWith("# ")) color = Vec4(1f, 0.8f, 0.6f, 1f)
-                if (color != null)
-                    pushStyleColor(Col.Text, color)
+                if (color != null) pushStyleColor(Col.Text, color)
                 textUnformatted(i)
-                if (color != null)
-                    popStyleColor()
+                if (color != null) popStyleColor()
             }
-            if (copyToClipboard)
-                logFinish()
+            if (copyToClipboard) logFinish()
 
-            if (scrollToBottom || (autoScroll && scrollY >= scrollMaxY))
-                setScrollHereY(1f)
+            if (scrollToBottom || (autoScroll && scrollY >= scrollMaxY)) setScrollHereY(1f)
             scrollToBottom = false
 
             popStyleVar()
@@ -192,14 +182,12 @@ object Console {
             val inputTextFlags = Itf.EnterReturnsTrue or Itf.CallbackCompletion or Itf.CallbackHistory
             if (inputText("Input", inputBuf, inputTextFlags, textEditCallbackStub, this)) {
                 val s = inputBuf.cStr.trimEnd()
-                if (s.isNotEmpty())
-                    execCommand(s)
+                if (s.isNotEmpty()) execCommand(s)
                 reclaimFocus = true
             }
 
             setItemDefaultFocus()
-            if (reclaimFocus)
-                setKeyboardFocusHere(-1)
+            if (reclaimFocus) setKeyboardFocusHere(-1)
 
             end()
         }
@@ -222,8 +210,7 @@ object Console {
                 }
                 "HISTORY" -> {
                     val first = history.size - 10
-                    for (i in (if (first > 0) first else 0) until history.size)
-                        addLog("%3d: ${history[i]}\n", i)
+                    for (i in (if (first > 0) first else 0) until history.size) addLog("%3d: ${history[i]}\n", i)
                 }
                 else -> addLog("Unknown command: '$cmdLine'\n")
             }
@@ -244,30 +231,23 @@ object Console {
                     var wordStart = wordEnd
                     while (wordStart > 0) {
                         val c = data.buf[wordStart]
-                        if (c == ' '.b || c == '\t'.b || c == ','.b || c == ';'.b)
-                            break
+                        if (c == ' '.b || c == '\t'.b || c == ','.b || c == ';'.b) break
                         wordStart--
                     }
 
                     val word = data.buf.copyOfRange(wordStart, wordEnd).cStr
                     val candidates = ArrayList<String>()
-                    for (c in commands)
-                        if (c.startsWith(word))
-                            candidates += c
-                    when {
-                        // No match
-                        candidates.isEmpty() -> addLog("No match for \"%s\"!\n", word)
-                        // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
-                        candidates.size == 1 -> {
-                            // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
+                    for (c in commands) if (c.startsWith(word)) candidates += c
+                    when { // No match
+                        candidates.isEmpty() -> addLog("No match for \"%s\"!\n",
+                            word) // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
+                        candidates.size == 1 -> { // Single match. Delete the beginning of the word and replace it entirely so we've got nice casing.
                             data.deleteChars(wordStart, wordEnd)
                             data.insertChars(data.cursorPos, candidates[0])
                             data.insertChars(data.cursorPos, " ")
-                        }
-                        // Multiple matches. Complete as much as we can..
+                        } // Multiple matches. Complete as much as we can..
                         // So inputing "C"+Tab will complete to "CL" then display "CLEAR" and "CLASSIFY" as matches.
-                        else -> {
-                            // Multiple matches. Complete as much as we can..
+                        else -> { // Multiple matches. Complete as much as we can..
                             // So inputing "C"+Tab will complete to "CL" then display "CLEAR" and "CLASSIFY" as matches.
                             var matchLen = wordEnd - wordStart
                             while (true) {
@@ -276,14 +256,12 @@ object Console {
 
                                 var i = 0
                                 while ((i < candidates.size) and allCandidatesMatch) {
-                                    if (i == 0)
-                                        c = candidates[i][matchLen].toUpperCase()
-                                    else if ((c == 0.toChar()) or (c != candidates[i][matchLen].toUpperCase()))
-                                        allCandidatesMatch = false
+                                    if (i == 0) c = candidates[i][matchLen].toUpperCase()
+                                    else if ((c == 0.toChar()) or (c != candidates[i][matchLen].toUpperCase())) allCandidatesMatch =
+                                        false
                                     ++i
                                 }
-                                if (!allCandidatesMatch)
-                                    break
+                                if (!allCandidatesMatch) break
                                 matchLen++
                             }
 
@@ -297,14 +275,11 @@ object Console {
                 Itf.CallbackHistory.i -> {
                     val prevHistoryPos = historyPos
                     if (data.eventKey == Key.UpArrow) {
-                        if (historyPos == -1)
-                            historyPos = history.size - 1
-                        else
-                            --historyPos
+                        if (historyPos == -1) historyPos = history.size - 1
+                        else --historyPos
                     } else if (data.eventKey == Key.DownArrow) {
                         if (historyPos != -1) {
-                            if (++historyPos >= history.size)
-                                --historyPos
+                            if (++historyPos >= history.size) --historyPos
                         }
                     }
 

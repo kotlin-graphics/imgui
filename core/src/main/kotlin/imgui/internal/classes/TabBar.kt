@@ -43,7 +43,6 @@ import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
-
 /** Storage for a tab bar (sizeof() 92~96 bytes) */
 class TabBar {
     val tabs = ArrayList<TabItem>()
@@ -79,10 +78,14 @@ class TabBar {
     var flags: TabBarFlags = TabBarFlag.None.i
     var reorderRequestTabId: ID = 0
     var reorderRequestDir = 0
+
+    /** Number of tabs submitted this frame. */
+    var tabsActiveCount = 0
+
     var wantLayout = false
     var visibleTabWasSubmitted = false
 
-    /** For BeginTabItem()/EndTabItem() */
+    /** Index of last BeginTabItem() tab for use by EndTabItem()  */
     var lastTabItemIdx = -1
 
     /** style.FramePadding locked at the time of BeginTabBar() */
@@ -122,10 +125,9 @@ class TabBar {
             return true
         }
 
-        // When toggling back from ordered to manually-reorderable, shuffle tabs to enforce the last visible order.
-        // Otherwise, the most recently inserted tabs would move at the end of visible list which can be a little too confusing or magic for the user.
-        if (flags_ has TabBarFlag.Reorderable && flags_ hasnt TabBarFlag.Reorderable && tabs.isNotEmpty() && prevFrameVisible != -1)
-            tabs.sortBy(TabItem::offset)
+        // When toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
+        if (flags_ has TabBarFlag.Reorderable != flags has TabBarFlag.Reorderable && tabs.isNotEmpty() && prevFrameVisible != -1)
+            tabs.sortBy(TabItem::beginOrder)
 
         // Flags
         if (flags_ hasnt TabBarFlag.FittingPolicyMask_)
@@ -137,6 +139,7 @@ class TabBar {
         prevFrameVisible = currFrameVisible
         currFrameVisible = g.frameCount
         framePadding put g.style.framePadding
+        tabsActiveCount = 0
 
         // Layout
         // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
@@ -272,6 +275,7 @@ class TabBar {
         }
         lastTabItemIdx = tabs.indexOf(tab)
         tab.contentWidth = size.x
+        tab.beginOrder = tabsActiveCount++
 
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
         val tabBarFocused = this.flags has TabBarFlag._IsFocused
@@ -773,3 +777,4 @@ class TabBar {
         fun calcMaxTabWidth() = g.fontSize * 20f
     }
 }
+

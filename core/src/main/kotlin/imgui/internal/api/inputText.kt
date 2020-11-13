@@ -880,14 +880,14 @@ internal interface inputText {
             }
         }
 
+        if (isPassword && !isDisplayingHint)
+            popFont()
+
         if (isMultiline) {
             dummy(textSize + Vec2(0f, g.fontSize)) // Always add room to scroll an extra line
             endChild()
             endGroup()
         }
-
-        if (isPassword && !isDisplayingHint)
-            popFont()
 
         // Log as text
         if (g.logEnabled && (!isPassword || isDisplayingHint))
@@ -1006,14 +1006,21 @@ internal interface inputText {
             // Generic named filters
             if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
 
+                // The libc allows overriding locale, with e.g. 'setlocale(LC_NUMERIC, "de_DE.UTF-8");' which affect the output/input of printf/scanf.
+                // The standard mandate that programs starts in the "C" locale where the decimal point is '.'.
+                // We don't really intend to provide widespread support for it, but out of empathy for people stuck with using odd API, we support the bare minimum aka overriding the decimal point.
+                // Change the default decimal_point with:
+                //   ImGui::GetCurrentContext()->PlatformLocaleDecimalPoint = *localeconv()->decimal_point;
+                val cDecimalPoint = g.platformLocaleDecimalPoint
+
                 // Allow 0-9 . - + * /
                 if (flags has Itf.CharsDecimal)
-                    if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/')
+                    if (c !in '0'..'9' && c != cDecimalPoint && c != '-' && c != '+' && c != '*' && c != '/')
                         return false
 
                 // Allow 0-9 . - + * / e E
                 if (flags has Itf.CharsScientific)
-                    if (c !in '0'..'9' && c != '.' && c != '-' && c != '+' && c != '*' && c != '/' && c != 'e' && c != 'E')
+                    if (c !in '0'..'9' && c != cDecimalPoint && c != '-' && c != '+' && c != '*' && c != '/' && c != 'e' && c != 'E')
                         return false
 
                 // Allow 0-9 a-F A-F
