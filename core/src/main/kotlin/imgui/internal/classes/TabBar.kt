@@ -301,7 +301,8 @@ class TabBar {
         tabsNames += label
 
         // Update selected tab
-        if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0) if (!tabBarAppearing || selectedTabId == 0) if (!isTabButton) nextSelectedTabId = id  // New tabs gets activated
+        if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0) if (!tabBarAppearing || selectedTabId == 0) if (!isTabButton) nextSelectedTabId =
+            id  // New tabs gets activated
         if (flags has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
             if (!isTabButton) nextSelectedTabId = id
 
@@ -311,7 +312,8 @@ class TabBar {
         if (tabContentsVisible) visibleTabWasSubmitted = true
 
         // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
-        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing) if (tabs.size == 1 && this.flags hasnt TabBarFlag.AutoSelectNewTabs) tabContentsVisible = true
+        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing) if (tabs.size == 1 && this.flags hasnt TabBarFlag.AutoSelectNewTabs) tabContentsVisible =
+            true
 
         // Note that tab_is_new is not necessarily the same as tab_appearing! When a tab bar stops being submitted
         // and then gets submitted again, the tabs will have 'tab_appearing=true' but 'tab_is_new=false'.
@@ -352,7 +354,8 @@ class TabBar {
         }
 
         // Click to Select a tab
-        var buttonFlags = (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
+        var buttonFlags =
+            (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
         if (g.dragDropActive) buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
         if (pressed && !isTabButton) nextSelectedTabId = id
@@ -365,7 +368,10 @@ class TabBar {
         if (held && !tabAppearing && isMouseDragging(MouseButton.Left)) if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable) // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
             if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
                 if (this.flags has TabBarFlag.Reorderable) queueReorder(tab, -1)
-            } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x) if (this.flags has TabBarFlag.Reorderable) queueReorder(tab, +1)
+            } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x) if (this.flags has TabBarFlag.Reorderable) queueReorder(
+                tab,
+                +1
+            )
 
         //        if (false)
         //            if (hovered && g.hoveredIdNotActiveTimer > 0.5f && bb.width < tab.widthContents)        {
@@ -395,13 +401,24 @@ class TabBar {
 
         // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
         val hoveredUnblocked = isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)
-        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || isMouseReleased(MouseButton.Right))) if (!isTabButton) nextSelectedTabId = id
+        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || isMouseReleased(MouseButton.Right))) if (!isTabButton) nextSelectedTabId =
+            id
 
-        if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton) flags = flags or TabItemFlag.NoCloseWithMiddleMouseButton
+        if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton) flags =
+            flags or TabItemFlag.NoCloseWithMiddleMouseButton
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) getIDWithSeed("#CLOSE", -1, id) else 0
-        val justClosed = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding, label.toByteArray(), id, closeButtonId, tabContentsVisible)
+        val justClosed = tabItemLabelAndCloseButton(
+            displayDrawList,
+            bb,
+            flags,
+            framePadding,
+            label.toByteArray(),
+            id,
+            closeButtonId,
+            tabContentsVisible
+        )
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
@@ -413,7 +430,9 @@ class TabBar {
 
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
-        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered()) if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip) setTooltip(label.substring(0, findRenderedTextEnd(label)))
+        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered()) if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip) setTooltip(
+            label.substring(0, findRenderedTextEnd(label))
+        )
 
         assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)) { "TabItemButton should not be selected" }
         return if (isTabButton) pressed else tabContentsVisible
@@ -444,10 +463,12 @@ class TabBar {
                 tabs[tabDstN] = tabs[tabSrcN]
 
             // We will need sorting if tabs have changed section (e.g. moved from one of Leading/Central/Trailing to another)
-            val currTabSectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+            val currTabSectionN =
+                if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
             if (tabDstN > 0) {
                 val prevTab = tabs[tabDstN - 1]
-                val prevTabSectionN = if(prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
+                val prevTabSectionN =
+                    if (prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
                 if (currTabSectionN == 0 && prevTabSectionN != 0)
                     needSortBySection = true
                 if (prevTabSectionN == 2 && currTabSectionN != 2)
@@ -466,8 +487,10 @@ class TabBar {
             tabs.sortWith(tabItemComparerBySection)
 
         // Calculate spacing between sections
-        sections[0].spacing = if (sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
-        sections[1].spacing = if (sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
+        sections[0].spacing =
+            if (sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
+        sections[1].spacing =
+            if (sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
 
         // Setup next selected tab
         var scrollTrackSelectedTabID: ID = 0
@@ -479,7 +502,8 @@ class TabBar {
 
         // Process order change request (we could probably process it when requested but it's just saner to do it in a single spot).
         if (reorderRequestTabId != 0) {
-            if (processReorder() && reorderRequestTabId == selectedTabId) scrollTrackSelectedTabID = reorderRequestTabId
+            if (processReorder() && reorderRequestTabId == selectedTabId)
+                scrollTrackSelectedTabID = reorderRequestTabId
             reorderRequestTabId = 0
         }
 
@@ -518,7 +542,8 @@ class TabBar {
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
             tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
 
-            val sectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+            val sectionN =
+                if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
             val section = sections[sectionN]
             section.width += tab.contentWidth + if (sectionN == currSectionN) g.style.itemInnerSpacing.x else 0f
             currSectionN = sectionN
@@ -559,7 +584,8 @@ class TabBar {
 
         // With ImGuiTabBarFlags_FittingPolicyScroll policy, we will only shrink leading/trailing if the central section is not visible anymore
         if (widthExcess > 0f && (flags has TabBarFlag.FittingPolicyResizeDown || !centralSectionIsVisible)) {
-            val shrinkDataCount = if (centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
+            val shrinkDataCount =
+                if (centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
             val shrinkDataOffset = if (centralSectionIsVisible) sections[0].tabCount + sections[2].tabCount else 0
             shrinkWidths(g.shrinkWidthBuffer, shrinkDataOffset, shrinkDataCount, widthExcess)
 
@@ -570,7 +596,8 @@ class TabBar {
                 if (shrinkedWidth < 0f)
                     continue
 
-                val sectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+                val sectionN =
+                    if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
                 sections[sectionN].width -= tab.width - shrinkedWidth
                 tab.width = shrinkedWidth
             }
@@ -617,7 +644,11 @@ class TabBar {
             scrollingSpeed = scrollingSpeed max (70f * g.fontSize)
             scrollingSpeed = scrollingSpeed max (abs(scrollingTarget - scrollingAnim) / 0.3f)
             val teleport = prevFrameVisible + 1 < g.frameCount || scrollingTargetDistToVisibility > 10f * g.fontSize
-            scrollingAnim = if (teleport) scrollingTarget else linearSweep(scrollingAnim, scrollingTarget, io.deltaTime * scrollingSpeed)
+            scrollingAnim = if (teleport) scrollingTarget else linearSweep(
+                scrollingAnim,
+                scrollingTarget,
+                io.deltaTime * scrollingSpeed
+            )
         } else scrollingSpeed = 0f
 
         scrollingRectMinX = barRect.min.x + sections[0].width + sections[0].spacing
@@ -652,7 +683,8 @@ class TabBar {
     fun scrollToTab(tab: TabItem, sections: Array<TabBarSection>) {
         if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing)) return
 
-        val margin = g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
+        val margin =
+            g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
         val order = tab.order
 
         // Scrolling happens only in the central section (leading/trailing sections are not scrolling)
@@ -661,7 +693,8 @@ class TabBar {
 
         // We make all tabs positions all relative Sections[0].Width to make code simpler
         val tabX1 = tab.offset - sections[0].width + if (order > sections[0].tabCount - 1) -margin else 0f
-        val tabX2 = tab.offset - sections[0].width + tab.width + if (order + 1 < tabs.size - sections[2].tabCount) margin else 1f
+        val tabX2 =
+            tab.offset - sections[0].width + tab.width + if (order + 1 < tabs.size - sections[2].tabCount) margin else 1f
         scrollingTargetDistToVisibility = 0f
         if (scrollingTarget > tabX1 || (tabX2 - tabX1 >= scrollableWidth)) {
             // Scroll to the left
@@ -697,9 +730,16 @@ class TabBar {
         io.keyRepeatRate = 0.2f
         val x = barRect.min.x max (barRect.max.x - scrollingButtonsWidth)
         window.dc.cursorPos.put(x, barRect.min.y)
-        if (arrowButtonEx("##<", Dir.Left, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat)) selectDir = -1
+        if (arrowButtonEx("##<", Dir.Left, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat)) selectDir =
+            -1
         window.dc.cursorPos.put(x + arrowButtonSize.x, barRect.min.y)
-        if (arrowButtonEx("##>", Dir.Right, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat)) selectDir = +1
+        if (arrowButtonEx(
+                "##>",
+                Dir.Right,
+                arrowButtonSize,
+                ButtonFlag.PressedOnClick or ButtonFlag.Repeat
+            )
+        ) selectDir = +1
         popStyleColor(2)
         io.keyRepeatRate = backupRepeatRate
         io.keyRepeatDelay = backupRepeatDelay
