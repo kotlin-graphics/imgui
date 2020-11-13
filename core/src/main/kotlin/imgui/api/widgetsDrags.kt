@@ -24,6 +24,8 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.has
 import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
@@ -260,7 +262,8 @@ interface widgetsDrags {
         if (tempInputIsActive) {
             // Only clamp CTRL+Click input when ImGuiSliderFlags_ClampInput is set
             val isClampInput = flags hasnt SliderFlag.ClampOnInput  && (pMin == null || pMax == null || pMin < pMax)
-            return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput }, pMax.takeIf { isClampInput })
+            return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput },
+                pMax.takeIf { isClampInput })
         }
 
         // Draw frame

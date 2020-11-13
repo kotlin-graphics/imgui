@@ -101,7 +101,7 @@ internal interface tabBars {
         var closeButtonVisible = false
         if (closeButtonId != 0)
             if (isContentsVisible || bb.width >= style.tabMinWidthForUnselectedCloseButton)
-                if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == closeButtonId)
+                if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == tabId || g.activeId == closeButtonId)
                     closeButtonVisible = true
         if (closeButtonVisible) {
             val closeButtonSz = g.fontSize

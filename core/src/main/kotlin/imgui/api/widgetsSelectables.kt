@@ -5,7 +5,6 @@ import imgui.*
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.contentRegionMaxAbs
 import imgui.ImGui.currentWindow
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
@@ -57,7 +56,8 @@ interface widgetsSelectables {
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)  // FIXME-OPT: Avoid if vertically clipped.
+        val spanAllColumns = flags has Sf.SpanAllColumns
+        if (spanAllColumns && window.dc.currentColumns != null)  // FIXME-OPT: Avoid if vertically clipped.
             pushColumnsBackground()
 
         // Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
@@ -69,8 +69,8 @@ interface widgetsSelectables {
         itemSize(size, 0f)
 
         // Fill horizontal space
-        val minX = if(flags has Sf.SpanAllColumns) window.parentWorkRect.min.x else pos.x
-        val maxX = if(flags has Sf.SpanAllColumns) window.parentWorkRect.max.x else window.workRect.max.x
+        val minX = if(spanAllColumns) window.parentWorkRect.min.x else pos.x
+        val maxX = if(spanAllColumns) window.parentWorkRect.max.x else window.workRect.max.x
         if (sizeArg.x == 0f || flags has Sf._SpanAvailWidth)
             size.x = max(labelSize.x, maxX - minX)
 
@@ -79,29 +79,30 @@ interface widgetsSelectables {
         val textMax = Vec2(minX + size.x, pos.y + size.y)
 
         // Selectables are meant to be tightly packed together with no click-gap, so we extend their box to cover spacing between selectable.
-        val bbEnlarged = Rect(minX, pos.y, textMax.x, textMax.y)
-        val spacing = style.itemSpacing
-        val spacingL = floor(spacing.x * 0.5f)
-        val spacingU = floor(spacing.y * 0.5f)
-        bbEnlarged.min.x -= spacingL
-        bbEnlarged.min.y -= spacingU
-        bbEnlarged.max.x += spacing.x - spacingL
-        bbEnlarged.max.y += spacing.y - spacingU
-        //if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb_align.Min, bb_align.Max, IM_COL32(255, 0, 0, 255)); }
-        //if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb_enlarged.Min, bb_enlarged.Max, IM_COL32(0, 255, 0, 255)); }
+        val bb = Rect(minX, pos.y, textMax.x, textMax.y)
+        if (flags hasnt Sf._NoPadWithHalfSpacing) {
+            val spacing = style.itemSpacing
+            val spacingL = floor(spacing.x * 0.5f)
+            val spacingU = floor(spacing.y * 0.5f)
+            bb.min.x -= spacingL
+            bb.min.y -= spacingU
+            bb.max.x += spacing.x - spacingL
+            bb.max.y += spacing.y - spacingU
+        }
+        //if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb.Min, bb.Max, IM_COL32(0, 255, 0, 255)); }
 
         val itemAdd = when {
             flags has Sf.Disabled -> {
                 val backupItemFlags = window.dc.itemFlags
                 window.dc.itemFlags = window.dc.itemFlags or If.Disabled or If.NoNavDefaultFocus
-                itemAdd(bbEnlarged, id).also {
+                itemAdd(bb, id).also {
                     window.dc.itemFlags = backupItemFlags
                 }
             }
-            else -> itemAdd(bbEnlarged, id)
+            else -> itemAdd(bb, id)
         }
         if (!itemAdd) {
-            if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)
+            if (spanAllColumns && window.dc.currentColumns != null)
                 pushColumnsBackground()
             return false
         }
@@ -119,7 +120,7 @@ interface widgetsSelectables {
 
         val wasSelected = selected
 
-        val (pressed, h, held) = buttonBehavior(bbEnlarged, id, buttonFlags)
+        val (pressed, h, held) = buttonBehavior(bb, id, buttonFlags)
         var hovered = h
 
         // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
@@ -143,15 +144,15 @@ interface widgetsSelectables {
             hovered = true
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
-            renderFrame(bbEnlarged.min, bbEnlarged.max, col.u32, false, 0f)
-            renderNavHighlight(bbEnlarged, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
+            renderFrame(bb.min, bb.max, col.u32, false, 0f)
+            renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         }
 
-        if (flags has Sf.SpanAllColumns && window.dc.currentColumns != null)
+        if (spanAllColumns && window.dc.currentColumns != null)
             popColumnsBackground()
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-        renderTextClipped(textMin, textMax, label, labelSize, style.selectableTextAlign, bbEnlarged)
+        renderTextClipped(textMin, textMax, label, labelSize, style.selectableTextAlign, bb)
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
