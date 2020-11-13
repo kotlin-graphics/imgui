@@ -16,12 +16,10 @@ import imgui.windowsIme.imeListener
 import imgui.windowsIme.imm
 import kool.BYTES
 import kool.Stack
-import kool.indices
-import org.lwjgl.glfw.*
 import kool.lim
+import org.lwjgl.glfw.*
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.JNI
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.*
 import org.lwjgl.system.Platform
 import org.lwjgl.system.windows.User32
@@ -37,10 +35,11 @@ import kotlin.collections.set
 // - When calling Init with 'install_callbacks=true': GLFW callbacks will be installed for you. They will call user's previously installed callbacks, if any.
 // - When calling Init with 'install_callbacks=false': GLFW callbacks won't be installed. You will need to call those function yourself from your own GLFW callbacks.
 class ImplGlfw @JvmOverloads constructor(
-        /** Main window */
-        val window: GlfwWindow, installCallbacks: Boolean = true,
-        /** for vr environment */
-        val vrTexSize: Vec2i? = null) {
+    /** Main window */
+    val window: GlfwWindow, installCallbacks: Boolean = true,
+    /** for vr environment */
+    val vrTexSize: Vec2i? = null
+) {
 
     /** for passing inputs in vr */
     var vrCursorPos: Vec2? = null
@@ -54,11 +53,15 @@ class ImplGlfw @JvmOverloads constructor(
         with(io) {
 
             // Setup back-end capabilities flags
-            backendFlags = backendFlags or BackendFlag.HasMouseCursors      // We can honor GetMouseCursor() values (optional)
-            backendFlags = backendFlags or BackendFlag.HasSetMousePos       // We can honor io.WantSetMousePos requests (optional, rarely used)
-            backendFlags = backendFlags or BackendFlag.PlatformHasViewports // We can create multi-viewports on the Platform side (optional)
+            backendFlags =
+                backendFlags or BackendFlag.HasMouseCursors      // We can honor GetMouseCursor() values (optional)
+            backendFlags =
+                backendFlags or BackendFlag.HasSetMousePos       // We can honor io.WantSetMousePos requests (optional, rarely used)
+            backendFlags =
+                backendFlags or BackendFlag.PlatformHasViewports // We can create multi-viewports on the Platform side (optional)
             if (GLFW_HAS_MOUSE_PASSTHROUGH || (GLFW_HAS_WINDOW_HOVERED && Platform.get() == Platform.WINDOWS))
-                backendFlags = backendFlags or BackendFlag.HasMouseHoveredViewport // We can set io.MouseHoveredViewport correctly (optional, not easy)
+                backendFlags =
+                    backendFlags or BackendFlag.HasMouseHoveredViewport // We can set io.MouseHoveredViewport correctly (optional, not easy)
             backendPlatformName = "imgui_impl_glfw"
 
             // Keyboard mapping. Dear ImGui will use those indices to peek into the io.KeysDown[] array.
@@ -85,7 +88,8 @@ class ImplGlfw @JvmOverloads constructor(
             keyMap[Key.Y] = GLFW_KEY_Y
             keyMap[Key.Z] = GLFW_KEY_Z
 
-            setClipboardTextFn = { _, text -> glfwSetClipboardString(clipboardUserData as Long, text) } // TODO uno -> clipboard
+            setClipboardTextFn =
+                { _, text -> glfwSetClipboardString(clipboardUserData as Long, text) } // TODO uno -> clipboard
             getClipboardTextFn = { glfwGetClipboardString(clipboardUserData as Long) }
             clipboardUserData = window.handle.value
 
@@ -100,15 +104,20 @@ class ImplGlfw @JvmOverloads constructor(
         val prevErrorCallback = glfwSetErrorCallback(null)
         mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
         mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
-        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this. [JVM] TODO
+        mouseCursors[MouseCursor.ResizeAll.i] =
+            glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this. [JVM] TODO
 //         mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR)
         mouseCursors[MouseCursor.ResizeNS.i] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)
         mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
         mouseCursors[MouseCursor.Hand.i] = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
-        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x00036009/*GLFW_RESIZE_ALL_CURSOR*/ else GLFW_ARROW_CURSOR)
-        mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x00036008/*GLFW_RESIZE_NESW_CURSOR*/ else GLFW_ARROW_CURSOR)
-        mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x00036007/*GLFW_RESIZE_NWSE_CURSOR*/ else GLFW_ARROW_CURSOR)
-        mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x0003600A/*GLFW_NOT_ALLOWED_CURSOR*/ else GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.ResizeAll.i] =
+            glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x00036009/*GLFW_RESIZE_ALL_CURSOR*/ else GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.ResizeNESW.i] =
+            glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x00036008/*GLFW_RESIZE_NESW_CURSOR*/ else GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.ResizeNWSE.i] =
+            glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x00036007/*GLFW_RESIZE_NWSE_CURSOR*/ else GLFW_ARROW_CURSOR)
+        mouseCursors[MouseCursor.NotAllowed.i] =
+            glfwCreateStandardCursor(if (GLFW_HAS_NEW_CURSORS) 0x0003600A/*GLFW_NOT_ALLOWED_CURSOR*/ else GLFW_ARROW_CURSOR)
 
         glfwSetErrorCallback(prevErrorCallback)
 
@@ -192,12 +201,12 @@ class ImplGlfw @JvmOverloads constructor(
             // rectangles and last focused time of every viewports it knows about. It will be unaware of other windows that may be sitting between or over your windows.
             // [GLFW] FIXME: This is currently only correct on Win32. See what we do below with the WM_NCHITTEST, missing an equivalent for other systems.
             // See https://github.com/glfw/glfw/issues/1236 if you want to help in making this a GLFW feature.
-            if(GLFW_HAS_MOUSE_PASSTHROUGH || (GLFW_HAS_WINDOW_HOVERED && Platform.get() == Platform.WINDOWS)) {
+            if (GLFW_HAS_MOUSE_PASSTHROUGH || (GLFW_HAS_WINDOW_HOVERED && Platform.get() == Platform.WINDOWS)) {
                 val windowNoInput = viewport.flags has ViewportFlag.NoInputs
-                if(GLFW_HAS_MOUSE_PASSTHROUGH)
+                if (GLFW_HAS_MOUSE_PASSTHROUGH)
                     glfwSetWindowAttrib(window.value, GLFW_MOUSE_PASSTHROUGH.i, windowNoInput.i)
-                    if (glfwGetWindowAttrib(window.value, GLFW_HOVERED) != 0 && !windowNoInput)
-                        io.mouseHoveredViewport = viewport.id
+                if (glfwGetWindowAttrib(window.value, GLFW_HOVERED) != 0 && !windowNoInput)
+                    io.mouseHoveredViewport = viewport.id
             }
         }
     }
@@ -218,7 +227,7 @@ class ImplGlfw @JvmOverloads constructor(
                 // Show OS mouse cursor
                 // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
                 window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL }
-                        ?: mouseCursors[MouseCursor.Arrow.i])
+                    ?: mouseCursors[MouseCursor.Arrow.i])
                 window.cursorMode = CursorMode.normal
             }
         }
@@ -273,34 +282,26 @@ class ImplGlfw @JvmOverloads constructor(
 
     fun updateMonitors() {
         val platformIO = ImGui.platformIO
-        val stack = MemoryStack.stackPush()
-        val x = stack.mallocInt(1)
-        val y = stack.mallocInt(1)
-        val w = stack.mallocInt(1)
-        val h = stack.mallocInt(1)
-        val glfwMonitors = glfwGetMonitors()!!
+        val glfwMonitors = glfw.monitors
         platformIO.monitors.clear()
-        for (n in glfwMonitors.indices) {
+        for (glfwMonitor in glfwMonitors) {
             val monitor = PlatformMonitor()
-            glfwGetMonitorPos(glfwMonitors[n], x, y)
-            val vidMode = glfwGetVideoMode(glfwMonitors[n])!!
-            monitor.mainPos.put(x[0], y[0])
-            monitor.mainSize.put(vidMode.width, vidMode.height)
+            val pos = glfwMonitor.pos
+            val vidMode = glfwMonitor.videoMode
+            monitor.mainPos put pos
+            monitor.workPos put pos
+            monitor.mainSize put vidMode.size
+            monitor.workSize put vidMode.size
             if (GLFW_HAS_MONITOR_WORK_AREA) {
-                glfwGetMonitorWorkarea(glfwMonitors[n], x, y, w, h)
-                monitor.workPos.put(x[0], y[0])
-                monitor.workSize.put(w[0], h[0])
-            } else {
-                monitor.workPos.put(x[0], y[0])
-                monitor.workSize.put(vidMode.width, vidMode.height)
+                val workArea = glfwMonitor.workArea
+                if (workArea.z > 0 && workArea.w > 0) {
+                    monitor.workPos.put(workArea.x, workArea.y)
+                    monitor.workSize.put(workArea.z, workArea.w)
+                }
             }
-            if (GLFW_HAS_PER_MONITOR_DPI) {
-                // Warning: the validity of monitor DPI information on Windows depends on the application DPI awareness settings, which generally needs to be set in the manifest or at runtime.
-                val xScale = stack.mallocFloat(1)
-                val yScale = stack.mallocFloat(1)
-                glfwGetMonitorContentScale(glfwMonitors[n], xScale, yScale)
-                monitor.dpiScale = xScale[0]
-            }
+            if (GLFW_HAS_PER_MONITOR_DPI)
+            // Warning: the validity of monitor DPI information on Windows depends on the application DPI awareness settings, which generally needs to be set in the manifest or at runtime.
+                monitor.dpiScale = glfwMonitor.contentScale.x
             platformIO.monitors += monitor
         }
         wantUpdateMonitors = false
@@ -332,10 +333,10 @@ class ImplGlfw @JvmOverloads constructor(
     companion object {
 
         fun initForOpenGL(window: GlfwWindow, installCallbacks: Boolean) =
-                ImplGlfw(window, installCallbacks).also { clientApi = GlfwClientApi.OpenGL }
+            ImplGlfw(window, installCallbacks).also { clientApi = GlfwClientApi.OpenGL }
 
         fun initForVulkan(window: GlfwWindow, installCallbacks: Boolean) =
-                ImplGlfw(window, installCallbacks).also { clientApi = GlfwClientApi.Vulkan }
+            ImplGlfw(window, installCallbacks).also { clientApi = GlfwClientApi.Vulkan }
 
         val mouseButtonCB: MouseButtonCB = { button: Int, action: Int, _: Int ->
             if (action == GLFW_PRESS && button in 0..2)
@@ -499,7 +500,8 @@ class ImplGlfw @JvmOverloads constructor(
         val GetWindowLong by lazy { User32.getLibrary().getFunctionAddress("GetWindowLong") }
         val SetWindowLong by lazy { User32.getLibrary().getFunctionAddress("SetWindowLong") }
         fun getWindowLong(hWnd: HWND, nIndex: Int) = JNI.callPI(hWnd.L, nIndex, GetWindowLong)
-        fun setWindowLong(hWnd: HWND, nIndex: Int, dwNewLong: Int) = JNI.callPI(hWnd.L, nIndex, dwNewLong, SetWindowLong)
+        fun setWindowLong(hWnd: HWND, nIndex: Int, dwNewLong: Int) =
+            JNI.callPI(hWnd.L, nIndex, dwNewLong, SetWindowLong)
 
         fun showWindow(viewport: Viewport) {
 
@@ -627,7 +629,11 @@ class ImplGlfw @JvmOverloads constructor(
                             ptCurrentPos.x = (pos.x - viewport.pos.x).L
                             ptCurrentPos.y = (pos.y - viewport.pos.y).L
                         }
-                        if (imm.setCompositionWindow(himc, cf) == 0) System.err.println("imm.setCompositionWindow failed")
+                        if (imm.setCompositionWindow(
+                                himc,
+                                cf
+                            ) == 0
+                        ) System.err.println("imm.setCompositionWindow failed")
                         if (imm.releaseContext(hwnd, himc) == 0) System.err.println("imm.releaseContext failed")
                     }
             }
