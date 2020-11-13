@@ -120,13 +120,12 @@ interface platformOS {
 
         // Update our implicit z-order knowledge of platform windows, which is used when the back-end cannot provide io.MouseHoveredViewport.
         // When setting Platform_GetWindowFocus, it is expected that the platform back-end can handle calls without crashing if it doesn't have data stored.
-        g.platformIO.platform_GetWindowFocus?.let { getFocus ->
-            g.viewports.find { it.platformWindowCreated && getFocus(it) }?.let { focusedViewport ->
-                if (g.platformLastFocusedViewport != focusedViewport.id) {
-                    if (focusedViewport.lastFrontMostStampCount != g.viewportFrontMostStampCount)
-                        focusedViewport.lastFrontMostStampCount = ++g.viewportFrontMostStampCount
-                    g.platformLastFocusedViewport = focusedViewport.id
-                }
+        // FIXME-VIEWPORT: We should use this information to also set dear imgui-side focus, allowing us to handle os-level alt+tab.
+        g.platformIO.platform_GetWindowFocus?.let { getWindowFocus ->
+            g.viewports.find { it.platformWindowCreated && getWindowFocus(it) }?.let { focusedViewport ->
+                // Store a tag so we can infer z-order easily from all our windows
+                if (focusedViewport.lastFrontMostStampCount != g.viewportFrontMostStampCount)
+                    focusedViewport.lastFrontMostStampCount = ++g.viewportFrontMostStampCount
             }
         }
     }

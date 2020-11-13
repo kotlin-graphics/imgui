@@ -246,9 +246,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Last known viewport that was hovered by mouse (even if we are not hovering any viewport any more) + honoring the _NoInputs flag. */
     var mouseLastHoveredViewport: ViewportP? = null
 
-    /** Record of last focused platform window/viewport, when this changes we stamp the viewport as front-most */
-    var platformLastFocusedViewport: ID = 0
-
     /** Every time the front-most window changes, we stamp its viewport with an incrementing counter */
     var viewportFrontMostStampCount = 0
 
