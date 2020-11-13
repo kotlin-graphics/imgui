@@ -74,10 +74,7 @@ import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.*
-import imgui.internal.sections.Axis
-import imgui.internal.sections.Columns
-import imgui.internal.sections.DrawListFlag
-import imgui.internal.sections.WindowSettings
+import imgui.internal.sections.*
 import kool.BYTES
 import kool.lim
 import kool.rem
@@ -473,9 +470,9 @@ interface demoDebugInformations {
                 text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
                 text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")
                 text("MovingWindow: '${g.movingWindow?.name ?: "NULL"}'")
-                ImGui::Text(
+                text(
                     "MouseViewport: 0x%08X (UserHovered 0x%08X, LastHovered 0x%08X)",
-                    g.MouseViewport->ID, g.IO.MouseHoveredViewport, g.MouseLastHoveredViewport ? g.MouseLastHoveredViewport->ID : 0);
+                    g.mouseViewport!!.id, g.io.mouseHoveredViewport, g.mouseLastHoveredViewport?.id ?: 0)
             }
 
             text("ITEMS")
