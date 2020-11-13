@@ -218,8 +218,8 @@ interface demoDebugInformations {
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
             if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
             if (io.configWindowsMemoryCompactTimer >= 0f) text(
-                "io.ConfigWindowsMemoryCompactTimer = %.1ff",
-                io.configWindowsMemoryCompactTimer
+                    "io.ConfigWindowsMemoryCompactTimer = %.1ff",
+                    io.configWindowsMemoryCompactTimer
             )
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
@@ -232,15 +232,15 @@ interface demoDebugInformations {
             // @formatter:on
             separator()
             text(
-                "io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
-                io.fonts.flags
+                    "io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
+                    io.fonts.flags
             )
             text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
             text(
-                "io.displayFramebufferScale: %.2f,%.2f".format(
-                    io.displayFramebufferScale.x,
-                    io.displayFramebufferScale.y
-                )
+                    "io.displayFramebufferScale: %.2f,%.2f".format(
+                            io.displayFramebufferScale.x,
+                            io.displayFramebufferScale.y
+                    )
             )
             separator()
             text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
@@ -308,14 +308,14 @@ interface demoDebugInformations {
                         for (rectN in WRT.values()) {
                             val r = Funcs.getWindowRect(nav, rectN)
                             text(
-                                "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s",
-                                r.min.x,
-                                r.min.y,
-                                r.max.x,
-                                r.max.y,
-                                r.width,
-                                r.height,
-                                WRT.names[rectN.ordinal]
+                                    "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s",
+                                    r.min.x,
+                                    r.min.y,
+                                    r.max.x,
+                                    r.max.y,
+                                    r.width,
+                                    r.height,
+                                    WRT.names[rectN.ordinal]
                             )
                         }
                     }
@@ -337,20 +337,20 @@ interface demoDebugInformations {
             if (open) {
                 g.platformIO.monitors.forEachIndexed { i, mon ->
                     bulletText(
-                        "Monitor #$i: DPI %.0f%%\n MainMin (%.0f,%.0f), MainMax (%.0f,%.0f), MainSize (%.0f,%.0f)\n WorkMin (%.0f,%.0f), WorkMax (%.0f,%.0f), WorkSize (%.0f,%.0f)",
-                        mon.dpiScale * 100f,
-                        mon.mainPos.x,
-                        mon.mainPos.y,
-                        mon.mainPos.x + mon.mainSize.x,
-                        mon.mainPos.y + mon.mainSize.y,
-                        mon.mainSize.x,
-                        mon.mainSize.y,
-                        mon.workPos.x,
-                        mon.workPos.y,
-                        mon.workPos.x + mon.workSize.x,
-                        mon.workPos.y + mon.workSize.y,
-                        mon.workSize.x,
-                        mon.workSize.y
+                            "Monitor #$i: DPI %.0f%%\n MainMin (%.0f,%.0f), MainMax (%.0f,%.0f), MainSize (%.0f,%.0f)\n WorkMin (%.0f,%.0f), WorkMax (%.0f,%.0f), WorkSize (%.0f,%.0f)",
+                            mon.dpiScale * 100f,
+                            mon.mainPos.x,
+                            mon.mainPos.y,
+                            mon.mainPos.x + mon.mainSize.x,
+                            mon.mainPos.y + mon.mainSize.y,
+                            mon.mainSize.x,
+                            mon.mainSize.y,
+                            mon.workPos.x,
+                            mon.workPos.y,
+                            mon.workPos.x + mon.workSize.x,
+                            mon.workPos.y + mon.workSize.y,
+                            mon.workSize.x,
+                            mon.workSize.y
                     )
                 }
                 treePop()
@@ -396,7 +396,6 @@ interface demoDebugInformations {
             if (smallButton("Clear nodes")) dockContextClearNodes(g, 0, true)
             sameLine()
             if (smallButton("Rebuild all")) dc.wantFullRebuild = true
-            text("HoveredDockNode: 0x%08X", g.hoveredDockNode?.id ?: 0)
             for (node in dc.nodes.values)
                 if (!rootNodesOnly || node.isRootNode)
                     Funcs.nodeDockNode(node, "Node")
@@ -443,19 +442,19 @@ interface demoDebugInformations {
                     var selectedTabName: String? = null
                     if (settings.selectedWindowId != 0)
                         findWindowByID(settings.selectedWindowId)?.let { selectedTabName = it.name }
-                            ?: findWindowSettings(settings.selectedWindowId)?.let { selectedTabName = it.name }
+                                ?: findWindowSettings(settings.selectedWindowId)?.let { selectedTabName = it.name }
                     val name = selectedTabName ?: if (settings.selectedWindowId != 0) "N/A" else ""
                     bulletText(
-                        "Node %08X, Parent %08X, SelectedTab %08X ('$name')",
-                        settings.id, settings.parentNodeId, settings.selectedWindowId
+                            "Node %08X, Parent %08X, SelectedTab %08X ('$name')",
+                            settings.id, settings.parentNodeId, settings.selectedWindowId
                     )
                 }
             }
             //            #endif
 
             treeNode(
-                "SettingsIniData",
-                "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes"
+                    "SettingsIniData",
+                    "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes"
             ) {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
             }
@@ -469,29 +468,18 @@ interface demoDebugInformations {
                 text("HoveredWindow: '${g.hoveredWindow?.name}'")
                 text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
                 text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")
+                text("HoveredDockNode: 0x%08X", g.hoveredDockNode?.id ?: 0)
                 text("MovingWindow: '${g.movingWindow?.name ?: "NULL"}'")
-                text(
-                    "MouseViewport: 0x%08X (UserHovered 0x%08X, LastHovered 0x%08X)",
-                    g.mouseViewport!!.id, g.io.mouseHoveredViewport, g.mouseLastHoveredViewport?.id ?: 0)
+                text("MouseViewport: 0x%08X (UserHovered 0x%08X, LastHovered 0x%08X)", g.mouseViewport!!.id, g.io.mouseHoveredViewport, g.mouseLastHoveredViewport?.id
+                        ?: 0)
             }
 
             text("ITEMS")
             indent {
-                text(
-                    "ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}",
-                    g.activeId, g.activeIdPreviousFrame, g.activeIdTimer
-                )
+                text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
-                text(
-                    "HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}",
-                    g.hoveredId,
-                    g.hoveredIdPreviousFrame,
-                    g.hoveredIdTimer
-                ) // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
-                text(
-                    "DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)",
-                    g.dragDropPayload.sourceId
-                )
+                text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
+                text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
             }
 
             text("NAV,FOCUS")
@@ -543,7 +531,7 @@ interface demoDebugInformations {
             val node = g.hoveredDockNode!!
             val p = StringBuffer(64)
             val overlayDrawList = node.hostWindow?.let(::getForegroundDrawList)
-                ?: getForegroundDrawList(mainViewport as ViewportP)
+                    ?: getForegroundDrawList(mainViewport as ViewportP)
             p += "DockId: %X${if (node.isCentralNode) " *CentralNode*" else ""}\n".format(node.id)
             p += "WindowClass: %08X\n".format(node.windowClass.classId)
             p += "Size: (%.0f, %.0f)\n".format(node.size.x, node.size.y)
@@ -569,14 +557,14 @@ interface demoDebugInformations {
      *
      *  add style selector block (not a window), essentially a combo listing the default styles. */
     fun showStyleSelector(label: String) =
-        if (combo(label, Companion::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
-            when (styleIdx) {
-                0 -> styleColorsClassic()
-                1 -> styleColorsDark()
-                2 -> styleColorsLight()
-            }
-            true
-        } else false
+            if (combo(label, Companion::styleIdx, "Classic\u0000Dark\u0000Light\u0000")) {
+                when (styleIdx) {
+                    0 -> styleColorsClassic()
+                    1 -> styleColorsDark()
+                    2 -> styleColorsLight()
+                }
+                true
+            } else false
 
     /** Demo helper function to select among loaded fonts.
      *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
@@ -595,7 +583,7 @@ interface demoDebugInformations {
         }
         sameLine()
         helpMarker(
-            """
+                """
             - Load additional fonts with io.Fonts->AddFontFromFileTTF().
             - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
             - Read FAQ and documentation in misc/fonts/ for more details.
@@ -607,7 +595,7 @@ interface demoDebugInformations {
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
         bulletText(
-            """
+                """
             Click and drag on lower corner to resize window
             (double-click to auto fit window to its contents).""".trimIndent()
         )
@@ -712,7 +700,7 @@ interface demoDebugInformations {
                 val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
                 val backupFlags = fgDrawList.flags
                 fgDrawList.flags =
-                    fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                        fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
                 for (baseIdx in elemOffset until (elemOffset + drawCmd.elemCount) step 3) {
                     val triangle = Array(3) { Vec2() }
                     for (n in 0..2) {
@@ -722,23 +710,23 @@ interface demoDebugInformations {
                     }
                     if (showMesh)
                         fgDrawList.addPolyline(
-                            triangle.toCollection(ArrayList()),
-                            COL32(255, 255, 0, 255),
-                            true,
-                            1f
+                                triangle.toCollection(ArrayList()),
+                                COL32(255, 255, 0, 255),
+                                true,
+                                1f
                         ) // In yellow: mesh triangles
                 }
                 // Draw bounding boxes
                 if (showAabb) {
                     fgDrawList.addRect(
-                        floor(clipRect.min),
-                        floor(clipRect.max),
-                        COL32(255, 0, 255, 255)
+                            floor(clipRect.min),
+                            floor(clipRect.max),
+                            COL32(255, 0, 255, 255)
                     ) // In pink: clipping rectangle submitted to GPU
                     fgDrawList.addRect(
-                        floor(vtxsRect.min),
-                        floor(vtxsRect.max),
-                        COL32(0, 255, 255, 255)
+                            floor(vtxsRect.min),
+                            floor(vtxsRect.max),
+                            COL32(0, 255, 255, 255)
                     ) // In cyan: bounding box of triangles
                 }
                 fgDrawList.flags = backupFlags
@@ -748,8 +736,8 @@ interface demoDebugInformations {
             fun nodeDrawList(window: Window?, viewport: ViewportP?, drawList: DrawList, label: String) {
 
                 val nodeOpen = treeNode(
-                    drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " +
-                            "${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds"
+                        drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " +
+                        "${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds"
                 )
                 if (drawList === windowDrawList) {
                     sameLine()
@@ -775,9 +763,9 @@ interface demoDebugInformations {
                         continue
                     if (cb != null) {
                         bulletText(
-                            "Callback %s, UserData %s",
-                            cb.toString(),
-                            String((cmd.userCallbackData as ByteBuffer).array())
+                                "Callback %s, UserData %s",
+                                cb.toString(),
+                                String((cmd.userCallbackData as ByteBuffer).array())
                         )
                         continue
                     }
@@ -785,8 +773,8 @@ interface demoDebugInformations {
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
 
                     var string =
-                        ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
-                            .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                            ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
+                                    .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
@@ -805,9 +793,9 @@ interface demoDebugInformations {
 
                     // Display vertex information summary. Hover to get all triangles drawn in wire-frame
                     string =
-                        "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(
-                            totalArea
-                        )
+                            "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(
+                                    totalArea
+                            )
                     selectable(string)
                     if (isItemHovered() && fgDrawList != null)
                         nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, true, false)
@@ -825,7 +813,7 @@ interface demoDebugInformations {
                                 triangles[n] put v.pos
                                 val name = if (n == 0) "Vert:" else "     "
                                 val s = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                                    .format(style.locale, idx_i++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                                        .format(style.locale, idx_i++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                                 s.toCharArray(buf, bufP)
                                 bufP += s.length
                             }
@@ -848,25 +836,25 @@ interface demoDebugInformations {
 
             fun nodeColumns(columns: Columns) {
                 if (!treeNode(
-                        columns.id,
-                        "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X",
-                        columns.id,
-                        columns.flags
-                    )
+                                columns.id,
+                                "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X",
+                                columns.id,
+                                columns.flags
+                        )
                 )
                     return
                 bulletText(
-                    "Width: %.1f (MinX: %.1f, MaxX: %.1f)",
-                    columns.offMaxX - columns.offMinX,
-                    columns.offMinX,
-                    columns.offMaxX
+                        "Width: %.1f (MinX: %.1f, MaxX: %.1f)",
+                        columns.offMaxX - columns.offMinX,
+                        columns.offMinX,
+                        columns.offMaxX
                 )
                 columns.columns.forEachIndexed { i, c ->
                     bulletText(
-                        "Column %02d: OffsetNorm %.3f (= %.1f px)",
-                        i,
-                        c.offsetNorm,
-                        columns getOffsetFrom c.offsetNorm
+                            "Column %02d: OffsetNorm %.3f (= %.1f px)",
+                            i,
+                            c.offsetNorm,
+                            columns getOffsetFrom c.offsetNorm
                     )
                 }
                 treePop()
@@ -892,7 +880,7 @@ interface demoDebugInformations {
                 val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else TreeNodeFlag.None
                 if (!isActive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
                 val open =
-                    treeNodeEx(label, treeNodeFlags.i, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
+                        treeNodeEx(label, treeNodeFlags.i, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
                 if (!isActive) popStyleColor()
                 if (isItemHovered() && isActive)
                     getForegroundDrawList(window).addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
@@ -920,65 +908,65 @@ interface demoDebugInformations {
                 bulletText("WindowClassId: 0x%08X".format(window.windowClass.classId))
                 val xy = (if (window.scrollbar.x) "X" else "") + if (window.scrollbar.y) "Y" else ""
                 bulletText(
-                    "Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy",
-                    window.scroll.x,
-                    window.scrollMax.x,
-                    window.scroll.y,
-                    window.scrollMax.y
+                        "Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy",
+                        window.scroll.x,
+                        window.scrollMax.x,
+                        window.scroll.y,
+                        window.scrollMax.y
                 )
                 val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
                 bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
                 bulletText("Appearing: ${window.appearing}, Hidden: ${window.hidden} (CanSkip ${window.hiddenFramesCanSkipItems} Cannot ${window.hiddenFramesCannotSkipItems}), SkipItems: ${window.skipItems}")
                 bulletText(
-                    "NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X",
-                    window.navLastIds[0],
-                    window.navLastIds[1],
-                    window.dc.navLayerActiveMask
+                        "NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X",
+                        window.navLastIds[0],
+                        window.navLastIds[1],
+                        window.dc.navLayerActiveMask
                 )
                 bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name}")
                 if (!window.navRectRel[0].isInverted)
                     bulletText(
-                        "NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)",
-                        window.navRectRel[0].min.x,
-                        window.navRectRel[0].min.y,
-                        window.navRectRel[0].max.x,
-                        window.navRectRel[0].max.y
+                            "NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)",
+                            window.navRectRel[0].min.x,
+                            window.navRectRel[0].min.y,
+                            window.navRectRel[0].max.x,
+                            window.navRectRel[0].max.y
                     )
                 else
                     bulletText("NavRectRel[0]: <None>")
                 bulletText(
-                    "Viewport: ${window.viewport?.idx ?: -1}${if (window.viewportOwned) " (Owned)" else ""}, ViewportId: 0x%08X, ViewportPos: (%.1f,%.1f)",
-                    window.viewportId,
-                    window.viewportPos.x,
-                    window.viewportPos.y
+                        "Viewport: ${window.viewport?.idx ?: -1}${if (window.viewportOwned) " (Owned)" else ""}, ViewportId: 0x%08X, ViewportPos: (%.1f,%.1f)",
+                        window.viewportId,
+                        window.viewportPos.x,
+                        window.viewportPos.y
                 )
                 bulletText("ViewportMonitor: ${window.viewport?.platformMonitor ?: -1}")
                 if (DEBUG)
                     bulletText(
-                        "DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive.i}, Vis: ${window.dockTabIsVisible.i}",
-                        window.dockId
+                            "DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive.i}, Vis: ${window.dockTabIsVisible.i}",
+                            window.dockId
                     )
                 else
                     bulletText(
-                        "DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive}, Vis: ${window.dockTabIsVisible}",
-                        window.dockId
+                            "DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive}, Vis: ${window.dockTabIsVisible}",
+                            window.dockId
                     )
                 if (window.dockNode != null || window.dockNodeAsHost != null)
                     nodeDockNode(
-                        window.dockNodeAsHost
-                            ?: window.dockNode!!, if (window.dockNodeAsHost != null) "DockNodeAsHost" else "DockNode"
+                            window.dockNodeAsHost
+                                    ?: window.dockNode!!, if (window.dockNodeAsHost != null) "DockNodeAsHost" else "DockNode"
                     )
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
                 if (window.rootWindowDockStop !== window.rootWindow) nodeWindow(
-                    window.rootWindowDockStop!!,
-                    "RootWindowDockStop"
+                        window.rootWindowDockStop!!,
+                        "RootWindowDockStop"
                 )
                 window.parentWindow?.let { nodeWindow(it, "ParentWindow") }
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
                 if (window.columnsStorage.isNotEmpty() && treeNode(
-                        "Columns",
-                        "Columns sets (${window.columnsStorage.size})"
-                    )
+                                "Columns",
+                                "Columns sets (${window.columnsStorage.size})"
+                        )
                 ) {
                     window.columnsStorage.forEach(Funcs::nodeColumns)
                     treePop()
@@ -990,25 +978,25 @@ interface demoDebugInformations {
             fun nodeViewport(viewport: ViewportP) {
                 setNextItemOpen(true, Cond.Once)
                 if (treeNode(
-                        viewport.id.L,
-                        "Viewport #${viewport.idx}, ID: 0x%08X, Parent: 0x%08X, Window: \"${viewport.window?.name ?: "N/A"}\"",
-                        viewport.id,
-                        viewport.parentViewportId
-                    )
+                                viewport.id.L,
+                                "Viewport #${viewport.idx}, ID: 0x%08X, Parent: 0x%08X, Window: \"${viewport.window?.name ?: "N/A"}\"",
+                                viewport.id,
+                                viewport.parentViewportId
+                        )
                 ) {
                     val flags = viewport.flags
                     bulletText(
-                        "Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f\nMonitor: %d, DpiScale: %.0f%%",
-                        viewport.pos.x,
-                        viewport.pos.y,
-                        viewport.size.x,
-                        viewport.size.y,
-                        viewport.workOffsetMin.x,
-                        viewport.workOffsetMin.y,
-                        viewport.workOffsetMax.x,
-                        viewport.workOffsetMax.y,
-                        viewport.platformMonitor,
-                        viewport.dpiScale * 100f
+                            "Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f\nMonitor: %d, DpiScale: %.0f%%",
+                            viewport.pos.x,
+                            viewport.pos.y,
+                            viewport.size.x,
+                            viewport.size.y,
+                            viewport.workOffsetMin.x,
+                            viewport.workOffsetMin.y,
+                            viewport.workOffsetMax.x,
+                            viewport.workOffsetMax.y,
+                            viewport.platformMonitor,
+                            viewport.dpiScale * 100f
                     )
                     if (viewport.idx > 0) {
                         sameLine()
@@ -1034,45 +1022,37 @@ interface demoDebugInformations {
 
             fun nodeDockNode(node: DockNode, label: String) {
 
+                val isAlive = g.frameCount - node.lastFrameAlive < 2    // Submitted with ImGuiDockNodeFlags_KeepAliveOnly
+                val isActive = g.frameCount - node.lastFrameActive < 2  // Submitted
+                if (!isAlive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
                 val open = when {
-                    node.windows.isNotEmpty() -> treeNode(
-                        node.id.L,
-                        "$label 0x%04X${if (node.isVisible) "" else " (hidden)"}: ${node.windows.size} windows (vis: '${node.visibleWindow?.name}')",
-                        node.id
-                    )
-                    else -> treeNode(
-                        node.id.L,
-                        "$label 0x%04X${if (node.isVisible) "" else " (hidden)"}: ${if (node.splitAxis == Axis.X) "horizontal" else if (node.splitAxis == Axis.Y) "vertical" else "n/a"} split (vis: '${node.visibleWindow?.name}')",
-                        node.id
-                    )
+                    node.windows.isNotEmpty() -> treeNode(node.id.L, "$label 0x%04X${if (node.isVisible) "" else " (hidden)"}: ${node.windows.size} windows (vis: '${node.visibleWindow?.name}')", node.id)
+                    else -> treeNode(node.id.L, "$label 0x%04X${if (node.isVisible) "" else " (hidden)"}: ${if (node.splitAxis == Axis.X) "horizontal" else if (node.splitAxis == Axis.Y) "vertical" else "n/a"} split (vis: '${node.visibleWindow?.name}')", node.id)
                 }
+                if (!isAlive) popStyleColor()
+                if (isActive && ImGui.isItemHovered())
+                    getForegroundDrawList(node.hostWindow
+                            ?: node.visibleWindow!!).addRect(node.pos, node.pos + node.size, COL32(255, 255, 0, 255))
                 if (open) {
                     node.childNodes[0].also { assert(it == null || it.parentNode === node) }
                     node.childNodes[1].also { assert(it == null || it.parentNode === node) }
-                    bulletText(
-                        "Pos (%.0f,%.0f), Size (%.0f, %.0f) Ref (%.0f, %.0f)",
-                        node.pos.x, node.pos.y, node.size.x, node.size.y, node.sizeRef.x, node.sizeRef.y
-                    )
+                    bulletText("Pos (%.0f,%.0f), Size (%.0f, %.0f) Ref (%.0f, %.0f)", node.pos.x, node.pos.y, node.size.x, node.size.y, node.sizeRef.x, node.sizeRef.y)
                     nodeWindow(node.hostWindow, "HostWindow")
                     nodeWindow(node.visibleWindow, "VisibleWindow")
-                    bulletText(
-                        "SelectedTabID: 0x%08X, LastFocusedNodeID: 0x%08X",
-                        node.selectedTabId,
-                        node.lastFocusedNodeId
-                    )
+                    bulletText("SelectedTabID: 0x%08X, LastFocusedNodeID: 0x%08X", node.selectedTabId, node.lastFocusedNodeId)
                     val builder = StringBuilder("Misc:")
                     builder += if (node.isDockSpace) " IsDockSpace" else ""
                     builder += if (node.isCentralNode) " IsCentralNode" else ""
-                    builder += if (g.frameCount - node.lastFrameAlive < 2) " IsAlive" else ""
-                    builder += if (g.frameCount - node.lastFrameActive < 2) " IsActive" else ""
+                    builder += if (isAlive) " IsAlive" else ""
+                    builder += if (isActive) " IsActive" else ""
                     builder += if (node.wantLockSizeOnce) " WantLockSizeOnce" else ""
                     bulletText(builder.toString())
                     if (treeNode(
-                            "flags",
-                            "LocalFlags: 0x%04X SharedFlags: 0x%04X",
-                            node.localFlags,
-                            node.sharedFlags
-                        )
+                                    "flags",
+                                    "LocalFlags: 0x%04X SharedFlags: 0x%04X",
+                                    node.localFlags,
+                                    node.sharedFlags
+                            )
                     ) {
                         checkboxFlags("LocalFlags: NoDocking", node::localFlags, DockNodeFlag._NoDocking.i)
                         checkboxFlags("LocalFlags: NoSplit", node::localFlags, DockNodeFlag.NoSplit.i)
@@ -1082,9 +1062,9 @@ interface demoDebugInformations {
                         checkboxFlags("LocalFlags: NoTabBar", node::localFlags, DockNodeFlag._NoTabBar.i)
                         checkboxFlags("LocalFlags: HiddenTabBar", node::localFlags, DockNodeFlag._HiddenTabBar.i)
                         checkboxFlags(
-                            "LocalFlags: NoWindowMenuButton",
-                            node::localFlags,
-                            DockNodeFlag._NoWindowMenuButton.i
+                                "LocalFlags: NoWindowMenuButton",
+                                node::localFlags,
+                                DockNodeFlag._NoWindowMenuButton.i
                         )
                         checkboxFlags("LocalFlags: NoCloseButton", node::localFlags, DockNodeFlag._NoCloseButton.i)
                         treePop()
@@ -1100,9 +1080,9 @@ interface demoDebugInformations {
 
             fun nodeStorage(storage: HashMap<ID, Boolean>, label: String) {
                 if (!treeNode(
-                        label,
-                        "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes"
-                    )
+                                label,
+                                "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes"
+                        )
                 ) // [JVM] Boolean size is actually VM dependent
                     return
                 storage.forEach { (key, value) ->
@@ -1112,11 +1092,11 @@ interface demoDebugInformations {
             }
 
             fun nodeWindowSettings(settings: WindowSettings) =
-                text(
-                    "0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " +
-                            "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}",
-                    settings.id
-                )
+                    text(
+                            "0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " +
+                                    "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}",
+                            settings.id
+                    )
 
             fun nodeTabBar(tabBar: TabBar) {
                 // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
@@ -1154,7 +1134,7 @@ interface demoDebugInformations {
         }
 
         val selected =
-            BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
+                BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
 
         var styleIdx = -1
 

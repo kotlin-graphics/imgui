@@ -121,12 +121,12 @@ interface docking {
         // Store hovered dock node. We could in theory use DockNodeTreeFindVisibleNodeByPos() on the root host dock node, but using ->DockNode is a good shortcut.
         g.hoveredDockNode = null
         g.hoveredWindowUnderMovingWindow?.let { hoveredWindow ->
-            hoveredWindow.dockNode?.let {
-                g.hoveredDockNode = it
-            }
             hoveredWindow.dockNodeAsHost?.let {
                 g.hoveredDockNode = dockNodeTreeFindVisibleNodeByPos(it, g.io.mousePos)
             }
+                    ?: hoveredWindow.rootWindowDockStop!!.dockNode?.let {
+                        g.hoveredDockNode = it
+                    }
         }
 
         // Process Docking requests
@@ -356,6 +356,7 @@ interface docking {
         assert(window.flags hasnt WindowFlag.NoDocking)
         if (!g.dragDropActive)
             return
+        //GetForegroundDrawList(window)->AddRect(window->Pos, window->Pos + window->Size, IM_COL32(255, 255, 0, 255));
         if (!beginDragDropTargetCustom(window.rect(), window.id))
             return
 
