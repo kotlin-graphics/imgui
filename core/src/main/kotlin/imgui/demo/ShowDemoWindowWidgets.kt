@@ -226,9 +226,9 @@ object ShowDemoWindowWidgets {
     var currentItem2 = 0
     var currentItem3 = 0
 
-    object FuncHolder {
-        val itemGetter: (Array<String>, Int, KMutableProperty0<String>) -> Boolean = { items, idx, pStr ->
-            pStr.set(items[idx])
+    object Funcs0 {
+        val itemGetter: (Array<String>, Int, KMutableProperty0<String>) -> Boolean = { items, n, pStr ->
+            pStr.set(items[n])
             true
         }
     }
@@ -279,15 +279,15 @@ object ShowDemoWindowWidgets {
 
     val password = "password123".toByteArray(64)
 
-    object Funcs {
+    object Funcs1 {
         val myCallback: InputTextCallback = { data: InputTextCallbackData ->
             when (data.eventFlag) {
                 Itf.CallbackCompletion.i -> data.insertChars(data.cursorPos, "..")
                 Itf.CallbackHistory.i ->
                     if (data.eventKey == Key.UpArrow) {
                     data.deleteChars(0, data.bufTextLen)
-                    data.insertChars(0, "Pressed Up!");
-                    data.selectAll()
+                    data.insertChars(0, "Pressed Up!")
+                        data.selectAll()
                 }
                 else if (data.eventKey == Key.DownArrow) {
                     data.deleteChars(0, data.bufTextLen)
@@ -372,7 +372,7 @@ object ShowDemoWindowWidgets {
     val vec4i = intArrayOf(1, 5, 100, 255)
 
     /* Text Input */
-    object Funcs0 {
+    object Funcs2 {
         val MyResizeCallback: InputTextCallback = { data ->
             if (data.eventFlag == Itf.CallbackResize.i) {
 //                ImVector<char>* my_str = (ImVector<char>*)data->UserData; TODO
@@ -403,7 +403,7 @@ object ShowDemoWindowWidgets {
     var funcType = 0
     var displayCount = 70
 
-    object Funcs1 {
+    object Funcs3 {
         fun sin(i: Int) = kotlin.math.sin(i * 0.1f)
         fun saw(i: Int) = if (i has 1) 1f else -1f
     }
@@ -506,7 +506,9 @@ object ShowDemoWindowWidgets {
                 // See "Combo" section for examples of how to use the more complete BeginCombo()/EndCombo() api.
                 val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK")
                 combo("combo", ::currentItem0, items)
-                sameLine(); helpMarker("Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, and demonstration of various flags.\n")
+                sameLine(); helpMarker(
+                    "Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, " +
+                            "and demonstration of various flags.\n")
             }
 
             run {
@@ -708,7 +710,8 @@ object ShowDemoWindowWidgets {
             }
             treeNode("Word Wrapping") {
                 // Using shortcut. You can use PushTextWrapPos()/PopTextWrapPos() for more flexibility.
-                textWrapped("This text should automatically wrap on the edge of the window. The current implementation " +
+                textWrapped(
+                    "This text should automatically wrap on the edge of the window. The current implementation " +
                         "for text wrapping follows simple rules suitable for English and possibly other languages.")
                 spacing()
 
@@ -754,7 +757,10 @@ object ShowDemoWindowWidgets {
         }
 
         treeNode("Images") {
-            textWrapped("Below we are displaying the font texture (which is the only texture we have access to in this demo). Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. Hover the texture for a zoomed view!")
+            textWrapped(
+                "Below we are displaying the font texture (which is the only texture we have access to in this demo). " +
+                        "Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. " +
+                        "Hover the texture for a zoomed view!")
             // Below we are displaying the font texture because it is the only texture we have access to inside the demo!
             // Remember that ImTextureID is just storage for whatever you want it to be. It is essentially a value that
             // will be passed to the rendering back-end via the ImDrawCmd structure.
@@ -854,7 +860,7 @@ object ShowDemoWindowWidgets {
             combo("combo 3 (array)", ::currentItem2, items)
 
             // Simplified one-liner Combo() using an accessor function
-            combo("combo 4 (function)", ::currentItem3, FuncHolder.itemGetter, items.toTypedArray())
+            combo("combo 4 (function)", ::currentItem3, Funcs0.itemGetter, items.toTypedArray())
         }
 
         treeNode("Selectables") {
@@ -970,13 +976,13 @@ object ShowDemoWindowWidgets {
             }
 
             treeNode("Completion, History, Edit Callbacks")            {
-                inputText("Completion", buf1, Itf.CallbackCompletion.i, Funcs.myCallback)
+                inputText("Completion", buf1, Itf.CallbackCompletion.i, Funcs1.myCallback)
                 sameLine(); helpMarker("Here we append \"..\" each time Tab is pressed. See 'Examples>Console' for a more meaningful demonstration of using this callback.")
 
-                inputText("History", buf2, Itf.CallbackHistory.i, Funcs.myCallback)
+                inputText("History", buf2, Itf.CallbackHistory.i, Funcs1.myCallback)
                 sameLine(); helpMarker("Here we replace and select text each time Up/Down are pressed. See 'Examples>Console' for a more meaningful demonstration of using this callback.")
 
-                inputText("Edit", buf3, Itf.CallbackEdit.i, Funcs.myCallback, ::editCount)
+                inputText("Edit", buf3, Itf.CallbackEdit.i, Funcs1.myCallback, ::editCount)
                 sameLine(); helpMarker("Here we toggle the casing of the first character on every edits + count edits.")
                 sameLine(); text("($editCount)")
             }
@@ -993,7 +999,7 @@ object ShowDemoWindowWidgets {
                 // For this demo we are using ImVector as a string container.
                 // Note that because we need to store a terminating zero character, our size/capacity are 1 more
                 // than usually reported by a typical string class.
-                Funcs0.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), 0)
+                Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), 0)
                 text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
             }
         }
@@ -1033,7 +1039,7 @@ object ShowDemoWindowWidgets {
             withItemWidth(100) { combo("func", ::funcType, "Sin\u0000Saw\u0000") }
             sameLine()
             sliderInt("Sample count", ::displayCount, 1, 400)
-            val func = if (funcType == 0) Funcs1::sin else Funcs1::saw
+            val func = if (funcType == 0) Funcs3::sin else Funcs3::saw
             plotLines("Lines", func, displayCount, 0, "", -1f, 1f, Vec2(0, 80))
             plotHistogram("Histogram", func, displayCount, 0, "", -1f, 1f, Vec2(0, 80))
             separator()
@@ -1314,7 +1320,10 @@ object ShowDemoWindowWidgets {
 
             val dragSpeed = 0.2f
             text("Drags:")
-            checkbox("Clamp integers to 0..50", ::dragClamp); sameLine(); helpMarker("As with every widgets in dear imgui, we never modify values unless there is a user interaction.\nYou can override the clamping limits by using CTRL+Click to input a value.")
+            checkbox("Clamp integers to 0..50", ::dragClamp)
+            sameLine(); helpMarker(
+                """As with every widgets in dear imgui, we never modify values unless there is a user interaction.
+                You can override the clamping limits by using CTRL+Click to input a value.""".trimIndent())
             dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, s8_zero.takeIf { dragClamp }, s8_fifty.takeIf { dragClamp })
             dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
             dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })

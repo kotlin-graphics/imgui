@@ -60,7 +60,9 @@ object PropertyEditor {
     fun showPlaceholderObject(prefix: String, uid: Int) {
         //  Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
         pushID(uid)
-        alignTextToFramePadding() // Text and Tree nodes are less high than framed widgets, here we add vertical spacing to make the tree lines equal high.
+
+        // Text and Tree nodes are less high than framed widgets, using AlignTextToFramePadding() we add vertical spacing to make the tree lines equal high.
+        alignTextToFramePadding()
         val nodeOpen = treeNode("Object", "${prefix}_$uid")
         nextColumn()
         alignTextToFramePadding()

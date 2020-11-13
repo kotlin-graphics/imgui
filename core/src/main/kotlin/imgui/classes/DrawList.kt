@@ -1471,14 +1471,20 @@ class DrawList(sharedData: DrawListSharedData?) {
     ) {
         val gradientExtent = gradientP1 - gradientP0
         val gradientInvLength2 = 1f / gradientExtent.lengthSqr
+        val col0R = (col0 ushr COL32_R_SHIFT) and 0xFF
+        val col0G = (col0 ushr COL32_G_SHIFT) and 0xFF
+        val col0B = (col0 ushr COL32_B_SHIFT) and 0xFF
+        val colDeltaR = ((col1 ushr COL32_R_SHIFT) and 0xFF) - col0R
+        val colDeltaG = ((col1 ushr COL32_G_SHIFT) and 0xFF) - col0G
+        val colDeltaB = ((col1 ushr COL32_B_SHIFT) and 0xFF) - col0B
         for (i in vertStart until vertEnd) {
             var offset = i * DrawVert.size
             val pos = Vec2(vtxBuffer.data, offset)
             val d = pos - gradientP0 dot gradientExtent
             val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
-            val r = lerp((col0 ushr COL32_R_SHIFT) and 0xFF, (col1 ushr COL32_R_SHIFT) and 0xFF, t)
-            val g = lerp((col0 ushr COL32_G_SHIFT) and 0xFF, (col1 ushr COL32_G_SHIFT) and 0xFF, t)
-            val b = lerp((col0 ushr COL32_B_SHIFT) and 0xFF, (col1 ushr COL32_B_SHIFT) and 0xFF, t)
+            val r = (col0R + colDeltaR * t).i
+            val g = (col0G + colDeltaG * t).i
+            val b = (col0B + colDeltaB * t).i
             offset += Vec2.size * 2
             val col = vtxBuffer.data.getInt(offset)
             val newCol = (r shl COL32_R_SHIFT) or (g shl COL32_G_SHIFT) or (b shl COL32_B_SHIFT) or (col and COL32_A_MASK)

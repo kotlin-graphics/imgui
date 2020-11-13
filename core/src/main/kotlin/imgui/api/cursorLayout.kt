@@ -109,7 +109,7 @@ interface cursorLayout {
      *  or layout primitives such as SameLine() on whole group, etc.)   */
     fun beginGroup() {
 
-        with(currentWindow) {
+        with(g.currentWindow!!) {
             dc.groupStack.add(
                     GroupData().apply {
                         backupCursorPos put dc.cursorPos
@@ -135,7 +135,7 @@ interface cursorLayout {
      *  (so you can use IsItemHovered() or layout primitives such as SameLine() on whole group, etc.) */
     fun endGroup() {
 
-        val window = currentWindow
+        val window = g.currentWindow!!
         assert(window.dc.groupStack.isNotEmpty()) { "Mismatched BeginGroup()/EndGroup() calls" }
 
         val groupData = window.dc.groupStack.last()
@@ -162,12 +162,11 @@ interface cursorLayout {
         itemSize(groupBb.size)
         itemAdd(groupBb, 0)
 
-        /*  If the current ActiveId was declared within the boundary of our group, we copy it to ::lastItemId so ::isItemActive,
-            ::isItemDeactivated etc. will be functional on the entire group.
-            It would be be neater if we replaced window.dc.lastItemId by e.g. 'lastItemIsActive: Boolean',
-            but would put a little more burden on individual widgets.
-            Also if you grep for LastItemId you'll notice it is only used in that context.
-            (The tests not symmetrical because ActiveIdIsAlive is an ID itself, in order to be able to handle ActiveId being overwritten during the frame.)         */
+        // If the current ActiveId was declared within the boundary of our group, we copy it to LastItemId so IsItemActive(), IsItemDeactivated() etc. will be functional on the entire group.
+        // It would be be neater if we replaced window.DC.LastItemId by e.g. 'bool LastItemIsActive', but would put a little more burden on individual widgets.
+        // Also if you grep for LastItemId you'll notice it is only used in that context.
+        // (The tests not symmetrical because ActiveIdIsAlive is an ID itself, in order to be able to handle ActiveId being overwritten during the frame.)
+        // (The two tests not the same because ActiveIdIsAlive is an ID itself, in order to be able to handle ActiveId being overwritten during the frame.)
         val groupContainsCurrActiveId = groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0
         val groupContainsPrevActiveId = !groupData.backupActiveIdPreviousFrameIsAlive && g.activeIdPreviousFrameIsAlive
         if (groupContainsCurrActiveId)
