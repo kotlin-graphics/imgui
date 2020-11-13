@@ -1031,8 +1031,9 @@ interface demoDebugInformations {
                 }
                 if (!isAlive) popStyleColor()
                 if (isActive && ImGui.isItemHovered())
-                    getForegroundDrawList(node.hostWindow
-                            ?: node.visibleWindow!!).addRect(node.pos, node.pos + node.size, COL32(255, 255, 0, 255))
+                    (node.hostWindow ?: node.visibleWindow)?.let { window ->
+                        getForegroundDrawList(window).addRect(node.pos, node.pos + node.size, COL32(255, 255, 0, 255))
+                    }
                 if (open) {
                     node.childNodes[0].also { assert(it == null || it.parentNode === node) }
                     node.childNodes[1].also { assert(it == null || it.parentNode === node) }
