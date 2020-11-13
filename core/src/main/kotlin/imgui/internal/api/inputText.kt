@@ -767,11 +767,14 @@ internal interface inputText {
 
                 // Vertical scroll
                 if (isMultiline) {
+                    // Test if cursor is vertically visible
                     var scrollY = drawWindow.scroll.y
+                    val scrollMaxY = ((textSize.y + style.framePadding.y * 2f) - innerSize.y) max 0f
                     if (cursorOffset.y - g.fontSize < scrollY)
                         scrollY = glm.max(0f, cursorOffset.y - g.fontSize)
                     else if (cursorOffset.y - innerSize.y >= scrollY)
-                        scrollY = cursorOffset.y - innerSize.y
+                        scrollY = cursorOffset.y - innerSize.y + style.framePadding.y * 2f
+                    scrollY = clamp(scrollY, 0f, scrollMaxY)
                     drawPos.y += drawWindow.scroll.y - scrollY   // Manipulate cursor pos immediately avoid a frame of lag
                     drawWindow.scroll.y = scrollY
                 }
@@ -884,7 +887,7 @@ internal interface inputText {
             popFont()
 
         if (isMultiline) {
-            dummy(textSize + Vec2(0f, g.fontSize)) // Always add room to scroll an extra line
+            dummy(textSize)
             endChild()
             endGroup()
         }
@@ -932,9 +935,12 @@ internal interface inputText {
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
     fun <N> tempInputScalar(
         bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
-        format_: String, clampMin: N? = null, clampMax: N? = null
+        format_: String, clampMin_: N? = null, clampMax_: N? = null
     ): Boolean
             where N : Number, N : Comparable<N> {
+
+        var clampMin = clampMin_
+        var clampMax = clampMax_
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -956,8 +962,14 @@ internal interface inputText {
 
             // Apply new value (or operations) then clamp
             dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
-            if (clampMin != null || clampMax != null)
+            if (clampMin != null && clampMax != null) {
+                if (clampMin > clampMax) {
+                    val t = clampMin
+                    clampMin = clampMax
+                    clampMax = t
+                }
                 dataTypeClamp(dataType, pData, clampMin, clampMax)
+            }
 
             // Only mark as edited if new value is different
             valueChanged = dataBackup != pData
