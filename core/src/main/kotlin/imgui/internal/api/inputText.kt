@@ -84,8 +84,8 @@ internal interface inputText {
      *  doing UTF8 > U16 > UTF8 conversions on the go to easily internal interface with stb_textedit. Ideally should stay in UTF-8 all the time. See https://github.com/nothings/stb/issues/188)
      */
     fun inputTextEx(
-            label: String, hint: String?, buf_: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
-            callback: InputTextCallback? = null, callbackUserData: Any? = null,
+        label: String, hint: String?, buf_: ByteArray, sizeArg: Vec2, flags: InputTextFlags,
+        callback: InputTextCallback? = null, callbackUserData: Any? = null,
     ): Boolean {
 
         var buf = buf_
@@ -113,8 +113,13 @@ internal interface inputText {
         val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val h = if (isMultiline) g.fontSize * 8f else labelSize.y
-        val frameSize = calcItemSize(sizeArg, calcItemWidth(), h + style.framePadding.y * 2f) // Arbitrary default of 8 lines high for multi-line
-        val totalSize = Vec2(frameSize.x + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
+        val frameSize = calcItemSize(
+            sizeArg,
+            calcItemWidth(),
+            h + style.framePadding.y * 2f
+        ) // Arbitrary default of 8 lines high for multi-line
+        val totalSize =
+            Vec2(frameSize.x + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, frameSize.y)
 
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
         val totalBb = Rect(frameBb.min, frameBb.min + totalSize)
@@ -143,7 +148,8 @@ internal interface inputText {
             }
             drawWindow = g.currentWindow!!  // Child window
             // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
-            drawWindow.dc.navLayerActiveMaskNext = drawWindow.dc.navLayerActiveMaskNext or drawWindow.dc.navLayerCurrentMask
+            drawWindow.dc.navLayerActiveMaskNext =
+                drawWindow.dc.navLayerActiveMaskNext or drawWindow.dc.navLayerCurrentMask
             innerSize.x -= drawWindow.scrollbarSizes.x
         } else {
             itemSize(totalBb, style.framePadding.y)
@@ -156,12 +162,15 @@ internal interface inputText {
         var state = getInputTextState(id)
 
         val focusRequested = focusableItemRegister(window, id)
-        val focusRequestedByCode = focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterRegular == window.dc.focusCounterRegular
+        val focusRequestedByCode =
+            focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterRegular == window.dc.focusCounterRegular
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
         val userClicked = hovered && io.mouseClicked[0]
-        val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
-        val userScrollFinish = isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == drawWindow getScrollbarID Axis.Y
+        val userNavInputStart =
+            g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
+        val userScrollFinish =
+            isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == drawWindow getScrollbarID Axis.Y
         val userScrollActive = isMultiline && state != null && g.activeId == drawWindow getScrollbarID Axis.Y
 
         var clearActiveId = false
@@ -178,20 +187,23 @@ internal interface inputText {
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             val bufLen = buf.strlen()
             if (state.initialTextA.size < bufLen)
-                state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+                state.initialTextA =
+                    ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             else if (state.initialTextA.size > bufLen)
                 state.initialTextA[bufLen] = 0
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
             // Start edition
             if (state.textW.size < buf.size)
-                state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
+                state.textW =
+                    CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.
             else if (state.textW.size > buf.size)
                 state.textW[buf.size] = NUL
 //            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
-            state.curLenA = bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
+            state.curLenA =
+                bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
 
             /*  Preserve cursor position and undo/redo stack if we come back to same widget
                 For non-readonly widgets we might be able to require that TextAIsValid && TextA == buf ? (untested) and discard undo stack if user buffer has changed. */
@@ -228,7 +240,8 @@ internal interface inputText {
             g.activeIdUsingNavInputMask = g.activeIdUsingNavInputMask or (1 shl NavInput.Cancel)
             g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or ((1L shl Key.Home) or (1L shl Key.End))
             if (isMultiline)
-                g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or ((1L shl Key.PageUp) or (1L shl Key.PageDown)) // FIXME-NAV: Page up/down actually not supported yet by widget, but claim them ahead.
+                g.activeIdUsingKeyInputMask =
+                    g.activeIdUsingKeyInputMask or ((1L shl Key.PageUp) or (1L shl Key.PageDown)) // FIXME-NAV: Page up/down actually not supported yet by widget, but claim them ahead.
             if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
                 g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or (1L shl Key.Tab)
         }
@@ -261,7 +274,8 @@ internal interface inputText {
         }
 
         // Select the buffer to render.
-        val bufDisplayFromState = (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state?.textAIsValid == true
+        val bufDisplayFromState =
+            (renderCursor || renderSelection || g.activeId == id) && !isReadOnly && state?.textAIsValid == true
         val isDisplayingHint = hint != null && (if (bufDisplayFromState) state!!.textA else buf)[0] == 0.b
 
         // Password pushes a temporary font with only a fallback glyph
@@ -364,30 +378,39 @@ internal interface inputText {
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
             val isOsxShiftShortcut = isOsx && io.keyMods == (KeyMod.Super or KeyMod.Shift)
-            val isWordmoveKeyDown = if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
+            val isWordmoveKeyDown =
+                if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
             val isCtrlKeyOnly = io.keyMods == KeyMod.Ctrl.i
             val isShiftKeyOnly = io.keyMods == KeyMod.Shift.i
             val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) KeyMod.Super.i else KeyMod.Ctrl.i
 
-            val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
-            val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
-            val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
+            val isCut =
+                ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
+            val isCopy =
+                ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
+            val isPaste =
+                ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
             val isUndo = ((isShortcutKey && Key.Z.isPressed) && !isReadOnly && isUndoable)
-            val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
+            val isRedo =
+                ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
 
             when {
-                Key.LeftArrow.isPressed -> state.onKeyPressed(when {
-                    isStartendKeyDown -> K.LINESTART
-                    isWordmoveKeyDown -> K.WORDLEFT
-                    else -> K.LEFT
-                } or kMask)
-                Key.RightArrow.isPressed -> state.onKeyPressed(when {
-                    isStartendKeyDown -> K.LINEEND
-                    isWordmoveKeyDown -> K.WORDRIGHT
-                    else -> K.RIGHT
-                } or kMask)
+                Key.LeftArrow.isPressed -> state.onKeyPressed(
+                    when {
+                        isStartendKeyDown -> K.LINESTART
+                        isWordmoveKeyDown -> K.WORDLEFT
+                        else -> K.LEFT
+                    } or kMask
+                )
+                Key.RightArrow.isPressed -> state.onKeyPressed(
+                    when {
+                        isStartendKeyDown -> K.LINEEND
+                        isWordmoveKeyDown -> K.WORDRIGHT
+                        else -> K.RIGHT
+                    } or kMask
+                )
                 Key.UpArrow.isPressed && isMultiline ->
                     if (io.keyCtrl)
                         drawWindow setScrollY glm.max(drawWindow.scroll.y - g.fontSize, 0f)
@@ -437,7 +460,8 @@ internal interface inputText {
                     // Cut, Copy
                     io.setClipboardTextFn?.let {
                         val ib = if (state.hasSelection) min(state.stb.selectStart, state.stb.selectEnd) else 0
-                        val ie = if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
+                        val ie =
+                            if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
                         clipboardText = String(state.textW, ib, ie - ib)
                     }
                     if (isCut) {
@@ -471,7 +495,8 @@ internal interface inputText {
             }
 
             // Update render selection flag after events have been handled, so selection highlight can be displayed during the same frame.
-            renderSelection = renderSelection || (state.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor))
+            renderSelection =
+                renderSelection || (state.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor))
         }
 
         // Process callbacks and apply result back to user's buffer.
@@ -565,7 +590,8 @@ internal interface inputText {
                         assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
                         if (cbData.cursorPos != utf8CursorPos) {
-                            state.stb.cursor = textCountCharsFromUtf8(cbData.buf, cbData.cursorPos); state.cursorFollow = true; }
+                            state.stb.cursor =
+                                textCountCharsFromUtf8(cbData.buf, cbData.cursorPos); state.cursorFollow = true; }
                         if (cbData.selectionStart != utf8SelectionStart) {
                             state.stb.selectStart = textCountCharsFromUtf8(cbData.buf, cbData.selectionStart); }
                         if (cbData.selectionEnd != utf8SelectionEnd) {
@@ -580,7 +606,8 @@ internal interface inputText {
                                     state.textW[newSize] = NUL
                             }
                             state.curLenW = textStrFromUtf8(state.textW, cbData.buf)
-                            state.curLenA = cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
+                            state.curLenA =
+                                cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
                             state.cursorAnimReset()
                         }
                     }
@@ -759,8 +786,12 @@ internal interface inputText {
                 val textSelectedBegin = state.stb.selectStart min state.stb.selectEnd
                 val textSelectedEnd = state.stb.selectStart max state.stb.selectEnd
 
-                val bgColor = getColorU32(Col.TextSelectedBg, if (renderCursor) 1f else 0.6f) // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
-                val bgOffYUp = if (isMultiline) 0f else -1f // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
+                val bgColor = getColorU32(
+                    Col.TextSelectedBg,
+                    if (renderCursor) 1f else 0.6f
+                ) // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
+                val bgOffYUp =
+                    if (isMultiline) 0f else -1f // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
                 val bgOffYDn = if (isMultiline) 0f else 2f
                 val rectPos = drawPos + selectStartOffset - drawScroll
                 var p = textSelectedBegin
@@ -790,15 +821,30 @@ internal interface inputText {
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0, bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                drawWindow.drawList.addText(
+                    g.font,
+                    g.fontSize,
+                    drawPos - drawScroll,
+                    col,
+                    bufDisplay,
+                    0,
+                    bufDisplayEnd,
+                    0f,
+                    clipRect.takeUnless { isMultiline })
             }
 
             // Draw blinking cursor
             if (renderCursor) {
                 state.cursorAnim += io.deltaTime
-                val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
+                val cursorIsVisible =
+                    !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
                 val cursorScreenPos = drawPos + cursorOffset - drawScroll
-                val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f, cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
+                val cursorScreenRect = Rect(
+                    cursorScreenPos.x,
+                    cursorScreenPos.y - g.fontSize + 0.5f,
+                    cursorScreenPos.x + 1f,
+                    cursorScreenPos.y - 1.5f
+                )
                 if (cursorIsVisible && cursorScreenRect overlaps clipRect)
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
@@ -821,7 +867,16 @@ internal interface inputText {
 
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
-                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, 0, bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
+                drawWindow.drawList.addText(
+                    g.font,
+                    g.fontSize,
+                    drawPos,
+                    col,
+                    bufDisplay,
+                    0,
+                    bufDisplayEnd,
+                    0f,
+                    clipRect.takeUnless { isMultiline })
             }
         }
 
@@ -875,9 +930,11 @@ internal interface inputText {
      *  ImGuiSliderFlags_ClampOnInput / ImGuiSliderFlags_ClampOnInput flag is set!
      *  This is intended: this way we allow CTRL+Click manual input to set a value out of bounds, for maximum flexibility.
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
-    fun <N> tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
-                            format_: String, clampMin: N? = null, clampMax: N? = null,): Boolean
-            where N : Number, N: Comparable<N> {
+    fun <N> tempInputScalar(
+        bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
+        format_: String, clampMin: N? = null, clampMax: N? = null
+    ): Boolean
+            where N : Number, N : Comparable<N> {
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -888,11 +945,10 @@ internal interface inputText {
         val format = parseFormatTrimDecorations(format_)
         val dataBuf = pData.format(dataType, format).trim()
 
-        val flags: InputTextFlags = Itf.AutoSelectAll or Itf._NoMarkEdited or when (dataType) {
+        val flags = Itf.AutoSelectAll or Itf._NoMarkEdited or when (dataType) {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
-        val buf = dataBuf.toByteArray(32)
         var valueChanged = false
         if (tempInputText(bb, id, label, dataBuf.toByteArray(), flags)) {
             // Backup old value
@@ -914,11 +970,17 @@ internal interface inputText {
 
     fun tempInputIsActive(id: ID): Boolean = g.activeId == id && g.tempInputId == id
 
-    fun getInputTextState(id: ID): InputTextState? = g.inputTextState.takeIf { it.id == id } // Get input text state if active
+    fun getInputTextState(id: ID): InputTextState? =
+        g.inputTextState.takeIf { it.id == id } // Get input text state if active
 
     companion object {
         /** Return false to discard a character.    */
-        fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?, userData: Any?): Boolean {
+        fun inputTextFilterCharacter(
+            char: KMutableProperty0<Char>,
+            flags: InputTextFlags,
+            callback: InputTextCallback?,
+            userData: Any?
+        ): Boolean {
 
             var c by char
 
@@ -961,7 +1023,7 @@ internal interface inputText {
 
                 // Turn a-z into A-Z
                 if (flags has Itf.CharsUppercase && c in 'a'..'z')
-                    c =  c + ('A' - 'a')
+                    c = c + ('A' - 'a')
 
                 if (flags has Itf.CharsNoBlank && c.isBlankW)
                     return false
@@ -1002,9 +1064,9 @@ internal interface inputText {
         }
 
         fun inputTextCalcTextSizeW(
-                text: CharArray, textBegin: Int, textEnd: Int,
-                remaining: KMutableProperty0<Int>? = null, outOffset: Vec2? = null,
-                stopOnNewLine: Boolean = false,
+            text: CharArray, textBegin: Int, textEnd: Int,
+            remaining: KMutableProperty0<Int>? = null, outOffset: Vec2? = null,
+            stopOnNewLine: Boolean = false,
         ): Vec2 {
 
             val font = g.font

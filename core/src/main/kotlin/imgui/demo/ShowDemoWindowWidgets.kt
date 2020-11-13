@@ -1227,7 +1227,7 @@ object ShowDemoWindowWidgets {
             // Sliders
             text("Underlying float value: %f", sliderF)
             sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", flags2)
-            sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%.3f", flags2)
+            sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%d", flags2)
         }
 
         treeNode("Range Widgets") {

@@ -376,7 +376,7 @@ class TabBar {
         if (held && singleFloatingWindowNode && isMouseDragging(MouseButton.Left, 0f))
         // Move
             dockedWindow!!.startMouseMoving()
-        else if (held && !tabAppearing && isMouseDragging(MouseButton.Left)) {
+        else if(held && !tabAppearing && isMouseDragging(MouseButton.Left)) {
             // Drag and drop: re-order tabs
             var dragDistanceFromEdgeX = 0f
             if (!g.dragDropActive && (flags has TabBarFlag.Reorderable || dockedWindow != null)) {
