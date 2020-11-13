@@ -8,6 +8,7 @@ import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.getID
+import imgui.ImGui.itemSize
 import imgui.ImGui.mainViewport
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
@@ -98,6 +99,7 @@ interface docking {
 
         val title = "${window.name}/DockSpace_%08X".format(id)
 
+        // FIXME-DOCK: What is the reason for not simply calling BeginChild()?
         if (node.windows.isNotEmpty() || node.isSplitNode)
             pushStyleColor(Col.ChildBg, COL32(0, 0, 0, 0))
         pushStyleVar(StyleVar.ChildBorderSize, 0f)
@@ -129,6 +131,7 @@ interface docking {
 
         g.withinEndChild = true
         end()
+        itemSize(size)
         g.withinEndChild = false
     }
 
