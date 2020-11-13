@@ -22,7 +22,7 @@ const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 12
 const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX = 512
 fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((glm.πf * 2f) / acos((_RAD - _MAXERROR) / _RAD)).i, DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
 
-// ImDrawList: You may set this to higher values (e.g. 2 or 3) to increase tessellation of fast rounded corners path.
+/** ImDrawList: You may set this to higher values (e.g. 2 or 3) to increase tessellation of fast rounded corners path. */
 var DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER = 1
 
 /** Data shared between all ImDrawList instances
@@ -60,6 +60,9 @@ class DrawListSharedData {
 
     /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
     val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
+
+    /** UV of anti-aliased lines in the atlas */
+    lateinit var texUvLines: Array<Vec4>
 
     fun setCircleSegmentMaxError_(maxError: Float) {
         if (circleSegmentMaxError == maxError)

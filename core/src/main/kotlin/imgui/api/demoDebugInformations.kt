@@ -38,6 +38,7 @@ import imgui.ImGui.pushID
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.saveIniSettingsToDisk
+import imgui.ImGui.saveIniSettingsToMemory
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
@@ -286,16 +287,18 @@ interface demoDebugInformations {
 //
         // Details for Docking
 //        #ifdef IMGUI_HAS_DOCK
-//                if (ImGui::TreeNode("Docking"))
-//                {
-//                    ImGui::TreePop();
-//                }
+        treeNode("Dock nodes") {
+
+        }
 //        #endif // #define IMGUI_HAS_DOCK
 
         // Settings
         treeNode("Settings") {
             if (smallButton("Clear"))
                 clearIniSettings()
+            sameLine()
+            if (smallButton("Save to memory"))
+                saveIniSettingsToMemory()
             sameLine()
             if (smallButton("Save to disk"))
                 saveIniSettingsToDisk(io.iniFilename)
@@ -306,7 +309,7 @@ interface demoDebugInformations {
                 textUnformatted("<NULL>")
             text("SettingsDirtyTimer %.2f", g.settingsDirtyTimer)
             treeNode("SettingsHandlers", "Settings handlers: (${g.settingsHandlers.size})") {
-                g.settingsHandlers.forEach { textUnformatted(it.typeName) }
+                g.settingsHandlers.forEach { bulletText(it.typeName) }
             }
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(Funcs::nodeWindowSettings)
@@ -329,6 +332,7 @@ interface demoDebugInformations {
         if (treeNode("Internal state")) {
             text("HoveredWindow: '${g.hoveredWindow?.name}'")
             text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+            text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")
             /*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                 information or not                 */
             text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer)
@@ -360,7 +364,7 @@ interface demoDebugInformations {
                 if (showWindowsBeginOrder && window.flags hasnt Wf._ChildWindow) {
                     val buf = "${window.beginOrderWithinContext}"
                     drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
-                    drawList.addText(window.pos, COL32(255, 255, 255, 255), buf)
+                    drawList.addText(window.pos, COL32(255), buf)
                 }
             }
 

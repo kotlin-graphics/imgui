@@ -93,13 +93,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Window being drawn into    */
     var currentWindow: Window? = null
 
-    /** Will catch mouse inputs */
+    /** Window the mouse is hovering. Will typically catch mouse inputs. */
     var hoveredWindow: Window? = null
 
-    /** Will catch mouse inputs (for focus/move only)   */
+    /** == HoveredWindow ? HoveredWindow->RootWindow : NULL, merely a shortcut to avoid null test in some situation. */
     var hoveredRootWindow: Window? = null
 
-    /** Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow. */
+    /** Hovered window ignoring MovingWindow. Only set if MovingWindow is set. */
+    var hoveredWindowUnderMovingWindow: Window? = null
+
+    /** Track the window we clicked on (in order to preserve focus). The actual window that is moved is generally MovingWindow->RootWindow. */
     var movingWindow: Window? = null
 
     /** Track the window we started mouse-wheeling on. Until a timer elapse or mouse has moved, generally keep scrolling the same window even if during the course of scrolling the mouse ends up hovering a child window. */
@@ -115,9 +118,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Hovered widget  */
     var hoveredId: ID = 0
 
+    var hoveredIdPreviousFrame: ID = 0
+
     var hoveredIdAllowOverlap = false
 
-    var hoveredIdPreviousFrame: ID = 0
+    /** At least one widget passed the rect test, but has been discarded by disabled flag or popup inhibit.
+     *  May be true even if HoveredId == 0. */
+    var hoveredIdDisabled = false
 
     /** Measure contiguous hovering time */
     var hoveredIdTimer = 0f
@@ -138,6 +145,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Active widget allows another widget to steal active id (generally for overlapping widgets, but not always)   */
     var activeIdAllowOverlap = false
+
+    /** Disable losing active id if the active id window gets unfocused. */
+    var activeIdNoClearOnFocusLoss = false
 
     /** Track whether the active id led to a press (this is to allow changing between PressOnClick and PressOnRelease without pressing twice). Used by range_select branch. */
     var activeIdHasBeenPressedBefore = false
@@ -470,6 +480,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Initial/reference color at the time of opening the color picker. */
     val colorPickerRef = Vec4()
 
+    /** Accumulated slider delta when using navigation controls. */
+    var sliderCurrentAccum = 0f
+
+    /** Has the accumulated slider delta changed since last time we tried to apply it? */
+    var sliderCurrentAccumDirty = false
+
     var dragCurrentAccumDirty = false
 
     /** Accumulator for dragging modification. Always high-precision, not rounded by end-user precision settings */
@@ -630,6 +646,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         if (g.settingsLoaded)
             io.iniFilename?.let(::saveIniSettingsToDisk)
 
+        // Notify hooked test engine, if any
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            Hook.shutdown!!.invoke(this)
+
         // Clear everything else
         g.apply {
             windows.forEach { it.destroy() }
@@ -642,6 +662,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             navWindow = null
             hoveredWindow = null
             hoveredRootWindow = null
+            hoveredWindowUnderMovingWindow = null
             activeIdWindow = null
             activeIdPreviousFrameWindow = null
             movingWindow = null

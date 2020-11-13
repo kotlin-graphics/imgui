@@ -1,6 +1,7 @@
 package imgui.demo
 
 import glm_.f
+import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -24,6 +25,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.showAboutWindow
 import imgui.ImGui.showMetricsWindow
 import imgui.ImGui.showUserGuide
+import imgui.ImGui.sliderFloat
 import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
@@ -36,15 +38,21 @@ import imgui.dsl.menu
 import imgui.dsl.menuBar
 import imgui.dsl.treeNode
 import imgui.dsl.window
+import imgui.internal.sections.or
+import imgui.internal.sections.wo
+import kool.lim
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
+import imgui.internal.sections.DrawListFlag as Dlf
 
 object ExampleApp {
 
     object show {
         // Examples Apps (accessible from the "Examples" menu)
-        var documents = false
         var mainMenuBar = false
+        var documents = false
         var console = false
         var log = false
         var layout = false
@@ -74,14 +82,16 @@ object ExampleApp {
     var noBackground = false
     var noBringToFront = false
 
+    var baseRot = 0f
     var filter = TextFilter()
+    var lineWidth = 1f
 
     operator fun invoke(open_: KMutableProperty0<Boolean>?) {
 
         var open = open_
 
-        if (show.documents) Documents(show::documents)
         if (show.mainMenuBar) MainMenuBar()
+        if (show.documents) Documents(show::documents)
         if (show.console) Console(show::console)
         if (show.log) Log(show::log)
         if (show.layout) Layout(show::layout)
@@ -128,7 +138,7 @@ object ExampleApp {
         //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
-        pushItemWidth(fontSize * -12);
+        pushItemWidth(fontSize * -12)
 
         // Menu Bar
         menuBar {
@@ -211,6 +221,7 @@ object ExampleApp {
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
                 checkbox("io.MouseDrawCursor", io::mouseDrawCursor)
                 sameLine(); helpMarker("Instruct Dear ImGui to render a mouse cursor itself. Note that a mouse cursor rendered via your application GPU rendering path will feel more laggy than hardware cursor, but will be more in sync with your other visuals.\n\nSome desktop applications may use both kinds of cursors (e.g. enable software cursor only when resizing/dragging something).")
+                text("Also see Style->Rendering for rendering options.")
                 separator()
             }
             treeNode("Backend Flags") {

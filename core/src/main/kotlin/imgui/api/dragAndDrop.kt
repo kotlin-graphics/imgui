@@ -187,7 +187,8 @@ interface dragAndDrop {
 
         val window = g.currentWindow!!
         if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect) return false
-        g.hoveredWindow.let { if (it == null || window.rootWindow !== it.rootWindow) return false }
+        val hoveredWindow = g.hoveredWindowUnderMovingWindow
+        if (hoveredWindow == null || window.rootWindow !== hoveredWindow.rootWindow) return false
 
         val displayRect = when {
             window.dc.lastItemStatusFlags has ItemStatusFlag.HasDisplayRect -> window.dc.lastItemDisplayRect

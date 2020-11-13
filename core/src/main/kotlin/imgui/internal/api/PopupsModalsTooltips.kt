@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.glm
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -72,7 +73,7 @@ internal interface PopupsModalsTooltips {
         if (g.navActivateId == id && flags hasnt Wf._NavFlattened && (childWindow.dc.navLayerActiveMask != 0 || childWindow.dc.navHasScroll)) {
             focusWindow(childWindow)
             navInitWindow(childWindow, false)
-            setActiveID(id + 1, childWindow) // Steal ActiveId with a dummy id so that key-press won't activate child item
+            setActiveID(id + 1, childWindow) // Steal ActiveId with another arbitrary id so that key-press won't activate child item
             g.activeIdSource = InputSource.Nav
         }
 
@@ -100,7 +101,8 @@ internal interface PopupsModalsTooltips {
         val popupRef = PopupData(popupId = id, window = null, sourceWindow = g.navWindow, openFrameCount = g.frameCount,
                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
                 openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
-//        println("" + g.openPopupStack.size +", "+currentStackSize)
+
+        IMGUI_DEBUG_LOG_POPUP("OpenPopupEx(0x%08X)", id)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
         else {
@@ -124,6 +126,7 @@ internal interface PopupsModalsTooltips {
 
     fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
+        IMGUI_DEBUG_LOG_POPUP("ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=${restoreFocusToWindowUnderPopup.i}")
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
 
         // Trim open popup stack
@@ -142,43 +145,44 @@ internal interface PopupsModalsTooltips {
             }
     }
 
+    /** When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
+     *  This function closes any popups that are over 'ref_window'. */
     fun closePopupsOverWindow(refWindow: Window?, restoreFocusToWindowUnderPopup: Boolean) {
 
         if (g.openPopupStack.empty())
             return
 
-        /*  When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
-            Don't close our own child popup windows */
-        var popupCountToKeep = 0
+        // Don't close our own child popup windows.
+        var popupCountToKeep = -1 // [JVM] to have the step directly into the while
         if (refWindow != null)
         // Find the highest popup which is a descendant of the reference window (generally reference window = NavWindow)
-            while (popupCountToKeep < g.openPopupStack.size) {
+            while (++popupCountToKeep < g.openPopupStack.size) {
                 val popup = g.openPopupStack[popupCountToKeep]
-                if (popup.window == null) {
-                    popupCountToKeep++
+                if (popup.window == null)
                     continue
-                }
                 assert(popup.window!!.flags has Wf._Popup)
-                if (popup.window!!.flags has Wf._ChildWindow) {
-                    popupCountToKeep++
+                if (popup.window!!.flags has Wf._ChildWindow)
                     continue
-                }
-                // Trim the stack when popups are not direct descendant of the reference window (the reference window is often the NavWindow)
-                var popupOrDescendentIsRefWindow = false
-                var m = popupCountToKeep
-                while (m < g.openPopupStack.size && !popupOrDescendentIsRefWindow) {
-                    g.openPopupStack[m].window?.let { popupWindow ->
-                        if (popupWindow.rootWindow === refWindow.rootWindow)
-                            popupOrDescendentIsRefWindow = true
+
+                // Trim the stack unless the popup is a direct parent of the reference window (the reference window is often the NavWindow)
+                // - With this stack of window, clicking/focusing Popup1 will close Popup2 and Popup3:
+                //     Window -> Popup1 -> Popup2 -> Popup3
+                // - Each popups may contain child windows, which is why we compare ->RootWindow!
+                //     Window -> Popup1 -> Popup1_Child -> Popup2 -> Popup2_Child
+                var refWindowIsDescendentOfPopup = false
+                for (n in popupCountToKeep until g.openPopupStack.size) {
+                    val popupWindow = g.openPopupStack[n].window
+                    if (popupWindow != null && popupWindow.rootWindow === refWindow.rootWindow) {
+                        refWindowIsDescendentOfPopup = true
+                        break
                     }
-                    m++
                 }
-                if (!popupOrDescendentIsRefWindow) break
-                popupCountToKeep++
+                if (!refWindowIsDescendentOfPopup)
+                    break
             }
 
         if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
-            //IMGUI_DEBUG_LOG("ClosePopupsOverWindow(%s) -> ClosePopupToLevel(%d)\n", ref_window->Name, popup_count_to_keep);
+            IMGUI_DEBUG_LOG_POPUP("ClosePopupsOverWindow(\"${refWindow!!.name}\") -> ClosePopupToLevel($popupCountToKeep)")
             closePopupToLevel(popupCountToKeep, restoreFocusToWindowUnderPopup)
         }
     }

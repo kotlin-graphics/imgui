@@ -17,6 +17,7 @@ import imgui.ImGui.logFinish
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.setLastItemData
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.internal.*
@@ -259,9 +260,13 @@ interface windows {
             if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f)
                 window.windowPadding.put(0f, if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
 
-            /* Collapse window by double-clicking on title bar
-            At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit
-            detection and drawing   */
+            // Lock menu offset so size calculation can use it as menu-bar windows need a minimum size.
+            window.dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
+            window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
+
+            // Collapse window by double-clicking on title bar
+            // At this point we don't have a clipping rectangle setup yet, so we can use the title bar area
+            // for hit detection and drawing
             if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse) {
                 /*  We don't use a regular button+id to test for double-click on title bar (mostly due to legacy reason, could be fixed),
                     so verify that we don't have items over the title bar.                 */
@@ -483,7 +488,7 @@ interface windows {
             window.scrollMax.y = max(0f, window.contentSize.y + window.windowPadding.y * 2f - window.innerRect.height)
 
             // Apply scrolling
-            window.scroll = window.calcNextScrollFromScrollTargetAndClamp(true)
+            window.scroll = window.calcNextScrollFromScrollTargetAndClamp()
             window.scrollTarget put Float.MAX_VALUE
 
             /* ---------- DRAWING ---------- */
@@ -560,7 +565,7 @@ interface windows {
                         floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
                         floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
-
+                parentWorkRect put workRect
 
                 // [LEGACY] Content Region
                 // FIXME-OBSOLETE: window->ContentRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
@@ -605,8 +610,6 @@ interface windows {
                 dc.navHasScroll = scrollMax.y > 0f
 
                 dc.menuBarAppending = false
-                dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
-                dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
                 dc.menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
                 dc.treeDepth = 0
                 dc.treeJumpToParentOnPopMask = 0x00
@@ -643,6 +646,9 @@ interface windows {
             if (flags hasnt Wf.NoTitleBar)
                 window.renderTitleBarContents(titleBarRect, name, pOpen)
 
+            // Clear hit test shape every frame
+            window.hitTestHoleSize put 0
+
             // Pressing CTRL+C while holding on a window copy its content to the clipboard
             // This works but 1. doesn't handle multiple Begin/End pairs, 2. recursing into another Begin/End pair - so we need to work that out and add better logging scope.
             // Maybe we can support CTRL+C on every element?
@@ -654,9 +660,8 @@ interface windows {
 
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
-            window.dc.lastItemId = window.moveId
-            window.dc.lastItemStatusFlags = if (isMouseHoveringRect(titleBarRect)) ItemStatusFlag.HoveredRect.i else 0
-            window.dc.lastItemRect = titleBarRect
+            val flag = if(isMouseHoveringRect(titleBarRect, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
+            setLastItemData(window, window.moveId, flag.i, titleBarRect)
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
                 Hook.itemAdd!!(g, window.dc.lastItemRect, window.dc.lastItemId)

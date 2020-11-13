@@ -49,7 +49,7 @@ interface itemWidgetsUtilities {
                     g.navDisableMouseHover || !window.isContentHoverable(flags) -> false
                     // Test if the item is disabled
                     window.dc.itemFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled -> false
-                    /*  Special handling for the dummy item after Begin() which represent the title bar or tab.
+                    /*  Special handling for calling after Begin() which represent the title bar or tab.
                         When the window is collapsed (SkipItems==true) that last item will never be overwritten
                         so we need to detect the case.  */
                     window.dc.lastItemId == window.moveId && window.writeAccessed -> false

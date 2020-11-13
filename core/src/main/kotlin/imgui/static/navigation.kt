@@ -774,7 +774,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toByteArray()
                 getForegroundDrawList(window).apply {
                     addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                    addText(io.fontDefault, 13f, cand.min, COL32(255, 255, 255, 255), buf)
+                    addText(io.fontDefault, 13f, cand.min, COL32(255), buf)
                 }
             }
         }
@@ -925,7 +925,7 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
 
 /** Restore the last focused child.
  *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
-fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow ?: window
+fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow?.takeIf { it.wasActive } ?: window
 
 // FIXME-OPT O(N)
 fun findWindowFocusIndex(window: Window): Int {
