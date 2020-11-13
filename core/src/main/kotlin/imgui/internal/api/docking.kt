@@ -371,31 +371,40 @@ interface docking {
         val payloadWindow = payload.data as Window
         acceptDragDropPayload(IMGUI_PAYLOAD_TYPE_WINDOW, DragDropFlag.AcceptBeforeDelivery or DragDropFlag.AcceptNoDrawDefaultRect)?.let {
             // Select target node
-            // (we should not assume that g.HoveredDockNode is != NULL when window is a host dock node: it depends on padding/spacing handled by DockNodeTreeFindVisibleNodeByPos)
-            var node = g.hoveredDockNode
-            val allowNullTargetNode = window.dockNode == null && window.dockNodeAsHost == null
+            // (Important: we cannot use g.HoveredDockNode here! Because each of our target node have filters based on payload, each candidate drop target will do its own evaluation)
+            var dockIntoFloatingWindow = false
+            var node: DockNode? = null
+            val dockNodeAsHost = window.dockNodeAsHost
+            if (dockNodeAsHost != null) {
+                // Cannot assume that node will != NULL even though we passed the rectangle test: it depends on padding/spacing handled by DockNodeTreeFindVisibleNodeByPos().
+                node = dockNodeTreeFindVisibleNodeByPos(dockNodeAsHost, g.io.mousePos)
 
-            // There is an edge case when docking into a dockspace which only has inactive nodes (because none of the windows are active)
-            // In this case we need to fallback into any leaf mode, possibly the central node.
-            if (window.dockNodeAsHost != null)
-                node?.let {
-                    if (it.isDockSpace && it.isRootNode) {
-                        val centralNode = it.centralNode
-                        node = when {
-                            centralNode != null && it.isLeafNode -> centralNode // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
-                            else -> dockNodeTreeFindFallbackLeafNode(it)
-                        }
-                    }
+                // There is an edge case when docking into a dockspace which only has _inactive_ nodes (because none of the windows are active)
+                // In this case we need to fallback into any leaf mode, possibly the central node.
+                // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
+                if (node != null && node.isDockSpace && node.isRootNode) {
+                    val centralNode = node.centralNode
+                    node = if (centralNode != null && node.isLeafNode) centralNode else dockNodeTreeFindFallbackLeafNode(node)
                 }
+            } else {
+                val dockNode = window.dockNode
+                if (dockNode != null)
+                    node = dockNode
+                else
+                    dockIntoFloatingWindow = true // Dock into a regular window
+            }
 
-            val explicitTargetRect = node?.let { n -> n.tabBar?.let { t -> if (!n.isHiddenTabBar && !n.isNoTabBar) Rect(t.barRect) else null } }
-                    ?: Rect(window.pos, window.pos + Vec2(window.size.x, frameHeight))
+            val tabBar = node?.tabBar
+            val explicitTargetRect = when {
+                node != null && tabBar != null && !node.isHiddenTabBar && !node.isNoTabBar -> Rect(tabBar.barRect)
+                else -> Rect(window.pos, window.pos + Vec2(window.size.x, frameHeight))
+            }
             val isExplicitTarget = io.configDockingWithShift || isMouseHoveringRect(explicitTargetRect.min, explicitTargetRect.max)
 
             // Preview docking request and find out split direction/ratio
             //const bool do_preview = true;     // Ignore testing for payload->IsPreview() which removes one frame of delay, but breaks overlapping drop targets within the same window.
             val doPreview = payload.preview || payload.delivery
-            if (doPreview && (node != null || allowNullTargetNode)) {
+            if (doPreview && (node != null || dockIntoFloatingWindow)) {
                 val splitInner = DockPreviewData()
                 val splitOuter = DockPreviewData()
                 var splitData = splitInner
