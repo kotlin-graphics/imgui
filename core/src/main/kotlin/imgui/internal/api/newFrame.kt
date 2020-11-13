@@ -151,7 +151,7 @@ internal interface newFrame {
                     g.mouseViewport = movingWindow.viewport
 
                 // Clear the NoInput window flag set by the Viewport system
-                movingWindow.viewport!!.apply { flags = flags wo ViewportFlag.NoInputs }
+                movingWindow.viewport!!.apply { flags = flags wo ViewportFlag.NoInputs }  // FIXME-VIEWPORT: Test engine managed to crash here because Viewport was NULL.
 
                 clearActiveID()
                 g.movingWindow = null
