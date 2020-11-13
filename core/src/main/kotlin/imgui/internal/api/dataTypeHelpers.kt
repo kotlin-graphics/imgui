@@ -220,25 +220,13 @@ internal interface dataTypeHelpers {
         return dataBackup != pData()
     }
 
-    fun <N> dataTypeClamp(dataType: DataType, pData: KMutableProperty0<N>, pMin: N?, pMax: N?): Boolean
-            where N : Number, N : Comparable<N> = when (dataType) {
-        DataType.Byte -> clampBehaviorT(pData as KMutableProperty0<Byte>, pMin as Byte?, pMax as Byte?)
-        DataType.Ubyte -> clampBehaviorT(pData as KMutableProperty0<Ubyte>, pMin as Ubyte?, pMax as Ubyte?)
-        DataType.Short -> clampBehaviorT(pData as KMutableProperty0<Short>, pMin as Short?, pMax as Short?)
-        DataType.Ushort -> clampBehaviorT(pData as KMutableProperty0<Ushort>, pMin as Ushort?, pMax as Ushort?)
-        DataType.Int -> clampBehaviorT(pData as KMutableProperty0<Int>, pMin as Int?, pMax as Int?)
-        DataType.Uint -> clampBehaviorT(pData as KMutableProperty0<Uint>, pMin as Uint?, pMax as Uint?)
-        DataType.Long -> clampBehaviorT(pData as KMutableProperty0<Long>, pMin as Long?, pMax as Long?)
-        DataType.Ulong -> clampBehaviorT(pData as KMutableProperty0<Ulong>, pMin as Ulong?, pMax as Ulong?)
-        DataType.Float -> clampBehaviorT(pData as KMutableProperty0<Float>, pMin as Float?, pMax as Float?)
-        DataType.Double -> clampBehaviorT<Double>(pData as KMutableProperty0<Double>, pMin as Double?, pMax as Double?)
-        else -> error("invalid")
-    }
+    // useless on JVM with `N : Number, N : Comparable<N>`
+//    IMGUI_API int           DataTypeCompare(ImGuiDataType data_type, const void* arg_1, const void* arg_2);
 
-    fun <N> clampBehaviorT(pV: KMutableProperty0<N>, vMin: N?, vMax: N?): Boolean
+    fun <N> dataTypeClampT(pV: KMutableProperty0<N>, vMin: N?, vMax: N?): Boolean
             where N : Number, N : Comparable<N> {
         var v by pV
-        // Clamp, both sides are optional
+        // Clamp, both sides are optional, return true if modified
         return when {
             vMin != null && v < vMin -> {
                 v = vMin; true; }
@@ -246,5 +234,20 @@ internal interface dataTypeHelpers {
                 v = vMax; true; }
             else -> false
         }
+    }
+
+    fun <N> dataTypeClamp(dataType: DataType, pData: KMutableProperty0<N>, pMin: N?, pMax: N?): Boolean
+            where N : Number, N : Comparable<N> = when (dataType) {
+        DataType.Byte -> dataTypeClampT(pData as KMutableProperty0<Byte>, pMin as Byte?, pMax as Byte?)
+        DataType.Ubyte -> dataTypeClampT(pData as KMutableProperty0<Ubyte>, pMin as Ubyte?, pMax as Ubyte?)
+        DataType.Short -> dataTypeClampT(pData as KMutableProperty0<Short>, pMin as Short?, pMax as Short?)
+        DataType.Ushort -> dataTypeClampT(pData as KMutableProperty0<Ushort>, pMin as Ushort?, pMax as Ushort?)
+        DataType.Int -> dataTypeClampT(pData as KMutableProperty0<Int>, pMin as Int?, pMax as Int?)
+        DataType.Uint -> dataTypeClampT(pData as KMutableProperty0<Uint>, pMin as Uint?, pMax as Uint?)
+        DataType.Long -> dataTypeClampT(pData as KMutableProperty0<Long>, pMin as Long?, pMax as Long?)
+        DataType.Ulong -> dataTypeClampT(pData as KMutableProperty0<Ulong>, pMin as Ulong?, pMax as Ulong?)
+        DataType.Float -> dataTypeClampT(pData as KMutableProperty0<Float>, pMin as Float?, pMax as Float?)
+        DataType.Double -> dataTypeClampT(pData as KMutableProperty0<Double>, pMin as Double?, pMax as Double?)
+        else -> error("invalid")
     }
 }
