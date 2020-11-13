@@ -429,8 +429,9 @@ interface main {
                 }
 
             // Draw modal whitening background between CTRL-TAB list
-            if (dimBgForWindowList) {
+            if (dimBgForWindowList && g.navWindowingTargetAnim!!.active) {
                 // Choose a draw list that will be front-most across all our children
+                // In the unlikely case that the window wasn't made active we can't rely on its drawlist and skip rendering all-together.
                 val window = g.navWindowingTargetAnim!!
                 val drawList = findFrontMostVisibleChildWindow(window.rootWindow!!).drawList
                 drawList.pushClipRectFullScreen()
