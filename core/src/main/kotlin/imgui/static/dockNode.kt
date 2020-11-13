@@ -1124,7 +1124,7 @@ fun dockNodePreviewDockRender(hostWindow: Window, hostNode: DockNode?, rootPaylo
             hostNode.tabBar?.let {
                 tabPos.x += when {
                     // We don't use OffsetNewTab because when using non-persistent-order tab bar it is incremented with each Tab submission.
-                    !hostNode.isHiddenTabBar && !hostNode.isNoTabBar -> it.offsetMax + style.itemInnerSpacing.x
+                    !hostNode.isHiddenTabBar && !hostNode.isNoTabBar -> it.widthAllTabs + style.itemInnerSpacing.x
                     else -> style.itemInnerSpacing.x + tabItemCalcSize(hostNode.windows[0].name, hostNode.windows[0].hasCloseButton).x
                 }
             }

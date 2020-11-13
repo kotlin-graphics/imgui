@@ -115,8 +115,7 @@ interface demoDebugInformations {
         open[0] = showWindow
     }
 
-    fun showDemoWindow(open: KMutableProperty0<Boolean>) {
-        // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
+    fun showDemoWindow(open: KMutableProperty0<Boolean>) { // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
         // Most ImGui functions would normally just crash if the context is missing.
         assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" }
         ExampleApp(open)
@@ -192,8 +191,7 @@ interface demoDebugInformations {
             separator()
             text("io.backendPlatformName: ${io.backendPlatformName}")
             text("io.backendRendererName: ${io.backendRendererName}")
-            text("io.configFlags: 0x%08X", io.configFlags)
-            // @formatter:off
+            text("io.configFlags: 0x%08X", io.configFlags) // @formatter:off
             if (io.configFlags has ConfigFlag.NavEnableKeyboard) text(" NavEnableKeyboard")
             if (io.configFlags has ConfigFlag.NavEnableGamepad) text(" NavEnableGamepad")
             if (io.configFlags has ConfigFlag.NavEnableSetMousePos) text(" NavEnableSetMousePos")
@@ -217,10 +215,7 @@ interface demoDebugInformations {
             if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
             if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
-            if (io.configWindowsMemoryCompactTimer >= 0f) text(
-                    "io.ConfigWindowsMemoryCompactTimer = %.1ff",
-                    io.configWindowsMemoryCompactTimer
-            )
+            if (io.configWindowsMemoryCompactTimer >= 0f) text("io.ConfigWindowsMemoryCompactTimer = %.1ff", io.configWindowsMemoryCompactTimer)
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
@@ -231,17 +226,9 @@ interface demoDebugInformations {
             if (io.backendFlags has BackendFlag.RendererHasViewports) text(" RendererHasViewports")
             // @formatter:on
             separator()
-            text(
-                    "io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
-                    io.fonts.flags
-            )
+            text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}", io.fonts.flags)
             text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
-            text(
-                    "io.displayFramebufferScale: %.2f,%.2f".format(
-                            io.displayFramebufferScale.x,
-                            io.displayFramebufferScale.y
-                    )
-            )
+            text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x, io.displayFramebufferScale.y))
             separator()
             text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
             text("style.windowBorderSize: %.2f", style.windowBorderSize)
@@ -289,8 +276,7 @@ interface demoDebugInformations {
         treeNode("Tools") {
 
             // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
-            if (button("Item Picker.."))
-                debugStartItemPicker()
+            if (button("Item Picker..")) debugStartItemPicker()
             sameLine()
             helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
 
@@ -307,26 +293,16 @@ interface demoDebugInformations {
                     indent {
                         for (rectN in WRT.values()) {
                             val r = Funcs.getWindowRect(nav, rectN)
-                            text(
-                                    "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s",
-                                    r.min.x,
-                                    r.min.y,
-                                    r.max.x,
-                                    r.max.y,
-                                    r.width,
-                                    r.height,
-                                    WRT.names[rectN.ordinal]
-                            )
-                        }
+                            text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height, WRT.names[rectN.ordinal])
                     }
                 }
+            }
             checkbox("Show mesh when hovering ImDrawCmd", ::showDrawcmdMesh)
             checkbox("Show bounding boxes when hovering ImDrawCmd", ::showDrawcmdAabb)
         }
 
         // Contents
-        Funcs.nodeWindows(g.windows, "Windows")
-        //Funcs::NodeWindows(g.WindowsFocusOrder, "WindowsFocusOrder")
+        Funcs.nodeWindows(g.windows, "Windows") //Funcs::NodeWindows(g.WindowsFocusOrder, "WindowsFocusOrder")
         if (treeNode("Viewpoer", "Viewports  (${g.viewports.size})")) {
             indent(treeNodeToLabelSpacing) {
                 showViewportThumbnails()
@@ -336,22 +312,9 @@ interface demoDebugInformations {
             helpMarker("Dear ImGui uses monitor data:\n- to query DPI settings on a per monitor basis\n- to position popup/tooltips so they don't straddle monitors.")
             if (open) {
                 g.platformIO.monitors.forEachIndexed { i, mon ->
-                    bulletText(
-                            "Monitor #$i: DPI %.0f%%\n MainMin (%.0f,%.0f), MainMax (%.0f,%.0f), MainSize (%.0f,%.0f)\n WorkMin (%.0f,%.0f), WorkMax (%.0f,%.0f), WorkSize (%.0f,%.0f)",
-                            mon.dpiScale * 100f,
-                            mon.mainPos.x,
-                            mon.mainPos.y,
-                            mon.mainPos.x + mon.mainSize.x,
-                            mon.mainPos.y + mon.mainSize.y,
-                            mon.mainSize.x,
-                            mon.mainSize.y,
-                            mon.workPos.x,
-                            mon.workPos.y,
-                            mon.workPos.x + mon.workSize.x,
-                            mon.workPos.y + mon.workSize.y,
-                            mon.workSize.x,
-                            mon.workSize.y
-                    )
+                    bulletText("Monitor #$i: DPI %.0f%%\n MainMin (%.0f,%.0f), MainMax (%.0f,%.0f), MainSize (%.0f,%.0f)\n WorkMin (%.0f,%.0f), WorkMax (%.0f,%.0f), WorkSize (%.0f,%.0f)", mon.dpiScale * 100f,
+                            mon.mainPos.x, mon.mainPos.y, mon.mainPos.x + mon.mainSize.x, mon.mainPos.y + mon.mainSize.y, mon.mainSize.x, mon.mainSize.y,
+                            mon.workPos.x, mon.workPos.y, mon.workPos.x + mon.workSize.x, mon.workPos.y + mon.workSize.y, mon.workSize.x, mon.workSize.y)
                 }
                 treePop()
             }
@@ -372,8 +335,7 @@ interface demoDebugInformations {
 
         // Details for TabBars
         if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
-            for (n in 0 until g.tabBars.list.size)
-                Funcs.nodeTabBar(g.tabBars.list[n]!!)
+            for (n in 0 until g.tabBars.list.size) Funcs.nodeTabBar(g.tabBars.list[n]!!)
             treePop()
         }
 
@@ -392,7 +354,6 @@ interface demoDebugInformations {
             val dc = g.dockContext
             checkbox("List root nodes", ::rootNodesOnly)
             checkbox("Ctrl shows window dock info", ::showDockingNodes)
-
             if (smallButton("Clear nodes")) dockContextClearNodes(g, 0, true)
             sameLine()
             if (smallButton("Rebuild all")) dc.wantFullRebuild = true
@@ -404,19 +365,14 @@ interface demoDebugInformations {
 
         // Settings
         treeNode("Settings") {
-            if (smallButton("Clear"))
-                clearIniSettings()
+            if (smallButton("Clear")) clearIniSettings()
             sameLine()
-            if (smallButton("Save to memory"))
-                saveIniSettingsToMemory()
+            if (smallButton("Save to memory")) saveIniSettingsToMemory()
             sameLine()
-            if (smallButton("Save to disk"))
-                saveIniSettingsToDisk(io.iniFilename)
+            if (smallButton("Save to disk")) saveIniSettingsToDisk(io.iniFilename)
             sameLine()
-            if (io.iniFilename != null)
-                text("\"${io.iniFilename}\"")
-            else
-                textUnformatted("<NULL>")
+            if (io.iniFilename != null) text("\"${io.iniFilename}\"")
+            else textUnformatted("<NULL>")
             text("SettingsDirtyTimer %.2f", g.settingsDirtyTimer)
             treeNode("SettingsHandlers", "Settings handlers: (${g.settingsHandlers.size})") {
                 g.settingsHandlers.forEach { bulletText(it.typeName) }
@@ -452,10 +408,7 @@ interface demoDebugInformations {
             }
             //            #endif
 
-            treeNode(
-                    "SettingsIniData",
-                    "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes"
-            ) {
+            treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
                 inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
             }
         }
@@ -498,21 +451,19 @@ interface demoDebugInformations {
         }
 
         // Overlay: Display windows Rectangles and Begin Order
-        if (showWindowsRects || showWindowsBeginOrder)
-            for (window in g.windows) {
-                if (!window.wasActive)
-                    continue
-                val drawList = getForegroundDrawList(window)
-                if (showWindowsRects) {
-                    val r = Funcs.getWindowRect(window, showWindowsRectType)
-                    drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
-                }
-                if (showWindowsBeginOrder && window.flags hasnt Wf._ChildWindow) {
-                    val buf = "${window.beginOrderWithinContext}"
-                    drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
-                    drawList.addText(window.pos, COL32(255), buf)
-                }
+        if (showWindowsRects || showWindowsBeginOrder) for (window in g.windows) {
+            if (!window.wasActive) continue
+            val drawList = getForegroundDrawList(window)
+            if (showWindowsRects) {
+                val r = Funcs.getWindowRect(window, showWindowsRectType)
+                drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
             }
+            if (showWindowsBeginOrder && window.flags hasnt Wf._ChildWindow) {
+                val buf = "${window.beginOrderWithinContext}"
+                drawList.addRectFilled(window.pos, window.pos + Vec2(fontSize), COL32(200, 100, 100, 255))
+                drawList.addText(window.pos, COL32(255), buf)
+            }
+        }
 
         //        #ifdef IMGUI_HAS_TABLE
         //        // Overlay: Display Tables Rectangles
@@ -575,34 +526,28 @@ interface demoDebugInformations {
         if (beginCombo(label, fontCurrent.debugName)) {
             for (font in io.fonts.fonts) {
                 pushID(font)
-                if (selectable(font.debugName, font === fontCurrent))
-                    io.fontDefault = font
+                if (selectable(font.debugName, font === fontCurrent)) io.fontDefault = font
                 popID()
             }
             endCombo()
         }
         sameLine()
-        helpMarker(
-                """
+        helpMarker("""
             - Load additional fonts with io.Fonts->AddFontFromFileTTF().
             - The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().
             - Read FAQ and documentation in misc/fonts/ for more details.
-            - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame()."""
-        )
+            - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
     }
 
     /** Helper to display basic user controls. */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
-        bulletText(
-                """
+        bulletText("""
             Click and drag on lower corner to resize window
-            (double-click to auto fit window to its contents).""".trimIndent()
-        )
+            (double-click to auto fit window to its contents).""".trimIndent())
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
-        if (io.fontAllowUserScaling)
-            bulletText("CTRL+Mouse Wheel to zoom window contents.")
+        if (io.fontAllowUserScaling) bulletText("CTRL+Mouse Wheel to zoom window contents.")
         bulletText("While inputing text:\n")
         indent {
             bulletText("CTRL+Left/Right to word jump.")
@@ -642,8 +587,7 @@ interface demoDebugInformations {
 
         /** Tables Rect Type */
         enum class TRT {
-            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect,
-            ColumnsContentHeadersIdeal, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
+            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect, ColumnsContentHeadersIdeal, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
 
             companion object {
                 val names = WRT.values().map { it.name }
@@ -709,25 +653,11 @@ interface demoDebugInformations {
                         vtxsRect add p
                     }
                     if (showMesh)
-                        fgDrawList.addPolyline(
-                                triangle.toCollection(ArrayList()),
-                                COL32(255, 255, 0, 255),
-                                true,
-                                1f
-                        ) // In yellow: mesh triangles
-                }
-                // Draw bounding boxes
+                        fgDrawList.addPolyline(triangle.toCollection(ArrayList()),COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
+                } // Draw bounding boxes
                 if (showAabb) {
-                    fgDrawList.addRect(
-                            floor(clipRect.min),
-                            floor(clipRect.max),
-                            COL32(255, 0, 255, 255)
-                    ) // In pink: clipping rectangle submitted to GPU
-                    fgDrawList.addRect(
-                            floor(vtxsRect.min),
-                            floor(vtxsRect.max),
-                            COL32(0, 255, 255, 255)
-                    ) // In cyan: bounding box of triangles
+                    fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255)) // In pink: clipping rectangle submitted to GPU
+                    fgDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(0, 255, 255, 255)) // In cyan: bounding box of triangles
                 }
                 fgDrawList.flags = backupFlags
             }
@@ -735,13 +665,9 @@ interface demoDebugInformations {
             /** Note that both 'window' and 'viewport' may be NULL here. Viewport is generally null of destroyed popups which previously owned a viewport. */
             fun nodeDrawList(window: Window?, viewport: ViewportP?, drawList: DrawList, label: String) {
 
-                val nodeOpen = treeNode(
-                        drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " +
-                        "${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds"
-                )
+                val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, ${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds")
                 if (drawList === windowDrawList) {
-                    sameLine()
-                    // Can't display stats for active draw list! (we don't have the data double-buffered)
+                    sameLine() // Can't display stats for active draw list! (we don't have the data double-buffered)
                     textColored(Vec4(1f, 0.4f, 0.4f, 1f), "CURRENTLY APPENDING")
                     if (nodeOpen) treePop()
                     return
@@ -750,30 +676,22 @@ interface demoDebugInformations {
                 if (window != null && fgDrawList != null && isItemHovered())
                     fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
 
-                if (!nodeOpen)
-                    return
+                if (!nodeOpen) return
 
-                if (window?.wasActive == false)
-                    textDisabled("Warning: owning Window is inactive. This DrawList is not being rendered!")
+                if (window?.wasActive == false) textDisabled("Warning: owning Window is inactive. This DrawList is not being rendered!")
 
                 var elemOffset = 0
                 for (cmd in drawList.cmdBuffer) {
                     val cb = cmd.userCallback
-                    if (cb == null && cmd.elemCount == 0)
-                        continue
+                    if (cb == null && cmd.elemCount == 0) continue
                     if (cb != null) {
-                        bulletText(
-                                "Callback %s, UserData %s",
-                                cb.toString(),
-                                String((cmd.userCallbackData as ByteBuffer).array())
-                        )
+                        bulletText("Callback %s, UserData %s", cb.toString(), String((cmd.userCallbackData as ByteBuffer).array()))
                         continue
                     }
 
                     val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
 
-                    var string =
-                            ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
+                    var string = ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
                                     .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
@@ -792,10 +710,7 @@ interface demoDebugInformations {
                     }
 
                     // Display vertex information summary. Hover to get all triangles drawn in wire-frame
-                    string =
-                            "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(
-                                    totalArea
-                            )
+                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
                     selectable(string)
                     if (isItemHovered() && fgDrawList != null)
                         nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, true, false)
@@ -820,8 +735,8 @@ interface demoDebugInformations {
 
                             selectable(String(buf), false)
                             if (fgDrawList != null && isItemHovered()) {
-                                val backupFlags = fgDrawList.flags
-                                // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                                val backupFlags =
+                                    fgDrawList.flags // Disable AA on triangle outlines is more readable for very large and thin triangles.
                                 fgDrawList.flags = fgDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
                                 fgDrawList.addPolyline(triangles, COL32(255, 255, 0, 255), true, 1f)
                                 fgDrawList.flags = backupFlags
@@ -835,34 +750,17 @@ interface demoDebugInformations {
             }
 
             fun nodeColumns(columns: Columns) {
-                if (!treeNode(
-                                columns.id,
-                                "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X",
-                                columns.id,
-                                columns.flags
-                        )
-                )
+                if (!treeNode(columns.id, "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X", columns.id, columns.flags))
                     return
-                bulletText(
-                        "Width: %.1f (MinX: %.1f, MaxX: %.1f)",
-                        columns.offMaxX - columns.offMinX,
-                        columns.offMinX,
-                        columns.offMaxX
-                )
+                bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.offMaxX - columns.offMinX, columns.offMinX, columns.offMaxX)
                 columns.columns.forEachIndexed { i, c ->
-                    bulletText(
-                            "Column %02d: OffsetNorm %.3f (= %.1f px)",
-                            i,
-                            c.offsetNorm,
-                            columns getOffsetFrom c.offsetNorm
-                    )
+                    bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", i, c.offsetNorm, columns getOffsetFrom c.offsetNorm)
                 }
                 treePop()
             }
 
             fun nodeWindows(windows: ArrayList<Window>, label: String) {
-                if (!treeNode(label, "$label (${windows.size})"))
-                    return
+                if (!treeNode(label, "$label (${windows.size})")) return
                 text("(In front-to-back order:)")
                 windows.asReversed().forEach { // Iterate front to back
                     withId(it) { nodeWindow(it, "Window") }
@@ -882,18 +780,17 @@ interface demoDebugInformations {
                 val open =
                         treeNodeEx(label, treeNodeFlags.i, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
                 if (!isActive) popStyleColor()
-                if (isItemHovered() && isActive)
-                    getForegroundDrawList(window).addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
-                if (!open)
-                    return
+                if (isItemHovered() && isActive) getForegroundDrawList(window).addRect(window.pos,
+                    window.pos + window.size,
+                    COL32(255, 255, 0, 255))
+                if (!open) return
 
-                if (window.memoryCompacted)
-                    textDisabled("Note: some memory buffers have been compacted/freed.")
+                if (window.memoryCompacted) textDisabled("Note: some memory buffers have been compacted/freed.")
 
                 val flags = window.flags
                 nodeDrawList(window, window.viewport, window.drawList, "DrawList")
-                bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)", window.pos.x.f, window.pos.y.f,
-                        window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
+                bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)",
+                    window.pos.x.f, window.pos.y.f, window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
                 val builder = StringBuilder()
                 if (flags has Wf._ChildWindow) builder += "Child "
                 if (flags has Wf._Tooltip) builder += "Tooltip "
@@ -907,55 +804,25 @@ interface demoDebugInformations {
                 bulletText("Flags: 0x%08X ($builder..)", flags)
                 bulletText("WindowClassId: 0x%08X".format(window.windowClass.classId))
                 val xy = (if (window.scrollbar.x) "X" else "") + if (window.scrollbar.y) "Y" else ""
-                bulletText(
-                        "Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy",
-                        window.scroll.x,
-                        window.scrollMax.x,
-                        window.scroll.y,
-                        window.scrollMax.y
-                )
+                bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy", window.scroll.x, window.scrollMax.x, window.scroll.y, window.scrollMax.y)
                 val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
                 bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
                 bulletText("Appearing: ${window.appearing}, Hidden: ${window.hidden} (CanSkip ${window.hiddenFramesCanSkipItems} Cannot ${window.hiddenFramesCannotSkipItems}), SkipItems: ${window.skipItems}")
-                bulletText(
-                        "NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X",
-                        window.navLastIds[0],
-                        window.navLastIds[1],
-                        window.dc.navLayerActiveMask
-                )
+                bulletText("NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X", window.navLastIds[0], window.navLastIds[1], window.dc.navLayerActiveMask)
                 bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name}")
                 if (!window.navRectRel[0].isInverted)
-                    bulletText(
-                            "NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)",
-                            window.navRectRel[0].min.x,
-                            window.navRectRel[0].min.y,
-                            window.navRectRel[0].max.x,
-                            window.navRectRel[0].max.y
-                    )
+                    bulletText("NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)", window.navRectRel[0].min.x, window.navRectRel[0].min.y, window.navRectRel[0].max.x, window.navRectRel[0].max.y)
                 else
                     bulletText("NavRectRel[0]: <None>")
-                bulletText(
-                        "Viewport: ${window.viewport?.idx ?: -1}${if (window.viewportOwned) " (Owned)" else ""}, ViewportId: 0x%08X, ViewportPos: (%.1f,%.1f)",
-                        window.viewportId,
-                        window.viewportPos.x,
-                        window.viewportPos.y
-                )
+                bulletText("Viewport: ${window.viewport?.idx ?: -1}${if (window.viewportOwned) " (Owned)" else ""}, ViewportId: 0x%08X, ViewportPos: (%.1f,%.1f)",
+                        window.viewportId, window.viewportPos.x, window.viewportPos.y)
                 bulletText("ViewportMonitor: ${window.viewport?.platformMonitor ?: -1}")
                 if (DEBUG)
-                    bulletText(
-                            "DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive.i}, Vis: ${window.dockTabIsVisible.i}",
-                            window.dockId
-                    )
+                    bulletText("DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive.i}, Vis: ${window.dockTabIsVisible.i}", window.dockId)
                 else
-                    bulletText(
-                            "DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive}, Vis: ${window.dockTabIsVisible}",
-                            window.dockId
-                    )
+                    bulletText("DockId: 0x%04X, DockOrder: ${window.dockOrder}, Act: ${window.dockIsActive}, Vis: ${window.dockTabIsVisible}", window.dockId)
                 if (window.dockNode != null || window.dockNodeAsHost != null)
-                    nodeDockNode(
-                            window.dockNodeAsHost
-                                    ?: window.dockNode!!, if (window.dockNodeAsHost != null) "DockNodeAsHost" else "DockNode"
-                    )
+                    nodeDockNode(window.dockNodeAsHost ?: window.dockNode!!, if (window.dockNodeAsHost != null) "DockNodeAsHost" else "DockNode")
                 if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
                 if (window.rootWindowDockStop !== window.rootWindow) nodeWindow(
                         window.rootWindowDockStop!!,
@@ -963,11 +830,7 @@ interface demoDebugInformations {
                 )
                 window.parentWindow?.let { nodeWindow(it, "ParentWindow") }
                 if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
-                if (window.columnsStorage.isNotEmpty() && treeNode(
-                                "Columns",
-                                "Columns sets (${window.columnsStorage.size})"
-                        )
-                ) {
+                if (window.columnsStorage.isNotEmpty() && treeNode("Columns", "Columns sets (${window.columnsStorage.size})")) {
                     window.columnsStorage.forEach(Funcs::nodeColumns)
                     treePop()
                 }
@@ -1080,11 +943,7 @@ interface demoDebugInformations {
 
 
             fun nodeStorage(storage: HashMap<ID, Boolean>, label: String) {
-                if (!treeNode(
-                                label,
-                                "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes"
-                        )
-                ) // [JVM] Boolean size is actually VM dependent
+                if (!treeNode(label, "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes")) // [JVM] Boolean size is actually VM dependent
                     return
                 storage.forEach { (key, value) ->
                     bulletText("Key 0x%08X Value { i: $value }".format(key)) // Important: we currently don't store a type, real value may not be integer.
@@ -1092,15 +951,9 @@ interface demoDebugInformations {
                 treePop()
             }
 
-            fun nodeWindowSettings(settings: WindowSettings) =
-                    text(
-                            "0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " +
-                                    "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}",
-                            settings.id
-                    )
+            fun nodeWindowSettings(settings: WindowSettings) = text("0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}", settings.id)
 
-            fun nodeTabBar(tabBar: TabBar) {
-                // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
+            fun nodeTabBar(tabBar: TabBar) { // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
                 val isActive = tabBar.prevFrameVisible >= ImGui.frameCount - 2
                 val p = StringBuffer("TabBar (${tabBar.tabs.size} tabs)${if (isActive) " *Inactive*" else ""}")
                 if (tabBar.flags has TabBarFlag._DockNode) {
@@ -1117,17 +970,14 @@ interface demoDebugInformations {
                     for (tabN in tabBar.tabs.indices) {
                         val tab = tabBar.tabs[tabN]
                         pushID(tab)
-                        if (smallButton("<"))
-                            tabBar.queueChangeTabOrder(tab, -1)
+                        if (smallButton("<")) tabBar.queueReorder(tab, -1)
                         sameLine(0, 2)
-                        if (smallButton(">")) {
-                            tabBar.queueChangeTabOrder(tab, +1)
-                            sameLine()
-                            val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
-                            val s = if (tab.window != null || tab.nameOffset != -1) tabBar.getTabName(tab) else ""
-                            text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
-                            popID()
-                        }
+                        if (smallButton(">")) tabBar.queueReorder(tab, +1)
+                        sameLine()
+                        val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
+                        val s = if (tab.window != null || tab.nameOffset != -1) tabBar.getTabName(tab) else ""
+                        text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
+                        popID()
                     }
                     treePop()
                 }
