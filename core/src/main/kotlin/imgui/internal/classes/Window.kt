@@ -825,6 +825,7 @@ class Window(
                           resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
 
         // Ensure that ScrollBar doesn't read last frame's SkipItems
+        assert(beginCount == 0)
         skipItems = false
 
         // Draw window + handle manual resize
