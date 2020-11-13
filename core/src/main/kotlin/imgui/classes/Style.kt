@@ -19,79 +19,124 @@ class Style {
 
     /**  Global alpha applies to everything in Dear ImGui.    */
     var alpha = 1f
+
     /** Padding within a window. */
     var windowPadding = Vec2(8)
+
     /** Radius of window corners rounding. Set to 0.0f to have rectangular windows. Large values tend to lead to variety of artifacts and are not recommended.  */
     var windowRounding = 7f
+
     /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).  */
     var windowBorderSize = 1f
+
     /** Minimum window size. This is a global setting. If you want to constraint individual windows, use SetNextWindowSizeConstraints(). */
     var windowMinSize = Vec2i(32)
+
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)
+
     /** Side of the collapsing/docking button in the title bar (None/Left/Right). Defaults to ImGuiDir_Left. */
     var windowMenuButtonPosition = Dir.Left
+
     /** Radius of child window corners rounding. Set to 0.0f to have rectangular child windows.  */
     var childRounding = 0f
+
     /** Thickness of border around child windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly). */
     var childBorderSize = 1f
+
     /** Radius of popup window corners rounding. (Note that tooltip windows use WindowRounding) */
     var popupRounding = 0f
+
     /** Thickness of border around popup/tooltip windows. Generally set to 0f or 1f.
      *  (Other values are not well tested and more CPU/GPU costly). */
     var popupBorderSize = 1f
+
     /** Padding within a framed rectangle (used by most widgets).    */
     var framePadding = Vec2(4, 3)
+
     /** Radius of frame corners rounding. Set to 0.0f to have rectangular frames (used by most widgets).    */
     var frameRounding = 0f
+
     /** Thickness of border around frames. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).    */
     var frameBorderSize = 0f
+
     /** Horizontal and vertical spacing between widgets/lines.   */
     var itemSpacing = Vec2(8, 4)
+
     /** Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label).  */
     var itemInnerSpacing = Vec2(4)
+
     /** Expand reactive bounding box for touch-based system where touch position is not accurate enough. Unfortunately
      *  we don't sort widgets so priority on overlap will always be given to the first widget. So don't grow this too much!   */
     var touchExtraPadding = Vec2()
+
     /** Horizontal spacing when e.g. entering a tree node. Generally == (FontSize + FramePadding.x*2).  */
     var indentSpacing = 21f
+
     /** Minimum horizontal spacing between two columns. Preferably > (FramePadding.x + 1).  */
     var columnsMinSpacing = 6f
+
     /** Width of the vertical scrollbar, Height of the horizontal scrollbar. */
     var scrollbarSize = 14f
+
     /** Radius of grab corners rounding for scrollbar.   */
     var scrollbarRounding = 9f
+
     /** Minimum width/height of a grab box for slider/scrollbar */
     var grabMinSize = 10f
+
     /** Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs. */
     var grabRounding = 0f
+
+    /** The size in pixels of the dead-zone around zero on logarithmic sliders that cross zero. */
+    var logSliderDeadzone = 4f
+
     /** Radius of upper corners of a tab. Set to 0.0f to have rectangular tabs. */
     var tabRounding = 4f
+
     /** Thickness of border around tabs. */
     var tabBorderSize = 0f
+
     /** Minimum width for close button to appears on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected. */
     var tabMinWidthForUnselectedCloseButton = 0f
+
     /** Side of the color button in the ColorEdit4 widget (left/right). Defaults to ImGuiDir_Right. */
     var colorButtonPosition = Dir.Right
+
     /** Alignment of button text when button is larger than text. Defaults to (0.5f, 0.5f) (centered).   */
     var buttonTextAlign = Vec2(0.5f)
+
     /** Alignment of selectable text. Defaults to (0.0f, 0.0f) (top-left aligned). It's generally important to keep this left-aligned if you want to lay multiple items on a same line. */
     var selectableTextAlign = Vec2()
+
     /** Window position are clamped to be visible within the display area or monitors by at least this amount.
      *  Only applies to regular windows.    */
     var displayWindowPadding = Vec2(19)
+
     /** If you cannot see the edges of your screen (e.g. on a TV) increase the safe area padding. Apply to popups/tooltips
      *  as well regular windows.  NB: Prefer configuring your TV sets correctly!   */
     var displaySafeAreaPadding = Vec2(3)
+
     /** Scale software rendered mouse cursor (when io.MouseDrawCursor is enabled). May be removed later.    */
     var mouseCursorScale = 1f
-    /** Enable anti-aliasing on lines/borders. Disable if you are really short on CPU/GPU.  */
+
+    /** Enable anti-aliased on lines/borders. Disable if you are really tight on CPU/GPU. Latched at the beginning of the frame (copied to ImDrawList).
+     *
+     *  Draw anti-aliased lines using textures where possible. */
     var antiAliasedLines = true
-    /**  Enable anti-aliasing on filled shapes (rounded rectangles, circles, etc.)  */
+
+    /** Enable anti-aliased lines/borders using textures where possible. Require back-end to render with
+     *  bilinear filtering. Latched at the beginning of the frame (copied to ImDrawList). */
+    var antiAliasedLinesUseTex = true
+
+    /**  Enable anti-aliased on filled shapes (rounded rectangles, circles, etc.).. Disable if you are really tight
+     *  on CPU/GPU. Latched at the beginning of the frame (copied to ImDrawList). */
     var antiAliasedFill = true
+
     /** Tessellation tolerance when using pathBezierCurveTo() without a specific number of segments.
      *  Decrease for highly tessellated curves (higher quality, more polygons), increase to reduce quality. */
     var curveTessellationTol = 1.25f
+
     /** Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled() or drawing rounded corner rectangles
      *  with no explicit segment count specified. Decrease for higher quality but more geometry. */
     var circleSegmentMaxError = 1.6f
@@ -163,6 +208,7 @@ class Style {
         scrollbarRounding = floor(scrollbarRounding * scaleFactor)
         grabMinSize = floor(grabMinSize * scaleFactor)
         grabRounding = floor(grabRounding * scaleFactor)
+        logSliderDeadzone = floor(logSliderDeadzone * scaleFactor)
         tabRounding = floor(tabRounding * scaleFactor)
         if (tabMinWidthForUnselectedCloseButton != Float.MAX_VALUE)
             tabMinWidthForUnselectedCloseButton = floor(tabMinWidthForUnselectedCloseButton * scaleFactor)

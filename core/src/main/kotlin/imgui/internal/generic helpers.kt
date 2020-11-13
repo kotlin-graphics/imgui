@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
-fun ASSERT_PARANOID(value: Boolean) = assert(value)
 
 //-----------------------------------------------------------------------------
 // [SECTION] Generic helpers
@@ -494,11 +493,12 @@ fun lerp(a: Double, b: Double, t: Float): Double = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float): Int = (a + (b - a) * t).i
 fun lerp(a: Long, b: Long, t: Float): Long = (a + (b - a) * t).L
 fun modPositive(a: Int, b: Int): Int = (a + b) % b
+// TODO -> glm
 fun Vec2.lerp(b: Vec2, t: Float): Vec2 = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
 fun Vec2.lerp(b: Vec2i, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
 fun Vec2i.lerp(b: Vec2i, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
-fun Vec4.lerp(b: Vec4, t: Float): Vec4 = Vec4(x + (b.x - x) * t, y + (b.y - y) * t, z + (b.z - z) * t, w + (b.w - w) * t)
+fun Vec4.lerp(b: Vec4, t: Float): Vec4 = Vec4 { lerp(this[it], b[it], t) }
 fun saturate(f: Float): Float = if (f < 0f) 0f else if (f > 1f) 1f else f
 infix fun Vec2.invLength(failValue: Float): Float {
     val d = x * x + y * y

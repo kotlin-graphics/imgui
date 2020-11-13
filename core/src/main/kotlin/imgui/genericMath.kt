@@ -6,36 +6,35 @@ import unsigned.Uint
 import unsigned.Ulong
 import unsigned.Ushort
 import java.math.BigInteger
-import kotlin.math.min as kmin
-import kotlin.math.max as kmax
-import kotlin.plus
-import kotlin.minus
-import kotlin.times
 import kotlin.div
+import kotlin.minus
+import kotlin.plus
+import kotlin.times
 import imgui.internal.lerp as ilerp
 
 @Suppress("UNCHECKED_CAST")
 
-infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
-    this is Byte && other is Byte -> (this + other).b
-    this is Ubyte && other is Ubyte -> (this + other).b
-    this is Short && other is Short -> (this + other).s
-    this is Ushort && other is Ushort -> (this + other).s
-    this is Int && other is Int -> this + other
-    this is Uint && other is Uint -> this + other
-    this is Long && other is Long -> this + other
-    this is Ulong && other is Ulong -> this + other
-    this is Float && other is Float -> this + other
-    this is Double && other is Double -> this + other
-    this is BigInteger && other is BigInteger -> this + other
-    else -> error("Invalid operand types")
-} as N
+//infix operator fun <N> N.plus(other: N): N where N : Number, N : Comparable<N> = when {
+//    this is Byte && other is Byte -> (this + other).b
+//    this is Ubyte && other is Ubyte -> (this + other).b
+//    this is Short && other is Short -> (this + other).s
+//    this is Ushort && other is Ushort -> (this + other).s
+//    this is Int && other is Int -> this + other
+//    this is Uint && other is Uint -> this + other
+//    this is Long && other is Long -> this + other
+//    this is Ulong && other is Ulong -> this + other
+//    this is Float && other is Float -> this + other
+//    this is Double && other is Double -> this + other
+//    this is BigInteger && other is BigInteger -> this + other
+//    else -> error("Invalid operand types")
+//} as N
 
-infix operator fun <N> N.minus(other: N): N where N : Number, N : Comparable<N> = when {
-    this is Byte && other is Byte -> (this - other).b
-    this is Ubyte && other is Ubyte -> (this - other).b
-    this is Short && other is Short -> (this - other).s
-    this is Ushort && other is Ushort -> (this - other).s
+infix operator fun <Type> Type.minus(other: Type): Type
+        where Type : Number, Type : Comparable<Type> = when {
+    this is Byte && other is Byte -> this - other
+    this is Ubyte && other is Ubyte -> this - other
+    this is Short && other is Short -> this - other
+    this is Ushort && other is Ushort -> this - other
     this is Int && other is Int -> this - other
     this is Uint && other is Uint -> this - other
     this is Long && other is Long -> this - other
@@ -44,7 +43,7 @@ infix operator fun <N> N.minus(other: N): N where N : Number, N : Comparable<N> 
     this is Double && other is Double -> this - other
     this is BigInteger && other is BigInteger -> this - other
     else -> error("Invalid operand types")
-} as N
+} as Type
 
 infix operator fun <N> N.times(other: N): N where N : Number, N : Comparable<N> = when {
     this is Byte && other is Byte -> (this * other).b
@@ -120,16 +119,16 @@ infix operator fun <N> N.plus(int: Int): N where N : Number, N : Comparable<N> =
 } as N
 
 infix operator fun <N> N.compareTo(int: Int): Int where N : Number, N : Comparable<N> = when (this) {
-    is Byte -> (this as Byte).compareTo(int)
+    is Byte -> compareTo(int)
     is Ubyte -> compareTo(int)
-    is Short -> (this as Short).compareTo(int)
+    is Short -> compareTo(int)
     is Ushort -> compareTo(int)
-    is Int -> (this as Int).compareTo(int)
+    is Int -> compareTo(int)
     is Uint -> compareTo(int)
-    is Long -> (this as Long).compareTo(int)
+    is Long -> compareTo(int)
     is Ulong -> compareTo(int.L)
-    is Float -> (this as Float).compareTo(int)
-    is Double -> (this as Double).compareTo(int)
+    is Float -> compareTo(int)
+    is Double -> compareTo(int)
     else -> error("Invalid operand types")
 }
 
@@ -153,47 +152,14 @@ val <N> N.asSigned: N where N : Number, N : Comparable<N>
         else -> this
     } as N
 
-fun <N> clamp(a: N, min: N, max: N): N where N : Number, N : Comparable<N> = when (a) {
-    is Byte -> glm.clamp(a, min as Byte, max as Byte)
-    is Ubyte -> if(a < min) min else if (a > max) max else a // TODO glm -> clamp unsigned
-    is Short -> glm.clamp(a, min as Short, max as Short)
-    is Ushort -> if(a < min) min else if (a > max) max else a
-    is Int -> glm.clamp(a, min as Int, max as Int)
-    is Uint -> if(a < min) min else if (a > max) max else a
-    is Long -> glm.clamp(a, min as Long, max as Long)
-    is Ulong -> if(a < min) min else if (a > max) max else a
-    is Float -> glm.clamp(a, min as Float, max as Float)
-    is Double -> glm.clamp(a, min as Double, max as Double)
-    else -> error("Invalid type")
-} as N
+fun <N> clamp(a: N, min: N, max: N): N where N : Number, N : Comparable<N> =
+        if (a < min) min else if (a > max) max else a
 
-fun <N> min(a: N, b: N): N where N : Number, N : Comparable<N> = when (a) {
-    is Byte -> kmin(a.i, b.i).b
-    is Ubyte -> if(a < b) a else b // TODO glm -> clamp unsigned
-    is Short -> kmin(a.i, b.i).s
-    is Ushort -> if(a < b) a else b
-    is Int -> kmin(a, b as Int)
-    is Uint -> if(a < b) a else b
-    is Long -> kmin(a, b as Long)
-    is Ulong -> if(a < b) a else b
-    is Float -> kmin(a, b as Float)
-    is Double -> kmin(a, b as Double)
-    else -> error("Invalid type")
-} as N
+fun <Type> min(a: Type, b: Type): Type
+        where Type : Number, Type : Comparable<Type> = if (a < b) a else b
 
-fun <N> max(a: N, b: N): N where N : Number, N : Comparable<N> = when (a) {
-    is Byte -> kmax(a.i, b.i).b
-    is Ubyte -> if(a > b) a else b // TODO glm -> clamp unsigned
-    is Short -> kmax(a.i, b.i).s
-    is Ushort -> if(a > b) a else b
-    is Int -> kmax(a, b as Int)
-    is Uint -> if(a > b) a else b
-    is Long -> kmax(a, b as Long)
-    is Ulong -> if(a > b) a else b
-    is Float -> kmax(a, b as Float)
-    is Double -> kmax(a, b as Double)
-    else -> error("Invalid type")
-} as N
+fun <Type> max(a: Type, b: Type): Type
+        where Type : Number, Type : Comparable<Type> = if (a > b) a else b
 
 fun <N> lerp(a: N, b: N, t: Float): N where N : Number, N : Comparable<N> = when (a) {
     is Byte -> ilerp(a.i, b.i, t).b
@@ -224,3 +190,49 @@ fun <N> lerp(a: N, b: N, t: Float): N where N : Number, N : Comparable<N> = when
 //    is Double -> d / n
 //    else -> error("Invalid operand types")
 //} as N
+
+
+infix operator fun <Type> Type.compareTo(float: Float): Int where Type : Number, Type : Comparable<Type> = when (this) {
+    is Byte -> compareTo(float)
+    is Short -> compareTo(float)
+    is Int -> compareTo(float)
+    is Long -> compareTo(float)
+    is Ubyte, is Ushort, is Uint, is Ulong -> f.compareTo(float) // TODO -> unsigned
+    is Float -> compareTo(float)
+    is Double -> compareTo(float)
+    else -> error("invalid")
+}
+
+@JvmName("min_")
+fun <Type, N> min(n: N, t: Type): Type
+        where Type : Number, Type : Comparable<Type>,
+              N : Number, N : Comparable<N> = when (t) {
+    is Byte -> if (n.b < t) n.b else t
+    is Ubyte -> if (n.ub < t) n.ub else t
+    is Short -> if (n.s < t) n.s else t
+    is Ushort -> if (n.us < t) n.us else t
+    is Int -> if (n.i < t) n.i else t
+    is Uint -> if (n.ui < t) n.ui else t
+    is Long -> if (n.L < t) n.L else t
+    is Ulong -> if (n.ul < t) n.ul else t
+    is Float -> if (n.f < t) n.f else t
+    is Double -> if (n.d < t) n.d else t
+    else -> error("invalid")
+} as Type
+
+@JvmName("max_")
+fun <Type, N> max(n: N, t: Type): Type
+        where Type : Number, Type : Comparable<Type>,
+              N : Number, N : Comparable<N> = when (t) {
+    is Byte -> if (n.b > t) n.b else t
+    is Ubyte -> if (n.ub > t) n.ub else t
+    is Short -> if (n.s > t) n.s else t
+    is Ushort -> if (n.us > t) n.us else t
+    is Int -> if (n.i > t) n.i else t
+    is Uint -> if (n.ui > t) n.ui else t
+    is Long -> if (n.L > t) n.L else t
+    is Ulong -> if (n.ul > t) n.ul else t
+    is Float -> if (n.f > t) n.f else t
+    is Double -> if (n.d > t) n.d else t
+    else -> error("invalid")
+} as Type

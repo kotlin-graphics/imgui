@@ -10,7 +10,6 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
-import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -21,7 +20,6 @@ import imgui.ImGui.dragFloat
 import imgui.ImGui.dummy
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
-import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.image
 import imgui.ImGui.inputFloat
@@ -39,12 +37,12 @@ import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.showFontSelector
 import imgui.ImGui.showStyleSelector
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
-import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
@@ -132,7 +130,7 @@ object StyleEditor {
         sameLine()
         helpMarker(
                 "Save/Revert in local non-persistent storage. Default Colors definition are not affected. " +
-                "Use \"Export\" below to save them somewhere.")
+                        "Use \"Export\" below to save them somewhere.")
 
         separator()
 
@@ -161,6 +159,7 @@ object StyleEditor {
                 sliderFloat("PopupRounding", style::popupRounding, 0f, 16f, "%.0f")
                 sliderFloat("ScrollbarRounding", style::scrollbarRounding, 0f, 12f, "%.0f")
                 sliderFloat("GrabRounding", style::grabRounding, 0f, 12f, "%.0f")
+                sliderFloat("LogSliderDeadzone", style::logSliderDeadzone, 0f, 12f, "%.0f")
                 sliderFloat("TabRounding", style::tabRounding, 0f, 12f, "%.0f")
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
@@ -197,7 +196,7 @@ object StyleEditor {
                         val name = i.name
                         if (!outputOnlyModified || col != ref!!.colors[i])
                             logText("colors[Col_$name]%s = Vec4(%.2f, %.2f, %.2f, %.2f)\n",
-                                   " ".repeat(23 - name.length), col.x, col.y, col.z, col.w)
+                                    " ".repeat(23 - name.length), col.x, col.y, col.z, col.w)
                     }
                     logFinish()
                 }
@@ -266,13 +265,12 @@ object StyleEditor {
                 val MAX_SCALE = 2f
                 helpMarker(
                         "Those are old settings provided for convenience.\n" +
-                        "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, " +
-                        "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n" +
-                        "Using those settings here will give you poor quality results.")
-                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f")) // Scale only this window
-                    setWindowFontScale(windowScale max MIN_SCALE)
-                if(dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f")) // Scale everything
-                    io.fontGlobalScale = io.fontGlobalScale max MIN_SCALE
+                                "However, the _correct_ way of scaling your UI is currently to reload your font at the designed size, " +
+                                "rebuild the font atlas, and call style.ScaleAllSizes() on a reference ImGuiStyle structure.\n" +
+                                "Using those settings here will give you poor quality results.")
+                if (dragFloat("window scale", ::windowScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.ClampOnInput.i)) // Scale only this window
+                    setWindowFontScale(windowScale)
+                dragFloat("global scale", io::fontGlobalScale, 0.005f, MIN_SCALE, MAX_SCALE, "%.2f", SliderFlag.ClampOnInput.i) // Scale everything
                 popItemWidth()
 
                 endTabItem()
@@ -281,11 +279,33 @@ object StyleEditor {
             if (beginTabItem("Rendering")) {
                 checkbox("Anti-aliased lines", style::antiAliasedLines)
                 sameLine(); helpMarker("When disabling anti-aliasing lines, you'll probably want to disable borders in your style as well.")
+                checkbox("Anti-aliased lines use texture", style::antiAliasedLinesUseTex)
+                sameLine(); helpMarker("Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)
                 dragFloat("Curve Tessellation Tolerance", style::curveTessellationTol, 0.02f, 0.1f, 10f, "%.2f")
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
-                dragFloat("Circle segment Max Error", style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f")
+
+                // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
+                dragFloat("Circle Segment Max Error", style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f")
+                if (ImGui.isItemActive) {
+                    setNextWindowPos(ImGui.cursorScreenPos)
+                    tooltip {
+                        val p = ImGui.cursorScreenPos
+                        val RAD_MIN = 10f
+                        val RAD_MAX = 80f
+                        var offX = 10f
+                        for (n in 0..6) {
+                            val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n.f /(7f - 1f)
+                            ImGui.windowDrawList.addCircle(Vec2(p.x+offX+rad, p.y+RAD_MAX), rad, Col.Text.u32, 0)
+                            offX += 10f + rad * 2f
+                        }
+                        ImGui.dummy(Vec2(offX, RAD_MAX * 2f))
+                    }
+                }
+                ImGui.sameLine()
+                helpMarker("When drawing circle primitives with \"num_segments == 0\" tesselation will be calculated automatically.")
+
                 /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                     But application code could have a toggle to switch between zero and non-zero.             */
                 dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")

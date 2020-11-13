@@ -128,8 +128,8 @@ class TabBar {
         framePadding put g.style.framePadding
 
         // Layout
-        itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
-        window.dc.cursorPos.x = barRect.min.x
+        // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
+        window.dc.cursorPos.put(barRect.min.x, barRect.max.y + style.itemSpacing.y)
 
         // Draw separator
         val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
@@ -149,7 +149,7 @@ class TabBar {
             else -> PtrOrIndex(this)
         }
 
-    fun findTabByID(tabId: ID): TabItem? = when (tabId) {
+    infix fun findTabByID(tabId: ID): TabItem? = when (tabId) {
         0 -> null
         else -> tabs.find { it.id == tabId }
     }
@@ -198,7 +198,8 @@ class TabBar {
 
         val id = calcTabID(label)
 
-        // If the user called us with *p_open == false, we early out and don't render. We make a dummy call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
+        // If the user called us with *p_open == false, we early out and don't render.
+        // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
         Hook.itemInfo?.invoke(g, id, label, window.dc.lastItemStatusFlags)
         if (pOpen?.get() == false) {
             pushItemFlag(ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus, true)
@@ -386,13 +387,15 @@ class TabBar {
 
         wantLayout = false
 
-        // Garbage collect
+        // Garbage collect by compacting list
         var tabDstN = 0
         for (tabSrcN in tabs.indices) {
             val tab = tabs[tabSrcN]
-            if (tab.lastFrameVisible < prevFrameVisible) {
-                if (tab.id == selectedTabId)
-                    selectedTabId = 0
+            if (tab.lastFrameVisible < prevFrameVisible || tab.wantClose) {
+                // Remove tab
+                if (visibleTabId == tab.id) visibleTabId = 0
+                if (selectedTabId == tab.id) selectedTabId = 0
+                if (nextSelectedTabId == tab.id) nextSelectedTabId = 0
                 continue
             }
             if (tabDstN != tabSrcN)
@@ -401,7 +404,7 @@ class TabBar {
         }
         if (tabs.size != tabDstN)
             for (i in tabDstN until tabs.size)
-                tabs.remove(tabs.last())
+                tabs.pop()
 
         // Setup next selected tab
         var scrollTrackSelectedTabID: ID = 0
@@ -535,6 +538,11 @@ class TabBar {
         // Clear name buffers
         if (flags hasnt TabBarFlag._DockNode)
             tabsNames.clear()
+
+        // Actual layout in host window (we don't do it in BeginTabBar() so as not to waste an extra frame)
+        val window = g.currentWindow!!
+        window.dc.cursorPos put barRect.min
+        itemSize(Vec2(offsetMaxIdeal, barRect.height), framePadding.y)
     }
 
     /** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.
@@ -639,7 +647,7 @@ class TabBar {
         arrowCol.w *= 0.5f
         pushStyleColor(Col.Text, arrowCol)
         pushStyleColor(Col.Button, Vec4())
-        val open = beginCombo("##v", null, ComboFlag.NoPreview.i)
+        val open = beginCombo("##v", null, ComboFlag.NoPreview or ComboFlag.HeightLargest)
         popStyleColor(2)
 
         var tabToSelect: TabItem? = null

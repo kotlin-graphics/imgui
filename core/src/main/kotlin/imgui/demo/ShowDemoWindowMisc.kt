@@ -37,7 +37,7 @@ import imgui.dsl.treeNode
 object ShowDemoWindowMisc {
 
     /* Tabbing */
-    var buf0 = "dummy".toByteArray(32)
+    var buf0 = "hello".toByteArray(32)
 
 
     /* Focus from code */

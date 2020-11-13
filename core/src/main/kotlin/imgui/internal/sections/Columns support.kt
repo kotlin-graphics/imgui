@@ -91,7 +91,7 @@ class Columns {
     var hostBackupClipRect = Rect()
 
     /** Backup of WorkRect at the time of BeginColumns() */
-    var hostWorkRect = Rect()
+    var hostBackupParentWorkRect = Rect()
     var lineMinY = 0f
     var lineMaxY = 0f
     val columns = ArrayList<ColumnData>()

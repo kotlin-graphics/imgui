@@ -17,6 +17,7 @@ import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.topMostPopupModal
+import imgui.internal.sections.IMGUI_DEBUG_LOG_POPUP
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.hasnt
@@ -118,7 +119,10 @@ interface popupsModals {
     /** call to mark popup as open (don't call every frame!). */
     fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) = openPopupEx(g.currentWindow!!.getID(strId), popupFlags)
 
-    /** helper to open popup when clicked on last item. return true when just opened. (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)   */
+    /** helper to open popup when clicked on last item. return true when just opened.
+     *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
+     *
+     *  Open a popup if mouse button is released over the item */
     fun openPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean =
             with(g.currentWindow!!) {
                 val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
@@ -149,7 +153,7 @@ interface popupsModals {
                 break
             popupIdx--
         }
-        //IMGUI_DEBUG_LOG("CloseCurrentPopup %d -> %d\n", g.BeginPopupStack.Size - 1, popup_idx);
+        IMGUI_DEBUG_LOG_POPUP("CloseCurrentPopup ${g.beginPopupStack.lastIndex} -> $popupIdx")
         closePopupToLevel(popupIdx, true)
 
         /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.
