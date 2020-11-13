@@ -53,6 +53,7 @@ interface docking {
             flags = flags or DockNodeFlag.KeepAliveOnly
 
         assert(flags hasnt DockNodeFlag._DockSpace)
+        assert(id != 0)
         val node = dockContextFindNodeByID(ctx, id) ?: dockContextAddNode(ctx, id).also {
             IMGUI_DEBUG_LOG_DOCKING("DockSpace: dockspace node 0x%08X created".format(id))
             it.localFlags = it.localFlags or DockNodeFlag._CentralNode

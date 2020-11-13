@@ -127,7 +127,8 @@ class TabBar {
 
         // When toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
         if (flags_ has TabBarFlag.Reorderable != flags has TabBarFlag.Reorderable && tabs.isNotEmpty() && prevFrameVisible != -1)
-            tabs.sortBy(TabItem::beginOrder)
+            if(flags hasnt TabBarFlag._DockNode)
+                tabs.sortBy(TabItem::beginOrder)
 
         // Flags
         if (flags_ hasnt TabBarFlag.FittingPolicyMask_)
