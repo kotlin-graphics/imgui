@@ -112,6 +112,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Hovered window ignoring MovingWindow. Only set if MovingWindow is set. */
     var hoveredWindowUnderMovingWindow: Window? = null
 
+    /** Hovered dock node. */
     var hoveredDockNode: DockNode? = null
 
     /** Track the window we clicked on (in order to preserve focus). The actually window that is moved is generally MovingWindow->RootWindow. */
