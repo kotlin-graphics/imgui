@@ -279,6 +279,42 @@ object ShowDemoWindowWidgets {
 
     val password = "password123".toByteArray(64)
 
+    object Funcs {
+        val myCallback: InputTextCallback = { data: InputTextCallbackData ->
+            when (data.eventFlag) {
+                Itf.CallbackCompletion.i -> data.insertChars(data.cursorPos, "..")
+                Itf.CallbackHistory.i ->
+                    if (data.eventKey == Key.UpArrow) {
+                    data.deleteChars(0, data.bufTextLen)
+                    data.insertChars(0, "Pressed Up!");
+                    data.selectAll()
+                }
+                else if (data.eventKey == Key.DownArrow) {
+                    data.deleteChars(0, data.bufTextLen)
+                    data.insertChars(0, "Pressed Down!")
+                    data.selectAll()
+                }
+                Itf.CallbackEdit.i -> {
+                    // Toggle casing of first character
+                    val c = data.buf[0].c
+                    if (c in 'a'..'z' || c in 'A'..'Z')
+                        data.buf[0] = data.buf[0] xor 32
+                    data.bufDirty = true
+
+                    // Increment a counter
+                    var counter by (data.userData as KMutableProperty0<Int>)
+                    counter = counter + 1 // cant ++ because of bug
+                }
+            }
+            false
+        }
+    }
+
+    var buf1 = ByteArray(64)
+    var buf2 = ByteArray(64)
+    var buf3 = ByteArray(64)
+    var editCount = 0
+
     /* Color/Picker Widgets */
     val color = Vec4.fromColor(114, 144, 154, 200)
     var noBorder = false
@@ -925,12 +961,24 @@ object ShowDemoWindowWidgets {
                 inputText("uppercase", bufs[3], Itf.CharsUppercase.i)
                 inputText("no blank", bufs[4], Itf.CharsNoBlank.i)
                 inputText("\"imgui\" letters", bufs[5], Itf.CallbackCharFilter.i, TextFilters.filterImGuiLetters)
-
-                text("Password input")
+            }
+            treeNode("Password Input") {
                 inputText("password", password, Itf.Password.i)
                 sameLine(); helpMarker("Display all characters as '*'.\nDisable clipboard cut and copy.\nDisable logging.")
                 inputTextWithHint("password (w/ hint)", "<password>", password, Itf.Password.i)
                 inputText("password (clear)", password)
+            }
+
+            treeNode("Completion, History, Edit Callbacks")            {
+                inputText("Completion", buf1, Itf.CallbackCompletion.i, Funcs.myCallback)
+                sameLine(); helpMarker("Here we append \"..\" each time Tab is pressed. See 'Examples>Console' for a more meaningful demonstration of using this callback.")
+
+                inputText("History", buf2, Itf.CallbackHistory.i, Funcs.myCallback)
+                sameLine(); helpMarker("Here we replace and select text each time Up/Down are pressed. See 'Examples>Console' for a more meaningful demonstration of using this callback.")
+
+                inputText("Edit", buf3, Itf.CallbackEdit.i, Funcs.myCallback, ::editCount)
+                sameLine(); helpMarker("Here we toggle the casing of the first character on every edits + count edits.")
+                sameLine(); text("($editCount)")
             }
 
             treeNode("Resize Callback") {

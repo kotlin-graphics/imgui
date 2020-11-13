@@ -75,10 +75,8 @@ interface widgetsMenus {
         beginGroup() // Backup position on layer 0 // FIXME: Misleading to use a group for that backup/restore
         pushID("##menubar")
 
-        /*  We don't clip with current window clipping rectangle as it is already set to the area below. However we clip
-            with window full rect.
-            We remove 1 worth of rounding to max.x to that text in long menus and small windows don't tend to display
-            over the lower-right rounded area, which looks particularly glitchy. */
+        // We don't clip with current window clipping rectangle as it is already set to the area below. However we clip with window full rect.
+        // We remove 1 worth of rounding to Max.x to that text in long menus and small windows don't tend to display over the lower-right rounded area, which looks particularly glitchy.
         val barRect = window.menuBarRect()
         val clipRect = Rect(round(barRect.min.x + window.windowBorderSize), round(barRect.min.y + window.windowBorderSize),
                 round(barRect.min.x max (barRect.max.x - (window.windowRounding max window.windowBorderSize))), round(barRect.max.y))
@@ -86,7 +84,9 @@ interface widgetsMenus {
         pushClipRect(clipRect.min, clipRect.max, false)
 
         with(window.dc) {
-            cursorPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
+            // We overwrite CursorMaxPos because BeginGroup sets it to CursorPos (essentially the .EmitItem hack in EndMenuBar() would need something analoguous here, maybe a BeginGroupEx() with flags).
+            cursorMaxPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
+            cursorPos put cursorMaxPos
             layoutType = Lt.Horizontal
             navLayerCurrent = NavLayer.Menu
             navLayerCurrentMask = 1 shl NavLayer.Menu

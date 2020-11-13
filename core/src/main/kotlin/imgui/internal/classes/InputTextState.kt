@@ -52,6 +52,9 @@ class InputTextState {
     /** after a double-click to select all, we ignore further mouse drags to update selection */
     var selectedAllMouseLock = false
 
+    /** edited this frame */
+    var edited = false
+
     /** Temporarily set when active */
     var userFlags: InputTextFlags = 0
 
@@ -196,6 +199,7 @@ class InputTextState {
         var dst = pos
 
         // We maintain our buffer length in both UTF-8 and wchar formats
+        edited = true
         curLenA -= textCountUtf8BytesFromStr(textW, dst, dst + n)
         curLenW -= n
 
@@ -235,6 +239,7 @@ class InputTextState {
             for (i in 0 until textLen - pos) textW[textLen - 1 + newTextLen - i] = textW[textLen - 1 - i]
         for (i in 0 until newTextLen) textW[pos + i] = newText[ptr + i]
 
+        edited = true
         curLenW += newTextLen
         curLenA += newTextLenUtf8
         if (curLenW < textW.size) textW[curLenW] = NUL

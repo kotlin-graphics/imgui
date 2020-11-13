@@ -20,7 +20,7 @@ jobs:
     - name: Build fat jars
       run: ./gradlew shadowJar
     - name: Move jars
-      run: mkdir shadowJars && mv */build/libs/imgui-*.jar shadowJars
+      run: mkdir shadowJars && mv build/libs/imgui*.jar shadowJars
     - uses: actions/upload-artifact@v1
       with:
         name: ImGui linux artifacts
@@ -41,7 +41,7 @@ jobs:
       - name: Build fat jars
         run: ./gradlew shadowJar
       - name: Move jars
-        run: mkdir shadowJars; mv */build/libs/imgui-*.jar shadowJars
+        run: mkdir shadowJars; mv build/libs/imgui*.jar shadowJars
       - uses: actions/upload-artifact@v1
         with:
           name: ImGui windows artifacts
@@ -64,7 +64,7 @@ jobs:
       - name: Build fat jars
         run: ./gradlew shadowJar
       - name: Move jars
-        run: mkdir shadowJars && mv */build/libs/imgui-*.jar shadowJars
+        run: mkdir shadowJars && mv build/libs/imgui*.jar shadowJars
       - uses: actions/upload-artifact@v1
         with:
           name: ImGui macOS artifacts
