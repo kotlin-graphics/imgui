@@ -9,12 +9,13 @@ import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
-import imgui.internal.sections.NavLayer
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
 import imgui.internal.hash
+import imgui.internal.sections.NavLayer
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
+import uno.kotlin.NUL
 import java.util.*
 import java.util.regex.Pattern
 import imgui.WindowFlag as Wf
@@ -75,9 +76,12 @@ internal interface internal {
         val focusFrontWindow = window?.rootWindow // NB: In docking branch this is window->RootWindowDockStop
         val displayFrontWindow = window?.rootWindow
 
-        // Steal focus on active widgets
+        // Steal active widgets. Some of the cases it triggers includes:
+        // - Focus a window while an InputText in another window is active, if focus happens before the old InputText can run.
+        // - When using Nav to activate menu items (due to timing of activating on press->new window appears->losing ActiveId)
         if (g.activeId != 0 && g.activeIdWindow?.rootWindow !== focusFrontWindow)
-            clearActiveID()
+            if (!g.activeIdNoClearOnFocusLoss)
+                clearActiveID()
 
         // Passing NULL allow to disable keyboard focus
         if (window == null)
@@ -121,9 +125,12 @@ internal interface internal {
         g.fontSize = g.currentWindow?.calcFontSize() ?: 0f
 
         val atlas = g.font.containerAtlas
-        g.drawListSharedData.texUvWhitePixel = atlas.texUvWhitePixel
-        g.drawListSharedData.font = g.font
-        g.drawListSharedData.fontSize = g.fontSize
+        g.drawListSharedData.also {
+            it.texUvWhitePixel = atlas.texUvWhitePixel
+            it.texUvLines = atlas.texUvLines
+            it.font = g.font
+            it.fontSize = g.fontSize
+        }
     }
 
     /** ~GetDefaultFont */
@@ -147,6 +154,21 @@ internal interface internal {
             i = matcher.end()
         }
         return 0
+    }
+
+    /** We don't use strchr() because our strings are usually very short and often start with '%' */
+    fun parseFormatFindStart2(fmt_: String): Int {
+        var fmt = StringPointer(fmt_)
+        var c = fmt[0]
+        while (c != NUL) {
+            if (c == '%' && fmt[1] != '%')
+                return fmt()
+            else if (c == '%')
+                fmt++
+            fmt++
+            c = fmt[0]
+        }
+        return fmt()
     }
 
     fun parseFormatFindEnd(fmt: String, i_: Int = 0): Int {

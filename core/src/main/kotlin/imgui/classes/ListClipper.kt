@@ -1,7 +1,6 @@
 package imgui.classes
 
 import glm_.max
-import imgui.ImGui
 import imgui.ImGui.calcListClipping
 import imgui.api.g
 
@@ -21,7 +20,7 @@ import imgui.api.g
  *      the element height (step skipped if we passed a known height as second arg to constructor).
  *  - Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and
  *      position the cursor before the first element.
- *  - (Step 2: dummy step only required if an explicit items_height was passed to constructor or Begin() and user call
+ *  - (Step 2: empty step only required if an explicit items_height was passed to constructor or Begin() and user call
  *      Step(). Does nothing and switch to Step 3.)
  *  - Step 3: the clipper validate that we have reached the expected Y position (corresponding to element DisplayEnd),
  *      advance the cursor to the end of the list and then returns 'false' to end the loop. */
@@ -82,7 +81,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
                     true
                 }
             }
-            /*  Step 2: dummy step only required if an explicit items_height was passed to constructor or Begin() and user still
+            /*  Step 2: empty step only required if an explicit items_height was passed to constructor or Begin() and user still
                 call Step(). Does nothing and switch to Step 3.     */
             stepNo == 2 -> {
                 assert(display.first >= 0 && display.last >= 0)
@@ -117,7 +116,7 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
         if (itemsHeight > 0f) {
             display = calcListClipping(itemsCount, itemsHeight) // calculate how many to clip/display
             if (display.first > 0)
-                setCursorPosYAndSetupDummyPrevLine(startPosY + display.first * itemsHeight, itemsHeight) // advance cursor
+                setCursorPosYAndSetupForPrevLine(startPosY + display.first * itemsHeight, itemsHeight) // advance cursor
             stepNo = 2
         }
     }
@@ -129,14 +128,14 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
         /*  In theory here we should assert that ImGui::GetCursorPosY() == StartPosY + DisplayEnd * ItemsHeight,
             but it feels saner to just seek at the end and not assert/crash the user.         */
         if (itemsCount < Int.MAX_VALUE)
-            setCursorPosYAndSetupDummyPrevLine(startPosY + itemsCount * itemsHeight, itemsHeight) // advance cursor
+            setCursorPosYAndSetupForPrevLine(startPosY + itemsCount * itemsHeight, itemsHeight) // advance cursor
         itemsCount = -1
         stepNo = 3
     }
 
     companion object {
 
-        fun setCursorPosYAndSetupDummyPrevLine(posY: Float, lineHeight: Float) {
+        fun setCursorPosYAndSetupForPrevLine(posY: Float, lineHeight: Float) {
             /*  Set cursor position and a few other things so that SetScrollHereY() and Columns() can work when seeking
                 cursor.
                 FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would

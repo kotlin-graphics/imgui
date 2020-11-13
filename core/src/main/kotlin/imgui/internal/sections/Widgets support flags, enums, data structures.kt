@@ -30,6 +30,9 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     /** [BETA] Represent a mixed/indeterminate value, generally multi-selection where values differ. Currently only supported by Checkbox() (later should support all sorts of widgets) */
     MixedValue(1 shl 6),  // false
 
+    /** [ALPHA] Allow hovering interactions but underlying value is not changed. */
+    ReadOnly(1 shl 7),  // false
+
     Default_(0);
 
     infix fun and(b: ItemFlag): ItemFlags = i and b.i
@@ -101,56 +104,62 @@ enum class ButtonFlag(val i: ButtonFlags) {
 
     None(0),
 
-    /** hold to repeat  */
-    Repeat(1 shl 0),
+    /** React on left mouse button (default) */
+    MouseButtonLeft(1 shl 0),
+
+    /** React on right mouse button */
+    MouseButtonRight(1 shl 1),
+
+    /** React on center mouse button */
+    MouseButtonMiddle(1 shl 2),
 
     /** return true on click (mouse down event) */
-    PressedOnClick(1 shl 1),
+    PressedOnClick(1 shl 4),
 
     /** [Default] return true on click + release on same item <-- this is what the majority of Button are using */
-    PressedOnClickRelease(1 shl 2),
+    PressedOnClickRelease(1 shl 5),
 
     /** return true on click + release even if the release event is not done while hovering the item */
-    PressedOnClickReleaseAnywhere(1 shl 3),
+    PressedOnClickReleaseAnywhere(1 shl 6),
 
     /** return true on release (default requires click+release) */
-    PressedOnRelease(1 shl 4),
+    PressedOnRelease(1 shl 7),
 
     /** return true on double-click (default requires click+release) */
-    PressedOnDoubleClick(1 shl 5),
+    PressedOnDoubleClick(1 shl 8),
 
     /** return true when held into while we are drag and dropping another item (used by e.g. tree nodes, collapsing headers) */
-    PressedOnDragDropHold(1 shl 6),
+    PressedOnDragDropHold(1 shl 9),
+
+    /** hold to repeat  */
+    Repeat(1 shl 10),
 
     /** allow interactions even if a child window is overlapping */
-    FlattenChildren(1 shl 7),
+    FlattenChildren(1 shl 11),
 
     /** require previous frame HoveredId to either match id or be null before being usable, use along with SetItemAllowOverlap() */
-    AllowItemOverlap(1 shl 8),
+    AllowItemOverlap(1 shl 12),
 
     /** disable automatically closing parent popup on press // [UNUSED] */
-    DontClosePopups(1 shl 9),
+    DontClosePopups(1 shl 13),
 
     /** disable interactions */
-    Disabled(1 shl 10),
+    Disabled(1 shl 14),
 
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
-    AlignTextBaseLine(1 shl 11),
+    AlignTextBaseLine(1 shl 15),
 
     /** disable mouse interaction if a key modifier is held */
-    NoKeyModifiers(1 shl 12),
+    NoKeyModifiers(1 shl 16),
 
     /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
-    NoHoldingActiveId(1 shl 13),
+    NoHoldingActiveId(1 shl 17),
 
     /** don't override navigation focus when activated */
-    NoNavFocus(1 shl 14),
+    NoNavFocus(1 shl 18),
 
     /** don't report as hovered when nav focus is on this item */
-    NoHoveredOnFocus(1 shl 15),
-    MouseButtonLeft(1 shl 16),  // [Default] react on left mouse button
-    MouseButtonRight(1 shl 17),  // react on right mouse button
-    MouseButtonMiddle(1 shl 18),  // react on center mouse button
+    NoHoveredOnFocus(1 shl 19),
 
     MouseButtonMask_(MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
     MouseButtonShift_(16),
@@ -175,13 +184,6 @@ infix fun ButtonFlags.hasnt(b: ButtonFlag): Boolean = and(b.i) == 0
 infix fun ButtonFlags.wo(b: ButtonFlag): ButtonFlags = and(b.i.inv())
 
 typealias ButtonFlags = Int
-
-
-enum class SliderFlag { None, Vertical }
-
-
-enum class DragFlag { None, Vertical }
-
 
 
 typealias SeparatorFlags = Int
@@ -464,18 +466,23 @@ infix fun DrawCornerFlags.wo(b: DrawCornerFlag): DrawCornerFlags = and(b.i.inv()
 
 typealias DrawListFlags = Int
 
-/** Flags: for ImDrawList */
+/** Flags for ImDrawList. Those are set automatically by ImGui:: functions from ImGuiIO settings, and generally not
+ *  manipulated directly. It is however possible to temporarily alter flags between calls to ImDrawList:: functions. */
 enum class DrawListFlag(val i: DrawListFlags) {
     None(0),
 
-    /** Lines are anti-aliased (*2 the number of triangles for 1.0f wide line, otherwise *3 the number of triangles) */
+    /** Enable anti-aliased lines/borders (*2 the number of triangles for 1.0f wide line or lines thin enough to be
+     *  drawn using textures, otherwise *3 the number of triangles) */
     AntiAliasedLines(1 shl 0),
 
-    /** Filled shapes have anti-aliased edges (*2 the number of vertices) */
-    AntiAliasedFill(1 shl 1),
+    /** Enable anti-aliased lines/borders using textures when possible. Require back-end to render with bilinear filtering. */
+    AntiAliasedLinesUseTex(1 shl 1),
+
+    /** Enable anti-aliased edge around filled shapes (rounded rectangles, circles). */
+    AntiAliasedFill(1 shl 2),
 
     /** Can emit 'VtxOffset > 0' to allow large meshes. Set when 'ImGuiBackendFlags_RendererHasVtxOffset' is enabled. */
-    AllowVtxOffset(1 shl 2);
+    AllowVtxOffset(1 shl 3);
 
     infix fun and(b: DrawListFlag): DrawListFlags = i and b.i
     infix fun and(b: DrawListFlags): DrawListFlags = i and b

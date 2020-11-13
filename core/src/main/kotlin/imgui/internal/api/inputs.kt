@@ -17,7 +17,8 @@ internal interface inputs {
         return g.activeIdUsingKeyInputMask.and(1L shl key.i) != 0L // TODO Long.has
     }
 
-    /** [Internal] This doesn't test if the button is pressed */
+    /** Return if a mouse click/drag went past the given threshold. Valid to call during the MouseReleased frame.
+     *  [Internal] This doesn't test if the button is pressed */
     fun isMouseDragPastThreshold(button: MouseButton, lockThreshold_: Float): Boolean {
 
         assert(button.i in io.mouseDown.indices)

@@ -20,6 +20,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import unsigned.toUInt
 import kotlin.math.max
+import imgui.internal.sections.DrawCornerFlag as Dcf
 
 /** Render helpers
  *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
@@ -189,7 +190,7 @@ internal interface renderHelpers {
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
         val borderSize = style.frameBorderSize
         if (border && borderSize > 0f) {
-            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, DrawCornerFlag.All.i, borderSize)
+            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
             window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
         }
     }
@@ -197,7 +198,7 @@ internal interface renderHelpers {
     fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(g.currentWindow!!) {
         val borderSize = style.frameBorderSize
         if (borderSize > 0f) {
-            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, DrawCornerFlag.All.i, borderSize)
+            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
             drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
         }
     }
@@ -234,12 +235,12 @@ internal interface renderHelpers {
                     }
                     var roundingCornersFlagsCell = 0
                     if (y1 <= pMin.y) {
-                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.TopLeft
-                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.TopRight
+                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopLeft
+                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopRight
                     }
                     if (y2 >= pMax.y) {
-                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.BotLeft
-                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or DrawCornerFlag.BotRight
+                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotLeft
+                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotRight
                     }
                     roundingCornersFlagsCell = roundingCornersFlagsCell and roundingCornersFlags
                     drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, if (roundingCornersFlagsCell.bool) rounding else 0f, roundingCornersFlagsCell)
@@ -272,7 +273,7 @@ internal interface renderHelpers {
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
             window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
-                    Col.NavHighlight.u32, rounding, DrawCornerFlag.All.i, THICKNESS)
+                    Col.NavHighlight.u32, rounding, Dcf.All.i, THICKNESS)
             if (!fullyVisible)
                 window.drawList.popClipRect()
         }

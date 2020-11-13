@@ -1,6 +1,7 @@
 package imgui.api
 
 import glm_.f
+import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -25,6 +26,7 @@ import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.classes.IO
 import imgui.classes.Style
+import imgui.font.FontAtlas
 import imgui.internal.*
 import imgui.internal.sections.or
 import imgui.static.*
@@ -80,13 +82,16 @@ interface main {
         g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
         g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
-        g.drawListSharedData.initialFlags = Dlf.None.i
+        var flags = Dlf.None.i
         if (style.antiAliasedLines)
-            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedLines
+            flags = flags or Dlf.AntiAliasedLines
+        if (style.antiAliasedLinesUseTex && g.font.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i)
+            flags = flags or Dlf.AntiAliasedLinesUseTex
         if (style.antiAliasedFill)
-            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AntiAliasedFill
+            flags = flags or Dlf.AntiAliasedFill
         if (io.backendFlags has BackendFlag.RendererHasVtxOffset)
-            g.drawListSharedData.initialFlags = g.drawListSharedData.initialFlags or Dlf.AllowVtxOffset
+            flags = flags or Dlf.AllowVtxOffset
+        g.drawListSharedData.initialFlags = flags
 
         g.backgroundDrawList._resetForNewFrame()
         g.backgroundDrawList.pushTextureId(io.fonts.texID)
@@ -115,6 +120,7 @@ interface main {
         g.hoveredIdPreviousFrame = g.hoveredId
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
+        g.hoveredIdDisabled = false
 
         // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
         if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)

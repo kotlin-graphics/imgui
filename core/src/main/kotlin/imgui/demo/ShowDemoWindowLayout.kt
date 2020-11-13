@@ -3,6 +3,7 @@ package imgui.demo
 import gli_.has
 import glm_.L
 import glm_.f
+import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import glm_.wo
@@ -22,7 +23,6 @@ import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvail
-import imgui.ImGui.cursorPosX
 import imgui.ImGui.cursorScreenPos
 import imgui.ImGui.cursorStartPos
 import imgui.ImGui.dragFloat
@@ -35,18 +35,13 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
-import imgui.ImGui.font
-import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getID
-import imgui.ImGui.inputInt
 import imgui.ImGui.invisibleButton
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemRectMax
-import imgui.ImGui.itemRectMin
 import imgui.ImGui.itemRectSize
 import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
@@ -100,12 +95,12 @@ import imgui.dsl.group
 import imgui.dsl.indent
 import imgui.dsl.menuBar
 import imgui.dsl.treeNode
+import imgui.dsl.withClipRect
 import imgui.dsl.withId
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
 import kotlin.math.sin
-import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 
 object ShowDemoWindowLayout {
@@ -113,7 +108,7 @@ object ShowDemoWindowLayout {
     /* Child regions */
     var disableMouseWheel = false
     var disableMenu = false
-    var line = 50
+    var offsetX = 0
 
 
     /* Widgets Width */
@@ -166,12 +161,12 @@ object ShowDemoWindowLayout {
 
 
     /* Clipping */
-    val size = Vec2(100)
-    val offset = Vec2(50, 20)
+    val size = Vec2(100f)
+    val offset = Vec2(30)
 
     operator fun invoke() {
 
-        if (!collapsingHeader("Layout"))
+        if (!collapsingHeader("Layout & Scrolling"))
             return
 
         treeNode("Child Windows") {
@@ -180,23 +175,14 @@ object ShowDemoWindowLayout {
             checkbox("Disable Mouse Wheel", ::disableMouseWheel)
             checkbox("Disable Menu", ::disableMenu)
 
-            var gotoLine = button("Goto")
-            sameLine()
-            withItemWidth(100) {
-                gotoLine = gotoLine or inputInt("##Line", ::line, 0, 0, Itf.EnterReturnsTrue.i)
-            }
-
             // Child 1: no border, enable horizontal scrollbar
             run {
                 var windowFlags = Wf.HorizontalScrollbar.i
                 if (disableMouseWheel)
                     windowFlags = windowFlags or Wf.NoScrollWithMouse
                 child("ChildL", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
-                    for (i in 0..99) {
+                    for (i in 0..99)
                         text("%04d: scrollable region", i)
-                        if (gotoLine && line == i) setScrollHereY()
-                    }
-                    if (gotoLine && line >= 100) setScrollHereY()
                 }
             }
             sameLine()
@@ -237,15 +223,20 @@ object ShowDemoWindowLayout {
             // - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from
             //   the POV of the parent window). See 'Demo->Querying Status (Active/Focused/Hovered etc.)' for details.
             run {
-                cursorPosX += 10f
+                setNextItemWidth(100f)
+                dragInt("Offset X", ::offsetX, 1f, -1000, 1000)
+
+                ImGui.cursorPosX += offsetX
                 withStyleColor(Col.ChildBg, COL32(255, 0, 0, 100)) {
                     beginChild("Red", Vec2(200, 100), true, Wf.None.i)
                     for (n in 0..49)
                         text("Some test $n")
                     endChild()
                 }
-                val childRectMin = itemRectMin
-                val childRectMax = itemRectMax
+                val childIsHovered = ImGui.isItemHovered()
+                val childRectMin = ImGui.itemRectMin
+                val childRectMax = ImGui.itemRectMax
+                text("Hovered: ${childIsHovered.i}")
                 text("Rect of child window is: (%.0f,%.0f) (%.0f,%.0f)", childRectMin.x, childRectMin.y, childRectMax.x, childRectMax.y)
             }
         }
@@ -548,7 +539,7 @@ object ShowDemoWindowLayout {
                     button("Button##1")
                     sameLine(0f, spacing)
                     treeNode("Node##1") {
-                        // Dummy tree data
+                        // Placeholder tree data
                         for (i in 0..5)
                             bulletText("Item $i..")
                     }
@@ -562,7 +553,7 @@ object ShowDemoWindowLayout {
                     val nodeOpen = treeNode("Node##2")
                     sameLine(0f, spacing); button("Button##2")
                     if (nodeOpen) {
-                        // Dummy tree data
+                        // Placeholder tree data
                         for (i in 0..5)
                             bulletText("Item $i..")
                         treePop()
@@ -586,8 +577,6 @@ object ShowDemoWindowLayout {
             helpMarker("Use SetScrollHereY() or SetScrollFromPosY() to scroll to a given vertical position.")
 
             checkbox("Decoration", ::enableExtraDecorations)
-            sameLine()
-            helpMarker("We expose this for testing because scrolling sometimes had issues with window decoration such as menu-bars.")
 
             checkbox("Track", ::enableTrack)
             pushItemWidth(100)
@@ -641,11 +630,9 @@ object ShowDemoWindowLayout {
             spacing()
             helpMarker(
                     "Use SetScrollHereX() or SetScrollFromPosX() to scroll to a given horizontal position.\n\n" +
-                    "Using the \"Scroll To Pos\" button above will make the discontinuity at edges visible: " +
-                    "scrolling to the top/bottom/left/right-most item will add an additional WindowPadding to reflect " +
-                    "on reaching the edge of the list.\n\nBecause the clipping rectangle of most window hides half " +
-                    "worth of WindowPadding on the left/right, using SetScrollFromPosX(+1) will usually result in " +
-                    "clipped text whereas the equivalent SetScrollFromPosY(+1) wouldn't.")
+                            "Because the clipping rectangle of most window hides half worth of WindowPadding on the " +
+                            "left/right, using SetScrollFromPosX(+1) will usually result in clipped text whereas the " +
+                            "equivalent SetScrollFromPosY(+1) wouldn't.")
             pushID("##HorizontalScrolling")
             for (i in 0..4) {
                 val childHeight = textLineHeight + style.scrollbarSize + style.windowPadding.y * 2f
@@ -676,7 +663,7 @@ object ShowDemoWindowLayout {
 
             helpMarker(
                     "Horizontal scrolling for a window is enabled via the ImGuiWindowFlags_HorizontalScrollbar flag.\n\n" +
-                    "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
+                            "You may want to also explicitly specify content width by using SetNextWindowContentWidth() before Begin().")
             sliderInt("Lines", ::lines, 1, 15)
             pushStyleVar(StyleVar.FrameRounding, 3f)
             pushStyleVar(StyleVar.FramePadding, Vec2(2f, 1f))
@@ -795,20 +782,58 @@ object ShowDemoWindowLayout {
         }
 
         treeNode("Clipping") {
-            textWrapped(
-                    "On a per-widget basis we are occasionally clipping text CPU-side if it won't fit in its frame. " +
-                    "Otherwise we are doing coarser clipping + passing a scissor rectangle to the renderer. " +
-                    "The system is designed to try minimizing both execution and CPU/GPU rendering cost.")
             dragVec2("size", size, 0.5f, 1f, 200f, "%.0f")
-            textWrapped("(Click and drag)")
-            val pos = Vec2(cursorScreenPos)
-            val clipRect = Vec4(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
-            invisibleButton("##dummy", size)
-            if (isItemActive && isMouseDragging(MouseButton.Left))
-                offset += io.mouseDelta
-            windowDrawList.addRectFilled(pos, Vec2(pos.x + size.x, pos.y + size.y), imgui.COL32_WHITE)
-            windowDrawList.addText(font, fontSize * 2f, Vec2(pos.x + offset.x, pos.y + offset.y),
-                    COL32_WHITE, "Line 1 hello\nLine 2 clip me!", 0f, clipRect)
+            textWrapped("(Click and drag to scroll)")
+
+            for (n in 0..2) {
+                if (n > 0)
+                    sameLine()
+                pushID(n)
+                group { // Lock X position
+
+                    invisibleButton("##empty", size)
+                    if (ImGui.isItemActive && ImGui.isMouseDragging(MouseButton.Left))
+                        offset += io.mouseDelta
+                    val p0 = Vec2(ImGui.itemRectMin)
+                    val p1 = Vec2(ImGui.itemRectMax)
+                    val textStr = "Line 1 hello\nLine 2 clip me!"
+                    val textPos = p0 + offset
+                    val drawList = ImGui.windowDrawList
+
+                    when (n) {
+                        0 -> {
+                            helpMarker("""
+                                Using ImGui::PushClipRect():
+                                Will alter ImGui hit-testing logic + ImDrawList rendering.
+                                (use this if you want your clipping rectangle to affect interactions)""".trimIndent())
+                            withClipRect(p0, p1, true) {
+                                drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                                drawList.addText(textPos, COL32_WHITE, textStr)
+                            }
+                        }
+                        1 -> {
+                            helpMarker("""
+                                Using ImDrawList::PushClipRect():
+                                Will alter ImDrawList rendering only.
+                                (use this as a shortcut if you are only using ImDrawList calls)""".trimIndent())
+                            drawList.withClipRect(p0, p1, true) {
+                                addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                                addText(textPos, COL32_WHITE, textStr)
+                            }
+                        }
+                        2 -> {
+                            helpMarker("""
+                                Using ImDrawList::AddText() with a fine ClipRect:
+                                Will alter only this specific ImDrawList::AddText() rendering.
+                                (this is often used internally to avoid altering the clipping rectangle and minimize draw calls)""".trimIndent())
+                            val clipRect = Vec4(p0, p1) // AddText() takes a ImVec4* here so let's convert.
+                            drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                            drawList.addText(ImGui.font, ImGui.fontSize, textPos, COL32_WHITE, textStr, 0f, clipRect)
+                        }
+                    }
+                }
+                popID()
+            }
         }
     }
 }

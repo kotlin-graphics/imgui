@@ -31,10 +31,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.classes.Rect
-import imgui.internal.sections.ItemFlag
-import imgui.internal.sections.ItemStatusFlag
-import imgui.internal.sections.has
-import imgui.internal.sections.or
+import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -61,7 +58,7 @@ val S32_MAX: Int = Integer.MAX_VALUE
 interface widgetsMain {
 
     /** button  */
-    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, 0)
+    fun button(label: String, sizeArg: Vec2 = Vec2()): Boolean = buttonEx(label, sizeArg, Bf.None.i)
 
     /** button with FramePadding = (0,0) to easily embed within text
      *  Small buttons fits within text without additional vertical spacing.     */
@@ -73,12 +70,12 @@ interface widgetsMain {
         return pressed
     }
 
-    /** button behavior without the visuals, frequently useful to build custom behaviors using the public api
+    /** flexible button behavior without the visuals, frequently useful to build custom behaviors using the public api
      *  (along with isItemActive, isItemHovered, etc.)
      *  Tip: use pushId()/popId() to push indices or pointers in the ID stack.
      *  Then you can keep 'strid' empty or the same for all your buttons (instead of creating a string based on a
      *  non-string id)  */
-    fun invisibleButton(strId: String, sizeArg: Vec2): Boolean {
+    fun invisibleButton(strId: String, sizeArg: Vec2, flags: ButtonFlags = Bf.None.i): Boolean {
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -90,7 +87,7 @@ interface widgetsMain {
         itemSize(size)
         if (!itemAdd(bb, id)) return false
 
-        val (pressed, _, _) = buttonBehavior(bb, id)
+        val (pressed, _, _) = buttonBehavior(bb, id, flags)
 
         return pressed
     }
@@ -296,7 +293,7 @@ interface widgetsMain {
         }
     }
 
-    /** draw a small circle and keep the cursor on the same line. advance cursor x position
+    /** draw a small circle + keep the cursor on the same line. advance cursor x position
      *  by GetTreeNodeToLabelSpacing(), same distance that TreeNode() uses  */
     fun bullet() {
 
