@@ -75,7 +75,7 @@ class MyDocument(
         dirty = false
     }
 
-    // Display dummy contents for the Document
+    // Display placeholder contents for the Document
     fun displayContents() {
         pushID(this)
         text("Document \"$name\"")

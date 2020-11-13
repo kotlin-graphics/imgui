@@ -687,7 +687,8 @@ fun registerTests_Perf(e: TestEngine) {
                 ImGui.sliderFloat("Line width", ::lineWidth0, 1f, 10f)
                 ImGui.sliderFloat("Radius", ::radius, 1f, maxRadius)
                 ImGui.sliderInt("Segments", ::segmentCountManual, 1, 512)
-                ImGui.dragFloat("Circle segment Max Error", ImGui.style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f", 1f)
+                // TODO
+//                ImGui.dragFloat("Circle segment Max Error", ImGui.style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f", 1f)
                 ImGui.checkbox("No anti-aliasing", ::noAA)
                 ImGui.sameLine()
                 ImGui.checkbox("Overdraw", ::overdraw)
@@ -846,7 +847,7 @@ fun registerTests_Perf(e: TestEngine) {
                         val start = Vec2(center.x + sin(r) * lineLen * 0.5f, center.y + cos(r) * lineLen * 0.5f)
                         val end = Vec2(center.x - sin(r) * lineLen * 0.5f, center.y - cos(r) * lineLen * 0.5f)
 
-                        drawList.addLine(start, end, COL32(255, 255, 255, 255), lineWidth1)
+                        drawList.addLine(start, end, COL32(255), lineWidth1)
                     }
 
                     ImGui.cursorPosY = cursorPos.y + i * lineSpacing.y
@@ -900,7 +901,7 @@ fun registerTests_Perf(e: TestEngine) {
                         val topLeft = Vec2(center.x - lineLen * 0.5f, center.y - lineLen * 0.5f)
                         val bottomRight = Vec2(center.x + lineLen * 0.5f, center.y + lineLen * 0.5f)
 
-                        drawList.addRect(topLeft, bottomRight, COL32(255, 255, 255, 255), 0f, DrawCornerFlag.All.i, cellLineWidth)
+                        drawList.addRect(topLeft, bottomRight, COL32(255), 0f, DrawCornerFlag.All.i, cellLineWidth)
 
                         ImGui.cursorPos = Vec2(cursorPos.x + (j + 0.5f) * lineSpacing.x - 16f, cursorPos.y + (i + 0.5f) * lineSpacing.y - ImGui.textLineHeight * 0.5f)
                         ImGui.text("%.2f", cellLineWidth)

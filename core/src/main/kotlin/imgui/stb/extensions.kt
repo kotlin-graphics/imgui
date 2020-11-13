@@ -6,7 +6,6 @@ import glm_.vec2.Vec2i
 import imgui.stak
 import kool.BYTES
 import kool.adr
-import kool.free
 import org.lwjgl.stb.*
 import org.lwjgl.system.CustomBuffer
 import org.lwjgl.system.MemoryUtil.*
@@ -186,8 +185,8 @@ fun stbtt_GetFontVMetrics(info: STBTTFontinfo): IntArray = stak {
 }
 
 fun stbtt_GetPackedQuad(chardata: STBTTPackedchar.Buffer, p: Vec2i, charIndex: Int, q: STBTTAlignedQuad, alignToInteger: Boolean = false) = stak {
-    val dummy = it.callocFloat(2).adr
-    STBTruetype.nstbtt_GetPackedQuad(chardata.adr, p.x, p.y, charIndex, dummy, dummy + Float.BYTES, q.adr, alignToInteger.i)
+    val unused = it.callocFloat(2).adr
+    STBTruetype.nstbtt_GetPackedQuad(chardata.adr, p.x, p.y, charIndex, unused, unused + Float.BYTES, q.adr, alignToInteger.i)
 }
 
 fun stbtt_GetGlyphBitmapBoxSubpixel(font: STBTTFontinfo, glyph: Int, scale: Vec2, shift: Vec2 = Vec2()): IntArray = stak { s ->

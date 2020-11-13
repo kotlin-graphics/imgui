@@ -50,7 +50,7 @@ class GroupData {
 /** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
  *  has overwritten the data.
  *  ¬ItemHoveredDataBackup, we optimize by using a function accepting a lambda */
-fun itemHoveredDataBackup(block: () -> Unit) {
+fun lastItemDataBackup(block: () -> Unit) {
     // backup
     var window = g.currentWindow!!
     val lastItemId = window.dc.lastItemId
@@ -245,7 +245,7 @@ class StyleMod(val idx: StyleVar) {
     val floats = FloatArray(2)
 }
 
-/** Storage for one active tab item (sizeof() 26~32 bytes) */
+/** Storage for one active tab item (sizeof() 28~32 bytes) */
 class TabItem {
     var id: ID = 0
     var flags = TabItemFlag.None.i
@@ -253,9 +253,6 @@ class TabItem {
 
     /** This allows us to infer an ordered list of the last activated tabs with little maintenance */
     var lastFrameSelected = -1
-
-    /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
-    var nameOffset = -1
 
     /** Position relative to beginning of tab */
     var offset = 0f
@@ -265,6 +262,12 @@ class TabItem {
 
     /** Width of actual contents, stored during BeginTabItem() call */
     var contentWidth = 0f
+
+    /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
+    var nameOffset = -1
+
+    /** Marked as closed by SetTabItemClosed() */
+    var wantClose = false
 }
 
 

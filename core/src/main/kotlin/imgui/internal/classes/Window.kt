@@ -32,7 +32,6 @@ import kotlin.collections.HashMap
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
-
 /** Storage for one window */
 class Window(
         var context: Context,
@@ -200,14 +199,24 @@ class Window(
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()
 
-    /** Cover the whole scrolling region, shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward). */
+    /** Initially covers the whole scrolling region. Reduced by containers e.g columns/tables when active.
+     * Shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward). */
     var workRect = Rect()
+
+    /** Backup of WorkRect before entering a container such as columns/tables. Used by e.g. SpanAllColumns functions
+     *  to easily access. Stacked containers are responsible for maintaining this. // FIXME-WORKRECT: Could be a stack? */
+    val parentWorkRect = Rect()
 
     /** Current clipping/scissoring rectangle, evolve as we are using PushClipRect(), etc. == DrawList->clip_rect_stack.back(). */
     var clipRect = Rect()
 
     /** FIXME: This is currently confusing/misleading. It is essentially WorkRect but not handling of scrolling. We currently rely on it as right/bottom aligned sizing operation need some size to rely on. */
     var contentRegionRect = Rect()
+
+    /** Define an optional rectangular hole where mouse will pass-through the window. */
+    val hitTestHoleSize = Vec2i()
+
+    val hitTestHoleOffset = Vec2i()
 
 
     /** Last frame number the window was Active. */
@@ -236,7 +245,7 @@ class Window(
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
 
-    /** Point to ourself or first ancestor that is not a child window.  */
+    /** Point to ourself or first ancestor that is not a child window == Top-level window. */
     var rootWindow: Window? = null
 
     /** Point to ourself or first ancestor which will display TitleBgActive color when this window is active.   */
@@ -259,6 +268,7 @@ class Window(
 
     /** Set when window extraneous data have been garbage collected */
     var memoryCompacted = false
+
     /** Backup of last idx/vtx count, so when waking up the window we can preallocate and avoid iterative alloc/copy */
     var memoryDrawListIdxCapacity = 0
     var memoryDrawListVtxCapacity = 0
@@ -395,7 +405,7 @@ class Window(
     /** ~BringWindowToDisplayFront */
     fun bringToDisplayFront() {
         val currentFrontWindow = g.windows.last()
-        if (currentFrontWindow === this || currentFrontWindow.rootWindow === this)
+        if (currentFrontWindow === this || currentFrontWindow.rootWindow === this) // Cheap early out (could be better)
             return
         for (i in g.windows.size - 2 downTo 0) // We can ignore the top-most window
             if (g.windows[i] === this) {
@@ -521,6 +531,13 @@ class Window(
         this.collapsed = collapsed
     }
 
+    /** ~SetWindowHitTestHole */
+    fun setHitTestHole(pos: Vec2, size: Vec2) {
+        assert(hitTestHoleSize.x == 0) { "We don't support multiple holes/hit test filters" }
+        hitTestHoleSize put size
+        hitTestHoleOffset put (pos - this.pos)
+    }
+
 
     // Garbage collection
 
@@ -574,6 +591,7 @@ class Window(
         focusWindow(this)
         setActiveID(moveId, this)
         g.navDisableHighlight = true
+        g.activeIdNoClearOnFocusLoss = true
         g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
 
         val canMoveWindow = flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove
@@ -606,9 +624,11 @@ class Window(
         scrollTargetCenterRatio.y = 0f
     }
 
-    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position. */
+    /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.
+     *
+     *  Note that a local position will vary depending on initial scroll value
+     *  We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size */
     fun setScrollFromPosX(localX: Float, centerXratio: Float) {
-        // We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
         assert(centerXratio in 0f..1f)
         scrollTarget.x = floor(localX + scroll.x)
         scrollTargetCenterRatio.x = centerXratio
@@ -616,11 +636,8 @@ class Window(
 
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
     fun setScrollFromPosY(localY_: Float, centerYRatio: Float = 0.5f) {
-        /*  We store a target position so centering can occur on the next frame when we are guaranteed to have a known
-            window size         */
         assert(centerYRatio in 0f..1f)
-        val decorationUpHeight = titleBarHeight + menuBarHeight
-        val localY = localY_ - decorationUpHeight
+        val localY = localY_ - (titleBarHeight + menuBarHeight) // FIXME: Would be nice to have a more standardized access to our scrollable/client rect
         scrollTarget.y = floor(localY + scroll.y)
         scrollTargetCenterRatio.y = centerYRatio
     }
@@ -640,7 +657,7 @@ class Window(
             else if (itemRect.max.y >= windowRect.max.y)
                 setScrollFromPosY(itemRect.max.y - pos.y + style.itemSpacing.y, 1f)
 
-            val nextScroll = calcNextScrollFromScrollTargetAndClamp(false)
+            val nextScroll = calcNextScrollFromScrollTargetAndClamp()
             deltaScroll put (nextScroll - scroll)
         }
 
@@ -886,27 +903,17 @@ class Window(
     // [SECTION] FORWARD DECLARATIONS
     //-------------------------------------------------------------------------
 
-    fun calcNextScrollFromScrollTargetAndClamp(snapOnEdges: Boolean): Vec2 {
+    fun calcNextScrollFromScrollTargetAndClamp(): Vec2 {
         val scroll = Vec2(scroll)
         if (scrollTarget.x < Float.MAX_VALUE) {
             val crX = scrollTargetCenterRatio.x
-            var targetX = scrollTarget.x
-            if (snapOnEdges && crX <= 0f && targetX <= windowPadding.x)
-                targetX = 0f
-            else if (snapOnEdges && crX >= 1f && targetX >= contentSize.x + windowPadding.x + style.itemSpacing.x)
-                targetX = contentSize.x + windowPadding.x * 2f
+            val targetX = scrollTarget.x
             scroll.x = targetX - crX * (sizeFull.x - scrollbarSizes.x)
         }
         if (scrollTarget.y < Float.MAX_VALUE) {
-            /*  'snap_on_edges' allows for a discontinuity at the edge of scrolling limits to take account of WindowPadding
-                so that scrolling to make the last item visible scroll far enough to see the padding.         */
             val decorationUpHeight = titleBarHeight + menuBarHeight
             val crY = scrollTargetCenterRatio.y
-            var targetY = scrollTarget.y
-            if (snapOnEdges && crY <= 0f && targetY <= windowPadding.y)
-                targetY = 0f
-            if (snapOnEdges && crY >= 1f && targetY >= contentSize.y + windowPadding.y + style.itemSpacing.y)
-                targetY = contentSize.y + windowPadding.y * 2f
+            val targetY = scrollTarget.y
             scroll.y = targetY - crY * (sizeFull.y - scrollbarSizes.y - decorationUpHeight)
         }
         scroll.x = floor(scroll.x max 0f)
@@ -1128,3 +1135,4 @@ class Window(
 
     override fun toString() = name
 }
+

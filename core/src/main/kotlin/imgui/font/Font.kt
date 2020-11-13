@@ -5,8 +5,8 @@ import glm_.*
 import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
+import imgui.*
 import imgui.ImGui.io
-import imgui.UNICODE_CODEPOINT_MAX
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.has
@@ -14,8 +14,6 @@ import imgui.internal.charIsBlankA
 import imgui.internal.charIsBlankW
 import imgui.internal.round
 import imgui.internal.textCharFromUtf8
-import imgui.memchr
-import imgui.strlen
 import kool.lim
 import kool.pos
 import org.lwjgl.system.Platform
@@ -483,7 +481,7 @@ class Font {
 
     fun buildLookupTable() {
 
-        val maxCodepoint = glyphs.map { it.codepoint.i }.max()!!
+        val maxCodepoint = glyphs.map { it.codepoint.i }.maxOrNull()!!
 
         // Build lookup table
         assert(glyphs.size < 0xFFFF) { "-1 is reserved" }
@@ -554,9 +552,36 @@ class Font {
         }
     }
 
-    /** x0/y0/x1/y1 are offset from the character upper-left layout position, in pixels. Therefore x0/y0 are often fairly close to zero.
-     *  Not to be mistaken with texture coordinates, which are held by u0/v0/u1/v1 in normalized format (0.0..1.0 on each texture axis). */
-    fun addGlyph(codepoint: Int, x0: Float, y0: Float, x1: Float, y1: Float, u0: Float, v0: Float, u1: Float, v1: Float, advanceX: Float) {
+    /** x0/y0/x1/y1 are offset from the character upper-left layout position, in pixels.
+     *  Therefore x0/y0 are often fairly close to zero.
+     *  Not to be mistaken with texture coordinates, which are held by u0/v0/u1/v1 in normalized format
+     *  (0.0..1.0 on each texture axis).
+     * 'cfg' is not necessarily == 'this->ConfigData' because multiple source fonts+configs can be used to build
+     *  one target font. */
+    fun addGlyph(cfg: FontConfig?, codepoint: Int, x0_: Float, y0: Float, x1_: Float, y1: Float, u0: Float, v0: Float,
+                 u1: Float, v1: Float, advanceX_: Float) {
+
+        var x0 = x0_
+        var x1 = x1_
+        var advanceX = advanceX_
+        if (cfg != null) {
+            // Clamp & recenter if needed
+            val advanceXOriginal = advanceX
+            advanceX = clamp(advanceX, cfg.glyphMinAdvanceX, cfg.glyphMaxAdvanceX)
+            if (advanceX != advanceXOriginal) {
+                val charOffX = if(cfg.pixelSnapH) floor((advanceX - advanceXOriginal) * 0.5f) else (advanceX - advanceXOriginal) * 0.5f
+                x0 += charOffX
+                x1 += charOffX
+            }
+
+            // Snap to pixel
+            if (cfg.pixelSnapH)
+                advanceX = round(advanceX)
+
+            // Bake spacing
+            advanceX += cfg.glyphExtraSpacing.x
+        }
+
         val glyph = FontGlyph()
         glyphs += glyph
         glyph.codepoint = codepoint.c
@@ -569,14 +594,16 @@ class Font {
         glyph.v0 = v0
         glyph.u1 = u1
         glyph.v1 = v1
-        glyph.advanceX = advanceX + configData[0].glyphExtraSpacing.x  // Bake spacing into xAdvance
+        glyph.advanceX = advanceX
 
         if (configData[0].pixelSnapH)
             glyph.advanceX = round(glyph.advanceX)
         // Compute rough surface usage metrics (+1 to account for average padding, +0.99 to round)
+        // We use (U1-U0)*TexWidth instead of X1-X0 to account for oversampling.
+        val pad = containerAtlas.texGlyphPadding + 0.99f
         dirtyLookupTables = true
-        metricsTotalSurface += ((glyph.u1 - glyph.u0) * containerAtlas.texSize.x + 1.99f).i *
-                ((glyph.v1 - glyph.v0) * containerAtlas.texSize.y + 1.99f).i
+        metricsTotalSurface += ((glyph.u1 - glyph.u0) * containerAtlas.texSize.x + pad).i *
+                ((glyph.v1 - glyph.v0) * containerAtlas.texSize.y + pad).i
     }
 
     /** Makes 'dst' character/glyph points to 'src' character/glyph. Currently needs to be called AFTER fonts have been built.  */
@@ -620,6 +647,7 @@ class Font {
 
         val atlas = g.font.containerAtlas
         g.drawListSharedData.texUvWhitePixel put atlas.texUvWhitePixel
+        g.drawListSharedData.texUvLines = atlas.texUvLines
         g.drawListSharedData.font = g.font
         g.drawListSharedData.fontSize = g.fontSize
     }
