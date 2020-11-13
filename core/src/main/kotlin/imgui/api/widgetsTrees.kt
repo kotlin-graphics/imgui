@@ -10,7 +10,7 @@ import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.popID
 import imgui.ImGui.pushID
-import imgui.ImGui.setNavId
+import imgui.ImGui.setNavID
 import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
@@ -101,7 +101,7 @@ interface widgetsTrees {
         // Handle Left arrow to move to parent tree node (when ImGuiTreeNodeFlags_NavLeftJumpsBackHere is enabled)
         if (g.navMoveDir == Dir.Left && g.navWindow === window && navMoveRequestButNoResultYet())
             if (g.navIdIsAlive && window.dc.treeJumpToParentOnPopMask has treeDepthMask) {
-                setNavId(window.idStack.last(), g.navLayer, 0)
+                setNavID(window.idStack.last(), g.navLayer, 0)
                 navMoveRequestCancel()
             }
         window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask and treeDepthMask - 1
