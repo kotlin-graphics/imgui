@@ -254,7 +254,6 @@ fun updateWindowManualResize(
 
     // Resize grips and borders are on layer 1
     window.dc.navLayerCurrent = NavLayer.Menu
-    window.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
 
     // Manual resize grips
     pushID("#RESIZE")
@@ -334,7 +333,6 @@ fun updateWindowManualResize(
 
     // Restore nav layer
     window.dc.navLayerCurrent = NavLayer.Main
-    window.dc.navLayerCurrentMask = 1 shl NavLayer.Main
 
     // Navigation resize (keyboard/gamepad)
     if (g.navWindowingTarget?.rootWindow === window) {

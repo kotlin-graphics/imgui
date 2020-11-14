@@ -992,7 +992,6 @@ class Window(var context: Context,
         val itemFlagsBackup = dc.itemFlags
         dc.itemFlags = dc.itemFlags or ItemFlag.NoNavDefaultFocus
         dc.navLayerCurrent = NavLayer.Menu
-        dc.navLayerCurrentMask = 1 shl NavLayer.Menu
 
         // Layout buttons
         // FIXME: Would be nice to generalize the subtleties expressed here into reusable code.
@@ -1023,7 +1022,6 @@ class Window(var context: Context,
         if (hasCloseButton) if (closeButton(getID("#CLOSE"), closeButtonPos)) pOpen!!.set(false)
 
         dc.navLayerCurrent = NavLayer.Main
-        dc.navLayerCurrentMask = 1 shl NavLayer.Main
         dc.itemFlags = itemFlagsBackup
 
         // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
