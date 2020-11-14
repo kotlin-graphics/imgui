@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.closeButton
 import imgui.ImGui.currentWindow
+import imgui.ImGui.getIDWithSeed
 import imgui.ImGui.indent
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
@@ -144,16 +145,16 @@ interface widgetsTrees {
             flags = flags or Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton
         val isOpen = treeNodeBehavior(id, flags, label)
         if (open != null) {
-            /*  Create a small overlapping close button
-                FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
-                FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
-             */
+            // Create a small overlapping close button
+            // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
+            // FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
             val buttonSize = g.fontSize
             val buttonPos = Vec2(
                     max(window.dc.lastItemRect.min.x, window.dc.lastItemRect.max.x - style.framePadding.x * 2f - buttonSize),
                     (window.dc.lastItemRect.min.y))
             lastItemDataBackup {
-                if (closeButton(window.getID(id + 1), buttonPos))
+                val closeButtonId = getIDWithSeed("#CLOSE", -1, id)
+                if (closeButton(closeButtonId, buttonPos))
                     open.set(false)
             }
         }

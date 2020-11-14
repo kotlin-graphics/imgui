@@ -40,7 +40,7 @@ internal interface tabBars {
         // While rendering tabs, we trim 1 pixel off the top of our bounding box so they can fit within a regular frame height while looking "detached" from it.
         val width = bb.width
         assert(width > 0f)
-        val rounding = max(0f, min(style.tabRounding, width * 0.5f - 1f))
+        val rounding = max(0f, min(if(flags has TabItemFlag._Button) g.style.frameRounding else style.tabRounding, width * 0.5f - 1f))
         val y1 = bb.min.y + 1f
         val y2 = bb.max.y + if(flags has TabItemFlag._Preview) 0f else -1f
         drawList.apply {

@@ -17,8 +17,8 @@ import imgui.ImGui.mainViewport
 import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
-import imgui.classes.ViewportP
 import imgui.ImGui.topMostPopupModal
+import imgui.classes.ViewportP
 import imgui.internal.sections.IMGUI_DEBUG_LOG_POPUP
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.NextWindowDataFlag
@@ -126,8 +126,9 @@ interface popupsModals {
     /** helper to open popup when clicked on last item. return true when just opened.
      *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
      *
-     *  Open a popup if mouse button is released over the item */
-    fun openPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean =
+     *  Helper to open a popup if mouse button is released over the item
+     *  - This is essentially the same as BeginPopupContextItem() but without the trailing BeginPopup() */
+    fun openPopupOnItemClick(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i) =
             with(g.currentWindow!!) {
                 val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
                 if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
@@ -135,8 +136,7 @@ interface popupsModals {
                     val id = if (strId.isNotEmpty()) getID(strId) else dc.lastItemId
                     assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
                     openPopupEx(id, popupFlags)
-                    true
-                } else false
+                }
             }
 
     /** cmanually close the popup we have begin-ed into.  */
@@ -175,14 +175,14 @@ interface popupsModals {
     //  - Helpers to do OpenPopup+BeginPopup where the Open action is triggered by e.g. hovering an item and right-clicking.
     //  - They are convenient to easily create context menus, hence the name.
     //  - IMPORTANT: Notice that BeginPopupContextXXX takes ImGuiPopupFlags just like OpenPopup() and unlike BeginPopup(). For full consistency, we may add ImGuiWindowFlags to the BeginPopupContextXXX functions in the future.
-    //  - We exceptionally default their flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter. Passing a mouse button to ImGuiPopupFlags is guaranteed to be legal.
+    //  - IMPORTANT: we exceptionally default their flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter, so if you add other flags remember to re-add the ImGuiPopupFlags_MouseButtonRight.
 
 
     /** This is a helper to handle the simplest case of associating one named popup to one given widget.
      *  - You can pass a NULL str_id to use the identifier of the last item.
      *  - You may want to handle this on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
-     *  - This is essentially the same as calling OpenPopupContextItem() + BeginPopup() but written to avoid
-     *    computing the ID twice because BeginPopupContextXXX functions are called very frequently.
+     *  - This is essentially the same as calling OpenPopupOnItemClick() + BeginPopup() but written to avoid
+     *    computing the ID twice because BeginPopupContextXXX functions may be called very frequently.
      *
      *  open+begin popup when clicked on last item. if you can pass a NULL str_id only if the previous item had an id.
      *  If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here.

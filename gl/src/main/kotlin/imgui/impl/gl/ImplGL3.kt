@@ -117,7 +117,7 @@ class ImplGL3(glslVersion: Int? = null) : GLInterface {
         glUseProgram(program.name)
 //        glUniform1i(g_AttribLocationTex, 0); moved to program creation
         glUniform(matUL, orthoProjection)
-        if (SAMPLER_BINDING)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
             glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
         if (!IMPL_OPENGL_ES2)
@@ -152,7 +152,7 @@ class ImplGL3(glslVersion: Int? = null) : GLInterface {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = when {
-            SAMPLER_BINDING -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
+            !OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -229,8 +229,8 @@ class ImplGL3(glslVersion: Int? = null) : GLInterface {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if (SAMPLER_BINDING)
-            glBindSampler(0, lastSampler)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
+                glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         if (!IMPL_OPENGL_ES2)
             glBindVertexArray(lastVertexArrayObject)
@@ -327,6 +327,27 @@ class ImplGL3(glslVersion: Int? = null) : GLInterface {
             program.delete()
 
         destroyFontsTexture()
+    }
+
+    companion object {
+
+        var OPENGL_ES2 = false
+        var OPENGL_ES3 = false
+
+        // Desktop GL 3.2+ has glDrawElementsBaseVertex() which GL ES and WebGL don't have.
+        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
+
+        // Desktop GL 3.3+ has glBindSampler()
+        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
+
+        var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
+
+        var POLYGON_MODE = true
+        var UNPACK_ROW_LENGTH = true
+        var SINGLE_GL_CONTEXT = true
+
+        // #if defined(IMGUI_IMPL_OPENGL_ES2) || defined(IMGUI_IMPL_OPENGL_ES3) || !defined(GL_VERSION_3_2) -> false
+        var MAY_HAVE_DRAW_WITH_BASE_VERTEX = true
     }
 
     /*private fun debugSave(fbWidth: Int, fbHeight: Int) {
