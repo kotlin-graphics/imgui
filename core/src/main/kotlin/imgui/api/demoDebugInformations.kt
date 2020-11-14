@@ -632,10 +632,8 @@ interface demoDebugInformations {
                 WRT.ContentRegionRect -> window.contentRegionRect
             }
 
-            fun nodeDrawCmdShowMeshAndBoundingBox(
-                    fgDrawList: DrawList, drawList: DrawList, drawCmd: DrawCmd, elemOffset: Int,
-                    showMesh: Boolean, showAabb: Boolean,
-            ) {
+            fun nodeDrawCmdShowMeshAndBoundingBox(fgDrawList: DrawList, drawList: DrawList, drawCmd: DrawCmd,
+                                                  elemOffset: Int, showMesh: Boolean, showAabb: Boolean) {
                 assert(showMesh || showAabb)
                 val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
 
@@ -696,7 +694,7 @@ interface demoDebugInformations {
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
+                            nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
                     if (!cmdNodeOpen) continue
 
                     // Calculate approximate coverage area (touched pixel count)
@@ -713,7 +711,7 @@ interface demoDebugInformations {
                     string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
                     selectable(string)
                     if (isItemHovered() && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, true, false)
+                            nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, true, false)
 
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
@@ -736,7 +734,7 @@ interface demoDebugInformations {
                             selectable(String(buf), false)
                             if (fgDrawList != null && isItemHovered()) {
                                 val backupFlags =
-                                    fgDrawList.flags // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                                        fgDrawList.flags // Disable AA on triangle outlines is more readable for very large and thin triangles.
                                 fgDrawList.flags = fgDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
                                 fgDrawList.addPolyline(triangles, COL32(255, 255, 0, 255), true, 1f)
                                 fgDrawList.flags = backupFlags
@@ -781,8 +779,8 @@ interface demoDebugInformations {
                         treeNodeEx(label, treeNodeFlags.i, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
                 if (!isActive) popStyleColor()
                 if (isItemHovered() && isActive) getForegroundDrawList(window).addRect(window.pos,
-                    window.pos + window.size,
-                    COL32(255, 255, 0, 255))
+                        window.pos + window.size,
+                        COL32(255, 255, 0, 255))
                 if (!open) return
 
                 if (window.memoryCompacted) textDisabled("Note: some memory buffers have been compacted/freed.")
@@ -953,7 +951,8 @@ interface demoDebugInformations {
 
             fun nodeWindowSettings(settings: WindowSettings) = text("0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}", settings.id)
 
-            fun nodeTabBar(tabBar: TabBar) { // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
+            fun nodeTabBar(tabBar: TabBar) {
+                // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
                 val isActive = tabBar.prevFrameVisible >= ImGui.frameCount - 2
                 val p = StringBuffer("TabBar (${tabBar.tabs.size} tabs)${if (isActive) " *Inactive*" else ""}")
                 if (tabBar.flags has TabBarFlag._DockNode) {
@@ -966,6 +965,12 @@ interface demoDebugInformations {
                 if (!isActive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
                 val open = treeNode(tabBar, p.toString())
                 if (!isActive) popStyleColor()
+                if (isActive && ImGui.isItemHovered()) {
+                    val drawList = ImGui.foregroundDrawList
+                    drawList.addRect(tabBar.barRect.min, tabBar.barRect.max, COL32(255, 255, 0, 255))
+                    drawList.addLine(Vec2(tabBar.scrollingRectMinX, tabBar.barRect.min.y), Vec2(tabBar.scrollingRectMinX, tabBar.barRect.max.y), COL32(0, 255, 0, 255))
+                    drawList.addLine(Vec2(tabBar.scrollingRectMaxX, tabBar.barRect.min.y), Vec2(tabBar.scrollingRectMaxX, tabBar.barRect.max.y), COL32(0, 255, 0, 255))
+                }
                 if (open) {
                     for (tabN in tabBar.tabs.indices) {
                         val tab = tabBar.tabs[tabN]
@@ -976,7 +981,7 @@ interface demoDebugInformations {
                         sameLine()
                         val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
                         val s = if (tab.window != null || tab.nameOffset != -1) tabBar.getTabName(tab) else ""
-                        text("%02d$c Tab 0x%08X '$s'", tabN, tab.id)
+                        text("%02d$c Tab 0x%08X '$s' Offset: %.1f, Width: %.1f/%.1f", tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
                         popID()
                     }
                     treePop()

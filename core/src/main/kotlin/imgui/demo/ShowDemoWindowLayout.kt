@@ -19,6 +19,7 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
+import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
@@ -47,6 +48,7 @@ import imgui.ImGui.listBox
 import imgui.ImGui.listBoxFooter
 import imgui.ImGui.listBoxHeader
 import imgui.ImGui.nextColumn
+import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -69,12 +71,14 @@ import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereX
 import imgui.ImGui.setScrollHereY
+import imgui.ImGui.setTabItemClosed
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
+import imgui.ImGui.tabItemButton
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textLineHeight
@@ -94,6 +98,9 @@ import imgui.dsl.child
 import imgui.dsl.group
 import imgui.dsl.indent
 import imgui.dsl.menuBar
+import imgui.dsl.popup
+import imgui.dsl.popupContextItem
+import imgui.dsl.tabBar
 import imgui.dsl.treeNode
 import imgui.dsl.withClipRect
 import imgui.dsl.withId
@@ -128,9 +135,18 @@ object ShowDemoWindowLayout {
 
 
     /* Tabs */
-    var tabBarFlags: TabBarFlags = TabBarFlag.Reorderable.i
+    var tabBarFlags0: TabBarFlags = TabBarFlag.Reorderable.i
     val names0 = arrayOf("Artichoke", "Beetroot", "Celery", "Daikon")
     val opened = BooleanArray(4) { true } // Persistent user state
+
+    /* TabItem Button */
+    var nextTabId = 0
+    val activeTabs = ArrayList<Int>()
+    var tabBarFlags1: TabBarFlags = TabBarFlag.AutoSelectNewTabs or TabBarFlag.Reorderable or TabBarFlag.FittingPolicyResizeDown
+    var showLeadingButton = true
+    var showTrailingButton = true
+    var enablePosition = false
+
 
     /** Text Baseline Alignment */
     var spacing = style.itemInnerSpacing.x
@@ -385,16 +401,16 @@ object ShowDemoWindowLayout {
 
             treeNode("Advanced & Close Button") {
                 // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
-                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags, TabBarFlag.Reorderable.i)
-                checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags, TabBarFlag.AutoSelectNewTabs.i)
-                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags, TabBarFlag.TabListPopupButton.i)
-                checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags, TabBarFlag.NoCloseWithMiddleMouseButton.i)
-                if (tabBarFlags hasnt TabBarFlag.FittingPolicyMask_)
-                    tabBarFlags = tabBarFlags or TabBarFlag.FittingPolicyDefault_
-                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags, TabBarFlag.FittingPolicyResizeDown.i))
-                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
-                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags, TabBarFlag.FittingPolicyScroll.i))
-                    tabBarFlags = tabBarFlags wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags0, TabBarFlag.Reorderable.i)
+                checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags0, TabBarFlag.AutoSelectNewTabs.i)
+                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags0, TabBarFlag.TabListPopupButton.i)
+                checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags0, TabBarFlag.NoCloseWithMiddleMouseButton.i)
+                if (tabBarFlags0 hasnt TabBarFlag.FittingPolicyMask_)
+                    tabBarFlags0 = tabBarFlags0 or TabBarFlag.FittingPolicyDefault_
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags0, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags0 = tabBarFlags0 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags0, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags0 = tabBarFlags0 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
 
                 // Tab Bar
                 for (n in opened.indices) {
@@ -404,7 +420,7 @@ object ShowDemoWindowLayout {
 
                 // Passing a bool* to BeginTabItem() is similar to passing one to Begin():
                 // the underlying bool will be set to false when the tab is closed.
-                if (beginTabBar("MyTabBar", tabBarFlags)) {
+                if (beginTabBar("MyTabBar", tabBarFlags0)) {
                     for (n in opened.indices)
                         if (opened[n] && beginTabItem(names0[n], opened, n, TabItemFlag.None.i)) {
                             text("This is the ${names0[n]} tab!")
@@ -413,6 +429,62 @@ object ShowDemoWindowLayout {
                             endTabItem()
                         }
                     endTabBar()
+                }
+                separator()
+            }
+
+            treeNode("TabItemButton & Leading/Trailing flags") {
+
+                if (nextTabId == 0) // Initialize with some default tabs
+                    for (i in 0..2)
+                        activeTabs += nextTabId++
+
+                // TabItemButton() and Leading/Trailing flags are distinct features which we will demo together.
+                // (It is possible to submit regular tabs with Leading/Trailing flags, or TabItemButton tabs without Leading/Trailing flags...
+                // but they tend to make more sense together)
+                checkbox("Show Leading TabItemButton()", ::showLeadingButton)
+                checkbox("Show Trailing TabItemButton()", ::showTrailingButton)
+
+                // Expose some other flags which are useful to showcase how they interact with Leading/Trailing tabs
+                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton.i)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags1, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags1, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll.i)
+
+                tabBar("MyTabBar", tabBarFlags1) {
+                    // Demo a Leading TabItemButton(): click the "?" button to open a menu
+                    if (showLeadingButton)
+                        if(tabItemButton("?", TabItemFlag.Leading or TabItemFlag.NoTooltip))
+                            openPopup("MyHelpMenu")
+                    popup("MyHelpMenu") {
+                        selectable("Hello!")
+                    }
+
+                    // Demo Trailing Tabs: click the "+" button to add a new tab (in your app you may want to use a font icon instead of the "+")
+                    // Note that we submit it before the regular tabs, but because of the ImGuiTabItemFlags_Trailing flag it will always appear at the end.
+                    if (showTrailingButton)
+                        if(tabItemButton("+", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
+                            activeTabs += nextTabId++ // Add new tab
+
+                    // Submit our regular tabs
+                    var n = 0
+                    while (n < activeTabs.size) {
+
+                        var open = true
+                        _b = open
+                        val name = "%04d".format(activeTabs[n])
+                        if (beginTabItem(name, ::_b, TabItemFlag.None.i)) {
+                            open = _b
+                            text("This is the $name tab!")
+                            endTabItem()
+                        }
+
+                        if (!open)
+                            activeTabs.removeAt(n)
+                        else
+                           n++
+                    }
                 }
                 separator()
             }

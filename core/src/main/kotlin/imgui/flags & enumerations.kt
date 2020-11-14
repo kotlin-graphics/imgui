@@ -554,16 +554,28 @@ enum class TabItemFlag(@JvmField val i: TabItemFlags) {
     /** Disable tooltip for the given tab */
     NoTooltip(1 shl 4),
 
+    /** Disable reordering this tab or having another tab cross over this tab */
+    NoReorder                     (1 shl 5),
+
+    /**  Enforce the tab position to the left of the tab bar (after the tab list popup button) */
+    Leading (1 shl 6),
+
+    /**  Enforce the tab position to the right of the tab bar (before the scrolling buttons) */
+    Trailing (1 shl 7),
+
     // [Internal]
 
     /** Track whether p_open was set or not (we'll need this info on the next frame to recompute ContentWidth during layout) */
     _NoCloseButton(1 shl 20),
 
+    /** Used by TabItemButton, change the tab item behavior to mimic a button */
+    _Button(1 shl 21),
+
     /** [Docking] Trailing tabs with the _Unsorted flag will be sorted based on the DockOrder of their Window. */
-    _Unsorted(1 shl 21),
+    _Unsorted(1 shl 22),
 
     /** [Docking] Display tab shape for docking preview (height is adjusted slightly to compensate for the yet missing tab bar) */
-    _Preview(1 shl 22);
+    _Preview(1 shl 23);
 
 
     infix fun and(b: TabItemFlag): TabItemFlags = i and b.i

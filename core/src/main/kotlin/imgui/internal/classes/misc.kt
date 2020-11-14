@@ -254,7 +254,12 @@ class NextItemData {
     }
 }
 
-class ShrinkWidthItem(var index: Int, var width: Float)
+class ShrinkWidthItem(var index: Int = 0, var width: Float = 0f) {
+    infix fun put(other: ShrinkWidthItem) {
+        index = other.index
+        width = other.width
+    }
+}
 class PtrOrIndex(
         /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
         val ptr: TabBar?,
@@ -310,7 +315,7 @@ class TabItem {
     /** Width currently displayed */
     var width = 0f
 
-    /** Width of actual contents, stored during BeginTabItem() call */
+    /** Width of label, stored during BeginTabItem() call */
     var contentWidth = 0f
 
     /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
@@ -318,6 +323,9 @@ class TabItem {
 
     /** BeginTabItem() order, used to re-order tabs after toggling ImGuiTabBarFlags_Reorderable */
     var beginOrder = -1
+
+    /** Index only used during TabBarLayout() */
+    var indexDuringLayout = -1
 
     /** Marked as closed by SetTabItemClosed() */
     var wantClose = false

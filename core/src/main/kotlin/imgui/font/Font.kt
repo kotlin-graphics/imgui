@@ -40,7 +40,7 @@ class Font {
     /** Height of characters, set during loading (don't change after loading)   */
     var fontSize = 0f                           // 4     // in  // <user set>
 
-    // Members: Hot ~36/48 bytes (for CalcTextSize + render loop)
+    // Members: Hot ~28/40 bytes (for CalcTextSize + render loop)
 
     /** Sparse. Index glyphs by Unicode code-point. */
     val indexLookup = ArrayList<Int>()          // 12-16 // out //
@@ -49,9 +49,6 @@ class Font {
     val glyphs = ArrayList<FontGlyph>()         // 12-16 // out //
 
     var fallbackGlyph: FontGlyph? = null        // 4-8   // out // = FindGlyph(FontFallbackChar)
-
-    /** Offset font rendering by xx pixels  */
-    var displayOffset = Vec2()                  // 8     // in  // = (0,0)
 
     // Members: Cold ~32/40 bytes
 
@@ -289,8 +286,8 @@ class Font {
         if (glyph == null || !glyph.visible)
             return
         val scale = if (size >= 0f) size / fontSize else 1f
-        val x = floor(pos.x + displayOffset.x)
-        val y = floor(pos.y + displayOffset.y)
+        val x = floor(pos.x)
+        val y = floor(pos.y)
         drawList.primReserve(6, 4)
         drawList.primRectUV(Vec2(x + glyph.x0 * scale, y + glyph.y0 * scale), Vec2(x + glyph.x1 * scale, y + glyph.y1 * scale), Vec2(glyph.u0, glyph.v0), Vec2(glyph.u1, glyph.v1), col)
     }
@@ -303,7 +300,7 @@ class Font {
         var textEnd = textEnd_
 
         // Align to be pixel perfect
-        var (x, y) = pos(floor(pos.x) + displayOffset.x, floor(pos.y) + displayOffset.y)
+        var (x, y) = pos(floor(pos.x), floor(pos.y))
         if (y > clipRect.w) return
 
         val scale = size / fontSize

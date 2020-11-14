@@ -1,8 +1,13 @@
 package imgui.internal.api
 
+import imgui.DataType
+import imgui.Hook
 import imgui.ID
+import imgui.IMGUI_ENABLE_TEST_ENGINE
 import imgui.api.g
+import imgui.api.gImGui
 import imgui.internal.classes.Window
+import imgui.internal.hash
 import imgui.internal.sections.*
 
 /** Basic Accessors */
@@ -118,5 +123,18 @@ internal interface basicAccessors {
      *  Push given value as-is at the top of the ID stack (whereas PushID combines old and new hashes) */
     fun pushOverrideID(id: ID) {
         g.currentWindow!!.idStack += id
+    }
+
+    /** Helper to avoid a common series of PushOverrideID -> GetID() -> PopID() call
+     *  (note that when using this pattern, TestEngine's "Stack Tool" will tend to not display the intermediate stack level.
+     *  for that to work we would need to do PushOverrideID() -> ItemAdd() -> PopID() which would alter widget code a little more) */
+    fun getIDWithSeed(str: String, strEnd: Int = -1, seed: ID): ID {
+        val id = hash(str, if(strEnd != -1) strEnd else 0, seed)
+        keepAliveID(id)
+        if(IMGUI_ENABLE_TEST_ENGINE) {
+            val g = gImGui!!
+            Hook.idInfo2!!.invoke(g, DataType._String, id, str, strEnd)
+        }
+        return id
     }
 }

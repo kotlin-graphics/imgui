@@ -176,6 +176,8 @@ internal interface inputText {
         var clearActiveId = false
         var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
 
+        var scrollY = if(isMultiline) drawWindow.scroll.y else Float.MAX_VALUE
+
         val initMakeActive = focusRequested || userClicked || userScrollFinish || userNavInputStart
         val initState = initMakeActive || userScrollActive
         if (initState && g.activeId != id) {
@@ -241,7 +243,7 @@ internal interface inputText {
             g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or ((1L shl Key.Home) or (1L shl Key.End))
             if (isMultiline)
                 g.activeIdUsingKeyInputMask =
-                    g.activeIdUsingKeyInputMask or ((1L shl Key.PageUp) or (1L shl Key.PageDown)) // FIXME-NAV: Page up/down actually not supported yet by widget, but claim them ahead.
+                    g.activeIdUsingKeyInputMask or ((1L shl Key.PageUp) or (1L shl Key.PageDown))
             if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
                 g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or (1L shl Key.Tab)
         }
@@ -284,7 +286,6 @@ internal interface inputText {
                 val glyph = g.font.findGlyph('*')!!
                 fontSize = g.font.fontSize
                 scale = g.font.scale
-                displayOffset = g.font.displayOffset
                 ascent = g.font.ascent
                 descent = g.font.descent
                 containerAtlas = g.font.containerAtlas
@@ -374,6 +375,9 @@ internal interface inputText {
             state!! // ~IM_ASSERT(state != NULL);
             assert(io.keyMods == mergedKeyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" } // We rarely do this check, but if anything let's do it here.
 
+            val rowCountPerPage = ((innerSize.y - style.framePadding.y) / g.fontSize).i max 1
+            state.stb.rowCountPerPage = rowCountPerPage
+
             val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
@@ -421,6 +425,14 @@ internal interface inputText {
                         drawWindow setScrollY glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY)
                     else
                         state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
+                Key.PageUp.isPressed && isMultiline -> {
+                    state.onKeyPressed(K.PGUP or kMask)
+                    scrollY -= rowCountPerPage * g.fontSize
+                }
+                Key.PageDown.isPressed && isMultiline -> {
+                    state.onKeyPressed(K.PGDOWN or kMask)
+                    scrollY += rowCountPerPage * g.fontSize
+                }
                 Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
                 Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
                 Key.Delete.isPressed && !isReadOnly -> state.onKeyPressed(K.DELETE or kMask)
@@ -768,12 +780,11 @@ internal interface inputText {
                 // Vertical scroll
                 if (isMultiline) {
                     // Test if cursor is vertically visible
-                    var scrollY = drawWindow.scroll.y
-                    val scrollMaxY = ((textSize.y + style.framePadding.y * 2f) - innerSize.y) max 0f
-                    if (cursorOffset.y - g.fontSize < scrollY)
+                     if (cursorOffset.y - g.fontSize < scrollY)
                         scrollY = glm.max(0f, cursorOffset.y - g.fontSize)
                     else if (cursorOffset.y - innerSize.y >= scrollY)
                         scrollY = cursorOffset.y - innerSize.y + style.framePadding.y * 2f
+                    val scrollMaxY = ((textSize.y + style.framePadding.y * 2f) - innerSize.y) max 0f
                     scrollY = clamp(scrollY, 0f, scrollMaxY)
                     drawPos.y += drawWindow.scroll.y - scrollY   // Manipulate cursor pos immediately avoid a frame of lag
                     drawWindow.scroll.y = scrollY
