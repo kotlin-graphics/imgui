@@ -1,7 +1,7 @@
 package imgui.classes
 
 import glm_.max
-import imgui.ImGui.calcListClipping
+import imgui.ImGui
 import imgui.api.g
 
 /** Helper: Manually clip large list of items.
@@ -33,70 +33,16 @@ class ListClipper
  *  begin()/end() api directly, but prefer calling step().   */
 constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
 
-    @Deprecated("Dummy deprecation: this is a remainder this is inclusive on the JVM, unlike the native imgui")
-    lateinit var display: IntRange
-    var itemsCount = 0
+    var displayStart = 0
+    var displayEnd = 0
+    var itemsCount = -1
 
     // [Internal]
     var stepNo = 0
     var itemsHeight = 0f
     var startPosY = 0f
 
-    init {
-        /* NB: Begin() initialize every fields (as we allow user to call Begin/End multiple times on a same instance if they want). */
-        begin(itemsCount, itemsHeight)
-    }
-
-    /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those
-     *  items.  */
-    fun step(): Boolean {
-        val window = g.currentWindow!!
-
-        return when {
-
-            itemsCount == 0 || window.skipItems -> {
-                itemsCount = -1
-                false
-            }
-            /*  Step 0: the clipper let you process the first element, regardless of it being visible or not, so we can measure
-                the element height.     */
-            stepNo == 0 -> {
-                display = 0 until 1
-                startPosY = window.dc.cursorPos.y
-                stepNo = 1
-                true
-            }
-            /*  Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and
-                position the cursor before the first element.     */
-            stepNo == 1 -> {
-                if (itemsCount == 1) {
-                    itemsCount = -1
-                    false
-                } else {
-                    val itemsHeight = window.dc.cursorPos.y - startPosY
-                    assert(itemsHeight > 0f) { "If this triggers, it means Item 0 hasn't moved the cursor vertically" }
-                    begin(itemsCount - 1, itemsHeight)
-                    display = display.first + 1 until display.last + 1
-                    stepNo = 3
-                    true
-                }
-            }
-            /*  Step 2: empty step only required if an explicit items_height was passed to constructor or Begin() and user still
-                call Step(). Does nothing and switch to Step 3.     */
-            stepNo == 2 -> {
-                assert(display.first >= 0 && display.last >= 0)
-                stepNo = 3
-                true
-            }
-            else -> {
-                /*  Step 3: the clipper validate that we have reached the expected Y position (corresponding to element
-                    DisplayEnd), advance the cursor to the end of the list and then returns 'false' to end the loop.             */
-                if (stepNo == 3)
-                    end()
-                false
-            }
-        }
-    }
+    fun dispose() = assert(itemsCount == -1) { "Forgot to call End(), or to Step() until false?" }
 
     /** Automatically called by constructor if you passed 'items_count' or by Step() in Step 1.
      *  Use case A: Begin() called from constructor with items_height<0, then called again from Sync() in StepNo 1
@@ -112,25 +58,86 @@ constructor(itemsCount: Int = -1, itemsHeight: Float = -1f) {
         this.itemsHeight = itemsHeight
         this.itemsCount = itemsCount
         stepNo = 0
-        display = -1..-1 // [JVM], no need to use `until`, -1 is a special value for invalid status
-        if (itemsHeight > 0f) {
-            display = calcListClipping(itemsCount, itemsHeight) // calculate how many to clip/display
-            if (display.first > 0)
-                setCursorPosYAndSetupForPrevLine(startPosY + display.first * itemsHeight, itemsHeight) // advance cursor
-            stepNo = 2
-        }
+        displayStart = -1
+        displayEnd = 0
     }
 
     /** Automatically called on the last call of Step() that returns false. */
     fun end() {
 
-        if (itemsCount < 0) return
-        /*  In theory here we should assert that ImGui::GetCursorPosY() == StartPosY + DisplayEnd * ItemsHeight,
-            but it feels saner to just seek at the end and not assert/crash the user.         */
-        if (itemsCount < Int.MAX_VALUE)
-            setCursorPosYAndSetupForPrevLine(startPosY + itemsCount * itemsHeight, itemsHeight) // advance cursor
+        if (itemsCount < 0) // Already ended
+            return
+
+        // In theory here we should assert that ImGui::GetCursorPosY() == StartPosY + DisplayEnd * ItemsHeight, but it feels saner to just seek at the end and not assert/crash the user.
+        if (itemsCount < Int.MAX_VALUE && displayStart >= 0)
+            setCursorPosYAndSetupForPrevLine(startPosY + itemsCount * itemsHeight, itemsHeight)
         itemsCount = -1
         stepNo = 3
+    }
+
+    /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those
+     *  items.  */
+    fun step(): Boolean {
+
+        val window = g.currentWindow!!
+
+        // Reached end of list
+        if(displayEnd >= itemsCount || window.skipItems) {
+            end()
+            return false
+        }
+        // Step 0: Let you process the first element (regardless of it being visible or not, so we can measure the element height)
+        if(stepNo == 0) {
+            startPosY = window.dc.cursorPos.y
+            if (itemsHeight <= 0f) {
+                // Submit the first item so we can measure its height (generally it is 0..1)
+                displayStart = 0
+                displayEnd = 1
+                stepNo = 1
+                return true
+            }
+
+            // Already has item height (given by user in Begin): skip to calculating step
+            displayStart = displayEnd
+            stepNo = 2
+        }
+
+        // Step 1: the clipper infer height from first element
+        if(stepNo == 1) {
+            assert(itemsHeight <= 0f)
+            itemsHeight = window.dc.cursorPos.y - startPosY
+            assert(itemsHeight > 0f) { "Unable to calculate item height! First item hasn't moved the cursor vertically!" }
+            stepNo = 2
+        }
+
+        // Step 2: calculate the actual range of elements to display, and position the cursor before the first element
+        if(stepNo == 2) {
+            assert(itemsHeight > 0f)
+
+            val alreadySubmitted = displayEnd
+            ImGui.calcListClipping(itemsCount - alreadySubmitted, itemsHeight)
+            displayStart += alreadySubmitted
+            displayEnd += alreadySubmitted
+
+            // Seek cursor
+            if (displayStart > alreadySubmitted)
+                setCursorPosYAndSetupForPrevLine(startPosY + displayStart * itemsHeight, itemsHeight)
+
+            stepNo = 3
+            return true
+        }
+
+        // Step 3: the clipper validate that we have reached the expected Y position (corresponding to element DisplayEnd),
+        // Advance the cursor to the end of the list and then returns 'false' to end the loop.
+        if (stepNo == 3) {
+            // Seek cursor
+            if (itemsCount < Int.MAX_VALUE)
+                setCursorPosYAndSetupForPrevLine(startPosY + itemsCount * itemsHeight, itemsHeight) // advance cursor
+            itemsCount = -1
+            return false
+        }
+
+        error("game over")
     }
 
     companion object {

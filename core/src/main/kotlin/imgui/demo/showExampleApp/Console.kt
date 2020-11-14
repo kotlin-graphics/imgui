@@ -140,7 +140,8 @@ object Console {
             // To use the clipper we can replace your standard loop:
             //      for (int i = 0; i < Items.Size; i++)
             //   With:
-            //      ImGuiListClipper clipper(Items.Size);
+            //      ImGuiListClipper clipper;
+            //      clipper.Begin(Items.Size);
             //      while (clipper.Step())
             //         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
             // - That your items are evenly spaced (same height)

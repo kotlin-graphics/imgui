@@ -1473,7 +1473,7 @@ enum class SliderFlag(val i: SliderFlags) {
     None(0),
 
     /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
-    ClampOnInput(1 shl 4),
+    AlwaysClamp(1 shl 4),
 
     /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
     Logarithmic(1 shl 5),

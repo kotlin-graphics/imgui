@@ -555,7 +555,7 @@ object ShowDemoWindowWidgets {
                     Hold SHIFT/ALT for faster/slower edit.
                     Double-click or CTRL+click to input value.""".trimIndent())
 
-                dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%", SliderFlag.ClampOnInput.i)
+                dragInt("drag int 0..100", ::i2, 1f, 0, 100, "%d%%", SliderFlag.AlwaysClamp.i)
 
                 dragFloat("drag float", ::f2, 0.005f)
                 dragFloat("drag small float", ::f3, 0.0001f, 0f, 0f, "%.06f ns")
@@ -1213,7 +1213,7 @@ object ShowDemoWindowWidgets {
 
         treeNode("Drag/Slider Flags") {
             // Demonstrate using advanced flags for DragXXX and SliderXXX functions. Note that the flags are the same!
-            checkboxFlags("ImGuiSliderFlags_ClampOnInput", ::flags2, SliderFlag.ClampOnInput.i)
+            checkboxFlags("ImGuiSliderFlags_AlwaysClamp", ::flags2, SliderFlag.AlwaysClamp.i)
             sameLine(); helpMarker("Always clamp value to min/max bounds (if any) when input manually with CTRL+Click.")
             checkboxFlags("ImGuiSliderFlags_Logarithmic", ::flags2, SliderFlag.Logarithmic.i)
             sameLine(); helpMarker("Enable logarithmic editing (more precision for small values).")
@@ -1237,7 +1237,7 @@ object ShowDemoWindowWidgets {
         }
 
         treeNode("Range Widgets") {
-            dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", SliderFlag.ClampOnInput.i)
+            dragFloatRange2("range float", ::begin, ::end, 0.25f, 0f, 100f, "Min: %.1f %%", "Max: %.1f %%", SliderFlag.AlwaysClamp.i)
             dragIntRange2("range int", ::beginI, ::endI, 5f, 0, 1000, "Min: %d units", "Max: %d units")
             dragIntRange2("range int (no bounds)", ::beginI, ::endI, 5f, 0, 0, "Min: %d units", "Max: %d units")
         }

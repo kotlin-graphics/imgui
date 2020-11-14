@@ -24,8 +24,6 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
-import imgui.internal.sections.ItemFlag
-import imgui.internal.sections.has
 import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
@@ -84,7 +82,7 @@ interface widgetsDrags {
             dragScalarN(label, DataType.Float, v to _fa, 4, vSpeed, vMin, vMax, format, flags)
                     .also { v put _fa }
 
-    /** NB: You likely want to specify the ImGuiSliderFlags_ClampOnInput when using this. */
+    /** NB: You likely want to specify the ImGuiSliderFlags_AlwaysClamp when using this. */
     fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
                         vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f, format: String = "%.3f",
                         formatMax: String = format, flags: SliderFlags = SliderFlag.None.i): Boolean {
@@ -157,7 +155,7 @@ interface widgetsDrags {
             dragScalarN(label, DataType.Int, v to _ia, 4, vSpeed, vMin, vMax, format, flags)
                     .also { v put _ia }
 
-    /** NB: You likely want to specify the ImGuiSliderFlags_ClampOnInput when using this. */
+    /** NB: You likely want to specify the ImGuiSliderFlags_AlwaysClamp when using this. */
     fun dragIntRange2(label: String, vCurrentMinPtr: KMutableProperty0<Int>, vCurrentMaxPtr: KMutableProperty0<Int>,
                       vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0, format: String = "%d",
                       formatMax: String = format, flags: SliderFlags = SliderFlag.None.i): Boolean {
@@ -260,8 +258,8 @@ interface widgetsDrags {
         }
 
         if (tempInputIsActive) {
-            // Only clamp CTRL+Click input when ImGuiSliderFlags_ClampInput is set
-            val isClampInput = flags hasnt SliderFlag.ClampOnInput  && (pMin == null || pMax == null || pMin < pMax)
+            // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
+            val isClampInput = flags hasnt SliderFlag.AlwaysClamp  && (pMin == null || pMax == null || pMin < pMax)
             return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput },
                 pMax.takeIf { isClampInput })
         }

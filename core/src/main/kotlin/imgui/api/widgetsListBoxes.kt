@@ -49,9 +49,10 @@ interface widgetsListBoxes {
         // Assume all items have even height (= 1 line of text). If you need items of different or variable sizes you can create a custom version of ListBox() in your code without using the clipper.
         var valueChanged = false
         // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
-        val clipper = ListClipper(itemsCount, textLineHeightWithSpacing)
+        val clipper = ListClipper()
+        clipper.begin(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
-            for (i in clipper.display)
+            for (i in clipper.displayStart until clipper.displayEnd)
                 withBool { itemSelected ->
                     itemSelected.set(i == currentItem)
                     val itemText = items.getOrElse(i) { "*Unknown item*" }
