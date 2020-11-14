@@ -57,6 +57,7 @@ import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.Rect
 import imgui.internal.sections.Axis
 import imgui.internal.sections.InputSource
+import imgui.internal.sections.shl
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag
@@ -148,8 +149,7 @@ internal interface inputText {
             }
             drawWindow = g.currentWindow!!  // Child window
             // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
-            drawWindow.dc.navLayerActiveMaskNext =
-                drawWindow.dc.navLayerActiveMaskNext or drawWindow.dc.navLayerCurrentMask
+            drawWindow.dc.navLayerActiveMaskNext = drawWindow.dc.navLayerActiveMaskNext or (1 shl drawWindow.dc.navLayerCurrent)
             innerSize.x -= drawWindow.scrollbarSizes.x
         } else {
             itemSize(totalBb, style.framePadding.y)

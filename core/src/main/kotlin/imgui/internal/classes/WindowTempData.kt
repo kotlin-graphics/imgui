@@ -54,11 +54,9 @@ class WindowTempData {
 
     /** Current layer, 0..31 (we currently only use 0..1)   */
     var navLayerCurrent = NavLayer.Main
-    /** = (1 << navLayerCurrent) used by ::itemAdd prior to clipping. */
-    var navLayerCurrentMask = 1 shl NavLayer.Main
-    /** Which layer have been written to (result from previous frame)   */
+    /** Which layers have been written to (result from previous frame)   */
     var navLayerActiveMask = 0
-    /** Which layer have been written to (buffer for current frame) */
+    /** Which layers have been written to (accumulator for current frame) */
     var navLayerActiveMaskNext = 0x00
     /** Current focus scope ID while appending */
     var navFocusScopeIdCurrent: ID = 0
