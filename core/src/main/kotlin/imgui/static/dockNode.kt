@@ -713,7 +713,6 @@ fun dockNodeUpdateTabBar(node: DockNode, hostWindow: Window) {
     if (!node.isDockSpace) {
         hostWindow.skipItems = false
         hostWindow.dc.navLayerCurrent = NavLayer.Menu
-        hostWindow.dc.navLayerCurrentMask = 1 shl NavLayer.Menu
     }
 
     // Use PushOverrideID() instead of PushID() to use the node id _without_ the host window ID.
@@ -910,7 +909,6 @@ fun dockNodeUpdateTabBar(node: DockNode, hostWindow: Window) {
     // Restore SkipItems flag
     if (!node.isDockSpace) {
         hostWindow.dc.navLayerCurrent = NavLayer.Main
-        hostWindow.dc.navLayerCurrentMask = 1 shl NavLayer.Main
         hostWindow.skipItems = backupSkipItem
     }
 }
