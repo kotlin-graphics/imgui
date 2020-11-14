@@ -941,7 +941,7 @@ internal interface inputText {
     }
 
     /** Note that Drag/Slider functions are only forwarding the min/max values clamping values if the
-     *  ImGuiSliderFlags_ClampOnInput / ImGuiSliderFlags_ClampOnInput flag is set!
+     *  ImGuiSliderFlags_AlwaysClamp flag is set!
      *  This is intended: this way we allow CTRL+Click manual input to set a value out of bounds, for maximum flexibility.
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
     fun <N> tempInputScalar(

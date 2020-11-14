@@ -51,13 +51,16 @@ object LongText {
         beginChild("Log")
 
         when (testType) {
+            // Single call to TextUnformatted() with a big buffer
             0 -> textEx(log.toString())
+            // Multiple calls to Text(), manually coarsely clipped - demonstrate how to use the ImGuiListClipper helper.
             1 -> {
                 pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
-                val clipper = ListClipper(lines)
+                val clipper = ListClipper()
+                clipper.begin(lines)
                 while (clipper.step())
-                    for (i in clipper.display)
-                        text("%d The quick brown fox jumps over the lazy dog".format(i))
+                    for (i in clipper.displayStart until clipper.displayEnd)
+                        text("$i The quick brown fox jumps over the lazy dog")
                 popStyleVar()
             }
             2 -> {

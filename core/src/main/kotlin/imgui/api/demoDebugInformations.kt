@@ -715,10 +715,11 @@ interface demoDebugInformations {
 
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
-                    val clipper = ListClipper(cmd.elemCount / 3)
+                    val clipper = ListClipper()
+                    clipper.begin(cmd.elemCount / 3)
                     while (clipper.step()) {
-                        var idx_i = elemOffset + clipper.display.first * 3
-                        for (prim in clipper.display) {
+                        var idx_i = elemOffset + clipper.displayStart * 3
+                        for (prim in clipper.displayStart until clipper.displayEnd) {
                             var bufP = 0
                             val triangles = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {

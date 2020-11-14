@@ -567,18 +567,15 @@ class TabBar {
                 tabs[tabDstN] = tabs[tabSrcN]
 
             // We will need sorting if tabs have changed section (e.g. moved from one of Leading/Central/Trailing to another)
-            val prevTab = tabs[tabDstN - 1]
-            val currTabSectionN =
-                if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
-            val prevTabSectionN =
-                if (prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
-
-            // We will need sorting if either current tab is leading (section_n == 0), but not the previous one,
-            // or if the current is not trailing (section_n == 2), but the previous one is.
-            if (tabDstN > 0 && currTabSectionN == 0 && prevTabSectionN != 0)
-                needSortBySection = true
-            if (tabDstN > 0 && prevTabSectionN == 2 && currTabSectionN != 2)
-                needSortBySection = true
+            val currTabSectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+            if (tabDstN > 0) {
+                val prevTab = tabs[tabDstN - 1]
+                val prevTabSectionN = if(prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
+                if (currTabSectionN == 0 && prevTabSectionN != 0)
+                    needSortBySection = true
+                if (prevTabSectionN == 2 && currTabSectionN != 2)
+                    needSortBySection = true
+            }
 
             sections[currTabSectionN].tabCount++
 
