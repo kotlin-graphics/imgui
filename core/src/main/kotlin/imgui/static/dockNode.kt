@@ -732,7 +732,7 @@ fun dockNodeUpdateTabBar(node: DockNode, hostWindow: Window) {
     node.isFocused = isFocused
 
     val nodeFlags = node.mergedFlags
-    val hasWindowMenuButton = nodeFlags hasnt DockNodeFlag._NoWindowMenuButton
+    val hasWindowMenuButton = nodeFlags hasnt DockNodeFlag._NoWindowMenuButton && style.windowMenuButtonPosition != Dir.None
     val hasCloseButton = nodeFlags hasnt DockNodeFlag._NoCloseButton
 
     // In a dock node, the Collapse Button turns into the Window Menu button.
