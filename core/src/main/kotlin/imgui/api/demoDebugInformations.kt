@@ -148,7 +148,7 @@ interface demoDebugInformations {
 
             text("Dear ImGui $version ($IMGUI_VERSION_NUM)")
             separator()
-            text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.size}")
+            text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.SIZE}")
             text("IMGUI_USE_BGRA_PACKED_COLOR: $USE_BGRA_PACKED_COLOR")
             separator()
             text("io.backendPlatformName: ${io.backendPlatformName}")
