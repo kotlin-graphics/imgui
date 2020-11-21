@@ -1,38 +1,47 @@
 package imgui
 
+import glm_.vec2.Vec2i
+import imgui.classes.Context
+import imgui.impl.glfw.ImplGlfw
+import imgui.impl.vk.ImplVulkan
+import imgui.impl.vk.ImplVulkanH
 import uno.glfw.GlfwWindow
 import uno.glfw.glfw
 import uno.glfw.windowHint.Api
+import uno.vk.createSurface
 import uno.vk.requiredInstanceExtensions
 import uno.vk.vulkanSupported
 import vkk.*
 import vkk.entities.VkDebugReportCallback
 import vkk.entities.VkDescriptorPool
 import vkk.entities.VkPipelineCache
+import vkk.entities.VkSurfaceKHR
+import vkk.extensions.VkColorSpaceKHR
 import vkk.extensions.VkDebugReport
+import vkk.extensions.VkPresentModeKHR
+import vkk.extensions.getSurfaceSupportKHR
 import vkk.identifiers.Device
 import vkk.identifiers.Instance
 import vkk.identifiers.PhysicalDevice
 import vkk.identifiers.Queue
-import vkk.vk10.physicalDevices
-import vkk.vk10.queueFamilyProperties
+import vkk.vk10.*
 import vkk.vk10.structs.*
 import kotlin.system.exitProcess
 
-lateinit var instance: Instance
-lateinit var physicalDevice: PhysicalDevice
-lateinit var device: Device
-var queueFamily = -1
-lateinit var queue: Queue
-var debugReport = VkDebugReportCallback.NULL
-var pipelineCache = VkPipelineCache.NULL
-var descriptorPool = VkDescriptorPool.NULL
+var IMGUI_UNLIMITED_FRAME_RATE = false
 
-//static ImGui_ImplVulkanH_Window g_MainWindowData;
-//static int                      g_MinImageCount = 2;
-//static bool                     g_SwapChainRebuild = false;
-//static int                      g_SwapChainResizeWidth = 0;
-//static int                      g_SwapChainResizeHeight = 0;
+lateinit var gInstance: Instance
+lateinit var gPhysicalDevice: PhysicalDevice
+lateinit var gDevice: Device
+var gQueueFamily = -1
+lateinit var gQueue: Queue
+var gDebugReport = VkDebugReportCallback.NULL
+var gPipelineCache = VkPipelineCache.NULL
+var gDescriptorPool = VkDescriptorPool.NULL
+
+val gMainWindowData = ImplVulkanH.Window()
+var gMinImageCount = 2
+var gSwapChainRebuild = false
 
 fun main() {
 
@@ -53,110 +62,100 @@ fun main() {
     setupVulkan(glfw.requiredInstanceExtensions)
 
     // Create Window Surface
-//    VkSurfaceKHR surface;
-//    VkResult err = glfwCreateWindowSurface(g_Instance, window, g_Allocator, &surface);
-//    check_vk_result(err);
-//
-//    // Create Framebuffers
-//    int w, h;
-//    glfwGetFramebufferSize(window, &w, &h);
-//    glfwSetFramebufferSizeCallback(window, glfw_resize_callback);
-//    ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
-//    SetupVulkanWindow(wd, surface, w, h);
-//
-//    // Setup Dear ImGui context
-//    IMGUI_CHECKVERSION();
-//    ImGui::CreateContext();
-//    ImGuiIO& io = ImGui::GetIO(); (void)io;
-//    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-//    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-//
-//    // Setup Dear ImGui style
-//    ImGui::StyleColorsDark();
-//    //ImGui::StyleColorsClassic();
-//
-//    // Setup Platform/Renderer bindings
-//    ImGui_ImplGlfw_InitForVulkan(window, true);
-//    ImGui_ImplVulkan_InitInfo init_info = {};
-//    init_info.Instance = g_Instance;
-//    init_info.PhysicalDevice = g_PhysicalDevice;
-//    init_info.Device = g_Device;
-//    init_info.QueueFamily = g_QueueFamily;
-//    init_info.Queue = g_Queue;
-//    init_info.PipelineCache = g_PipelineCache;
-//    init_info.DescriptorPool = g_DescriptorPool;
-//    init_info.Allocator = g_Allocator;
-//    init_info.MinImageCount = g_MinImageCount;
-//    init_info.ImageCount = wd->ImageCount;
-//    init_info.CheckVkResultFn = check_vk_result;
-//    ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
-//
-//    // Load Fonts
-//    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-//    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-//    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-//    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-//    // - Read 'docs/FONTS.txt' for more instructions and details.
-//    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-//    //io.Fonts->AddFontDefault();
-//    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-//    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-//    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-//    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-//    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-//    //IM_ASSERT(font != NULL);
-//
-//    // Upload Fonts
-//    {
-//        // Use any command queue
-//        VkCommandPool command_pool = wd->Frames[wd->FrameIndex].CommandPool;
-//        VkCommandBuffer command_buffer = wd->Frames[wd->FrameIndex].CommandBuffer;
-//
-//        err = vkResetCommandPool(g_Device, command_pool, 0);
-//        check_vk_result(err);
-//        VkCommandBufferBeginInfo begin_info = {};
-//        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-//        begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-//        err = vkBeginCommandBuffer(command_buffer, &begin_info);
-//        check_vk_result(err);
-//
-//        ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-//
-//        VkSubmitInfo end_info = {};
-//        end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-//        end_info.commandBufferCount = 1;
-//        end_info.pCommandBuffers = &command_buffer;
-//        err = vkEndCommandBuffer(command_buffer);
-//        check_vk_result(err);
-//        err = vkQueueSubmit(g_Queue, 1, &end_info, VK_NULL_HANDLE);
-//        check_vk_result(err);
-//
-//        err = vkDeviceWaitIdle(g_Device);
-//        check_vk_result(err);
-//        ImGui_ImplVulkan_DestroyFontUploadObjects();
-//    }
-//
-//    // Our state
-//    bool show_demo_window = true;
-//    bool show_another_window = false;
-//    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    val surface = gInstance createSurface window
+
+    // Create Framebuffers
+    val size = window.framebufferSize
+    val wd = gMainWindowData
+    setupVulkanWindow(wd, surface, size)
+
+    // Setup Dear ImGui context
+    val context = Context()
+    val io = ImGui.io
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui.styleColorsDark()
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer bindings
+    val implGlfw = ImplGlfw.initForVulkan(window, true)
+    val initInfo = ImplVulkan.InitInfo().also {
+        it.instance = gInstance
+        it.physicalDevice = gPhysicalDevice
+        it.device = gDevice
+        it.queueFamily = gQueueFamily
+        it.queue = gQueue
+        it.pipelineCache = gPipelineCache
+        it.descriptorPool = gDescriptorPool
+        it.minImageCount = gMinImageCount
+        it.imageCount = wd.imageCount
+    }
+    val implVk = ImplVulkan(initInfo, wd.renderPass)
+
+    // Load Fonts
+    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
+    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+    // - Read 'docs/FONTS.md' for more instructions and details.
+    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+    //io.Fonts->AddFontDefault();
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+    //IM_ASSERT(font != NULL);
+
+    // Upload Fonts
+    run {
+        // Use any command queue
+        val commandPool = wd.frames!![wd.frameIndex].commandPool
+        val commandBuffer = wd.frames!![wd.frameIndex].commandBuffer!!
+
+        gDevice.resetCommandPool(commandPool, 0)
+        val beginInfo = CommandBufferBeginInfo(flags = VkCommandBufferUsage.ONE_TIME_SUBMIT_BIT.i)
+        commandBuffer.begin(beginInfo)
+
+        implVk.createFontsTexture(commandBuffer)
+
+        val endInfo = SubmitInfo(commandBuffer = commandBuffer)
+        commandBuffer.end()
+        gQueue.submit(endInfo)
+
+        gDevice.waitIdle()
+        implVk.destroyFontUploadObjects()
+    }
+
+    // Our state
+//    bool show_demo_window = true
+//    bool show_another_window = false
+//    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f)
 //
 //    // Main loop
 //    while (!glfwWindowShouldClose(window))
 //    {
-//        // Poll and handle events (inputs, window resize, etc.)
-//        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-//        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-//        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-//        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-//        glfwPollEvents();
-//
+        // Poll and handle events (inputs, window resize, etc.)
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+//        glfwPollEvents()
+
+        //        // Resize swap chain?
 //        if (g_SwapChainRebuild)
 //        {
-//            g_SwapChainRebuild = false;
-//            ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
-//            ImGui_ImplVulkanH_CreateWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, g_SwapChainResizeWidth, g_SwapChainResizeHeight, g_MinImageCount);
-//            g_MainWindowData.FrameIndex = 0;
+//            int width, height;
+//            glfwGetFramebufferSize(window, &width, &height);
+//            if (width > 0 && height > 0)
+//            {
+//                ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
+//                ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
+//                g_MainWindowData.FrameIndex = 0;
+//                g_SwapChainRebuild = false;
+//            }
 //        }
 //
 //        // Start the Dear ImGui frame
@@ -203,26 +202,27 @@ fun main() {
 //
 //        // Rendering
 //        ImGui::Render();
-//        memcpy(&wd->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
-//        FrameRender(wd);
-//
-//        FramePresent(wd);
+//        ImDrawData* draw_data = ImGui::GetDrawData();
+//        const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
+//        if (!is_minimized)
+//        {
+//            memcpy(&wd->ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
+//            FrameRender(wd, draw_data);
+//            FramePresent(wd);
+//        }
 //    }
+
+    // Cleanup
+    gDevice.waitIdle()
+    implVk.shutdown()
+    implGlfw.shutdown()
+    context.destroy()
+
+//    cleanupVulkanWindow()
+//    cleanupVulkan()
 //
-//    // Cleanup
-//    err = vkDeviceWaitIdle(g_Device);
-//    check_vk_result(err);
-//    ImGui_ImplVulkan_Shutdown();
-//    ImGui_ImplGlfw_Shutdown();
-//    ImGui::DestroyContext();
-//
-//    CleanupVulkanWindow();
-//    CleanupVulkan();
-//
-//    glfwDestroyWindow(window);
-//    glfwTerminate();
-//
-//    return 0;
+//    glfwDestroyWindow(window)
+//    glfwTerminate()
 }
 
 //
@@ -244,7 +244,6 @@ fun main() {
 //#endif // IMGUI_VULKAN_DEBUG_REPORT
 //
 fun setupVulkan(extensions: ArrayList<String>) {
-//    VkResult err;
 
     // Create Vulkan Instance
     run {
@@ -259,110 +258,97 @@ fun setupVulkan(extensions: ArrayList<String>) {
             createInfo.enabledExtensionNames = extensions
 
             // Create Vulkan Instance
-            instance = Instance(createInfo)
+            gInstance = Instance(createInfo)
 
             // Setup the debug report callback
             val debugReportCi = DebugReportCallbackCreateInfo(flags = VkDebugReport.ERROR_BIT_EXT.i or VkDebugReport.WARNING_BIT_EXT.i or VkDebugReport.PERFORMANCE_WARNING_BIT_EXT.i)
-            TODO()
-//            debugReport = instance.createDebugReportCallbackEXT(debugReportCi)
-        } else
-        // Create Vulkan Instance without any debug feature
-            instance = Instance(createInfo)
+            gDebugReport = gInstance createDebugReportCallbackEXT debugReportCi
+        } else // Create Vulkan Instance without any debug feature
+            gInstance = Instance(createInfo)
     }
 
     // Select GPU
     run {
-        TODO()
-//        val gpus = instance.physicalDevices
+        val gpus = gInstance.physicalDevices
+        assert(gpus.isNotEmpty())
 
         // If a number >1 of GPUs got reported, you should find the best fit GPU for your purpose
         // e.g. VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU if available, or with the greatest memory available, etc.
         // for sake of simplicity we'll just take the first one, assuming it has a graphics queue family.
-//        physicalDevice = gpus[0]
+        gPhysicalDevice = gpus[0]
     }
 
     // Select graphics queue family
     run {
-        TODO()
-//        val queues = physicalDevice.queueFamilyProperties
-//        for (i in queues.indices)
-//            if (queues[i].queueFlags has VkQueueFlag.GRAPHICS_BIT) {
-//                queueFamily = i
-//                break
-//            }
-//        assert(queueFamily != -1)
+        val queues = gPhysicalDevice.queueFamilyProperties
+        gQueueFamily = queues.indexOfFirst { it.queueFlags has VkQueueFlag.GRAPHICS_BIT }
+        assert(gQueueFamily != -1)
     }
 
     // Create Logical Device (with 1 queue)
     run {
-        TODO()
-//        val queueInfo = DeviceQueueCreateInfo(
-//                queueFamilyIndex = queueFamily,
-//                queuePriority = 1f)
-//        val createInfo = DeviceCreateInfo(
-//                queueCreateInfo = queueInfo,
-//                enabledExtensionNames = listOf("VK_KHR_swapchain"))
-//        device = physicalDevice createDevice createInfo
-//        queue = device.getQueue(queueFamily)
+        val queueInfo = DeviceQueueCreateInfo(gQueueFamily, queuePriority = 1f)
+        val createInfo = DeviceCreateInfo(
+                queueCreateInfo = queueInfo,
+                enabledExtensionNames = listOf("VK_KHR_swapchain"))
+        gDevice = gPhysicalDevice createDevice createInfo
+        gQueue = gDevice.getQueue(gQueueFamily)
     }
 
     // Create Descriptor Pool
     run {
-        TODO()
-//        val poolSizes = arrayOf(
-//                DescriptorPoolSize(VkDescriptorType.SAMPLER, 1000),
-//                DescriptorPoolSize(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1000),
-//                DescriptorPoolSize(VkDescriptorType.SAMPLED_IMAGE, 1000),
-//                DescriptorPoolSize(VkDescriptorType.STORAGE_IMAGE, 1000),
-//                DescriptorPoolSize(VkDescriptorType.UNIFORM_TEXEL_BUFFER, 1000),
-//                DescriptorPoolSize(VkDescriptorType.STORAGE_TEXEL_BUFFER, 1000),
-//                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER, 1000),
-//                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER, 1000),
-//                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER_DYNAMIC, 1000),
-//                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER_DYNAMIC, 1000),
-//                DescriptorPoolSize(VkDescriptorType.INPUT_ATTACHMENT, 1000))
-//        val poolInfo = DescriptorPoolCreateInfo(
-//                flags = VkDescriptorPoolCreate.FREE_DESCRIPTOR_SET_BIT.i,
-//                maxSets = 1000 * poolSizes.size,
-//                poolSizes = poolSizes)
-//        descriptorPool = device createDescriptorPool poolInfo
+        val poolSizes = arrayOf(
+                DescriptorPoolSize(VkDescriptorType.SAMPLER, 1000),
+                DescriptorPoolSize(VkDescriptorType.COMBINED_IMAGE_SAMPLER, 1000),
+                DescriptorPoolSize(VkDescriptorType.SAMPLED_IMAGE, 1000),
+                DescriptorPoolSize(VkDescriptorType.STORAGE_IMAGE, 1000),
+                DescriptorPoolSize(VkDescriptorType.UNIFORM_TEXEL_BUFFER, 1000),
+                DescriptorPoolSize(VkDescriptorType.STORAGE_TEXEL_BUFFER, 1000),
+                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER, 1000),
+                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER, 1000),
+                DescriptorPoolSize(VkDescriptorType.UNIFORM_BUFFER_DYNAMIC, 1000),
+                DescriptorPoolSize(VkDescriptorType.STORAGE_BUFFER_DYNAMIC, 1000),
+                DescriptorPoolSize(VkDescriptorType.INPUT_ATTACHMENT, 1000))
+        val poolInfo = DescriptorPoolCreateInfo(
+                flags = VkDescriptorPoolCreate.FREE_DESCRIPTOR_SET_BIT.i,
+                maxSets = 1000 * poolSizes.size,
+                poolSizes = poolSizes)
+        gDescriptorPool = gDevice createDescriptorPool poolInfo
     }
 }
-//
-//// All the ImGui_ImplVulkanH_XXX structures/functions are optional helpers used by the demo.
-//// Your real engine/app may not use them.
-//static void SetupVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height)
-//{
-//    wd->Surface = surface;
-//
-//    // Check for WSI support
-//    VkBool32 res;
-//    vkGetPhysicalDeviceSurfaceSupportKHR(g_PhysicalDevice, g_QueueFamily, wd->Surface, &res);
-//    if (res != VK_TRUE)
-//    {
-//        fprintf(stderr, "Error no WSI support on physical device 0\n");
-//        exit(-1);
-//    }
-//
-//    // Select Surface Format
-//    const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
-//    const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-//    wd->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(g_PhysicalDevice, wd->Surface, requestSurfaceImageFormat, (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat), requestSurfaceColorSpace);
-//
-//    // Select Present Mode
-//    #ifdef IMGUI_UNLIMITED_FRAME_RATE
-//        VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR };
-//    #else
-//    VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_FIFO_KHR };
-//    #endif
-//    wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(g_PhysicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
-//    //printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
-//
-//    // Create SwapChain, RenderPass, Framebuffer, etc.
-//    IM_ASSERT(g_MinImageCount >= 2);
-//    ImGui_ImplVulkanH_CreateWindow(g_Instance, g_PhysicalDevice, g_Device, wd, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
-//}
-//
+
+/** All the ImGui_ImplVulkanH_XXX structures/functions are optional helpers used by the demo.
+ *  Your real engine/app may not use them. */
+fun setupVulkanWindow(wd: ImplVulkanH.Window, surface: VkSurfaceKHR, size: Vec2i) {
+
+    wd.surface = surface
+
+    // Check for WSI support
+    val res = gPhysicalDevice.getSurfaceSupportKHR(gQueueFamily, wd.surface)
+    if (!res) {
+        System.err.println("Error no WSI support on physical device 0")
+        System.exit(-1)
+    }
+
+    // Select Surface Format
+    val requestSurfaceImageFormat = arrayOf( VkFormat.B8G8R8A8_UNORM, VkFormat.R8G8B8A8_UNORM, VkFormat.B8G8R8_UNORM, VkFormat.R8G8B8_UNORM)
+    val requestSurfaceColorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR
+    wd.surfaceFormat = ImplVulkanH.selectSurfaceFormat(gPhysicalDevice, wd.surface, requestSurfaceImageFormat, requestSurfaceColorSpace)
+
+    // Select Present Mode
+    val presentModes = when {
+        IMGUI_UNLIMITED_FRAME_RATE -> arrayOf(VkPresentModeKHR.MAILBOX, VkPresentModeKHR.IMMEDIATE, VkPresentModeKHR.FIFO)
+        else -> arrayOf(VkPresentModeKHR.FIFO)
+    }
+    wd.presentMode = ImplVulkanH.selectPresentMode(gPhysicalDevice, wd.surface, presentModes)
+    //printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
+
+    // Create SwapChain, RenderPass, Framebuffer, etc.
+    assert(gMinImageCount >= 2)
+    ImplVulkanH.createOrResizeWindow(gInstance, gPhysicalDevice, gDevice, wd, gQueueFamily, size, gMinImageCount)
+}
+
+
 //static void CleanupVulkan()
 //{
 //    vkDestroyDescriptorPool(g_Device, g_DescriptorPool, g_Allocator);
