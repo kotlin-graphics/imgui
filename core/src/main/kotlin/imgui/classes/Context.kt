@@ -3,6 +3,7 @@ package imgui.classes
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.callContextHooks
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.api.g
 import imgui.api.gImGui
@@ -13,7 +14,6 @@ import imgui.internal.classes.*
 import imgui.internal.hash
 import imgui.internal.sections.*
 import imgui.static.*
-import uno.kotlin.NUL
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -534,6 +534,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ImGuiWindow .ini settings entries (parsed from the last loaded .ini file and maintained on saving) */
     val settingsWindows = ArrayList<WindowSettings>()
 
+    /** Hooks for extensions (e.g. test engine) */
+    val hooks = ArrayList<ContextHook>()
+
     //------------------------------------------------------------------
     // Capture/Logging
     //------------------------------------------------------------------
@@ -603,10 +606,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     }
 
     fun initialize() {
-        assert(!g.initialized && !g.settingsLoaded)
+        assert(!initialized && !g.settingsLoaded)
 
         // Add .ini handle for ImGuiWindow type
-        g.settingsHandlers += SettingsHandler().apply {
+        settingsHandlers += SettingsHandler().apply {
             typeName = "Window"
             typeHash = hash("Window")
             clearAllFn = ::windowSettingsHandler_ClearAll
@@ -616,7 +619,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             writeAllFn = ::windowSettingsHandler_WriteAll
         }
 
-        g.initialized = true
+        initialized = true
     }
 
     fun setCurrent() {
@@ -637,63 +640,77 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
-        if (g.fontAtlasOwnedByContext)
+        if (fontAtlasOwnedByContext)
             io.fonts.locked = false
         io.fonts.clear()
 
         // Cleanup of other data are conditional on actually having initialized Dear ImGui.
-        if (!g.initialized) return
+        if (!initialized) return
 
         // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
-        if (g.settingsLoaded)
+        if (settingsLoaded)
             io.iniFilename?.let(::saveIniSettingsToDisk)
 
         // Notify hooked test engine, if any
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            Hook.shutdown!!.invoke(this)
+        callContextHooks(this, ContextHookType.Shutdown)
 
         // Clear everything else
-        g.apply {
-            windows.forEach { it.destroy() }
-            windows.clear()
-            windowsFocusOrder.clear()
-            windowsTempSortBuffer.clear()
-            currentWindow = null
-            currentWindowStack.clear()
-            windowsById.clear()
-            navWindow = null
-            hoveredWindow = null
-            hoveredRootWindow = null
-            hoveredWindowUnderMovingWindow = null
-            activeIdWindow = null
-            activeIdPreviousFrameWindow = null
-            movingWindow = null
-            settingsWindows.clear()
-            colorModifiers.clear()
-            styleModifiers.clear()
-            fontStack.clear()
-            openPopupStack.clear()
-            beginPopupStack.clear()
-            drawDataBuilder.clear()
-            backgroundDrawList._clearFreeMemory(destroy = true)
-            foregroundDrawList._clearFreeMemory(destroy = true)
+        windows.forEach { it.destroy() }
+        windows.clear()
+        windowsFocusOrder.clear()
+        windowsTempSortBuffer.clear()
+        currentWindow = null
+        currentWindowStack.clear()
+        windowsById.clear()
+        navWindow = null
+        hoveredWindow = null
+        hoveredRootWindow = null
+        hoveredWindowUnderMovingWindow = null
+        activeIdWindow = null
+        activeIdPreviousFrameWindow = null
+        movingWindow = null
+        settingsWindows.clear()
+        colorModifiers.clear()
+        styleModifiers.clear()
+        fontStack.clear()
+        openPopupStack.clear()
+        beginPopupStack.clear()
+        drawDataBuilder.clear()
+        backgroundDrawList._clearFreeMemory(destroy = true)
+        foregroundDrawList._clearFreeMemory(destroy = true)
 
-            tabBars.clear()
-            currentTabBarStack.clear()
-            shrinkWidthBuffer.clear()
+        tabBars.clear()
+        currentTabBarStack.clear()
+        shrinkWidthBuffer.clear()
 
-            clipboardHandlerData = ""
-            g.menusIdSubmittedThisFrame.clear()
-            inputTextState.textW = CharArray(0)
-            inputTextState.initialTextA = ByteArray(0)
-            inputTextState.textA = ByteArray(0)
+        clipboardHandlerData = ""
+        menusIdSubmittedThisFrame.clear()
+        inputTextState.textW = CharArray(0)
+        inputTextState.initialTextA = ByteArray(0)
+        inputTextState.textA = ByteArray(0)
 
-            if (logFile != null) {
-                logFile = null
-            }
-            logBuffer.setLength(0)
-
-            initialized = false
+        if (logFile != null) {
+            logFile = null
         }
+        logBuffer.setLength(0)
+
+        initialized = false
     }
+}
+
+
+//-----------------------------------------------------------------------------
+// [SECTION] Generic context hooks
+//-----------------------------------------------------------------------------
+
+typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
+
+enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
+
+/** Hook for extensions like ImGuiTestEngine */
+class ContextHook {
+    var type = ContextHookType.NewFramePre
+    var owner: ID = 0
+    var callback: ContextHookCallback? = null
+    var userData: Any? = null
 }

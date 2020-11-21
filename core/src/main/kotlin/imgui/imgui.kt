@@ -19,7 +19,7 @@ const val IMGUI_VERSION = "1.79"
 const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 17900
+const val IMGUI_VERSION_NUM = 17901
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -93,14 +93,11 @@ var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
 
 
 //-----------------------------------------------------------------------------
-// [SECTION] Test Engine Hooks (imgui_test_engine)
+// [SECTION] Test Engine specific hooks (imgui_test_engine)
 //-----------------------------------------------------------------------------
 
 // TODO rename closer to cpp?
 
-typealias Hook_Shutdown = (Context) -> Unit
-typealias Hook_PreNewFrame = (Context) -> Unit
-typealias Hook_PostNewFrame = (Context) -> Unit
 typealias Hook_ItemAdd = (Context, Rect, ID) -> Unit
 typealias Hook_ItemInfo = (Context, ID, String, ItemStatusFlags) -> Unit
 typealias Hook_IdInfo = (Context, DataType, ID, Any?) -> Unit
@@ -108,15 +105,6 @@ typealias Hook_IdInfo2 = (Context, DataType, ID, Any?, Int) -> Unit
 typealias Hook_Log = (Context, String) -> Unit
 
 object Hook {
-
-    /** ~ImGuiTestEngineHook_Shutdown */
-    var shutdown: Hook_Shutdown? = null
-
-    /** ~ImGuiTestEngineHook_PreNewFrame */
-    var preNewFrame: Hook_PreNewFrame? = null
-
-    /** ~ImGuiTestEngineHook_PostNewFrame */
-    var postNewFrame: Hook_PostNewFrame? = null
 
     /** Register item bounding box
      *  ~ImGuiTestEngineHook_ItemAdd */
@@ -207,6 +195,7 @@ object ImGui :
         internal,
         // init in Context class
         newFrame,
+        genericContextHooks,
         settings,
         basicAccessors,
         basicHelpersForWidgetCode,
