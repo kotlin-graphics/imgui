@@ -230,7 +230,7 @@ object ImGui :
 
 
 @JvmField
-var DEBUG = true
+var DEBUG = false
 
 internal typealias stak = Stack
 
