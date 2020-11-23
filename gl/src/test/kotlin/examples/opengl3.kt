@@ -10,6 +10,7 @@ import imgui.ImGui
 import imgui.api.widgetsComboBox
 import imgui.api.widgetsComboBox.ComboFilterState
 import imgui.classes.Context
+import imgui.font.Font
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
@@ -100,6 +101,7 @@ private class ImGuiOpenGL3 {
 
         // Setup Dear ImGui style
         ImGui.styleColorsDark()
+        ImGui.setCurrentFont(Font())
 //        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer bindings
