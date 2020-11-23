@@ -102,7 +102,7 @@ internal interface PopupsModalsTooltips {
                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
                 openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 
-        IMGUI_DEBUG_LOG_POPUP("OpenPopupEx(0x%08X)", id)
+        //IMGUI_DEBUG_LOG_POPUP("OpenPopupEx(0x%08X)", id)
         if (g.openPopupStack.size < currentStackSize + 1)
             g.openPopupStack += popupRef
         else {
