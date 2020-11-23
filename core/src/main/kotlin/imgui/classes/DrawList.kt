@@ -19,6 +19,7 @@ import kool.*
 import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
+import java.nio.IntBuffer
 import java.util.Stack
 import kotlin.math.sqrt
 
