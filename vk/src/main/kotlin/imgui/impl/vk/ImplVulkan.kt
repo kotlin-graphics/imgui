@@ -26,15 +26,6 @@ import vkk.vk10.structs.*
 
 class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
 
-    // Called by user code
-    //IMGUI_IMPL_API bool     ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass);
-    //IMGUI_IMPL_API void     ImGui_ImplVulkan_Shutdown();
-    //IMGUI_IMPL_API void     ImGui_ImplVulkan_NewFrame();
-    //IMGUI_IMPL_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer, VkPipeline pipeline = VK_NULL_HANDLE);
-    //IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
-    //IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontUploadObjects();
-    //IMGUI_IMPL_API void     ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count); // To override MinImageCount after initialization (e.g. if swap chain is recreated)
-
     /** Initialization data, for ImGui_ImplVulkan_Init()
      *  [Please zero-clear before use!]
      *  ~ImGui_ImplVulkan_InitInfo */
@@ -52,6 +43,15 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
         //    const VkAllocationCallbacks* Allocator;
         //    void                (*CheckVkResultFn)(VkResult err);
     }
+
+    // Called by user code
+    //IMGUI_IMPL_API bool     ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass);
+    //IMGUI_IMPL_API void     ImGui_ImplVulkan_Shutdown();
+    //IMGUI_IMPL_API void     ImGui_ImplVulkan_NewFrame();
+    //IMGUI_IMPL_API void     ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer, VkPipeline pipeline = VK_NULL_HANDLE);
+    //IMGUI_IMPL_API bool     ImGui_ImplVulkan_CreateFontsTexture(VkCommandBuffer command_buffer);
+    //IMGUI_IMPL_API void     ImGui_ImplVulkan_DestroyFontUploadObjects();
+    //IMGUI_IMPL_API void     ImGui_ImplVulkan_SetMinImageCount(uint32_t min_image_count); // To override MinImageCount after initialization (e.g. if swap chain is recreated)
 
     /** ~ImGui_ImplVulkan_Init */
     init {
@@ -80,101 +80,103 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
     /** ~ImGui_ImplVulkan_NewFrame */
     fun newFrame() {}
 
-    /** Render function
-     *  (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
-     *  ~ImGui_ImplVulkan_RenderDrawData */
-    fun renderDrawData(drawData: DrawData, commandBuffer: CommandBuffer, pipeline_: VkPipeline) {
+    companion object {
+        /** Render function
+         *  (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
+         *  ~ImGui_ImplVulkan_RenderDrawData */
+        fun renderDrawData(drawData: DrawData, commandBuffer: CommandBuffer, pipeline_: VkPipeline = VkPipeline.NULL) {
 
-        var pipeline = pipeline_
-        // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
-        val fbSize = Vec2i(drawData.displaySize * drawData.framebufferScale)
-        if (fbSize anyLessThanEqual 0)
-            return
+            var pipeline = pipeline_
+            // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
+            val fbSize = Vec2i(drawData.displaySize * drawData.framebufferScale)
+            if (fbSize anyLessThanEqual 0)
+                return
 
-        val v = gVulkanInitInfo
-        if (pipeline.isInvalid)
-            pipeline = gPipeline
+            val v = gVulkanInitInfo
+            if (pipeline.isInvalid)
+                pipeline = gPipeline
 
-        // Allocate array to store enough vertex/index buffers
-        val wrb = gMainWindowRenderBuffers
-        if (wrb.frameRenderBuffers == null) {
-            wrb.index = 0
-            wrb.frameRenderBuffers = Array(v.imageCount) { ImplVulkanH.FrameRenderBuffers() }
-        }
-        wrb.index = (wrb.index + 1) % wrb.count
-        val rb = wrb.frameRenderBuffers!![wrb.index]
-
-        if (drawData.totalVtxCount > 0) {
-            // Create or resize the vertex/index buffers
-            val vertexSize = VkDeviceSize(drawData.totalVtxCount * DrawVert.SIZE)
-            val indexSize = VkDeviceSize(drawData.totalIdxCount * DrawIdx.BYTES)
-            if (rb.vertexBuffer.isInvalid || rb.vertexBufferSize < vertexSize)
-                createOrResizeBuffer(rb::vertexBuffer, rb::vertexBufferMemory, rb::vertexBufferSize, vertexSize, VkBufferUsage.VERTEX_BUFFER_BIT)
-            if (rb.indexBuffer.isInvalid || rb.indexBufferSize < indexSize)
-                createOrResizeBuffer(rb::indexBuffer, rb::indexBufferMemory, rb::indexBufferSize, indexSize, VkBufferUsage.INDEX_BUFFER_BIT)
-
-            // Upload vertex/index data into a single contiguous GPU buffer
-            //            var vtxDst: DrawVert? = null
-            var vtxDst = v.device.mapMemory(rb.vertexBufferMemory, VkDeviceSize(0), vertexSize)
-            var idxDst = v.device.mapMemory(rb.indexBufferMemory, VkDeviceSize(0), indexSize)
-            for (cmdList in drawData.cmdLists) {
-                memCopy(cmdList.vtxBuffer.adr, vtxDst, cmdList.vtxBuffer.sizeByte.L)
-                memCopy(cmdList.idxBuffer.adr, idxDst, cmdList.idxBuffer.remSize.L)
-                vtxDst += cmdList.vtxBuffer.sizeByte.L
-                idxDst += cmdList.idxBuffer.remSize.L
+            // Allocate array to store enough vertex/index buffers
+            val wrb = gMainWindowRenderBuffers
+            if (wrb.frameRenderBuffers == null) {
+                wrb.index = 0
+                wrb.frameRenderBuffers = Array(v.imageCount) { ImplVulkanH.FrameRenderBuffers() }
             }
-            val range = arrayOf(
-                    MappedMemoryRange(rb.vertexBufferMemory, size = VkDeviceSize.WHOLE_SIZE),
-                    MappedMemoryRange(rb.indexBufferMemory, size = VkDeviceSize.WHOLE_SIZE))
-            v.device flushMappedMemoryRanges range
-            v.device unmapMemory rb.vertexBufferMemory
-            v.device unmapMemory rb.indexBufferMemory
-        }
+            wrb.index = (wrb.index + 1) % wrb.count
+            val rb = wrb.frameRenderBuffers!![wrb.index]
 
-        // Setup desired Vulkan state
-        setupRenderState(drawData, pipeline, commandBuffer, rb, fbSize)
+            if (drawData.totalVtxCount > 0) {
+                // Create or resize the vertex/index buffers
+                val vertexSize = VkDeviceSize(drawData.totalVtxCount * DrawVert.SIZE)
+                val indexSize = VkDeviceSize(drawData.totalIdxCount * DrawIdx.BYTES)
+                if (rb.vertexBuffer.isInvalid || rb.vertexBufferSize < vertexSize)
+                    createOrResizeBuffer(rb::vertexBuffer, rb::vertexBufferMemory, rb::vertexBufferSize, vertexSize, VkBufferUsage.VERTEX_BUFFER_BIT)
+                if (rb.indexBuffer.isInvalid || rb.indexBufferSize < indexSize)
+                    createOrResizeBuffer(rb::indexBuffer, rb::indexBufferMemory, rb::indexBufferSize, indexSize, VkBufferUsage.INDEX_BUFFER_BIT)
 
-        // Will project scissor/clipping rectangles into framebuffer space
-        val clipOff = drawData.displayPos         // (0,0) unless using multi-viewports
-        val clipScale = drawData.framebufferScale // (1,1) unless using retina display which are often (2,2)
+                // Upload vertex/index data into a single contiguous GPU buffer
+                //            var vtxDst: DrawVert? = null
+                var vtxDst = v.device.mapMemory(rb.vertexBufferMemory, VkDeviceSize(0), vertexSize)
+                var idxDst = v.device.mapMemory(rb.indexBufferMemory, VkDeviceSize(0), indexSize)
+                for (cmdList in drawData.cmdLists) {
+                    memCopy(cmdList.vtxBuffer.adr, vtxDst, cmdList.vtxBuffer.sizeByte.L)
+                    memCopy(cmdList.idxBuffer.adr, idxDst, cmdList.idxBuffer.remSize.L)
+                    vtxDst += cmdList.vtxBuffer.sizeByte.L
+                    idxDst += cmdList.idxBuffer.remSize.L
+                }
+                val range = arrayOf(
+                        MappedMemoryRange(rb.vertexBufferMemory, size = VkDeviceSize.WHOLE_SIZE),
+                        MappedMemoryRange(rb.indexBufferMemory, size = VkDeviceSize.WHOLE_SIZE))
+                v.device flushMappedMemoryRanges range
+                v.device unmapMemory rb.vertexBufferMemory
+                v.device unmapMemory rb.indexBufferMemory
+            }
 
-        // Render command lists
-        // (Because we merged all buffers into a single one, we maintain our own offset into them)
-        var globalVtxOffset = 0
-        var globalIdxOffset = 0
-        for (cmdList in drawData.cmdLists) {
-            for (cmd in cmdList.cmdBuffer) {
-                val cb = cmd.userCallback
-                if (cb != null) {
-                    // User callback, registered via ImDrawList::AddCallback()
-                    // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
-                    if (cmd.resetRenderState)
-                        setupRenderState(drawData, pipeline, commandBuffer, rb, fbSize)
-                    else
-                        cb(cmdList, cmd)
-                } else {
-                    // Project scissor/clipping rectangles into framebuffer space
-                    val clipRect = Vec4 { (cmd.clipRect[it] - clipOff[it]) * clipScale[it] }
+            // Setup desired Vulkan state
+            setupRenderState(drawData, pipeline, commandBuffer, rb, fbSize)
 
-                    if (clipRect.x < fbSize.x && clipRect.y < fbSize.y && clipRect.z >= 0f && clipRect.w >= 0f) {
-                        // Negative offsets are illegal for vkCmdSetScissor
-                        if (clipRect.x < 0f)
-                            clipRect.x = 0f
-                        if (clipRect.y < 0f)
-                            clipRect.y = 0f
+            // Will project scissor/clipping rectangles into framebuffer space
+            val clipOff = drawData.displayPos         // (0,0) unless using multi-viewports
+            val clipScale = drawData.framebufferScale // (1,1) unless using retina display which are often (2,2)
 
-                        // Apply scissor/clipping rectangle
-                        val offset = Offset2D(clipRect.x.i, clipRect.y.i)
-                        val extent = Extent2D((clipRect.z - clipRect.x).i, (clipRect.w - clipRect.y).i)
-                        commandBuffer setScissor Rect2D(offset, extent)
+            // Render command lists
+            // (Because we merged all buffers into a single one, we maintain our own offset into them)
+            var globalVtxOffset = 0
+            var globalIdxOffset = 0
+            for (cmdList in drawData.cmdLists) {
+                for (cmd in cmdList.cmdBuffer) {
+                    val cb = cmd.userCallback
+                    if (cb != null) {
+                        // User callback, registered via ImDrawList::AddCallback()
+                        // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
+                        if (cmd.resetRenderState)
+                            setupRenderState(drawData, pipeline, commandBuffer, rb, fbSize)
+                        else
+                            cb(cmdList, cmd)
+                    } else {
+                        // Project scissor/clipping rectangles into framebuffer space
+                        val clipRect = Vec4 { (cmd.clipRect[it] - clipOff[it % 2]) * clipScale[it % 2] }
 
-                        // Draw
-                        commandBuffer.drawIndexed(cmd.elemCount, 1, cmd.idxOffset + globalIdxOffset, cmd.vtxOffset + globalVtxOffset, 0)
+                        if (clipRect.x < fbSize.x && clipRect.y < fbSize.y && clipRect.z >= 0f && clipRect.w >= 0f) {
+                            // Negative offsets are illegal for vkCmdSetScissor
+                            if (clipRect.x < 0f)
+                                clipRect.x = 0f
+                            if (clipRect.y < 0f)
+                                clipRect.y = 0f
+
+                            // Apply scissor/clipping rectangle
+                            val offset = Offset2D(clipRect.x.i, clipRect.y.i)
+                            val extent = Extent2D((clipRect.z - clipRect.x).i, (clipRect.w - clipRect.y).i)
+                            commandBuffer setScissor Rect2D(offset, extent)
+
+                            // Draw
+                            commandBuffer.drawIndexed(cmd.elemCount, 1, cmd.idxOffset + globalIdxOffset, cmd.vtxOffset + globalVtxOffset, 0)
+                        }
                     }
                 }
+                globalIdxOffset += cmdList.idxBuffer.rem
+                globalVtxOffset += cmdList.vtxBuffer.rem
             }
-            globalIdxOffset += cmdList.idxBuffer.rem
-            globalVtxOffset += cmdList.vtxBuffer.rem
         }
     }
 
