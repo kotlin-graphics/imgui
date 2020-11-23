@@ -101,7 +101,6 @@ private class ImGuiOpenGL3 {
 
         // Setup Dear ImGui style
         ImGui.styleColorsDark()
-        ImGui.setCurrentFont(Font())
 //        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer bindings
