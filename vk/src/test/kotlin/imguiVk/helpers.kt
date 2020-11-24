@@ -4,6 +4,7 @@ import glm_.vec2.Vec2i
 import imgui.impl.vk.ImplVulkan
 import imgui.impl.vk.ImplVulkanH
 import imgui.internal.DrawData
+import kool.Ptr
 import kool.Stack
 import kool.adr
 import org.lwjgl.system.JNI
@@ -16,6 +17,9 @@ import vkk.identifiers.VK
 import vkk.vk10.*
 import vkk.vk10.structs.*
 
+fun debugReport(flags: VkDebugReportFlagsEXT, objectType: VkDebugReportObjectTypeEXT, `object`: Long, location: Long, messageCode: Int,
+                layerPrefix: String, message: String, userData: Ptr) =
+        println("[vulkan] Debug report from ObjectType: $objectType\nMessage: $message")
 
 fun setupVulkan(extensions: ArrayList<String>) {
 
@@ -37,6 +41,7 @@ fun setupVulkan(extensions: ArrayList<String>) {
             // Setup the debug report callback
             val debugReportCi = DebugReportCallbackCreateInfo(flags = VkDebugReport.ERROR_BIT_EXT.i or VkDebugReport.WARNING_BIT_EXT.i or VkDebugReport.PERFORMANCE_WARNING_BIT_EXT.i)
             gDebugReport = gInstance createDebugReportCallbackEXT debugReportCi
+            DebugReportCallback.callback = ::debugReport
         } else // Create Vulkan Instance without any debug feature
             gInstance = Instance(createInfo)
     }
