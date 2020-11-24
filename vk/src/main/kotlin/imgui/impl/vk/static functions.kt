@@ -220,7 +220,7 @@ fun setupRenderState(drawData: DrawData, pipeline: VkPipeline, commandBuffer: Co
     // Bind pipeline and descriptor sets:
     commandBuffer.apply {
         bindPipeline(VkPipelineBindPoint.GRAPHICS, pipeline)
-        bindDescriptorSets(VkPipelineBindPoint.GRAPHICS, gPipelineLayout, 0, gDescriptorSet, 0)
+        bindDescriptorSets(VkPipelineBindPoint.GRAPHICS, gPipelineLayout, 0, gDescriptorSet)
     }
 
     // Bind Vertex And Index Buffer:
