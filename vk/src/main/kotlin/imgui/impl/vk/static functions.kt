@@ -22,7 +22,7 @@ import kotlin.reflect.KMutableProperty0
 /** [JVM] @return VkPipeline
  *  ~ImGui_ImplVulkan_CreatePipeline */
 fun createPipeline(device: Device, pipelineCache: VkPipelineCache, renderPass: VkRenderPass,
-                   msaaSamples: VkSampleCount): VkPipeline {
+                   msaaSamples: VkSampleCount, subpass: Int): VkPipeline {
 
     createShaderModules(device)
 
@@ -101,7 +101,8 @@ fun createPipeline(device: Device, pipelineCache: VkPipelineCache, renderPass: V
     colorBlendState = blendInfo,
     dynamicState = dynamicState,
     layout = gPipelineLayout,
-    renderPass = renderPass)
+    renderPass = renderPass,
+    subpass = subpass)
     return device.createGraphicsPipeline (pipelineCache, info)
 }
 

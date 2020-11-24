@@ -12,6 +12,7 @@ var gDescriptorSetLayout = VkDescriptorSetLayout.NULL
 var gPipelineLayout = VkPipelineLayout.NULL
 var gDescriptorSet = VkDescriptorSet.NULL
 var gPipeline = VkPipeline.NULL
+var gSubpass = 0
 var gShaderModuleVert = VkShaderModule.NULL
 var gShaderModuleFrag = VkShaderModule.NULL
 

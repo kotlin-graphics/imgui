@@ -37,6 +37,7 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
         lateinit var queue: Queue
         var pipelineCache = VkPipelineCache.NULL
         var descriptorPool = VkDescriptorPool.NULL
+        var subpass = 0
         var minImageCount = 0          // >= 2
         var imageCount = 0             // >= MinImageCount
         var msaaSamples = VkSampleCount._1_BIT   // >= VK_SAMPLE_COUNT_1_BIT
@@ -55,7 +56,7 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
 
     /** ~ImGui_ImplVulkan_Init */
     init {
-        // Setup back-end capabilities flags
+        // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_vulkan"
         io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
 
@@ -71,6 +72,8 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
         }
         gVulkanInitInfo = info
         gRenderPass = renderPass
+        gSubpass = info.subpass
+
         createDeviceObjects()
     }
 
@@ -81,9 +84,7 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
     fun newFrame() {}
 
     companion object {
-        /** Render function
-         *  (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
-         *  ~ImGui_ImplVulkan_RenderDrawData */
+        /** Render function */
         fun renderDrawData(drawData: DrawData, commandBuffer: CommandBuffer, pipeline_: VkPipeline = VkPipeline.NULL) {
 
             var pipeline = pipeline_
@@ -335,8 +336,8 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
 
     /** ~ImGui_ImplVulkan_CreateDeviceObjects */
     fun createDeviceObjects(): Boolean {
+
         val v = gVulkanInitInfo
-        //        VkResult err
 
         if (gFontSampler.isInvalid) {
             val info = SamplerCreateInfo(
@@ -373,7 +374,7 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
             gPipelineLayout = v.device createPipelineLayout layoutInfo
         }
 
-        gPipeline = createPipeline(v.device, v.pipelineCache, gRenderPass, v.msaaSamples)
+        gPipeline = createPipeline(v.device, v.pipelineCache, gRenderPass, v.msaaSamples, gSubpass)
 
         return true
     }
