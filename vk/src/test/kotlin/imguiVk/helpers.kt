@@ -4,10 +4,15 @@ import glm_.vec2.Vec2i
 import imgui.impl.vk.ImplVulkan
 import imgui.impl.vk.ImplVulkanH
 import imgui.internal.DrawData
+import kool.Stack
+import kool.adr
+import org.lwjgl.system.JNI
+import org.lwjgl.system.MemoryUtil
 import vkk.*
 import vkk.entities.VkSurfaceKHR
 import vkk.extensions.*
 import vkk.identifiers.Instance
+import vkk.identifiers.VK
 import vkk.vk10.*
 import vkk.vk10.structs.*
 
@@ -19,8 +24,8 @@ fun setupVulkan(extensions: ArrayList<String>) {
         val createInfo = InstanceCreateInfo(enabledExtensionNames = extensions)
 
         if (imgui.DEBUG) {
-            // Enabling multiple validation layers grouped as LunarG standard validation
-            createInfo.enabledLayerNames = listOf("VK_LAYER_LUNARG_standard_validation")
+            // Enabling validation layers
+            createInfo.enabledLayerNames = listOf("VK_LAYER_KHRONOS_validation")
 
             // Enable debug report extension (we need additional storage, so we duplicate the user array to add our new extension to it)
             extensions += "VK_EXT_debug_report"

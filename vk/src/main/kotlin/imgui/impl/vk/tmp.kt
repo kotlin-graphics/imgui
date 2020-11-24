@@ -12,3 +12,5 @@ import vkk.vk10.structs.*
 
 //  glfw -> T : MemoryStack (for VkStack)
 // inline fun loop(block: (MemoryStack) -> Unit) = loop({ isOpen }, block)
+
+// enum for all reports flags

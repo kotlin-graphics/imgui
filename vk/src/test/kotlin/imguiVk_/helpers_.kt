@@ -11,18 +11,48 @@ import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.EXTDebugReport.*
+import org.lwjgl.vulkan.EXTDebugUtils.*
 import org.lwjgl.vulkan.KHRSurface.*
 import org.lwjgl.vulkan.KHRSwapchain.*
 import org.lwjgl.vulkan.VK10.*
+import kotlin.system.exitProcess
 
 val debugReport = VkDebugReportCallbackEXT.create { _, objectType, _, _, _, _, pMessage, _ ->
     System.err.println("[vulkan] Debug report from ObjectType: $objectType\nMessage: ${MemoryUtil.memASCII(pMessage)}")
     VK_FALSE
 }
 
+var debugCallbackUtils = callback@ { severity: Int, type: Int, callbackDataPointer: Long, _: Long ->
+    val dbg = if (type and EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
+        " (performance)"
+    } else if(type and EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
+        " (validation)"
+    } else {
+        ""
+    }
+
+    val callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(callbackDataPointer)
+    val obj = callbackData.pMessageIdNameString()
+    val message = callbackData.pMessageString()
+    val objectType = 0
+
+    when (severity) {
+        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ->
+            println("!! $obj($objectType) Validation$dbg: $message")
+        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ->
+            println("!! $obj($objectType) Validation$dbg: $message")
+        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT ->
+            println("!! $obj($objectType) Validation$dbg: $message")
+        else -> println("!! $obj($objectType) Validation (unknown message type)$dbg: $message")
+    }
+
+    // return false here, otherwise the application would quit upon encountering a validation error.
+    VK_FALSE
+}
+
 fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
 
-    var err = 0
+    var err: Int
 
     // Create Vulkan Instance
     run {
@@ -30,6 +60,8 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
                 .sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                 .ppEnabledExtensionNames(extensions)
         if (imgui.DEBUG) {
+            System.err.println("DEBUG ENABLED, LOL")
+
             // Enabling validation layers
             val layers = s.callocPointer(1)
             layers[0] = MemoryUtil.memASCII("VK_LAYER_KHRONOS_validation")
@@ -38,7 +70,7 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
             // Enable debug report extension (we need additional storage, so we duplicate the user array to add our new extension to it)
             val extensionsExt = s.callocPointer(extensions.rem + 1)
             MemoryUtil.memCopy(extensions, extensionsExt)
-            extensionsExt[extensions.rem] = MemoryUtil.memASCII("VK_EXT_debug_report")
+            extensionsExt[extensions.rem] = MemoryUtil.memASCII("VK_EXT_debug_utils")
             createInfo.ppEnabledExtensionNames(extensionsExt)
 
             // Create Vulkan Instance
@@ -47,12 +79,14 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
             checkVkResult(err)
 
             // Setup the debug report callback
-            val debugReportCi = VkDebugReportCallbackCreateInfoEXT.callocStack(s)
-                    .sType(VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT)
-                    .flags(VK_DEBUG_REPORT_ERROR_BIT_EXT or VK_DEBUG_REPORT_WARNING_BIT_EXT or VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
-                    .pfnCallback(debugReport)
-                    .pUserData(MemoryUtil.NULL)
-            err = vkCreateDebugReportCallbackEXT(gInstance, debugReportCi, gAllocator, pL)
+            val debugReportCi = VkDebugUtilsMessengerCreateInfoEXT.callocStack(s)
+                    .sType(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
+                    .flags(0)
+                    .pfnUserCallback(debugCallbackUtils)
+                    .messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT or VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT or VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT or VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+                    .messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+//                    .pUserData(MemoryUtil.NULL)
+            err = EXTDebugUtils.vkCreateDebugUtilsMessengerEXT(gInstance, debugReportCi, gAllocator, pL)
             gDebugReport = pL[0]
             checkVkResult(err)
         } else {
@@ -98,6 +132,7 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
     run {
         val deviceExtensions = s.callocPointer(1)
         deviceExtensions[0] = MemoryUtil.memASCII("VK_KHR_swapchain")
+        val layers = s.pointers(MemoryUtil.memUTF8("VK_LAYER_KHRONOS_validation"))
         val queuePriority = s.floats(1f)
         val queueInfo = VkDeviceQueueCreateInfo.callocStack(1, s)
                 .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
@@ -107,6 +142,7 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
                 .sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                 .pQueueCreateInfos(queueInfo)
                 .ppEnabledExtensionNames(deviceExtensions)
+                .ppEnabledLayerNames(layers) // TODO check me
         err = vkCreateDevice(gPhysicalDevice, createInfo, gAllocator, pP)
         gDevice = VkDevice(pP[0], gPhysicalDevice, createInfo)
         checkVkResult(err)
@@ -118,16 +154,16 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
     run {
         val poolSizes = VkDescriptorPoolSize.callocStack(11, s).also {
             it[0].type(VK_DESCRIPTOR_TYPE_SAMPLER).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC).descriptorCount(1000)
-            it[0].type(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT).descriptorCount(1000)
+            it[1].type(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER).descriptorCount(1000)
+            it[2].type(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE).descriptorCount(1000)
+            it[3].type(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE).descriptorCount(1000)
+            it[4].type(VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER).descriptorCount(1000)
+            it[5].type(VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER).descriptorCount(1000)
+            it[6].type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER).descriptorCount(1000)
+            it[7].type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER).descriptorCount(1000)
+            it[8].type(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC).descriptorCount(1000)
+            it[9].type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC).descriptorCount(1000)
+            it[10].type(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT).descriptorCount(1000)
         }
         val poolInfo = VkDescriptorPoolCreateInfo.callocStack(s)
                 .sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
@@ -151,7 +187,7 @@ fun setupVulkanWindow_(wd: ImplVulkanH_.Window, surface: Long, size: Vec2i) = St
     val res = pI[0]
     if (res != VK_TRUE) {
         System.err.println("Error no WSI support on physical device 0")
-        System.exit(-1)
+        exitProcess(-1)
     }
 
     // Select Surface Format

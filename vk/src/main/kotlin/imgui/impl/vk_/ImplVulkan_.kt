@@ -163,12 +163,15 @@ class ImplVulkan_(info: InitInfo, renderPass: Long) {
                                     clipRect.y = 0f
 
                                 // Apply scissor/clipping rectangle
-                                val scissor = VkRect2D.callocStack(1, s).apply {
-                                    it.offset().x(clipRect.x.i)
-                                    it.offset().y(clipRect.y.i)
-                                    it.extent().width((clipRect.z - clipRect.x).i)
-                                    it.extent().height((clipRect.w - clipRect.y).i)
-                                }
+                                val scissor = VkRect2D.callocStack(1, s)
+                                        .offset {
+                                            it.x(clipRect.x.i)
+                                            it.y(clipRect.y.i)
+                                        }
+                                        .extent {
+                                            it.width((clipRect.z - clipRect.x).i)
+                                            it.height((clipRect.w - clipRect.y).i)
+                                        }
                                 vkCmdSetScissor(commandBuffer, 0, scissor)
 
                                 // Draw
@@ -176,8 +179,8 @@ class ImplVulkan_(info: InitInfo, renderPass: Long) {
                             }
                         }
                     }
-                    globalIdxOffset += cmdList.idxBuffer.remSize
-                    globalVtxOffset += cmdList.vtxBuffer.sizeByte
+                    globalIdxOffset += cmdList.idxBuffer.rem
+                    globalVtxOffset += cmdList.vtxBuffer.rem
                 }
             }
         }
