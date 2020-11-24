@@ -8,6 +8,7 @@ import gln.glViewport
 import imgui.DEBUG
 import imgui.ImGui
 import imgui.classes.Context
+import imgui.font.Font
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
