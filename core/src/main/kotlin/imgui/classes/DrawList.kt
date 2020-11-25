@@ -19,6 +19,7 @@ import kool.*
 import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
+import java.nio.IntBuffer
 import java.util.Stack
 import kotlin.math.sqrt
 
@@ -1468,7 +1469,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val colDeltaG = ((col1 ushr COL32_G_SHIFT) and 0xFF) - col0G
         val colDeltaB = ((col1 ushr COL32_B_SHIFT) and 0xFF) - col0B
         for (i in vertStart until vertEnd) {
-            var offset = i * DrawVert.size
+            var offset = i * DrawVert.SIZE
             val pos = Vec2(vtxBuffer.data, offset)
             val d = pos - gradientP0 dot gradientExtent
             val t = glm.clamp(d * gradientInvLength2, 0f, 1f)
@@ -1493,15 +1494,15 @@ class DrawList(sharedData: DrawListSharedData?) {
             val min = uvA min uvB
             val max = uvA max uvB
             for (i in vertStart until vertEnd) {
-                val vertexPos = Vec2(vtxBuffer.data, i * DrawVert.size)
+                val vertexPos = Vec2(vtxBuffer.data, i * DrawVert.SIZE)
                 val vertexUV = glm.clamp(uvA + (vertexPos - a) * scale, min, max)
-                vertexUV.to(vtxBuffer.data, i * DrawVert.size + Vec2.size)
+                vertexUV.to(vtxBuffer.data, i * DrawVert.SIZE + Vec2.size)
             }
         } else
             for (i in vertStart until vertEnd) {
-                val vertexPos = Vec2(vtxBuffer.data, i * DrawVert.size)
+                val vertexPos = Vec2(vtxBuffer.data, i * DrawVert.SIZE)
                 val vertexUV = uvA + (vertexPos - a) * scale
-                vertexUV.to(vtxBuffer.data, i * DrawVert.size + Vec2.size)
+                vertexUV.to(vtxBuffer.data, i * DrawVert.SIZE + Vec2.size)
             }
     }
 
@@ -1519,9 +1520,9 @@ private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
 inline class DrawVert_Buffer(val data: ByteBuffer) {
 
     operator fun get(index: Int) = DrawVert(
-            Vec2(data, index * DrawVert.size),
-            Vec2(data, index * DrawVert.size + DrawVert.ofsUv),
-            data.getInt(index * DrawVert.size + DrawVert.ofsCol))
+            Vec2(data, index * DrawVert.SIZE),
+            Vec2(data, index * DrawVert.SIZE + DrawVert.OFS_UV),
+            data.getInt(index * DrawVert.SIZE + DrawVert.OFS_COL))
 
     operator fun plusAssign(v: Vec2) {
         data.putFloat(v.x)
@@ -1537,25 +1538,31 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
     }
 
     inline val cap: Int
-        get() = data.cap / DrawVert.size
+        get() = data.cap / DrawVert.SIZE
 
     inline var lim: Int
-        get() = data.lim / DrawVert.size
+        get() = data.lim / DrawVert.SIZE
         set(value) {
-            data.lim = value * DrawVert.size
+            data.lim = value * DrawVert.SIZE
         }
 
     inline var pos: Int
-        get() = data.pos / DrawVert.size
+        get() = data.pos / DrawVert.SIZE
         set(value) {
-            data.pos = value * DrawVert.size
+            data.pos = value * DrawVert.SIZE
         }
 
     inline val rem: Int
-        get() = data.rem / DrawVert.size
+        get() = data.rem / DrawVert.SIZE
 
     inline val size: Int
         get() = rem
+
+    inline val sizeByte: Int
+        get() = data.rem
+
+    inline val adr: Ptr
+        get() = data.adr
 
     fun hasRemaining(): Boolean = rem > 0
 
@@ -1578,7 +1585,7 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
     infix fun reserve(newCapacity: Int): DrawVert_Buffer {
         if (newCapacity <= cap)
             return this
-        val newData = ByteBuffer(newCapacity * DrawVert.size)
+        val newData = ByteBuffer(newCapacity * DrawVert.SIZE)
         if (lim > 0)
             MemoryUtil.memCopy(data.adr, newData.adr, data.lim.L)
         data.free()

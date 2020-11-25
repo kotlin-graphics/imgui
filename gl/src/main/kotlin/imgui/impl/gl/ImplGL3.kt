@@ -1,7 +1,6 @@
 package imgui.impl.gl
 
 import glm_.L
-import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
@@ -23,7 +22,6 @@ import imgui.internal.DrawVert
 import imgui.or
 import kool.*
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL20C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
 import org.lwjgl.opengl.GL33C
@@ -105,9 +103,9 @@ class ImplGL3 : GLInterface {
         glEnableVertexAttribArray(semantic.attr.POSITION)
         glEnableVertexAttribArray(semantic.attr.TEX_COORD)
         glEnableVertexAttribArray(semantic.attr.COLOR)
-        glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
-        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
-        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.size, Vec2.size * 2)
+        glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, 0)
+        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, Vec2.size)
+        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.SIZE, Vec2.size * 2)
     }
 
     /** OpenGL3 Render function.
