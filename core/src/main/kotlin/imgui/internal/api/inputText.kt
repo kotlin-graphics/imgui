@@ -895,12 +895,12 @@ internal interface inputText {
             val dataBackup = pData()
 
             // Apply new value (or operations) then clamp
-            dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
+            dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
             if (clampMin != null || clampMax != null)
                 dataTypeClamp(dataType, pData, clampMin, clampMax)
 
             // Only mark as edited if new value is different
-            valueChanged = dataBackup != pData
+            valueChanged = dataBackup != pData()
 
             if (valueChanged)
                 markItemEdited(id)
