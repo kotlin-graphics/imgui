@@ -1,4 +1,4 @@
 rootProject.name = "imgui"
 
-include("core", "glfw", "gl", "vk", /*"jogl",*/ "openjfx", "bgfx")
+include("imgui-core", "imgui-glfw", "imgui-gl", "imgui-vk", /*"imgui-jogl",*/ "imgui-openjfx", "imgui-bgfx")
 

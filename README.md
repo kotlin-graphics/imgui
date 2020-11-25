@@ -109,18 +109,13 @@ Dear ImGui allows you create elaborate tools as well as very short-lived ones. O
 
 You should be able to try the examples from `test` (tested on Windows/Mac/Linux) within minutes. If you can't, let me know!
 
-OpenGL:
-- [Kotlin](gl/src/test/kotlin/examples/opengl3.kt)
-- [Java](gl/src/test/java/imgui/examples/OpenGL3.java)
+OpenGL Kotlin:
 
-Vulkan:
-- Kotlin:
+- [lwjgl](imgui-gl/src/test/kotlin/examples/opengl3.kt) 
 
-     - [VK²](vk/src/test/kotlin/imguiVk/vulkan.kt)
+OpenGL Java:
 
-     - [LWJGL vanilla](vk/src/test/kotlin/imguiVk_/vulkan_.kt)
-- Java:
-      - PR me!
+- [lwjgl](imgui-gl/src/test/java/imgui/examples/OpenGL3.java) 
 
 You should refer to those also to learn how to use the imgui library.
 
@@ -228,7 +223,7 @@ dependencies {
     This example gets the OpenGL needed modules.
      */
     ["gl", "glfw", "core"].each {
-        implementation "com.github.kotlin-graphics.imgui:$it:-SNAPSHOT"
+        implementation "com.github.kotlin-graphics.imgui:imgui-$it:-SNAPSHOT"
     }
 	
     switch ( OperatingSystem.current() ) {
