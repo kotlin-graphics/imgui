@@ -95,7 +95,7 @@ public class OpenGL3 {
         imgui.styleColorsDark(null);
 //        imgui.styleColorsClassic(null)
 
-        // Setup Platform/Renderer bindings
+        // Setup Platform/Renderer backends
         implGlfw = new ImplGlfw(window, true, null);
         implGl3 = new ImplGL3();
 

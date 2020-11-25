@@ -68,7 +68,7 @@ private class ImGuiOpenGL2 {
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
 
-        // Setup Platform/Renderer bindings
+        // Setup Platform/Renderer backends
         implGlfw = ImplGlfw(window, true)
         implGl2 = ImplGL2()
 

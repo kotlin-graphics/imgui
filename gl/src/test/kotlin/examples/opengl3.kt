@@ -6,8 +6,11 @@ import gln.checkError
 import gln.glClearColor
 import gln.glViewport
 import imgui.*
+import imgui.DEBUG
+import imgui.ImGui
 import imgui.classes.Context
 import imgui.classes.IO
+import imgui.font.Font
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersionString
 import imgui.impl.glfw.ImplGlfw
@@ -41,7 +44,7 @@ private class ImGuiOpenGL3 {
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
     var showAnotherWindow = false
-    var showDemo = true
+    var showDemoWindow = true
     var counter = 0
 
 //    val rmt = MemoryUtil.memAllocPointer(1).also { Remotery.rmt_CreateGlobalInstance(it) }
@@ -112,7 +115,7 @@ private class ImGuiOpenGL3 {
             style.colors[Col.WindowBg].w = 1f
         }
 
-        // Setup Platform/Renderer bindings
+        // Setup Platform/Renderer backend
         implGlfw = ImplGlfw.initForOpenGL(window, true)
         implGl3 = ImplGL3()
 
@@ -172,8 +175,8 @@ private class ImGuiOpenGL3 {
             newFrame()
 
             // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-            if (showDemo)
-                showDemoWindow(::showDemo)
+            if (showDemoWindow)
+                showDemoWindow(::showDemoWindow)
 
             // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
             run {
@@ -184,7 +187,7 @@ private class ImGuiOpenGL3 {
 //                    println("picking occured")
 
                 text("This is some useful text.")                // Display some text (you can use a format strings too)
-                checkbox("Demo Window", ::showDemo)             // Edit bools storing our window open/close state
+                checkbox("Demo Window", ::showDemoWindow)             // Edit bools storing our window open/close state
                 checkbox("Another Window", ::showAnotherWindow)
 
                 sliderFloat("float", ::f, 0f, 1f)   // Edit 1 float using a slider from 0.0f to 1.0f

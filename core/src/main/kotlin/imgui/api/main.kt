@@ -7,6 +7,7 @@ import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.callContextHooks
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
@@ -30,6 +31,7 @@ import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
+import imgui.classes.ContextHookType
 import imgui.classes.*
 import imgui.font.FontAtlas
 import imgui.has
@@ -62,8 +64,7 @@ interface main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
 
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            Hook.preNewFrame!!(g)
+        callContextHooks(g, ContextHookType.NewFramePre)
 
         // Check and assert for various common IO and Configuration mistakes
         g.configFlagsLastFrame = g.configFlagsCurrFrame
@@ -249,8 +250,7 @@ interface main {
         begin("Debug##Default")
         assert(g.currentWindow!!.isFallbackWindow)
 
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            Hook.postNewFrame!!(g)
+        callContextHooks(g, ContextHookType.NewFramePost)
     }
 
     /** Ends the Dear ImGui frame. automatically called by ::render().
@@ -263,6 +263,8 @@ interface main {
         // Don't process endFrame() multiple times.
         if (g.frameCountEnded == g.frameCount) return
         assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()?" }
+
+        callContextHooks(g, ContextHookType.EndFramePre)
 
         errorCheckEndFrameSanityChecks()
 
@@ -336,9 +338,11 @@ interface main {
         io.mouseWheelH = 0f
         io.inputQueueCharacters.clear()
         io.navInputs.fill(0f)
+
+        callContextHooks(g, ContextHookType.EndFramePost)
     }
 
-    /** ends the Dear ImGui frame, finalize the draw data. You can get call GetDrawData() to obtain it and run your rendering function (up to v1.60, this used to call io.RenderDrawListsFn(). Nowadays, we allow and prefer calling your render function yourself.)   */
+    /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData(). */
     fun render() {
 
         assert(g.initialized)
@@ -346,6 +350,8 @@ interface main {
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
         io.metricsRenderWindows = 0
+
+        callContextHooks(g, ContextHookType.RenderPre)
 
         // Add background ImDrawList (for each active viewport)
         for (viewport in g.viewports) {
@@ -396,10 +402,11 @@ interface main {
             io.metricsRenderVertices += viewport.drawData!!.totalVtxCount
             io.metricsRenderIndices += viewport.drawData!!.totalIdxCount
         }
+
+        callContextHooks(g, ContextHookType.RenderPost)
     }
 
-    /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
-     *  ::newFrame()   */
+    /** Pass this to your backend rendering function! Valid after Render() and until the next call to NewFrame() */
     val drawData: DrawData?
         //        get() = when (Platform.get()) { TODO check
 //            Platform.MACOSX -> g.drawData.clone()

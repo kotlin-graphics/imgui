@@ -3,7 +3,6 @@ package imgui.impl.gl
 import glm_.L
 import glm_.glm
 import glm_.i
-import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import glm_.vec4.Vec4ub
@@ -24,7 +23,6 @@ import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import kool.*
-import org.lwjgl.opengl.GL20C
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
 import org.lwjgl.opengl.GL33C
@@ -49,7 +47,7 @@ class ImplGL3(glslVersion: Int? = null) : GLInterface {
             else -> 200 // GLES 2
         }
 
-        // Setup back-end capabilities flags
+        // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
 
         if (MAY_HAVE_VTX_OFFSET)
@@ -129,16 +127,14 @@ class ImplGL3(glslVersion: Int? = null) : GLInterface {
         glEnableVertexAttribArray(semantic.attr.POSITION)
         glEnableVertexAttribArray(semantic.attr.TEX_COORD)
         glEnableVertexAttribArray(semantic.attr.COLOR)
-        glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.size, 0)
-        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.size, Vec2.size)
-        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.size, Vec2.size * 2)
+        glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, 0)
+        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, Vec2.size)
+        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.SIZE, Vec2.size * 2)
     }
 
     /** OpenGL3 Render function.
-     *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(), but you can now call this directly
-     *  from your main loop)
-     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
-     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.   */
+     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL state explicitly.
+     *  This is in order to be able to run within an OpenGL engine that doesn't do so.   */
     override fun renderDrawData(drawData: DrawData) {
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)

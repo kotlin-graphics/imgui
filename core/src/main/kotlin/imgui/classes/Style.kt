@@ -125,7 +125,7 @@ class Style {
      *  Draw anti-aliased lines using textures where possible. */
     var antiAliasedLines = true
 
-    /** Enable anti-aliased lines/borders using textures where possible. Require back-end to render with
+    /** Enable anti-aliased lines/borders using textures where possible. Require backend to render with
      *  bilinear filtering. Latched at the beginning of the frame (copied to ImDrawList). */
     var antiAliasedLinesUseTex = true
 

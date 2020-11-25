@@ -100,9 +100,9 @@ class ImplGL2_mac : GLInterface {
         for (cmdList in drawData.cmdLists) {
 
             // Upload vertex/index buffers
-            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.size, cmdList.vtxBuffer.data.adr + 0)
-            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.size, cmdList.vtxBuffer.data.adr + Vec2.size)
-            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.size, cmdList.vtxBuffer.data.adr + Vec2.size * 2)
+            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + 0)
+            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size)
+            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size * 2)
 
             var idxBufferOffset = cmdList.idxBuffer.adr
 

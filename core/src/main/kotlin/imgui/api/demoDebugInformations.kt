@@ -153,7 +153,7 @@ interface demoDebugInformations {
 
             text("Dear ImGui $version ($IMGUI_VERSION_NUM)")
             separator()
-            text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.size}")
+            text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.SIZE}")
             text("define: __cplusplus=%d", -1)
             if (USE_BGRA_PACKED_COLOR)
                 text("define: IMGUI_USE_BGRA_PACKED_COLOR")

@@ -434,7 +434,7 @@ fun navUpdateWindowing() {
     }
 
     // Keyboard: Press and Release ALT to toggle menu layer
-    // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
+    // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of backend clearing releases all keys on ALT-TAB
     if (NavInput._KeyMenu.isTest(InputReadMode.Pressed))
         g.navWindowingToggleLayer = true
     if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isTest(
@@ -983,7 +983,7 @@ fun navCalcPreferredRefPos(): Vec2 {
                 visibleRect.min,
                 visibleRect.max
             )
-        )   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+        )   // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }
 }
 

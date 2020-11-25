@@ -74,8 +74,8 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
-    /** [BETA] Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui.
-     *  Set io.OptResizeWindowsFromEdges and make sure mouse cursors are supported by back-end (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) */
+    /** [BETA] Enable resize from any corners and borders. Your backend needs to honor the different values of io.mouseCursor set by imgui.
+     *  Set io.OptResizeWindowsFromEdges and make sure mouse cursors are supported by backend (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) */
     // ResizeFromAnySide(1 shl 17),
     /** No gamepad/keyboard navigation within the window    */
     NoNavInputs(1 shl 18),
@@ -930,7 +930,7 @@ operator fun IntArray.set(index: Key, value: Int) {
 operator fun IntArray.get(index: Key): Int = get(index.i)
 
 
-// To test io.KeyMods (which is a combination of individual fields io.KeyCtrl, io.KeyShift, io.KeyAlt set by user/back-end)
+// To test io.KeyMods (which is a combination of individual fields io.KeyCtrl, io.KeyShift, io.KeyAlt set by user/backend)
 enum class KeyMod(val i: KeyModFlags) {
     None(0),
     Ctrl(1 shl 0),
@@ -1065,23 +1065,23 @@ enum class ConfigFlag(@JvmField val i: ConfigFlags) {
     /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
     NavEnableKeyboard(1 shl 0),
 
-    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
-     *  Back-end also needs to set ImGuiBackendFlags_HasGamepad. */
+    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].
+     *  Backend also needs to set ImGuiBackendFlags_HasGamepad. */
     NavEnableGamepad(1 shl 1),
 
     /** Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward.
-     *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your binding,
+     *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your backend,
      *  otherwise ImGui will react as if the mouse is jumping around back and forth. */
     NavEnableSetMousePos(1 shl 2),
 
     /** Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set. */
     NavNoCaptureKeyboard(1 shl 3),
 
-    /** Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the back-end. */
+    /** Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the backend. */
     NoMouse(1 shl 4),
 
-    /** Request back-end to not alter mouse cursor configuration.
-     *  Use if the back-end cursor changes are interfering with yours and you don't want to use setMouseCursor() to change mouse cursor.
+    /** Request backend to not alter mouse cursor configuration.
+     *  Use if the backend cursor changes are interfering with yours and you don't want to use setMouseCursor() to change mouse cursor.
      *  You may want to honor requests from imgui by reading ::mouseCursor yourself instead. */
     NoMouseCursorChange(1 shl 5),
 
@@ -1102,13 +1102,13 @@ enum class ConfigFlag(@JvmField val i: ConfigFlags) {
     /** [BETA: Don't use] FIXME-DPI: Request bitmap-scaled fonts to match DpiScale. This is a very low-quality workaround. The correct way to handle DPI is _currently_ to replace the atlas and/or fonts in the Platform_OnChangedViewport callback, but this is all early work in progress. */
     DpiEnableScaleFonts(1 shl 15),
 
-    /** JVM custom, request back-end to not read the mouse status allowing you to provide your own custom input */
+    /** JVM custom, request backend to not read the mouse status allowing you to provide your own custom input */
     NoMouseUpdate(1 shl 16),
 
     /** JVM custom */
     NoKeyboardUpdate(1 shl 17),
 
-    /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
+    /*  User storage (to allow your backend/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core Dear ImGui)     */
 
     /** Application is SRGB-aware. */
@@ -1136,22 +1136,22 @@ infix fun ConfigFlags.wo(b: ConfigFlag): ConfigFlags = and(b.i.inv())
 
 typealias BackendFlags = Int
 
-/** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end.
+/** Backend capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom backend.
  *
  *  Flags: for io.BackendFlags  */
 enum class BackendFlag(@JvmField val i: BackendFlags) {
     None(0),
 
-    /** Back-end Platform supports gamepad and currently has one connected. */
+    /** Backend Platform supports gamepad and currently has one connected. */
     HasGamepad(1 shl 0),
 
-    /** Back-end Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
+    /** Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
     HasMouseCursors(1 shl 1),
 
-    /** Back-end Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
+    /** Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
     HasSetMousePos(1 shl 2),
 
-    /** Back-end Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
+    /** Backend Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
     RendererHasVtxOffset(1 shl 3),
 
     // [BETA] Viewports
@@ -1525,7 +1525,7 @@ enum class MouseButton {
 
 
 /** Enumeration for GetMouseCursor()
- *  User code may request binding to display given cursor by calling SetMouseCursor(),
+ *  User code may request backend to display given cursor by calling SetMouseCursor(),
  *  which is why we have some cursors that are marked unused here
  *
  *  A mouse cursor identifier */

@@ -442,7 +442,10 @@ class TabBar {
                 } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x) {
                     dragDistanceFromEdgeX = io.mousePos.x - bb.max.x
                     if (flags has TabBarFlag.Reorderable)
-                        queueReorder(tab, +1)
+                        queueReorder(
+                tab,
+                +1
+            )
                 }
             }
 
@@ -567,10 +570,12 @@ class TabBar {
                 tabs[tabDstN] = tabs[tabSrcN]
 
             // We will need sorting if tabs have changed section (e.g. moved from one of Leading/Central/Trailing to another)
-            val currTabSectionN = if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+            val currTabSectionN =
+                if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
             if (tabDstN > 0) {
                 val prevTab = tabs[tabDstN - 1]
-                val prevTabSectionN = if(prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
+                val prevTabSectionN =
+                    if (prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
                 if (currTabSectionN == 0 && prevTabSectionN != 0)
                     needSortBySection = true
                 if (prevTabSectionN == 2 && currTabSectionN != 2)
@@ -604,7 +609,8 @@ class TabBar {
 
         // Process order change request (we could probably process it when requested but it's just saner to do it in a single spot).
         if (reorderRequestTabId != 0) {
-            if (processReorder() && reorderRequestTabId == selectedTabId) scrollTrackSelectedTabID = reorderRequestTabId
+            if (processReorder() && reorderRequestTabId == selectedTabId)
+                scrollTrackSelectedTabID = reorderRequestTabId
             reorderRequestTabId = 0
         }
 

@@ -40,7 +40,7 @@ package imgui.impl
 //
 //        with(io) {
 //
-//            // Setup back-end capabilities flags
+//            // Setup backend capabilities flags
 //            backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
 //            backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
 //

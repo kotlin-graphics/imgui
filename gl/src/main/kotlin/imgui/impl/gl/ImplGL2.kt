@@ -26,7 +26,7 @@ import org.lwjgl.opengl.GL20C.*
 
 class ImplGL2 : GLInterface {
 
-    init { // Setup back-end capabilities flags
+    init { // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl2"
     }
 
@@ -76,9 +76,8 @@ class ImplGL2 : GLInterface {
     }
 
     /** OpenGL2 Render function.
-     *  (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
-     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL state explicitly,
-     *  in order to be able to run within any OpenGL engine that doesn't do so. */
+     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL state explicitly.
+     *  This is in order to be able to run within an OpenGL engine that doesn't do so. */
     override fun renderDrawData(drawData: DrawData) {
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
@@ -107,9 +106,9 @@ class ImplGL2 : GLInterface {
         for (cmdList in drawData.cmdLists) {
 
             // Upload vertex/index buffers
-            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.size, cmdList.vtxBuffer.data.adr + 0)
-            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.size, cmdList.vtxBuffer.data.adr + Vec2.size)
-            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.size, cmdList.vtxBuffer.data.adr + Vec2.size * 2)
+            GL11.glVertexPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + 0)
+            GL11.glTexCoordPointer(Vec2.length, GL_FLOAT, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size)
+            GL11.glColorPointer(Vec4b.length, GL_UNSIGNED_BYTE, DrawVert.SIZE, cmdList.vtxBuffer.data.adr + Vec2.size * 2)
 
             var idxBufferOffset = cmdList.idxBuffer.adr
 

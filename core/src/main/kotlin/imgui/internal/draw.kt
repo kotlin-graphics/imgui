@@ -21,13 +21,13 @@ import java.util.logging.Level
  *      A) Change your GPU render state,
  *      B) render a complex 3D scene inside a UI element without an intermediate texture/render target, etc.
  *  The expected behavior from your rendering function is 'if (cmd.UserCallback != NULL) { cmd.UserCallback(parent_list, cmd); } else { RenderTriangles() }'
- *  If you want to override the signature of ImDrawCallback, you can simply use e.g. '#define ImDrawCallback MyDrawCallback' (in imconfig.h) + update rendering back-end accordingly. */
+ *  If you want to override the signature of ImDrawCallback, you can simply use e.g. '#define ImDrawCallback MyDrawCallback' (in imconfig.h) + update rendering backend accordingly. */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 // Typically, 1 command = 1 GPU draw call (unless command is a callback)
 // - VtxOffset/IdxOffset: When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset' is enabled,
 //   those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
-//   Pre-1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields.
+//   Pre-1.71 backends will typically ignore the VtxOffset/IdxOffset fields.
 // - The ClipRect/TextureId/VtxOffset fields must be contiguous as we memcmp() them together (this is asserted for).
 class DrawCmd {
 
@@ -60,8 +60,8 @@ class DrawCmd {
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
 
-    /** Special Draw callback value to request renderer back-end to reset the graphics/render state.
-     *  The renderer back-end needs to handle this special value, otherwise it will crash trying to call a function at this address.
+    /** Special Draw callback value to request renderer backend to reset the graphics/render state.
+     *  The renderer backend needs to handle this special value, otherwise it will crash trying to call a function at this address.
      *  This is useful for example if you submitted callbacks which you know have altered the render state and you want it to be restored.
      *  It is not done by default because they are many perfectly useful way of altering render state for imgui contents
      *  (e.g. changing shader/blending settings before an Image call). */
@@ -96,7 +96,7 @@ class DrawCmd {
 }
 
 /** Vertex index, default to 16-bit
- *  To allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end (recommended).
+ *  To allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer backend (recommended).
  *  To use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h. */
 typealias DrawIdx = Int
 
@@ -110,10 +110,10 @@ class DrawVert(
 ) {
 
     companion object {
-        val size = 2 * Vec2.size + Int.BYTES
-        val ofsPos = 0f
-        val ofsUv = Vec2.size
-        val ofsCol = Vec2.size * 2
+        val SIZE = 2 * Vec2.size + Int.BYTES
+        val OFS_POS = 0
+        val OFS_UV = OFS_POS + Vec2.size
+        val OFS_COL = OFS_UV + Vec2.size
     }
 
     override fun toString() = "pos: $pos, uv: $uv, col: $col"
