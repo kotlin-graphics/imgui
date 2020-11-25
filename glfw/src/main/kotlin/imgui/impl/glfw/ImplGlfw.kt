@@ -31,7 +31,8 @@ class ImplGlfw @JvmOverloads constructor(
         /** Main window */
         val window: GlfwWindow, installCallbacks: Boolean = true,
         /** for vr environment */
-        val vrTexSize: Vec2i? = null) {
+        val vrTexSize: Vec2i? = null,
+        clientApi: GlfwClientApi = GlfwClientApi.OpenGL) {
 
     /** for passing inputs in vr */
     var vrCursorPos: Vec2? = null
@@ -111,6 +112,8 @@ class ImplGlfw @JvmOverloads constructor(
             window.charCBs["imgui"] = charCallback
             imeListener.install(window)
         }
+
+        imgui.impl.clientApi = clientApi
     }
 
     fun shutdown() {
@@ -272,5 +275,11 @@ class ImplGlfw @JvmOverloads constructor(
         }
 
         val charCallback: CharCB = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
+
+        fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
+                ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.OpenGL)
+
+        fun initForVulkan(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
+                ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Vulkan)
     }
 }
