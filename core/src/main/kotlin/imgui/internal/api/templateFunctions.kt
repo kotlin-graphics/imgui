@@ -8,6 +8,7 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart2
 import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.style
@@ -2292,9 +2293,11 @@ internal interface templateFunctions {
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
-        val vStr = fmt.substring(fmtStart).format(v)
+        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+        var vStr = fmt.substring(fmtStart, fmtEnd).format(v)
+        vStr = vStr.trimStart()
         return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.d.i
+            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.i
             else -> vStr.i
         }
     }
@@ -2304,9 +2307,11 @@ internal interface templateFunctions {
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
-        val vStr = fmt.substring(fmtStart).format(v.v)
+        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v)
+        vStr.trimStart()
         return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.d.ui
+            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.ui
             else -> vStr.ui
         }
     }
@@ -2316,9 +2321,11 @@ internal interface templateFunctions {
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
-        val vStr = fmt.substring(fmtStart).format(v)
+        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v)
+        vStr.trimStart()
         return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.d.L
+            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.L
             else -> vStr.L
         }
     }
@@ -2328,9 +2335,11 @@ internal interface templateFunctions {
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
-        val vStr = fmt.substring(fmtStart).format(v.v)
+        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v)
+        vStr.trimStart()
         return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.d.ul
+            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.ul
             else -> vStr.ul
         }
     }
@@ -2340,10 +2349,12 @@ internal interface templateFunctions {
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
-        val vStr = fmt.substring(fmtStart).format(v)
+        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v)
+        vStr.trimStart()
         return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.d.f
-            else -> vStr.f
+            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.f
+            else -> vStr.replace(',', '.').f
         }
     }
 
@@ -2352,10 +2363,12 @@ internal interface templateFunctions {
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
-        val vStr = fmt.substring(fmtStart).format(v)
+        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v)
+        vStr.trimStart()
         return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.d
-            else -> vStr.d
+            DataType.Float, DataType.Double -> vStr.replace(',', '.').d
+            else -> vStr.replace(',', '.').d
         }
     }
 
