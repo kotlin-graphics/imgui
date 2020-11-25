@@ -890,7 +890,7 @@ internal interface inputText {
         }
         val buf = dataBuf.toByteArray(32)
         var valueChanged = false
-        if (tempInputText(bb, id, label, dataBuf.toByteArray(), flags)) {
+        if (tempInputText(bb, id, label, buf, flags)) {
             // Backup old value
             val dataBackup = pData()
 
