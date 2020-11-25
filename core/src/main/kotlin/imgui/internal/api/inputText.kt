@@ -964,6 +964,7 @@ internal interface inputText {
             DataType.Float, DataType.Double -> Itf.CharsScientific
             else -> Itf.CharsDecimal
         }
+        val buf = dataBuf.toByteArray(32)
         var valueChanged = false
         if (tempInputText(bb, id, label, buf, flags)) {
             // Backup old value
