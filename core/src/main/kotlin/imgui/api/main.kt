@@ -314,7 +314,7 @@ interface main {
         callContextHooks(g, ContextHookType.EndFramePost)
     }
 
-    /** ends the Dear ImGui frame, finalize the draw data. You can get call GetDrawData() to obtain it and run your rendering function (up to v1.60, this used to call io.RenderDrawListsFn(). Nowadays, we allow and prefer calling your render function yourself.)   */
+    /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData(). */
     fun render() {
 
         assert(g.initialized)
@@ -358,8 +358,7 @@ interface main {
         callContextHooks(g, ContextHookType.RenderPost)
     }
 
-    /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
-     *  ::newFrame()   */
+    /** Pass this to your back-end rendering function! Valid after Render() and until the next call to NewFrame() */
     val drawData: DrawData?
         get() = when (Platform.get()) {
             Platform.MACOSX -> g.drawData.clone()
