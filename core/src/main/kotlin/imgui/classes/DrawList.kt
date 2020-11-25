@@ -1553,7 +1553,7 @@ inline class DrawVert_Buffer(val data: ByteBuffer) {
         get() = rem
 
     inline val sizeByte: Int
-        get() = data.rem / DrawVert.SIZE
+        get() = data.rem
 
     inline val adr: Ptr
         get() = data.adr

@@ -397,31 +397,31 @@ fun checkVkResult(err: Int) {
 
 fun createOrResizeBuffer(buffer: LongBuffer, bufferMemory: LongBuffer, pBufferSize: LongBuffer, newSize: Long, usage: Int) = Stack { s ->
     val v = gVulkanInitInfo
-    if (buffer[0] != VK10.VK_NULL_HANDLE)
-        VK10.vkDestroyBuffer(v.device, buffer[0], v.allocator)
-    if (bufferMemory[0] != VK10.VK_NULL_HANDLE)
-        VK10.vkFreeMemory(v.device, bufferMemory[0], v.allocator)
+    if (buffer[0] != VK_NULL_HANDLE)
+        vkDestroyBuffer(v.device, buffer[0], v.allocator)
+    if (bufferMemory[0] != VK_NULL_HANDLE)
+        vkFreeMemory(v.device, bufferMemory[0], v.allocator)
 
     val vertexBufferSizeAligned = ((newSize - 1) / gBufferMemoryAlignment + 1) * gBufferMemoryAlignment
     val bufferInfo = VkBufferCreateInfo.callocStack(s)
-            .sType(VK10.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
+            .sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
             .size(vertexBufferSizeAligned)
             .usage(usage)
-            .sharingMode(VK10.VK_SHARING_MODE_EXCLUSIVE)
-    var err = VK10.vkCreateBuffer(v.device, bufferInfo, v.allocator, buffer)
+            .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
+    var err = vkCreateBuffer(v.device, bufferInfo, v.allocator, buffer)
     checkVkResult(err)
 
     val req = VkMemoryRequirements.callocStack(s)
-    VK10.vkGetBufferMemoryRequirements(v.device, buffer[0], req)
+    vkGetBufferMemoryRequirements(v.device, buffer[0], req)
     gBufferMemoryAlignment = if (gBufferMemoryAlignment > req.alignment()) gBufferMemoryAlignment else req.alignment()
     val allocInfo = VkMemoryAllocateInfo.callocStack(s)
-            .sType(VK10.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
+            .sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
             .allocationSize(req.size())
-            .memoryTypeIndex(memoryType(VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, req.memoryTypeBits()))
-    err = VK10.vkAllocateMemory(v.device, allocInfo, v.allocator, bufferMemory)
+            .memoryTypeIndex(memoryType(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, req.memoryTypeBits()))
+    err = vkAllocateMemory(v.device, allocInfo, v.allocator, bufferMemory)
     checkVkResult(err)
 
-    err = VK10.vkBindBufferMemory(v.device, buffer[0], bufferMemory[0], 0)
+    err = vkBindBufferMemory(v.device, buffer[0], bufferMemory[0], 0)
     checkVkResult(err)
     pBufferSize[0] = newSize
 }
