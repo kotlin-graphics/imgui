@@ -4,7 +4,7 @@ import imgui.DEBUG
 import imgui.api.g
 
 
-fun IMGUI_DEBUG_LOG(fmt: String, vararg args: Any) = println("[%05d] ".format(g.frameCount) + fmt.format(args))
+fun IMGUI_DEBUG_LOG(fmt: String, vararg args: Any) = println("[%05d] ".format(g.frameCount) + fmt.format(*args))
 
 // Debug Logging for selected systems. Remove the '((void)0) //' to enable.
 fun IMGUI_DEBUG_LOG_POPUP(fmt: String, vararg args: Any) {
