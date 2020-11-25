@@ -97,8 +97,7 @@ interface widgetsColorEditorPicker {
      *  With typical options: Left-click on colored square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
     fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-            colorEdit4(label, col to _fa, flags)
-                    .also { col put _fa }
+            colorEdit4(label, col to _fa, flags).also { col put _fa }
 
     fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = 0): Boolean {
 
@@ -171,7 +170,7 @@ interface widgetsColorEditorPicker {
             val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.DisplayHSV) 2 else 1
 
-            for (n in 0 until components) {
+            repeat (components) { n ->
                 if (n > 0)
                     sameLine(0f, style.itemInnerSpacing.x)
                 setNextItemWidth(if (n + 1 < components) wItemOne else wItemLast)

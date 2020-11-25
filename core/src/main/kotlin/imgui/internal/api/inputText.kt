@@ -965,12 +965,12 @@ internal interface inputText {
             else -> Itf.CharsDecimal
         }
         var valueChanged = false
-        if (tempInputText(bb, id, label, dataBuf.toByteArray(), flags)) {
+        if (tempInputText(bb, id, label, buf, flags)) {
             // Backup old value
             val dataBackup = pData()
 
             // Apply new value (or operations) then clamp
-            dataTypeApplyOpFromText(dataBuf, g.inputTextState.initialTextA, dataType, pData)
+            dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
             if (clampMin != null && clampMax != null) {
                 if (clampMin > clampMax) {
                     val t = clampMin
@@ -981,7 +981,7 @@ internal interface inputText {
             }
 
             // Only mark as edited if new value is different
-            valueChanged = dataBackup != pData
+            valueChanged = dataBackup != pData()
 
             if (valueChanged)
                 markItemEdited(id)
