@@ -100,7 +100,7 @@ private class ImGuiOpenGL3 {
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
 
-        // Setup Platform/Renderer bindings
+        // Setup Platform/Renderer backend
         implGlfw = ImplGlfw(window, true)
         implGl3 = ImplGL3()
 

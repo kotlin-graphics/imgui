@@ -342,7 +342,7 @@ internal interface inputText {
             if (state.selectedAllMouseLock && !io.mouseDown[0])
                 state.selectedAllMouseLock = false
 
-            // It is ill-defined whether the back-end needs to send a \t character when pressing the TAB keys.
+            // It is ill-defined whether the backend needs to send a \t character when pressing the TAB keys.
             // Win32 and GLFW naturally do it but not SDL.
             val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
             if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly)

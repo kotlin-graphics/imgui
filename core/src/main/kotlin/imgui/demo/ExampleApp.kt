@@ -198,7 +198,7 @@ object ExampleApp {
 
                 checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
                 checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
-                sameLine(); helpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
+                sameLine(); helpMarker("Required backend to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
                 sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
                 checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
@@ -213,7 +213,7 @@ object ExampleApp {
                         io.configFlags = io.configFlags wo ConfigFlag.NoMouse
                 }
                 checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
-                sameLine(); helpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
+                sameLine(); helpMarker("Instruct backend to not alter mouse cursor shape and visibility.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
                 sameLine(); helpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
                 checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)
@@ -226,10 +226,10 @@ object ExampleApp {
             }
             treeNode("Backend Flags") {
                 helpMarker("""
-                    Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.
-                    Here we expose then as read-only fields to avoid breaking interactions with your back-end.""".trimIndent())
+                    Those flags are set by the backends (imgui_impl_xxx files) to specify their capabilities.
+                    Here we expose then as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
 
-                // Make a local copy to avoid modifying actual back-end flags.
+                // Make a local copy to avoid modifying actual backend flags.
                 val backendFlags = intArrayOf(io.backendFlags)
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)

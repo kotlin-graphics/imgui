@@ -73,7 +73,7 @@ const val NAV_WINDOWING_HIGHLIGHT_DELAY = 0.2f
 /** Time before the window list starts to appear */
 const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 
-// Window resizing from edges (when io.configWindowsResizeFromEdges = true and BackendFlag.HasMouseCursors is set in io.backendFlags by back-end)
+// Window resizing from edges (when io.configWindowsResizeFromEdges = true and BackendFlag.HasMouseCursors is set in io.backendFlags by backend)
 
 /** Extend outside and inside windows. Affect FindHoveredWindow(). */
 const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f

@@ -12,7 +12,7 @@ import imgui.internal.classes.Rect
 
 
 /** Inputs Utilities: Keyboard
- *  - For 'int user_key_index' you can use your own indices/enums according to how your back-end/engine stored them in io.KeysDown[].
+ *  - For 'int user_key_index' you can use your own indices/enums according to how your backend/engine stored them in io.KeysDown[].
  *  - We don't know the meaning of those value. You can use GetKeyIndex() to map a ImGuiKey_ value into the user index. */
 interface inputUtilitiesKeyboard {
 

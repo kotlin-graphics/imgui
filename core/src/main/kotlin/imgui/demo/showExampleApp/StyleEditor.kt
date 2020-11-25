@@ -282,7 +282,7 @@ object StyleEditor {
                 checkbox("Anti-aliased lines use texture", style::antiAliasedLinesUseTex)
                 sameLine()
                 helpMarker(
-                    "Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
+                    "Faster lines using texture data. Require backend to render with bilinear filtering (not point/nearest filtering).")
 
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)

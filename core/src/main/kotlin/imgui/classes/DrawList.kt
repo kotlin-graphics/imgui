@@ -1288,11 +1288,11 @@ class DrawList(sharedData: DrawListSharedData?) {
             - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
               Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics window to inspect draw list contents.
             - If you want large meshes with more than 64K vertices, you can either:
-              (A) Handle the ImDrawCmd::VtxOffset value in your renderer back-end, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
-                  Most example back-ends already support this from 1.71. Pre-1.71 back-ends won't.
+              (A) Handle the ImDrawCmd::VtxOffset value in your renderer backend, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
+                  Most example backends already support this from 1.71. Pre-1.71 backends won't.
                   Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
-              (B) Or handle 32-bits indices in your renderer back-end, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
-                  Most example back-ends already support this. For example, the OpenGL example code detect index size at compile-time:
+              (B) Or handle 32-bits indices in your renderer backend, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
+                  Most example backends already support this. For example, the OpenGL example code detect index size at compile-time:
                     glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
                   Your own engine or render API may use different parameters or function calls to specify index sizes.
                   2 and 4 bytes indices are generally supported by most graphics API.
