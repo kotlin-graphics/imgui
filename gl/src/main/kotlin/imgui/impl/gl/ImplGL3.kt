@@ -109,10 +109,8 @@ class ImplGL3 : GLInterface {
     }
 
     /** OpenGL3 Render function.
-     *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(), but you can now call this directly
-     *  from your main loop)
-     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
-     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.   */
+     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL state explicitly.
+     *  This is in order to be able to run within an OpenGL engine that doesn't do so.   */
     override fun renderDrawData(drawData: DrawData) {
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
