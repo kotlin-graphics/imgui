@@ -46,7 +46,7 @@ class ImplGL3 : GLInterface {
             else -> 200 // GLES 2
         }
 
-        // Setup back-end capabilities flags
+        // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
 
         if (MAY_HAVE_DRAW_WITH_BASE_VERTEX)

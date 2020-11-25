@@ -32,7 +32,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
     var configFlags: ConfigFlags = ConfigFlag.None.i
 
-    /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
+    /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom backend to communicate features supported by the backend. */
     var backendFlags: BackendFlags = BackendFlag.None.i
 
     /** Main display size, in pixels.   */
@@ -117,18 +117,18 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // User Functions
     //------------------------------------------------------------------
 
-    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window)
-    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window) + User data for back-end/wrappers to store their own stuff.
+    // Optional: Platform/Renderer backend name (informational only! will be displayed in About Window)
+    // Optional: Platform/Renderer backend name (informational only! will be displayed in About Window) + User data for backend/wrappers to store their own stuff.
     var backendPlatformName: String? = null
     var backendRendererName: String? = null
 
-    /** User data for platform back-end */
+    /** User data for platform backend */
     var backendPlatformUserData: Any? = null
 
-    /** User data for renderer back-end */
+    /** User data for renderer backend */
     var backendRendererUserData: Any? = null
 
-    /** User data for non C++ programming language back-end */
+    /** User data for non C++ programming language backend */
     var backendLanguageUserData: Any? = null
 
     // Optional: Access OS clipboard
@@ -164,7 +164,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
     var mouseWheel = 0f
 
-    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
+    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all backends.   */
     var mouseWheelH = 0f
 
     /** Keyboard modifier pressed: Control  */
@@ -260,7 +260,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mobile/console: when set, you may display an on-screen keyboard. This is set by Dear ImGui when it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
 
-    /** MousePos has been altered, back-end should reposition mouse on next frame. Rarely used! Set only when ImGuiConfigFlags_NavEnableSetMousePos flag is enabled. */
+    /** MousePos has been altered, backend should reposition mouse on next frame. Rarely used! Set only when ImGuiConfigFlags_NavEnableSetMousePos flag is enabled. */
     var wantSetMousePos = false
 
     /** When manual .ini load/save is active (io.IniFilename == NULL), this will be set to notify your application that you can call SaveIniSettingsToMemory() and save yourself. Important: clear io.WantSaveIniSettings yourself after saving! */
@@ -357,6 +357,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** For AddInputCharacterUTF16 */
     var inputQueueSurrogate = NUL
 
-    /** Queue of _characters_ input (obtained by platform back-end). Fill using AddInputCharacter() helper. */
+    /** Queue of _characters_ input (obtained by platform backend). Fill using AddInputCharacter() helper. */
     val inputQueueCharacters = ArrayList<Char>()
 }

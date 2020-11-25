@@ -358,7 +358,7 @@ interface main {
         callContextHooks(g, ContextHookType.RenderPost)
     }
 
-    /** Pass this to your back-end rendering function! Valid after Render() and until the next call to NewFrame() */
+    /** Pass this to your backend rendering function! Valid after Render() and until the next call to NewFrame() */
     val drawData: DrawData?
         get() = when (Platform.get()) {
             Platform.MACOSX -> g.drawData.clone()

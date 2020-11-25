@@ -26,7 +26,7 @@ import org.lwjgl.opengl.GL20C.*
 
 class ImplGL2 : GLInterface {
 
-    init { // Setup back-end capabilities flags
+    init { // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl2"
     }
 
