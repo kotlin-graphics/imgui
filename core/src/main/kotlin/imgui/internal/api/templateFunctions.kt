@@ -2282,8 +2282,8 @@ internal interface templateFunctions {
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v)
-        vStr.trimStart()
+        var vStr = fmt.substring(fmtStart, fmtEnd).format(v)
+        vStr = vStr.trimStart()
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.i
             else -> vStr.i
