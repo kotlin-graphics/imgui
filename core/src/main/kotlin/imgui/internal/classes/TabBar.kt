@@ -75,8 +75,9 @@ class TabBar {
     var prevFrameVisible = -1
     var barRect = Rect()
 
+    var currTabsContentsHeight = 0f
     /** Record the height of contents submitted below the tab bar */
-    var lastTabContentHeight = 0f
+    var prevTabsContentsHeight = 0f
 
     /** Actual width of all tabs (locked during layout) */
     var widthAllTabs = 0f
@@ -109,6 +110,8 @@ class TabBar {
     /** style.FramePadding locked at the time of BeginTabBar() */
     var framePadding = Vec2()
 
+    val tabsContentsMin = Vec2()
+
     /** For non-docking tab bar we re-append names in a contiguous buffer. */
     val tabsNames = ArrayList<String>()
 
@@ -137,8 +140,10 @@ class TabBar {
         // Add to stack
         g.currentTabBarStack += tabBarRef
         g.currentTabBar = this
-        if (currFrameVisible == g.frameCount) { //printf("[%05d] BeginTabBarEx already called this frame\n", g.FrameCount);
-            assert(false)
+
+        // Append with multiple BeginTabBar()/EndTabBar() pairs.
+        if (currFrameVisible == g.frameCount) {
+            window.dc.cursorPos put tabsContentsMin
             return true
         }
 
@@ -156,12 +161,15 @@ class TabBar {
         wantLayout = true // Layout will be done on the first call to ItemTab()
         prevFrameVisible = currFrameVisible
         currFrameVisible = g.frameCount
+        prevTabsContentsHeight = currTabsContentsHeight
+        currTabsContentsHeight = 0f
         framePadding put g.style.framePadding
         tabsActiveCount = 0
 
         // Layout
         // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
-        window.dc.cursorPos.put(barRect.min.x, barRect.max.y + style.itemSpacing.y)
+        tabsContentsMin.put(barRect.min.x, barRect.max.y + style.itemSpacing.y)
+        window.dc.cursorPos put tabsContentsMin
 
         // Draw separator
         val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
