@@ -339,26 +339,26 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, end_: Int = text.strlen())
     val consumed = (s[0] != 0.b).i + (s[1] != 0.b).i + (s[2] != 0.b).i + (s[3] != 0.b).i
 
     // Assume a four-byte character and load four bytes. Unused bits are shifted out.
-    var outChar = (s[0].i and masks [len]) shl 18
+    var outChar = (s[0].i and masks[len]) shl 18
     outChar = outChar or ((s[1].i and 0x3f) shl 12)
-    outChar = outChar or ((s[2].i and 0x3f) shl  6)
-    outChar = outChar or ((s[3].i and 0x3f) shl  0)
-    outChar = outChar ushr shiftc [len]
+    outChar = outChar or ((s[2].i and 0x3f) shl 6)
+    outChar = outChar or ((s[3].i and 0x3f) shl 0)
+    outChar = outChar ushr shiftc[len]
 
     // Accumulate the various error conditions.
     var e = (outChar < mins[len]).i shl 6 // non-canonical encoding
     e = e or (((outChar ushr 11) == 0x1b).i shl 7)  // surrogate half?
     e = e or ((outChar > UNICODE_CODEPOINT_MAX).i shl 8)  // out of range?
-    e = e or ((s[1] & 0xc0) >> 2)
-    e | = (s[2] & 0xc0) >> 4
-    e | = (s[3]) >> 6
-    e ^ = 0x2a // top two bits of each tail byte correct?
-    e > >= shifte [len]
+    e = e or ((s[1].i and 0xc0) ushr 2)
+    e = e or ((s[2].i and 0xc0) ushr 4)
+    e = e or (s[3].i ushr 6)
+    e = e xor 0x2a // top two bits of each tail byte correct?
+    e = e ushr shifte[len]
 
-    if (e)
-    *out_char = IM_UNICODE_CODEPOINT_INVALID
+    if (e != 0)
+        outChar = UNICODE_CODEPOINT_INVALID
 
-    return consumed
+    return outChar to consumed
 }
 
 /** return input UTF-8 bytes count */
@@ -404,7 +404,7 @@ fun textCountCharsFromUtf8(text: ByteArray, textEnd: Int = text.size): Int {
 
 /** return number of bytes to express one char in UTF-8 */
 fun textCountUtf8BytesFromChar(text: ByteArray, textEnd: Int): Int {
-    val (_, bytes) = textCharFromUtf8(text, end = textEnd)
+    val (_, bytes) = textCharFromUtf8(text, end_ = textEnd)
     return bytes
 }
 
