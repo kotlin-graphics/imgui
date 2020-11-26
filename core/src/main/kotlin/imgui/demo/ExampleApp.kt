@@ -87,7 +87,6 @@ object ExampleApp {
     var noBringToFront = false
     var noDocking = false
 
-    var baseRot = 0f
     var filter = TextFilter()
     var lineWidth = 1f
 

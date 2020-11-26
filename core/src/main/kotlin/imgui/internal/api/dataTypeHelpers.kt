@@ -109,10 +109,8 @@ internal interface dataTypeHelpers {
                 .also { pData[0] = _i }
     }
 
-    fun dataTypeApplyOpFromText(
-            buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
-            pData: KMutableProperty0<*>, format: String? = null,
-    ): Boolean {
+    fun dataTypeApplyOpFromText(buf_: String, initialValueBuf_: ByteArray, dataType: DataType,
+            pData: KMutableProperty0<*>, format: String? = null): Boolean {
 
         val buf = buf_.replace(Regex("\\s+"), "")
                 .replace("$NUL", "")
@@ -129,7 +127,7 @@ internal interface dataTypeHelpers {
         // Copy the value in an opaque buffer so we can compare at the end of the function if it changed at all.
         val dataBackup = pData()
 
-        if (buf_[0] == NUL) // TODO check me
+        if (buf.isEmpty())
             return false
 
         when (dataType) {
