@@ -423,16 +423,8 @@ class TabBar {
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) getIDWithSeed("#CLOSE", -1, id) else 0
-        val justClosed = tabItemLabelAndCloseButton(
-            displayDrawList,
-            bb,
-            flags,
-            framePadding,
-            label.toByteArray(),
-            id,
-            closeButtonId,
-            tabContentsVisible
-        )
+        val (justClosed, textClipped) = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding,
+                label.toByteArray(), id, closeButtonId, tabContentsVisible)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
@@ -444,9 +436,9 @@ class TabBar {
 
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
-        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered()) if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip) setTooltip(
-            label.substring(0, findRenderedTextEnd(label))
-        )
+        if (textClipped && g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered())
+            if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
+                setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
         assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)) { "TabItemButton should not be selected" }
         return if (isTabButton) pressed else tabContentsVisible

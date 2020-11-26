@@ -2,6 +2,7 @@ package imgui.internal.api
 
 import glm_.func.common.min
 import glm_.vec2.Vec2
+import glm_.vec2.Vec2bool
 import imgui.*
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
@@ -60,13 +61,18 @@ internal interface tabBars {
     }
 
     /** Render text label (with custom clipping) + Unsaved Document marker + Close Button logic
-     *  We tend to lock style.FramePadding for a given tab-bar, hence the 'frame_padding' parameter.    */
+     *  We tend to lock style.FramePadding for a given tab-bar, hence the 'frame_padding' parameter.
+     *  [JVM] @return [justClosed: Boolean, textClipped: Boolean] */
     fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2,
-                                   label: ByteArray, tabId: ID, closeButtonId: ID, isContentsVisible: Boolean): Boolean {
+                                   label: ByteArray, tabId: ID, closeButtonId: ID, isContentsVisible: Boolean): Vec2bool {
 
         val labelSize = calcTextSize(label, 0, hideTextAfterDoubleHash =  true)
+
+        var justClosed = false
+        var textClipped = false
+
         if (bb.width <= 1f)
-            return false
+            return Vec2bool(justClosed, textClipped)
 
         // In Style V2 we'll have full override of all colors per state (e.g. focused, selected)
         // But right now if you want to alter text color of tabs this is what you need to do.
@@ -75,12 +81,6 @@ internal interface tabBars {
 //        if (!is_contents_visible)
 //            g.Style.Alpha *= 0.7f;
 //        #endif
-
-        // In Style V2 we'll have full override of all colors per state (e.g. focused, selected)
-        // But right now if you want to alter text color of tabs this is what you need to do.
-//        val backupAlpha = style.alpha
-//        if(!isContentsVisible)
-//            style.alpha *= 0.7f
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
         val TAB_UNSAVED_MARKER = "*".toByteArray()
@@ -91,6 +91,10 @@ internal interface tabBars {
             renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - framePadding, TAB_UNSAVED_MARKER, 0, null)
         }
         val textEllipsisClipBb = Rect(textPixelClipBb)
+
+        // Return clipped state ignoring the close button
+        textClipped = (textEllipsisClipBb.min.x + labelSize.x) > textPixelClipBb.max.x
+            //draw_list->AddCircle(text_ellipsis_clip_bb.Min, 3.0f, *out_text_clipped ? IM_COL32(255, 0, 0, 255) : IM_COL32(0, 255, 0, 255));
 
         // Close Button
         // We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
@@ -127,6 +131,7 @@ internal interface tabBars {
 //        if(!isContentsVisible)
 //            style.alpha = backupAlpha
 
-        return closeButtonPressed
+        justClosed = closeButtonPressed
+        return Vec2bool(justClosed, textClipped)
     }
 }
