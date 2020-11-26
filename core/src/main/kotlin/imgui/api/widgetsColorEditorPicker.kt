@@ -75,7 +75,7 @@ import imgui.InputTextFlag as Itf
 import imgui.internal.sections.DrawCornerFlag as Dcf
 
 
-/** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little colored preview square that can be
+/** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little color square that can be
  *  left-clicked to open a picker, and right-clicked to open an option menu.)
  *  - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way to
  *      document the number of elements that are expected to be accessible.
@@ -94,7 +94,7 @@ interface widgetsColorEditorPicker {
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
-     *  With typical options: Left-click on colored square to open color picker. Right-click to open option menu.
+     *  With typical options: Left-click on color square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
     fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
             colorEdit4(label, col to _fa, flags).also { col put _fa }
@@ -694,7 +694,7 @@ interface widgetsColorEditorPicker {
         return valueChanged
     }
 
-    /**  A little colored square. Return true when clicked.
+    /**  A little color square. Return true when clicked.
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.
      *  Note that 'col' may be encoded in HSV if ImGuiColorEditFlags_InputHSV is set.   */
