@@ -376,10 +376,10 @@ object ShowDemoWindowWidgets {
     object Funcs2 {
         val MyResizeCallback: InputTextCallback = { data ->
             if (data.eventFlag == Itf.CallbackResize.i) {
-//                ImVector<char>* my_str = (ImVector<char>*)data->UserData; TODO
-//                IM_ASSERT(my_str->begin() == data->Buf);
-//                my_str->resize(data->BufSize);  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
-//                data->Buf = my_str->begin();
+                val myString = data.userData as ByteArray
+                assert(myString.contentEquals(data.buf))
+                data.userData = ByteArray(data.bufSize)  // NB: On resizing calls, generally data->BufSize == data->BufTextLen + 1
+                data.buf = myString
             }
             false
         }
@@ -389,7 +389,7 @@ object ShowDemoWindowWidgets {
         val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: ItemFlags) -> Boolean =
                 { label, myStr, size, flags ->
                     assert(flags hasnt Itf.CallbackResize)
-                    inputTextMultiline(label, myStr.cStr, size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
+                    inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
                 }
     }
 
@@ -1008,6 +1008,8 @@ object ShowDemoWindowWidgets {
                 // For this demo we are using ImVector as a string container.
                 // Note that because we need to store a terminating zero character, our size/capacity are 1 more
                 // than usually reported by a typical string class.
+                if (myStr.isEmpty())
+                    myStr = ByteArray(1)
                 Funcs2.MyInputTextMultiline("##MyStr", myStr, Vec2(-Float.MIN_VALUE, textLineHeight * 16), 0)
                 text("Data: ${myStr.hashCode()}\nSize: ${myStr.strlen()}\nCapacity: ${myStr.size}")
             }
