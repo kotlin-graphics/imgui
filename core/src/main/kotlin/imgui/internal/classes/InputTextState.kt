@@ -229,7 +229,7 @@ class InputTextState {
         if (newTextLen + textLen > textW.size) {
             if (!isResizable)
                 return false
-            assert(textLen < textW.size)
+            assert(textLen <= textW.size) // [JVM] <= instead < because we dont use the termination NUL
             val tmp = CharArray(textLen + glm.clamp(newTextLen * 4, 32, 256 max newTextLen))
             System.arraycopy(textW, 0, tmp, 0, textW.size)
             textW = tmp
