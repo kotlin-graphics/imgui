@@ -201,7 +201,7 @@ object StyleEditor {
                 sameLine()
                 checkbox("Only Modified Colors", ::outputOnlyModified)
 
-                text("Tip: Left-click on colored square to open color picker,\nRight-click to open edit options menu.")
+                text("Tip: Left-click on color square to open color picker,\nRight-click to open edit options menu.")
 
                 filter.draw("Filter colors", fontSize * 16)
 
@@ -212,7 +212,7 @@ object StyleEditor {
                 }; sameLine()
                 helpMarker("""
                     In the color list:
-                    Left-click on colored square to open color picker,
+                    Left-click on color square to open color picker,
                     Right-click to open edit options menu.""".trimIndent())
 
                 child("#colors", Vec2(), true,
