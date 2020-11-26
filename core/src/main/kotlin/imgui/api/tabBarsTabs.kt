@@ -49,6 +49,8 @@ interface tabBarsTabs {
         }
         else
             window.dc.cursorPos.y = tabBar.barRect.max.y + tabBar.prevTabsContentsHeight
+        if (tabBar.beginCount > 1)
+            window.dc.cursorPos put tabBar.backupCursorPos
 
         if (tabBar.flags hasnt TabBarFlag._DockNode) popID()
 
