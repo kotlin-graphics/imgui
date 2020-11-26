@@ -58,9 +58,12 @@ class TabBarSection {
     var spacing = 0f
 }
 
-/** Storage for a tab bar (sizeof() 92~96 bytes) */
+/** Storage for a tab bar (sizeof() 152 bytes) */
 class TabBar {
+
     val tabs = ArrayList<TabItem>()
+
+    var flags: TabBarFlags = TabBarFlag.None.i
 
     /** Zero for tab-bars used by docking */
     var id: ID = 0
@@ -91,12 +94,15 @@ class TabBar {
     var scrollingSpeed = 0f
     var scrollingRectMinX = 0f
     var scrollingRectMaxX = 0f
-    var flags: TabBarFlags = TabBarFlag.None.i
     var reorderRequestTabId: ID = 0
     var reorderRequestDir = 0
 
     /** Number of tabs submitted this frame. */
     var tabsActiveCount = 0
+    /** Index of last BeginTabItem() tab for use by EndTabItem()  */
+    var lastTabItemIdx = -1
+
+    var beginCount = 0
 
     var wantLayout = false
     var visibleTabWasSubmitted = false
@@ -104,13 +110,12 @@ class TabBar {
     /** Set to true when a new tab item or button has been added to the tab bar during last frame */
     var tabsAddedNew = false
 
-    /** Index of last BeginTabItem() tab for use by EndTabItem()  */
-    var lastTabItemIdx = -1
-
     /** style.FramePadding locked at the time of BeginTabBar() */
     var framePadding = Vec2()
 
     val tabsContentsMin = Vec2()
+
+    val backupCursorPos = Vec2()
 
     /** For non-docking tab bar we re-append names in a contiguous buffer. */
     val tabsNames = ArrayList<String>()
@@ -142,8 +147,10 @@ class TabBar {
         g.currentTabBar = this
 
         // Append with multiple BeginTabBar()/EndTabBar() pairs.
+        backupCursorPos put window.dc.cursorPos
         if (currFrameVisible == g.frameCount) {
             window.dc.cursorPos put tabsContentsMin
+            beginCount++
             return true
         }
 
@@ -165,6 +172,7 @@ class TabBar {
         currTabsContentsHeight = 0f
         framePadding put g.style.framePadding
         tabsActiveCount = 0
+        beginCount = 1
 
         // Layout
         // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
