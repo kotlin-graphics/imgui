@@ -22,6 +22,7 @@ import imgui.internal.DrawVert
 import imgui.or
 import kool.*
 import org.lwjgl.opengl.GL30C.*
+import org.lwjgl.opengl.GL31C.GL_PRIMITIVE_RESTART
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
 import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
@@ -78,6 +79,8 @@ class ImplGL3 : GLInterface {
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glEnable(GL_SCISSOR_TEST)
+        if(OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+            glDisable(GL_PRIMITIVE_RESTART)
         if (POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
@@ -151,6 +154,7 @@ class ImplGL3 : GLInterface {
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
+        val lastEnablePrimitiveRestart = OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310 && glIsEnabled(GL_PRIMITIVE_RESTART)
 
         // Setup desired GL state
         setupRenderState(drawData, fbWidth, fbHeight)
@@ -216,6 +220,11 @@ class ImplGL3 : GLInterface {
         if (lastEnableCullFace) glEnable(GL_CULL_FACE) else glDisable(GL_CULL_FACE)
         if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
         if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
+        if(OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+            when {
+                lastEnablePrimitiveRestart -> glEnable(GL_PRIMITIVE_RESTART)
+                else -> glDisable(GL_PRIMITIVE_RESTART)
+            }
         if (POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         glViewport(lastViewport)
@@ -314,6 +323,9 @@ class ImplGL3 : GLInterface {
 
         // Desktop GL 3.3+ has glBindSampler()
         val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
+
+        // Desktop GL 3.1+ has GL_PRIMITIVE_RESTART state
+        val OPENGL_MAY_HAVE_PRIMITIVE_RESTART by lazy { OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 310 }
 
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
