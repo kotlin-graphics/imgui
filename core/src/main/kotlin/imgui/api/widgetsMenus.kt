@@ -124,9 +124,7 @@ interface widgetsMenus {
             }
         }
 
-//        assert(window.flags has Wf.MenuBar && window.dc.menuBarAppending)
-        if(!(window.flags has Wf.MenuBar && window.dc.menuBarAppending))
-            println()
+        assert(window.flags has Wf.MenuBar && window.dc.menuBarAppending)
         popClipRect()
         popID()
         with(window.dc) {
