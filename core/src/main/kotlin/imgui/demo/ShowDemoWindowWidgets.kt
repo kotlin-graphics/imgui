@@ -1521,7 +1521,7 @@ object ShowDemoWindowWidgets {
                     }
                     if (beginDragDropTarget()) {
                         acceptDragDropPayload("DND_DEMO_CELL")?.let { payload ->
-                            assert(payload.dataSize == Int.BYTES)
+//                            assert(payload.dataSize == Int.BYTES) [JVM]
                             val payloadN = payload.data!! as Int
                             when (mode) {
                                 Mode.Copy -> names[n] = names[payloadN]
