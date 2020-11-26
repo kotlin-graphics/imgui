@@ -113,7 +113,8 @@ interface demoDebugInformations {
         open[0] = showWindow
     }
 
-    fun showDemoWindow(open: KMutableProperty0<Boolean>) { // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
+    fun showDemoWindow(open: KMutableProperty0<Boolean>) {
+        // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
         // Most ImGui functions would normally just crash if the context is missing.
         assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" }
         ExampleApp(open)

@@ -382,23 +382,18 @@ internal interface inputText {
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
             val isOsxShiftShortcut = isOsx && io.keyMods == (KeyMod.Super or KeyMod.Shift)
-            val isWordmoveKeyDown =
-                if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
+            val isWordmoveKeyDown = if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
             val isCtrlKeyOnly = io.keyMods == KeyMod.Ctrl.i
             val isShiftKeyOnly = io.keyMods == KeyMod.Shift.i
             val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) KeyMod.Super.i else KeyMod.Ctrl.i
 
-            val isCut =
-                ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
-            val isCopy =
-                ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
-            val isPaste =
-                ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
+            val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
+            val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
+            val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
             val isUndo = ((isShortcutKey && Key.Z.isPressed) && !isReadOnly && isUndoable)
-            val isRedo =
-                ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
+            val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(
@@ -507,8 +502,7 @@ internal interface inputText {
             }
 
             // Update render selection flag after events have been handled, so selection highlight can be displayed during the same frame.
-            renderSelection =
-                renderSelection || (state.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor))
+            renderSelection = renderSelection || (state.hasSelection && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor))
         }
 
         // Process callbacks and apply result back to user's buffer.
@@ -800,12 +794,8 @@ internal interface inputText {
                 val textSelectedBegin = state.stb.selectStart min state.stb.selectEnd
                 val textSelectedEnd = state.stb.selectStart max state.stb.selectEnd
 
-                val bgColor = getColorU32(
-                    Col.TextSelectedBg,
-                    if (renderCursor) 1f else 0.6f
-                ) // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
-                val bgOffYUp =
-                    if (isMultiline) 0f else -1f // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
+                val bgColor = getColorU32(Col.TextSelectedBg, if (renderCursor) 1f else 0.6f) // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
+                val bgOffYUp = if (isMultiline) 0f else -1f // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
                 val bgOffYDn = if (isMultiline) 0f else 2f
                 val rectPos = drawPos + selectStartOffset - drawScroll
                 var p = textSelectedBegin
@@ -835,30 +825,17 @@ internal interface inputText {
             // We test for 'buf_display_max_length' as a way to avoid some pathological cases (e.g. single-line 1 MB string) which would make ImDrawList crash.
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
-                drawWindow.drawList.addText(
-                    g.font,
-                    g.fontSize,
-                    drawPos - drawScroll,
-                    col,
-                    bufDisplay,
-                    0,
-                    bufDisplayEnd,
-                    0f,
-                    clipRect.takeUnless { isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos - drawScroll, col, bufDisplay, 0,
+                    bufDisplayEnd, 0f, clipRect.takeUnless { isMultiline })
             }
 
             // Draw blinking cursor
             if (renderCursor) {
                 state.cursorAnim += io.deltaTime
-                val cursorIsVisible =
-                    !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
+                val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
                 val cursorScreenPos = drawPos + cursorOffset - drawScroll
-                val cursorScreenRect = Rect(
-                    cursorScreenPos.x,
-                    cursorScreenPos.y - g.fontSize + 0.5f,
-                    cursorScreenPos.x + 1f,
-                    cursorScreenPos.y - 1.5f
-                )
+                val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f,
+                    cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
                 if (cursorIsVisible && cursorScreenRect overlaps clipRect)
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
@@ -879,16 +856,8 @@ internal interface inputText {
 
             if (isMultiline || bufDisplayEnd < bufDisplayMaxLength) {
                 val col = getColorU32(if (isDisplayingHint) Col.TextDisabled else Col.Text)
-                drawWindow.drawList.addText(
-                    g.font,
-                    g.fontSize,
-                    drawPos,
-                    col,
-                    bufDisplay,
-                    0,
-                    bufDisplayEnd,
-                    0f,
-                    clipRect.takeUnless { isMultiline })
+                drawWindow.drawList.addText(g.font, g.fontSize, drawPos, col, bufDisplay, 0, bufDisplayEnd,
+                    0f, clipRect.takeUnless { isMultiline })
             }
         }
 
