@@ -96,12 +96,6 @@ class TabBar {
     var scrollingRectMaxX = 0f
     var reorderRequestTabId: ID = 0
     var reorderRequestDir = 0
-
-    /** Number of tabs submitted this frame. */
-    var tabsActiveCount = 0
-    /** Index of last BeginTabItem() tab for use by EndTabItem()  */
-    var lastTabItemIdx = -1
-
     var beginCount = 0
 
     var wantLayout = false
@@ -109,11 +103,15 @@ class TabBar {
 
     /** Set to true when a new tab item or button has been added to the tab bar during last frame */
     var tabsAddedNew = false
+    /** Number of tabs submitted this frame. */
+    var tabsActiveCount = 0
+    /** Index of last BeginTabItem() tab for use by EndTabItem()  */
+    var lastTabItemIdx = -1
+
+    var itemSpacingY = 0f
 
     /** style.FramePadding locked at the time of BeginTabBar() */
     var framePadding = Vec2()
-
-    val tabsContentsMin = Vec2()
 
     val backupCursorPos = Vec2()
 
@@ -149,7 +147,7 @@ class TabBar {
         // Append with multiple BeginTabBar()/EndTabBar() pairs.
         backupCursorPos put window.dc.cursorPos
         if (currFrameVisible == g.frameCount) {
-            window.dc.cursorPos put tabsContentsMin
+            window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
             beginCount++
             return true
         }
@@ -170,14 +168,14 @@ class TabBar {
         currFrameVisible = g.frameCount
         prevTabsContentsHeight = currTabsContentsHeight
         currTabsContentsHeight = 0f
+        itemSpacingY = g.style.itemSpacing.y
         framePadding put g.style.framePadding
         tabsActiveCount = 0
         beginCount = 1
 
         // Layout
         // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
-        tabsContentsMin.put(barRect.min.x, barRect.max.y + style.itemSpacing.y)
-        window.dc.cursorPos put tabsContentsMin
+        window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
 
         // Draw separator
         val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
