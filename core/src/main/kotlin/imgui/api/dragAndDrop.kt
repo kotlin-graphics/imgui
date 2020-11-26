@@ -220,7 +220,7 @@ interface dragAndDrop {
         val wasAcceptedPreviously = g.dragDropAcceptIdPrev == g.dragDropTargetId
         val r = Rect(g.dragDropTargetRect)
         val rSurface = r.width * r.height
-        if (rSurface < g.dragDropAcceptIdCurrRectSurface) {
+        if (rSurface <= g.dragDropAcceptIdCurrRectSurface) {
             g.dragDropAcceptFlags = flags
             g.dragDropAcceptIdCurr = g.dragDropTargetId
             g.dragDropAcceptIdCurrRectSurface = rSurface
