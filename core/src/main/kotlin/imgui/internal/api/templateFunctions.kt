@@ -1029,7 +1029,7 @@ internal interface templateFunctions {
             vCur = scaleValueFromRatioT(dataType, vNewParametric, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
             vOldRefForAccumRemainder = vOldParametric
         } else
-            vCur += g.dragCurrentAccum
+            vCur += g.dragCurrentAccum.i
 
         // Round to user desired precision based on format string
         if (flags hasnt SliderFlag.NoRoundToFormat)
@@ -2294,8 +2294,7 @@ internal interface templateFunctions {
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        var vStr = fmt.substring(fmtStart, fmtEnd).format(v)
-        vStr = vStr.trimStart()
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.i
             else -> vStr.i
@@ -2308,11 +2307,10 @@ internal interface templateFunctions {
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v)
-        vStr.trimStart()
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v).trimStart()
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.ui
-            else -> vStr.ui
+            else -> Uint(vStr.i) // additional wrapping to overcome numbers with leading minus
         }
     }
 
@@ -2322,8 +2320,7 @@ internal interface templateFunctions {
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v)
-        vStr.trimStart()
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.L
             else -> vStr.L
@@ -2336,11 +2333,10 @@ internal interface templateFunctions {
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v)
-        vStr.trimStart()
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v).trimStart()
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.ul
-            else -> vStr.ul
+            else -> Ulong(vStr.L) // additional wrapping to overcome numbers with leading minus
         }
     }
 
@@ -2350,8 +2346,7 @@ internal interface templateFunctions {
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v)
-        vStr.trimStart()
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.f
             else -> vStr.replace(',', '.').f
@@ -2364,8 +2359,7 @@ internal interface templateFunctions {
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v)
-        vStr.trimStart()
+        val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d
             else -> vStr.replace(',', '.').d
