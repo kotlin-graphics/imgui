@@ -21,7 +21,6 @@ import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.or
 import kool.*
-import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL30C.*
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
 import org.lwjgl.opengl.GL33C
@@ -38,11 +37,20 @@ class ImplGL3 : GLInterface {
     val buffers = GlBuffers<Buffer>()
     var vao = GlVertexArray()
 
+    /** ~ImGui_ImplOpenGL3_Init */
     init {
 
-        // query for GL version
-        glVersion = when {
-            !OPENGL_ES2 -> glGetInteger(GL_MAJOR_VERSION) * 100 + glGetInteger(GL_MINOR_VERSION) * 10
+        // Query for GL version (e.g. 320 for GL 3.2)
+        var major = glGetInteger(GL_MAJOR_VERSION)
+        var minor = glGetInteger(GL_MINOR_VERSION)
+        if (major == 0 && minor == 0) {
+            // Query GL_VERSION in desktop GL 2.x, the string will start with "<major>.<minor>"
+            val glVersion = glGetString(GL_VERSION)!!
+            major = glVersion.substringBefore('.').i
+            minor = glVersion.substringAfter('.').i
+        }
+        gGlVersion = when {
+            !OPENGL_ES2 -> major * 100 + minor * 10
             else -> 200 // GLES 2
         }
 
@@ -50,7 +58,7 @@ class ImplGL3 : GLInterface {
         io.backendRendererName = "imgui_impl_opengl3"
 
         if (MAY_HAVE_DRAW_WITH_BASE_VERTEX)
-            if (glVersion >= 320)
+            if (gGlVersion >= 320)
                 io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     }
 
@@ -92,7 +100,7 @@ class ImplGL3 : GLInterface {
         val orthoProjection = glm.ortho(L, R, B, T, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330)
             glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
         vao.bind()
@@ -124,7 +132,7 @@ class ImplGL3 : GLInterface {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = when {
-            !OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
+            !OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -183,7 +191,7 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && glVersion >= 320)
+                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && gGlVersion >= 320)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
                             glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
@@ -196,7 +204,7 @@ class ImplGL3 : GLInterface {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330)
                 glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
@@ -302,10 +310,10 @@ class ImplGL3 : GLInterface {
         var OPENGL_ES3 = false
 
         // Desktop GL 3.2+ has glDrawElementsBaseVertex() which GL ES and WebGL don't have.
-        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
+        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
 
         // Desktop GL 3.3+ has glBindSampler()
-        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
+        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
 
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
