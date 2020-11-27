@@ -452,7 +452,7 @@ fun textCountCharsFromUtf8(text: ByteArray, textEnd: Int = text.size): Int {
 
 /** return number of bytes to express one char in UTF-8 */
 fun textCountUtf8BytesFromChar(text: ByteArray, textEnd: Int): Int {
-    val (_, bytes) = textCharFromUtf8(text, end_ = textEnd)
+    val (_, bytes) = textCharFromUtf8(text, textEnd = textEnd)
     return bytes
 }
 
