@@ -104,6 +104,8 @@ interface dragAndDrop {
                 g.dragDropActive = true
                 g.dragDropSourceFlags = flags
                 g.dragDropMouseButton = mouseButton
+                if (payload.sourceId == g.activeId)
+                    g.activeIdNoClearOnFocusLoss = true
             }
 
             g.dragDropSourceFrameCount = g.frameCount
