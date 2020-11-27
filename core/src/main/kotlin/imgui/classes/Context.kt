@@ -571,6 +571,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Will call IM_DEBUG_BREAK() when encountering this id */
     var debugItemPickerBreakId: ID = 0
 
+    var debugMetricsConfig = MetricsConfig()
 
     //------------------------------------------------------------------
     // Misc
