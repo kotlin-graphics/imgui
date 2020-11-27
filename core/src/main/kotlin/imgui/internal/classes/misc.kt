@@ -139,6 +139,17 @@ class NavMoveResult {
     }
 }
 
+/** Storage for ShowMetricsWindow() and DebugNodeXXX() functions */
+class MetricsConfig {
+    var showWindowsRects = false
+    var showWindowsBeginOrder = false
+    var showTablesRects = false
+    var showDrawCmdMesh = true
+    var showDrawCmdBoundingBoxes = true
+    var showWindowsRectsType = -1
+    var showTablesRectsType = -1
+}
+
 /** Storage for SetNextWindow** functions    */
 class NextWindowData {
     var flags = NextWindowDataFlag.None.i
