@@ -44,7 +44,7 @@ class DrawListSharedData {
     var circleSegmentMaxError = 0f
 
     /** Value for pushClipRectFullscreen() */
-    var clipRectFullscreen = Vec4(-8192f, -8192f, 8192f, 8192f)
+    var clipRectFullscreen = Vec4()
 
     /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
     var initialFlags = DrawListFlag.None.i
@@ -59,7 +59,7 @@ class DrawListSharedData {
     }
 
     /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
-    val circleSegmentCounts = IntArray(64) // This will be set by SetCircleSegmentMaxError()
+    val circleSegmentCounts = IntArray(64)
 
     /** UV of anti-aliased lines in the atlas */
     lateinit var texUvLines: Array<Vec4>

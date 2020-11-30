@@ -99,22 +99,6 @@ class Columns {
 
     fun destroy() = splitter.clearFreeMemory(destroy = true)
 
-    fun clear() {
-        id = 0
-        flags = ColumnsFlag.None.i
-        isFirstFrame = false
-        isBeingResized = false
-        current = 0
-        count = 1
-        offMaxX = 0f
-        offMinX = 0f
-        hostCursorPosY = 0f
-        hostCursorMaxPosX = 0f
-        lineMaxY = 0f
-        lineMinY = 0f
-        columns.clear()
-    }
-
     /** ~GetColumnOffsetFromNorm    */
     infix fun getOffsetFrom(offsetNorm: Float): Float = offsetNorm * (offMaxX - offMinX)
 
