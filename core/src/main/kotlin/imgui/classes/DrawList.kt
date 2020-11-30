@@ -54,22 +54,22 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Vertex buffer.  */
     var vtxBuffer = DrawVert_Buffer(0)
 
+    /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
+    var flags: DrawListFlags = DrawListFlag.None.i
+
 
     // -----------------------------------------------------------------------------------------------------------------
     // [Internal, used while building lists]
     // -----------------------------------------------------------------------------------------------------------------
 
-    /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
-    var flags: DrawListFlags = DrawListFlag.None.i
+    /** [Internal] Generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0. */
+    var _vtxCurrentIdx = 0
 
     /** Pointer to shared draw data (you can use ImGui::drawListSharedData to get the one from current ImGui context) */
     var _data: DrawListSharedData = sharedData ?: DrawListSharedData()
 
     /** Pointer to owner window's name for debugging    */
     var _ownerName = ""
-
-    /** [Internal] Generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0. */
-    var _vtxCurrentIdx = 0
 
     /** [Internal] point within VtxBuffer.Data after each add command (to avoid using the ImVector<> operators too much)    */
     var _vtxWritePtr = 0
@@ -85,8 +85,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** [Internal] current path building    */
     val _path = ArrayList<Vec2>()
 
-    /** [Internal] Template of active commands. Fields should match those of CmdBuffer.back(). */
-    var _cmdHeader: DrawCmd = DrawCmd()
+    /** [Internal] template of active commands. Fields should match those of CmdBuffer.back(). */
+    var _cmdHeader = DrawCmdHeader()
 
     /** [Internal] for channels api (note: prefer using your own persistent instance of ImDrawListSplitter!) */
     val _splitter = DrawListSplitter()
