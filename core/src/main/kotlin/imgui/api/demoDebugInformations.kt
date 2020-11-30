@@ -77,7 +77,6 @@ import imgui.internal.sections.wo
 import kool.BYTES
 import kool.lim
 import kool.rem
-import java.nio.ByteBuffer
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -169,8 +168,8 @@ interface demoDebugInformations {
             if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
             if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
-            if (io.configWindowsMemoryCompactTimer >= 0f) text("io.ConfigWindowsMemoryCompactTimer = %.1ff",
-                    io.configWindowsMemoryCompactTimer)
+            if (io.configMemoryCompactTimer >= 0f) text("io.ConfigMemoryCompactTimer = %.1f",
+                    io.configMemoryCompactTimer)
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
