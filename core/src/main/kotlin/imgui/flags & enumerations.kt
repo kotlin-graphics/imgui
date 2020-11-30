@@ -248,7 +248,7 @@ enum class TreeNodeFlag(@JvmField val i: TreeNodeFlags) {
     /** Draw as selected    */
     Selected(1 shl 0),
 
-    /** Full colored frame (e.g. for CollapsingHeader)  */
+    /** Draw frame with background (e.g. for CollapsingHeader)  */
     Framed(1 shl 1),
 
     /** Hit testing to allow subsequent widgets to overlap this one */
@@ -1368,16 +1368,16 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
     /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */
     NoAlpha(1 shl 1),
 
-    /** ColorEdit: disable picker when clicking on colored square.  */
+    /** ColorEdit: disable picker when clicking on color square.  */
     NoPicker(1 shl 2),
 
     /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
     NoOptions(1 shl 3),
 
-    /** ColorEdit, ColorPicker: disable colored square preview next to the inputs. (e.g. to show only the inputs)   */
+    /** ColorEdit, ColorPicker: disable color square preview next to the inputs. (e.g. to show only the inputs)   */
     NoSmallPreview(1 shl 4),
 
-    /** ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview colored square).   */
+    /** ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview color square).   */
     NoInputs(1 shl 5),
 
     /** ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview. */
@@ -1386,7 +1386,7 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
     /** ColorEdit, ColorPicker: disable display of inline text label (the label is still forwarded to the tooltip and picker).  */
     NoLabel(1 shl 7),
 
-    /** ColorPicker: disable bigger color preview on right side of the picker, use small colored square preview instead.    */
+    /** ColorPicker: disable bigger color preview on right side of the picker, use small color square preview instead.    */
     NoSidePreview(1 shl 8),
 
     /** ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source. */

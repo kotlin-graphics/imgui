@@ -581,9 +581,9 @@ object ShowDemoWindowWidgets {
             run {
                 colorEdit3("color 1", col1)
                 sameLine(); helpMarker("""
-                    Click on the colored square to open a color picker.
+                    Click on the color square to open a color picker.
                     Click and hold to use drag and drop.
-                    Right-click on the colored square to show options.
+                    Right-click on the color square to show options.
                     CTRL+click on individual component to input value.""".trimIndent())
 
                 colorEdit4("color 2", col2)
@@ -701,7 +701,7 @@ object ShowDemoWindowWidgets {
         }
 
         treeNode("Text") {
-            treeNode("Colored Text") {
+            treeNode("Color Text") {
                 // Using shortcut. You can use PushStyleColor()/PopStyleColor() for more flexibility.
                 textColored(Vec4(1f, 0f, 1f, 1f), "Pink")
                 textColored(Vec4(1f, 1f, 0f, 1f), "Yellow")
@@ -1091,7 +1091,7 @@ object ShowDemoWindowWidgets {
 
             text("Color widget:")
             sameLine(); helpMarker("""
-                Click on the colored square to open a color picker.                
+                Click on the color square to open a color picker.                
                 CTRL+click on individual component to input value.
                 """.trimIndent())
             colorEdit3("MyColor##1", color, miscFlags)
@@ -1490,7 +1490,7 @@ object ShowDemoWindowWidgets {
                 // They are using standardized payload strings IMGUI_PAYLOAD_TYPE_COLOR_3F and IMGUI_PAYLOAD_TYPE_COLOR_4F
                 // to allow your own widgets to use colors in their drag and drop interaction.
                 // Also see 'Demo->Widgets->Color/Picker Widgets->Palette' demo.
-                helpMarker("You can drag from the colored squares.")
+                helpMarker("You can drag from the color squares.")
                 colorEdit3("color 1", col3)
                 colorEdit4("color 2", col4)
             }

@@ -297,6 +297,12 @@ fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
     return 0
 }
 
+private val lengths = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0)
+private val masks = intArrayOf(0x00, 0x7f, 0x1f, 0x0f, 0x07)
+private val mins = intArrayOf(4194304, 0, 128, 2048, 65536)
+private val shiftc = intArrayOf(0, 18, 12, 6, 0)
+private val shifte = intArrayOf(0, 6, 4, 2, 0)
+
 /** read one character. return input UTF-8 bytes count
  *  @return [JVM] [char: Int, bytes: Int] */
 fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
@@ -344,6 +350,64 @@ fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.st
     }
     return 0 to 0
 }
+
+///** read one character. return input UTF-8 bytes count
+// *
+// *  Convert UTF-8 to 32-bit character, process single character input.
+// *  Based on work of Christopher Wellons (https://github.com/skeeto/branchless-utf8)
+// *  We handle UTF-8 decoding error by skipping forward.
+// *
+// *  @return [JVM] [char: Int, bytes: Int]
+// *
+// *  ~ImTextCharFromUtf8 */
+//fun textCharFromUtf8(text: ByteArray, begin: Int = 0, end_: Int = text.strlen()): Pair<Int, Int> {
+//
+//    var end = end_
+//
+//    val s = ByteArray(4)
+//    val len = lengths[text[begin].i ushr 3]
+//
+//    if (end_ == -1)
+//        end = len + if (len == 0) 1 else 0 // Max length, nulls will be taken into account.
+//
+//    // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
+//    s[0] = if (begin + 0 < end) text[0] else 0
+//    s[1] = if (s[0] != 0.b && begin + 1 < end) text[begin + 1] else 0
+//    s[2] = if (s[1] != 0.b && begin + 2 < end) text[begin + 2] else 0
+//    s[3] = if (s[2] != 0.b && begin + 3 < end) text[begin + 3] else 0
+//
+//    // Compute the pointer to the next character early so that the next
+//    // iteration can start working on the next character. Neither Clang
+//    // nor GCC figure out this reordering on their own.
+//    //const unsigned char *next = s + len + !len;
+//
+//    // No bytes are consumed when *in_text == 0 || in_text == in_text_end.
+//    // One byte is consumed in case of invalid first byte of in_text.
+//    // All available bytes (at most `len` bytes) are consumed on incomplete/invalid second to last bytes.
+//    val consumed = (s[0] != 0.b).i + (s[1] != 0.b).i + (s[2] != 0.b).i + (s[3] != 0.b).i
+//
+//    // Assume a four-byte character and load four bytes. Unused bits are shifted out.
+//    var outChar = (s[0].i and masks[len]) shl 18
+//    outChar = outChar or ((s[1].i and 0x3f) shl 12)
+//    outChar = outChar or ((s[2].i and 0x3f) shl 6)
+//    outChar = outChar or ((s[3].i and 0x3f) shl 0)
+//    outChar = outChar ushr shiftc[len]
+//
+//    // Accumulate the various error conditions.
+//    var e = (outChar < mins[len]).i shl 6 // non-canonical encoding
+//    e = e or (((outChar ushr 11) == 0x1b).i shl 7)  // surrogate half?
+//    e = e or ((outChar > UNICODE_CODEPOINT_MAX).i shl 8)  // out of range?
+//    e = e or ((s[1].i and 0xc0) ushr 2)
+//    e = e or ((s[2].i and 0xc0) ushr 4)
+//    e = e or (s[3].i ushr 6)
+//    e = e xor 0x2a // top two bits of each tail byte correct?
+//    e = e ushr shifte[len]
+//
+//    if (e != 0)
+//        outChar = UNICODE_CODEPOINT_INVALID
+//
+//    return outChar to consumed
+//}
 
 /** return input UTF-8 bytes count */
 fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, textRemaining: Vec1i? = null): Int {
@@ -493,6 +557,7 @@ fun lerp(a: Double, b: Double, t: Float): Double = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float): Int = (a + (b - a) * t).i
 fun lerp(a: Long, b: Long, t: Float): Long = (a + (b - a) * t).L
 fun modPositive(a: Int, b: Int): Int = (a + b) % b
+
 // TODO -> glm
 fun Vec2.lerp(b: Vec2, t: Float): Vec2 = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)

@@ -9,15 +9,15 @@ class ImplBestGL: GLInterface by getNewImpl() {
         private fun getNewImpl(): GLInterface {
             return when {
                 caps.OpenGL32 -> {
-                    glVersion = 150
+                    gGlVersion = 150
                     ImplGL3()
                 }
                 caps.OpenGL30 && Platform.get() != Platform.MACOSX -> {
-                    glVersion = 130
+                    gGlVersion = 130
                     ImplGL3()
                 }
                 caps.OpenGL20 -> {
-                    glVersion = 110
+                    gGlVersion = 110
                     if (Platform.get() == Platform.MACOSX) ImplGL2_mac() else ImplGL2()
                 }
                 else -> throw RuntimeException("OpenGL 2 is not present on this system!")

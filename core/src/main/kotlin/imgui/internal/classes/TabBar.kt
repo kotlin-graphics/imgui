@@ -60,9 +60,12 @@ class TabBarSection {
     var spacing = 0f
 }
 
-/** Storage for a tab bar (sizeof() 92~96 bytes) */
+/** Storage for a tab bar (sizeof() 152 bytes) */
 class TabBar {
+
     val tabs = ArrayList<TabItem>()
+
+    var flags: TabBarFlags = TabBarFlag.None.i
 
     /** Zero for tab-bars used by docking */
     var id: ID = 0
@@ -77,8 +80,9 @@ class TabBar {
     var prevFrameVisible = -1
     var barRect = Rect()
 
+    var currTabsContentsHeight = 0f
     /** Record the height of contents submitted below the tab bar */
-    var lastTabContentHeight = 0f
+    var prevTabsContentsHeight = 0f
 
     /** Actual width of all tabs (locked during layout) */
     var widthAllTabs = 0f
@@ -92,24 +96,26 @@ class TabBar {
     var scrollingSpeed = 0f
     var scrollingRectMinX = 0f
     var scrollingRectMaxX = 0f
-    var flags: TabBarFlags = TabBarFlag.None.i
     var reorderRequestTabId: ID = 0
     var reorderRequestDir = 0
-
-    /** Number of tabs submitted this frame. */
-    var tabsActiveCount = 0
+    var beginCount = 0
 
     var wantLayout = false
     var visibleTabWasSubmitted = false
 
     /** Set to true when a new tab item or button has been added to the tab bar during last frame */
     var tabsAddedNew = false
-
+    /** Number of tabs submitted this frame. */
+    var tabsActiveCount = 0
     /** Index of last BeginTabItem() tab for use by EndTabItem()  */
     var lastTabItemIdx = -1
 
+    var itemSpacingY = 0f
+
     /** style.FramePadding locked at the time of BeginTabBar() */
     var framePadding = Vec2()
+
+    val backupCursorPos = Vec2()
 
     /** For non-docking tab bar we re-append names in a contiguous buffer. */
     val tabsNames = ArrayList<String>()
@@ -138,9 +144,12 @@ class TabBar {
         // Add to stack
         g.currentTabBarStack += tabBarRef
         g.currentTabBar = this
+
+        // Append with multiple BeginTabBar()/EndTabBar() pairs.
+        backupCursorPos put window.dc.cursorPos
         if (currFrameVisible == g.frameCount) {
-            //IMGUI_DEBUG_LOG("BeginTabBarEx already called this frame\n", g.FrameCount);
-//            assert(false)
+            window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
+            beginCount++
             return true
         }
 
@@ -159,12 +168,16 @@ class TabBar {
         wantLayout = true // Layout will be done on the first call to ItemTab()
         prevFrameVisible = currFrameVisible
         currFrameVisible = g.frameCount
+        prevTabsContentsHeight = currTabsContentsHeight
+        currTabsContentsHeight = 0f
+        itemSpacingY = g.style.itemSpacing.y
         framePadding put g.style.framePadding
         tabsActiveCount = 0
+        beginCount = 1
 
         // Layout
         // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
-        window.dc.cursorPos.put(barRect.min.x, barRect.max.y + style.itemSpacing.y)
+        window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
 
         // Draw separator
         val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
@@ -516,16 +529,8 @@ class TabBar {
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) getIDWithSeed("#CLOSE", -1, id) else 0
-        val justClosed = tabItemLabelAndCloseButton(
-            displayDrawList,
-            bb,
-            flags,
-            framePadding,
-            label.toByteArray(),
-            id,
-            closeButtonId,
-            tabContentsVisible
-        )
+        val (justClosed, textClipped) = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding,
+                label.toByteArray(), id, closeButtonId, tabContentsVisible)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
@@ -537,9 +542,9 @@ class TabBar {
 
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
-        if (g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered()) if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip) setTooltip(
-            label.substring(0, findRenderedTextEnd(label))
-        )
+        if (textClipped && g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered())
+            if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
+                setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
         assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)) { "TabItemButton should not be selected" }
         return if (isTabButton) pressed else tabContentsVisible

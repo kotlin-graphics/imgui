@@ -36,7 +36,7 @@ import org.lwjgl.system.Platform
 var glslVersionString = ""
 
 /** Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2) */
-var glVersion = 0
+var gGlVersion = 0
 
 val vertexShader_glsl_120: String by lazy {
     """
@@ -212,12 +212,12 @@ val fontTexture = IntBuffer(1)
 var IMPL_OPENGL_ES2 = false
 var IMPL_OPENGL_ES3 = false
 
-var MAY_HAVE_VTX_OFFSET = lazy { IMPL_OPENGL_ES2 || IMPL_OPENGL_ES3 || glVersion >= 320 }.value
+var MAY_HAVE_VTX_OFFSET = lazy { IMPL_OPENGL_ES2 || IMPL_OPENGL_ES3 || gGlVersion >= 320 }.value
 
 var CLIP_ORIGIN = false
 
 var POLYGON_MODE = true
-var SAMPLER_BINDING = lazy { glVersion >= 330 }.value
+var SAMPLER_BINDING = lazy { gGlVersion >= 330 }.value
 var UNPACK_ROW_LENGTH = true
 
 

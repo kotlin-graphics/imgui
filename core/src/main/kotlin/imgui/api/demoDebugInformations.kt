@@ -79,7 +79,6 @@ import kool.BYTES
 import kool.lim
 import kool.rem
 import uno.kotlin.plusAssign
-import java.nio.ByteBuffer
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -216,7 +215,7 @@ interface demoDebugInformations {
             if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
             if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
-            if (io.configWindowsMemoryCompactTimer >= 0f) text("io.ConfigWindowsMemoryCompactTimer = %.1ff", io.configWindowsMemoryCompactTimer)
+            if (io.configMemoryCompactTimer >= 0f) text("io.configMemoryCompactTimer = %.1f", io.configMemoryCompactTimer)
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
@@ -410,7 +409,8 @@ interface demoDebugInformations {
             //            #endif
 
             treeNode("SettingsIniData", "Settings unpacked data (.ini): ${g.settingsIniData.toByteArray().size} bytes") {
-                inputTextMultiline("##Ini", g.settingsIniData, Vec2(-Float.MIN_VALUE, 0f), InputTextFlag.ReadOnly.i)
+                val size = Vec2(-Float.MIN_VALUE, ImGui.textLineHeight * 20)
+                inputTextMultiline("##Ini", g.settingsIniData, size, InputTextFlag.ReadOnly.i)
             }
         }
 
@@ -634,25 +634,27 @@ interface demoDebugInformations {
             }
 
             fun nodeDrawCmdShowMeshAndBoundingBox(fgDrawList: DrawList, drawList: DrawList, drawCmd: DrawCmd,
-                                                  elemOffset: Int, showMesh: Boolean, showAabb: Boolean) {
+                                                  showMesh: Boolean, showAabb: Boolean) {
                 assert(showMesh || showAabb)
                 val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
+                val vtxBuffer = drawList.vtxBuffer
+                val vtxPointer = drawCmd.vtxOffset
 
                 // Draw wire-frame version of all triangles
                 val clipRect = Rect(drawCmd.clipRect)
                 val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
                 val backupFlags = fgDrawList.flags
-                fgDrawList.flags =
-                        fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
-                for (baseIdx in elemOffset until (elemOffset + drawCmd.elemCount) step 3) {
+                fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                var idxN = drawCmd.idxOffset
+                while (idxN < drawCmd.idxOffset + drawCmd.elemCount) {
                     val triangle = Array(3) { Vec2() }
                     for (n in 0..2) {
-                        val p = drawList.vtxBuffer[idxBuffer?.get(baseIdx + n) ?: baseIdx + n].pos
-                        triangle[n] = p
-                        vtxsRect add p
+                        triangle[n] = vtxBuffer[vtxPointer + (idxBuffer?.get(idxN) ?: idxN)].pos
+                        vtxsRect.add(triangle[n])
+                        idxN++
                     }
                     if (showMesh)
-                        fgDrawList.addPolyline(triangle.toCollection(ArrayList()),COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
+                        fgDrawList.addPolyline(triangle.toList(),COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
                 } // Draw bounding boxes
                 if (showAabb) {
                     fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255)) // In pink: clipping rectangle submitted to GPU
@@ -664,7 +666,12 @@ interface demoDebugInformations {
             /** Note that both 'window' and 'viewport' may be NULL here. Viewport is generally null of destroyed popups which previously owned a viewport. */
             fun nodeDrawList(window: Window?, viewport: ViewportP?, drawList: DrawList, label: String) {
 
-                val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, ${drawList.idxBuffer.lim} indices, ${drawList.cmdBuffer.size} cmds")
+                var cmdCount = drawList.cmdBuffer.size
+                val last = drawList.cmdBuffer.last()
+                if (cmdCount > 0 && last.elemCount == 0 && last.userCallback == null)
+                    cmdCount--
+
+                val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, ${drawList.idxBuffer.lim} indices, $cmdCount cmds")
                 if (drawList === windowDrawList) {
                     sameLine() // Can't display stats for active draw list! (we don't have the data double-buffered)
                     textColored(Vec4(1f, 0.4f, 0.4f, 1f), "CURRENTLY APPENDING")
@@ -674,57 +681,61 @@ interface demoDebugInformations {
                 val fgDrawList = viewport?.let(::getForegroundDrawList)   // Render additional visuals into the top-most draw list
                 if (window != null && fgDrawList != null && isItemHovered())
                     fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
+                if (!nodeOpen)
+                    return
 
-                if (!nodeOpen) return
+                if (window?.wasActive == false)
+                    textDisabled("Warning: owning Window is inactive. This DrawList is not being rendered!")
 
-                if (window?.wasActive == false) textDisabled("Warning: owning Window is inactive. This DrawList is not being rendered!")
-
-                var elemOffset = 0
-                for (cmd in drawList.cmdBuffer) {
+                for (cmdIdx in 0 until cmdCount) {
+                    val cmd = drawList.cmdBuffer[cmdIdx]
                     val cb = cmd.userCallback
-                    if (cb == null && cmd.elemCount == 0) continue
                     if (cb != null) {
-                        bulletText("Callback %s, UserData %s", cb.toString(), String((cmd.userCallbackData as ByteBuffer).array()))
+                        bulletText("Callback $cb, UserData ${cmd.userCallbackData?.toString() ?: "null"}")
                         continue
                     }
 
-                    val idxBuffer = drawList.idxBuffer.takeIf { it.hasRemaining() }
-
-                    var string = ("DrawCmd: %5d triangles, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
-                                    .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                    var string = ("DrawCmd: %5d tris, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
+                            .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
                     val buf = CharArray(300)
                     val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
                     if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
-                            nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, showDrawcmdMesh, showDrawcmdAabb)
+                            nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd,  showDrawcmdMesh, showDrawcmdAabb)
                     if (!cmdNodeOpen) continue
 
                     // Calculate approximate coverage area (touched pixel count)
                     // This will be in pixels squared as long there's no post-scaling happening to the renderer output.
+                    val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
+                    val vtxBuffer = drawList.vtxBuffer
+                    val vtxPointer = cmd.vtxOffset
                     var totalArea = 0f
-                    for (baseIdx in elemOffset until (elemOffset + cmd.elemCount) step 3) {
+                    var idxN = cmd.idxOffset
+                    while (idxN < cmd.idxOffset + cmd.elemCount) {
                         val triangle = Array(3) {
-                            drawList.vtxBuffer[idxBuffer?.get(baseIdx + it) ?: baseIdx + it].pos
+                            vtxBuffer[vtxPointer + (idxBuffer?.get(idxN) ?: idxN)].pos
                         }
                         totalArea += triangleArea(triangle[0], triangle[1], triangle[2])
+                        idxN++
                     }
 
                     // Display vertex information summary. Hover to get all triangles drawn in wire-frame
-                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px".format(totalArea)
+                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px"
+                            .format(totalArea)
                     selectable(string)
                     if (isItemHovered() && fgDrawList != null)
-                            nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, elemOffset, true, false)
+                        nodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd,  true, false)
 
                     // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
                     // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
                     val clipper = ListClipper()
                     clipper.begin(cmd.elemCount / 3)
                     while (clipper.step()) {
-                        var idx_i = elemOffset + clipper.displayStart * 3
+                        var idx_i = cmd.idxOffset + clipper.displayStart * 3
                         for (prim in clipper.displayStart until clipper.displayEnd) {
                             var bufP = 0
                             val triangles = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {
-                                val v = drawList.vtxBuffer[idxBuffer?.get(idx_i) ?: idx_i]
+                                val v = vtxBuffer[vtxPointer + (idxBuffer?.get(idx_i) ?: idx_i)]
                                 triangles[n] put v.pos
                                 val name = if (n == 0) "Vert:" else "     "
                                 val s = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
@@ -735,8 +746,7 @@ interface demoDebugInformations {
 
                             selectable(String(buf), false)
                             if (fgDrawList != null && isItemHovered()) {
-                                val backupFlags =
-                                        fgDrawList.flags // Disable AA on triangle outlines is more readable for very large and thin triangles.
+                                val backupFlags = fgDrawList.flags // Disable AA on triangle outlines is more readable for very large and thin triangles.
                                 fgDrawList.flags = fgDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
                                 fgDrawList.addPolyline(triangles, COL32(255, 255, 0, 255), true, 1f)
                                 fgDrawList.flags = backupFlags
@@ -744,7 +754,6 @@ interface demoDebugInformations {
                         }
                     }
                     treePop()
-                    elemOffset += cmd.elemCount
                 }
                 treePop()
             }

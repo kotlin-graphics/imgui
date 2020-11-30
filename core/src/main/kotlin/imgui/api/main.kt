@@ -214,7 +214,7 @@ interface main {
 
         // Mark all windows as not visible and compact unused memory.
         assert(g.windowsFocusOrder.size == g.windows.size)
-        val memoryCompactStartTime = if (io.configWindowsMemoryCompactTimer >= 0f) g.time.f - io.configWindowsMemoryCompactTimer else Float.MAX_VALUE
+        val memoryCompactStartTime = if (io.configMemoryCompactTimer >= 0f) g.time.f - io.configMemoryCompactTimer else Float.MAX_VALUE
         g.windows.forEach {
             it.wasActive = it.active
             it.beginCount = 0

@@ -104,6 +104,8 @@ interface dragAndDrop {
                 g.dragDropActive = true
                 g.dragDropSourceFlags = flags
                 g.dragDropMouseButton = mouseButton
+                if (payload.sourceId == g.activeId)
+                    g.activeIdNoClearOnFocusLoss = true
             }
 
             g.dragDropSourceFrameCount = g.frameCount
@@ -224,7 +226,7 @@ interface dragAndDrop {
         val wasAcceptedPreviously = g.dragDropAcceptIdPrev == g.dragDropTargetId
         val r = Rect(g.dragDropTargetRect)
         val rSurface = r.width * r.height
-        if (rSurface < g.dragDropAcceptIdCurrRectSurface) {
+        if (rSurface <= g.dragDropAcceptIdCurrRectSurface) {
             g.dragDropAcceptFlags = flags
             g.dragDropAcceptIdCurr = g.dragDropTargetId
             g.dragDropAcceptIdCurrRectSurface = rSurface

@@ -364,7 +364,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
      *  We avoid using the ImVec2 math operators here to reduce cost to a minimum for debug/non-inlined builds. */
-    fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness_: Float) {
+    fun addPolyline(points: List<Vec2>, col: Int, closed: Boolean, thickness_: Float) {
 
         var thickness = thickness_
 
