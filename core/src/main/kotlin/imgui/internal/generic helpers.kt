@@ -297,117 +297,114 @@ fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
     return 0
 }
 
+///** read one character. return input UTF-8 bytes count
+// *  @return [JVM] [char: Int, bytes: Int] */
+//fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
+//    var str = textBegin
+//    fun s(i: Int = 0) = text[i + str].toUInt()
+//    fun spp() = text[str++].toUInt()
+//    val invalid = UNICODE_CODEPOINT_INVALID // will be invalid but not end of string
+//    if ((s() and 0x80) == 0) return spp() to 1
+//    if ((s() and 0xe0) == 0xc0) {
+//        if (textEnd != 0 && textEnd - str < 2) return invalid to 1
+//        if (s() < 0xc2) return invalid to 2
+//        var c = (spp() and 0x1f) shl 6
+//        if ((s() and 0xc0) != 0x80) return invalid to 2
+//        c += (spp() and 0x3f)
+//        return c to 2
+//    }
+//    if ((s() and 0xf0) == 0xe0) {
+//        if (textEnd != 0 && textEnd - str < 3) return invalid to 1
+//        if (s() == 0xe0 && (s(1) < 0xa0 || s(1) > 0xbf)) return invalid to 3
+//        if (s() == 0xed && s(1) > 0x9f) return invalid to 3 // str[1] < 0x80 is checked below
+//        var c = (spp() and 0x0f) shl 12
+//        if ((s() and 0xc0) != 0x80) return invalid to 3
+//        c += (spp() and 0x3f) shl 6
+//        if ((s() and 0xc0) != 0x80) return invalid to 3
+//        c += spp() and 0x3f
+//        return c to 3
+//    }
+//    if ((s() and 0xf8) == 0xf0) {
+//        if (textEnd != 0 && textEnd - str < 4) return invalid to 1
+//        if (s() > 0xf4) return invalid to 4
+//        if (s() == 0xf0 && (s(1) < 0x90 || s(1) > 0xbf)) return invalid to 4
+//        if (s() == 0xf4 && s(1) > 0x8f) return invalid to 4 // str[1] < 0x80 is checked below
+//        var c = (spp() and 0x07) shl 18
+//        if ((s() and 0xc0) != 0x80) return invalid to 4
+//        c += (spp() and 0x3f) shl 12
+//        if ((s() and 0xc0) != 0x80) return invalid to 4
+//        c += (spp() and 0x3f) shl 6
+//        if ((s() and 0xc0) != 0x80) return invalid to 4
+//        c += spp() and 0x3f
+//        // utf-8 encodings of values used in surrogate pairs are invalid
+//        if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
+//        // If codepoint does not fit in ImWchar, use replacement character U+FFFD instead
+//        if (c >= UNICODE_CODEPOINT_MAX) c = UNICODE_CODEPOINT_INVALID
+//        return c to 4
+//    }
+//    return 0 to 0
+//}
+
+
 private val lengths = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0)
 private val masks = intArrayOf(0x00, 0x7f, 0x1f, 0x0f, 0x07)
-private val mins = intArrayOf(4194304, 0, 128, 2048, 65536)
+private val mins = intArrayOf(0x400000, 0, 0x80, 0x800, 0x10000)
 private val shiftc = intArrayOf(0, 18, 12, 6, 0)
 private val shifte = intArrayOf(0, 6, 4, 2, 0)
 
 /** read one character. return input UTF-8 bytes count
- *  @return [JVM] [char: Int, bytes: Int] */
-fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
-    var str = textBegin
-    fun s(i: Int = 0) = text[i + str].toUInt()
-    fun spp() = text[str++].toUInt()
-    val invalid = UNICODE_CODEPOINT_INVALID // will be invalid but not end of string
-    if ((s() and 0x80) == 0) return spp() to 1
-    if ((s() and 0xe0) == 0xc0) {
-        if (textEnd != 0 && textEnd - str < 2) return invalid to 1
-        if (s() < 0xc2) return invalid to 2
-        var c = (spp() and 0x1f) shl 6
-        if ((s() and 0xc0) != 0x80) return invalid to 2
-        c += (spp() and 0x3f)
-        return c to 2
-    }
-    if ((s() and 0xf0) == 0xe0) {
-        if (textEnd != 0 && textEnd - str < 3) return invalid to 1
-        if (s() == 0xe0 && (s(1) < 0xa0 || s(1) > 0xbf)) return invalid to 3
-        if (s() == 0xed && s(1) > 0x9f) return invalid to 3 // str[1] < 0x80 is checked below
-        var c = (spp() and 0x0f) shl 12
-        if ((s() and 0xc0) != 0x80) return invalid to 3
-        c += (spp() and 0x3f) shl 6
-        if ((s() and 0xc0) != 0x80) return invalid to 3
-        c += spp() and 0x3f
-        return c to 3
-    }
-    if ((s() and 0xf8) == 0xf0) {
-        if (textEnd != 0 && textEnd - str < 4) return invalid to 1
-        if (s() > 0xf4) return invalid to 4
-        if (s() == 0xf0 && (s(1) < 0x90 || s(1) > 0xbf)) return invalid to 4
-        if (s() == 0xf4 && s(1) > 0x8f) return invalid to 4 // str[1] < 0x80 is checked below
-        var c = (spp() and 0x07) shl 18
-        if ((s() and 0xc0) != 0x80) return invalid to 4
-        c += (spp() and 0x3f) shl 12
-        if ((s() and 0xc0) != 0x80) return invalid to 4
-        c += (spp() and 0x3f) shl 6
-        if ((s() and 0xc0) != 0x80) return invalid to 4
-        c += spp() and 0x3f
-        // utf-8 encodings of values used in surrogate pairs are invalid
-        if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
-        // If codepoint does not fit in ImWchar, use replacement character U+FFFD instead
-        if (c >= UNICODE_CODEPOINT_MAX) c = UNICODE_CODEPOINT_INVALID
-        return c to 4
-    }
-    return 0 to 0
-}
+ *
+ *  Convert UTF-8 to 32-bit character, process single character input.
+ *  Based on work of Christopher Wellons (https://github.com/skeeto/branchless-utf8)
+ *  We handle UTF-8 decoding error by skipping forward.
+ *
+ *  @return [JVM] [char: Int, bytes: Int]
+ *
+ *  ~ImTextCharFromUtf8 */
+fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
 
-///** read one character. return input UTF-8 bytes count
-// *
-// *  Convert UTF-8 to 32-bit character, process single character input.
-// *  Based on work of Christopher Wellons (https://github.com/skeeto/branchless-utf8)
-// *  We handle UTF-8 decoding error by skipping forward.
-// *
-// *  @return [JVM] [char: Int, bytes: Int]
-// *
-// *  ~ImTextCharFromUtf8 */
-//fun textCharFromUtf8(text: ByteArray, begin: Int = 0, end_: Int = text.strlen()): Pair<Int, Int> {
-//
-//    var end = end_
-//
-//    val s = ByteArray(4)
-//    val len = lengths[text[begin].i ushr 3]
-//
-//    if (end_ == -1)
-//        end = len + if (len == 0) 1 else 0 // Max length, nulls will be taken into account.
-//
-//    // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
-//    s[0] = if (begin + 0 < end) text[0] else 0
-//    s[1] = if (s[0] != 0.b && begin + 1 < end) text[begin + 1] else 0
-//    s[2] = if (s[1] != 0.b && begin + 2 < end) text[begin + 2] else 0
-//    s[3] = if (s[2] != 0.b && begin + 3 < end) text[begin + 3] else 0
-//
-//    // Compute the pointer to the next character early so that the next
-//    // iteration can start working on the next character. Neither Clang
-//    // nor GCC figure out this reordering on their own.
-//    //const unsigned char *next = s + len + !len;
-//
-//    // No bytes are consumed when *in_text == 0 || in_text == in_text_end.
-//    // One byte is consumed in case of invalid first byte of in_text.
-//    // All available bytes (at most `len` bytes) are consumed on incomplete/invalid second to last bytes.
-//    val consumed = (s[0] != 0.b).i + (s[1] != 0.b).i + (s[2] != 0.b).i + (s[3] != 0.b).i
-//
-//    // Assume a four-byte character and load four bytes. Unused bits are shifted out.
-//    var outChar = (s[0].i and masks[len]) shl 18
-//    outChar = outChar or ((s[1].i and 0x3f) shl 12)
-//    outChar = outChar or ((s[2].i and 0x3f) shl 6)
-//    outChar = outChar or ((s[3].i and 0x3f) shl 0)
-//    outChar = outChar ushr shiftc[len]
-//
-//    // Accumulate the various error conditions.
-//    var e = (outChar < mins[len]).i shl 6 // non-canonical encoding
-//    e = e or (((outChar ushr 11) == 0x1b).i shl 7)  // surrogate half?
-//    e = e or ((outChar > UNICODE_CODEPOINT_MAX).i shl 8)  // out of range?
-//    e = e or ((s[1].i and 0xc0) ushr 2)
-//    e = e or ((s[2].i and 0xc0) ushr 4)
-//    e = e or (s[3].i ushr 6)
-//    e = e xor 0x2a // top two bits of each tail byte correct?
-//    e = e ushr shifte[len]
-//
-//    if (e != 0)
-//        outChar = UNICODE_CODEPOINT_INVALID
-//
-//    return outChar to consumed
-//}
+    var end = textEnd
+
+    val len = lengths[text[begin].i ushr 3]
+    var wanted = len + (len == 0).i
+
+    if (textEnd == -1)
+        end = len + if (len == 0) 1 else 0 // Max length, nulls will be taken into account.
+
+    // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
+    val s = ByteArray(4)
+    s[0] = if (begin + 0 < end) text[0] else 0
+    s[1] = if (s[0] != 0.b && begin + 1 < end) text[begin + 1] else 0
+    s[2] = if (s[1] != 0.b && begin + 2 < end) text[begin + 2] else 0
+    s[3] = if (s[2] != 0.b && begin + 3 < end) text[begin + 3] else 0
+
+    // Assume a four-byte character and load four bytes. Unused bits are shifted out.
+    var outChar = (s[0].i and masks[len]) shl 18
+    outChar = outChar or ((s[1].i and 0x3f) shl 12)
+    outChar = outChar or ((s[2].i and 0x3f) shl 6)
+    outChar = outChar or ((s[3].i and 0x3f) shl 0)
+    outChar = outChar ushr shiftc[len]
+
+    // Accumulate the various error conditions.
+    var e = (outChar < mins[len]).i shl 6 // non-canonical encoding
+    e = e or (((outChar ushr 11) == 0x1b).i shl 7)  // surrogate half?
+    e = e or ((outChar > UNICODE_CODEPOINT_MAX).i shl 8)  // out of range?
+    e = e or ((s[1].i and 0xc0) ushr 2)
+    e = e or ((s[2].i and 0xc0) ushr 4)
+    e = e or (s[3].i ushr 6)
+    e = e xor 0x2a // top two bits of each tail byte correct?
+    e = e ushr shifte[len]
+
+    if (e != 0) {
+        // No bytes are consumed when *in_text == 0 || in_text == in_text_end.
+        // One byte is consumed in case of invalid first byte of in_text.
+        // All available bytes (at most `len` bytes) are consumed on incomplete/invalid second to last bytes.
+        // Invalid or incomplete input may consume less bytes than wanted, therefore every byte has to be inspected in s.
+        wanted = min(wanted, s[0].bool.i + s[1].bool.i + s[2].bool.i + s[3].bool.i)
+        outChar = UNICODE_CODEPOINT_INVALID
+    }
+    return outChar to wanted
+}
 
 /** return input UTF-8 bytes count */
 fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, textRemaining: Vec1i? = null): Int {
