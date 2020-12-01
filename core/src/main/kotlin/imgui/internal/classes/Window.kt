@@ -552,10 +552,8 @@ class Window(var context: Context,
     // Garbage collection
 
     /** Free up/compact internal window buffers, we can use this when a window becomes unused.
-     *  This is currently unused by the library, but you may call this yourself for easy GC.
      *  Not freed:
-     *  - ImGuiWindow, ImGuiWindowSettings, Name
-     *  - StateStorage, ColumnsStorage (may hold useful data)
+     *  - ImGuiWindow, ImGuiWindowSettings, Name, StateStorage, ColumnsStorage (may hold useful data)
      *  This should have no noticeable visual effect. When the window reappear however, expect new allocation/buffer growth/copy cost.
      *
      *  ~gcCompactTransientWindowBuffers */
