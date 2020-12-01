@@ -8,7 +8,6 @@ import imgui.api.g
 import imgui.classes.Context
 import imgui.internal.*
 import imgui.internal.sections.*
-import java.lang.StringBuilder
 
 
 //-----------------------------------------------------------------------------
@@ -16,12 +15,10 @@ import java.lang.StringBuilder
 //-----------------------------------------------------------------------------
 
 
-
 /** Stacked color modifier, backup of modified data so we can restore it    */
 class ColorMod(val col: Col, value: Vec4) {
     val backupValue = Vec4(value)
 }
-
 
 
 /** Type information associated to one ImGuiDataType. Retrieve with DataTypeGetInfo(). */
@@ -140,6 +137,10 @@ class NavMoveResult {
     }
 }
 
+//-----------------------------------------------------------------------------
+// [SECTION] Metrics, Debug
+//-----------------------------------------------------------------------------
+
 /** Storage for ShowMetricsWindow() and DebugNodeXXX() functions */
 class MetricsConfig {
     var showWindowsRects = false
@@ -149,6 +150,47 @@ class MetricsConfig {
     var showDrawCmdBoundingBoxes = true
     var showWindowsRectsType = -1
     var showTablesRectsType = -1
+}
+
+class StackSizes {
+    var sizeOfIDStack = 0
+    var sizeOfColorStack = 0
+    var sizeOfStyleVarStack = 0
+    var sizeOfFontStack = 0
+    var sizeOfFocusScopeStack = 0
+    var sizeOfGroupStack = 0
+    var sizeOfBeginPopupStack = 0
+
+    /** Save current stack sizes for later compare */
+    fun setToCurrentState() {
+        val window = g.currentWindow!!
+        sizeOfIDStack = window.idStack.size
+        sizeOfColorStack = g.colorStack.size
+        sizeOfStyleVarStack = g.styleVarStack.size
+        sizeOfFontStack = g.fontStack.size
+        sizeOfFocusScopeStack = g.focusScopeStack.size
+        sizeOfGroupStack = g.groupStack.size
+        sizeOfBeginPopupStack = g.beginPopupStack.size
+    }
+
+    /** Compare to detect usage errors */
+    fun compareWithCurrentState() {
+
+        val window = g.currentWindow!!
+
+        // Window stacks
+        // NOT checking: DC.ItemWidth, DC.TextWrapPos (per window) to allow user to conveniently push once and not pop (they are cleared on Begin)
+        assert(sizeOfIDStack == window.idStack.size) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
+
+        // Global stacks
+        // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
+        assert(sizeOfGroupStack == g.groupStack.size) { "BeginGroup/EndGroup Mismatch!" }
+        assert(sizeOfBeginPopupStack == g.beginPopupStack.size) { "BeginPopup/EndPopup or BeginMenu/EndMenu Mismatch!" }
+        assert(sizeOfColorStack >= g.colorStack.size) { "PushStyleColor/PopStyleColor Mismatch!" }
+        assert(sizeOfStyleVarStack >= g.styleVarStack.size) { "PushStyleVar/PopStyleVar Mismatch!" }
+        assert(sizeOfFontStack >= g.fontStack.size) { "PushFont/PopFont Mismatch!" }
+        assert(sizeOfFocusScopeStack == g.focusScopeStack.size) { "PushFocusScope/PopFocusScope Mismatch!" }
+    }
 }
 
 /** Storage for SetNextWindow** functions    */
@@ -206,6 +248,7 @@ class ShrinkWidthItem(var index: Int = 0, var width: Float = 0f) {
         width = other.width
     }
 }
+
 class PtrOrIndex(
         /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
         val ptr: TabBar?,
@@ -253,7 +296,7 @@ typealias ReadLineFn = (ctx: Context, handler: SettingsHandler, entry: Any, line
 typealias ApplyAllFn = (ctx: Context, handler: SettingsHandler) -> Unit
 
 /** Write: Output every entries into 'out_buf' */
-typealias WriteAllFn  = (ctx: Context, handler: SettingsHandler, outBuf: StringBuilder) -> Unit
+typealias WriteAllFn = (ctx: Context, handler: SettingsHandler, outBuf: StringBuilder) -> Unit
 
 
 /** Stacked style modifier, backup of modified data so we can restore it. Data type inferred from the variable. */
@@ -292,7 +335,6 @@ class TabItem {
     /** Marked as closed by SetTabItemClosed() */
     var wantClose = false
 }
-
 
 
 //-----------------------------------------------------------------------------

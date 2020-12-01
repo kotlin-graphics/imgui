@@ -124,8 +124,10 @@ interface windows {
         // Add to stack
         // We intentionally set g.CurrentWindow to NULL to prevent usage until when the viewport is set, then will call SetCurrentWindow()
         g.currentWindowStack += window
+        g.currentWindow = window
+        window.dc.stackSizesOnBegin.setToCurrentState()
         g.currentWindow = null
-        errorCheckBeginEndCompareStacksSize(window, true)
+
         if (flags has Wf._Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
@@ -732,8 +734,9 @@ interface windows {
 
         // Pop from window stack
         g.currentWindowStack.pop()
-        if (window.flags has Wf._Popup) g.beginPopupStack.pop()
-        errorCheckBeginEndCompareStacksSize(window, false)
+        if (window.flags has Wf._Popup)
+            g.beginPopupStack.pop()
+        window.dc.stackSizesOnBegin.compareWithCurrentState()
         setCurrentWindow(g.currentWindowStack.lastOrNull())
     }
 }
