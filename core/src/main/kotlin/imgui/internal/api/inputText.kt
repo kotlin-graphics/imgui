@@ -176,9 +176,10 @@ internal interface inputText {
 
         var scrollY = if (isMultiline) drawWindow.scroll.y else Float.MAX_VALUE
 
+        val initChangedSpecs = state != null && state.stb.singleLine != !isMultiline
         val initMakeActive = focusRequested || userClicked || userScrollFinish || userNavInputStart
         val initState = initMakeActive || userScrollActive
-        if (initState && g.activeId != id) {
+        if ((initState && g.activeId != id) || initChangedSpecs) {
             // Access state even if we don't own it yet.
             state = g.inputTextState
             state.cursorAnimReset()
@@ -187,8 +188,7 @@ internal interface inputText {
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             val bufLen = buf.strlen()
             if (state.initialTextA.size < bufLen)
-                state.initialTextA =
-                        ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+                state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             else if (state.initialTextA.size > bufLen)
                 state.initialTextA[bufLen] = 0
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
@@ -201,12 +201,11 @@ internal interface inputText {
 //            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
-            state.curLenA =
-                    bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
+            state.curLenA = bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
 
             /*  Preserve cursor position and undo/redo stack if we come back to same widget
                 For non-readonly widgets we might be able to require that TextAIsValid && TextA == buf ? (untested) and discard undo stack if user buffer has changed. */
-            val recycleState = state.id == id
+            val recycleState = state.id == id && !initChangedSpecs
             if (recycleState)
             /*  Recycle existing cursor/selection/undo stack but clamp position
                 Note a single mouse click will override the cursor/position immediately by calling
