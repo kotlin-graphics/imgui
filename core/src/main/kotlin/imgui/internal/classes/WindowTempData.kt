@@ -85,7 +85,7 @@ class WindowTempData {
     /** Current persistent per-window storage (store e.g. tree node open/close state) */
     var stateStorage = HashMap<ID, Boolean>()
     /** Current columns set */
-    var currentColumns: Columns? = null
+    var currentColumns: OldColumns? = null
 
     var layoutType = LayoutType.Horizontal
 

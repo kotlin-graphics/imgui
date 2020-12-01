@@ -14,7 +14,7 @@ import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
 import imgui.internal.*
-import imgui.internal.sections.Columns
+import imgui.internal.sections.OldColumns
 import imgui.internal.sections.OldColumnsFlags
 import imgui.internal.sections.has
 import imgui.internal.sections.hasnt
@@ -164,7 +164,7 @@ interface columns {
 
         val COLUMNS_HIT_RECT_HALF_WIDTH = 4f
 
-        fun getDraggedColumnOffset(columns: Columns, columnIndex: Int): Float {
+        fun getDraggedColumnOffset(columns: OldColumns, columnIndex: Int): Float {
             /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge
                 of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
                 enforce absolute positioning.   */
@@ -181,7 +181,7 @@ interface columns {
             return x
         }
 
-        fun getColumnWidthEx(columns: Columns, columnIndex_: Int, beforeResize: Boolean = false): Float {
+        fun getColumnWidthEx(columns: OldColumns, columnIndex_: Int, beforeResize: Boolean = false): Float {
             val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
             val offsetNorm = when {

@@ -52,8 +52,8 @@ infix fun OldColumnsFlags.hasnt(b: OldColumnsFlag): Boolean = and(b.i) == 0
 infix fun OldColumnsFlags.wo(b: OldColumnsFlag): OldColumnsFlags = and(b.i.inv())
 
 
-/** Storage data for a single column */
-class ColumnData {
+/** Storage data for a single column for legacy Columns() api */
+class OldColumnData {
     /** Column start offset, normalized 0f (far left) -> 1f (far right) */
     var offsetNorm = 0f
     var offsetNormBeforeResize = 0f
@@ -63,8 +63,8 @@ class ColumnData {
     var clipRect = Rect()
 }
 
-/** Storage data for a columns set */
-class Columns {
+/** Storage data for a columns set for legacy Columns() api */
+class OldColumns {
     var id: ID = 0
     var flags: OldColumnsFlags = OldColumnsFlag.None.i
     var isFirstFrame = false
@@ -94,7 +94,7 @@ class Columns {
     var hostBackupParentWorkRect = Rect()
     var lineMinY = 0f
     var lineMaxY = 0f
-    val columns = ArrayList<ColumnData>()
+    val columns = ArrayList<OldColumnData>()
     val splitter = DrawListSplitter()
 
     fun destroy() = splitter.clearFreeMemory(destroy = true)

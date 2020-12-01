@@ -230,7 +230,7 @@ class Window(var context: Context,
 
     var stateStorage = HashMap<ID, Boolean>()
 
-    val columnsStorage = ArrayList<Columns>()
+    val columnsStorage = ArrayList<OldColumns>()
 
     /** User scale multiplier per-window, via SetWindowFontScale() */
     var fontWindowScale = 1f
@@ -686,12 +686,12 @@ class Window(var context: Context,
     // Internal API, new columns API
 
 
-    fun findOrCreateColumns(id: ID): Columns {
+    fun findOrCreateColumns(id: ID): OldColumns {
 
         // We have few columns per window so for now we don't need bother much with turning this into a faster lookup.
         for (c in columnsStorage) if (c.id == id) return c
 
-        return Columns().also {
+        return OldColumns().also {
             columnsStorage += it
             it.id = id
         }

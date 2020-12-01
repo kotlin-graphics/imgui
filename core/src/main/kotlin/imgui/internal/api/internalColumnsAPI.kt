@@ -23,7 +23,7 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.internal.classes.Window
-import imgui.internal.sections.ColumnData
+import imgui.internal.sections.OldColumnData
 import imgui.internal.sections.OldColumnsFlag
 import imgui.internal.sections.OldColumnsFlags
 import imgui.internal.sections.hasnt
@@ -90,7 +90,7 @@ internal interface internalColumnsAPI {
         columns.isFirstFrame = columns.columns.isEmpty()
         if (columns.columns.isEmpty())
             for (i in 0..columnsCount)
-                columns.columns += ColumnData().apply { offsetNorm = i / columnsCount.f }
+                columns.columns += OldColumnData().apply { offsetNorm = i / columnsCount.f }
 
         for (n in 0 until columnsCount) {
             // Compute clipping rectangle
