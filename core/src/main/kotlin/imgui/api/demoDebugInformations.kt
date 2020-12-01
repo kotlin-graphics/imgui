@@ -199,14 +199,15 @@ interface demoDebugInformations {
         end()
     }
 
-    /** Create Debug/Metrics window. display Dear ImGui internals: draw commands (with individual draw calls and vertices),
-     *  window list, basic internal state, etc.    */
+    /** create Metrics/Debugger window. display Dear ImGui internals: windows, draw commands, various internal state, etc. */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
-        if (!begin("Dear ImGui Metrics", open)) {
+        if (!begin("Dear ImGui Metrics/Debugger", open)) {
             end()
             return
         }
+
+        val cfg = g.debugMetricsConfig
 
         // Basic info
         text("Dear ImGui $version")
@@ -217,6 +218,12 @@ interface demoDebugInformations {
         //SameLine(); if (SmallButton("GC")) { g.GcCompactAll = true; }
 
         separator()
+
+        // Debugging enums
+        if (cfg.showWindowsRectsType < 0)
+            cfg.showWindowsRectsType = WRT.WorkRect.ordinal
+        if (cfg.showTablesRectsType < 0)
+            cfg.showTablesRectsType = TRT.WorkRect.ordinal
 
         // Helper functions to display common structures:
         // - NodeDrawList()

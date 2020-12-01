@@ -160,7 +160,7 @@ object ExampleApp {
                 menuItem("Documents", "", show::documents)
             }
             menu("Tools") {
-                menuItem("Metrics", "", show::metrics)
+                menuItem("Metrics/Debugger", "", show::metrics)
                 menuItem("Style Editor", "", show::styleEditor)
                 menuItem("About Dear ImGui", "", show::about)
             }
@@ -175,7 +175,7 @@ object ExampleApp {
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
-                    "and Metrics (general purpose Dear ImGui debugging tool).")
+                    "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
             separator()
 
             text("PROGRAMMER GUIDE:")
