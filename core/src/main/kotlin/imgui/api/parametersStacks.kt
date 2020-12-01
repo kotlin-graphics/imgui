@@ -255,8 +255,8 @@ interface parametersStacks {
 
     // Parameters stacks (current window)
 
-    /** push width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
-     *  (so -1.0f always align width to the right side). 0.0f = default to ~2/3 of windows width,     */
+    /** push width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the
+     *  right of window (so -FLT_MIN always align width to the right side). 0.0f = default to ~2/3 of windows width, */
     fun pushItemWidth(itemWidth: Int) = pushItemWidth(itemWidth.f)
 
     fun pushItemWidth(itemWidth: Float) {
@@ -274,8 +274,8 @@ interface parametersStacks {
         }
     }
 
-    /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
-     *  (so -1.0f always align width to the right side) */
+    /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the
+     *  right of window (so -FLT_MIN always align width to the right side) */
     fun setNextItemWidth(itemWidth: Float) {
         g.nextItemData.flags = g.nextItemData.flags or NextItemDataFlag.HasWidth
         g.nextItemData.width = itemWidth
