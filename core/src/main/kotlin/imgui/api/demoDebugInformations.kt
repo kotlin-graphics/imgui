@@ -70,7 +70,7 @@ import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
 import imgui.internal.classes.Window
-import imgui.internal.sections.Columns
+import imgui.internal.sections.OldColumns
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.WindowSettings
 import imgui.internal.sections.wo
@@ -676,7 +676,7 @@ interface demoDebugInformations {
                 treePop()
             }
 
-            fun nodeColumns(columns: Columns) {
+            fun nodeColumns(columns: OldColumns) {
                 if (!treeNode(columns.id,
                                 "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X",
                                 columns.id,
