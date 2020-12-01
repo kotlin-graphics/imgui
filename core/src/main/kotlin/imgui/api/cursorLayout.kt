@@ -92,13 +92,13 @@ interface cursorLayout {
         itemAdd(bb, 0)
     }
 
-    /** move content position toward the right, by style.indentSpacing or indentW if != 0    */
+    /** move content position toward the right, by indent_w, or style.IndentSpacing if indent_w <= 0 */
     fun indent(indentW: Float = 0f) = with(currentWindow) {
         dc.indent += if (indentW != 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indent + dc.columnsOffset
     }
 
-    /** move content position back to the left, by style.IndentSpacing or indentW if != 0    */
+    /** move content position back to the left, by indent_w, or style.IndentSpacing if indent_w <= 0 */
     fun unindent(indentW: Float = 0f) = with(currentWindow) {
         dc.indent -= if (indentW != 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indent + dc.columnsOffset

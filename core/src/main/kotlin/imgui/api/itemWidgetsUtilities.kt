@@ -64,9 +64,11 @@ interface itemWidgetsUtilities {
     val isItemActive: Boolean
         get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
-    /** Is the last item focused for keyboard/gamepad navigation?   */
+    /** Is the last item focused for keyboard/gamepad navigation?
+     *
+     *  == GetItemID() == GetFocusID() */
     val isItemFocused: Boolean
-        get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
+        get() = !(g.navId != g.currentWindow!!.dc.lastItemId || g.navId == 0)
 
     /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
     fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =
