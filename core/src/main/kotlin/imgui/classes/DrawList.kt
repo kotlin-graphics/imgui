@@ -1270,7 +1270,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     infix fun addTo(outList: ArrayList<DrawList>) {
 
         // Remove trailing command if unused.
-        // Technically we could return directly instead of popping, but this make things looks neat in Metrics window as well.
+        // Technically we could return directly instead of popping, but this make things looks neat in Metrics/Debugger window as well.
         _popUnusedDrawCmd()
         if (cmdBuffer.empty()) return
 
@@ -1286,7 +1286,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
             If this assert triggers because you are drawing lots of stuff manually:
             - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
-              Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics window to inspect draw list contents.
+              Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics/Debugger window to inspect draw list contents.
             - If you want large meshes with more than 64K vertices, you can either:
               (A) Handle the ImDrawCmd::VtxOffset value in your renderer backend, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
                   Most example backends already support this from 1.71. Pre-1.71 backends won't.
