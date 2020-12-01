@@ -490,7 +490,7 @@ class Window(var context: Context,
      *  If you want a window to never be focused, you may use the e.g. NoInputs flag.
      *  ~ IsWindowNavFocusable */
     val isNavFocusable: Boolean
-        get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
+        get() = wasActive && this === rootWindow && flags hasnt Wf.NoNavFocus
 
     /** ~GetWindowAllowedExtentRect */
     fun getAllowedExtentRect(): Rect {
