@@ -115,12 +115,12 @@ interface tabBarsTabs {
         val tabBar = g.currentTabBar
         val isWithinManualTabBar = tabBar != null && tabBar.flags hasnt TabBarFlag._DockNode
         if (isWithinManualTabBar) {
-            val tabId = tabBar!! calcTabID label
+            val tabId = tabBar!!.calcTabID(label, null)
             tabBar.findTabByID(tabId)?.wantClose = true // Will be processed by next call to TabBarLayout()
         } else findWindowByName(label)?.let { window ->
             if (window.dockIsActive)
                 window.dockNode?.let { node ->
-                val tabId = node.tabBar!! calcTabID label
+                val tabId = node.tabBar!!.calcTabID(label, window)
                 node.tabBar!! removeTab tabId
                 window.dockTabWantClose = true
             }

@@ -63,14 +63,15 @@ enum class DataAuthority { Auto, DockNode, Window }
 enum class DockNodeState { Unknown, HostWindowHiddenBecauseSingleWindow, HostWindowHiddenBecauseWindowsAreResizing, HostWindowVisible }
 
 // sizeof() 116~160
-class DockNode(
-        val id: ID) {
+class DockNode(val id: ID) {
 
     /** Flags shared by all nodes of a same dockspace hierarchy (inherited from the root node) */
     var sharedFlags = DockNodeFlag.None.i
 
     /** Flags specific to this node */
     var localFlags = DockNodeFlag.None.i
+
+    var state = DockNodeState.Unknown
 
     var parentNode: DockNode? = null
 
@@ -97,8 +98,6 @@ class DockNode(
     /** [Root node only] */
     var windowClass = WindowClass()
 
-
-    var state = DockNodeState.Unknown
 
     var hostWindow: Window? = null
 

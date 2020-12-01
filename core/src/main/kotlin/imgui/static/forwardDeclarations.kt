@@ -151,10 +151,6 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
 // AddDrawListToDrawData is a DrawList class method
 
-/** ~GetViewportRect */
-val viewportRect: Rect
-    get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
-
 //-----------------------------------------------------------------------------
 // Settings
 //-----------------------------------------------------------------------------

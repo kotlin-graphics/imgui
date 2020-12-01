@@ -168,14 +168,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 //    // (default to posix malloc/free)
 //    void*       (*MemAllocFn)(size_t sz);
 //    void        (*MemFreeFn)(void* ptr);
-//
-    // TODO remove
-//    // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
-//    // (default to use native imm32 api on Windows)
-//    val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
-//
-//    /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
-//    var imeWindowHandle: HWND = HWND(MemoryUtil.NULL)
 
     //------------------------------------------------------------------
     // Input - Fill before calling NewFrame()

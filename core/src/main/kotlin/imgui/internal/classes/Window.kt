@@ -26,7 +26,6 @@ import imgui.api.g
 import imgui.classes.*
 import imgui.internal.*
 import imgui.internal.sections.*
-import imgui.static.viewportRect
 import kool.cap
 import java.util.*
 import kotlin.collections.ArrayList
@@ -1063,6 +1062,11 @@ class Window(var context: Context,
                 clipR)
         }
     }
+
+    fun endFrameDrawDimmedBackgrounds() {
+
+    }
+
 
     /** ~ClampWindowRect */
     infix fun clampRect(visibilityRect: Rect) {
