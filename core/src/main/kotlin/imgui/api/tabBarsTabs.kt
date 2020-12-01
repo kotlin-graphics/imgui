@@ -88,7 +88,8 @@ interface tabBarsTabs {
         val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
         assert(tabBar.lastTabItemIdx >= 0)
         val tab = tabBar.tabs[tabBar.lastTabItemIdx]
-        if (tab.flags hasnt TabItemFlag.NoPushId) window.idStack.pop()
+        if (tab.flags hasnt TabItemFlag.NoPushId)
+            popID()
     }
 
     /** create a Tab behaving like a button. return true when clicked. cannot be selected in the tab bar. */
