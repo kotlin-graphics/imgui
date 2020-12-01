@@ -596,9 +596,15 @@ internal interface inputText {
                             state.cursorFollow = true
                         }
                         if (cbData.selectionStart != utf8SelectionStart || bufDirty)
-                            state.stb.selectStart = textCountCharsFromUtf8(cbData.buf, cbData.selectionStart)
+                            state.stb.selectStart = when {
+                                cbData.selectionStart == cbData.cursorPos -> state.stb.cursor
+                                else -> textCountCharsFromUtf8(cbData.buf, cbData.selectionStart)
+                            }
                         if (cbData.selectionEnd != utf8SelectionEnd || bufDirty)
-                            state.stb.selectEnd = textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd)
+                            state.stb.selectEnd = when {
+                                cbData.selectionEnd == cbData.selectionStart -> state.stb.selectStart
+                                else -> textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd)
+                            }
                         if (bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {

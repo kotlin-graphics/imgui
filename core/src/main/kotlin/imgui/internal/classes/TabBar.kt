@@ -765,7 +765,7 @@ class TabBar {
                 if (tabToScrollTo!!.flags has TabItemFlag._Button) {
                     targetOrder += selectDir
                     selectedOrder += selectDir
-                    tabToScrollTo = if (targetOrder <= 0 || targetOrder >= tabs.size) tabToScrollTo else null
+                    tabToScrollTo = if (targetOrder < 0 || targetOrder >= tabs.size) tabToScrollTo else null
                 }
             }
         }
