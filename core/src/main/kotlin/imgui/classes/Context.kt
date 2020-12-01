@@ -62,6 +62,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Set within EndChild() */
     var withinEndChild = false
 
+    /** Request full GC */
+    var gcCompactAll = false
+
     /** Will call test engine hooks: ImGuiTestEngineHook_ItemAdd(), ImGuiTestEngineHook_ItemInfo(), ImGuiTestEngineHook_Log() */
     var testEngineHookItems = false
 

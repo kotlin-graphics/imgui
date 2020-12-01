@@ -197,7 +197,7 @@ interface main {
 
         // Mark all windows as not visible and compact unused memory.
         assert(g.windowsFocusOrder.size == g.windows.size)
-        val memoryCompactStartTime = if (io.configMemoryCompactTimer >= 0f) g.time.f - io.configMemoryCompactTimer else Float.MAX_VALUE
+        val memoryCompactStartTime = if (g.gcCompactAll || io.configMemoryCompactTimer < 0f) Float.MAX_VALUE else g.time.f - io.configMemoryCompactTimer
         g.windows.forEach {
             it.wasActive = it.active
             it.beginCount = 0
@@ -208,6 +208,7 @@ interface main {
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
                 it.gcCompactTransientBuffers()
         }
+        g.gcCompactAll = false
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow?.wasActive == false)

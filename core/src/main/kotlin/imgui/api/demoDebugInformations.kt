@@ -208,11 +208,14 @@ interface demoDebugInformations {
             return
         }
 
+        // Basic info
         text("Dear ImGui $version")
         text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
         text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
         text("${io.metricsActiveWindows} active windows (${io.metricsRenderWindows} visible)")
         text("${io.metricsAllocs} active allocations")
+        //SameLine(); if (SmallButton("GC")) { g.GcCompactAll = true; }
+
         separator()
 
         // Helper functions to display common structures:

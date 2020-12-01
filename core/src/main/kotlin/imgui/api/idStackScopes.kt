@@ -27,7 +27,11 @@ interface idStackScopes {
     fun pushID(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
 
     /** pop from the ID stack. */
-    fun popID() = g.currentWindow!!.idStack.pop()
+    fun popID() {
+        val window = g.currentWindow!!
+        assert(window.idStack.size > 1) { "Too many PopID or PopFocusScope (or could be popping in a wrong/different window?)" }
+        window.idStack.pop()
+    }
 
     /** calculate unique ID (hash of whole ID stack + given parameter). e.g. if you want to query into ImGuiStorage
      *  yourself. otherwise rarely needed   */
