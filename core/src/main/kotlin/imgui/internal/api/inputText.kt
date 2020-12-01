@@ -590,14 +590,16 @@ internal interface inputText {
                         assert(cbData.buf === state.textA) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
-                        if (cbData.cursorPos != utf8CursorPos) {
-                            state.stb.cursor =
-                                    textCountCharsFromUtf8(cbData.buf, cbData.cursorPos); state.cursorFollow = true; }
-                        if (cbData.selectionStart != utf8SelectionStart) {
-                            state.stb.selectStart = textCountCharsFromUtf8(cbData.buf, cbData.selectionStart); }
-                        if (cbData.selectionEnd != utf8SelectionEnd) {
-                            state.stb.selectEnd = textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd); }
-                        if (cbData.bufDirty) {
+                        val bufDirty = cbData.bufDirty
+                        if (cbData.cursorPos != utf8CursorPos || bufDirty) {
+                            state.stb.cursor = textCountCharsFromUtf8(cbData.buf, cbData.cursorPos)
+                            state.cursorFollow = true
+                        }
+                        if (cbData.selectionStart != utf8SelectionStart || bufDirty)
+                            state.stb.selectStart = textCountCharsFromUtf8(cbData.buf, cbData.selectionStart)
+                        if (cbData.selectionEnd != utf8SelectionEnd || bufDirty)
+                            state.stb.selectEnd = textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd)
+                        if (bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
                                 val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)
