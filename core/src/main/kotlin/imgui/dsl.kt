@@ -74,8 +74,8 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.font.Font
-import imgui.internal.sections.ColumnsFlag
-import imgui.internal.sections.ColumnsFlags
+import imgui.internal.sections.OldColumnsFlag
+import imgui.internal.sections.OldColumnsFlags
 import kotlin.reflect.KMutableProperty0
 
 /** twin brother of dsl_ */
@@ -575,7 +575,7 @@ object dsl {
     // Columns
 
     inline fun columns(strId: String = "", columnsCount: Int,
-                       flags: ColumnsFlags = ColumnsFlag.None.i, block: () -> Unit) {
+                       flags: OldColumnsFlags = OldColumnsFlag.None.i, block: () -> Unit) {
         beginColumns(strId, columnsCount, flags)
         try {
             block()
