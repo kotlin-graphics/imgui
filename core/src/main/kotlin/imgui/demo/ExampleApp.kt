@@ -201,9 +201,8 @@ object ExampleApp {
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
                 sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
                 checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
-
-                // The "NoMouse" option above can get us stuck with a disable mouse! Provide an alternative way to fix it:
                 if (io.configFlags has ConfigFlag.NoMouse) {
+                    // The "NoMouse" option can get us stuck with a disabled mouse! Let's provide an alternative way to fix it:
                     if ((time.f % 0.4f) < 0.2f) {
                         sameLine()
                         text("<<PRESS SPACE TO DISABLE>>")

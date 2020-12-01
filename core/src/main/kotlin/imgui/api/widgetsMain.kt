@@ -186,21 +186,22 @@ interface widgetsMain {
     }
 
     fun checkboxFlags(label: String, flags: IntArray, flagsValue: Int): Boolean {
-        val v = booleanArrayOf((flags[0] and flagsValue) == flagsValue)
+        _b = (flags[0] and flagsValue) == flagsValue // ~allOn
+        val anyOn = flags[0] has flagsValue
         val pressed = when {
-            !v[0] && flags[0] has flagsValue -> { // Mixed value (FIXME: find a way to expose neatly to Checkbox?)
+            !_b && anyOn -> {
                 val window = currentWindow
                 val backupItemFlags = window.dc.itemFlags
                 window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
-                checkbox(label, v).also {
+                checkbox(label, ::_b).also {
                     window.dc.itemFlags = backupItemFlags
                 }
             }
-            else -> checkbox(label, v) // Regular checkbox
+            else -> checkbox(label, ::_b)
         }
         if (pressed)
             flags[0] = when {
-                v[0] -> flags[0] or flagsValue
+                _b -> flags[0] or flagsValue
                 else -> flags[0] wo flagsValue
             }
         return pressed
