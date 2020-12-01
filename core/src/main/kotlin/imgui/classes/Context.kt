@@ -216,6 +216,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Stack for PushFocusScope()/PopFocusScope() */
     val focusScopeStack = Stack<ID>()
 
+    /** Stack for PushItemFlag()/PopItemFlag() */
+    val itemFlagsStack = Stack<ItemFlags>()
+
+    /** Stack for BeginGroup()/EndGroup() */
+    val groupStack = Stack<GroupData>()
+
     /** Which popups are open (persistent)  */
     val openPopupStack = Stack<PopupData>()
 

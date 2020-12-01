@@ -626,13 +626,8 @@ interface windows {
 
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
-                dc.itemFlagsStack.clear()
                 dc.itemWidthStack.clear()
                 dc.textWrapPosStack.clear()
-                dc.groupStack.clear()
-
-                dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
-                if (parentWindow != null) dc.itemFlagsStack += dc.itemFlags
 
                 if (autoFitFrames.x > 0) autoFitFrames.x--
                 if (autoFitFrames.y > 0) autoFitFrames.y--
@@ -670,7 +665,9 @@ interface windows {
         } else   // Append
             setCurrentWindow(window)
 
-        window.dc.navFocusScopeIdCurrent = if(flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0 // -V595
+        // Pull/inherit current state
+        window.dc.itemFlags = g.itemFlagsStack.last() // Inherit from shared stack
+        window.dc.navFocusScopeIdCurrent = if(flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0 // Inherit from parent only // -V595
 
         pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 

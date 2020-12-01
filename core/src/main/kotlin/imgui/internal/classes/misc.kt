@@ -36,6 +36,7 @@ class ColorMod(val col: Col, value: Vec4) {
 
 /* Stacked storage data for BeginGroup()/EndGroup() */
 class GroupData {
+    var windowID: ID = 0
     var backupCursorPos = Vec2()
     var backupCursorMaxPos = Vec2()
     var backupIndent = 0f

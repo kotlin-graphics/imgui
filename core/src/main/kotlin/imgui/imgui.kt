@@ -216,6 +216,7 @@ object ImGui :
         color,
         plot,
         // shade functions in DrawList class
+        `garbage collection`,
         debugTools
 
 
