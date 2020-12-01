@@ -29,7 +29,7 @@ interface idStackScopes {
     /** pop from the ID stack. */
     fun popID() {
         val window = g.currentWindow!!
-        assert(window.idStack.size > 1) { "Too many PopID or PopFocusScope (or could be popping in a wrong/different window?)" }
+        assert(window.idStack.size > 1) { "Too many PopID(), or could be popping in a wrong/different window?" }
         window.idStack.pop()
     }
 

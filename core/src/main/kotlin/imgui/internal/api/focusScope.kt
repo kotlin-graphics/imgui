@@ -8,26 +8,26 @@ import imgui.api.g
 // patterns generally need to react (e.g. clear selection) when landing on an item of the set.
 interface focusScope {
 
-    /** FIXME: this is storing in same stack as IDStack, so Push/Pop mismatch will be reported there. Maybe play nice and a separate in-context stack. */
     fun pushFocusScope(id: ID) { // TODO dsl
-        g.currentWindow!!.apply {
-            val topMostId = idStack.last()
-            idStack += dc.navFocusScopeIdCurrent
-            idStack += topMostId
-            dc.navFocusScopeIdCurrent = id
-        }
+        val window = g.currentWindow!!
+        g.focusScopeStack += window.dc.navFocusScopeIdCurrent
+        window.dc.navFocusScopeIdCurrent = id
     }
 
     fun popFocusScope() {
-        g.currentWindow!!.apply {
-            dc.navFocusScopeIdCurrent = idStack.last()
-            idStack.pop()
-            assert(idStack.size > 1) { "Too many PopID or PopFocusScope (or could be popping in a wrong/different window?)" }
-            idStack.pop()
-        }
+        val window = g.currentWindow!!
+        assert(g.focusScopeStack.isNotEmpty()) { "Too many PopFocusScope() ?" }
+        window.dc.navFocusScopeIdCurrent = g.focusScopeStack.last()
+        g.focusScopeStack.pop()
     }
 
-    /** ~GetFocusScopeID */
-    val focusScopeID: ID
+    /** Focus scope which is actually active
+     *  ~GetFocusedFocusScope */
+    val focusedFocusScope: ID
         get() = g.navFocusScopeId
+
+    /** Focus scope we are outputting into, set by PushFocusScope()
+     *  ~GetFocusScopeID */
+    val focusScope: ID
+        get() = g.currentWindow!!.dc.navFocusScopeIdCurrent
 }
