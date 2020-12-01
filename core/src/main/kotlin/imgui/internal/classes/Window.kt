@@ -126,16 +126,16 @@ class Window(var context: Context,
     var hasCloseButton = false
 
     /** Current border being held for resize (-1: none, otherwise 0-3) */
-    var resizeBorderHeld = -1
+    var resizeBorderHeld = 0
 
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
 
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
-    var beginOrderWithinParent = -1
+    var beginOrderWithinParent = 0
 
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
-    var beginOrderWithinContext = -1
+    var beginOrderWithinContext = 0
 
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
     var popupId: ID = 0
@@ -174,14 +174,13 @@ class Window(var context: Context,
     /** ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this should be in the TempData structure)   */
     val idStack = Stack<ID>()
 
-    /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
-    var dc = WindowTempData()
-
     init {
         idStack += id
         moveId = getID("#MOVE")
-        childId = 0
     }
+
+    /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
+    var dc = WindowTempData()
 
     fun destroy() {
         assert(drawList === drawListInst)
@@ -242,10 +241,13 @@ class Window(var context: Context,
     /** Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back) */
     var settingsOffset = -1
 
-    val drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    val drawListInst = DrawList(null)
 
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
-    var drawList = drawListInst
+    var drawList = drawListInst.apply {
+        _data = context.drawListSharedData
+        _ownerName = name
+    }
 
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
