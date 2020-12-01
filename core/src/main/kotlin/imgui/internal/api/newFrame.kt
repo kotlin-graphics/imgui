@@ -133,7 +133,7 @@ internal interface newFrame {
             val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpen(rootWindow.popupId, PopupFlag.AnyPopupLevel.i)
 
             if (rootWindow != null && !isClosedPopup) {
-                g.hoveredWindow!!.startMouseMoving()
+                g.hoveredWindow!!.startMouseMoving() //-V595
 
                 // Cancel moving if clicked outside of title bar
                 if (io.configWindowsMoveFromTitleBarOnly && rootWindow.flags hasnt WindowFlag.NoTitleBar)
