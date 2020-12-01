@@ -3,7 +3,7 @@ package imgui.internal.api
 import imgui.api.g
 
 /** Garbage collection */
-interface `garbage collection` {
+interface garbageCollection {
 
     fun gcCompactTransientMiscBuffers() {
         g.itemFlagsStack.clear()

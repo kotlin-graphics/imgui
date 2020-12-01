@@ -45,25 +45,25 @@ interface parametersStacks {
      *  the in-flight colors as ImU32   */
     fun pushStyleColor(idx: Col, col: Int) {
         val backup = ColorMod(idx, style.colors[idx])
-        g.colorModifiers.push(backup)
+        g.colorStack.push(backup)
         g.style.colors[idx] = col.vec4
     }
 
     fun pushStyleColor(idx: Col, col: Vec4) {
         val backup = ColorMod(idx, style.colors[idx])
-        g.colorModifiers.push(backup)
+        g.colorStack.push(backup)
         style.colors[idx] = col
     }
 
     fun popStyleColor(count: Int = 1) = repeat(count) {
-        val backup = g.colorModifiers.pop()
+        val backup = g.colorStack.pop()
         style.colors[backup.col] put backup.backupValue
     }
 
     /** It'll throw error if wrong correspondence between idx and value type
      *  GStyleVarInfo */
     fun pushStyleVar(idx: StyleVar, value: Any) {
-        g.styleModifiers.push(StyleMod(idx).also {
+        g.styleVarStack.push(StyleMod(idx).also {
             when (idx) {
                 StyleVar.Alpha -> {
                     it.floats[0] = style.alpha
@@ -162,7 +162,7 @@ interface parametersStacks {
     }
 
     fun popStyleVar(count: Int = 1) = repeat(count) {
-        val backup = g.styleModifiers.pop()
+        val backup = g.styleVarStack.pop()
         when (backup.idx) {
             StyleVar.Alpha -> style.alpha = backup.floats[0]
             StyleVar.WindowPadding -> style.windowPadding put backup.floats

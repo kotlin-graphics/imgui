@@ -204,22 +204,22 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var nextItemData = NextItemData()
 
 
-    /** Stack for PushStyleColor()/PopStyleColor()  */
-    var colorModifiers = Stack<ColorMod>()
+    /** Stack for PushStyleColor()/PopStyleColor() - inherited by Begin()  */
+    var colorStack = Stack<ColorMod>()
 
-    /** Stack for PushStyleVar()/PopStyleVar()  */
-    val styleModifiers = Stack<StyleMod>()
+    /** Stack for PushStyleVar()/PopStyleVar() - inherited by Begin()  */
+    val styleVarStack = Stack<StyleMod>()
 
-    /** Stack for PushFont()/PopFont()  */
+    /** Stack for PushFont()/PopFont() - inherited by Begin()  */
     val fontStack = Stack<Font>()
 
-    /** Stack for PushFocusScope()/PopFocusScope() */
+    /** Stack for PushFocusScope()/PopFocusScope() - not inherited by Begin(), unless child window */
     val focusScopeStack = Stack<ID>()
 
-    /** Stack for PushItemFlag()/PopItemFlag() */
+    /** Stack for PushItemFlag()/PopItemFlag() - inherited by Begin() */
     val itemFlagsStack = Stack<ItemFlags>()
 
-    /** Stack for BeginGroup()/EndGroup() */
+    /** Stack for BeginGroup()/EndGroup() - not inherited by Begin() */
     val groupStack = Stack<GroupData>()
 
     /** Which popups are open (persistent)  */
@@ -683,8 +683,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         activeIdPreviousFrameWindow = null
         movingWindow = null
         settingsWindows.clear()
-        colorModifiers.clear()
-        styleModifiers.clear()
+        colorStack.clear()
+        styleVarStack.clear()
         fontStack.clear()
         openPopupStack.clear()
         beginPopupStack.clear()

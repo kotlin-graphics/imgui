@@ -112,5 +112,5 @@ class WindowTempData {
 
     val textWrapPosStack = Stack<Float>()
     /** Store size of various stacks for asserting  */
-    val stackSizesBackup = IntArray(5)
+    val stackSizesOnBegin = StackSizes()
 }
