@@ -567,10 +567,8 @@ class Window(var context: Context,
         drawList._clearFreeMemory()
         dc.apply {
             childWindows.clear()
-            itemFlagsStack.clear()
             itemWidthStack.clear()
             textWrapPosStack.clear()
-            groupStack.clear()
         }
     }
 

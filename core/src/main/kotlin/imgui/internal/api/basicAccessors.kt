@@ -30,6 +30,10 @@ internal interface basicAccessors {
     val focusID: ID
         get() = g.navId
 
+    /** ~GetItemsFlags */
+    val itemsFlags: ItemFlags
+        get() = g.currentWindow!!.dc.itemFlags
+
     fun setActiveID(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
@@ -129,9 +133,9 @@ internal interface basicAccessors {
      *  (note that when using this pattern, TestEngine's "Stack Tool" will tend to not display the intermediate stack level.
      *  for that to work we would need to do PushOverrideID() -> ItemAdd() -> PopID() which would alter widget code a little more) */
     fun getIDWithSeed(str: String, strEnd: Int = -1, seed: ID): ID {
-        val id = hash(str, if(strEnd != -1) strEnd else 0, seed)
+        val id = hash(str, if (strEnd != -1) strEnd else 0, seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE) {
+        if (IMGUI_ENABLE_TEST_ENGINE) {
             val g = gImGui!!
             Hook.idInfo2!!.invoke(g, DataType._String, id, str, strEnd)
         }

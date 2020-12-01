@@ -15,6 +15,7 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
+import imgui.ImGui.gcCompactTransientMiscBuffers
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mergedKeyModFlags
@@ -30,6 +31,7 @@ import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.*
+import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or
 import imgui.static.*
 import org.lwjgl.system.Platform
@@ -208,6 +210,8 @@ interface main {
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
                 it.gcCompactTransientBuffers()
         }
+        if (g.gcCompactAll)
+            gcCompactTransientMiscBuffers()
         g.gcCompactAll = false
 
         // Closing the focused window restore focus to the first active root window in descending z-order
@@ -218,6 +222,9 @@ interface main {
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
+        g.itemFlagsStack.clear()
+        g.itemFlagsStack += ItemFlag.Default_.i
+        g.groupStack.clear()
         closePopupsOverWindow(g.navWindow, false)
 
         // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
