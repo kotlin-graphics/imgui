@@ -200,8 +200,6 @@ class DrawListSplitter {
         for (i in 1 until channelsCount) {
             if (i < oldChannelsCount)
                 _channels[i].resize0()
-            if (_channels[i]._cmdBuffer.isEmpty())
-                _channels[i]._cmdBuffer += DrawCmd().apply { headerCopy(drawList._cmdHeader) } // Copy ClipRect, TextureId, VtxOffset
         }
     }
 
@@ -291,8 +289,10 @@ class DrawListSplitter {
         drawList._idxWritePtr = drawList.idxBuffer.lim
 
         // If current command is used with different settings we need to add a new command
-        val currCmd = drawList.cmdBuffer.last()
-        if (currCmd.elemCount == 0)
+        val currCmd = drawList.cmdBuffer.lastOrNull()
+        if (currCmd == null)
+            drawList.addDrawCmd()
+        else if (currCmd.elemCount == 0)
             currCmd headerCopy drawList._cmdHeader // Copy ClipRect, TextureId, VtxOffset
         else if (!currCmd.headerCompare(drawList._cmdHeader))
             drawList.addDrawCmd()

@@ -504,7 +504,7 @@ class FontAtlas {
             var n = n_
             while (n <= n2) {
                 val aMod = n and 31
-                val bMod = (if (n2 >= n + 31) 31 else n2 and 31) + 1
+                val bMod = (if (n2 > (n or 31)) 31 else n2 and 31) + 1
                 val mask = ((1L shl bMod) - 1).toUInt() wo ((1L shl aMod) - 1).toUInt()
                 this[n ushr 5] = this[n ushr 5] or mask
                 n = (n + 32) wo 31
