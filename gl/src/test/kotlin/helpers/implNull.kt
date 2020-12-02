@@ -24,7 +24,6 @@ class ImGuiApp_ImplNull : ImGuiApp() {
 
     override fun initCreateWindow(title: String, size: Vec2): Boolean {
         io.displaySize put size
-        io.fonts.build()
         for (n in 0 until Key.COUNT)
             io.keyMap[n] = n
 
