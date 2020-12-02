@@ -7,11 +7,12 @@ import java.nio.ByteBuffer
 
 abstract class ImGuiApp {
 
-    var dpiAware = true
-    var quit = false
-    var vSync = true
-    var dpiScale = 1f
-    val clearColor = Vec4(0f, 0f, 0f, 1f)
+    var dpiAware = true                                 // [In]  InitCreateWindow()
+    var srgbFramebuffer = false                         // [In]  InitCreateWindow() FIXME-WIP
+    var quit = false                                    // [In]  NewFrame()
+    var dpiScale = 1f                                   // [Out] InitCreateWindow() / NewFrame()
+    val clearColor = Vec4(0f, 0f, 0f, 1f)   // [In]  Render()
+    var vSync = true                                    // [Out] Render()
 
     abstract fun initCreateWindow(windowTitle: String, windowSize: Vec2): Boolean
     open fun initBackends() = Unit
