@@ -31,6 +31,13 @@ class ImGuiApp_ImplNull : ImGuiApp() {
     }
 
     override fun newFrame(): Boolean {
+
+        // Dummy build
+        //unsigned char* pixels = NULL;
+        //int width = 0;
+        //int height = 0;
+        //io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+
         val time = timeInMicroseconds
         if (lastTime == 0L)
             lastTime = time
