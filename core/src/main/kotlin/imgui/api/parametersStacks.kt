@@ -45,25 +45,25 @@ interface parametersStacks {
      *  the in-flight colors as ImU32   */
     fun pushStyleColor(idx: Col, col: Int) {
         val backup = ColorMod(idx, style.colors[idx])
-        g.colorModifiers.push(backup)
+        g.colorStack.push(backup)
         g.style.colors[idx] = col.vec4
     }
 
     fun pushStyleColor(idx: Col, col: Vec4) {
         val backup = ColorMod(idx, style.colors[idx])
-        g.colorModifiers.push(backup)
+        g.colorStack.push(backup)
         style.colors[idx] = col
     }
 
     fun popStyleColor(count: Int = 1) = repeat(count) {
-        val backup = g.colorModifiers.pop()
+        val backup = g.colorStack.pop()
         style.colors[backup.col] put backup.backupValue
     }
 
     /** It'll throw error if wrong correspondence between idx and value type
      *  GStyleVarInfo */
     fun pushStyleVar(idx: StyleVar, value: Any) {
-        g.styleModifiers.push(StyleMod(idx).also {
+        g.styleVarStack.push(StyleMod(idx).also {
             when (idx) {
                 StyleVar.Alpha -> {
                     it.floats[0] = style.alpha
@@ -162,7 +162,7 @@ interface parametersStacks {
     }
 
     fun popStyleVar(count: Int = 1) = repeat(count) {
-        val backup = g.styleModifiers.pop()
+        val backup = g.styleVarStack.pop()
         when (backup.idx) {
             StyleVar.Alpha -> style.alpha = backup.floats[0]
             StyleVar.WindowPadding -> style.windowPadding put backup.floats
@@ -189,6 +189,18 @@ interface parametersStacks {
             StyleVar.SelectableTextAlign -> style.selectableTextAlign put backup.floats
         }
     }
+
+    // FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
+    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
+
+    fun popAllowKeyboardFocus() = popItemFlag()
+
+    /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
+     *  (using io.KeyRepeatDelay/io.KeyRepeatRate setting). Note that you can call IsItemActive() after any Button() to
+     *  tell if the button is held in the current frame.    */
+    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat.i, repeat)
+
+    fun popButtonRepeat() = popItemFlag()
 
     /** retrieve style color as stored in ImGuiStyle structure. use to feed back into PushStyleColor(), otherwise use
      *  GetColorU32() to get style color + style alpha. */
@@ -299,16 +311,4 @@ interface parametersStacks {
         textWrapPosStack.pop()
         textWrapPos = textWrapPosStack.lastOrNull() ?: -1f
     }
-
-    // FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
-    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
-
-    fun popAllowKeyboardFocus() = popItemFlag()
-
-    /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
-     *  (using io.KeyRepeatDelay/io.KeyRepeatRate setting). Note that you can call IsItemActive() after any Button() to
-     *  tell if the button is held in the current frame.    */
-    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat.i, repeat)
-
-    fun popButtonRepeat() = popItemFlag()
 }

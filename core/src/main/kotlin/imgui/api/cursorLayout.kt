@@ -57,8 +57,7 @@ interface cursorLayout {
                     if (offsetFromStartX != 0f)
                         pos.x - scroll.x + offsetFromStartX + glm.max(0f, spacing) + dc.groupOffset + dc.columnsOffset
                     else
-                        dc.cursorPosPrevLine.x + if (spacing < 0f) style.itemSpacing.x else spacing
-                    , dc.cursorPosPrevLine.y)
+                        dc.cursorPosPrevLine.x + if (spacing < 0f) style.itemSpacing.x else spacing, dc.cursorPosPrevLine.y)
             dc.currLineSize.y = dc.prevLineSize.y
             dc.currLineTextBaseOffset = dc.prevLineTextBaseOffset
         }
@@ -93,13 +92,13 @@ interface cursorLayout {
         itemAdd(bb, 0)
     }
 
-    /** move content position toward the right, by style.indentSpacing or indentW if != 0    */
+    /** move content position toward the right, by indent_w, or style.IndentSpacing if indent_w <= 0 */
     fun indent(indentW: Float = 0f) = with(currentWindow) {
         dc.indent += if (indentW != 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indent + dc.columnsOffset
     }
 
-    /** move content position back to the left, by style.IndentSpacing or indentW if != 0    */
+    /** move content position back to the left, by indent_w, or style.IndentSpacing if indent_w <= 0 */
     fun unindent(indentW: Float = 0f) = with(currentWindow) {
         dc.indent -= if (indentW != 0f) indentW else style.indentSpacing
         dc.cursorPos.x = pos.x + dc.indent + dc.columnsOffset
@@ -110,18 +109,18 @@ interface cursorLayout {
     fun beginGroup() {
 
         with(g.currentWindow!!) {
-            dc.groupStack.add(
-                    GroupData().apply {
-                        backupCursorPos put dc.cursorPos
-                        backupCursorMaxPos put dc.cursorMaxPos
-                        backupIndent = dc.indent
-                        backupGroupOffset = dc.groupOffset
-                        backupCurrLineSize put dc.currLineSize
-                        backupCurrLineTextBaseOffset = dc.currLineTextBaseOffset
-                        backupActiveIdIsAlive = g.activeIdIsAlive
-                        backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
-                        emitItem = true
-                    })
+            g.groupStack += GroupData().apply {
+                windowID = id
+                backupCursorPos put dc.cursorPos
+                backupCursorMaxPos put dc.cursorMaxPos
+                backupIndent = dc.indent
+                backupGroupOffset = dc.groupOffset
+                backupCurrLineSize put dc.currLineSize
+                backupCurrLineTextBaseOffset = dc.currLineTextBaseOffset
+                backupActiveIdIsAlive = g.activeIdIsAlive
+                backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
+                emitItem = true
+            }
             dc.groupOffset = dc.cursorPos.x - pos.x - dc.columnsOffset
             dc.indent = dc.groupOffset
             dc.cursorMaxPos put dc.cursorPos
@@ -136,9 +135,10 @@ interface cursorLayout {
     fun endGroup() {
 
         val window = g.currentWindow!!
-        assert(window.dc.groupStack.isNotEmpty()) { "Mismatched BeginGroup()/EndGroup() calls" }
+        assert(g.groupStack.isNotEmpty()) { "Mismatched BeginGroup()/EndGroup() calls" }
 
-        val groupData = window.dc.groupStack.last()
+        val groupData = g.groupStack.last()
+        assert(groupData.windowID == window.id) { "EndGroup() in wrong window?" }
 
         val groupBb = Rect(groupData.backupCursorPos, window.dc.cursorMaxPos max groupData.backupCursorPos)
 
@@ -154,7 +154,7 @@ interface cursorLayout {
         }
 
         if (!groupData.emitItem) {
-            window.dc.groupStack.pop()
+            g.groupStack.pop()
             return
         }
 
@@ -184,7 +184,7 @@ interface cursorLayout {
         if (groupContainsPrevActiveId && g.activeId != g.activeIdPreviousFrame)
             window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.Deactivated
 
-        window.dc.groupStack.pop()
+        g.groupStack.pop()
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]
     }
 

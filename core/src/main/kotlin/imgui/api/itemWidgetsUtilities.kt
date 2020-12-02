@@ -64,7 +64,9 @@ interface itemWidgetsUtilities {
     val isItemActive: Boolean
         get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
-    /** Is the last item focused for keyboard/gamepad navigation?   */
+    /** Is the last item focused for keyboard/gamepad navigation?
+     *
+     *  == GetItemID() == GetFocusID() */
     val isItemFocused: Boolean
         get() {
             val window = g.currentWindow!!

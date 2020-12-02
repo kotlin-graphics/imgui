@@ -9,20 +9,25 @@ import imgui.api.g
 interface focusScope {
 
     fun pushFocusScope(id: ID) { // TODO dsl
-        g.currentWindow!!.apply {
-            idStack += dc.navFocusScopeIdCurrent
-            dc.navFocusScopeIdCurrent = id
-        }
+        val window = g.currentWindow!!
+        g.focusScopeStack += window.dc.navFocusScopeIdCurrent
+        window.dc.navFocusScopeIdCurrent = id
     }
 
     fun popFocusScope() {
-        g.currentWindow!!.apply {
-            dc.navFocusScopeIdCurrent = idStack.last()
-            idStack.pop()
-        }
+        val window = g.currentWindow!!
+        assert(g.focusScopeStack.isNotEmpty()) { "Too many PopFocusScope() ?" }
+        window.dc.navFocusScopeIdCurrent = g.focusScopeStack.last()
+        g.focusScopeStack.pop()
     }
 
-    /** ~GetFocusScopeID */
-    val focusScopeID: ID
+    /** Focus scope which is actually active
+     *  ~GetFocusedFocusScope */
+    val focusedFocusScope: ID
         get() = g.navFocusScopeId
+
+    /** Focus scope we are outputting into, set by PushFocusScope()
+     *  ~GetFocusScopeID */
+    val focusScope: ID
+        get() = g.currentWindow!!.dc.navFocusScopeIdCurrent
 }

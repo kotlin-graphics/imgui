@@ -228,7 +228,7 @@ object ShowDemoWindowMisc {
                     "otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.COUNT) {
                     bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
-                    if (isItemHovered() || isItemFocused)
+                    if (isItemHovered())
                         mouseCursor = MouseCursor.of(i)
                 }
             }

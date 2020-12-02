@@ -457,7 +457,8 @@ internal interface widgets {
             // Horizontal Separator
             var x1 = window.pos.x
             val x2 = window.pos.x + window.size.x
-            if (window.dc.groupStack.isNotEmpty())
+            // FIXME-WORKRECT: old hack (#205) until we decide of consistent behavior with WorkRect/Indent and Separator
+            if (g.groupStack.isNotEmpty() && g.groupStack.last().windowID == window.id)
                 x1 += window.dc.indent
 
             val columns = window.dc.currentColumns.takeIf { flags has SeparatorFlag.SpanAllColumns }

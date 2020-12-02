@@ -29,7 +29,7 @@ typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 //   those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
 //   Pre-1.71 backends will typically ignore the VtxOffset/IdxOffset fields.
 // - The ClipRect/TextureId/VtxOffset fields must be contiguous as we memcmp() them together (this is asserted for).
-class DrawCmd {
+class DrawCmd : DrawCmdHeader {
 
     // Also ensure our padding fields are zeroed
     constructor()
@@ -40,15 +40,15 @@ class DrawCmd {
 
 
     /** Clipping rectangle (x1, y1, x2, y2). Subtract ImDrawData->DisplayPos to get clipping rectangle in "viewport" coordinates */
-    var clipRect = Vec4()
+    override var clipRect = Vec4()
 
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
-    var textureId: TextureID? = null
+    override var textureId: TextureID? = null
 
     /** Start offset in vertex buffer. ImGuiBackendFlags_RendererHasVtxOffset: always 0, otherwise may be >0 to support
      *  meshes larger than 64K vertices with 16-bit indices. */
-    var vtxOffset = 0
+    override var vtxOffset = 0
 
     /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
     var idxOffset = 0
@@ -80,19 +80,6 @@ class DrawCmd {
         resetRenderState = drawCmd.resetRenderState
         userCallbackData = drawCmd.userCallbackData
     }
-
-    // Compare ClipRect, TextureId and VtxOffset with a single memcmp()
-//    #define ImDrawCmd_HeaderSize                        (IM_OFFSETOF(ImDrawCmd, VtxOffset) + sizeof(unsigned int))
-
-    /** Compare ClipRect, TextureId, VtxOffset */
-    infix fun headerCompare(other: DrawCmd): Boolean = clipRect == other.clipRect && textureId == other.textureId && vtxOffset == other.vtxOffset
-
-    /** Copy ClipRect, TextureId, VtxOffset */
-    infix fun headerCopy(other: DrawCmd) {
-        clipRect put other.clipRect
-        textureId = other.textureId
-        vtxOffset = other.vtxOffset
-    }
 }
 
 /** Vertex index, default to 16-bit
@@ -119,7 +106,29 @@ class DrawVert(
     override fun toString() = "pos: $pos, uv: $uv, col: $col"
 }
 
-/** Temporary storage to output draw commands out of order, used by ImDrawListSplitter and ImDrawList::ChannelsSplit()
+/** [Internal] For use by ImDrawList */
+open class DrawCmdHeader {
+    open var clipRect = Vec4()
+    open var textureId: TextureID? = null
+    open var vtxOffset = 0
+
+    // Compare ClipRect, TextureId and VtxOffset with a single memcmp()
+//    #define ImDrawCmd_HeaderSize                        (IM_OFFSETOF(ImDrawCmd, VtxOffset) + sizeof(unsigned int))
+
+    /** Compare ClipRect, TextureId, VtxOffset */
+    infix fun headerCompare(other: DrawCmdHeader): Boolean = clipRect == other.clipRect && textureId == other.textureId && vtxOffset == other.vtxOffset
+
+    /** Copy ClipRect, TextureId, VtxOffset */
+    infix fun headerCopy(other: DrawCmdHeader) {
+        clipRect put other.clipRect
+        textureId = other.textureId
+        vtxOffset = other.vtxOffset
+    }
+}
+
+/** [Internal] For use by ImDrawListSplitter
+ *
+ *  Temporary storage to output draw commands out of order, used by ImDrawListSplitter and ImDrawList::ChannelsSplit()
  *
  *  Draw channels are used by the Columns API to "split" the render list into different channels while building, so
  *  items of each column can be batched together.
@@ -159,10 +168,6 @@ class DrawListSplitter {
     /** Draw channels (not resized down so _Count might be < Channels.Size) */
     val _channels = Stack<DrawChannel>()
 
-    init {
-        clear()
-    }
-
     fun clear() {
         _current = 0
         _count = 1
@@ -197,8 +202,6 @@ class DrawListSplitter {
         for (i in 1 until channelsCount) {
             if (i < oldChannelsCount)
                 _channels[i].resize0()
-            if (_channels[i]._cmdBuffer.isEmpty())
-                _channels[i]._cmdBuffer += DrawCmd().apply { headerCopy(drawList._cmdHeader) } // Copy ClipRect, TextureId, VtxOffset
         }
     }
 
@@ -288,8 +291,10 @@ class DrawListSplitter {
         drawList._idxWritePtr = drawList.idxBuffer.lim
 
         // If current command is used with different settings we need to add a new command
-        val currCmd = drawList.cmdBuffer.last()
-        if (currCmd.elemCount == 0)
+        val currCmd = drawList.cmdBuffer.lastOrNull()
+        if (currCmd == null)
+            drawList.addDrawCmd()
+        else if (currCmd.elemCount == 0)
             currCmd headerCopy drawList._cmdHeader // Copy ClipRect, TextureId, VtxOffset
         else if (!currCmd.headerCompare(drawList._cmdHeader))
             drawList.addDrawCmd()

@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.api.g
+import imgui.classes.Context
 import imgui.classes.WindowClass
 import imgui.internal.DrawListSplitter
 import imgui.internal.floor
@@ -35,7 +36,7 @@ class BitVector(sz: Int) { // ~create
         var n = n_
         while (n <= n2) {
             val aMod = n and 31
-            val bMod = (if (n2 >= n + 31) 31 else n2 and 31) + 1
+            val bMod = (if (n2 > (n or 31)) 31 else n2 and 31) + 1
             val mask = ((1L shl bMod) - 1).toUInt() wo ((1L shl aMod) - 1).toUInt()
             this[n ushr 5] = this[n ushr 5] or mask
             n = (n + 32) wo 31
@@ -73,6 +74,7 @@ class BitVector(sz: Int) { // ~create
 // [SECTION] ImDrawList support -> section.`drawList support`.kt
 //-----------------------------------------------------------------------------
 
+
 /** Stacked color modifier, backup of modified data so we can restore it    */
 class ColorMod(val col: Col, value: Vec4) {
     val backupValue = Vec4(value)
@@ -96,6 +98,7 @@ class ColorMod(val col: Col, value: Vec4) {
 
 /* Stacked storage data for BeginGroup()/EndGroup() */
 class GroupData {
+    var windowID: ID = 0
     var backupCursorPos = Vec2()
     var backupCursorMaxPos = Vec2()
     var backupIndent = 0f
@@ -199,6 +202,10 @@ class NavMoveResult {
     }
 }
 
+//-----------------------------------------------------------------------------
+// [SECTION] Metrics, Debug
+//-----------------------------------------------------------------------------
+
 /** Storage for ShowMetricsWindow() and DebugNodeXXX() functions */
 class MetricsConfig {
     var showWindowsRects = false
@@ -208,6 +215,47 @@ class MetricsConfig {
     var showDrawCmdBoundingBoxes = true
     var showWindowsRectsType = -1
     var showTablesRectsType = -1
+}
+
+class StackSizes {
+    var sizeOfIDStack = 0
+    var sizeOfColorStack = 0
+    var sizeOfStyleVarStack = 0
+    var sizeOfFontStack = 0
+    var sizeOfFocusScopeStack = 0
+    var sizeOfGroupStack = 0
+    var sizeOfBeginPopupStack = 0
+
+    /** Save current stack sizes for later compare */
+    fun setToCurrentState() {
+        val window = g.currentWindow!!
+        sizeOfIDStack = window.idStack.size
+        sizeOfColorStack = g.colorStack.size
+        sizeOfStyleVarStack = g.styleVarStack.size
+        sizeOfFontStack = g.fontStack.size
+        sizeOfFocusScopeStack = g.focusScopeStack.size
+        sizeOfGroupStack = g.groupStack.size
+        sizeOfBeginPopupStack = g.beginPopupStack.size
+    }
+
+    /** Compare to detect usage errors */
+    fun compareWithCurrentState() {
+
+        val window = g.currentWindow!!
+
+        // Window stacks
+        // NOT checking: DC.ItemWidth, DC.TextWrapPos (per window) to allow user to conveniently push once and not pop (they are cleared on Begin)
+        assert(sizeOfIDStack == window.idStack.size) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
+
+        // Global stacks
+        // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
+        assert(sizeOfGroupStack == g.groupStack.size) { "BeginGroup/EndGroup Mismatch!" }
+        assert(sizeOfBeginPopupStack == g.beginPopupStack.size) { "BeginPopup/EndPopup or BeginMenu/EndMenu Mismatch!" }
+        assert(sizeOfColorStack >= g.colorStack.size) { "PushStyleColor/PopStyleColor Mismatch!" }
+        assert(sizeOfStyleVarStack >= g.styleVarStack.size) { "PushStyleVar/PopStyleVar Mismatch!" }
+        assert(sizeOfFontStack >= g.fontStack.size) { "PushFont/PopFont Mismatch!" }
+        assert(sizeOfFocusScopeStack == g.focusScopeStack.size) { "PushFocusScope/PopFocusScope Mismatch!" }
+    }
 }
 
 /** Storage for SetNextWindow** functions    */
@@ -271,6 +319,7 @@ class ShrinkWidthItem(var index: Int = 0, var width: Float = 0f) {
         width = other.width
     }
 }
+
 class PtrOrIndex(
         /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
         val ptr: TabBar?,
@@ -341,7 +390,6 @@ class TabItem {
     /** Marked as closed by SetTabItemClosed() */
     var wantClose = false
 }
-
 
 
 //-----------------------------------------------------------------------------

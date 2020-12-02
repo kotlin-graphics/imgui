@@ -147,16 +147,16 @@ class Window(var context: Context,
     var hasCloseButton = false
 
     /** Current border being held for resize (-1: none, otherwise 0-3) */
-    var resizeBorderHeld = -1
+    var resizeBorderHeld = 0
 
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
 
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
-    var beginOrderWithinParent = -1
+    var beginOrderWithinParent = 0
 
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
-    var beginOrderWithinContext = -1
+    var beginOrderWithinContext = 0
 
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
     var popupId: ID = 0
@@ -198,14 +198,13 @@ class Window(var context: Context,
     /** ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this should be in the TempData structure)   */
     val idStack = Stack<ID>()
 
-    /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
-    var dc = WindowTempData()
-
     init {
         idStack += id
         moveId = getID("#MOVE")
-        childId = 0
     }
+
+    /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
+    var dc = WindowTempData()
 
     fun destroy() {
         assert(drawList === drawListInst)
@@ -213,17 +212,14 @@ class Window(var context: Context,
         drawListInst._clearFreeMemory(true)
     }
 
-    // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
+    // The best way to understand what those rectangles are is to use the 'Metrics->Tools->Show Windows Rectangles' viewer.
     // The main 'OuterRect', omitted as a field, is window->Rect().
 
     /** == Window->Rect() just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
 
     /** Inner rectangle (omit title bar, menu bar, scroll bar) */
-    var innerRect = Rect(0f,
-        0f,
-        0f,
-        0f) // Clear so the InnerRect.GetSize() code in Begin() doesn't lead to overflow even if the result isn't used.
+    var innerRect = Rect(0f, 0f, 0f, 0f) // Clear so the InnerRect.GetSize() code in Begin() doesn't lead to overflow even if the result isn't used.
 
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()
@@ -271,10 +267,13 @@ class Window(var context: Context,
     /** Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back) */
     var settingsOffset = -1
 
-    val drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    val drawListInst = DrawList(null)
 
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
-    var drawList = drawListInst
+    var drawList = drawListInst.apply {
+        _data = context.drawListSharedData
+        _ownerName = name
+    }
 
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
@@ -303,12 +302,12 @@ class Window(var context: Context,
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
 
-    /** Set when window extraneous data have been garbage collected */
-    var memoryCompacted = false
-
     /** Backup of last idx/vtx count, so when waking up the window we can preallocate and avoid iterative alloc/copy */
     var memoryDrawListIdxCapacity = 0
     var memoryDrawListVtxCapacity = 0
+
+    /** Set when window extraneous data have been garbage collected */
+    var memoryCompacted = false
 
     // Docking
 
@@ -621,10 +620,8 @@ class Window(var context: Context,
     // Garbage collection
 
     /** Free up/compact internal window buffers, we can use this when a window becomes unused.
-     *  This is currently unused by the library, but you may call this yourself for easy GC.
      *  Not freed:
-     *  - ImGuiWindow, ImGuiWindowSettings, Name
-     *  - StateStorage, ColumnsStorage (may hold useful data)
+     *  - ImGuiWindow, ImGuiWindowSettings, Name, StateStorage, ColumnsStorage (may hold useful data)
      *  This should have no noticeable visual effect. When the window reappear however, expect new allocation/buffer growth/copy cost.
      *
      *  ~gcCompactTransientWindowBuffers */
@@ -636,10 +633,8 @@ class Window(var context: Context,
         drawList._clearFreeMemory()
         dc.apply {
             childWindows.clear()
-            itemFlagsStack.clear()
             itemWidthStack.clear()
             textWrapPosStack.clear()
-            groupStack.clear()
         }
     }
 

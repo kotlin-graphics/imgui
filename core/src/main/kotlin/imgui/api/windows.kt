@@ -156,8 +156,10 @@ interface windows {
         // Add to stack
         // We intentionally set g.CurrentWindow to NULL to prevent usage until when the viewport is set, then will call SetCurrentWindow()
         g.currentWindowStack += window
+        g.currentWindow = window
+        window.dc.stackSizesOnBegin.setToCurrentState()
         g.currentWindow = null
-        errorCheckBeginEndCompareStacksSize(window, true)
+
         if (flags has Wf._Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
@@ -770,13 +772,8 @@ interface windows {
 
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled
-                dc.itemFlagsStack.clear()
                 dc.itemWidthStack.clear()
                 dc.textWrapPosStack.clear()
-                dc.groupStack.clear()
-
-                dc.itemFlags = parentWindow?.dc?.itemFlags ?: If.Default_.i
-                if (parentWindow != null) dc.itemFlagsStack += dc.itemFlags
 
                 if (autoFitFrames.x > 0) autoFitFrames.x--
                 if (autoFitFrames.y > 0) autoFitFrames.y--
@@ -847,12 +844,15 @@ interface windows {
             setCurrentWindow(window)
         }
 
+        // Pull/inherit current state
+        window.dc.itemFlags = g.itemFlagsStack.last() // Inherit from shared stack
+        window.dc.navFocusScopeIdCurrent = if(flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0 // Inherit from parent only // -V595
+
         if (flags hasnt Wf._DockNodeHost)
             pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 
         // Clear 'accessed' flag last thing (After PushClipRect which will set the flag. We want the flag to stay false when the default "Debug" window is unused)
-        if (firstBeginOfTheFrame) window.writeAccessed = false
-
+        window.writeAccessed = false
         window.beginCount++
         g.nextWindowData.clearFlags()
 
@@ -937,8 +937,9 @@ interface windows {
 
         // Pop from window stack
         g.currentWindowStack.pop()
-        if (window.flags has Wf._Popup) g.beginPopupStack.pop()
-        errorCheckBeginEndCompareStacksSize(window, false)
+        if (window.flags has Wf._Popup)
+            g.beginPopupStack.pop()
+        window.dc.stackSizesOnBegin.compareWithCurrentState()
         setCurrentWindow(g.currentWindowStack.lastOrNull())
         g.currentWindow?.let { setCurrentViewport(it, it.viewport) }
 

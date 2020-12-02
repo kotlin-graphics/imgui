@@ -171,7 +171,7 @@ object ExampleApp {
                 menuItem("Documents", "", show::documents)
             }
             menu("Tools") {
-                menuItem("Metrics", "", show::metrics)
+                menuItem("Metrics/Debugger", "", show::metrics)
                 menuItem("Style Editor", "", show::styleEditor)
                 menuItem("About Dear ImGui", "", show::about)
             }
@@ -186,7 +186,7 @@ object ExampleApp {
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
-                    "and Metrics (general purpose Dear ImGui debugging tool).")
+                    "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
             separator()
 
             text("PROGRAMMER GUIDE:")
@@ -207,14 +207,14 @@ object ExampleApp {
             treeNode("Configuration##2") {
 
                 checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+                sameLine(); helpMarker("Enable keyboard controls.")
                 checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
-                sameLine(); helpMarker("Required backend to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
+                sameLine(); helpMarker("Enable gamepad controls. Require backend to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
                 sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
                 checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
-
-                // The "NoMouse" option above can get us stuck with a disable mouse! Provide an alternative way to fix it:
                 if (io.configFlags has ConfigFlag.NoMouse) {
+                    // The "NoMouse" option can get us stuck with a disabled mouse! Let's provide an alternative way to fix it:
                     if ((time.f % 0.4f) < 0.2f) {
                         sameLine()
                         text("<<PRESS SPACE TO DISABLE>>")
