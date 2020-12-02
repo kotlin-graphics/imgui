@@ -522,12 +522,24 @@ class Window(var context: Context,
         return sizeFinal
     }
 
+    /** ~IsWindowChildOf */
     infix fun isChildOf(potentialParent: Window?): Boolean {
         if (rootWindow === potentialParent) return true
         var window: Window? = this
         while (window != null) {
             if (window === potentialParent) return true
             window = window.parentWindow
+        }
+        return false
+    }
+
+    /** ~IsWindowAbove */
+    infix fun isAbove(potentialBelow: Window?): Boolean {
+        for (candidateWindow in g.windows.asReversed()) {
+            if (candidateWindow === this)
+                return true
+            if (candidateWindow === potentialBelow)
+                return false
         }
         return false
     }
