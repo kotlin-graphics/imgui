@@ -329,9 +329,10 @@ fun updateSelectWindowViewport(window: Window) {
             updateTryMergeWindowIntoHostViewports(window)
     }
 
-    // Fallback to default viewport
+    // Fallback: merge in default viewport if z-order matches, otherwise create a new viewport
     if (window.viewport == null)
-        window.viewport = mainViewport
+        if (!updateTryMergeWindowIntoHostViewport(window, mainViewport))
+            window.viewport = addUpdateViewport(window, window.id, window.pos, window.size, ViewportFlag.None.i)
 
     val vp = window.viewport
     // Mark window as allowed to protrude outside of its viewport and into the current monitor

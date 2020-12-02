@@ -426,10 +426,13 @@ interface windows {
                 // Update common viewport flags
                 val viewportFlagsToClear = Vf.TopMost or Vf.NoTaskBarIcon or Vf.NoDecoration or Vf.NoRendererClear
                 var viewportFlags = viewport.flags wo viewportFlagsToClear
-                val isShortLivedFloatingWindow = flags has (Wf._ChildMenu or Wf._Tooltip or Wf._Popup)
+                val isModal = flags has Wf._Modal
+                val isShortLivedFloatingWindow = (flags has (Wf._ChildMenu or Wf._Tooltip or Wf._Popup)) && !isModal
                 if (flags has Wf._Tooltip)
                     viewportFlags = viewportFlags or Vf.TopMost
-                if (io.configViewportsNoTaskBarIcon || isShortLivedFloatingWindow)
+                //if (flags & ImGuiWindowFlags_Modal)
+                //    viewport_flags |= ImGuiViewportFlags_TopMost; // Not correct because other popups can be stack above a modal?
+                if ((io.configViewportsNoTaskBarIcon || isShortLivedFloatingWindow) && !isModal)
                     viewportFlags = viewportFlags or Vf.NoTaskBarIcon
                 if (io.configViewportsNoDecoration || isShortLivedFloatingWindow)
                     viewportFlags = viewportFlags or Vf.NoDecoration
@@ -438,7 +441,7 @@ interface windows {
                 // won't steal the OS focus away from their parent window (which may be reflected in OS the title bar decoration).
                 // Setting _NoFocusOnClick would technically prevent us from bringing back to front in case they are being covered by an OS window from a different app,
                 // but it shouldn't be much of a problem considering those are already popups that are closed when clicking elsewhere.
-                if (isShortLivedFloatingWindow && flags hasnt Wf._Modal)
+                if (isShortLivedFloatingWindow && !isModal)
                     viewportFlags = viewportFlags or (Vf.NoFocusOnAppearing or Vf.NoFocusOnClick)
 
                 // We can overwrite viewport flags using ImGuiWindowClass (advanced users)
