@@ -427,15 +427,19 @@ interface windows {
                 val viewportFlagsToClear = Vf.TopMost or Vf.NoTaskBarIcon or Vf.NoDecoration or Vf.NoRendererClear
                 var viewportFlags = viewport.flags wo viewportFlagsToClear
                 val isModal = flags has Wf._Modal
-                val isShortLivedFloatingWindow = (flags has (Wf._ChildMenu or Wf._Tooltip or Wf._Popup)) && !isModal
+                val isShortLivedFloatingWindow = flags has (Wf._ChildMenu or Wf._Tooltip or Wf._Popup)
                 if (flags has Wf._Tooltip)
                     viewportFlags = viewportFlags or Vf.TopMost
-                //if (flags & ImGuiWindowFlags_Modal)
-                //    viewport_flags |= ImGuiViewportFlags_TopMost; // Not correct because other popups can be stack above a modal?
                 if ((io.configViewportsNoTaskBarIcon || isShortLivedFloatingWindow) && !isModal)
                     viewportFlags = viewportFlags or Vf.NoTaskBarIcon
                 if (io.configViewportsNoDecoration || isShortLivedFloatingWindow)
                     viewportFlags = viewportFlags or Vf.NoDecoration
+
+                // Not correct to set modal as topmost because:
+                // - Because other popups can be stacked above a modal (e.g. combo box in a modal)
+                // - ImGuiViewportFlags_TopMost is currently handled different in backends: in Win32 it is "appear top most" whereas in GLFW and SDL it is "stay topmost"
+                //if (flags & ImGuiWindowFlags_Modal)
+                //    viewport_flags |= ImGuiViewportFlags_TopMost;
 
                 // For popups and menus that may be protruding out of their parent viewport, we enable _NoFocusOnClick so that clicking on them
                 // won't steal the OS focus away from their parent window (which may be reflected in OS the title bar decoration).

@@ -439,6 +439,9 @@ interface main {
                         continue
                     if (viewport === g.navWindowingTargetAnim?.viewport)
                         continue
+                    val vieportWindow = viewport.window
+                    if (vieportWindow != null && modalWindow != null && vieportWindow isAbove modalWindow)
+                        continue
                     val drawList = getForegroundDrawList(viewport)
                     val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
                     drawList.addRectFilled(viewport.pos, viewport.pos + viewport.size, dimBgCol)
