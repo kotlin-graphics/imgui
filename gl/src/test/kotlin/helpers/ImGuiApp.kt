@@ -20,7 +20,7 @@ abstract class ImGuiApp {
     open fun shutdownCloseWindow() = Unit
     open fun shutdownBackends() = Unit
     open fun destroy() = Unit
-    abstract fun captureFramebuffer(rect: Vec4i, pixelsRgba: ByteBuffer, userData: Any?): Boolean
+    abstract fun captureFramebuffer(rect: Vec4i, pixels: ByteBuffer, userData: Any?): Boolean
 }
 
 //typealias InitCreateWindow = (app: ImGuiApp, windowTitle: String, windowSize: Vec2) -> Boolean

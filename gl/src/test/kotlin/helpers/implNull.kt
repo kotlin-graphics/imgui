@@ -2,9 +2,13 @@ package helpers
 
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4i
-import imgui.ImGui
+import glm_.d
+import glm_.f
+import glm_.L
 import imgui.ImGui.io
+import imgui.Key
 import kool.BYTES
+import kool.adr
 import org.lwjgl.system.MemoryUtil
 import java.nio.ByteBuffer
 
@@ -18,7 +22,7 @@ class ImGuiApp_ImplNull : ImGuiApp() {
 
     // Functions
 
-    override fun initCreateWindow(windowTitle: String, windowSize: Vec2): Boolean {
+    override fun initCreateWindow(title: String, size: Vec2): Boolean {
         io.displaySize put size
         io.fonts.build()
         for (n in 0 until Key.COUNT)
@@ -29,7 +33,7 @@ class ImGuiApp_ImplNull : ImGuiApp() {
 
     override fun newFrame(): Boolean {
         val time = timeInMicroseconds
-        if (lastTime == 0)
+        if (lastTime == 0L)
             lastTime = time
         io.deltaTime = ((time - lastTime).d / 1000000.0).f
         if (io.deltaTime <= 0f)
@@ -39,8 +43,8 @@ class ImGuiApp_ImplNull : ImGuiApp() {
         return true
     }
 
-    override fun captureFramebuffer(rect: Vec4i, pixelsRgba: ByteBuffer, userData: Any?): Boolean {
-        MemoryUtil.memSet(pixels.adr, 0, rect.z * rect.w * Int.BYTES)
+    override fun captureFramebuffer(rect: Vec4i, pixels: ByteBuffer, userData: Any?): Boolean {
+        MemoryUtil.memSet(pixels.adr, 0, rect.z * rect.w * Int.BYTES.L)
         return true
     }
 
