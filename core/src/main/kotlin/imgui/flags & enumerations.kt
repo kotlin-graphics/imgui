@@ -1,5 +1,6 @@
 package imgui
 
+import glm_.has
 import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getNavInputAmount
@@ -831,6 +832,8 @@ enum class KeyMod(val i: KeyModFlags) {
 
     infix fun or(b: KeyMod): KeyModFlags = i or b.i
 }
+
+infix fun Int.has(f: KeyMod): Boolean = has(f.i)
 
 typealias KeyModFlags = Int
 
