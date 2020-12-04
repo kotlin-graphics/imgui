@@ -8,6 +8,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isKeyPressed
 import imgui.internal.sections.InputReadMode
+import org.lwjgl.system.Platform
 
 
 //-----------------------------------------------------------------------------
@@ -828,7 +829,8 @@ enum class KeyMod(val i: KeyModFlags) {
     Ctrl(1 shl 0),
     Shift(1 shl 1),
     Alt(1 shl 2),
-    Super(1 shl 3);
+    Super(1 shl 3),
+    Shortcut(if (Platform.get() == Platform.MACOSX) Super.i else Ctrl.i);
 
     infix fun or(b: KeyMod): KeyModFlags = i or b.i
 }
