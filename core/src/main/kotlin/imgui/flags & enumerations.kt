@@ -743,6 +743,7 @@ enum class DataType(val name_: String) {
     Int("S32"), Uint("U32"),
     Long("S64"), Ulong("U64"),
     Float("float"), Double("double"),
+    Count("Count"),
 
     _String("[internal] String"), _Pointer("[internal] Pointer"), _ID("[internal] ID");
 
