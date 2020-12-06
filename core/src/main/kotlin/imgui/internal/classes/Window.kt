@@ -902,11 +902,14 @@ class Window(var context: Context,
         }
 
         // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
-        if (hasCollapseButton) if (collapseButton(getID("#COLLAPSE"), collapseButtonPos)) wantCollapseToggle =
-            true // Defer actual collapsing to next frame as we are too far in the Begin() function
+        if (hasCollapseButton)
+            if (collapseButton(getID("#COLLAPSE"), collapseButtonPos))
+                wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
 
         // Close button
-        if (hasCloseButton) if (closeButton(getID("#CLOSE"), closeButtonPos)) pOpen!!.set(false)
+        if (hasCloseButton)
+            if (closeButton(getID("#CLOSE"), closeButtonPos))
+                pOpen!!.set(false)
 
         dc.navLayerCurrent = NavLayer.Main
         dc.itemFlags = itemFlagsBackup
