@@ -24,6 +24,7 @@ import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
+import imgui.classes.Context
 import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
@@ -38,6 +39,11 @@ import imgui.internal.sections.DrawListFlag as Dlf
 
 /** Main */
 interface main {
+
+    /** Internal state access - if you want to share Dear ImGui state between modules (e.g. DLL) or allocate it yourself
+     *  Note that we still point to some static data and members (such as GFontAtlas), so the state instance you end up using will point to the static data within its module */
+    val currentContext: Context?
+        get() = gImGui
 
     /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
     val io: IO
