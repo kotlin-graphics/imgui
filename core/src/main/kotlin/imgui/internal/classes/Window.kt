@@ -494,9 +494,9 @@ class Window(var context: Context,
     }
 
     /** ~SetWindowSize */
-    fun setSize(size: Vec2,
-                cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond) return //        JVM, useless
+    fun setSize(size: Vec2, cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
+        if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond)
+            return //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowSizeAllowFlags = setWindowSizeAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
 
