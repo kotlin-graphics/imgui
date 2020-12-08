@@ -180,7 +180,8 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
-        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        val flags = ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags or flags)
 
         return pressed
     }
@@ -262,7 +263,7 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(Vec2(checkBb.max.x + style.itemInnerSpacing.x, checkBb.min.y + style.framePadding.y), label)
 
-        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
         return pressed
     }
 

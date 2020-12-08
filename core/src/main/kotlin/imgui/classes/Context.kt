@@ -4,6 +4,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.saveIniSettingsToDisk
+import imgui.ImGui.callHooks
 import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
@@ -534,6 +535,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ImGuiWindow .ini settings entries (parsed from the last loaded .ini file and maintained on saving) */
     val settingsWindows = ArrayList<WindowSettings>()
 
+//    ImChunkStream<ImGuiTableSettings>   SettingsTables;         // ImGuiTable .ini settings entrie
+
+    /** Hooks for extensions (e.g. test engine) */
+    val hooks = ArrayList<ContextHook>()
+
     //------------------------------------------------------------------
     // Capture/Logging
     //------------------------------------------------------------------
@@ -649,8 +655,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             io.iniFilename?.let(::saveIniSettingsToDisk)
 
         // Notify hooked test engine, if any
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            Hook.shutdown!!.invoke(this)
+        g callHooks ContextHookType.Shutdown
 
         // Clear everything else
         g.apply {

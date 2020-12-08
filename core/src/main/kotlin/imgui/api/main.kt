@@ -8,6 +8,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.callHooks
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
@@ -59,8 +60,7 @@ interface main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
 
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            Hook.preNewFrame!!(g)
+        g callHooks ContextHookType.NewFramePre
 
         // Check and assert for various common IO and Configuration mistakes
         errorCheckNewFrameSanityChecks()
@@ -235,8 +235,7 @@ interface main {
         begin("Debug##Default")
         assert(g.currentWindow!!.isFallbackWindow)
 
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            Hook.postNewFrame!!(g)
+        g callHooks ContextHookType.NewFramePost
     }
 
     /** Ends the Dear ImGui frame. automatically called by ::render().

@@ -24,6 +24,7 @@ import imgui.ImGui.style
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
 import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
@@ -281,7 +282,7 @@ interface widgetsDrags {
         if (labelSize.x > 0f)
             ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
 
-        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
         return valueChanged
     }
 

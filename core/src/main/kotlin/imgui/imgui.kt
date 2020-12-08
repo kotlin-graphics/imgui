@@ -93,49 +93,17 @@ var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
 
 
 //-----------------------------------------------------------------------------
-// [SECTION] Test Engine Hooks (imgui_test_engine)
+// [SECTION] Generic context hooks
 //-----------------------------------------------------------------------------
 
-// TODO rename closer to cpp?
+typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
+enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
 
-typealias Hook_Shutdown = (Context) -> Unit
-typealias Hook_PreNewFrame = (Context) -> Unit
-typealias Hook_PostNewFrame = (Context) -> Unit
-typealias Hook_ItemAdd = (Context, Rect, ID) -> Unit
-typealias Hook_ItemInfo = (Context, ID, String, ItemStatusFlags) -> Unit
-typealias Hook_IdInfo = (Context, DataType, ID, Any?) -> Unit
-typealias Hook_IdInfo2 = (Context, DataType, ID, Any?, Int) -> Unit
-typealias Hook_Log = (Context, String) -> Unit
-
-object Hook {
-
-    /** ~ImGuiTestEngineHook_Shutdown */
-    var shutdown: Hook_Shutdown? = null
-
-    /** ~ImGuiTestEngineHook_PreNewFrame */
-    var preNewFrame: Hook_PreNewFrame? = null
-
-    /** ~ImGuiTestEngineHook_PostNewFrame */
-    var postNewFrame: Hook_PostNewFrame? = null
-
-    /** Register item bounding box
-     *  ~ImGuiTestEngineHook_ItemAdd */
-    var itemAdd: Hook_ItemAdd? = null
-
-    /** Register item label and status flags (optional)
-     *  ~ImGuiTestEngineHook_ItemInfo */
-    var itemInfo: Hook_ItemInfo? = null
-
-    /** ~ImGuiTestEngineHook_IdInfo */
-    var idInfo: Hook_IdInfo? = null
-
-    /** ~ImGuiTestEngineHook_IdInfo */
-    var idInfo2: Hook_IdInfo2? = null
-
-    /** Custom log entry from user land into test log
-     *  ~ImGuiTestEngineHook_Log */
-    var log: Hook_Log? = null
-}
+class ContextHook(
+    val type: ContextHookType,
+    val owner: ID = 0,
+    val callback: ContextHookCallback,
+    val userData: Any? = null)
 
 
 // Helper: Unicode defines
@@ -207,6 +175,7 @@ object ImGui :
         internal,
         // init in Context class
         newFrame,
+        genericContextHooks,
         settings,
         basicAccessors,
         basicHelpersForWidgetCode,

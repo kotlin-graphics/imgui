@@ -12,6 +12,7 @@ import imgui.*
 import imgui.ImGui.format
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
@@ -220,8 +221,11 @@ interface widgetsSliders {
         }
 
         // Draw frame
-        val frameCol =
-                if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = when (id) {
+            g.activeId -> Col.FrameBgActive
+            g.hoveredId -> Col.FrameBgHovered
+            else -> Col.FrameBg
+        }
         ImGui.renderNavHighlight(frameBb, id)
         ImGui.renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, ImGui.style.frameRounding)
 
@@ -232,35 +236,27 @@ interface widgetsSliders {
             ImGui.markItemEdited(id)
 
         // Render grab
-        if (grabBb.max.x > grabBb.min.x)
-            window.drawList.addRectFilled(
-                    grabBb.min,
-                    grabBb.max,
-                    ImGui.getColorU32(if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab),
-                    ImGui.style.grabRounding
-            )
+        if (grabBb.max.x > grabBb.min.x) {
+            val col = if (g.activeId == id) Col.SliderGrabActive else Col.SliderGrab
+            window.drawList.addRectFilled(grabBb.min, grabBb.max, col.u32, ImGui.style.grabRounding)
+        }
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = format.format(
-                ImGui.style.locale, when (val data = pData()) {
+        val value = format.format(ImGui.style.locale, when (val data = pData()) {
             is Ubyte -> data.v
             is Ushort -> data.v
             is Uint -> data.v
             is Ulong -> data.v
             else -> data
-        }
-        )
+        })
         ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
-        if (labelSize.x > 0f)
-            ImGui.renderText(
-                    Vec2(
-                            frameBb.max.x + ImGui.style.itemInnerSpacing.x,
-                            frameBb.min.y + ImGui.style.framePadding.y
-                    ), label
-            )
+        if (labelSize.x > 0f) {
+            val pos = Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y)
+            ImGui.renderText(pos, label)
+        }
 
-        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
         return valueChanged
     }
 
