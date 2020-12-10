@@ -44,6 +44,7 @@ import imgui.internal.floor
 import imgui.internal.hash
 import imgui.internal.linearSweep
 import imgui.internal.sections.ButtonFlag
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or
 import kotlin.math.abs
@@ -317,7 +318,7 @@ class TabBar {
 
         // If the user called us with *p_open == false, we early out and don't render.
         // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
-        Hook.itemInfo?.invoke(g, id, label, window.dc.lastItemStatusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
         if (pOpen?.get() == false) {
             pushItemFlag(ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus, true)
             itemAdd(Rect(), id)

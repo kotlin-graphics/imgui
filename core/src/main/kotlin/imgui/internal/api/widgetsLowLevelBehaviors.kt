@@ -138,7 +138,7 @@ internal interface widgetsLowLevelBehaviors {
             g.hoveredWindow = window
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
-            Hook.itemAdd!!(g, bb, id)
+            IMGUI_TEST_ENGINE_ITEM_ADD(bb, id)
 
         var pressed = false
         var hovered = itemHoverable(bb, id)
@@ -574,9 +574,9 @@ internal interface widgetsLowLevelBehaviors {
         if (!displayFrame && flags hasnt (Tnf.SpanAvailWidth or Tnf.SpanFullWidth))
             interactBb.max.x = frameBb.min.x + textWidth + style.itemSpacing.x * 2f
 
-        /*  Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
-            For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
-            This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero. */
+        // Store a flag for the current depth to tell if we will allow closing this node when navigating one of its child.
+        // For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
+        // This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero.
         val isLeaf = flags has Tnf.Leaf
         var isOpen = treeNodeBehaviorIsOpen(id, flags)
         if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
@@ -589,7 +589,9 @@ internal interface widgetsLowLevelBehaviors {
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            Hook.itemInfo?.invoke(g, window.dc.lastItemId, label.cStr, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+            val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
+            val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+            IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label.cStr, window.dc.itemFlags or f or f2)
             return isOpen
         }
 
@@ -707,7 +709,9 @@ internal interface widgetsLowLevelBehaviors {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        Hook.itemInfo?.invoke(g, id, label.cStr, window.dc.itemFlags or (if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable) or if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
+        val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, window.dc.itemFlags or f or f2)
         return isOpen
     }
 

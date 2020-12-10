@@ -844,7 +844,7 @@ interface windows {
             }
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
-                Hook.itemAdd!!(g, window.dc.lastItemRect, window.dc.lastItemId)
+                IMGUI_TEST_ENGINE_ITEM_ADD( window.dc.lastItemRect, window.dc.lastItemId)
         } else {
             // Append
             setCurrentViewport(window, window.viewport)
@@ -881,7 +881,9 @@ interface windows {
                 // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
                 assert(flags has Wf.NoTitleBar || window.dockIsActive)
                 if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)
-                    if (window.outerRectClipped.min.x >= window.outerRectClipped.max.x || window.outerRectClipped.min.y >= window.outerRectClipped.max.y) // TODO anyGreaterThanEqual bugged
+                   // FIXME: Doesn't make sense for ChildWindow??
+                    if(!g.logEnabled)
+                        if (window.outerRectClipped.min.x >= window.outerRectClipped.max.x || window.outerRectClipped.min.y >= window.outerRectClipped.max.y)
                         window.hiddenFramesCanSkipItems = 1
 
                 // Hide along with parent or if parent is collapsed

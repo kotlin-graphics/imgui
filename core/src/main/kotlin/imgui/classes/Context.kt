@@ -8,6 +8,7 @@ import imgui.ImGui.destroyPlatformWindows
 import imgui.ImGui.dockContextInitialize
 import imgui.ImGui.dockContextShutdown
 import imgui.ImGui.saveIniSettingsToDisk
+import imgui.ImGui.callHooks
 import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
@@ -574,6 +575,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ImGuiWindow .ini settings entries (parsed from the last loaded .ini file and maintained on saving) */
     val settingsWindows = ArrayList<WindowSettings>()
 
+//    ImChunkStream<ImGuiTableSettings>   SettingsTables;         // ImGuiTable .ini settings entrie
+
     /** Hooks for extensions (e.g. test engine) */
     val hooks = ArrayList<ContextHook>()
 
@@ -732,7 +735,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         dockContextShutdown(g)
 
         // Notify hooked test engine, if any
-        callContextHooks(this, ContextHookType.Shutdown)
+        g callHooks ContextHookType.Shutdown
 
         // Clear everything else
         windows.forEach { it.destroy() }
@@ -792,9 +795,8 @@ typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
 enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
 
 /** Hook for extensions like ImGuiTestEngine */
-class ContextHook {
-    var type = ContextHookType.NewFramePre
-    var owner: ID = 0
-    var callback: ContextHookCallback? = null
-    var userData: Any? = null
-}
+class ContextHook(
+    var type: ContextHookType = ContextHookType.NewFramePre,
+    var owner: ID = 0,
+    var callback: ContextHookCallback? = null,
+    var userData: Any? = null)

@@ -503,14 +503,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                 if (useTexture) {
                     // If we're using textures we only need to emit the left/right edge vertices
                     val texUVs = _data.texUvLines[integerThickness]
-                    if (fractionalThickness != 0f) {
+                    /*if (fractionalThickness != 0f) { // Currently always zero when use_texture==false!
                         val texUVs1 = _data.texUvLines[integerThickness + 1]
                         texUVs.x = texUVs.x + (texUVs1.x - texUVs.x) * fractionalThickness // inlined ImLerp()
                         texUVs.y = texUVs.y + (texUVs1.y - texUVs.y) * fractionalThickness
                         texUVs.z = texUVs.z + (texUVs1.z - texUVs.z) * fractionalThickness
                         texUVs.w = texUVs.w + (texUVs1.w - texUVs.w) * fractionalThickness
-                    }
-
+                    }*/
                     val texUV0 = Vec2(texUVs.x, texUVs.y)
                     val texUV1 = Vec2(texUVs.z, texUVs.w)
 

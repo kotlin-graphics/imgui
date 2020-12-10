@@ -19,7 +19,6 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
-import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columns
 import imgui.ImGui.combo
@@ -71,7 +70,6 @@ import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollHereX
 import imgui.ImGui.setScrollHereY
-import imgui.ImGui.setTabItemClosed
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderInt
@@ -99,7 +97,6 @@ import imgui.dsl.group
 import imgui.dsl.indent
 import imgui.dsl.menuBar
 import imgui.dsl.popup
-import imgui.dsl.popupContextItem
 import imgui.dsl.tabBar
 import imgui.dsl.treeNode
 import imgui.dsl.withClipRect
@@ -120,6 +117,7 @@ object ShowDemoWindowLayout {
 
     /* Widgets Width */
     var f = 0f
+    var showIndentedItems = true
 
 
     /* Basic Horizontal Layout */
@@ -263,35 +261,60 @@ object ShowDemoWindowLayout {
             // Use PushItemWidth()/PopItemWidth() to set the width of a group of items.
             // In real code use you'll probably want to choose width values that are proportional to your font size
             // e.g. Using '20.0f * GetFontSize()' as width instead of '200.0f', etc.
+
+            checkbox("Show indented items", ::showIndentedItems)
+
             text("SetNextItemWidth/PushItemWidth(100)")
             sameLine(); helpMarker("Fixed width.")
-            setNextItemWidth(100f)
-            dragFloat("float##1", ::f)
-
-            text("SetNextItemWidth/PushItemWidth(GetWindowWidth() * 0.5f)")
-            sameLine(); helpMarker("Half of window width.")
-            setNextItemWidth(windowWidth * 0.5f)
-            dragFloat("float##2", ::f)
-
-            text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
-            sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
-            setNextItemWidth(contentRegionAvail.x * 0.5f)
-            dragFloat("float##3", ::f)
+            pushItemWidth(100)
+            dragFloat("float##1b", ::f)
+            if (showIndentedItems)
+                indent {
+                    dragFloat("float (indented)##1b", ::f)
+                }
+            popItemWidth()
 
             text("SetNextItemWidth/PushItemWidth(-100)")
             sameLine(); helpMarker("Align to right edge minus 100")
-            setNextItemWidth(-100f)
-            dragFloat("float##4", ::f)
+            pushItemWidth(-100)
+            dragFloat("float##2a", ::f)
+            if (showIndentedItems)
+                indent {
+                    dragFloat("float (indented)##2b", ::f)
+                }
+            popItemWidth()
+
+            text("SetNextItemWidth/PushItemWidth(GetContentRegionAvail().x * 0.5f)")
+            sameLine(); helpMarker("Half of available width.\n(~ right-cursor_pos)\n(works within a column set)")
+            pushItemWidth(contentRegionAvail.x * 0.5f)
+            dragFloat("float##3a", ::f)
+            if (showIndentedItems)
+                indent {
+                    dragFloat("float (indented)##3b", ::f)
+                }
+            popItemWidth()
+
+            text("SetNextItemWidth/PushItemWidth(-GetContentRegionAvail().x * 0.5f)")
+            sameLine(); helpMarker("Align to right edge minus half")
+            pushItemWidth(-ImGui.contentRegionAvail.x * 0.5f)
+            dragFloat("float##4a", ::f)
+            if (showIndentedItems)
+                indent {
+                    dragFloat("float (indented)##4b", ::f)
+                }
+            popItemWidth()
 
             // Demonstrate using PushItemWidth to surround three items.
             // Calling SetNextItemWidth() before each of them would have the same effect.
-            text("SetNextItemWidth/PushItemWidth(-1)")
+            text("SetNextItemWidth/PushItemWidth(-FLT_MIN)")
             sameLine(); helpMarker("Align to right edge")
-            pushItemWidth(-1)
+            pushItemWidth(-Float.MIN_VALUE)
 
             dragFloat("##float5a", ::f)
-            dragFloat("##float5b", ::f)
-            dragFloat("##float5c", ::f)
+            if (showIndentedItems)
+                indent {
+                    dragFloat("float (indented)##5b", ::f)
+                }
             popItemWidth()
         }
 
@@ -455,7 +478,7 @@ object ShowDemoWindowLayout {
                 tabBar("MyTabBar", tabBarFlags1) {
                     // Demo a Leading TabItemButton(): click the "?" button to open a menu
                     if (showLeadingButton)
-                        if(tabItemButton("?", TabItemFlag.Leading or TabItemFlag.NoTooltip))
+                        if (tabItemButton("?", TabItemFlag.Leading or TabItemFlag.NoTooltip))
                             openPopup("MyHelpMenu")
                     popup("MyHelpMenu") {
                         selectable("Hello!")
@@ -464,7 +487,7 @@ object ShowDemoWindowLayout {
                     // Demo Trailing Tabs: click the "+" button to add a new tab (in your app you may want to use a font icon instead of the "+")
                     // Note that we submit it before the regular tabs, but because of the ImGuiTabItemFlags_Trailing flag it will always appear at the end.
                     if (showTrailingButton)
-                        if(tabItemButton("+", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
+                        if (tabItemButton("+", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
                             activeTabs += nextTabId++ // Add new tab
 
                     // Submit our regular tabs
@@ -483,7 +506,7 @@ object ShowDemoWindowLayout {
                         if (!open)
                             activeTabs.removeAt(n)
                         else
-                           n++
+                            n++
                     }
                 }
                 separator()

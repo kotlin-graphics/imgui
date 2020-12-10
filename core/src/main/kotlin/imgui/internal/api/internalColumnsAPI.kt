@@ -23,9 +23,9 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.*
 import imgui.internal.classes.Window
-import imgui.internal.sections.ColumnData
-import imgui.internal.sections.ColumnsFlag
-import imgui.internal.sections.ColumnsFlags
+import imgui.internal.sections.OldColumnData
+import imgui.internal.sections.OldColumnsFlag
+import imgui.internal.sections.OldColumnsFlags
 import imgui.internal.sections.hasnt
 import kotlin.math.max
 import kotlin.math.min
@@ -46,7 +46,7 @@ internal interface internalColumnsAPI {
     }
 
     /** setup number of columns. use an identifier to distinguish multiple column sets. close with EndColumns().    */
-    fun beginColumns(strId: String = "", columnsCount: Int, flags: ColumnsFlags) {
+    fun beginColumns(strId: String = "", columnsCount: Int, flags: OldColumnsFlags) {
 
         val window = currentWindow
 
@@ -90,7 +90,7 @@ internal interface internalColumnsAPI {
         columns.isFirstFrame = columns.columns.isEmpty()
         if (columns.columns.isEmpty())
             for (i in 0..columnsCount)
-                columns.columns += ColumnData().apply { offsetNorm = i / columnsCount.f }
+                columns.columns += OldColumnData().apply { offsetNorm = i / columnsCount.f }
 
         for (n in 0 until columnsCount) {
             // Compute clipping rectangle
@@ -131,13 +131,13 @@ internal interface internalColumnsAPI {
         val flags = columns.flags
         columns.lineMaxY = columns.lineMaxY max window.dc.cursorPos.y
         window.dc.cursorPos.y = columns.lineMaxY
-        if (flags hasnt ColumnsFlag.GrowParentContentsSize)
+        if (flags hasnt OldColumnsFlag.GrowParentContentsSize)
             window.dc.cursorMaxPos.x = columns.hostCursorMaxPosX  // Restore cursor max pos, as columns don't grow parent
 
         // Draw columns borders and handle resize
         // The IsBeingResized flag ensure we preserve pre-resize columns width so back-and-forth are not lossy
         var isBeingResized = false
-        if (flags hasnt ColumnsFlag.NoBorder && !window.skipItems) {
+        if (flags hasnt OldColumnsFlag.NoBorder && !window.skipItems) {
             // We clip Y boundaries CPU side because very long triangles are mishandled by some GPU drivers.
             val y1 = columns.hostCursorPosY max window.clipRect.min.y
             val y2 = window.dc.cursorPos.y min window.clipRect.max.y
@@ -154,13 +154,13 @@ internal interface internalColumnsAPI {
 
                 var hovered = false
                 var held = false
-                if (flags hasnt ColumnsFlag.NoResize) {
+                if (flags hasnt OldColumnsFlag.NoResize) {
                     val (_, ho, he) = buttonBehavior(columnHitRect, columnId)
                     hovered = ho
                     held = he
                     if (hovered || held)
                         g.mouseCursor = MouseCursor.ResizeEW
-                    if (held && column.flags hasnt ColumnsFlag.NoResize)
+                    if (held && column.flags hasnt OldColumnsFlag.NoResize)
                         draggingColumn = n
                 }
 

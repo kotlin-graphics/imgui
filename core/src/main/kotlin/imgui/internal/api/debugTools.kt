@@ -6,11 +6,17 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.bulletText
+import imgui.ImGui.end
+import imgui.ImGui.endChild
+import imgui.ImGui.endGroup
+import imgui.ImGui.endTabBar
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.popFocusScope
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
+import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.sameLine
@@ -31,8 +37,8 @@ import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
 import imgui.internal.classes.Window
 import imgui.internal.floor
-import imgui.internal.sections.Columns
 import imgui.internal.sections.DrawListFlag
+import imgui.internal.sections.OldColumns
 import imgui.internal.sections.WindowSettings
 import imgui.internal.sections.wo
 import imgui.internal.triangleArea
@@ -40,8 +46,72 @@ import kool.lib.isNotEmpty
 import kool.rem
 import uno.kotlin.plusAssign
 
+typealias ErrorLogCallback = (userData: Any?, fmt: String) -> Unit
+
 /** Debug Tools */
 internal interface debugTools {
+
+    /** Experimental recovery from incorrect usage of BeginXXX/EndXXX/PushXXX/PopXXX calls.
+     *  Must be called during or before EndFrame().
+     *  This is generally flawed as we are not necessarily End/Popping things in the right order.
+     *  FIXME: Can't recover from inside BeginTabItem/EndTabItem yet.
+     *  FIXME: Can't recover from interleaved BeginTabBar/Begin */
+    fun errorCheckEndFrameRecover(logCallback: ErrorLogCallback?, userData: Any? = null) {
+        // PVS-Studio V1044 is "Loop break conditions do not depend on the number of iterations"
+        while (g.currentWindowStack.isNotEmpty()) {
+//            if(IMGUI_HAS_TABLE)
+//                    while (g.currentTable && (g.CurrentTable->OuterWindow == g.CurrentWindow || g.CurrentTable->InnerWindow == g.CurrentWindow))
+//            {
+//                if (log_callback) log_callback(userData, "Recovered from missing EndTable() in '%s'", g.CurrentTable->OuterWindow->Name);
+//                EndTable();
+//            }
+            val window = g.currentWindow!!
+//            assert(window != null)
+            while (g.currentTabBar != null) { //-V1044
+                logCallback?.invoke(userData, "Recovered from missing EndTabBar() in '${window.name}'")
+                endTabBar()
+            }
+            while (window.dc.treeDepth > 0) {
+                logCallback?.invoke(userData, "Recovered from missing TreePop() in '${window.name}'")
+                treePop()
+            }
+            while (g.groupStack.size > window.dc.stackSizesOnBegin.sizeOfGroupStack) {
+                logCallback?.invoke(userData, "Recovered from missing EndGroup() in '${window.name}'")
+                endGroup()
+            }
+            while (window.idStack.size > 1) {
+                logCallback?.invoke(userData, "Recovered from missing PopID() in '${window.name}'")
+                popID()
+            }
+            while (g.colorStack.size > window.dc.stackSizesOnBegin.sizeOfColorStack) {
+                val name = window.name
+                val col = g.colorStack.last().col
+                logCallback?.invoke(userData, "Recovered from missing PopStyleColor() in '$name' for ImGuiCol_$col")
+                popStyleColor()
+            }
+            while (g.styleVarStack.size > window.dc.stackSizesOnBegin.sizeOfStyleVarStack) {
+                logCallback?.invoke(userData, "Recovered from missing PopStyleVar() in '${window.name}'")
+                popStyleVar()
+            }
+            while (g.focusScopeStack.size > window.dc.stackSizesOnBegin.sizeOfFocusScopeStack) {
+                logCallback?.invoke(userData, "Recovered from missing PopFocusScope() in '${window.name}'")
+                popFocusScope()
+            }
+            if (g.currentWindowStack.size == 1) {
+                assert(window.isFallbackWindow)
+                break
+            }
+            assert(window === g.currentWindow)
+            if (window.flags has WindowFlag._ChildWindow) {
+                logCallback?.invoke(userData, "Recovered from missing EndChild() for '${window.name}'")
+                endChild()
+            }
+            else {
+                logCallback?.invoke(userData, "Recovered from missing End() for '${window.name}'")
+                end()
+            }
+        }
+    }
 
     fun debugDrawItemRect(col: Int = COL32(255, 0, 0, 255)) {
         val window = g.currentWindow!!
@@ -53,7 +123,7 @@ internal interface debugTools {
     }
 
     /** [DEBUG] Display contents of Columns */
-    fun debugNodeColumns(columns: Columns) {
+    fun debugNodeColumns(columns: OldColumns) {
         if (!treeNode(columns.id.L, "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X", columns.id, columns.flags))
             return
         bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.offMaxX - columns.offMinX, columns.offMinX, columns.offMaxX)

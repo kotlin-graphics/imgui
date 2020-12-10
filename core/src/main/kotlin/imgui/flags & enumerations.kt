@@ -1,5 +1,6 @@
 package imgui
 
+import glm_.has
 import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getNavInputAmount
@@ -7,6 +8,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isKeyPressed
 import imgui.internal.sections.InputReadMode
+import org.lwjgl.system.Platform
 
 
 //-----------------------------------------------------------------------------
@@ -850,6 +852,7 @@ enum class DataType(val name_: String) {
     Int("S32"), Uint("U32"),
     Long("S64"), Ulong("U64"),
     Float("float"), Double("double"),
+    Count("Count"),
 
     _String("[internal] String"), _Pointer("[internal] Pointer"), _ID("[internal] ID");
 
@@ -936,10 +939,13 @@ enum class KeyMod(val i: KeyModFlags) {
     Ctrl(1 shl 0),
     Shift(1 shl 1),
     Alt(1 shl 2),
-    Super(1 shl 3);
+    Super(1 shl 3),
+    Shortcut(if (Platform.get() == Platform.MACOSX) Super.i else Ctrl.i);
 
     infix fun or(b: KeyMod): KeyModFlags = i or b.i
 }
+
+infix fun Int.has(f: KeyMod): Boolean = has(f.i)
 
 typealias KeyModFlags = Int
 

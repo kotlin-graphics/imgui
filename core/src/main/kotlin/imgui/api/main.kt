@@ -7,7 +7,7 @@ import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
-import imgui.ImGui.callContextHooks
+import imgui.ImGui.callHooks
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.closePopupsOverWindow
@@ -33,6 +33,7 @@ import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.classes.ContextHookType
+import imgui.classes.Context
 import imgui.classes.*
 import imgui.font.FontAtlas
 import imgui.has
@@ -53,6 +54,11 @@ import imgui.internal.sections.DrawListFlag as Dlf
 /** Main */
 interface main {
 
+    /** Internal state access - if you want to share Dear ImGui state between modules (e.g. DLL) or allocate it yourself
+     *  Note that we still point to some static data and members (such as GFontAtlas), so the state instance you end up using will point to the static data within its module */
+    val currentContext: Context?
+        get() = gImGui
+
     /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
     val io: IO
         get() = gImGui?.io
@@ -67,7 +73,7 @@ interface main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
 
-        callContextHooks(g, ContextHookType.NewFramePre)
+        g callHooks ContextHookType.NewFramePre
 
         // Check and assert for various common IO and Configuration mistakes
         g.configFlagsLastFrame = g.configFlagsCurrFrame
@@ -259,7 +265,7 @@ interface main {
         begin("Debug##Default")
         assert(g.currentWindow!!.isFallbackWindow)
 
-        callContextHooks(g, ContextHookType.NewFramePost)
+        g callHooks ContextHookType.NewFramePost
     }
 
     /** Ends the Dear ImGui frame. automatically called by ::render().
@@ -273,7 +279,7 @@ interface main {
         if (g.frameCountEnded == g.frameCount) return
         assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()?" }
 
-        callContextHooks(g, ContextHookType.EndFramePre)
+        g callHooks ContextHookType.EndFramePre
 
         errorCheckEndFrameSanityChecks()
 
@@ -348,7 +354,7 @@ interface main {
         io.inputQueueCharacters.clear()
         io.navInputs.fill(0f)
 
-        callContextHooks(g, ContextHookType.EndFramePost)
+        g callHooks ContextHookType.EndFramePost
     }
 
     /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData(). */
@@ -360,7 +366,7 @@ interface main {
         g.frameCountRendered = g.frameCount
         io.metricsRenderWindows = 0
 
-        callContextHooks(g, ContextHookType.RenderPre)
+        g callHooks ContextHookType.RenderPre
 
         // Add background ImDrawList (for each active viewport)
         for (viewport in g.viewports) {
@@ -412,7 +418,7 @@ interface main {
             io.metricsRenderIndices += viewport.drawData!!.totalIdxCount
         }
 
-        callContextHooks(g, ContextHookType.RenderPost)
+        g callHooks ContextHookType.RenderPost
     }
 
     /** Pass this to your backend rendering function! Valid after Render() and until the next call to NewFrame() */

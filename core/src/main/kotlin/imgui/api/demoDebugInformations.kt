@@ -75,6 +75,13 @@ import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.*
 import imgui.internal.sections.*
+import imgui.internal.classes.Rect
+import imgui.internal.classes.TabBar
+import imgui.internal.classes.Window
+import imgui.internal.sections.OldColumns
+import imgui.internal.sections.DrawListFlag
+import imgui.internal.sections.WindowSettings
+import imgui.internal.sections.wo
 import kool.BYTES
 import kool.lim
 import kool.rem
@@ -768,7 +775,7 @@ interface demoDebugInformations {
                 treePop()
             }
 
-            fun nodeColumns(columns: Columns) {
+            fun nodeColumns(columns: OldColumns) {
                 if (!treeNode(columns.id, "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X", columns.id, columns.flags))
                     return
                 bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns.offMaxX - columns.offMinX, columns.offMinX, columns.offMaxX)

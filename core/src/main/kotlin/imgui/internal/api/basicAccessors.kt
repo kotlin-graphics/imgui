@@ -1,7 +1,6 @@
 package imgui.internal.api
 
 import imgui.DataType
-import imgui.Hook
 import imgui.ID
 import imgui.IMGUI_ENABLE_TEST_ENGINE
 import imgui.api.g
@@ -136,8 +135,8 @@ internal interface basicAccessors {
         val id = hash(str, if (strEnd != -1) strEnd else 0, seed)
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE) {
-            val g = gImGui!!
-            Hook.idInfo2!!.invoke(g, DataType._String, id, str, strEnd)
+//            val g = gImGui!!
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, str, strEnd)
         }
         return id
     }
