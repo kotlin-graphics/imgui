@@ -682,8 +682,10 @@ interface windows {
             if (flags has Wf._ChildWindow) { // Child window can be out of sight and have "negative" clip windows.
                 // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
                 assert(flags has Wf.NoTitleBar)
-                if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0) if (window.outerRectClipped.min.x >= window.outerRectClipped.max.x || window.outerRectClipped.min.y >= window.outerRectClipped.max.y) // TODO anyGreaterThanEqual bugged
-                    window.hiddenFramesCanSkipItems = 1
+                if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)  // FIXME: Doesn't make sense for ChildWindow??
+                    if(!g.logEnabled)
+                        if (window.outerRectClipped.min.x >= window.outerRectClipped.max.x || window.outerRectClipped.min.y >= window.outerRectClipped.max.y)
+                            window.hiddenFramesCanSkipItems = 1
 
                 // Hide along with parent or if parent is collapsed
                 parentWindow?.let {
