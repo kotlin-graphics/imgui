@@ -1,25 +1,23 @@
 package imgui.internal.api
 
+import imgui.ContextHook
+import imgui.ContextHookType
 import imgui.classes.Context
-import imgui.classes.ContextHook
-import imgui.classes.ContextHookType
 
 // Generic context hooks
 interface genericContextHooks {
 
     /** No specific ordering/dependency support, will see as needed */
-    fun addContextHook(ctx: Context, hook: ContextHook) {
-        val g = ctx
-//        assert(hook.callback != null)
-        g.hooks += hook
+    infix fun Context.addHook(hook: ContextHook) {
+        assert(hook.callback != null)
+        hooks += hook
     }
 
     /** Call context hooks (used by e.g. test engine)
      *  We assume a small number of hooks so all stored in same array */
-    fun callContextHooks(ctx: Context, hookType: ContextHookType) {
-        val g = ctx
-        for (hook in g.hooks)
+    infix fun Context.callHooks(hookType: ContextHookType) {
+        for (hook in hooks)
             if (hook.type == hookType)
-                hook.callback!!(g, hook)
+                hook.callback!!.invoke(this, hook)
     }
 }

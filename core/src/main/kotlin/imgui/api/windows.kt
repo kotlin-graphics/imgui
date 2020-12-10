@@ -661,9 +661,8 @@ interface windows {
             val flag = if (isMouseHoveringRect(titleBarRect, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
             setLastItemData(window, window.moveId, flag.i, titleBarRect)
 
-            if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar) Hook.itemAdd!!(g,
-                window.dc.lastItemRect,
-                window.dc.lastItemId)
+            if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
+                IMGUI_TEST_ENGINE_ITEM_ADD(window.dc.lastItemRect, window.dc.lastItemId)
         } else   // Append
             setCurrentWindow(window)
 
