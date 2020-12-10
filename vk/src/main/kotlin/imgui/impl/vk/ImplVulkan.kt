@@ -116,7 +116,6 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
                     createOrResizeBuffer(rb::indexBuffer, rb::indexBufferMemory, rb::indexBufferSize, indexSize, VkBufferUsage.INDEX_BUFFER_BIT)
 
                 // Upload vertex/index data into a single contiguous GPU buffer
-                //            var vtxDst: DrawVert? = null
                 var vtxDst = v.device.mapMemory(rb.vertexBufferMemory, VkDeviceSize(0), vertexSize)
                 var idxDst = v.device.mapMemory(rb.indexBufferMemory, VkDeviceSize(0), indexSize)
                 for (cmdList in drawData.cmdLists) {

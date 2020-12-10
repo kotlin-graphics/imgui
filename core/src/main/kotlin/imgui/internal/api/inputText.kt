@@ -56,6 +56,7 @@ import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.Rect
 import imgui.internal.sections.Axis
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
 import imgui.internal.sections.InputSource
 import imgui.internal.sections.shl
 import imgui.stb.te.click
@@ -882,7 +883,7 @@ internal interface inputText {
         if (valueChanged && flags hasnt Itf._NoMarkEdited)
             markItemEdited(id)
 
-        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
         return when {
             flags has Itf.EnterReturnsTrue -> enterPressed
             else -> valueChanged

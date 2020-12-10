@@ -305,7 +305,8 @@ interface widgetsMenus {
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.beginPopupStack.size, true)
 
-        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
+        val f = ItemStatusFlag.Openable or if(menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags or f)
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
@@ -385,7 +386,8 @@ interface widgetsMenus {
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 
-        Hook.itemInfo?.invoke(g, window.dc.lastItemId, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
+        val f = ItemStatusFlag.Checkable or if(selected) ItemStatusFlag.Checked else ItemStatusFlag.None
+        IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label, window.dc.itemFlags or f)
         return pressed
     }
 

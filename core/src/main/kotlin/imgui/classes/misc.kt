@@ -161,8 +161,13 @@ class TextFilter(defaultFilter: String = "") {
         return valueChanged
     }
 
-    fun passFilter(text_: String, textEnd: Int = text_.length): Boolean {
-        val text = if (textEnd != text_.length) text_.substring(0, textEnd) else text_
+    fun passFilter(text_: String?, textEnd: Int = -1): Boolean {
+
+        if(exc.isEmpty() && inc.isEmpty())
+            return true
+
+        var text = text_ ?: ""
+        text = if (textEnd != text.length) text.substring(0, textEnd) else text
         if (exc.any { it in text }) return false
         if (inc.any { it in text }) return true
         // Implicit * grep

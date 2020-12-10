@@ -21,10 +21,7 @@ import imgui.ImGui.setNavID
 import imgui.ImGui.style
 import imgui.internal.classes.Rect
 import imgui.internal.floor
-import imgui.internal.sections.ItemStatusFlag
-import imgui.internal.sections.NavHighlightFlag
-import imgui.internal.sections.hasnt
-import imgui.internal.sections.or
+import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -173,7 +170,7 @@ interface widgetsSelectables {
         if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && window.dc.itemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
 
-        Hook.itemInfo?.invoke(g, id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
         return pressed
     }
 

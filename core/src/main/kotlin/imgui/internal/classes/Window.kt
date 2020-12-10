@@ -278,16 +278,12 @@ class Window(var context: Context,
     var memoryCompacted = false
 
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
-    fun getID(strID: String,
-              end: Int = 0): ID { // FIXME: ImHash with str_end doesn't behave same as with identical zero-terminated string, because of ### handling.
+    fun getID(strID: String, end: Int = 0): ID {
         val seed: ID = idStack.last()
         val id: ID = hash(strID, end, seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo2?.invoke(g,
-            DataType._String,
-            id,
-            strID,
-            end)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, end)
         return id
     }
 
@@ -296,10 +292,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hash(System.identityHashCode(ptrID), seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo?.invoke(g,
-            DataType._Pointer,
-            id,
-            ptrID)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._Pointer, ptrID)
         return id
     }
 
@@ -309,10 +303,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo?.invoke(g,
-            DataType._Pointer,
-            id,
-            intPtr)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Long, intPtr) // TODO check me
         return id
     }
 
@@ -320,42 +312,37 @@ class Window(var context: Context,
         val seed = idStack.last()
         val id = hash(n, seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo?.invoke(g, DataType.Int, id, n)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Int, n)
         return id
     }
 
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
         val id = hash(strID, strID.length - strEnd, seed_ = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo2?.invoke(g,
-            DataType._String,
-            id,
-            strID,
-            strEnd)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, strEnd)
         return id
     }
 
     fun getIdNoKeepAlive(ptrID: Any): ID {
         val id = hash(System.identityHashCode(ptrID), seed = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo?.invoke(g,
-            DataType._Pointer,
-            id,
-            ptrID)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._Pointer, ptrID)
         return id
     }
 
     fun getIdNoKeepAlive(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
         val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo?.invoke(g,
-            DataType._Pointer,
-            id,
-            intPtr)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Long, intPtr) // TODO checkMe
         return id
     }
 
     fun getIdNoKeepAlive(n: Int): ID {
         val id = hash(n, seed = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookIdInfo == id) Hook.idInfo?.invoke(g, DataType.Int, id, n)
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Int, n)
         return id
     }
 
@@ -501,9 +488,9 @@ class Window(var context: Context,
     }
 
     /** ~ SetWindowPos */
-    fun setPos(pos: Vec2,
-               cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.None && setWindowPosAllowFlags hasnt cond) return //        JVM, useless
+    fun setPos(pos: Vec2, cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
+        if (cond != Cond.None && setWindowPosAllowFlags hasnt cond)
+            return //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowPosAllowFlags = setWindowPosAllowFlags wo (Cond.Once or Cond.FirstUseEver or Cond.Appearing)
         setWindowPosVal put Float.MAX_VALUE
@@ -518,9 +505,9 @@ class Window(var context: Context,
     }
 
     /** ~SetWindowSize */
-    fun setSize(size: Vec2,
-                cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
-        if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond) return //        JVM, useless
+    fun setSize(size: Vec2, cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
+        if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond)
+            return //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowSizeAllowFlags = setWindowSizeAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
 
@@ -909,11 +896,14 @@ class Window(var context: Context,
         }
 
         // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
-        if (hasCollapseButton) if (collapseButton(getID("#COLLAPSE"), collapseButtonPos)) wantCollapseToggle =
-            true // Defer actual collapsing to next frame as we are too far in the Begin() function
+        if (hasCollapseButton)
+            if (collapseButton(getID("#COLLAPSE"), collapseButtonPos))
+                wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
 
         // Close button
-        if (hasCloseButton) if (closeButton(getID("#CLOSE"), closeButtonPos)) pOpen!!.set(false)
+        if (hasCloseButton)
+            if (closeButton(getID("#CLOSE"), closeButtonPos))
+                pOpen!!.set(false)
 
         dc.navLayerCurrent = NavLayer.Main
         dc.itemFlags = itemFlagsBackup
