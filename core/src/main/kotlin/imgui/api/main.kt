@@ -8,7 +8,6 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
-import imgui.ImGui.callContextHooks
 import imgui.ImGui.callHooks
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
@@ -259,7 +258,7 @@ interface main {
         if (g.frameCountEnded == g.frameCount) return
         assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()?" }
 
-        callContextHooks(g, ContextHookType.EndFramePre)
+        g callHooks ContextHookType.EndFramePre
 
         errorCheckEndFrameSanityChecks()
 
@@ -326,7 +325,7 @@ interface main {
         io.inputQueueCharacters.clear()
         io.navInputs.fill(0f)
 
-        callContextHooks(g, ContextHookType.EndFramePost)
+        g callHooks ContextHookType.EndFramePost
     }
 
     /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData(). */
@@ -339,7 +338,7 @@ interface main {
         io.metricsRenderWindows = 0
         g.drawDataBuilder.clear()
 
-        callContextHooks(g, ContextHookType.RenderPre)
+        g callHooks ContextHookType.RenderPre
 
         // Add background ImDrawList
         if (g.backgroundDrawList.vtxBuffer.hasRemaining())
@@ -370,7 +369,7 @@ interface main {
         io.metricsRenderVertices = g.drawData.totalVtxCount
         io.metricsRenderIndices = g.drawData.totalIdxCount
 
-        callContextHooks(g, ContextHookType.RenderPost)
+        g callHooks ContextHookType.RenderPost
     }
 
     /** Pass this to your backend rendering function! Valid after Render() and until the next call to NewFrame() */
