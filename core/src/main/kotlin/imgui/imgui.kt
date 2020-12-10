@@ -92,20 +92,6 @@ val IMGUI_ENABLE_TEST_ENGINE: Boolean
 var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
 
 
-//-----------------------------------------------------------------------------
-// [SECTION] Generic context hooks
-//-----------------------------------------------------------------------------
-
-typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
-enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
-
-class ContextHook(
-    val type: ContextHookType,
-    val owner: ID = 0,
-    val callback: ContextHookCallback,
-    val userData: Any? = null)
-
-
 // Helper: Unicode defines
 
 /** Last Unicode code point supported by this build.

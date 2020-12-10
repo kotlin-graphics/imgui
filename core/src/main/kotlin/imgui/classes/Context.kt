@@ -3,7 +3,6 @@ package imgui.classes
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.callContextHooks
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.callHooks
 import imgui.api.g
@@ -724,9 +723,8 @@ typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
 enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
 
 /** Hook for extensions like ImGuiTestEngine */
-class ContextHook {
-    var type = ContextHookType.NewFramePre
-    var owner: ID = 0
-    var callback: ContextHookCallback? = null
-    var userData: Any? = null
-}
+class ContextHook(
+    var type: ContextHookType = ContextHookType.NewFramePre,
+    var owner: ID = 0,
+    var callback: ContextHookCallback? = null,
+    var userData: Any? = null)
