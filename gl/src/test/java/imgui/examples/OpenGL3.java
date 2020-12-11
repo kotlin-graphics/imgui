@@ -6,14 +6,12 @@ import glm_.vec4.Vec4;
 import imgui.Cond;
 import imgui.ImGui;
 import imgui.MutableProperty0;
-import imgui.classes.IO;
 import imgui.classes.Context;
+import imgui.classes.IO;
+import imgui.classes.InputTextCallbackData;
 import imgui.impl.gl.ImplGL3;
 import imgui.impl.glfw.ImplGlfw;
-
-import static imgui.ImguiKt.DEBUG;
-import static imgui.impl.gl.CommonGLKt.setGlslVersion;
-
+import kotlin.jvm.functions.Function1;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
@@ -23,9 +21,10 @@ import uno.glfw.VSync;
 
 import static gln.GlnKt.glClearColor;
 import static gln.GlnKt.glViewport;
+import static imgui.ImguiKt.DEBUG;
+import static imgui.impl.gl.CommonGLKt.setGlslVersion;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.system.MemoryUtil.NULL;
 import static uno.glfw.windowHint.Profile.core;
 
 public class OpenGL3 {
