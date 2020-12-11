@@ -119,8 +119,7 @@ internal interface PopupsModalsTooltips {
 
     fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
-        IMGUI_DEBUG_LOG_POPUP(
-            "ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=${restoreFocusToWindowUnderPopup.i}")
+        IMGUI_DEBUG_LOG_POPUP("ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=${restoreFocusToWindowUnderPopup.i}")
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
 
         // Trim open popup stack
@@ -145,13 +144,19 @@ internal interface PopupsModalsTooltips {
         if (g.openPopupStack.empty()) return
 
         // Don't close our own child popup windows.
-        var popupCountToKeep = -1 // [JVM] to have the step directly into the while
+        var popupCountToKeep = 0
         if (refWindow != null) // Find the highest popup which is a descendant of the reference window (generally reference window = NavWindow)
-            while (++popupCountToKeep < g.openPopupStack.size) {
+            while (popupCountToKeep < g.openPopupStack.size) {
                 val popup = g.openPopupStack[popupCountToKeep]
-                if (popup.window == null) continue
+                if (popup.window == null) {
+                    popupCountToKeep++
+                    continue
+                }
                 assert(popup.window!!.flags has Wf._Popup)
-                if (popup.window!!.flags has Wf._ChildWindow) continue
+                if (popup.window!!.flags has Wf._ChildWindow) {
+                    popupCountToKeep++
+                    continue
+                }
 
                 // Trim the stack unless the popup is a direct parent of the reference window (the reference window is often the NavWindow)
                 // - With this stack of window, clicking/focusing Popup1 will close Popup2 and Popup3:
@@ -166,12 +171,13 @@ internal interface PopupsModalsTooltips {
                         break
                     }
                 }
-                if (!refWindowIsDescendentOfPopup) break
+                if (!refWindowIsDescendentOfPopup)
+                    break
+                popupCountToKeep++
             }
 
         if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
-            IMGUI_DEBUG_LOG_POPUP(
-                "ClosePopupsOverWindow(\"${refWindow!!.name}\") -> ClosePopupToLevel($popupCountToKeep)")
+            IMGUI_DEBUG_LOG_POPUP("ClosePopupsOverWindow(\"${refWindow?.name}\") -> ClosePopupToLevel($popupCountToKeep)")
             closePopupToLevel(popupCountToKeep, restoreFocusToWindowUnderPopup)
         }
     }
