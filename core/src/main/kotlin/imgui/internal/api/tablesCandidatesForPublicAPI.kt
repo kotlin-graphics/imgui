@@ -94,7 +94,7 @@ interface tablesCandidatesForPublicAPI {
             // [Resize Rule 3] If we are are followed by a fixed column and we have a Stretch column before, we need to ensure
             // that our left border won't move, which we can do by making sure column_a/column_b resizes cancels each others.
             if (column1 != null && column1.flags has Tcf.WidthFixed)
-                if (table.leftMostStretchedColumnDisplayOrder != -1 && table.leftMostStretchedColumnDisplayOrder < column0.displayOrder) {
+                if (table.leftMostStretchedColumn != -1 && table.columns[table.leftMostStretchedColumn].displayOrder < column0.displayOrder) {
                 // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
                     val column1Width = (column1.widthRequest - (column0Width - column0.widthRequest)) max minWidth
                     column0Width = column0.widthRequest + column1.widthRequest - column1Width

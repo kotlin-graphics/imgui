@@ -250,11 +250,14 @@ class Table {
     /** -1 or +1 */
     var reorderColumnDir: TableColumnIdx = 0
 
+    /** Index of left-most stretched column. */
+    var leftMostStretchedColumn: TableColumnIdx = 0
+
+    /** Index of right-most stretched column. */
+    var rightMostStretchedColumn: TableColumnIdx = 0
+
     /** Index of right-most non-hidden column. */
     var rightMostEnabledColumn: TableColumnIdx = 0
-
-    /** Display order of left-most stretched column. */
-    var leftMostStretchedColumnDisplayOrder: TableColumnIdx = 0
 
     /** Column right-clicked on, of -1 if opening context menu from a neutral/empty spot */
     var contextPopupColumn: TableColumnIdx = 0
@@ -554,7 +557,8 @@ class Table {
         var sumWeightsStretched = 0f     // Sum of all weights for weighted columns.
         var sumWidthFixedRequests = 0f  // Sum of all width for fixed and auto-resize columns, excluding width contributed by Stretch columns.
         var maxWidthAuto = 0f            // Largest auto-width (used for SameWidths feature)
-        leftMostStretchedColumnDisplayOrder = -1
+        leftMostStretchedColumn = -1
+        rightMostStretchedColumn = -1
         for (columnN in 0 until columnsCount) {
             if (enabledMaskByIndex hasnt (1L shl columnN))
                 continue
@@ -600,11 +604,16 @@ class Table {
                 sumWidthFixedRequests += column.widthRequest
             } else {
                 assert(column.flags has Tcf.WidthStretch)
-                if (column.stretchWeight < 0f)
-                    column.stretchWeight = 1f
+
+                // Revert or initialize weight (when column->StretchWeight < 0.0f normally it means there has been no init value so it'll always default to 1.0f)
+                if (column.autoFitQueue != 0x00 || column.stretchWeight < 0f)
+                    column.stretchWeight = if(column.initStretchWeightOrWidth > 0f) column.initStretchWeightOrWidth else 1f
+
                 sumWeightsStretched += column.stretchWeight
-                if (leftMostStretchedColumnDisplayOrder == -1 || leftMostStretchedColumnDisplayOrder > column.displayOrder)
-                    leftMostStretchedColumnDisplayOrder = column.displayOrder
+                if (leftMostStretchedColumn == -1 || columns[leftMostStretchedColumn].displayOrder > column.displayOrder)
+                    leftMostStretchedColumn = columnN
+                if (rightMostStretchedColumn == -1 || columns[rightMostStretchedColumn].displayOrder < column.displayOrder)
+                    rightMostStretchedColumn = columnN
             }
             maxWidthAuto = maxWidthAuto max column.widthAuto
             sumWidthFixedRequests += cellPaddingX * 2f
@@ -663,8 +672,8 @@ class Table {
             }
 
             // [Resize Rule 1] The right-most Visible column is not resizable if there is at least one Stretch column
-            // (see comments in TableResizeColumn())
-            if (column.nextEnabledColumn == -1 && leftMostStretchedColumnDisplayOrder != -1)
+            // See additional comments in TableSetColumnWidth().
+            if (column.nextEnabledColumn == -1 && leftMostStretchedColumn != -1)
                 column.flags = column.flags or Tcf.NoDirectResize_
 
             // Assign final width, record width in case we will need to shrink
@@ -930,7 +939,7 @@ class Table {
         if (flags has Tf.Sortable) {
             var count = 0
             var mask = 0
-            var list = 0;
+            var list = 0
             if (flags has Tcf.PreferSortAscending && flags hasnt Tcf.NoSortAscending) {
                 mask = mask or (1 shl SortDirection.Ascending.i)
                 list = list or (SortDirection.Ascending.i shl (count shl 1))
@@ -1121,7 +1130,7 @@ class Table {
         if (flags has Tf.Resizable) {
             if (column != null) {
                 val canResize = column.flags hasnt Tcf.NoResize && column.isEnabled
-                if (menuItem("Size column to fit", "", false, canResize))
+                if (menuItem("Size column to fit###SizeOne", "", false, canResize))
                     setColumnWidthAutoSingle(columnN)
             }
 
@@ -1781,9 +1790,10 @@ class Table {
         if (!column.isEnabled)
             return
         column.cannotSkipItemsQueue = 1 shl 0
-        column.autoFitQueue = 1 shl 1
         if (column.flags has Tcf.WidthStretch)
             autoFitSingleStretchColumn = columnN
+        else
+            column.autoFitQueue = 1 shl 1
     }
 
     /** ~TableSetColumnWidthAutoAll */
@@ -1827,7 +1837,7 @@ class Table {
     /** ~static void TableUpdateColumnsWeightFromWidth(ImGuiTable* table) */
     fun updateColumnsWeightFromWidth() {
 
-        assert(leftMostStretchedColumnDisplayOrder != -1)
+        assert(leftMostStretchedColumn != -1 && rightMostStretchedColumn != -1)
 
         // Measure existing quantity
         var visibleWeight = 0f
@@ -1986,7 +1996,7 @@ class Table {
 
     companion object {
         fun tableGetColumnAvailSortDirection(column: TableColumn, n: Int): SortDirection {
-            assert(n < column.sortDirectionsAvailCount);
+            assert(n < column.sortDirectionsAvailCount)
             return SortDirection of ((column.sortDirectionsAvailList ushr (n shl 1)) and 0x03)
         }
     }

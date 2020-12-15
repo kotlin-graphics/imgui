@@ -166,12 +166,11 @@ interface tablesInternal {
         table.rowPosY2 = table.rowPosY1 // "
         table.rowTextBaseline = 0f // This will be cleared again by TableBeginRow()
         table.freezeRowsRequest = 0 // This will be setup by TableSetupScrollFreeze(), if any
-                table.freezeRowsCount = 0 // "
+        table.freezeRowsCount = 0 // "
         table.freezeColumnsRequest = 0
         table.freezeColumnsCount = 0
         table.isUnfrozen = true
         table.declColumnsCount = 0
-        table.rightMostEnabledColumn = -1
 
         // Using opaque colors facilitate overlapping elements of the grid
         table.borderColorStrong = Col.TableBorderStrong.u32
