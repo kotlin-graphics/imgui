@@ -13,6 +13,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.style
 import imgui.classes.DrawList
+import imgui.classes.skipItemForListClipping
 import imgui.internal.classes.Rect
 import imgui.internal.sections.DrawListSharedData
 import imgui.WindowFlag as Wf
@@ -71,7 +72,7 @@ interface miscellaneousUtilities {
         val window = g.currentWindow!!
         return when {
             g.logEnabled -> 0 to itemsCount // If logging is active, do not perform any clipping
-            window.skipItems -> 0 to 0
+            skipItemForListClipping -> 0 to 0
             else -> {
                 // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
                 val unclippedRect = window.clipRect

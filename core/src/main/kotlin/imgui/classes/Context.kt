@@ -3,15 +3,17 @@ package imgui.classes
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.callHooks
+import imgui.ImGui.saveIniSettingsToDisk
+import imgui.ImGui.tableSettingsInstallHandler
 import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.internal.DrawChannel
 import imgui.internal.DrawData
 import imgui.internal.classes.*
-import imgui.internal.hash
+import imgui.internal.hashStr
 import imgui.internal.sections.*
 import imgui.static.*
 import java.io.File
@@ -457,7 +459,18 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragDropPayloadBufLocal = ByteBuffer.allocate(16)
 
 
+    // Table
+
+    var currentTable: Table? = null
+    val tables = Pool { Table() }
+    val currentTableStack = ArrayList<PtrOrIndex>()
+
+    /** Last used timestamp of each tables (SOA, for efficient GC) */
+    val tablesLastTimeActive = ArrayList<Float>()
+    val drawChannelsTempMergeBuffer = ArrayList<DrawChannel>()
+
     // Tab bars
+
     var currentTabBar: TabBar? = null
     val tabBars = TabBarPool()
     val currentTabBarStack = Stack<PtrOrIndex>()
@@ -509,6 +522,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var tooltipOverrideCount = 0
 
+    /** Time before slow tooltips appears (FIXME: This is temporary until we merge in tooltip timer+priority work) */
+    var tooltipSlowDelay = 0.5f
+
     /** If no custom clipboard handler is defined   */
     var clipboardHandlerData = ""
 
@@ -546,7 +562,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ImGuiWindow .ini settings entries (parsed from the last loaded .ini file and maintained on saving) */
     val settingsWindows = ArrayList<WindowSettings>()
 
-//    ImChunkStream<ImGuiTableSettings>   SettingsTables;         // ImGuiTable .ini settings entrie
+    /** ImGuiTable .ini settings entries */
+    val settingsTables = ArrayList<TableSettings>()
 
     /** Hooks for extensions (e.g. test engine) */
     val hooks = ArrayList<ContextHook>()
@@ -626,13 +643,19 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         // Add .ini handle for ImGuiWindow type
         settingsHandlers += SettingsHandler().apply {
             typeName = "Window"
-            typeHash = hash("Window")
+            typeHash = hashStr("Window")
             clearAllFn = ::windowSettingsHandler_ClearAll
             readOpenFn = ::windowSettingsHandler_ReadOpen
             readLineFn = ::windowSettingsHandler_ReadLine
             applyAllFn = ::windowSettingsHandler_ApplyAll
             writeAllFn = ::windowSettingsHandler_WriteAll
         }
+
+        // Add .ini handle for ImGuiTable type
+        tableSettingsInstallHandler(this)
+
+//        #ifdef IMGUI_HAS_DOCK
+//        #endif // #ifdef IMGUI_HAS_DOCK
 
         initialized = true
     }
@@ -698,6 +721,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         currentTabBarStack.clear()
         shrinkWidthBuffer.clear()
 
+        g.tables.clear()
+        g.currentTableStack.clear()
+        g.drawChannelsTempMergeBuffer.clear() // TODO check if this needs proper deallocation
+
         clipboardHandlerData = ""
         menusIdSubmittedThisFrame.clear()
         inputTextState.textW = CharArray(0)
@@ -724,7 +751,7 @@ enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePos
 
 /** Hook for extensions like ImGuiTestEngine */
 class ContextHook(
-    var type: ContextHookType = ContextHookType.NewFramePre,
-    var owner: ID = 0,
-    var callback: ContextHookCallback? = null,
-    var userData: Any? = null)
+        var type: ContextHookType = ContextHookType.NewFramePre,
+        var owner: ID = 0,
+        var callback: ContextHookCallback? = null,
+        var userData: Any? = null)

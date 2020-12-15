@@ -584,6 +584,271 @@ infix fun TabItemFlags.hasnt(b: TabItemFlag): Boolean = and(b.i) == 0
 infix fun TabItemFlags.wo(b: TabItemFlag): TabItemFlags = and(b.i.inv())
 
 
+typealias TableFlags = Int
+
+// Flags for ImGui::BeginTable()
+// - Important! Sizing policies have particularly complex and subtle side effects, more so than you would expect.
+//   Read comments/demos carefully + experiment with live demos to get acquainted with them.
+// - The default sizing policy for columns depends on whether the ScrollX flag is set on the table:
+//   When ScrollX is off:
+//    - Table defaults to ImGuiTableFlags_ColumnsWidthStretch -> all Columns defaults to ImGuiTableColumnFlags_WidthStretch.
+//    - Columns sizing policy allowed: Stretch (default) or Fixed/Auto.
+//    - Stretch Columns will share the width available in table.
+//    - Fixed Columns will generally obtain their requested width unless the Table cannot fit them all.
+//   When ScrollX is on:
+//    - Table defaults to ImGuiTableFlags_ColumnsWidthFixed -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed.
+//    - Columns sizing policy allowed: Fixed/Auto mostly!
+//    - Fixed Columns can be enlarged as needed. Table will show an horizontal scrollbar if needed.
+//    - Using Stretch columns OFTEN DOES NOT MAKE SENSE if ScrollX is on, UNLESS you have specified a value for 'inner_width' in BeginTable().
+// - Mixing up columns with different sizing policy is possible BUT can be tricky and has some side-effects and restrictions.
+//   (their visible order and the scrolling state have subtle but necessary effects on how they can be manually resized).
+//   The typical use of mixing sizing policies is to have ScrollX disabled, one or two Stretch Column and many Fixed Columns.
+enum class TableFlag(@JvmField val i: TableFlags) {
+
+    // Features
+
+    None                            (0),
+    /** Allow resizing columns. */
+    Resizable                       (1 shl 0),
+    /** Allow reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
+    Reorderable                     (1 shl 1),
+    /** Allow hiding/disabling columns in context menu. */
+    Hideable                        (1 shl 2),
+    /** Allow sorting on one column (sort_specs_count will always be == 1). Call TableGetSortSpecs() to obtain sort specs. */
+    Sortable                        (1 shl 3),
+    /** Allow sorting on multiple columns by holding Shift (sort_specs_count may be > 1). Call TableGetSortSpecs() to obtain sort specs. */
+    MultiSortable                   (1 shl 4),
+    /** Disable persisting columns order, width and sort settings in the .ini file. */
+    NoSavedSettings                 (1 shl 5),
+    /** Right-click on columns body/contents will display table context menu. By default it is available in TableHeadersRow(). */
+    ContextMenuInBody               (1 shl 6),
+
+    // Decorations
+
+    /** Set each RowBg color with ImGuiCol_TableRowBg or ImGuiCol_TableRowBgAlt (equivalent of calling TableSetBgColor with ImGuiTableBgFlags_RowBg0 on each row manually) */
+    RowBg                           (1 shl 7),
+    /** Draw horizontal borders between rows. */
+    BordersInnerH                   (1 shl 8),
+    /** Draw horizontal borders at the top and bottom. */
+    BordersOuterH                   (1 shl 9),
+    /** Draw vertical borders between columns. */
+    BordersInnerV                   (1 shl 10),
+    /** Draw vertical borders on the left and right sides. */
+    BordersOuterV                   (1 shl 11),
+    /** Draw horizontal borders. */
+    BordersH                        (BordersInnerH or BordersOuterH),
+    /** Draw vertical borders. */
+    BordersV                        (BordersInnerV or BordersOuterV),
+    /** Draw inner borders. */
+    BordersInner                    (BordersInnerV or BordersInnerH),
+    /** Draw outer borders. */
+    BordersOuter                    (BordersOuterV or BordersOuterH),
+    /** Draw all borders. */
+    Borders                         (BordersInner or BordersOuter),
+    /** Disable vertical borders in columns Body (borders will always appears in Headers). */
+    NoBordersInBody                 (1 shl 12),
+    /** Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). */
+    NoBordersInBodyUntilResize      (1 shl 13),
+
+    // Sizing
+
+    /** Default if ScrollX is off. Columns will default to use _WidthStretch. Read description above for more details. */
+    ColumnsWidthStretch             (1 shl 14),
+    /** Default if ScrollX is on. Columns will default to use _WidthFixed or _WidthAutoResize policy (if Resizable is off). Read description above for more details. */
+    ColumnsWidthFixed               (1 shl 15),
+    /** Make all columns the same widths which is useful with Fixed columns policy (but granted by default with Stretch policy + no resize). Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible and disable ImGuiTableFlags_Resizable. */
+    SameWidths                      (1 shl 16),
+    /** Disable headers' contribution to automatic width calculation. */
+    NoHeadersWidth                  (1 shl 17),
+    /** Disable extending past the limit set by outer_size.y, only meaningful when neither of ScrollX|ScrollY are set (data below the limit will be clipped and not visible) */
+    NoHostExtendY                   (1 shl 18),
+    /** Disable keeping column always minimally visible when ScrollX is off and table gets too small. */
+    NoKeepColumnsVisible            (1 shl 19),
+    /** Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth. */
+    PreciseWidths                   (1 shl 20),
+    /** Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze(). */
+    NoClip                          (1 shl 21),
+
+    // Padding
+
+    /** Default if BordersOuterV is on. Enable outer-most padding. */
+    PadOuterX                       (1 shl 22),
+    /** Default if BordersOuterV is off. Disable outer-most padding. */
+    NoPadOuterX                     (1 shl 23),
+    /** Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off). */
+    NoPadInnerX                     (1 shl 24),
+
+    // Scrolling
+
+    /** Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this create a child window, ScrollY is currently generally recommended when using ScrollX. */
+    ScrollX(1 shl 25),
+    /** Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. */
+    ScrollY(1 shl 26);
+
+    infix fun and(b: TableFlag): TableFlags = i and b.i
+    infix fun and(b: TableFlags): TableFlags = i and b
+    infix fun or(b: TableFlag): TableFlags = i or b.i
+    infix fun or(b: TableFlags): TableFlags = i or b
+    infix fun xor(b: TableFlag): TableFlags = i xor b.i
+    infix fun xor(b: TableFlags): TableFlags = i xor b
+    infix fun wo(b: TableFlags): TableFlags = and(b.inv())
+}
+
+infix fun TableFlags.and(b: TableFlag): TableFlags = and(b.i)
+infix fun TableFlags.or(b: TableFlag): TableFlags = or(b.i)
+infix fun TableFlags.xor(b: TableFlag): TableFlags = xor(b.i)
+infix fun TableFlags.has(b: TableFlag): Boolean = and(b.i) != 0
+infix fun TableFlags.hasnt(b: TableFlag): Boolean = and(b.i) == 0
+infix fun TableFlags.wo(b: TableFlag): TableFlags = and(b.i.inv())
+
+
+typealias TableColumnFlags = Int
+
+// Flags for ImGui::TableSetupColumn()
+enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
+
+    // Input configuration flags
+
+    None                      (0),
+    /** Default as a hidden/disabled column. */
+    DefaultHide               (1 shl 0),
+    /** Default as a sorting column. */
+    DefaultSort               (1 shl 1),
+    /** Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _ColumnsWidthStretch). */
+    WidthStretch              (1 shl 2),
+    /** Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _ColumnsWidthFixed and table is resizable). */
+    WidthFixed                (1 shl 3),
+    /** Column will not stretch and keep resizing based on submitted contents (default if table sizing policy is _ColumnsWidthFixed and table is not resizable). */
+    WidthAutoResize           (1 shl 4),
+    /** Disable manual resizing. */
+    NoResize                  (1 shl 5),
+    /** Disable manual reordering this column, this will also prevent other columns from crossing over this column. */
+    NoReorder                 (1 shl 6),
+    /** Disable ability to hide/disable this column. */
+    NoHide                    (1 shl 7),
+    /** Disable clipping for this column (all NoClip columns will render in a same draw command). */
+    NoClip                    (1 shl 8),
+    /** Disable ability to sort on this field (even if ImGuiTableFlags_Sortable is set on the table). */
+    NoSort                    (1 shl 9),
+    /** Disable ability to sort in the ascending direction. */
+    NoSortAscending           (1 shl 10),
+    /** Disable ability to sort in the descending direction. */
+    NoSortDescending          (1 shl 11),
+    /** Header width don't contribute to automatic column width. */
+    NoHeaderWidth             (1 shl 12),
+    /** Make the initial sort direction Ascending when first sorting on this column (default). */
+    PreferSortAscending       (1 shl 13),
+    /** Make the initial sort direction Descending when first sorting on this column. */
+    PreferSortDescending      (1 shl 14),
+    /** Use current Indent value when entering cell (default for column 0). */
+    IndentEnable              (1 shl 15),
+    /** Ignore current Indent value when entering cell (default for columns > 0). Indentation changes _within_ the cell will still be honored. */
+    IndentDisable             (1 shl 16),
+
+    // Output status flags, read-only via TableGetColumnFlags()
+
+    /** Status: is enabled == not hidden by user/api (referred to as "Hide" in _DefaultHide and _NoHide) flags. */
+    IsEnabled                 (1 shl 20),
+    /** Status: is visible == is enabled AND not clipped by scrolling. */
+    IsVisible                 (1 shl 21),
+    /** Status: is currently part of the sort specs */
+    IsSorted                  (1 shl 22),
+    /** Status: is hovered by mouse */
+    IsHovered                 (1 shl 23),
+
+    // [Internal] Combinations and masks
+
+    WidthMask_                (WidthStretch or WidthFixed or WidthAutoResize),
+    IndentMask_               (IndentEnable or IndentDisable),
+    StatusMask_               (IsEnabled or IsVisible or IsSorted or IsHovered),
+    /** [Internal] Disable user resizing this column directly (it may however we resized indirectly from its left edge) */
+    NoDirectResize_           (1 shl 30);
+
+    infix fun and(b: TableColumnFlag): TableColumnFlags = i and b.i
+    infix fun and(b: TableColumnFlags): TableColumnFlags = i and b
+    infix fun or(b: TableColumnFlag): TableColumnFlags = i or b.i
+    infix fun or(b: TableColumnFlags): TableColumnFlags = i or b
+    infix fun xor(b: TableColumnFlag): TableColumnFlags = i xor b.i
+    infix fun xor(b: TableColumnFlags): TableColumnFlags = i xor b
+    infix fun wo(b: TableColumnFlags): TableColumnFlags = and(b.inv())
+}
+
+infix fun TableColumnFlags.and(b: TableColumnFlag): TableColumnFlags = and(b.i)
+infix fun TableColumnFlags.or(b: TableColumnFlag): TableColumnFlags = or(b.i)
+infix fun TableColumnFlags.xor(b: TableColumnFlag): TableColumnFlags = xor(b.i)
+infix fun TableColumnFlags.has(b: TableColumnFlag): Boolean = and(b.i) != 0
+infix fun TableColumnFlags.hasnt(b: TableColumnFlag): Boolean = and(b.i) == 0
+infix fun TableColumnFlags.wo(b: TableColumnFlag): TableColumnFlags = and(b.i.inv())
+
+
+typealias TableRowFlags = Int
+
+// Flags for ImGui::TableNextRow()
+enum class TableRowFlag(@JvmField val i: Int) {
+    None                         (0),
+    /** Identify header row (set default background color + width of its contents accounted different for auto column width) */
+    Headers                      (1 shl 0);
+
+    infix fun and(b: TableRowFlag): TableRowFlags = i and b.i
+    infix fun and(b: TableRowFlags): TableRowFlags = i and b
+    infix fun or(b: TableRowFlag): TableRowFlags = i or b.i
+    infix fun or(b: TableRowFlags): TableRowFlags = i or b
+    infix fun xor(b: TableRowFlag): TableRowFlags = i xor b.i
+    infix fun xor(b: TableRowFlags): TableRowFlags = i xor b
+    infix fun wo(b: TableRowFlags): TableRowFlags = and(b.inv())
+}
+
+infix fun TableRowFlags.and(b: TableRowFlag): TableRowFlags = and(b.i)
+infix fun TableRowFlags.or(b: TableRowFlag): TableRowFlags = or(b.i)
+infix fun TableRowFlags.xor(b: TableRowFlag): TableRowFlags = xor(b.i)
+infix fun TableRowFlags.has(b: TableRowFlag): Boolean = and(b.i) != 0
+infix fun TableRowFlags.hasnt(b: TableRowFlag): Boolean = and(b.i) == 0
+infix fun TableRowFlags.wo(b: TableRowFlag): TableRowFlags = and(b.i.inv())
+
+
+typealias TableBgTargets = Int
+
+// Enum for ImGui::TableSetBgColor()
+// Background colors are rendering in 3 layers:
+//  - Layer 0: draw with RowBg0 color if set, otherwise draw with ColumnBg0 if set.
+//  - Layer 1: draw with RowBg1 color if set, otherwise draw with ColumnBg1 if set.
+//  - Layer 2: draw with CellBg color if set.
+// The purpose of the two row/columns layers is to let you decide if a background color changes should override or blend with the existing color.
+// When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color automatically set for odd/even rows.
+// If you set the color of RowBg0 target, your color will override the existing RowBg0 color.
+// If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
+enum class TableBgTarget(@JvmField val i: TableBgTargets) {
+    None(0),
+    //ImGuiTableBgTarget_ColumnBg0                  = 1,        // FIXME-TABLE: Todo. Set column background color 0 (generally used for background
+    //ImGuiTableBgTarget_ColumnBg1                  = 2,        // FIXME-TABLE: Todo. Set column background color 1 (generally used for selection marking)
+    /** Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used) */
+    RowBg0                       (3),
+    /** Set row background color 1 (generally used for selection marking) */
+    RowBg1                       (4),
+    /** Set cell background color (top-most color) */
+    CellBg                       (5);
+
+    infix fun and(b: TableBgTarget): TableBgTargets = i and b.i
+    infix fun and(b: TableBgTargets): TableBgTargets = i and b
+    infix fun or(b: TableBgTarget): TableBgTargets = i or b.i
+    infix fun or(b: TableBgTargets): TableBgTargets = i or b
+    infix fun xor(b: TableBgTarget): TableBgTargets = i xor b.i
+    infix fun xor(b: TableBgTargets): TableBgTargets = i xor b
+    infix fun wo(b: TableBgTargets): TableBgTargets = and(b.inv())
+
+    companion object {
+        infix fun of(i: Int) = values().first { it.i == i }
+    }
+}
+
+infix fun TableBgTargets.and(b: TableBgTarget): TableBgTargets = and(b.i)
+infix fun TableBgTargets.or(b: TableBgTarget): TableBgTargets = or(b.i)
+infix fun TableBgTargets.xor(b: TableBgTarget): TableBgTargets = xor(b.i)
+infix fun TableBgTargets.has(b: TableBgTarget): Boolean = and(b.i) != 0
+infix fun TableBgTargets.hasnt(b: TableBgTarget): Boolean = and(b.i) == 0
+infix fun TableBgTargets.wo(b: TableBgTarget): TableBgTargets = and(b.i.inv())
+
+
 typealias FocusedFlags = Int
 
 /** Flags for ImGui::IsWindowFocused() */
@@ -766,6 +1031,20 @@ enum class Dir {
 }
 
 infix fun Int.shl(b: Dir) = shl(b.i)
+
+
+/** A sorting direction */
+enum class SortDirection {
+    None,
+    /** Ascending = 0->9, A->Z etc. */
+    Ascending,
+    /** Descending = 9->0, Z->A etc. */
+    Descending;
+
+    @JvmField
+    val i = ordinal
+}
+
 
 /** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array
  *
@@ -1106,6 +1385,16 @@ enum class Col {
     PlotLinesHovered,
     PlotHistogram,
     PlotHistogramHovered,
+    /** Table header background */
+    TableHeaderBg,
+    /** Table outer and header borders (prefer using Alpha=1.0 here) */
+    TableBorderStrong,
+    /** Table inner borders (prefer using Alpha=1.0 here) */
+    TableBorderLight,
+    /** Table row background (even rows) */
+    TableRowBg,
+    /** Table row background (odd rows) */
+    TableRowBgAlt,
     TextSelectedBg,
     DragDropTarget,
 
@@ -1194,6 +1483,9 @@ enum class StyleVar {
 
     /** float   */
     IndentSpacing,
+
+    /** vec2    */
+    CellPadding,
 
     /** Float   */
     ScrollbarSize,

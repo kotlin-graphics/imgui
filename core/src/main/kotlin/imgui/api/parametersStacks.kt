@@ -129,6 +129,10 @@ interface parametersStacks {
                     it.floats[0] = style.indentSpacing
                     style.indentSpacing = value as Float
                 }
+                StyleVar.CellPadding -> {
+                    style.cellPadding to it.floats
+                    style.cellPadding put (value as Vec2)
+                }
                 StyleVar.ScrollbarSize -> {
                     it.floats[0] = style.scrollbarSize
                     style.scrollbarSize = value as Float

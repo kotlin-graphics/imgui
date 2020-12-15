@@ -3,7 +3,7 @@ package imgui.internal.sections
 import glm_.vec2.Vec2
 import imgui.ID
 import imgui.internal.classes.*
-import imgui.internal.hash
+import imgui.internal.hashStr
 
 /** Storage for a window .ini settings (we keep one of those even if the actual window wasn't instanced during this session)
  *
@@ -12,7 +12,7 @@ import imgui.internal.hash
  *
  *  ~ CreateNewWindowSettings */
 class WindowSettings(val name: String = "") {
-    var id: ID = hash(name)
+    var id: ID = hashStr(name)
     var pos = Vec2()
     var size = Vec2()
     var collapsed = false
@@ -20,7 +20,7 @@ class WindowSettings(val name: String = "") {
     var wantApply = false
 
     fun clear() {
-        id = hash(name)
+        id = hashStr(name)
         pos put 0f
         size put 0f
         collapsed = false

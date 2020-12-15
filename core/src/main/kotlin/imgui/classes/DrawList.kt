@@ -328,18 +328,14 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addText(pos: Vec2, col: Int, text: String) = addText(g.font, g.fontSize, pos, col, text)
 
-    fun addText(
-            font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
-            wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null,
-    ) {
+    fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
+                wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
         val bytes = text.toByteArray()
         addText(font, fontSize, pos, col, bytes, 0, bytes.size, wrapWidth, cpuFineClipRect)
     }
 
-    fun addText(
-            font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int = 0,
-            textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null,
-    ) {
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int = 0,
+                textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
 

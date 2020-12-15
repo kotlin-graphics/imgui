@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import imgui.api.g
+import imgui.ImGui.tableGcCompactSettings
 
 /** Garbage collection */
 interface garbageCollection {
@@ -8,6 +9,7 @@ interface garbageCollection {
     fun gcCompactTransientMiscBuffers() {
         g.itemFlagsStack.clear()
         g.groupStack.clear()
+        tableGcCompactSettings()
     }
 
     // -> Window class

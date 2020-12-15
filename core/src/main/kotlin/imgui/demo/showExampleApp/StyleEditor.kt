@@ -136,6 +136,7 @@ object StyleEditor {
                 text("Main")
                 sliderVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
                 sliderVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
+                sliderVec2("CellPadding", style.cellPadding, 0f, 20f, "%.0f")
                 sliderVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
                 sliderVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
                 sliderVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")

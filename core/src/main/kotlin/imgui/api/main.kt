@@ -32,6 +32,7 @@ import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.*
+import imgui.internal.classes.PoolIdx
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or
 import imgui.static.*
@@ -215,6 +216,11 @@ interface main {
             // Garbage collect transient buffers of recently unused windows
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
                 it.gcCompactTransientBuffers()
+
+            // Garbage collect transient buffers of recently unused tables
+            for (i in 0 until g.tablesLastTimeActive.size)
+                if (g.tablesLastTimeActive[i] >= 0f && g.tablesLastTimeActive[i] < memoryCompactStartTime)
+                    g.tables.getByIndex(i).gcCompactTransientBuffers()
         }
         if (g.gcCompactAll)
             gcCompactTransientMiscBuffers()

@@ -66,6 +66,11 @@ interface styles {
             colors[Col.PlotLinesHovered]        (1.00f, 0.43f, 0.35f, 1.00f)
             colors[Col.PlotHistogram]           (0.90f, 0.70f, 0.00f, 1.00f)
             colors[Col.PlotHistogramHovered]    (1.00f, 0.60f, 0.00f, 1.00f)
+            colors[Col.TableHeaderBg]           (0.19f, 0.19f, 0.20f, 1.00f)
+            colors[Col.TableBorderStrong]       (0.31f, 0.31f, 0.35f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableBorderLight]        (0.23f, 0.23f, 0.25f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableRowBg]              (0.00f, 0.00f, 0.00f, 0.00f)
+            colors[Col.TableRowBgAlt]           (1.00f, 1.00f, 1.00f, 0.06f)
             colors[Col.TextSelectedBg]          (0.26f, 0.59f, 0.98f, 0.35f)
             colors[Col.DragDropTarget]          (1.00f, 1.00f, 0.00f, 0.90f)
             colors[Col.NavHighlight]            (0.26f, 0.59f, 0.98f, 1.00f)
@@ -125,6 +130,11 @@ interface styles {
             colors[Col.PlotLinesHovered]        (0.90f, 0.70f, 0.00f, 1.00f)
             colors[Col.PlotHistogram]           (0.90f, 0.70f, 0.00f, 1.00f)
             colors[Col.PlotHistogramHovered]    (1.00f, 0.60f, 0.00f, 1.00f)
+            colors[Col.TableHeaderBg]           (0.27f, 0.27f, 0.38f, 1.00f)
+            colors[Col.TableBorderStrong]       (0.31f, 0.31f, 0.45f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableBorderLight]        (0.26f, 0.26f, 0.28f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableRowBg]              (0.00f, 0.00f, 0.00f, 0.00f)
+            colors[Col.TableRowBgAlt]           (1.00f, 1.00f, 1.00f, 0.07f)
             colors[Col.TextSelectedBg]          (0.00f, 0.00f, 1.00f, 0.35f)
             colors[Col.DragDropTarget]          (1.00f, 1.00f, 0.00f, 0.90f)
             colors[Col.NavHighlight]            (colors[Col.HeaderHovered])
@@ -184,6 +194,11 @@ interface styles {
             colors[Col.PlotLinesHovered]        (1.00f, 0.43f, 0.35f, 1.00f)
             colors[Col.PlotHistogram]           (0.90f, 0.70f, 0.00f, 1.00f)
             colors[Col.PlotHistogramHovered]    (1.00f, 0.45f, 0.00f, 1.00f)
+            colors[Col.TableHeaderBg]           (0.78f, 0.87f, 0.98f, 1.00f)
+            colors[Col.TableBorderStrong]       (0.57f, 0.57f, 0.64f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableBorderLight]        (0.68f, 0.68f, 0.74f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableRowBg]              (0.00f, 0.00f, 0.00f, 0.00f)
+            colors[Col.TableRowBgAlt]           (0.30f, 0.30f, 0.30f, 0.09f)
             colors[Col.TextSelectedBg]          (0.26f, 0.59f, 0.98f, 0.35f)
             colors[Col.DragDropTarget]          (0.26f, 0.59f, 0.98f, 0.95f)
             colors[Col.NavHighlight]            (colors[Col.HeaderHovered])

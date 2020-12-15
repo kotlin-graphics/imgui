@@ -76,6 +76,13 @@ class Rect {
         if (max.y < p.y) max.y = p.y
     }
 
+    infix fun add(r: Vec4) {
+        if (min.x > r.x) min.x = r.x
+        if (min.y > r.y) min.y = r.y
+        if (max.x < r.z) max.x = r.z
+        if (max.y < r.w) max.y = r.w
+    }
+
     infix fun add(r: Rect) {
         if (min.x > r.min.x) min.x = r.min.x
         if (min.y > r.min.y) min.y = r.min.y

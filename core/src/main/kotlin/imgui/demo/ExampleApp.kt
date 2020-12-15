@@ -1,15 +1,16 @@
 package imgui.demo
 
 import glm_.f
-import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.beginTable
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
 import imgui.ImGui.end
+import imgui.ImGui.endTable
 import imgui.ImGui.fontSize
 import imgui.ImGui.io
 import imgui.ImGui.logButtons
@@ -26,8 +27,8 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.showAboutWindow
 import imgui.ImGui.showMetricsWindow
 import imgui.ImGui.showUserGuide
-import imgui.ImGui.sliderFloat
 import imgui.ImGui.spacing
+import imgui.ImGui.tableNextColumn
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
@@ -39,14 +40,8 @@ import imgui.dsl.menu
 import imgui.dsl.menuBar
 import imgui.dsl.treeNode
 import imgui.dsl.window
-import imgui.internal.sections.or
-import imgui.internal.sections.wo
-import kool.lim
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
-import imgui.internal.sections.DrawListFlag as Dlf
 
 object ExampleApp {
 
@@ -260,23 +255,26 @@ object ExampleApp {
         }
 
         collapsingHeader("Window options") {
-            checkbox("No titlebar", ::noTitlebar); sameLine(150)
-            checkbox("No scrollbar", ::noScrollbar); sameLine(300)
-            checkbox("No menu", ::noMenu)
-            checkbox("No move", ::noMove); sameLine(150)
-            checkbox("No resize", ::noResize); sameLine(300)
-            checkbox("No collapse", ::noCollapse)
-            checkbox("No close", ::noClose); sameLine(150)
-            checkbox("No nav", ::noNav); sameLine(300)
-            checkbox("No background", ::noBackground)
-            checkbox("No bring to front", ::noBringToFront)
+            if (beginTable("split", 3)) {
+                tableNextColumn(); checkbox("No titlebar", ::noTitlebar); sameLine(150)
+                tableNextColumn(); checkbox("No scrollbar", ::noScrollbar); sameLine(300)
+                tableNextColumn(); checkbox("No menu", ::noMenu)
+                tableNextColumn(); checkbox("No move", ::noMove); sameLine(150)
+                tableNextColumn(); checkbox("No resize", ::noResize); sameLine(300)
+                tableNextColumn(); checkbox("No collapse", ::noCollapse)
+                tableNextColumn(); checkbox("No close", ::noClose); sameLine(150)
+                tableNextColumn(); checkbox("No nav", ::noNav); sameLine(300)
+                tableNextColumn(); checkbox("No background", ::noBackground)
+                tableNextColumn(); checkbox("No bring to front", ::noBringToFront)
+                endTable()
+            }
         }
 
         // All demo contents
         ShowDemoWindowWidgets()
         ShowDemoWindowLayout()
         ShowDemoWindowPopups()
-        ShowDemoWindowColumns()
+        ShowDemoWindowTables()
         ShowDemoWindowMisc()
 
         // End of ShowDemoWindow()

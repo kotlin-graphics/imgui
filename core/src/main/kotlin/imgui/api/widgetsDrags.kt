@@ -122,11 +122,11 @@ interface widgetsDrags {
      *
      *  NB: vSpeed is float to allow adjusting the drag speed with more precision     */
     fun dragInt(label: String, v: IntArray, ptr: Int, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
+                format: String? = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             withInt(v, ptr) { dragInt(label, it, vSpeed, vMin, vMax, format, flags) }
 
     fun dragInt(label: String, v: KMutableProperty0<Int>, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
-                format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
+                format: String? = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
             dragScalar(label, DataType.Int, v, vSpeed, vMin, vMax, format, flags)
 
     fun dragInt2(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,

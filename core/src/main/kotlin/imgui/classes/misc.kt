@@ -1,8 +1,5 @@
 package imgui.classes
 
-import glm_.bool
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -76,6 +73,7 @@ class Payload {
     // /** Data (copied and owned by dear imgui) */
     /** Data provided by setDragDropSource */
     var data: Any? = null
+
     /** Data size */
     var dataSize = 0
 
@@ -83,14 +81,19 @@ class Payload {
 
     /** Source item id */
     var sourceId: ID = 0
+
     /** Source parent id (if available) */
     var sourceParentId: ID = 0
+
     /** Data timestamp */
     var dataFrameCount = -1
+
     /** Data type tag (short user-supplied string, 32 characters max) */ // JVM: No character limit
     var dataType: String? = null
+
     /** Set when AcceptDragDropPayload() was called and mouse has been hovering the target item (nb: handle overlapping drag targets) */
     var preview = false
+
     /** Set when AcceptDragDropPayload() was called and mouse button is released over the target item. */
     var delivery = false
 
@@ -106,6 +109,39 @@ class Payload {
     }
 
     fun isDataType(type: String): Boolean = dataFrameCount != -1 && type == dataType
+}
+
+/** Sorting specification for one column of a table (sizeof == 12 bytes) */
+class TableColumnSortSpecs {
+    /** User id of the column (if specified by a TableSetupColumn() call) */
+    var columnUserID: ID = 0
+
+    /** Index of the column */
+    var columnIndex = 0
+
+    /** Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables sorted on a single criteria will always have a 0 here) */
+    var sortOrder = 0
+
+    /** ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending (you can use this or SortSign, whichever is more convenient for your sort function) */
+    var sortDirection = SortDirection.None
+}
+
+/** Sorting specifications for a table (often handling sort specs for a single column, occasionally more)
+ *  Obtained by calling TableGetSortSpecs().
+ *  When 'SpecsDirty == true' you can sort your data. It will be true with sorting specs have changed since last call, or the first time.
+ *  Make sure to set 'SpecsDirty = false' after sorting, else you may wastefully sort your data every frame! */
+class TableSortSpecs {
+    /** Pointer to sort spec array. */
+    var specs: TableColumnSortSpecs? = null
+    fun specs(n: Int) = specsArray[specsPtr + n]
+    lateinit var specsArray: Array<TableColumnSortSpecs>
+    var specsPtr = 0
+
+    /** Sort spec count. Most often 1 unless e.g. ImGuiTableFlags_MultiSortable is enabled. */
+    var specsCount = 0
+
+    /** Set to true when specs have changed since last time! Use this to sort again, then clear the flag. */
+    var specsDirty = false
 }
 
 class SizeCallbackData(
@@ -139,7 +175,7 @@ class TextFilter(defaultFilter: String = "") {
 
     operator fun plusAssign(filter: String) {
         val f = filter.trim()
-        if(f.isNotEmpty()) {
+        if (f.isNotEmpty()) {
             if (f[0] == '-')
                 exc += f.drop(1)
             else {
@@ -163,7 +199,7 @@ class TextFilter(defaultFilter: String = "") {
 
     fun passFilter(text_: String?, textEnd: Int = -1): Boolean {
 
-        if(exc.isEmpty() && inc.isEmpty())
+        if (exc.isEmpty() && inc.isEmpty())
             return true
 
         var text = text_ ?: ""
@@ -196,14 +232,13 @@ class TextFilter(defaultFilter: String = "") {
         inc.clear()
         exc.clear()
         countGrep = 0
-        inputBuf.cStr.split(",").map { it.trim() }.filter(String::isNotEmpty).
-                forEach { f ->
-                    if (f[0] == '-') exc += f
-                    else {
-                        inc += f
-                        countGrep++
-                    }
-                }
+        inputBuf.cStr.split(",").map { it.trim() }.filter(String::isNotEmpty).forEach { f ->
+            if (f[0] == '-') exc += f
+            else {
+                inc += f
+                countGrep++
+            }
+        }
     }
 
     fun clear() {

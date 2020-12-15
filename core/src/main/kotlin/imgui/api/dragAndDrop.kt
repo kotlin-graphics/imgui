@@ -90,7 +90,7 @@ interface dragAndDrop {
             g.activeIdUsingKeyInputMask = -1L
         } else {
             window = null
-            sourceId = hash("#SourceExtern")
+            sourceId = hashStr("#SourceExtern")
             sourceDragActive = true
         }
 

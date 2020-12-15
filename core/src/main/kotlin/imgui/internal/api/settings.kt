@@ -4,7 +4,7 @@ import imgui.ID
 import imgui.IMGUI_DEBUG_INI_SETTINGS
 import imgui.ImGui.io
 import imgui.api.g
-import imgui.internal.hash
+import imgui.internal.hashStr
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
 
@@ -41,10 +41,10 @@ internal interface settings {
             g.settingsWindows.find { it.id == id }
 
     fun findOrCreateWindowSettings(name: String): WindowSettings =
-            findWindowSettings(hash(name)) ?: createNewWindowSettings(name)
+            findWindowSettings(hashStr(name)) ?: createNewWindowSettings(name)
 
     fun findSettingsHandler(typeName: String): SettingsHandler? {
-        val typeHash = hash(typeName)
+        val typeHash = hashStr(typeName)
         return g.settingsHandlers.find { it.typeHash == typeHash }
     }
 }

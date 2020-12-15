@@ -43,7 +43,8 @@ allprojects {
             dokkaSourceSets.configureEach {
                 sourceLink {
                     localDirectory.set(file("src/main/kotlin"))
-                    remoteUrl.set(URL("https://github.com/kotlin-graphics/glm/tree/master/src/main/kotlin"))
+                    // TODO -> per module..
+                    remoteUrl.set(URL("https://github.com/kotlin-graphics/imgui/tree/master/src/main/kotlin"))
                     remoteLineSuffix.set("#L")
                 }
             }

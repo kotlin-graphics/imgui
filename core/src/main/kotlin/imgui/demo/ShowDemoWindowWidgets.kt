@@ -15,6 +15,7 @@ import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.beginPopupContextItem
+import imgui.ImGui.beginTable
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -48,6 +49,7 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endPopup
+import imgui.ImGui.endTable
 import imgui.ImGui.fontSize
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.image
@@ -121,6 +123,8 @@ import imgui.ImGui.sliderScalar
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
+import imgui.ImGui.tableNextColumn
+import imgui.ImGui.tableNextRow
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
@@ -240,7 +244,7 @@ object ShowDemoWindowWidgets {
     val selection1 = BooleanArray(5)
     var selected0 = -1
     val selected1 = BooleanArray(3)
-    val selected2 = BooleanArray(16)
+    val selected2 = BooleanArray(10)
     val selected3 = arrayOf(
             intArrayOf(1, 0, 0, 0),
             intArrayOf(0, 1, 0, 0),
@@ -900,12 +904,28 @@ object ShowDemoWindowWidgets {
                 selectable("Hello.h", selected1, 2); sameLine(300); text(" 2,345 bytes")
             }
             treeNode("In columns") {
-                columns(3, "", false)
-                for (i in 0..15) {
-                    if (selectable("Item $i", selected2, i)) Unit
-                    nextColumn()
+                if (beginTable("split1", 3, TableFlag.Resizable or TableFlag.NoSavedSettings)) {
+                    for (i in 0..9) {
+                        val label = "Item $i"
+                        tableNextColumn()
+                        selectable(label, selected2, i) // FIXME-TABLE: Selection overlap
+                    }
+                    endTable()
                 }
-                columns(1)
+                separator()
+                if (beginTable("split2", 3, TableFlag.Resizable or TableFlag.NoSavedSettings)) {
+                    for (i in 0..9) {
+                        val label = "Item $i"
+                        tableNextRow()
+                        tableNextColumn()
+                        selectable(label, selected2, i, imgui.SelectableFlag.SpanAllColumns.i)
+                        tableNextColumn()
+                        text("Some other contents")
+                        tableNextColumn()
+                        text("123456")
+                    }
+                    endTable()
+                }
             }
             treeNode("Grid") {
 

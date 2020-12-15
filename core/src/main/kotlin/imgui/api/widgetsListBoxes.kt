@@ -52,7 +52,7 @@ interface widgetsListBoxes {
         val clipper = ListClipper()
         clipper.begin(itemsCount, textLineHeightWithSpacing)
         while (clipper.step())
-            for (i in clipper.displayStart until clipper.displayEnd)
+            for (i in clipper.display)
                 withBool { itemSelected ->
                     itemSelected.set(i == currentItem)
                     val itemText = items.getOrElse(i) { "*Unknown item*" }

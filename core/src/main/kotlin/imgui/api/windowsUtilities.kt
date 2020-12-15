@@ -185,8 +185,8 @@ interface windowsUtilities {
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
         assert(scale > 0f)
         fontWindowScale = scale
-        g.drawListSharedData.fontSize = calcFontSize()
-        g.fontSize = g.drawListSharedData.fontSize
+        g.fontSize = calcFontSize()
+        g.drawListSharedData.fontSize = g.fontSize
     }
 
     /** Set named window position.  */

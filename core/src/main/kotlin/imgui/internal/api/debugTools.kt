@@ -1,15 +1,18 @@
 package imgui.internal.api
 
 import glm_.L
+import glm_.d
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
+import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.isItemHovered
@@ -32,9 +35,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
 import imgui.internal.DrawCmd
-import imgui.internal.classes.Rect
-import imgui.internal.classes.TabBar
-import imgui.internal.classes.Window
+import imgui.internal.classes.*
 import imgui.internal.floor
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.OldColumns
@@ -104,8 +105,7 @@ internal interface debugTools {
             if (window.flags has WindowFlag._ChildWindow) {
                 logCallback?.invoke(userData, "Recovered from missing EndChild() for '${window.name}'")
                 endChild()
-            }
-            else {
+            } else {
                 logCallback?.invoke(userData, "Recovered from missing End() for '${window.name}'")
                 end()
             }
@@ -199,7 +199,7 @@ internal interface debugTools {
             clipper.begin(cmd.elemCount / 3) // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
             while (clipper.step()) {
                 var idx_i = cmd.idxOffset + clipper.displayStart * 3
-                for (prim in clipper.displayStart until clipper.displayEnd) {
+                for (prim in clipper.display) {
                     val bufP = StringBuilder()
                     val triangle = Array(3) { Vec2() }
                     for (n in 0..2) {
@@ -301,6 +301,70 @@ internal interface debugTools {
             }
             treePop()
         }
+    }
+
+    fun debugNodeTable(table: Table) {
+        val isActive = table.lastFrameActive >= ImGui.frameCount - 2 // Note that fully clipped early out scrolling tables will appear as inactive here.
+        val p = "Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')${if (isActive) "" else " *Inactive*"}".format(table.id)
+        if (!isActive) pushStyleColor(Col.Text, Col.TextDisabled.u32)
+        val open = treeNode(table, p)
+        if (!isActive) popStyleColor()
+        if (isItemHovered())
+            foregroundDrawList.addRect(table.outerRect.min, table.outerRect.max, COL32(255, 255, 0, 255))
+        if (!open)
+            return
+        val clearSettings = smallButton("Clear settings")
+        bulletText("OuterRect: Pos: (%.1f,%.1f) Size: (%.1f,%.1f)", table.outerRect.min.x, table.outerRect.min.y, table.outerRect.width, table.outerRect.height)
+        bulletText("ColumnsWidth: %.1f, AutoFitWidth: %.1f, InnerWidth: %.1f${if (table.innerWidth == 0f) " (auto)" else ""}", table.columnsTotalWidth, table.columnsAutoFitWidth, table.innerWidth)
+        bulletText("CellPaddingX: %.1f, CellSpacingX: %.1f/%.1f, OuterPaddingX: %.1f", table.cellPaddingX, table.cellSpacingX1, table.cellSpacingX2, table.outerPaddingX)
+        bulletText("HoveredColumnBody: ${table.hoveredColumnBody}, HoveredColumnBorder: ${table.hoveredColumnBorder}")
+        bulletText("ResizedColumn: ${table.resizedColumn}, ReorderColumn: ${table.reorderColumn}, HeldHeaderColumn: ${table.heldHeaderColumn}")
+        //BulletText("BgDrawChannels: %d/%d", 0, table->BgDrawChannelUnfrozen);
+        for (n in 0 until table.columnsCount) {
+            val column = table.columns[n]
+            val name = table getColumnName n
+            val buf = StringBuilder()
+            column.apply {
+                buf += "Column $n order $displayOrder name '$name': offset %+.2f to %+.2f\n".format(minX - table.workRect.min.x, maxX - table.workRect.min.x)
+                buf += "Enabled: ${isEnabled.i}, VisibleX/Y: ${isVisibleX.i}/${isVisibleY.i}, RequestOutput: ${isRequestOutput.i}, SkipItems: ${isSkipItems.i}, DrawChannels: $drawChannelFrozen,$drawChannelUnfrozen\n"
+                buf += "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f\n".format(widthGiven, widthRequest, widthAuto, stretchWeight)
+                buf += "MinX: %.1f, MaxX: %.1f (%+.1f), ClipRect: %.1f to %.1f (+%.1f)\n".format(minX, maxX, maxX - minX, clipRect.min.x, clipRect.max.x, clipRect.max.x - clipRect.min.x)
+                buf += "ContentWidth: %.1f,%.1f, HeadersUsed/Ideal %.1f/%.1f\n".format(contentMaxXFrozen - workMinX, contentMaxXUnfrozen - workMinX, contentMaxXHeadersUsed - workMinX, contentMaxXHeadersIdeal - workMinX)
+                val dir = if (sortDirection == SortDirection.Ascending) " (Asc)" else if (sortDirection == SortDirection.Descending) " (Des)" else ""
+                buf += "Sort: $sortOrder$dir, UserID: 0x%08X, Flags: 0x%04X: ".format(userID, flags)
+                if (flags has TableColumnFlag.WidthStretch) buf += "WidthStretch "
+                if (flags has TableColumnFlag.WidthFixed) buf += "WidthFixed "
+                if (flags has TableColumnFlag.WidthAutoResize) buf += "WidthAutoResize "
+                if (flags has TableColumnFlag.NoResize) buf += "NoResize "
+                buf += ".."
+            }
+            bullet()
+            selectable(buf.toString())
+            if (isItemHovered()) {
+                val r = Rect(column.minX, table.outerRect.min.y, column.maxX, table.outerRect.max.y)
+                foregroundDrawList.addRect(r.min, r.max, COL32(255, 255, 0, 255))
+            }
+        }
+        table.getBoundSettings()?.let(::debugNodeTableSettings)
+        if (clearSettings)
+            table.isResetAllRequest = true
+        treePop()
+    }
+
+    fun debugNodeTableSettings(settings: TableSettings) {
+        if (!treeNode(settings.id.L, "Settings 0x%08X (${settings.columnsCount} columns)", settings.id))
+            return
+        bulletText("SaveFlags: 0x%08X", settings.saveFlags)
+        bulletText("ColumnsCount: ${settings.columnsCount} (max ${settings.columnsCountMax})")
+        for (n in 0 until settings.columnsCount) {
+            val columnSettings = settings.columnSettings[n]
+            val sortDir = if (columnSettings.sortOrder != -1) columnSettings.sortDirection else SortDirection.None
+            val dir = if (sortDir == SortDirection.Ascending) "Asc" else if (sortDir == SortDirection.Descending) "Des" else "---"
+            val stretch = if (columnSettings.isStretch) "Weight" else "Width "
+            bulletText("Column $n Order ${columnSettings.displayOrder} SortOrder ${columnSettings.sortOrder} $dir Vis ${columnSettings.isEnabled.d} $stretch %7.3f UserID 0x%08X",
+                    columnSettings.widthOrWeight, columnSettings.userID)
+        }
+        treePop()
     }
 
     fun debugNodeWindow(window: Window?, label: String) {

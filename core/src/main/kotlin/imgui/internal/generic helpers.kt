@@ -1,5 +1,6 @@
 package imgui.internal
 
+import gli_.has
 import glm_.*
 import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
@@ -63,7 +64,7 @@ fun hash(data: IntArray, seed: Int = 0): ID {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
     val bytes = ByteArray(buffer.rem) { buffer[it] }
-    return hash(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
+    return hashStr(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
 }
 
 /** CRC32 needs a 1KB lookup table (not cache friendly)
@@ -113,7 +114,7 @@ fun hash(data: ByteBuffer, seed: Int = 0): ID {
     return crc.inv()
 }
 
-fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): ID {
+fun hashStr(data: String, dataSize_: Int = 0, seed_: Int = 0): ID {
 
     /*
     convert to "Extended ASCII" Windows-1252 (CP1252) https://en.wikipedia.org/wiki/Windows-1252
@@ -726,5 +727,44 @@ fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
     else -> when {
         dy > 0f -> Dir.Down
         else -> Dir.Up
+    }
+}
+
+
+// Helper: ImBitArray class (wrapper over ImBitArray functions)
+// Store 1-bit per value. NOT CLEARED by constructor.
+//template<int BITCOUNT>
+class BitArray(val bitCount: Int) {
+
+    val storage = IntArray((bitCount + 31) ushr 5)
+
+    fun clearBits() = storage.fill(0)
+
+    fun mask(n: Int): Int = 1 shl (n and 31)
+
+    infix fun testBit(n: Int): Boolean{
+        assert(n < bitCount)
+        return storage[n ushr 5] hasnt mask(n)
+    }
+
+    infix fun setBit(n: Int) {
+        assert(n < bitCount)
+        storage[n ushr 5] = storage[n ushr 5] or mask(n)
+    }
+
+    infix fun clearBit(n: Int) {
+        assert(n < bitCount)
+        storage[n ushr 5] = storage[n ushr 5] wo mask(n)
+    }
+
+    fun setBitRange(n1: Int, n2: Int) {
+        var n = n1
+        while (n <= n2) {
+            val aMod = n and 31
+            val bMod = (if(n2 > (n or 31)) 31 else n2 and 31) + 1
+            val mask = ((1L shl bMod) - 1).i wo ((1L shl aMod) - 1).i
+            storage[n ushr 5] = storage[n ushr 5] or mask
+            n = (n + 32) wo 31
+        }
     }
 }

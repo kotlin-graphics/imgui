@@ -305,10 +305,12 @@ internal interface basicHelpersForWidgetCode {
     /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features.
      *  ~GetContentRegionMaxAbs */
     val contentRegionMaxAbs: Vec2
-        get() = g.currentWindow!!.run {
-            val mx = Vec2(contentRegionRect.max)
-            dc.currentColumns?.let { mx.x = workRect.max.x }
-            mx
+        get() {
+            val window = g.currentWindow!!
+            val mx = window.contentRegionRect.max
+            if (window.dc.currentColumns != null || g.currentTable != null)
+                mx.x = window.workRect.max.x
+            return mx
         }
 
     /** Shrink excess width from a set of item, by removing width from the larger items first.

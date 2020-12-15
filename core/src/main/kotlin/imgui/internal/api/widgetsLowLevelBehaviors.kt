@@ -113,7 +113,9 @@ internal interface widgetsLowLevelBehaviors {
      *    Frame N + RepeatDelay                  true                     true              -                   true
      *    ...                                    -                        -                 -                   -
      *    Frame N + RepeatDelay + RepeatRate*N   true                     true              -                   true
-     *  -------------------------------------------------------------------------------------------------------------------------------------------------   */
+     *  -------------------------------------------------------------------------------------------------------------------------------------------------
+     *
+     *  @return [pressed, hovered, held] */
     fun buttonBehavior(bb: Rect, id: ID, flags_: ButtonFlags = 0): BooleanArray {
 
         val window = currentWindow

@@ -22,9 +22,11 @@ import imgui.ImGui.endCombo
 import imgui.ImGui.endTooltip
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
+import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
 import imgui.ImGui.getStyleColorVec4
+import imgui.ImGui.indent
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -57,6 +59,7 @@ import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
+import imgui.ImGui.unindent
 import imgui.ImGui.windowDrawList
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
@@ -67,9 +70,7 @@ import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.dsl.withId
 import imgui.internal.*
-import imgui.internal.classes.Rect
-import imgui.internal.classes.TabBar
-import imgui.internal.classes.Window
+import imgui.internal.classes.*
 import imgui.internal.sections.OldColumns
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.WindowSettings
@@ -254,19 +255,53 @@ interface demoDebugInformations {
                 indent {
                     for (rectN in WRT.values()) {
                         val r = Funcs.getWindowRect(nav, rectN)
-                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s",
-                                r.min.x,
-                                r.min.y,
-                                r.max.x,
-                                r.max.y,
-                                r.width,
-                                r.height,
-                                WRT.names[rectN.ordinal])
+                        text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${WRT.names[rectN.ordinal]}",
+                                r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                     }
                 }
             }
-            checkbox("Show mesh when hovering ImDrawCmd", ::showDrawcmdMesh)
-            checkbox("Show bounding boxes when hovering ImDrawCmd", ::showDrawcmdAabb)
+            checkbox("Show ImDrawCmd mesh when hovering", ::showDrawcmdMesh)
+            checkbox("Show ImDrawCmd bounding boxes when hovering", ::showDrawcmdAabb)
+
+            checkbox("Show tables rectangles", cfg::showTablesRects)
+            sameLine()
+            setNextItemWidth(fontSize * 12)
+            cfg.showTablesRects = combo("##show_table_rects_type", cfg::showTablesRectsType, TRT.names, TRT.names.size) or cfg.showTablesRects
+            val nav = g.navWindow
+            if (cfg.showTablesRects && nav != null)
+                for (tableN in 0 until g.tables.size) {
+                    val table = g.tables.getByIndex(tableN)
+                    if (table.lastFrameActive < g.frameCount - 1 || (table.outerWindow !== nav && table.innerWindow !== nav))
+                    continue
+
+                    bulletText("Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')", table.id)
+                    if (isItemHovered())
+                        foregroundDrawList.addRect(table.outerRect.min - 1, table.outerRect.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                    indent()
+                    for (rectN in TRT.values()) {
+                        if (rectN >= TRT.ColumnsRect) {
+                            if (rectN != TRT.ColumnsRect && rectN != TRT.ColumnsClipRect)
+                                continue
+                            for (columnN in 0 until table.columnsCount) {
+                                val r = Funcs.getTableRect(table, rectN, columnN)
+                                val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}"
+                                        .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                selectable(buf)
+                                if (isItemHovered())
+                                    foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                            }
+                        }
+                        else {
+                            val r = Funcs.getTableRect(table, rectN, -1)
+                            val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${rectN.name}".format(
+                                    r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                            selectable(buf)
+                            if (isItemHovered())
+                                foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                        }
+                    }
+                    unindent()
+                }
         }
 
         // Contents
@@ -396,16 +431,27 @@ interface demoDebugInformations {
             }
         }
 
-        //        #ifdef IMGUI_HAS_TABLE
-        //        // Overlay: Display Tables Rectangles
-        //        if (show_tables_rects)
-        //        {
-        //            for (int table_n = 0; table_n < g.Tables.GetSize(); table_n++)
-        //            {
-        //                ImGuiTable* table = g.Tables.GetByIndex(table_n);
-        //            }
-        //        }
-        //        #endif // #define IMGUI_HAS_TABLE
+        // Overlay: Display Tables Rectangles
+        if (cfg.showTablesRects)
+            for (tableN in 0 until g.tables.size) {
+                val table = g.tables.getByIndex(tableN)
+                if (table.lastFrameActive < g.frameCount - 1)
+                continue
+                val drawList = getForegroundDrawList(table.outerWindow)
+                if (cfg.showTablesRectsType >= TRT.ColumnsRect.ordinal) {
+                    for (columnN in 0 until table.columnsCount) {
+                        val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], columnN)
+                        val col = if(table.hoveredColumnBody == columnN) COL32(255, 255, 128, 255) else COL32(255, 0, 128, 255)
+                        val thickness = if(table.hoveredColumnBody == columnN) 3f else 1f
+                        drawList.addRect(r.min, r.max, col, 0f, 0.inv(), thickness)
+                    }
+                }
+                else {
+                    val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], -1)
+                    drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
+                }
+            }
+
         //
         //        #ifdef IMGUI_HAS_DOCK
         //        // Overlay: Display Docking info
@@ -506,7 +552,8 @@ interface demoDebugInformations {
 
         /** Tables Rect Type */
         enum class TRT {
-            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect, ColumnsContentHeadersIdeal, ColumnsContentHeadersDesired, ColumnsContentRowsFrozen, ColumnsContentRowsUnfrozen;
+            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect,
+            ColumnsContentHeadersUsed, ColumnsContentHeadersIdeal, ColumnsContentFrozen, ColumnsContentUnfrozen;
 
             companion object {
                 val names = WRT.values().map { it.name }
@@ -535,6 +582,20 @@ interface demoDebugInformations {
         // - NodeTabBar()
         // - NodeStorage()
         object Funcs {
+
+            fun getTableRect(table: Table, rectType: TRT, n: Int): Rect = when(rectType) {
+                TRT.OuterRect -> table.outerRect
+                TRT.WorkRect -> table.workRect
+                TRT.HostClipRect -> table.hostClipRect
+                TRT.InnerClipRect -> table.innerClipRect
+                TRT.BackgroundClipRect -> table.bgClipRect
+                TRT.ColumnsRect -> table.columns[n].let { c -> Rect(c.minX, table.innerClipRect.min.y, c.maxX, table.innerClipRect.min.y + table.lastOuterHeight) }
+                TRT.ColumnsClipRect -> table.columns[n].clipRect
+                TRT.ColumnsContentHeadersUsed -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersUsed, table.innerClipRect.min.y + table.lastFirstRowHeight) } // Note: y1/y2 not always accurate
+                TRT.ColumnsContentHeadersIdeal -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersIdeal, table.innerClipRect.min.y + table.lastFirstRowHeight) }
+                TRT.ColumnsContentFrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXFrozen, table.innerClipRect.min.y + table.lastFirstRowHeight) }
+                TRT.ColumnsContentUnfrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y + table.lastFirstRowHeight, c.contentMaxXUnfrozen, table.innerClipRect.max.y) }
+            }
 
             fun getWindowRect(window: Window, rectType: WRT): Rect = when (rectType) {
                 WRT.OuterRect -> window.rect()
@@ -649,7 +710,7 @@ interface demoDebugInformations {
                     clipper.begin(cmd.elemCount / 3)
                     while (clipper.step()) {
                         var idx_i = cmd.idxOffset + clipper.displayStart * 3
-                        for (prim in clipper.displayStart until clipper.displayEnd) {
+                        for (prim in clipper.display) {
                             var bufP = 0
                             val triangles = arrayListOf(Vec2(), Vec2(), Vec2())
                             for (n in 0 until 3) {

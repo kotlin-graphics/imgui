@@ -13,10 +13,12 @@ interface contentRegion {
      *  ~GetContentRegionMax    */
     val contentRegionMax: Vec2
         /** ~GetContentRegionMax */
-        get() = g.currentWindow!!.run {
-            val mx = contentRegionRect.max - pos
-            dc.currentColumns?.let { mx.x = workRect.max.x - pos.x }
-            mx
+        get() {
+            val window = g.currentWindow!!
+            val mx = window.contentRegionRect.max - window.pos
+            if (window.dc.currentColumns != null || g.currentTable != null)
+                mx.x = window.workRect.max.x - window.pos.x
+            return mx
         }
 
     /** == GetContentRegionMax() - GetCursorPos()

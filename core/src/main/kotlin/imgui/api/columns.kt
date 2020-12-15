@@ -22,11 +22,8 @@ import kotlin.math.max
 import kotlin.math.min
 import imgui.internal.sections.OldColumnsFlag as Cf
 
-/** Columns
- *  - You can also use SameLine(pos_x) to mimic simplified columns.
- *  - The columns API is work-in-progress and rather lacking (columns are arguably the worst part of dear imgui at the moment!)
- *  - There is a maximum of 64 columns.
- *  - Currently working on new 'Tables' api which will replace columns around Q2 2020 (see GitHub #2957). */
+/** Legacy Columns API (2020: prefer using Tables!)
+ *  - You can also use SameLine(pos_x) to mimic simplified columns. */
 interface columns {
 
     fun columns(columnsCount: Int = 1, id: String = "", border: Boolean = true) {

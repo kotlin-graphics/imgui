@@ -149,7 +149,7 @@ object Log {
                 // it possible (and would be recommended if you want to search through tens of thousands of entries).
                 val clipper = ListClipper()
                 while (clipper.step())
-                    for (lineNo in clipper.displayStart until clipper.displayEnd) {
+                    for (lineNo in clipper.display) {
                         val lineStart = lineOffsets[lineNo]
                         val lineEnd = if (lineNo + 1 < lineOffsets.size) lineOffsets[lineNo + 1] - 1 else buf.length
                         textEx(buf.subSequence(lineStart, lineEnd).toString())

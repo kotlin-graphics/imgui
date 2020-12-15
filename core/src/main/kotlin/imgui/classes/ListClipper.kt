@@ -1,5 +1,6 @@
 package imgui.classes
 
+import glm_.i
 import glm_.max
 import imgui.ImGui
 import imgui.api.g
@@ -27,9 +28,13 @@ class ListClipper {
     var displayStart = 0
     var displayEnd = 0
 
+    val display
+        get() = displayStart until displayEnd
+
     // [Internal]
     var itemsCount = -1
     var stepNo = 0
+    var itemsFrozen = 0
     var itemsHeight = 0f
     var startPosY = 0f
 
@@ -45,9 +50,15 @@ class ListClipper {
 
         val window = g.currentWindow!!
 
+        g.currentTable?.let { table ->
+            if (table.isInsideRow)
+                table.endRow()
+        }
+
         startPosY = window.dc.cursorPos.y
         this.itemsHeight = itemsHeight
         this.itemsCount = itemsCount
+        itemsFrozen = 0
         stepNo = 0
         displayStart = -1
         displayEnd = 0
@@ -61,7 +72,7 @@ class ListClipper {
 
         // In theory here we should assert that ImGui::GetCursorPosY() == StartPosY + DisplayEnd * ItemsHeight, but it feels saner to just seek at the end and not assert/crash the user.
         if (itemsCount < Int.MAX_VALUE && displayStart >= 0)
-            setCursorPosYAndSetupForPrevLine(startPosY + itemsCount * itemsHeight, itemsHeight)
+            setCursorPosYAndSetupForPrevLine(startPosY + (itemsCount - itemsFrozen) * itemsHeight, itemsHeight)
         itemsCount = -1
         stepNo = 3
     }
@@ -72,18 +83,32 @@ class ListClipper {
 
         val window = g.currentWindow!!
 
+        val table = g.currentTable
+        if (table != null && table.isInsideRow)
+            table.endRow()
+
         // Reached end of list
-        if(displayEnd >= itemsCount || window.skipItems) {
+        if (displayEnd >= itemsCount || skipItemForListClipping) {
             end()
             return false
         }
         // Step 0: Let you process the first element (regardless of it being visible or not, so we can measure the element height)
-        if(stepNo == 0) {
+        if (stepNo == 0) {
+
+            // While we are in frozen row state, keep displaying items one by one, unclipped
+            // FIXME: Could be stored as a table-agnostic state.
+            if (table != null && !table.isUnfrozen) {
+                displayStart = itemsFrozen
+                displayEnd = itemsFrozen + 1
+                itemsFrozen++
+                return true
+            }
+
             startPosY = window.dc.cursorPos.y
             if (itemsHeight <= 0f) {
                 // Submit the first item so we can measure its height (generally it is 0..1)
-                displayStart = 0
-                displayEnd = 1
+                displayStart = itemsFrozen
+                displayEnd = itemsFrozen + 1
                 stepNo = 1
                 return true
             }
@@ -94,15 +119,21 @@ class ListClipper {
         }
 
         // Step 1: the clipper infer height from first element
-        if(stepNo == 1) {
+        if (stepNo == 1) {
             assert(itemsHeight <= 0f)
-            itemsHeight = window.dc.cursorPos.y - startPosY
+            if (table != null) {
+                val posY1 = table.rowPosY1   // Using this instead of StartPosY to handle clipper straddling the frozen row
+                val posY2 = table.rowPosY2   // Using this instead of CursorPos.y to take account of tallest cell.
+                itemsHeight = posY2 - posY1
+                window.dc.cursorPos.y = posY2
+            } else
+                itemsHeight = window.dc.cursorPos.y - startPosY
             assert(itemsHeight > 0f) { "Unable to calculate item height! First item hasn't moved the cursor vertically!" }
             stepNo = 2
         }
 
         // Step 2: calculate the actual range of elements to display, and position the cursor before the first element
-        if(stepNo == 2) {
+        if (stepNo == 2) {
             assert(itemsHeight > 0f)
 
             val alreadySubmitted = displayEnd
@@ -112,7 +143,7 @@ class ListClipper {
 
             // Seek cursor
             if (displayStart > alreadySubmitted)
-                setCursorPosYAndSetupForPrevLine(startPosY + displayStart * itemsHeight, itemsHeight)
+                setCursorPosYAndSetupForPrevLine(startPosY + (displayStart - itemsFrozen) * itemsHeight, itemsHeight)
 
             stepNo = 3
             return true
@@ -123,7 +154,7 @@ class ListClipper {
         if (stepNo == 3) {
             // Seek cursor
             if (itemsCount < Int.MAX_VALUE)
-                setCursorPosYAndSetupForPrevLine(startPosY + itemsCount * itemsHeight, itemsHeight) // advance cursor
+                setCursorPosYAndSetupForPrevLine(startPosY + (itemsCount - itemsFrozen) * itemsHeight, itemsHeight) // advance cursor
             itemsCount = -1
             return false
         }
@@ -134,18 +165,31 @@ class ListClipper {
     companion object {
 
         fun setCursorPosYAndSetupForPrevLine(posY: Float, lineHeight: Float) {
-            /*  Set cursor position and a few other things so that SetScrollHereY() and Columns() can work when seeking
-                cursor.
-                FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would
-                stumble on the same issue.
-                The clipper should probably have a 4th step to display the last item in a regular manner.   */
-            g.currentWindow!!.dc.apply {
-                cursorPos.y = posY
-                cursorMaxPos.y = cursorMaxPos.y max posY
-                cursorPosPrevLine.y = cursorPos.y - lineHeight  // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
-                prevLineSize.y = (lineHeight - g.style.itemSpacing.y)      // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
-                currentColumns?.lineMinY = cursorPos.y                         // Setting this so that cell Y position are set properly
+            // Set cursor position and a few other things so that SetScrollHereY() and Columns() can work when seeking cursor.
+            // FIXME: It is problematic that we have to do that here, because custom/equivalent end-user code would stumble on the same issue.
+            // The clipper should probably have a 4th step to display the last item in a regular manner.
+            val window = g.currentWindow!!
+            val offY = posY - window.dc.cursorPos.y
+            window.dc.cursorPos.y = posY
+            window.dc.cursorMaxPos.y = window.dc.cursorMaxPos.y max posY
+            window.dc.cursorPosPrevLine.y = window.dc.cursorPos.y - lineHeight  // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
+            window.dc.prevLineSize.y = lineHeight - g.style.itemSpacing.y      // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
+            window.dc.currentColumns?.let { columns ->
+                columns.lineMinY = window.dc.cursorPos.y                         // Setting this so that cell Y position are set properly
+            }
+            g.currentTable?.let { table ->
+                if (table.isInsideRow)
+                    table.endRow()
+                table.rowPosY2 = window.dc.cursorPos.y
+                val rowIncrease = ((offY / lineHeight) + 0.5f).i
+                //table->CurrentRow += row_increase; // Can't do without fixing TableEndRow()
+                table.rowBgColorCounter += rowIncrease
             }
         }
     }
 }
+
+// FIXME-TABLE: This prevents us from using ImGuiListClipper _inside_ a table cell.
+// The problem we have is that without a Begin/End scheme for rows using the clipper is ambiguous.
+val skipItemForListClipping: Boolean
+    get() = g.currentTable?.hostSkipItems ?: g.currentWindow!!.skipItems

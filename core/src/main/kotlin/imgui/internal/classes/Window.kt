@@ -39,7 +39,7 @@ class Window(var context: Context,
              var name: String) {
 
     /** == ImHashStr(Name) */
-    val id: ID = hash(name)
+    val id: ID = hashStr(name)
 
     /** See enum WindowFlags */
     var flags = Wf.None.i
@@ -280,7 +280,7 @@ class Window(var context: Context,
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getID(strID: String, end: Int = 0): ID {
         val seed: ID = idStack.last()
-        val id: ID = hash(strID, end, seed)
+        val id: ID = hashStr(strID, end, seed)
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, end)
@@ -318,7 +318,7 @@ class Window(var context: Context,
     }
 
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
-        val id = hash(strID, strID.length - strEnd, seed_ = idStack.last())
+        val id = hashStr(strID, strID.length - strEnd, seed_ = idStack.last())
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, strEnd)
         return id
@@ -726,7 +726,7 @@ class Window(var context: Context,
      *  4..7: borders (Top, Right, Bottom, Left) */
     infix fun getResizeID(n: Int): ID {
         assert(n in 0..7)
-        val id = hash("#RESIZE", 0, id)
+        val id = hashStr("#RESIZE", 0, id)
         return hash(intArrayOf(n), id)
     }
 
@@ -911,8 +911,10 @@ class Window(var context: Context,
         // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
         // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
         val UNSAVED_DOCUMENT_MARKER = "*"
-        val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER,
-            hideTextAfterDoubleHash = false).x else 0f
+        val markerSizeX = when {
+            flags has Wf.UnsavedDocument -> calcTextSize(UNSAVED_DOCUMENT_MARKER, hideTextAfterDoubleHash = false).x
+            else -> 0f
+        }
         val textSize = calcTextSize(name, hideTextAfterDoubleHash = true) + Vec2(markerSizeX, 0f)
 
         // As a nice touch we try to ensure that centered title text doesn't get affected by visibility of Close/Collapse button,
@@ -920,38 +922,29 @@ class Window(var context: Context,
         if (padL > style.framePadding.x) padL += style.itemInnerSpacing.x
         if (padR > style.framePadding.x) padR += style.itemInnerSpacing.x
         if (style.windowTitleAlign.x > 0f && style.windowTitleAlign.x < 1f) {
-            val centerness =
-                saturate(1f - abs(style.windowTitleAlign.x - 0.5f) * 2f) // 0.0f on either edges, 1.0f on center
-            val padExtend = kotlin.math.min(kotlin.math.max(padL, padR), titleBarRect.width - padL - padR - textSize.x)
+            val centerness = saturate(1f - abs(style.windowTitleAlign.x - 0.5f) * 2f) // 0.0f on either edges, 1.0f on center
+            val padExtend = min(max(padL, padR), titleBarRect.width - padL - padR - textSize.x)
             padL = padL max (padExtend * centerness)
             padR = padR max (padExtend * centerness)
         }
 
         val layoutR = Rect(titleBarRect.min.x + padL, titleBarRect.min.y, titleBarRect.max.x - padR, titleBarRect.max.y)
-        val clipR = Rect(layoutR.min.x,
-            layoutR.min.y,
-            layoutR.max.x + style.itemInnerSpacing.x,
-            layoutR.max.y) //if (g.IO.KeyCtrl) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
+        val clipR = Rect(layoutR.min.x, layoutR.min.y, layoutR.max.x + style.itemInnerSpacing.x, layoutR.max.y) //if (g.IO.KeyCtrl) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
         renderTextClipped(layoutR.min, layoutR.max, name, textSize, style.windowTitleAlign, clipR)
 
         if (flags has Wf.UnsavedDocument) {
-            val markerPos = Vec2(kotlin.math.max(layoutR.min.x,
-                layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x,
-                layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
+            val markerPos = Vec2(max(layoutR.min.x, layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
             val off = Vec2(0f, floor(-g.fontSize * 0.25f))
-            renderTextClipped(markerPos + off,
-                layoutR.max + off,
-                UNSAVED_DOCUMENT_MARKER,
-                null,
-                Vec2(0, style.windowTitleAlign.y),
-                clipR)
+            renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER,
+                    null, Vec2(0, style.windowTitleAlign.y), clipR)
         }
     }
 
     /** ~ClampWindowRect */
     infix fun clampRect(visibilityRect: Rect) {
         val sizeForClamping = Vec2(size)
-        if (io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar) sizeForClamping.y = titleBarHeight
+        if (io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar)
+            sizeForClamping.y = titleBarHeight
         pos put glm.clamp(pos, visibilityRect.min - sizeForClamping, visibilityRect.max)
     }
 

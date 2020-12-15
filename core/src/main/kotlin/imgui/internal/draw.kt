@@ -155,7 +155,7 @@ class DrawChannel {
 // FIXME: This may be a little confusing, trying to be a little too low-level/optimal instead of just doing vector swap..
 //-----------------------------------------------------------------------------
 /** Split/Merge functions are used to split the draw list into different layers which can be drawn into out of order.
- *  This is used by the Columns api, so items of each column can be batched together in a same draw call. */
+ *  This is used by the Columns/Tables API, so items of each column can be batched together in a same draw call. */
 class DrawListSplitter {
     /** Current channel number (0) */
     var _current = 0

@@ -348,6 +348,7 @@ inline class PoolIdx(val i: Int) {
     operator fun inc() = PoolIdx(i + 1)
     operator fun dec() = PoolIdx(i - 1)
     operator fun compareTo(other: PoolIdx): Int = i.compareTo(other.i)
+    operator fun compareTo(other: Int): Int = i.compareTo(other.i)
     operator fun minus(int: Int) = PoolIdx(i - int)
 }
 
@@ -381,7 +382,7 @@ class TabBarPool {
         get() = list.size
 }
 
-class Pool<T>(val placementNew: () -> T) {
+class Pool<T>(val placementNew: () -> T) : Iterable<T> {
     val buf = ArrayList<T>()        // Contiguous data
     val map = mutableMapOf<ID, PoolIdx>()        // ID->Index
 
@@ -391,6 +392,7 @@ class Pool<T>(val placementNew: () -> T) {
     operator fun get(key: ID): T? = getByKey(key)
 
     fun getByIndex(n: PoolIdx): T = buf[n.i]
+    fun getByIndex(n: Int): T = buf[n]
     operator fun get(n: PoolIdx): T = getByIndex(n)
 
     fun getIndex(p: T) = PoolIdx(buf.indexOf(p))
@@ -427,4 +429,5 @@ class Pool<T>(val placementNew: () -> T) {
 //    { Buf.reserve(capacity); Map.Data.reserve(capacity); }
 
     val size get() = buf.size
+    override fun iterator(): Iterator<T> = buf.iterator()
 }

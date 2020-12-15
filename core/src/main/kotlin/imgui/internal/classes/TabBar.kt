@@ -39,7 +39,7 @@ import imgui.ImGui.tabItemCalcSize
 import imgui.ImGui.tabItemLabelAndCloseButton
 import imgui.api.g
 import imgui.internal.floor
-import imgui.internal.hash
+import imgui.internal.hashStr
 import imgui.internal.linearSweep
 import imgui.internal.sections.ButtonFlag
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
@@ -389,7 +389,7 @@ class TabBar {
             )
 
         //        if (false)
-        //            if (hovered && g.hoveredIdNotActiveTimer > 0.5f && bb.width < tab.widthContents)        {
+        //            if (hovered && g.hoveredIdNotActiveTimer > TOOLTIP_DELAY && bb.width < tab.widthContents)        {
         //                // Enlarge tab display when hovering
         //                bb.max.x = bb.min.x + lerp (bb.width, tab.widthContents, saturate((g.hoveredIdNotActiveTimer-0.4f) * 6f)).i.f
         //                displayDrawList = GetOverlayDrawList(window)
@@ -437,7 +437,7 @@ class TabBar {
 
         // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
         // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
-        if (textClipped && g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > 0.5f && isItemHovered())
+        if (textClipped && g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > g.tooltipSlowDelay && isItemHovered())
             if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
                 setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
@@ -675,7 +675,7 @@ class TabBar {
     infix fun calcTabID(label: String): Int {
         return when {
             flags has TabBarFlag._DockNode -> {
-                val id = hash(label)
+                val id = hashStr(label)
                 keepAliveID(id)
                 id
             }

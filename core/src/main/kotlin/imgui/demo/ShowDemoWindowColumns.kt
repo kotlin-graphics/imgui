@@ -1,43 +1,100 @@
 package imgui.demo
 
 import glm_.L
+import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
+import glm_.wo
 import imgui.*
+import imgui.ImGui.alignTextToFramePadding
+import imgui.ImGui.beginTable
 import imgui.ImGui.button
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
+import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.collapsingHeader
 import imgui.ImGui.columnIndex
 import imgui.ImGui.columns
+import imgui.ImGui.combo
 import imgui.ImGui.contentRegionAvail
+import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
+import imgui.ImGui.dragVec2
+import imgui.ImGui.endTable
 import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.getColumnWidth
+import imgui.ImGui.indent
 import imgui.ImGui.inputFloat
+import imgui.ImGui.inputText
+import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.nextColumn
+import imgui.ImGui.openPopup
+import imgui.ImGui.popButtonRepeat
 import imgui.ImGui.popID
+import imgui.ImGui.popItemWidth
+import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushButtonRepeat
 import imgui.ImGui.pushID
+import imgui.ImGui.pushItemWidth
+import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
+import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowContentSize
+import imgui.ImGui.sliderFloat
+import imgui.ImGui.smallButton
+import imgui.ImGui.spacing
 import imgui.ImGui.style
+import imgui.ImGui.tableGetColumnFlags
+import imgui.ImGui.tableGetColumnIndex
+import imgui.ImGui.tableGetColumnName
+import imgui.ImGui.tableGetRowIndex
+import imgui.ImGui.tableGetSortSpecs
+import imgui.ImGui.tableHeader
+import imgui.ImGui.tableHeadersRow
+import imgui.ImGui.tableNextColumn
+import imgui.ImGui.tableNextRow
+import imgui.ImGui.tableSetBgColor
+import imgui.ImGui.tableSetColumnIndex
+import imgui.ImGui.tableSetupColumn
+import imgui.ImGui.tableSetupScrollFreeze
 import imgui.ImGui.text
+import imgui.ImGui.textDisabled
+import imgui.ImGui.textLineHeightWithSpacing
+import imgui.ImGui.textUnformatted
 import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
+import imgui.ImGui.unindent
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.classes.DrawList
 import imgui.classes.ListClipper
+import imgui.classes.TableSortSpecs
 import imgui.dsl.child
 import imgui.dsl.collapsingHeader
+import imgui.dsl.popup
+import imgui.dsl.popupContextItem
 import imgui.dsl.selectable
+import imgui.dsl.table
 import imgui.dsl.treeNode
+import imgui.dsl.treeNodeEx
+import imgui.TableColumnFlag as Tcf
+import imgui.TableFlag as Tf
+import imgui.TableRowFlag as Trf
+import imgui.TreeNodeFlag as Tnf
 
+// Demonstrate old/legacy Columns API!
+// [2020: Columns are under-featured and not maintained. Prefer using the more flexible and powerful BeginTable() API!]
 object ShowDemoWindowColumns {
 
     /* Columns */
@@ -57,16 +114,11 @@ object ShowDemoWindowColumns {
 
     operator fun invoke() {
 
-        if (!collapsingHeader("Columns"))
-            return
-
-        pushID("Columns")
-
-        checkbox("Disable tree indentation", ::disableIndent)
+        val open = treeNode("Legacy Columns API")
         sameLine()
-        helpMarker("Disable the indenting of tree nodes so demo columns can use the full window width.")
-        if (disableIndent)
-            pushStyleVar(StyleVar.IndentSpacing, 0f)
+        helpMarker("Columns() is an old API! Prefer using the more flexible and powerful BeginTable() API!")
+        if (!open)
+            return
 
         // Basic columns
         treeNode("Basic") {
@@ -178,8 +230,10 @@ object ShowDemoWindowColumns {
             val childSize = Vec2(0f, fontSize * 20f)
             child("##ScrollingRegion", childSize, false, WindowFlag.HorizontalScrollbar.i) {
                 columns(10)
+
+                // Also demonstrate using clipper for large vertical lists
                 val ITEMS_COUNT = 2000
-                val clipper = ListClipper()  // Also demonstrate using the clipper for large list
+                val clipper = ListClipper()
                 clipper.begin(ITEMS_COUNT)
                 while (clipper.step())
                     for (i in clipper.displayStart until clipper.displayEnd)
@@ -219,8 +273,6 @@ object ShowDemoWindowColumns {
             columns(1)
         }
 
-        if (disableIndent)
-            popStyleVar()
-        popID()
+        treePop()
     }
 }

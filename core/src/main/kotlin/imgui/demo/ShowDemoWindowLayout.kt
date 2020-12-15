@@ -15,6 +15,7 @@ import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
+import imgui.ImGui.beginTable
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
@@ -35,6 +36,7 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.endTable
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getID
 import imgui.ImGui.invisibleButton
@@ -77,6 +79,7 @@ import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.tabItemButton
+import imgui.ImGui.tableNextColumn
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textLineHeight
@@ -88,7 +91,6 @@ import imgui.ImGui.windowContentRegionMax
 import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
-import imgui.ImGui.windowWidth
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
 import imgui.demo.showExampleApp.MenuFile
@@ -218,11 +220,14 @@ object ShowDemoWindowLayout {
                             endMenuBar()
                         }
                         columns(2)
-                        for (i in 0..99) {
-                            val text = "%03d".format(style.locale, i)
-                            button(text, Vec2(-Float.MIN_VALUE, 0f))
-                            nextColumn()
+                        if (beginTable("split", 2, TableFlag.Resizable or TableFlag.NoSavedSettings)) {
+                            for (i in 0..99) {
+                                val text = "%03d".format(style.locale, i)
+                                tableNextColumn()
+                                button(text, Vec2(-Float.MIN_VALUE, 0f))
+                            }
                         }
+                        endTable()
                     }
                 }
             }
@@ -850,6 +855,15 @@ object ShowDemoWindowLayout {
                 if (showTextWrapped)
                     textWrapped("This text should automatically wrap on the edge of the work rectangle.")
                 if (showColumns) {
+                    text("Tables:")
+                    if (beginTable("table", 4, TableFlag.Borders.i)) {
+                        for (n in 0..3) {
+                            tableNextColumn()
+                            text("Width %.2f", ImGui.contentRegionAvail.x)
+                        }
+                        endTable()
+                    }
+                    text("Columns:")
                     columns(4)
                     for (n in 0..3) {
                         text("Width %.2f", getColumnWidth())
