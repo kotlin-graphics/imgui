@@ -212,9 +212,17 @@ interface tablesInternal {
             table.resetSettings()
         if (table.isInitializing)
         {
-            // Initialize for new settings
+            // Initialize
             table.settingsOffset = -1
             table.isSortSpecsDirty = true
+            table.instanceInteracted = -1
+            table.contextPopupColumn = -1
+            table.reorderColumn = -1
+            table.resizedColumn = -1
+            table.lastResizedColumn = -1
+            table.autoFitSingleStretchColumn = -1
+            table.hoveredColumnBody = -1
+            table.hoveredColumnBorder = -1
             for (n in 0 until columnsCount) {
                 var column = table.columns[n]
                 val widthAuto = column.widthAuto
@@ -254,14 +262,9 @@ interface tablesInternal {
         innerWindow.skipItems = true
 
         // Clear names
-        // FIXME-TABLE: probably could be done differently...
-        if (table.columnsNames.isNotEmpty()) {
+        // At this point the ->NameOffset field of each column will be invalid until TableUpdateLayout() or the first call to TableSetupColumn()
+        if (table.columnsNames.isNotEmpty())
             table.columnsNames.clear()
-            for (columnN in 0 until table.columnsCount) {
-                val column = table.columns[columnN]
-                column.nameOffset = -1
-            }
-        }
 
         // Apply queued resizing/reordering/hiding requests
         table.beginApplyRequests()
@@ -303,6 +306,13 @@ interface tablesInternal {
 //    IMGUI_API ImRect        TableGetCellBgRect(const ImGuiTable* table, int column_n)
 //    IMGUI_API const char*   TableGetColumnName(const ImGuiTable* table, int column_n)
 //    IMGUI_API ImGuiID       TableGetColumnResizeID(const ImGuiTable* table, int column_n, int instance_no = 0)
+
+    // Minimum column content width (without padding)
+    fun tableGetMinColumnWidth(): Float =
+        //return g.Style.ColumnsMinSpacing; // FIXME-TABLE
+        g.style.framePadding.x
+
+    //  -> Table class
 //    IMGUI_API void          TableSetColumnWidthAutoSingle(ImGuiTable* table, int column_n)
 //    IMGUI_API void          TableSetColumnWidthAutoAll(ImGuiTable* table)
 //    IMGUI_API void          TableRemove(ImGuiTable* table)

@@ -27,10 +27,10 @@ import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.setTooltip
 import imgui.ImGui.tableGetHeaderRowHeight
 import imgui.ImGui.tableGetHoveredColumn
+import imgui.ImGui.tableGetMinColumnWidth
 import imgui.ImGui.tableOpenContextMenu
 import imgui.ImGui.tableSetColumnSortDirection
 import imgui.classes.TableSortSpecs
-import imgui.internal.api.tablesCandidatesForPublicAPI.Companion.tableGetMinColumnWidth
 import imgui.internal.classes.COL32_DISABLE
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TABLE_MAX_COLUMNS
@@ -361,7 +361,7 @@ interface tables {
         }
 
         // Store name (append with zero-terminator in contiguous buffer)
-        assert(column.nameOffset == -1)
+        column.nameOffset = -1
         if (label != null && label.isNotEmpty()) {
             column.nameOffset = table.columnsNames.size
             table.columnsNames += label

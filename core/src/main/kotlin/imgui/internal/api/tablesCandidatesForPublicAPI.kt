@@ -13,6 +13,7 @@ import imgui.ImGui.tableFixColumnSortDirection
 import imgui.ImGui.tableGetColumnCount
 import imgui.ImGui.tableGetColumnFlags
 import imgui.ImGui.tableGetColumnName
+import imgui.ImGui.tableGetMinColumnWidth
 import imgui.internal.classes.TableColumnIdx
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
@@ -127,16 +128,6 @@ interface tablesCandidatesForPublicAPI {
         }
     }
 
-    fun tableSetColumnIsEnabled(columnN_: Int, hidden: Boolean) {
-        var columnN = columnN_
-        val table = g.currentTable!!
-        assert(/*table != NULL &&*/ !table.isLayoutLocked)
-        if (columnN < 0)
-            columnN = table.currentColumn
-        assert(columnN >= 0 && columnN < table.columnsCount)
-        table.columns[columnN].isEnabledNextFrame = !hidden
-    }
-
     /** Note that the NoSortAscending/NoSortDescending flags are processed in TableSortSpecsSanitize(), and they may change/revert
      *  the value of SortDirection. We could technically also do it here but it would be unnecessary and duplicate code. */
     fun tableSetColumnSortDirection(columnN: Int, sortDirection: SortDirection, appendToSortSpecs_: Boolean) {
@@ -204,12 +195,5 @@ interface tablesCandidatesForPublicAPI {
         // Optimization: avoid PopClipRect() + SetCurrentChannel()
         setWindowClipRectBeforeSetChannel(window, table.hostBackupClipRect)
         table.drawSplitter.setCurrentChannel(window.drawList, column.drawChannelCurrent)
-    }
-
-    companion object {
-        /** Minimum column content width (without padding) */
-        fun tableGetMinColumnWidth(): Float =
-            //return g.Style.ColumnsMinSpacing; // FIXME-TABLE
-            g.style.framePadding.x
     }
 }

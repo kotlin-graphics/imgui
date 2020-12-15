@@ -18,6 +18,7 @@ import imgui.ImGui.pushItemFlag
 import imgui.ImGui.separator
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.tableFixColumnSortDirection
+import imgui.ImGui.tableGetMinColumnWidth
 import imgui.ImGui.tableSetBgColor
 import imgui.ImGui.tableSetColumnWidth
 import imgui.ImGui.tableSettingsFindByID
@@ -25,7 +26,6 @@ import imgui.api.g
 import imgui.classes.TableColumnSortSpecs
 import imgui.classes.TableSortSpecs
 import imgui.internal.*
-import imgui.internal.api.tablesCandidatesForPublicAPI.Companion.tableGetMinColumnWidth
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.NavLayer
 import imgui.internal.sections.or
@@ -72,7 +72,7 @@ class Table {
     var settingsLoadedFlags = Tf.None.i
 
     /** Offset in g.SettingsTables */
-    var settingsOffset = -1
+    var settingsOffset = 0
 
     var lastFrameActive = -1
 
@@ -87,7 +87,7 @@ class Table {
     var instanceCurrent = 0
 
     /** Mark which instance (generally 0) of the same ID is being interacted with */
-    var instanceInteracted = -1
+    var instanceInteracted = 0
 
     var rowPosY1 = 0f
 
@@ -228,25 +228,25 @@ class Table {
     var declColumnsCount: TableColumnIdx = 0
 
     /** Index of column whose visible region is being hovered. Important: == ColumnsCount when hovering empty region after the right-most column! */
-    var hoveredColumnBody: TableColumnIdx = -1
+    var hoveredColumnBody: TableColumnIdx = 0
 
     /** Index of column whose right-border is being hovered (for resizing). */
-    var hoveredColumnBorder: TableColumnIdx = -1
+    var hoveredColumnBorder: TableColumnIdx = 0
 
     /** Index of single stretch column requesting auto-fit. */
-    var autoFitSingleStretchColumn: TableColumnIdx = -1
+    var autoFitSingleStretchColumn: TableColumnIdx = 0
 
     /** Index of column being resized. Reset when InstanceCurrent==0. */
-    var resizedColumn: TableColumnIdx = -1
+    var resizedColumn: TableColumnIdx = 0
 
     /** Index of column being resized from previous frame. */
-    var lastResizedColumn: TableColumnIdx = -1
+    var lastResizedColumn: TableColumnIdx = 0
 
     /** Index of column header being held. */
     var heldHeaderColumn: TableColumnIdx = 0
 
     /** Index of column being reordered. (not cleared) */
-    var reorderColumn: TableColumnIdx = -1
+    var reorderColumn: TableColumnIdx = 0
 
     /** -1 or +1 */
     var reorderColumnDir: TableColumnIdx = 0
@@ -258,7 +258,7 @@ class Table {
     var leftMostStretchedColumnDisplayOrder: TableColumnIdx = 0
 
     /** Column right-clicked on, of -1 if opening context menu from a neutral/empty spot */
-    var contextPopupColumn: TableColumnIdx = -1
+    var contextPopupColumn: TableColumnIdx = 0
 
     /** Requested frozen rows count */
     var freezeRowsRequest: TableColumnIdx = 0
@@ -491,6 +491,7 @@ class Table {
             // In theory we could be calling TableSetupColumn() here with dummy values it should yield the same effect.
             if (columnN >= declColumnsCount) {
                 setupColumnFlags(column, Tcf.None.i)
+                column.nameOffset = -1
                 column.userID = 0
                 column.initStretchWeightOrWidth = -1f
             }
@@ -886,7 +887,7 @@ class Table {
         // Initial state
         innerWindow!!.let {
             if (flags has Tf.NoClip)
-                drawSplitter.setCurrentChannel(it.drawList, TABLE_DRAW_CHANNEL_UNCLIPPED)
+                drawSplitter.setCurrentChannel(it.drawList, TABLE_DRAW_CHANNEL_NOCLIP)
             else
                 it.drawList.pushClipRect(it.clipRect.min, it.clipRect.max, false)
         }
@@ -918,7 +919,7 @@ class Table {
 
         // Indentation
         if (flags hasnt Tcf.IndentMask_)
-            flags = flags or if(columns.indexOf(column) == 0) Tcf.IndentEnable else Tcf.IndentDisable
+            flags = flags or if (columns.indexOf(column) == 0) Tcf.IndentEnable else Tcf.IndentDisable
 
         // Alignment
         //if ((flags & ImGuiTableColumnFlags_AlignMask_) == 0)
@@ -985,8 +986,6 @@ class Table {
             }
         }
     }
-
-    TableUpdateColumnsWeightFromWidth
 
     /** FIXME-TABLE: This is a mess, need to redesign how we render borders (as some are also done in TableEndRow)
      *  ~TableDrawBorders */
@@ -1468,7 +1467,7 @@ class Table {
         isSortSpecsDirty = false // Mark as not dirty for us
     }
 
-    /** [Internal] Called by TableNextRow()!
+    /** [Internal] Called by TableNextRow()
      *  ~TableBeginRow */
     fun beginRow() {
 
@@ -1504,7 +1503,7 @@ class Table {
         }
     }
 
-    /** [Internal] Called by TableNextRow()!
+    /** [Internal] Called by TableNextRow()
      *  ~TableEndRow */
     fun endRow() {
         val window = g.currentWindow!!
@@ -1632,7 +1631,7 @@ class Table {
         isInsideRow = false
     }
 
-    /** [Internal] Called by TableNextColumn()!
+    /** [Internal] Called by TableSetColumnIndex()/TableNextColumn()
      *  This is called very frequently, so we need to be mindful of unnecessary overhead.
      *  FIXME-TABLE FIXME-OPT: Could probably shortcut some things for non-active or clipped columns.
      *  ~TableBeginCell */
@@ -1667,8 +1666,8 @@ class Table {
         window.skipItems = column.isSkipItems
         if (flags has Tf.NoClip) {
             // FIXME: if we end up drawing all borders/bg in EndTable, could remove this and just assert that channel hasn't changed.
-            drawSplitter.setCurrentChannel(window.drawList, TABLE_DRAW_CHANNEL_UNCLIPPED)
-            //IM_ASSERT(table->DrawSplitter._Current == TABLE_DRAW_CHANNEL_UNCLIPPED);
+            drawSplitter.setCurrentChannel(window.drawList, TABLE_DRAW_CHANNEL_NOCLIP)
+            //IM_ASSERT(table->DrawSplitter._Current == TABLE_DRAW_CHANNEL_NOCLIP);
         } else {
             // FIXME-TABLE: Could avoid this if draw channel is dummy channel?
             setWindowClipRectBeforeSetChannel(window, column.clipRect)
@@ -1676,7 +1675,7 @@ class Table {
         }
     }
 
-    /** [Internal] Called by TableNextRow()/TableNextColumn()!
+    /** [Internal] Called by TableNextRow()/TableSetColumnIndex()/TableNextColumn()
      *  ~TableEndCell */
     fun endCell() {
 
@@ -1716,7 +1715,10 @@ class Table {
     }
 
     /** ~TableGetColumnName */
-    infix fun getColumnName(columnN: Int): String = columnsNames.getOrElse(columns[columnN].nameOffset) { "" }
+    infix fun getColumnName(columnN: Int): String {
+        assert(isLayoutLocked || columnN <= declColumnsCount) { "NameOffset is invalid otherwise" }
+        return columnsNames.getOrElse(columns[columnN].nameOffset) { "" }
+    }
 
     /** Return the resizing ID for the right-side of the given column.
      *  ~TableGetColumnResizeID */
