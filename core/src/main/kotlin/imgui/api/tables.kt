@@ -24,6 +24,7 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextEllipsis
+import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setTooltip
 import imgui.ImGui.tableGetColumnNextSortDirection
 import imgui.ImGui.tableGetHeaderRowHeight
@@ -469,7 +470,9 @@ interface tables {
         //GetForegroundDrawList()->AddRect(cell_r.Min, cell_r.Max, IM_COL32(255, 0, 0, 255)); // [DEBUG]
         //GetForegroundDrawList()->AddRect(bb.Min, bb.Max, IM_COL32(255, 0, 0, 255)); // [DEBUG]
 
-        val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.None.i)
+        // Using AllowItemOverlap mode because we cover the whole cell, and we want user to be able to submit subsequent items.
+        val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.AllowItemOverlap.i)
+        setItemAllowOverlap()
         if (hovered || selected) {
             val col = if(held) Col.HeaderActive else if(hovered) Col.HeaderHovered else Col.Header
             //RenderFrame(bb.Min, bb.Max, col, false, 0.0f);

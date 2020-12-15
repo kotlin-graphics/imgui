@@ -1692,7 +1692,6 @@ class Table {
         window.dc.cursorMaxPos.x = window.dc.cursorPos.x
         window.dc.columnsOffset = startX - window.pos.x - window.dc.indent // FIXME-WORKRECT
         window.dc.currLineTextBaseOffset = rowTextBaseline
-        window.dc.lastItemId = 0
         window.dc.navLayerCurrent = column.navLayerCurrent
 
         window.workRect.min.y = window.dc.cursorPos.y
@@ -1705,6 +1704,11 @@ class Table {
             window.dc.cursorPos.y = window.dc.cursorPos.y max rowPosY2
 
         window.skipItems = column.isSkipItems
+        if (column.isSkipItems) {
+            window.dc.lastItemId = 0
+            window.dc.lastItemStatusFlags = 0
+        }
+
         if (flags has Tf.NoClip) {
             // FIXME: if we end up drawing all borders/bg in EndTable, could remove this and just assert that channel hasn't changed.
             drawSplitter.setCurrentChannel(window.drawList, TABLE_DRAW_CHANNEL_NOCLIP)
@@ -1756,9 +1760,9 @@ class Table {
     }
 
     /** ~TableGetColumnName */
-    infix fun getColumnName(columnN: Int): String {
-        assert(isLayoutLocked || columnN <= declColumnsCount) { "NameOffset is invalid otherwise" }
-        return columnsNames.getOrElse(columns[columnN].nameOffset) { "" }
+    infix fun getColumnName(columnN: Int): String = when {
+        !isLayoutLocked && columnN >= declColumnsCount -> "" // NameOffset is invalid at this point
+        else -> columnsNames.getOrElse(columns[columnN].nameOffset) { "" }
     }
 
     /** Return the resizing ID for the right-side of the given column.
@@ -1867,6 +1871,7 @@ class Table {
         refScale = settings.refScale
 
         // Serialize ImGuiTableSettings/ImGuiTableColumnSettings into ImGuiTable/ImGuiTableColumn
+        var displayOrderMask = 0L
         for (dataN in 0 until settings.columnsCount) {
             val columnSettings = settings.columnSettings[dataN]
             val columnN = columnSettings.index
@@ -1881,17 +1886,27 @@ class Table {
                     column.widthRequest = columnSettings.widthOrWeight
                 column.autoFitQueue = 0x00
             }
-            if (settings.saveFlags has Tf.Reorderable)
-                column.displayOrder = columnSettings.displayOrder
-            else
-                column.displayOrder = columnN
+            column.displayOrder = when {
+                settings.saveFlags has Tf.Reorderable -> columnSettings.displayOrder
+                else -> columnN
+            }
+            displayOrderMask = displayOrderMask or (1L shl column.displayOrder)
             column.isEnabled = columnSettings.isEnabled
             column.isEnabledNextFrame = columnSettings.isEnabled
             column.sortOrder = columnSettings.sortOrder
             column.sortDirection = columnSettings.sortDirection
         }
 
-        // FIXME-TABLE: Need to validate .ini data
+        // Validate and fix invalid display order data
+        val expectedDisplayOrderMask = when(settings.columnsCount) {
+            64 -> 0.inv()
+            else -> (1L shl settings.columnsCount) - 1
+        }
+        if (displayOrderMask != expectedDisplayOrderMask)
+            for (columnN in 0 until columnsCount)
+                columns[columnN].displayOrder = columnN
+
+        // Rebuild index
         for (columnN in 0 until columnsCount)
             displayOrderToIndex[columns[columnN].displayOrder] = columnN
     }

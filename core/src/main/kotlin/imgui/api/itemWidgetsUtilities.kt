@@ -136,8 +136,8 @@ interface itemWidgetsUtilities {
     val itemRectSize: Vec2
         get() = currentWindowRead!!.dc.lastItemRect.size
 
-    /** allow last item to be overlapped by a subsequent item. sometimes useful with invisible buttons, selectables, etc.
-     *  to catch unused area.   */
+    /** Allow last item to be overlapped by a subsequent item. Both may be activated during the same frame before the later one takes priority.
+     *  FIXME: Although this is exposed, its interaction and ideal idiom with using ImGuiButtonFlags_AllowItemOverlap flag are extremely confusing, need rework. */
     fun setItemAllowOverlap() {
         if (g.hoveredId == g.currentWindow!!.dc.lastItemId)
             g.hoveredIdAllowOverlap = true
