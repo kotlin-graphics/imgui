@@ -31,10 +31,7 @@ class TableColumn {
     /** Optional, value passed to TableSetupColumn() */
     var userID: ID = 0
 
-    /** Flags as they were provided by user. See ImGuiTableColumnFlags_ */
-    var flagsIn = Tcf.None.i
-
-    /** Effective flags. See ImGuiTableColumnFlags_ */
+    /** Flags after some patching (not directly same as provided by user). See ImGuiTableColumnFlags_ */
     var flags = Tcf.None.i
 
     /** Absolute positions */
@@ -121,14 +118,23 @@ class TableColumn {
     /** ImGuiNavLayer in 1 byte */
     var navLayerCurrent = NavLayer.Main
 
-    /** ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending */
-    var sortDirection = SortDirection.None
-
     /** Queue of 8 values for the next 8 frames to request auto-fit */
     var autoFitQueue = 0
 
     /** Queue of 8 values for the next 8 frames to disable Clipped/SkipItem */
     var cannotSkipItemsQueue = 0
+
+    /** ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending */
+    var sortDirection = SortDirection.None
+
+    /** Number of available sort directions (0 to 3) */
+    var sortDirectionsAvailCount = 0
+
+    /** Mask of available sort directions (1-bit each) */
+    var sortDirectionsAvailMask = 0
+
+    /** Ordered of available sort directions (2-bits each) */
+    var sortDirectionsAvailList = 0
 }
 
 /** Transient cell data stored per row.
@@ -220,10 +226,6 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
     // Adjust flags: set default sizing policy
     if (flags hasnt (Tf.ColumnsWidthStretch or Tf.ColumnsWidthFixed))
         flags = flags or if (flags has Tf.ScrollX) Tf.ColumnsWidthFixed else Tf.ColumnsWidthStretch
-
-    // Adjust flags: MultiSortable automatically enable Sortable
-    if (flags has Tf.MultiSortable)
-        flags = flags or Tf.Sortable
 
     // Adjust flags: disable Resizable when using SameWidths (done above enforcing BordersInnerV)
     if (flags has Tf.SameWidths)

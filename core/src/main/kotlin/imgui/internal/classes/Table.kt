@@ -17,7 +17,6 @@ import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.separator
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
-import imgui.ImGui.tableFixColumnSortDirection
 import imgui.ImGui.tableGetMinColumnWidth
 import imgui.ImGui.tableSetBgColor
 import imgui.ImGui.tableSetColumnWidth
@@ -504,7 +503,7 @@ class Table {
                 if (!column.isEnabled && column.sortOrder != -1)
                     isSortSpecsDirty = true
             }
-            if (column.sortOrder > 0 && flags hasnt Tf.MultiSortable)
+            if (column.sortOrder > 0 && flags hasnt Tf.SortMulti)
                 isSortSpecsDirty = true
 
             val startAutoFit = when {
@@ -522,6 +521,7 @@ class Table {
             val indexMask = 1L shl columnN
             val displayOrderMask = 1L shl column.displayOrder
             if (column.isEnabled) {
+                // Mark as enabled and link to previous/next enabled column
                 column.prevEnabledColumn = lastVisibleColumnIdx
                 column.nextEnabledColumn = -1
                 if (lastVisibleColumnIdx != -1)
@@ -534,6 +534,8 @@ class Table {
             } else column.indexWithinEnabledSet = -1
             assert(column.indexWithinEnabledSet <= column.displayOrder)
         }
+        if (flags has Tf.Sortable && sortSpecsCount == 0 && flags hasnt Tf.SortTristate)
+            isSortSpecsDirty = true
         rightMostEnabledColumn = lastVisibleColumnIdx
 
         // [Part 2] Disable child window clipping while fitting columns. This is not strictly necessary but makes it possible
@@ -561,11 +563,6 @@ class Table {
             // Count resizable columns
             if (column.flags hasnt Tcf.NoResize)
                 countResizable++
-
-            // We have a unusual edge case where if the user doesn't call TableGetSortSpecs() but has sorting enabled
-            // or varying sorting flags, we still want the sorting arrows to honor those flags.
-            if (flags has Tf.Sortable)
-                tableFixColumnSortDirection(column)
 
             // Calculate ideal/auto column width (that's the width required for all contents to be visible without clipping)
             // Combine width from regular rows + width from headers unless requested not to.
@@ -789,7 +786,7 @@ class Table {
             // Note that scrolling tables (where inner_window != outer_window) handle Y clipped earlier in BeginTable() so IsVisibleY really only applies to non-scrolling tables.
             // FIXME-TABLE: Because InnerClipRect.Max.y is conservatively ==outer_window->ClipRect.Max.y, we never can mark columns _Above_ the scroll line as not IsVisibleY.
             // Taking advantage of LastOuterHeight would yield good results there...
-            // FIXME-TABLE: IsVisible == false is disabled because it effectively means not submitting will reduces contents width which is fed to outer_window->DC.CursorMaxPos.x,
+            // FIXME-TABLE: Y clipping is disabled because it effectively means not submitting will reduce contents width which is fed to outer_window->DC.CursorMaxPos.x,
             // and this may be used (e.g. typically by outer_window using AlwaysAutoResize or outer_window's horizontal scrollbar, but could be something else).
             // Possible solution to preserve last known content width for clipped column. Test 'table_reported_size' fails when enabling Y clipping and window is resized small.
             column.isVisibleX = column.clipRect.max.x > column.clipRect.min.x
@@ -805,9 +802,6 @@ class Table {
 
             // Mark column as SkipItems (ignoring all items/layout)
             column.isSkipItems = !column.isEnabled || hostSkipItems
-            //if (!is_visible && (column->Flags & ImGuiTableColumnFlags_AutoCull))
-            //    if ((column->AutoFitQueue & 1) == 0 && (column->CannotSkipItemsQueue & 1) == 0)
-            //        column->IsSkipItems = true;
             if (column.isSkipItems)
                 assert(!isVisible)
 
@@ -895,7 +889,6 @@ class Table {
     }
 
     /** Adjust flags: default width mode + stretch columns are not allowed when auto extending
-     *  Set 'column->FlagsIn' and 'column->Flags'.
      *
      *  ~static void TableSetupColumnFlags(ImGuiTable* table, ImGuiTableColumn* column, ImGuiTableColumnFlags flags_in) */
     fun setupColumnFlags(column: TableColumn, flagsIn: TableColumnFlags) {
@@ -928,8 +921,45 @@ class Table {
         //IM_ASSERT(ImIsPowerOfTwo(flags & ImGuiTableColumnFlags_AlignMask_)); // Check that only 1 of each set is used.
 
         // Preserve status flags
-        column.flagsIn = flagsIn
         column.flags = flags or (column.flags and Tcf.StatusMask_)
+
+        // Build an ordered list of available sort directions
+        column.sortDirectionsAvailCount = 0
+        column.sortDirectionsAvailMask = 0
+        column.sortDirectionsAvailList = 0
+        if (flags has Tf.Sortable) {
+            var count = 0
+            var mask = 0
+            var list = 0;
+            if (flags has Tcf.PreferSortAscending && flags hasnt Tcf.NoSortAscending) {
+                mask = mask or (1 shl SortDirection.Ascending.i)
+                list = list or (SortDirection.Ascending.i shl (count shl 1))
+                count++
+            }
+            if (flags has Tcf.PreferSortDescending && flags hasnt Tcf.NoSortDescending) {
+                mask = mask or (1 shl SortDirection.Descending.i)
+                list = list or (SortDirection.Descending.i shl (count shl 1))
+                count++
+            }
+            if (flags hasnt Tcf.PreferSortAscending && flags hasnt Tcf.NoSortAscending) {
+                mask = mask or (1 shl SortDirection.Ascending.i)
+                list = list or (SortDirection.Ascending.i shl (count shl 1))
+                count++
+            }
+            if (flags hasnt Tcf.PreferSortDescending && flags hasnt Tcf.NoSortDescending) {
+                mask = mask or (1 shl SortDirection.Descending.i)
+                list = list or (SortDirection.Descending.i shl (count shl 1))
+                count++
+            }
+            if (flags has Tf.SortTristate || count == 0) {
+                mask = mask or (1 shl SortDirection.None.i)
+                count++
+            }
+            column.sortDirectionsAvailList = list
+            column.sortDirectionsAvailMask = mask
+            column.sortDirectionsAvailCount = count
+            fixColumnSortDirection(column)
+        }
     }
 
     /** Process hit-testing on resizing borders. Actual size change will be applied in EndTable()
@@ -1392,7 +1422,7 @@ class Table {
         }
 
         val needFixLinearize = (1L shl sortOrderCount) != sortOrderMask + 1
-        val needFixSingleSortOrder = sortOrderCount > 1 && flags hasnt Tf.MultiSortable
+        val needFixSingleSortOrder = sortOrderCount > 1 && flags hasnt Tf.SortMulti
         if (needFixLinearize || needFixSingleSortOrder) {
             var fixedMask = 0x00L
             for (sortN in 0 until sortOrderCount) {
@@ -1419,13 +1449,13 @@ class Table {
         }
 
         // Fallback default sort order (if no column had the ImGuiTableColumnFlags_DefaultSort flag)
-        if (sortOrderCount == 0)
+        if (sortOrderCount == 0 && flags hasnt Tf.SortTristate)
             for (columnN in 0 until columnsCount) {
                 val column = columns[columnN]
                 if (column.isEnabled && flags hasnt Tcf.NoSort) {
                     sortOrderCount = 1
                     column.sortOrder = 0
-                    tableFixColumnSortDirection(column)
+                    column.sortDirection = tableGetColumnAvailSortDirection(column, 0)
                     break
                 }
             }
@@ -1440,23 +1470,23 @@ class Table {
         sortSpecsSanitize()
 
         // Write output
-        val singleSortSpecs = sortSpecsCount <= 1
-        if (singleSortSpecs)
+        if (sortSpecsCount <= 1)
             sortSpecsMulti.clear()
         else
             repeat(sortSpecsCount) {
                 sortSpecsMulti += TableColumnSortSpecs()
             }
-        lateinit var sortSpecs: TableColumnSortSpecs
+        var sortSpecs: TableColumnSortSpecs? = null
         for (columnN in 0 until columnsCount) {
             val column = columns[columnN]
             if (column.sortOrder == -1)
                 continue
             assert(column.sortOrder < sortSpecsCount)
-            sortSpecs = when {
-                singleSortSpecs -> sortSpecsSingle.also { assert(column.sortOrder == 0) }
+            sortSpecs = when(sortSpecsCount) {
+                0 -> null
+                1 -> sortSpecsSingle
                 else -> sortSpecsMulti[column.sortOrder]
-            }
+            }!!
             sortSpecs.columnUserID = column.userID
             sortSpecs.columnIndex = columnN
             sortSpecs.sortOrder = column.sortOrder
@@ -1466,6 +1496,16 @@ class Table {
         this.sortSpecs.specsCount = sortSpecsCount
         this.sortSpecs.specsDirty = true // Mark as dirty for user
         isSortSpecsDirty = false // Mark as not dirty for us
+    }
+
+    /** Fix sort direction if currently set on a value which is unavailable (e.g. activating NoSortAscending/NoSortDescending)
+     *
+     *  ~tableFixColumnSortDirection */
+    infix fun fixColumnSortDirection(column: TableColumn) {
+        if (column.sortOrder == -1 || column.sortDirectionsAvailMask has (1 shl column.sortDirection.i))
+            return
+        column.sortDirection = tableGetColumnAvailSortDirection(column, 0)
+        isSortSpecsDirty = true
     }
 
     /** [Internal] Called by TableNextRow()
@@ -1927,5 +1967,12 @@ class Table {
             settings.id = 0 // Invalidate storage, we won't fit because of a count change
         }
         return null
+    }
+
+    companion object {
+        fun tableGetColumnAvailSortDirection(column: TableColumn, n: Int): SortDirection {
+            assert(n < column.sortDirectionsAvailCount);
+            return SortDirection of ((column.sortDirectionsAvailList ushr (n shl 1)) and 0x03)
+        }
     }
 }

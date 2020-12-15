@@ -14,6 +14,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.setNextWindowContentSize
 import imgui.internal.classes.*
+import imgui.internal.classes.Table.Companion.tableGetColumnAvailSortDirection
 import kotlin.math.ceil
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
@@ -284,18 +285,19 @@ interface tablesInternal {
 //    IMGUI_API void          TableSortSpecsSanitize(ImGuiTable* table);
 //    IMGUI_API void          TableSortSpecsBuild(ImGuiTable* table);
 
-    fun tableFixColumnSortDirection(column: TableColumn) {
-        // Initial sort state
-        if (column.sortDirection == SortDirection.None)
-            column.sortDirection = when {
-                column.flags has Tcf.PreferSortDescending -> SortDirection.Descending
-                else -> SortDirection.Ascending
-            }
-        // Handle NoSortAscending/NoSortDescending
-        if (column.sortDirection == SortDirection.Ascending && column.flags has Tcf.NoSortAscending)
-            column.sortDirection = SortDirection.Descending
-        else if (column.sortDirection == SortDirection.Descending && column.flags has Tcf.NoSortDescending)
-            column.sortDirection = SortDirection.Ascending
+    /** Calculate next sort direction that would be set after clicking the column
+     *  - If the PreferSortDescending flag is set, we will default to a Descending direction on the first click.
+     *  - Note that the PreferSortAscending flag is never checked, it is essentially the default and therefore a no-op. */
+//    IM_STATIC_ASSERT(ImGuiSortDirection_None == 0 && ImGuiSortDirection_Ascending == 1 && ImGuiSortDirection_Descending == 2);
+    fun tableGetColumnNextSortDirection(column: TableColumn): SortDirection {
+        assert(column.sortDirectionsAvailCount > 0)
+        if (column.sortOrder == -1)
+            return tableGetColumnAvailSortDirection(column, 0)
+        for (n in 0..2)
+            if (column.sortDirection == tableGetColumnAvailSortDirection(column, n))
+                return tableGetColumnAvailSortDirection(column, (n + 1) % column.sortDirectionsAvailCount)
+        assert(false)
+        return SortDirection.None
     }
 
     //  -> Table class

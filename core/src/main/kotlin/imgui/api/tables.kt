@@ -25,6 +25,7 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.setTooltip
+import imgui.ImGui.tableGetColumnNextSortDirection
 import imgui.ImGui.tableGetHeaderRowHeight
 import imgui.ImGui.tableGetHoveredColumn
 import imgui.ImGui.tableGetMinColumnWidth
@@ -142,7 +143,8 @@ interface tables {
 //        #if 0
 //        // Strip out dummy channel draw calls
 //        // We have no way to prevent user submitting direct ImDrawList calls into a hidden column (but ImGui:: calls will be clipped out)
-//        // (The problem with this approach is we are effectively making it harder for users watching metrics to spot wasted vertices)
+//        // Pros: remove draw calls which will have no effect. since they'll have zero-size cliprect they may be early out anyway.
+//        // Cons: making it harder for users watching metrics/debugger to spot the wasted vertices.
 //        if (table->DummyDrawChannel != (ImGuiTableColumnIdx)-1)
 //        {
 //            ImDrawChannel* dummy_channel = &table->DrawSplitter._Channels[table->DummyDrawChannel]
@@ -321,7 +323,6 @@ interface tables {
 
         // When passing a width automatically enforce WidthFixed policy
         // (vs TableFixColumnFlags would default to WidthAutoResize)
-        // (we write to FlagsIn which is a little misleading, another solution would be to pass init_width_or_weight to TableFixColumnFlags)
         if (flags hasnt Tcf.WidthMask_)
             if (table.flags has Tf.ColumnsWidthFixed && initWidthOrWeight > 0f)
                 flags = flags or Tcf.WidthFixed
@@ -352,7 +353,7 @@ interface tables {
                 column.isEnabledNextFrame = false
             }
             if (flags has Tcf.DefaultSort && table.settingsLoadedFlags hasnt Tf.Sortable) {
-                column.sortOrder = 0 // Multiple columns using _DefaultSort will be reordered when building the sort specs.
+                column.sortOrder = 0 // Multiple columns using _DefaultSort will be reassigned unique SortOrder values when building the sort specs.
                 column.sortDirection = when {
                     column.flags has Tcf.PreferSortDescending -> SortDirection.Descending
                     else -> SortDirection.Ascending
@@ -535,13 +536,7 @@ interface tables {
 
             // Handle clicking on column header to adjust Sort Order
             if (pressed && table.reorderColumn != columnN) {
-                // Set new sort direction
-                // - If the PreferSortDescending flag is set, we will default to a Descending direction on the first click.
-                // - Note that the PreferSortAscending flag is never checked, it is essentially the default and therefore a no-op.
-                val sortDirection = when(column.sortOrder) {
-                    -1 -> if(column.flags has Tcf.PreferSortDescending) SortDirection.Descending else SortDirection.Ascending
-                    else -> if(column.sortDirection == SortDirection.Ascending) SortDirection.Descending else SortDirection.Ascending
-                }
+                val sortDirection = tableGetColumnNextSortDirection(column)
                 tableSetColumnSortDirection(columnN, sortDirection, g.io.keyShift)
             }
         }
@@ -615,7 +610,7 @@ interface tables {
         if (table.isSortSpecsDirty)
             table.sortSpecsBuild()
 
-        return table.sortSpecs.takeIf { it.specsCount != 0 }
+        return table.sortSpecs
     }
 
     /** change the color of a cell, row, or column. See ImGuiTableBgTarget_ flags for details. */

@@ -9,7 +9,6 @@ import imgui.internal.hashStr
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
-import imgui.ImGui.tableFixColumnSortDirection
 import imgui.ImGui.tableGetColumnCount
 import imgui.ImGui.tableGetColumnFlags
 import imgui.ImGui.tableGetColumnName
@@ -135,8 +134,10 @@ interface tablesCandidatesForPublicAPI {
         var appendToSortSpecs = appendToSortSpecs_
         val table = g.currentTable!!
 
-        if (table.flags hasnt Tf.MultiSortable)
+        if (table.flags hasnt Tf.SortMulti)
             appendToSortSpecs = false
+        if (table.flags hasnt Tf.SortTristate)
+            assert(sortDirection != SortDirection.None)
 
         var sortOrderMax: TableColumnIdx = 0
         if (appendToSortSpecs)
@@ -145,14 +146,16 @@ interface tablesCandidatesForPublicAPI {
 
         val column = table.columns[columnN]
         column.sortDirection = sortDirection
-        if (column.sortOrder == -1 || !appendToSortSpecs)
+        if (column.sortDirection == SortDirection.None)
+            column.sortOrder = -1
+        else if (column.sortOrder == -1 || !appendToSortSpecs)
             column.sortOrder = if(appendToSortSpecs) sortOrderMax + 1 else 0
 
         for (otherColumnN in 0 until table.columnsCount) {
             val otherColumn = table.columns[otherColumnN]
             if (otherColumn !== column && !appendToSortSpecs)
                 otherColumn.sortOrder = -1
-            tableFixColumnSortDirection(otherColumn)
+            table fixColumnSortDirection otherColumn
         }
         table.isSettingsDirty = true
         table.isSortSpecsDirty = true

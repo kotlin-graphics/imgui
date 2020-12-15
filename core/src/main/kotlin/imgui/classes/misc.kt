@@ -137,7 +137,7 @@ class TableSortSpecs {
     lateinit var specsArray: Array<TableColumnSortSpecs>
     var specsPtr = 0
 
-    /** Sort spec count. Most often 1 unless e.g. ImGuiTableFlags_MultiSortable is enabled. */
+    /** Sort spec count. Most often 1. May be > 1 when ImGuiTableFlags_SortMulti is enabled. May be == 0 when ImGuiTableFlags_SortTristate is enabled. */
     var specsCount = 0
 
     /** Set to true when specs have changed since last time! Use this to sort again, then clear the flag. */
