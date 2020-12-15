@@ -154,6 +154,9 @@ class Window(var context: Context,
     /** Hide the window for N frames while allowing items to be submitted so we can measure their size */
     var hiddenFramesCannotSkipItems = 0
 
+    /** Hide the window until frame N at Render() time only */
+    var hiddenFramesForRenderOnly = 0
+
     /** store acceptable condition flags for SetNextWindowPos() use. */
     var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
 

@@ -234,7 +234,7 @@ internal interface PopupsModalsTooltips {
         if (tooltipFlags has TooltipFlag.OverridePreviousTooltip) findWindowByName(windowName)?.let {
             if (it.active) { // Hide previous tooltip from being displayed. We can't easily "reset" the content of a window so we create a new one.
                 it.hidden = true
-                it.hiddenFramesCanSkipItems = 1
+                it.hiddenFramesCanSkipItems = 1 // FIXME: This may not be necessary?
                 windowName = "##Tooltip_%02d".format(++g.tooltipOverrideCount)
             }
         }

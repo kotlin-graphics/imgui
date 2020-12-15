@@ -216,10 +216,11 @@ interface windows {
             window.contentSize = window.calcContentSize()
             if (window.hiddenFramesCanSkipItems > 0) window.hiddenFramesCanSkipItems--
             if (window.hiddenFramesCannotSkipItems > 0) window.hiddenFramesCannotSkipItems--
+            if (window.hiddenFramesForRenderOnly > 0) window.hiddenFramesForRenderOnly--
 
             // Hide new windows for one frame until they calculate their size
-            if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi)) window.hiddenFramesCannotSkipItems =
-                    1
+            if (windowJustCreated && (!windowSizeXsetByApi || !windowSizeYsetByApi))
+                window.hiddenFramesCannotSkipItems = 1
 
             /*  Hide popup/tooltip window when re-opening while we measure size (because we recycle the windows)
                 We reset Size/SizeContents for reappearing popups/tooltips early in this function,
@@ -704,12 +705,12 @@ interface windows {
             // Don't render if style alpha is 0.0 at the time of Begin(). This is arbitrary and inconsistent but has been there for a long while (may remove at some point)
             if (style.alpha <= 0f) window.hiddenFramesCanSkipItems = 1
 
-            // Update the Hidden flag
-            window.hidden = window.hiddenFramesCanSkipItems > 0 || window.hiddenFramesCannotSkipItems > 0
+            window.apply {
+                // Update the Hidden flag
+                hidden = hiddenFramesCanSkipItems > 0 || hiddenFramesCannotSkipItems > 0 || hiddenFramesForRenderOnly > 0
 
-            // Update the SkipItems flag, used to early out of all items functions (no layout required)
-            window.skipItems = window.run {
-                (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0
+                // Update the SkipItems flag, used to early out of all items functions (no layout required)
+                skipItems = (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0
             }
         }
 
