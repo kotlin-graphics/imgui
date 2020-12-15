@@ -1555,5 +1555,12 @@ object ShowDemoWindowTables {
                 }
             treePop()
         }
+
+        popID();
+
+        ShowDemoWindowColumns();
+
+        if (disableIndent)
+            popStyleVar()
     }
 }

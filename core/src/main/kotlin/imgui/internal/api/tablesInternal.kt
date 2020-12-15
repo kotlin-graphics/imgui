@@ -139,7 +139,7 @@ interface tablesInternal {
         val innerPaddingExplicit = if(padInnerX && flags has Tf.BordersInnerV) g.style.cellPadding.x else 0f
         table.cellSpacingX1 = innerSpacingExplicit + innerSpacingForBorder
         table.cellSpacingX2 = innerSpacingExplicit - table.cellSpacingX1
-        table.cellPaddingX = innerSpacingExplicit
+        table.cellPaddingX = innerPaddingExplicit
         table.cellPaddingY = g.style.cellPadding.y
 
         val outerPaddingForBorder = if(flags has Tf.BordersOuterV) TABLE_BORDER_SIZE else 0f
@@ -191,7 +191,7 @@ interface tablesInternal {
 
         // Mark as used
         if (tableIdx >= g.tablesLastTimeActive.size)
-            for (i in g.tablesLastTimeActive.size until tableIdx.i)
+            for (i in g.tablesLastTimeActive.size..tableIdx.i)
                 g.tablesLastTimeActive += -1f
         g.tablesLastTimeActive[tableIdx.i] = g.time.f
         table.memoryCompacted = false
