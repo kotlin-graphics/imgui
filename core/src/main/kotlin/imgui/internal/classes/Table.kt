@@ -37,7 +37,7 @@ import imgui.WindowFlag as Wf
 import imgui.internal.sections.ButtonFlag as Bf
 
 
-/** FIXME-TABLES: transient data could be stored in a per-stacked table structure: DrawSplitter, SortSpecs, incoming RowData */
+/** FIXME-TABLE: transient data could be stored in a per-stacked table structure: DrawSplitter, SortSpecs, incoming RowData */
 class Table {
 
     var id: ID = 0
@@ -763,7 +763,7 @@ class Table {
 
             // Lock all our positions
             // - ClipRect.Min.x: Because merging draw commands doesn't compare min boundaries, we make ClipRect.Min.x match left bounds to be consistent regardless of merging.
-            // - ClipRect.Max.x: using WorkMaxX instead of MaxX (aka including padding) is detrimental to visibility in very-small column.
+            // - ClipRect.Max.x: using WorkMaxX instead of MaxX (aka including padding) makes things more consistent when resizing down, tho slightly detrimental to visibility in very-small column.
             // - FIXME-TABLE: We want equal width columns to have equal (ClipRect.Max.x - WorkMinX) width, which means ClipRect.max.x cannot stray off host_clip_rect.Max.x else right-most column may appear shorter.
             column.minX = offsetX
             column.maxX = offsetX + column.widthGiven + cellSpacingX1 + cellSpacingX2 + cellPaddingX * 2f
@@ -772,7 +772,7 @@ class Table {
             column.itemWidth = floor(column.widthGiven * 0.65f)
             column.clipRect.min.x = column.minX
             column.clipRect.min.y = workRect.min.y
-            column.clipRect.max.x = column.maxX // column->WorkMaxX;
+            column.clipRect.max.x = column.workMaxX //column->MaxX;
             column.clipRect.max.y = Float.MAX_VALUE
             column.clipRect clipWithFull hostClipRect
 

@@ -734,7 +734,7 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
     NoSortAscending           (1 shl 10),
     /** Disable ability to sort in the descending direction. */
     NoSortDescending          (1 shl 11),
-    /** Header width don't contribute to automatic column width. */
+    /** Disable header text width contribution to automatic column width. */
     NoHeaderWidth             (1 shl 12),
     /** Make the initial sort direction Ascending when first sorting on this column (default). */
     PreferSortAscending       (1 shl 13),
@@ -819,14 +819,12 @@ typealias TableBgTargets = Int
 // If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
 enum class TableBgTarget(@JvmField val i: TableBgTargets) {
     None(0),
-    //ImGuiTableBgTarget_ColumnBg0                  = 1,        // FIXME-TABLE: Todo. Set column background color 0 (generally used for background
-    //ImGuiTableBgTarget_ColumnBg1                  = 2,        // FIXME-TABLE: Todo. Set column background color 1 (generally used for selection marking)
     /** Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used) */
-    RowBg0                       (3),
+    RowBg0                       (1),
     /** Set row background color 1 (generally used for selection marking) */
-    RowBg1                       (4),
+    RowBg1                       (2),
     /** Set cell background color (top-most color) */
-    CellBg                       (5);
+    CellBg                       (3);
 
     infix fun and(b: TableBgTarget): TableBgTargets = i and b.i
     infix fun and(b: TableBgTargets): TableBgTargets = i and b

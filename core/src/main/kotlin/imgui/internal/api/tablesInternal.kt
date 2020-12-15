@@ -136,10 +136,9 @@ interface tablesInternal {
         val innerSpacingForBorder = if(flags has Tf.BordersInnerV) TABLE_BORDER_SIZE else 0f
         val innerSpacingExplicit = if(padInnerX && flags hasnt Tf.BordersInnerV) g.style.cellPadding.x else 0f
         val innerPaddingExplicit = if(padInnerX && flags has Tf.BordersInnerV) g.style.cellPadding.x else 0f
-        val innerSpacing = innerSpacingForBorder + innerSpacingExplicit
-        table.cellSpacingX1 = ceil(innerSpacing * 0.5f)
-        table.cellSpacingX2 = innerSpacing - table.cellSpacingX1
-        table.cellPaddingX = innerPaddingExplicit
+        table.cellSpacingX1 = innerSpacingExplicit + innerSpacingForBorder
+        table.cellSpacingX2 = innerSpacingExplicit - table.cellSpacingX1
+        table.cellPaddingX = innerSpacingExplicit
         table.cellPaddingY = g.style.cellPadding.y
 
         val outerPaddingForBorder = if(flags has Tf.BordersOuterV) TABLE_BORDER_SIZE else 0f
@@ -255,7 +254,7 @@ interface tablesInternal {
         innerWindow.skipItems = true
 
         // Clear names
-        // FIXME-TABLES: probably could be done differently...
+        // FIXME-TABLE: probably could be done differently...
         if (table.columnsNames.isNotEmpty()) {
             table.columnsNames.clear()
             for (columnN in 0 until table.columnsCount) {

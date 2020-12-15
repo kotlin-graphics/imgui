@@ -184,7 +184,7 @@ object ShowDemoWindowTables {
     enum class ContentsType1 { ShortText, LongText, Button, FillButton, InputText }
 
     var flags10 = Tf.ScrollY or Tf.BordersOuter or Tf.RowBg
-    var contentsType1 = ContentsType1.Button.ordinal
+    var contentsType1 = ContentsType1.LongText.ordinal
     var columnCount1 = 3
     var label0 = ""
     var dummyF = 0f
@@ -523,7 +523,7 @@ object ShowDemoWindowTables {
             // If there is not enough available width to fit all columns, they will however be resized down.
             // FIXME-TABLE: Providing a stretch-on-init would make sense especially for tables which don't have saved settings
             helpMarker(
-                    "Using _Resizable + _ColumnsWidthFixedX flags.\n" +
+                    "Using _Resizable + _ColumnsWidthFixed flags.\n" +
                             "Fixed-width columns generally makes more sense if you want to use horizontal scrolling.\n\n" +
                             "Double-click a column border to auto-fit the column to its contents.")
             //ImGui::CheckboxFlags("ImGuiTableFlags_ScrollX", &flags, ImGuiTableFlags_ScrollX); // FIXME-TABLE: Explain or fix the effect of enable Scroll on outer_size
@@ -627,7 +627,8 @@ object ShowDemoWindowTables {
                 - BorderOuterV"
                 - any form of row selection"
                 Because of this, activating BorderOuterV sets the default to PadOuterX. Using PadOuterX or NoPadOuterX you can override the default.
-                """.trimIndent())
+                
+                Actual padding values are using style.CellPadding.""".trimIndent())
 
             pushingStyleCompact {
                 checkboxFlags("ImGuiTableFlags_PadOuterX", ::flags5, Tf.PadOuterX.i)
