@@ -484,6 +484,17 @@ class Table {
             if (columnN != orderN)
                 isDefaultDisplayOrder = false
             val column = columns[columnN]
+
+            // Clear column settings if not submitted by user.
+            // Currently we make it mandatory to call TableSetupColumn() every frame.
+            // It would easily work without but we're ready to guarantee it since e.g. names need resubmission anyway.
+            // In theory we could be calling TableSetupColumn() here with dummy values it should yield the same effect.
+            if (columnN >= declColumnsCount) {
+                setupColumnFlags(column, Tcf.None.i)
+                column.userID = 0
+                column.initStretchWeightOrWidth = -1f
+            }
+
             if (flags hasnt Tf.Hideable || flags has Tcf.NoHide)
                 column.isEnabledNextFrame = true
             if (column.isEnabled != column.isEnabledNextFrame) {
@@ -546,11 +557,7 @@ class Table {
                 continue
             val column = columns[columnN]
 
-            // Adjust flags: default width mode + weighted columns are not allowed when auto extending
-            // FIXME-TABLE: Clarify why we need to do this again here and not just in TableSetupColumn()
-            column.flags = fixColumnFlags(column.flagsIn) or (column.flags and Tcf.StatusMask_)
-            if (column.flags hasnt Tcf.IndentMask_)
-                column.flags = column.flags or if (columnN == 0) Tcf.IndentEnable else Tcf.IndentDisable
+            // Count resizable columns
             if (column.flags hasnt Tcf.NoResize)
                 countResizable++
 
@@ -621,7 +628,7 @@ class Table {
                 } else {
                     sumWeightsStretched += 1f - column.stretchWeight // Update old sum
                     column.stretchWeight = 1f
-                    if (countFixed > 0)
+                    if (mixedSameWidths)
                         column.widthRequest = maxWidthAuto
                 }
             }
@@ -886,9 +893,13 @@ class Table {
     }
 
     /** Adjust flags: default width mode + stretch columns are not allowed when auto extending
-     *  ~static ImGuiTableColumnFlags TableFixColumnFlags(ImGuiTable* table, ImGuiTableColumnFlags flags) */
-    infix fun fixColumnFlags(flags_: TableColumnFlags): TableColumnFlags {
-        var flags = flags
+     *  Set 'column->FlagsIn' and 'column->Flags'.
+     *
+     *  ~static void TableSetupColumnFlags(ImGuiTable* table, ImGuiTableColumn* column, ImGuiTableColumnFlags flags_in) */
+    fun setupColumnFlags(column: TableColumn, flagsIn: TableColumnFlags) {
+
+        var flags = flagsIn
+
         // Sizing Policy
         if (flags hasnt Tcf.WidthMask_)
         // FIXME-TABLE: Inconsistent to promote columns to WidthAutoResize
@@ -905,12 +916,18 @@ class Table {
         if (flags has Tcf.NoSortAscending && flags has Tcf.NoSortDescending)
             flags = flags or Tcf.NoSort
 
+        // Indentation
+        if (flags hasnt Tcf.IndentMask_)
+            flags = flags or if(columns.indexOf(column) == 0) Tcf.IndentEnable else Tcf.IndentDisable
+
         // Alignment
         //if ((flags & ImGuiTableColumnFlags_AlignMask_) == 0)
         //    flags |= ImGuiTableColumnFlags_AlignCenter;
         //IM_ASSERT(ImIsPowerOfTwo(flags & ImGuiTableColumnFlags_AlignMask_)); // Check that only 1 of each set is used.
 
-        return flags
+        // Preserve status flags
+        column.flagsIn = flagsIn
+        column.flags = flags or (column.flags and Tcf.StatusMask_)
     }
 
     /** Process hit-testing on resizing borders. Actual size change will be applied in EndTable()
@@ -969,6 +986,8 @@ class Table {
         }
     }
 
+    TableUpdateColumnsWeightFromWidth
+
     /** FIXME-TABLE: This is a mess, need to redesign how we render borders (as some are also done in TableEndRow)
      *  ~TableDrawBorders */
     fun drawBorders() {
@@ -1004,7 +1023,8 @@ class Table {
                 if (column.maxX > innerClipRect.max.x && !isResized)// && is_hovered)
                     continue
                 if (column.nextEnabledColumn == -1 && !isResizable)
-                    continue
+                    if (flags hasnt Tf.SameWidths)
+                        continue
                 if (column.maxX <= column.clipRect.min.x) // FIXME-TABLE FIXME-STYLE: Assume BorderSize==1, this is problematic if we want to increase the border size..
                     continue
 

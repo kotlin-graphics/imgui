@@ -326,9 +326,8 @@ interface tables {
             if (table.flags has Tf.ColumnsWidthFixed && initWidthOrWeight > 0f)
                 flags = flags or Tcf.WidthFixed
 
+        table.setupColumnFlags(column, flags)
         column.userID = userId
-        column.flagsIn = flags
-        column.flags = table.fixColumnFlags(column.flagsIn) or (column.flags and Tcf.StatusMask_)
         flags = column.flags
 
         // Initialize defaults

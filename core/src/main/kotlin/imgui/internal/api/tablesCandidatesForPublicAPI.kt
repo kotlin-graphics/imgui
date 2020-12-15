@@ -47,8 +47,8 @@ interface tablesCandidatesForPublicAPI {
 
     /** 'width' = inner column width, without padding */
     fun tableSetColumnWidth(columnN: Int, width: Float)     {
-        val table = g.currentTable!!
-        assert(/*table != NULL &&*/ !table.isLayoutLocked)
+        val table = g.currentTable
+        check(table != null && !table.isLayoutLocked)
         assert(columnN >= 0 && columnN < table.columnsCount)
         val column0 = table.columns[columnN]
         var column0Width = width
