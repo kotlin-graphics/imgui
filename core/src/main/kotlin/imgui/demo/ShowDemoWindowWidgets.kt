@@ -275,10 +275,7 @@ object ShowDemoWindowWidgets {
     object TextFilters {
         // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i'
         val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
-            when {
-                data.eventChar.i < 256 && data.eventChar in "imgui" -> false
-                else -> true
-            }
+                !(data.eventChar < 256 && data.eventChar in "imgui")
         }
     }
 
