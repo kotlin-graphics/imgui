@@ -180,7 +180,9 @@ class StackSizes {
 
         // Window stacks
         // NOT checking: DC.ItemWidth, DC.TextWrapPos (per window) to allow user to conveniently push once and not pop (they are cleared on Begin)
-        assert(sizeOfIDStack == window.idStack.size) { "PushID/PopID or TreeNode/TreePop Mismatch!" }
+        assert(sizeOfIDStack == window.idStack.size) {
+            "PushID/PopID or TreeNode/TreePop Mismatch!"
+        }
 
         // Global stacks
         // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.

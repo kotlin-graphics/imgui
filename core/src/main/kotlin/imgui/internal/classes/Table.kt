@@ -50,10 +50,10 @@ class Table {
     val columns = ArrayList<TableColumn>()
 
     /** Point within RawData[]. Store display order of columns (when not reordered, the values are 0...Count-1) */
-    val displayOrderToIndex = ArrayList<TableColumnIdx>()
+    var displayOrderToIndex = intArrayOf()
 
     /** Point within RawData[]. Store cells background requests for current row. */
-    val rowCellData = ArrayList<TableCellData>()
+    var rowCellData = arrayOf<TableCellData>()
 
     /** Column DisplayOrder -> IsEnabled map */
     var enabledMaskByDisplayOrder = 0L
@@ -337,9 +337,11 @@ class Table {
     infix fun beginInitMemory(columnsCount: Int) {
         // Allocate single buffer for our arrays
 //        ImSpanAllocator<3> span_allocator;
-        columns += TableColumn()
-        displayOrderToIndex += 0
-        rowCellData += TableCellData()
+        repeat(columnsCount) {
+            columns += TableColumn()
+        }
+        displayOrderToIndex += IntArray(columnsCount)
+        rowCellData += Array(columnsCount) { TableCellData() }
 //        span_allocator.ReserveBytes(0, columnsCount1 * sizeof(ImGuiTableColumn));
 //        span_allocator.ReserveBytes(1, columnsCount1 * sizeof(ImGuiTableColumnIdx));
 //        span_allocator.ReserveBytes(2, columnsCount1 * sizeof(ImGuiTableCellData));
@@ -607,7 +609,7 @@ class Table {
 
                 // Revert or initialize weight (when column->StretchWeight < 0.0f normally it means there has been no init value so it'll always default to 1.0f)
                 if (column.autoFitQueue != 0x00 || column.stretchWeight < 0f)
-                    column.stretchWeight = if(column.initStretchWeightOrWidth > 0f) column.initStretchWeightOrWidth else 1f
+                    column.stretchWeight = if (column.initStretchWeightOrWidth > 0f) column.initStretchWeightOrWidth else 1f
 
                 sumWeightsStretched += column.stretchWeight
                 if (leftMostStretchedColumn == -1 || columns[leftMostStretchedColumn].displayOrder > column.displayOrder)
@@ -1491,7 +1493,7 @@ class Table {
             if (column.sortOrder == -1)
                 continue
             assert(column.sortOrder < sortSpecsCount)
-            sortSpecs = when(sortSpecsCount) {
+            sortSpecs = when (sortSpecsCount) {
                 0 -> null
                 1 -> sortSpecsSingle
                 else -> sortSpecsMulti[column.sortOrder]
@@ -1908,7 +1910,7 @@ class Table {
         }
 
         // Validate and fix invalid display order data
-        val expectedDisplayOrderMask = when(settings.columnsCount) {
+        val expectedDisplayOrderMask = when (settings.columnsCount) {
             64 -> 0.inv()
             else -> (1L shl settings.columnsCount) - 1
         }

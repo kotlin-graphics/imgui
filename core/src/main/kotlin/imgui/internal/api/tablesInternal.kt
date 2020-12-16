@@ -7,16 +7,14 @@ import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChildEx
-import imgui.api.g
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemSize
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.setNextWindowContentSize
+import imgui.api.g
 import imgui.internal.classes.*
 import imgui.internal.classes.Table.Companion.tableGetColumnAvailSortDirection
-import kotlin.math.ceil
-import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
 import imgui.WindowFlag as Wf
@@ -42,7 +40,7 @@ interface tablesInternal {
         // If an outer size is specified ahead we will be able to early out when not visible. Exact clipping rules may evolve.
         val useChildWindow = flags has (Tf.ScrollX or Tf.ScrollY)
         val availSize = ImGui.contentRegionAvail
-        val actualOuterSize = calcItemSize(outerSize, availSize.x max 1f, if(useChildWindow) availSize.y max 1f else 0f)
+        val actualOuterSize = calcItemSize(outerSize, availSize.x max 1f, if (useChildWindow) availSize.y max 1f else 0f)
         val outerRect = Rect(outerWindow.dc.cursorPos, outerWindow.dc.cursorPos + actualOuterSize)
         if (useChildWindow && isClippedEx(outerRect, 0, false)) {
             itemSize(outerRect)
@@ -51,7 +49,7 @@ interface tablesInternal {
 
         // Acquire storage for the table
         val table = g.tables.getOrAddByKey(id)
-        val instanceNo = if(table.lastFrameActive != g.frameCount) 0 else table.instanceCurrent + 1
+        val instanceNo = if (table.lastFrameActive != g.frameCount) 0 else table.instanceCurrent + 1
         val instanceId: ID = id + instanceNo
         val tableLastFlags = table.flags
         if (instanceNo > 0)
@@ -89,10 +87,10 @@ interface tablesInternal {
                 overrideContentSize.x = innerWidth
 
             if (overrideContentSize.x != Float.MAX_VALUE || overrideContentSize.y != Float.MAX_VALUE) // TODO glm -> anyNotEqual
-                setNextWindowContentSize(Vec2{ if(overrideContentSize[it] != Float.MAX_VALUE) overrideContentSize[it] else 0f})
+                setNextWindowContentSize(Vec2 { if (overrideContentSize[it] != Float.MAX_VALUE) overrideContentSize[it] else 0f })
 
             // Create scrolling region (without border and zero window padding)
-            val childFlags = if(flags has Tf.ScrollX) Wf.HorizontalScrollbar else Wf.None
+            val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else Wf.None
             beginChildEx(name, instanceId, table.outerRect.size, false, childFlags.i)
             table.innerWindow = g.currentWindow
             val inner = table.innerWindow!!
@@ -127,33 +125,33 @@ interface tablesInternal {
         // - PadInner           ........Content.. Pad | Pad ..Content........
         // - PadOuter+PadInner  | Pad ..Content.. Pad | Pad ..Content.. Pad |
         val padOuterX = when {
-                flags has Tf.NoPadOuterX -> false
-                else -> when {
-                        flags has Tf.PadOuterX -> true
-                        else -> flags has Tf.BordersOuterV
-                }
+            flags has Tf.NoPadOuterX -> false
+            else -> when {
+                flags has Tf.PadOuterX -> true
+                else -> flags has Tf.BordersOuterV
+            }
         }
         val padInnerX = flags hasnt Tf.NoPadInnerX
-        val innerSpacingForBorder = if(flags has Tf.BordersInnerV) TABLE_BORDER_SIZE else 0f
-        val innerSpacingExplicit = if(padInnerX && flags hasnt Tf.BordersInnerV) g.style.cellPadding.x else 0f
-        val innerPaddingExplicit = if(padInnerX && flags has Tf.BordersInnerV) g.style.cellPadding.x else 0f
+        val innerSpacingForBorder = if (flags has Tf.BordersInnerV) TABLE_BORDER_SIZE else 0f
+        val innerSpacingExplicit = if (padInnerX && flags hasnt Tf.BordersInnerV) g.style.cellPadding.x else 0f
+        val innerPaddingExplicit = if (padInnerX && flags has Tf.BordersInnerV) g.style.cellPadding.x else 0f
         table.cellSpacingX1 = innerSpacingExplicit + innerSpacingForBorder
         table.cellSpacingX2 = innerSpacingExplicit - table.cellSpacingX1
         table.cellPaddingX = innerPaddingExplicit
         table.cellPaddingY = g.style.cellPadding.y
 
-        val outerPaddingForBorder = if(flags has Tf.BordersOuterV) TABLE_BORDER_SIZE else 0f
-        val outerPaddingExplicit = if(padOuterX) g.style.cellPadding.x else 0f
+        val outerPaddingForBorder = if (flags has Tf.BordersOuterV) TABLE_BORDER_SIZE else 0f
+        val outerPaddingExplicit = if (padOuterX) g.style.cellPadding.x else 0f
         table.outerPaddingX = (outerPaddingForBorder + outerPaddingExplicit) - table.cellPaddingX
 
         table.currentColumn = -1
         table.currentRow = -1
         table.rowBgColorCounter = 0
         table.lastRowFlags = Trf.None.i
-        table.innerClipRect put if(innerWindow === outerWindow) table.workRect else innerWindow.clipRect
+        table.innerClipRect put if (innerWindow === outerWindow) table.workRect else innerWindow.clipRect
         table.innerClipRect clipWith table.workRect     // We need this to honor inner_width
         table.innerClipRect clipWithFull table.hostClipRect
-        table.innerClipRect.max.y = if(flags has Tf.NoHostExtendY) table.innerClipRect.max.y min innerWindow.workRect.max.y else innerWindow.clipRect.max.y
+        table.innerClipRect.max.y = if (flags has Tf.NoHostExtendY) table.innerClipRect.max.y min innerWindow.workRect.max.y else innerWindow.clipRect.max.y
 
         // Initial draw cmd starts with a BgClipRect that matches the one of its host, to facilitate merge draw commands by default.
         // This is because all our cell highlight are manually clipped with BgClipRect
@@ -210,8 +208,7 @@ interface tablesInternal {
         }
         if (table.isResetAllRequest)
             table.resetSettings()
-        if (table.isInitializing)
-        {
+        if (table.isInitializing) {
             // Initialize
             table.settingsOffset = -1
             table.isSortSpecsDirty = true
@@ -310,8 +307,8 @@ interface tablesInternal {
 
     // Minimum column content width (without padding)
     fun tableGetMinColumnWidth(): Float =
-        //return g.Style.ColumnsMinSpacing; // FIXME-TABLE
-        g.style.framePadding.x
+            //return g.Style.ColumnsMinSpacing; // FIXME-TABLE
+            g.style.framePadding.x
 
     //  -> Table class
 //    IMGUI_API void          TableSetColumnWidthAutoSingle(ImGuiTable* table, int column_n)
