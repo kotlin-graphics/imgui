@@ -325,7 +325,7 @@ interface tables {
         table.declColumnsCount++
 
         // When passing a width automatically enforce WidthFixed policy
-        // (vs TableFixColumnFlags would default to WidthAutoResize)
+        // (whereas TableSetupColumnFlags would default to WidthAutoResize)
         if (flags hasnt Tcf.WidthMask_)
             if (table.flags has Tf.ColumnsWidthFixed && initWidthOrWeight > 0f)
                 flags = flags or Tcf.WidthFixed

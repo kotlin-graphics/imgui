@@ -71,7 +71,8 @@ interface tablesCandidatesForPublicAPI {
         // - All fixed: easy.
         // - All stretch: easy.
         // - One or more fixed + one stretch: easy.
-        // - One or more fixed + more than one stretch: A MESS
+        // - One or more fixed + more than one stretch: tricky.
+        //    // Qt when manual resize is enabled only support a single _trailing_ stretch column.
 
         // When forwarding resize from Wn| to Fn+1| we need to be considerate of the _NoResize flag on Fn+1.
         // FIXME-TABLE: Find a way to rewrite all of this so interactions feel more consistent for the user.
@@ -91,6 +92,11 @@ interface tablesCandidatesForPublicAPI {
         // - W1 F2 F3  resize from W1|          --> ok: equivalent to resizing |F2. F3 will not move. (forwarded by Resize Rule 2)
         // - W1 F2 F3  resize from F2|          --> ok
         // All resizes from a Wx columns are locking other columns.
+
+        // Possible improvements:
+        // - W1 W2 W3  resize W1|               --> to not be stuck, both W2 and W3 would stretch down. Seems possible to fix. Would be most beneficial to simplify resize of all-weighted columns.
+        // - W1 F2 W3  resize W1| or F2|        --> symmetrical resize is weird and glitchy. Seems possible to fix.
+        // - W3 F1 F2  resize W3|               --> to not be stuck past F1|, both F1 and F2 would need to stretch down, which would be lossy or ambiguous. Seems hard to fix.
 
         // Rules:
         // - [Resize Rule 1] Can't resize from right of right-most visible column if there is any Stretch column. Implemented in TableUpdateLayout().
@@ -113,7 +119,7 @@ interface tablesCandidatesForPublicAPI {
             column0.widthRequest = column0Width
         }
         else if (column0.flags has Tcf.WidthStretch) {
-            // We can also use previous column if there's no next one
+            // We can also use previous column if there's no next one (this is used when doing an auto-fit on the right-most stretch column)
             if (column1 == null)
                 column1 = table.columns.getOrNull(column0.prevEnabledColumn) ?: return
 
@@ -124,6 +130,7 @@ interface tablesCandidatesForPublicAPI {
                 column1.widthRequest = minWidth max column1Width
             }
             else {
+                // At this point column_1 is the next OR previous column and we know it is a stretch column.
                 // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
                 val column1Width = (column1.widthRequest - (column0Width - column0.widthRequest)) max minWidth
                 column0Width = column0.widthRequest + column1.widthRequest - column1Width

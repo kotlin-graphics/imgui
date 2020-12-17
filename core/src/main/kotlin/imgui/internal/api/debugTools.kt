@@ -320,6 +320,10 @@ internal interface debugTools {
         bulletText("HoveredColumnBody: ${table.hoveredColumnBody}, HoveredColumnBorder: ${table.hoveredColumnBorder}")
         bulletText("ResizedColumn: ${table.resizedColumn}, ReorderColumn: ${table.reorderColumn}, HeldHeaderColumn: ${table.heldHeaderColumn}")
         //BulletText("BgDrawChannels: %d/%d", 0, table->BgDrawChannelUnfrozen);
+        var sumWeights = 0f
+        for (n in 0 until table.columnsCount)
+            if (table.columns[n].flags has TableColumnFlag.WidthStretch)
+                sumWeights += table.columns[n].stretchWeight
         for (n in 0 until table.columnsCount) {
             val column = table.columns[n]
             val name = table getColumnName n
@@ -327,7 +331,7 @@ internal interface debugTools {
             column.apply {
                 buf += "Column $n order $displayOrder name '$name': offset %+.2f to %+.2f\n".format(minX - table.workRect.min.x, maxX - table.workRect.min.x)
                 buf += "Enabled: ${isEnabled.i}, VisibleX/Y: ${isVisibleX.i}/${isVisibleY.i}, RequestOutput: ${isRequestOutput.i}, SkipItems: ${isSkipItems.i}, DrawChannels: $drawChannelFrozen,$drawChannelUnfrozen\n"
-                buf += "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f\n".format(widthGiven, widthRequest, widthAuto, stretchWeight)
+                buf += "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f (%.1f%%)\n".format(widthGiven, widthRequest, widthAuto, stretchWeight,  (column.stretchWeight / sumWeights) * 100f)
                 buf += "MinX: %.1f, MaxX: %.1f (%+.1f), ClipRect: %.1f to %.1f (+%.1f)\n".format(minX, maxX, maxX - minX, clipRect.min.x, clipRect.max.x, clipRect.max.x - clipRect.min.x)
                 buf += "ContentWidth: %.1f,%.1f, HeadersUsed/Ideal %.1f/%.1f\n".format(contentMaxXFrozen - workMinX, contentMaxXUnfrozen - workMinX, contentMaxXHeadersUsed - workMinX, contentMaxXHeadersIdeal - workMinX)
                 val dir = if (sortDirection == SortDirection.Ascending) " (Asc)" else if (sortDirection == SortDirection.Descending) " (Des)" else ""

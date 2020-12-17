@@ -1794,7 +1794,7 @@ class Table {
     fun setColumnWidthAutoAll() {
         for (columnN in 0 until columnsCount) {
             val column = columns[columnN]
-            if (!column.isEnabled)
+            if (!column.isEnabled && column.flags hasnt Tcf.WidthStretch) // Can reset weight of hidden stretch column
                 continue
             column.cannotSkipItemsQueue = 1 shl 0
             column.autoFitQueue = 1 shl 1
@@ -1851,7 +1851,8 @@ class Table {
             val column = columns[columnN]
             if (!column.isEnabled || column.flags hasnt Tcf.WidthStretch)
                 continue
-            column.stretchWeight = ((column.widthRequest + 0f) / visibleWidth) * visibleWeight
+            column.stretchWeight = (column.widthRequest / visibleWidth) * visibleWeight
+            assert(column.stretchWeight > 0f)
         }
     }
 
