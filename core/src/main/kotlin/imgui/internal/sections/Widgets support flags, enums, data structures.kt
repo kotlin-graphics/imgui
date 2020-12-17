@@ -286,6 +286,12 @@ operator fun Vec2.get(axis: Axis): Float = when (axis) {
     else -> throw Error()
 }
 
+operator fun Vec2.set(axis: Axis, float: Float) = when (axis) {
+    Axis.X -> x = float
+    Axis.Y -> y = float
+    else -> throw Error()
+}
+
 infix fun Int.shl(b: Axis) = shl(b.ordinal - 1)
 
 
