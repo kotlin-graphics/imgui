@@ -140,6 +140,8 @@ interface tables {
         var maxPosX = backupInnerMaxPosX
         if (table.rightMostEnabledColumn != -1)
             maxPosX = maxPosX max table.columns[table.rightMostEnabledColumn].maxX
+        if (table.resizedColumn != -1)
+            maxPosX = maxPosX max table.resizeLockMinContentsX2
 
 //        #if 0
 //        // Strip out dummy channel draw calls
@@ -380,10 +382,10 @@ interface tables {
         assert(columns in 0 until TABLE_MAX_COLUMNS)
         assert(rows in 0..127) // Arbitrary limit
 
-        table.freezeColumnsRequest = if(table.flags has Tf.ScrollX) columns else 0
-        table.freezeColumnsCount = if(table.innerWindow!!.scroll.x != 0f) table.freezeColumnsRequest else 0
-        table.freezeRowsRequest = if(table.flags has Tf.ScrollY) rows else 0
-        table.freezeRowsCount = if(table.innerWindow!!.scroll.y != 0f) table.freezeRowsRequest else 0
+        table.freezeColumnsRequest = if (table.flags has Tf.ScrollX) columns else 0
+        table.freezeColumnsCount = if (table.innerWindow!!.scroll.x != 0f) table.freezeColumnsRequest else 0
+        table.freezeRowsRequest = if (table.flags has Tf.ScrollY) rows else 0
+        table.freezeRowsCount = if (table.innerWindow!!.scroll.y != 0f) table.freezeRowsRequest else 0
         table.isUnfrozen = table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
     }
 
@@ -405,7 +407,7 @@ interface tables {
         val rowHeight = tableGetHeaderRowHeight()
         tableNextRow(Trf.Headers.i, rowHeight)
         if (table.hostSkipItems) // Merely an optimization, you may skip in your own code.
-        return
+            return
 
         val columnsCount = tableGetColumnCount()
         for (columnN in 0 until columnsCount) {
@@ -439,10 +441,10 @@ interface tables {
 
         val window = g.currentWindow!!
         if (window.skipItems)
-        return
+            return
 
         val table = g.currentTable
-        check(table != null) {"Need to call TableHeader() after BeginTable()!"}
+        check(table != null) { "Need to call TableHeader() after BeginTable()!" }
         assert(table.currentColumn != -1)
         val columnN = table.currentColumn
         val column = table.columns[columnN]
@@ -459,6 +461,24 @@ interface tables {
         val cellR = table getCellBgRect columnN
         val labelHeight = labelSize.y max (table.rowMinHeight - table.cellPaddingY * 2f)
 
+        // Calculate ideal size for sort order arrow
+        var wArrow = 0f
+        var wSortText = 0f
+        var sortOrderSuf = ""
+        val ARROW_SCALE = 0.65f
+        if (table.flags has Tf.Sortable && column.flags hasnt Tcf.NoSort) {
+            wArrow = floor(g.fontSize * ARROW_SCALE + g.style.framePadding.x)// table->CellPadding.x);
+            if (column.sortOrder > 0) {
+                sortOrderSuf = "${column.sortOrder + 1}"
+                wSortText = g.style.itemInnerSpacing.x + calcTextSize(sortOrderSuf).x
+            }
+        }
+
+        // We feed our unclipped width to the column without writing on CursorMaxPos, so that column is still considering for merging.
+        val maxPosX = labelPos.x + labelSize.x + wSortText + wArrow
+        column.contentMaxXHeadersUsed = column.contentMaxXHeadersUsed max column.workMaxX
+        column.contentMaxXHeadersIdeal = column.contentMaxXHeadersIdeal max maxPosX
+
         // Keep header highlighted when context menu is open.
         val selected = table.isContextPopupOpen && table.contextPopupColumn == columnN && table.instanceInteracted == table.instanceCurrent
         val id = window.getID(label)
@@ -474,12 +494,11 @@ interface tables {
         val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.AllowItemOverlap.i)
         setItemAllowOverlap()
         if (hovered || selected) {
-            val col = if(held) Col.HeaderActive else if(hovered) Col.HeaderHovered else Col.Header
+            val col = if (held) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             //RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
             tableSetBgColor(TableBgTarget.CellBg, col.u32, table.currentColumn)
             renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
-        }
-        else  // Submit single cell bg color in the case we didn't submit a full header row
+        } else  // Submit single cell bg color in the case we didn't submit a full header row
             if (table.rowFlags hasnt Trf.Headers)
                 tableSetBgColor(TableBgTarget.CellBg, Col.TableHeaderBg.u32, table.currentColumn)
         if (held)
@@ -509,32 +528,18 @@ interface tables {
         }
 
         // Sort order arrow
-        var wArrow = 0f
-        var wSortText = 0f
-        var ellipsisMax = cellR.max.x
+        val ellipsisMax = cellR.max.x - wArrow - wSortText
         if (table.flags has Tf.Sortable && column.flags hasnt Tcf.NoSort) {
-            val ARROW_SCALE = 0.65f
-            wArrow = floor(g.fontSize * ARROW_SCALE + g.style.framePadding.x)// table->CellPadding.x);
             if (column.sortOrder != -1) {
-                lateinit var sortOrderSuf: String
-                wSortText = 0f
-                if (column.sortOrder > 0) {
-                    sortOrderSuf = "${column.sortOrder + 1}"
-                    wSortText = g.style.itemInnerSpacing.x + calcTextSize(sortOrderSuf).x
-                }
-
                 var x = cellR.min.x max (cellR.max.x - wArrow - wSortText)
-                ellipsisMax -= wArrow + wSortText
-
                 val y = labelPos.y
-                val col = Col.Text.u32
                 if (column.sortOrder > 0) {
                     pushStyleColor(Col.Text, getColorU32(Col.Text, 0.7f))
                     renderText(Vec2(x + g.style.itemInnerSpacing.x, y), sortOrderSuf)
                     popStyleColor()
                     x += wSortText
                 }
-                window.drawList.renderArrow(Vec2(x, y), col, if(column.sortDirection == SortDirection.Ascending) Dir.Up else Dir.Down, ARROW_SCALE)
+                window.drawList.renderArrow(Vec2(x, y), Col.Text.u32, if (column.sortDirection == SortDirection.Ascending) Dir.Up else Dir.Down, ARROW_SCALE)
             }
 
             // Handle clicking on column header to adjust Sort Order
@@ -553,11 +558,6 @@ interface tables {
         val textClipped = labelSize.x > (ellipsisMax - labelPos.x)
         if (textClipped && hovered && g.hoveredIdNotActiveTimer > g.tooltipSlowDelay)
             setTooltip(label.substring(0, labelEnd))
-
-        // We feed our unclipped width to the column without writing on CursorMaxPos, so that column is still considering for merging.
-        val maxPosX = labelPos.x + labelSize.x + wSortText + wArrow
-        column.contentMaxXHeadersUsed = column.contentMaxXHeadersUsed max column.workMaxX
-        column.contentMaxXHeadersIdeal = column.contentMaxXHeadersIdeal max maxPosX
 
         // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden
         if (isMouseReleased(1) && isItemHovered())
@@ -587,8 +587,8 @@ interface tables {
     fun tableGetColumnFlags(columnN_: Int = -1): TableColumnFlags {
         val table = g.currentTable ?: return Tcf.None.i
         val columnN = if (columnN_ < 0) table.currentColumn else columnN_
-        return when(columnN) {
-            table.columnsCount -> if(table.hoveredColumnBody == columnN) Tcf.IsHovered.i else Tcf.None.i
+        return when (columnN) {
+            table.columnsCount -> if (table.hoveredColumnBody == columnN) Tcf.IsHovered.i else Tcf.None.i
             else -> table.columns[columnN].flags
         }
     }
@@ -604,7 +604,7 @@ interface tables {
         val table = g.currentTable!!
 
         if (table.flags hasnt Tf.Sortable)
-        return null
+            return null
 
         // Require layout (in case TableHeadersRow() hasn't been called) as it may alter IsSortSpecsDirty in some paths.
         if (!table.isLayoutLocked)
@@ -644,7 +644,7 @@ interface tables {
                 if (table.rowPosY1 > table.innerClipRect.max.y) // Discard
                     return
                 assert(columnN == -1)
-                val bgIdx = if(bgTarget == TableBgTarget.RowBg1) 1 else 0
+                val bgIdx = if (bgTarget == TableBgTarget.RowBg1) 1 else 0
                 table.rowBgColor[bgIdx] = color
             }
             else -> assert(false)

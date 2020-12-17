@@ -593,8 +593,8 @@ typealias TableFlags = Int
 //   When ScrollX is off:
 //    - Table defaults to ImGuiTableFlags_ColumnsWidthStretch -> all Columns defaults to ImGuiTableColumnFlags_WidthStretch.
 //    - Columns sizing policy allowed: Stretch (default) or Fixed/Auto.
-//    - Stretch Columns will share the width available in table.
-//    - Fixed Columns will generally obtain their requested width unless the Table cannot fit them all.
+//    - Fixed Columns will generally obtain their requested width (unless the Table cannot fit them all).
+//    - Stretch Columns will share the remaining width.
 //   When ScrollX is on:
 //    - Table defaults to ImGuiTableFlags_ColumnsWidthFixed -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed.
 //    - Columns sizing policy allowed: Fixed/Auto mostly!

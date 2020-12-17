@@ -150,6 +150,9 @@ class Table {
 
     var resizedColumnNextWidth = 0f
 
+    /** Lock minimum contents width while resizing down in order to not create feedback loops. But we allow growing the table. */
+    var resizeLockMinContentsX2 = 0f
+
     /** Reference scale to be able to rescale columns on font/dpi changes. */
     var refScale = 0f
 
@@ -358,8 +361,7 @@ class Table {
     fun beginApplyRequests() {
         // Handle resizing request
         // (We process this at the first TableBegin of the frame)
-        // FIXME-TABLE: Preserve contents width _while resizing down_ until releasing.
-        // FIXME-TABLE: Contains columns if our work area doesn't allow for scrolling.
+        // FIXME-TABLE: Contains columns if our work area doesn't allow for scrolling?
         if (instanceCurrent == 0) {
             if (resizedColumn != -1 && resizedColumnNextWidth != Float.MAX_VALUE)
                 tableSetColumnWidth(resizedColumn, resizedColumnNextWidth)
@@ -542,6 +544,7 @@ class Table {
         if (flags has Tf.Sortable && sortSpecsCount == 0 && flags hasnt Tf.SortTristate)
             isSortSpecsDirty = true
         rightMostEnabledColumn = lastVisibleColumnIdx
+        assert(rightMostEnabledColumn >= 0)
 
         // [Part 2] Disable child window clipping while fitting columns. This is not strictly necessary but makes it possible
         // to avoid the column fitting to wait until the first visible frame of the child container (may or not be a good thing).
@@ -857,9 +860,7 @@ class Table {
         // Clear Resizable flag if none of our column are actually resizable (either via an explicit _NoResize flag, either
         // because of using _WidthAutoResize/_WidthStretch). This will hide the resizing option from the context menu.
         if (isHoveringTable && hoveredColumnBody == -1) {
-            var unusedX1 = workRect.min.x
-            if (rightMostEnabledColumn != -1)
-                unusedX1 = unusedX1 max (columns[rightMostEnabledColumn].clipRect.max.x)
+            val unusedX1 = workRect.min.x max columns[rightMostEnabledColumn].clipRect.max.x
             if (g.io.mousePos.x >= unusedX1)
                 hoveredColumnBody = columnsCount
         }
@@ -1019,6 +1020,8 @@ class Table {
                 hovered = false
             }
             if (held) {
+                if (lastResizedColumn == -1)
+                    resizeLockMinContentsX2 = if(rightMostEnabledColumn != -1) columns[rightMostEnabledColumn].maxX else -Float.MAX_VALUE
                 resizedColumn = columnN
                 instanceInteracted = instanceCurrent
             }

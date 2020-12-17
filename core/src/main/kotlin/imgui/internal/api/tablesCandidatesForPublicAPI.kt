@@ -67,7 +67,12 @@ interface tablesCandidatesForPublicAPI {
 
         var column1 = table.columns.getOrNull(column0.nextEnabledColumn)
 
-        // In this surprisingly not simple because of how we support mixing Fixed and Stretch columns.
+        // In this surprisingly not simple because of how we support mixing Fixed and multiple Stretch columns.
+        // - All fixed: easy.
+        // - All stretch: easy.
+        // - One or more fixed + one stretch: easy.
+        // - One or more fixed + more than one stretch: A MESS
+
         // When forwarding resize from Wn| to Fn+1| we need to be considerate of the _NoResize flag on Fn+1.
         // FIXME-TABLE: Find a way to rewrite all of this so interactions feel more consistent for the user.
         // Scenarios:
