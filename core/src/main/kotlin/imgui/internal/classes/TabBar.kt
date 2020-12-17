@@ -377,7 +377,8 @@ class TabBar {
         val hovered = hovered_ || g.hoveredId == id
 
         // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
-        if (!held) setItemAllowOverlap()
+        if (g.activeId != id)
+            setItemAllowOverlap()
 
         // Drag and drop: re-order tabs
         if (held && !tabAppearing && isMouseDragging(MouseButton.Left)) if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable) // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x

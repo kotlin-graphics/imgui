@@ -80,15 +80,17 @@ interface tablesCandidatesForPublicAPI {
         // - F1 F2 F3  resize from F3|          --> ok: alter ->WidthRequested of Fixed column. If active, ScrollX extent can be altered.
         // - F1 F2 W3  resize from F1| or F2|   --> ok: alter ->WidthRequested of Fixed column. If active, ScrollX extent can be altered, but it doesn't make much sense as the Stretch column will always be minimal size.
         // - F1 F2 W3  resize from W3|          --> ok: no-op (disabled by Resize Rule 1)
-        // - W1 W2 W3  resize from W1| or W2|   --> FIXME
+        // - W1 W2 W3  resize from W1| or W2|   --> ij
         // - W1 W2 W3  resize from W3|          --> ok: no-op (disabled by Resize Rule 1)
         // - W1 F2 F3  resize from F3|          --> ok: no-op (disabled by Resize Rule 1)
         // - W1 F2     resize from F2|          --> ok: no-op (disabled by Resize Rule 1)
         // - W1 W2 F3  resize from W1| or W2|   --> ok
         // - W1 F2 W3  resize from W1| or F2|   --> FIXME
         // - F1 W2 F3  resize from W2|          --> ok
+        // - F1 W3 F2  resize from W3|          --> ok
         // - W1 F2 F3  resize from W1|          --> ok: equivalent to resizing |F2. F3 will not move. (forwarded by Resize Rule 2)
-        // - W1 F2 F3  resize from F2|          --> FIXME should resize F2, F3 and not have effect on W1 (Stretch columns are _before_ the Fixed column).
+        // - W1 F2 F3  resize from F2|          --> ok
+        // All resizes from a Wx columns are locking other columns.
 
         // Rules:
         // - [Resize Rule 1] Can't resize from right of right-most visible column if there is any Stretch column. Implemented in TableUpdateLayout().

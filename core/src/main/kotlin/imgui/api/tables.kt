@@ -492,7 +492,8 @@ interface tables {
 
         // Using AllowItemOverlap mode because we cover the whole cell, and we want user to be able to submit subsequent items.
         val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.AllowItemOverlap.i)
-        setItemAllowOverlap()
+        if(g.activeId != id)
+            setItemAllowOverlap()
         if (hovered || selected) {
             val col = if (held) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             //RenderFrame(bb.Min, bb.Max, col, false, 0.0f);

@@ -658,22 +658,11 @@ class Table {
                 continue
             val column = columns[columnN]
 
-            // Allocate width for stretched/weighted columns
-            if (column.flags has Tcf.WidthStretch) {
-                // StretchWeight gets converted into WidthRequest
-                if (!mixedSameWidths) {
-                    val weightRatio = column.stretchWeight / sumWeightsStretched
-                    column.widthRequest = floor(max(widthAvailForStretchedColumns * weightRatio, minColumnWidth) + 0.01f)
-                    widthRemainingForStretchedColumns -= column.widthRequest
-                }
-
-                // [Resize Rule 2] Resizing from right-side of a stretch column preceding a fixed column
-                // needs to forward resizing to left-side of fixed column. We also need to copy the NoResize flag..
-                if (column.nextEnabledColumn != -1)
-                    columns.getOrNull(column.nextEnabledColumn)?.let { nextColumn ->
-                        if (nextColumn.flags has Tcf.WidthFixed)
-                            column.flags = column.flags or (nextColumn.flags and Tcf.NoDirectResize_)
-                    }
+            // Allocate width for stretched/weighted columns (StretchWeight gets converted into WidthRequest)
+            if ((column.flags has Tcf.WidthStretch) && !mixedSameWidths) {
+                val weightRatio = column.stretchWeight / sumWeightsStretched
+                column.widthRequest = floor(max(widthAvailForStretchedColumns * weightRatio, minColumnWidth) + 0.01f)
+                widthRemainingForStretchedColumns -= column.widthRequest
             }
 
             // [Resize Rule 1] The right-most Visible column is not resizable if there is at least one Stretch column
@@ -1021,7 +1010,7 @@ class Table {
             }
             if (held) {
                 if (lastResizedColumn == -1)
-                    resizeLockMinContentsX2 = if(rightMostEnabledColumn != -1) columns[rightMostEnabledColumn].maxX else -Float.MAX_VALUE
+                    resizeLockMinContentsX2 = if (rightMostEnabledColumn != -1) columns[rightMostEnabledColumn].maxX else -Float.MAX_VALUE
                 resizedColumn = columnN
                 instanceInteracted = instanceCurrent
             }
