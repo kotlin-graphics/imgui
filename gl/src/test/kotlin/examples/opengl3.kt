@@ -8,7 +8,6 @@ import gln.glViewport
 import imgui.DEBUG
 import imgui.ImGui
 import imgui.classes.Context
-import imgui.font.Font
 import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
@@ -37,6 +36,7 @@ private class ImGuiOpenGL3 {
 
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
+
     // Our state
     var showAnotherWindow = false
     var showDemoWindow = true
