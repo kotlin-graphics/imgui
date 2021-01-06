@@ -162,8 +162,3 @@ gradle-app.setting
 **/build/
 
 # End of https://www.toptal.com/developers/gitignore/api/java,gradle,intellij,kotlin
-
-gl/src/test/kotlin/app
-gl/src/test/kotlin/engine
-gl/src/test/kotlin/shared
-gl/src/test/kotlin/anchor.kt
