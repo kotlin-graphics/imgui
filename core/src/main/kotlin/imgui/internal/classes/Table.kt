@@ -327,7 +327,7 @@ class Table {
     var isUnfrozen = false
 
     /** Set when outer_size value passed to BeginTable() is (>= -1.0f && <= 0.0f) */
-    var isOuterRectFitX = false
+    var isOuterRectAutoFitX = false
 
     var memoryCompacted = false
 
@@ -877,11 +877,12 @@ class Table {
         // [Part 9] Lock actual OuterRect/WorkRect right-most position.
         // This is done late to handle the case of fixed-columns tables not claiming more widths that they need.
         // Because of this we are careful with uses of WorkRect and InnerClipRect before this point.
-        if (flags has Tf.NoHostExtendX && innerWindow === outerWindow && rightMostStretchedColumn == -1) {
+        if (rightMostStretchedColumn != -1)
+            isOuterRectAutoFitX = false
+        if (isOuterRectAutoFitX) {
             outerRect.max.x = unusedX1
             workRect.max.x = unusedX1
             innerClipRect.max.x = innerClipRect.max.x min unusedX1
-            isOuterRectFitX = false
         }
         innerWindow!!.parentWorkRect put workRect
         borderX1 = innerClipRect.min.x// +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : -1.0f);

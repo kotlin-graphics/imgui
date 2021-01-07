@@ -68,7 +68,7 @@ interface tablesInternal {
         table.columnsCount = columnsCount
         table.isLayoutLocked = false
         table.innerWidth = innerWidth
-        table.isOuterRectFitX = outerSize.x >= -1f && outerSize.x <= 0f // Bit ambiguous
+        table.isOuterRectAutoFitX = outerSize.x == 0f && !useChildWindow
 
         // When not using a child window, WorkRect.Max will grow as we append contents.
         if (useChildWindow) {

@@ -280,7 +280,7 @@ interface widgetsMain {
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int): Boolean =
             radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 
-    fun progressBar(fraction_: Float, sizeArg: Vec2 = Vec2(-1f, 0f), overlay_: String = "") {
+    fun progressBar(fraction_: Float, sizeArg: Vec2 = Vec2(-Float.MIN_VALUE, 0f), overlay_: String = "") {
         val window = currentWindow
         if (window.skipItems) return
 

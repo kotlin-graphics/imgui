@@ -679,46 +679,44 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Disable headers' contribution to automatic width calculation. */
     NoHeadersWidth(1 shl 16),
 
-    /** Disable extending table past the limit required by the right-most columns. Only meaningful with Fixed columns and when neither ScrollX nor ScrollY are set. */
-    NoHostExtendX(1 shl 17),
-
     /** Disable extending table past the limit set by outer_size.y. Only meaningful when neither ScrollX nor ScrollY are set (data below the limit will be clipped and not visible) */
-    NoHostExtendY(1 shl 18),
+    NoHostExtendY(1 shl 17),
 
     /** Disable keeping column always minimally visible when ScrollX is off and table gets too small. */
-    NoKeepColumnsVisible(1 shl 19),
+    NoKeepColumnsVisible(1 shl 18),
 
     /** Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth. */
-    PreciseWidths(1 shl 20),
+    PreciseWidths(1 shl 19),
 
     /** Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze(). */
-    NoClip(1 shl 21),
+    NoClip(1 shl 20),
 
     // Padding
 
     /** Default if BordersOuterV is on. Enable outer-most padding. */
-    PadOuterX(1 shl 22),
+    PadOuterX(1 shl 21),
 
     /** Default if BordersOuterV is off. Disable outer-most padding. */
-    NoPadOuterX(1 shl 23),
+    NoPadOuterX(1 shl 22),
 
     /** Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off). */
-    NoPadInnerX(1 shl 24),
+    NoPadInnerX(1 shl 23),
 
     // Scrolling
 
     /** Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this create a child window, ScrollY is currently generally recommended when using ScrollX. */
-    ScrollX(1 shl 25),
+    ScrollX(1 shl 24),
 
     /** Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. */
-    ScrollY(1 shl 26),
+    ScrollY(1 shl 25),
 
     // Sorting
 
     /** Hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1). */
-    SortMulti                       (1 shl 27),
+    SortMulti(1 shl 26),
+
     /** Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0). */
-    SortTristate                    (1 shl 28);
+    SortTristate(1 shl 27);
 
     infix fun and(b: TableFlag): TableFlags = i and b.i
     infix fun and(b: TableFlags): TableFlags = i and b

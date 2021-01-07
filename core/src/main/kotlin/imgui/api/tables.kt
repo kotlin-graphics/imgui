@@ -76,7 +76,7 @@ interface tables {
 
     /** Read about "TABLE SIZING" at the top of this file. */
     fun beginTable(strId: String, columnsCount: Int, flags: TableFlags = Tf.None.i,
-                   outerSize: Vec2 = Vec2(), innerWidth: Float = 0f): Boolean {
+                   outerSize: Vec2 = Vec2(-Float.MIN_VALUE, 0f), innerWidth: Float = 0f): Boolean {
         val id = getID(strId)
         return beginTableEx(strId, id, columnsCount, flags, outerSize, innerWidth)
     }
@@ -195,7 +195,7 @@ interface tables {
         if (table.hostBackupItemWidthStackSize != 1)
             TODO()
 //        outerWindow.dc.itemWidthStack.size = table->HostBackupItemWidthStackSize  // TODO check me
-        val outerWidth = if(table.isOuterRectFitX) table.columnsAutoFitWidth else table.workRect.width
+        val outerWidth = if(table.isOuterRectAutoFitX) table.workRect.width else table.columnsAutoFitWidth
         outerWindow.dc.columnsOffset = table.hostBackupColumnsOffset
         if (innerWindow != outerWindow)
             endChild()
