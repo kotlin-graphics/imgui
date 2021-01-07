@@ -436,7 +436,6 @@ interface tables {
     /** Emit a column header (text + optional sort order)
      *  We cpu-clip text here so that all columns headers can be merged into a same draw call.
      *  Note that because of how we cpu-clip and display sorting indicators, you _cannot_ use SameLine() after a TableHeader()
-     *  FIXME-TABLE: Style confusion between CellPadding.y and FramePadding.y
      *
      *  submit one header cell manually (rarely used) */
     fun tableHeader(label: String = "") {
@@ -459,7 +458,7 @@ interface tables {
         val labelPos = window.dc.cursorPos // [JVM] same instance, careful!
 
         // If we already got a row height, there's use that.
-        // FIXME-TABLE-PADDING: Problem if the correct outer-padding CellBgRect strays off our ClipRect
+        // FIXME-TABLE: Padding problem if the correct outer-padding CellBgRect strays off our ClipRect
         val cellR = table getCellBgRect columnN
         val labelHeight = labelSize.y max (table.rowMinHeight - table.cellPaddingY * 2f)
 
@@ -469,7 +468,7 @@ interface tables {
         var sortOrderSuf = ""
         val ARROW_SCALE = 0.65f
         if (table.flags has Tf.Sortable && column.flags hasnt Tcf.NoSort) {
-            wArrow = floor(g.fontSize * ARROW_SCALE + g.style.framePadding.x)// table->CellPadding.x);
+            wArrow = floor(g.fontSize * ARROW_SCALE + g.style.framePadding.x)
             if (column.sortOrder > 0) {
                 sortOrderSuf = "${column.sortOrder + 1}"
                 wSortText = g.style.itemInnerSpacing.x + calcTextSize(sortOrderSuf).x

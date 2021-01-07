@@ -169,7 +169,11 @@ class Table {
     /** We use this to cpu-clip cell background color fill */
     val bgClipRect = Rect()
 
-    val bgClipRectForDrawCmd = Rect()
+    /** Actual ImDrawCmd clip rect for BG0/1 channel. This tends to be == OuterWindow->ClipRect at BeginTable() because output in BG0/BG1 is cpu-clipped */
+    val bg0ClipRectForDrawCmd = Rect()
+
+    /** Actual ImDrawCmd clip rect for BG2 channel. This tends to be a correct, tight-fit, because output to BG2 are done by widgets relying on regular ClipRect. */
+    val bg2ClipRectForDrawCmd = Rect()
 
     /** This is used to check if we can eventually merge our columns draw calls into the current draw call of the current window. */
     val hostClipRect = Rect()
@@ -440,7 +444,7 @@ class Table {
      *  - We allocate 1 or 2 background draw channels. This is because we know TablePushBackgroundChannel() is only used for
      *    horizontal spanning. If we allowed vertical spanning we'd need one background draw channel per merge group (1-4).
      *  Draw channel allocation (before merging):
-     *  - NoClip                       --> 2+D+1 channels: bg0/1 + bg2 + foreground (same clip rect == 1 draw call) (FIXME-TABLE: could merge bg2 and foreground?)
+     *  - NoClip                       --> 2+D+1 channels: bg0/1 + bg2 + foreground (same clip rect == always 1 draw call)
      *  - Clip                         --> 2+D+N channels
      *  - FreezeRows                   --> 2+D+N*2 (unless scrolling value is zero)
      *  - FreezeRows || FreezeColunns  --> 3+D+N*2 (unless scrolling value is zero)
@@ -476,7 +480,8 @@ class Table {
         // All our cell highlight are manually clipped with BgClipRect. When unfreezing it will be made smaller to fit scrolling rect.
         // (This technically isn't part of setting up draw channels, but is reasonably related to be done here)
         bgClipRect put innerClipRect
-        bgClipRectForDrawCmd put hostClipRect
+        bg0ClipRectForDrawCmd put outerWindow!!.clipRect
+        bg2ClipRectForDrawCmd put hostClipRect
         assert(bgClipRect.min.y <= bgClipRect.max.y)
     }
 
@@ -1051,12 +1056,11 @@ class Table {
      *  ~TableDrawBorders */
     fun drawBorders() {
         val innerWindow = innerWindow!!
-        val outerWindow = outerWindow!!
         drawSplitter.setCurrentChannel(innerWindow.drawList, TABLE_DRAW_CHANNEL_BG0)
         if (innerWindow.hidden || !hostClipRect.overlaps(innerClipRect))
             return
         val innerDrawlist = innerWindow.drawList
-        val outerDrawlist = outerWindow.drawList
+        innerDrawlist.pushClipRect(bg0ClipRectForDrawCmd.min, bg0ClipRectForDrawCmd.max, false)
 
         // Draw inner border and resizing feedback
         val borderSize = TABLE_BORDER_SIZE
@@ -1066,7 +1070,6 @@ class Table {
             isUsingHeaders -> lastFirstRowHeight + if (freezeRowsCount >= 1) outerRect.min.y else workRect.min.y
             else -> drawY1
         }
-
         if (flags has Tf.BordersInnerV)
             for (orderN in 0 until columnsCount) {
 
@@ -1113,16 +1116,14 @@ class Table {
             // Either solution currently won't allow us to use a larger border size: the border would clipped.
             val outerBorder = Rect(outerRect) // [JVM] we need a local copy, shadowing is fine
             val outerCol = borderColorStrong
-            if (innerWindow !== outerWindow) // FIXME-TABLE
-                outerBorder expand 1f
             if ((flags and Tf.BordersOuter) == Tf.BordersOuter.i)
-                outerDrawlist.addRect(outerBorder.min, outerBorder.max, outerCol, 0f, 0.inv(), borderSize)
+                innerDrawlist.addRect(outerBorder.min, outerBorder.max, outerCol, 0f, 0.inv(), borderSize)
             else if (flags has Tf.BordersOuterV) {
-                outerDrawlist.addLine(outerBorder.min, Vec2(outerBorder.min.x, outerBorder.max.y), outerCol, borderSize)
-                outerDrawlist.addLine(Vec2(outerBorder.max.x, outerBorder.min.y), outerBorder.max, outerCol, borderSize)
+                innerDrawlist.addLine(outerBorder.min, Vec2(outerBorder.min.x, outerBorder.max.y), outerCol, borderSize)
+                innerDrawlist.addLine(Vec2(outerBorder.max.x, outerBorder.min.y), outerBorder.max, outerCol, borderSize)
             } else if (flags has Tf.BordersOuterH) {
-                outerDrawlist.addLine(outerBorder.min, Vec2(outerBorder.max.x, outerBorder.min.y), outerCol, borderSize)
-                outerDrawlist.addLine(Vec2(outerBorder.min.x, outerBorder.max.y), outerBorder.max, outerCol, borderSize)
+                innerDrawlist.addLine(outerBorder.min, Vec2(outerBorder.max.x, outerBorder.min.y), outerCol, borderSize)
+                innerDrawlist.addLine(Vec2(outerBorder.min.x, outerBorder.max.y), outerBorder.max, outerCol, borderSize)
             }
         }
         if (flags has Tf.BordersInnerH && rowPosY2 < outerRect.max.y) {
@@ -1131,6 +1132,8 @@ class Table {
             if (borderY >= bgClipRect.min.y && borderY < bgClipRect.max.y)
                 innerDrawlist.addLine(Vec2(borderX1, borderY), Vec2(borderX2, borderY), borderColorLight, borderSize)
         }
+
+        innerDrawlist.popClipRect()
     }
 
     /** Output context menu into current window (generally a popup)
@@ -1621,7 +1624,7 @@ class Table {
                 // In theory we could call SetWindowClipRectBeforeSetChannel() but since we know TableEndRow() is
                 // always followed by a change of clipping rectangle we perform the smallest overwrite possible here.
                 if (flags hasnt Tf.NoClip)
-                    window.drawList._cmdHeader.clipRect put bgClipRectForDrawCmd.toVec4()
+                    window.drawList._cmdHeader.clipRect put bg0ClipRectForDrawCmd.toVec4()
                 drawSplitter.setCurrentChannel(window.drawList, TABLE_DRAW_CHANNEL_BG0)
             }
 
@@ -1675,11 +1678,11 @@ class Table {
             // BgClipRect starts as table->InnerClipRect, reduce it now and make BgClipRectForDrawCmd == BgClipRect
             val y0 = (rowPosY2 + 1) max window.innerClipRect.min.y
             bgClipRect.min.y = y0 min window.innerClipRect.max.y
-            bgClipRectForDrawCmd.min.y = bgClipRect.min.y
+            bg2ClipRectForDrawCmd.min.y = bgClipRect.min.y
             bgClipRect.max.y = window.innerClipRect.max.y
-            bgClipRectForDrawCmd.max.y = bgClipRect.max.y
+            bg2ClipRectForDrawCmd.max.y = bgClipRect.max.y
             bg2DrawChannelCurrent = bg2DrawChannelUnfrozen
-            assert(bgClipRectForDrawCmd.min.y <= bgClipRectForDrawCmd.max.y)
+            assert(bg2ClipRectForDrawCmd.min.y <= bg2ClipRectForDrawCmd.max.y)
 
             val rowHeight = rowPosY2 - rowPosY1
             rowPosY2 = workRect.min.y + rowPosY2 - outerRect.min.y
@@ -1688,7 +1691,7 @@ class Table {
             for (columnN in 0 until columnsCount) {
                 val column = columns[columnN]
                 column.drawChannelCurrent = column.drawChannelUnfrozen
-                column.clipRect.min.y = bgClipRectForDrawCmd.min.y
+                column.clipRect.min.y = bg2ClipRectForDrawCmd.min.y
             }
 
             // Update cliprect ahead of TableBeginCell() so clipper can access to new ClipRect->Min.y

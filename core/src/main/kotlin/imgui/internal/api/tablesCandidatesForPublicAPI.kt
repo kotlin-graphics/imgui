@@ -202,7 +202,7 @@ interface tablesCandidatesForPublicAPI {
 
         // Optimization: avoid SetCurrentChannel() + PushClipRect()
         table.hostBackupInnerClipRect put window.clipRect
-        setWindowClipRectBeforeSetChannel(window, table.bgClipRectForDrawCmd)
+        setWindowClipRectBeforeSetChannel(window, table.bg2ClipRectForDrawCmd)
         table.drawSplitter.setCurrentChannel(window.drawList, table.bg2DrawChannelCurrent)
     }
 
