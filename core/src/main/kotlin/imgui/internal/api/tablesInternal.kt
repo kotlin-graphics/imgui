@@ -70,6 +70,7 @@ interface tablesInternal {
         table.innerWidth = innerWidth
         table.outerRect put outerRect
         table.workRect put outerRect
+        table.isOuterRectFitX = outerSize.x >= -1f && outerSize.x <= 0f // Bit ambiguous
 
         // When not using a child window, WorkRect.Max will grow as we append contents.
         if (useChildWindow) {
@@ -115,7 +116,6 @@ interface tablesInternal {
         table.hostBackupCursorMaxPos put innerWindow.dc.cursorMaxPos
         table.hostBackupItemWidth = outerWindow.dc.itemWidth
         table.hostBackupItemWidthStackSize = outerWindow.dc.itemWidthStack.size
-        innerWindow.parentWorkRect put table.workRect
         innerWindow.dc.prevLineSize put 0f
         innerWindow.dc.currLineSize put 0f
 
@@ -153,13 +153,6 @@ interface tablesInternal {
         table.innerClipRect clipWithFull table.hostClipRect
         table.innerClipRect.max.y = if (flags has Tf.NoHostExtendY) table.innerClipRect.max.y min innerWindow.workRect.max.y else innerWindow.clipRect.max.y
 
-        // Initial draw cmd starts with a BgClipRect that matches the one of its host, to facilitate merge draw commands by default.
-        // This is because all our cell highlight are manually clipped with BgClipRect
-        // Larger at first, if/after unfreezing will become same as tight
-        table.bgClipRect put table.innerClipRect
-        table.bgClipRectForDrawCmd put table.hostClipRect
-        assert(table.bgClipRect.min.y <= table.bgClipRect.max.y)
-
         table.rowPosY1 = table.workRect.min.y // This is needed somehow
         table.rowPosY2 = table.rowPosY1 // "
         table.rowTextBaseline = 0f // This will be cleared again by TableBeginRow()
@@ -173,8 +166,6 @@ interface tablesInternal {
         // Using opaque colors facilitate overlapping elements of the grid
         table.borderColorStrong = Col.TableBorderStrong.u32
         table.borderColorLight = Col.TableBorderLight.u32
-        table.borderX1 = table.innerClipRect.min.x// +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : -1.0f);
-        table.borderX2 = table.innerClipRect.max.x// +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : +1.0f);
 
         // Make table current
         val tableIdx = g.tables.getIndex(table)

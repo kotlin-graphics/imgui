@@ -193,12 +193,12 @@ interface tables {
         if (table.hostBackupItemWidthStackSize != 1)
             TODO()
 //        outerWindow.dc.itemWidthStack.size = table->HostBackupItemWidthStackSize  // TODO check me
+        val outerWidth = if(table.isOuterRectFitX) table.columnsAutoFitWidth else table.workRect.width
         outerWindow.dc.columnsOffset = table.hostBackupColumnsOffset
         if (innerWindow != outerWindow)
             endChild()
         else {
-            val itemSize = table.outerRect.size // [JVM] safe, it's a new instance
-            itemSize.x = table.columnsTotalWidth
+            val itemSize = Vec2(outerWidth, table.outerRect.height)
             itemSize(itemSize)
         }
 
@@ -208,7 +208,7 @@ interface tables {
             innerWindow.dc.cursorMaxPos.x = maxPosX // Set contents width for scrolling
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPosX max (backupOuterCursorPosX + table.columnsTotalWidth + innerWindow.scrollbarSizes.x) // For auto-fit
         } else
-            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPosX max (table.workRect.min.x + table.columnsAutoFitWidth) // For auto-fit
+            outerWindow.dc.cursorPosPrevLine.x = table.workRect.max.x // For consistent reaction to SameLine() // FIXME: Should be a feature of layout/ItemAdd
 
         // Save settings
         if (table.isSettingsDirty)

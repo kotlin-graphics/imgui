@@ -319,6 +319,9 @@ class Table {
     /** Set when we got past the frozen row. */
     var isUnfrozen = false
 
+    /** Set when outer_size value passed to BeginTable() is (>= -1.0f && <= 0.0f) */
+    var isOuterRectFitX = false
+
     var memoryCompacted = false
 
     /** Backup of InnerWindow->SkipItem at the end of BeginTable(), because we will overwrite InnerWindow->SkipItem on a per-column basis */
@@ -465,6 +468,13 @@ class Table {
             }
             column.drawChannelCurrent = column.drawChannelFrozen
         }
+
+        // Initial draw cmd starts with a BgClipRect that matches the one of its host, to facilitate merge draw commands by default.
+        // All our cell highlight are manually clipped with BgClipRect. When unfreezing it will be made smaller to fit scrolling rect.
+        // (This technically isn't part of setting up draw channels, but is reasonably related to be done here)
+        bgClipRect put innerClipRect
+        bgClipRectForDrawCmd put hostClipRect
+        assert(bgClipRect.min.y <= bgClipRect.max.y)
     }
 
     /** Layout columns for the frame. This is in essence the followup to BeginTable().
@@ -848,25 +858,38 @@ class Table {
         // [Part 8] Detect/store when we are hovering the unused space after the right-most column (so e.g. context menus can react on it)
         // Clear Resizable flag if none of our column are actually resizable (either via an explicit _NoResize flag, either
         // because of using _WidthAutoResize/_WidthStretch). This will hide the resizing option from the context menu.
+        val unusedX1 = workRect.min.x max columns[rightMostEnabledColumn].clipRect.max.x
         if (isHoveringTable && hoveredColumnBody == -1) {
-            val unusedX1 = workRect.min.x max columns[rightMostEnabledColumn].clipRect.max.x
             if (g.io.mousePos.x >= unusedX1)
                 hoveredColumnBody = columnsCount
         }
         if (countResizable == 0 && flags has Tf.Resizable)
             flags = flags wo Tf.Resizable
 
-        // [Part 9] Allocate draw channels
+        // [Part 9] Lock actual OuterRect/WorkRect right-most position.
+        // This is done late to handle the case of fixed-columns tables not claiming more widths that they need.
+        // Because of this we are careful with uses of WorkRect and InnerClipRect before this point.
+        if (flags has Tf.NoHostExtendX && innerWindow === outerWindow && rightMostStretchedColumn == -1) {
+            outerRect.max.x = unusedX1
+            workRect.max.x = unusedX1
+            innerClipRect.max.x = innerClipRect.max.x min unusedX1
+            isOuterRectFitX = false
+        }
+        innerWindow!!.parentWorkRect put workRect
+        borderX1 = innerClipRect.min.x// +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : -1.0f);
+        borderX2 = innerClipRect.max.x// +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : +1.0f);
+
+        // [Part 10] Allocate draw channels and setup background cliprect
         setupDrawChannels()
 
-        // [Part 10] Hit testing on borders
+        // [Part 11] Hit testing on borders
         if (flags has Tf.Resizable)
             updateBorders()
         lastFirstRowHeight = 0f
         isLayoutLocked = true
         isUsingHeaders = false
 
-        // [Part 11] Context menu
+        // [Part 12] Context menu
         if (isContextPopupOpen && instanceCurrent == instanceInteracted) {
             val contextMenuId = hashStr("##ContextMenu", 0, id)
             if (beginPopupEx(contextMenuId, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)) {
