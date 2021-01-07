@@ -676,9 +676,6 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Make all columns the same widths which is useful with Fixed columns policy (but granted by default with Stretch policy + no resize). Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible and disable ImGuiTableFlags_Resizable. */
     SameWidths(1 shl 15),
 
-    /** Disable headers' contribution to automatic width calculation. */
-    NoHeadersWidth(1 shl 16),
-
     /** Disable extending table past the limit set by outer_size.y. Only meaningful when neither ScrollX nor ScrollY are set (data below the limit will be clipped and not visible) */
     NoHostExtendY(1 shl 17),
 
@@ -687,6 +684,8 @@ enum class TableFlag(@JvmField val i: TableFlags) {
 
     /** Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth. */
     PreciseWidths(1 shl 19),
+
+    // Clipping
 
     /** Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze(). */
     NoClip(1 shl 20),

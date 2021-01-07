@@ -597,7 +597,7 @@ class Table {
                 val contentWidthBody = (column.contentMaxXFrozen max column.contentMaxXUnfrozen) - column.workMinX
                 val contentWidthHeaders = column.contentMaxXHeadersIdeal - column.workMinX
                 var widthAuto = contentWidthBody
-                if (flags hasnt Tf.NoHeadersWidth && column.flags hasnt Tcf.NoHeaderWidth)
+                if (column.flags hasnt Tcf.NoHeaderWidth)
                     widthAuto = widthAuto max contentWidthHeaders
                 widthAuto = widthAuto max minColumnWidth
 
