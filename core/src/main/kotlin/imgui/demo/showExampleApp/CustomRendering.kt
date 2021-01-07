@@ -42,7 +42,7 @@ import kotlin.reflect.KMutableProperty0
 
 object CustomRendering {
 
-    var sz = 33f
+    var sz = 36f
     var thickness = 3f
     var ngonSides = 6
     var circleSegmentsOverride = false
@@ -109,12 +109,10 @@ object CustomRendering {
                 sliderInt("N-gon sides", ::ngonSides, 3, 12)
                 checkbox("##circlesegmentoverride", ::circleSegmentsOverride)
                 sameLine(0f, style.itemInnerSpacing.x)
-                if (sliderInt("Circle segments", ::circleSegmentsOverrideV, 3, 40))
-                    circleSegmentsOverride = true
+                circleSegmentsOverride = sliderInt("Circle segments override", ::circleSegmentsOverrideV, 3, 40) or circleSegmentsOverride
                 checkbox("##curvessegmentoverride", ::curveSegmentsOverride)
                 sameLine(0f, style.itemInnerSpacing.x)
-                if (sliderInt("Curves segments", ::curveSegmentsOverrideV, 3, 40))
-                    curveSegmentsOverride = true
+                curveSegmentsOverride = sliderInt("Curves segments override", ::curveSegmentsOverrideV, 3, 40) or curveSegmentsOverride
                 colorEdit4("Color", colf)
 
                 val p = cursorScreenPos
@@ -124,7 +122,7 @@ object CustomRendering {
                 val cornersAll = DrawCornerFlag.All.i
                 val cornersTlBr = DrawCornerFlag.TopLeft or DrawCornerFlag.BotRight
                 val circleSegments = if (circleSegmentsOverride) circleSegmentsOverrideV else 0
-                var curveSegments = if(curveSegmentsOverride) curveSegmentsOverrideV else 0
+                val curveSegments = if(curveSegmentsOverride) curveSegmentsOverrideV else 0
                 var (x, y) = p + 4f
                 for (n in 0 until 2) {
                     // First line uses a thickness of 1.0f, second line uses the configurable thickness
@@ -140,8 +138,14 @@ object CustomRendering {
                         addLine(Vec2(x, y), Vec2(x + sz, y), col, th); x += sz + spacing  // Horizontal line (note: drawing a filled rectangle will be faster!)
                         addLine(Vec2(x, y), Vec2(x, y + sz), col, th); x += spacing       // Vertical line (note: drawing a filled rectangle will be faster!)
                         addLine(Vec2(x, y), Vec2(x + sz, y + sz), col, th); x += sz + spacing  // Diagonal line
-                        addQuadBezierCurve(Vec2(x, y + sz * 0.6), Vec2(x + sz * 0.5, y - sz * 0.4), Vec2(x + sz, y + sz), col, th, curveSegments); x += sz + spacing  // Quad Bezier (3 control points)
-                        addBezierCurve(Vec2(x, y), Vec2(x + sz * 1.3f, y + sz * 0.3f), Vec2(x + sz - sz * 1.3f, y + sz - sz * 0.3f), Vec2(x + sz, y + sz), col, th, curveSegments)
+
+                        // Quadratic Bezier Curve (3 control points)
+                        val cp3 = arrayOf(Vec2(x, y + sz * 0.6f), Vec2(x + sz * 0.5f, y - sz * 0.4f), Vec2(x + sz, y + sz))
+                        addQuadBezierCurve(cp3[0], cp3[1], cp3[2], col, th, curveSegments); x += sz + spacing
+
+                        // Cubic Bezier Curve (4 control points)
+                        val cp4 = arrayOf(Vec2(x, y), Vec2(x + sz * 1.3f, y + sz * 0.3f), Vec2(x + sz - sz * 1.3f, y + sz - sz * 0.3f), Vec2(x + sz, y + sz))
+                        addBezierCurve(cp4[0], cp4[1], cp4[2], cp4[3], col, th, curveSegments)
                     }
                     x = p.x + 4
                     y += sz + spacing

@@ -629,7 +629,8 @@ fun bezierClosestPointCasteljau(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
 /** Closely mimics PathBezierToCasteljau() in imgui_draw.cpp
  *  [JVM] pClosestDist2 in return */
 fun bezierClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2_: Float,
-                                    x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float,
+                                    x1: Float, y1: Float, x2: Float, y2: Float,
+                                    x3: Float, y3: Float, x4: Float, y4: Float,
                                     tessTol: Float, level: Int): Float {
     var pClosestDist2 = pClosestDist2_
     val dx = x4 - x1
@@ -666,6 +667,14 @@ fun bezierClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClose
     return pClosestDist2
 }
 
+/** Quadratic bezier */
+fun quadBezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, t: Float): Vec2 {
+    val u = 1f - t
+    val w1 = u * u
+    val w2 = 2 * u * t
+    val w3 = t * t
+    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y)
+}
 
 fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
     val ap = p - a
