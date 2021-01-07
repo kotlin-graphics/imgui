@@ -203,9 +203,9 @@ constructor(
 // Configuration
 
 val TABLE_DRAW_CHANNEL_BG0 = 0
-val TABLE_DRAW_CHANNEL_BG1_FROZEN = 1
+val TABLE_DRAW_CHANNEL_BG2_FROZEN = 1
 
-/** When using ImGuiTableFlags_NoClip */
+/** When using ImGuiTableFlags_NoClip (this becomes the last visible channel) */
 val TABLE_DRAW_CHANNEL_NOCLIP = 2
 
 /** FIXME-TABLE: Currently hard-coded because of clipping assumptions with outer borders rendering. */

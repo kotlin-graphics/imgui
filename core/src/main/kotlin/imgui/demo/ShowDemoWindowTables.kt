@@ -306,11 +306,11 @@ object ShowDemoWindowTables {
 
     enum class ContentsType2 { Text, Button, SmallButton, FillButton, Selectable, SelectableSpanRow }
 
-    var contentsType2 = ContentsType2.Button.ordinal
+    var contentsType2 = ContentsType2.SelectableSpanRow.ordinal
     val contentsTypeNames2 = arrayOf("Text", "Button", "SmallButton", "FillButton", "Selectable", "Selectable (span row)")
     var freezeCols1 = 1
     var freezeRows1 = 1
-    var itemsCount = templateItemsNames.size
+    var itemsCount = templateItemsNames.size * 2
     val outerSizeValue = Vec2(0, TEXT_BASE_HEIGHT * 12)
     var rowMinHeight = 0f // Auto
     var innerWidthWithScroll = 0f // Auto-extend

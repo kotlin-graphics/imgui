@@ -552,7 +552,7 @@ interface demoDebugInformations {
 
         /** Tables Rect Type */
         enum class TRT {
-            OuterRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect,
+            OuterRect, InnerRect,WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect,
             ColumnsContentHeadersUsed, ColumnsContentHeadersIdeal, ColumnsContentFrozen, ColumnsContentUnfrozen;
 
             companion object {
@@ -585,6 +585,7 @@ interface demoDebugInformations {
 
             fun getTableRect(table: Table, rectType: TRT, n: Int): Rect = when(rectType) {
                 TRT.OuterRect -> table.outerRect
+                TRT.InnerRect -> table.innerRect
                 TRT.WorkRect -> table.workRect
                 TRT.HostClipRect -> table.hostClipRect
                 TRT.InnerClipRect -> table.innerClipRect

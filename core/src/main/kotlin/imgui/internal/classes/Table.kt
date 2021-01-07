@@ -156,8 +156,11 @@ class Table {
     /** Reference scale to be able to rescale columns on font/dpi changes. */
     var refScale = 0f
 
-    /** Note: OuterRect.Max.y is often FLT_MAX until EndTable(), unless a height has been specified in BeginTable(). */
+    /** Note: for non-scrolling table, OuterRect.Max.y is often FLT_MAX until EndTable(), unless a height has been specified in BeginTable(). */
     val outerRect = Rect()
+
+    /** InnerRect but without decoration. As with OuterRect, for non-scrolling tables, InnerRect.Max.y is */
+    val innerRect = Rect()
 
     val workRect = Rect()
 
@@ -178,7 +181,7 @@ class Table {
     val hostBackupParentWorkRect = Rect()
 
     /** Backup of InnerWindow->ClipRect during PushTableBackground()/PopTableBackground() */
-    val hostBackupClipRect = Rect()
+    val hostBackupInnerClipRect = Rect()
 
     /** Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable() */
     val hostBackupPrevLineSize = Vec2()
@@ -284,9 +287,9 @@ class Table {
     var dummyDrawChannel: TableDrawChannelIdx = 0
 
     /** For Selectable() and other widgets drawing accross columns after the freezing line. Index within DrawSplitter.Channels[] */
-    var bg1DrawChannelCurrent: TableDrawChannelIdx = 0
+    var bg2DrawChannelCurrent: TableDrawChannelIdx = 0
 
-    var bg1DrawChannelUnfrozen: TableDrawChannelIdx = 0
+    var bg2DrawChannelUnfrozen: TableDrawChannelIdx = 0
 
     /** Set by TableUpdateLayout() which is called when beginning the first row. */
     var isLayoutLocked = false
@@ -434,10 +437,10 @@ class Table {
      *  - After crossing FreezeRowsCount, all columns see their current draw channel changed to a second set of channels.
      *  - We only use the dummy draw channel so we can push a null clipping rectangle into it without affecting other
      *    channels, while simplifying per-row/per-cell overhead. It will be empty and discarded when merged.
-     *  - We allocate 1 or 2 background draw channels. This is because we know PushTableBackground() is only used for
+     *  - We allocate 1 or 2 background draw channels. This is because we know TablePushBackgroundChannel() is only used for
      *    horizontal spanning. If we allowed vertical spanning we'd need one background draw channel per merge group (1-4).
      *  Draw channel allocation (before merging):
-     *  - NoClip                       --> 2+D+1 channels: bg0 + bg1 + foreground (same clip rect == 1 draw call) (FIXME-TABLE: could merge bg1 and foreground?)
+     *  - NoClip                       --> 2+D+1 channels: bg0/1 + bg2 + foreground (same clip rect == 1 draw call) (FIXME-TABLE: could merge bg2 and foreground?)
      *  - Clip                         --> 2+D+N channels
      *  - FreezeRows                   --> 2+D+N*2 (unless scrolling value is zero)
      *  - FreezeRows || FreezeColunns  --> 3+D+N*2 (unless scrolling value is zero)
@@ -451,8 +454,8 @@ class Table {
         val channelsTotal = channelsForBg + (channelsForRow * freezeRowMultiplier) + channelsForDummy
         drawSplitter.split(innerWindow!!.drawList, channelsTotal)
         dummyDrawChannel = if (channelsForDummy > 0) channelsTotal - 1 else -1
-        bg1DrawChannelCurrent = TABLE_DRAW_CHANNEL_BG1_FROZEN
-        bg1DrawChannelUnfrozen = if (freezeRowsCount > 0) 2 + channelsForRow else TABLE_DRAW_CHANNEL_BG1_FROZEN
+        bg2DrawChannelCurrent = TABLE_DRAW_CHANNEL_BG2_FROZEN
+        bg2DrawChannelUnfrozen = if (freezeRowsCount > 0) 2 + channelsForRow else TABLE_DRAW_CHANNEL_BG2_FROZEN
 
         var drawChannelCurrent = 2
         for (columnN in 0 until columnsCount) {
@@ -1057,8 +1060,8 @@ class Table {
 
         // Draw inner border and resizing feedback
         val borderSize = TABLE_BORDER_SIZE
-        val drawY1 = outerRect.min.y
-        val drawY2Body = outerRect.max.y
+        val drawY1 = innerRect.min.y
+        val drawY2Body = innerRect.max.y
         val drawY2Head = when {
             isUsingHeaders -> lastFirstRowHeight + if (freezeRowsCount >= 1) outerRect.min.y else workRect.min.y
             else -> drawY1
@@ -1250,6 +1253,7 @@ class Table {
         val splitter = drawSplitter
         val hasFreezeV = freezeRowsCount > 0
         val hasFreezeH = freezeColumnsCount > 0
+        assert(splitter._current == 0)
 
         // Track which groups we are going to attempt to merge, and which channels goes into each group.
         class MergeGroup {
@@ -1326,7 +1330,7 @@ class Table {
 
         // 2. Rewrite channel list in our preferred order
         if (mergeGroupMask != 0) {
-            // We skip channel 0 (Bg0) and 1 (Bg1 frozen) from the shuffling since they won't move - see channels allocation in TableSetupDrawChannels().
+            // We skip channel 0 (Bg0/Bg1) and 1 (Bg2 frozen) from the shuffling since they won't move - see channels allocation in TableSetupDrawChannels().
             val LEADING_DRAW_CHANNELS = 2
 //            g.drawChannelsTempMergeBuffer.resize(splitter->_Count - LEADING_DRAW_CHANNELS) // Use shared temporary storage so the allocation gets amortized
             if (g.drawChannelsTempMergeBuffer.size < splitter._count - LEADING_DRAW_CHANNELS)
@@ -1344,8 +1348,8 @@ class Table {
             val remainingMask = BitArray(TABLE_MAX_DRAW_CHANNELS)                       // We need 132-bit of storage
             remainingMask.clearBits()
             remainingMask.setBitRange(LEADING_DRAW_CHANNELS, splitter._count - 1)
-            remainingMask.clearBit(bg1DrawChannelUnfrozen)
-            assert(!hasFreezeV || bg1DrawChannelUnfrozen != TABLE_DRAW_CHANNEL_BG1_FROZEN)
+            remainingMask.clearBit(bg2DrawChannelUnfrozen)
+            assert(!hasFreezeV || bg2DrawChannelUnfrozen != TABLE_DRAW_CHANNEL_BG2_FROZEN)
             var remainingCount = splitter._count - if (hasFreezeV) LEADING_DRAW_CHANNELS + 1 else LEADING_DRAW_CHANNELS
             //ImRect host_rect = (table->InnerWindow == table->OuterWindow) ? table->InnerClipRect : table->HostClipRect;
             val hostRect = hostClipRect // [JVM] careful, same instance!
@@ -1397,10 +1401,10 @@ class Table {
                     }
                 }
 
-                // Make sure Bg1DrawChannelUnfrozen appears in the middle of our groups (whereas Bg0 and Bg1 frozen are fixed to 0 and 1)
+                // Make sure Bg2DrawChannelUnfrozen appears in the middle of our groups (whereas Bg0/Bg1 and Bg2 frozen are fixed to 0 and 1)
                 if (mergeGroupN == 1 && hasFreezeV)
 //                    memcpy(dstTmp++, &splitter->_Channels[table->Bg1DrawChannelUnfrozen], sizeof(ImDrawChannel))
-                    memcpy(splitter._channels[bg1DrawChannelUnfrozen])
+                    memcpy(splitter._channels[bg2DrawChannelUnfrozen])
             }
 
             // Append unmergeable channels that we didn't reorder at the end of the list
@@ -1587,7 +1591,6 @@ class Table {
         // Row background fill
         val bgY1 = rowPosY1
         val bgY2 = rowPosY2
-
         val unfreezeRowsActual = currentRow + 1 == freezeRowsCount
         val unfreezeRowsRequest = currentRow + 1 == freezeRowsRequest
         if (currentRow == 0)
@@ -1675,7 +1678,7 @@ class Table {
             bgClipRectForDrawCmd.min.y = bgClipRect.min.y
             bgClipRect.max.y = window.innerClipRect.max.y
             bgClipRectForDrawCmd.max.y = bgClipRect.max.y
-            bg1DrawChannelCurrent = bg1DrawChannelUnfrozen
+            bg2DrawChannelCurrent = bg2DrawChannelUnfrozen
             assert(bgClipRectForDrawCmd.min.y <= bgClipRectForDrawCmd.max.y)
 
             val rowHeight = rowPosY2 - rowPosY1

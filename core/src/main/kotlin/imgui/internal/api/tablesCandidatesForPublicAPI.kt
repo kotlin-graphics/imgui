@@ -194,14 +194,16 @@ interface tablesCandidatesForPublicAPI {
         return rowHeight
     }
 
+    /** Bg2 is used by Selectable (and possibly other widgets) to render to the background.
+     *  Unlike our Bg0/1 channel which we uses for RowBg/CellBg/Borders and where we guarantee all shapes to be CPU-clipped, the Bg2 channel being widgets-facing will rely on regular ClipRect. */
     fun tablePushBackgroundChannel() {
         val window = g.currentWindow!!
         val table = g.currentTable!!
 
         // Optimization: avoid SetCurrentChannel() + PushClipRect()
-        table.hostBackupClipRect put window.clipRect
+        table.hostBackupInnerClipRect put window.clipRect
         setWindowClipRectBeforeSetChannel(window, table.bgClipRectForDrawCmd)
-        table.drawSplitter.setCurrentChannel(window.drawList, table.bg1DrawChannelCurrent)
+        table.drawSplitter.setCurrentChannel(window.drawList, table.bg2DrawChannelCurrent)
     }
 
     fun tablePopBackgroundChannel() {
@@ -210,7 +212,7 @@ interface tablesCandidatesForPublicAPI {
         val column = table.columns[table.currentColumn]
 
         // Optimization: avoid PopClipRect() + SetCurrentChannel()
-        setWindowClipRectBeforeSetChannel(window, table.hostBackupClipRect)
+        setWindowClipRectBeforeSetChannel(window, table.hostBackupInnerClipRect)
         table.drawSplitter.setCurrentChannel(window.drawList, column.drawChannelCurrent)
     }
 }

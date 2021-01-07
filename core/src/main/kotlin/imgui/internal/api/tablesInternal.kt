@@ -68,8 +68,6 @@ interface tablesInternal {
         table.columnsCount = columnsCount
         table.isLayoutLocked = false
         table.innerWidth = innerWidth
-        table.outerRect put outerRect
-        table.workRect put outerRect
         table.isOuterRectFitX = outerSize.x >= -1f && outerSize.x <= 0f // Bit ambiguous
 
         // When not using a child window, WorkRect.Max will grow as we append contents.
@@ -92,12 +90,18 @@ interface tablesInternal {
 
             // Create scrolling region (without border and zero window padding)
             val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else Wf.None
-            beginChildEx(name, instanceId, table.outerRect.size, false, childFlags.i)
+            beginChildEx(name, instanceId, outerRect.size, false, childFlags.i)
             table.innerWindow = g.currentWindow
             val inner = table.innerWindow!!
             table.workRect put inner.workRect
             table.outerRect put inner.rect()
+            table.innerRect put table.innerWindow!!.innerRect
             assert(inner.windowPadding.x == 0f && inner.windowPadding.y == 0f && inner.windowBorderSize == 0f) // TODO glm -> allEqual
+        } else {
+            // For non-scrolling tables, WorkRect == OuterRect == InnerRect.
+            // But at this point we do NOT have a correct value for .Max.y (unless a height has been explicitly passed in). It will only be updated in EndTable().
+            table.workRect put outerRect
+            table.outerRect put outerRect
         }
 
         // Push a standardized ID for both child-using and not-child-using tables

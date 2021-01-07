@@ -114,11 +114,13 @@ interface tables {
         innerWindow.dc.prevLineSize put table.hostBackupPrevLineSize
         innerWindow.dc.currLineSize put table.hostBackupCurrLineSize
         innerWindow.dc.cursorMaxPos put table.hostBackupCursorMaxPos
-        if (innerWindow !== outerWindow) {
-            table.outerRect.max.y = table.outerRect.max.y max (innerWindow.pos.y + innerWindow.size.y)
+        if (innerWindow !== outerWindow)
+            // Both OuterRect/InnerRect are valid from BeginTable
             innerWindow.dc.cursorMaxPos.y = table.rowPosY2
-        } else if (flags hasnt Tf.NoHostExtendY) {
+        else if (flags hasnt Tf.NoHostExtendY) {
+            // Patch OuterRect/InnerRect height
             table.outerRect.max.y = table.outerRect.max.y max innerWindow.dc.cursorPos.y
+            table.innerRect.max.y = table.outerRect.max.y
             innerWindow.dc.cursorMaxPos.y = table.rowPosY2
         }
         table.workRect.max.y = table.workRect.max.y max table.outerRect.max.y
@@ -131,7 +133,6 @@ interface tables {
         // Draw borders
         if (flags has Tf.Borders)
             table.drawBorders()
-        table.drawSplitter.setCurrentChannel(innerWindow.drawList, 0)
 
         // Store content width reference for each column (before attempting to merge draw calls)
         val backupOuterCursorPosX = outerWindow.dc.cursorPos.x
@@ -157,6 +158,7 @@ interface tables {
 //        #endif
 
         // Flatten channels and merge draw calls
+        table.drawSplitter.setCurrentChannel(innerWindow.drawList, 0)
         if (table.flags hasnt Tf.NoClip)
             table.mergeDrawChannels()
         table.drawSplitter.merge(innerWindow.drawList)
