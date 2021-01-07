@@ -88,7 +88,7 @@ class ListClipper {
             table.endRow()
 
         // Reached end of list
-        if (displayEnd >= itemsCount || skipItemForListClipping) {
+        if (itemsCount == 0 || skipItemForListClipping) {
             end()
             return false
         }
@@ -130,6 +130,12 @@ class ListClipper {
                 itemsHeight = window.dc.cursorPos.y - startPosY
             assert(itemsHeight > 0f) { "Unable to calculate item height! First item hasn't moved the cursor vertically!" }
             stepNo = 2
+        }
+
+        // Reached end of list
+        if (displayEnd >= itemsCount) {
+            end()
+            return false
         }
 
         // Step 2: calculate the actual range of elements to display, and position the cursor before the first element
