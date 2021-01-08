@@ -6,26 +6,17 @@ dependencies {
 
     implementation(project(":core"))
 
-    val platform = when {
-        current().isWindows -> "win"
-        current().isLinux -> "linux"
-        else -> "mac"
+    val (platform, lwjglNatives) = when {
+        current().isWindows -> "win" to "windows"
+        current().isLinux -> "linux" to "linux"
+        else -> "mac" to "macos"
     }
     listOf("base", "graphics").forEach {
         implementation("org.openjfx:javafx-$it:11:$platform")
     }
 
-    val kx = "com.github.kotlin-graphics"
-    implementation("$kx:glm:${findProperty("glmVersion")}")
-
-    val lwjglNatives = "natives-" + when (current()) {
-        WINDOWS -> "windows"
-        LINUX -> "linux"
-        else -> "macos"
-    }
-
     implementation("org.lwjgl", "lwjgl")
-    runtimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
+    runtimeOnly("org.lwjgl", "lwjgl", classifier = "natives-$lwjglNatives")
 }
 
 tasks.compileJava {
