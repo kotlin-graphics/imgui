@@ -61,6 +61,7 @@ interface tablesCandidatesForPublicAPI {
         if (column0.widthGiven == column0Width || column0.widthRequest == column0Width)
             return
 
+        //IMGUI_DEBUG_LOG("TableSetColumnWidth(%d, %.1f->%.1f)\n", column_0_idx, column_0->WidthGiven, column_0_width);
         var column1 = table.columns.getOrNull(column0.nextEnabledColumn)
 
         // In this surprisingly not simple because of how we support mixing Fixed and multiple Stretch columns.
@@ -82,59 +83,41 @@ interface tablesCandidatesForPublicAPI {
         // - W1 F2 F3  resize from F3|          --> ok: no-op (disabled by Resize Rule 1)
         // - W1 F2     resize from F2|          --> ok: no-op (disabled by Resize Rule 1)
         // - W1 W2 F3  resize from W1| or W2|   --> ok
-        // - W1 F2 W3  resize from W1| or F2|   --> FIXME
+        // - W1 F2 W3  resize from W1| or F2|   --> ok
         // - F1 W2 F3  resize from W2|          --> ok
         // - F1 W3 F2  resize from W3|          --> ok
-        // - W1 F2 F3  resize from W1|          --> ok: equivalent to resizing |F2. F3 will not move. (forwarded by Resize Rule 2)
+        // - W1 F2 F3  resize from W1|          --> ok: equivalent to resizing |F2. F3 will not move.
         // - W1 F2 F3  resize from F2|          --> ok
         // All resizes from a Wx columns are locking other columns.
 
         // Possible improvements:
         // - W1 W2 W3  resize W1|               --> to not be stuck, both W2 and W3 would stretch down. Seems possible to fix. Would be most beneficial to simplify resize of all-weighted columns.
-        // - W1 F2 W3  resize W1| or F2|        --> symmetrical resize is weird and glitchy. Seems possible to fix.
         // - W3 F1 F2  resize W3|               --> to not be stuck past F1|, both F1 and F2 would need to stretch down, which would be lossy or ambiguous. Seems hard to fix.
 
-        // Rules:
-        // - [Resize Rule 1] Can't resize from right of right-most visible column if there is any Stretch column. Implemented in TableUpdateLayout().
-        // - [Resize Rule 2] Resizing from right-side of a Stretch column before a fixed column forward sizing to left-side of fixed column.
-        // - [Resize Rule 3] If we are are followed by a fixed column and we have a Stretch column before, we need to ensure that our left border won't move.
-        table.isSettingsDirty = true
-        if (column0.flags has Tcf.WidthFixed) {
-            // [Resize Rule 3] If we are are followed by a fixed column and we have a Stretch column before, we need to ensure
-            // that our left border won't move, which we can do by making sure column_a/column_b resizes cancels each others.
-            if (column1 != null && column1.flags has Tcf.WidthFixed)
-                if (table.leftMostStretchedColumn != -1 && table.columns[table.leftMostStretchedColumn].displayOrder < column0.displayOrder) {
-                // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
-                    val column1Width = (column1.widthRequest - (column0Width - column0.widthRequest)) max minWidth
-                    column0Width = column0.widthRequest + column1.widthRequest - column1Width
-                    column1.widthRequest = column1Width
-            }
+        // [Resize Rule 1] Can't resize from right of right-most visible column if there is any Stretch column. Implemented in TableUpdateLayout().
 
-            // Apply
-            //IMGUI_DEBUG_LOG("TableSetColumnWidth(%d, %.1f->%.1f)\n", column_0_idx, column_0->WidthRequested, column_0_width);
-            column0.widthRequest = column0Width
-        }
-        else if (column0.flags has Tcf.WidthStretch) {
-            // We can also use previous column if there's no next one (this is used when doing an auto-fit on the right-most stretch column)
-            if (column1 == null)
-                column1 = table.columns.getOrNull(column0.prevEnabledColumn) ?: return
-
-            if (column1.flags has Tcf.WidthFixed) {
-                // [Resize Rule 2]
-                val off = column0.widthGiven - column0Width
-                val column1Width = column1.widthGiven + off
-                column1.widthRequest = minWidth max column1Width
-            }
-            else {
-                // At this point column_1 is the next OR previous column and we know it is a stretch column.
-                // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
-                val column1Width = (column1.widthRequest - (column0Width - column0.widthRequest)) max minWidth
-                column0Width = column0.widthRequest + column1.widthRequest - column1Width
-                column1.widthRequest = column1Width
+        // If we have all Fixed columns OR resizing a Fixed column that doesn't come after a Stretch one, we can do an offsetting resize.
+        // This is the preferred resize path
+        if (column0.flags has Tcf.WidthFixed)
+            if (column1 == null || table.leftMostStretchedColumn == -1 || table.columns[table.leftMostStretchedColumn].displayOrder >= column0.displayOrder) {
                 column0.widthRequest = column0Width
-                table.updateColumnsWeightFromWidth()
+                table.isSettingsDirty = true
+                return
             }
-        }
+
+        // We can also use previous column if there's no next one (this is used when doing an auto-fit on the right-most stretch column)
+        if (column1 == null)
+            column1 = table.columns.getOrNull(column0.prevEnabledColumn) ?: return
+
+        // Resizing from right-side of a Stretch column before a Fixed column forward sizing to left-side of fixed column.
+        // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
+        val column1Width = (column1.widthRequest - (column0Width - column0.widthRequest)) max minWidth
+        column0Width = column0.widthRequest + column1.widthRequest - column1Width
+        column0.widthRequest = column0Width
+        column1.widthRequest = column1Width
+        if ((column0.flags or column1.flags) has Tcf.WidthStretch)
+            table.updateColumnsWeightFromWidth()
+        table.isSettingsDirty = true
     }
 
     /** Note that the NoSortAscending/NoSortDescending flags are processed in TableSortSpecsSanitize(), and they may change/revert

@@ -115,7 +115,7 @@ interface tables {
         innerWindow.dc.currLineSize put table.hostBackupCurrLineSize
         innerWindow.dc.cursorMaxPos put table.hostBackupCursorMaxPos
         if (innerWindow !== outerWindow)
-            // Both OuterRect/InnerRect are valid from BeginTable
+        // Both OuterRect/InnerRect are valid from BeginTable
             innerWindow.dc.cursorMaxPos.y = table.rowPosY2
         else if (flags hasnt Tf.NoHostExtendY) {
             // Patch OuterRect/InnerRect height
@@ -195,7 +195,7 @@ interface tables {
         if (table.hostBackupItemWidthStackSize != 1)
             TODO()
 //        outerWindow.dc.itemWidthStack.size = table->HostBackupItemWidthStackSize  // TODO check me
-        val outerWidth = if(table.isOuterRectAutoFitX) table.workRect.width else table.columnsAutoFitWidth
+        val outerWidth = if (table.isOuterRectAutoFitX) table.workRect.width else table.columnsAutoFitWidth
         outerWindow.dc.columnsOffset = table.hostBackupColumnsOffset
         if (innerWindow != outerWindow)
             endChild()
@@ -322,7 +322,7 @@ interface tables {
         assert(!table.isLayoutLocked) { "Need to call call TableSetupColumn() before first row!" }
         assert(flags hasnt Tcf.StatusMask_) { "Illegal to pass StatusMask values to TableSetupColumn()" }
         if (table.declColumnsCount >= table.columnsCount) {
-            assert(table.declColumnsCount < table.columnsCount){ "Called TableSetupColumn() too many times!" }
+            assert(table.declColumnsCount < table.columnsCount) { "Called TableSetupColumn() too many times!" }
             return
         }
 
@@ -496,9 +496,9 @@ interface tables {
 
         // Using AllowItemOverlap mode because we cover the whole cell, and we want user to be able to submit subsequent items.
         val (pressed, hovered, held) = buttonBehavior(bb, id, ButtonFlag.AllowItemOverlap.i)
-        if(g.activeId != id)
+        if (g.activeId != id)
             setItemAllowOverlap()
-        if (hovered || selected) {
+        if (held || hovered || selected) {
             val col = if (held) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             //RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
             tableSetBgColor(TableBgTarget.CellBg, col.u32, table.currentColumn)
