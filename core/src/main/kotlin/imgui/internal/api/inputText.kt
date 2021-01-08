@@ -563,7 +563,7 @@ internal interface inputText {
                     }
 
                     if (eventFlag != Itf.None) {
-                        val cbData = TextEditCallbackData()
+                        val cbData = InputTextCallbackData()
                         cbData.eventFlag = eventFlag.i
                         cbData.flags = flags
                         cbData.userData = callbackUserData

@@ -137,12 +137,13 @@ object ShowDemoWindowTables {
 
     /* Resizable, fixed */
     var flags2 = Tf.Resizable or Tf.ColumnsWidthFixed or Tf.BordersOuter or Tf.BordersV or Tf.ContextMenuInBody
+    var useAllWidth0 = true
 
     /* Resizable, mixed */
     var flags3 = Tf.ColumnsWidthFixed or Tf.RowBg or Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable
 
     /* Reorderable, hideable, with headers */
-    var flags4 = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.BordersOuter or Tf.BordersV or Tf.NoBordersInBody
+    var flags4 = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.BordersOuter or Tf.BordersV
 
     /* Padding */
     var flags5 = Tf.BordersV.i
@@ -185,7 +186,7 @@ object ShowDemoWindowTables {
 
     /* Outer size */
     var flags13 = Tf.Borders or Tf.Resizable or Tf.ContextMenuInBody or Tf.RowBg or Tf.ColumnsWidthFixed
-    var useAllWidth = false
+    var useAllWidth1 = false
 
     /* Background color */
     var flags14 = Tf.RowBg.i
@@ -509,8 +510,8 @@ object ShowDemoWindowTables {
                     "Using _Resizable + _ColumnsWidthFixed flags.\n" +
                             "Fixed-width columns generally makes more sense if you want to use horizontal scrolling.\n\n" +
                             "Double-click a column border to auto-fit the column to its contents.")
-            //ImGui::CheckboxFlags("ImGuiTableFlags_ScrollX", &flags, ImGuiTableFlags_ScrollX); // FIXME-TABLE: Explain or fix the effect of enable Scroll on outer_size
-            table("##table1", 3, flags2) {
+            checkbox("Use all width", ::useAllWidth0)
+            table("##table1", 3, flags2, Vec2(if(useAllWidth0) -Float.MIN_VALUE else 0f, 0f)) {
                 for (row in 0..4) {
                     tableNextRow()
                     for (column in 0..2) {
@@ -848,7 +849,7 @@ object ShowDemoWindowTables {
         treeNode("Recursive") {
             helpMarker("This demonstrate embedding a table into another table cell.")
 
-            table("recurse1", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable) {
+            table("recurse1", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
                 tableSetupColumn("A0")
                 tableSetupColumn("A1")
                 tableHeadersRow()
@@ -857,7 +858,7 @@ object ShowDemoWindowTables {
                 text("A0 Cell 0")
                 run {
                     val rowsHeight = TEXT_BASE_HEIGHT * 2
-                    table("recurse2", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable) {
+                    table("recurse2", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
                         tableSetupColumn("B0")
                         tableSetupColumn("B1")
                         tableHeadersRow()
@@ -1014,9 +1015,9 @@ object ShowDemoWindowTables {
             // The default value of outer_size.x is -FLT_MIN which right-align tables.
             // Using outer_size.x == 0.0f on a table with no scrolling and no stretch column we can make them tighter.
             text("Using auto/all width, using NoHostExtendY:");
-            checkbox("Use all width", ::useAllWidth)
+            checkbox("Use all width", ::useAllWidth1)
             checkboxFlags("ImGuiTableFlags_NoHostExtendY", ::flags13, Tf.NoHostExtendY.i)
-            table("##table3", 3, flags13, Vec2(if(useAllWidth) -Float.MIN_VALUE else 0f, TEXT_BASE_HEIGHT * 5.5f)) {
+            table("##table3", 3, flags13, Vec2(if(useAllWidth1) -Float.MIN_VALUE else 0f, TEXT_BASE_HEIGHT * 5.5f)) {
                 for (row in 0..9) { // TODO dsl this pattern?
                     tableNextRow()
                     for (column in 0..2) {

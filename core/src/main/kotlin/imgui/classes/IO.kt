@@ -95,11 +95,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
      *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
-     *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
-     *  (was called io.OptMacOSXBehaviors prior to 1.63) */
+     *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl */
     var configMacOSXBehaviors = false
 
-    /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
+    /** Set to false to disable blinking cursor, for users who consider it distracting. */
     var configInputTextCursorBlink = true
 
     /** Enable resizing of windows from their edges and from the lower-left corner.

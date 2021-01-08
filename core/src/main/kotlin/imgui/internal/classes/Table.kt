@@ -1057,10 +1057,11 @@ class Table {
      *  ~TableDrawBorders */
     fun drawBorders() {
         val innerWindow = innerWindow!!
-        drawSplitter.setCurrentChannel(innerWindow.drawList, TABLE_DRAW_CHANNEL_BG0)
         if (innerWindow.hidden || !hostClipRect.overlaps(innerClipRect))
             return
+
         val innerDrawlist = innerWindow.drawList
+        drawSplitter.setCurrentChannel(innerDrawlist, TABLE_DRAW_CHANNEL_BG0)
         innerDrawlist.pushClipRect(bg0ClipRectForDrawCmd.min, bg0ClipRectForDrawCmd.max, false)
 
         // Draw inner border and resizing feedback
@@ -1082,12 +1083,12 @@ class Table {
                 val isHovered = hoveredColumnBorder == columnN
                 val isResized = resizedColumn == columnN && instanceInteracted == instanceCurrent
                 val isResizable = column.flags hasnt (Tcf.NoResize or Tcf.NoDirectResize_)
+                val isFrozenSeparator = freezeColumnsCount != -1 && freezeColumnsCount == orderN + 1
 
                 if (column.maxX > innerClipRect.max.x && !isResized)// && is_hovered)
                     continue
-                if (column.nextEnabledColumn == -1 && !isResizable)
-                    if (flags hasnt Tf.SameWidths)
-                        continue
+                if (column.nextEnabledColumn == -1 && !isResizable && flags hasnt Tf.SameWidths)
+                    continue
                 if (column.maxX <= column.clipRect.min.x) // FIXME-TABLE FIXME-STYLE: Assume BorderSize==1, this is problematic if we want to increase the border size..
                     continue
 
@@ -1095,7 +1096,7 @@ class Table {
                 // Always draw full height border when being resized/hovered, or on the delimitation of frozen column scrolling.
                 val col: Int
                 val drawY2: Float
-                if (isHovered || isResized || (freezeColumnsCount != -1 && freezeColumnsCount == orderN + 1)) {
+                if (isHovered || isResized || isFrozenSeparator) {
                     drawY2 = drawY2Body
                     col = if (isResized) Col.SeparatorActive.u32 else if (isHovered) Col.SeparatorHovered.u32 else borderColorStrong
                 } else {
@@ -1108,7 +1109,7 @@ class Table {
             }
 
         // Draw outer border
-        // FIXME-TABLE: could use AddRect or explicit VLine/HLine helper?
+        // FIXME: could use AddRect or explicit VLine/HLine helper?
         if (flags has Tf.BordersOuter) {
             // Display outer border offset by 1 which is a simple way to display it without adding an extra draw call
             // (Without the offset, in outer_window it would be rendered behind cells, because child windows are above their

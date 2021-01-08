@@ -36,8 +36,6 @@ typealias TextureID = Int
 typealias InputTextCallback = (InputTextCallbackData) -> Boolean
 typealias SizeCallback = (SizeCallbackData) -> Unit
 
-typealias TextEditCallbackData = InputTextCallbackData
-
 infix fun String.cmp(charArray: CharArray): Boolean {
     for (i in indices)
         if (get(i) != charArray[i])

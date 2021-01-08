@@ -227,7 +227,7 @@ object Console {
             (data.userData as ExampleAppConsole).inputTextCallback(data)
         }
 
-        fun inputTextCallback(data: TextEditCallbackData): Boolean {
+        fun inputTextCallback(data: InputTextCallbackData): Boolean {
             when (data.eventFlag) {
                 imgui.InputTextFlag.CallbackCompletion.i -> {
                     val wordEnd = data.cursorPos
