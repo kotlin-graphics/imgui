@@ -581,8 +581,7 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
 // [SECTION] MISC HELPERS/UTILITIES (Geometry functions)
 //-----------------------------------------------------------------------------
 
-/** Cubic Bezier */
-fun bezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
+fun bezierCubicCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
     val u = 1.0f - t
     val w1 = u * u * u
     val w2 = 3 * u * u * t
@@ -593,6 +592,14 @@ fun bezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
             w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y)
 }
 
+fun bezierQuadraticCalc(p1: Vec2, p2: Vec2, p3: Vec2, t: Float): Vec2 {
+    val u = 1f - t
+    val w1 = u * u
+    val w2 = 2 * u * t
+    val w3 = t * t
+    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y)
+}
+
 /** For curves with explicit number of segments */
 fun bezierClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegments: Int): Vec2 {
     assert(numSegments > 0) { "Use ImBezierClosestPointCasteljau()" }
@@ -601,7 +608,7 @@ fun bezierClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegme
     var pClosestDist2 = Float.MAX_VALUE
     val tStep = 1f / numSegments
     for (iStep in 1..numSegments) {
-        val pCurrent = bezierCalc(p1, p2, p3, p4, tStep * iStep)
+        val pCurrent = bezierCubicCalc(p1, p2, p3, p4, tStep * iStep)
         val pLine = lineClosestPoint(pLast, pCurrent, p)
         val dist2 = (p - pLine).lengthSqr
         if (dist2 < pClosestDist2) {

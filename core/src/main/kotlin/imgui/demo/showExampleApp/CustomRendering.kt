@@ -141,11 +141,11 @@ object CustomRendering {
 
                         // Quadratic Bezier Curve (3 control points)
                         val cp3 = arrayOf(Vec2(x, y + sz * 0.6f), Vec2(x + sz * 0.5f, y - sz * 0.4f), Vec2(x + sz, y + sz))
-                        addQuadBezierCurve(cp3[0], cp3[1], cp3[2], col, th, curveSegments); x += sz + spacing
+                        addBezierQuadratic(cp3[0], cp3[1], cp3[2], col, th, curveSegments); x += sz + spacing
 
                         // Cubic Bezier Curve (4 control points)
                         val cp4 = arrayOf(Vec2(x, y), Vec2(x + sz * 1.3f, y + sz * 0.3f), Vec2(x + sz - sz * 1.3f, y + sz - sz * 0.3f), Vec2(x + sz, y + sz))
-                        addBezierCurve(cp4[0], cp4[1], cp4[2], cp4[3], col, th, curveSegments)
+                        addBezierCubic(cp4[0], cp4[1], cp4[2], cp4[3], col, th, curveSegments)
                     }
                     x = p.x + 4
                     y += sz + spacing

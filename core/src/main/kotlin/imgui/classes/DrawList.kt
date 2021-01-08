@@ -747,23 +747,23 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Cubic Bezier takes 4 controls points
      *
      *  Cubic Bezier (4 control points) */
-    fun addBezierCurve(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
+    fun addBezierCubic(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
         if (col hasnt COL32_A_MASK) return
 
         pathLineTo(p1)
-        pathBezierCurveTo(p2, p3, p4, numSegments)
+        pathBezierCubicCurveTo(p2, p3, p4, numSegments)
         pathStroke(col, false, thickness)
     }
 
     /** Quad Bezier (3 control points)
      *
      *  Quadratic Bezier takes 3 controls points */
-    fun addQuadBezierCurve(p1: Vec2, p2: Vec2, p3: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
+    fun addBezierQuadratic(p1: Vec2, p2: Vec2, p3: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
         if (col hasnt COL32_A_MASK)
             return
 
         pathLineTo(p1)
-        pathQuadBezierCurveTo(p2, p3, numSegments)
+        pathBezierQuadraticCurveTo(p2, p3, numSegments)
         pathStroke(col, false, thickness)
     }
 
@@ -887,67 +887,35 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    /** Quadratic bezier */
-    fun pathQuadBezierToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
-                                  x3: Float, y3: Float, tessTol: Float, level: Int) {
-        val dx = x3 - x1
-        val dy = y3 - y1
-        val det = (x2 - x3) * dy - (y2 - y3) * dx
-        if (det * det * 4f < tessTol * (dx * dx + dy * dy))
-            path += Vec2(x3, y3)
-        else if (level < 10) {
-            val x12 = (x1 + x2) * 0.5f
-            val y12 = (y1 + y2) * 0.5f
-            val x23 = (x2 + x3) * 0.5f
-            val y23 = (y2 + y3) * 0.5f
-            val x123 = (x12 + x23) * 0.5f
-            val y123 = (y12 + y23) * 0.5f
-            pathQuadBezierToCasteljau(path, x1, y1, x12, y12, x123, y123, tessTol, level + 1)
-            pathQuadBezierToCasteljau(path, x123, y123, x23, y23, x3, y3, tessTol, level + 1)
-        }
+    private fun bezierCubicCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
+        val u = 1f - t
+        val w1 = u * u * u
+        val w2 = 3 * u * u * t
+        val w3 = 3 * u * t * t
+        val w4 = t * t * t
+        return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y)
     }
 
-    /** Cubic bezier
-     *
-     *  Cubic Bezier (4 control points) */
-    fun pathBezierCurveTo(p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int = 0) {
-
-        val p1 = _path.last()
-        if (numSegments == 0) // Auto-tessellated
-            pathBezierToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, style.curveTessellationTol, 0)
-        else {
-            val tStep = 1f / numSegments
-            for (iStep in 1..numSegments)
-                _path += bezierCalc(p1, p2, p3, p4, tStep * iStep)
-        }
+    private fun bezierQuadraticCalc(p1: Vec2, p2: Vec2, p3: Vec2, t: Float): Vec2 {
+        val u = 1f - t
+        val w1 = u * u
+        val w2 = 2 * u * t
+        val w3 = t * t
+        return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y)
     }
 
-    /** Quadratic bezier
-     *
-     *  Quad Bezier (3 control points) */
-    fun pathQuadBezierCurveTo(p2: Vec2, p3: Vec2, numSegments: Int = 0) {
-        val p1 = _path.last()
-        if (numSegments == 0)
-            pathQuadBezierToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _data.curveTessellationTol, 0) // Auto-tessellated
-        else {
-            val tStep = 1f / numSegments
-            for (iStep in 1..numSegments)
-                _path += quadBezierCalc(p1, p2, p3, tStep * iStep)
-        }
-    }
-
-    /** Cubic bezier
-     *  Closely mimics BezierClosestPointCasteljauStep() in imgui.cpp */
-    private fun pathBezierToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float, tess_tol: Float, level: Int) {
+    /** Closely mimics ImBezierCubicClosestPointCasteljau() in imgui.cpp */
+    private fun pathBezierCubicCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
+                                                x3: Float, y3: Float, x4: Float, y4: Float, tessTol: Float, level: Int) {
         val dx = x4 - x1
         val dy = y4 - y1
-        var d2 = ((x2 - x4) * dy - (y2 - y4) * dx)
-        var d3 = ((x3 - x4) * dy - (y3 - y4) * dx)
-        d2 = if (d2 >= 0) d2 else -d2
-        d3 = if (d3 >= 0) d3 else -d3
-        if ((d2 + d3) * (d2 + d3) < tess_tol * (dx * dx + dy * dy)) {
-            path.add(Vec2(x4, y4))
-        } else if (level < 10) {
+        var d2 = (x2 - x4) * dy - (y2 - y4) * dx
+        var d3 = (x3 - x4) * dy - (y3 - y4) * dx
+        d2 = if(d2 >= 0) d2 else -d2
+        d3 = if(d3 >= 0) d3 else -d3
+        if ((d2 + d3) * (d2 + d3) < tessTol * (dx * dx + dy * dy))
+                path += Vec2(x4, y4)
+        else if (level < 10) {
             val x12 = (x1 + x2) * 0.5f
             val y12 = (y1 + y2) * 0.5f
             val x23 = (x2 + x3) * 0.5f
@@ -960,8 +928,56 @@ class DrawList(sharedData: DrawListSharedData?) {
             val y234 = (y23 + y34) * 0.5f
             val x1234 = (x123 + x234) * 0.5f
             val y1234 = (y123 + y234) * 0.5f
-            pathBezierToCasteljau(path, x1, y1, x12, y12, x123, y123, x1234, y1234, tess_tol, level + 1)
-            pathBezierToCasteljau(path, x1234, y1234, x234, y234, x34, y34, x4, y4, tess_tol, level + 1)
+            pathBezierCubicCurveToCasteljau(path, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
+            pathBezierCubicCurveToCasteljau(path, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
+        }
+    }
+
+    private fun pathBezierQuadraticCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
+                                                    x3: Float, y3: Float, tessTol: Float, level: Int) {
+        val dx = x3 - x1
+        val dy = y3 - y1
+        val det = (x2 - x3) * dy - (y2 - y3) * dx
+        if (det * det * 4f < tessTol * (dx * dx + dy * dy))
+                path += Vec2(x3, y3)
+        else if (level < 10) {
+            val x12 = (x1 + x2) * 0.5f
+            val y12 = (y1 + y2) * 0.5f
+            val x23 = (x2 + x3) * 0.5f
+            val y23 = (y2 + y3) * 0.5f
+            val x123 = (x12 + x23) * 0.5f
+            val y123 = (y12 + y23) * 0.5f
+            pathBezierQuadraticCurveToCasteljau(path, x1, y1, x12, y12, x123, y123, tessTol, level + 1)
+            pathBezierQuadraticCurveToCasteljau(path, x123, y123, x23, y23, x3, y3, tessTol, level + 1)
+        }
+    }
+
+    /** Cubic bezier
+     *
+     *  Cubic Bezier (4 control points) */
+    fun pathBezierCubicCurveTo(p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int = 0) {
+
+        val p1 = _path.last()
+        if (numSegments == 0)
+            pathBezierCubicCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, style.curveTessellationTol, 0) // Auto-tessellated
+        else {
+            val tStep = 1f / numSegments
+            for (iStep in 1..numSegments)
+                _path += bezierCubicCalc(p1, p2, p3, p4, tStep * iStep)
+        }
+    }
+
+    /** Quadratic bezier
+     *
+     *  Quad Bezier (3 control points) */
+    fun pathBezierQuadraticCurveTo(p2: Vec2, p3: Vec2, numSegments: Int) {
+        val p1 = _path.last()
+        if (numSegments == 0)
+            pathBezierQuadraticCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _data.curveTessellationTol, 0)// Auto-tessellated
+        else {
+            val tStep = 1f / numSegments
+            for (iStep in 1..numSegments)
+                _path + bezierQuadraticCalc(p1, p2, p3, tStep * iStep)
         }
     }
 
