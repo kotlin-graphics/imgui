@@ -53,15 +53,11 @@ interface tablesCandidatesForPublicAPI {
         val column0 = table.columns[columnN]
         var column0Width = width
 
-        // Constraints
-        val minWidth = tableGetMinColumnWidth()
-        val maxWidth0 = when {
-            table.flags has Tf.ScrollX -> Float.MAX_VALUE
-            else -> (table.workRect.max.x - column0.minX) - (table.columnsEnabledCount - (column0.indexWithinEnabledSet + 1)) * minWidth
-        }
-        column0Width = clamp(column0Width, minWidth, maxWidth0)
-
+        // Apply constraints early
         // Compare both requested and actual given width to avoid overwriting requested width when column is stuck (minimum size, bounded)
+        val minWidth = tableGetMinColumnWidth()
+        val maxWidth = table getMaxColumnWidth columnN
+        column0Width = clamp(column0Width, minWidth, maxWidth)
         if (column0.widthGiven == column0Width || column0.widthRequest == column0Width)
             return
 

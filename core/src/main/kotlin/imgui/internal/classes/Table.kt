@@ -574,7 +574,6 @@ class Table {
 
         // [Part 3] Fix column flags. Calculate ideal width for columns. Count how many fixed/stretch columns we have and sum of weights.
         val minColumnWidth = tableGetMinColumnWidth()
-        val minColumnDistance = minColumnWidth + cellPaddingX * 2f + cellSpacingX1 + cellSpacingX2
         var countFixed = 0                    // Number of columns that have fixed sizing policy (not stretched sizing policy) (this is NOT the opposite of count_resizable!)
         var countResizable = 0                // Number of columns the user can resize (this is NOT the opposite of count_fixed!)
         var sumWeightsStretched = 0f     // Sum of all weights for weighted columns.
@@ -764,36 +763,20 @@ class Table {
             if (isHoveringTable && g.io.mousePos.x >= column.clipRect.min.x && g.io.mousePos.x < column.clipRect.max.x)
                 hoveredColumnBody = columnN
 
-            // Maximum width
-            var maxWidth = Float.MAX_VALUE
-            if (flags has Tf.ScrollX) {
-                // Frozen columns can't reach beyond visible width else scrolling will naturally break.
-                if (orderN < freezeColumnsRequest) {
-                    maxWidth = (innerClipRect.max.x - (freezeColumnsRequest - orderN) * minColumnDistance) - offsetX
-                    maxWidth -= outerPaddingX + cellPaddingX + cellSpacingX2
-                }
-            } else if (flags hasnt Tf.NoKeepColumnsVisible) {
-                // If horizontal scrolling if disabled, we apply a final lossless shrinking of columns in order to make
-                // sure they are all visible. Because of this we also know that all of the columns will always fit in
-                // table->WorkRect and therefore in table->InnerRect (because ScrollX is off)
-                // FIXME-TABLE: This is solved incorrectly but also quite a difficult problem to fix as we also want ClipRect width to match.
-                // See "table_width_distrib" and "table_width_keep_visible" tests
-                maxWidth = workRect.max.x - (columnsEnabledCount - column.indexWithinEnabledSet - 1) * minColumnDistance - offsetX
-                //max_width -= table->CellSpacingX1;
-                maxWidth -= cellSpacingX2 + cellPaddingX * 2f + outerPaddingX
-            }
+            // Lock start position
+            column.minX = offsetX
+
+            // Lock width based on start position and minimum/maximum width for this position
+            val maxWidth = getMaxColumnWidth(columnN)
             column.widthGiven = column.widthGiven min maxWidth
-
-            // Minimum width
             column.widthGiven = column.widthGiven max min(column.widthRequest, minColumnWidth)
+            column.maxX = offsetX + column.widthGiven + cellSpacingX1 + cellSpacingX2 + cellPaddingX * 2f
 
-            // Lock all our positions
+            // Lock other positions
             // - ClipRect.Min.x: Because merging draw commands doesn't compare min boundaries, we make ClipRect.Min.x match left bounds to be consistent regardless of merging.
             // - ClipRect.Max.x: using WorkMaxX instead of MaxX (aka including padding) makes things more consistent when resizing down, tho slightly detrimental to visibility in very-small column.
             // - ClipRect.Max.x: using MaxX makes it easier for header to receive hover highlight with no discontinuity and display sorting arrow.
             // - FIXME-TABLE: We want equal width columns to have equal (ClipRect.Max.x - WorkMinX) width, which means ClipRect.max.x cannot stray off host_clip_rect.Max.x else right-most column may appear shorter.
-            column.minX = offsetX
-            column.maxX = offsetX + column.widthGiven + cellSpacingX1 + cellSpacingX2 + cellPaddingX * 2f
             column.workMinX = column.minX + cellPaddingX + cellSpacingX1
             column.workMaxX = column.maxX - cellPaddingX - cellSpacingX2 // Expected max
             column.itemWidth = floor(column.widthGiven * 0.65f)
@@ -1804,6 +1787,33 @@ class Table {
     fun getColumnResizeID(columnN: Int, instanceNo: Int = 0): ID {
         assert(columnN < columnsCount)
         return id + 1 + instanceNo * columnsCount + columnN
+    }
+
+    /** Maximum column content width given current layout. Use column->MinX so this value on a per-column basis. */
+    infix fun getMaxColumnWidth(columnN: Int): Float {
+        val column = columns[columnN]
+        var maxWidth = Float.MAX_VALUE
+        val minColumnDistance = tableGetMinColumnWidth() + cellPaddingX * 2f + cellSpacingX1 + cellSpacingX2
+        if (flags has Tf.ScrollX) {
+            // Frozen columns can't reach beyond visible width else scrolling will naturally break.
+            if (column.displayOrder < freezeColumnsRequest) {
+                maxWidth = (innerClipRect.max.x - (freezeColumnsRequest - column.displayOrder) * minColumnDistance) - column.minX
+                maxWidth = maxWidth - outerPaddingX - cellPaddingX - cellSpacingX2
+            }
+        }
+        else if (flags hasnt Tf.NoKeepColumnsVisible) {
+            // If horizontal scrolling if disabled, we apply a final lossless shrinking of columns in order to make
+            // sure they are all visible. Because of this we also know that all of the columns will always fit in
+            // table->WorkRect and therefore in table->InnerRect (because ScrollX is off)
+            // FIXME-TABLE: This is solved incorrectly but also quite a difficult problem to fix as we also want ClipRect width to match.
+            // See "table_width_distrib" and "table_width_keep_visible" tests
+            maxWidth = workRect.max.x - (columnsEnabledCount - column.indexWithinEnabledSet - 1) * minColumnDistance - column.minX
+            //max_width -= table->CellSpacingX1;
+            maxWidth -= cellSpacingX2
+            maxWidth -= cellPaddingX * 2f
+            maxWidth -= outerPaddingX
+        }
+        return maxWidth
     }
 
     /** Disable clipping then auto-fit, will take 2 frames

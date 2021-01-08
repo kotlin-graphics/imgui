@@ -679,7 +679,7 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Disable extending table past the limit set by outer_size.y. Only meaningful when neither ScrollX nor ScrollY are set (data below the limit will be clipped and not visible) */
     NoHostExtendY(1 shl 16),
 
-    /** Disable keeping column always minimally visible when ScrollX is off and table gets too small. */
+    /** Disable keeping column always minimally visible when ScrollX is off and table gets too small. Not recommended if columns are resizable. */
     NoKeepColumnsVisible(1 shl 17),
 
     /** Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth. */

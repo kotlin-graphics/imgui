@@ -306,6 +306,7 @@ interface tablesInternal {
             g.style.framePadding.x
 
     //  -> Table class
+//    IMGUI_API float         TableGetMaxColumnWidth(const ImGuiTable* table, int column_n);
 //    IMGUI_API void          TableSetColumnWidthAutoSingle(ImGuiTable* table, int column_n)
 //    IMGUI_API void          TableSetColumnWidthAutoAll(ImGuiTable* table)
 //    IMGUI_API void          TableRemove(ImGuiTable* table)
