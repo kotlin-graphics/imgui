@@ -320,8 +320,11 @@ interface tables {
         val table = g.currentTable
         check(table != null) { "Need to call TableSetupColumn() after BeginTable()!" }
         assert(!table.isLayoutLocked) { "Need to call call TableSetupColumn() before first row!" }
-        assert(table.declColumnsCount >= 0 && table.declColumnsCount < table.columnsCount) { "Called TableSetupColumn() too many times!" }
         assert(flags hasnt Tcf.StatusMask_) { "Illegal to pass StatusMask values to TableSetupColumn()" }
+        if (table.declColumnsCount >= table.columnsCount) {
+            assert(table.declColumnsCount < table.columnsCount){ "Called TableSetupColumn() too many times!" }
+            return
+        }
 
         val column = table.columns[table.declColumnsCount]
         table.declColumnsCount++

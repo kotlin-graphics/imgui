@@ -18,7 +18,6 @@ import imgui.internal.sections.*
 import imgui.DragDropFlag as Ddf
 
 /** Drag and Drop
- *  - [BETA API] API may evolve!
  *  - If you stop calling BeginDragDropSource() the payload is preserved however it won't have a preview tooltip (we currently display a fallback "..." tooltip as replacement) */
 interface dragAndDrop {
 

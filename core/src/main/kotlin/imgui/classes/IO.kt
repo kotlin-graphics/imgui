@@ -18,6 +18,10 @@ import org.lwjgl.system.Platform
 import uno.glfw.HWND
 import uno.kotlin.NUL
 
+//-----------------------------------------------------------------------------
+// [SECTION] ImGuiIO
+//-----------------------------------------------------------------------------
+
 /** -----------------------------------------------------------------------------
  *  IO
  *  Communicate most settings and inputs/outputs to Dear ImGui using this structure.

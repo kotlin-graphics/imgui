@@ -32,8 +32,11 @@ typealias ID = Int
 /** User data to identify a texture */
 typealias TextureID = Int
 
-// Return false = pass
+/** Return false = pass
+ *
+ *  Callback function for ImGui::InputText() */
 typealias InputTextCallback = (InputTextCallbackData) -> Boolean
+/** Callback function for ImGui::SetNextWindowSizeConstraints() */
 typealias SizeCallback = (SizeCallbackData) -> Unit
 
 infix fun String.cmp(charArray: CharArray): Boolean {

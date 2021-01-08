@@ -12,7 +12,7 @@ import org.lwjgl.system.Platform
 
 
 //-----------------------------------------------------------------------------
-// Flags & Enumerations
+// [SECTION] Flags & Enumerations
 //-----------------------------------------------------------------------------
 
 
@@ -1186,7 +1186,7 @@ typealias KeyModFlags = Int
  *  based on your io.keysDown[] + io.keyMap[] arrays.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
  *  ::newFrame(). Note that io.navInputs[] is cleared by ::endFrame().
- *  Read instructions in imgui.cpp for more details.
+ *  Read instructions in imgui.cpp for more details. Download PNG/PSD at http://dearimgui.org/controls_sheets.
  *
  *  An input identifier for navigation */
 enum class NavInput {

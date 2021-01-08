@@ -9,12 +9,12 @@ import imgui.internal.floor
 import java.util.*
 import kotlin.collections.ArrayList
 
-/** -----------------------------------------------------------------------------
- *  Style
- *  You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
+//-----------------------------------------------------------------------------
+// [SECTION] ImGuiStyle
+//-----------------------------------------------------------------------------
+/** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
  *  During the frame, use ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,
- *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors.
- *  ----------------------------------------------------------------------------- */
+ *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors. */
 class Style {
 
     /**  Global alpha applies to everything in Dear ImGui.    */

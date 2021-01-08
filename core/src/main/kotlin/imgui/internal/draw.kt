@@ -303,7 +303,7 @@ class DrawListSplitter {
 /** -----------------------------------------------------------------------------
  *  All draw command lists required to render the frame + pos/size coordinates to use for the projection matrix.
  *
- *  Draw List API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListFlags, ImDrawList, ImDrawData)
+ *  [SECTION] Drawing API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListFlags, ImDrawList, ImDrawData)
  *  Hold a series of drawing commands. The user provides a renderer for ImDrawData which essentially contains an array of ImDrawList.
  *
  *  All draw data to render a Dear ImGui frame

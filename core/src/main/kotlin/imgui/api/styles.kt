@@ -18,7 +18,7 @@ interface styles {
      * or I'll kill you slowly
      */
 
-    /** New, recommended style  */
+    /** new, recommended style (default) */
     fun styleColorsDark(dst: Style? = null) {
         (dst ?: g.style).apply {
             colors.clear()
@@ -81,71 +81,8 @@ interface styles {
         }
     }
 
-    /** Classic imgui style (default)   */
-    fun styleColorsClassic(dst: Style? = null) {
-        (dst ?: g.style).apply {
-            colors.clear()
-            for (c in Col.values())
-                colors += Vec4()
-            // @formatter:off
-            colors[Col.Text]                    (0.90f, 0.90f, 0.90f, 1.00f)
-            colors[Col.TextDisabled]            (0.60f, 0.60f, 0.60f, 1.00f)
-            colors[Col.WindowBg]                (0.00f, 0.00f, 0.00f, 0.70f)
-            colors[Col.ChildBg]                 (0.00f, 0.00f, 0.00f, 0.00f)
-            colors[Col.PopupBg]                 (0.11f, 0.11f, 0.14f, 0.92f)
-            colors[Col.Border]                  (0.50f, 0.50f, 0.50f, 0.50f)
-            colors[Col.BorderShadow]            (0.00f, 0.00f, 0.00f, 0.00f)
-            colors[Col.FrameBg]                 (0.43f, 0.43f, 0.43f, 0.39f)
-            colors[Col.FrameBgHovered]          (0.47f, 0.47f, 0.69f, 0.40f)
-            colors[Col.FrameBgActive]           (0.42f, 0.41f, 0.64f, 0.69f)
-            colors[Col.TitleBg]                 (0.27f, 0.27f, 0.54f, 0.83f)
-            colors[Col.TitleBgActive]           (0.32f, 0.32f, 0.63f, 0.87f)
-            colors[Col.TitleBgCollapsed]        (0.40f, 0.40f, 0.80f, 0.20f)
-            colors[Col.MenuBarBg]               (0.40f, 0.40f, 0.55f, 0.80f)
-            colors[Col.ScrollbarBg]             (0.20f, 0.25f, 0.30f, 0.60f)
-            colors[Col.ScrollbarGrab]           (0.40f, 0.40f, 0.80f, 0.30f)
-            colors[Col.ScrollbarGrabHovered]    (0.40f, 0.40f, 0.80f, 0.40f)
-            colors[Col.ScrollbarGrabActive]     (0.41f, 0.39f, 0.80f, 0.60f)
-            colors[Col.CheckMark]               (0.90f, 0.90f, 0.90f, 0.50f)
-            colors[Col.SliderGrab]              (1.00f, 1.00f, 1.00f, 0.30f)
-            colors[Col.SliderGrabActive]        (0.41f, 0.39f, 0.80f, 0.60f)
-            colors[Col.Button]                  (0.35f, 0.40f, 0.61f, 0.62f)
-            colors[Col.ButtonHovered]           (0.40f, 0.48f, 0.71f, 0.79f)
-            colors[Col.ButtonActive]            (0.46f, 0.54f, 0.80f, 1.00f)
-            colors[Col.Header]                  (0.40f, 0.40f, 0.90f, 0.45f)
-            colors[Col.HeaderHovered]           (0.45f, 0.45f, 0.90f, 0.80f)
-            colors[Col.HeaderActive]            (0.53f, 0.53f, 0.87f, 0.80f)
-            colors[Col.Separator]               (0.50f, 0.50f, 0.50f, 0.60f)
-            colors[Col.SeparatorHovered]        (0.60f, 0.60f, 0.70f, 1.00f)
-            colors[Col.SeparatorActive]         (0.70f, 0.70f, 0.90f, 1.00f)
-            colors[Col.ResizeGrip]              (1.00f, 1.00f, 1.00f, 0.16f)
-            colors[Col.ResizeGripHovered]       (0.78f, 0.82f, 1.00f, 0.60f)
-            colors[Col.ResizeGripActive]        (0.78f, 0.82f, 1.00f, 0.90f)
-            colors[Col.Tab]                     (colors[Col.Header].lerp(colors[Col.TitleBgActive], 0.80f))
-            colors[Col.TabHovered]              (colors[Col.HeaderHovered])
-            colors[Col.TabActive]               (colors[Col.HeaderActive].lerp(colors[Col.TitleBgActive], 0.60f))
-            colors[Col.TabUnfocused]            (colors[Col.Tab].lerp(colors[Col.TitleBg], 0.80f))
-            colors[Col.TabUnfocusedActive]      (colors[Col.TabActive].lerp(colors[Col.TitleBg], 0.40f))
-            colors[Col.PlotLines]               (1.00f, 1.00f, 1.00f, 1.00f)
-            colors[Col.PlotLinesHovered]        (0.90f, 0.70f, 0.00f, 1.00f)
-            colors[Col.PlotHistogram]           (0.90f, 0.70f, 0.00f, 1.00f)
-            colors[Col.PlotHistogramHovered]    (1.00f, 0.60f, 0.00f, 1.00f)
-            colors[Col.TableHeaderBg]           (0.27f, 0.27f, 0.38f, 1.00f)
-            colors[Col.TableBorderStrong]       (0.31f, 0.31f, 0.45f, 1.00f)   // Prefer using Alpha=1.0 here
-            colors[Col.TableBorderLight]        (0.26f, 0.26f, 0.28f, 1.00f)   // Prefer using Alpha=1.0 here
-            colors[Col.TableRowBg]              (0.00f, 0.00f, 0.00f, 0.00f)
-            colors[Col.TableRowBgAlt]           (1.00f, 1.00f, 1.00f, 0.07f)
-            colors[Col.TextSelectedBg]          (0.00f, 0.00f, 1.00f, 0.35f)
-            colors[Col.DragDropTarget]          (1.00f, 1.00f, 0.00f, 0.90f)
-            colors[Col.NavHighlight]            (colors[Col.HeaderHovered])
-            colors[Col.NavWindowingHighlight]   (1.00f, 1.00f, 1.00f, 0.70f)
-            colors[Col.NavWindowingDimBg]       (0.80f, 0.80f, 0.80f, 0.20f)
-            colors[Col.ModalWindowDimBg]        (0.20f, 0.20f, 0.20f, 0.35f)
-            // @formatter:on
-        }
-    }
-
     /** Those light colors are better suited with a thicker font than the default one + FrameBorder
+     *
      *  Best used with borders and a custom, thicker font    */
     fun styleColorsLight(dst: Style? = null) {
         (dst ?: g.style).apply {
@@ -204,6 +141,70 @@ interface styles {
             colors[Col.NavHighlight]            (colors[Col.HeaderHovered])
             colors[Col.NavWindowingHighlight]   (0.70f, 0.70f, 0.70f, 0.70f)
             colors[Col.NavWindowingDimBg]       (0.20f, 0.20f, 0.20f, 0.20f)
+            colors[Col.ModalWindowDimBg]        (0.20f, 0.20f, 0.20f, 0.35f)
+            // @formatter:on
+        }
+    }
+
+    /** classic imgui style */
+    fun styleColorsClassic(dst: Style? = null) {
+        (dst ?: g.style).apply {
+            colors.clear()
+            for (c in Col.values())
+                colors += Vec4()
+            // @formatter:off
+            colors[Col.Text]                    (0.90f, 0.90f, 0.90f, 1.00f)
+            colors[Col.TextDisabled]            (0.60f, 0.60f, 0.60f, 1.00f)
+            colors[Col.WindowBg]                (0.00f, 0.00f, 0.00f, 0.70f)
+            colors[Col.ChildBg]                 (0.00f, 0.00f, 0.00f, 0.00f)
+            colors[Col.PopupBg]                 (0.11f, 0.11f, 0.14f, 0.92f)
+            colors[Col.Border]                  (0.50f, 0.50f, 0.50f, 0.50f)
+            colors[Col.BorderShadow]            (0.00f, 0.00f, 0.00f, 0.00f)
+            colors[Col.FrameBg]                 (0.43f, 0.43f, 0.43f, 0.39f)
+            colors[Col.FrameBgHovered]          (0.47f, 0.47f, 0.69f, 0.40f)
+            colors[Col.FrameBgActive]           (0.42f, 0.41f, 0.64f, 0.69f)
+            colors[Col.TitleBg]                 (0.27f, 0.27f, 0.54f, 0.83f)
+            colors[Col.TitleBgActive]           (0.32f, 0.32f, 0.63f, 0.87f)
+            colors[Col.TitleBgCollapsed]        (0.40f, 0.40f, 0.80f, 0.20f)
+            colors[Col.MenuBarBg]               (0.40f, 0.40f, 0.55f, 0.80f)
+            colors[Col.ScrollbarBg]             (0.20f, 0.25f, 0.30f, 0.60f)
+            colors[Col.ScrollbarGrab]           (0.40f, 0.40f, 0.80f, 0.30f)
+            colors[Col.ScrollbarGrabHovered]    (0.40f, 0.40f, 0.80f, 0.40f)
+            colors[Col.ScrollbarGrabActive]     (0.41f, 0.39f, 0.80f, 0.60f)
+            colors[Col.CheckMark]               (0.90f, 0.90f, 0.90f, 0.50f)
+            colors[Col.SliderGrab]              (1.00f, 1.00f, 1.00f, 0.30f)
+            colors[Col.SliderGrabActive]        (0.41f, 0.39f, 0.80f, 0.60f)
+            colors[Col.Button]                  (0.35f, 0.40f, 0.61f, 0.62f)
+            colors[Col.ButtonHovered]           (0.40f, 0.48f, 0.71f, 0.79f)
+            colors[Col.ButtonActive]            (0.46f, 0.54f, 0.80f, 1.00f)
+            colors[Col.Header]                  (0.40f, 0.40f, 0.90f, 0.45f)
+            colors[Col.HeaderHovered]           (0.45f, 0.45f, 0.90f, 0.80f)
+            colors[Col.HeaderActive]            (0.53f, 0.53f, 0.87f, 0.80f)
+            colors[Col.Separator]               (0.50f, 0.50f, 0.50f, 0.60f)
+            colors[Col.SeparatorHovered]        (0.60f, 0.60f, 0.70f, 1.00f)
+            colors[Col.SeparatorActive]         (0.70f, 0.70f, 0.90f, 1.00f)
+            colors[Col.ResizeGrip]              (1.00f, 1.00f, 1.00f, 0.16f)
+            colors[Col.ResizeGripHovered]       (0.78f, 0.82f, 1.00f, 0.60f)
+            colors[Col.ResizeGripActive]        (0.78f, 0.82f, 1.00f, 0.90f)
+            colors[Col.Tab]                     (colors[Col.Header].lerp(colors[Col.TitleBgActive], 0.80f))
+            colors[Col.TabHovered]              (colors[Col.HeaderHovered])
+            colors[Col.TabActive]               (colors[Col.HeaderActive].lerp(colors[Col.TitleBgActive], 0.60f))
+            colors[Col.TabUnfocused]            (colors[Col.Tab].lerp(colors[Col.TitleBg], 0.80f))
+            colors[Col.TabUnfocusedActive]      (colors[Col.TabActive].lerp(colors[Col.TitleBg], 0.40f))
+            colors[Col.PlotLines]               (1.00f, 1.00f, 1.00f, 1.00f)
+            colors[Col.PlotLinesHovered]        (0.90f, 0.70f, 0.00f, 1.00f)
+            colors[Col.PlotHistogram]           (0.90f, 0.70f, 0.00f, 1.00f)
+            colors[Col.PlotHistogramHovered]    (1.00f, 0.60f, 0.00f, 1.00f)
+            colors[Col.TableHeaderBg]           (0.27f, 0.27f, 0.38f, 1.00f)
+            colors[Col.TableBorderStrong]       (0.31f, 0.31f, 0.45f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableBorderLight]        (0.26f, 0.26f, 0.28f, 1.00f)   // Prefer using Alpha=1.0 here
+            colors[Col.TableRowBg]              (0.00f, 0.00f, 0.00f, 0.00f)
+            colors[Col.TableRowBgAlt]           (1.00f, 1.00f, 1.00f, 0.07f)
+            colors[Col.TextSelectedBg]          (0.00f, 0.00f, 1.00f, 0.35f)
+            colors[Col.DragDropTarget]          (1.00f, 1.00f, 0.00f, 0.90f)
+            colors[Col.NavHighlight]            (colors[Col.HeaderHovered])
+            colors[Col.NavWindowingHighlight]   (1.00f, 1.00f, 1.00f, 0.70f)
+            colors[Col.NavWindowingDimBg]       (0.80f, 0.80f, 0.80f, 0.20f)
             colors[Col.ModalWindowDimBg]        (0.20f, 0.20f, 0.20f, 0.35f)
             // @formatter:on
         }

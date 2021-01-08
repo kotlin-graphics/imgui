@@ -14,7 +14,7 @@ import kool.Stack
 // Version
 const val IMGUI_BUILD = 0
 
-/** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
+/** get the compiled version string e.g. "1.80 WIP" (essentially the value for IMGUI_VERSION from the compiled version of imgui.cpp) */
 const val IMGUI_VERSION = "1.80 WIP"
 const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
@@ -109,8 +109,8 @@ var MINECRAFT_BEHAVIORS = false
 
 object ImGui :
 //-----------------------------------------------------------------------------
-// ImGui: Dear ImGui end-user API
-// (This is a namespace. You can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
+// [SECTION] Dear ImGui end-user API functions
+// (Note that ImGui:: being a namespace, you can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
 //-----------------------------------------------------------------------------
 // context doesnt exist, only Context class
         main,
@@ -122,6 +122,7 @@ object ImGui :
         contentRegion,
         windowScrolling,
         parametersStacks,
+        styleReadAccess,
         cursorLayout,
         idStackScopes,
         widgetsText,
