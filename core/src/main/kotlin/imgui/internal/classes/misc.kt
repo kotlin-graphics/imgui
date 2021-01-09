@@ -361,7 +361,9 @@ class TabBarPool {
     /** ID->Index */
     val map = mutableMapOf<ID, PoolIdx>()
 
+    /** ~GetByKey */
     operator fun get(key: ID): TabBar? = map[key]?.let { list[it.i] }
+    /** ~GetByIndex */
     operator fun get(n: PoolIdx): TabBar? = list.getOrNull(n.i)
     fun getIndex(p: TabBar): PoolIdx = PoolIdx(list.indexOf(p))
     fun getOrAddByKey(key: ID): TabBar = map[key]?.let { list[it.i] }

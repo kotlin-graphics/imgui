@@ -15,6 +15,10 @@ import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.clearIniSettings
 import imgui.ImGui.combo
+import imgui.ImGui.debugNodeDrawList
+import imgui.ImGui.debugNodeTabBar
+import imgui.ImGui.debugNodeWindowSettings
+import imgui.ImGui.debugNodeWindowsList
 import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
@@ -231,10 +235,11 @@ interface demoDebugInformations {
         }
 
         // Contents
-        Funcs.nodeWindows(g.windows, "Windows") //Funcs::NodeWindows(g.WindowsFocusOrder, "WindowsFocusOrder")
-        if (treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})")) {
-            g.drawDataBuilder.layers.forEach { layer -> layer.forEach { Funcs.nodeDrawList(null, it, "DrawList") } }
-            treePop()
+        debugNodeWindowsList(g.windows, "Windows")
+        //DebugNodeWindowList(&g.WindowsFocusOrder, "WindowsFocusOrder");
+        treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})") {
+            for(layer in g.drawDataBuilder.layers[0])
+                debugNodeDrawList(null, layer, "DrawList")
         }
 
         // Details for Popups
@@ -249,9 +254,10 @@ interface demoDebugInformations {
         }
 
         // Details for TabBars
-        if (treeNode("TabBars", "Tab Bars (${g.tabBars.size})")) {
-            for (n in 0 until g.tabBars.list.size) Funcs.nodeTabBar(g.tabBars.list[n]!!)
-            treePop()
+        treeNode("TabBars", "Tab Bars (${g.tabBars.size})") {
+            for (n in 0 until g.tabBars.size)
+                debugNodeTabBar(g.tabBars[n]!!, "TabBar")
+
         }
 
         //        #ifdef IMGUI_HAS_TABLE
@@ -284,7 +290,7 @@ interface demoDebugInformations {
                 g.settingsHandlers.forEach { bulletText(it.typeName) }
             }
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
-                g.settingsWindows.forEach(Funcs::nodeWindowSettings)
+                g.settingsWindows.forEach(::debugNodeWindowSettings)
             } //            #ifdef IMGUI_HAS_TABLE
             //            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
             //                g.settingsTables.forEach(Funcs::nodeTableSettings)
@@ -611,282 +617,9 @@ interface demoDebugInformations {
                 }
                 WRT.ContentRegionRect -> window.contentRegionRect
             }
-
-            fun nodeDrawCmdShowMeshAndBoundingBox(window: Window?, drawList: DrawList, drawCmd: DrawCmd,
-                                                  showMesh: Boolean, showAabb: Boolean) {
-                assert(showMesh || showAabb)
-                val fgDrawList = getForegroundDrawList(window) // Render additional visuals into the top-most draw list
-                val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
-                val vtxBuffer = drawList.vtxBuffer
-                val vtxPointer = drawCmd.vtxOffset
-
-                // Draw wire-frame version of all triangles
-                val clipRect = Rect(drawCmd.clipRect)
-                val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
-                val backupFlags = fgDrawList.flags
-                fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
-                var idxN = drawCmd.idxOffset
-                while (idxN < drawCmd.idxOffset + drawCmd.elemCount) {
-                    val triangle = Array(3) { Vec2() }
-                    for (n in 0..2) {
-                        triangle[n] = vtxBuffer[vtxPointer + (idxBuffer?.get(idxN) ?: idxN)].pos
-                        vtxsRect.add(triangle[n])
-                        idxN++
-                    }
-                    if (showMesh)
-                        fgDrawList.addPolyline(triangle.toCollection(ArrayList()), COL32(255, 255, 0, 255),
-                                true, 1f) // In yellow: mesh triangles
-                } // Draw bounding boxes
-                if (showAabb) {
-                    fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255)) // In pink: clipping rectangle submitted to GPU
-                    fgDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(0, 255, 255, 255)) // In cyan: bounding box of triangles
-                }
-                fgDrawList.flags = backupFlags
-            }
-
-            fun nodeDrawList(window: Window?, drawList: DrawList, label: String) {
-
-                var cmdCount = drawList.cmdBuffer.size
-                val last = drawList.cmdBuffer.last()
-                if (cmdCount > 0 && last.elemCount == 0 && last.userCallback == null)
-                    cmdCount--
-
-                val nodeOpen = treeNode(drawList, "$label: '${drawList._ownerName}' ${drawList.vtxBuffer.lim} vtx, " + "${drawList.idxBuffer.lim} indices, $cmdCount cmds")
-                if (drawList === windowDrawList) {
-                    sameLine() // Can't display stats for active draw list! (we don't have the data double-buffered)
-                    textColored(Vec4(1f, 0.4f, 0.4f, 1f), "CURRENTLY APPENDING")
-                    if (nodeOpen) treePop()
-                    return
-                }
-                val fgDrawList = getForegroundDrawList(window)   // Render additional visuals into the top-most draw list
-                if (window != null && isItemHovered())
-                    fgDrawList.addRect(window.pos, window.pos + window.size, COL32(255, 255, 0, 255))
-
-                if (!nodeOpen)
-                    return
-
-                if (window?.wasActive == false)
-                    textDisabled("Warning: owning Window is inactive. This DrawList is not being rendered!")
-
-                for (cmdIdx in 0 until cmdCount) {
-                    val cmd = drawList.cmdBuffer[cmdIdx]
-                    val cb = cmd.userCallback
-                    if (cb != null) {
-                        bulletText("Callback $cb, UserData ${cmd.userCallbackData?.toString() ?: "null"}")
-                        continue
-                    }
-
-                    var string = ("DrawCmd: %5d tris, Tex 0x${cmd.textureId!!.asHexString}, (%4.0f,%4.0f)-(%4.0f,%4.0f)")
-                            .format(cmd.elemCount / 3, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
-                    val buf = CharArray(300)
-                    val cmdNodeOpen = treeNode(cmd.hashCode() - drawList.cmdBuffer.hashCode(), string)
-                    if (isItemHovered() && (showDrawcmdMesh || showDrawcmdAabb) && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, showDrawcmdMesh, showDrawcmdAabb)
-                    if (!cmdNodeOpen) continue
-
-                    // Calculate approximate coverage area (touched pixel count)
-                    // This will be in pixels squared as long there's no post-scaling happening to the renderer output.
-                    val idxBuffer = drawList.idxBuffer.takeIf { it.rem > 0 }
-                    val vtxBuffer = drawList.vtxBuffer
-                    val vtxPointer = cmd.vtxOffset
-                    var totalArea = 0f
-                    var idxN = cmd.idxOffset
-                    while (idxN < cmd.idxOffset + cmd.elemCount) {
-                        val triangle = Array(3) {
-                            vtxBuffer[vtxPointer + (idxBuffer?.get(idxN) ?: idxN)].pos
-                        }
-                        totalArea += triangleArea(triangle[0], triangle[1], triangle[2])
-                        idxN++
-                    }
-
-                    // Display vertex information summary. Hover to get all triangles drawn in wire-frame
-                    string = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%.0f px"
-                            .format(totalArea)
-                    selectable(string)
-                    if (isItemHovered() && fgDrawList != null)
-                        nodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, true, false)
-
-                    // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
-                    // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
-                    val clipper = ListClipper()
-                    clipper.begin(cmd.elemCount / 3)
-                    while (clipper.step()) {
-                        var idx_i = cmd.idxOffset + clipper.displayStart * 3
-                        for (prim in clipper.display) {
-                            var bufP = 0
-                            val triangles = arrayListOf(Vec2(), Vec2(), Vec2())
-                            for (n in 0 until 3) {
-                                val v = vtxBuffer[vtxPointer + (idxBuffer?.get(idx_i) ?: idx_i)]
-                                triangles[n] put v.pos
-                                val name = if (n == 0) "Vert:" else "     "
-                                val s = "$name %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                                        .format(style.locale, idx_i++, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
-                                s.toCharArray(buf, bufP)
-                                bufP += s.length
-                            }
-
-                            selectable(String(buf), false)
-                            if (fgDrawList != null && isItemHovered()) {
-                                val backupFlags = fgDrawList.flags // Disable AA on triangle outlines is more readable for very large and thin triangles.
-                                fgDrawList.flags = fgDrawList.flags and DrawListFlag.AntiAliasedLines.i.inv()
-                                fgDrawList.addPolyline(triangles, COL32(255, 255, 0, 255), true, 1f)
-                                fgDrawList.flags = backupFlags
-                            }
-                        }
-                    }
-                    treePop()
-                }
-                treePop()
-            }
-
-            fun nodeColumns(columns: OldColumns) {
-                if (!treeNode(columns.id,
-                                "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X",
-                                columns.id,
-                                columns.flags)
-                ) return
-                bulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)",
-                        columns.offMaxX - columns.offMinX,
-                        columns.offMinX,
-                        columns.offMaxX)
-                columns.columns.forEachIndexed { i, c ->
-                    bulletText("Column %02d: OffsetNorm %.3f (= %.1f px)",
-                            i,
-                            c.offsetNorm,
-                            columns getOffsetFrom c.offsetNorm)
-                }
-                treePop()
-            }
-
-            fun nodeWindows(windows: ArrayList<Window>, label: String) {
-                if (!treeNode(label, "$label (${windows.size})")) return
-                text("(In front-to-back order:)")
-                windows.asReversed().forEach { // Iterate front to back
-                    withId(it) { nodeWindow(it, "Window") }
-                }
-                treePop()
-            }
-
-            fun nodeWindow(window: Window?, label: String) {
-                if (window == null) {
-                    bulletText("$label: NULL")
-                    return
-                }
-
-                val isActive = window.wasActive
-                val treeNodeFlags = if (window === g.navWindow) TreeNodeFlag.Selected else TreeNodeFlag.None
-                if (!isActive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
-                val open =
-                        treeNodeEx(label, treeNodeFlags.i, "$label '${window.name}'${if (isActive) "" else " *Inactive*"}")
-                if (!isActive) popStyleColor()
-                if (isItemHovered() && isActive) getForegroundDrawList(window).addRect(window.pos,
-                        window.pos + window.size,
-                        COL32(255, 255, 0, 255))
-                if (!open) return
-
-                if (window.memoryCompacted) textDisabled("Note: some memory buffers have been compacted/freed.")
-
-                val flags = window.flags
-                nodeDrawList(window, window.drawList, "DrawList")
-                bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), SizeContents (%.1f,%.1f)",
-                        window.pos.x.f,
-                        window.pos.y.f,
-                        window.size.x,
-                        window.size.y,
-                        window.contentSize.x,
-                        window.contentSize.y)
-                val builder = StringBuilder()
-                if (flags has Wf._ChildWindow) builder += "Child "
-                if (flags has Wf._Tooltip) builder += "Tooltip "
-                if (flags has Wf._Popup) builder += "Popup "
-                if (flags has Wf._Modal) builder += "Modal "
-                if (flags has Wf._ChildMenu) builder += "ChildMenu "
-                if (flags has Wf.NoSavedSettings) builder += "NoSavedSettings "
-                if (flags has Wf.NoMouseInputs) builder += "NoMouseInputs"
-                if (flags has Wf.NoNavInputs) builder += "NoNavInputs"
-                if (flags has Wf.AlwaysAutoResize) builder += "AlwaysAutoResize"
-                bulletText("Flags: 0x%08X ($builder..)", flags)
-                val xy = (if (window.scrollbar.x) "X" else "") + if (window.scrollbar.y) "Y" else ""
-                bulletText("Scroll: (%.2f/%.2f,%.2f/%.2f) Scrollbar:$xy",
-                        window.scroll.x,
-                        window.scrollMax.x,
-                        window.scroll.y,
-                        window.scrollMax.y)
-                val order = if (window.active || window.wasActive) window.beginOrderWithinContext else -1
-                bulletText("Active: ${window.active}/${window.wasActive}, WriteAccessed: ${window.writeAccessed} BeginOrderWithinContext: $order")
-                bulletText("Appearing: ${window.appearing}, Hidden: ${window.hidden} (CanSkip ${window.hiddenFramesCanSkipItems} Cannot ${window.hiddenFramesCannotSkipItems}), SkipItems: ${window.skipItems}")
-                bulletText("NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X",
-                        window.navLastIds[0],
-                        window.navLastIds[1],
-                        window.dc.navLayerActiveMask)
-                bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name}")
-                if (!window.navRectRel[0].isInverted) bulletText("NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)",
-                        window.navRectRel[0].min.x,
-                        window.navRectRel[0].min.y,
-                        window.navRectRel[0].max.x,
-                        window.navRectRel[0].max.y)
-                else bulletText("NavRectRel[0]: <None>")
-                if (window.rootWindow !== window) nodeWindow(window.rootWindow!!, "RootWindow")
-                window.parentWindow?.let { nodeWindow(it, "ParentWindow") }
-                if (window.dc.childWindows.isNotEmpty()) nodeWindows(window.dc.childWindows, "ChildWindows")
-                if (window.columnsStorage.isNotEmpty() && treeNode("Columns",
-                                "Columns sets (${window.columnsStorage.size})")
-                ) {
-                    window.columnsStorage.forEach(Funcs::nodeColumns)
-                    treePop()
-                }
-                nodeStorage(window.stateStorage, "Storage")
-                treePop()
-            }
-
-            fun nodeStorage(storage: HashMap<ID, Boolean>, label: String) {
-                if (!treeNode(label,
-                                "$label: ${storage.size} entries, ${storage.size * Byte.BYTES} bytes")
-                ) // [JVM] Boolean size is actually VM dependent
-                    return
-                storage.forEach { (key, value) ->
-                    bulletText("Key 0x%08X Value { i: $value }".format(key)) // Important: we currently don't store a type, real value may not be integer.
-                }
-                treePop()
-            }
-
-            fun nodeWindowSettings(settings: WindowSettings) =
-                    text("0x%08X \"${settings.name}\" Pos (${settings.pos.x},${settings.pos.y}) " + "Size (${settings.size.x},${settings.size.y}) Collapsed=${settings.collapsed.i}",
-                            settings.id)
-
-            fun nodeTabBar(tabBar: TabBar) {
-                // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
-                val isActive = tabBar.prevFrameVisible >= ImGui.frameCount - 2
-                val string = "Tab Bar 0x%08X (${tabBar.tabs.size} tabs)${if (isActive) "" else " *Inactive*"}".format(tabBar.id)
-                if (!isActive) pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
-                val open = treeNode(tabBar, string)
-                if (!isActive) popStyleColor()
-                if (isActive && ImGui.isItemHovered()) {
-                    val drawList = ImGui.foregroundDrawList
-                    drawList.addRect(tabBar.barRect.min, tabBar.barRect.max, COL32(255, 255, 0, 255))
-                    drawList.addLine(Vec2(tabBar.scrollingRectMinX, tabBar.barRect.min.y), Vec2(tabBar.scrollingRectMinX, tabBar.barRect.max.y), COL32(0, 255, 0, 255))
-                    drawList.addLine(Vec2(tabBar.scrollingRectMaxX, tabBar.barRect.min.y), Vec2(tabBar.scrollingRectMaxX, tabBar.barRect.max.y), COL32(0, 255, 0, 255))
-                }
-                if (open) {
-                    for (tabN in tabBar.tabs.indices) {
-                        val tab = tabBar.tabs[tabN]
-                        pushID(tab)
-                        if (smallButton("<")) tabBar.queueReorder(tab, -1)
-                        sameLine(0, 2)
-                        if (smallButton(">")) tabBar.queueReorder(tab, +1)
-                        sameLine()
-                        val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
-                        val s = if (tab.nameOffset != -1) tabBar.getTabName(tab) else ""
-                        text("%02d$c Tab 0x%08X '$s' Offset: %.1f, Width: %.1f/%.1f", tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
-                        popID()
-                    }
-                    treePop()
-                }
-            }
         }
 
-        val selected =
-                BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
+        val selected = BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
 
         var styleIdx = -1
 
