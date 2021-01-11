@@ -22,6 +22,7 @@ import javafx.scene.shape.FillRule
 import javafx.scene.shape.StrokeLineCap
 import javafx.scene.shape.StrokeLineJoin
 import javafx.stage.Stage
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 typealias JFXColor = javafx.scene.paint.Color
@@ -400,9 +401,9 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                 val isBary = vtx1.col != vtx2.col || vtx2.col != vtx3.col
                                 val doBary = if (isBary) {
                                     triangleArea(vtx1.pos, vtx2.pos, vtx3.pos) >= BARYCENTRIC_SIZE_THRESHOLD &&
-                                            atLeastTwo(Math.abs(vtx1.pos.x - vtx2.pos.x) >= 2.0,
-                                                    Math.abs(vtx1.pos.x - vtx3.pos.x) >= 2.0,
-                                                    Math.abs(vtx3.pos.x - vtx2.pos.x) >= 2.0)
+                                            atLeastTwo(abs(vtx1.pos.x - vtx2.pos.x) >= 2.0,
+                                                    abs(vtx1.pos.x - vtx3.pos.x) >= 2.0,
+                                                    abs(vtx3.pos.x - vtx2.pos.x) >= 2.0)
                                 } else {
                                     false
                                 }
@@ -492,8 +493,8 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
 
                                         //if it's a line, needs to be drawn specially so that only 1 pixel isn't drawn
                                         if (maxY - minY > 1.0f) {
-                                            for (scanlineY in Math.round(minY).i..Math.round(maxY).i) {
-                                                for (x in Math.round(curx1).i..Math.round(curx2).i) {
+                                            for (scanlineY in minY.roundToInt()..maxY.roundToInt()) {
+                                                for (x in curx1.roundToInt()..curx2.roundToInt()) {
                                                     baryColor(Vec2(x, scanlineY))
                                                 }
                                                 curx1 += invslope1
@@ -504,7 +505,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                         } else {
                                             //average where the line goes
                                             val scanlineY = (maxY + minY) / 2.0f
-                                            for (x in Math.round(minX).i..Math.round(maxX).i) {
+                                            for (x in minX.roundToInt()..maxX.roundToInt()) {
                                                 //draw the color at each point on the line
                                                 baryColor(Vec2(x, scanlineY))
                                             }
@@ -532,8 +533,8 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                         val maxX = vs3.x max vs2.x max vs1.y
 
                                         if (maxY - minY > 1.0f) {
-                                            for (scanlineY in Math.round(maxY).i downTo Math.round(minY).i) {
-                                                for (x in Math.round(curx1).i..Math.round(curx2).i) {
+                                            for (scanlineY in maxY.roundToInt() downTo minY.roundToInt()) {
+                                                for (x in curx1.roundToInt()..curx2.roundToInt()) {
                                                     baryColor(Vec2(x, scanlineY))
                                                 }
                                                 curx1 -= invslope1
@@ -543,7 +544,7 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                             }
                                         } else {
                                             val scanlineY = (maxY + minY) / 2.0f
-                                            for (x in Math.round(minX).i..Math.round(maxX).i) {
+                                            for (x in minX.roundToInt()..maxX.roundToInt()) {
                                                 baryColor(Vec2(x, scanlineY))
                                             }
                                         }
@@ -594,12 +595,36 @@ class ImplJFX(private val stage: Stage, private var canvas: Canvas) {
                                                     (((col1 ushr COL32_B_SHIFT) and COLOR_SIZE_MASK) * color.blue).i,
                                                     (((col1 ushr COL32_A_SHIFT) and COLOR_SIZE_MASK) / COLOR_SIZE_MASK.toDouble()) * color.opacity)
                                             //add initial points
-                                            addPoint(vtx1.pos.x, vtx1.pos.y)
-                                            addPoint(vtx2.pos.x, vtx2.pos.y)
-                                            addPoint(vtx3.pos.x, vtx3.pos.y)
+                                            if (pos + 2 >= xs.size) {
+                                                if (DEBUG)
+                                                    println("increase points buffer size (old ${xs.size}, new ${xs.size * 2})")
+                                                val nx = DoubleArray(xs.size * 2)
+                                                val ny = DoubleArray(ys.size * 2)
+                                                xs.copyInto(nx)
+                                                ys.copyInto(ny)
+                                                xs = nx
+                                                ys = ny
+                                            }
+                                            xs[pos] = vtx1.pos.x.d
+                                            ys[pos++] = vtx1.pos.y.d
+                                            xs[pos] = vtx2.pos.x.d
+                                            ys[pos++] = vtx2.pos.y.d
+                                            xs[pos] = vtx3.pos.x.d
+                                            ys[pos++] = vtx3.pos.y.d
                                         }
                                         //add bordering point
-                                        addPoint(vtx6.pos.x, vtx6.pos.y)
+                                        if (pos == xs.size) {
+                                            if (DEBUG)
+                                                println("increase points buffer size (old ${xs.size}, new ${xs.size * 2})")
+                                            val nx = DoubleArray(xs.size * 2)
+                                            val ny = DoubleArray(ys.size * 2)
+                                            xs.copyInto(nx)
+                                            ys.copyInto(ny)
+                                            xs = nx
+                                            ys = ny
+                                        }
+                                        xs[pos] = vtx6.pos.x.d
+                                        ys[pos++] = vtx6.pos.y.d
                                     } else {
                                         //does not border the next triangle , do either draw this triangle or draw the last one
                                         //if the last triangle bordered this one, the vertex is already in the shape, so just draw
@@ -755,7 +780,7 @@ fun Int.toVec4(): Vec4 {
 
 inline fun dotProd(a: Vec2, b: Vec2) = ((a.x * b.x) + (a.y * b.y)).d
 
-inline fun triangleArea(a: Vec2, b: Vec2, c: Vec2) = Math.abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y)))
+inline fun triangleArea(a: Vec2, b: Vec2, c: Vec2) = abs((a.x * (b.y - c.y)) + (b.x * (c.y - a.y)) + (c.x * (a.y - b.y)))
 
 inline fun atLeastTwo(a: Boolean, b: Boolean, c: Boolean): Boolean {
     return if (a) b || c else b && c

@@ -13,9 +13,9 @@ import vkk.*
 import vkk.entities.VkSurfaceKHR
 import vkk.extensions.*
 import vkk.identifiers.Instance
-import vkk.identifiers.VK
 import vkk.vk10.*
 import vkk.vk10.structs.*
+import kotlin.system.exitProcess
 
 fun debugReport(flags: VkDebugReportFlagsEXT, objectType: VkDebugReportObjectTypeEXT, `object`: Long, location: Long, messageCode: Int,
                 layerPrefix: String, message: String, userData: Ptr) =
@@ -106,7 +106,7 @@ fun setupVulkanWindow(wd: ImplVulkanH.Window, surface: VkSurfaceKHR, size: Vec2i
     val res = gPhysicalDevice.getSurfaceSupportKHR(gQueueFamily, wd.surface)
     if (!res) {
         System.err.println("Error no WSI support on physical device 0")
-        System.exit(-1)
+        exitProcess(-1)
     }
 
     // Select Surface Format

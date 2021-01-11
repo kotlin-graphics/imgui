@@ -23,12 +23,10 @@ val debugReport = VkDebugReportCallbackEXT.create { _, objectType, _, _, _, _, p
 }
 
 var debugCallbackUtils = callback@ { severity: Int, type: Int, callbackDataPointer: Long, _: Long ->
-    val dbg = if (type and EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
-        " (performance)"
-    } else if(type and EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT == EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
-        " (validation)"
-    } else {
-        ""
+    val dbg = when {
+        type and VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT -> " (performance)"
+        type and VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT -> " (validation)"
+        else -> ""
     }
 
     val callbackData = VkDebugUtilsMessengerCallbackDataEXT.create(callbackDataPointer)
@@ -37,12 +35,9 @@ var debugCallbackUtils = callback@ { severity: Int, type: Int, callbackDataPoint
     val objectType = 0
 
     when (severity) {
-        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ->
-            println("!! $obj($objectType) Validation$dbg: $message")
-        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ->
-            println("!! $obj($objectType) Validation$dbg: $message")
-        EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT ->
-            println("!! $obj($objectType) Validation$dbg: $message")
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT -> println("!! $obj($objectType) Validation$dbg: $message")
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT -> println("!! $obj($objectType) Validation$dbg: $message")
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT -> println("!! $obj($objectType) Validation$dbg: $message")
         else -> println("!! $obj($objectType) Validation (unknown message type)$dbg: $message")
     }
 
@@ -63,8 +58,21 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
             System.err.println("DEBUG ENABLED, LOL")
 
             // Enabling validation layers
-            val layers = s.callocPointer(1)
-            layers[0] = MemoryUtil.memASCII("VK_LAYER_KHRONOS_validation")
+            val ib = s.mallocInt(1)
+            vkEnumerateInstanceLayerProperties(ib, null)
+            val pProps = VkLayerProperties.callocStack(ib[0])
+            vkEnumerateInstanceLayerProperties(ib, pProps)
+            var useKhrValidation = false
+            for (p in pProps) {
+                if (p.layerNameString() == "VK_LAYER_KHRONOS_validation") {
+                    useKhrValidation = true
+                    break
+                }
+            }
+            System.err.println("using VK_LAYER_KHRONOS_validation? $useKhrValidation")
+            val layers = s.callocPointer(if (useKhrValidation) 1 else 0)
+            if (useKhrValidation)
+                layers[0] = MemoryUtil.memASCII("VK_LAYER_KHRONOS_validation")
             createInfo.ppEnabledLayerNames(layers)
 
             // Enable debug report extension (we need additional storage, so we duplicate the user array to add our new extension to it)
@@ -75,6 +83,7 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
 
             // Create Vulkan Instance
             err = vkCreateInstance(createInfo, gAllocator, pP)
+            check(err == 0) { "Failed to create a Vulkan instance! (code $err)" }
             gInstance = VkInstance(pP[0], createInfo)
             checkVkResult(err)
 
@@ -86,7 +95,7 @@ fun setupVulkan_(extensions: PointerBuffer) = Stack { s ->
                     .messageSeverity(VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT or VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT or VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT or VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
                     .messageType(VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
 //                    .pUserData(MemoryUtil.NULL)
-            err = EXTDebugUtils.vkCreateDebugUtilsMessengerEXT(gInstance, debugReportCi, gAllocator, pL)
+            err = vkCreateDebugUtilsMessengerEXT(gInstance, debugReportCi, gAllocator, pL)
             gDebugReport = pL[0]
             checkVkResult(err)
         } else {
