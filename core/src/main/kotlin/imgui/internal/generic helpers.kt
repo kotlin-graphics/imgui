@@ -1,6 +1,5 @@
 package imgui.internal
 
-import gli_.has
 import glm_.*
 import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
@@ -582,26 +581,16 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
 //-----------------------------------------------------------------------------
 
 fun bezierCubicCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
-    val u = 1.0f - t
+    val u = 1f - t
     val w1 = u * u * u
     val w2 = 3 * u * u * t
     val w3 = 3 * u * t * t
     val w4 = t * t * t
-    return Vec2(
-            w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x,
-            w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y)
-}
-
-fun bezierQuadraticCalc(p1: Vec2, p2: Vec2, p3: Vec2, t: Float): Vec2 {
-    val u = 1f - t
-    val w1 = u * u
-    val w2 = 2 * u * t
-    val w3 = t * t
-    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y)
+    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y)
 }
 
 /** For curves with explicit number of segments */
-fun bezierClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegments: Int): Vec2 {
+fun bezierCubicClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegments: Int): Vec2 {
     assert(numSegments > 0) { "Use ImBezierClosestPointCasteljau()" }
     val pLast = Vec2(p1)
     val pClosest = Vec2()
@@ -623,36 +612,47 @@ fun bezierClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegme
 /** For auto-tessellated curves you can use tess_tol = style.CurveTessellationTol
  *
  *  tess_tol is generally the same value you would find in ImGui::GetStyle().CurveTessellationTol
- *  Because those ImXXX functions are lower-level than ImGui:: we cannot access this value automatically.   */
-fun bezierClosestPointCasteljau(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, tessTol: Float): Vec2 {
+ *  Because those ImXXX functions are lower-level than ImGui:: we cannot access this value automatically. */
+fun bezierCubicClosestPointCasteljau(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, tessTol: Float): Vec2 {
     assert(tessTol > 0f)
-    val pLast = Vec2(p1)
+    val pLast = p1 // [JVM] careful, same instance!
     val pClosest = Vec2()
     val pClosestDist2 = Float.MAX_VALUE
-    bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, tessTol, 0)
+    // [JVM] we dont need the return value
+    bezierCubicClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, tessTol, 0)
     return pClosest
 }
 
+fun bezierQuadraticCalc(p1: Vec2, p2: Vec2, p3: Vec2, t: Float): Vec2 {
+    val u = 1f - t
+    val w1 = u * u
+    val w2 = 2 * u * t
+    val w3 = t * t
+    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y)
+}
+
 /** Closely mimics PathBezierToCasteljau() in imgui_draw.cpp
- *  [JVM] pClosestDist2 in return */
-fun bezierClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2_: Float,
-                                    x1: Float, y1: Float, x2: Float, y2: Float,
-                                    x3: Float, y3: Float, x4: Float, y4: Float,
-                                    tessTol: Float, level: Int): Float {
-    var pClosestDist2 = pClosestDist2_
+ *
+ *  [JVM] p, pClosest, pLast, pClosestDist2 are supposed to modify the given instance
+ *  [JVM] @return pClosestDist2
+ */
+fun bezierCubicClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2: Float,
+                                         x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float,
+                                         x4: Float, y4: Float, tessTol: Float, level: Int): Float {
+    var res = pClosestDist2
     val dx = x4 - x1
     val dy = y4 - y1
     var d2 = ((x2 - x4) * dy - (y2 - y4) * dx)
     var d3 = ((x3 - x4) * dy - (y3 - y4) * dx)
-    d2 = if (d2 >= 0f) d2 else -d2
-    d3 = if (d3 >= 0f) d3 else -d3
+    d2 = if (d2 >= 0) d2 else -d2
+    d3 = if (d3 >= 0) d3 else -d3
     if ((d2 + d3) * (d2 + d3) < tessTol * (dx * dx + dy * dy)) {
         val pCurrent = Vec2(x4, y4)
         val pLine = lineClosestPoint(pLast, pCurrent, p)
         val dist2 = (p - pLine).lengthSqr
         if (dist2 < pClosestDist2) {
             pClosest put pLine
-            pClosestDist2 = dist2
+            res = dist2 // pClosestDist2 = dist2
         }
         pLast put pCurrent
     } else if (level < 10) {
@@ -668,19 +668,10 @@ fun bezierClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClose
         val y234 = (y23 + y34) * 0.5f
         val x1234 = (x123 + x234) * 0.5f
         val y1234 = (y123 + y234) * 0.5f
-        pClosestDist2 = bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
-        pClosestDist2 = bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
+        res = bezierCubicClosestPointCasteljauStep(p, pClosest, pLast, res, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
+        res = bezierCubicClosestPointCasteljauStep(p, pClosest, pLast, res, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
     }
-    return pClosestDist2
-}
-
-/** Quadratic bezier */
-fun quadBezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, t: Float): Vec2 {
-    val u = 1f - t
-    val w1 = u * u
-    val w2 = 2 * u * t
-    val w3 = t * t
-    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y)
+    return res
 }
 
 fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
@@ -758,7 +749,7 @@ class BitArray(val bitCount: Int) {
 
     fun mask(n: Int): Int = 1 shl (n and 31)
 
-    infix fun testBit(n: Int): Boolean{
+    infix fun testBit(n: Int): Boolean {
         assert(n < bitCount)
         return storage[n ushr 5] hasnt mask(n)
     }
@@ -777,7 +768,7 @@ class BitArray(val bitCount: Int) {
         var n = n1
         while (n <= n2) {
             val aMod = n and 31
-            val bMod = (if(n2 > (n or 31)) 31 else n2 and 31) + 1
+            val bMod = (if (n2 > (n or 31)) 31 else n2 and 31) + 1
             val mask = ((1L shl bMod) - 1).i wo ((1L shl aMod) - 1).i
             storage[n ushr 5] = storage[n ushr 5] or mask
             n = (n + 32) wo 31
