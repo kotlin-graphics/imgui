@@ -286,7 +286,7 @@ class Window(var context: Context,
         val id: ID = hashStr(strID, end, seed)
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, end)
+            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, strID, end)
         return id
     }
 
@@ -323,7 +323,7 @@ class Window(var context: Context,
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
         val id = hashStr(strID, strID.length - strEnd, seed_ = idStack.last())
         if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, strEnd)
+            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, strID, strEnd)
         return id
     }
 

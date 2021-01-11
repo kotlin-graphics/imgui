@@ -135,7 +135,7 @@ internal interface basicAccessors {
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE) {
 //            val g = gImGui!!
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, str, strEnd)
+            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, str, strEnd)
         }
         return id
     }
