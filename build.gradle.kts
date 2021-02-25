@@ -33,7 +33,7 @@ allprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
+        gradlePluginPortal()
         maven("https://jitpack.io")
     }
 
@@ -49,6 +49,8 @@ allprojects {
                 }
             }
         }
+
+        dokkaJavadoc { enabled = System.getenv("JITPACK") != "true" }
 
         withType<KotlinCompile>().all {
             kotlinOptions {
