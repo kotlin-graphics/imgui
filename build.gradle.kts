@@ -33,13 +33,13 @@ allprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
         maven("https://jitpack.io")
     }
 
     tasks {
 
         dokkaHtml {
+            enabled = System.getenv("JITPACK") != "true"
             dokkaSourceSets.configureEach {
                 sourceLink {
                     localDirectory.set(file("src/main/kotlin"))
@@ -72,33 +72,27 @@ allprojects {
     }
 
     val dokkaJavadocJar by tasks.register<Jar>("dokkaJavadocJar") {
+        enabled = System.getenv("JITPACK") != "true"
         dependsOn(tasks.dokkaJavadoc)
         from(tasks.dokkaJavadoc.get().outputDirectory.get())
         archiveClassifier.set("javadoc")
     }
 
     val dokkaHtmlJar by tasks.register<Jar>("dokkaHtmlJar") {
+        enabled = System.getenv("JITPACK") != "true"
         dependsOn(tasks.dokkaHtml)
         from(tasks.dokkaHtml.get().outputDirectory.get())
         archiveClassifier.set("html-doc")
     }
 
-    val sourceJar = task("sourceJar", Jar::class) {
-        dependsOn(tasks.classes)
-        archiveClassifier.set("sources")
-        from(sourceSets.main.get().allSource)
-    }
-
     artifacts {
         archives(dokkaJavadocJar)
         archives(dokkaHtmlJar)
-        archives(sourceJar)
     }
 
     publishing {
-        publications.create<MavenPublication>("mavenJava") {
+        publications.register<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(sourceJar)
         }
         repositories.maven {
             name = "GitHubPackages"
@@ -109,6 +103,8 @@ allprojects {
             }
         }
     }
+
+    java.withSourcesJar()
 
     // == Add access to the 'modular' variant of kotlin("stdlib"): Put this into a buildSrc plugin and reuse it in all your subprojects
     configurations.all { attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 11) }
