@@ -25,7 +25,7 @@ allprojects {
         options.compilerArgs = listOf("--patch-module", "$moduleName=${sourceSets.main.get().output.asPath}")
     }
 
-    java { modularity.inferModulePath.set(true) }
+//    java { modularity.inferModulePath.set(true) }
 
     dependencies {
 
@@ -118,5 +118,5 @@ allprojects {
     java.withSourcesJar()
 
     // == Add access to the 'modular' variant of kotlin("stdlib"): Put this into a buildSrc plugin and reuse it in all your subprojects
-    configurations.all { attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 11) }
+    configurations.all { attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 8) }
 }
