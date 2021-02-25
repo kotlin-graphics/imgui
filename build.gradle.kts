@@ -18,6 +18,12 @@ allprojects {
     apply(plugin = "com.github.johnrengelman.shadow")
 
     group = "com.github.kotlin_graphics"
+    val moduleName = "$group.imgui.${project.name}"
+
+    tasks.compileJava {
+        // this is needed because we have a separate compile step in this example with the 'module-info.java' is in 'main/java' and the Kotlin code is in 'main/kotlin'
+        options.compilerArgs = listOf("--patch-module", "$moduleName=${sourceSets.main.get().output.asPath}")
+    }
 
     java { modularity.inferModulePath.set(true) }
 
@@ -96,6 +102,8 @@ allprojects {
     publishing {
         publications.create<MavenPublication>("mavenJava") {
             from(components["java"])
+            groupId = group as String
+            artifactId = moduleName
         }
         repositories.maven {
             name = "GitHubPackages"
