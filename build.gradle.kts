@@ -103,7 +103,7 @@ allprojects {
         publications.create<MavenPublication>("mavenJava") {
             from(components["java"])
             groupId = group as String
-            artifactId = moduleName
+            artifactId = project.name
         }
         repositories.maven {
             name = "GitHubPackages"
