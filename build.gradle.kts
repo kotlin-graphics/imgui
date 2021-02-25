@@ -94,7 +94,7 @@ allprojects {
     }
 
     publishing {
-        publications.register<MavenPublication>("mavenJava") {
+        publications.create<MavenPublication>("mavenJava") {
             from(components["java"])
         }
         repositories.maven {
