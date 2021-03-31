@@ -1,10 +1,9 @@
-module com.github.kotlin_graphics.imgui.openjfx {
+module kotlin.graphics.imgui.openjfx {
 
     requires javafx.graphics;
 
     requires kotlin.stdlib;
 
-    requires com.github.kotlin_graphics.imgui.core;
-
-    requires com.github.kotlin_graphics.glm;
+    requires kotlin.graphics.imgui.core;
+    requires kotlin.graphics.glm;
 }

@@ -1,116 +1,59 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.net.URL
+import kx.KxProject.*
+import kx.LwjglModules.*
+import kx.kxImplementation
+import kx.lwjglImplementation
+import org.gradle.internal.os.OperatingSystem.*
 
 plugins {
-    java
-    kotlin("jvm") version "1.4.0"
-    `maven-publish`
-    id("org.jetbrains.dokka") version "1.4.0"
-    id("com.github.johnrengelman.shadow") version "6.0.0"
-//    idea
+    val build = "0.7.0+100"
+    id("kx.kotlin.11") version build
+    id("kx.lwjgl") version build
+    id("kx.dokka") version build
+    id("kx.publish") version build
 }
 
-allprojects {
-    apply(plugin = "java")
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "maven-publish")
-    apply(plugin = "org.jetbrains.dokka")
-    apply(plugin = "com.github.johnrengelman.shadow")
+version = "1.79"
 
-    group = "com.github.kotlin_graphics"
+project(":core").dependencies {
+    implementation(kotlin("reflect"))
+    kxImplementation(unsigned, kool, glm, gli, unoCore)
+    lwjglImplementation(jemalloc, stb)
+}
 
-    java { modularity.inferModulePath.set(true) }
+project(":gl").dependencies {
+    implementation(rootProject.projects.core)
+    implementation(rootProject.projects.glfw)
+    implementation(kotlin("reflect"))
+    kxImplementation(unsigned, kool, glm, gli, gln, unoCore)
+    lwjglImplementation(jemalloc, glfw, opengl, remotery, stb)
+    testImplementation("com.github.ajalt:mordant:1.2.1")
+}
 
-    dependencies {
+project(":glfw").dependencies {
+    implementation(rootProject.projects.core)
+    implementation(kotlin("reflect"))
+    kxImplementation(kool, glm, uno)
+    lwjglImplementation(glfw, opengl, remotery)
+}
 
-        implementation(kotlin("stdlib-jdk8"))
-
-        implementation(platform("org.lwjgl:lwjgl-bom:${findProperty("lwjglVersion")}"))
-
-        testImplementation("io.kotest:kotest-runner-junit5-jvm:${findProperty("kotestVersion")}")
-        testImplementation("io.kotest:kotest-assertions-core-jvm:${findProperty("kotestVersion")}")
+project(":openjfx").dependencies {
+    implementation(rootProject.projects.core)
+    val platform = when {
+        current().isWindows -> "win"
+        current().isLinux -> "linux"
+        else -> "mac"
     }
-
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven("https://jitpack.io")
+    listOf("base", "graphics").forEach {
+        implementation("org.openjfx:javafx-$it:11:$platform")
     }
+    kxImplementation(glm)
+    lwjglImplementation() // just core
+}
 
-    tasks {
-
-        dokkaHtml {
-            dokkaSourceSets.configureEach {
-                sourceLink {
-                    localDirectory.set(file("src/main/kotlin"))
-                    // TODO -> per module..
-                    remoteUrl.set(URL("https://github.com/kotlin-graphics/imgui/tree/master/src/main/kotlin"))
-                    remoteLineSuffix.set("#L")
-                }
-            }
-        }
-
-        withType<KotlinCompile>().all {
-            kotlinOptions {
-                jvmTarget = "11"
-                freeCompilerArgs += listOf("-Xinline-classes", "-Xopt-in=kotlin.RequiresOptIn")
-            }
-            sourceCompatibility = "11"
-        }
-
-        withType<Test> { useJUnitPlatform() }
-
-//        task lightJar (type: Jar) {
-//            archiveClassifier = 'light'
-//            from sourceSets . main . output
-//                    exclude 'extraFonts'
-//            inputs.property("moduleName", moduleName)
-//            manifest {
-//                attributes('Automatic-Module-Name': moduleName)
-//            }
-//            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//        }
-    }
-
-    val dokkaJavadocJar by tasks.register<Jar>("dokkaJavadocJar") {
-        dependsOn(tasks.dokkaJavadoc)
-        from(tasks.dokkaJavadoc.get().outputDirectory.get())
-        archiveClassifier.set("javadoc")
-    }
-
-    val dokkaHtmlJar by tasks.register<Jar>("dokkaHtmlJar") {
-        dependsOn(tasks.dokkaHtml)
-        from(tasks.dokkaHtml.get().outputDirectory.get())
-        archiveClassifier.set("html-doc")
-    }
-
-    val sourceJar = task("sourceJar", Jar::class) {
-        dependsOn(tasks.classes)
-        archiveClassifier.set("sources")
-        from(sourceSets.main.get().allSource)
-    }
-
-    artifacts {
-        archives(dokkaJavadocJar)
-        archives(dokkaHtmlJar)
-        archives(sourceJar)
-    }
-
-    publishing {
-        publications.create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            artifact(sourceJar)
-        }
-        repositories.maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/kotlin-graphics/imgui")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
-
-    // == Add access to the 'modular' variant of kotlin("stdlib"): Put this into a buildSrc plugin and reuse it in all your subprojects
-    configurations.all { attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 11) }
+project(":vk").dependencies {
+    implementation(rootProject.projects.core)
+    implementation(rootProject.projects.glfw)
+    implementation(kotlin("reflect"))
+    kxImplementation(kool, glm, gli, vkk, uno)
+    lwjglImplementation(glfw, opengl, remotery, vulkan)
 }

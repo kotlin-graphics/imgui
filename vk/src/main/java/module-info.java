@@ -1,4 +1,4 @@
-module com.github.kotlin_graphics.imgui.vk {
+module kotlin.graphics.imgui.vk {
 
     requires kotlin.stdlib;
 
@@ -6,13 +6,13 @@ module com.github.kotlin_graphics.imgui.vk {
     requires org.lwjgl.glfw;
     requires org.lwjgl.vulkan;
 
-    requires com.github.kotlin_graphics.imgui.core;
-    requires com.github.kotlin_graphics.imgui.glfw;
+    requires kotlin.graphics.imgui.core;
+    requires kotlin.graphics.imgui.glfw;
 
-    requires com.github.kotlin_graphics.glm;
-    requires com.github.kotlin_graphics.kool;
-    requires com.github.kotlin_graphics.vkk;
-    requires com.github.kotlin_graphics.gli;
-    requires com.github.kotlin_graphics.uno.core;
-    requires com.github.kotlin_graphics.uno.vk;
+    requires kotlin.graphics.glm;
+    requires kotlin.graphics.kool;
+    requires kotlin.graphics.vkk;
+    requires kotlin.graphics.gli;
+    requires kotlin.graphics.uno.core;
+    requires kotlin.graphics.uno.vk;
 }

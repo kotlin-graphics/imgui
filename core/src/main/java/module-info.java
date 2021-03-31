@@ -1,15 +1,15 @@
-module com.github.kotlin_graphics.imgui.core {
+module kotlin.graphics.imgui.core {
 
     requires java.desktop;
     requires jdk.jdi;
 
     requires kotlin.stdlib;
 
-    requires com.github.kotlin_graphics.uno.core;
-    requires com.github.kotlin_graphics.gli;
-    requires com.github.kotlin_graphics.glm;
-    requires com.github.kotlin_graphics.kool;
-    requires com.github.kotlin_graphics.kotlin_unsigned;
+    requires kotlin.graphics.uno.core;
+    requires kotlin.graphics.gli;
+    requires kotlin.graphics.glm;
+    requires kotlin.graphics.kool;
+    requires kotlin.graphics.unsigned;
 
     requires org.lwjgl;
     requires org.lwjgl.stb;

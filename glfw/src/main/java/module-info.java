@@ -1,11 +1,11 @@
-module com.github.kotlin_graphics.imgui.glfw {
+module kotlin.graphics.imgui.glfw {
 
     requires kotlin.stdlib;
 
-    requires com.github.kotlin_graphics.imgui.core;
-    requires com.github.kotlin_graphics.uno.core;
-    requires com.github.kotlin_graphics.glm;
-    requires com.github.kotlin_graphics.kool;
+    requires kotlin.graphics.imgui.core;
+    requires kotlin.graphics.uno.core;
+    requires kotlin.graphics.glm;
+    requires kotlin.graphics.kool;
 
     requires org.lwjgl.glfw;
 
