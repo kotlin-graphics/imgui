@@ -113,9 +113,9 @@ class ImplVulkan_(info: InitInfo, renderPass: Long) {
                     checkVkResult(err)
                     for (cmdList in drawData.cmdLists) {
                         MemoryUtil.memCopy(cmdList.vtxBuffer.adr, vtxDst[0], cmdList.vtxBuffer.sizeByte.L)
-                        MemoryUtil.memCopy(cmdList.idxBuffer.adr, idxDst[0], cmdList.idxBuffer.remSize.L)
+                        MemoryUtil.memCopy(cmdList.idxBuffer.adr, idxDst[0], cmdList.idxBuffer.remByte.L)
                         vtxDst[0] += cmdList.vtxBuffer.sizeByte.L
-                        idxDst[0] += cmdList.idxBuffer.remSize.L
+                        idxDst[0] += cmdList.idxBuffer.remByte.L
                     }
                     val range = VkMappedMemoryRange.callocStack(2, s)
                     range[0].sType(VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE)

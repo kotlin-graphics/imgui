@@ -14,7 +14,7 @@ import imgui.or
 import kool.BYTES
 import kool.adr
 import kool.rem
-import kool.remSize
+import kool.remByte
 import org.lwjgl.system.MemoryUtil.memCopy
 import org.lwjgl.vulkan.VK10.VK_QUEUE_FAMILY_IGNORED
 import vkk.*
@@ -120,9 +120,9 @@ class ImplVulkan(info: InitInfo, renderPass: VkRenderPass) {
                 var idxDst = v.device.mapMemory(rb.indexBufferMemory, VkDeviceSize(0), indexSize)
                 for (cmdList in drawData.cmdLists) {
                     memCopy(cmdList.vtxBuffer.adr, vtxDst, cmdList.vtxBuffer.sizeByte.L)
-                    memCopy(cmdList.idxBuffer.adr, idxDst, cmdList.idxBuffer.remSize.L)
+                    memCopy(cmdList.idxBuffer.adr, idxDst, cmdList.idxBuffer.remByte.L)
                     vtxDst += cmdList.vtxBuffer.sizeByte.L
-                    idxDst += cmdList.idxBuffer.remSize.L
+                    idxDst += cmdList.idxBuffer.remByte.L
                 }
                 val range = arrayOf(
                         MappedMemoryRange(rb.vertexBufferMemory, size = VkDeviceSize.WHOLE_SIZE),
