@@ -152,8 +152,10 @@ interface widgetsMain {
         val pos = Vec2(window.dc.cursorPos) //cursorPos gets updated somewhere else, which means we need to make a copy else checkboxes act incorrectly
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, id))
+        if (!itemAdd(totalBb, id)) {
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
             return false
+        }
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed) {

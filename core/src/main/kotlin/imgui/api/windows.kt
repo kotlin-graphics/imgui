@@ -387,7 +387,7 @@ interface windows {
             val resizeGripCol = IntArray(4)
             val resizeGripCount =
                     if (io.configWindowsResizeFromEdges) 2 else 1 // Allow resize from lower-left if we have the mouse cursor feedback for it.
-            val resizeGripDrawSize = floor(max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f))
+            val resizeGripDrawSize = floor(max(g.fontSize * 1.1f, window.windowRounding + 1f + g.fontSize * 0.2f))
             if (!window.collapsed) {
                 val (borderHeld_, ret) = updateWindowManualResize(window,
                         sizeAutoFit,

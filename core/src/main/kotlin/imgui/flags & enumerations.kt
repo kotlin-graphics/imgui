@@ -613,16 +613,16 @@ enum class TableFlag(@JvmField val i: TableFlags) {
 
     None(0),
 
-    /** Allow resizing columns. */
+    /** Enable resizing columns. */
     Resizable(1 shl 0),
 
-    /** Allow reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
+    /** Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
     Reorderable(1 shl 1),
 
-    /** Allow hiding/disabling columns in context menu. */
+    /** Enable hiding/disabling columns in context menu. */
     Hideable(1 shl 2),
 
-    /** Allow sorting on one column (sort_specs_count will always be == 1). Call TableGetSortSpecs() to obtain sort specs. */
+    /** Enable sorting. Call TableGetSortSpecs() to obtain sort specs. Also see ImGuiTableFlags_SortMulti and ImGuiTableFlags_SortTristate. */
     Sortable(1 shl 3),
 
     /** Disable persisting columns order, width and sort settings in the .ini file. */
@@ -663,10 +663,10 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Draw all borders. */
     Borders(BordersInner or BordersOuter),
 
-    /** Disable vertical borders in columns Body (borders will always appears in Headers). */
+    /** [ALPHA] Disable vertical borders in columns Body (borders will always appears in Headers). -> May move to style */
     NoBordersInBody(1 shl 11),
 
-    /** Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). */
+    /** [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). -> May move to style */
     NoBordersInBodyUntilResize(1 shl 12),
 
     // Sizing

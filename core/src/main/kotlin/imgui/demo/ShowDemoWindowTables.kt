@@ -510,7 +510,9 @@ object ShowDemoWindowTables {
                     "Using _Resizable + _ColumnsWidthFixed flags.\n" +
                             "Fixed-width columns generally makes more sense if you want to use horizontal scrolling.\n\n" +
                             "Double-click a column border to auto-fit the column to its contents.")
-            checkbox("Use all width", ::useAllWidth0)
+            if (radioButton("fit", !useAllWidth0)) useAllWidth0 = false
+            sameLine()
+            if (radioButton("right-most edge", useAllWidth0)) useAllWidth0 = true
             table("##table1", 3, flags2, Vec2(if(useAllWidth0) -Float.MIN_VALUE else 0f, 0f)) {
                 for (row in 0..4) {
                     tableNextRow()
@@ -847,10 +849,10 @@ object ShowDemoWindowTables {
 
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
-        treeNode("Recursive") {
+        treeNode("Nested") {
             helpMarker("This demonstrate embedding a table into another table cell.")
 
-            table("recurse1", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
+            table("nested1", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
                 tableSetupColumn("A0")
                 tableSetupColumn("A1")
                 tableHeadersRow()
@@ -859,7 +861,7 @@ object ShowDemoWindowTables {
                 text("A0 Cell 0")
                 run {
                     val rowsHeight = TEXT_BASE_HEIGHT * 2
-                    table("recurse2", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
+                    table("nested2", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
                         tableSetupColumn("B0")
                         tableSetupColumn("B1")
                         tableHeadersRow()
