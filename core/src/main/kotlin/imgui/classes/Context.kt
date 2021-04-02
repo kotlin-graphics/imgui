@@ -121,12 +121,17 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Item/widgets state and tracking information
 
-    /** Hovered widget  */
+    /** Hovered widget, filled during the frame  */
     var hoveredId: ID = 0
 
     var hoveredIdPreviousFrame: ID = 0
 
     var hoveredIdAllowOverlap = false
+
+    /** Hovered widget will use mouse wheel. Blocks scrolling the underlying window. */
+    var hoveredIdUsingMouseWheel = false
+
+    var hoveredIdPreviousFrameUsingMouseWheel = false
 
     /** At least one widget passed the rect test, but has been discarded by disabled flag or popup inhibit.
      *  May be true even if HoveredId == 0. */
@@ -162,6 +167,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdHasBeenEditedBefore = false
 
     var activeIdHasBeenEditedThisFrame = false
+
+    /** Active widget will want to read mouse wheel. Blocks scrolling the underlying window. */
+    var activeIdUsingMouseWheel = false
 
     /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
     var activeIdUsingNavDirMask = 0

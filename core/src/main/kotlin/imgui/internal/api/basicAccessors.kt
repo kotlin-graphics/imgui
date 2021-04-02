@@ -58,6 +58,7 @@ internal interface basicAccessors {
 
         // Clear declaration of inputs claimed by the widget
         // (Please note that this is WIP and not all keys/inputs are thoroughly declared by all widgets yet)
+        g.activeIdUsingMouseWheel = false
         g.activeIdUsingNavDirMask = 0x00
         g.activeIdUsingNavInputMask = 0x00
         g.activeIdUsingKeyInputMask = 0x00
@@ -96,6 +97,7 @@ internal interface basicAccessors {
         set(value) {
             g.hoveredId = value
             g.hoveredIdAllowOverlap = false
+            g.hoveredIdUsingMouseWheel = false
             if (value != 0 && g.hoveredIdPreviousFrame != value) {
                 g.hoveredIdTimer = 0f
                 g.hoveredIdNotActiveTimer = 0f

@@ -139,9 +139,10 @@ interface itemWidgetsUtilities {
     /** Allow last item to be overlapped by a subsequent item. Both may be activated during the same frame before the later one takes priority.
      *  FIXME: Although this is exposed, its interaction and ideal idiom with using ImGuiButtonFlags_AllowItemOverlap flag are extremely confusing, need rework. */
     fun setItemAllowOverlap() {
-        if (g.hoveredId == g.currentWindow!!.dc.lastItemId)
+        val id = g.currentWindow!!.dc.lastItemId
+        if (g.hoveredId == id)
             g.hoveredIdAllowOverlap = true
-        if (g.activeId == g.currentWindow!!.dc.lastItemId)
+        if (g.activeId == id)
             g.activeIdAllowOverlap = true
     }
 }

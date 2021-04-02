@@ -154,6 +154,8 @@ fun updateMouseWheel() {
     if (io.mouseWheel == 0f && io.mouseWheelH == 0f)
         return
 
+    if ((g.activeId != 0 && g.activeIdUsingMouseWheel) || (g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrameUsingMouseWheel))
+        return;
     var window = g.wheelingWindow ?: g.hoveredWindow
     if (window == null || window.collapsed)
         return

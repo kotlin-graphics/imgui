@@ -128,8 +128,10 @@ interface main {
         if (g.hoveredId != 0 && g.activeId != g.hoveredId)
             g.hoveredIdNotActiveTimer += io.deltaTime
         g.hoveredIdPreviousFrame = g.hoveredId
+        g.hoveredIdPreviousFrameUsingMouseWheel = g.hoveredIdUsingMouseWheel
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
+        g.hoveredIdUsingMouseWheel = false
         g.hoveredIdDisabled = false
 
         // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
