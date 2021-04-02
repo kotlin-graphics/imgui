@@ -43,7 +43,7 @@ class Table {
     var flags = Tf.None.i
 
     /** Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[] */
-//    var rawData: Any? = null
+    //    var rawData: Any? = null
 
     /** Point within RawData[] */
     val columns = ArrayList<TableColumn>()
@@ -350,21 +350,21 @@ class Table {
      *  ~tableBeginInitMemory */
     infix fun beginInitMemory(columnsCount: Int) {
         // Allocate single buffer for our arrays
-//        ImSpanAllocator<3> span_allocator;
+        //        ImSpanAllocator<3> span_allocator;
         repeat(columnsCount) {
             columns += TableColumn()
         }
         displayOrderToIndex += IntArray(columnsCount)
         rowCellData += Array(columnsCount) { TableCellData() }
-//        span_allocator.ReserveBytes(0, columnsCount1 * sizeof(ImGuiTableColumn));
-//        span_allocator.ReserveBytes(1, columnsCount1 * sizeof(ImGuiTableColumnIdx));
-//        span_allocator.ReserveBytes(2, columnsCount1 * sizeof(ImGuiTableCellData));
-//        table->RawData = IM_ALLOC(span_allocator.GetArenaSizeInBytes());
-//        memset(table->RawData, 0, span_allocator.GetArenaSizeInBytes());
-//        span_allocator.SetArenaBasePtr(table->RawData);
-//        span_allocator.GetSpan(0, &table->Columns);
-//        span_allocator.GetSpan(1, &table->DisplayOrderToIndex);
-//        span_allocator.GetSpan(2, &table->RowCellData);
+        //        span_allocator.ReserveBytes(0, columnsCount1 * sizeof(ImGuiTableColumn));
+        //        span_allocator.ReserveBytes(1, columnsCount1 * sizeof(ImGuiTableColumnIdx));
+        //        span_allocator.ReserveBytes(2, columnsCount1 * sizeof(ImGuiTableCellData));
+        //        table->RawData = IM_ALLOC(span_allocator.GetArenaSizeInBytes());
+        //        memset(table->RawData, 0, span_allocator.GetArenaSizeInBytes());
+        //        span_allocator.SetArenaBasePtr(table->RawData);
+        //        span_allocator.GetSpan(0, &table->Columns);
+        //        span_allocator.GetSpan(1, &table->DisplayOrderToIndex);
+        //        span_allocator.GetSpan(2, &table->RowCellData);
     }
 
     /** Apply queued resizing/reordering/hiding requests
@@ -504,24 +504,25 @@ class Table {
         // [Part 1] Apply/lock Enabled and Order states. Calculate auto/ideal width for columns.
         // Process columns in their visible orders as we are building the Prev/Next indices.
         var lastVisibleColumnIdx = -1
-        var wantAutoFit = false
+        var hasAutoFitRequest = false
+        var hasResizable = false
         for (orderN in 0 until columnsCount) {
             val columnN = displayOrderToIndex[orderN]
             if (columnN != orderN)
                 isDefaultDisplayOrder = false
             val column = columns[columnN]
 
-            // Clear column settings if not submitted by user.
-            // Currently we make it mandatory to call TableSetupColumn() every frame.
-            // It would easily work without but we're ready to guarantee it since e.g. names need resubmission anyway.
-            // In theory we could be calling TableSetupColumn() here with dummy values it should yield the same effect.
-            if (columnN >= declColumnsCount) {
+            // Clear column setup if not submitted by user. Currently we make it mandatory to call TableSetupColumn() every frame.
+            // It would easily work without but we're not ready to guarantee it since e.g. names need resubmission anyway.
+            // We take a slight shortcut but in theory we could be calling TableSetupColumn() here with dummy values, it should yield the same effect.
+            if (declColumnsCount <= columnN) {
                 setupColumnFlags(column, Tcf.None.i)
                 column.nameOffset = -1
                 column.userID = 0
                 column.initStretchWeightOrWidth = -1f
             }
 
+            // Update Enabled state, mark settings/sortspecs dirty
             if (flags hasnt Tf.Hideable || flags has Tcf.NoHide)
                 column.isEnabledNextFrame = true
             if (column.isEnabled != column.isEnabledNextFrame) {
@@ -533,17 +534,16 @@ class Table {
             if (column.sortOrder > 0 && flags hasnt Tf.SortMulti)
                 isSortSpecsDirty = true
 
+            // Auto-fit unsized columns
             val startAutoFit = when {
-                column.flags has (Tcf.WidthFixed or Tcf.WidthAuto) -> column.widthRequest
-                else -> column.stretchWeight
-            } < 0f
+                column.flags has (Tcf.WidthFixed or Tcf.WidthAuto) -> column.widthRequest < 0f
+                else -> column.stretchWeight < 0f
+            }
             if (startAutoFit) {
                 column.autoFitQueue = (1 shl 3) - 1 // Fit for three frames
                 column.cannotSkipItemsQueue = (1 shl 3) - 1 // Fit for three frames
             }
 
-            val indexMask = 1L shl columnN
-            val displayOrderMask = 1L shl column.displayOrder
             if (!column.isEnabled) {
                 column.indexWithinEnabledSet = -1
                 continue
@@ -554,10 +554,9 @@ class Table {
             column.nextEnabledColumn = -1
             if (lastVisibleColumnIdx != -1)
                 columns[lastVisibleColumnIdx].nextEnabledColumn = columnN
-            column.indexWithinEnabledSet = columnsEnabledCount
-            columnsEnabledCount++
-            enabledMaskByIndex = enabledMaskByIndex or indexMask
-            enabledMaskByDisplayOrder = enabledMaskByDisplayOrder or displayOrderMask
+            column.indexWithinEnabledSet = columnsEnabledCount++
+            enabledMaskByIndex = enabledMaskByIndex or (1L shl columnN)
+            enabledMaskByDisplayOrder = enabledMaskByDisplayOrder or (1L shl column.displayOrder)
             lastVisibleColumnIdx = columnN
             assert(column.indexWithinEnabledSet <= column.displayOrder)
 
@@ -566,8 +565,11 @@ class Table {
             if (!column.isPreserveWidthAuto)
                 column.widthAuto = getColumnWidthAuto(column)
 
+            val columnIsResizable = column.flags hasnt Tcf.NoResize
+            if (columnIsResizable)
+                hasResizable = true
             if (column.autoFitQueue != 0x00)
-                wantAutoFit = true
+                hasAutoFitRequest = true
         }
         if (flags has Tf.Sortable && sortSpecsCount == 0 && flags hasnt Tf.SortTristate)
             isSortSpecsDirty = true
@@ -575,16 +577,15 @@ class Table {
         assert(rightMostEnabledColumn >= 0)
 
         // [Part 2] Disable child window clipping while fitting columns. This is not strictly necessary but makes it possible
-        // to avoid the column fitting to wait until the first visible frame of the child container (may or not be a good thing).
+        // to avoid the column fitting having to wait until the first visible frame of the child container (may or not be a good thing).
         // FIXME-TABLE: for always auto-resizing columns may not want to do that all the time.
-        if (wantAutoFit && outerWindow !== innerWindow)
+        if (hasAutoFitRequest && outerWindow !== innerWindow)
             innerWindow!!.skipItems = false
-        if (wantAutoFit)
+        if (hasAutoFitRequest)
             isSettingsDirty = true
 
         // [Part 3] Fix column flags. Count how many fixed/stretch columns we have and sum of weights.
         var countFixed = 0                    // Number of columns that have fixed sizing policy (not stretched sizing policy) (this is NOT the opposite of count_resizable!)
-        var countResizable = 0                // Number of columns the user can resize (this is NOT the opposite of count_fixed!)
         var sumWidthRequests = 0f  // Sum of all width for fixed and auto-resize columns, excluding width contributed by Stretch columns but including spacing/padding.
         var maxWidthAuto = 0f            // Largest auto-width (used for SameWidths feature)
         var stretchSumWeights = 0f     // Sum of all weights for weighted columns.
@@ -594,10 +595,6 @@ class Table {
             if (enabledMaskByIndex hasnt (1L shl columnN))
                 continue
             val column = columns[columnN]
-
-            // Count resizable columns
-            if (column.flags hasnt Tcf.NoResize)
-                countResizable++
 
             if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
                 // Non-resizable columns keep their requested width
@@ -624,8 +621,6 @@ class Table {
                 countFixed += 1
                 sumWidthRequests += column.widthRequest
             } else {
-                assert(column.flags has Tcf.WidthStretch)
-
                 if (column.autoFitQueue != 0x00 || column.stretchWeight < 0f)
                     column.stretchWeight = if (column.initStretchWeightOrWidth > 0f) column.initStretchWeightOrWidth else 1f
 
@@ -662,7 +657,7 @@ class Table {
             }
 
         // [Part 5] Apply final widths based on requested widths
-//        val work_rect = table->WorkRect; [JVM] we use the same instance!
+        //        val work_rect = table->WorkRect; [JVM] we use the same instance!
         val widthSpacings = outerPaddingX * 2f + (cellSpacingX1 + cellSpacingX2) * (columnsEnabledCount - 1)
         val widthAvail = if (flags has Tf.ScrollX && innerWidth == 0f) innerClipRect.width else workRect.width
         val widthAvailForStretchedColumns = if (mixedSameWidths) 0f else widthAvail - widthSpacings - sumWidthRequests
@@ -854,7 +849,7 @@ class Table {
             if (g.io.mousePos.x >= unusedX1)
                 hoveredColumnBody = columnsCount
         }
-        if (countResizable == 0 && flags has Tf.Resizable)
+        if (!hasResizable && flags has Tf.Resizable)
             flags = flags wo Tf.Resizable
 
         // [Part 9] Lock actual OuterRect/WorkRect right-most position.
@@ -868,8 +863,8 @@ class Table {
             innerClipRect.max.x = innerClipRect.max.x min unusedX1
         }
         innerWindow!!.parentWorkRect put workRect
-        borderX1 = innerClipRect.min.x// +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : -1.0f);
-        borderX2 = innerClipRect.max.x// +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : +1.0f);
+        borderX1 = innerClipRect.min.x // +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : -1.0f);
+        borderX2 = innerClipRect.max.x // +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : +1.0f);
 
         // [Part 10] Allocate draw channels and setup background cliprect
         setupDrawChannels()
@@ -919,8 +914,11 @@ class Table {
                     if (this.flags has Tf.Resizable && flags hasnt Tcf.NoResize) Tcf.WidthFixed else Tcf.WidthAuto
                 else -> Tcf.WidthStretch
             }
-        assert((flags and Tcf.WidthMask_).isPowerOfTwo) { "Check that only 1 of each set is used." }
-        if (flags has Tcf.WidthAuto)
+        else
+            assert((flags and Tcf.WidthMask_).isPowerOfTwo) { "Check that only 1 of each set is used." }
+
+        // Resize
+        if (flags has Tcf.WidthAuto || flags hasnt Tf.Resizable)
             flags = flags or Tcf.NoResize
 
         // Sorting
@@ -1150,7 +1148,7 @@ class Table {
             val sizeAllDesc = when {
                 columnsEnabledFixedCount == columnsEnabledCount -> "Size all columns to fit###SizeAll"        // All fixed
                 columnsEnabledFixedCount == 0 -> "Size all columns to default###SizeAll"    // All stretch
-                else -> "Size all columns to fit/default###SizeAll"// Mixed
+                else -> "Size all columns to fit/default###SizeAll" // Mixed
             }
             if (menuItem(sizeAllDesc, ""))
                 setColumnWidthAutoAll()
@@ -1170,20 +1168,20 @@ class Table {
 
         // Sorting
         // (modify TableOpenContextMenu() to add _Sortable flag if enabling this)
-//        #if 0
-//        if ((table->Flags & ImGuiTableFlags_Sortable) && column != NULL && (column->Flags & ImGuiTableColumnFlags_NoSort) == 0)
-//        {
-//            if (wantSeparator)
-//                Separator()
-//            wantSeparator = true
-//
-//            bool append_to_sort_specs = g.IO.KeyShift
-//            if (MenuItem("Sort in Ascending Order", NULL, column->SortOrder != -1 && column->SortDirection == ImGuiSortDirection_Ascending, (column->Flags & ImGuiTableColumnFlags_NoSortAscending) == 0))
-//            TableSetColumnSortDirection(table, columnN, ImGuiSortDirection_Ascending, append_to_sort_specs)
-//            if (MenuItem("Sort in Descending Order", NULL, column->SortOrder != -1 && column->SortDirection == ImGuiSortDirection_Descending, (column->Flags & ImGuiTableColumnFlags_NoSortDescending) == 0))
-//            TableSetColumnSortDirection(table, columnN, ImGuiSortDirection_Descending, append_to_sort_specs)
-//        }
-//        #endif
+        //        #if 0
+        //        if ((table->Flags & ImGuiTableFlags_Sortable) && column != NULL && (column->Flags & ImGuiTableColumnFlags_NoSort) == 0)
+        //        {
+        //            if (wantSeparator)
+        //                Separator()
+        //            wantSeparator = true
+        //
+        //            bool append_to_sort_specs = g.IO.KeyShift
+        //            if (MenuItem("Sort in Ascending Order", NULL, column->SortOrder != -1 && column->SortDirection == ImGuiSortDirection_Ascending, (column->Flags & ImGuiTableColumnFlags_NoSortAscending) == 0))
+        //            TableSetColumnSortDirection(table, columnN, ImGuiSortDirection_Ascending, append_to_sort_specs)
+        //            if (MenuItem("Sort in Descending Order", NULL, column->SortOrder != -1 && column->SortDirection == ImGuiSortDirection_Descending, (column->Flags & ImGuiTableColumnFlags_NoSortDescending) == 0))
+        //            TableSetColumnSortDirection(table, columnN, ImGuiSortDirection_Descending, append_to_sort_specs)
+        //        }
+        //        #endif
 
         // Hiding / Visibility
         if (flags has Tf.Hideable) {
@@ -1304,28 +1302,28 @@ class Table {
         }
 
         // [DEBUG] Display merge groups
-//        #if 0
-//        if (g.IO.KeyShift)
-//            for (int merge_group_n = 0; merge_group_n < IM_ARRAYSIZE(mergeGroups); merge_group_n++)
-//        {
-//            MergeGroup* merge_group = &merge_groups[merge_group_n]
-//            if (merge_group->ChannelsCount == 0)
-//            continue
-//            char buf[32]
-//            ImFormatString(buf, 32, "MG%d:%d", merge_group_n, merge_group->ChannelsCount)
-//            ImVec2 text_pos = merge_group->ClipRect.Min + ImVec2(4, 4)
-//            ImVec2 text_size = CalcTextSize(buf, NULL)
-//            GetForegroundDrawList()->AddRectFilled(text_pos, text_pos + text_size, IM_COL32(0, 0, 0, 255))
-//            GetForegroundDrawList()->AddText(text_pos, IM_COL32(255, 255, 0, 255), buf, NULL)
-//            GetForegroundDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 255, 0, 255))
-//        }
-//        #endif
+        //        #if 0
+        //        if (g.IO.KeyShift)
+        //            for (int merge_group_n = 0; merge_group_n < IM_ARRAYSIZE(mergeGroups); merge_group_n++)
+        //        {
+        //            MergeGroup* merge_group = &merge_groups[merge_group_n]
+        //            if (merge_group->ChannelsCount == 0)
+        //            continue
+        //            char buf[32]
+        //            ImFormatString(buf, 32, "MG%d:%d", merge_group_n, merge_group->ChannelsCount)
+        //            ImVec2 text_pos = merge_group->ClipRect.Min + ImVec2(4, 4)
+        //            ImVec2 text_size = CalcTextSize(buf, NULL)
+        //            GetForegroundDrawList()->AddRectFilled(text_pos, text_pos + text_size, IM_COL32(0, 0, 0, 255))
+        //            GetForegroundDrawList()->AddText(text_pos, IM_COL32(255, 255, 0, 255), buf, NULL)
+        //            GetForegroundDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 255, 0, 255))
+        //        }
+        //        #endif
 
         // 2. Rewrite channel list in our preferred order
         if (mergeGroupMask != 0) {
             // We skip channel 0 (Bg0/Bg1) and 1 (Bg2 frozen) from the shuffling since they won't move - see channels allocation in TableSetupDrawChannels().
             val LEADING_DRAW_CHANNELS = 2
-//            g.drawChannelsTempMergeBuffer.resize(splitter->_Count - LEADING_DRAW_CHANNELS) // Use shared temporary storage so the allocation gets amortized
+            //            g.drawChannelsTempMergeBuffer.resize(splitter->_Count - LEADING_DRAW_CHANNELS) // Use shared temporary storage so the allocation gets amortized
             if (g.drawChannelsTempMergeBuffer.size < splitter._count - LEADING_DRAW_CHANNELS)
                 for (i in g.drawChannelsTempMergeBuffer.size until (splitter._count - LEADING_DRAW_CHANNELS))
                     g.drawChannelsTempMergeBuffer += DrawChannel()
@@ -1367,11 +1365,11 @@ class Table {
                         mergeClipRect.max.x = mergeClipRect.max.x max hostRect.max.x
                     if (mergeGroupN has 2 && flags hasnt Tf.NoHostExtendY)
                         mergeClipRect.max.y = mergeClipRect.max.y max hostRect.max.y
-//                    #if 0
-//                    GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, ~0, 1.0f)
-//                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Min, merge_clip_rect.Min, IM_COL32(255, 100, 0, 200))
-//                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Max, merge_clip_rect.Max, IM_COL32(255, 100, 0, 200))
-//                    #endif
+                    //                    #if 0
+                    //                    GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, ~0, 1.0f)
+                    //                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Min, merge_clip_rect.Min, IM_COL32(255, 100, 0, 200))
+                    //                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Max, merge_clip_rect.Max, IM_COL32(255, 100, 0, 200))
+                    //                    #endif
                     remainingCount -= mergeGroup.channelsCount
                     for (n in remainingMask.storage.indices)
                         remainingMask.storage[n] = remainingMask.storage[n] wo mergeGroup.channelsMask.storage[n]
@@ -1388,7 +1386,7 @@ class Table {
                         val channel = splitter._channels[n]
                         assert(channel._cmdBuffer.size == 1 && mergeClipRect.contains(Rect(channel._cmdBuffer[0].clipRect)))
                         channel._cmdBuffer[0].clipRect = mergeClipRect.toVec4()
-//                        memcpy(dstTmp++, channel, sizeof(ImDrawChannel))
+                        //                        memcpy(dstTmp++, channel, sizeof(ImDrawChannel))
                         memcpy(channel)
                         n++
                     }
@@ -1396,7 +1394,7 @@ class Table {
 
                 // Make sure Bg2DrawChannelUnfrozen appears in the middle of our groups (whereas Bg0/Bg1 and Bg2 frozen are fixed to 0 and 1)
                 if (mergeGroupN == 1 && hasFreezeV)
-//                    memcpy(dstTmp++, &splitter->_Channels[table->Bg1DrawChannelUnfrozen], sizeof(ImDrawChannel))
+                //                    memcpy(dstTmp++, &splitter->_Channels[table->Bg1DrawChannelUnfrozen], sizeof(ImDrawChannel))
                     memcpy(splitter._channels[bg2DrawChannelUnfrozen])
             }
 
@@ -1413,7 +1411,7 @@ class Table {
                 n++
             }
             assert(dstTmp == /*g.drawChannelsTempMergeBuffer.Data +*/ g.drawChannelsTempMergeBuffer.size)
-//            memcpy(splitter._channels.Data + LEADING_DRAW_CHANNELS, g.DrawChannelsTempMergeBuffer.Data, (splitter->_Count - LEADING_DRAW_CHANNELS) * sizeof(ImDrawChannel))
+            //            memcpy(splitter._channels.Data + LEADING_DRAW_CHANNELS, g.DrawChannelsTempMergeBuffer.Data, (splitter->_Count - LEADING_DRAW_CHANNELS) * sizeof(ImDrawChannel))
             for (chIdx in 0 until splitter._count - LEADING_DRAW_CHANNELS) {
                 val dst = splitter._channels[LEADING_DRAW_CHANNELS + chIdx]
                 for (channel in g.drawChannelsTempMergeBuffer) {
@@ -1857,7 +1855,7 @@ class Table {
     fun setColumnWidthAutoAll() {
         for (columnN in 0 until columnsCount) {
             val column = columns[columnN]
-            if (!column.isEnabled && column.flags hasnt Tcf.WidthStretch) // Can reset weight of hidden stretch column
+            if (!column.isEnabled && column.flags hasnt Tcf.WidthStretch) // Cannot reset weight of hidden stretch column
                 continue
             column.cannotSkipItemsQueue = 1 shl 0
             column.autoFitQueue = 1 shl 1

@@ -153,15 +153,15 @@ object ShowDemoWindowTables {
     var showHeaders0 = false
     var flags6 = Tf.Borders or Tf.RowBg
     val cellPadding = Vec2()
-    var showWidgetFrameBg = false
+    var showWidgetFrameBg = true
     val textBufs = Array(3 * 5) { "" } // Mini text storage for 3x5 cells
     var init = true
 
     /* Sizing policies */
-    enum class ContentsType1 { ShortText, LongText, Button, FillButton, InputText }
+    enum class ContentsType1 { ShowWidth, ShortText, LongText, Button, FillButton, InputText }
 
-    var flags7 = Tf.ScrollY or Tf.BordersOuter or Tf.RowBg
-    var contentsType1 = ContentsType1.LongText
+    var flags7 = Tf.ScrollY or Tf.Borders or Tf.RowBg or Tf.Resizable
+    var contentsType1 = ContentsType1.ShowWidth
     var columnCount0 = 3
     val textBuf = ByteArray(32)
 
@@ -452,12 +452,12 @@ object ShowDemoWindowTables {
                 checkboxFlags("ImGuiTableFlags_BordersOuter", ::flags0, Tf.BordersOuter.i)
                 checkboxFlags("ImGuiTableFlags_BordersInner", ::flags0, Tf.BordersInner.i)
                 unindent()
-                checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags0, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appears in Headers")
 
                 alignTextToFramePadding(); text("Cell contents:")
                 sameLine(); radioButton("Text", ::contentsType0, ContentsType0.Text.ordinal)
                 sameLine(); radioButton("FillButton", ::contentsType0, ContentsType0.FillButton.ordinal)
                 checkbox("Display headers", ::displayHeaders)
+                checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags0, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appears in Headers")
             }
 
             table("##table1", 3, flags0) {
@@ -492,7 +492,7 @@ object ShowDemoWindowTables {
             pushingStyleCompact {
                 checkboxFlags("ImGuiTableFlags_Resizable", ::flags1, Tf.Resizable.i)
                 checkboxFlags("ImGuiTableFlags_BordersV", ::flags1, Tf.BordersV.i)
-                sameLine(); helpMarker("Using the _Resizable flag automatically enables the _BordersInnerV flag as well.")
+                sameLine(); helpMarker("Using the _Resizable flag automatically enables the _BordersInnerV flag as well, this is why the resize borders are still showing when unchecking this.")
             }
 
             table("##table1", 3, flags1) {
@@ -537,7 +537,7 @@ object ShowDemoWindowTables {
             setNextItemOpen(openAction != 0)
         treeNode("Resizable, mixed") {
             helpMarker("Using TableSetupColumn() to alter resizing policy on a per-column basis.\n\n" +
-                       "When combining Fixed and Stretch columns, generally you only want one, maybe two trailing columns to use _WidthStretch.")
+                               "When combining Fixed and Stretch columns, generally you only want one, maybe two trailing columns to use _WidthStretch.")
 
             table("##table1", 3, flags3) {
                 tableSetupColumn("AAA", Tcf.WidthFixed.i)
@@ -573,7 +573,9 @@ object ShowDemoWindowTables {
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
         treeNode("Reorderable, hideable, with headers") {
-            helpMarker("Click and drag column headers to reorder columns.\n\nYou can also right-click on a header to open a context menu.")
+            helpMarker(
+                "Click and drag column headers to reorder columns.\n\n" +
+                        "Right-click on a header to open a context menu.")
             pushingStyleCompact {
                 checkboxFlags("ImGuiTableFlags_Resizable", ::flags4, Tf.Resizable.i)
                 checkboxFlags("ImGuiTableFlags_Reorderable", ::flags4, Tf.Reorderable.i)
@@ -619,14 +621,13 @@ object ShowDemoWindowTables {
         treeNode("Padding") {
             // First example: showcase use of padding flags and effect of BorderOuterV/BorderInnerV on X padding.
             // We don't expose BorderOuterH/BorderInnerH here because they have no effect on X padding.
-            helpMarker("""
-                We often want outer padding activated when any using features which makes the edges of a column visible:"
-                e.g.:"
-                - BorderOuterV"
-                - any form of row selection"
-                Because of this, activating BorderOuterV sets the default to PadOuterX. Using PadOuterX or NoPadOuterX you can override the default.
-                
-                Actual padding values are using style.CellPadding.""".trimIndent())
+            helpMarker("We often want outer padding activated when any using features which makes the edges of a column visible:\n" +
+                               "e.g.:\n" +
+                               "- BorderOuterV\n" +
+                               "- any form of row selection\n" +
+                               "Because of this, activating BorderOuterV sets the default to PadOuterX. Using PadOuterX or NoPadOuterX you can override the default.\n\n" +
+                               "Actual padding values are using style.CellPadding.\n\n" +
+                               "In this demo we don't show horizontal borders to emphasis how they don't affect default horizontal padding.")
 
             pushingStyleCompact {
                 checkboxFlags("ImGuiTableFlags_PadOuterX", ::flags5, Tf.PadOuterX.i)
@@ -706,7 +707,7 @@ object ShowDemoWindowTables {
             pushingStyleCompact {
                 withItemWidth(TEXT_BASE_WIDTH * 30) {
                     _i = contentsType1.ordinal
-                    combo("Contents", ::_i, "Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
+                    combo("Contents", ::_i, "Show width\u0000Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
                     contentsType1 = ContentsType1.values()[_i]
                     if (contentsType1 == ContentsType1.FillButton) {
                         sameLine()
@@ -740,7 +741,8 @@ object ShowDemoWindowTables {
                         val label = "Hello $column,$row"
                         when (contentsType1) {
                             ContentsType1.ShortText -> textUnformatted(label)
-                            ContentsType1.LongText -> text("Some longer text $column,$row\nOver two lines..")
+                            ContentsType1.LongText -> text("Some ${if(column == 0) "long" else "longeeer"} text $column,$row\nOver two lines..")
+                            ContentsType1.ShowWidth -> text("W: %.1f", contentRegionAvail.x)
                             ContentsType1.Button -> button(label)
                             ContentsType1.FillButton -> button(label, Vec2(-Float.MIN_VALUE, 0f))
                             ContentsType1.InputText -> {

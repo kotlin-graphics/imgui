@@ -16,6 +16,9 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isItemVisible
+import imgui.ImGui.itemRectMax
+import imgui.ImGui.itemRectMin
 import imgui.ImGui.popFocusScope
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
@@ -59,14 +62,14 @@ internal interface debugTools {
     fun errorCheckEndFrameRecover(logCallback: ErrorLogCallback?, userData: Any? = null) {
         // PVS-Studio V1044 is "Loop break conditions do not depend on the number of iterations"
         while (g.currentWindowStack.isNotEmpty()) {
-//            if(IMGUI_HAS_TABLE)
-//                    while (g.currentTable && (g.CurrentTable->OuterWindow == g.CurrentWindow || g.CurrentTable->InnerWindow == g.CurrentWindow))
-//            {
-//                if (log_callback) log_callback(userData, "Recovered from missing EndTable() in '%s'", g.CurrentTable->OuterWindow->Name);
-//                EndTable();
-//            }
+            //            if(IMGUI_HAS_TABLE)
+            //                    while (g.currentTable && (g.CurrentTable->OuterWindow == g.CurrentWindow || g.CurrentTable->InnerWindow == g.CurrentWindow))
+            //            {
+            //                if (log_callback) log_callback(userData, "Recovered from missing EndTable() in '%s'", g.CurrentTable->OuterWindow->Name);
+            //                EndTable();
+            //            }
             val window = g.currentWindow!!
-//            assert(window != null)
+            //            assert(window != null)
             while (g.currentTabBar != null) { //-V1044
                 logCallback?.invoke(userData, "Recovered from missing EndTabBar() in '${window.name}'")
                 endTabBar()
@@ -167,7 +170,7 @@ internal interface debugTools {
             }
 
             var buf = "DrawCmd:%5d tris, Tex 0x%p, ClipRect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
-                    cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
+                cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
             val pcmdNodeOpen = treeNode(drawList.cmdBuffer.indexOf(cmd), buf)
             if (isItemHovered() && (cfg.showDrawCmdMesh || cfg.showDrawCmdBoundingBoxes) /*&& fgDrawList != null*/)
                 debugNodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, cfg.showDrawCmdMesh, cfg.showDrawCmdBoundingBoxes)
@@ -207,7 +210,7 @@ internal interface debugTools {
                         triangle[n] put v.pos
                         val isFirst = if (n == 0) "Vert:" else "     "
                         bufP += "$isFirst %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                                .format(idx_i, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                            .format(idx_i, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                         idx_i++
                     }
                     buf = bufP.toString()
@@ -296,7 +299,7 @@ internal interface debugTools {
                 val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
                 val name = if (tab.nameOffset != -1) tabBar.getTabName(tab) else ""
                 text("%02d$c Tab 0x%08X '$name' Offset: %.1f, Width: %.1f/%.1f",
-                        tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
+                     tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
                 popID()
             }
             treePop()
@@ -311,6 +314,8 @@ internal interface debugTools {
         if (!isActive) popStyleColor()
         if (isItemHovered())
             foregroundDrawList.addRect(table.outerRect.min, table.outerRect.max, COL32(255, 255, 0, 255))
+        if (isItemVisible && table.hoveredColumnBody != -1)
+            foregroundDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
         if (!open)
             return
         val clearSettings = smallButton("Clear settings")
@@ -329,9 +334,9 @@ internal interface debugTools {
             val name = table getColumnName n
             val buf = StringBuilder()
             column.apply {
-                buf += "Column $n order $displayOrder '$name': offset %+.2f to %+.2f${if(n < table.freezeColumnsRequest) " (Frozen)" else ""}\n".format(minX - table.workRect.min.x, maxX - table.workRect.min.x)
+                buf += "Column $n order $displayOrder '$name': offset %+.2f to %+.2f${if (n < table.freezeColumnsRequest) " (Frozen)" else ""}\n".format(minX - table.workRect.min.x, maxX - table.workRect.min.x)
                 buf += "Enabled: ${isEnabled.i}, VisibleX/Y: ${isVisibleX.i}/${isVisibleY.i}, RequestOutput: ${isRequestOutput.i}, SkipItems: ${isSkipItems.i}, DrawChannels: $drawChannelFrozen,$drawChannelUnfrozen\n"
-                buf += "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f (%.1f%%)\n".format(widthGiven, widthRequest, widthAuto, stretchWeight,  if(column.stretchWeight > 0f) (column.stretchWeight / sumWeights) * 100f else 0f)
+                buf += "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f (%.1f%%)\n".format(widthGiven, widthRequest, widthAuto, stretchWeight, if (column.stretchWeight > 0f) (column.stretchWeight / sumWeights) * 100f else 0f)
                 buf += "MinX: %.1f, MaxX: %.1f (%+.1f), ClipRect: %.1f to %.1f (+%.1f)\n".format(minX, maxX, maxX - minX, clipRect.min.x, clipRect.max.x, clipRect.max.x - clipRect.min.x)
                 buf += "ContentWidth: %.1f,%.1f, HeadersUsed/Ideal %.1f/%.1f\n".format(contentMaxXFrozen - workMinX, contentMaxXUnfrozen - workMinX, contentMaxXHeadersUsed - workMinX, contentMaxXHeadersIdeal - workMinX)
                 val dir = if (sortDirection == SortDirection.Ascending) " (Asc)" else if (sortDirection == SortDirection.Descending) " (Des)" else ""
@@ -366,7 +371,7 @@ internal interface debugTools {
             val dir = if (sortDir == SortDirection.Ascending) "Asc" else if (sortDir == SortDirection.Descending) "Des" else "---"
             val stretch = if (columnSettings.isStretch) "Weight" else "Width "
             bulletText("Column $n Order ${columnSettings.displayOrder} SortOrder ${columnSettings.sortOrder} $dir Vis ${columnSettings.isEnabled.d} $stretch %7.3f UserID 0x%08X",
-                    columnSettings.widthOrWeight, columnSettings.userID)
+                       columnSettings.widthOrWeight, columnSettings.userID)
         }
         treePop()
     }
@@ -395,7 +400,7 @@ internal interface debugTools {
         val flags = window.flags
         debugNodeDrawList(window, window.drawList, "DrawList")
         bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), ContentSize (%.1f,%.1f)", window.pos.x, window.pos.y,
-                window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
+                   window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
         val s = StringBuilder()
         if (flags has WindowFlag._ChildWindow) s += "Child "
         if (flags has WindowFlag._Tooltip) s += "Tooltip "

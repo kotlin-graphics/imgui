@@ -133,18 +133,18 @@ interface tables {
         if (flags has Tf.Borders)
             table.drawBorders()
 
-//        #if 0
-//        // Strip out dummy channel draw calls
-//        // We have no way to prevent user submitting direct ImDrawList calls into a hidden column (but ImGui:: calls will be clipped out)
-//        // Pros: remove draw calls which will have no effect. since they'll have zero-size cliprect they may be early out anyway.
-//        // Cons: making it harder for users watching metrics/debugger to spot the wasted vertices.
-//        if (table->DummyDrawChannel != (ImGuiTableColumnIdx)-1)
-//        {
-//            ImDrawChannel* dummy_channel = &table->DrawSplitter._Channels[table->DummyDrawChannel]
-//            dummy_channel->_CmdBuffer.resize(0)
-//            dummy_channel->_IdxBuffer.resize(0)
-//        }
-//        #endif
+        //        #if 0
+        //        // Strip out dummy channel draw calls
+        //        // We have no way to prevent user submitting direct ImDrawList calls into a hidden column (but ImGui:: calls will be clipped out)
+        //        // Pros: remove draw calls which will have no effect. since they'll have zero-size cliprect they may be early out anyway.
+        //        // Cons: making it harder for users watching metrics/debugger to spot the wasted vertices.
+        //        if (table->DummyDrawChannel != (ImGuiTableColumnIdx)-1)
+        //        {
+        //            ImDrawChannel* dummy_channel = &table->DrawSplitter._Channels[table->DummyDrawChannel]
+        //            dummy_channel->_CmdBuffer.resize(0)
+        //            dummy_channel->_IdxBuffer.resize(0)
+        //        }
+        //        #endif
 
         // Flatten channels and merge draw calls
         table.drawSplitter.setCurrentChannel(innerWindow.drawList, 0)
@@ -201,7 +201,7 @@ interface tables {
         outerWindow.dc.itemWidth = table.hostBackupItemWidth
         if (table.hostBackupItemWidthStackSize != 1)
             TODO()
-//        outerWindow.dc.itemWidthStack.size = table->HostBackupItemWidthStackSize  // TODO check me
+        //        outerWindow.dc.itemWidthStack.size = table->HostBackupItemWidthStackSize  // TODO check me
         val outerWidth = if (table.isOuterRectAutoFitX) table.workRect.width else table.columnsAutoFitWidth
         outerWindow.dc.columnsOffset = table.hostBackupColumnsOffset
         if (innerWindow != outerWindow)
@@ -345,18 +345,18 @@ interface tables {
         if (flags has Tcf.WidthStretch)
             assert(initWidthOrWeight != 0f) { "Need to provide a valid weight!" }
         column.initStretchWeightOrWidth = initWidthOrWeight
-        if (table.isInitializing && column.widthRequest < 0f && column.stretchWeight < 0f) {
-            // Init width or weight
-            if (flags has Tcf.WidthFixed && initWidthOrWeight > 0f)
-                column.widthRequest = initWidthOrWeight
-            if (flags has Tcf.WidthStretch)
-                column.stretchWeight = initWidthOrWeight.takeIf { it > 0f } ?: -1f
-
-            // Disable auto-fit if an explicit width/weight has been specified
-            if (initWidthOrWeight > 0f)
-                column.autoFitQueue = 0x00
-        }
         if (table.isInitializing) {
+            // Init width or weight
+            if (column.widthRequest < 0f && column.stretchWeight < 0f) {
+                if (flags has Tcf.WidthFixed && initWidthOrWeight > 0f)
+                    column.widthRequest = initWidthOrWeight
+                if (flags has Tcf.WidthStretch)
+                    column.stretchWeight = initWidthOrWeight.takeIf { it > 0f } ?: -1f
+
+                // Disable auto-fit if an explicit width/weight has been specified
+                if (initWidthOrWeight > 0f)
+                    column.autoFitQueue = 0x00
+            }
             // Init default visibility/sort state
             if (flags has Tcf.DefaultHide && table.settingsLoadedFlags hasnt Tf.Hideable) {
                 column.isEnabled = false
@@ -409,6 +409,10 @@ interface tables {
         val table = g.currentTable
         check(table != null) { "Need to call TableHeadersRow() after BeginTable()!" }
 
+        // Layout if not already done (this is automatically done by TableNextRow, we do it here solely to facilitate stepping in debugger as it is frequent to step in TableUpdateLayout)
+        if (!table.isLayoutLocked)
+            table.updateLayout()
+
         // Open row
         val rowY1 = ImGui.cursorScreenPos.y
         val rowHeight = tableGetHeaderRowHeight()
@@ -456,8 +460,8 @@ interface tables {
         val column = table.columns[columnN]
 
         // Label
-//        if (label == NULL) -> default parameter
-//            label = "";
+        //        if (label == NULL) -> default parameter
+        //            label = "";
         val labelEnd = findRenderedTextEnd(label)
         val labelSize = calcTextSize(label.toByteArray(), 0, labelEnd, true)
         val labelPos = window.dc.cursorPos // [JVM] same instance, careful!

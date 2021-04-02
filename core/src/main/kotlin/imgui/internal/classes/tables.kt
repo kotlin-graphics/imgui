@@ -25,14 +25,12 @@ typealias TableDrawChannelIdx = Int
  *  We use the terminology "Clipped" to refer to a column that is out of sight because of scrolling/clipping.
  *  This is in contrast with some user-facing api such as IsItemVisible() / IsRectVisible() which use "Visible" to mean "not clipped". */
 class TableColumn {
-    /** Clipping rectangle for the column */
-    val clipRect = Rect()
-
-    /** Optional, value passed to TableSetupColumn() */
-    var userID: ID = 0
 
     /** Flags after some patching (not directly same as provided by user). See ImGuiTableColumnFlags_ */
     var flags = Tcf.None.i
+
+    /** Final/actual width visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum width, may be < WidthRequest to honor shrinking columns down in tight space. */
+    var widthGiven = 0f
 
     /** Absolute positions */
     var minX = 0f
@@ -40,26 +38,31 @@ class TableColumn {
     /** Absolute positions */
     var maxX = 0f
 
-    /** Value passed to TableSetupColumn(). For Width it is a content width (_without padding_). */
-    var initStretchWeightOrWidth = 0f
-
-    /** Master width weight when (Flags & _WidthStretch). Often around ~1.0f initially. */
-    var stretchWeight = -1f
+    /** Master width absolute value when !(Flags & _WidthStretch). When Stretch this is derived every frame from StretchWeight in TableUpdateLayout() */
+    var widthRequest = -1f
 
     /** Automatic width */
     var widthAuto = 0f
 
-    /** Master width absolute value when !(Flags & _WidthStretch). When Stretch this is derived every frame from StretchWeight in TableUpdateLayout() */
-    var widthRequest = -1f
+    /** Master width weight when (Flags & _WidthStretch). Often around ~1.0f initially. */
+    var stretchWeight = -1f
 
-    /** Final/actual width visible == (MaxX - MinX), locked in TableUpdateLayout(). May be > WidthRequest to honor minimum width, may be < WidthRequest to honor shrinking columns down in tight space. */
-    var widthGiven = 0f
+    /** Value passed to TableSetupColumn(). For Width it is a content width (_without padding_). */
+    var initStretchWeightOrWidth = 0f
 
-    /** Start position for the frame, currently ~(MinX + CellPaddingX) */
+    /** Clipping rectangle for the column */
+    val clipRect = Rect()
+
+    /** Optional, value passed to TableSetupColumn() */
+    var userID: ID = 0
+
+    /** Contents region min ~(MinX + CellPaddingX + CellSpacingX1) == cursor start position when entering column */
     var workMinX = 0f
 
+    /** Contents region max ~(MaxX - CellPaddingX - CellSpacingX2) */
     var workMaxX = 0f
 
+    /** Current item width for the column, preserved across rows */
     var itemWidth = 0f
 
     /** Contents maximum position for frozen rows (apart from headers), from which we can infer content width. */
