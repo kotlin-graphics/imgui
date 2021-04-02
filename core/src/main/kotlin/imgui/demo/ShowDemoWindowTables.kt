@@ -75,6 +75,8 @@ import imgui.dsl.popupContextItem
 import imgui.dsl.table
 import imgui.dsl.treeNode
 import imgui.dsl.treeNodeEx
+import imgui.dsl.withId
+import imgui.dsl.withItemWidth
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
@@ -513,7 +515,7 @@ object ShowDemoWindowTables {
             if (radioButton("fit", !useAllWidth0)) useAllWidth0 = false
             sameLine()
             if (radioButton("right-most edge", useAllWidth0)) useAllWidth0 = true
-            table("##table1", 3, flags2, Vec2(if(useAllWidth0) -Float.MIN_VALUE else 0f, 0f)) {
+            table("##table1", 3, flags2, Vec2(if (useAllWidth0) -Float.MIN_VALUE else 0f, 0f)) {
                 for (row in 0..4) {
                     tableNextRow()
                     for (column in 0..2) {
@@ -890,14 +892,14 @@ object ShowDemoWindowTables {
             helpMarker("This section allows you to interact and see the effect of StretchX vs FixedX sizing policies depending on whether Scroll is enabled and the contents of your columns.")
 
             pushingStyleCompact {
-                setNextItemWidth(TEXT_BASE_WIDTH * 22)
-                combo("Contents", ::contentsType1, "Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
-                if (contentsType1 == ContentsType1.FillButton.ordinal) {
-                    sameLine()
-                    helpMarker("Be mindful that using right-alignment (e.g. size.x = -FLT_MIN) creates a feedback loop where contents width can feed into auto-column width can feed into contents width.")
+                withItemWidth(TEXT_BASE_WIDTH * 30) {
+                    combo("Contents", ::contentsType1, "Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
+                    if (contentsType1 == ContentsType1.FillButton.ordinal) {
+                        sameLine()
+                        helpMarker("Be mindful that using right-alignment (e.g. size.x = -FLT_MIN) creates a feedback loop where contents width can feed into auto-column width can feed into contents width.")
+                    }
+                    dragInt("Columns", ::columnCount1, 0.1f, 1, 64, "%d", SliderFlag.AlwaysClamp.i)
                 }
-                setNextItemWidth(TEXT_BASE_WIDTH * 22)
-                dragInt("Columns", ::columnCount1, 0.1f, 1, 64, "%d", SliderFlag.AlwaysClamp.i)
                 checkboxFlags("ImGuiTableFlags_BordersInnerH", ::flags11, Tf.BordersInnerH.i)
                 checkboxFlags("ImGuiTableFlags_BordersOuterH", ::flags11, Tf.BordersOuterH.i)
                 checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags11, Tf.BordersInnerV.i)
@@ -979,15 +981,16 @@ object ShowDemoWindowTables {
                             "this is rather unusual and only makes sense when specifying an 'inner_width' for the table!\n" +
                             "Without an explicit value, inner_width is == outer_size.x and therefore using Stretch columns + ScrollX together doesn't make sense.")
             pushingStyleCompact {
-                pushID("flags3")
-                checkboxFlags("ImGuiTableFlags_ScrollX", ::flags12, Tf.ScrollX.i)
-                if (checkboxFlags("ImGuiTableFlags_SizingPolicyStretch", ::flags12, Tf.SizingPolicyStretch.i))
-                    flags12 = flags12 wo Tf.SizingPolicyFixed      // Can't specify both sizing polices so we clear the other
-                if (checkboxFlags("ImGuiTableFlags_SizingPolicyFixed", ::flags12, Tf.SizingPolicyFixed.i))
-                    flags12 = flags12 wo Tf.SizingPolicyStretch    // Can't specify both sizing polices so we clear the other
-                setNextItemWidth(TEXT_BASE_WIDTH * 10f)
-                dragFloat("inner_width", ::innerWidth, 1f, 0f, Float.MAX_VALUE, "%.1f")
-                popID()
+                withId("flags3") {
+                    withItemWidth(TEXT_BASE_WIDTH * 30) {
+                        checkboxFlags("ImGuiTableFlags_ScrollX", ::flags12, Tf.ScrollX.i)
+                        if (checkboxFlags("ImGuiTableFlags_SizingPolicyStretch", ::flags12, Tf.SizingPolicyStretch.i))
+                            flags12 = flags12 wo Tf.SizingPolicyFixed      // Can't specify both sizing polices so we clear the other
+                        if (checkboxFlags("ImGuiTableFlags_SizingPolicyFixed", ::flags12, Tf.SizingPolicyFixed.i))
+                            flags12 = flags12 wo Tf.SizingPolicyStretch    // Can't specify both sizing polices so we clear the other
+                        dragFloat("inner_width", ::innerWidth, 1f, 0f, Float.MAX_VALUE, "%.1f")
+                    }
+                }
             }
             table("##table3", 7, flags12 or Tf.SizingPolicyStretch or Tf.ContextMenuInBody, outerSize, innerWidth) {
                 for (cell in 0 until 20 * 7) {
@@ -1020,7 +1023,7 @@ object ShowDemoWindowTables {
             text("Using auto/all width, using NoHostExtendY:")
             checkbox("Use all width", ::useAllWidth1)
             checkboxFlags("ImGuiTableFlags_NoHostExtendY", ::flags13, Tf.NoHostExtendY.i)
-            table("##table3", 3, flags13, Vec2(if(useAllWidth1) -Float.MIN_VALUE else 0f, TEXT_BASE_HEIGHT * 5.5f)) {
+            table("##table3", 3, flags13, Vec2(if (useAllWidth1) -Float.MIN_VALUE else 0f, TEXT_BASE_HEIGHT * 5.5f)) {
                 for (row in 0..9) { // TODO dsl this pattern?
                     tableNextRow()
                     for (column in 0..2) {
@@ -1457,8 +1460,8 @@ object ShowDemoWindowTables {
                 tableSetupColumn("ID", Tcf.DefaultSort or Tcf.WidthFixed or Tcf.NoHide, -1f, MyItemColumnID.ID.ordinal)
                 tableSetupColumn("Name", Tcf.WidthFixed.i, -1f, MyItemColumnID.Name.ordinal)
                 tableSetupColumn("Action", Tcf.NoSort or Tcf.WidthFixed, -1f, MyItemColumnID.Action.ordinal)
-                tableSetupColumn("Quantity", Tcf.PreferSortDescending.i, 1f, MyItemColumnID.Quantity.ordinal)
-                tableSetupColumn("Description", Tcf.WidthStretch.i, 1f, MyItemColumnID.Description.ordinal)
+                tableSetupColumn("Quantity", Tcf.PreferSortDescending.i, -1f, MyItemColumnID.Quantity.ordinal)
+                tableSetupColumn("Description", Tcf.WidthStretch.i, -1f, MyItemColumnID.Description.ordinal)
                 tableSetupColumn("Hidden", Tcf.DefaultHide or Tcf.NoSort)
                 tableSetupScrollFreeze(freezeCols1, freezeRows1)
 

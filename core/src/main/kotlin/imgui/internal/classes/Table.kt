@@ -501,7 +501,7 @@ class Table {
         enabledMaskByDisplayOrder = 0x00
         minColumnWidth = 1f max (g.style.framePadding.x * 1f) // g.Style.ColumnsMinSpacing; // FIXME-TABLE
 
-        // [Part 1] Apply/lock Enabled and Order states.
+        // [Part 1] Apply/lock Enabled and Order states. Calculate auto/ideal width for columns.
         // Process columns in their visible orders as we are building the Prev/Next indices.
         var lastVisibleColumnIdx = -1
         var wantAutoFit = false
@@ -542,24 +542,32 @@ class Table {
                 column.cannotSkipItemsQueue = (1 shl 3) - 1 // Fit for three frames
             }
 
-            if (column.autoFitQueue != 0x00)
-                wantAutoFit = true
-
             val indexMask = 1L shl columnN
             val displayOrderMask = 1L shl column.displayOrder
-            if (column.isEnabled) {
-                // Mark as enabled and link to previous/next enabled column
-                column.prevEnabledColumn = lastVisibleColumnIdx
-                column.nextEnabledColumn = -1
-                if (lastVisibleColumnIdx != -1)
-                    columns[lastVisibleColumnIdx].nextEnabledColumn = columnN
-                column.indexWithinEnabledSet = columnsEnabledCount
-                columnsEnabledCount++
-                enabledMaskByIndex = enabledMaskByIndex or indexMask
-                enabledMaskByDisplayOrder = enabledMaskByDisplayOrder or displayOrderMask
-                lastVisibleColumnIdx = columnN
-            } else column.indexWithinEnabledSet = -1
+            if (!column.isEnabled) {
+                column.indexWithinEnabledSet = -1
+                continue
+            }
+
+            // Mark as enabled and link to previous/next enabled column
+            column.prevEnabledColumn = lastVisibleColumnIdx
+            column.nextEnabledColumn = -1
+            if (lastVisibleColumnIdx != -1)
+                columns[lastVisibleColumnIdx].nextEnabledColumn = columnN
+            column.indexWithinEnabledSet = columnsEnabledCount
+            columnsEnabledCount++
+            enabledMaskByIndex = enabledMaskByIndex or indexMask
+            enabledMaskByDisplayOrder = enabledMaskByDisplayOrder or displayOrderMask
+            lastVisibleColumnIdx = columnN
             assert(column.indexWithinEnabledSet <= column.displayOrder)
+
+            // Calculate ideal/auto column width (that's the width required for all contents to be visible without clipping)
+            // Combine width from regular rows + width from headers unless requested not to.
+            if (!column.isPreserveWidthAuto)
+                column.widthAuto = getColumnWidthAuto(column)
+
+            if (column.autoFitQueue != 0x00)
+                wantAutoFit = true
         }
         if (flags has Tf.Sortable && sortSpecsCount == 0 && flags hasnt Tf.SortTristate)
             isSortSpecsDirty = true
@@ -574,7 +582,7 @@ class Table {
         if (wantAutoFit)
             isSettingsDirty = true
 
-        // [Part 3] Fix column flags. Calculate ideal width for columns. Count how many fixed/stretch columns we have and sum of weights.
+        // [Part 3] Fix column flags. Count how many fixed/stretch columns we have and sum of weights.
         var countFixed = 0                    // Number of columns that have fixed sizing policy (not stretched sizing policy) (this is NOT the opposite of count_resizable!)
         var countResizable = 0                // Number of columns the user can resize (this is NOT the opposite of count_fixed!)
         var sumWeightsStretched = 0f     // Sum of all weights for weighted columns.
@@ -590,11 +598,6 @@ class Table {
             // Count resizable columns
             if (column.flags hasnt Tcf.NoResize)
                 countResizable++
-
-            // Calculate ideal/auto column width (that's the width required for all contents to be visible without clipping)
-            // Combine width from regular rows + width from headers unless requested not to.
-            if (!column.isPreserveWidthAuto)
-                column.widthAuto = getColumnWidthAuto(column)
 
             if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
                 // Non-resizable columns keep their requested width
