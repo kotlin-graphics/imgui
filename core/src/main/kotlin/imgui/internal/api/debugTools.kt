@@ -315,7 +315,7 @@ internal interface debugTools {
             return
         val clearSettings = smallButton("Clear settings")
         bulletText("OuterRect: Pos: (%.1f,%.1f) Size: (%.1f,%.1f)", table.outerRect.min.x, table.outerRect.min.y, table.outerRect.width, table.outerRect.height)
-        bulletText("ColumnsWidth: %.1f, AutoFitWidth: %.1f, InnerWidth: %.1f${if (table.innerWidth == 0f) " (auto)" else ""}", table.columnsTotalWidth, table.columnsAutoFitWidth, table.innerWidth)
+        bulletText("ColumnsGivenWidth: %.1f, ColumnsAutoFitWidth: %.1f, InnerWidth: %.1f${if (table.innerWidth == 0f) " (auto)" else ""}", table.columnsGivenWidth, table.columnsAutoFitWidth, table.innerWidth)
         bulletText("CellPaddingX: %.1f, CellSpacingX: %.1f/%.1f, OuterPaddingX: %.1f", table.cellPaddingX, table.cellSpacingX1, table.cellSpacingX2, table.outerPaddingX)
         bulletText("HoveredColumnBody: ${table.hoveredColumnBody}, HoveredColumnBorder: ${table.hoveredColumnBorder}")
         bulletText("ResizedColumn: ${table.resizedColumn}, ReorderColumn: ${table.reorderColumn}, HeldHeaderColumn: ${table.heldHeaderColumn}")

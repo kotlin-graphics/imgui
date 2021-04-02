@@ -300,11 +300,6 @@ interface tablesInternal {
 //    IMGUI_API const char*   TableGetColumnName(const ImGuiTable* table, int column_n)
 //    IMGUI_API ImGuiID       TableGetColumnResizeID(const ImGuiTable* table, int column_n, int instance_no = 0)
 
-    // Minimum column content width (without padding)
-    fun tableGetMinColumnWidth(): Float =
-            //return g.Style.ColumnsMinSpacing; // FIXME-TABLE
-            g.style.framePadding.x
-
     //  -> Table class
 //    IMGUI_API float         TableGetMaxColumnWidth(const ImGuiTable* table, int column_n);
 //    IMGUI_API void          TableSetColumnWidthAutoSingle(ImGuiTable* table, int column_n)

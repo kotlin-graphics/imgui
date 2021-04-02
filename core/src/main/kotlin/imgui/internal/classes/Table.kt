@@ -17,7 +17,6 @@ import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.separator
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
-import imgui.ImGui.tableGetMinColumnWidth
 import imgui.ImGui.tableSetBgColor
 import imgui.ImGui.tableSetColumnWidth
 import imgui.ImGui.tableSettingsFindByID
@@ -119,6 +118,8 @@ class Table {
 
     var hostIndentX = 0f
 
+    var minColumnWidth = 0f
+
     var outerPaddingX = 0f
 
     /** Padding from each borders */
@@ -143,7 +144,7 @@ class Table {
     var innerWidth = 0f
 
     /** Sum of current column width */
-    var columnsTotalWidth = 0f
+    var columnsGivenWidth = 0f
 
     /** Sum of ideal column width in order nothing to be clipped, used for auto-fitting and content width submission in outer window */
     var columnsAutoFitWidth = 0f
@@ -494,14 +495,16 @@ class Table {
 
         assert(!isLayoutLocked)
 
-        // [Part 1] Apply/lock Enabled and Order states.
-        // Process columns in their visible orders as we are building the Prev/Next indices.
-        var lastVisibleColumnIdx = -1
-        var wantColumnAutoFit = false
         isDefaultDisplayOrder = true
         columnsEnabledCount = 0
         enabledMaskByIndex = 0x00
         enabledMaskByDisplayOrder = 0x00
+        minColumnWidth = 1f max (g.style.framePadding.x * 1f) // g.Style.ColumnsMinSpacing; // FIXME-TABLE
+
+        // [Part 1] Apply/lock Enabled and Order states.
+        // Process columns in their visible orders as we are building the Prev/Next indices.
+        var lastVisibleColumnIdx = -1
+        var wantAutoFit = false
         for (orderN in 0 until columnsCount) {
             val columnN = displayOrderToIndex[orderN]
             if (columnN != orderN)
@@ -540,7 +543,7 @@ class Table {
             }
 
             if (column.autoFitQueue != 0x00)
-                wantColumnAutoFit = true
+                wantAutoFit = true
 
             val indexMask = 1L shl columnN
             val displayOrderMask = 1L shl column.displayOrder
@@ -566,13 +569,12 @@ class Table {
         // [Part 2] Disable child window clipping while fitting columns. This is not strictly necessary but makes it possible
         // to avoid the column fitting to wait until the first visible frame of the child container (may or not be a good thing).
         // FIXME-TABLE: for always auto-resizing columns may not want to do that all the time.
-        if (wantColumnAutoFit && outerWindow !== innerWindow)
+        if (wantAutoFit && outerWindow !== innerWindow)
             innerWindow!!.skipItems = false
-        if (wantColumnAutoFit)
+        if (wantAutoFit)
             isSettingsDirty = true
 
         // [Part 3] Fix column flags. Calculate ideal width for columns. Count how many fixed/stretch columns we have and sum of weights.
-        val minColumnWidth = tableGetMinColumnWidth()
         var countFixed = 0                    // Number of columns that have fixed sizing policy (not stretched sizing policy) (this is NOT the opposite of count_resizable!)
         var countResizable = 0                // Number of columns the user can resize (this is NOT the opposite of count_fixed!)
         var sumWeightsStretched = 0f     // Sum of all weights for weighted columns.
@@ -591,20 +593,14 @@ class Table {
 
             // Calculate ideal/auto column width (that's the width required for all contents to be visible without clipping)
             // Combine width from regular rows + width from headers unless requested not to.
-            if (!column.isPreserveWidthAuto) {
-                val contentWidthBody = (column.contentMaxXFrozen max column.contentMaxXUnfrozen) - column.workMinX
-                val contentWidthHeaders = column.contentMaxXHeadersIdeal - column.workMinX
-                var widthAuto = contentWidthBody
-                if (column.flags hasnt Tcf.NoHeaderWidth)
-                    widthAuto = widthAuto max contentWidthHeaders
-                column.widthAuto = widthAuto max minColumnWidth
-            }
-            column.isPreserveWidthAuto = false
+            if (!column.isPreserveWidthAuto)
+                column.widthAuto = getColumnWidthAuto(column)
 
             if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
                 // Non-resizable columns keep their requested width
                 if (column.flags has Tcf.WidthFixed && column.initStretchWeightOrWidth > 0f)
                     if (flags hasnt Tf.Resizable || column.flags has Tcf.NoResize) {
+                        // Use user value regardless of IsPreserveWidthAuto
                         column.widthAuto = column.widthAuto max column.initStretchWeightOrWidth
                         column.widthRequest = column.widthAuto
                     }
@@ -619,7 +615,8 @@ class Table {
                 // large height (= first frame scrollbar display very off + clipper would skip lots of items).
                 // This is merely making the side-effect less extreme, but doesn't properly fixes it.
                 // FIXME: Move this to ->WidthGiven to avoid temporary lossyless?
-                if (column.autoFitQueue > 0x01 && isInitializing)
+                // FIXME: This break IsPreserveWidthAuto from not flickering if the stored WidthAuto was smaller.
+                if (column.autoFitQueue > 0x01 && isInitializing && !column.isPreserveWidthAuto)
                     column.widthRequest = column.widthRequest max (minColumnWidth * 4f) // FIXME-TABLE: Another constant/scale?
                 countFixed += 1
                 sumWidthFixedRequests += column.widthRequest
@@ -636,6 +633,7 @@ class Table {
                 if (rightMostStretchedColumn == -1 || columns[rightMostStretchedColumn].displayOrder < column.displayOrder)
                     rightMostStretchedColumn = columnN
             }
+            column.isPreserveWidthAuto = false
             maxWidthAuto = maxWidthAuto max column.widthAuto
             sumWidthFixedRequests += cellPaddingX * 2f
         }
@@ -667,8 +665,7 @@ class Table {
         val widthAvail = if (flags has Tf.ScrollX && innerWidth == 0f) innerClipRect.width else workRect.width
         val widthAvailForStretchedColumns = if (mixedSameWidths) 0f else widthAvail - widthSpacings - sumWidthFixedRequests
         var widthRemainingForStretchedColumns = widthAvailForStretchedColumns
-        columnsTotalWidth = widthSpacings
-        columnsAutoFitWidth = widthSpacings
+        columnsGivenWidth = widthSpacings + (cellPaddingX * 2) * columnsEnabledCount
         for (columnN in 0 until columnsCount) {
             if (enabledMaskByIndex hasnt (1L shl columnN))
                 continue
@@ -688,8 +685,7 @@ class Table {
 
             // Assign final width, record width in case we will need to shrink
             column.widthGiven = floor(column.widthRequest max minColumnWidth)
-            columnsTotalWidth += column.widthGiven + cellPaddingX * 2f
-            columnsAutoFitWidth += column.widthAuto + cellPaddingX * 2f
+            columnsGivenWidth += column.widthGiven
         }
 
         // [Part 6] Redistribute stretch remainder width due to rounding (remainder width is < 1.0f * number of Stretch column).
@@ -1525,6 +1521,23 @@ class Table {
         isSortSpecsDirty = true
     }
 
+    /** Note this is meant to be stored in column->WidthAuto, please generally use the WidthAuto field
+     *  ~TableGetColumnWidthAuto */
+    infix fun getColumnWidthAuto(column: TableColumn): Float {
+        val contentWidthBody = (column.contentMaxXFrozen max column.contentMaxXUnfrozen) - column.workMinX
+        val contentWidthHeaders = column.contentMaxXHeadersIdeal - column.workMinX
+        var widthAuto = contentWidthBody
+        if (column.flags hasnt Tcf.NoHeaderWidth)
+            widthAuto = widthAuto max contentWidthHeaders
+
+        // Non-resizable fixed columns preserve their requested width
+        if (column.flags has Tcf.WidthFixed && column.initStretchWeightOrWidth > 0f)
+            if (flags hasnt Tf.Resizable || column.flags has Tcf.NoResize)
+                widthAuto = widthAuto max column.initStretchWeightOrWidth
+
+        return widthAuto max minColumnWidth
+    }
+
     /** [Internal] Called by TableNextRow()
      *  ~TableBeginRow */
     fun beginRow() {
@@ -1788,11 +1801,12 @@ class Table {
         return id + 1 + instanceNo * columnsCount + columnN
     }
 
-    /** Maximum column content width given current layout. Use column->MinX so this value on a per-column basis. */
+    /** Maximum column content width given current layout. Use column->MinX so this value on a per-column basis.
+     * ~TableGetMaxColumnWidth */
     infix fun getMaxColumnWidth(columnN: Int): Float {
         val column = columns[columnN]
         var maxWidth = Float.MAX_VALUE
-        val minColumnDistance = tableGetMinColumnWidth() + cellPaddingX * 2f + cellSpacingX1 + cellSpacingX2
+        val minColumnDistance = minColumnWidth + cellPaddingX * 2f + cellSpacingX1 + cellSpacingX2
         if (flags has Tf.ScrollX) {
             // Frozen columns can't reach beyond visible width else scrolling will naturally break.
             if (column.displayOrder < freezeColumnsRequest) {

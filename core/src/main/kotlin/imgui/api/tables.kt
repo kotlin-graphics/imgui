@@ -29,7 +29,6 @@ import imgui.ImGui.setTooltip
 import imgui.ImGui.tableGetColumnNextSortDirection
 import imgui.ImGui.tableGetHeaderRowHeight
 import imgui.ImGui.tableGetHoveredColumn
-import imgui.ImGui.tableGetMinColumnWidth
 import imgui.ImGui.tableOpenContextMenu
 import imgui.ImGui.tableSetColumnSortDirection
 import imgui.classes.TableSortSpecs
@@ -134,16 +133,6 @@ interface tables {
         if (flags has Tf.Borders)
             table.drawBorders()
 
-        // Store content width reference for each column (before attempting to merge draw calls)
-        val backupOuterCursorPosX = outerWindow.dc.cursorPos.x
-        val backupOuterMaxPosX = outerWindow.dc.cursorMaxPos.x
-        val backupInnerMaxPosX = innerWindow.dc.cursorMaxPos.x
-        var maxPosX = backupInnerMaxPosX
-        if (table.rightMostEnabledColumn != -1)
-            maxPosX = maxPosX max table.columns[table.rightMostEnabledColumn].maxX
-        if (table.resizedColumn != -1)
-            maxPosX = maxPosX max table.resizeLockMinContentsX2
-
 //        #if 0
 //        // Strip out dummy channel draw calls
 //        // We have no way to prevent user submitting direct ImDrawList calls into a hidden column (but ImGui:: calls will be clipped out)
@@ -163,11 +152,19 @@ interface tables {
             table.mergeDrawChannels()
         table.drawSplitter.merge(innerWindow.drawList)
 
+        // Update ColumnsAutoFitWidth to get us ahead for host using our size to auto-resize without waiting for next BeginTable()
+        val widthSpacings = table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
+        table.columnsAutoFitWidth = widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount
+        for (columnN in 0 until table.columnsCount)
+            if (table.enabledMaskByIndex has (1L shl columnN))
+                table.columnsAutoFitWidth += table getColumnWidthAuto table.columns[columnN]
+
+        // Update scroll
         if (table.flags hasnt Tf.ScrollX && innerWindow !== outerWindow)
             innerWindow.scroll.x = 0f
         else if (table.lastResizedColumn != -1 && table.resizedColumn == -1 && innerWindow.scrollbar.x && table.instanceInteracted == table.instanceCurrent) {
             // When releasing a column being resized, scroll to keep the resulting column in sight
-            val neighborWidthToKeepVisible = tableGetMinColumnWidth() + table.cellPaddingX * 2f
+            val neighborWidthToKeepVisible = table.minColumnWidth + table.cellPaddingX * 2f
             val column = table.columns[table.lastResizedColumn]
             if (column.maxX < table.innerClipRect.min.x)
                 innerWindow.setScrollFromPosX(column.maxX - innerWindow.pos.x - neighborWidthToKeepVisible, 1f)
@@ -183,10 +180,20 @@ interface tables {
             table.resizedColumnNextWidth = newWidth
         }
 
-        // Layout in outer window
+        // Pop from id stack
         assert(innerWindow.idStack.last() == table.id + table.instanceCurrent) { "Mismatching PushID/PopID!" }
         assert(outerWindow.dc.itemWidthStack.size >= table.hostBackupItemWidthStackSize) { "Too many PopItemWidth!" }
         popID()
+
+        // Layout in outer window
+        val backupOuterCursorPosX = outerWindow.dc.cursorPos.x
+        val backupOuterMaxPosX = outerWindow.dc.cursorMaxPos.x
+        val backupInnerMaxPosX = innerWindow.dc.cursorMaxPos.x
+        var maxPosX = backupInnerMaxPosX
+        if (table.rightMostEnabledColumn != -1)
+            maxPosX = maxPosX max table.columns[table.rightMostEnabledColumn].maxX
+        if (table.resizedColumn != -1)
+            maxPosX = maxPosX max table.resizeLockMinContentsX2
         innerWindow.workRect put table.hostBackupWorkRect
         innerWindow.parentWorkRect put table.hostBackupParentWorkRect
         innerWindow.skipItems = table.hostSkipItems
@@ -208,7 +215,7 @@ interface tables {
         // FIXME-TABLE: This can be improved (e.g. for Fixed columns we don't want to auto AutoFitWidth? or propagate window auto-fit to table?)
         if (table.flags has Tf.ScrollX) {
             innerWindow.dc.cursorMaxPos.x = maxPosX // Set contents width for scrolling
-            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPosX max (backupOuterCursorPosX + table.columnsTotalWidth + innerWindow.scrollbarSizes.x) // For auto-fit
+            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPosX max (backupOuterCursorPosX + table.columnsGivenWidth + innerWindow.scrollbarSizes.x) // For scrolling
         } else
             outerWindow.dc.cursorPosPrevLine.x = table.workRect.max.x // For consistent reaction to SameLine() // FIXME: Should be a feature of layout/ItemAdd
 

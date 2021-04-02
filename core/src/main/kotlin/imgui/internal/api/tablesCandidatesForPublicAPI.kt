@@ -12,7 +12,6 @@ import imgui.ImGui.style
 import imgui.ImGui.tableGetColumnCount
 import imgui.ImGui.tableGetColumnFlags
 import imgui.ImGui.tableGetColumnName
-import imgui.ImGui.tableGetMinColumnWidth
 import imgui.internal.classes.TableColumnIdx
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
@@ -55,7 +54,8 @@ interface tablesCandidatesForPublicAPI {
 
         // Apply constraints early
         // Compare both requested and actual given width to avoid overwriting requested width when column is stuck (minimum size, bounded)
-        val minWidth = tableGetMinColumnWidth()
+        assert(table.minColumnWidth > 0f)
+        val minWidth = table.minColumnWidth
         val maxWidth = minWidth max (table getMaxColumnWidth columnN)
         column0Width = clamp(column0Width, minWidth, maxWidth)
         if (column0.widthGiven == column0Width || column0.widthRequest == column0Width)
