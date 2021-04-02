@@ -642,7 +642,7 @@ class Table {
         }
         columnsEnabledFixedCount = countFixed
 
-        // [Part 4] Apply "same widths" feature.
+        // [Part 4] Apply "all same widths" feature.
         // - When all columns are fixed or columns are of mixed type: use the maximum auto width.
         // - When all columns are stretch: use same weight.
         val mixedSameWidths = flags has Tf.SameWidths && countFixed > 0
@@ -1073,10 +1073,11 @@ class Table {
                 val isResizable = column.flags hasnt (Tcf.NoResize or Tcf.NoDirectResize_)
                 val isFrozenSeparator = freezeColumnsCount != -1 && freezeColumnsCount == orderN + 1
 
-                if (column.maxX > innerClipRect.max.x && !isResized)// && is_hovered)
+                if (column.maxX > innerClipRect.max.x && !isResized)
                     continue
-                if (column.nextEnabledColumn == -1 && !isResizable && flags hasnt Tf.SameWidths)
-                    continue
+                if (column.nextEnabledColumn == -1 && !isResizable)
+                    if (flags hasnt Tf.SameWidths || isOuterRectAutoFitX)
+                        continue
                 if (column.maxX <= column.clipRect.min.x) // FIXME-TABLE FIXME-STYLE: Assume BorderSize==1, this is problematic if we want to increase the border size..
                     continue
 
