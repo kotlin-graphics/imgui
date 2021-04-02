@@ -56,7 +56,7 @@ interface tablesCandidatesForPublicAPI {
         // Apply constraints early
         // Compare both requested and actual given width to avoid overwriting requested width when column is stuck (minimum size, bounded)
         val minWidth = tableGetMinColumnWidth()
-        val maxWidth = table getMaxColumnWidth columnN
+        val maxWidth = minWidth max (table getMaxColumnWidth columnN)
         column0Width = clamp(column0Width, minWidth, maxWidth)
         if (column0.widthGiven == column0Width || column0.widthRequest == column0Width)
             return
@@ -113,6 +113,7 @@ interface tablesCandidatesForPublicAPI {
         // (old_a + old_b == new_a + new_b) --> (new_a == old_a + old_b - new_b)
         val column1Width = (column1.widthRequest - (column0Width - column0.widthRequest)) max minWidth
         column0Width = column0.widthRequest + column1.widthRequest - column1Width
+        assert(column0Width > 0f && column1Width > 0f)
         column0.widthRequest = column0Width
         column1.widthRequest = column1Width
         if ((column0.flags or column1.flags) has Tcf.WidthStretch)

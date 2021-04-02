@@ -225,7 +225,10 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
 
     // Adjust flags: set default sizing policy
     if (flags hasnt (Tf.ColumnsWidthStretch or Tf.ColumnsWidthFixed))
-        flags = flags or if (flags has Tf.ScrollX) Tf.ColumnsWidthFixed else Tf.ColumnsWidthStretch
+        flags = flags or when {
+            flags has Tf.ScrollX || outerWindow.flags has WindowFlag.AlwaysAutoResize -> Tf.ColumnsWidthFixed
+            else -> Tf.ColumnsWidthStretch
+        }
 
     // Adjust flags: disable Resizable when using SameWidths (done above enforcing BordersInnerV)
     if (flags has Tf.SameWidths)

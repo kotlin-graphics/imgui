@@ -487,9 +487,8 @@ class Table {
 
     /** Layout columns for the frame. This is in essence the followup to BeginTable().
      *  Runs on the first call to TableNextRow(), to give a chance for TableSetupColumn() to be called first.
-     *  FIXME-TABLE: Our width (and therefore our WorkRect) will be minimal in the first frame for WidthAutoResize
-     *  columns, increase feedback side-effect with widgets relying on WorkRect.Max.x. Maybe provide a default distribution
-     *  for WidthAutoResize columns?
+     *  FIXME-TABLE: Our width (and therefore our WorkRect) will be minimal in the first frame for _WidthAuto columns.
+     *  Increase feedback side-effect with widgets relying on WorkRect.Max.x... Maybe provide a default distribution for _WidthAuto columns?
      *  ~TableUpdateLayout */
     fun updateLayout() {
 
@@ -532,7 +531,7 @@ class Table {
                 isSortSpecsDirty = true
 
             val startAutoFit = when {
-                column.flags has (Tcf.WidthFixed or Tcf.WidthAutoResize) -> column.widthRequest
+                column.flags has (Tcf.WidthFixed or Tcf.WidthAuto) -> column.widthRequest
                 else -> column.stretchWeight
             } < 0f
             if (startAutoFit) {
@@ -609,10 +608,10 @@ class Table {
             }
             column.isPreserveWidthAuto = false
 
-            if (column.flags has (Tcf.WidthFixed or Tcf.WidthAutoResize)) {
+            if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
                 // Process auto-fit for non-stretched columns
                 // Latch initial size for fixed columns and update it constantly for auto-resizing column (unless clipped!)
-                if (column.autoFitQueue != 0x00 || (column.flags has Tcf.WidthAutoResize && column.isVisibleX))
+                if (column.autoFitQueue != 0x00 || (column.flags has Tcf.WidthAuto && column.isVisibleX))
                     column.widthRequest = column.widthAuto
 
                 // FIXME-TABLE: Increase minimum size during init frame to avoid biasing auto-fitting widgets
@@ -651,7 +650,7 @@ class Table {
                 if (enabledMaskByIndex hasnt (1L shl columnN))
                     continue
                 val column = columns[columnN]
-                if (column.flags has (Tcf.WidthFixed or Tcf.WidthAutoResize)) {
+                if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
                     sumWidthFixedRequests += maxWidthAuto - column.widthRequest // Update old sum
                     column.widthRequest = maxWidthAuto
                 } else {
@@ -848,7 +847,7 @@ class Table {
 
         // [Part 8] Detect/store when we are hovering the unused space after the right-most column (so e.g. context menus can react on it)
         // Clear Resizable flag if none of our column are actually resizable (either via an explicit _NoResize flag, either
-        // because of using _WidthAutoResize/_WidthStretch). This will hide the resizing option from the context menu.
+        // because of using _WidthAuto/_WidthStretch). This will hide the resizing option from the context menu.
         val unusedX1 = workRect.min.x max columns[rightMostEnabledColumn].clipRect.max.x
         if (isHoveringTable && hoveredColumnBody == -1) {
             if (g.io.mousePos.x >= unusedX1)
@@ -913,14 +912,14 @@ class Table {
 
         // Sizing Policy
         if (flags hasnt Tcf.WidthMask_)
-        // FIXME-TABLE: Inconsistent to promote columns to WidthAutoResize
+        // FIXME-TABLE: Inconsistent to promote columns to WidthAuto
             flags = flags or when {
                 this.flags has Tf.ColumnsWidthFixed ->
-                    if (this.flags has Tf.Resizable && flags hasnt Tcf.NoResize) Tcf.WidthFixed else Tcf.WidthAutoResize
+                    if (this.flags has Tf.Resizable && flags hasnt Tcf.NoResize) Tcf.WidthFixed else Tcf.WidthAuto
                 else -> Tcf.WidthStretch
             }
         assert((flags and Tcf.WidthMask_).isPowerOfTwo) { "Check that only 1 of each set is used." }
-        if (flags has Tcf.WidthAutoResize)
+        if (flags has Tcf.WidthAuto)
             flags = flags or Tcf.NoResize
 
         // Sorting
