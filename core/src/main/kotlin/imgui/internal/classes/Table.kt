@@ -914,7 +914,7 @@ class Table {
         if (flags hasnt Tcf.WidthMask_)
         // FIXME-TABLE: Inconsistent to promote columns to WidthAuto
             flags = flags or when {
-                this.flags has Tf.ColumnsWidthFixed ->
+                this.flags has Tf.SizingPolicyFixed ->
                     if (this.flags has Tf.Resizable && flags hasnt Tcf.NoResize) Tcf.WidthFixed else Tcf.WidthAuto
                 else -> Tcf.WidthStretch
             }
