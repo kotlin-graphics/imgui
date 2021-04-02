@@ -9,6 +9,7 @@ import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcItemSize
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcWrapWidthForPos
+import imgui.ImGui.checkboxFlagsT
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
@@ -36,6 +37,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
+import unsigned.Ulong
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
@@ -472,4 +474,10 @@ internal interface widgets {
             }
         }
     }
+
+    fun checkboxFlags(label: String, flags: KMutableProperty0<Long>, flagsValue: Long): Boolean =
+        checkboxFlagsT(label, flags, flagsValue)
+
+    fun checkboxFlags(label: String, flags: KMutableProperty0<Ulong>, flagsValue: Ulong): Boolean =
+        checkboxFlagsT(label, flags, flagsValue)
 }

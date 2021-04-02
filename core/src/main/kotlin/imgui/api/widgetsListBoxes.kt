@@ -23,7 +23,9 @@ import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.style
 import imgui.ImGui.textLineHeightWithSpacing
+import imgui.WindowFlag
 import imgui.classes.ListClipper
+import imgui.has
 import imgui.internal.classes.Rect
 import imgui.internal.floor
 import imgui.withBool
@@ -126,7 +128,9 @@ interface widgetsListBoxes {
     /** FIXME: In principle this function should be called EndListBox(). We should rename it after re-evaluating if we want to keep the same signature.
      *  Terminate the scrolling region. Only call ListBoxFooter() if ListBoxHeader() returned true!  */
     fun listBoxFooter() {
-        val parentWindow = currentWindow.parentWindow!!
+        val window = currentWindow
+        assert(window.flags has WindowFlag._ChildWindow) { "Mismatched ListBoxHeader/ListBoxFooter calls. Did you test the return value of ListBoxHeader()?" }
+        val parentWindow = window.parentWindow!!
         val bb = parentWindow.dc.lastItemRect // assign is safe, itemSize() won't modify bb
 
         endChildFrame()
