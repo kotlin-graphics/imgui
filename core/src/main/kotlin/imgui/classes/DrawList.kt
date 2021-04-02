@@ -90,6 +90,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** [Internal] for channels api (note: prefer using your own persistent instance of ImDrawListSplitter!) */
     val _splitter = DrawListSplitter()
 
+    /** [Internal] anti-alias fringe is scaled by this value, this helps to keep things sharp while zooming at vertex buffer content */
+    var _fringeScale = 1f
+
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
     fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) =
@@ -368,11 +371,11 @@ class DrawList(sharedData: DrawListSharedData?) {
         val opaqueUv = Vec2(_data.texUvWhitePixel)
 
         val count = if (closed) points.size else points.lastIndex // The number of line segments we need to draw
-        val thickLine = thickness > 1f
+        val thickLine = thickness > _fringeScale
 
         if (flags has DrawListFlag.AntiAliasedLines) {
             // Anti-aliased stroke
-            val AA_SIZE = 1f
+            val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
 
             // Thicknesses <1.0 should behave like thickness 1.0
@@ -385,8 +388,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             //      could be improved.
             // - If AA_SIZE is not 1.0f we cannot use the texture path.
             val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex &&
-                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX &&
-                    fractionalThickness <= 0.00001f
+                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f  && AA_SIZE == 1f
 
             ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) {
                 "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off"
@@ -653,7 +655,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         if (flags has DrawListFlag.AntiAliasedFill) {
             // Anti-aliased Fill
-            val AA_SIZE = 1f
+            val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
             val idxCount = (points.size - 2) * 3 + points.size * 6
             val vtxCount = points.size * 2
