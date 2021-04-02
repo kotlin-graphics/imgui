@@ -756,6 +756,7 @@ object ShowDemoWindowTables {
                             "because the container window won't automatically extend vertically to fix contents (this may be improved in future versions).")
 
             pushingStyleCompact {
+                checkboxFlags("ImGuiTableFlags_Resizable", ::flags9, Tf.Resizable.i)
                 checkboxFlags("ImGuiTableFlags_ScrollX", ::flags9, Tf.ScrollX.i)
                 checkboxFlags("ImGuiTableFlags_ScrollY", ::flags9, Tf.ScrollY.i)
                 setNextItemWidth(ImGui.frameHeight)

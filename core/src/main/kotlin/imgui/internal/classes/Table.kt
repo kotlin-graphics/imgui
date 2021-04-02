@@ -597,18 +597,18 @@ class Table {
                 var widthAuto = contentWidthBody
                 if (column.flags hasnt Tcf.NoHeaderWidth)
                     widthAuto = widthAuto max contentWidthHeaders
-                widthAuto = widthAuto max minColumnWidth
-
-                // Non-resizable columns also submit their requested width
-                if (column.flags has Tcf.WidthFixed && column.initStretchWeightOrWidth > 0f)
-                    if (flags hasnt Tf.Resizable || column.flags has Tcf.NoResize)
-                        widthAuto = widthAuto max column.initStretchWeightOrWidth
-
-                column.widthAuto = widthAuto
+                column.widthAuto = widthAuto max minColumnWidth
             }
             column.isPreserveWidthAuto = false
 
             if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
+                // Non-resizable columns keep their requested width
+                if (column.flags has Tcf.WidthFixed && column.initStretchWeightOrWidth > 0f)
+                    if (flags hasnt Tf.Resizable || column.flags has Tcf.NoResize) {
+                        column.widthAuto = column.widthAuto max column.initStretchWeightOrWidth
+                        column.widthRequest = column.widthAuto
+                    }
+
                 // Process auto-fit for non-stretched columns
                 // Latch initial size for fixed columns and update it constantly for auto-resizing column (unless clipped!)
                 if (column.autoFitQueue != 0x00 || (column.flags has Tcf.WidthAuto && column.isVisibleX))
@@ -1799,8 +1799,7 @@ class Table {
                 maxWidth = (innerClipRect.max.x - (freezeColumnsRequest - column.displayOrder) * minColumnDistance) - column.minX
                 maxWidth = maxWidth - outerPaddingX - cellPaddingX - cellSpacingX2
             }
-        }
-        else if (flags hasnt Tf.NoKeepColumnsVisible) {
+        } else if (flags hasnt Tf.NoKeepColumnsVisible) {
             // If horizontal scrolling if disabled, we apply a final lossless shrinking of columns in order to make
             // sure they are all visible. Because of this we also know that all of the columns will always fit in
             // table->WorkRect and therefore in table->InnerRect (because ScrollX is off)

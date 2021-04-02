@@ -308,12 +308,7 @@ interface tables {
     // - Use TableSetupScrollFreeze() to lock columns (from the right) or rows (from the top) so they stay visible when scrolled.
 
 
-    /** We use a default parameter of 'init_width_or_weight == -1',
-     *  - with ImGuiTableColumnFlags_WidthFixed,    width  <= 0 --> init width == auto
-     *  - with ImGuiTableColumnFlags_WidthFixed,    width  >  0 --> init width == manual
-     *  - with ImGuiTableColumnFlags_WidthStretch,  weight <  0 --> init weight == 1.0f
-     *  - with ImGuiTableColumnFlags_WidthStretch,  weight >= 0 --> init weight == custom
-     *  Widths are specified _without_ CellPadding. So if you specify a width of 100.0f the column will be 100.0f+Padding*2.0f and you can fit a 100.0-wide item in it. */
+    /** See "COLUMN SIZING POLICIES" comments at the top of this file  */
     fun tableSetupColumn(label: String?, flags_: TableColumnFlags = Tcf.None.i, initWidthOrWeight: Float = -1f, userId: ID = 0) {
 
         var flags = flags_
@@ -330,7 +325,7 @@ interface tables {
         table.declColumnsCount++
 
         // When passing a width automatically enforce WidthFixed policy
-        // (whereas TableSetupColumnFlags would default to WidthAuto)
+        // (whereas TableSetupColumnFlags would default to WidthAuto if table is not Resizable)
         if (flags hasnt Tcf.WidthMask_)
             if (table.flags has Tf.ColumnsWidthFixed && initWidthOrWeight > 0f)
                 flags = flags or Tcf.WidthFixed
