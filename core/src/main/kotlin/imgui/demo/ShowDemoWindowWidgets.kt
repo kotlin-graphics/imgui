@@ -1579,14 +1579,14 @@ object ShowDemoWindowWidgets {
             }
         }
 
-        treeNode("Querying Status (Active/Focused/Hovered etc.)") {
+        treeNode("Querying Status (Edited/Active/Focused/Hovered etc.)") {
             // Select an item type
             val itemNames = arrayOf(
                     "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputFloat",
-                    "InputFloat3", "ColorEdit4", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "ListBox")
+                    "InputFloat3", "ColorEdit4", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "Combo", "ListBox")
             combo("Item Type", ::itemType, itemNames, itemNames.size)
             sameLine()
-            helpMarker("Testing how various types of items are interacting with the IsItemXXX functions.")
+            helpMarker("Testing how various types of items are interacting with the IsItemXXX functions. Note that the bool return value of most ImGui function is generally equivalent to calling ImGui::IsItemHovered().")
 
             // Submit selected item item so we can query their status in the code following it.
             val ret = when (itemType) {
@@ -1602,7 +1602,8 @@ object ShowDemoWindowWidgets {
                 9 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
                 10 -> treeNode("ITEM: TreeNode").also { if (it) treePop() } // Testing tree node
                 11 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
-                12 -> listBox("ITEM: ListBox", ::currentItem4, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                12 -> combo("ITEM: Combo", ::currentItem4, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                13 -> listBox("ITEM: ListBox", ::currentItem4, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                 else -> false
             }
 

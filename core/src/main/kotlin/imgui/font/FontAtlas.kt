@@ -623,10 +623,10 @@ class FontAtlas {
                     srcTmp.dstIndex = outputIdx
                 outputIdx++
             }
-            assert(srcTmp.dstIndex != -1) { "cfg.DstFont not pointing within atlas->Fonts[] array?" }
-            if (srcTmp.dstIndex == -1)
+            if (srcTmp.dstIndex == -1) {
+                assert(srcTmp.dstIndex != -1) { "cfg.DstFont not pointing within atlas->Fonts[] array?" }
                 return false
-
+            }
             // Initialize helper structure for font loading and verify that the TTF/OTF data is correct
             val fontOffset = STBTruetype.stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0) { "FontData is incorrect, or FontNo cannot be found." }

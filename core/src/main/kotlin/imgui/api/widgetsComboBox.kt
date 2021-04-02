@@ -22,6 +22,7 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -262,6 +263,9 @@ interface widgetsComboBox {
         }
 
         endCombo()
+        if (valueChanged)
+            markItemEdited(g.currentWindow!!.dc.lastItemId)
+
         return valueChanged
     }
 

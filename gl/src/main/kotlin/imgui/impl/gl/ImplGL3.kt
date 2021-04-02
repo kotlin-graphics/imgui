@@ -80,7 +80,7 @@ class ImplGL3 : GLInterface {
         glDisable(GL_DEPTH_TEST)
         glDisable(GL_STENCIL_TEST)
         glEnable(GL_SCISSOR_TEST)
-        if(OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
             glDisable(GL_PRIMITIVE_RESTART)
         if (POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -99,8 +99,9 @@ class ImplGL3 : GLInterface {
         val R = drawData.displayPos.x + drawData.displaySize.x
         var T = drawData.displayPos.y
         var B = drawData.displayPos.y + drawData.displaySize.y
-        if (!clipOriginLowerLeft) {
-            val tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
+        if (CLIP_ORIGIN && Platform.get() != Platform.MACOSX)
+            if (!clipOriginLowerLeft) {
+                val tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
         val orthoProjection = glm.ortho(L, R, B, T, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
@@ -211,7 +212,7 @@ class ImplGL3 : GLInterface {
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
         if (OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330)
-                glBindSampler(0, lastSampler)
+            glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
@@ -223,7 +224,7 @@ class ImplGL3 : GLInterface {
         if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
         if (lastEnableStencilTest) glEnable(GL_STENCIL_TEST) else glDisable(GL_STENCIL_TEST)
         if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
-        if(OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
             when {
                 lastEnablePrimitiveRestart -> glEnable(GL_PRIMITIVE_RESTART)
                 else -> glDisable(GL_PRIMITIVE_RESTART)
