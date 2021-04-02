@@ -78,6 +78,7 @@ class ImplGL3 : GLInterface {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
+        glDisable(GL_STENCIL_TEST)
         glEnable(GL_SCISSOR_TEST)
         if(OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
             glDisable(GL_PRIMITIVE_RESTART)
@@ -153,6 +154,7 @@ class ImplGL3 : GLInterface {
         val lastEnableBlend = glIsEnabled(GL_BLEND)
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
+        val lastEnableStencilTest = glIsEnabled(GL_STENCIL_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
         val lastEnablePrimitiveRestart = OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310 && glIsEnabled(GL_PRIMITIVE_RESTART)
 
@@ -219,6 +221,7 @@ class ImplGL3 : GLInterface {
         if (lastEnableBlend) glEnable(GL_BLEND) else glDisable(GL_BLEND)
         if (lastEnableCullFace) glEnable(GL_CULL_FACE) else glDisable(GL_CULL_FACE)
         if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
+        if (lastEnableStencilTest) glEnable(GL_STENCIL_TEST) else glDisable(GL_STENCIL_TEST)
         if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
         if(OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
             when {

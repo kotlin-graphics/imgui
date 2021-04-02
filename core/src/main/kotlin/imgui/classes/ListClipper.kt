@@ -97,7 +97,7 @@ class ListClipper {
 
             // While we are in frozen row state, keep displaying items one by one, unclipped
             // FIXME: Could be stored as a table-agnostic state.
-            if (table != null && !table.isUnfrozen) {
+            if (table != null && !table.isUnfrozenRows) {
                 displayStart = itemsFrozen
                 displayEnd = itemsFrozen + 1
                 itemsFrozen++

@@ -393,7 +393,7 @@ interface tables {
         table.freezeColumnsCount = if (table.innerWindow!!.scroll.x != 0f) table.freezeColumnsRequest else 0
         table.freezeRowsRequest = if (table.flags has Tf.ScrollY) rows else 0
         table.freezeRowsCount = if (table.innerWindow!!.scroll.y != 0f) table.freezeRowsRequest else 0
-        table.isUnfrozen = table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
+        table.isUnfrozenRows = table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
     }
 
     /** [Public] This is a helper to output TableHeader() calls based on the column names declared in TableSetupColumn().

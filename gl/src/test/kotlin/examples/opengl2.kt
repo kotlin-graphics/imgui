@@ -173,7 +173,13 @@ private class ImGuiOpenGL2 {
             glClearColor(clearColor)
             glClear(GL_COLOR_BUFFER_BIT)
 
+            // If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),
+            // you may need to backup/reset/restore other state, e.g. for current shader using the commented lines below.
+            //GLint last_program;
+            //glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
+            //glUseProgram(0);
             implGl2.renderDrawData(drawData!!)
+            //glUseProgram(last_program);
         }
 
         if (DEBUG)

@@ -164,7 +164,7 @@ interface tablesInternal {
         table.freezeRowsCount = 0 // "
         table.freezeColumnsRequest = 0
         table.freezeColumnsCount = 0
-        table.isUnfrozen = true
+        table.isUnfrozenRows = true
         table.declColumnsCount = 0
 
         // Using opaque colors facilitate overlapping elements of the grid

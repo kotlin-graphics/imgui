@@ -329,9 +329,9 @@ internal interface debugTools {
             val name = table getColumnName n
             val buf = StringBuilder()
             column.apply {
-                buf += "Column $n order $displayOrder name '$name': offset %+.2f to %+.2f\n".format(minX - table.workRect.min.x, maxX - table.workRect.min.x)
+                buf += "Column $n order $displayOrder '$name': offset %+.2f to %+.2f${if(n < table.freezeColumnsRequest) " (Frozen)" else ""}\n".format(minX - table.workRect.min.x, maxX - table.workRect.min.x)
                 buf += "Enabled: ${isEnabled.i}, VisibleX/Y: ${isVisibleX.i}/${isVisibleY.i}, RequestOutput: ${isRequestOutput.i}, SkipItems: ${isSkipItems.i}, DrawChannels: $drawChannelFrozen,$drawChannelUnfrozen\n"
-                buf += "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f (%.1f%%)\n".format(widthGiven, widthRequest, widthAuto, stretchWeight,  (column.stretchWeight / sumWeights) * 100f)
+                buf += "WidthGiven: %.1f, Request/Auto: %.1f/%.1f, StretchWeight: %.3f (%.1f%%)\n".format(widthGiven, widthRequest, widthAuto, stretchWeight,  if(column.stretchWeight > 0f) (column.stretchWeight / sumWeights) * 100f else 0f)
                 buf += "MinX: %.1f, MaxX: %.1f (%+.1f), ClipRect: %.1f to %.1f (+%.1f)\n".format(minX, maxX, maxX - minX, clipRect.min.x, clipRect.max.x, clipRect.max.x - clipRect.min.x)
                 buf += "ContentWidth: %.1f,%.1f, HeadersUsed/Ideal %.1f/%.1f\n".format(contentMaxXFrozen - workMinX, contentMaxXUnfrozen - workMinX, contentMaxXHeadersUsed - workMinX, contentMaxXHeadersIdeal - workMinX)
                 val dir = if (sortDirection == SortDirection.Ascending) " (Asc)" else if (sortDirection == SortDirection.Descending) " (Des)" else ""

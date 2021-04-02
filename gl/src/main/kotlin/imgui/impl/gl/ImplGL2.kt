@@ -45,22 +45,28 @@ class ImplGL2 : GLInterface {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
+        glDisable(GL_STENCIL_TEST)
         glDisable(GL11.GL_LIGHTING)
         glDisable(GL11.GL_COLOR_MATERIAL)
         glEnable(GL_SCISSOR_TEST)
         GL11.glEnableClientState(GL_VERTEX_ARRAY)
         GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY)
         GL11.glEnableClientState(GL11.GL_COLOR_ARRAY)
+        GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY)
         glEnable(GL_TEXTURE_2D)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        GL11.glShadeModel(GL11.GL_SMOOTH)
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 
-        /*  If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),
-            you may need to backup/reset/restore current shader using the lines below. DO NOT MODIFY THIS FILE! Add the code in your calling function:         */
-//          val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
-//          glUseProgram(0)
-//          ImplGL2.renderDrawData(...)
-//          glUseProgram(lastProgram)
+        // you may need to backup/reset/restore other state, e.g. for current shader using the commented lines below.
+        // (DO NOT MODIFY THIS FILE! Add the code in your calling function)
+        //   GLint last_program;
+        //   glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
+        //   glUseProgram(0);
+        //   ImGui_ImplOpenGL2_RenderDrawData(...);
+        //   glUseProgram(last_program)
+        // There are potentially many more states you could need to clear/setup that we can't access from default headers.
+        // e.g. glBindBuffer(GL_ARRAY_BUFFER, 0), glDisable(GL_TEXTURE_CUBE_MAP).
 
         // Setup viewport, orthographic projection matrix
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
@@ -92,6 +98,7 @@ class ImplGL2 : GLInterface {
         val lastPolygonMode = glGetVec2i(GL_POLYGON_MODE)
         val lastViewport = glGetVec4i(GL_VIEWPORT)
         val lastScissorBox = glGetVec4i(GL_SCISSOR_BOX)
+        val lastShadeModel = glGetInteger(GL11.GL_SHADE_MODEL)
         val lastTexEnvMode = glGetTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE)
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT or GL_COLOR_BUFFER_BIT or GL11.GL_TRANSFORM_BIT)
 
@@ -156,6 +163,7 @@ class ImplGL2 : GLInterface {
         glPolygonMode(GL_FRONT, lastPolygonMode[0]); glPolygonMode(GL_BACK, lastPolygonMode[1])
         glViewport(lastViewport)
         glScissor(lastScissorBox)
+        GL11.glShadeModel(lastShadeModel)
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, lastTexEnvMode)
     }
 

@@ -325,7 +325,7 @@ class Table {
     var isResetDisplayOrderRequest = false
 
     /** Set when we got past the frozen row. */
-    var isUnfrozen = false
+    var isUnfrozenRows = false
 
     /** Set when outer_size value passed to BeginTable() is (>= -1.0f && <= 0.0f) */
     var isOuterRectAutoFitX = false
@@ -720,6 +720,7 @@ class Table {
         // [Part 7] Setup final position, offset, skip/clip states and clipping rectangles, detect hovered column
         // Process columns in their visible orders as we are comparing the visible order and adjusting host_clip_rect while looping.
         var visibleN = 0
+        var offsetXFrozen = freezeColumnsCount > 0
         var offsetX = (if (freezeColumnsCount > 0) outerRect.min.x else workRect.min.x) + outerPaddingX - cellSpacingX1
         val hostClipRect = Rect(innerClipRect) // [JVM] local copy, shadow is fine
         //host_clip_rect.Max.x += table->CellPaddingX + table->CellSpacingX2;
@@ -731,8 +732,10 @@ class Table {
 
             column.navLayerCurrent = if (freezeRowsCount > 0 || columnN < freezeColumnsCount) NavLayer.Menu else NavLayer.Main
 
-            if (freezeColumnsCount > 0 && freezeColumnsCount == visibleN)
+            if (offsetXFrozen && freezeColumnsCount == visibleN) {
                 offsetX += workRect.min.x - outerRect.min.x
+                offsetXFrozen = false
+            }
 
             // Clear status flags
             column.flags = column.flags wo Tcf.StatusMask_
@@ -1008,6 +1011,10 @@ class Table {
             val borderY2Hit = if (flags has Tf.NoBordersInBody) hitY2Head else hitY2Body
             if (flags has Tf.NoBordersInBody && !isUsingHeaders)
                 continue
+
+            if (freezeColumnsCount > 0)
+                if (column.maxX < columns[displayOrderToIndex[freezeColumnsCount - 1]].maxX)
+                    continue
 
             val columnId = getColumnResizeID(columnN, instanceCurrent)
             val hitRect = Rect(column.maxX - hitHalfWidth, hitY1, column.maxX + hitHalfWidth, borderY2Hit)
@@ -1672,8 +1679,8 @@ class Table {
                 column.navLayerCurrent = if (columnN < freezeColumnsCount) NavLayer.Menu else NavLayer.Main
             }
         if (unfreezeRowsActual) {
-            assert(!isUnfrozen)
-            isUnfrozen = true
+            assert(!isUnfrozenRows)
+            isUnfrozenRows = true
 
             // BgClipRect starts as table->InnerClipRect, reduce it now and make BgClipRectForDrawCmd == BgClipRect
             val y0 = (rowPosY2 + 1) max window.innerClipRect.min.y
@@ -1762,7 +1769,7 @@ class Table {
         // Report maximum position so we can infer content size per column.
         val maxPosX = when {
             rowFlags has Trf.Headers -> column::contentMaxXHeadersUsed  // Useful in case user submit contents in header row that is not a TableHeader() call
-            else -> if (isUnfrozen) column::contentMaxXUnfrozen else column::contentMaxXFrozen
+            else -> if (isUnfrozenRows) column::contentMaxXUnfrozen else column::contentMaxXFrozen
         }
         maxPosX.set(maxPosX() max window.dc.cursorMaxPos.x)
         rowPosY2 = rowPosY2 max (window.dc.cursorMaxPos.y + cellPaddingY)
