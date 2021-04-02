@@ -334,7 +334,7 @@ interface tables {
         // When passing a width automatically enforce WidthFixed policy
         // (whereas TableSetupColumnFlags would default to WidthAuto if table is not Resizable)
         if (flags hasnt Tcf.WidthMask_)
-            if (table.flags has Tf.SizingPolicyFixed && initWidthOrWeight > 0f)
+            if (table.flags has Tf.SizingFixedFit && initWidthOrWeight > 0f)
                 flags = flags or Tcf.WidthFixed
 
         table.setupColumnFlags(column, flags)

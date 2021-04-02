@@ -136,14 +136,14 @@ object ShowDemoWindowTables {
     var contentsType0 = ContentsType0.Text.ordinal
 
     /* Resizable, stretch */
-    var flags1 = Tf.SizingPolicyStretch or Tf.Resizable or Tf.BordersOuter or Tf.BordersV or Tf.ContextMenuInBody
+    var flags1 = Tf.SizingStretchSame or Tf.Resizable or Tf.BordersOuter or Tf.BordersV or Tf.ContextMenuInBody
 
     /* Resizable, fixed */
-    var flags2 = Tf.SizingPolicyFixed or Tf.Resizable or Tf.BordersOuter or Tf.BordersV or Tf.ContextMenuInBody
-    var fixedFill0 = false
+    var flags2 = Tf.SizingFixedFit or Tf.Resizable or Tf.BordersOuter or Tf.BordersV or Tf.ContextMenuInBody
+    var fixedFill0 = true
 
     /* Resizable, mixed */
-    var flags3 = Tf.SizingPolicyFixed or Tf.RowBg or Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable
+    var flags3 = Tf.SizingFixedFit or Tf.RowBg or Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable
 
     /* Reorderable, hideable, with headers */
     var flags4 = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.BordersOuter or Tf.BordersV
@@ -174,7 +174,7 @@ object ShowDemoWindowTables {
     var freezeRows0 = 1
 
     /* Stretch + ScrollX */
-    var flags10 = Tf.SizingPolicyStretch or Tf.ScrollX or Tf.ScrollY or Tf.BordersOuter or Tf.RowBg or Tf.ContextMenuInBody
+    var flags10 = Tf.SizingStretchSame or Tf.ScrollX or Tf.ScrollY or Tf.BordersOuter or Tf.RowBg or Tf.ContextMenuInBody
     var innerWidth0 = 1000f
 
     /* Columns flags */
@@ -182,14 +182,14 @@ object ShowDemoWindowTables {
     val columnNames = arrayOf("One", "Two", "Three")
     val columnFlags = intArrayOf(Tcf.DefaultSort.i, Tcf.None.i, Tcf.DefaultHide.i)
     val columnFlagsOut = IntArray(columnCount1) // Output from TableGetColumnFlags()
-    var flags11 = Tf.SizingPolicyFixed or Tf.ScrollX or Tf.ScrollY or Tf.RowBg or Tf.BordersOuter or Tf.BordersV or
+    var flags11 = Tf.SizingFixedFit or Tf.ScrollX or Tf.ScrollY or Tf.RowBg or Tf.BordersOuter or Tf.BordersV or
             Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.Sortable
 
     /* Columns widths */
     var flags12 = Tf.None.i
 
     /* Outer size */
-    var flags13 = Tf.Borders or Tf.Resizable or Tf.ContextMenuInBody or Tf.RowBg or Tf.SizingPolicyFixed
+    var flags13 = Tf.Borders or Tf.Resizable or Tf.ContextMenuInBody or Tf.RowBg or Tf.SizingFixedFit
     var fixedFill1 = false
 
     /* Background color */
@@ -312,7 +312,7 @@ object ShowDemoWindowTables {
 
     /* Advanced */
     var flags20 = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.Sortable or Tf.SortMulti or Tf.RowBg or
-            Tf.Borders or Tf.NoBordersInBody or Tf.ScrollX or Tf.ScrollY or Tf.SizingPolicyFixed
+            Tf.Borders or Tf.NoBordersInBody or Tf.ScrollX or Tf.ScrollY or Tf.SizingFixedFit
 
     enum class ContentsType2 { Text, Button, SmallButton, FillButton, Selectable, SelectableSpanRow }
 
@@ -509,12 +509,12 @@ object ShowDemoWindowTables {
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
         treeNode("Resizable, fixed") {
-            // Here we use ImGuiTableFlags_SizingPolicyFixed (even though _ScrollX is not set)
+            // Here we use ImGuiTableFlags_SizingFixedFit (even though _ScrollX is not set)
             // So columns will adopt the "Fixed" policy and will maintain a fixed width regardless of the whole available width (unless table is small)
             // If there is not enough available width to fit all columns, they will however be resized down.
             // FIXME-TABLE: Providing a stretch-on-init would make sense especially for tables which don't have saved settings
             helpMarker(
-                "Using _Resizable + _SizingPolicyFixed flags.\n" +
+                "Using _Resizable + _SizingFixedFit flags.\n" +
                         "Fixed-width columns generally makes more sense if you want to use horizontal scrolling.\n\n" +
                         "Double-click a column border to auto-fit the column to its contents.")
             pushingStyleCompact {
@@ -536,7 +536,8 @@ object ShowDemoWindowTables {
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
         treeNode("Resizable, mixed") {
-            helpMarker("Using columns flag to alter resizing policy on a per-column basis.")
+            helpMarker("Using TableSetupColumn() to alter resizing policy on a per-column basis.\n\n" +
+                       "When combining Fixed and Stretch columns, generally you only want one, maybe two trailing columns to use _WidthStretch.")
 
             table("##table1", 3, flags3) {
                 tableSetupColumn("AAA", Tcf.WidthFixed.i)
@@ -598,7 +599,7 @@ object ShowDemoWindowTables {
             }
 
             // Use outer_size.x == 0.0f instead of default to make the table as tight as possible (only valid when no scrolling and no stretch column)
-            table("##table2", 3, flags4 or Tf.SizingPolicyFixed, Vec2()) {
+            table("##table2", 3, flags4 or Tf.SizingFixedFit, Vec2()) {
                 tableSetupColumn("One")
                 tableSetupColumn("Two")
                 tableSetupColumn("Three")
@@ -712,23 +713,20 @@ object ShowDemoWindowTables {
                         helpMarker("Be mindful that using right-alignment (e.g. size.x = -FLT_MIN) creates a feedback loop where contents width can feed into auto-column width can feed into contents width.")
                     }
                     dragInt("Columns", ::columnCount0, 0.1f, 1, 64, "%d", SliderFlag.AlwaysClamp.i)
+                    if (checkboxFlags("ImGuiTableFlags_SizingStretchSame", ::flags7, Tf.SizingStretchSame.i))
+                        flags7 = flags7 wo Tf.SizingFixedFit       // Can't specify both sizing polices so we clear the other
+                    sameLine(); helpMarker("Default if _ScrollX if disabled. Makes columns use _WidthStretch policy by default.")
+                    if (checkboxFlags("ImGuiTableFlags_SizingFixedFit", ::flags7, Tf.SizingFixedFit.i))
+                        flags7 = flags7 wo Tf.SizingStretchSame     // Can't specify both sizing polices so we clear the other
+                    sameLine(); helpMarker("Default if _ScrollX if enabled. Makes columns use _WidthFixed by default, or _WidthFixedResize if _Resizable is not set.")
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags7, Tf.Resizable.i)
+                    checkboxFlags("ImGuiTableFlags_PreciseWidths", ::flags7, Tf.PreciseWidths.i)
+                    sameLine(); helpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.")
+                    checkboxFlags("ImGuiTableFlags_Resizable", ::flags7, Tf.Resizable.i)
+                    checkboxFlags("ImGuiTableFlags_ScrollX", ::flags7, Tf.ScrollX.i)
+                    checkboxFlags("ImGuiTableFlags_ScrollY", ::flags7, Tf.ScrollY.i)
+                    checkboxFlags("ImGuiTableFlags_NoClip", ::flags7, Tf.NoClip.i)
                 }
-                checkboxFlags("ImGuiTableFlags_BordersInnerH", ::flags7, Tf.BordersInnerH.i)
-                checkboxFlags("ImGuiTableFlags_BordersOuterH", ::flags7, Tf.BordersOuterH.i)
-                checkboxFlags("ImGuiTableFlags_BordersInnerV", ::flags7, Tf.BordersInnerV.i)
-                checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags7, Tf.BordersOuterV.i)
-                checkboxFlags("ImGuiTableFlags_ScrollX", ::flags7, Tf.ScrollX.i)
-                checkboxFlags("ImGuiTableFlags_ScrollY", ::flags7, Tf.ScrollY.i)
-                if (checkboxFlags("ImGuiTableFlags_SizingPolicyStretch", ::flags7, Tf.SizingPolicyStretch.i))
-                    flags7 = flags7 wo Tf.SizingPolicyFixed       // Can't specify both sizing polices so we clear the other
-                sameLine(); helpMarker("Default if _ScrollX if disabled. Makes columns use _WidthStretch policy by default.")
-                if (checkboxFlags("ImGuiTableFlags_SizingPolicyFixed", ::flags7, Tf.SizingPolicyFixed.i))
-                    flags7 = flags7 wo Tf.SizingPolicyStretch     // Can't specify both sizing polices so we clear the other
-                sameLine(); helpMarker("Default if _ScrollX if enabled. Makes columns use _WidthFixed by default, or _WidthFixedResize if _Resizable is not set.")
-                checkboxFlags("ImGuiTableFlags_PreciseWidths", ::flags7, Tf.PreciseWidths.i)
-                sameLine(); helpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.")
-                checkboxFlags("ImGuiTableFlags_Resizable", ::flags7, Tf.Resizable.i)
-                checkboxFlags("ImGuiTableFlags_NoClip", ::flags7, Tf.NoClip.i)
             }
 
             val outerSize = Vec2(-Float.MIN_VALUE, TEXT_BASE_HEIGHT * 7)
@@ -792,7 +790,7 @@ object ShowDemoWindowTables {
             setNextItemOpen(openAction != 0)
         treeNode("Horizontal scrolling") {
             helpMarker(
-                "When ScrollX is enabled, the default sizing policy becomes ImGuiTableFlags_SizingPolicyFixed," +
+                "When ScrollX is enabled, the default sizing policy becomes ImGuiTableFlags_SizingFixedFit, " +
                         "as automatically stretching columns doesn't make much sense with horizontal scrolling.\n\n" +
                         "Also note that as of the current version, you will almost always want to enable ScrollY along with ScrollX," +
                         "because the container window won't automatically extend vertically to fix contents (this may be improved in future versions).")
@@ -921,7 +919,7 @@ object ShowDemoWindowTables {
             }
 
             table("##table1", 4, flags12) {
-                // We could also set ImGuiTableFlags_SizingPolicyFixed on the table and all columns will default to ImGuiTableColumnFlags_WidthFixed.
+                // We could also set ImGuiTableFlags_SizingFixedFit on the table and all columns will default to ImGuiTableColumnFlags_WidthFixed.
                 tableSetupColumn("", Tcf.WidthFixed.i, 100f)
                 tableSetupColumn("", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 15f)
                 tableSetupColumn("", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 30f)
@@ -1207,7 +1205,7 @@ object ShowDemoWindowTables {
             // [2.2] Right-click on the ".." to open a custom popup
             // [2.3] Right-click in columns to open another custom popup
             helpMarker("Demonstrate mixing table context menu (over header), item context button (over button) and custom per-colum context menu (over column body).")
-            val flags15b = Tf.Resizable or Tf.SizingPolicyFixed or Tf.Reorderable or Tf.Hideable or Tf.Borders
+            val flags15b = Tf.Resizable or Tf.SizingFixedFit or Tf.Reorderable or Tf.Hideable or Tf.Borders
             // [JVM] cant use DSL because of endTable isnt the last call
             if (beginTable("##table2", COLUMNS_COUNT, flags15b)) {
                 tableSetupColumn("One")
@@ -1269,7 +1267,7 @@ object ShowDemoWindowTables {
             helpMarker("Multiple tables with the same identifier will share their settings, width, visibility, order etc.")
             for (n in 0..2) {
                 val open = collapsingHeader("Synced Table $n", Tnf.DefaultOpen.i)
-                val flags = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.Borders or Tf.SizingPolicyFixed or Tf.NoSavedSettings
+                val flags = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.Borders or Tf.SizingFixedFit or Tf.NoSavedSettings
                 if (open && beginTable("Table", 3, flags)) {
                     tableSetupColumn("One")
                     tableSetupColumn("Two")
@@ -1379,12 +1377,12 @@ object ShowDemoWindowTables {
                     }
 
                     treeNodeEx("Sizing:", Tnf.DefaultOpen.i) {
-                        if (checkboxFlags("ImGuiTableFlags_SizingPolicyStretch", ::flags20, Tf.SizingPolicyStretch.i))
-                            flags20 = flags20 wo Tf.SizingPolicyFixed   // Can't specify both sizing polices so we clear the other
+                        if (checkboxFlags("ImGuiTableFlags_SizingStretchSame", ::flags20, Tf.SizingStretchSame.i))
+                            flags20 = flags20 wo Tf.SizingFixedFit   // Can't specify both sizing polices so we clear the other
                         sameLine(); helpMarker("[Default if ScrollX is off]\nFit all columns within available width (or specified inner_width). Fixed and Stretch columns allowed.")
                         sameLine(); helpMarker("In the Advanced demo we override the policy of each column so those table-wide settings have less effect that typical.")
-                        if (checkboxFlags("ImGuiTableFlags_SizingPolicyFixed", ::flags20, Tf.SizingPolicyFixed.i))
-                            flags20 = flags20 wo Tf.SizingPolicyStretch // Can't specify both sizing polices so we clear the other
+                        if (checkboxFlags("ImGuiTableFlags_SizingFixedFit", ::flags20, Tf.SizingFixedFit.i))
+                            flags20 = flags20 wo Tf.SizingStretchSame // Can't specify both sizing polices so we clear the other
                         sameLine(); helpMarker("[Default if ScrollX is on]\nEnlarge as needed: enable scrollbar if ScrollX is enabled, otherwise extend parent window's contents rectangle. Only Fixed columns allowed. Stretched columns will calculate their width assuming no scrolling.")
                         checkboxFlags("ImGuiTableFlags_NoHostExtendY", ::flags20, Tf.NoHostExtendY.i)
                         checkboxFlags("ImGuiTableFlags_NoKeepColumnsVisible", ::flags20, Tf.NoKeepColumnsVisible.i)

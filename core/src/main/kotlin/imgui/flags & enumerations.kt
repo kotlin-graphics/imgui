@@ -589,11 +589,11 @@ typealias TableFlags = Int
 // Flags for ImGui::BeginTable()
 // - Important! Sizing policies have complex and subtle side effects, more so than you would expect.
 //   Read comments/demos carefully + experiment with live demos to get acquainted with them.
-// - The DEFAULT policy depends on whether the _ScrollX flag is set on the table, and whether _AlwaysAutoResize flag is set on window.
-//   - ImGuiTableFlags_SizingPolicyStretch is the default if ScrollX if off.
-//   - ImGuiTableFlags_SizingPolicyFixed   is the default if ScrollX is on, or if host window has ImGuiWindowFlags_AlwaysAutoResize.
+// - The DEFAULT sizing policies are:
+//    - Default to ImGuiTableFlags_SizingFixedFit    if ScrollX is on, or if host window has ImGuiWindowFlags_AlwaysAutoResize.
+//    - Default to ImGuiTableFlags_SizingStretchSame if ScrollX is off.
 // - When ScrollX is off:
-//    - Table defaults to ImGuiTableFlags_SizingPolicyStretch -> all Columns defaults to ImGuiTableColumnFlags_WidthStretch.
+//    - Table defaults to ImGuiTableFlags_SizingStretchSame -> all Columns defaults to ImGuiTableColumnFlags_WidthStretch with same weight.
 //    - Columns sizing policy allowed: Stretch (default), Fixed/Auto.
 //    - Fixed Columns will generally obtain their requested width (unless the table cannot fit them all).
 //    - Stretch Columns will share the remaining width.
@@ -601,7 +601,7 @@ typealias TableFlags = Int
 //      The typical use of mixing sizing policies is: any number of LEADING Fixed columns, followed by one or two TRAILING Stretch columns.
 //      (this is because the visible order of columns have subtle but necessary effects on how they react to manual resizing).
 // - When ScrollX is on:
-//    - Table defaults to ImGuiTableFlags_SizingPolicyFixed -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed or ImGuiTableColumnFlags_WidthAuto.
+//    - Table defaults to ImGuiTableFlags_SizingFixedFit -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed or ImGuiTableColumnFlags_WidthAuto.
 //    - Columns sizing policy allowed: Fixed/Auto mostly.
 //    - Fixed Columns can be enlarged as needed. Table will show an horizontal scrollbar if needed.
 //    - When using auto-resizing (non-resizable) fixed columns, querying the content width to use item right-alignment e.g. SetNextItemWidth(-FLT_MIN) doesn't make sense, would create a feedback loop.
@@ -670,13 +670,13 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). -> May move to style */
     NoBordersInBodyUntilResize(1 shl 12),
 
-    // Sizing Policy
+    // Sizing Policy (read above for defaults)
 
-    /** [Default if ScrollX is on]  Columns default to _WidthFixed (if resizable) or _WidthAuto (if not resizable), matching contents width. */
-    SizingPolicyFixed(1 shl 13),
+    /** Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching contents width. */
+    SizingFixedFit(1 shl 13),
 
-    /** [Default if ScrollX is off] Columns default to _WidthStretch with same weights. */
-    SizingPolicyStretch(1 shl 14),
+    /** Columns default to _WidthStretch with default weights all equal, unless overriden by TableSetupColumn(). */
+    SizingStretchSame(1 shl 14),
 
     /** Make all columns the same widths which is useful with Fixed columns policy (but granted by default with Stretch policy + no resize). Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible and disable ImGuiTableFlags_Resizable. */
     SameWidths(1 shl 15),
@@ -754,13 +754,13 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
     /** Default as a sorting column. */
     DefaultSort(1 shl 1),
 
-    /** Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _SizingPolicyStretch). */
+    /** Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _SizingStretchSame). */
     WidthStretch(1 shl 2),
 
-    /** Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _SizingPolicyFixed and table is resizable). */
+    /** Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _SizingFixedFit and table is resizable). */
     WidthFixed(1 shl 3),
 
-    /** Column will not stretch and keep resizing based on submitted contents (default if table sizing policy is _SizingPolicyFixed and table is not resizable).
+    /** Column will not stretch and keep resizing based on submitted contents (default if table sizing policy is _SizingFixedFit and table is not resizable).
      *  Generally compatible with using right-most fitting widgets (e.g. SetNextItemWidth(-FLT_MIN))     */
     WidthAuto(1 shl 4),
 

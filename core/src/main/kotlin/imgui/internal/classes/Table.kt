@@ -585,9 +585,9 @@ class Table {
         // [Part 3] Fix column flags. Count how many fixed/stretch columns we have and sum of weights.
         var countFixed = 0                    // Number of columns that have fixed sizing policy (not stretched sizing policy) (this is NOT the opposite of count_resizable!)
         var countResizable = 0                // Number of columns the user can resize (this is NOT the opposite of count_fixed!)
-        var sumWeightsStretched = 0f     // Sum of all weights for weighted columns.
-        var sumWidthFixedRequests = 0f  // Sum of all width for fixed and auto-resize columns, excluding width contributed by Stretch columns.
+        var sumWidthRequests = 0f  // Sum of all width for fixed and auto-resize columns, excluding width contributed by Stretch columns but including spacing/padding.
         var maxWidthAuto = 0f            // Largest auto-width (used for SameWidths feature)
+        var stretchSumWeights = 0f     // Sum of all weights for weighted columns.
         leftMostStretchedColumn = -1
         rightMostStretchedColumn = -1
         for (columnN in 0 until columnsCount) {
@@ -622,15 +622,14 @@ class Table {
                 if (column.autoFitQueue > 0x01 && isInitializing && !column.isPreserveWidthAuto)
                     column.widthRequest = column.widthRequest max (minColumnWidth * 4f) // FIXME-TABLE: Another constant/scale?
                 countFixed += 1
-                sumWidthFixedRequests += column.widthRequest
+                sumWidthRequests += column.widthRequest
             } else {
                 assert(column.flags has Tcf.WidthStretch)
 
-                // Revert or initialize weight (when column->StretchWeight < 0.0f normally it means there has been no init value so it'll always default to 1.0f)
                 if (column.autoFitQueue != 0x00 || column.stretchWeight < 0f)
                     column.stretchWeight = if (column.initStretchWeightOrWidth > 0f) column.initStretchWeightOrWidth else 1f
 
-                sumWeightsStretched += column.stretchWeight
+                stretchSumWeights += column.stretchWeight
                 if (leftMostStretchedColumn == -1 || columns[leftMostStretchedColumn].displayOrder > column.displayOrder)
                     leftMostStretchedColumn = columnN
                 if (rightMostStretchedColumn == -1 || columns[rightMostStretchedColumn].displayOrder < column.displayOrder)
@@ -638,7 +637,7 @@ class Table {
             }
             column.isPreserveWidthAuto = false
             maxWidthAuto = maxWidthAuto max column.widthAuto
-            sumWidthFixedRequests += cellPaddingX * 2f
+            sumWidthRequests += cellPaddingX * 2f
         }
         columnsEnabledFixedCount = countFixed
 
@@ -652,10 +651,10 @@ class Table {
                     continue
                 val column = columns[columnN]
                 if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
-                    sumWidthFixedRequests += maxWidthAuto - column.widthRequest // Update old sum
+                    sumWidthRequests += maxWidthAuto - column.widthRequest // Update old sum
                     column.widthRequest = maxWidthAuto
                 } else {
-                    sumWeightsStretched += 1f - column.stretchWeight // Update old sum
+                    stretchSumWeights += 1f - column.stretchWeight // Update old sum
                     column.stretchWeight = 1f
                     if (mixedSameWidths)
                         column.widthRequest = maxWidthAuto
@@ -666,7 +665,7 @@ class Table {
 //        val work_rect = table->WorkRect; [JVM] we use the same instance!
         val widthSpacings = outerPaddingX * 2f + (cellSpacingX1 + cellSpacingX2) * (columnsEnabledCount - 1)
         val widthAvail = if (flags has Tf.ScrollX && innerWidth == 0f) innerClipRect.width else workRect.width
-        val widthAvailForStretchedColumns = if (mixedSameWidths) 0f else widthAvail - widthSpacings - sumWidthFixedRequests
+        val widthAvailForStretchedColumns = if (mixedSameWidths) 0f else widthAvail - widthSpacings - sumWidthRequests
         var widthRemainingForStretchedColumns = widthAvailForStretchedColumns
         columnsGivenWidth = widthSpacings + (cellPaddingX * 2) * columnsEnabledCount
         for (columnN in 0 until columnsCount) {
@@ -676,7 +675,7 @@ class Table {
 
             // Allocate width for stretched/weighted columns (StretchWeight gets converted into WidthRequest)
             if ((column.flags has Tcf.WidthStretch) && !mixedSameWidths) {
-                val weightRatio = column.stretchWeight / sumWeightsStretched
+                val weightRatio = column.stretchWeight / stretchSumWeights
                 column.widthRequest = floor(max(widthAvailForStretchedColumns * weightRatio, minColumnWidth) + 0.01f)
                 widthRemainingForStretchedColumns -= column.widthRequest
             }
@@ -695,7 +694,7 @@ class Table {
         // Using right-to-left distribution (more likely to match resizing cursor).
         if (widthRemainingForStretchedColumns >= 1f && flags hasnt Tf.PreciseWidths) {
             var orderN = columnsCount - 1
-            while (sumWeightsStretched > 0f && widthRemainingForStretchedColumns >= 1f && orderN >= 0) {
+            while (stretchSumWeights > 0f && widthRemainingForStretchedColumns >= 1f && orderN >= 0) {
                 if (enabledMaskByDisplayOrder hasnt (1L shl orderN)) {
                     orderN--
                     continue
@@ -914,9 +913,9 @@ class Table {
 
         // Sizing Policy
         if (flags hasnt Tcf.WidthMask_)
-        // FIXME-TABLE: Inconsistent to promote columns to WidthAuto
+        // FIXME-TABLE: clarify promotion to WidthAuto?
             flags = flags or when {
-                this.flags has Tf.SizingPolicyFixed ->
+                this.flags has Tf.SizingFixedFit ->
                     if (this.flags has Tf.Resizable && flags hasnt Tcf.NoResize) Tcf.WidthFixed else Tcf.WidthAuto
                 else -> Tcf.WidthStretch
             }
