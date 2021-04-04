@@ -339,6 +339,11 @@ interface tables {
         val column = table.columns[table.declColumnsCount]
         table.declColumnsCount++
 
+        // Assert when passing a width or weight if policy is entirely left to default, to avoid storing width into weight and vice-versa.
+        // Give a grace to users of ImGuiTableFlags_ScrollX.
+        if (table.isDefaultSizingPolicy && flags hasnt Tcf.WidthMask_ && flags hasnt Tf.ScrollX)
+            assert(initWidthOrWeight <= 0f) { "Can only specify width/weight if sizing policy is set explicitely in either Table or Column." }
+
         // When passing a width automatically enforce WidthFixed policy
         // (whereas TableSetupColumnFlags would default to WidthAuto if table is not Resizable)
         if (flags hasnt Tcf.WidthMask_ && initWidthOrWeight > 0f)

@@ -197,6 +197,9 @@ class Table {
     /** Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable() */
     val hostBackupCursorMaxPos = Vec2()
 
+    /** outer_size.x passed to BeginTable() */
+    val userOuterSize = Vec2()
+
     /** Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable() */
     var hostBackupColumnsOffset = 0f
 
@@ -329,6 +332,9 @@ class Table {
 
     /** Set when outer_size.x == 0.0f in BeginTable(), scrolling is disabled, and there are no stretch columns. */
     var isOuterRectMinFitX = false
+
+    /** Set if user didn't explicitely set a sizing policy in BeginTable() */
+    var isDefaultSizingPolicy = false
 
     var memoryCompacted = false
 
@@ -852,8 +858,7 @@ class Table {
         // [Part 8] Lock actual OuterRect/WorkRect right-most position.
         // This is done late to handle the case of fixed-columns tables not claiming more widths that they need.
         // Because of this we are careful with uses of WorkRect and InnerClipRect before this point.
-        if (rightMostStretchedColumn != -1)
-            isOuterRectMinFitX = false
+        isOuterRectMinFitX = userOuterSize.x == 0f && rightMostStretchedColumn == -1 && innerWindow == outerWindow
         if (isOuterRectMinFitX) {
             outerRect.max.x = unusedX1
             workRect.max.x = unusedX1

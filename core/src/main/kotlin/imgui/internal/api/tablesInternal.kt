@@ -1,9 +1,6 @@
 package imgui.internal.api
 
-import glm_.f
-import glm_.has
-import glm_.max
-import glm_.min
+import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChildEx
@@ -12,7 +9,9 @@ import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemSize
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.setNextWindowContentSize
+import imgui.ImGui.setNextWindowScroll
 import imgui.api.g
+import imgui.hasnt
 import imgui.internal.classes.*
 import imgui.internal.classes.Table.Companion.tableGetColumnAvailSortDirection
 import imgui.TableFlag as Tf
@@ -56,6 +55,7 @@ interface tablesInternal {
             assert(table.columnsCount == columnsCount) { "BeginTable(): Cannot change columns count mid-frame while preserving same ID" }
 
         // Fix flags
+        table.isDefaultSizingPolicy = flags hasnt Tf._SizingMask
         flags = tableFixFlags(flags, outerWindow)
 
         // Initialize
@@ -68,7 +68,7 @@ interface tablesInternal {
         table.columnsCount = columnsCount
         table.isLayoutLocked = false
         table.innerWidth = innerWidth
-        table.isOuterRectMinFitX = outerSize.x == 0f && !useChildWindow // Will be set to false later if there are any Stretch column.
+        table.userOuterSize put outerSize
 
         // When not using a child window, WorkRect.Max will grow as we append contents.
         if (useChildWindow) {
@@ -87,6 +87,10 @@ interface tablesInternal {
 
             if (overrideContentSize.x != Float.MAX_VALUE || overrideContentSize.y != Float.MAX_VALUE) // TODO glm -> anyNotEqual
                 setNextWindowContentSize(Vec2 { if (overrideContentSize[it] != Float.MAX_VALUE) overrideContentSize[it] else 0f })
+
+            // Reset scroll if we are reactivating it
+            if (tableLastFlags hasnt (Tf.ScrollX or Tf.ScrollY))
+                setNextWindowScroll(Vec2())
 
             // Create scrolling region (without border and zero window padding)
             val childFlags = if (flags has Tf.ScrollX) Wf.HorizontalScrollbar else Wf.None
