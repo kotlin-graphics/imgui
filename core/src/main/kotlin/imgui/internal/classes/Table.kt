@@ -1049,7 +1049,7 @@ class Table {
         val drawY1 = innerRect.min.y
         val drawY2Body = innerRect.max.y
         val drawY2Head = when {
-            isUsingHeaders -> lastFirstRowHeight + if (freezeRowsCount >= 1) outerRect.min.y else workRect.min.y
+            isUsingHeaders -> innerRect.max.y min ((if (freezeRowsCount >= 1) innerRect.min.y else workRect.min.y) + lastFirstRowHeight)
             else -> drawY1
         }
         if (flags has Tf.BordersInnerV)

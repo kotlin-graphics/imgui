@@ -110,6 +110,7 @@ interface tables {
         innerWindow.dc.prevLineSize put table.hostBackupPrevLineSize
         innerWindow.dc.currLineSize put table.hostBackupCurrLineSize
         innerWindow.dc.cursorMaxPos put table.hostBackupCursorMaxPos
+
         if (innerWindow !== outerWindow)
         // Both OuterRect/InnerRect are valid from BeginTable
             innerWindow.dc.cursorMaxPos.y = table.rowPosY2
@@ -117,8 +118,9 @@ interface tables {
             // Patch OuterRect/InnerRect height
             table.outerRect.max.y = table.outerRect.max.y max innerWindow.dc.cursorPos.y
             table.innerRect.max.y = table.outerRect.max.y
-            innerWindow.dc.cursorMaxPos.y = table.rowPosY2
+            outerWindow.dc.cursorMaxPos.y = table.rowPosY2
         }
+
         table.workRect.max.y = table.workRect.max.y max table.outerRect.max.y
         table.lastOuterHeight = table.outerRect.height
 
