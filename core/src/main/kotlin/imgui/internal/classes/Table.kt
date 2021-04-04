@@ -1799,7 +1799,7 @@ class Table {
     /** Return the resizing ID for the right-side of the given column.
      *  ~TableGetColumnResizeID */
     fun getColumnResizeID(columnN: Int, instanceNo: Int = 0): ID {
-        assert(columnN < columnsCount)
+        assert(columnN in 0 until columnsCount)
         return id + 1 + instanceNo * columnsCount + columnN
     }
 

@@ -123,7 +123,7 @@ interface tables {
         // FIXME: This ideally should be done earlier, in BeginTable() SetNextWindowContentSize call, just like writing to inner_window->DC.CursorMaxPos.y,
         // but since the later is likely to be impossible to do we'd rather update both axises together.
         if (table.flags has Tf.ScrollX) {
-            val outerPaddingForBorder = if(table.flags has Tf.BordersOuterV) TABLE_BORDER_SIZE else 0f
+            val outerPaddingForBorder = if (table.flags has Tf.BordersOuterV) TABLE_BORDER_SIZE else 0f
             val inner = table.innerWindow!!
             var maxPosX = inner.dc.cursorMaxPos.x
             if (table.rightMostEnabledColumn != -1)
@@ -165,8 +165,13 @@ interface tables {
         val widthSpacings = table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
         table.columnsAutoFitWidth = widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount
         for (columnN in 0 until table.columnsCount)
-            if (table.enabledMaskByIndex has (1L shl columnN))
-                table.columnsAutoFitWidth += table getColumnWidthAuto table.columns[columnN]
+            if (table.enabledMaskByIndex has (1L shl columnN)) {
+                val column = table.columns[columnN]
+                table.columnsAutoFitWidth += when {
+                    column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize -> column.widthRequest
+                    else -> table getColumnWidthAuto column
+                }
+            }
 
         // Update scroll
         if (table.flags hasnt Tf.ScrollX && innerWindow !== outerWindow)
