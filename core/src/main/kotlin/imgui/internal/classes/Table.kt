@@ -832,7 +832,7 @@ class Table {
             }
 
             if (visibleN < freezeColumnsCount)
-                hostClipRect.min.x = hostClipRect.min.x max (column.maxX + TABLE_BORDER_SIZE)
+                hostClipRect.min.x = clamp(column.maxX + TABLE_BORDER_SIZE, hostClipRect.min.x, hostClipRect.max.x)
 
             offsetX += column.widthGiven + cellSpacingX1 + cellSpacingX2 + cellPaddingX * 2f
             visibleN++
@@ -1037,7 +1037,7 @@ class Table {
      *  ~TableDrawBorders */
     fun drawBorders() {
         val innerWindow = innerWindow!!
-        if (innerWindow.hidden || !hostClipRect.overlaps(innerClipRect))
+        if (!outerWindow!!.clipRect.overlaps(outerRect))
             return
 
         val innerDrawlist = innerWindow.drawList
