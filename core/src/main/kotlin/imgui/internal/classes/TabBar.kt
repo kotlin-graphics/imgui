@@ -668,7 +668,7 @@ class TabBar {
         // Actual layout in host window (we don't do it in BeginTabBar() so as not to waste an extra frame)
         val window = g.currentWindow!!
         window.dc.cursorPos put barRect.min
-        itemSize(barRect.size, framePadding.y)
+        itemSize(Vec2(widthAllTabs, barRect.height), framePadding.y)
         window.dc.idealMaxPos.x = window.dc.idealMaxPos.x max (barRect.min.x + widthAllTabsIdeal)
     }
 
