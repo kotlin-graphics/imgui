@@ -745,7 +745,8 @@ class BitArray(val bitCount: Int) {
 
     val storage = IntArray((bitCount + 31) ushr 5)
 
-    fun clearBits() = storage.fill(0)
+    fun clearAllBits() = storage.fill(0)
+    fun setAllBits() = storage.fill(255)
 
     fun mask(n: Int): Int = 1 shl (n and 31)
 
@@ -764,8 +765,9 @@ class BitArray(val bitCount: Int) {
         storage[n ushr 5] = storage[n ushr 5] wo mask(n)
     }
 
-    fun setBitRange(n1: Int, n2: Int) {
-        var n = n1
+    fun setBitRange(n_: Int, n2_: Int) { // Works on range [n..n2)
+        var n = n_
+        val n2 = n2_ - 1
         while (n <= n2) {
             val aMod = n and 31
             val bMod = (if (n2 > (n or 31)) 31 else n2 and 31) + 1
