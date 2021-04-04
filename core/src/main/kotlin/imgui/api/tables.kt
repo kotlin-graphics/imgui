@@ -225,6 +225,7 @@ interface tables {
         // Override declared contents width/height to enable auto-resize while not needlessly adding a scrollbar
         if (table.isOuterRectMinFitX) {
             // FIXME-TABLE: Could we remove this section?
+            // ColumnsAutoFitWidth may be one frame ahead here since for Fixed+NoResize is calculated from latest contents
             assert(table.flags hasnt Tf.ScrollX)
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth)
         } else if (table.userOuterSize.x <= 0f) {
