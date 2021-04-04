@@ -587,6 +587,7 @@ infix fun TabItemFlags.wo(b: TabItemFlag): TabItemFlags = and(b.i.inv())
 typealias TableFlags = Int
 
 // Flags for ImGui::BeginTable()
+// [BETA API] API may evolve slightly! If you use this, please update to the next version when it comes out!
 // - Important! Sizing policies have complex and subtle side effects, more so than you would expect.
 //   Read comments/demos carefully + experiment with live demos to get acquainted with them.
 // - The DEFAULT sizing policies are:
@@ -700,7 +701,7 @@ enum class TableFlag(@JvmField val i: TableFlags) {
 
     // Padding
 
-    /** Default if BordersOuterV is on. Enable outer-most padding. */
+    /** Default if BordersOuterV is on. Enable outer-most padding. Generally desirable if you have headers. */
     PadOuterX(1 shl 20),
 
     /** Default if BordersOuterV is off. Disable outer-most padding. */

@@ -44,9 +44,10 @@ import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
 
 // Tables
-// [BETA API] API may evolve!
+// [BETA API] API may evolve slightly! If you use this, please update to the next version when it comes out!
 // - Full-featured replacement for old Columns API.
-// - See Demo->Tables for details.
+// - See Demo->Tables for demo code.
+// - See top of imgui_tables.cpp for general commentary.
 // - See ImGuiTableFlags_ and ImGuiTableColumnFlags_ enums for a description of available flags.
 // The typical call flow is:
 // - 1. Call BeginTable()
@@ -59,17 +60,13 @@ import imgui.TableRowFlag as Trf
 //      you may prefer using TableNextColumn() instead of TableNextRow() + TableSetColumnIndex().
 //      TableNextColumn() will automatically wrap-around into the next row if needed.
 //    - IMPORTANT: Comparatively to the old Columns() API, we need to call TableNextColumn() for the first column!
-//    - Both TableSetColumnIndex() and TableNextColumn() return true when the column is visible or performing
-//      width measurements. Otherwise, you may skip submitting the contents of a cell/column, BUT ONLY if you know
-//      it is not going to contribute to row height.
-//      In many situations, you may skip submitting contents for every columns but one (e.g. the first one).
 //    - Summary of possible call flow:
-//      ----------------------------------------------------------------------------------------------------------
-//       TableNextRow() -> TableSetColumnIndex(0) -> Text("Hello 0") -> TableSetColumnIndex(1) -> Text("Hello 1")  // OK
-//       TableNextRow() -> TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")  // OK
-//                         TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")  // OK: TableNextColumn() automatically gets to next row!
-//       TableNextRow()                           -> Text("Hello 0")                                               // Not OK! Missing TableSetColumnIndex() or TableNextColumn()! Text will not appear!
-//      ----------------------------------------------------------------------------------------------------------
+//        --------------------------------------------------------------------------------------------------------
+//        TableNextRow() -> TableSetColumnIndex(0) -> Text("Hello 0") -> TableSetColumnIndex(1) -> Text("Hello 1")  // OK
+//        TableNextRow() -> TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")  // OK
+//                          TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")  // OK: TableNextColumn() automatically gets to next row!
+//        TableNextRow()                           -> Text("Hello 0")                                               // Not OK! Missing TableSetColumnIndex() or TableNextColumn()! Text will not appear!
+//        --------------------------------------------------------------------------------------------------------
 // - 5. Call EndTable()
 interface tables {
 
@@ -302,14 +299,6 @@ interface tables {
         // however they shouldn't skip submitting for columns that may have the tallest contribution to row height.
         return table.requestOutputMaskByIndex has (1L shl columnN)
     }
-
-    /** return current column index. */
-    fun tableGetColumnIndex(): Int = g.currentTable?.currentColumn ?: 0
-
-    /** Note: for row coloring we use ->RowBgColorCounter which is the same value without counting header rows
-     *
-     *  return current row index. */
-    fun tableGetRowIndex(): Int = g.currentTable?.currentRow ?: 0
 
     // Tables: Headers & Columns declaration
     // - Use TableSetupColumn() to specify label, resizing policy, default width/weight, id, various other flags etc.
@@ -593,6 +582,14 @@ interface tables {
     /** return number of columns (value passed to BeginTable) */
     fun tableGetColumnCount(): Int = g.currentTable?.columnsCount ?: 0
 
+    /** return current column index. */
+    fun tableGetColumnIndex(): Int = g.currentTable?.currentColumn ?: 0
+
+    /** Note: for row coloring we use ->RowBgColorCounter which is the same value without counting header rows
+     *
+     *  return current row index. */
+    fun tableGetRowIndex(): Int = g.currentTable?.currentRow ?: 0
+
     /** return "" if column didn't have a name declared by TableSetupColumn(). Pass -1 to use current column. */
     fun tableGetColumnName(columnN: Int = -1): String? {
         val table = g.currentTable ?: return null
@@ -601,7 +598,7 @@ interface tables {
 
     /** We allow querying for an extra column in order to poll the IsHovered state of the right-most section
      *
-     *  return column flags so you can query their Enabled/Visible/Sorted/Hovered status flags. */
+     *  return column flags so you can query their Enabled/Visible/Sorted/Hovered status flags. Pass -1 to use current column. */
     fun tableGetColumnFlags(columnN_: Int = -1): TableColumnFlags {
         val table = g.currentTable ?: return Tcf.None.i
         val columnN = if (columnN_ < 0) table.currentColumn else columnN_
@@ -635,16 +632,16 @@ interface tables {
     }
 
     /** change the color of a cell, row, or column. See ImGuiTableBgTarget_ flags for details. */
-    fun tableSetBgColor(bgTarget: TableBgTarget, color_: Int, columnN_: Int = -1) {
+    fun tableSetBgColor(target: TableBgTarget, color_: Int, columnN_: Int = -1) {
 
         val table = g.currentTable!!
-        assert(bgTarget != TableBgTarget.None)
+        assert(target != TableBgTarget.None)
 
         val color = if (color_ == COL32_DISABLE) 0 else color_
         var columnN = columnN_
 
         // We cannot draw neither the cell or row background immediately as we don't know the row height at this point in time.
-        when (bgTarget) {
+        when (target) {
             TableBgTarget.CellBg -> {
                 if (table.rowPosY1 > table.innerClipRect.max.y) // Discard
                     return
@@ -662,7 +659,7 @@ interface tables {
                 if (table.rowPosY1 > table.innerClipRect.max.y) // Discard
                     return
                 assert(columnN == -1)
-                val bgIdx = if (bgTarget == TableBgTarget.RowBg1) 1 else 0
+                val bgIdx = if (target == TableBgTarget.RowBg1) 1 else 0
                 table.rowBgColor[bgIdx] = color
             }
             else -> assert(false)

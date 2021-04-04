@@ -131,20 +131,25 @@ interface widgetsTrees {
         return treeNodeBehavior(window.getID(label), flags or Tnf.CollapsingHeader, label)
     }
 
-    /** when 'open' isn't NULL, display an additional small close button on upper right of the header */
-    fun collapsingHeader(label: String, open: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = 0): Boolean {
+    /** when 'p_visible != NULL': if '*p_visible==true' display an additional small close button on upper right of the header which will set the bool to false when clicked, if '*p_visible==false' don't display the header.
+     *
+     *  p_visible == NULL                        : regular collapsing header
+     *  p_visible != NULL && *p_visible == true  : show a small close button on the corner of the header, clicking the button will set *p_visible = false
+     *  p_visible != NULL && *p_visible == false : do not show the header at all
+     *  Do not mistake this with the Open state of the header itself, which you can adjust with SetNextItemOpen() or ImGuiTreeNodeFlags_DefaultOpen. */
+    fun collapsingHeader(label: String, visible: KMutableProperty0<Boolean>?, flags_: TreeNodeFlags = 0): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (open?.get()  == false) return false
+        if (visible?.get()  == false) return false
 
         val id = window.getID(label)
         var flags = flags_ or Tnf.CollapsingHeader
-        if (open != null)
+        if (visible != null)
             flags = flags or Tnf.AllowItemOverlap or Tnf._ClipLabelForTrailingButton
         val isOpen = treeNodeBehavior(id, flags, label)
-        if (open != null) {
+        if (visible != null) {
             // Create a small overlapping close button
             // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             // FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
@@ -155,7 +160,7 @@ interface widgetsTrees {
             lastItemDataBackup {
                 val closeButtonId = getIDWithSeed("#CLOSE", -1, id)
                 if (closeButton(closeButtonId, buttonPos))
-                    open.set(false)
+                    visible.set(false)
             }
         }
         return isOpen
