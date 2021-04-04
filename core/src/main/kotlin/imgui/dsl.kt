@@ -478,6 +478,13 @@ object dsl {
         }
     }
 
+    inline fun tabItem(label: String, pOpen: BooleanArray, ptr: Int, flags: TabItemFlags = 0, block: () -> Unit) {
+        if (beginTabItem(label, pOpen, ptr, flags)) {
+            block()
+            endTabItem()
+        }
+    }
+
 
     // Drag and Drop
 

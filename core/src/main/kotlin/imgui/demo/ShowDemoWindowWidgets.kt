@@ -121,6 +121,7 @@ import imgui.ImGui.sliderScalar
 import imgui.ImGui.smallButton
 import imgui.ImGui.spacing
 import imgui.ImGui.style
+import imgui.ImGui.tabItemButton
 import imgui.ImGui.tableNextColumn
 import imgui.ImGui.tableNextRow
 import imgui.ImGui.text
@@ -145,6 +146,8 @@ import imgui.dsl.group
 import imgui.dsl.popup
 import imgui.dsl.radioButton
 import imgui.dsl.smallButton
+import imgui.dsl.tabBar
+import imgui.dsl.tabItem
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
 import imgui.dsl.withButtonRepeat
@@ -243,14 +246,14 @@ object ShowDemoWindowWidgets {
     val selected1 = BooleanArray(3)
     val selected2 = BooleanArray(10)
     val selected3 = arrayOf(
-            intArrayOf(1, 0, 0, 0),
-            intArrayOf(0, 1, 0, 0),
-            intArrayOf(0, 0, 1, 0),
-            intArrayOf(0, 0, 0, 1))
+        intArrayOf(1, 0, 0, 0),
+        intArrayOf(0, 1, 0, 0),
+        intArrayOf(0, 0, 1, 0),
+        intArrayOf(0, 0, 0, 1))
     val selected4 = booleanArrayOf(true, false, true, false, true, false, true, false, true)
 
 
-    /* Multi-line Text Input */
+    /* Text Input */
     val textMultiline = """
         /*
          The Pentium F00F bug, shorthand for F0 0F C7 C8,
@@ -266,13 +269,12 @@ object ShowDemoWindowWidgets {
         
         """.trimIndent().toByteArray(1024 * 16)
     var flags1 = Itf.AllowTabInput.i
-
     val bufs = Array(6) { ByteArray(64) }
 
     object TextFilters {
         // Return 0 (pass) if the character is 'i' or 'm' or 'g' or 'u' or 'i'
         val filterImGuiLetters: InputTextCallback = { data: InputTextCallbackData ->
-                !(data.eventChar < 256 && data.eventChar in "imgui")
+            !(data.eventChar < 256 && data.eventChar in "imgui")
         }
     }
 
@@ -384,13 +386,23 @@ object ShowDemoWindowWidgets {
         // Note: Because ImGui:: is a namespace you would typically add your own function into the namespace.
         // For example, you code may declare a function 'ImGui::InputText(const char* label, MyString* my_str)'
         val MyInputTextMultiline: (label: String, myStr: ByteArray, size: Vec2, flags: ItemFlags) -> Boolean =
-                { label, myStr, size, flags ->
-                    assert(flags hasnt Itf.CallbackResize)
-                    inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
-                }
+            { label, myStr, size, flags ->
+                assert(flags hasnt Itf.CallbackResize)
+                inputTextMultiline(label, String(myStr), size, flags or Itf.CallbackResize, MyResizeCallback, myStr)
+            }
     }
 
     var myStr = ByteArray(0)
+
+    /* Tabs */
+    var tabBarFlags0 = TabBarFlag.Reorderable.i
+    val opened = BooleanArray(4) { true } // Persistent user state
+    val activeTabs = ArrayList<Int>()
+    var nextTabId = 0
+    var showLeadingButton = true
+    var showTrailingButton = true
+    var tabBarFlags1 = TabBarFlag.AutoSelectNewTabs or TabBarFlag.Reorderable or TabBarFlag.FittingPolicyResizeDown
+
 
     /* Plots Widgets */
     var animate = true
@@ -418,9 +430,9 @@ object ShowDemoWindowWidgets {
     var mode = Mode.Copy
 
     val names = arrayOf(
-            "Bobby", "Beatrice", "Betty",
-            "Brianna", "Barry", "Bernard",
-            "Bibi", "Blaine", "Bryn")
+        "Bobby", "Beatrice", "Betty",
+        "Brianna", "Barry", "Bernard",
+        "Bibi", "Blaine", "Bryn")
     val itemNames = arrayOf("Item One", "Item Two", "Item Three", "Item Four", "Item Five")
 
 
@@ -462,9 +474,9 @@ object ShowDemoWindowWidgets {
                     sameLine()
                 withID(i) {
                     withStyleColor(
-                            Col.Button, Color.hsv(i / 7f, 0.6f, 0.6f),
-                            Col.ButtonHovered, Color.hsv(i / 7f, 0.7f, 0.7f),
-                            Col.ButtonActive, Color.hsv(i / 7f, 0.8f, 0.8f)) {
+                        Col.Button, Color.hsv(i / 7f, 0.6f, 0.6f),
+                        Col.ButtonHovered, Color.hsv(i / 7f, 0.7f, 0.7f),
+                        Col.ButtonActive, Color.hsv(i / 7f, 0.8f, 0.8f)) {
                         button("Click")
                     }
                 }
@@ -505,8 +517,8 @@ object ShowDemoWindowWidgets {
                 val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK")
                 combo("combo", ::currentItem0, items)
                 sameLine(); helpMarker(
-                    "Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, " +
-                            "and demonstration of various flags.\n")
+                "Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, " +
+                        "and demonstration of various flags.\n")
             }
 
             run {
@@ -563,8 +575,8 @@ object ShowDemoWindowWidgets {
                 sameLine(); helpMarker("CTRL+click to input value.")
 
                 sliderFloat("slider float", ::f4, 0f, 1f, "ratio = %.3f")
-//                TODO
-//                sliderFloat("slider float (curve)", ::f5, -10f, 10f, "%.4f", 2f)
+                //                TODO
+                //                sliderFloat("slider float (curve)", ::f5, -10f, 10f, "%.4f", 2f)
 
                 sliderAngle("slider angle", ::angle)
 
@@ -709,8 +721,8 @@ object ShowDemoWindowWidgets {
             treeNode("Word Wrapping") {
                 // Using shortcut. You can use PushTextWrapPos()/PopTextWrapPos() for more flexibility.
                 textWrapped(
-                        "This text should automatically wrap on the edge of the window. The current implementation " +
-                                "for text wrapping follows simple rules suitable for English and possibly other languages.")
+                    "This text should automatically wrap on the edge of the window. The current implementation " +
+                            "for text wrapping follows simple rules suitable for English and possibly other languages.")
                 spacing()
 
                 sliderFloat("Wrap width", ::wrapWidth, -20f, 600f, "%.0f")
@@ -745,9 +757,9 @@ object ShowDemoWindowWidgets {
                 // Note that characters values are preserved even by InputText() if the font cannot be displayed,
                 // so you can safely copy & paste garbled characters into another application.
                 textWrapped(
-                        "CJK text will only appears if the font was loaded with the appropriate CJK character ranges." +
-                                "Call io.Font->AddFontFromFileTTF() manually to load extra character ranges." +
-                                "Read docs/FONTS.txt for details.")
+                    "CJK text will only appears if the font was loaded with the appropriate CJK character ranges." +
+                            "Call io.Font->AddFontFromFileTTF() manually to load extra character ranges." +
+                            "Read docs/FONTS.txt for details.")
                 text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)") // Normally we would use u8"blah blah" with the proper characters directly in the string.
                 text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
                 inputText("UTF-8 input", buf)
@@ -756,9 +768,9 @@ object ShowDemoWindowWidgets {
 
         treeNode("Images") {
             textWrapped(
-                    "Below we are displaying the font texture (which is the only texture we have access to in this demo). " +
-                            "Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. " +
-                            "Hover the texture for a zoomed view!")
+                "Below we are displaying the font texture (which is the only texture we have access to in this demo). " +
+                        "Use the 'ImTextureID' type as storage to pass pointers or identifier to your own texture data. " +
+                        "Hover the texture for a zoomed view!")
             // Below we are displaying the font texture because it is the only texture we have access to inside the demo!
             // Remember that ImTextureID is just storage for whatever you want it to be. It is essentially a value that
             // will be passed to the rendering backend via the ImDrawCmd structure.
@@ -950,7 +962,7 @@ object ShowDemoWindowWidgets {
             }
             treeNode("Alignment") {
                 helpMarker(
-                        """
+                    """
                     By default, Selectables uses style.SelectableTextAlign but it can be overridden on a per-item 
                     " +
                                 "basis using PushStyleVar(). You'll probably want to always keep your default situation to 
@@ -1028,9 +1040,115 @@ object ShowDemoWindowWidgets {
             }
         }
 
-        // Plot/Graph widgets are currently fairly limited.
-        // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
-        // and the sizeof() of your structure in the "stride" parameter.
+        // Tabs
+        treeNode("Tabs") {
+            treeNode("Basic") {
+                val tabBarFlags = TabBarFlag.None.i
+                tabBar("MyTabBar", tabBarFlags) {
+                    tabItem("Avocado") {
+                        text("This is the Avocado tab!\nblah blah blah blah blah")
+                    }
+                    tabItem("Broccoli") {
+                        text("This is the Broccoli tab!\nblah blah blah blah blah")
+                    }
+                    tabItem("Cucumber") {
+                        text("This is the Cucumber tab!\nblah blah blah blah blah")
+                    }
+                }
+                separator()
+            }
+
+            treeNode("Advanced & Close Button") {
+                // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
+                checkboxFlags("ImGuiTabBarFlags_Reorderable", ::tabBarFlags0, TabBarFlag.Reorderable.i)
+                checkboxFlags("ImGuiTabBarFlags_AutoSelectNewTabs", ::tabBarFlags0, TabBarFlag.AutoSelectNewTabs.i)
+                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags0, TabBarFlag.TabListPopupButton.i)
+                checkboxFlags("ImGuiTabBarFlags_NoCloseWithMiddleMouseButton", ::tabBarFlags0, TabBarFlag.NoCloseWithMiddleMouseButton.i)
+                if (tabBarFlags0 hasnt TabBarFlag.FittingPolicyMask_)
+                    tabBarFlags0 = tabBarFlags0 or TabBarFlag.FittingPolicyDefault_
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags0, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags0 = tabBarFlags0 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags0, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags0 = tabBarFlags0 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+
+                // Tab Bar
+                val names = listOf("Artichoke", "Beetroot", "Celery", "Daikon")
+                for (n in opened.indices) {
+                    if (n > 0) sameLine()
+                    checkbox(names[n], opened, n)
+                }
+
+                // Passing a bool* to BeginTabItem() is similar to passing one to Begin():
+                // the underlying bool will be set to false when the tab is closed.
+                tabBar("MyTabBar", tabBarFlags0) {
+                    for (n in opened.indices)
+                        if (opened[n])
+                            tabItem(names[n], opened, n, TabItemFlag.None.i) {
+                                text("This is the ${names[n]} tab!")
+                                if (n has 1)
+                                    text("I am an odd tab.")
+                            }
+                }
+                separator()
+            }
+
+            treeNode("TabItemButton & Leading/Trailing flags") {
+                if (nextTabId == 0) // Initialize with some default tabs
+                    for (i in 0..2)
+                        activeTabs += nextTabId++
+
+                // TabItemButton() and Leading/Trailing flags are distinct features which we will demo together.
+                // (It is possible to submit regular tabs with Leading/Trailing flags, or TabItemButton tabs without Leading/Trailing flags...
+                // but they tend to make more sense together)
+                checkbox("Show Leading TabItemButton()", ::showLeadingButton)
+                checkbox("Show Trailing TabItemButton()", ::showTrailingButton)
+
+                // Expose some other flags which are useful to showcase how they interact with Leading/Trailing tabs
+                checkboxFlags("ImGuiTabBarFlags_TabListPopupButton", ::tabBarFlags1, TabBarFlag.TabListPopupButton.i)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyResizeDown", ::tabBarFlags1, TabBarFlag.FittingPolicyResizeDown.i))
+                    tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyResizeDown)
+                if (checkboxFlags("ImGuiTabBarFlags_FittingPolicyScroll", ::tabBarFlags1, TabBarFlag.FittingPolicyScroll.i))
+                    tabBarFlags1 = tabBarFlags1 wo (TabBarFlag.FittingPolicyMask_ xor TabBarFlag.FittingPolicyScroll)
+
+                tabBar("MyTabBar", tabBarFlags1) {
+                    // Demo a Leading TabItemButton(): click the "?" button to open a menu
+                    if (showLeadingButton)
+                        if (tabItemButton("?", TabItemFlag.Leading or TabItemFlag.NoTooltip))
+                            openPopup("MyHelpMenu")
+                    popup("MyHelpMenu") {
+                        selectable("Hello!")
+                    }
+
+                    // Demo Trailing Tabs: click the "+" button to add a new tab (in your app you may want to use a font icon instead of the "+")
+                    // Note that we submit it before the regular tabs, but because of the ImGuiTabItemFlags_Trailing flag it will always appear at the end.
+                    if (showTrailingButton)
+                        if (tabItemButton("+", TabItemFlag.Trailing or TabItemFlag.NoTooltip))
+                            activeTabs += nextTabId++ // Add new tab
+
+                    // Submit our regular tabs
+                    var n = 0
+                    while (n < activeTabs.size) {
+                        var open = true
+                        val name = "%04d".format(activeTabs[n])
+                        _b = open
+                        tabItem(name, ::_b, TabItemFlag.None.i) {
+                            text("This is the $name tab!")
+                        }
+                        open = _b
+                        if (!open)
+                            activeTabs.clear()
+                        else
+                            n++
+                    }
+                }
+                separator()
+            }
+        }
+
+        // Plot/Graph widgets are not very good.
+        // Consider writing your own, or using a third-party one, see:
+        // - ImPlot https://github.com/epezent/implot
+        // - others https://github.com/ocornut/imgui/wiki/Useful-Widgets
         treeNode("Plots Widgets") {
 
             checkbox("Animate", ::animate)
@@ -1118,9 +1236,9 @@ object ShowDemoWindowWidgets {
 
             text("Color button with Picker:")
             sameLine(); helpMarker(
-                "With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\n" +
-                        "With the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only " +
-                        "be used for the tooltip and picker popup.")
+            "With the ImGuiColorEditFlags_NoInputs flag you can hide all the slider/text inputs.\n" +
+                    "With the ImGuiColorEditFlags_NoLabel flag you can pass a non-empty label which will only " +
+                    "be used for the tooltip and picker popup.")
             colorEdit4("MyColor##3", color, Cef.NoInputs or Cef.NoLabel or miscFlags)
 
             text("Color button with Custom Picker Popup:")
@@ -1194,9 +1312,9 @@ object ShowDemoWindowWidgets {
             }
             combo("Display Mode", ::displayMode, "Auto/Current\u0000None\u0000RGB Only\u0000HSV Only\u0000Hex Only\u0000")
             sameLine(); helpMarker(
-                "ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, " +
-                        "but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex " +
-                        "if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
+            "ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, " +
+                    "but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex " +
+                    "if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
             combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
             sameLine(); helpMarker("User can right-click the picker to change mode.")
             var flags = miscFlags
@@ -1213,10 +1331,10 @@ object ShowDemoWindowWidgets {
 
             text("Set defaults in code:")
             sameLine(); helpMarker(
-                "SetColorEditOptions() is designed to allow you to set boot-time default.\n" +
-                        "We don't have Push/Pop functions because you can force options on a per-widget basis if needed," +
-                        "and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid" +
-                        "encouraging you to persistently save values that aren't forward-compatible.")
+            "SetColorEditOptions() is designed to allow you to set boot-time default.\n" +
+                    "We don't have Push/Pop functions because you can force options on a per-widget basis if needed," +
+                    "and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid" +
+                    "encouraging you to persistently save values that aren't forward-compatible.")
             if (button("Default: Uint8 + HSV + Hue Bar"))
                 setColorEditOptions(Cef.Uint8 or Cef.DisplayHSV or Cef.PickerHueBar)
             if (button("Default: Float + HDR + Hue Wheel"))
@@ -1226,9 +1344,9 @@ object ShowDemoWindowWidgets {
             spacing()
             text("HSV encoded colors")
             sameLine(); helpMarker(
-                "By default, colors are given to ColorEdit and ColorPicker in RGB, but ImGuiColorEditFlags_InputHSV" +
-                        "allows you to store colors as HSV and pass them to ColorEdit and ColorPicker as HSV. This comes with the" +
-                        "added benefit that you can manipulate hue values with the picker even when saturation or value are zero.")
+            "By default, colors are given to ColorEdit and ColorPicker in RGB, but ImGuiColorEditFlags_InputHSV" +
+                    "allows you to store colors as HSV and pass them to ColorEdit and ColorPicker as HSV. This comes with the" +
+                    "added benefit that you can manipulate hue values with the picker even when saturation or value are zero.")
             text("Color widget with InputHSV:")
             colorEdit4("HSV shown as RGB##1", colorHsv, Cef.DisplayRGB or Cef.InputHSV or Cef.Float)
             colorEdit4("HSV shown as HSV##1", colorHsv, Cef.DisplayHSV or Cef.InputHSV or Cef.Float)
@@ -1347,67 +1465,67 @@ object ShowDemoWindowWidgets {
             text("Drags:")
             checkbox("Clamp integers to 0..50", ::dragClamp)
             sameLine(); helpMarker(
-                """As with every widgets in dear imgui, we never modify values unless there is a user interaction.
+            """As with every widgets in dear imgui, we never modify values unless there is a user interaction.
                 You can override the clamping limits by using CTRL+Click to input a value.""".trimIndent())
-            dragScalar("drag s8",         DataType.Byte,   ::s8_v,  dragSpeed, s8_zero.takeIf { dragClamp },  s8_fifty.takeIf { dragClamp })
-            dragScalar("drag u8",         DataType.Ubyte,  ::u8_v,  dragSpeed, u8_zero.takeIf { dragClamp },  u8_fifty.takeIf { dragClamp }, "%d ms")
-            dragScalar("drag s16",        DataType.Short,  ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
-            dragScalar("drag u16",        DataType.Ushort, ::u16_v, dragSpeed, u16_zero.takeIf { dragClamp }, u16_fifty.takeIf { dragClamp }, "%d ms")
-            dragScalar("drag s32",        DataType.Int,    ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
-            dragScalar("drag u32",        DataType.Uint,   ::u32_v, dragSpeed, u32_zero.takeIf { dragClamp }, u32_fifty.takeIf { dragClamp }, "%d ms")
-            dragScalar("drag s64",        DataType.Long,   ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
-            dragScalar("drag u64",        DataType.Ulong,  ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
-            dragScalar("drag float",      DataType.Float,  ::f32_v, 0.005f, f32_zero, f32_one, "%f")
-            dragScalar("drag float log",  DataType.Float,  ::f32_v, 0.005f, f32_zero, f32_one, "%f", SliderFlag.Logarithmic.i)
-            dragScalar("drag double",     DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams")
+            dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, s8_zero.takeIf { dragClamp }, s8_fifty.takeIf { dragClamp })
+            dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
+            dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
+            dragScalar("drag u16", DataType.Ushort, ::u16_v, dragSpeed, u16_zero.takeIf { dragClamp }, u16_fifty.takeIf { dragClamp }, "%d ms")
+            dragScalar("drag s32", DataType.Int, ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
+            dragScalar("drag u32", DataType.Uint, ::u32_v, dragSpeed, u32_zero.takeIf { dragClamp }, u32_fifty.takeIf { dragClamp }, "%d ms")
+            dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
+            dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
+            dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f")
+            dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", SliderFlag.Logarithmic.i)
+            dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams")
             dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic.i)
 
             text("Sliders")
-            sliderScalar("slider s8 full",        DataType.Byte,   ::s8_v,  s8_min,   s8_max,    "%d")
-            sliderScalar("slider u8 full",        DataType.Ubyte,  ::u8_v,  u8_min,   u8_max,    "%d")
-            sliderScalar("slider s16 full",       DataType.Short,  ::s16_v, s16_min,  s16_max,   "%d")
-            sliderScalar("slider u16 full",       DataType.Ushort, ::u16_v, u16_min,  u16_max,   "%d")
-            sliderScalar("slider s32 low",        DataType.Int,    ::s32_v, s32_zero, s32_fifty, "%d")
-            sliderScalar("slider s32 high",       DataType.Int,    ::s32_v, s32_hi_a, s32_hi_b,  "%d")
-            sliderScalar("slider s32 full",       DataType.Int,    ::s32_v, s32_min,  s32_max,   "%d")
-            sliderScalar("slider u32 low",        DataType.Uint,   ::u32_v, u32_zero, u32_fifty, "%d")
-            sliderScalar("slider u32 high",       DataType.Uint,   ::u32_v, u32_hi_a, u32_hi_b,  "%d")
-            sliderScalar("slider u32 full",       DataType.Uint,   ::u32_v, u32_min,  u32_max,   "%d")
-            sliderScalar("slider s64 low",        DataType.Long,   ::s64_v, s64_zero, s64_fifty, "%d")
-            sliderScalar("slider s64 high",       DataType.Long,   ::s64_v, s64_hi_a, s64_hi_b,  "%d")
-            sliderScalar("slider s64 full",       DataType.Long,   ::s64_v, s64_min,  s64_max,   "%d")
-            sliderScalar("slider u64 low",        DataType.Ulong,  ::u64_v, u64_zero, u64_fifty, "%d ms")
-            sliderScalar("slider u64 high",       DataType.Ulong,  ::u64_v, u64_hi_a, u64_hi_b,  "%d ms")
-            sliderScalar("slider u64 full",       DataType.Ulong,  ::u64_v, u64_min,  u64_max,   "%d ms")
-            sliderScalar("slider float low",      DataType.Float,  ::f32_v, f32_zero, f32_one)
-            sliderScalar("slider float low log",  DataType.Float,  ::f32_v, f32_zero, f32_one,   "%.10f", SliderFlag.Logarithmic.i)
-            sliderScalar("slider float high",     DataType.Float,  ::f32_v, f32_lo_a, f32_hi_a,  "%e")
-            sliderScalar("slider double low",     DataType.Double, ::f64_v, f64_zero, f64_one,   "%.10f grams")
-            sliderScalar("slider double low log", DataType.Double, ::f64_v, f64_zero, f64_one,   "%.10f", SliderFlag.Logarithmic.i)
-            sliderScalar("slider double high",    DataType.Double, ::f64_v, f64_lo_a, f64_hi_a,  "%e grams")
+            sliderScalar("slider s8 full", DataType.Byte, ::s8_v, s8_min, s8_max, "%d")
+            sliderScalar("slider u8 full", DataType.Ubyte, ::u8_v, u8_min, u8_max, "%d")
+            sliderScalar("slider s16 full", DataType.Short, ::s16_v, s16_min, s16_max, "%d")
+            sliderScalar("slider u16 full", DataType.Ushort, ::u16_v, u16_min, u16_max, "%d")
+            sliderScalar("slider s32 low", DataType.Int, ::s32_v, s32_zero, s32_fifty, "%d")
+            sliderScalar("slider s32 high", DataType.Int, ::s32_v, s32_hi_a, s32_hi_b, "%d")
+            sliderScalar("slider s32 full", DataType.Int, ::s32_v, s32_min, s32_max, "%d")
+            sliderScalar("slider u32 low", DataType.Uint, ::u32_v, u32_zero, u32_fifty, "%d")
+            sliderScalar("slider u32 high", DataType.Uint, ::u32_v, u32_hi_a, u32_hi_b, "%d")
+            sliderScalar("slider u32 full", DataType.Uint, ::u32_v, u32_min, u32_max, "%d")
+            sliderScalar("slider s64 low", DataType.Long, ::s64_v, s64_zero, s64_fifty, "%d")
+            sliderScalar("slider s64 high", DataType.Long, ::s64_v, s64_hi_a, s64_hi_b, "%d")
+            sliderScalar("slider s64 full", DataType.Long, ::s64_v, s64_min, s64_max, "%d")
+            sliderScalar("slider u64 low", DataType.Ulong, ::u64_v, u64_zero, u64_fifty, "%d ms")
+            sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, u64_hi_a, u64_hi_b, "%d ms")
+            sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, u64_min, u64_max, "%d ms")
+            sliderScalar("slider float low", DataType.Float, ::f32_v, f32_zero, f32_one)
+            sliderScalar("slider float low log", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", SliderFlag.Logarithmic.i)
+            sliderScalar("slider float high", DataType.Float, ::f32_v, f32_lo_a, f32_hi_a, "%e")
+            sliderScalar("slider double low", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f grams")
+            sliderScalar("slider double low log", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", SliderFlag.Logarithmic.i)
+            sliderScalar("slider double high", DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams")
 
             text("Sliders (reverse)")
-            sliderScalar("slider s8 reverse",  DataType.Byte,  ::s8_v,  s8_max,    s8_min,   "%d")
-            sliderScalar("slider u8 reverse",  DataType.Ubyte, ::u8_v,  u8_max,    u8_min,   "%d") // [JVM] %u -> %d
-            sliderScalar("slider s32 reverse", DataType.Int,   ::s32_v, s32_fifty, s32_zero, "%d")
-            sliderScalar("slider u32 reverse", DataType.Uint,  ::u32_v, u32_fifty, u32_zero, "%s") // [JVM] %u -> %d
-            sliderScalar("slider s64 reverse", DataType.Long,  ::s64_v, s64_fifty, s64_zero, "%d") // [JVM] %I64d -> %d
+            sliderScalar("slider s8 reverse", DataType.Byte, ::s8_v, s8_max, s8_min, "%d")
+            sliderScalar("slider u8 reverse", DataType.Ubyte, ::u8_v, u8_max, u8_min, "%d") // [JVM] %u -> %d
+            sliderScalar("slider s32 reverse", DataType.Int, ::s32_v, s32_fifty, s32_zero, "%d")
+            sliderScalar("slider u32 reverse", DataType.Uint, ::u32_v, u32_fifty, u32_zero, "%s") // [JVM] %u -> %d
+            sliderScalar("slider s64 reverse", DataType.Long, ::s64_v, s64_fifty, s64_zero, "%d") // [JVM] %I64d -> %d
             sliderScalar("slider u64 reverse", DataType.Ulong, ::u64_v, u64_fifty, u64_zero, "%d ms") // [JVM] %I64u -> %d
 
             text("Inputs")
             checkbox("Show step buttons", ::inputsStep)
-            inputScalar("input s8",      DataType.Byte,   ::s8_v,  s8_one.takeIf { inputsStep },  null, "%d")
-            inputScalar("input u8",      DataType.Ubyte,  ::u8_v,  u8_one.takeIf { inputsStep },  null, "%d")
-            inputScalar("input s16",     DataType.Short,  ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
-            inputScalar("input u16",     DataType.Ushort, ::u16_v, u16_one.takeIf { inputsStep }, null, "%d")
-            inputScalar("input s32",     DataType.Int,    ::s32_v, s32_one.takeIf { inputsStep }, null, "%d")
-            inputScalar("input s32 hex", DataType.Int,    ::s32_v, s32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
-            inputScalar("input u32",     DataType.Uint,   ::u32_v, u32_one.takeIf { inputsStep }, null, "%d")
-            inputScalar("input u32 hex", DataType.Uint,   ::u32_v, u32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
-            inputScalar("input s64",     DataType.Long,   ::s64_v, s64_one.takeIf { inputsStep })
-            inputScalar("input u64",     DataType.Ulong,  ::u64_v, u64_one.takeIf { inputsStep })
-            inputScalar("input float",   DataType.Float,  ::f32_v, f32_one.takeIf { inputsStep })
-            inputScalar("input double",  DataType.Double, ::f64_v, f64_one.takeIf { inputsStep })
+            inputScalar("input s8", DataType.Byte, ::s8_v, s8_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input u8", DataType.Ubyte, ::u8_v, u8_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input s16", DataType.Short, ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input u16", DataType.Ushort, ::u16_v, u16_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input s32", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input s32 hex", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
+            inputScalar("input u32", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%d")
+            inputScalar("input u32 hex", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
+            inputScalar("input s64", DataType.Long, ::s64_v, s64_one.takeIf { inputsStep })
+            inputScalar("input u64", DataType.Ulong, ::u64_v, u64_one.takeIf { inputsStep })
+            inputScalar("input float", DataType.Float, ::f32_v, f32_one.takeIf { inputsStep })
+            inputScalar("input double", DataType.Double, ::f64_v, f64_one.takeIf { inputsStep })
             // @formatter:on
         }
 
@@ -1449,10 +1567,10 @@ object ShowDemoWindowWidgets {
                         if (i > 0) sameLine()
                         withID(i) {
                             withStyleColor(
-                                    Col.FrameBg, Color.hsv(i / 7f, 0.5f, 0.5f),
-                                    Col.FrameBgHovered, Color.hsv(i / 7f, 0.6f, 0.5f),
-                                    Col.FrameBgActive, Color.hsv(i / 7f, 0.7f, 0.5f),
-                                    Col.SliderGrab, Color.hsv(i / 7f, 0.9f, 0.9f)) {
+                                Col.FrameBg, Color.hsv(i / 7f, 0.5f, 0.5f),
+                                Col.FrameBgHovered, Color.hsv(i / 7f, 0.6f, 0.5f),
+                                Col.FrameBgActive, Color.hsv(i / 7f, 0.7f, 0.5f),
+                                Col.SliderGrab, Color.hsv(i / 7f, 0.9f, 0.9f)) {
 
                                 withFloat(values1, i) { vSliderFloat("##v", Vec2(18, 160), it, 0f, 1f, "") }
                                 if (isItemActive || isItemHovered()) setTooltip("%.3f", values1[i])
@@ -1535,7 +1653,7 @@ object ShowDemoWindowWidgets {
                     }
                     if (beginDragDropTarget()) {
                         acceptDragDropPayload("DND_DEMO_CELL")?.let { payload ->
-//                            assert(payload.dataSize == Int.BYTES) [JVM] we don't use this field
+                            //                            assert(payload.dataSize == Int.BYTES) [JVM] we don't use this field
                             val payloadN = payload.data!! as Int
                             when (mode) {
                                 Mode.Copy -> names[n] = names[payloadN]
@@ -1559,8 +1677,8 @@ object ShowDemoWindowWidgets {
             treeNode("Drag to reorder items (simple)") {
                 // Simple reordering
                 helpMarker(
-                        "We don't use the drag and drop api at all here! " +
-                                "Instead we query when the item is held but not hovered, and order items accordingly.")
+                    "We don't use the drag and drop api at all here! " +
+                            "Instead we query when the item is held but not hovered, and order items accordingly.")
                 itemNames.forEachIndexed { n, item ->
                     selectable(item)
 
@@ -1579,8 +1697,8 @@ object ShowDemoWindowWidgets {
         treeNode("Querying Status (Edited/Active/Focused/Hovered etc.)") {
             // Select an item type
             val itemNames = arrayOf(
-                    "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputFloat",
-                    "InputFloat3", "ColorEdit4", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "Combo", "ListBox")
+                "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputFloat",
+                "InputFloat3", "ColorEdit4", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "Combo", "ListBox")
             combo("Item Type", ::itemType, itemNames, itemNames.size)
             sameLine()
             helpMarker("Testing how various types of items are interacting with the IsItemXXX functions. Note that the bool return value of most ImGui function is generally equivalent to calling ImGui::IsItemHovered().")
@@ -1658,23 +1776,23 @@ object ShowDemoWindowWidgets {
             // Testing IsWindowFocused() function with its various flags.
             // Note that the ImGuiFocusedFlags_XXX flags can be combined.
             bulletText(
-                    "isWindowFocused() = ${isWindowFocused()}\n" +
-                            "isWindowFocused(ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows)}\n" +
-                            "isWindowFocused(ChildWindows | RootWindow) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow)}\n" +
-                            "isWindowFocused(RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow)}\n" +
-                            "isWindowFocused(AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow)}\n")
+                "isWindowFocused() = ${isWindowFocused()}\n" +
+                        "isWindowFocused(ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows)}\n" +
+                        "isWindowFocused(ChildWindows | RootWindow) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow)}\n" +
+                        "isWindowFocused(RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow)}\n" +
+                        "isWindowFocused(AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow)}\n")
 
             // Testing IsWindowHovered() function with its various flags.
             // Note that the ImGuiHoveredFlags_XXX flags can be combined.
             bulletText(
-                    "isWindowHovered() = ${isWindowHovered()}\n" +
-                            "isWindowHovered(AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
-                            "isWindowHovered(AllowWhenBlockedByActiveItem) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
-                            "isWindowHovered(ChildWindows) = ${isWindowHovered(HoveredFlag.ChildWindows)}\n" +
-                            "isWindowHovered(ChildWindows | RootWindow) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow)}\n" +
-                            "isWindowHovered(ChildWindows | AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.AllowWhenBlockedByPopup)}\n" +
-                            "isWindowHovered(RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow)}\n" +
-                            "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
+                "isWindowHovered() = ${isWindowHovered()}\n" +
+                        "isWindowHovered(AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
+                        "isWindowHovered(AllowWhenBlockedByActiveItem) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
+                        "isWindowHovered(ChildWindows) = ${isWindowHovered(HoveredFlag.ChildWindows)}\n" +
+                        "isWindowHovered(ChildWindows | RootWindow) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow)}\n" +
+                        "isWindowHovered(ChildWindows | AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.AllowWhenBlockedByPopup)}\n" +
+                        "isWindowHovered(RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow)}\n" +
+                        "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
 
             beginChild("child", Vec2(0, 50), true)
             text("This is another child window for testing the _ChildWindows flag.")
@@ -1694,8 +1812,8 @@ object ShowDemoWindowWidgets {
                     endPopup()
                 }
                 text(
-                        "IsItemHovered() after begin = ${isItemHovered()} (== is title bar hovered)\n" +
-                                "IsItemActive() after begin = $isItemActive (== is window being clicked/moved)")
+                    "IsItemHovered() after begin = ${isItemHovered()} (== is title bar hovered)\n" +
+                            "IsItemActive() after begin = $isItemActive (== is window being clicked/moved)")
                 end()
             }
         }

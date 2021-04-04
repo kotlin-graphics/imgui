@@ -311,8 +311,9 @@ interface tables {
     // - Use TableSetupScrollFreeze() to lock columns (from the right) or rows (from the top) so they stay visible when scrolled.
 
 
-    /** See "COLUMN SIZING POLICIES" comments at the top of this file  */
-    fun tableSetupColumn(label: String?, flags_: TableColumnFlags = Tcf.None.i, initWidthOrWeight: Float = -1f, userId: ID = 0) {
+    /** See "COLUMN SIZING POLICIES" comments at the top of this file
+     *  If (init_width_or_weight <= 0.0f) it is ignored */
+    fun tableSetupColumn(label: String?, flags_: TableColumnFlags = Tcf.None.i, initWidthOrWeight: Float = 0f, userId: ID = 0) {
 
         var flags = flags_
         val table = g.currentTable
@@ -340,8 +341,6 @@ interface tables {
         flags = column.flags
 
         // Initialize defaults
-        if (flags has Tcf.WidthStretch)
-            assert(initWidthOrWeight != 0f) { "Need to provide a valid weight!" }
         column.initStretchWeightOrWidth = initWidthOrWeight
         if (table.isInitializing) {
             // Init width or weight
