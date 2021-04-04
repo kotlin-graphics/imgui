@@ -168,7 +168,7 @@ interface demoDebugInformations {
                     for (rectN in WRT.values()) {
                         val r = Funcs.getWindowRect(nav, rectN)
                         text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${WRT.names[rectN.ordinal]}",
-                                r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                             r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                     }
                 }
             }
@@ -197,16 +197,15 @@ interface demoDebugInformations {
                             for (columnN in 0 until table.columnsCount) {
                                 val r = Funcs.getTableRect(table, rectN, columnN)
                                 val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}"
-                                        .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                    .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
                                     foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
                             }
-                        }
-                        else {
+                        } else {
                             val r = Funcs.getTableRect(table, rectN, -1)
                             val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) ${rectN.name}".format(
-                                    r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                             selectable(buf)
                             if (isItemHovered())
                                 foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
@@ -220,7 +219,7 @@ interface demoDebugInformations {
         debugNodeWindowsList(g.windows, "Windows")
         //DebugNodeWindowList(&g.WindowsFocusOrder, "WindowsFocusOrder");
         treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})") {
-            for(layer in g.drawDataBuilder.layers[0])
+            for (layer in g.drawDataBuilder.layers[0])
                 debugNodeDrawList(null, layer, "DrawList")
         }
 
@@ -303,16 +302,16 @@ interface demoDebugInformations {
             text("ITEMS")
             indent {
                 text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}",
-                        g.activeId,
-                        g.activeIdPreviousFrame,
-                        g.activeIdTimer)
+                     g.activeId,
+                     g.activeIdPreviousFrame,
+                     g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}",
-                        g.hoveredId,
-                        g.hoveredIdPreviousFrame,
-                        g.hoveredIdTimer) // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
+                     g.hoveredId,
+                     g.hoveredIdPreviousFrame,
+                     g.hoveredIdTimer) // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
                 text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)",
-                        g.dragDropPayload.sourceId)
+                     g.dragDropPayload.sourceId)
             }
 
             text("NAV,FOCUS")
@@ -355,12 +354,11 @@ interface demoDebugInformations {
                 if (cfg.showTablesRectsType >= TRT.ColumnsRect.ordinal) {
                     for (columnN in 0 until table.columnsCount) {
                         val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], columnN)
-                        val col = if(table.hoveredColumnBody == columnN) COL32(255, 255, 128, 255) else COL32(255, 0, 128, 255)
-                        val thickness = if(table.hoveredColumnBody == columnN) 3f else 1f
+                        val col = if (table.hoveredColumnBody == columnN) COL32(255, 255, 128, 255) else COL32(255, 0, 128, 255)
+                        val thickness = if (table.hoveredColumnBody == columnN) 3f else 1f
                         drawList.addRect(r.min, r.max, col, 0f, 0.inv(), thickness)
                     }
-                }
-                else {
+                } else {
                     val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], -1)
                     drawList.addRect(r.min, r.max, COL32(255, 0, 128, 255))
                 }
@@ -422,7 +420,7 @@ interface demoDebugInformations {
             if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
             if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
             if (io.configMemoryCompactTimer >= 0f) text("io.ConfigMemoryCompactTimer = %.1f",
-                    io.configMemoryCompactTimer)
+                                                        io.configMemoryCompactTimer)
             text("io.backendFlags: 0x%08X", io.backendFlags)
             if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
             if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
@@ -430,10 +428,10 @@ interface demoDebugInformations {
             if (io.backendFlags has BackendFlag.RendererHasVtxOffset) text(" RendererHasVtxOffset") // @formatter:on
             separator()
             text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
-                    io.fonts.flags)
+                 io.fonts.flags)
             text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
             text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x,
-                    io.displayFramebufferScale.y))
+                                                                io.displayFramebufferScale.y))
             separator()
             text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
             text("style.windowBorderSize: %.2f", style.windowBorderSize)
@@ -462,14 +460,14 @@ interface demoDebugInformations {
      *
      *  add style selector block (not a window), essentially a combo listing the default styles. */
     fun showStyleSelector(label: String) =
-            if (combo(label, Companion::styleIdx, "Dark\u0000Light\u0000Classic\u0000")) {
-                when (styleIdx) {
-                    0 -> styleColorsDark()
-                    1 -> styleColorsLight()
-                    2 -> styleColorsClassic()
-                }
-                true
-            } else false
+        if (combo(label, Companion::styleIdx, "Dark\u0000Light\u0000Classic\u0000")) {
+            when (styleIdx) {
+                0 -> styleColorsDark()
+                1 -> styleColorsLight()
+                2 -> styleColorsClassic()
+            }
+            true
+        } else false
 
     /** Demo helper function to select among loaded fonts.
      *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
@@ -532,7 +530,7 @@ interface demoDebugInformations {
 
         /** Windows Rect Type */
         enum class WRT {
-            OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Content, ContentRegionRect;
+            OuterRect, OuterRectClipped, InnerRect, InnerClipRect, WorkRect, Content, ContentIdeal, ContentRegionRect;
 
             companion object {
                 val names = values().map { it.name }
@@ -541,7 +539,7 @@ interface demoDebugInformations {
 
         /** Tables Rect Type */
         enum class TRT {
-            OuterRect, InnerRect,WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsWorkRect,
+            OuterRect, InnerRect, WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsWorkRect,
             ColumnsClipRect, ColumnsContentHeadersUsed, ColumnsContentHeadersIdeal, ColumnsContentFrozen, ColumnsContentUnfrozen;
 
             companion object {
@@ -572,7 +570,7 @@ interface demoDebugInformations {
         // - NodeStorage()
         object Funcs {
 
-            fun getTableRect(table: Table, rectType: TRT, n: Int): Rect = when(rectType) {
+            fun getTableRect(table: Table, rectType: TRT, n: Int): Rect = when (rectType) {
                 TRT.OuterRect -> table.outerRect
                 TRT.InnerRect -> table.innerRect
                 TRT.WorkRect -> table.workRect
@@ -595,6 +593,10 @@ interface demoDebugInformations {
                 WRT.InnerClipRect -> window.innerClipRect
                 WRT.WorkRect -> window.workRect
                 WRT.Content -> {
+                    val min = window.innerRect.min - window.scroll + window.windowPadding
+                    Rect(min, min + window.contentSize)
+                }
+                WRT.ContentIdeal -> {
                     val min = window.innerRect.min - window.scroll + window.windowPadding
                     Rect(min, min + window.contentSize)
                 }

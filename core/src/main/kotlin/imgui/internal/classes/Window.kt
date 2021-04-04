@@ -56,6 +56,8 @@ class Window(var context: Context,
     /** Size of contents/scrollable client area (calculated from the extents reach of the cursor) from previous frame. Does not include window decoration or window padding. */
     var contentSize = Vec2()
 
+    val contentSizeIdeal = Vec2()
+
     /** Size of contents/scrollable client area explicitly request by the user via SetNextWindowContentSize(). */
     var contentSizeExplicit = Vec2()
 
@@ -445,10 +447,12 @@ class Window(var context: Context,
             rootWindowForNav!!.parentWindow!! // ~assert
     }
 
-    /** ~CalcWindowExpectedSize */
-    fun calcExpectedSize(): Vec2 {
-        val sizeContents = calcContentSize()
-        val sizeAutoFit = calcAutoFitSize(sizeContents)
+    /** ~CalcWindowNextAutoFitSize */
+    fun calcNextAutoFitSize(): Vec2 {
+        val sizeContentsCurrent = Vec2()
+        val sizeContentsIdeal = Vec2()
+        calcContentSizes(sizeContentsCurrent, sizeContentsIdeal)
+        val sizeAutoFit = calcAutoFitSize(sizeContentsIdeal)
         val sizeFinal = calcSizeAfterConstraint(sizeAutoFit)
         return sizeFinal
     }
@@ -1144,12 +1148,23 @@ class Window(var context: Context,
         return newSize
     }
 
-    /** ~CalcWindowContentSize */
-    fun calcContentSize(): Vec2 = when {
-        collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(contentSize)
-        hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(contentSize)
-        else -> Vec2(floor(if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x),
-            floor(if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y))
+    /** ~CalcWindowContentSizes */
+    fun calcContentSizes(contentSizeCurrent: Vec2, contentSizeIdeal: Vec2) {
+        var preserveOldContentSizes = false
+        if (collapsed && autoFitFrames.x <= 0 && autoFitFrames.y <= 0)
+            preserveOldContentSizes = true
+        else if (hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0)
+            preserveOldContentSizes = true
+        if (preserveOldContentSizes) {
+            contentSizeCurrent put this.contentSize
+            contentSizeIdeal put contentSizeIdeal
+            return
+        }
+
+        contentSizeCurrent.x = if(contentSizeExplicit.x != 0f) contentSizeExplicit.x else floor(dc.cursorMaxPos.x - dc.cursorStartPos.x)
+        contentSizeCurrent.y = if(contentSizeExplicit.y != 0f) contentSizeExplicit.y else floor(dc.cursorMaxPos.y - dc.cursorStartPos.y)
+        contentSizeIdeal.x = if(contentSizeExplicit.x != 0f) contentSizeExplicit.x else floor(max(dc.cursorMaxPos.x, dc.idealMaxPos.x) - dc.cursorStartPos.x)
+        contentSizeIdeal.y = if(contentSizeExplicit.y != 0f) contentSizeExplicit.y else floor(max(dc.cursorMaxPos.y, dc.idealMaxPos.y) - dc.cursorStartPos.y)
     }
 
 

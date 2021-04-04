@@ -213,7 +213,7 @@ interface windows {
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
-            window.contentSize = window.calcContentSize()
+            window.calcContentSizes(window.contentSize, window.contentSize)
             if (window.hiddenFramesCanSkipItems > 0) window.hiddenFramesCanSkipItems--
             if (window.hiddenFramesCannotSkipItems > 0) window.hiddenFramesCannotSkipItems--
             if (window.hiddenFramesForRenderOnly > 0) window.hiddenFramesForRenderOnly--
@@ -237,6 +237,7 @@ interface windows {
                         window.sizeFull.y = 0f
                     }
                     window.contentSize put 0f
+                    window.contentSizeIdeal put 0f
                 }
             }
 
@@ -574,10 +575,10 @@ interface windows {
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
                 val workRectSizeX =
                         if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f,
-                                size.x - windowPadding.x * 2f - scrollbarSizes.x)
+                                                                                        size.x - windowPadding.x * 2f - scrollbarSizes.x)
                 val workRectSizeY =
                         if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f,
-                                size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y)
+                                                                                        size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y)
                 workRect.min.put(floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
                         floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
@@ -610,6 +611,7 @@ interface windows {
                 dc.cursorMaxPos put dc.cursorStartPos
                 dc.prevLineSize put 0f
                 dc.currLineSize put 0f
+                dc.idealMaxPos put dc.cursorStartPos
                 dc.prevLineTextBaseOffset = 0f
                 dc.currLineTextBaseOffset = 0f
 

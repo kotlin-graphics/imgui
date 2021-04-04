@@ -43,8 +43,6 @@ import imgui.internal.classes.NavMoveResult
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

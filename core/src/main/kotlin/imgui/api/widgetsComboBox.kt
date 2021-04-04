@@ -139,7 +139,7 @@ interface widgetsComboBox {
         findWindowByName(name)?.let {
             if (it.wasActive) {
                 // Always override 'AutoPosLastDirection' to not leave a chance for a past value to affect us.
-                val sizeExpected = it.calcExpectedSize()
+                val sizeExpected = it.calcNextAutoFitSize()
                 it.autoPosLastDirection = when {
                     flags has Cf.PopupAlignLeft -> Dir.Left // "Below, Toward Left"
                     else -> Dir.Down // "Below, Toward Right (default)"
@@ -364,7 +364,7 @@ interface widgetsComboBox {
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let { popupWindow ->
             if (popupWindow.wasActive) {
-                val sizeExpected = popupWindow.calcExpectedSize()
+                val sizeExpected = popupWindow.calcNextAutoFitSize()
                 if (flags has Cf.PopupAlignLeft)
                     popupWindow.autoPosLastDirection = Dir.Left
                 val rOuter = popupWindow.getAllowedExtentRect()

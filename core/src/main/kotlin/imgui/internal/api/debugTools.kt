@@ -409,8 +409,9 @@ internal interface debugTools {
 
         val flags = window.flags
         debugNodeDrawList(window, window.drawList, "DrawList")
-        bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), ContentSize (%.1f,%.1f)", window.pos.x, window.pos.y,
-                   window.size.x, window.size.y, window.contentSize.x, window.contentSize.y)
+        bulletText("Pos: (%.1f,%.1f), Size: (%.1f,%.1f), ContentSize (%.1f,%.1f) Ideal (%.1f,%.1f)",
+                   window.pos.x, window.pos.y, window.size.x, window.size.y,
+                   window.contentSize.x, window.contentSize.y, window.contentSizeIdeal.x, window.contentSizeIdeal.y)
         val s = StringBuilder()
         if (flags has WindowFlag._ChildWindow) s += "Child "
         if (flags has WindowFlag._Tooltip) s += "Tooltip "

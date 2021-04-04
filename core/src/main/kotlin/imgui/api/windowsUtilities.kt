@@ -7,6 +7,7 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.classes.DrawList
+import imgui.internal.floor
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.or
 import imgui.FocusedFlag as Ff
@@ -135,7 +136,7 @@ interface windowsUtilities {
     fun setNextWindowContentSize(size: Vec2) {
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasContentSize
-            contentSizeVal put size
+            contentSizeVal put floor(size)
         }
     }
 

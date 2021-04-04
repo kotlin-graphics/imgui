@@ -24,8 +24,11 @@ class WindowTempData {
     /** Initial position after Begin(), generally ~ window position + WindowPadding. */
     var cursorStartPos = Vec2()
 
-    /** Used to implicitly calculate the size of our contents, always growing during the frame. Used to calculate window->ContentSize at the beginning of next frame */
+    /** Used to implicitly calculate ContentSize at the beginning of next frame. Always growing during the frame. */
     var cursorMaxPos = Vec2()
+
+    /** Used to implicitly calculate ContentSizeIdeal. */
+    val idealMaxPos = Vec2()
 
     var currLineSize = Vec2()
 
