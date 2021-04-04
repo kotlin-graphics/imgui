@@ -9,6 +9,7 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
+import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart2
@@ -873,7 +874,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -979,7 +980,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1085,7 +1086,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1191,7 +1192,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1297,7 +1298,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1403,7 +1404,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f

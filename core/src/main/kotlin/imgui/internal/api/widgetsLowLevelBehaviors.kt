@@ -51,7 +51,12 @@ import imgui.internal.sections.ButtonFlag as Bf
 
 @Suppress("UNCHECKED_CAST")
 
-const val DRAG_DROP_HOLD_TIMER = 0.7f
+// Widgets
+
+/** Time for drag-hold to activate items accepting the ImGuiButtonFlags_PressedOnDragDropHold button behavior. */
+val DRAGDROP_HOLD_TO_OPEN_TIMER = 0.7f
+/** Multiplier for the default value of io.MouseDragThreshold to make DragFloat/DragInt react faster to mouse drags. */
+val DRAG_MOUSE_THRESHOLD_FACTOR = 0.5f
 
 /** Widgets low-level behaviors */
 internal interface widgetsLowLevelBehaviors {
@@ -154,7 +159,7 @@ internal interface widgetsLowLevelBehaviors {
             if (isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 hoveredId = id
-                if (calcTypematicRepeatAmount(g.hoveredIdTimer + 0.0001f - io.deltaTime, g.hoveredIdTimer + 0.0001f - io.deltaTime, DRAG_DROP_HOLD_TIMER, 0f) != 0) {
+                if (calcTypematicRepeatAmount(g.hoveredIdTimer + 0.0001f - io.deltaTime, g.hoveredIdTimer + 0.0001f - io.deltaTime, DRAGDROP_HOLD_TO_OPEN_TIMER, 0f) != 0) {
                     pressed = true
                     g.dragDropHoldJustPressedId = id
                     focusWindow(window)

@@ -238,7 +238,7 @@ interface widgetsDrags {
             else -> format_
         }
 
-        // Tabbing or CTRL-clicking on Drag turns it into an input box
+        // Tabbing or CTRL-clicking on Drag turns it into an InputText
         val hovered = ImGui.itemHoverable(frameBb, id)
         val tempInputAllowed = flags hasnt SliderFlag.NoInput
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
@@ -256,6 +256,17 @@ interface widgetsDrags {
                     ImGui.focusableItemUnregister(window)
                 }
             }
+//            #if 0
+//            // Experimental: simple click (without moving) turns Drag into an InputText
+//            // FIXME: Currently polling ImGuiConfigFlags_IsTouchScreen, may either poll an hypothetical ImGuiBackendFlags_HasKeyboard and/or an explicit drag settings.
+//            if (temp_input_allowed && !temp_input_is_active && !(g.IO.ConfigFlags & ImGuiConfigFlags_IsTouchScreen))
+//            if (g.ActiveId == id && hovered && g.IO.MouseReleased[0] && !IsMouseDragPastThreshold(0, g.IO.MouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR))
+//            {
+//                g.NavInputId = id;
+//                temp_input_is_active = true;
+//                FocusableItemUnregister(window);
+//            }
+//            #endif
         }
 
         if (tempInputIsActive) {
