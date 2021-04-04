@@ -3,6 +3,7 @@ package imgui.api
 import glm_.has
 import glm_.hasnt
 import glm_.max
+import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginTableEx
@@ -214,21 +215,31 @@ interface tables {
         // Layout in outer window
         // (FIXME: To allow auto-fit and allow desirable effect of SameLine() we dissociate 'used' vs 'ideal' size by overriding
         // CursorPosPrevLine and CursorMaxPos manually. That should be a more general layout feature, see same problem e.g. #3414)
-        val outerWidth = if (table.isOuterRectMinFitX) table.workRect.width else table.columnsAutoFitWidth
-        val outerHeight = table.outerRect.height
         if (innerWindow != outerWindow)
             endChild()
         else {
-            itemSize(Vec2(outerWidth, outerHeight))
-            outerWindow.dc.cursorPosPrevLine.x = table.outerRect.max.x
+            itemSize(table.outerRect.size)
+            itemAdd(table.outerRect, 0)
         }
 
-        // Override declared contents width to enable auto-resize on the X axis when possible
-        // FIXME-TABLE: This can be improved (e.g. for Fixed columns we don't want to auto AutoFitWidth? or propagate window auto-fit to table?)
-        outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max when {
-            table.flags has Tf.ScrollX -> table.outerRect.min.x + table.columnsGivenWidth + innerWindow.scrollbarSizes.x // For outer scrolling
-            else -> table.workRect.min.x + outerWidth
-        } // For auto-fit
+        // Override declared contents width/height to enable auto-resize while not needlessly adding a scrollbar
+        if (table.isOuterRectMinFitX) {
+            // FIXME-TABLE: Could we remove this section?
+            assert(table.flags hasnt Tf.ScrollX)
+            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth)
+        } else if (table.userOuterSize.x <= 0f) {
+            val decorationSize = if (table.flags has Tf.ScrollX) innerWindow.scrollbarSizes.x else 0f
+            outerWindow.dc.idealMaxPos.x = outerWindow.dc.idealMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth + decorationSize - table.userOuterSize.x)
+            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.max.x min table.outerRect.min.x + table.columnsAutoFitWidth)
+        } else
+            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max table.outerRect.max.x
+        if (table.userOuterSize.y <= 0f) {
+            val decorationSize = if (table.flags has Tf.ScrollY) innerWindow.scrollbarSizes.y else 0f
+            outerWindow.dc.idealMaxPos.y = outerWindow.dc.idealMaxPos.y max (innerContentMaxY + decorationSize - table.userOuterSize.y)
+            outerWindow.dc.cursorMaxPos.y = backupOuterMaxPos.y max (table.outerRect.max.y min innerContentMaxY)
+        } else
+        // OuterRect.Max.y may already have been pushed downward from the initial value (unless ImGuiTableFlags_NoHostExtendY is set)
+            outerWindow.dc.cursorMaxPos.y = backupOuterMaxPos.y max table.outerRect.max.y
 
         // Override declared contents height
         if (innerWindow === outerWindow && flags hasnt Tf.NoHostExtendY)
