@@ -77,7 +77,7 @@ object CustomRendering {
 
             if (beginTabItem("Primitives")) {
 
-                pushItemWidth(-fontSize * 10)
+                pushItemWidth(-fontSize * 15)
                 val drawList = windowDrawList
 
                 // Draw gradients
@@ -163,7 +163,7 @@ object CustomRendering {
                     addRectFilled(Vec2(x, y), Vec2(x + 1, y + 1), col); x += sz            // Pixel (faster than AddLine)
                 }
 
-                dummy(Vec2((sz + spacing) * 8.8f, (sz + spacing) * 3))
+                dummy(Vec2((sz + spacing) * 10.2f, (sz + spacing) * 3))
                 popItemWidth()
                 endTabItem()
             }

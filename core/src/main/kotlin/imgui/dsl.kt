@@ -85,9 +85,9 @@ object dsl {
 
     // Tables
 
-    inline fun table(strId: String, columnsCount: Int, flags: TableFlags = TableFlag.None.i,
+    inline fun table(strId: String, columns: Int, flags: TableFlags = TableFlag.None.i,
                      outerSize: Vec2 = Vec2(), innerWidth: Float = 0f, block: () -> Unit) {
-        if (beginTable(strId, columnsCount, flags, outerSize, innerWidth)) { // ~open
+        if (beginTable(strId, columns, flags, outerSize, innerWidth)) { // ~open
             block()
             end()
         }

@@ -176,7 +176,6 @@ object ShowDemoWindowTables {
 
     /* Resizable, fixed */
     var flags2 = Tf.SizingFixedFit or Tf.Resizable or Tf.BordersOuter or Tf.BordersV or Tf.ContextMenuInBody
-    var fixedFill0 = true
 
     /* Resizable, mixed */
     var flags3 = Tf.SizingFixedFit or Tf.RowBg or Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable
@@ -194,7 +193,6 @@ object ShowDemoWindowTables {
     var init = true
 
     /* Sizing policies */
-    var fixedFill1 = true
     var flags7 = Tf.BordersV or Tf.BordersOuterH or Tf.RowBg or Tf.ContextMenuInBody
     val sizingPolicyFlags = intArrayOf(Tf.SizingFixedFit.i, Tf.SizingFixedSame.i, Tf.SizingStretchProp.i, Tf.SizingStretchSame.i)
 
@@ -427,7 +425,7 @@ object ShowDemoWindowTables {
             // [Method 1] Using TableNextRow() to create a new row, and TableSetColumnIndex() to select the column.
             // In many situations, this is the most flexible and easy to use pattern.
             helpMarker("Using TableNextRow() + calling TableSetColumnIndex() _before_ each cell, in a loop.")
-            table("##table1", 3) {
+            table("table1", 3) {
                 for (row in 0..3) {
                     tableNextRow()
                     for (column in 0..2) {
@@ -440,7 +438,7 @@ object ShowDemoWindowTables {
             // [Method 2] Using TableNextColumn() called multiple times, instead of using a for loop + TableSetColumnIndex().
             // This is generally more convenient when you have code manually submitting the contents of each columns.
             helpMarker("Using TableNextRow() + calling TableNextColumn() _before_ each cell, manually.")
-            table("##table2", 3) {
+            table("table2", 3) {
                 for (row in 0..3) {
                     tableNextRow()
                     tableNextColumn()
@@ -458,7 +456,7 @@ object ShowDemoWindowTables {
             helpMarker("""
                 Only using TableNextColumn(), which tends to be convenient for tables where every cells contains the same type of contents.
                 This is also more similar to the old NextColumn() function of the Columns API, and provided to facilitate the Columns->Tables API transition.""".trimIndent())
-            table("##table3", 3) {
+            table("table3", 3) {
                 for (item in 0..13) {
                     tableNextColumn()
                     text("Item $item")
@@ -500,7 +498,7 @@ object ShowDemoWindowTables {
                 checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags0, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appears in Headers")
             }
 
-            table("##table1", 3, flags0) {
+            table("table1", 3, flags0) {
                 // Display headers so we can inspect their interaction with borders.
                 // (Headers are not the main purpose of this section of the demo, so we are not elaborating on them too much. See other sections for details)
                 if (displayHeaders) {
@@ -535,7 +533,7 @@ object ShowDemoWindowTables {
                 sameLine(); helpMarker("Using the _Resizable flag automatically enables the _BordersInnerV flag as well, this is why the resize borders are still showing when unchecking this.")
             }
 
-            table("##table1", 3, flags1) {
+            table("table1", 3, flags1) {
                 for (row in 0..4) {
                     tableNextRow()
                     for (column in 0..2) {
@@ -558,11 +556,10 @@ object ShowDemoWindowTables {
                         "Fixed-width columns generally makes more sense if you want to use horizontal scrolling.\n\n" +
                         "Double-click a column border to auto-fit the column to its contents.")
             pushingStyleCompact {
-                checkbox("fill", ::fixedFill0)
+                checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags2, Tf.NoHostExtendX.i)
             }
 
-            val outerSize = Vec2(if (fixedFill0) -Float.MIN_VALUE else 0f, 0f)
-            table("##table1", 3, flags2, outerSize) {
+            table("table1", 3, flags2) {
                 for (row in 0..4) {
                     tableNextRow()
                     for (column in 0..2) {
@@ -579,7 +576,7 @@ object ShowDemoWindowTables {
             helpMarker("Using TableSetupColumn() to alter resizing policy on a per-column basis.\n\n" +
                                "When combining Fixed and Stretch columns, generally you only want one, maybe two trailing columns to use _WidthStretch.")
 
-            table("##table1", 3, flags3) {
+            table("table1", 3, flags3) {
                 tableSetupColumn("AAA", Tcf.WidthFixed.i)
                 tableSetupColumn("BBB", Tcf.WidthFixed.i)
                 tableSetupColumn("CCC", Tcf.WidthStretch.i)
@@ -592,7 +589,7 @@ object ShowDemoWindowTables {
                     }
                 }
             }
-            table("##table2", 6, flags3) {
+            table("table2", 6, flags3) {
                 tableSetupColumn("AAA", Tcf.WidthFixed.i)
                 tableSetupColumn("BBB", Tcf.WidthFixed.i)
                 tableSetupColumn("CCC", Tcf.WidthFixed or Tcf.DefaultHide)
@@ -641,7 +638,7 @@ object ShowDemoWindowTables {
             }
 
             // Use outer_size.x == 0.0f instead of default to make the table as tight as possible (only valid when no scrolling and no stretch column)
-            table("##table2", 3, flags4 or Tf.SizingFixedFit, Vec2()) {
+            table("table2", 3, flags4 or Tf.SizingFixedFit, Vec2()) {
                 tableSetupColumn("One")
                 tableSetupColumn("Two")
                 tableSetupColumn("Three")
@@ -681,7 +678,7 @@ object ShowDemoWindowTables {
                 checkbox("show_headers", ::showHeaders0)
             }
 
-            table("##table1", 3, flags5) {
+            table("table_padding", 3, flags5) {
                 if (showHeaders0) {
                     tableSetupColumn("One")
                     tableSetupColumn("Two")
@@ -720,7 +717,7 @@ object ShowDemoWindowTables {
             }
 
             pushStyleVar(StyleVar.CellPadding, cellPadding)
-            table("##table2", 3, flags6) {
+            table("table_padding_2", 3, flags6) {
                 if (!showWidgetFrameBg)
                     pushStyleColor(Col.FrameBg, 0)
                 for (cell in 0 until 3 * 5) {
@@ -743,15 +740,10 @@ object ShowDemoWindowTables {
             setNextItemOpen(openAction != 0)
         treeNode("Sizing policies") {
             pushingStyleCompact {
-                checkbox("fill", ::fixedFill1)
-                sameLine(); helpMarker(
-                "Value passed to outer_size only affects tables with _SizingFixedFit or _SizingFixedSame sizing policies.\n\n" +
-                        " - outer_size.x == 0: table fit to columns total contents.\n" +
-                        " - outer_size.x == -FLT_MIN: table fill until right-most edge.")
                 checkboxFlags("ImGuiTableFlags_Resizable", ::flags7, Tf.Resizable.i)
+                checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags7, Tf.NoHostExtendX.i)
             }
 
-            val outerSize = Vec2(if (fixedFill1) -Float.MIN_VALUE else 0f, 0f)
             for (tableN in 0..3)
                 withID(tableN) {
                     setNextItemWidth(TEXT_BASE_WIDTH * 30)
@@ -759,7 +751,7 @@ object ShowDemoWindowTables {
 
                     // To make it easier to understand the different sizing policy,
                     // For each policy: we display one table where the columns have equal contents width, and one where the columns have different contents width.
-                    table("##table1", 3, sizingPolicyFlags[tableN] or flags7, outerSize) {
+                    table("table1", 3, sizingPolicyFlags[tableN] or flags7) {
                         for (row in 0..2) {
                             tableNextRow()
                             tableNextColumn(); text("Oh dear")
@@ -767,7 +759,7 @@ object ShowDemoWindowTables {
                             tableNextColumn(); text("Oh dear")
                         }
                     }
-                    table("##table2", 3, sizingPolicyFlags[tableN] or flags7, outerSize) {
+                    table("table2", 3, sizingPolicyFlags[tableN] or flags7) {
                         for (row in 0..2) {
                             tableNextRow()
                             tableNextColumn(); text("AAAA")
@@ -807,8 +799,7 @@ object ShowDemoWindowTables {
                 }
             }
 
-            outerSize.put(0f, TEXT_BASE_HEIGHT * 7)
-            table("##table2", columnCount0, flags8, outerSize) {
+            table("table2", columnCount0, flags8, Vec2(0f, TEXT_BASE_HEIGHT * 7)) {
                 for (cell in 0 until 10 * columnCount0) {
                     tableNextColumn()
                     val column = tableGetColumnIndex()
@@ -844,7 +835,7 @@ object ShowDemoWindowTables {
             // When using ScrollX or ScrollY we need to specify a size for our table container!
             // Otherwise by default the table will fit all available space, like a BeginChild() call.
             val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 8)
-            table("##table1", 3, flags9, outerSize) {
+            table("table_scrolly", 3, flags9, outerSize) {
                 tableSetupScrollFreeze(0, 1) // Make top row always visible
                 tableSetupColumn("One", Tcf.None.i)
                 tableSetupColumn("Two", Tcf.None.i)
@@ -887,7 +878,7 @@ object ShowDemoWindowTables {
             // When using ScrollX or ScrollY we need to specify a size for our table container!
             // Otherwise by default the table will fit all available space, like a BeginChild() call.
             val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 8)
-            table("##table1", 7, flags10, outerSize) {
+            table("table_scrollx", 7, flags10, outerSize) {
                 tableSetupScrollFreeze(freezeCols0, freezeRows0)
                 tableSetupColumn("Line #", Tcf.NoHide.i) // Make the first column not hideable to match our use of TableSetupScrollFreeze()
                 tableSetupColumn("One")
@@ -931,7 +922,7 @@ object ShowDemoWindowTables {
                     }
                 }
             }
-            table("##table2", 7, flags11, outerSize, innerWidth0) {
+            table("table2", 7, flags11, outerSize, innerWidth0) {
                 for (cell in 0 until 20 * 7) {
                     tableNextColumn()
                     text("Hello world ${tableGetColumnIndex()},${tableGetRowIndex()}")
@@ -945,7 +936,7 @@ object ShowDemoWindowTables {
             // Create a first table just to show all the options/flags we want to make visible in our example!
             // -> begin of the class, as static
 
-            table("##flags", columnCount1, Tf.None.i) {
+            table("table_columns_flags_checkboxes", columnCount1, Tf.None.i) {
                 pushingStyleCompact {
                     for (column in 0 until columnCount1) {
                         tableNextColumn()
@@ -967,7 +958,7 @@ object ShowDemoWindowTables {
             // We use a scrolling table to be able to showcase the difference between the _IsEnabled and _IsVisible flags above, otherwise in
             // a non-scrolling table columns are always visible (unless using ImGuiTableFlags_NoKeepColumnsVisible + resizing the parent window down)
             val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 9)
-            table("##table", columnCount1, flags12, outerSize) {
+            table("table_columns_flags", columnCount1, flags12, outerSize) {
                 for (column in 0 until columnCount1)
                     tableSetupColumn(columnNames[column], columnFlags[column])
                 tableHeadersRow()
@@ -995,7 +986,7 @@ object ShowDemoWindowTables {
                 checkboxFlags("ImGuiTableFlags_Resizable", ::flags13, Tf.Resizable.i)
                 checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags13, Tf.NoBordersInBodyUntilResize.i)
             }
-            table("##table1", 3, flags13) {
+            table("table1", 3, flags13) {
                 // We could also set ImGuiTableFlags_SizingFixedFit on the table and all columns will default to ImGuiTableColumnFlags_WidthFixed.
                 tableSetupColumn("one", Tcf.WidthFixed.i, 100f) // Default to 100.0f
                 tableSetupColumn("two", Tcf.WidthFixed.i, 200f) // Default to 200.0f
@@ -1021,7 +1012,7 @@ object ShowDemoWindowTables {
                 checkboxFlags("ImGuiTableFlags_BordersOuterV", ::flags14, Tf.BordersOuterV.i)
             }
 
-            table("##table2", 4, flags14) {
+            table("table2", 4, flags14) {
                 // We could also set ImGuiTableFlags_SizingFixedFit on the table and all columns will default to ImGuiTableColumnFlags_WidthFixed.
                 tableSetupColumn("", Tcf.WidthFixed.i, 100f)
                 tableSetupColumn("", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 15f)
@@ -1043,7 +1034,7 @@ object ShowDemoWindowTables {
         treeNode("Nested tables") {
             helpMarker("This demonstrate embedding a table into another table cell.")
 
-            table("nested1", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
+            table("table_nested1", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
                 tableSetupColumn("A0")
                 tableSetupColumn("A1")
                 tableHeadersRow()
@@ -1052,7 +1043,7 @@ object ShowDemoWindowTables {
                 text("A0 Cell 0")
                 run {
                     val rowsHeight = TEXT_BASE_HEIGHT * 2
-                    table("nested2", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
+                    table("table_nested2", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
                         tableSetupColumn("B0")
                         tableSetupColumn("B1")
                         tableHeadersRow()
@@ -1079,7 +1070,7 @@ object ShowDemoWindowTables {
             setNextItemOpen(openAction != 0)
         treeNode("Row height") {
             helpMarker("You can pass a 'min_row_height' to TableNextRow().\n\nRows are padded with 'style.CellPadding.y' on top and bottom, so effectively the minimum row height will always be >= 'style.CellPadding.y * 2.0f'.\n\nWe cannot honor a _maximum_ row height as that would requires a unique clipping rectangle per row.")
-            table("##Table", 1, Tf.BordersOuter or Tf.BordersInnerV) {
+            table("table_row_height", 1, Tf.BordersOuter or Tf.BordersInnerV) {
                 for (row in 0..9) {
                     val minRowHeight = (TEXT_BASE_HEIGHT * 0.3f * row).i.f
                     tableNextRow(Trf.None.i, minRowHeight)
@@ -1103,7 +1094,7 @@ object ShowDemoWindowTables {
             }
 
             val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 5.5f)
-            table("##table3", 3, flags15, outerSize) {
+            table("table1", 3, flags15, outerSize) {
                 for (row in 0..9) { // TODO dsl this pattern?
                     tableNextRow()
                     for (column in 0..2) {
@@ -1118,7 +1109,7 @@ object ShowDemoWindowTables {
             spacing()
 
             text("Using explicit size:")
-            table("##table1", 3, Tf.Borders or Tf.RowBg, Vec2(TEXT_BASE_WIDTH * 30, 0f)) {
+            table("table2", 3, Tf.Borders or Tf.RowBg, Vec2(TEXT_BASE_WIDTH * 30, 0f)) {
                 for (row in 0..4) {
                     tableNextRow()
                     for (column in 0..2) {
@@ -1128,7 +1119,7 @@ object ShowDemoWindowTables {
                 }
             }
             sameLine()
-            table("##table2", 3, Tf.Borders or Tf.RowBg, Vec2(TEXT_BASE_WIDTH * 30, 0f)) {
+            table("table3", 3, Tf.Borders or Tf.RowBg, Vec2(TEXT_BASE_WIDTH * 30, 0f)) {
                 for (row in 0..2) {
                     tableNextRow(0, TEXT_BASE_HEIGHT * 1.5f)
                     for (column in 0..2) {
@@ -1155,7 +1146,7 @@ object ShowDemoWindowTables {
                 assert(cellBgType in 0..1)
             }
 
-            table("##Table", 5, flags16) {
+            table("table1", 5, flags16) {
                 for (row in 0..5) {
 
                     tableNextRow()
@@ -1188,7 +1179,7 @@ object ShowDemoWindowTables {
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
         treeNode("Tree view") {
-            table("##3ways", 3, flags17) {
+            table("3ways", 3, flags17) {
                 // The first column will use the default _WidthStretch when ScrollX is Off and _WidthFixed when ScrollX is On
                 tableSetupColumn("Name", Tcf.NoHide.i)
                 tableSetupColumn("Size", Tcf.WidthFixed.i, TEXT_BASE_WIDTH * 12f)
@@ -1205,7 +1196,7 @@ object ShowDemoWindowTables {
             helpMarker(
                 "Showcase using PushItemWidth() and how it is preserved on a per-column basis.\n\n" +
                         "Note that on auto-resizing non-resizable fixed columns, querying the content width for e.g. right-alignment doesn't make sense.")
-            table("##table2", 3, Tf.Borders.i) {
+            table("table_item_width", 3, Tf.Borders.i) {
                 tableSetupColumn("small")
                 tableSetupColumn("half")
                 tableSetupColumn("right-align")
@@ -1241,7 +1232,7 @@ object ShowDemoWindowTables {
             setNextItemOpen(openAction != 0)
         treeNode("Custom headers") {
             val COLUMNS_COUNT = 3
-            table("##table1", COLUMNS_COUNT, Tf.Borders or Tf.Reorderable or Tf.Hideable) {
+            table("table_custom_headers", COLUMNS_COUNT, Tf.Borders or Tf.Reorderable or Tf.Hideable) {
                 tableSetupColumn("Apricot")
                 tableSetupColumn("Banana")
                 tableSetupColumn("Cherry")
@@ -1287,7 +1278,7 @@ object ShowDemoWindowTables {
             // [1.1] Right-click on the TableHeadersRow() line to open the default table context menu.
             // [1.2] Right-click in columns also open the default table context menu (if ImGuiTableFlags_ContextMenuInBody is set)
             val COLUMNS_COUNT = 3
-            table("##table1", COLUMNS_COUNT, flags18) {
+            table("table_context_menu", COLUMNS_COUNT, flags18) {
                 tableSetupColumn("One")
                 tableSetupColumn("Two")
                 tableSetupColumn("Three")
@@ -1312,7 +1303,7 @@ object ShowDemoWindowTables {
             helpMarker("Demonstrate mixing table context menu (over header), item context button (over button) and custom per-colum context menu (over column body).")
             val flags15b = Tf.Resizable or Tf.SizingFixedFit or Tf.Reorderable or Tf.Hideable or Tf.Borders
             // [JVM] cant use DSL because of endTable isnt the last call
-            if (beginTable("##table2", COLUMNS_COUNT, flags15b)) {
+            if (beginTable("table_context_menu_2", COLUMNS_COUNT, flags15b)) {
                 tableSetupColumn("One")
                 tableSetupColumn("Two")
                 tableSetupColumn("Three")
@@ -1402,7 +1393,7 @@ object ShowDemoWindowTables {
                 sameLine(); helpMarker("When sorting is enabled: allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0).")
             }
 
-            table("##table", 4, flags19, Vec2(0f, TEXT_BASE_HEIGHT * 15), 0f) {
+            table("table_sorting", 4, flags19, Vec2(0f, TEXT_BASE_HEIGHT * 15), 0f) {
                 // Declare columns
                 // We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
                 // This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
@@ -1572,7 +1563,7 @@ object ShowDemoWindowTables {
             var tableDrawList: DrawList? = null // "
 
             val innerWidthToUse = if (flags20 has Tf.ScrollX) innerWidthWithScroll else 0f
-            table("##table", 6, flags20, if (outerSizeEnabled) outerSizeValue else Vec2(0), innerWidthToUse) {
+            table("table_advanced", 6, flags20, if (outerSizeEnabled) outerSizeValue else Vec2(0), innerWidthToUse) {
                 // Declare columns
                 // We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
                 // This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
