@@ -602,7 +602,7 @@ typealias TableFlags = Int
 //      The typical use of mixing sizing policies is: any number of LEADING Fixed columns, followed by one or two TRAILING Stretch columns.
 //      (this is because the visible order of columns have subtle but necessary effects on how they react to manual resizing).
 // - When ScrollX is on:
-//    - Table defaults to ImGuiTableFlags_SizingFixedFit -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed or ImGuiTableColumnFlags_WidthAuto.
+//    - Table defaults to ImGuiTableFlags_SizingFixedFit -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed
 //    - Columns sizing policy allowed: Fixed/Auto mostly.
 //    - Fixed Columns can be enlarged as needed. Table will show an horizontal scrollbar if needed.
 //    - When using auto-resizing (non-resizable) fixed columns, querying the content width to use item right-alignment e.g. SetNextItemWidth(-FLT_MIN) doesn't make sense, would create a feedback loop.
@@ -767,10 +767,6 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
     /** Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _SizingFixedFit and table is resizable). */
     WidthFixed(1 shl 3),
 
-    /** Column will not stretch and keep resizing based on submitted contents (default if table sizing policy is _SizingFixedFit and table is not resizable, or policy is _SizingFixedSame).
-     *  Generally compatible with using right-most fitting widgets (e.g. SetNextItemWidth(-FLT_MIN))     */
-    WidthAuto(1 shl 4),
-
     /** Disable manual resizing. */
     NoResize(1 shl 5),
 
@@ -823,7 +819,7 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
 
     // [Internal] Combinations and masks
 
-    WidthMask_(WidthStretch or WidthFixed or WidthAuto),
+    WidthMask_(WidthStretch or WidthFixed),
     IndentMask_(IndentEnable or IndentDisable),
     StatusMask_(IsEnabled or IsVisible or IsSorted or IsHovered),
 

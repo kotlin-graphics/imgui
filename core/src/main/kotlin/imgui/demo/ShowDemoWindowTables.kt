@@ -141,8 +141,6 @@ object ShowDemoWindowTables {
             _i = _i wo (Tcf.WidthMask_ xor Tcf.WidthStretch)
         if (checkboxFlags("_WidthFixed", ::_i, Tcf.WidthFixed.i))
             _i = _i wo (Tcf.WidthMask_ xor Tcf.WidthFixed)
-        if (checkboxFlags("_WidthAuto", ::_i, Tcf.WidthAuto.i))
-            _i = _i wo (Tcf.WidthMask_ xor Tcf.WidthAuto)
         checkboxFlags("_NoResize", ::_i, Tcf.NoResize.i)
         checkboxFlags("_NoReorder", ::_i, Tcf.NoReorder.i)
         checkboxFlags("_NoHide", ::_i, Tcf.NoHide.i)

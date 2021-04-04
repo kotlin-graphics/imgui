@@ -354,7 +354,6 @@ internal interface debugTools {
                 buf += "Sort: $sortOrder$dir, UserID: 0x%08X, Flags: 0x%04X: ".format(userID, flags)
                 if (flags has TableColumnFlag.WidthStretch) buf += "WidthStretch "
                 if (flags has TableColumnFlag.WidthFixed) buf += "WidthFixed "
-                if (flags has TableColumnFlag.WidthAuto) buf += "WidthAuto "
                 if (flags has TableColumnFlag.NoResize) buf += "NoResize "
                 buf += ".."
             }

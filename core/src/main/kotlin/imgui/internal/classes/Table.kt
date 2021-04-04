@@ -541,7 +541,7 @@ class Table {
 
             // Auto-fit unsized columns
             val startAutoFit = when {
-                column.flags has (Tcf.WidthFixed or Tcf.WidthAuto) -> column.widthRequest < 0f
+                column.flags has Tcf.WidthFixed -> column.widthRequest < 0f
                 else -> column.stretchWeight < 0f
             }
             if (startAutoFit) {
@@ -611,7 +611,7 @@ class Table {
             val column = columns[columnN]
 
             val columnIsResizable = column.flags hasnt Tcf.NoResize
-            if (column.flags has (Tcf.WidthFixed or Tcf.WidthAuto)) {
+            if (column.flags has Tcf.WidthFixed) {
                 // Apply same widths policy
                 var widthAuto = column.widthAuto
                 if (tableSizingPolicy == Tf.SizingFixedSame.i && (column.autoFitQueue != 0x00 || !columnIsResizable))
@@ -619,7 +619,9 @@ class Table {
 
                 // Apply automatic width
                 // Latch initial size for fixed columns and update it constantly for auto-resizing column (unless clipped!)
-                if (column.autoFitQueue != 0x00 || (column.flags has Tcf.WidthAuto && column.isVisibleX))
+                if (column.autoFitQueue != 0x00)
+                    column.widthRequest = widthAuto
+                else if (column.flags has Tcf.WidthFixed && !columnIsResizable && requestOutputMaskByIndex has (1L shl columnN))
                     column.widthRequest = widthAuto
 
                 // FIXME-TABLE: Increase minimum size during init frame to avoid biasing auto-fitting widgets
@@ -903,17 +905,15 @@ class Table {
 
         // Sizing Policy
         if (flags hasnt Tcf.WidthMask_) {
-            // FIXME-TABLE: clarify promotion to WidthAuto?
             flags = flags or when (val tableSizingPolicy = this.flags and Tf._SizingMask) {
-                Tf.SizingFixedFit.i, Tf.SizingFixedSame.i ->
-                    if (this.flags has Tf.Resizable && flags hasnt Tcf.NoResize) Tcf.WidthFixed else Tcf.WidthAuto
+                Tf.SizingFixedFit.i, Tf.SizingFixedSame.i -> Tcf.WidthFixed
                 else -> Tcf.WidthStretch
             }
         } else
             assert((flags and Tcf.WidthMask_).isPowerOfTwo) { "Check that only 1 of each set is used." }
 
         // Resize
-        if (flags has Tcf.WidthAuto || flags hasnt Tf.Resizable)
+        if (this.flags hasnt Tf.Resizable)
             flags = flags or Tcf.NoResize
 
         // Sorting
@@ -936,7 +936,7 @@ class Table {
         column.sortDirectionsAvailCount = 0
         column.sortDirectionsAvailMask = 0
         column.sortDirectionsAvailList = 0
-        if (flags has Tf.Sortable) {
+        if (this.flags has Tf.Sortable) {
             var count = 0
             var mask = 0
             var list = 0
@@ -960,7 +960,7 @@ class Table {
                 list = list or (SortDirection.Descending.i shl (count shl 1))
                 count++
             }
-            if (flags has Tf.SortTristate || count == 0) {
+            if (this.flags has Tf.SortTristate || count == 0) {
                 mask = mask or (1 shl SortDirection.None.i)
                 count++
             }
@@ -1142,7 +1142,7 @@ class Table {
 
             val sizeAllDesc = when {
                 columnsEnabledFixedCount == columnsEnabledCount && flags and Tf._SizingMask != Tf.SizingFixedSame.i -> "Size all columns to fit###SizeAll"        // All fixed
-                else -> "Size all columns to default###SizeAll";    // All stretch or mixed
+                else -> "Size all columns to default###SizeAll"    // All stretch or mixed
             }
             if (menuItem(sizeAllDesc, ""))
                 setColumnWidthAutoAll()
