@@ -102,18 +102,21 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl */
     var configMacOSXBehaviors = false
 
-    /** Set to false to disable blinking cursor, for users who consider it distracting. */
+    /** Enable blinking cursor (optional as some users consider it to be distracting).. */
     var configInputTextCursorBlink = true
+
+    /** [BETA] Enable turning DragXXX widgets into text input with a simple mouse click-release (without moving). Not desirable on devices without a keyboard. */
+    var configDragClickToInputText = false
 
     /** Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be WindowFlag.ResizeFromAnySide flag) */
     var configWindowsResizeFromEdges = true
 
-    /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
+    /** Enable allowing to move windows only when clicking on their title bar. Does not apply to windows without a title bar. */
     var configWindowsMoveFromTitleBarOnly = false
 
-    /** [BETA] Free transient windows/tables memory buffers when unused for given amount of time. Set to -1.0f to disable. */
+    /** Timer (in seconds) to free transient windows/tables memory buffers when unused. Set to -1.0f to disable. */
     var configMemoryCompactTimer = 60f
 
     //------------------------------------------------------------------

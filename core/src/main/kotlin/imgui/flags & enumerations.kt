@@ -768,40 +768,40 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
     WidthFixed(1 shl 3),
 
     /** Disable manual resizing. */
-    NoResize(1 shl 5),
+    NoResize(1 shl 4),
 
     /** Disable manual reordering this column, this will also prevent other columns from crossing over this column. */
-    NoReorder(1 shl 6),
+    NoReorder(1 shl 5),
 
     /** Disable ability to hide/disable this column. */
-    NoHide(1 shl 7),
+    NoHide(1 shl 6),
 
     /** Disable clipping for this column (all NoClip columns will render in a same draw command). */
-    NoClip(1 shl 8),
+    NoClip(1 shl 7),
 
     /** Disable ability to sort on this field (even if ImGuiTableFlags_Sortable is set on the table). */
-    NoSort(1 shl 9),
+    NoSort(1 shl 8),
 
     /** Disable ability to sort in the ascending direction. */
-    NoSortAscending(1 shl 10),
+    NoSortAscending(1 shl 9),
 
     /** Disable ability to sort in the descending direction. */
-    NoSortDescending(1 shl 11),
+    NoSortDescending(1 shl 10),
 
     /** Disable header text width contribution to automatic column width. */
-    NoHeaderWidth(1 shl 12),
+    NoHeaderWidth(1 shl 11),
 
     /** Make the initial sort direction Ascending when first sorting on this column (default). */
-    PreferSortAscending(1 shl 13),
+    PreferSortAscending(1 shl 12),
 
     /** Make the initial sort direction Descending when first sorting on this column. */
-    PreferSortDescending(1 shl 14),
+    PreferSortDescending(1 shl 13),
 
     /** Use current Indent value when entering cell (default for column 0). */
-    IndentEnable(1 shl 15),
+    IndentEnable(1 shl 14),
 
     /** Ignore current Indent value when entering cell (default for columns > 0). Indentation changes _within_ the cell will still be honored. */
-    IndentDisable(1 shl 16),
+    IndentDisable(1 shl 15),
 
     // Output status flags, read-only via TableGetColumnFlags()
 
