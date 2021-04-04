@@ -32,10 +32,7 @@ import imgui.ImGui.tableGetHoveredColumn
 import imgui.ImGui.tableOpenContextMenu
 import imgui.ImGui.tableSetColumnSortDirection
 import imgui.classes.TableSortSpecs
-import imgui.internal.classes.COL32_DISABLE
-import imgui.internal.classes.Rect
-import imgui.internal.classes.TABLE_MAX_COLUMNS
-import imgui.internal.classes.TABLE_RESIZE_SEPARATOR_HALF_THICKNESS
+import imgui.internal.classes.*
 import imgui.internal.floor
 import imgui.internal.sections.ButtonFlag
 import imgui.internal.sections.NavHighlightFlag
@@ -120,6 +117,20 @@ interface tables {
             outerWindow.dc.cursorMaxPos.y = table.rowPosY2
         }
 
+        // Setup inner scrolling range
+        // FIXME: This ideally should be done earlier, in BeginTable() SetNextWindowContentSize call, just like writing to inner_window->DC.CursorMaxPos.y,
+        // but since the later is likely to be impossible to do we'd rather update both axises together.
+        if (table.flags has Tf.ScrollX) {
+            val outerPaddingForBorder = if(table.flags has Tf.BordersOuterV) TABLE_BORDER_SIZE else 0f
+            val inner = table.innerWindow!!
+            var maxPosX = inner.dc.cursorMaxPos.x
+            if (table.rightMostEnabledColumn != -1)
+                maxPosX = maxPosX max (table.columns[table.rightMostEnabledColumn].workMaxX + table.cellPaddingX + table.outerPaddingX - outerPaddingForBorder)
+            if (table.resizedColumn != -1)
+                maxPosX = maxPosX max table.resizeLockMinContentsX2
+            inner.dc.cursorMaxPos.x = maxPosX
+        }
+
         table.workRect.max.y = table.workRect.max.y max table.outerRect.max.y
         table.lastOuterHeight = table.outerRect.height
 
@@ -185,7 +196,6 @@ interface tables {
 
         // Restore window data that we modified
         val backupOuterMaxPos = Vec2(outerWindow.dc.cursorMaxPos)
-        val backupInnerMaxPos = Vec2(innerWindow.dc.cursorMaxPos)
         innerWindow.workRect put table.hostBackupWorkRect
         innerWindow.parentWorkRect put table.hostBackupParentWorkRect
         innerWindow.skipItems = table.hostSkipItems
@@ -210,16 +220,10 @@ interface tables {
 
         // Override declared contents width to enable auto-resize on the X axis when possible
         // FIXME-TABLE: This can be improved (e.g. for Fixed columns we don't want to auto AutoFitWidth? or propagate window auto-fit to table?)
-        if (table.flags has Tf.ScrollX) {
-            var maxPosX = backupInnerMaxPos.x
-            if (table.rightMostEnabledColumn != -1)
-                maxPosX = maxPosX max table.columns[table.rightMostEnabledColumn].maxX
-            if (table.resizedColumn != -1)
-                maxPosX = maxPosX max table.resizeLockMinContentsX2
-            innerWindow.dc.cursorMaxPos.x = maxPosX // For inner scrolling
-            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.min.x + table.columnsGivenWidth + innerWindow.scrollbarSizes.x) // For outer scrolling
-        } else
-            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.workRect.min.x + outerWidth) // For auto-fit
+        outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max when {
+            table.flags has Tf.ScrollX -> table.outerRect.min.x + table.columnsGivenWidth + innerWindow.scrollbarSizes.x // For outer scrolling
+            else -> table.workRect.min.x + outerWidth
+        } // For auto-fit
 
         // Save settings
         if (table.isSettingsDirty)

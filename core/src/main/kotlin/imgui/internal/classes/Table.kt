@@ -653,7 +653,7 @@ class Table {
         }
         columnsEnabledFixedCount = countFixed
 
-        // [Part 5] Apply final widths based on requested widths
+        // [Part 4] Apply final widths based on requested widths
         //        val work_rect = table->WorkRect; [JVM] we use the same instance!
         val widthSpacings = outerPaddingX * 2f + (cellSpacingX1 + cellSpacingX2) * (columnsEnabledCount - 1)
         val widthAvail = if (flags has Tf.ScrollX && innerWidth == 0f) innerClipRect.width else workRect.width
@@ -682,7 +682,7 @@ class Table {
             columnsGivenWidth += column.widthGiven
         }
 
-        // [Part 6] Redistribute stretch remainder width due to rounding (remainder width is < 1.0f * number of Stretch column).
+        // [Part 5] Redistribute stretch remainder width due to rounding (remainder width is < 1.0f * number of Stretch column).
         // Using right-to-left distribution (more likely to match resizing cursor).
         if (widthRemainingForStretchedColumns >= 1f && flags hasnt Tf.PreciseWidths) {
             var orderN = columnsCount - 1
@@ -708,7 +708,7 @@ class Table {
         val mouseHitRect = Rect(outerRect.min.x, outerRect.min.y, outerRect.max.x, outerRect.max.y max (outerRect.min.y + lastOuterHeight))
         val isHoveringTable = itemHoverable(mouseHitRect, 0)
 
-        // [Part 7] Setup final position, offset, skip/clip states and clipping rectangles, detect hovered column
+        // [Part 6] Setup final position, offset, skip/clip states and clipping rectangles, detect hovered column
         // Process columns in their visible orders as we are comparing the visible order and adjusting host_clip_rect while looping.
         var visibleN = 0
         var offsetXFrozen = freezeColumnsCount > 0
@@ -838,7 +838,7 @@ class Table {
             visibleN++
         }
 
-        // [Part 8] Detect/store when we are hovering the unused space after the right-most column (so e.g. context menus can react on it)
+        // [Part 7] Detect/store when we are hovering the unused space after the right-most column (so e.g. context menus can react on it)
         // Clear Resizable flag if none of our column are actually resizable (either via an explicit _NoResize flag, either
         // because of using _WidthAuto/_WidthStretch). This will hide the resizing option from the context menu.
         val unusedX1 = workRect.min.x max columns[rightMostEnabledColumn].clipRect.max.x
@@ -849,7 +849,7 @@ class Table {
         if (!hasResizable && flags has Tf.Resizable)
             flags = flags wo Tf.Resizable
 
-        // [Part 9] Lock actual OuterRect/WorkRect right-most position.
+        // [Part 8] Lock actual OuterRect/WorkRect right-most position.
         // This is done late to handle the case of fixed-columns tables not claiming more widths that they need.
         // Because of this we are careful with uses of WorkRect and InnerClipRect before this point.
         if (rightMostStretchedColumn != -1)
@@ -863,17 +863,17 @@ class Table {
         borderX1 = innerClipRect.min.x // +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : -1.0f);
         borderX2 = innerClipRect.max.x // +((table->Flags & ImGuiTableFlags_BordersOuter) ? 0.0f : +1.0f);
 
-        // [Part 10] Allocate draw channels and setup background cliprect
+        // [Part 9] Allocate draw channels and setup background cliprect
         setupDrawChannels()
 
-        // [Part 11] Hit testing on borders
+        // [Part 10] Hit testing on borders
         if (flags has Tf.Resizable)
             updateBorders()
         lastFirstRowHeight = 0f
         isLayoutLocked = true
         isUsingHeaders = false
 
-        // [Part 12] Context menu
+        // [Part 11] Context menu
         if (isContextPopupOpen && instanceCurrent == instanceInteracted) {
             val contextMenuId = hashStr("##ContextMenu", 0, id)
             if (beginPopupEx(contextMenuId, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)) {
@@ -882,7 +882,7 @@ class Table {
             } else isContextPopupOpen = false
         }
 
-        // [Part 13] Sanitize and build sort specs before we have a change to use them for display.
+        // [Part 12] Sanitize and build sort specs before we have a change to use them for display.
         // This path will only be exercised when sort specs are modified before header rows (e.g. init or visibility change)
         if (isSortSpecsDirty && flags has Tf.Sortable)
             sortSpecsBuild()

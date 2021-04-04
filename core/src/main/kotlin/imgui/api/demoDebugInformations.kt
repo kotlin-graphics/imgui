@@ -541,8 +541,8 @@ interface demoDebugInformations {
 
         /** Tables Rect Type */
         enum class TRT {
-            OuterRect, InnerRect,WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsClipRect,
-            ColumnsContentHeadersUsed, ColumnsContentHeadersIdeal, ColumnsContentFrozen, ColumnsContentUnfrozen;
+            OuterRect, InnerRect,WorkRect, HostClipRect, InnerClipRect, BackgroundClipRect, ColumnsRect, ColumnsWorkRect,
+            ColumnsClipRect, ColumnsContentHeadersUsed, ColumnsContentHeadersIdeal, ColumnsContentFrozen, ColumnsContentUnfrozen;
 
             companion object {
                 val names = WRT.values().map { it.name }
@@ -580,6 +580,7 @@ interface demoDebugInformations {
                 TRT.InnerClipRect -> table.innerClipRect
                 TRT.BackgroundClipRect -> table.bgClipRect
                 TRT.ColumnsRect -> table.columns[n].let { c -> Rect(c.minX, table.innerClipRect.min.y, c.maxX, table.innerClipRect.min.y + table.lastOuterHeight) }
+                TRT.ColumnsWorkRect -> table.columns[n].let { c -> Rect(c.workMinX, table.workRect.min.y, c.workMaxX, table.workRect.max.y) }
                 TRT.ColumnsClipRect -> table.columns[n].clipRect
                 TRT.ColumnsContentHeadersUsed -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersUsed, table.innerClipRect.min.y + table.lastFirstRowHeight) } // Note: y1/y2 not always accurate
                 TRT.ColumnsContentHeadersIdeal -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersIdeal, table.innerClipRect.min.y + table.lastFirstRowHeight) }
