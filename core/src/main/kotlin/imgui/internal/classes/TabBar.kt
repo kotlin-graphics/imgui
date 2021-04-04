@@ -668,7 +668,8 @@ class TabBar {
         // Actual layout in host window (we don't do it in BeginTabBar() so as not to waste an extra frame)
         val window = g.currentWindow!!
         window.dc.cursorPos put barRect.min
-        itemSize(Vec2(widthAllTabsIdeal, barRect.height), framePadding.y)
+        itemSize(barRect.size, framePadding.y)
+        window.dc.idealMaxPos.x = window.dc.idealMaxPos.x max (barRect.min.x + widthAllTabsIdeal)
     }
 
     /** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.
