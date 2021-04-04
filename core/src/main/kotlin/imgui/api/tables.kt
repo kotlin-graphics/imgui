@@ -107,15 +107,17 @@ interface tables {
         innerWindow.dc.prevLineSize put table.hostBackupPrevLineSize
         innerWindow.dc.currLineSize put table.hostBackupCurrLineSize
         innerWindow.dc.cursorMaxPos put table.hostBackupCursorMaxPos
-
+        val innerContentMaxY = table.rowPosY2
+        assert(table.rowPosY2 == innerWindow.dc.cursorPos.y)
         if (innerWindow !== outerWindow)
-            innerWindow.dc.cursorMaxPos.y = table.rowPosY2
+            innerWindow.dc.cursorMaxPos.y = innerContentMaxY
         else if (flags hasnt Tf.NoHostExtendY) {
             // Patch OuterRect/InnerRect height
-            table.outerRect.max.y = table.outerRect.max.y max innerWindow.dc.cursorPos.y
+            table.outerRect.max.y = table.outerRect.max.y max innerContentMaxY
             table.innerRect.max.y = table.outerRect.max.y
-            outerWindow.dc.cursorMaxPos.y = table.rowPosY2
         }
+        table.workRect.max.y = table.workRect.max.y max table.outerRect.max.y
+        table.lastOuterHeight = table.outerRect.height
 
         // Setup inner scrolling range
         // FIXME: This ideally should be done earlier, in BeginTable() SetNextWindowContentSize call, just like writing to inner_window->DC.CursorMaxPos.y,
@@ -131,9 +133,7 @@ interface tables {
             inner.dc.cursorMaxPos.x = maxPosX
         }
 
-        table.workRect.max.y = table.workRect.max.y max table.outerRect.max.y
-        table.lastOuterHeight = table.outerRect.height
-
+        // Pop clipping rect
         if (flags hasnt Tf.NoClip)
             innerWindow.drawList.popClipRect()
         innerWindow.clipRect put innerWindow.drawList._clipRectStack.last()
@@ -224,6 +224,10 @@ interface tables {
             table.flags has Tf.ScrollX -> table.outerRect.min.x + table.columnsGivenWidth + innerWindow.scrollbarSizes.x // For outer scrolling
             else -> table.workRect.min.x + outerWidth
         } // For auto-fit
+
+        // Override declared contents height
+        if (innerWindow === outerWindow && flags hasnt Tf.NoHostExtendY)
+            outerWindow.dc.cursorMaxPos.y = outerWindow.dc.cursorMaxPos.y max innerContentMaxY
 
         // Save settings
         if (table.isSettingsDirty)
