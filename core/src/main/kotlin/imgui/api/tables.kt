@@ -70,7 +70,7 @@ interface tables {
 
     /** Read about "TABLE SIZING" at the top of this file. */
     fun beginTable(strId: String, columnsCount: Int, flags: TableFlags = Tf.None.i,
-                   outerSize: Vec2 = Vec2(-Float.MIN_VALUE, 0f), innerWidth: Float = 0f): Boolean {
+                   outerSize: Vec2 = Vec2(), innerWidth: Float = 0f): Boolean {
         val id = getID(strId)
         return beginTableEx(strId, id, columnsCount, flags, outerSize, innerWidth)
     }
@@ -223,7 +223,7 @@ interface tables {
         }
 
         // Override declared contents width/height to enable auto-resize while not needlessly adding a scrollbar
-        if (table.isOuterRectMinFitX) {
+        if (table.flags has Tf.NoHostExtendX) {
             // FIXME-TABLE: Could we remove this section?
             // ColumnsAutoFitWidth may be one frame ahead here since for Fixed+NoResize is calculated from latest contents
             assert(table.flags hasnt Tf.ScrollX)

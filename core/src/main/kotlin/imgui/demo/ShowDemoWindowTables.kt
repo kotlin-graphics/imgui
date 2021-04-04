@@ -230,8 +230,7 @@ object ShowDemoWindowTables {
     var flags14 = Tf.None.i
 
     /* Outer size */
-    var flags15 = Tf.Borders or Tf.Resizable or Tf.ContextMenuInBody or Tf.RowBg or Tf.SizingFixedFit
-    var fixedFill2 = false
+    var flags15 = Tf.Borders or Tf.Resizable or Tf.ContextMenuInBody or Tf.RowBg or Tf.SizingFixedFit or Tf.NoHostExtendX
 
     /* Background color */
     var flags16 = Tf.RowBg.i
@@ -362,7 +361,7 @@ object ShowDemoWindowTables {
     var freezeCols1 = 1
     var freezeRows1 = 1
     var itemsCount = templateItemsNames.size * 2
-    val outerSizeValue = Vec2(-Float.MIN_VALUE, TEXT_BASE_HEIGHT * 12)
+    val outerSizeValue = Vec2(0f, TEXT_BASE_HEIGHT * 12)
     var rowMinHeight = 0f // Auto
     var innerWidthWithScroll = 0f // Auto-extend
     var outerSizeEnabled = true
@@ -808,7 +807,7 @@ object ShowDemoWindowTables {
                 }
             }
 
-            outerSize.put(-Float.MIN_VALUE, TEXT_BASE_HEIGHT * 7)
+            outerSize.put(0f, TEXT_BASE_HEIGHT * 7)
             table("##table2", columnCount0, flags8, outerSize) {
                 for (cell in 0 until 10 * columnCount0) {
                     tableNextColumn()
@@ -844,8 +843,8 @@ object ShowDemoWindowTables {
 
             // When using ScrollX or ScrollY we need to specify a size for our table container!
             // Otherwise by default the table will fit all available space, like a BeginChild() call.
-            val size = Vec2(-Float.MIN_VALUE, TEXT_BASE_HEIGHT * 8)
-            table("##table1", 3, flags9, size) {
+            val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 8)
+            table("##table1", 3, flags9, outerSize) {
                 tableSetupScrollFreeze(0, 1) // Make top row always visible
                 tableSetupColumn("One", Tcf.None.i)
                 tableSetupColumn("Two", Tcf.None.i)
@@ -887,7 +886,7 @@ object ShowDemoWindowTables {
 
             // When using ScrollX or ScrollY we need to specify a size for our table container!
             // Otherwise by default the table will fit all available space, like a BeginChild() call.
-            val outerSize = Vec2(-Float.MIN_VALUE, TEXT_BASE_HEIGHT * 8)
+            val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 8)
             table("##table1", 7, flags10, outerSize) {
                 tableSetupScrollFreeze(freezeCols0, freezeRows0)
                 tableSetupColumn("Line #", Tcf.NoHide.i) // Make the first column not hideable to match our use of TableSetupScrollFreeze()
@@ -967,8 +966,8 @@ object ShowDemoWindowTables {
             // Create the real table we care about for the example!
             // We use a scrolling table to be able to showcase the difference between the _IsEnabled and _IsVisible flags above, otherwise in
             // a non-scrolling table columns are always visible (unless using ImGuiTableFlags_NoKeepColumnsVisible + resizing the parent window down)
-            val size = Vec2(-Float.MIN_VALUE, TEXT_BASE_HEIGHT * 9)
-            table("##table", columnCount1, flags12, size) {
+            val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 9)
+            table("##table", columnCount1, flags12, outerSize) {
                 for (column in 0 until columnCount1)
                     tableSetupColumn(columnNames[column], columnFlags[column])
                 tableHeadersRow()
@@ -1093,16 +1092,17 @@ object ShowDemoWindowTables {
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
         treeNode("Outer size") {
-            // Showcasing use of outer_size.x == 0.0f and ImGuiTableFlags_NoHostExtendY
-            // The default value of outer_size.x is -FLT_MIN which right-align tables.
-            // Using outer_size.x == 0.0f on a table with no scrolling and no stretch column we can make them tighter.
-            text("Using auto/all width, using NoHostExtendY:")
+            // Showcasing use of ImGuiTableFlags_NoHostExtendX and ImGuiTableFlags_NoHostExtendY
+            // Important to that note how the two flags have slightly different behaviors!
+            text("Using NoHostExtendX and NoHostExtendY:")
             pushingStyleCompact {
-                checkbox("fill", ::fixedFill2)
+                checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags15, Tf.NoHostExtendX.i)
+                sameLine(); helpMarker("Make outer width auto-fit to columns, overriding outer_size.x value.\n\nOnly available when ScrollX/ScrollY are disabled and Stretch columns are not used.")
                 checkboxFlags("ImGuiTableFlags_NoHostExtendY", ::flags15, Tf.NoHostExtendY.i)
+                sameLine(); helpMarker("Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit).\n\nOnly available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.")
             }
 
-            val outerSize = Vec2(if (fixedFill2) -Float.MIN_VALUE else 0f, TEXT_BASE_HEIGHT * 5.5f)
+            val outerSize = Vec2(0f, TEXT_BASE_HEIGHT * 5.5f)
             table("##table3", 3, flags15, outerSize) {
                 for (row in 0..9) { // TODO dsl this pattern?
                     tableNextRow()
@@ -1402,7 +1402,7 @@ object ShowDemoWindowTables {
                 sameLine(); helpMarker("When sorting is enabled: allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0).")
             }
 
-            table("##table", 4, flags19, Vec2(-Float.MIN_VALUE, TEXT_BASE_HEIGHT * 15), 0f) {
+            table("##table", 4, flags19, Vec2(0f, TEXT_BASE_HEIGHT * 15), 0f) {
                 // Declare columns
                 // We use the "user_id" parameter of TableSetupColumn() to specify a user id that will be stored in the sort specifications.
                 // This is so our sort function can identify a column given our own identifier. We could also identify them based on their index!
@@ -1485,7 +1485,11 @@ object ShowDemoWindowTables {
                         val flags = intArrayOf(flags20)
                         editTableSizingFlags(flags, 0)
                         flags20 = flags[0]
+                        sameLine(); helpMarker("In the Advanced demo we override the policy of each column so those table-wide settings have less effect that typical.")
+                        checkboxFlags("ImGuiTableFlags_NoHostExtendX", ::flags20, Tf.NoHostExtendX.i)
+                        sameLine(); helpMarker("Make outer width auto-fit to columns, overriding outer_size.x value.\n\nOnly available when ScrollX/ScrollY are disabled and Stretch columns are not used.")
                         checkboxFlags("ImGuiTableFlags_NoHostExtendY", ::flags20, Tf.NoHostExtendY.i)
+                        sameLine(); helpMarker("Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit).\n\nOnly available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.")
                         checkboxFlags("ImGuiTableFlags_NoKeepColumnsVisible", ::flags20, Tf.NoKeepColumnsVisible.i)
                         sameLine(); helpMarker("Only available if ScrollX is disabled.")
                         checkboxFlags("ImGuiTableFlags_PreciseWidths", ::flags20, Tf.PreciseWidths.i)
@@ -1576,7 +1580,7 @@ object ShowDemoWindowTables {
                 tableSetupColumn("Name", Tcf.WidthFixed.i, 0f, MyItemColumnID.Name.ordinal)
                 tableSetupColumn("Action", Tcf.NoSort or Tcf.WidthFixed, 0f, MyItemColumnID.Action.ordinal)
                 tableSetupColumn("Quantity", Tcf.PreferSortDescending.i, 0f, MyItemColumnID.Quantity.ordinal)
-                tableSetupColumn("Description", Tcf.WidthStretch.i, 0f, MyItemColumnID.Description.ordinal)
+                tableSetupColumn("Description", if(flags20 has Tf.NoHostExtendX) 0 else Tcf.WidthStretch.i, 0f, MyItemColumnID.Description.ordinal)
                 tableSetupColumn("Hidden", Tcf.DefaultHide or Tcf.NoSort)
                 tableSetupScrollFreeze(freezeCols1, freezeRows1)
 

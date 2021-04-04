@@ -241,9 +241,9 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
     if (flags has Tf.Resizable)
         flags = flags or Tf.BordersInnerV
 
-    // Adjust flags: disable NoHostExtendY if we have any scrolling going on
+    // Adjust flags: disable NoHostExtendX/NoHostExtendY if we have any scrolling going on
     if (flags has Tf.NoHostExtendY && flags has (Tf.ScrollX or Tf.ScrollY))
-        flags = flags wo Tf.NoHostExtendY
+        flags = flags wo (Tf.NoHostExtendX or Tf.NoHostExtendY)
 
     // Adjust flags: NoBordersInBodyUntilResize takes priority over NoBordersInBody
     if (flags has Tf.NoBordersInBodyUntilResize)

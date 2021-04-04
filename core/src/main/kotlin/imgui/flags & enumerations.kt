@@ -683,48 +683,51 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     SizingStretchProp(3 shl 13),
 
     /** Columns default to _WidthStretch with default weights all equal, unless overriden by TableSetupColumn(). */
-    SizingStretchSame(1 shl 14),
+    SizingStretchSame(4 shl 13),
 
-    /** Disable extending table past the limit set by outer_size.y. Only meaningful when neither ScrollX nor ScrollY are set (data below the limit will be clipped and not visible) */
-    NoHostExtendY(1 shl 16),
+    /** Make outer width auto-fit to columns, overriding outer_size.x value. Only available when ScrollX/ScrollY are disabled and Stretch columns are not used. */
+    NoHostExtendX(1 shl 16),
+
+    /** Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit). Only available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible. */
+    NoHostExtendY(1 shl 17),
 
     /** Disable keeping column always minimally visible when ScrollX is off and table gets too small. Not recommended if columns are resizable. */
-    NoKeepColumnsVisible(1 shl 17),
+    NoKeepColumnsVisible(1 shl 18),
 
     /** Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth. */
-    PreciseWidths(1 shl 18),
+    PreciseWidths(1 shl 19),
 
     // Clipping
 
     /** Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze(). */
-    NoClip(1 shl 19),
+    NoClip(1 shl 20),
 
     // Padding
 
     /** Default if BordersOuterV is on. Enable outer-most padding. Generally desirable if you have headers. */
-    PadOuterX(1 shl 20),
+    PadOuterX(1 shl 21),
 
     /** Default if BordersOuterV is off. Disable outer-most padding. */
-    NoPadOuterX(1 shl 21),
+    NoPadOuterX(1 shl 22),
 
     /** Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off). */
-    NoPadInnerX(1 shl 22),
+    NoPadInnerX(1 shl 23),
 
     // Scrolling
 
     /** Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this create a child window, ScrollY is currently generally recommended when using ScrollX. */
-    ScrollX(1 shl 23),
+    ScrollX(1 shl 24),
 
     /** Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. */
-    ScrollY(1 shl 24),
+    ScrollY(1 shl 25),
 
     // Sorting
 
     /** Hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1). */
-    SortMulti(1 shl 25),
+    SortMulti(1 shl 26),
 
     /** Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0). */
-    SortTristate(1 shl 26),
+    SortTristate(1 shl 27),
 
     /** [Internal] Combinations and masks */
     _SizingMask(SizingFixedFit or SizingFixedSame or SizingStretchProp or SizingStretchSame);

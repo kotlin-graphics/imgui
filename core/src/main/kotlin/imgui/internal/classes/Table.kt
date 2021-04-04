@@ -330,9 +330,6 @@ class Table {
     /** Set when we got past the frozen row. */
     var isUnfrozenRows = false
 
-    /** Set when outer_size.x == 0.0f in BeginTable(), scrolling is disabled, and there are no stretch columns. */
-    var isOuterRectMinFitX = false
-
     /** Set if user didn't explicitely set a sizing policy in BeginTable() */
     var isDefaultSizingPolicy = false
 
@@ -858,8 +855,9 @@ class Table {
         // [Part 8] Lock actual OuterRect/WorkRect right-most position.
         // This is done late to handle the case of fixed-columns tables not claiming more widths that they need.
         // Because of this we are careful with uses of WorkRect and InnerClipRect before this point.
-        isOuterRectMinFitX = userOuterSize.x == 0f && rightMostStretchedColumn == -1 && innerWindow == outerWindow
-        if (isOuterRectMinFitX) {
+        if (rightMostStretchedColumn != -1)
+            flags = flags wo Tf.NoHostExtendX
+        if (flags has Tf.NoHostExtendX) {
             outerRect.max.x = unusedX1
             workRect.max.x = unusedX1
             innerClipRect.max.x = innerClipRect.max.x min unusedX1
@@ -1069,11 +1067,12 @@ class Table {
                 val isResized = resizedColumn == columnN && instanceInteracted == instanceCurrent
                 val isResizable = column.flags hasnt (Tcf.NoResize or Tcf.NoDirectResize_)
                 val isFrozenSeparator = freezeColumnsCount != -1 && freezeColumnsCount == orderN + 1
-
                 if (column.maxX > innerClipRect.max.x && !isResized)
                     continue
+
+                // Decide whether right-most column is visible
                 if (column.nextEnabledColumn == -1 && !isResizable)
-                    if (flags and Tf._SizingMask != Tf.SizingFixedSame.i || isOuterRectMinFitX)
+                    if (flags and Tf._SizingMask != Tf.SizingFixedSame.i || flags has Tf.NoHostExtendX)
                         continue
                 if (column.maxX <= column.clipRect.min.x) // FIXME-TABLE FIXME-STYLE: Assume BorderSize==1, this is problematic if we want to increase the border size..
                     continue
