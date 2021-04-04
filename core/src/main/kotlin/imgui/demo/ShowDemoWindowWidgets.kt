@@ -27,7 +27,6 @@ import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorEdit3
 import imgui.ImGui.colorEdit4
 import imgui.ImGui.colorPicker4
-import imgui.ImGui.columns
 import imgui.ImGui.combo
 import imgui.ImGui.cursorPos
 import imgui.ImGui.cursorScreenPos
@@ -89,7 +88,6 @@ import imgui.ImGui.labelText
 import imgui.ImGui.listBox
 import imgui.ImGui.menuItem
 import imgui.ImGui.newLine
-import imgui.ImGui.nextColumn
 import imgui.ImGui.openPopup
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.plotLines
@@ -150,14 +148,13 @@ import imgui.dsl.smallButton
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
 import imgui.dsl.withButtonRepeat
-import imgui.dsl.withId
+import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
 import imgui.dsl.withTextWrapPos
 import imgui.internal.sections.ItemFlags
 import imgui.or
-import kool.BYTES
 import unsigned.Ubyte
 import unsigned.Uint
 import unsigned.Ulong
@@ -463,7 +460,7 @@ object ShowDemoWindowWidgets {
             for (i in 0..6) {
                 if (i > 0)
                     sameLine()
-                withId(i) {
+                withID(i) {
                     withStyleColor(
                             Col.Button, Color.hsv(i / 7f, 0.6f, 0.6f),
                             Col.ButtonHovered, Color.hsv(i / 7f, 0.7f, 0.7f),
@@ -811,7 +808,7 @@ object ShowDemoWindowWidgets {
             }
             textWrapped("And now some textured buttons..")
             for (i in 0..7) {
-                withId(i) {
+                withID(i) {
                     val framePadding = -1 + i                             // -1 == uses default padding (style.FramePadding)
                     val size = Vec2(32)                     // Size of the image we want to make visible
                     val uv0 = Vec2()                        // UV coordinates for lower-left
@@ -1156,7 +1153,7 @@ object ShowDemoWindowWidgets {
                     separator()
                     text("Palette")
                     savedPalette.forEachIndexed { n, c ->
-                        withId(n) {
+                        withID(n) {
                             if ((n % 8) != 0)
                                 sameLine(0f, style.itemSpacing.y)
 
@@ -1447,10 +1444,10 @@ object ShowDemoWindowWidgets {
                 vSliderInt("##int", Vec2(18, 160), ::intValue, 0, 5)
                 sameLine()
 
-                withId("set1") {
+                withID("set1") {
                     for (i in 0..6) {
                         if (i > 0) sameLine()
-                        withId(i) {
+                        withID(i) {
                             withStyleColor(
                                     Col.FrameBg, Color.hsv(i / 7f, 0.5f, 0.5f),
                                     Col.FrameBgHovered, Color.hsv(i / 7f, 0.6f, 0.5f),
@@ -1465,14 +1462,14 @@ object ShowDemoWindowWidgets {
                 }
 
                 sameLine()
-                withId("set2") {
+                withID("set2") {
                     val rows = 3
                     val smallSliderSize = Vec2(18, floor((160f - (rows - 1) * spacing) / rows))
                     for (nx in 0..3) {
                         if (nx > 0) sameLine()
                         group {
                             for (ny in 0 until rows) {
-                                withId(nx * rows + ny) {
+                                withID(nx * rows + ny) {
                                     withFloat(values2, nx) { f ->
                                         vSliderFloat("##v", smallSliderSize, f, 0f, 1f, "")
                                     }
@@ -1485,10 +1482,10 @@ object ShowDemoWindowWidgets {
                 }
 
                 sameLine()
-                withId("set3") {
+                withID("set3") {
                     for (i in 0..3) {
                         if (i > 0) sameLine()
-                        withId(i) {
+                        withID(i) {
                             withStyleVar(StyleVar.GrabMinSize, 40f) {
                                 withFloat(values1, i) {
                                     vSliderFloat("##v", Vec2(40, 160), it, 0f, 1f, "%.2f\nsec")

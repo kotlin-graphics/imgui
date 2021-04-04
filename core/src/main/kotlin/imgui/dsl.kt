@@ -226,19 +226,19 @@ object dsl {
 
     // ID stack/scopes
 
-    inline fun withId(id: Int, block: () -> Unit) {
+    inline fun withID(id: Int, block: () -> Unit) {
         pushID(id)
         block()
         popID()
     }
 
-    inline fun withId(id: String, block: () -> Unit) {
+    inline fun withID(id: String, block: () -> Unit) {
         pushID(id)
         block()
         popID()
     }
 
-    inline fun withId(id: Any, block: () -> Unit) {
+    inline fun withID(id: Any, block: () -> Unit) {
         pushID(id)
         block()
         popID()

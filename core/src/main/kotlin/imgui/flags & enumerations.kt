@@ -675,11 +675,14 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching contents width. */
     SizingFixedFit(1 shl 13),
 
+    /** Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching the maximum contents width of all columns. Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible. */
+    SizingFixedSame(2 shl 13),
+
+    /** Columns default to _WidthStretch with default weights proportional to each columns contents widths. */
+    SizingStretchProp(3 shl 13),
+
     /** Columns default to _WidthStretch with default weights all equal, unless overriden by TableSetupColumn(). */
     SizingStretchSame(1 shl 14),
-
-    /** Make all columns the same widths which is useful with Fixed columns policy (but granted by default with Stretch policy + no resize). Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible and disable ImGuiTableFlags_Resizable. */
-    SameWidths(1 shl 15),
 
     /** Disable extending table past the limit set by outer_size.y. Only meaningful when neither ScrollX nor ScrollY are set (data below the limit will be clipped and not visible) */
     NoHostExtendY(1 shl 16),
@@ -720,7 +723,10 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     SortMulti(1 shl 25),
 
     /** Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0). */
-    SortTristate(1 shl 26);
+    SortTristate(1 shl 26),
+
+    /** [Internal] Combinations and masks */
+    _SizingMask(SizingFixedFit or SizingFixedSame or SizingStretchProp or SizingStretchSame);
 
     infix fun and(b: TableFlag): TableFlags = i and b.i
     infix fun and(b: TableFlags): TableFlags = i and b
@@ -754,13 +760,13 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
     /** Default as a sorting column. */
     DefaultSort(1 shl 1),
 
-    /** Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _SizingStretchSame). */
+    /** Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _SizingStretchSame or _SizingStretchProp). */
     WidthStretch(1 shl 2),
 
     /** Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _SizingFixedFit and table is resizable). */
     WidthFixed(1 shl 3),
 
-    /** Column will not stretch and keep resizing based on submitted contents (default if table sizing policy is _SizingFixedFit and table is not resizable).
+    /** Column will not stretch and keep resizing based on submitted contents (default if table sizing policy is _SizingFixedFit and table is not resizable, or policy is _SizingFixedSame).
      *  Generally compatible with using right-most fitting widgets (e.g. SetNextItemWidth(-FLT_MIN))     */
     WidthAuto(1 shl 4),
 

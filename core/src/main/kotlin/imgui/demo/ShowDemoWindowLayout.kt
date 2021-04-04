@@ -102,7 +102,7 @@ import imgui.dsl.popup
 import imgui.dsl.tabBar
 import imgui.dsl.treeNode
 import imgui.dsl.withClipRect
-import imgui.dsl.withId
+import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleColor
 import imgui.dsl.withStyleVar
@@ -374,7 +374,7 @@ object ShowDemoWindowLayout {
                 text("Lists:")
                 for (i in 0..3) {
                     if (i > 0) sameLine()
-                    withId(i) {
+                    withID(i) {
                         withInt(selection, i) {
                             listBox("", it, items)
                         }

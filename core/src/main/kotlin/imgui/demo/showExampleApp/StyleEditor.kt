@@ -58,7 +58,7 @@ import imgui.dsl.radioButton
 import imgui.dsl.smallButton
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
-import imgui.dsl.withId
+import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.font.Font
 import uno.kotlin.NUL
@@ -222,7 +222,7 @@ object StyleEditor {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name
                             if (!filter.passFilter(name)) continue
-                            withId(i) {
+                            withID(i) {
                                 colorEditVec4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
                                 if (style.colors[i] != ref!!.colors[i]) { // Tips: in a real user application, you may want to merge and use an icon font into the main font,
                                     // so instead of "Save"/"Revert" you'd use icons!

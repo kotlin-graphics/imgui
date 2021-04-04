@@ -227,15 +227,15 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
     var flags = flags_
 
     // Adjust flags: set default sizing policy
-    if (flags hasnt (Tf.SizingStretchSame or Tf.SizingFixedFit))
+    if (flags hasnt Tf._SizingMask)
         flags = flags or when {
             flags has Tf.ScrollX || outerWindow.flags has WindowFlag.AlwaysAutoResize -> Tf.SizingFixedFit
             else -> Tf.SizingStretchSame
         }
 
-    // Adjust flags: disable Resizable when using SameWidths (done above enforcing BordersInnerV)
-    if (flags has Tf.SameWidths)
-        flags = (flags wo Tf.Resizable) or Tf.NoKeepColumnsVisible
+    // Adjust flags: enable NoKeepColumnsVisible when using ImGuiTableFlags_SizingFixedSame
+    if (flags and Tf._SizingMask == Tf.SizingFixedSame.i)
+        flags = flags or Tf.NoKeepColumnsVisible
 
     // Adjust flags: enforce borders when resizable
     if (flags has Tf.Resizable)

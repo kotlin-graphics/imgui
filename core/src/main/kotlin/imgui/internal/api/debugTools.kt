@@ -306,6 +306,17 @@ internal interface debugTools {
         }
     }
 
+    companion object {
+        fun debugNodeTableGetSizingPolicyDesc(sizingPolicy: TableFlags): String =
+            when (sizingPolicy and TableFlag._SizingMask) {
+                TableFlag.SizingFixedFit.i -> "FixedFit"
+                TableFlag.SizingFixedSame.i -> "FixedSame"
+                TableFlag.SizingStretchProp.i -> "StretchProp"
+                TableFlag.SizingStretchSame.i -> "StretchSame"
+                else -> "N/A"
+            }
+    }
+
     fun debugNodeTable(table: Table) {
         val isActive = table.lastFrameActive >= ImGui.frameCount - 2 // Note that fully clipped early out scrolling tables will appear as inactive here.
         val p = "Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')${if (isActive) "" else " *Inactive*"}".format(table.id)
@@ -319,7 +330,7 @@ internal interface debugTools {
         if (!open)
             return
         val clearSettings = smallButton("Clear settings")
-        bulletText("OuterRect: Pos: (%.1f,%.1f) Size: (%.1f,%.1f)", table.outerRect.min.x, table.outerRect.min.y, table.outerRect.width, table.outerRect.height)
+        bulletText("OuterRect: Pos: (%.1f,%.1f) Size: (%.1f,%.1f) Sizing: '${debugNodeTableGetSizingPolicyDesc(table.flags)}'", table.outerRect.min.x, table.outerRect.min.y, table.outerRect.width, table.outerRect.height)
         bulletText("ColumnsGivenWidth: %.1f, ColumnsAutoFitWidth: %.1f, InnerWidth: %.1f${if (table.innerWidth == 0f) " (auto)" else ""}", table.columnsGivenWidth, table.columnsAutoFitWidth, table.innerWidth)
         bulletText("CellPaddingX: %.1f, CellSpacingX: %.1f/%.1f, OuterPaddingX: %.1f", table.cellPaddingX, table.cellSpacingX1, table.cellSpacingX2, table.outerPaddingX)
         bulletText("HoveredColumnBody: ${table.hoveredColumnBody}, HoveredColumnBorder: ${table.hoveredColumnBorder}")

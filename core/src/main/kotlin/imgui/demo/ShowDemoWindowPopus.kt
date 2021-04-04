@@ -38,7 +38,7 @@ import imgui.dsl.popup
 import imgui.dsl.popupContextItem
 import imgui.dsl.popupModal
 import imgui.dsl.treeNode
-import imgui.dsl.withId
+import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleVar
 import imgui.demo.showExampleApp.MenuFile
@@ -232,7 +232,7 @@ object ShowDemoWindowPopups {
             // to make them two different menusets. If we don't, opening any popup above and hovering our menu here would
             // open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it,
             // which is the desired behavior for regular menus.
-            withId("foo") {
+            withID("foo") {
                 menuItem("Menu item", "CTRL+M")
                 menu("Menu inside a regular window") { MenuFile() }
             }

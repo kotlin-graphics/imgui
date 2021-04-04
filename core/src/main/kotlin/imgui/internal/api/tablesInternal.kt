@@ -212,7 +212,7 @@ interface tablesInternal {
             table.reorderColumn = -1
             table.resizedColumn = -1
             table.lastResizedColumn = -1
-            table.autoFitSingleStretchColumn = -1
+            table.autoFitSingleColumn = -1
             table.hoveredColumnBody = -1
             table.hoveredColumnBorder = -1
             for (n in 0 until columnsCount) {

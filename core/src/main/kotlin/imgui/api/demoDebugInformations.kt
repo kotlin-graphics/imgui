@@ -1,10 +1,7 @@
 package imgui.api
 
-import glm_.asHexString
-import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
@@ -29,7 +26,6 @@ import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
-import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.indent
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
@@ -38,10 +34,8 @@ import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.popID
-import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushID
-import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.saveIniSettingsToDisk
@@ -55,33 +49,21 @@ import imgui.ImGui.styleColorsClassic
 import imgui.ImGui.styleColorsDark
 import imgui.ImGui.styleColorsLight
 import imgui.ImGui.text
-import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
-import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
-import imgui.ImGui.windowDrawList
-import imgui.classes.DrawList
-import imgui.classes.ListClipper
 import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
 import imgui.dsl.treeNode
-import imgui.dsl.withId
 import imgui.internal.*
 import imgui.internal.classes.*
-import imgui.internal.sections.OldColumns
-import imgui.internal.sections.DrawListFlag
-import imgui.internal.sections.WindowSettings
-import imgui.internal.sections.wo
 import kool.BYTES
-import kool.lim
-import kool.rem
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
