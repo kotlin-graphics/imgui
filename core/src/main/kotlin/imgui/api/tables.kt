@@ -112,7 +112,6 @@ interface tables {
         innerWindow.dc.cursorMaxPos put table.hostBackupCursorMaxPos
 
         if (innerWindow !== outerWindow)
-        // Both OuterRect/InnerRect are valid from BeginTable
             innerWindow.dc.cursorMaxPos.y = table.rowPosY2
         else if (flags hasnt Tf.NoHostExtendY) {
             // Patch OuterRect/InnerRect height
@@ -185,9 +184,8 @@ interface tables {
         popID()
 
         // Restore window data that we modified
-        val backupOuterCursorPosX = outerWindow.dc.cursorPos.x
-        val backupOuterMaxPosX = outerWindow.dc.cursorMaxPos.x
-        val backupInnerMaxPosX = innerWindow.dc.cursorMaxPos.x
+        val backupOuterMaxPos = Vec2(outerWindow.dc.cursorMaxPos)
+        val backupInnerMaxPos = Vec2(innerWindow.dc.cursorMaxPos)
         innerWindow.workRect put table.hostBackupWorkRect
         innerWindow.parentWorkRect put table.hostBackupParentWorkRect
         innerWindow.skipItems = table.hostSkipItems
@@ -201,7 +199,7 @@ interface tables {
         // Layout in outer window
         // (FIXME: To allow auto-fit and allow desirable effect of SameLine() we dissociate 'used' vs 'ideal' size by overriding
         // CursorPosPrevLine and CursorMaxPos manually. That should be a more general layout feature, see same problem e.g. #3414)
-        val outerWidth = if (table.isOuterRectAutoFitX) table.workRect.width else table.columnsAutoFitWidth
+        val outerWidth = if (table.isOuterRectMinFitX) table.workRect.width else table.columnsAutoFitWidth
         val outerHeight = table.outerRect.height
         if (innerWindow != outerWindow)
             endChild()
@@ -210,18 +208,18 @@ interface tables {
             outerWindow.dc.cursorPosPrevLine.x = table.outerRect.max.x
         }
 
-        // Override EndChild/ItemSize max extent with our own to enable auto-resize on the X axis when possible
+        // Override declared contents width to enable auto-resize on the X axis when possible
         // FIXME-TABLE: This can be improved (e.g. for Fixed columns we don't want to auto AutoFitWidth? or propagate window auto-fit to table?)
         if (table.flags has Tf.ScrollX) {
-            var maxPosX = backupInnerMaxPosX
+            var maxPosX = backupInnerMaxPos.x
             if (table.rightMostEnabledColumn != -1)
                 maxPosX = maxPosX max table.columns[table.rightMostEnabledColumn].maxX
             if (table.resizedColumn != -1)
                 maxPosX = maxPosX max table.resizeLockMinContentsX2
             innerWindow.dc.cursorMaxPos.x = maxPosX // For inner scrolling
-            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPosX max (backupOuterCursorPosX + table.columnsGivenWidth + innerWindow.scrollbarSizes.x) // For outer scrolling
+            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.min.x + table.columnsGivenWidth + innerWindow.scrollbarSizes.x) // For outer scrolling
         } else
-            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPosX max (table.workRect.min.x + outerWidth) // For auto-fit
+            outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.workRect.min.x + outerWidth) // For auto-fit
 
         // Save settings
         if (table.isSettingsDirty)
