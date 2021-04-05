@@ -43,6 +43,7 @@ import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.endTable
 import imgui.ImGui.endTooltip
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
@@ -89,7 +90,7 @@ object dsl {
                      outerSize: Vec2 = Vec2(), innerWidth: Float = 0f, block: () -> Unit) {
         if (beginTable(strId, columns, flags, outerSize, innerWidth)) { // ~open
             block()
-            end()
+            endTable()
         }
     }
 
