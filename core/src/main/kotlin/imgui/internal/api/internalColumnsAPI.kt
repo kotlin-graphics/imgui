@@ -41,7 +41,7 @@ internal interface internalColumnsAPI {
     fun setWindowClipRectBeforeSetChannel(window: Window, clipRect: Rect) {
         val clipRectVec4 = clipRect.toVec4()
         window.clipRect put clipRect
-        window.drawList._cmdHeader.clipRect = clipRectVec4 // safe, new instance
+        window.drawList._cmdHeader.clipRect put clipRectVec4 // safe, new instance
         window.drawList._clipRectStack[window.drawList._clipRectStack.lastIndex] put clipRectVec4
     }
 

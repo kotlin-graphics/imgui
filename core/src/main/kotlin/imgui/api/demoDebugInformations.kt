@@ -376,98 +376,104 @@ interface demoDebugInformations {
     }
 
     /** create About window. display Dear ImGui version, credits and build/system information. */
-    fun showAboutWindow(open: KMutableProperty0<Boolean>) {
+    object ShowAboutWindow {
+        var showConfigInfo = false
+        operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-        if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
+            if (!begin("About Dear ImGui", open, Wf.AlwaysAutoResize.i)) {
+                end()
+                return
+            }
+
+            // Basic info
+            text("Dear ImGui ${ImGui.version}")
+            separator()
+            text("By Omar Cornut and all Dear Imgui contributors.")
+            text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
+
+            checkbox("Config/Build Information", ::showConfigInfo)
+            if (showConfigInfo) {
+
+                val copyToClipboard = button("Copy to clipboard")
+                val childSize = Vec2(0f, textLineHeightWithSpacing * 18)
+                beginChildFrame(getID("cfginfos"), childSize, Wf.NoMove.i)
+                if (copyToClipboard) {
+                    logToClipboard()
+                    logText("```\n") // Back quotes will make text appears without formatting when pasting on GitHub
+                }
+
+                text("Dear ImGui ${ImGui.version} ($IMGUI_VERSION_NUM)")
+                separator()
+                text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.SIZE}")
+                text("IMGUI_USE_BGRA_PACKED_COLOR: $USE_BGRA_PACKED_COLOR")
+                separator()
+                text("io.backendPlatformName: ${io.backendPlatformName}")
+                text("io.backendRendererName: ${io.backendRendererName}")
+                text("io.configFlags: 0x%08X", io.configFlags) // @formatter:off
+                if (io.configFlags has ConfigFlag.NavEnableKeyboard) text(" NavEnableKeyboard")
+                if (io.configFlags has ConfigFlag.NavEnableGamepad) text(" NavEnableGamepad")
+                if (io.configFlags has ConfigFlag.NavEnableSetMousePos) text(" NavEnableSetMousePos")
+                if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard) text(" NavNoCaptureKeyboard")
+                if (io.configFlags has ConfigFlag.NoMouse) text(" NoMouse")
+                if (io.configFlags has ConfigFlag.NoMouseCursorChange) text(" NoMouseCursorChange")
+                if (io.mouseDrawCursor) text("io.mouseDrawCursor")
+                if (io.configMacOSXBehaviors) text("io.configMacOSXBehaviors")
+                if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
+                if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
+                if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
+                if (io.configMemoryCompactTimer >= 0f) text("io.ConfigMemoryCompactTimer = %.1f",
+                                                            io.configMemoryCompactTimer)
+                text("io.backendFlags: 0x%08X", io.backendFlags)
+                if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
+                if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
+                if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
+                if (io.backendFlags has BackendFlag.RendererHasVtxOffset) text(" RendererHasVtxOffset") // @formatter:on
+                separator()
+                text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
+                     io.fonts.flags)
+                text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
+                text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x,
+                                                                    io.displayFramebufferScale.y))
+                separator()
+                text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
+                text("style.windowBorderSize: %.2f", style.windowBorderSize)
+                text("style.framePadding: %.2f,%.2f", style.framePadding.x, style.framePadding.y)
+                text("style.frameRounding: %.2f", style.frameRounding)
+                text("style.frameBorderSize: %.2f", style.frameBorderSize)
+                text("style.itemSpacing: %.2f,%.2f", style.itemSpacing.x, style.itemSpacing.y)
+                text("style.itemInnerSpacing: %.2f,%.2f", style.itemInnerSpacing.x, style.itemInnerSpacing.y)
+
+                if (copyToClipboard) {
+                    logText("\n```\n")
+                    logFinish()
+                }
+                endChildFrame()
+            }
             end()
-            return
         }
-
-        // Basic info
-        text("Dear ImGui $version")
-        separator()
-        text("By Omar Cornut and all Dear Imgui contributors.")
-        text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.")
-
-        checkbox("Config/Build Information", Companion::showConfigInfo)
-        if (showConfigInfo) {
-
-            val copyToClipboard = button("Copy to clipboard")
-            val childSize = Vec2(0f, textLineHeightWithSpacing * 18)
-            beginChildFrame(getID("cfginfos"), childSize, Wf.NoMove.i)
-            if (copyToClipboard) {
-                logToClipboard()
-                logText("```\n") // Back quotes will make text appears without formatting when pasting on GitHub
-            }
-
-            text("Dear ImGui $version ($IMGUI_VERSION_NUM)")
-            separator()
-            text("sizeof(size_t): ${Int.BYTES}, sizeof(DrawIdx): ${DrawIdx.BYTES}, sizeof(DrawVert): ${DrawVert.SIZE}")
-            text("IMGUI_USE_BGRA_PACKED_COLOR: $USE_BGRA_PACKED_COLOR")
-            separator()
-            text("io.backendPlatformName: ${io.backendPlatformName}")
-            text("io.backendRendererName: ${io.backendRendererName}")
-            text("io.configFlags: 0x%08X", io.configFlags) // @formatter:off
-            if (io.configFlags has ConfigFlag.NavEnableKeyboard) text(" NavEnableKeyboard")
-            if (io.configFlags has ConfigFlag.NavEnableGamepad) text(" NavEnableGamepad")
-            if (io.configFlags has ConfigFlag.NavEnableSetMousePos) text(" NavEnableSetMousePos")
-            if (io.configFlags has ConfigFlag.NavNoCaptureKeyboard) text(" NavNoCaptureKeyboard")
-            if (io.configFlags has ConfigFlag.NoMouse) text(" NoMouse")
-            if (io.configFlags has ConfigFlag.NoMouseCursorChange) text(" NoMouseCursorChange")
-            if (io.mouseDrawCursor) text("io.mouseDrawCursor")
-            if (io.configMacOSXBehaviors) text("io.configMacOSXBehaviors")
-            if (io.configInputTextCursorBlink) text("io.configInputTextCursorBlink")
-            if (io.configWindowsResizeFromEdges) text("io.configWindowsResizeFromEdges")
-            if (io.configWindowsMoveFromTitleBarOnly) text("io.configWindowsMoveFromTitleBarOnly")
-            if (io.configMemoryCompactTimer >= 0f) text("io.ConfigMemoryCompactTimer = %.1f",
-                                                        io.configMemoryCompactTimer)
-            text("io.backendFlags: 0x%08X", io.backendFlags)
-            if (io.backendFlags has BackendFlag.HasGamepad) text(" HasGamepad")
-            if (io.backendFlags has BackendFlag.HasMouseCursors) text(" HasMouseCursors")
-            if (io.backendFlags has BackendFlag.HasSetMousePos) text(" HasSetMousePos")
-            if (io.backendFlags has BackendFlag.RendererHasVtxOffset) text(" RendererHasVtxOffset") // @formatter:on
-            separator()
-            text("io.fonts: ${io.fonts.fonts.size} fonts, Flags: 0x%08X, TexSize: ${io.fonts.texSize.x},${io.fonts.texSize.y}",
-                 io.fonts.flags)
-            text("io.displaySize: ${io.displaySize.x},${io.displaySize.y}")
-            text("io.displayFramebufferScale: %.2f,%.2f".format(io.displayFramebufferScale.x,
-                                                                io.displayFramebufferScale.y))
-            separator()
-            text("style.windowPadding: %.2f,%.2f", style.windowPadding.x, style.windowPadding.y)
-            text("style.windowBorderSize: %.2f", style.windowBorderSize)
-            text("style.framePadding: %.2f,%.2f", style.framePadding.x, style.framePadding.y)
-            text("style.frameRounding: %.2f", style.frameRounding)
-            text("style.frameBorderSize: %.2f", style.frameBorderSize)
-            text("style.itemSpacing: %.2f,%.2f", style.itemSpacing.x, style.itemSpacing.y)
-            text("style.itemInnerSpacing: %.2f,%.2f", style.itemInnerSpacing.x, style.itemInnerSpacing.y)
-
-            if (copyToClipboard) {
-                logText("\n```\n")
-                logFinish()
-            }
-            endChildFrame()
-        }
-        end()
     }
 
     /** add style editor block (not a window). you can pass in a reference ImGuiStyle structure to compare to,
      *  revert to and save to (else it uses the default style)  */
     fun showStyleEditor(ref: Style? = null) = StyleEditor.invoke(ref)
 
-    /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
-     *  Here we use the simplified Combo() api that packs items into a single literal string.
-     *  Useful for quick combo boxes where the choices are known locally.
-     *
-     *  add style selector block (not a window), essentially a combo listing the default styles. */
-    fun showStyleSelector(label: String) =
-        if (combo(label, Companion::styleIdx, "Dark\u0000Light\u0000Classic\u0000")) {
-            when (styleIdx) {
-                0 -> styleColorsDark()
-                1 -> styleColorsLight()
-                2 -> styleColorsClassic()
-            }
-            true
-        } else false
+    object ShowStyleSelector {
+        var styleIdx = -1
+        /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
+         *  Here we use the simplified Combo() api that packs items into a single literal string.
+         *  Useful for quick combo boxes where the choices are known locally.
+         *
+         *  add style selector block (not a window), essentially a combo listing the default styles. */
+        operator fun invoke(label: String) =
+            if (combo(label, ::styleIdx, "Dark\u0000Light\u0000Classic\u0000")) {
+                when (styleIdx) {
+                    0 -> styleColorsDark()
+                    1 -> styleColorsLight()
+                    2 -> styleColorsClassic()
+                }
+                true
+            } else false
+    }
 
     /** Demo helper function to select among loaded fonts.
      *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
@@ -558,8 +564,6 @@ interface demoDebugInformations {
 
         var showWindow = false
 
-        var showConfigInfo = false
-
 
         // Helper functions to display common structures:
         // - NodeDrawList()
@@ -606,7 +610,6 @@ interface demoDebugInformations {
 
         val selected = BooleanArray(4 + 3 + 16 + 16) { it == 1 || it == 23 + 0 || it == 23 + 5 || it == 23 + 10 || it == 23 + 15 }
 
-        var styleIdx = -1
 
         /** Helper to display a little (?) mark which shows a tooltip when hovered.
          *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.txt)    */

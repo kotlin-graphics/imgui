@@ -169,7 +169,7 @@ internal interface debugTools {
                 continue
             }
 
-            var buf = "DrawCmd:%5d tris, Tex 0x%p, ClipRect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
+            var buf = "DrawCmd:%5d tris, Tex 0x%02d, ClipRect (%4.0f,%4.0f)-(%4.0f,%4.0f)".format(
                 cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
             val pcmdNodeOpen = treeNode(drawList.cmdBuffer.indexOf(cmd), buf)
             if (isItemHovered() && (cfg.showDrawCmdMesh || cfg.showDrawCmdBoundingBoxes) /*&& fgDrawList != null*/)

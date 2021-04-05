@@ -38,21 +38,6 @@ import imgui.dsl.treeNode
 // [2020: Columns are under-featured and not maintained. Prefer using the more flexible and powerful BeginTable() API!]
 object ShowDemoWindowColumns {
 
-    /* Columns */
-    var selected = -1
-    var disableIndent = false
-
-
-    /* Borders */
-    var hBorders = true
-    var vBorders = true
-    var columnsCount = 4
-
-    /* Mixed Items */
-    var foo = 1f
-    var bar = 1f
-
-
     operator fun invoke() {
 
         val open = treeNode("Legacy Columns API")
@@ -61,97 +46,9 @@ object ShowDemoWindowColumns {
         if (!open)
             return
 
-        // Basic columns
-        treeNode("Basic") {
-            text("Without border:")
-            columns(3, "mycolumns3", false)  // 3-ways, no border
-            separator()
-            for (n in 0..13) {
-                selectable("Item $n")
-                //if (ImGui::Button(label, ImVec2(-FLT_MIN,0.0f))) {}
-                nextColumn()
-            }
-            columns(1)
-            separator()
-
-            text("With border:")
-            columns(4, "mycolumns") // 4-ways, with border
-            separator()
-            text("ID"); nextColumn()
-            text("Name"); nextColumn()
-            text("Path"); nextColumn()
-            text("Hovered"); nextColumn()
-            separator()
-            val names = listOf("One", "Two", "Three")
-            val paths = listOf("/path/one", "/path/two", "/path/three")
-            for (i in 0..2) {
-                selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns.i) {
-                    selected = i
-                }
-                nextColumn()
-                text(names[i]); nextColumn()
-                text(paths[i]); nextColumn()
-                text("${isItemHovered().i}"); nextColumn()
-            }
-            columns(1)
-            separator()
-        }
-
-        if (treeNode("Borders")) {
-            // NB: Future columns API should allow automatic horizontal borders.
-            val linesCount = 3
-            setNextItemWidth(fontSize * 8)
-            dragInt("##columns_count", ::columnsCount, 0.1f, 2, 10, "%d columns")
-            if (columnsCount < 2)
-                columnsCount = 2
-            sameLine()
-            checkbox("horizontal", ::hBorders)
-            sameLine()
-            checkbox("vertical", ::vBorders)
-            columns(columnsCount, "", vBorders)
-            for (i in 0 until columnsCount * linesCount) {
-                if (hBorders && columnIndex == 0)
-                    separator()
-                text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
-                text("Width %.2f", getColumnWidth())
-                text("Avail %.2f", contentRegionAvail.x)
-                text("Offset %.2f", getColumnOffset())
-                text("Long text that is likely to clip")
-                button("Button", Vec2(-Float.MIN_VALUE, 0f))
-                nextColumn()
-            }
-            columns(1)
-            if (hBorders)
-                separator()
-            treePop()
-        }
-
-        // Create multiple items in a same cell before switching to next column
-        treeNode("Mixed items") {
-            columns(3, "mixed")
-            separator()
-
-            text("Hello")
-            button("Banana")
-            nextColumn()
-
-            text("ImGui")
-            button("Apple")
-            inputFloat("red", ::foo, 0.05f, 0f, "%.3f")
-            text("An extra line here.")
-            nextColumn()
-
-            text("Sailor")
-            button("Corniflower")
-            inputFloat("blue", ::bar, 0.05f, 0f, "%.3f")
-            nextColumn()
-
-            collapsingHeader("Category A") { text("Blah blah blah") }; nextColumn()
-            collapsingHeader("Category B") { text("Blah blah blah") }; nextColumn()
-            collapsingHeader("Category C") { text("Blah blah blah") }; nextColumn()
-            columns(1)
-            separator()
-        }
+        Basic()
+        Borders()
+        `Mixed Items`()
 
         // Word wrapping
         treeNode("Word-wrapping") {
@@ -215,5 +112,115 @@ object ShowDemoWindowColumns {
         }
 
         treePop()
+    }
+
+    object Basic {
+        var selected = -1
+        operator fun invoke() {
+            // Basic columns
+            treeNode("Basic") {
+                text("Without border:")
+                columns(3, "mycolumns3", false)  // 3-ways, no border
+                separator()
+                for (n in 0..13) {
+                    selectable("Item $n")
+                    //if (ImGui::Button(label, ImVec2(-FLT_MIN,0.0f))) {}
+                    nextColumn()
+                }
+                columns(1)
+                separator()
+
+                text("With border:")
+                columns(4, "mycolumns") // 4-ways, with border
+                separator()
+                text("ID"); nextColumn()
+                text("Name"); nextColumn()
+                text("Path"); nextColumn()
+                text("Hovered"); nextColumn()
+                separator()
+                val names = listOf("One", "Two", "Three")
+                val paths = listOf("/path/one", "/path/two", "/path/three")
+                for (i in 0..2) {
+                    selectable("%04d".format(style.locale, i), selected == i, SelectableFlag.SpanAllColumns.i) {
+                        selected = i
+                    }
+                    nextColumn()
+                    text(names[i]); nextColumn()
+                    text(paths[i]); nextColumn()
+                    text("${isItemHovered().i}"); nextColumn()
+                }
+                columns(1)
+                separator()
+            }
+        }
+    }
+
+    object Borders {
+        var hBorders = true
+        var vBorders = true
+        var columnsCount = 4
+        operator fun invoke() {
+            if (treeNode("Borders")) {
+                // NB: Future columns API should allow automatic horizontal borders.
+                val linesCount = 3
+                setNextItemWidth(fontSize * 8)
+                dragInt("##columns_count", ::columnsCount, 0.1f, 2, 10, "%d columns")
+                if (columnsCount < 2)
+                    columnsCount = 2
+                sameLine()
+                checkbox("horizontal", ::hBorders)
+                sameLine()
+                checkbox("vertical", ::vBorders)
+                columns(columnsCount, "", vBorders)
+                for (i in 0 until columnsCount * linesCount) {
+                    if (hBorders && columnIndex == 0)
+                        separator()
+                    text("%c%c%c", 'a' + i, 'a' + i, 'a' + i)
+                    text("Width %.2f", getColumnWidth())
+                    text("Avail %.2f", contentRegionAvail.x)
+                    text("Offset %.2f", getColumnOffset())
+                    text("Long text that is likely to clip")
+                    button("Button", Vec2(-Float.MIN_VALUE, 0f))
+                    nextColumn()
+                }
+                columns(1)
+                if (hBorders)
+                    separator()
+                treePop()
+            }
+        }
+    }
+
+    object `Mixed Items` {
+        var foo = 1f
+        var bar = 1f
+        operator fun invoke() {
+            // Create multiple items in a same cell before switching to next column
+            treeNode("Mixed items") {
+                columns(3, "mixed")
+                separator()
+
+                text("Hello")
+                button("Banana")
+                nextColumn()
+
+                text("ImGui")
+                button("Apple")
+                inputFloat("red", ::foo, 0.05f, 0f, "%.3f")
+                text("An extra line here.")
+                nextColumn()
+
+                text("Sailor")
+                button("Corniflower")
+                inputFloat("blue", ::bar, 0.05f, 0f, "%.3f")
+                nextColumn()
+
+                collapsingHeader("Category A") { text("Blah blah blah") }; nextColumn()
+                collapsingHeader("Category B") { text("Blah blah blah") }; nextColumn()
+                collapsingHeader("Category C") { text("Blah blah blah") }; nextColumn()
+                columns(1)
+                separator()
+            }
+        }
     }
 }

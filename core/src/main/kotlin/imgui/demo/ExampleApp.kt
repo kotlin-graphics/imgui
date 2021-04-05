@@ -24,7 +24,6 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
-import imgui.ImGui.showAboutWindow
 import imgui.ImGui.showMetricsWindow
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
@@ -33,6 +32,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.demoDebugInformations.ShowAboutWindow
 import imgui.classes.TextFilter
 import imgui.demo.showExampleApp.*
 import imgui.dsl.collapsingHeader
@@ -99,7 +99,7 @@ object ExampleApp {
         if (show.customRendering) CustomRendering(show::customRendering)
 
         if (show.metrics) showMetricsWindow(show::metrics)
-        if (show.about) showAboutWindow(show::about)
+        if (show.about) ShowAboutWindow(show::about)
         if (show.styleEditor)
             window("Dear ImGui Style Editor", show::styleEditor) {
                 StyleEditor()

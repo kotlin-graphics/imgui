@@ -207,9 +207,10 @@ interface tables {
         innerWindow.skipItems = table.hostSkipItems
         outerWindow.dc.cursorPos put table.outerRect.min
         outerWindow.dc.itemWidth = table.hostBackupItemWidth
-        if (table.hostBackupItemWidthStackSize != 1)
-            TODO()
-        //        outerWindow.dc.itemWidthStack.size = table->HostBackupItemWidthStackSize  // TODO check me
+        for (i in outerWindow.dc.itemWidthStack.size until table.hostBackupItemWidthStackSize)
+            outerWindow.dc.itemWidthStack += 0f
+        for (i in table.hostBackupItemWidthStackSize until outerWindow.dc.itemWidthStack.size)
+            outerWindow.dc.itemWidthStack.pop()
         outerWindow.dc.columnsOffset = table.hostBackupColumnsOffset
 
         // Layout in outer window

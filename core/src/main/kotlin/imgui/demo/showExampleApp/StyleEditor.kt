@@ -38,7 +38,6 @@ import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.showFontSelector
-import imgui.ImGui.showStyleSelector
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
 import imgui.ImGui.style
@@ -49,6 +48,7 @@ import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.demoDebugInformations.ShowStyleSelector
 import imgui.api.g
 import imgui.classes.Style
 import imgui.classes.TextFilter
@@ -95,7 +95,7 @@ object StyleEditor {
         var ref = ref_ ?: refSavedStyle
 
         pushItemWidth(windowWidth * 0.55f)
-        if (showStyleSelector("Colors##Selector")) refSavedStyle = Style(style)
+        if (ShowStyleSelector("Colors##Selector")) refSavedStyle = Style(style)
 
         showFontSelector("Fonts##Selector")
 

@@ -374,7 +374,6 @@ object ShowDemoWindowTables {
 
 
     /* Columns */
-    var selected = -1
     var disableIndent = false
 
 
