@@ -32,7 +32,7 @@ interface tablesInternal {
             return false
 
         // Sanity checks
-        assert(columnsCount > 0 && columnsCount <= TABLE_MAX_COLUMNS) { "Only 1..64 columns allowed!" }
+        assert(columnsCount in 1..TABLE_MAX_COLUMNS) { "Only 1..64 columns allowed!" }
         if (flags has Tf.ScrollX)
             assert(innerWidth >= 0f)
 
@@ -144,7 +144,7 @@ interface tablesInternal {
         val innerSpacingExplicit = if (padInnerX && flags hasnt Tf.BordersInnerV) g.style.cellPadding.x else 0f
         val innerPaddingExplicit = if (padInnerX && flags has Tf.BordersInnerV) g.style.cellPadding.x else 0f
         table.cellSpacingX1 = innerSpacingExplicit + innerSpacingForBorder
-        table.cellSpacingX2 = innerSpacingExplicit - table.cellSpacingX1
+        table.cellSpacingX2 = innerSpacingExplicit
         table.cellPaddingX = innerPaddingExplicit
         table.cellPaddingY = g.style.cellPadding.y
 
