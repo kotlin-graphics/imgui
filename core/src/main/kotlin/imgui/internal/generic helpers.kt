@@ -752,7 +752,7 @@ class BitArray(val bitCount: Int) {
 
     infix fun testBit(n: Int): Boolean {
         assert(n < bitCount)
-        return storage[n ushr 5] hasnt mask(n)
+        return storage[n ushr 5] has mask(n)
     }
 
     infix fun setBit(n: Int) {
