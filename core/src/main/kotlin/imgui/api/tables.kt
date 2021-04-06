@@ -490,7 +490,7 @@ interface tables {
         //            label = "";
         val labelEnd = findRenderedTextEnd(label)
         val labelSize = calcTextSize(label.toByteArray(), 0, labelEnd, true)
-        val labelPos = window.dc.cursorPos // [JVM] same instance, careful!
+        val labelPos = Vec2(window.dc.cursorPos)
 
         // If we already got a row height, there's use that.
         // FIXME-TABLE: Padding problem if the correct outer-padding CellBgRect strays off our ClipRect
