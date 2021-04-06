@@ -16,6 +16,7 @@ import imgui.internal.classes.*
 import imgui.internal.hashStr
 import imgui.internal.sections.*
 import imgui.static.*
+import kool.free
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*

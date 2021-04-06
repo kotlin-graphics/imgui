@@ -1322,10 +1322,7 @@ class Table {
             // We skip channel 0 (Bg0/Bg1) and 1 (Bg2 frozen) from the shuffling since they won't move - see channels allocation in TableSetupDrawChannels().
             val LEADING_DRAW_CHANNELS = 2
             //            g.drawChannelsTempMergeBuffer.resize(splitter->_Count - LEADING_DRAW_CHANNELS) // Use shared temporary storage so the allocation gets amortized
-            if (g.drawChannelsTempMergeBuffer.size < splitter._count - LEADING_DRAW_CHANNELS)
-                for (i in g.drawChannelsTempMergeBuffer.size until (splitter._count - LEADING_DRAW_CHANNELS))
-                    g.drawChannelsTempMergeBuffer += DrawChannel()
-            var dstTmp = 0 //g.drawChannelsTempMergeBuffer.Data
+            var dstTmp = 0 //~g.drawChannelsTempMergeBuffer.Data
 
             fun memcpy(src: DrawChannel) {
                 val dst = g.drawChannelsTempMergeBuffer[dstTmp++]
@@ -1385,15 +1382,18 @@ class Table {
                         assert(channel._cmdBuffer.size == 1 && mergeClipRect.contains(Rect(channel._cmdBuffer[0].clipRect)))
                         channel._cmdBuffer[0].clipRect = mergeClipRect.toVec4()
                         //                        memcpy(dstTmp++, channel, sizeof(ImDrawChannel))
-                        memcpy(channel)
+                        g.drawChannelsTempMergeBuffer += channel
+                        dstTmp++
                         n++
                     }
                 }
 
                 // Make sure Bg2DrawChannelUnfrozen appears in the middle of our groups (whereas Bg0/Bg1 and Bg2 frozen are fixed to 0 and 1)
-                if (mergeGroupN == 1 && hasFreezeV)
-                //                    memcpy(dstTmp++, &splitter->_Channels[table->Bg1DrawChannelUnfrozen], sizeof(ImDrawChannel))
-                    memcpy(splitter._channels[bg2DrawChannelUnfrozen])
+                if (mergeGroupN == 1 && hasFreezeV) {
+                    //                    memcpy(dstTmp++, &splitter->_Channels[table->Bg1DrawChannelUnfrozen], sizeof(ImDrawChannel))
+                    g.drawChannelsTempMergeBuffer += splitter._channels[bg2DrawChannelUnfrozen]
+                    dstTmp++
+                }
             }
 
             // Append unmergeable channels that we didn't reorder at the end of the list
@@ -1404,20 +1404,17 @@ class Table {
                     continue
                 }
                 val channel = splitter._channels[n]
-                memcpy(channel)
+                g.drawChannelsTempMergeBuffer += channel
+                dstTmp++
                 remainingCount--
                 n++
             }
-            assert(dstTmp == /*g.drawChannelsTempMergeBuffer.Data +*/ g.drawChannelsTempMergeBuffer.size)
+            assert(dstTmp == /*~g.drawChannelsTempMergeBuffer.Data */ g.drawChannelsTempMergeBuffer.size)
             //            memcpy(splitter._channels.Data + LEADING_DRAW_CHANNELS, g.DrawChannelsTempMergeBuffer.Data, (splitter->_Count - LEADING_DRAW_CHANNELS) * sizeof(ImDrawChannel))
-            for (chIdx in 0 until splitter._count - LEADING_DRAW_CHANNELS) {
-                val dst = splitter._channels[LEADING_DRAW_CHANNELS + chIdx]
-                for (channel in g.drawChannelsTempMergeBuffer) {
-                    for (cmd in channel._cmdBuffer)
-                        dst._cmdBuffer += DrawCmd(cmd)
-                    dst._idxBuffer = IntBuffer(channel._idxBuffer)
-                }
-            }
+            for(i in 0 until splitter._count - LEADING_DRAW_CHANNELS)
+                splitter._channels[LEADING_DRAW_CHANNELS + i] = g.drawChannelsTempMergeBuffer[i]
+
+            g.drawChannelsTempMergeBuffer.clear() // [JVM]
         }
     }
 
