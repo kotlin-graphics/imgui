@@ -24,6 +24,9 @@ interface miscellaneousUtilities {
     /** test if rectangle (of given size, starting from cursor position) is visible / not clipped.  */
     fun isRectVisible(size: Vec2): Boolean = with(currentWindowRead!!) { clipRect overlaps Rect(dc.cursorPos, dc.cursorPos + size) }
 
+    /** [JVM] */
+    fun isRectVisible(rect: Rect): Boolean = isRectVisible(rect.min, rect.max)
+
     /** test if rectangle (in screen space) is visible / not clipped. to perform coarse clipping on user's side.    */
     fun isRectVisible(rectMin: Vec2, rectMax: Vec2): Boolean = currentWindowRead!!.clipRect overlaps Rect(rectMin, rectMax)
 

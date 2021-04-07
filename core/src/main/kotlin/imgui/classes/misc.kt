@@ -13,6 +13,8 @@ class Color {
 
     val value = Vec4()
 
+    constructor()
+
     constructor(r: Int, g: Int, b: Int, a: Int = 255) {
         val sc = 1f / 255f
         value.x = r * sc

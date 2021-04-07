@@ -5,13 +5,18 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.internal.floor
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sqrt
 
 /** An axis-aligned rectangle (2 points)
  *  2D axis aligned bounding-box
  *  NB: we can't rely on ImVec2 math operators being available here */
 class Rect {
+
     /** Upper-left  */
     var min = Vec2()
+
     /** Lower-right */
     var max = Vec2()
 
@@ -56,12 +61,16 @@ class Rect {
     val size get() = max - min
     val width get() = max.x - min.x
     val height get() = max.y - min.y
+
     /** Top-left    */
     val tl get() = Vec2(min)
+
     /** Top-right   */
     val tr get() = Vec2(max.x, min.y)
+
     /** Bottom-left */
     val bl get() = Vec2(min.x, max.y)
+
     /** Bottom-right    */
     val br get() = Vec2(max)
 
@@ -161,6 +170,46 @@ class Rect {
     infix fun put(rect: Rect) {
         min put rect.min
         max put rect.max
+    }
+
+    /* [JVM] for node-editor */
+
+    val isEmpty: Boolean
+        get() = min.x >= max.x || min.y >= max.y
+
+    fun closestPoint(p: Vec2, snapToEdge: Boolean): Vec2 = when {
+        !snapToEdge && contains(p) -> p
+        else -> Vec2 { if (p[it] > max[it]) max[it] else if (p[it] < min[it]) min[it] else p[it] }
+    }
+
+    fun closestPoint(p: Vec2, snapToEdge: Boolean, radius: Float): Vec2 {
+
+        val point = closestPoint(p, snapToEdge)
+
+        val offset = p - point
+        val distanceSq = offset.x * offset.x + offset.y * offset.y
+        if (distanceSq <= 0)
+            return point
+
+        val distance = sqrt(distanceSq)
+
+        return point + offset * (min(distance, radius) * (1f / distance))
+    }
+
+    infix fun closestPoint(other: Rect): Vec2 {
+        val result = Vec2()
+        result.x = when {
+            other.min.x >= max.x -> max.x
+            other.max.x <= min.x -> min.x
+            else -> (kotlin.math.max(min.x, other.min.x) + kotlin.math.min(max.x, other.max.x)) / 2
+        }
+        result.y = if (other.min.y >= max.y)
+            max.y
+        else if (other.max.y <= min.y)
+            min.y
+        else
+            (kotlin.math.max(min.y, other.min.y) + kotlin.math.min(max.y, other.max.y)) / 2
+        return result
     }
 
     override fun toString() = "min: $min, max: $max"

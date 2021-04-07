@@ -1126,15 +1126,16 @@ enum class Key {
     Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
     Space, Enter, Escape, KeyPadEnter,
 
+    _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
     /** for text edit CTRL+A: select all */
     A,
-
+    B,
     /** for text edit CTRL+C: copy */
     C,
-
+    D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U,
     /** for text edit CTRL+V: paste */
     V,
-
+    W,
     /** for text edit CTRL+X: cut */
     X,
 
@@ -1143,6 +1144,7 @@ enum class Key {
 
     /** for text edit CTRL+Z: undo */
     Z,
+    F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
     Count;
 
     companion object {
