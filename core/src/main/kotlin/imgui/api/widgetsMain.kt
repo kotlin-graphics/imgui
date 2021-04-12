@@ -152,8 +152,10 @@ interface widgetsMain {
         val pos = Vec2(window.dc.cursorPos) //cursorPos gets updated somewhere else, which means we need to make a copy else checkboxes act incorrectly
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, id))
+        if (!itemAdd(totalBb, id)) {
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
             return false
+        }
 
         val (pressed, hovered, held) = buttonBehavior(totalBb, id)
         if (pressed) {
@@ -187,21 +189,22 @@ interface widgetsMain {
     }
 
     fun checkboxFlags(label: String, flags: IntArray, flagsValue: Int): Boolean {
-        val v = booleanArrayOf((flags[0] and flagsValue) == flagsValue)
+        _b = (flags[0] and flagsValue) == flagsValue // ~allOn
+        val anyOn = flags[0] has flagsValue
         val pressed = when {
-            !v[0] && flags[0] has flagsValue -> { // Mixed value (FIXME: find a way to expose neatly to Checkbox?)
+            !_b && anyOn -> {
                 val window = currentWindow
                 val backupItemFlags = window.dc.itemFlags
                 window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
-                checkbox(label, v).also {
+                checkbox(label, ::_b).also {
                     window.dc.itemFlags = backupItemFlags
                 }
             }
-            else -> checkbox(label, v) // Regular checkbox
+            else -> checkbox(label, ::_b)
         }
         if (pressed)
             flags[0] = when {
-                v[0] -> flags[0] or flagsValue
+                _b -> flags[0] or flagsValue
                 else -> flags[0] wo flagsValue
             }
         return pressed
@@ -279,7 +282,7 @@ interface widgetsMain {
     fun radioButton(label: String, v: KMutableProperty0<Int>, vButton: Int): Boolean =
             radioButton(label, v() == vButton).also { if (it) v.set(vButton) }
 
-    fun progressBar(fraction_: Float, sizeArg: Vec2 = Vec2(-1f, 0f), overlay_: String = "") {
+    fun progressBar(fraction_: Float, sizeArg: Vec2 = Vec2(-Float.MIN_VALUE, 0f), overlay_: String = "") {
         val window = currentWindow
         if (window.skipItems) return
 

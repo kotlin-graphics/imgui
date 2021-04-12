@@ -4,7 +4,6 @@ import gli_.has
 import glm_.L
 import glm_.f
 import glm_.i
-import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
 import imgui.ImGui.findOrCreateWindowSettings
@@ -14,6 +13,7 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
+import imgui.internal.classes.PoolIdx
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.SettingsHandler
@@ -36,9 +36,14 @@ import imgui.WindowFlag as Wf
 
 fun setCurrentWindow(window: Window?) {
     g.currentWindow = window
-    if (window != null)
+    g.currentTable = when {
+        window != null && window.dc.currentTableIdx != -1 -> g.tables.getByIndex(window.dc.currentTableIdx)
+        else -> null
+    }
+    if (window != null) {
         g.fontSize = window.calcFontSize()
-    g.drawListSharedData.fontSize = g.fontSize
+        g.drawListSharedData.fontSize = g.fontSize
+    }
 }
 
 /** Find window given position, search front-to-back
@@ -205,11 +210,12 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
     // Write to text buffer
     for (setting in g.settingsWindows)
     // all numeric fields to ints to have full c++ compatibility
-        buf += """|[${handler.typeName}][${setting.name}]
-                  |Pos=${setting.pos.x.i},${setting.pos.y.i}
-                  |Size=${setting.size.x.i},${setting.size.y.i}
-                  |Collapsed=${setting.collapsed.i} 
-                  |""".trimMargin()
+        buf += """
+            |[${handler.typeName}][${setting.name}]
+            |Pos=${setting.pos.x.i},${setting.pos.y.i}
+            |Size=${setting.size.x.i},${setting.size.y.i}
+            |Collapsed=${setting.collapsed.i} 
+            |""".trimMargin()
 }
 
 //-----------------------------------------------------------------------------

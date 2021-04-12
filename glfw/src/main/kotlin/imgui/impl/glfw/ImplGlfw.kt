@@ -41,7 +41,7 @@ class ImplGlfw @JvmOverloads constructor(
 
         with(io) {
 
-            // Setup back-end capabilities flags
+            // Setup backend capabilities flags
             backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
             backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
             backendPlatformName = "imgui_impl_glfw"
@@ -213,7 +213,7 @@ class ImplGlfw @JvmOverloads constructor(
 
     fun newFrame() {
 
-        assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
+        assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer backend. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
 
         // Setup display size (every frame to accommodate for window resizing)
         val size = window.size

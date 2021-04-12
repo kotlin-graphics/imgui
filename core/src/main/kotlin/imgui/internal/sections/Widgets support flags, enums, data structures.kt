@@ -286,6 +286,12 @@ operator fun Vec2.get(axis: Axis): Float = when (axis) {
     else -> throw Error()
 }
 
+operator fun Vec2.set(axis: Axis, float: Float) = when (axis) {
+    Axis.X -> x = float
+    Axis.Y -> y = float
+    else -> throw Error()
+}
+
 infix fun Int.shl(b: Axis) = shl(b.ordinal - 1)
 
 
@@ -475,7 +481,7 @@ enum class DrawListFlag(val i: DrawListFlags) {
      *  drawn using textures, otherwise *3 the number of triangles) */
     AntiAliasedLines(1 shl 0),
 
-    /** Enable anti-aliased lines/borders using textures when possible. Require back-end to render with bilinear filtering. */
+    /** Enable anti-aliased lines/borders using textures when possible. Require backend to render with bilinear filtering. */
     AntiAliasedLinesUseTex(1 shl 1),
 
     /** Enable anti-aliased edge around filled shapes (rounded rectangles, circles). */

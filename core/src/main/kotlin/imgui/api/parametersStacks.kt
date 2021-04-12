@@ -23,10 +23,8 @@ import imgui.internal.sections.or
 import imgui.internal.sections.wo
 import imgui.internal.sections.ItemFlag as If
 
-/** Parameters stacks */
+// Parameters stacks (shared)
 interface parametersStacks {
-
-    // Parameters stacks
 
     /** use NULL as a shortcut to push default font */
     fun pushFont(font: Font = defaultFont) {
@@ -42,28 +40,33 @@ interface parametersStacks {
     }
 
     /** FIXME: This may incur a round-trip (if the end user got their data from a float4) but eventually we aim to store
-     *  the in-flight colors as ImU32   */
+     *  the in-flight colors as ImU32
+     *
+     *  modify a style color. always use this if you modify the style after NewFrame(). */
     fun pushStyleColor(idx: Col, col: Int) {
         val backup = ColorMod(idx, style.colors[idx])
-        g.colorModifiers.push(backup)
+        g.colorStack.push(backup)
         g.style.colors[idx] = col.vec4
     }
 
     fun pushStyleColor(idx: Col, col: Vec4) {
         val backup = ColorMod(idx, style.colors[idx])
-        g.colorModifiers.push(backup)
+        g.colorStack.push(backup)
         style.colors[idx] = col
     }
 
     fun popStyleColor(count: Int = 1) = repeat(count) {
-        val backup = g.colorModifiers.pop()
+        val backup = g.colorStack.pop()
         style.colors[backup.col] put backup.backupValue
     }
 
     /** It'll throw error if wrong correspondence between idx and value type
-     *  GStyleVarInfo */
+     *  GStyleVarInfo
+     *
+     *  modify a style float variable. always use this if you modify the style after NewFrame().
+     *  modify a style ImVec2 variable. always use this if you modify the style after NewFrame(). */
     fun pushStyleVar(idx: StyleVar, value: Any) {
-        g.styleModifiers.push(StyleMod(idx).also {
+        g.styleVarStack.push(StyleMod(idx).also {
             when (idx) {
                 StyleVar.Alpha -> {
                     it.floats[0] = style.alpha
@@ -129,6 +132,10 @@ interface parametersStacks {
                     it.floats[0] = style.indentSpacing
                     style.indentSpacing = value as Float
                 }
+                StyleVar.CellPadding -> {
+                    style.cellPadding to it.floats
+                    style.cellPadding put (value as Vec2)
+                }
                 StyleVar.ScrollbarSize -> {
                     it.floats[0] = style.scrollbarSize
                     style.scrollbarSize = value as Float
@@ -162,7 +169,7 @@ interface parametersStacks {
     }
 
     fun popStyleVar(count: Int = 1) = repeat(count) {
-        val backup = g.styleModifiers.pop()
+        val backup = g.styleVarStack.pop()
         when (backup.idx) {
             StyleVar.Alpha -> style.alpha = backup.floats[0]
             StyleVar.WindowPadding -> style.windowPadding put backup.floats
@@ -190,61 +197,23 @@ interface parametersStacks {
         }
     }
 
-    /** retrieve style color as stored in ImGuiStyle structure. use to feed back into PushStyleColor(), otherwise use
-     *  GetColorU32() to get style color + style alpha. */
-    fun getStyleColorVec4(idx: Col): Vec4 = Vec4(style.colors[idx])
+    // FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
+    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
 
-    /** get current font
-     *  ~GetFont    */
-    val font: Font
-        get() = g.font
+    fun popAllowKeyboardFocus() = popItemFlag()
 
-    /** get current font size (= height in pixels) of current font with current scale applied
-     *  ~GetFontSize    */
-    val fontSize: Float
-        get() = g.fontSize
+    /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
+     *  (using io.KeyRepeatDelay/io.KeyRepeatRate setting). Note that you can call IsItemActive() after any Button() to
+     *  tell if the button is held in the current frame.    */
+    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat.i, repeat)
 
-    /** get UV coordinate for a while pixel, useful to draw custom shapes via the ImDrawList API
-     *  ~GetFontTexUvWhitePixel */
-    val fontTexUvWhitePixel: Vec2
-        get() = g.drawListSharedData.texUvWhitePixel
+    fun popButtonRepeat() = popItemFlag()
 
-    /** retrieve given style color with style alpha applied and optional extra alpha multiplier */
-    fun getColorU32(idx: Col, alphaMul: Float = 1f): Int =
-            getColorU32(idx.i, alphaMul)
-
-    fun getColorU32(idx: Int, alphaMul: Float = 1f): Int {
-        val c = Vec4(style.colors[idx])
-        c.w *= style.alpha * alphaMul
-        return c.u32
-    }
-
-    /** retrieve given color with style alpha applied   */
-    fun getColorU32(col: Vec4): Int {
-        val c = Vec4(col)
-        c.w *= style.alpha
-        return c.u32
-    }
-
-    /** retrieve given color with style alpha applied    */
-    fun getColorU32(col: Int): Int {
-        val styleAlpha = style.alpha
-        if (styleAlpha >= 1f) return col
-        var a = (col and COL32_A_MASK) ushr COL32_A_SHIFT
-        a = (a * styleAlpha).i // We don't need to clamp 0..255 because Style.Alpha is in 0..1 range.
-        return (col and COL32_A_MASK.inv()) or (a shl COL32_A_SHIFT)
-    }
-
-    fun getColorU32(r: Int, g: Int, b: Int, a: Int): Int {
-        val c = Vec4(r.f / 255.0, g.f / 255.0, b.f / 255.0, a.f / 255.0)
-        c.w *= style.alpha
-        return c.u32
-    }
 
     // Parameters stacks (current window)
 
-    /** push width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
-     *  (so -1.0f always align width to the right side). 0.0f = default to ~2/3 of windows width,     */
+    /** push width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the
+     *  right of window (so -FLT_MIN always align width to the right side). 0.0f = default to ~2/3 of windows width, */
     fun pushItemWidth(itemWidth: Int) = pushItemWidth(itemWidth.f)
 
     fun pushItemWidth(itemWidth: Float) {
@@ -262,8 +231,8 @@ interface parametersStacks {
         }
     }
 
-    /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the right of window
-     *  (so -1.0f always align width to the right side) */
+    /** set width of the _next_ common large "item+label" widget. >0.0f: width in pixels, <0.0f align xx pixels to the
+     *  right of window (so -FLT_MIN always align width to the right side) */
     fun setNextItemWidth(itemWidth: Float) {
         g.nextItemData.flags = g.nextItemData.flags or NextItemDataFlag.HasWidth
         g.nextItemData.width = itemWidth
@@ -299,16 +268,4 @@ interface parametersStacks {
         textWrapPosStack.pop()
         textWrapPos = textWrapPosStack.lastOrNull() ?: -1f
     }
-
-    // FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
-    fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
-
-    fun popAllowKeyboardFocus() = popItemFlag()
-
-    /** in 'repeat' mode, Button*() functions return repeated true in a typematic manner
-     *  (using io.KeyRepeatDelay/io.KeyRepeatRate setting). Note that you can call IsItemActive() after any Button() to
-     *  tell if the button is held in the current frame.    */
-    fun pushButtonRepeat(repeat: Boolean) = pushItemFlag(If.ButtonRepeat.i, repeat)
-
-    fun popButtonRepeat() = popItemFlag()
 }

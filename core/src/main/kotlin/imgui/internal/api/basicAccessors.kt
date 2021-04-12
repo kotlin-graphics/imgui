@@ -4,9 +4,8 @@ import imgui.DataType
 import imgui.ID
 import imgui.IMGUI_ENABLE_TEST_ENGINE
 import imgui.api.g
-import imgui.api.gImGui
 import imgui.internal.classes.Window
-import imgui.internal.hash
+import imgui.internal.hashStr
 import imgui.internal.sections.*
 
 /** Basic Accessors */
@@ -28,6 +27,10 @@ internal interface basicAccessors {
     /** ~GetFocusID */
     val focusID: ID
         get() = g.navId
+
+    /** ~GetItemsFlags */
+    val itemsFlags: ItemFlags
+        get() = g.currentWindow!!.dc.itemFlags
 
     fun setActiveID(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
@@ -55,6 +58,7 @@ internal interface basicAccessors {
 
         // Clear declaration of inputs claimed by the widget
         // (Please note that this is WIP and not all keys/inputs are thoroughly declared by all widgets yet)
+        g.activeIdUsingMouseWheel = false
         g.activeIdUsingNavDirMask = 0x00
         g.activeIdUsingNavInputMask = 0x00
         g.activeIdUsingKeyInputMask = 0x00
@@ -93,6 +97,7 @@ internal interface basicAccessors {
         set(value) {
             g.hoveredId = value
             g.hoveredIdAllowOverlap = false
+            g.hoveredIdUsingMouseWheel = false
             if (value != 0 && g.hoveredIdPreviousFrame != value) {
                 g.hoveredIdTimer = 0f
                 g.hoveredIdNotActiveTimer = 0f
@@ -128,11 +133,11 @@ internal interface basicAccessors {
      *  (note that when using this pattern, TestEngine's "Stack Tool" will tend to not display the intermediate stack level.
      *  for that to work we would need to do PushOverrideID() -> ItemAdd() -> PopID() which would alter widget code a little more) */
     fun getIDWithSeed(str: String, strEnd: Int = -1, seed: ID): ID {
-        val id = hash(str, if(strEnd != -1) strEnd else 0, seed)
+        val id = hashStr(str, if (strEnd != -1) strEnd else 0, seed)
         keepAliveID(id)
-        if(IMGUI_ENABLE_TEST_ENGINE) {
+        if (IMGUI_ENABLE_TEST_ENGINE) {
 //            val g = gImGui!!
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, str, strEnd)
+            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, str, strEnd)
         }
         return id
     }

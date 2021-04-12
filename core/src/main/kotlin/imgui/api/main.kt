@@ -15,6 +15,7 @@ import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
+import imgui.ImGui.gcCompactTransientMiscBuffers
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mergedKeyModFlags
@@ -25,11 +26,14 @@ import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
+import imgui.classes.ContextHookType
 import imgui.classes.Context
 import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.*
+import imgui.internal.classes.PoolIdx
+import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or
 import imgui.static.*
 import org.lwjgl.system.Platform
@@ -124,8 +128,10 @@ interface main {
         if (g.hoveredId != 0 && g.activeId != g.hoveredId)
             g.hoveredIdNotActiveTimer += io.deltaTime
         g.hoveredIdPreviousFrame = g.hoveredId
+        g.hoveredIdPreviousFrameUsingMouseWheel = g.hoveredIdUsingMouseWheel
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
+        g.hoveredIdUsingMouseWheel = false
         g.hoveredIdDisabled = false
 
         // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
@@ -202,7 +208,7 @@ interface main {
 
         // Mark all windows as not visible and compact unused memory.
         assert(g.windowsFocusOrder.size == g.windows.size)
-        val memoryCompactStartTime = if (io.configWindowsMemoryCompactTimer >= 0f) g.time.f - io.configWindowsMemoryCompactTimer else Float.MAX_VALUE
+        val memoryCompactStartTime = if (g.gcCompactAll || io.configMemoryCompactTimer < 0f) Float.MAX_VALUE else g.time.f - io.configMemoryCompactTimer
         g.windows.forEach {
             it.wasActive = it.active
             it.beginCount = 0
@@ -212,7 +218,15 @@ interface main {
             // Garbage collect transient buffers of recently unused windows
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
                 it.gcCompactTransientBuffers()
+
+            // Garbage collect transient buffers of recently unused tables
+            for (i in 0 until g.tablesLastTimeActive.size)
+                if (g.tablesLastTimeActive[i] >= 0f && g.tablesLastTimeActive[i] < memoryCompactStartTime)
+                    g.tables.getByIndex(i).gcCompactTransientBuffers()
         }
+        if (g.gcCompactAll)
+            gcCompactTransientMiscBuffers()
+        g.gcCompactAll = false
 
         // Closing the focused window restore focus to the first active root window in descending z-order
         if (g.navWindow?.wasActive == false)
@@ -222,6 +236,9 @@ interface main {
         // But in order to allow the user to call NewFrame() multiple times without calling Render(), we are doing an explicit clear.
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
+        g.itemFlagsStack.clear()
+        g.itemFlagsStack += ItemFlag.Default_.i
+        g.groupStack.clear()
         closePopupsOverWindow(g.navWindow, false)
 
         // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
@@ -248,6 +265,8 @@ interface main {
         // Don't process endFrame() multiple times.
         if (g.frameCountEnded == g.frameCount) return
         assert(g.withinFrameScope) { "Forgot to call ImGui::newFrame()?" }
+
+        g callHooks ContextHookType.EndFramePre
 
         errorCheckEndFrameSanityChecks()
 
@@ -313,9 +332,11 @@ interface main {
         io.mouseWheelH = 0f
         io.inputQueueCharacters.clear()
         io.navInputs.fill(0f)
+
+        g callHooks ContextHookType.EndFramePost
     }
 
-    /** ends the Dear ImGui frame, finalize the draw data. You can get call GetDrawData() to obtain it and run your rendering function (up to v1.60, this used to call io.RenderDrawListsFn(). Nowadays, we allow and prefer calling your render function yourself.)   */
+    /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData(). */
     fun render() {
 
         assert(g.initialized)
@@ -324,6 +345,8 @@ interface main {
         g.frameCountRendered = g.frameCount
         io.metricsRenderWindows = 0
         g.drawDataBuilder.clear()
+
+        g callHooks ContextHookType.RenderPre
 
         // Add background ImDrawList
         if (g.backgroundDrawList.vtxBuffer.hasRemaining())
@@ -353,10 +376,11 @@ interface main {
         g.drawData setup g.drawDataBuilder.layers[0]
         io.metricsRenderVertices = g.drawData.totalVtxCount
         io.metricsRenderIndices = g.drawData.totalIdxCount
+
+        g callHooks ContextHookType.RenderPost
     }
 
-    /** Same value as passed to the old io.renderDrawListsFn function. Valid after ::render() and until the next call to
-     *  ::newFrame()   */
+    /** Pass this to your backend rendering function! Valid after Render() and until the next call to NewFrame() */
     val drawData: DrawData?
         get() = when (Platform.get()) {
             Platform.MACOSX -> g.drawData.clone()

@@ -64,9 +64,11 @@ interface itemWidgetsUtilities {
     val isItemActive: Boolean
         get() = if (g.activeId != 0) g.activeId == g.currentWindow!!.dc.lastItemId else false
 
-    /** Is the last item focused for keyboard/gamepad navigation?   */
+    /** Is the last item focused for keyboard/gamepad navigation?
+     *
+     *  == GetItemID() == GetFocusID() */
     val isItemFocused: Boolean
-        get() = g.navId != 0 && !g.navDisableHighlight && g.navId == g.currentWindow!!.dc.lastItemId
+        get() = !(g.navId != g.currentWindow!!.dc.lastItemId || g.navId == 0)
 
     /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
     fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =
@@ -134,12 +136,13 @@ interface itemWidgetsUtilities {
     val itemRectSize: Vec2
         get() = currentWindowRead!!.dc.lastItemRect.size
 
-    /** allow last item to be overlapped by a subsequent item. sometimes useful with invisible buttons, selectables, etc.
-     *  to catch unused area.   */
+    /** Allow last item to be overlapped by a subsequent item. Both may be activated during the same frame before the later one takes priority.
+     *  FIXME: Although this is exposed, its interaction and ideal idiom with using ImGuiButtonFlags_AllowItemOverlap flag are extremely confusing, need rework. */
     fun setItemAllowOverlap() {
-        if (g.hoveredId == g.currentWindow!!.dc.lastItemId)
+        val id = g.currentWindow!!.dc.lastItemId
+        if (g.hoveredId == id)
             g.hoveredIdAllowOverlap = true
-        if (g.activeId == g.currentWindow!!.dc.lastItemId)
+        if (g.activeId == id)
             g.activeIdAllowOverlap = true
     }
 }

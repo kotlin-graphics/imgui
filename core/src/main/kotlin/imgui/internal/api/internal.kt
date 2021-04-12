@@ -11,7 +11,7 @@ import imgui.classes.DrawList
 import imgui.font.Font
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
-import imgui.internal.hash
+import imgui.internal.hashStr
 import imgui.internal.sections.NavLayer
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
@@ -48,7 +48,7 @@ internal interface internal {
 
     fun findWindowByID(id: ID): Window? = g.windowsById[id]
 
-    fun findWindowByName(name: String): Window? = g.windowsById[hash(name)]
+    fun findWindowByName(name: String): Window? = g.windowsById[hashStr(name)]
 
 
     // Windows: Display Order and Focus Order

@@ -19,8 +19,10 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setItemAllowOverlap
 import imgui.ImGui.setNavID
 import imgui.ImGui.style
-import imgui.internal.*
+import imgui.ImGui.tablePopBackgroundChannel
+import imgui.ImGui.tablePushBackgroundChannel
 import imgui.internal.classes.Rect
+import imgui.internal.floor
 import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
@@ -53,10 +55,6 @@ interface widgetsSelectables {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val spanAllColumns = flags has Sf.SpanAllColumns
-        if (spanAllColumns && window.dc.currentColumns != null)  // FIXME-OPT: Avoid if vertically clipped.
-            pushColumnsBackground()
-
         // Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
         val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -67,8 +65,9 @@ interface widgetsSelectables {
 
         // Fill horizontal space
         // We don't support (size < 0.0f) in Selectable() because the ItemSpacing extension would make explicitely right-aligned sizes not visibly match other widgets.
-        val minX = if(spanAllColumns) window.parentWorkRect.min.x else pos.x
-        val maxX = if(spanAllColumns) window.parentWorkRect.max.x else window.workRect.max.x
+        val spanAllColumns = flags has Sf.SpanAllColumns
+        val minX = if (spanAllColumns) window.parentWorkRect.min.x else pos.x
+        val maxX = if (spanAllColumns) window.parentWorkRect.max.x else window.workRect.max.x
         if (sizeArg.x == 0f || flags has Sf._SpanAvailWidth)
             size.x = max(labelSize.x, maxX - minX)
 
@@ -79,15 +78,24 @@ interface widgetsSelectables {
         // Selectables are meant to be tightly packed together with no click-gap, so we extend their box to cover spacing between selectable.
         val bb = Rect(minX, pos.y, textMax.x, textMax.y)
         if (flags hasnt Sf._NoPadWithHalfSpacing) {
-            val spacing = style.itemSpacing
-            val spacingL = floor(spacing.x * 0.5f)
-            val spacingU = floor(spacing.y * 0.5f)
+            val spacingX = if(spanAllColumns) 0f else style.itemSpacing.x
+            val spacingY = style.itemSpacing.y
+            val spacingL = floor(spacingX * 0.5f)
+            val spacingU = floor(spacingY * 0.5f)
             bb.min.x -= spacingL
             bb.min.y -= spacingU
-            bb.max.x += spacing.x - spacingL
-            bb.max.y += spacing.y - spacingU
+            bb.max.x += spacingX - spacingL
+            bb.max.y += spacingY - spacingU
         }
         //if (g.IO.KeyCtrl) { GetForegroundDrawList()->AddRect(bb.Min, bb.Max, IM_COL32(0, 255, 0, 255)); }
+
+        // Modify ClipRect for the ItemAdd(), faster than doing a PushColumnsBackground/PushTableBackground for every Selectable..
+        val backupClipRectMinX = window.clipRect.min.x
+        val backupClipRectMaxX = window.clipRect.max.x
+        if (spanAllColumns) {
+            window.clipRect.min.x = window.parentWorkRect.min.x
+            window.clipRect.max.x = window.parentWorkRect.max.x
+        }
 
         val itemAdd = when {
             flags has Sf.Disabled -> {
@@ -99,11 +107,21 @@ interface widgetsSelectables {
             }
             else -> itemAdd(bb, id)
         }
-        if (!itemAdd) {
-            if (spanAllColumns && window.dc.currentColumns != null)
-                pushColumnsBackground()
-            return false
+
+        if (spanAllColumns) {
+            window.clipRect.min.x = backupClipRectMaxX
+            window.clipRect.max.x = backupClipRectMaxX
         }
+
+        if (!itemAdd)
+            return false
+
+        // FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
+        // which would be advantageous since most selectable are not selected.
+        if (spanAllColumns && window.dc.currentColumns != null)
+            pushColumnsBackground()
+        else if (spanAllColumns && g.currentTable != null)
+            tablePushBackgroundChannel()
 
         // We use NoHoldingActiveID on menus so user can click and _hold_ on a menu then drag to browse child entries
         var buttonFlags = 0
@@ -148,6 +166,8 @@ interface widgetsSelectables {
 
         if (spanAllColumns && window.dc.currentColumns != null)
             popColumnsBackground()
+        else if (spanAllColumns && g.currentTable != null)
+            tablePopBackgroundChannel()
 
         if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
         renderTextClipped(textMin, textMax, label, labelSize, style.selectableTextAlign, bb)

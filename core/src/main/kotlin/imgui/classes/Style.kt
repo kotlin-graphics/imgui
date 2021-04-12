@@ -9,12 +9,12 @@ import imgui.internal.floor
 import java.util.*
 import kotlin.collections.ArrayList
 
-/** -----------------------------------------------------------------------------
- *  Style
- *  You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
+//-----------------------------------------------------------------------------
+// [SECTION] ImGuiStyle
+//-----------------------------------------------------------------------------
+/** You may modify the ImGui::GetStyle() main instance during initialization and before NewFrame().
  *  During the frame, use ImGui::PushStyleVar(ImGuiStyleVar_XXXX)/PopStyleVar() to alter the main style values,
- *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors.
- *  ----------------------------------------------------------------------------- */
+ *  and ImGui::PushStyleColor(ImGuiCol_XXX)/PopStyleColor() for colors. */
 class Style {
 
     /**  Global alpha applies to everything in Dear ImGui.    */
@@ -24,7 +24,7 @@ class Style {
     var windowPadding = Vec2(8)
 
     /** Radius of window corners rounding. Set to 0.0f to have rectangular windows. Large values tend to lead to variety of artifacts and are not recommended.  */
-    var windowRounding = 7f
+    var windowRounding = 0f
 
     /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).  */
     var windowBorderSize = 1f
@@ -65,6 +65,9 @@ class Style {
 
     /** Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label).  */
     var itemInnerSpacing = Vec2(4)
+
+    /** Padding within a table cell */
+    val cellPadding = Vec2(4,2)
 
     /** Expand reactive bounding box for touch-based system where touch position is not accurate enough. Unfortunately
      *  we don't sort widgets so priority on overlap will always be given to the first widget. So don't grow this too much!   */
@@ -125,7 +128,7 @@ class Style {
      *  Draw anti-aliased lines using textures where possible. */
     var antiAliasedLines = true
 
-    /** Enable anti-aliased lines/borders using textures where possible. Require back-end to render with
+    /** Enable anti-aliased lines/borders using textures where possible. Require backend to render with
      *  bilinear filtering. Latched at the beginning of the frame (copied to ImDrawList). */
     var antiAliasedLinesUseTex = true
 
@@ -161,6 +164,7 @@ class Style {
         windowBorderSize = style.windowBorderSize
         windowMinSize put style.windowMinSize
         windowTitleAlign put style.windowTitleAlign
+        windowMenuButtonPosition = style.windowMenuButtonPosition
         childRounding = style.childRounding
         childBorderSize = style.childBorderSize
         popupRounding = style.popupRounding
@@ -170,6 +174,7 @@ class Style {
         frameBorderSize = style.frameBorderSize
         itemSpacing put style.itemSpacing
         itemInnerSpacing put style.itemInnerSpacing
+        cellPadding put style.cellPadding
         touchExtraPadding put style.touchExtraPadding
         indentSpacing = style.indentSpacing
         columnsMinSpacing = style.columnsMinSpacing
@@ -177,13 +182,22 @@ class Style {
         scrollbarRounding = style.scrollbarRounding
         grabMinSize = style.grabMinSize
         grabRounding = style.grabRounding
+        logSliderDeadzone = style.logSliderDeadzone
+        tabRounding = style.tabRounding
+        tabBorderSize = style.tabBorderSize
+        tabMinWidthForCloseButton = style.tabMinWidthForCloseButton
+        colorButtonPosition = style.colorButtonPosition
         buttonTextAlign put style.buttonTextAlign
+        selectableTextAlign put style.selectableTextAlign
         displayWindowPadding put style.displayWindowPadding
         displaySafeAreaPadding put style.displaySafeAreaPadding
+        mouseCursorScale = style.mouseCursorScale
         antiAliasedLines = style.antiAliasedLines
+        antiAliasedLinesUseTex = style.antiAliasedLinesUseTex
         antiAliasedFill = style.antiAliasedFill
         curveTessellationTol = style.curveTessellationTol
-        style.colors.forEach { colors.add(Vec4(it)) }
+        circleSegmentMaxError = style.circleSegmentMaxError
+        style.colors.forEach { colors += Vec4(it) }
 //        locale = style.locale
     }
 
@@ -201,6 +215,7 @@ class Style {
         frameRounding = floor(frameRounding * scaleFactor)
         itemSpacing = floor(itemSpacing * scaleFactor)
         itemInnerSpacing = floor(itemInnerSpacing * scaleFactor)
+        cellPadding put floor(cellPadding * scaleFactor)
         touchExtraPadding = floor(touchExtraPadding * scaleFactor)
         indentSpacing = floor(indentSpacing * scaleFactor)
         columnsMinSpacing = floor(columnsMinSpacing * scaleFactor)

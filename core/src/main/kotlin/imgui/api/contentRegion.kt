@@ -3,9 +3,16 @@ package imgui.api
 import glm_.vec2.Vec2
 import imgui.ImGui.contentRegionMaxAbs
 
-/** Content region
- *  - Those functions are bound to be redesigned soon (they are confusing, incomplete and return values in local window coordinates which increases confusion) */
+// Content region
+// - Retrieve available space from a given point. GetContentRegionAvail() is frequently useful.
+// - Those functions are bound to be redesigned (they are confusing, incomplete and the Min/Max return values are in local window coordinates which increases confusion)
 interface contentRegion {
+
+    /** == GetContentRegionMax() - GetCursorPos()
+     *
+     *  ~GetContentRegionAvail  */
+    val contentRegionAvail: Vec2
+        get() = g.currentWindow!!.run { contentRegionMaxAbs - dc.cursorPos }
 
     /** current content boundaries (typically window boundaries including scrolling, or current column boundaries), in
      *  windows coordinates
@@ -13,17 +20,13 @@ interface contentRegion {
      *  ~GetContentRegionMax    */
     val contentRegionMax: Vec2
         /** ~GetContentRegionMax */
-        get() = g.currentWindow!!.run {
-            val mx = contentRegionRect.max - pos
-            dc.currentColumns?.let { mx.x = workRect.max.x - pos.x }
-            mx
+        get() {
+            val window = g.currentWindow!!
+            val mx = window.contentRegionRect.max - window.pos
+            if (window.dc.currentColumns != null || g.currentTable != null)
+                mx.x = window.workRect.max.x - window.pos.x
+            return mx
         }
-
-    /** == GetContentRegionMax() - GetCursorPos()
-     *
-     *  ~GetContentRegionAvail  */
-    val contentRegionAvail: Vec2
-        get() = g.currentWindow!!.run { contentRegionMaxAbs - dc.cursorPos }
 
     /** content boundaries min (roughly (0,0)-Scroll), in window coordinates
      *  ~GetWindowContentRegionMin  */

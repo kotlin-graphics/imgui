@@ -21,8 +21,8 @@ import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.or
 import kool.*
-import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL30C.*
+import org.lwjgl.opengl.GL31C.GL_PRIMITIVE_RESTART
 import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
 import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
@@ -38,19 +38,28 @@ class ImplGL3 : GLInterface {
     val buffers = GlBuffers<Buffer>()
     var vao = GlVertexArray()
 
+    /** ~ImGui_ImplOpenGL3_Init */
     init {
 
-        // query for GL version
-        glVersion = when {
-            !OPENGL_ES2 -> glGetInteger(GL_MAJOR_VERSION) * 100 + glGetInteger(GL_MINOR_VERSION) * 10
+        // Query for GL version (e.g. 320 for GL 3.2)
+        var major = glGetInteger(GL_MAJOR_VERSION)
+        var minor = glGetInteger(GL_MINOR_VERSION)
+        if (major == 0 && minor == 0) {
+            // Query GL_VERSION in desktop GL 2.x, the string will start with "<major>.<minor>"
+            val glVersion = glGetString(GL_VERSION)!!
+            major = glVersion.substringBefore('.').i
+            minor = glVersion.substringAfter('.').i
+        }
+        gGlVersion = when {
+            !OPENGL_ES2 -> major * 100 + minor * 10
             else -> 200 // GLES 2
         }
 
-        // Setup back-end capabilities flags
+        // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
 
         if (MAY_HAVE_DRAW_WITH_BASE_VERTEX)
-            if (glVersion >= 320)
+            if (gGlVersion >= 320)
                 io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     }
 
@@ -69,7 +78,10 @@ class ImplGL3 : GLInterface {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
+        glDisable(GL_STENCIL_TEST)
         glEnable(GL_SCISSOR_TEST)
+        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+            glDisable(GL_PRIMITIVE_RESTART)
         if (POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
@@ -87,12 +99,13 @@ class ImplGL3 : GLInterface {
         val R = drawData.displayPos.x + drawData.displaySize.x
         var T = drawData.displayPos.y
         var B = drawData.displayPos.y + drawData.displaySize.y
-        if (!clipOriginLowerLeft) {
-            val tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
+        if (CLIP_ORIGIN && Platform.get() != Platform.MACOSX)
+            if (!clipOriginLowerLeft) {
+                val tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
         val orthoProjection = glm.ortho(L, R, B, T, mat)
         glUseProgram(program.name)
         glUniform(matUL, orthoProjection)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330)
             glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
         vao.bind()
@@ -109,10 +122,8 @@ class ImplGL3 : GLInterface {
     }
 
     /** OpenGL3 Render function.
-     *  (this used to be set in io.renderDrawListsFn and called by ImGui::render(), but you can now call this directly
-     *  from your main loop)
-     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL
-     *  state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.   */
+     *  Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL state explicitly.
+     *  This is in order to be able to run within an OpenGL engine that doesn't do so.   */
     override fun renderDrawData(drawData: DrawData) {
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
@@ -126,7 +137,7 @@ class ImplGL3 : GLInterface {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = when {
-            !OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
+            !OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -144,7 +155,9 @@ class ImplGL3 : GLInterface {
         val lastEnableBlend = glIsEnabled(GL_BLEND)
         val lastEnableCullFace = glIsEnabled(GL_CULL_FACE)
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
+        val lastEnableStencilTest = glIsEnabled(GL_STENCIL_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
+        val lastEnablePrimitiveRestart = OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310 && glIsEnabled(GL_PRIMITIVE_RESTART)
 
         // Setup desired GL state
         setupRenderState(drawData, fbWidth, fbHeight)
@@ -185,7 +198,7 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
-                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && glVersion >= 320)
+                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && gGlVersion >= 320)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
                             glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
@@ -198,8 +211,8 @@ class ImplGL3 : GLInterface {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && glVersion > 330)
-                glBindSampler(0, lastSampler)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330)
+            glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
         glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer)
@@ -209,7 +222,13 @@ class ImplGL3 : GLInterface {
         if (lastEnableBlend) glEnable(GL_BLEND) else glDisable(GL_BLEND)
         if (lastEnableCullFace) glEnable(GL_CULL_FACE) else glDisable(GL_CULL_FACE)
         if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
+        if (lastEnableStencilTest) glEnable(GL_STENCIL_TEST) else glDisable(GL_STENCIL_TEST)
         if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
+        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+            when {
+                lastEnablePrimitiveRestart -> glEnable(GL_PRIMITIVE_RESTART)
+                else -> glDisable(GL_PRIMITIVE_RESTART)
+            }
         if (POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         glViewport(lastViewport)
@@ -304,10 +323,13 @@ class ImplGL3 : GLInterface {
         var OPENGL_ES3 = false
 
         // Desktop GL 3.2+ has glDrawElementsBaseVertex() which GL ES and WebGL don't have.
-        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
+        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
 
         // Desktop GL 3.3+ has glBindSampler()
-        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && glVersion >= 330 }
+        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
+
+        // Desktop GL 3.1+ has GL_PRIMITIVE_RESTART state
+        val OPENGL_MAY_HAVE_PRIMITIVE_RESTART by lazy { OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 310 }
 
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 

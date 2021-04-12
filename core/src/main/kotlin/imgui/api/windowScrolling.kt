@@ -11,8 +11,7 @@ import imgui.lerp
 /** Windows Scrolling */
 interface windowScrolling {
 
-    /** Use -1.0f on one axis to leave as-is */
-    infix fun setNextWindowScroll(scroll: Vec2) {
+    fun setNextWindowScroll(scroll: Vec2) {
         g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasScroll
         g.nextWindowData.scrollVal put scroll
     }

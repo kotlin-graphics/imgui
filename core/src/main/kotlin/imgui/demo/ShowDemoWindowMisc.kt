@@ -11,7 +11,6 @@ import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
-import imgui.ImGui.isItemFocused
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isKeyPressed
 import imgui.ImGui.isKeyReleased
@@ -36,33 +35,9 @@ import imgui.dsl.treeNode
 
 object ShowDemoWindowMisc {
 
-    /* Tabbing */
-    var buf0 = "hello".toByteArray(32)
-
-
-    /* Focus from code */
-    var buf1 = "click on a button to set focus".toByteArray(128)
-    val f3 = FloatArray(3)
-    var float3 = 0f
-
-    /** Focused & Hovered Test */
-    var embedAllInsideAchildWindow = false
-
     operator fun invoke() {
 
-        collapsingHeader("Filtering") {
-            // Helper class to easy setup a text filter.
-            // You may want to implement a more feature-full filtering scheme in your own application.
-            val filter = TextFilter()
-            text("Filter usage:\n" +
-                    "  \"\"         display all lines\n" +
-                    "  \"xxx\"      display lines containing \"xxx\"\n" +
-                    "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n" +
-                    "  \"-xxx\"     hide lines containing \"xxx\"")
-            filter.draw()
-            val lines = arrayListOf("aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world")
-            lines.stream().filter { filter.passFilter(it) }.forEach { bulletText(it) }
-        }
+        Filtering()
 
         collapsingHeader("Inputs, Navigation & Focus") {
 
@@ -148,50 +123,9 @@ object ShowDemoWindowMisc {
                 if (isItemActive) captureKeyboardFromApp(false)
             }
 
-            treeNode("Tabbing") {
-                text("Use TAB/SHIFT+TAB to cycle through keyboard editable fields.")
-                inputText("1", buf0)
-                inputText("2", buf0)
-                inputText("3", buf0)
-                pushAllowKeyboardFocus(false)
-                inputText("4 (tab skip)", buf0)
-                //SameLine(); ShowHelperMarker("Use PushAllowKeyboardFocus(bool) to disable tabbing through certain widgets.");
-                popAllowKeyboardFocus()
-                inputText("5", buf0)
-            }
+            Tabbing()
 
-            treeNode("Focus from code") {
-                val focus1 = button("Focus on 1"); sameLine()
-                val focus2 = button("Focus on 2"); sameLine()
-                val focus3 = button("Focus on 3")
-                var hasFocus = 0
-
-                if (focus1) setKeyboardFocusHere()
-                inputText("1", buf1)
-                if (isItemActive) hasFocus = 1
-
-                if (focus2) setKeyboardFocusHere()
-                inputText("2", buf1)
-                if (isItemActive) hasFocus = 2
-
-                pushAllowKeyboardFocus(false)
-                if (focus3) setKeyboardFocusHere()
-                inputText("3 (tab skip)", buf1)
-                if (isItemActive) hasFocus = 3
-                popAllowKeyboardFocus()
-
-                text("Item with focus: ${if (hasFocus != 0) "$hasFocus" else "<none>"}")
-
-                // Use >= 0 parameter to SetKeyboardFocusHere() to focus an upcoming item
-                var focusAhead = -1
-                if (button("Focus on X")) focusAhead = 0; sameLine()
-                if (button("Focus on Y")) focusAhead = 1; sameLine()
-                if (button("Focus on Z")) focusAhead = 2
-                if (focusAhead != -1) setKeyboardFocusHere(focusAhead)
-                sliderFloat3("Float3", f3, 0f, 1f)
-
-                textWrapped("NB: Cursor & selection are preserved when refocusing last used item in code.")
-            }
+            `Focus from code`()
 
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
@@ -228,9 +162,83 @@ object ShowDemoWindowMisc {
                     "otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.COUNT) {
                     bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
-                    if (isItemHovered() || isItemFocused)
+                    if (isItemHovered())
                         mouseCursor = MouseCursor.of(i)
                 }
+            }
+        }
+    }
+
+    object Filtering {
+        val filter = TextFilter()
+        operator fun invoke() {
+            collapsingHeader("Filtering") {
+                // Helper class to easy setup a text filter.
+                // You may want to implement a more feature-full filtering scheme in your own application.
+                text("Filter usage:\n" +
+                             "  \"\"         display all lines\n" +
+                             "  \"xxx\"      display lines containing \"xxx\"\n" +
+                             "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n" +
+                             "  \"-xxx\"     hide lines containing \"xxx\"")
+                filter.draw()
+                val lines = arrayListOf("aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world")
+                lines.stream().filter { filter.passFilter(it) }.forEach { bulletText(it) }
+            }
+        }
+    }
+
+    object Tabbing {
+        var buf = "hello".toByteArray(32)
+        operator fun invoke() {
+            treeNode("Tabbing") {
+                text("Use TAB/SHIFT+TAB to cycle through keyboard editable fields.")
+                inputText("1", buf)
+                inputText("2", buf)
+                inputText("3", buf)
+                pushAllowKeyboardFocus(false)
+                inputText("4 (tab skip)", buf)
+                //SameLine(); ShowHelperMarker("Use PushAllowKeyboardFocus(bool) to disable tabbing through certain widgets.");
+                popAllowKeyboardFocus()
+                inputText("5", buf)
+            }
+        }
+    }
+
+    object `Focus from code` {
+        var buf = "click on a button to set focus".toByteArray(128)
+        val f3 = FloatArray(3)
+        operator fun invoke() {
+            treeNode("Focus from code") {
+                val focus1 = button("Focus on 1"); sameLine()
+                val focus2 = button("Focus on 2"); sameLine()
+                val focus3 = button("Focus on 3")
+                var hasFocus = 0
+
+                if (focus1) setKeyboardFocusHere()
+                inputText("1", buf)
+                if (isItemActive) hasFocus = 1
+
+                if (focus2) setKeyboardFocusHere()
+                inputText("2", buf)
+                if (isItemActive) hasFocus = 2
+
+                pushAllowKeyboardFocus(false)
+                if (focus3) setKeyboardFocusHere()
+                inputText("3 (tab skip)", buf)
+                if (isItemActive) hasFocus = 3
+                popAllowKeyboardFocus()
+
+                text("Item with focus: ${if (hasFocus != 0) "$hasFocus" else "<none>"}")
+
+                // Use >= 0 parameter to SetKeyboardFocusHere() to focus an upcoming item
+                var focusAhead = -1
+                if (button("Focus on X")) focusAhead = 0; sameLine()
+                if (button("Focus on Y")) focusAhead = 1; sameLine()
+                if (button("Focus on Z")) focusAhead = 2
+                if (focusAhead != -1) setKeyboardFocusHere(focusAhead)
+                sliderFloat3("Float3", f3, 0f, 1f)
+
+                textWrapped("NB: Cursor & selection are preserved when refocusing last used item in code.")
             }
         }
     }

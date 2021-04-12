@@ -52,18 +52,18 @@ fun fileLoadToMemory(filename: String): CharArray? =
         }
 
 /** [JVM] */
-fun hash(data: Int, seed: Int = 0): Int {
+fun hash(data: Int, seed: Int = 0): ID {
     val buffer = ByteBuffer.allocate(Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     buffer.putInt(0, data)
     return hash(buffer, seed)
 }
 
 /** [JVM] */
-fun hash(data: IntArray, seed: Int = 0): Int {
+fun hash(data: IntArray, seed: Int = 0): ID {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
     val bytes = ByteArray(buffer.rem) { buffer[it] }
-    return hash(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
+    return hashStr(String(bytes, StandardCharsets.ISO_8859_1), bytes.size, seed)
 }
 
 /** CRC32 needs a 1KB lookup table (not cache friendly)
@@ -91,7 +91,7 @@ val GCrc32LookupTable = longArrayOf(
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
-fun hash(data: ByteArray, seed: Int = 0): Int {
+fun hash(data: ByteArray, seed: Int = 0): ID {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable
     var b = 0
@@ -104,7 +104,7 @@ fun hash(data: ByteArray, seed: Int = 0): Int {
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
-fun hash(data: ByteBuffer, seed: Int = 0): Int {
+fun hash(data: ByteBuffer, seed: Int = 0): ID {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable
     var dataSize = data.rem
@@ -113,7 +113,7 @@ fun hash(data: ByteBuffer, seed: Int = 0): Int {
     return crc.inv()
 }
 
-fun hash(data: String, dataSize_: Int = 0, seed_: Int = 0): Int {
+fun hashStr(data: String, dataSize_: Int = 0, seed_: Int = 0): ID {
 
     /*
     convert to "Extended ASCII" Windows-1252 (CP1252) https://en.wikipedia.org/wiki/Windows-1252
@@ -297,52 +297,113 @@ fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
     return 0
 }
 
+///** read one character. return input UTF-8 bytes count
+// *  @return [JVM] [char: Int, bytes: Int] */
+//fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
+//    var str = textBegin
+//    fun s(i: Int = 0) = text[i + str].toUInt()
+//    fun spp() = text[str++].toUInt()
+//    val invalid = UNICODE_CODEPOINT_INVALID // will be invalid but not end of string
+//    if ((s() and 0x80) == 0) return spp() to 1
+//    if ((s() and 0xe0) == 0xc0) {
+//        if (textEnd != 0 && textEnd - str < 2) return invalid to 1
+//        if (s() < 0xc2) return invalid to 2
+//        var c = (spp() and 0x1f) shl 6
+//        if ((s() and 0xc0) != 0x80) return invalid to 2
+//        c += (spp() and 0x3f)
+//        return c to 2
+//    }
+//    if ((s() and 0xf0) == 0xe0) {
+//        if (textEnd != 0 && textEnd - str < 3) return invalid to 1
+//        if (s() == 0xe0 && (s(1) < 0xa0 || s(1) > 0xbf)) return invalid to 3
+//        if (s() == 0xed && s(1) > 0x9f) return invalid to 3 // str[1] < 0x80 is checked below
+//        var c = (spp() and 0x0f) shl 12
+//        if ((s() and 0xc0) != 0x80) return invalid to 3
+//        c += (spp() and 0x3f) shl 6
+//        if ((s() and 0xc0) != 0x80) return invalid to 3
+//        c += spp() and 0x3f
+//        return c to 3
+//    }
+//    if ((s() and 0xf8) == 0xf0) {
+//        if (textEnd != 0 && textEnd - str < 4) return invalid to 1
+//        if (s() > 0xf4) return invalid to 4
+//        if (s() == 0xf0 && (s(1) < 0x90 || s(1) > 0xbf)) return invalid to 4
+//        if (s() == 0xf4 && s(1) > 0x8f) return invalid to 4 // str[1] < 0x80 is checked below
+//        var c = (spp() and 0x07) shl 18
+//        if ((s() and 0xc0) != 0x80) return invalid to 4
+//        c += (spp() and 0x3f) shl 12
+//        if ((s() and 0xc0) != 0x80) return invalid to 4
+//        c += (spp() and 0x3f) shl 6
+//        if ((s() and 0xc0) != 0x80) return invalid to 4
+//        c += spp() and 0x3f
+//        // utf-8 encodings of values used in surrogate pairs are invalid
+//        if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
+//        // If codepoint does not fit in ImWchar, use replacement character U+FFFD instead
+//        if (c >= UNICODE_CODEPOINT_MAX) c = UNICODE_CODEPOINT_INVALID
+//        return c to 4
+//    }
+//    return 0 to 0
+//}
+
+
+private val lengths = intArrayOf(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0)
+private val masks = intArrayOf(0x00, 0x7f, 0x1f, 0x0f, 0x07)
+private val mins = intArrayOf(0x400000, 0, 0x80, 0x800, 0x10000)
+private val shiftc = intArrayOf(0, 18, 12, 6, 0)
+private val shifte = intArrayOf(0, 6, 4, 2, 0)
+
 /** read one character. return input UTF-8 bytes count
- *  @return [JVM] [char: Int, bytes: Int] */
-fun textCharFromUtf8(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
-    var str = textBegin
-    fun s(i: Int = 0) = text[i + str].toUInt()
-    fun spp() = text[str++].toUInt()
-    val invalid = UNICODE_CODEPOINT_INVALID // will be invalid but not end of string
-    if ((s() and 0x80) == 0) return spp() to 1
-    if ((s() and 0xe0) == 0xc0) {
-        if (textEnd != 0 && textEnd - str < 2) return invalid to 1
-        if (s() < 0xc2) return invalid to 2
-        var c = (spp() and 0x1f) shl 6
-        if ((s() and 0xc0) != 0x80) return invalid to 2
-        c += (spp() and 0x3f)
-        return c to 2
+ *
+ *  Convert UTF-8 to 32-bit character, process single character input.
+ *  Based on work of Christopher Wellons (https://github.com/skeeto/branchless-utf8)
+ *  We handle UTF-8 decoding error by skipping forward.
+ *
+ *  @return [JVM] [char: Int, bytes: Int]
+ *
+ *  ~ImTextCharFromUtf8 */
+fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
+
+    var end = textEnd
+
+    val len = lengths[text[begin].i ushr 3]
+    var wanted = len + (len == 0).i
+
+    if (textEnd == -1)
+        end = len + if (len == 0) 1 else 0 // Max length, nulls will be taken into account.
+
+    // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
+    val s = ByteArray(4)
+    s[0] = if (begin + 0 < end) text[0] else 0
+    s[1] = if (s[0] != 0.b && begin + 1 < end) text[begin + 1] else 0
+    s[2] = if (s[1] != 0.b && begin + 2 < end) text[begin + 2] else 0
+    s[3] = if (s[2] != 0.b && begin + 3 < end) text[begin + 3] else 0
+
+    // Assume a four-byte character and load four bytes. Unused bits are shifted out.
+    var outChar = (s[0].i and masks[len]) shl 18
+    outChar = outChar or ((s[1].i and 0x3f) shl 12)
+    outChar = outChar or ((s[2].i and 0x3f) shl 6)
+    outChar = outChar or ((s[3].i and 0x3f) shl 0)
+    outChar = outChar ushr shiftc[len]
+
+    // Accumulate the various error conditions.
+    var e = (outChar < mins[len]).i shl 6 // non-canonical encoding
+    e = e or (((outChar ushr 11) == 0x1b).i shl 7)  // surrogate half?
+    e = e or ((outChar > UNICODE_CODEPOINT_MAX).i shl 8)  // out of range?
+    e = e or ((s[1].i and 0xc0) ushr 2)
+    e = e or ((s[2].i and 0xc0) ushr 4)
+    e = e or (s[3].i ushr 6)
+    e = e xor 0x2a // top two bits of each tail byte correct?
+    e = e ushr shifte[len]
+
+    if (e != 0) {
+        // No bytes are consumed when *in_text == 0 || in_text == in_text_end.
+        // One byte is consumed in case of invalid first byte of in_text.
+        // All available bytes (at most `len` bytes) are consumed on incomplete/invalid second to last bytes.
+        // Invalid or incomplete input may consume less bytes than wanted, therefore every byte has to be inspected in s.
+        wanted = min(wanted, s[0].bool.i + s[1].bool.i + s[2].bool.i + s[3].bool.i)
+        outChar = UNICODE_CODEPOINT_INVALID
     }
-    if ((s() and 0xf0) == 0xe0) {
-        if (textEnd != 0 && textEnd - str < 3) return invalid to 1
-        if (s() == 0xe0 && (s(1) < 0xa0 || s(1) > 0xbf)) return invalid to 3
-        if (s() == 0xed && s(1) > 0x9f) return invalid to 3 // str[1] < 0x80 is checked below
-        var c = (spp() and 0x0f) shl 12
-        if ((s() and 0xc0) != 0x80) return invalid to 3
-        c += (spp() and 0x3f) shl 6
-        if ((s() and 0xc0) != 0x80) return invalid to 3
-        c += spp() and 0x3f
-        return c to 3
-    }
-    if ((s() and 0xf8) == 0xf0) {
-        if (textEnd != 0 && textEnd - str < 4) return invalid to 1
-        if (s() > 0xf4) return invalid to 4
-        if (s() == 0xf0 && (s(1) < 0x90 || s(1) > 0xbf)) return invalid to 4
-        if (s() == 0xf4 && s(1) > 0x8f) return invalid to 4 // str[1] < 0x80 is checked below
-        var c = (spp() and 0x07) shl 18
-        if ((s() and 0xc0) != 0x80) return invalid to 4
-        c += (spp() and 0x3f) shl 12
-        if ((s() and 0xc0) != 0x80) return invalid to 4
-        c += (spp() and 0x3f) shl 6
-        if ((s() and 0xc0) != 0x80) return invalid to 4
-        c += spp() and 0x3f
-        // utf-8 encodings of values used in surrogate pairs are invalid
-        if ((c and 0xFFFFF800.i) == 0xD800) return invalid to 4
-        // If codepoint does not fit in ImWchar, use replacement character U+FFFD instead
-        if (c >= UNICODE_CODEPOINT_MAX) c = UNICODE_CODEPOINT_INVALID
-        return c to 4
-    }
-    return 0 to 0
+    return outChar to wanted
 }
 
 /** return input UTF-8 bytes count */
@@ -493,6 +554,7 @@ fun lerp(a: Double, b: Double, t: Float): Double = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float): Int = (a + (b - a) * t).i
 fun lerp(a: Long, b: Long, t: Float): Long = (a + (b - a) * t).L
 fun modPositive(a: Int, b: Int): Int = (a + b) % b
+
 // TODO -> glm
 fun Vec2.lerp(b: Vec2, t: Float): Vec2 = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
@@ -518,27 +580,24 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
 // [SECTION] MISC HELPERS/UTILITIES (Geometry functions)
 //-----------------------------------------------------------------------------
 
-/** Cubic Bezier */
-fun bezierCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
-    val u = 1.0f - t
+fun bezierCubicCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
+    val u = 1f - t
     val w1 = u * u * u
     val w2 = 3 * u * u * t
     val w3 = 3 * u * t * t
     val w4 = t * t * t
-    return Vec2(
-            w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x,
-            w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y)
+    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y)
 }
 
 /** For curves with explicit number of segments */
-fun bezierClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegments: Int): Vec2 {
+fun bezierCubicClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegments: Int): Vec2 {
     assert(numSegments > 0) { "Use ImBezierClosestPointCasteljau()" }
     val pLast = Vec2(p1)
     val pClosest = Vec2()
     var pClosestDist2 = Float.MAX_VALUE
     val tStep = 1f / numSegments
     for (iStep in 1..numSegments) {
-        val pCurrent = bezierCalc(p1, p2, p3, p4, tStep * iStep)
+        val pCurrent = bezierCubicCalc(p1, p2, p3, p4, tStep * iStep)
         val pLine = lineClosestPoint(pLast, pCurrent, p)
         val dist2 = (p - pLine).lengthSqr
         if (dist2 < pClosestDist2) {
@@ -553,35 +612,47 @@ fun bezierClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegme
 /** For auto-tessellated curves you can use tess_tol = style.CurveTessellationTol
  *
  *  tess_tol is generally the same value you would find in ImGui::GetStyle().CurveTessellationTol
- *  Because those ImXXX functions are lower-level than ImGui:: we cannot access this value automatically.   */
-fun bezierClosestPointCasteljau(p: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, tessTol: Float): Vec2 {
+ *  Because those ImXXX functions are lower-level than ImGui:: we cannot access this value automatically. */
+fun bezierCubicClosestPointCasteljau(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, tessTol: Float): Vec2 {
     assert(tessTol > 0f)
-    val pLast = Vec2(p1)
+    val pLast = p1 // [JVM] careful, same instance!
     val pClosest = Vec2()
     val pClosestDist2 = Float.MAX_VALUE
-    bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, tessTol, 0)
+    // [JVM] we dont need the return value
+    bezierCubicClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, tessTol, 0)
     return pClosest
 }
 
+fun bezierQuadraticCalc(p1: Vec2, p2: Vec2, p3: Vec2, t: Float): Vec2 {
+    val u = 1f - t
+    val w1 = u * u
+    val w2 = 2 * u * t
+    val w3 = t * t
+    return Vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x, w1 * p1.y + w2 * p2.y + w3 * p3.y)
+}
+
 /** Closely mimics PathBezierToCasteljau() in imgui_draw.cpp
- *  [JVM] pClosestDist2 in return */
-fun bezierClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2_: Float,
-                                    x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float,
-                                    tessTol: Float, level: Int): Float {
-    var pClosestDist2 = pClosestDist2_
+ *
+ *  [JVM] p, pClosest, pLast, pClosestDist2 are supposed to modify the given instance
+ *  [JVM] @return pClosestDist2
+ */
+fun bezierCubicClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClosestDist2: Float,
+                                         x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float,
+                                         x4: Float, y4: Float, tessTol: Float, level: Int): Float {
+    var res = pClosestDist2
     val dx = x4 - x1
     val dy = y4 - y1
     var d2 = ((x2 - x4) * dy - (y2 - y4) * dx)
     var d3 = ((x3 - x4) * dy - (y3 - y4) * dx)
-    d2 = if (d2 >= 0f) d2 else -d2
-    d3 = if (d3 >= 0f) d3 else -d3
+    d2 = if (d2 >= 0) d2 else -d2
+    d3 = if (d3 >= 0) d3 else -d3
     if ((d2 + d3) * (d2 + d3) < tessTol * (dx * dx + dy * dy)) {
         val pCurrent = Vec2(x4, y4)
         val pLine = lineClosestPoint(pLast, pCurrent, p)
         val dist2 = (p - pLine).lengthSqr
         if (dist2 < pClosestDist2) {
             pClosest put pLine
-            pClosestDist2 = dist2
+            res = dist2 // pClosestDist2 = dist2
         }
         pLast put pCurrent
     } else if (level < 10) {
@@ -597,12 +668,11 @@ fun bezierClosestPointCasteljauStep(p: Vec2, pClosest: Vec2, pLast: Vec2, pClose
         val y234 = (y23 + y34) * 0.5f
         val x1234 = (x123 + x234) * 0.5f
         val y1234 = (y123 + y234) * 0.5f
-        pClosestDist2 = bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
-        pClosestDist2 = bezierClosestPointCasteljauStep(p, pClosest, pLast, pClosestDist2, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
+        res = bezierCubicClosestPointCasteljauStep(p, pClosest, pLast, res, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
+        res = bezierCubicClosestPointCasteljauStep(p, pClosest, pLast, res, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
     }
-    return pClosestDist2
+    return res
 }
-
 
 fun lineClosestPoint(a: Vec2, b: Vec2, p: Vec2): Vec2 {
     val ap = p - a
@@ -664,5 +734,46 @@ fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
     else -> when {
         dy > 0f -> Dir.Down
         else -> Dir.Up
+    }
+}
+
+
+// Helper: ImBitArray class (wrapper over ImBitArray functions)
+// Store 1-bit per value. NOT CLEARED by constructor.
+//template<int BITCOUNT>
+class BitArray(val bitCount: Int) {
+
+    val storage = IntArray((bitCount + 31) ushr 5)
+
+    fun clearAllBits() = storage.fill(0)
+    fun setAllBits() = storage.fill(255)
+
+    fun mask(n: Int): Int = 1 shl (n and 31)
+
+    infix fun testBit(n: Int): Boolean {
+        assert(n < bitCount)
+        return storage[n ushr 5] has mask(n)
+    }
+
+    infix fun setBit(n: Int) {
+        assert(n < bitCount)
+        storage[n ushr 5] = storage[n ushr 5] or mask(n)
+    }
+
+    infix fun clearBit(n: Int) {
+        assert(n < bitCount)
+        storage[n ushr 5] = storage[n ushr 5] wo mask(n)
+    }
+
+    fun setBitRange(n_: Int, n2_: Int) { // Works on range [n..n2)
+        var n = n_
+        val n2 = n2_ - 1
+        while (n <= n2) {
+            val aMod = n and 31
+            val bMod = (if (n2 > (n or 31)) 31 else n2 and 31) + 1
+            val mask = ((1L shl bMod) - 1).i wo ((1L shl aMod) - 1).i
+            storage[n ushr 5] = storage[n ushr 5] or mask
+            n = (n + 32) wo 31
+        }
     }
 }

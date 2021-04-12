@@ -133,7 +133,7 @@ internal interface newFrame {
             val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpen(rootWindow.popupId, PopupFlag.AnyPopupLevel.i)
 
             if (rootWindow != null && !isClosedPopup) {
-                g.hoveredWindow!!.startMouseMoving()
+                g.hoveredWindow!!.startMouseMoving() //-V595
 
                 // Cancel moving if clicked outside of title bar
                 if (io.configWindowsMoveFromTitleBarOnly && rootWindow.flags hasnt WindowFlag.NoTitleBar)
@@ -155,18 +155,7 @@ internal interface newFrame {
             // Find the top-most window between HoveredWindow and the top-most Modal Window.
             // This is where we can trim the popup stack.
             val modal = topMostPopupModal
-            var hoveredWindowAboveModal = false
-            if (modal == null)
-                hoveredWindowAboveModal = true
-            var i = g.windows.lastIndex
-            while (i >= 0 && !hoveredWindowAboveModal) {
-                val window = g.windows[i]
-                if (window === modal)
-                    break
-                if (window === g.hoveredWindow)
-                    hoveredWindowAboveModal = true
-                i--
-            }
+            val hoveredWindowAboveModal = g.hoveredWindow?.isAbove(modal) == true
             closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal, true)
         }
     }

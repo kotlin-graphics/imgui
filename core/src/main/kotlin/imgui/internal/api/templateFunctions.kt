@@ -4,9 +4,12 @@ package imgui.internal.api
 
 import glm_.*
 import imgui.*
+import imgui.ImGui.checkbox
 import imgui.ImGui.clearActiveID
+import imgui.ImGui.currentWindow
 import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
+import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart2
@@ -477,7 +480,7 @@ internal interface templateFunctions {
                 //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
                 t < 1f -> {
                     val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF + if(vMin > vMax) -0.5f else 0.5f
+                    val tmp = vNewOffF + if (vMin > vMax) -0.5f else 0.5f
                     vMin + tmp.i
                 }
                 else -> vMax
@@ -549,7 +552,7 @@ internal interface templateFunctions {
                 //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
                 t < 1f -> {
                     val vNewOffF = (vMax - vMin).v * t
-                    val tmp = vNewOffF + if(vMin > vMax) -0.5f else 0.5f
+                    val tmp = vNewOffF + if (vMin > vMax) -0.5f else 0.5f
                     vMin + tmp.i
                 }
                 else -> vMax
@@ -624,7 +627,7 @@ internal interface templateFunctions {
                 //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
                 t < 1f -> {
                     val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF.d + if(vMin > vMax) -0.5 else 0.5
+                    val tmp = vNewOffF.d + if (vMin > vMax) -0.5 else 0.5
                     vMin + tmp.L
                 }
                 else -> vMax
@@ -696,7 +699,7 @@ internal interface templateFunctions {
                 //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
                 t < 1f -> {
                     val vNewOffF = (vMax - vMin).v * t
-                    val tmp = vNewOffF.d + if(vMin > vMax) -0.5f else 0.5f
+                    val tmp = vNewOffF.d + if (vMin > vMax) -0.5f else 0.5f
                     vMin + tmp.L
                 }
                 else -> vMax
@@ -770,7 +773,7 @@ internal interface templateFunctions {
                 //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
                 t < 1f -> {
                     val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF + if(vMin > vMax) -0.5f else 0.5f
+                    val tmp = vNewOffF + if (vMin > vMax) -0.5f else 0.5f
                     vMin + tmp
                 }
                 else -> vMax
@@ -844,7 +847,7 @@ internal interface templateFunctions {
                 //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
                 t < 1f -> {
                     val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF + if(vMin > vMax) -0.5 else 0.5
+                    val tmp = vNewOffF + if (vMin > vMax) -0.5 else 0.5
                     vMin + tmp
                 }
                 else -> vMax
@@ -871,7 +874,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -977,7 +980,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1083,7 +1086,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1189,7 +1192,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1295,7 +1298,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -1401,7 +1404,7 @@ internal interface templateFunctions {
 
         // Inputs accumulates into g.DragCurrentAccum, which is flushed into the current value as soon as it makes a difference with our precision settings
         var adjustDelta = 0f
-        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && io.mouseDragMaxDistanceSqr[0] > 1f * 1f) {
+        if (g.activeIdSource == InputSource.Mouse && isMousePosValid() && isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
             adjustDelta = io.mouseDelta[axis]
             if (io.keyAlt)
                 adjustDelta *= 1f / 100f
@@ -2364,6 +2367,81 @@ internal interface templateFunctions {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d
             else -> vStr.replace(',', '.').d
         }
+    }
+
+    fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Int>, flagsValue: Int): Boolean {
+        var flags by flagsPtr
+        var allOn = (flags and flagsValue) == flagsValue
+        _b = allOn
+        val anyOn = flags has flagsValue
+        val pressed = when {
+            !allOn && anyOn -> {
+                val window = currentWindow
+                val backupItemFlags = window.dc.itemFlags
+                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
+                checkbox(label, ::_b).also {
+                    window.dc.itemFlags = backupItemFlags
+                }
+            }
+            else -> checkbox(label, ::_b)
+        }
+        allOn = _b
+        if (pressed)
+            flags = when {
+                allOn -> flags or flagsValue
+                else -> flags wo flagsValue
+            }
+        return pressed
+    }
+
+    fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Long>, flagsValue: Long): Boolean {
+        var flags by flagsPtr
+        var allOn = (flags and flagsValue) == flagsValue
+        _b = allOn
+        val anyOn = flags has flagsValue
+        val pressed = when {
+            !allOn && anyOn -> {
+                val window = currentWindow
+                val backupItemFlags = window.dc.itemFlags
+                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
+                checkbox(label, ::_b).also {
+                    window.dc.itemFlags = backupItemFlags
+                }
+            }
+            else -> checkbox(label, ::_b)
+        }
+        allOn = _b
+        if (pressed)
+            flags = when {
+                allOn -> flags or flagsValue
+                else -> flags wo flagsValue
+            }
+        return pressed
+    }
+
+    fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Ulong>, flagsValue: Ulong): Boolean {
+        var flags by flagsPtr
+        var allOn = (flags.v and flagsValue.v) == flagsValue.v
+        _b = allOn
+        val anyOn = flags.v has flagsValue.v
+        val pressed = when {
+            !allOn && anyOn -> {
+                val window = currentWindow
+                val backupItemFlags = window.dc.itemFlags
+                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
+                checkbox(label, ::_b).also {
+                    window.dc.itemFlags = backupItemFlags
+                }
+            }
+            else -> checkbox(label, ::_b)
+        }
+        allOn = _b
+        if (pressed)
+            flags.v = when {
+                allOn -> flags.v or flagsValue.v
+                else -> flags.v wo flagsValue.v
+            }
+        return pressed
     }
 
     companion object {

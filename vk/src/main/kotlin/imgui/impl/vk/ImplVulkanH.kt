@@ -102,8 +102,6 @@ object ImplVulkanH {
     }
 
     // Forward Declarations
-    //    bool ImGui_ImplVulkan_CreateDeviceObjects();
-    //    void ImGui_ImplVulkan_DestroyDeviceObjects();
     //    void ImGui_ImplVulkanH_DestroyFrame(VkDevice device, ImGui_ImplVulkanH_Frame* fd, const VkAllocationCallbacks* allocator);
     //    void ImGui_ImplVulkanH_DestroyFrameSemaphores(VkDevice device, ImGui_ImplVulkanH_FrameSemaphores* fsd, const VkAllocationCallbacks* allocator);
     //    void ImGui_ImplVulkanH_DestroyFrameRenderBuffers(VkDevice device, ImGui_ImplVulkanH_FrameRenderBuffers* buffers, const VkAllocationCallbacks* allocator);

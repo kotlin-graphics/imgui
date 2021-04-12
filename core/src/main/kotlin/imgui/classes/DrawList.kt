@@ -19,7 +19,6 @@ import kool.*
 import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
-import java.nio.IntBuffer
 import java.util.Stack
 import kotlin.math.sqrt
 
@@ -54,22 +53,22 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Vertex buffer.  */
     var vtxBuffer = DrawVert_Buffer(0)
 
+    /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
+    var flags: DrawListFlags = DrawListFlag.None.i
+
 
     // -----------------------------------------------------------------------------------------------------------------
     // [Internal, used while building lists]
     // -----------------------------------------------------------------------------------------------------------------
 
-    /** Flags, you may poke into these to adjust anti-aliasing settings per-primitive. */
-    var flags: DrawListFlags = DrawListFlag.None.i
+    /** [Internal] Generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0. */
+    var _vtxCurrentIdx = 0
 
     /** Pointer to shared draw data (you can use ImGui::drawListSharedData to get the one from current ImGui context) */
     var _data: DrawListSharedData = sharedData ?: DrawListSharedData()
 
     /** Pointer to owner window's name for debugging    */
     var _ownerName = ""
-
-    /** [Internal] Generally == VtxBuffer.Size unless we are past 64K vertices, in which case this gets reset to 0. */
-    var _vtxCurrentIdx = 0
 
     /** [Internal] point within VtxBuffer.Data after each add command (to avoid using the ImVector<> operators too much)    */
     var _vtxWritePtr = 0
@@ -85,11 +84,14 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** [Internal] current path building    */
     val _path = ArrayList<Vec2>()
 
-    /** [Internal] Template of active commands. Fields should match those of CmdBuffer.back(). */
-    var _cmdHeader: DrawCmd = DrawCmd()
+    /** [Internal] template of active commands. Fields should match those of CmdBuffer.back(). */
+    var _cmdHeader = DrawCmdHeader()
 
     /** [Internal] for channels api (note: prefer using your own persistent instance of ImDrawListSplitter!) */
     val _splitter = DrawListSplitter()
+
+    /** [Internal] anti-alias fringe is scaled by this value, this helps to keep things sharp while zooming at vertex buffer content */
+    var _fringeScale = 1f
 
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
@@ -328,18 +330,14 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addText(pos: Vec2, col: Int, text: String) = addText(g.font, g.fontSize, pos, col, text)
 
-    fun addText(
-            font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
-            wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null,
-    ) {
+    fun addText(font: Font?, fontSize: Float, pos: Vec2, col: Int, text: String,
+                wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
         val bytes = text.toByteArray()
         addText(font, fontSize, pos, col, bytes, 0, bytes.size, wrapWidth, cpuFineClipRect)
     }
 
-    fun addText(
-            font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int = 0,
-            textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null,
-    ) {
+    fun addText(font_: Font?, fontSize_: Float, pos: Vec2, col: Int, text: ByteArray, textBegin: Int = 0,
+                textEnd: Int = text.strlen(), wrapWidth: Float = 0f, cpuFineClipRect: Vec4? = null) {
 
         if ((col and COL32_A_MASK) == 0) return
 
@@ -364,7 +362,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
      *  We avoid using the ImVec2 math operators here to reduce cost to a minimum for debug/non-inlined builds. */
-    fun addPolyline(points: ArrayList<Vec2>, col: Int, closed: Boolean, thickness_: Float) {
+    fun addPolyline(points: List<Vec2>, col: Int, closed: Boolean, thickness_: Float) {
 
         var thickness = thickness_
 
@@ -373,11 +371,11 @@ class DrawList(sharedData: DrawListSharedData?) {
         val opaqueUv = Vec2(_data.texUvWhitePixel)
 
         val count = if (closed) points.size else points.lastIndex // The number of line segments we need to draw
-        val thickLine = thickness > 1f
+        val thickLine = thickness > _fringeScale
 
         if (flags has DrawListFlag.AntiAliasedLines) {
             // Anti-aliased stroke
-            val AA_SIZE = 1f
+            val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
 
             // Thicknesses <1.0 should behave like thickness 1.0
@@ -390,8 +388,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             //      could be improved.
             // - If AA_SIZE is not 1.0f we cannot use the texture path.
             val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex &&
-                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX &&
-                    fractionalThickness <= 0.00001f
+                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f  && AA_SIZE == 1f
 
             ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) {
                 "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off"
@@ -503,14 +500,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                 if (useTexture) {
                     // If we're using textures we only need to emit the left/right edge vertices
                     val texUVs = _data.texUvLines[integerThickness]
-                    if (fractionalThickness != 0f) {
+                    /*if (fractionalThickness != 0f) { // Currently always zero when use_texture==false!
                         val texUVs1 = _data.texUvLines[integerThickness + 1]
                         texUVs.x = texUVs.x + (texUVs1.x - texUVs.x) * fractionalThickness // inlined ImLerp()
                         texUVs.y = texUVs.y + (texUVs1.y - texUVs.y) * fractionalThickness
                         texUVs.z = texUVs.z + (texUVs1.z - texUVs.z) * fractionalThickness
                         texUVs.w = texUVs.w + (texUVs1.w - texUVs.w) * fractionalThickness
-                    }
-
+                    }*/
                     val texUV0 = Vec2(texUVs.x, texUVs.y)
                     val texUV1 = Vec2(texUVs.z, texUVs.w)
 
@@ -659,7 +655,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         if (flags has DrawListFlag.AntiAliasedFill) {
             // Anti-aliased Fill
-            val AA_SIZE = 1f
+            val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
             val idxCount = (points.size - 2) * 3 + points.size * 6
             val vtxCount = points.size * 2
@@ -750,12 +746,26 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-    /** Cubic Bezier takes 4 controls points */
-    fun addBezierCurve(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
+    /** Cubic Bezier takes 4 controls points
+     *
+     *  Cubic Bezier (4 control points) */
+    fun addBezierCubic(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
         if (col hasnt COL32_A_MASK) return
 
         pathLineTo(p1)
-        pathBezierCurveTo(p2, p3, p4, numSegments)
+        pathBezierCubicCurveTo(p2, p3, p4, numSegments)
+        pathStroke(col, false, thickness)
+    }
+
+    /** Quad Bezier (3 control points)
+     *
+     *  Quadratic Bezier takes 3 controls points */
+    fun addBezierQuadratic(p1: Vec2, p2: Vec2, p3: Vec2, col: Int, thickness: Float, numSegments: Int = 0) {
+        if (col hasnt COL32_A_MASK)
+            return
+
+        pathLineTo(p1)
+        pathBezierQuadraticCurveTo(p2, p3, numSegments)
         pathStroke(col, false, thickness)
     }
 
@@ -879,29 +889,33 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    fun pathBezierCurveTo(p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int = 0) {
+    /** Cubic bezier
+     *
+     *  Cubic Bezier (4 control points) */
+    fun pathBezierCubicCurveTo(p2: Vec2, p3: Vec2, p4: Vec2, numSegments: Int = 0) {
 
         val p1 = _path.last()
-        if (numSegments == 0) // Auto-tessellated
-            pathBezierToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, style.curveTessellationTol, 0)
+        if (numSegments == 0)
+            pathBezierCubicCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, style.curveTessellationTol, 0) // Auto-tessellated
         else {
             val tStep = 1f / numSegments
             for (iStep in 1..numSegments)
-                _path += bezierCalc(p1, p2, p3, p4, tStep * iStep)
+                _path += bezierCubicCalc(p1, p2, p3, p4, tStep * iStep)
         }
     }
 
-    /** Closely mimics BezierClosestPointCasteljauStep() in imgui.cpp */
-    private fun pathBezierToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float, x4: Float, y4: Float, tess_tol: Float, level: Int) {
+    /** Closely mimics ImBezierCubicClosestPointCasteljau() in imgui.cpp */
+    private fun pathBezierCubicCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
+                                        x3: Float, y3: Float, x4: Float, y4: Float, tessTol: Float, level: Int) {
         val dx = x4 - x1
         val dy = y4 - y1
-        var d2 = ((x2 - x4) * dy - (y2 - y4) * dx)
-        var d3 = ((x3 - x4) * dy - (y3 - y4) * dx)
-        d2 = if (d2 >= 0) d2 else -d2
-        d3 = if (d3 >= 0) d3 else -d3
-        if ((d2 + d3) * (d2 + d3) < tess_tol * (dx * dx + dy * dy)) {
-            path.add(Vec2(x4, y4))
-        } else if (level < 10) {
+        var d2 = (x2 - x4) * dy - (y2 - y4) * dx
+        var d3 = (x3 - x4) * dy - (y3 - y4) * dx
+        d2 = if(d2 >= 0) d2 else -d2
+        d3 = if(d3 >= 0) d3 else -d3
+        if ((d2 + d3) * (d2 + d3) < tessTol * (dx * dx + dy * dy))
+            path += Vec2(x4, y4)
+        else if (level < 10) {
             val x12 = (x1 + x2) * 0.5f
             val y12 = (y1 + y2) * 0.5f
             val x23 = (x2 + x3) * 0.5f
@@ -914,8 +928,41 @@ class DrawList(sharedData: DrawListSharedData?) {
             val y234 = (y23 + y34) * 0.5f
             val x1234 = (x123 + x234) * 0.5f
             val y1234 = (y123 + y234) * 0.5f
-            pathBezierToCasteljau(path, x1, y1, x12, y12, x123, y123, x1234, y1234, tess_tol, level + 1)
-            pathBezierToCasteljau(path, x1234, y1234, x234, y234, x34, y34, x4, y4, tess_tol, level + 1)
+            pathBezierCubicCurveToCasteljau(path, x1, y1, x12, y12, x123, y123, x1234, y1234, tessTol, level + 1)
+            pathBezierCubicCurveToCasteljau(path, x1234, y1234, x234, y234, x34, y34, x4, y4, tessTol, level + 1)
+        }
+    }
+
+    /** Quadratic bezier
+     *
+     *  Quad Bezier (3 control points) */
+    fun pathBezierQuadraticCurveTo(p2: Vec2, p3: Vec2, numSegments: Int) {
+        val p1 = _path.last()
+        if (numSegments == 0)
+            pathBezierQuadraticCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _data.curveTessellationTol, 0)// Auto-tessellated
+        else {
+            val tStep = 1f / numSegments
+            for (iStep in 1..numSegments)
+                _path + bezierQuadraticCalc(p1, p2, p3, tStep * iStep)
+        }
+    }
+
+    private fun pathBezierQuadraticCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
+                                                    x3: Float, y3: Float, tessTol: Float, level: Int) {
+        val dx = x3 - x1
+        val dy = y3 - y1
+        val det = (x2 - x3) * dy - (y2 - y3) * dx
+        if (det * det * 4f < tessTol * (dx * dx + dy * dy))
+                path += Vec2(x3, y3)
+        else if (level < 10) {
+            val x12 = (x1 + x2) * 0.5f
+            val y12 = (y1 + y2) * 0.5f
+            val x23 = (x2 + x3) * 0.5f
+            val y23 = (y2 + y3) * 0.5f
+            val x123 = (x12 + x23) * 0.5f
+            val y123 = (y12 + y23) * 0.5f
+            pathBezierQuadraticCurveToCasteljau(path, x1, y1, x12, y12, x123, y123, tessTol, level + 1)
+            pathBezierQuadraticCurveToCasteljau(path, x123, y123, x23, y23, x3, y3, tessTol, level + 1)
         }
     }
 
@@ -1270,7 +1317,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     infix fun addTo(outList: ArrayList<DrawList>) {
 
         // Remove trailing command if unused.
-        // Technically we could return directly instead of popping, but this make things looks neat in Metrics window as well.
+        // Technically we could return directly instead of popping, but this make things looks neat in Metrics/Debugger window as well.
         _popUnusedDrawCmd()
         if (cmdBuffer.empty()) return
 
@@ -1286,13 +1333,13 @@ class DrawList(sharedData: DrawListSharedData?) {
             (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
             If this assert triggers because you are drawing lots of stuff manually:
             - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
-              Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics window to inspect draw list contents.
+              Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics/Debugger window to inspect draw list contents.
             - If you want large meshes with more than 64K vertices, you can either:
-              (A) Handle the ImDrawCmd::VtxOffset value in your renderer back-end, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
-                  Most example back-ends already support this from 1.71. Pre-1.71 back-ends won't.
+              (A) Handle the ImDrawCmd::VtxOffset value in your renderer backend, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
+                  Most example backends already support this from 1.71. Pre-1.71 backends won't.
                   Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
-              (B) Or handle 32-bits indices in your renderer back-end, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
-                  Most example back-ends already support this. For example, the OpenGL example code detect index size at compile-time:
+              (B) Or handle 32-bits indices in your renderer backend, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
+                  Most example backends already support this. For example, the OpenGL example code detect index size at compile-time:
                     glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
                   Your own engine or render API may use different parameters or function calls to specify index sizes.
                   2 and 4 bytes indices are generally supported by most graphics API.

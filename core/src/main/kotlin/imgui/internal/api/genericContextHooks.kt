@@ -1,8 +1,8 @@
 package imgui.internal.api
 
-import imgui.ContextHook
-import imgui.ContextHookType
 import imgui.classes.Context
+import imgui.classes.ContextHook
+import imgui.classes.ContextHookType
 
 // Generic context hooks
 interface genericContextHooks {

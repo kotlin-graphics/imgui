@@ -58,7 +58,8 @@ internal interface renderHelpers {
 
         if (textEnd > 0) {
             window.drawList.addText(g.font, g.fontSize, pos, Col.Text.u32, text, 0, textEnd, wrapWidth)
-            if (g.logEnabled) logRenderedText(pos, text.cStr, textEnd)
+            if (g.logEnabled)
+                logRenderedText(pos, text.cStr, textEnd)
         }
     }
 

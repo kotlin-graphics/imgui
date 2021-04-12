@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
 
 
 //-----------------------------------------------------------------------------
-// Font API (FontConfig, FontGlyph, FontAtlasFlags, FontAtlas, Font)
+// [SECTION] Font API (FontConfig, FontGlyph, FontAtlasFlags, FontAtlas, Font)
 //-----------------------------------------------------------------------------
 
 

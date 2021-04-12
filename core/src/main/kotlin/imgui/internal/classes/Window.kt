@@ -39,7 +39,7 @@ class Window(var context: Context,
              var name: String) {
 
     /** == ImHashStr(Name) */
-    val id: ID = hash(name)
+    val id: ID = hashStr(name)
 
     /** See enum WindowFlags */
     var flags = Wf.None.i
@@ -55,6 +55,8 @@ class Window(var context: Context,
 
     /** Size of contents/scrollable client area (calculated from the extents reach of the cursor) from previous frame. Does not include window decoration or window padding. */
     var contentSize = Vec2()
+
+    val contentSizeIdeal = Vec2()
 
     /** Size of contents/scrollable client area explicitly request by the user via SetNextWindowContentSize(). */
     var contentSizeExplicit = Vec2()
@@ -126,16 +128,16 @@ class Window(var context: Context,
     var hasCloseButton = false
 
     /** Current border being held for resize (-1: none, otherwise 0-3) */
-    var resizeBorderHeld = -1
+    var resizeBorderHeld = 0
 
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
 
     /** Order within immediate parent window, if we are a child window. Otherwise 0. */
-    var beginOrderWithinParent = -1
+    var beginOrderWithinParent = 0
 
     /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
-    var beginOrderWithinContext = -1
+    var beginOrderWithinContext = 0
 
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
     var popupId: ID = 0
@@ -153,6 +155,9 @@ class Window(var context: Context,
 
     /** Hide the window for N frames while allowing items to be submitted so we can measure their size */
     var hiddenFramesCannotSkipItems = 0
+
+    /** Hide the window until frame N at Render() time only */
+    var hiddenFramesForRenderOnly = 0
 
     /** store acceptable condition flags for SetNextWindowPos() use. */
     var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
@@ -174,14 +179,13 @@ class Window(var context: Context,
     /** ID stack. ID are hashes seeded with the value at the top of the stack. (In theory this should be in the TempData structure)   */
     val idStack = Stack<ID>()
 
-    /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
-    var dc = WindowTempData()
-
     init {
         idStack += id
         moveId = getID("#MOVE")
-        childId = 0
     }
+
+    /** Temporary per-window data, reset at the beginning of the frame. This used to be called DrawContext, hence the "DC" variable name.  */
+    var dc = WindowTempData()
 
     fun destroy() {
         assert(drawList === drawListInst)
@@ -189,17 +193,14 @@ class Window(var context: Context,
         drawListInst._clearFreeMemory(true)
     }
 
-    // The best way to understand what those rectangles are is to use the 'Metrics -> Tools -> Show windows rectangles' viewer.
+    // The best way to understand what those rectangles are is to use the 'Metrics->Tools->Show Windows Rectangles' viewer.
     // The main 'OuterRect', omitted as a field, is window->Rect().
 
     /** == Window->Rect() just after setup in Begin(). == window->Rect() for root window. */
     var outerRectClipped = Rect()
 
     /** Inner rectangle (omit title bar, menu bar, scroll bar) */
-    var innerRect = Rect(0f,
-        0f,
-        0f,
-        0f) // Clear so the InnerRect.GetSize() code in Begin() doesn't lead to overflow even if the result isn't used.
+    var innerRect = Rect(0f, 0f, 0f, 0f) // Clear so the InnerRect.GetSize() code in Begin() doesn't lead to overflow even if the result isn't used.
 
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
     var innerClipRect = Rect()
@@ -234,7 +235,7 @@ class Window(var context: Context,
 
     var stateStorage = HashMap<ID, Boolean>()
 
-    val columnsStorage = ArrayList<Columns>()
+    val columnsStorage = ArrayList<OldColumns>()
 
     /** User scale multiplier per-window, via SetWindowFontScale() */
     var fontWindowScale = 1f
@@ -242,10 +243,13 @@ class Window(var context: Context,
     /** Offset into SettingsWindows[] (offsets are always valid as we only grow the array from the back) */
     var settingsOffset = -1
 
-    val drawListInst = DrawList(context.drawListSharedData).apply { _ownerName = name }
+    val drawListInst = DrawList(null)
 
     /** == &DrawListInst (for backward compatibility reason with code using imgui_internal.h we keep this a pointer) */
-    var drawList = drawListInst
+    var drawList = drawListInst.apply {
+        _data = context.drawListSharedData
+        _ownerName = name
+    }
 
     /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
@@ -271,20 +275,20 @@ class Window(var context: Context,
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
 
-    /** Set when window extraneous data have been garbage collected */
-    var memoryCompacted = false
-
     /** Backup of last idx/vtx count, so when waking up the window we can preallocate and avoid iterative alloc/copy */
     var memoryDrawListIdxCapacity = 0
     var memoryDrawListVtxCapacity = 0
 
+    /** Set when window extraneous data have been garbage collected */
+    var memoryCompacted = false
+
     /** calculate unique ID (hash of whole ID stack + given parameter). useful if you want to query into ImGuiStorage yourself  */
     fun getID(strID: String, end: Int = 0): ID {
         val seed: ID = idStack.last()
-        val id: ID = hash(strID, end, seed)
+        val id: ID = hashStr(strID, end, seed)
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, end)
+            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, strID, end)
         return id
     }
 
@@ -319,9 +323,9 @@ class Window(var context: Context,
     }
 
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
-        val id = hash(strID, strID.length - strEnd, seed_ = idStack.last())
+        val id = hashStr(strID, strID.length - strEnd, seed_ = idStack.last())
         if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._String, strID, strEnd)
+            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, strID, strEnd)
         return id
     }
 
@@ -443,14 +447,17 @@ class Window(var context: Context,
             rootWindowForNav!!.parentWindow!! // ~assert
     }
 
-    /** ~CalcWindowExpectedSize */
-    fun calcExpectedSize(): Vec2 {
-        val sizeContents = calcContentSize()
-        val sizeAutoFit = calcAutoFitSize(sizeContents)
+    /** ~CalcWindowNextAutoFitSize */
+    fun calcNextAutoFitSize(): Vec2 {
+        val sizeContentsCurrent = Vec2()
+        val sizeContentsIdeal = Vec2()
+        calcContentSizes(sizeContentsCurrent, sizeContentsIdeal)
+        val sizeAutoFit = calcAutoFitSize(sizeContentsIdeal)
         val sizeFinal = calcSizeAfterConstraint(sizeAutoFit)
         return sizeFinal
     }
 
+    /** ~IsWindowChildOf */
     infix fun isChildOf(potentialParent: Window?): Boolean {
         if (rootWindow === potentialParent) return true
         var window: Window? = this
@@ -461,12 +468,23 @@ class Window(var context: Context,
         return false
     }
 
+    /** ~IsWindowAbove */
+    infix fun isAbove(potentialBelow: Window?): Boolean {
+        for (candidateWindow in g.windows.asReversed()) {
+            if (candidateWindow === this)
+                return true
+            if (candidateWindow === potentialBelow)
+                return false
+        }
+        return false
+    }
+
     /** Can we focus this window with CTRL+TAB (or PadMenu + PadFocusPrev/PadFocusNext)
      *  Note that NoNavFocus makes the window not reachable with CTRL+TAB but it can still be focused with mouse or programmaticaly.
      *  If you want a window to never be focused, you may use the e.g. NoInputs flag.
      *  ~ IsWindowNavFocusable */
     val isNavFocusable: Boolean
-        get() = active && this === rootWindow && flags hasnt Wf.NoNavFocus
+        get() = wasActive && this === rootWindow && flags hasnt Wf.NoNavFocus
 
     /** ~GetWindowAllowedExtentRect */
     fun getAllowedExtentRect(): Rect {
@@ -537,10 +555,8 @@ class Window(var context: Context,
     // Garbage collection
 
     /** Free up/compact internal window buffers, we can use this when a window becomes unused.
-     *  This is currently unused by the library, but you may call this yourself for easy GC.
      *  Not freed:
-     *  - ImGuiWindow, ImGuiWindowSettings, Name
-     *  - StateStorage, ColumnsStorage (may hold useful data)
+     *  - ImGuiWindow, ImGuiWindowSettings, Name, StateStorage, ColumnsStorage (may hold useful data)
      *  This should have no noticeable visual effect. When the window reappear however, expect new allocation/buffer growth/copy cost.
      *
      *  ~gcCompactTransientWindowBuffers */
@@ -552,10 +568,8 @@ class Window(var context: Context,
         drawList._clearFreeMemory()
         dc.apply {
             childWindows.clear()
-            itemFlagsStack.clear()
             itemWidthStack.clear()
             textWrapPosStack.clear()
-            groupStack.clear()
         }
     }
 
@@ -678,12 +692,12 @@ class Window(var context: Context,
     // Internal API, new columns API
 
 
-    fun findOrCreateColumns(id: ID): Columns {
+    fun findOrCreateColumns(id: ID): OldColumns {
 
         // We have few columns per window so for now we don't need bother much with turning this into a faster lookup.
         for (c in columnsStorage) if (c.id == id) return c
 
-        return Columns().also {
+        return OldColumns().also {
             columnsStorage += it
             it.id = id
         }
@@ -719,7 +733,7 @@ class Window(var context: Context,
      *  4..7: borders (Top, Right, Bottom, Left) */
     infix fun getResizeID(n: Int): ID {
         assert(n in 0..7)
-        val id = hash("#RESIZE", 0, id)
+        val id = hashStr("#RESIZE", 0, id)
         return hash(intArrayOf(n), id)
     }
 
@@ -904,8 +918,10 @@ class Window(var context: Context,
         // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
         // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
         val UNSAVED_DOCUMENT_MARKER = "*"
-        val markerSizeX = if (flags has Wf.UnsavedDocument) calcTextSize(UNSAVED_DOCUMENT_MARKER,
-            hideTextAfterDoubleHash = false).x else 0f
+        val markerSizeX = when {
+            flags has Wf.UnsavedDocument -> calcTextSize(UNSAVED_DOCUMENT_MARKER, hideTextAfterDoubleHash = false).x
+            else -> 0f
+        }
         val textSize = calcTextSize(name, hideTextAfterDoubleHash = true) + Vec2(markerSizeX, 0f)
 
         // As a nice touch we try to ensure that centered title text doesn't get affected by visibility of Close/Collapse button,
@@ -913,38 +929,29 @@ class Window(var context: Context,
         if (padL > style.framePadding.x) padL += style.itemInnerSpacing.x
         if (padR > style.framePadding.x) padR += style.itemInnerSpacing.x
         if (style.windowTitleAlign.x > 0f && style.windowTitleAlign.x < 1f) {
-            val centerness =
-                saturate(1f - abs(style.windowTitleAlign.x - 0.5f) * 2f) // 0.0f on either edges, 1.0f on center
-            val padExtend = kotlin.math.min(kotlin.math.max(padL, padR), titleBarRect.width - padL - padR - textSize.x)
+            val centerness = saturate(1f - abs(style.windowTitleAlign.x - 0.5f) * 2f) // 0.0f on either edges, 1.0f on center
+            val padExtend = min(max(padL, padR), titleBarRect.width - padL - padR - textSize.x)
             padL = padL max (padExtend * centerness)
             padR = padR max (padExtend * centerness)
         }
 
         val layoutR = Rect(titleBarRect.min.x + padL, titleBarRect.min.y, titleBarRect.max.x - padR, titleBarRect.max.y)
-        val clipR = Rect(layoutR.min.x,
-            layoutR.min.y,
-            layoutR.max.x + style.itemInnerSpacing.x,
-            layoutR.max.y) //if (g.IO.KeyCtrl) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
+        val clipR = Rect(layoutR.min.x, layoutR.min.y, layoutR.max.x + style.itemInnerSpacing.x, layoutR.max.y) //if (g.IO.KeyCtrl) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
         renderTextClipped(layoutR.min, layoutR.max, name, textSize, style.windowTitleAlign, clipR)
 
         if (flags has Wf.UnsavedDocument) {
-            val markerPos = Vec2(kotlin.math.max(layoutR.min.x,
-                layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x,
-                layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
+            val markerPos = Vec2(max(layoutR.min.x, layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
             val off = Vec2(0f, floor(-g.fontSize * 0.25f))
-            renderTextClipped(markerPos + off,
-                layoutR.max + off,
-                UNSAVED_DOCUMENT_MARKER,
-                null,
-                Vec2(0, style.windowTitleAlign.y),
-                clipR)
+            renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER,
+                    null, Vec2(0, style.windowTitleAlign.y), clipR)
         }
     }
 
     /** ~ClampWindowRect */
     infix fun clampRect(visibilityRect: Rect) {
         val sizeForClamping = Vec2(size)
-        if (io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar) sizeForClamping.y = titleBarHeight
+        if (io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar)
+            sizeForClamping.y = titleBarHeight
         pos put glm.clamp(pos, visibilityRect.min - sizeForClamping, visibilityRect.max)
     }
 
@@ -1141,12 +1148,23 @@ class Window(var context: Context,
         return newSize
     }
 
-    /** ~CalcWindowContentSize */
-    fun calcContentSize(): Vec2 = when {
-        collapsed && autoFitFrames allLessThanEqual 0 -> Vec2(contentSize)
-        hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0 -> Vec2(contentSize)
-        else -> Vec2(floor(if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else dc.cursorMaxPos.x - dc.cursorStartPos.x),
-            floor(if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else dc.cursorMaxPos.y - dc.cursorStartPos.y))
+    /** ~CalcWindowContentSizes */
+    fun calcContentSizes(contentSizeCurrent: Vec2, contentSizeIdeal: Vec2) {
+        var preserveOldContentSizes = false
+        if (collapsed && autoFitFrames.x <= 0 && autoFitFrames.y <= 0)
+            preserveOldContentSizes = true
+        else if (hidden && hiddenFramesCannotSkipItems == 0 && hiddenFramesCanSkipItems > 0)
+            preserveOldContentSizes = true
+        if (preserveOldContentSizes) {
+            contentSizeCurrent put this.contentSize
+            contentSizeIdeal put contentSizeIdeal
+            return
+        }
+
+        contentSizeCurrent.x = if(contentSizeExplicit.x != 0f) contentSizeExplicit.x else floor(dc.cursorMaxPos.x - dc.cursorStartPos.x)
+        contentSizeCurrent.y = if(contentSizeExplicit.y != 0f) contentSizeExplicit.y else floor(dc.cursorMaxPos.y - dc.cursorStartPos.y)
+        contentSizeIdeal.x = if(contentSizeExplicit.x != 0f) contentSizeExplicit.x else floor(max(dc.cursorMaxPos.x, dc.idealMaxPos.x) - dc.cursorStartPos.x)
+        contentSizeIdeal.y = if(contentSizeExplicit.y != 0f) contentSizeExplicit.y else floor(max(dc.cursorMaxPos.y, dc.idealMaxPos.y) - dc.cursorStartPos.y)
     }
 
 

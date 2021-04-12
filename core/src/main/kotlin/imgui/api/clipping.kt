@@ -3,7 +3,8 @@ package imgui.api
 import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 
-/** Clipping */
+// Clipping
+// - Mouse hovering is affected by ImGui::PushClipRect() calls, unlike direct calls to ImDrawList::PushClipRect() which are render only.
 interface clipping {
 
     /** Push a clipping rectangle for both ImGui logic (hit-testing etc.) and low-level ImDrawList rendering.

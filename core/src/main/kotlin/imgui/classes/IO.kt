@@ -18,6 +18,10 @@ import org.lwjgl.system.Platform
 import uno.glfw.HWND
 import uno.kotlin.NUL
 
+//-----------------------------------------------------------------------------
+// [SECTION] ImGuiIO
+//-----------------------------------------------------------------------------
+
 /** -----------------------------------------------------------------------------
  *  IO
  *  Communicate most settings and inputs/outputs to Dear ImGui using this structure.
@@ -32,7 +36,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
     var configFlags: ConfigFlags = ConfigFlag.None.i
 
-    /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom back-end to communicate features supported by the back-end. */
+    /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom backend to communicate features supported by the backend. */
     var backendFlags: BackendFlags = BackendFlag.None.i
 
     /** Main display size, in pixels.   */
@@ -95,40 +99,42 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** = defined(__APPLE__), OS X style: Text editing cursor movement using Alt instead of Ctrl, Shortcuts using
      *  Cmd/Super instead of Ctrl, Line/Text Start and End using Cmd + Arrows instead of Home/End, Double click selects
-     *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl
-     *  (was called io.OptMacOSXBehaviors prior to 1.63) */
+     *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl */
     var configMacOSXBehaviors = false
 
-    /** Set to false to disable blinking cursor, for users who consider it distracting. (was called: io.OptCursorBlink prior to 1.63) */
+    /** Enable blinking cursor (optional as some users consider it to be distracting).. */
     var configInputTextCursorBlink = true
+
+    /** [BETA] Enable turning DragXXX widgets into text input with a simple mouse click-release (without moving). Not desirable on devices without a keyboard. */
+    var configDragClickToInputText = false
 
     /** Enable resizing of windows from their edges and from the lower-left corner.
      *  This requires (io.backendFlags has BackendFlags.HasMouseCursors) because it needs mouse cursor feedback.
      *  (This used to be WindowFlag.ResizeFromAnySide flag) */
     var configWindowsResizeFromEdges = true
 
-    /** [BETA] Set to true to only allow moving windows when clicked+dragged from the title bar. Windows without a title bar are not affected. */
+    /** Enable allowing to move windows only when clicking on their title bar. Does not apply to windows without a title bar. */
     var configWindowsMoveFromTitleBarOnly = false
 
-    /** [BETA] Compact window memory usage when unused. Set to -1.0f to disable. */
-    var configWindowsMemoryCompactTimer = 60f
+    /** Timer (in seconds) to free transient windows/tables memory buffers when unused. Set to -1.0f to disable. */
+    var configMemoryCompactTimer = 60f
 
     //------------------------------------------------------------------
     // User Functions
     //------------------------------------------------------------------
 
-    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window)
-    // Optional: Platform/Renderer back-end name (informational only! will be displayed in About Window) + User data for back-end/wrappers to store their own stuff.
+    // Optional: Platform/Renderer backend name (informational only! will be displayed in About Window)
+    // Optional: Platform/Renderer backend name (informational only! will be displayed in About Window) + User data for backend/wrappers to store their own stuff.
     var backendPlatformName: String? = null
     var backendRendererName: String? = null
 
-    /** User data for platform back-end */
+    /** User data for platform backend */
     var backendPlatformUserData: Any? = null
 
-    /** User data for renderer back-end */
+    /** User data for renderer backend */
     var backendRendererUserData: Any? = null
 
-    /** User data for non C++ programming language back-end */
+    /** User data for non C++ programming language backend */
     var backendLanguageUserData: Any? = null
 
     // Optional: Access OS clipboard
@@ -164,7 +170,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
     var mouseWheel = 0f
 
-    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all back-ends.   */
+    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all backends.   */
     var mouseWheelH = 0f
 
     /** Keyboard modifier pressed: Control  */
@@ -260,7 +266,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mobile/console: when set, you may display an on-screen keyboard. This is set by Dear ImGui when it wants textual keyboard input to happen (e.g. when a InputText widget is active). */
     var wantTextInput = false
 
-    /** MousePos has been altered, back-end should reposition mouse on next frame. Rarely used! Set only when ImGuiConfigFlags_NavEnableSetMousePos flag is enabled. */
+    /** MousePos has been altered, backend should reposition mouse on next frame. Rarely used! Set only when ImGuiConfigFlags_NavEnableSetMousePos flag is enabled. */
     var wantSetMousePos = false
 
     /** When manual .ini load/save is active (io.IniFilename == NULL), this will be set to notify your application that you can call SaveIniSettingsToMemory() and save yourself. Important: clear io.WantSaveIniSettings yourself after saving! */
@@ -357,6 +363,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** For AddInputCharacterUTF16 */
     var inputQueueSurrogate = NUL
 
-    /** Queue of _characters_ input (obtained by platform back-end). Fill using AddInputCharacter() helper. */
+    /** Queue of _characters_ input (obtained by platform backend). Fill using AddInputCharacter() helper. */
     val inputQueueCharacters = ArrayList<Char>()
 }

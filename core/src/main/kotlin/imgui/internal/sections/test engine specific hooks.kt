@@ -12,15 +12,15 @@ import imgui.internal.classes.Rect
 
 typealias TestEngineHook_ItemAdd = (ctx: Context, bb: Rect, id: ID) -> Unit
 typealias TestEngineHook_ItemInfo = (ctx: Context, id: ID, label: String, flags: ItemStatusFlags) -> Unit
-//typealias TestEngineHook_IdInfo = (ctx: Context, dataType: DataType, id: ID, dataId: Any) -> Unit
-typealias TestEngineHook_IdInfo = (ctx: Context, dataType: DataType, id: ID, dataId: Any, dataIdEnd: Any?) -> Unit
+typealias TestEngineHook_IdInfo = (ctx: Context, dataType: DataType, id: ID, dataId: Any) -> Unit
+typealias TestEngineHook_IdInfo2 = (ctx: Context, dataType: DataType, id: ID, dataId: Any, dataIdEnd: Any?) -> Unit
 typealias TestEngineHook_Log = (ctx: Context, fmt: String) -> Unit
 
 lateinit var testEngineHook_ItemAdd: TestEngineHook_ItemAdd
 lateinit var testEngineHook_ItemInfo: TestEngineHook_ItemInfo
 
-//typealias TestEngineHook_IdInfo = (ctx: Context, dataType: DataType, id: ID, dataId: Any) -> Unit
 lateinit var testEngineHook_IdInfo: TestEngineHook_IdInfo
+lateinit var testEngineHook_IdInfo2: TestEngineHook_IdInfo2
 lateinit var testEngineHook_Log: TestEngineHook_Log
 
 /**  Register item bounding box */
@@ -41,9 +41,12 @@ fun IMGUI_TEST_ENGINE_LOG(fmt: String, vararg args: Any) {
         testEngineHook_Log(g, fmt.format(*args))
 }
 
-//fun IMGUI_TEST_ENGINE_ID_INFO(_ID,_TYPE,_DATA)          if (g.TestEngineHookIdInfo == id) ImGuiTestEngineHook_IdInfo(&g, _TYPE, _ID, (const void*)(_DATA));
-
-fun IMGUI_TEST_ENGINE_ID_INFO(id: ID, type: DataType, data: Any, data2: Any? = null) {
+fun IMGUI_TEST_ENGINE_ID_INFO(id: ID, type: DataType, data: Any) {
     if (g.testEngineHookIdInfo == id)
-        testEngineHook_IdInfo(g, type, id, data, data2)
+        testEngineHook_IdInfo(g, type, id, data)
+}
+
+fun IMGUI_TEST_ENGINE_ID_INFO2(id: ID, type: DataType, data: Any, data2: Any? = null) {
+    if (g.testEngineHookIdInfo == id)
+        testEngineHook_IdInfo2(g, type, id, data, data2)
 }

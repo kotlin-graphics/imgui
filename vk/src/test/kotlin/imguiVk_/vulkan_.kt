@@ -89,7 +89,7 @@ private class ImGuiVulkan {
         ImGui.styleColorsDark()
         //ImGui::StyleColorsClassic();
 
-        // Setup Platform/Renderer bindings
+        // Setup Platform/Renderer backends
         implGlfw = ImplGlfw.initForVulkan(window, true)
         val initInfo = ImplVulkan_.InitInfo().also {
             it.instance = gInstance

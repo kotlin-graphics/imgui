@@ -9,6 +9,14 @@ import imgui.api.g
  *  FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions. */
 internal interface inputs {
 
+    fun setItemUsingMouseWheel() {
+        val id = g.currentWindow!!.dc.lastItemId
+        if (g.hoveredId == id)
+            g.hoveredIdUsingMouseWheel = true
+        if (g.activeId == id)
+            g.activeIdUsingMouseWheel = true
+    }
+
     infix fun isActiveIdUsingNavDir(dir: Dir): Boolean = g.activeIdUsingNavDirMask has (1 shl dir)
 
     infix fun isActiveIdUsingNavInput(input: NavInput): Boolean = g.activeIdUsingNavInputMask has (1 shl input)

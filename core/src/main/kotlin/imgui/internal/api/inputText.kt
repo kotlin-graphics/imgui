@@ -177,9 +177,10 @@ internal interface inputText {
 
         var scrollY = if (isMultiline) drawWindow.scroll.y else Float.MAX_VALUE
 
+        val initChangedSpecs = state != null && state.stb.singleLine != !isMultiline
         val initMakeActive = focusRequested || userClicked || userScrollFinish || userNavInputStart
         val initState = initMakeActive || userScrollActive
-        if (initState && g.activeId != id) {
+        if ((initState && g.activeId != id) || initChangedSpecs) {
             // Access state even if we don't own it yet.
             state = g.inputTextState
             state.cursorAnimReset()
@@ -188,8 +189,7 @@ internal interface inputText {
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             val bufLen = buf.strlen()
             if (state.initialTextA.size < bufLen)
-                state.initialTextA =
-                        ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
+                state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             else if (state.initialTextA.size > bufLen)
                 state.initialTextA[bufLen] = 0
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
@@ -202,12 +202,11 @@ internal interface inputText {
 //            state.textA = ByteArray(0)
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
-            state.curLenA =
-                    bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
+            state.curLenA = bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
 
             /*  Preserve cursor position and undo/redo stack if we come back to same widget
                 For non-readonly widgets we might be able to require that TextAIsValid && TextA == buf ? (untested) and discard undo stack if user buffer has changed. */
-            val recycleState = state.id == id
+            val recycleState = state.id == id && !initChangedSpecs
             if (recycleState)
             /*  Recycle existing cursor/selection/undo stack but clamp position
                 Note a single mouse click will override the cursor/position immediately by calling
@@ -340,7 +339,7 @@ internal interface inputText {
             if (state.selectedAllMouseLock && !io.mouseDown[0])
                 state.selectedAllMouseLock = false
 
-            // It is ill-defined whether the back-end needs to send a \t character when pressing the TAB keys.
+            // It is ill-defined whether the backend needs to send a \t character when pressing the TAB keys.
             // Win32 and GLFW naturally do it but not SDL.
             val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
             if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly)
@@ -564,7 +563,7 @@ internal interface inputText {
                     }
 
                     if (eventFlag != Itf.None) {
-                        val cbData = TextEditCallbackData()
+                        val cbData = InputTextCallbackData()
                         cbData.eventFlag = eventFlag.i
                         cbData.flags = flags
                         cbData.userData = callbackUserData
@@ -591,14 +590,22 @@ internal interface inputText {
                         assert(cbData.buf === state.textA) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
-                        if (cbData.cursorPos != utf8CursorPos) {
-                            state.stb.cursor =
-                                    textCountCharsFromUtf8(cbData.buf, cbData.cursorPos); state.cursorFollow = true; }
-                        if (cbData.selectionStart != utf8SelectionStart) {
-                            state.stb.selectStart = textCountCharsFromUtf8(cbData.buf, cbData.selectionStart); }
-                        if (cbData.selectionEnd != utf8SelectionEnd) {
-                            state.stb.selectEnd = textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd); }
-                        if (cbData.bufDirty) {
+                        val bufDirty = cbData.bufDirty
+                        if (cbData.cursorPos != utf8CursorPos || bufDirty) {
+                            state.stb.cursor = textCountCharsFromUtf8(cbData.buf, cbData.cursorPos)
+                            state.cursorFollow = true
+                        }
+                        if (cbData.selectionStart != utf8SelectionStart || bufDirty)
+                            state.stb.selectStart = when {
+                                cbData.selectionStart == cbData.cursorPos -> state.stb.cursor
+                                else -> textCountCharsFromUtf8(cbData.buf, cbData.selectionStart)
+                            }
+                        if (cbData.selectionEnd != utf8SelectionEnd || bufDirty)
+                            state.stb.selectEnd = when {
+                                cbData.selectionEnd == cbData.selectionStart -> state.stb.selectStart
+                                else -> textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd)
+                            }
+                        if (bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
                                 val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)

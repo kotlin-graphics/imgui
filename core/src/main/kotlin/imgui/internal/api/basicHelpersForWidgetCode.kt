@@ -279,17 +279,23 @@ internal interface basicHelpersForWidgetCode {
 
     /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
      *  @param option = ItemFlag   */
-    fun pushItemFlag(option: ItemFlags, enabled: Boolean) = with(currentWindow.dc) {
-        if (enabled)
-            itemFlags = itemFlags or option
-        else
-            itemFlags = itemFlags wo option
-        itemFlagsStack.add(itemFlags)
+    fun pushItemFlag(option: ItemFlags, enabled: Boolean) {
+        val window = g.currentWindow!!
+        var itemFlags = window.dc.itemFlags
+        assert(itemFlags == g.itemFlagsStack.last())
+        itemFlags = when {
+            enabled -> itemFlags or option
+            else -> itemFlags wo option
+        }
+        window.dc.itemFlags = itemFlags
+        g.itemFlagsStack += itemFlags
     }
 
-    fun popItemFlag() = with(currentWindow.dc) {
-        itemFlagsStack.pop()
-        itemFlags = itemFlagsStack.lastOrNull() ?: ItemFlag.Default_.i
+    fun popItemFlag() {
+        val window = g.currentWindow!!
+        assert(g.itemFlagsStack.size > 1) { "Too many calls to PopItemFlag() - we always leave a 0 at the bottom of the stack." }
+        g.itemFlagsStack.pop()
+        window.dc.itemFlags = g.itemFlagsStack.last()
     }
 
     /** Was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
@@ -299,10 +305,12 @@ internal interface basicHelpersForWidgetCode {
     /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features.
      *  ~GetContentRegionMaxAbs */
     val contentRegionMaxAbs: Vec2
-        get() = g.currentWindow!!.run {
-            val mx = Vec2(contentRegionRect.max)
-            dc.currentColumns?.let { mx.x = workRect.max.x }
-            mx
+        get() {
+            val window = g.currentWindow!!
+            val mx = window.contentRegionRect.max
+            if (window.dc.currentColumns != null || g.currentTable != null)
+                mx.x = window.workRect.max.x
+            return mx
         }
 
     /** Shrink excess width from a set of item, by removing width from the larger items first.

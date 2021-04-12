@@ -504,7 +504,7 @@ class FontAtlas {
             var n = n_
             while (n <= n2) {
                 val aMod = n and 31
-                val bMod = (if (n2 >= n + 31) 31 else n2 and 31) + 1
+                val bMod = (if (n2 > (n or 31)) 31 else n2 and 31) + 1
                 val mask = ((1L shl bMod) - 1).toUInt() wo ((1L shl aMod) - 1).toUInt()
                 this[n ushr 5] = this[n ushr 5] or mask
                 n = (n + 32) wo 31
@@ -623,10 +623,10 @@ class FontAtlas {
                     srcTmp.dstIndex = outputIdx
                 outputIdx++
             }
-            assert(srcTmp.dstIndex != -1) { "cfg.DstFont not pointing within atlas->Fonts[] array?" }
-            if (srcTmp.dstIndex == -1)
+            if (srcTmp.dstIndex == -1) {
+                assert(srcTmp.dstIndex != -1) { "cfg.DstFont not pointing within atlas->Fonts[] array?" }
                 return false
-
+            }
             // Initialize helper structure for font loading and verify that the TTF/OTF data is correct
             val fontOffset = STBTruetype.stbtt_GetFontOffsetForIndex(cfg.fontDataBuffer, cfg.fontNo)
             assert(fontOffset >= 0) { "FontData is incorrect, or FontNo cannot be found." }

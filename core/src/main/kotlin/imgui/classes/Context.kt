@@ -3,18 +3,20 @@ package imgui.classes
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.callHooks
+import imgui.ImGui.saveIniSettingsToDisk
+import imgui.ImGui.tableSettingsInstallHandler
 import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.internal.DrawChannel
 import imgui.internal.DrawData
 import imgui.internal.classes.*
-import imgui.internal.hash
+import imgui.internal.hashStr
 import imgui.internal.sections.*
 import imgui.static.*
-import uno.kotlin.NUL
+import kool.free
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -62,6 +64,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Set within EndChild() */
     var withinEndChild = false
+
+    /** Request full GC */
+    var gcCompactAll = false
 
     /** Will call test engine hooks: ImGuiTestEngineHook_ItemAdd(), ImGuiTestEngineHook_ItemInfo(), ImGuiTestEngineHook_Log() */
     var testEngineHookItems = false
@@ -117,12 +122,17 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Item/widgets state and tracking information
 
-    /** Hovered widget  */
+    /** Hovered widget, filled during the frame  */
     var hoveredId: ID = 0
 
     var hoveredIdPreviousFrame: ID = 0
 
     var hoveredIdAllowOverlap = false
+
+    /** Hovered widget will use mouse wheel. Blocks scrolling the underlying window. */
+    var hoveredIdUsingMouseWheel = false
+
+    var hoveredIdPreviousFrameUsingMouseWheel = false
 
     /** At least one widget passed the rect test, but has been discarded by disabled flag or popup inhibit.
      *  May be true even if HoveredId == 0. */
@@ -158,6 +168,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdHasBeenEditedBefore = false
 
     var activeIdHasBeenEditedThisFrame = false
+
+    /** Active widget will want to read mouse wheel. Blocks scrolling the underlying window. */
+    var activeIdUsingMouseWheel = false
 
     /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
     var activeIdUsingNavDirMask = 0
@@ -202,14 +215,23 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var nextItemData = NextItemData()
 
 
-    /** Stack for PushStyleColor()/PopStyleColor()  */
-    var colorModifiers = Stack<ColorMod>()
+    /** Stack for PushStyleColor()/PopStyleColor() - inherited by Begin()  */
+    var colorStack = Stack<ColorMod>()
 
-    /** Stack for PushStyleVar()/PopStyleVar()  */
-    val styleModifiers = Stack<StyleMod>()
+    /** Stack for PushStyleVar()/PopStyleVar() - inherited by Begin()  */
+    val styleVarStack = Stack<StyleMod>()
 
-    /** Stack for PushFont()/PopFont()  */
+    /** Stack for PushFont()/PopFont() - inherited by Begin()  */
     val fontStack = Stack<Font>()
+
+    /** Stack for PushFocusScope()/PopFocusScope() - not inherited by Begin(), unless child window */
+    val focusScopeStack = Stack<ID>()
+
+    /** Stack for PushItemFlag()/PopItemFlag() - inherited by Begin() */
+    val itemFlagsStack = Stack<ItemFlags>()
+
+    /** Stack for BeginGroup()/EndGroup() - not inherited by Begin() */
+    val groupStack = Stack<GroupData>()
 
     /** Which popups are open (persistent)  */
     val openPopupStack = Stack<PopupData>()
@@ -446,7 +468,18 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var dragDropPayloadBufLocal = ByteBuffer.allocate(16)
 
 
+    // Table
+
+    var currentTable: Table? = null
+    val tables = Pool { Table() }
+    val currentTableStack = ArrayList<PtrOrIndex>()
+
+    /** Last used timestamp of each tables (SOA, for efficient GC) */
+    val tablesLastTimeActive = ArrayList<Float>()
+    val drawChannelsTempMergeBuffer = ArrayList<DrawChannel>()
+
     // Tab bars
+
     var currentTabBar: TabBar? = null
     val tabBars = TabBarPool()
     val currentTabBarStack = Stack<PtrOrIndex>()
@@ -498,6 +531,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var tooltipOverrideCount = 0
 
+    /** Time before slow tooltips appears (FIXME: This is temporary until we merge in tooltip timer+priority work) */
+    var tooltipSlowDelay = 0.5f
+
     /** If no custom clipboard handler is defined   */
     var clipboardHandlerData = ""
 
@@ -535,7 +571,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ImGuiWindow .ini settings entries (parsed from the last loaded .ini file and maintained on saving) */
     val settingsWindows = ArrayList<WindowSettings>()
 
-//    ImChunkStream<ImGuiTableSettings>   SettingsTables;         // ImGuiTable .ini settings entrie
+    /** ImGuiTable .ini settings entries */
+    val settingsTables = ArrayList<TableSettings>()
 
     /** Hooks for extensions (e.g. test engine) */
     val hooks = ArrayList<ContextHook>()
@@ -574,6 +611,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Will call IM_DEBUG_BREAK() when encountering this id */
     var debugItemPickerBreakId: ID = 0
 
+    var debugMetricsConfig = MetricsConfig()
 
     //------------------------------------------------------------------
     // Misc
@@ -609,12 +647,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     }
 
     fun initialize() {
-        assert(!g.initialized && !g.settingsLoaded)
+        assert(!initialized && !g.settingsLoaded)
 
         // Add .ini handle for ImGuiWindow type
-        g.settingsHandlers += SettingsHandler().apply {
+        settingsHandlers += SettingsHandler().apply {
             typeName = "Window"
-            typeHash = hash("Window")
+            typeHash = hashStr("Window")
             clearAllFn = ::windowSettingsHandler_ClearAll
             readOpenFn = ::windowSettingsHandler_ReadOpen
             readLineFn = ::windowSettingsHandler_ReadLine
@@ -622,7 +660,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             writeAllFn = ::windowSettingsHandler_WriteAll
         }
 
-        g.initialized = true
+        // Add .ini handle for ImGuiTable type
+        tableSettingsInstallHandler(this)
+
+//        #ifdef IMGUI_HAS_DOCK
+//        #endif // #ifdef IMGUI_HAS_DOCK
+
+        initialized = true
     }
 
     fun setCurrent() {
@@ -643,62 +687,80 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
         /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
             (which would happen if we never called NewFrame)         */
-        if (g.fontAtlasOwnedByContext)
+        if (fontAtlasOwnedByContext)
             io.fonts.locked = false
         io.fonts.clear()
 
         // Cleanup of other data are conditional on actually having initialized Dear ImGui.
-        if (!g.initialized) return
+        if (!initialized) return
 
         // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
-        if (g.settingsLoaded)
+        if (settingsLoaded)
             io.iniFilename?.let(::saveIniSettingsToDisk)
 
         // Notify hooked test engine, if any
         g callHooks ContextHookType.Shutdown
 
         // Clear everything else
-        g.apply {
-            windows.forEach { it.destroy() }
-            windows.clear()
-            windowsFocusOrder.clear()
-            windowsTempSortBuffer.clear()
-            currentWindow = null
-            currentWindowStack.clear()
-            windowsById.clear()
-            navWindow = null
-            hoveredWindow = null
-            hoveredRootWindow = null
-            hoveredWindowUnderMovingWindow = null
-            activeIdWindow = null
-            activeIdPreviousFrameWindow = null
-            movingWindow = null
-            settingsWindows.clear()
-            colorModifiers.clear()
-            styleModifiers.clear()
-            fontStack.clear()
-            openPopupStack.clear()
-            beginPopupStack.clear()
-            drawDataBuilder.clear()
-            backgroundDrawList._clearFreeMemory(destroy = true)
-            foregroundDrawList._clearFreeMemory(destroy = true)
+        windows.forEach { it.destroy() }
+        windows.clear()
+        windowsFocusOrder.clear()
+        windowsTempSortBuffer.clear()
+        currentWindow = null
+        currentWindowStack.clear()
+        windowsById.clear()
+        navWindow = null
+        hoveredWindow = null
+        hoveredRootWindow = null
+        hoveredWindowUnderMovingWindow = null
+        activeIdWindow = null
+        activeIdPreviousFrameWindow = null
+        movingWindow = null
+        settingsWindows.clear()
+        colorStack.clear()
+        styleVarStack.clear()
+        fontStack.clear()
+        openPopupStack.clear()
+        beginPopupStack.clear()
+        drawDataBuilder.clear()
+        backgroundDrawList._clearFreeMemory(destroy = true)
+        foregroundDrawList._clearFreeMemory(destroy = true)
 
-            tabBars.clear()
-            currentTabBarStack.clear()
-            shrinkWidthBuffer.clear()
+        tabBars.clear()
+        currentTabBarStack.clear()
+        shrinkWidthBuffer.clear()
 
-            clipboardHandlerData = ""
-            g.menusIdSubmittedThisFrame.clear()
-            inputTextState.textW = CharArray(0)
-            inputTextState.initialTextA = ByteArray(0)
-            inputTextState.textA = ByteArray(0)
+        g.tables.clear()
+        g.currentTableStack.clear()
+        g.drawChannelsTempMergeBuffer.clear() // TODO check if this needs proper deallocation
 
-            if (logFile != null) {
-                logFile = null
-            }
-            logBuffer.setLength(0)
+        clipboardHandlerData = ""
+        menusIdSubmittedThisFrame.clear()
+        inputTextState.textW = CharArray(0)
+        inputTextState.initialTextA = ByteArray(0)
+        inputTextState.textA = ByteArray(0)
 
-            initialized = false
+        if (logFile != null) {
+            logFile = null
         }
+        logBuffer.setLength(0)
+
+        initialized = false
     }
 }
+
+
+//-----------------------------------------------------------------------------
+// [SECTION] Generic context hooks
+//-----------------------------------------------------------------------------
+
+typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
+
+enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
+
+/** Hook for extensions like ImGuiTestEngine */
+class ContextHook(
+        var type: ContextHookType = ContextHookType.NewFramePre,
+        var owner: ID = 0,
+        var callback: ContextHookCallback? = null,
+        var userData: Any? = null)

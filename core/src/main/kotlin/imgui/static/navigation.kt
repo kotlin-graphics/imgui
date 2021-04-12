@@ -43,8 +43,6 @@ import imgui.internal.classes.NavMoveResult
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -425,7 +423,7 @@ fun navUpdateWindowing() {
     }
 
     // Keyboard: Press and Release ALT to toggle menu layer
-    // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
+    // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of backend clearing releases all keys on ALT-TAB
     if (NavInput._KeyMenu.isTest(InputReadMode.Pressed))
         g.navWindowingToggleLayer = true
     if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isTest(
@@ -872,6 +870,13 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     return newBest
 }
 
+fun navApplyItemToResult(result: NavMoveResult, window: Window, id: ID, navBbRel: Rect) {
+    result.window = window
+    result.id = id
+    result.focusScopeId = window.dc.navFocusScopeIdCurrent
+    result.rectRel put navBbRel
+}
+
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
 fun navProcessItem(window: Window, navBb: Rect, id: ID) {
 
@@ -898,7 +903,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         FIXME-NAV: Consider policy for double scoring
         (scoring from NavScoringRectScreen + scoring from a rect wrapped according to current wrapping policy)     */
     if ((g.navId != id || g.navMoveRequestFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
-        var result by if (window === g.navWindow) g::navMoveResultLocal else g::navMoveResultOther
+        val result = if(window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
         val newBest = when {
             IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
                 if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
@@ -906,30 +911,15 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
             }
             else -> g.navMoveRequest && navScoreItem(result, navBb)
         }
-        if (newBest) {
-            result.window = window
-            result.id = id
-            result.focusScopeId = window.dc.navFocusScopeIdCurrent
-            result.rectRel put navBbRel
-        }
+        if (newBest)
+            navApplyItemToResult(result, window, id, navBbRel)
 
         // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
         val VISIBLE_RATIO = 0.7f
         if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
-            if (glm.clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) -
-                glm.clamp(
-                    navBb.min.y,
-                    window.clipRect.min.y,
-                    window.clipRect.max.y
-                ) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO
-            )
+            if (glm.clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - glm.clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
                 if (navScoreItem(g.navMoveResultLocalVisibleSet, navBb))
-                    result = g.navMoveResultLocalVisibleSet.also {
-                        it.window = window
-                        it.id = id
-                        it.focusScopeId = window.dc.navFocusScopeIdCurrent
-                        it.rectRel = navBbRel
-                    }
+                    navApplyItemToResult(g.navMoveResultLocalVisibleSet, window, id, navBbRel)
     }
 
     // Update window-relative bounding box of navigated item
@@ -965,7 +955,7 @@ fun navCalcPreferredRefPos(): Vec2 {
                 visibleRect.min,
                 visibleRect.max
             )
-        )   // ImFloor() is important because non-integer mouse position application in back-end might be lossy and result in undesirable non-zero delta.
+        )   // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }
 }
 

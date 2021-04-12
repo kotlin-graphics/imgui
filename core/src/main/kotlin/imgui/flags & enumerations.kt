@@ -12,7 +12,7 @@ import org.lwjgl.system.Platform
 
 
 //-----------------------------------------------------------------------------
-// Flags & Enumerations
+// [SECTION] Flags & Enumerations
 //-----------------------------------------------------------------------------
 
 
@@ -76,8 +76,8 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
-    /** [BETA] Enable resize from any corners and borders. Your back-end needs to honor the different values of io.mouseCursor set by imgui.
-     *  Set io.OptResizeWindowsFromEdges and make sure mouse cursors are supported by back-end (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) */
+    /** [BETA] Enable resize from any corners and borders. Your backend needs to honor the different values of io.mouseCursor set by imgui.
+     *  Set io.OptResizeWindowsFromEdges and make sure mouse cursors are supported by backend (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) */
     // ResizeFromAnySide(1 shl 17),
     /** No gamepad/keyboard navigation within the window    */
     NoNavInputs(1 shl 18),
@@ -244,7 +244,7 @@ enum class TreeNodeFlag(@JvmField val i: TreeNodeFlags) {
     /** Draw as selected    */
     Selected(1 shl 0),
 
-    /** Full colored frame (e.g. for CollapsingHeader)  */
+    /** Draw frame with background (e.g. for CollapsingHeader)  */
     Framed(1 shl 1),
 
     /** Hit testing to allow subsequent widgets to overlap this one */
@@ -551,13 +551,13 @@ enum class TabItemFlag(@JvmField val i: TabItemFlags) {
     NoTooltip(1 shl 4),
 
     /** Disable reordering this tab or having another tab cross over this tab */
-    NoReorder                     (1 shl 5),
+    NoReorder(1 shl 5),
 
     /**  Enforce the tab position to the left of the tab bar (after the tab list popup button) */
-    Leading (1 shl 6),
+    Leading(1 shl 6),
 
     /**  Enforce the tab position to the right of the tab bar (before the scrolling buttons) */
-    Trailing (1 shl 7),
+    Trailing(1 shl 7),
 
     // [Internal]
 
@@ -582,6 +582,338 @@ infix fun TabItemFlags.xor(b: TabItemFlag): TabItemFlags = xor(b.i)
 infix fun TabItemFlags.has(b: TabItemFlag): Boolean = and(b.i) != 0
 infix fun TabItemFlags.hasnt(b: TabItemFlag): Boolean = and(b.i) == 0
 infix fun TabItemFlags.wo(b: TabItemFlag): TabItemFlags = and(b.i.inv())
+
+
+typealias TableFlags = Int
+
+// Flags for ImGui::BeginTable()
+// [BETA API] API may evolve slightly! If you use this, please update to the next version when it comes out!
+// - Important! Sizing policies have complex and subtle side effects, more so than you would expect.
+//   Read comments/demos carefully + experiment with live demos to get acquainted with them.
+// - The DEFAULT sizing policies are:
+//    - Default to ImGuiTableFlags_SizingFixedFit    if ScrollX is on, or if host window has ImGuiWindowFlags_AlwaysAutoResize.
+//    - Default to ImGuiTableFlags_SizingStretchSame if ScrollX is off.
+// - When ScrollX is off:
+//    - Table defaults to ImGuiTableFlags_SizingStretchSame -> all Columns defaults to ImGuiTableColumnFlags_WidthStretch with same weight.
+//    - Columns sizing policy allowed: Stretch (default), Fixed/Auto.
+//    - Fixed Columns will generally obtain their requested width (unless the table cannot fit them all).
+//    - Stretch Columns will share the remaining width.
+//    - Mixed Fixed/Stretch columns is possible but has various side-effects on resizing behaviors.
+//      The typical use of mixing sizing policies is: any number of LEADING Fixed columns, followed by one or two TRAILING Stretch columns.
+//      (this is because the visible order of columns have subtle but necessary effects on how they react to manual resizing).
+// - When ScrollX is on:
+//    - Table defaults to ImGuiTableFlags_SizingFixedFit -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed
+//    - Columns sizing policy allowed: Fixed/Auto mostly.
+//    - Fixed Columns can be enlarged as needed. Table will show an horizontal scrollbar if needed.
+//    - When using auto-resizing (non-resizable) fixed columns, querying the content width to use item right-alignment e.g. SetNextItemWidth(-FLT_MIN) doesn't make sense, would create a feedback loop.
+//    - Using Stretch columns OFTEN DOES NOT MAKE SENSE if ScrollX is on, UNLESS you have specified a value for 'inner_width' in BeginTable().
+//      If you specify a value for 'inner_width' then effectively the scrolling space is known and Stretch or mixed Fixed/Stretch columns become meaningful again.
+// - Read on documentation at the top of imgui_tables.cpp for details.
+enum class TableFlag(@JvmField val i: TableFlags) {
+
+    // Features
+
+    None(0),
+
+    /** Enable resizing columns. */
+    Resizable(1 shl 0),
+
+    /** Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
+    Reorderable(1 shl 1),
+
+    /** Enable hiding/disabling columns in context menu. */
+    Hideable(1 shl 2),
+
+    /** Enable sorting. Call TableGetSortSpecs() to obtain sort specs. Also see ImGuiTableFlags_SortMulti and ImGuiTableFlags_SortTristate. */
+    Sortable(1 shl 3),
+
+    /** Disable persisting columns order, width and sort settings in the .ini file. */
+    NoSavedSettings(1 shl 4),
+
+    /** Right-click on columns body/contents will display table context menu. By default it is available in TableHeadersRow(). */
+    ContextMenuInBody(1 shl 5),
+
+    // Decorations
+
+    /** Set each RowBg color with ImGuiCol_TableRowBg or ImGuiCol_TableRowBgAlt (equivalent of calling TableSetBgColor with ImGuiTableBgFlags_RowBg0 on each row manually) */
+    RowBg(1 shl 6),
+
+    /** Draw horizontal borders between rows. */
+    BordersInnerH(1 shl 7),
+
+    /** Draw horizontal borders at the top and bottom. */
+    BordersOuterH(1 shl 8),
+
+    /** Draw vertical borders between columns. */
+    BordersInnerV(1 shl 9),
+
+    /** Draw vertical borders on the left and right sides. */
+    BordersOuterV(1 shl 10),
+
+    /** Draw horizontal borders. */
+    BordersH(BordersInnerH or BordersOuterH),
+
+    /** Draw vertical borders. */
+    BordersV(BordersInnerV or BordersOuterV),
+
+    /** Draw inner borders. */
+    BordersInner(BordersInnerV or BordersInnerH),
+
+    /** Draw outer borders. */
+    BordersOuter(BordersOuterV or BordersOuterH),
+
+    /** Draw all borders. */
+    Borders(BordersInner or BordersOuter),
+
+    /** [ALPHA] Disable vertical borders in columns Body (borders will always appears in Headers). -> May move to style */
+    NoBordersInBody(1 shl 11),
+
+    /** [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). -> May move to style */
+    NoBordersInBodyUntilResize(1 shl 12),
+
+    // Sizing Policy (read above for defaults)
+
+    /** Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching contents width. */
+    SizingFixedFit(1 shl 13),
+
+    /** Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching the maximum contents width of all columns. Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible. */
+    SizingFixedSame(2 shl 13),
+
+    /** Columns default to _WidthStretch with default weights proportional to each columns contents widths. */
+    SizingStretchProp(3 shl 13),
+
+    /** Columns default to _WidthStretch with default weights all equal, unless overriden by TableSetupColumn(). */
+    SizingStretchSame(4 shl 13),
+
+    /** Make outer width auto-fit to columns, overriding outer_size.x value. Only available when ScrollX/ScrollY are disabled and Stretch columns are not used. */
+    NoHostExtendX(1 shl 16),
+
+    /** Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit). Only available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible. */
+    NoHostExtendY(1 shl 17),
+
+    /** Disable keeping column always minimally visible when ScrollX is off and table gets too small. Not recommended if columns are resizable. */
+    NoKeepColumnsVisible(1 shl 18),
+
+    /** Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth. */
+    PreciseWidths(1 shl 19),
+
+    // Clipping
+
+    /** Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze(). */
+    NoClip(1 shl 20),
+
+    // Padding
+
+    /** Default if BordersOuterV is on. Enable outer-most padding. Generally desirable if you have headers. */
+    PadOuterX(1 shl 21),
+
+    /** Default if BordersOuterV is off. Disable outer-most padding. */
+    NoPadOuterX(1 shl 22),
+
+    /** Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off). */
+    NoPadInnerX(1 shl 23),
+
+    // Scrolling
+
+    /** Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this create a child window, ScrollY is currently generally recommended when using ScrollX. */
+    ScrollX(1 shl 24),
+
+    /** Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. */
+    ScrollY(1 shl 25),
+
+    // Sorting
+
+    /** Hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1). */
+    SortMulti(1 shl 26),
+
+    /** Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0). */
+    SortTristate(1 shl 27),
+
+    /** [Internal] Combinations and masks */
+    _SizingMask(SizingFixedFit or SizingFixedSame or SizingStretchProp or SizingStretchSame);
+
+    infix fun and(b: TableFlag): TableFlags = i and b.i
+    infix fun and(b: TableFlags): TableFlags = i and b
+    infix fun or(b: TableFlag): TableFlags = i or b.i
+    infix fun or(b: TableFlags): TableFlags = i or b
+    infix fun xor(b: TableFlag): TableFlags = i xor b.i
+    infix fun xor(b: TableFlags): TableFlags = i xor b
+    infix fun wo(b: TableFlags): TableFlags = and(b.inv())
+}
+
+infix fun TableFlags.and(b: TableFlag): TableFlags = and(b.i)
+infix fun TableFlags.or(b: TableFlag): TableFlags = or(b.i)
+infix fun TableFlags.xor(b: TableFlag): TableFlags = xor(b.i)
+infix fun TableFlags.has(b: TableFlag): Boolean = and(b.i) != 0
+infix fun TableFlags.hasnt(b: TableFlag): Boolean = and(b.i) == 0
+infix fun TableFlags.wo(b: TableFlag): TableFlags = and(b.i.inv())
+
+
+typealias TableColumnFlags = Int
+
+// Flags for ImGui::TableSetupColumn()
+enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
+
+    // Input configuration flags
+
+    None(0),
+
+    /** Default as a hidden/disabled column. */
+    DefaultHide(1 shl 0),
+
+    /** Default as a sorting column. */
+    DefaultSort(1 shl 1),
+
+    /** Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _SizingStretchSame or _SizingStretchProp). */
+    WidthStretch(1 shl 2),
+
+    /** Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _SizingFixedFit and table is resizable). */
+    WidthFixed(1 shl 3),
+
+    /** Disable manual resizing. */
+    NoResize(1 shl 4),
+
+    /** Disable manual reordering this column, this will also prevent other columns from crossing over this column. */
+    NoReorder(1 shl 5),
+
+    /** Disable ability to hide/disable this column. */
+    NoHide(1 shl 6),
+
+    /** Disable clipping for this column (all NoClip columns will render in a same draw command). */
+    NoClip(1 shl 7),
+
+    /** Disable ability to sort on this field (even if ImGuiTableFlags_Sortable is set on the table). */
+    NoSort(1 shl 8),
+
+    /** Disable ability to sort in the ascending direction. */
+    NoSortAscending(1 shl 9),
+
+    /** Disable ability to sort in the descending direction. */
+    NoSortDescending(1 shl 10),
+
+    /** Disable header text width contribution to automatic column width. */
+    NoHeaderWidth(1 shl 11),
+
+    /** Make the initial sort direction Ascending when first sorting on this column (default). */
+    PreferSortAscending(1 shl 12),
+
+    /** Make the initial sort direction Descending when first sorting on this column. */
+    PreferSortDescending(1 shl 13),
+
+    /** Use current Indent value when entering cell (default for column 0). */
+    IndentEnable(1 shl 14),
+
+    /** Ignore current Indent value when entering cell (default for columns > 0). Indentation changes _within_ the cell will still be honored. */
+    IndentDisable(1 shl 15),
+
+    // Output status flags, read-only via TableGetColumnFlags()
+
+    /** Status: is enabled == not hidden by user/api (referred to as "Hide" in _DefaultHide and _NoHide) flags. */
+    IsEnabled(1 shl 20),
+
+    /** Status: is visible == is enabled AND not clipped by scrolling. */
+    IsVisible(1 shl 21),
+
+    /** Status: is currently part of the sort specs */
+    IsSorted(1 shl 22),
+
+    /** Status: is hovered by mouse */
+    IsHovered(1 shl 23),
+
+    // [Internal] Combinations and masks
+
+    WidthMask_(WidthStretch or WidthFixed),
+    IndentMask_(IndentEnable or IndentDisable),
+    StatusMask_(IsEnabled or IsVisible or IsSorted or IsHovered),
+
+    /** [Internal] Disable user resizing this column directly (it may however we resized indirectly from its left edge) */
+    NoDirectResize_(1 shl 30);
+
+    infix fun and(b: TableColumnFlag): TableColumnFlags = i and b.i
+    infix fun and(b: TableColumnFlags): TableColumnFlags = i and b
+    infix fun or(b: TableColumnFlag): TableColumnFlags = i or b.i
+    infix fun or(b: TableColumnFlags): TableColumnFlags = i or b
+    infix fun xor(b: TableColumnFlag): TableColumnFlags = i xor b.i
+    infix fun xor(b: TableColumnFlags): TableColumnFlags = i xor b
+    infix fun wo(b: TableColumnFlags): TableColumnFlags = and(b.inv())
+}
+
+infix fun TableColumnFlags.and(b: TableColumnFlag): TableColumnFlags = and(b.i)
+infix fun TableColumnFlags.or(b: TableColumnFlag): TableColumnFlags = or(b.i)
+infix fun TableColumnFlags.xor(b: TableColumnFlag): TableColumnFlags = xor(b.i)
+infix fun TableColumnFlags.has(b: TableColumnFlag): Boolean = and(b.i) != 0
+infix fun TableColumnFlags.hasnt(b: TableColumnFlag): Boolean = and(b.i) == 0
+infix fun TableColumnFlags.wo(b: TableColumnFlag): TableColumnFlags = and(b.i.inv())
+
+
+typealias TableRowFlags = Int
+
+// Flags for ImGui::TableNextRow()
+enum class TableRowFlag(@JvmField val i: Int) {
+    None(0),
+
+    /** Identify header row (set default background color + width of its contents accounted different for auto column width) */
+    Headers(1 shl 0);
+
+    infix fun and(b: TableRowFlag): TableRowFlags = i and b.i
+    infix fun and(b: TableRowFlags): TableRowFlags = i and b
+    infix fun or(b: TableRowFlag): TableRowFlags = i or b.i
+    infix fun or(b: TableRowFlags): TableRowFlags = i or b
+    infix fun xor(b: TableRowFlag): TableRowFlags = i xor b.i
+    infix fun xor(b: TableRowFlags): TableRowFlags = i xor b
+    infix fun wo(b: TableRowFlags): TableRowFlags = and(b.inv())
+}
+
+infix fun TableRowFlags.and(b: TableRowFlag): TableRowFlags = and(b.i)
+infix fun TableRowFlags.or(b: TableRowFlag): TableRowFlags = or(b.i)
+infix fun TableRowFlags.xor(b: TableRowFlag): TableRowFlags = xor(b.i)
+infix fun TableRowFlags.has(b: TableRowFlag): Boolean = and(b.i) != 0
+infix fun TableRowFlags.hasnt(b: TableRowFlag): Boolean = and(b.i) == 0
+infix fun TableRowFlags.wo(b: TableRowFlag): TableRowFlags = and(b.i.inv())
+
+
+typealias TableBgTargets = Int
+
+// Enum for ImGui::TableSetBgColor()
+// Background colors are rendering in 3 layers:
+//  - Layer 0: draw with RowBg0 color if set, otherwise draw with ColumnBg0 if set.
+//  - Layer 1: draw with RowBg1 color if set, otherwise draw with ColumnBg1 if set.
+//  - Layer 2: draw with CellBg color if set.
+// The purpose of the two row/columns layers is to let you decide if a background color changes should override or blend with the existing color.
+// When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color automatically set for odd/even rows.
+// If you set the color of RowBg0 target, your color will override the existing RowBg0 color.
+// If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
+enum class TableBgTarget(@JvmField val i: TableBgTargets) {
+    None(0),
+
+    /** Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used) */
+    RowBg0(1),
+
+    /** Set row background color 1 (generally used for selection marking) */
+    RowBg1(2),
+
+    /** Set cell background color (top-most color) */
+    CellBg(3);
+
+    infix fun and(b: TableBgTarget): TableBgTargets = i and b.i
+    infix fun and(b: TableBgTargets): TableBgTargets = i and b
+    infix fun or(b: TableBgTarget): TableBgTargets = i or b.i
+    infix fun or(b: TableBgTargets): TableBgTargets = i or b
+    infix fun xor(b: TableBgTarget): TableBgTargets = i xor b.i
+    infix fun xor(b: TableBgTargets): TableBgTargets = i xor b
+    infix fun wo(b: TableBgTargets): TableBgTargets = and(b.inv())
+
+    companion object {
+        infix fun of(i: Int) = values().first { it.i == i }
+    }
+}
+
+infix fun TableBgTargets.and(b: TableBgTarget): TableBgTargets = and(b.i)
+infix fun TableBgTargets.or(b: TableBgTarget): TableBgTargets = or(b.i)
+infix fun TableBgTargets.xor(b: TableBgTarget): TableBgTargets = xor(b.i)
+infix fun TableBgTargets.has(b: TableBgTarget): Boolean = and(b.i) != 0
+infix fun TableBgTargets.hasnt(b: TableBgTarget): Boolean = and(b.i) == 0
+infix fun TableBgTargets.wo(b: TableBgTarget): TableBgTargets = and(b.i.inv())
 
 
 typealias FocusedFlags = Int
@@ -767,6 +1099,26 @@ enum class Dir {
 
 infix fun Int.shl(b: Dir) = shl(b.i)
 
+
+/** A sorting direction */
+enum class SortDirection {
+    None,
+
+    /** Ascending = 0->9, A->Z etc. */
+    Ascending,
+
+    /** Descending = 9->0, Z->A etc. */
+    Descending;
+
+    @JvmField
+    val i = ordinal
+
+    companion object {
+        infix fun of(i: Int) = values().first { it.i == i }
+    }
+}
+
+
 /** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array
  *
  *  A key identifier (ImGui-side enum) */
@@ -774,15 +1126,16 @@ enum class Key {
     Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
     Space, Enter, Escape, KeyPadEnter,
 
+    _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
     /** for text edit CTRL+A: select all */
     A,
-
+    B,
     /** for text edit CTRL+C: copy */
     C,
-
+    D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U,
     /** for text edit CTRL+V: paste */
     V,
-
+    W,
     /** for text edit CTRL+X: cut */
     X,
 
@@ -791,6 +1144,7 @@ enum class Key {
 
     /** for text edit CTRL+Z: undo */
     Z,
+    F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
     Count;
 
     companion object {
@@ -824,7 +1178,7 @@ operator fun IntArray.set(index: Key, value: Int) {
 operator fun IntArray.get(index: Key): Int = get(index.i)
 
 
-// To test io.KeyMods (which is a combination of individual fields io.KeyCtrl, io.KeyShift, io.KeyAlt set by user/back-end)
+// To test io.KeyMods (which is a combination of individual fields io.KeyCtrl, io.KeyShift, io.KeyAlt set by user/backend)
 enum class KeyMod(val i: KeyModFlags) {
     None(0),
     Ctrl(1 shl 0),
@@ -846,7 +1200,7 @@ typealias KeyModFlags = Int
  *  based on your io.keysDown[] + io.keyMap[] arrays.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
  *  ::newFrame(). Note that io.navInputs[] is cleared by ::endFrame().
- *  Read instructions in imgui.cpp for more details.
+ *  Read instructions in imgui.cpp for more details. Download PNG/PSD at http://dearimgui.org/controls_sheets.
  *
  *  An input identifier for navigation */
 enum class NavInput {
@@ -962,33 +1316,33 @@ enum class ConfigFlag(@JvmField val i: ConfigFlags) {
     /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
     NavEnableKeyboard(1 shl 0),
 
-    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui back-end to fill io.NavInputs[].
-     *  Back-end also needs to set ImGuiBackendFlags_HasGamepad. */
+    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].
+     *  Backend also needs to set ImGuiBackendFlags_HasGamepad. */
     NavEnableGamepad(1 shl 1),
 
     /** Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward.
-     *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your binding,
+     *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your backend,
      *  otherwise ImGui will react as if the mouse is jumping around back and forth. */
     NavEnableSetMousePos(1 shl 2),
 
     /** Instruct navigation to not set the io.WantCaptureKeyboard flag when io.NavActive is set. */
     NavNoCaptureKeyboard(1 shl 3),
 
-    /** Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the back-end. */
+    /** Instruct imgui to clear mouse position/buttons in NewFrame(). This allows ignoring the mouse information set by the backend. */
     NoMouse(1 shl 4),
 
-    /** Request back-end to not alter mouse cursor configuration.
-     *  Use if the back-end cursor changes are interfering with yours and you don't want to use setMouseCursor() to change mouse cursor.
+    /** Request backend to not alter mouse cursor configuration.
+     *  Use if the backend cursor changes are interfering with yours and you don't want to use setMouseCursor() to change mouse cursor.
      *  You may want to honor requests from imgui by reading ::mouseCursor yourself instead. */
     NoMouseCursorChange(1 shl 5),
 
-    /** JVM custom, request back-end to not read the mouse status allowing you to provide your own custom input */
+    /** JVM custom, request backend to not read the mouse status allowing you to provide your own custom input */
     NoMouseUpdate(1 shl 12),
 
     /** JVM custom */
     NoKeyboardUpdate(1 shl 13),
 
-    /*  User storage (to allow your back-end/engine to communicate to code that may be shared between multiple projects.
+    /*  User storage (to allow your backend/engine to communicate to code that may be shared between multiple projects.
         Those flags are not used by core Dear ImGui)     */
 
     /** Application is SRGB-aware. */
@@ -1016,22 +1370,22 @@ infix fun ConfigFlags.wo(b: ConfigFlag): ConfigFlags = and(b.i.inv())
 
 typealias BackendFlags = Int
 
-/** Back-end capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom back-end.
+/** Backend capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom backend.
  *
  *  Flags: for io.BackendFlags  */
 enum class BackendFlag(@JvmField val i: BackendFlags) {
     None(0),
 
-    /** Back-end Platform supports gamepad and currently has one connected. */
+    /** Backend Platform supports gamepad and currently has one connected. */
     HasGamepad(1 shl 0),
 
-    /** Back-end Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
+    /** Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
     HasMouseCursors(1 shl 1),
 
-    /** Back-end Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
+    /** Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
     HasSetMousePos(1 shl 2),
 
-    /** Back-end Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
+    /** Backend Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
     RendererHasVtxOffset(1 shl 3);
 
     infix fun and(b: BackendFlag): BackendFlags = i and b.i
@@ -1106,6 +1460,21 @@ enum class Col {
     PlotLinesHovered,
     PlotHistogram,
     PlotHistogramHovered,
+
+    /** Table header background */
+    TableHeaderBg,
+
+    /** Table outer and header borders (prefer using Alpha=1.0 here) */
+    TableBorderStrong,
+
+    /** Table inner borders (prefer using Alpha=1.0 here) */
+    TableBorderLight,
+
+    /** Table row background (even rows) */
+    TableRowBg,
+
+    /** Table row background (odd rows) */
+    TableRowBgAlt,
     TextSelectedBg,
     DragDropTarget,
 
@@ -1195,6 +1564,9 @@ enum class StyleVar {
     /** float   */
     IndentSpacing,
 
+    /** vec2    */
+    CellPadding,
+
     /** Float   */
     ScrollbarSize,
 
@@ -1233,16 +1605,16 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
     /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */
     NoAlpha(1 shl 1),
 
-    /** ColorEdit: disable picker when clicking on colored square.  */
+    /** ColorEdit: disable picker when clicking on color square.  */
     NoPicker(1 shl 2),
 
     /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
     NoOptions(1 shl 3),
 
-    /** ColorEdit, ColorPicker: disable colored square preview next to the inputs. (e.g. to show only the inputs)   */
+    /** ColorEdit, ColorPicker: disable color square preview next to the inputs. (e.g. to show only the inputs)   */
     NoSmallPreview(1 shl 4),
 
-    /** ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview colored square).   */
+    /** ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview color square).   */
     NoInputs(1 shl 5),
 
     /** ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview. */
@@ -1251,7 +1623,7 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
     /** ColorEdit, ColorPicker: disable display of inline text label (the label is still forwarded to the tooltip and picker).  */
     NoLabel(1 shl 7),
 
-    /** ColorPicker: disable bigger color preview on right side of the picker, use small colored square preview instead.    */
+    /** ColorPicker: disable bigger color preview on right side of the picker, use small color square preview instead.    */
     NoSidePreview(1 shl 8),
 
     /** ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source. */
@@ -1390,7 +1762,7 @@ enum class MouseButton {
 
 
 /** Enumeration for GetMouseCursor()
- *  User code may request binding to display given cursor by calling SetMouseCursor(),
+ *  User code may request backend to display given cursor by calling SetMouseCursor(),
  *  which is why we have some cursors that are marked unused here
  *
  *  A mouse cursor identifier */

@@ -14,12 +14,12 @@ import kool.Stack
 // Version
 const val IMGUI_BUILD = 0
 
-/** get the compiled version string e.g. "1.23" (essentially the compiled value for IMGUI_VERSION) */
-const val IMGUI_VERSION = "1.79"
+/** get the compiled version string e.g. "1.80 WIP" (essentially the value for IMGUI_VERSION from the compiled version of imgui.cpp) */
+const val IMGUI_VERSION = "1.80"
 const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 17900
+const val IMGUI_VERSION_NUM = 18000
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -73,7 +73,7 @@ const val NAV_WINDOWING_HIGHLIGHT_DELAY = 0.2f
 /** Time before the window list starts to appear */
 const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 
-// Window resizing from edges (when io.configWindowsResizeFromEdges = true and BackendFlag.HasMouseCursors is set in io.backendFlags by back-end)
+// Window resizing from edges (when io.configWindowsResizeFromEdges = true and BackendFlag.HasMouseCursors is set in io.backendFlags by backend)
 
 /** Extend outside and inside windows. Affect FindHoveredWindow(). */
 const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
@@ -90,20 +90,6 @@ val IMGUI_ENABLE_TEST_ENGINE: Boolean
 
 @JvmField
 var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
-
-
-//-----------------------------------------------------------------------------
-// [SECTION] Generic context hooks
-//-----------------------------------------------------------------------------
-
-typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
-enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
-
-class ContextHook(
-    val type: ContextHookType,
-    val owner: ID = 0,
-    val callback: ContextHookCallback,
-    val userData: Any? = null)
 
 
 // Helper: Unicode defines
@@ -123,8 +109,8 @@ var MINECRAFT_BEHAVIORS = false
 
 object ImGui :
 //-----------------------------------------------------------------------------
-// ImGui: Dear ImGui end-user API
-// (This is a namespace. You can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
+// [SECTION] Dear ImGui end-user API functions
+// (Note that ImGui:: being a namespace, you can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
 //-----------------------------------------------------------------------------
 // context doesnt exist, only Context class
         main,
@@ -136,6 +122,7 @@ object ImGui :
         contentRegion,
         windowScrolling,
         parametersStacks,
+        styleReadAccess,
         cursorLayout,
         idStackScopes,
         widgetsText,
@@ -153,6 +140,7 @@ object ImGui :
         widgetsMenus,
         tooltips,
         popupsModals,
+        tables,
         columns,
         tabBarsTabs,
         loggingCapture,
@@ -186,6 +174,9 @@ object ImGui :
         inputs,
         imgui.internal.api.dragAndDrop,
         internalColumnsAPI,
+        tablesCandidatesForPublicAPI,
+        tablesInternal,
+        tableSettings,
         tabBars,
         renderHelpers,
         widgets,
@@ -196,6 +187,7 @@ object ImGui :
         color,
         plot,
         // shade functions in DrawList class
+        garbageCollection,
         debugTools
 
 

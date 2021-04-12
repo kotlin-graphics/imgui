@@ -38,7 +38,6 @@ import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.showFontSelector
-import imgui.ImGui.showStyleSelector
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
 import imgui.ImGui.style
@@ -49,6 +48,7 @@ import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowWidth
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.demoDebugInformations.ShowStyleSelector
 import imgui.api.g
 import imgui.classes.Style
 import imgui.classes.TextFilter
@@ -58,7 +58,7 @@ import imgui.dsl.radioButton
 import imgui.dsl.smallButton
 import imgui.dsl.tooltip
 import imgui.dsl.treeNode
-import imgui.dsl.withId
+import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.font.Font
 import uno.kotlin.NUL
@@ -95,7 +95,7 @@ object StyleEditor {
         var ref = ref_ ?: refSavedStyle
 
         pushItemWidth(windowWidth * 0.55f)
-        if (showStyleSelector("Colors##Selector")) refSavedStyle = Style(style)
+        if (ShowStyleSelector("Colors##Selector")) refSavedStyle = Style(style)
 
         showFontSelector("Fonts##Selector")
 
@@ -136,6 +136,7 @@ object StyleEditor {
                 text("Main")
                 sliderVec2("WindowPadding", style.windowPadding, 0f, 20f, "%.0f")
                 sliderVec2("FramePadding", style.framePadding, 0f, 20f, "%.0f")
+                sliderVec2("CellPadding", style.cellPadding, 0f, 20f, "%.0f")
                 sliderVec2("ItemSpacing", style.itemSpacing, 0f, 20f, "%.0f")
                 sliderVec2("ItemInnerSpacing", style.itemInnerSpacing, 0f, 20f, "%.0f")
                 sliderVec2("TouchExtraPadding", style.touchExtraPadding, 0f, 10f, "%.0f")
@@ -201,7 +202,7 @@ object StyleEditor {
                 sameLine()
                 checkbox("Only Modified Colors", ::outputOnlyModified)
 
-                text("Tip: Left-click on colored square to open color picker,\nRight-click to open edit options menu.")
+                text("Tip: Left-click on color square to open color picker,\nRight-click to open edit options menu.")
 
                 filter.draw("Filter colors", fontSize * 16)
 
@@ -212,7 +213,7 @@ object StyleEditor {
                 }; sameLine()
                 helpMarker("""
                     In the color list:
-                    Left-click on colored square to open color picker,
+                    Left-click on color square to open color picker,
                     Right-click to open edit options menu.""".trimIndent())
 
                 child("#colors", Vec2(), true,
@@ -221,7 +222,7 @@ object StyleEditor {
                         for (i in 0 until Col.COUNT) {
                             val name = Col.values()[i].name
                             if (!filter.passFilter(name)) continue
-                            withId(i) {
+                            withID(i) {
                                 colorEditVec4("##color", style.colors[i], Cef.AlphaBar or alphaFlags)
                                 if (style.colors[i] != ref!!.colors[i]) { // Tips: in a real user application, you may want to merge and use an icon font into the main font,
                                     // so instead of "Save"/"Revert" you'd use icons!
@@ -282,7 +283,7 @@ object StyleEditor {
                 checkbox("Anti-aliased lines use texture", style::antiAliasedLinesUseTex)
                 sameLine()
                 helpMarker(
-                    "Faster lines using texture data. Require back-end to render with bilinear filtering (not point/nearest filtering).")
+                    "Faster lines using texture data. Require backend to render with bilinear filtering (not point/nearest filtering).")
 
                 checkbox("Anti-aliased fill", style::antiAliasedFill)
                 pushItemWidth(100)

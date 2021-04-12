@@ -59,7 +59,7 @@ object LongText {
                 val clipper = ListClipper()
                 clipper.begin(lines)
                 while (clipper.step())
-                    for (i in clipper.displayStart until clipper.displayEnd)
+                    for (i in clipper.display)
                         text("$i The quick brown fox jumps over the lazy dog")
                 popStyleVar()
             }

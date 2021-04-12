@@ -32,6 +32,7 @@ private class ImGuiOpenGL2 {
 
     var f = 0f
     val clearColor = Vec4(0.45f, 0.55f, 0.6f, 1f)
+
     // Our state
     var showAnotherWindow = false
     var showDemo = true
@@ -68,7 +69,7 @@ private class ImGuiOpenGL2 {
         ImGui.styleColorsDark()
 //        ImGui.styleColorsClassic()
 
-        // Setup Platform/Renderer bindings
+        // Setup Platform/Renderer backends
         implGlfw = ImplGlfw(window, true)
         implGl2 = ImplGL2()
 
@@ -172,7 +173,13 @@ private class ImGuiOpenGL2 {
             glClearColor(clearColor)
             glClear(GL_COLOR_BUFFER_BIT)
 
+            // If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),
+            // you may need to backup/reset/restore other state, e.g. for current shader using the commented lines below.
+            //GLint last_program;
+            //glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
+            //glUseProgram(0);
             implGl2.renderDrawData(drawData!!)
+            //glUseProgram(last_program);
         }
 
         if (DEBUG)

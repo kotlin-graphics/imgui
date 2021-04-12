@@ -22,6 +22,7 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
@@ -133,12 +134,16 @@ interface widgetsComboBox {
 
         val name = "##Combo_%02d".format(g.beginPopupStack.size) // Recycle windows based on depth
 
-        // Peak into expected window size so we can position it
+        // Position the window given a custom constraint (peak into expected window size so we can position it)
+        //    // This might be easier to express with an hypothetical SetNextWindowPosConstraints() function.
         findWindowByName(name)?.let {
             if (it.wasActive) {
-                val sizeExpected = it.calcExpectedSize()
-                if (flags has Cf.PopupAlignLeft)
-                    it.autoPosLastDirection = Dir.Left
+                // Always override 'AutoPosLastDirection' to not leave a chance for a past value to affect us.
+                val sizeExpected = it.calcNextAutoFitSize()
+                it.autoPosLastDirection = when {
+                    flags has Cf.PopupAlignLeft -> Dir.Left // "Below, Toward Left"
+                    else -> Dir.Down // "Below, Toward Right (default)"
+                }
                 val rOuter = it.getAllowedExtentRect()
                 val pos = findBestWindowPosForPopupEx(frameBb.bl, sizeExpected, it::autoPosLastDirection, rOuter, frameBb, PopupPositionPolicy.ComboBox)
                 setNextWindowPos(pos)
@@ -258,6 +263,9 @@ interface widgetsComboBox {
         }
 
         endCombo()
+        if (valueChanged)
+            markItemEdited(g.currentWindow!!.dc.lastItemId)
+
         return valueChanged
     }
 
@@ -273,7 +281,7 @@ interface widgetsComboBox {
         }
     }
 
-    class ComboFilterState(var activeIdx: Int= 0, var selectionChanged: Boolean = false)
+    class ComboFilterState(var activeIdx: Int = 0, var selectionChanged: Boolean = false)
 
     fun comboFilter(label: String, buffer: ByteArray, hints: Array<String>, s: ComboFilterState,
                     flags: ComboFlags = Cf.None.i): Boolean {
@@ -356,7 +364,7 @@ interface widgetsComboBox {
         // Peak into expected window size so we can position it
         findWindowByName(name)?.let { popupWindow ->
             if (popupWindow.wasActive) {
-                val sizeExpected = popupWindow.calcExpectedSize()
+                val sizeExpected = popupWindow.calcNextAutoFitSize()
                 if (flags has Cf.PopupAlignLeft)
                     popupWindow.autoPosLastDirection = Dir.Left
                 val rOuter = popupWindow.getAllowedExtentRect()

@@ -9,36 +9,30 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
 import imgui.ImGui.getColumnOffset
 import imgui.ImGui.io
-import imgui.ImGui.popClipRect
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushColumnClipRect
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.setWindowClipRectBeforeSetChannel
 import imgui.ImGui.style
 import imgui.internal.*
-import imgui.internal.sections.Columns
-import imgui.internal.sections.ColumnsFlags
+import imgui.internal.sections.OldColumns
+import imgui.internal.sections.OldColumnsFlags
 import imgui.internal.sections.has
 import imgui.internal.sections.hasnt
 import kotlin.math.max
 import kotlin.math.min
-import imgui.internal.sections.ColumnsFlag as Cf
+import imgui.internal.sections.OldColumnsFlag as Cf
 
-/** Columns
- *  - You can also use SameLine(pos_x) to mimic simplified columns.
- *  - The columns API is work-in-progress and rather lacking (columns are arguably the worst part of dear imgui at the moment!)
- *  - There is a maximum of 64 columns.
- *  - Currently working on new 'Tables' api which will replace columns around Q2 2020 (see GitHub #2957). */
+/** Legacy Columns API (2020: prefer using Tables!)
+ *  - You can also use SameLine(pos_x) to mimic simplified columns. */
 interface columns {
 
-    /** [2017/12: This is currently the only public API, while we are working on making BeginColumns/EndColumns user-facing]    */
     fun columns(columnsCount: Int = 1, id: String = "", border: Boolean = true) {
 
         val window = currentWindow
         assert(columnsCount >= 1)
 
-        val flags: ColumnsFlags = if (border) Cf.None.i else Cf.NoBorder.i
-        //flags |= ImGuiColumnsFlags_NoPreserveWidths; // NB: Legacy behavior
+        val flags: OldColumnsFlags = if (border) Cf.None.i else Cf.NoBorder.i
+        //flags |= ImGuiOldColumnFlags_NoPreserveWidths; // NB: Legacy behavior
         window.dc.currentColumns?.let {
             if (it.count == columnsCount && it.flags == flags)
                 return
@@ -167,7 +161,7 @@ interface columns {
 
         val COLUMNS_HIT_RECT_HALF_WIDTH = 4f
 
-        fun getDraggedColumnOffset(columns: Columns, columnIndex: Int): Float {
+        fun getDraggedColumnOffset(columns: OldColumns, columnIndex: Int): Float {
             /*  Active (dragged) column always follow mouse. The reason we need this is that dragging a column to the right edge
                 of an auto-resizing window creates a feedback loop because we store normalized positions. So while dragging we
                 enforce absolute positioning.   */
@@ -184,7 +178,7 @@ interface columns {
             return x
         }
 
-        fun getColumnWidthEx(columns: Columns, columnIndex_: Int, beforeResize: Boolean = false): Float {
+        fun getColumnWidthEx(columns: OldColumns, columnIndex_: Int, beforeResize: Boolean = false): Float {
             val columnIndex = if (columnIndex_ < 0) columns.current else columnIndex_
 
             val offsetNorm = when {

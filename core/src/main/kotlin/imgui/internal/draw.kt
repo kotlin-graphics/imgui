@@ -19,15 +19,15 @@ import java.util.logging.Level
  *      A) Change your GPU render state,
  *      B) render a complex 3D scene inside a UI element without an intermediate texture/render target, etc.
  *  The expected behavior from your rendering function is 'if (cmd.UserCallback != NULL) { cmd.UserCallback(parent_list, cmd); } else { RenderTriangles() }'
- *  If you want to override the signature of ImDrawCallback, you can simply use e.g. '#define ImDrawCallback MyDrawCallback' (in imconfig.h) + update rendering back-end accordingly. */
+ *  If you want to override the signature of ImDrawCallback, you can simply use e.g. '#define ImDrawCallback MyDrawCallback' (in imconfig.h) + update rendering backend accordingly. */
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 // Typically, 1 command = 1 GPU draw call (unless command is a callback)
 // - VtxOffset/IdxOffset: When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset' is enabled,
 //   those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
-//   Pre-1.71 back-ends will typically ignore the VtxOffset/IdxOffset fields.
+//   Pre-1.71 backends will typically ignore the VtxOffset/IdxOffset fields.
 // - The ClipRect/TextureId/VtxOffset fields must be contiguous as we memcmp() them together (this is asserted for).
-class DrawCmd {
+class DrawCmd : DrawCmdHeader {
 
     // Also ensure our padding fields are zeroed
     constructor()
@@ -38,15 +38,15 @@ class DrawCmd {
 
 
     /** Clipping rectangle (x1, y1, x2, y2). Subtract ImDrawData->DisplayPos to get clipping rectangle in "viewport" coordinates */
-    var clipRect = Vec4()
+    override var clipRect = Vec4()
 
     /** User-provided texture ID. Set by user in ImfontAtlas::SetTexID() for fonts or passed to Image*() functions.
     Ignore if never using images or multiple fonts atlas.   */
-    var textureId: TextureID? = null
+    override var textureId: TextureID? = null
 
     /** Start offset in vertex buffer. ImGuiBackendFlags_RendererHasVtxOffset: always 0, otherwise may be >0 to support
      *  meshes larger than 64K vertices with 16-bit indices. */
-    var vtxOffset = 0
+    override var vtxOffset = 0
 
     /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
     var idxOffset = 0
@@ -58,8 +58,8 @@ class DrawCmd {
     /** If != NULL, call the function instead of rendering the vertices. clip_rect and texture_id will be set normally. */
     var userCallback: DrawCallback? = null
 
-    /** Special Draw callback value to request renderer back-end to reset the graphics/render state.
-     *  The renderer back-end needs to handle this special value, otherwise it will crash trying to call a function at this address.
+    /** Special Draw callback value to request renderer backend to reset the graphics/render state.
+     *  The renderer backend needs to handle this special value, otherwise it will crash trying to call a function at this address.
      *  This is useful for example if you submitted callbacks which you know have altered the render state and you want it to be restored.
      *  It is not done by default because they are many perfectly useful way of altering render state for imgui contents
      *  (e.g. changing shader/blending settings before an Image call). */
@@ -78,23 +78,10 @@ class DrawCmd {
         resetRenderState = drawCmd.resetRenderState
         userCallbackData = drawCmd.userCallbackData
     }
-
-    // Compare ClipRect, TextureId and VtxOffset with a single memcmp()
-//    #define ImDrawCmd_HeaderSize                        (IM_OFFSETOF(ImDrawCmd, VtxOffset) + sizeof(unsigned int))
-
-    /** Compare ClipRect, TextureId, VtxOffset */
-    infix fun headerCompare(other: DrawCmd): Boolean = clipRect == other.clipRect && textureId == other.textureId && vtxOffset == other.vtxOffset
-
-    /** Copy ClipRect, TextureId, VtxOffset */
-    infix fun headerCopy(other: DrawCmd) {
-        clipRect put other.clipRect
-        textureId = other.textureId
-        vtxOffset = other.vtxOffset
-    }
 }
 
 /** Vertex index, default to 16-bit
- *  To allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end (recommended).
+ *  To allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer backend (recommended).
  *  To use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h. */
 typealias DrawIdx = Int
 
@@ -117,7 +104,29 @@ class DrawVert(
     override fun toString() = "pos: $pos, uv: $uv, col: $col"
 }
 
-/** Temporary storage to output draw commands out of order, used by ImDrawListSplitter and ImDrawList::ChannelsSplit()
+/** [Internal] For use by ImDrawList */
+open class DrawCmdHeader {
+    open var clipRect = Vec4()
+    open var textureId: TextureID? = null
+    open var vtxOffset = 0
+
+    // Compare ClipRect, TextureId and VtxOffset with a single memcmp()
+//    #define ImDrawCmd_HeaderSize                        (IM_OFFSETOF(ImDrawCmd, VtxOffset) + sizeof(unsigned int))
+
+    /** Compare ClipRect, TextureId, VtxOffset */
+    infix fun headerCompare(other: DrawCmdHeader): Boolean = clipRect == other.clipRect && textureId == other.textureId && vtxOffset == other.vtxOffset
+
+    /** Copy ClipRect, TextureId, VtxOffset */
+    infix fun headerCopy(other: DrawCmdHeader) {
+        clipRect put other.clipRect
+        textureId = other.textureId
+        vtxOffset = other.vtxOffset
+    }
+}
+
+/** [Internal] For use by ImDrawListSplitter
+ *
+ *  Temporary storage to output draw commands out of order, used by ImDrawListSplitter and ImDrawList::ChannelsSplit()
  *
  *  Draw channels are used by the Columns API to "split" the render list into different channels while building, so
  *  items of each column can be batched together.
@@ -146,7 +155,7 @@ class DrawChannel {
 // FIXME: This may be a little confusing, trying to be a little too low-level/optimal instead of just doing vector swap..
 //-----------------------------------------------------------------------------
 /** Split/Merge functions are used to split the draw list into different layers which can be drawn into out of order.
- *  This is used by the Columns api, so items of each column can be batched together in a same draw call. */
+ *  This is used by the Columns/Tables API, so items of each column can be batched together in a same draw call. */
 class DrawListSplitter {
     /** Current channel number (0) */
     var _current = 0
@@ -156,10 +165,6 @@ class DrawListSplitter {
 
     /** Draw channels (not resized down so _Count might be < Channels.Size) */
     val _channels = Stack<DrawChannel>()
-
-    init {
-        clear()
-    }
 
     fun clear() {
         _current = 0
@@ -195,8 +200,6 @@ class DrawListSplitter {
         for (i in 1 until channelsCount) {
             if (i < oldChannelsCount)
                 _channels[i].resize0()
-            if (_channels[i]._cmdBuffer.isEmpty())
-                _channels[i]._cmdBuffer += DrawCmd().apply { headerCopy(drawList._cmdHeader) } // Copy ClipRect, TextureId, VtxOffset
         }
     }
 
@@ -286,8 +289,10 @@ class DrawListSplitter {
         drawList._idxWritePtr = drawList.idxBuffer.lim
 
         // If current command is used with different settings we need to add a new command
-        val currCmd = drawList.cmdBuffer.last()
-        if (currCmd.elemCount == 0)
+        val currCmd = drawList.cmdBuffer.lastOrNull()
+        if (currCmd == null)
+            drawList.addDrawCmd()
+        else if (currCmd.elemCount == 0)
             currCmd headerCopy drawList._cmdHeader // Copy ClipRect, TextureId, VtxOffset
         else if (!currCmd.headerCompare(drawList._cmdHeader))
             drawList.addDrawCmd()
@@ -298,7 +303,7 @@ class DrawListSplitter {
 /** -----------------------------------------------------------------------------
  *  All draw command lists required to render the frame + pos/size coordinates to use for the projection matrix.
  *
- *  Draw List API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListFlags, ImDrawList, ImDrawData)
+ *  [SECTION] Drawing API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListFlags, ImDrawList, ImDrawData)
  *  Hold a series of drawing commands. The user provides a renderer for ImDrawData which essentially contains an array of ImDrawList.
  *
  *  All draw data to render a Dear ImGui frame

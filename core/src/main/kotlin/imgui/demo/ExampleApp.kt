@@ -1,15 +1,16 @@
 package imgui.demo
 
 import glm_.f
-import glm_.glm
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.beginTable
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.checkbox
 import imgui.ImGui.checkboxFlags
 import imgui.ImGui.end
+import imgui.ImGui.endTable
 import imgui.ImGui.fontSize
 import imgui.ImGui.io
 import imgui.ImGui.logButtons
@@ -17,20 +18,21 @@ import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.menuItem
+import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
-import imgui.ImGui.showAboutWindow
 import imgui.ImGui.showMetricsWindow
 import imgui.ImGui.showUserGuide
-import imgui.ImGui.sliderFloat
 import imgui.ImGui.spacing
+import imgui.ImGui.tableNextColumn
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.api.demoDebugInformations.Companion.helpMarker
+import imgui.api.demoDebugInformations.ShowAboutWindow
 import imgui.classes.TextFilter
 import imgui.demo.showExampleApp.*
 import imgui.dsl.collapsingHeader
@@ -38,14 +40,8 @@ import imgui.dsl.menu
 import imgui.dsl.menuBar
 import imgui.dsl.treeNode
 import imgui.dsl.window
-import imgui.internal.sections.or
-import imgui.internal.sections.wo
-import kool.lim
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
-import imgui.internal.sections.DrawListFlag as Dlf
 
 object ExampleApp {
 
@@ -103,7 +99,7 @@ object ExampleApp {
         if (show.customRendering) CustomRendering(show::customRendering)
 
         if (show.metrics) showMetricsWindow(show::metrics)
-        if (show.about) showAboutWindow(show::about)
+        if (show.about) ShowAboutWindow(show::about)
         if (show.styleEditor)
             window("Dear ImGui Style Editor", show::styleEditor) {
                 StyleEditor()
@@ -133,8 +129,8 @@ object ExampleApp {
 
         // Most "big" widgets share a common width settings by default. See 'Demo->Layout->Widgets Width' for details.
 
-        // e.g. Use 2/3 of the space for widgets and 1/3 for labels (default)
-        //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
+        // e.g. Use 2/3 of the space for widgets and 1/3 for labels (right align)
+        //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.35f);
 
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
         pushItemWidth(fontSize * -12)
@@ -160,7 +156,7 @@ object ExampleApp {
                 menuItem("Documents", "", show::documents)
             }
             menu("Tools") {
-                menuItem("Metrics", "", show::metrics)
+                menuItem("Metrics/Debugger", "", show::metrics)
                 menuItem("Style Editor", "", show::styleEditor)
                 menuItem("About Dear ImGui", "", show::about)
             }
@@ -175,7 +171,7 @@ object ExampleApp {
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
-                    "and Metrics (general purpose Dear ImGui debugging tool).")
+                    "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
             separator()
 
             text("PROGRAMMER GUIDE:")
@@ -196,14 +192,14 @@ object ExampleApp {
             treeNode("Configuration##2") {
 
                 checkboxFlags("io.ConfigFlags: NavEnableKeyboard", io::configFlags, ConfigFlag.NavEnableKeyboard.i)
+                sameLine(); helpMarker("Enable keyboard controls.")
                 checkboxFlags("io.ConfigFlags: NavEnableGamepad", io::configFlags, ConfigFlag.NavEnableGamepad.i)
-                sameLine(); helpMarker("Required back-end to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
+                sameLine(); helpMarker("Enable gamepad controls. Require backend to feed in gamepad inputs in io.NavInputs[] and set io.BackendFlags |= ImGuiBackendFlags_HasGamepad.\n\nRead instructions in imgui.cpp for details.")
                 checkboxFlags("io.ConfigFlags: NavEnableSetMousePos", io::configFlags, ConfigFlag.NavEnableSetMousePos.i)
                 sameLine(); helpMarker("Instruct navigation to move the mouse cursor. See comment for ImGuiConfigFlags_NavEnableSetMousePos.")
                 checkboxFlags("io.ConfigFlags: NoMouse", io::configFlags, ConfigFlag.NoMouse.i)
-
-                // The "NoMouse" option above can get us stuck with a disable mouse! Provide an alternative way to fix it:
                 if (io.configFlags has ConfigFlag.NoMouse) {
+                    // The "NoMouse" option can get us stuck with a disabled mouse! Let's provide an alternative way to fix it:
                     if ((time.f % 0.4f) < 0.2f) {
                         sameLine()
                         text("<<PRESS SPACE TO DISABLE>>")
@@ -212,9 +208,11 @@ object ExampleApp {
                         io.configFlags = io.configFlags wo ConfigFlag.NoMouse
                 }
                 checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
-                sameLine(); helpMarker("Instruct back-end to not alter mouse cursor shape and visibility.")
+                sameLine(); helpMarker("Instruct backend to not alter mouse cursor shape and visibility.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
-                sameLine(); helpMarker("Set to false to disable blinking cursor, for users who consider it distracting")
+                sameLine(); helpMarker("Enable blinking cursor (optional as some users consider it to be distracting)")
+                checkbox("io.ConfigDragClickToInputText", io::configDragClickToInputText)
+                sameLine(); helpMarker("Enable turning DragXXX widgets into text input with a simple mouse click-release (without moving).")
                 checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)
                 sameLine(); helpMarker("Enable resizing of windows from their edges and from the lower-left corner.\nThis requires (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) because it needs mouse cursor feedback.")
                 checkbox("io.configWindowsMoveFromTitleBarOnly", io::configWindowsMoveFromTitleBarOnly)
@@ -225,10 +223,10 @@ object ExampleApp {
             }
             treeNode("Backend Flags") {
                 helpMarker("""
-                    Those flags are set by the back-ends (imgui_impl_xxx files) to specify their capabilities.
-                    Here we expose then as read-only fields to avoid breaking interactions with your back-end.""".trimIndent())
+                    Those flags are set by the backends (imgui_impl_xxx files) to specify their capabilities.
+                    Here we expose then as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
 
-                // Make a local copy to avoid modifying actual back-end flags.
+                // Make a local copy to avoid modifying actual backend flags.
                 val backendFlags = intArrayOf(io.backendFlags)
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
@@ -259,26 +257,30 @@ object ExampleApp {
         }
 
         collapsingHeader("Window options") {
-            checkbox("No titlebar", ::noTitlebar); sameLine(150)
-            checkbox("No scrollbar", ::noScrollbar); sameLine(300)
-            checkbox("No menu", ::noMenu)
-            checkbox("No move", ::noMove); sameLine(150)
-            checkbox("No resize", ::noResize); sameLine(300)
-            checkbox("No collapse", ::noCollapse)
-            checkbox("No close", ::noClose); sameLine(150)
-            checkbox("No nav", ::noNav); sameLine(300)
-            checkbox("No background", ::noBackground)
-            checkbox("No bring to front", ::noBringToFront)
+            if (beginTable("split", 3)) {
+                tableNextColumn(); checkbox("No titlebar", ::noTitlebar); sameLine(150)
+                tableNextColumn(); checkbox("No scrollbar", ::noScrollbar); sameLine(300)
+                tableNextColumn(); checkbox("No menu", ::noMenu)
+                tableNextColumn(); checkbox("No move", ::noMove); sameLine(150)
+                tableNextColumn(); checkbox("No resize", ::noResize); sameLine(300)
+                tableNextColumn(); checkbox("No collapse", ::noCollapse)
+                tableNextColumn(); checkbox("No close", ::noClose); sameLine(150)
+                tableNextColumn(); checkbox("No nav", ::noNav); sameLine(300)
+                tableNextColumn(); checkbox("No background", ::noBackground)
+                tableNextColumn(); checkbox("No bring to front", ::noBringToFront)
+                endTable()
+            }
         }
 
         // All demo contents
         ShowDemoWindowWidgets()
         ShowDemoWindowLayout()
         ShowDemoWindowPopups()
-        ShowDemoWindowColumns()
+        ShowDemoWindowTables()
         ShowDemoWindowMisc()
 
         // End of ShowDemoWindow()
+        popItemWidth()
         end()
     }
 }
