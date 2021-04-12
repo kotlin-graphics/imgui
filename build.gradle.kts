@@ -12,7 +12,7 @@ plugins {
     id("kx.publish") version build
 }
 
-version = "1.79+2241"
+version = "1.79+2242"
 
 project(":core").dependencies {
     implementation(kotlin("reflect"))
