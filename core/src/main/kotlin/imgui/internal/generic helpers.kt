@@ -373,7 +373,7 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = text.strlen
 
     // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
     val s = ByteArray(4)
-    s[0] = if (begin + 0 < end) text[0] else 0
+    s[0] = if (begin + 0 < end) text[begin + 0] else 0
     s[1] = if (s[0] != 0.b && begin + 1 < end) text[begin + 1] else 0
     s[2] = if (s[1] != 0.b && begin + 2 < end) text[begin + 2] else 0
     s[3] = if (s[2] != 0.b && begin + 3 < end) text[begin + 3] else 0
