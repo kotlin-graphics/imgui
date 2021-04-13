@@ -481,9 +481,12 @@ fun navUpdateWindowing() {
             // Move to parent menu if necessary
             var newNavWindow = it
 
-            tailrec fun Window.getParent(): Window {
+            tailrec fun Window.getParent(): Window { // TODO, now we can use construct `parent?.`..
                 val parent = parentWindow
-                return if (parent != null && dc.navLayerActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu)) getParent() else this
+                return when {
+                    parent != null && dc.navLayerActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
+                    else -> this
+                }
             }
 
             newNavWindow = newNavWindow.getParent()

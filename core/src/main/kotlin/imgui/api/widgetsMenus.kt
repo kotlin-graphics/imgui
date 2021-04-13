@@ -105,7 +105,10 @@ interface widgetsMenus {
 
             tailrec fun Window.getParent(): Window {
                 val parent = parentWindow
-                return if (parent != null && parent.flags has Wf._ChildMenu) getParent() else this
+                return when {
+                    parent != null && parent.flags has Wf._ChildMenu -> parent.getParent()
+                    else -> this
+                }
             }
 
             navEarliestChild = navEarliestChild.getParent()
