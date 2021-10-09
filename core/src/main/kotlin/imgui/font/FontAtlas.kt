@@ -197,9 +197,13 @@ class FontAtlas {
         then the RGB pixels emitted will always be white (~75% of memory/bandwidth waste.  */
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
-    fun build() {
+    fun build(): Boolean {
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
-        buildWithStbTrueType()
+        return when(builder) {
+            "stbTrueType" -> buildWithStbTrueType()
+            "freeType" -> TODO()
+            else -> false
+        }
     }
 
     /** 1 byte per-pixel    */
@@ -445,6 +449,10 @@ class FontAtlas {
     /** Padding between glyphs within texture in pixels. Defaults to 1.
      *  If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
     var texGlyphPadding = 1
+
+    /** Select font builder/rasterizer. Default to "stb_truetype". Set to "freetype" to enable Freetype (default if IMGUI_ENABLE_FREETYPE is defined). */
+    var builder = "stbTrueType"
+
 
     /** = (1.0f/TexWidth, 1.0f/TexHeight)   */
     var texUvScale = Vec2()
