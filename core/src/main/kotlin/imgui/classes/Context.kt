@@ -577,6 +577,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Hooks for extensions (e.g. test engine) */
     val hooks = ArrayList<ContextHook>()
 
+    /** Next available HookId */
+    var hookIdNext: ID = 0
+
     //------------------------------------------------------------------
     // Capture/Logging
     //------------------------------------------------------------------
@@ -756,10 +759,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 typealias ContextHookCallback = (ctx: Context, hook: ContextHook) -> Unit
 
-enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown }
+enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePost, RenderPre, RenderPost, Shutdown, PendingRemoval_ }
 
 /** Hook for extensions like ImGuiTestEngine */
 class ContextHook(
+    // A unique ID assigned by AddContextHook()
+        var hookId: ID = 0,
         var type: ContextHookType = ContextHookType.NewFramePre,
         var owner: ID = 0,
         var callback: ContextHookCallback? = null,

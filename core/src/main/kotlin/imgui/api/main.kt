@@ -64,6 +64,12 @@ interface main {
 
         assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
 
+        // Remove pending delete hooks before frame start.
+        // This deferred removal avoid issues of removal while iterating the hook vector
+        for (n in g.hooks.indices.reversed())
+            if (g.hooks[n].type == ContextHookType.PendingRemoval_)
+                g.hooks.removeAt(n)
+
         g callHooks ContextHookType.NewFramePre
 
         // Check and assert for various common IO and Configuration mistakes

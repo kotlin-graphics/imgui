@@ -1,5 +1,6 @@
 package imgui.internal.api
 
+import imgui.ID
 import imgui.classes.Context
 import imgui.classes.ContextHook
 import imgui.classes.ContextHookType
@@ -8,13 +9,25 @@ import imgui.classes.ContextHookType
 interface `generic context hooks` {
 
     /** No specific ordering/dependency support, will see as needed */
-    fun addContextHook(ctx: Context, hook: ContextHook) {
+    fun addContextHook(ctx: Context, hook: ContextHook): ID {
         val g = ctx
-//        assert(hook.callback != null)
-        g.hooks += hook
+        check(hook.callback != null  && hook.hookId == 0 && hook.type != ContextHookType.PendingRemoval_)
+        g.hooks += hook.apply {
+            hookId = ++g.hookIdNext
+        }
+        return g.hookIdNext
     }
 
-    /** Call context hooks (used by e.g. test engine)
+    // Deferred removal, avoiding issue with changing vector while iterating it
+    fun removeContextHook(ctx: Context, hookId: ID) {
+        val g = ctx
+        check(hookId != 0)
+        for (hook in g.hooks)
+            if (hook.hookId == hookId)
+                hook.type = ContextHookType.PendingRemoval_
+    }
+
+        /** Call context hooks (used by e.g. test engine)
      *  We assume a small number of hooks so all stored in same array */
     fun callContextHooks(ctx: Context, hookType: ContextHookType) {
         val g = ctx
