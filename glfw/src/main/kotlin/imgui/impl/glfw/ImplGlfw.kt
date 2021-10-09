@@ -281,5 +281,7 @@ class ImplGlfw @JvmOverloads constructor(
 
         fun initForVulkan(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
                 ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Vulkan)
+
+        fun initForWebGPU(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw = TODO()
     }
 }

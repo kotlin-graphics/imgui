@@ -11,4 +11,4 @@ var time = 0.0
 val mouseJustPressed = BooleanArray(MouseButton.COUNT)
 val mouseCursors = LongArray(MouseCursor.COUNT)
 
-enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
+enum class GlfwClientApi { Unknown, OpenGL, Vulkan, WebGPU }
