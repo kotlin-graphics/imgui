@@ -651,8 +651,10 @@ interface windows {
             }
 
             // Title bar
-            if (flags hasnt Wf.NoTitleBar)
-                window.renderTitleBarContents(titleBarRect, name, pOpen)
+            if (flags hasnt Wf.NoTitleBar) {
+                val rect = Rect(titleBarRect.min.x + window.windowBorderSize, titleBarRect.min.y, titleBarRect.max.x - window.windowBorderSize, titleBarRect.max.y)
+                window.renderTitleBarContents(rect, name, pOpen)
+            }
 
             // Clear hit test shape every frame
             window.hitTestHoleSize put 0
