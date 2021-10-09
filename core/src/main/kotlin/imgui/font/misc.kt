@@ -47,8 +47,8 @@ class FontConfig {
     /** Merge into previous ImFont, so you can combine multiple inputs font into one ImFont (e.g. ASCII font + icons +
      *  Japanese glyphs). You may want to use GlyphOffset.y when merge font of different heights.   */
     var mergeMode = false
-    /** Settings for custom font rasterizer (e.g. ImGuiFreeType). Leave as zero if you aren't using one.    */
-    var rasterizerFlags = 0x00
+    /** Settings for custom font builder. THIS IS BUILDER IMPLEMENTATION DEPENDENT. Leave as zero if unsure. */
+    var fontBuilderFlags = 0x00
     /** Brighten (>1.0f) or darken (<1.0f) font output. Brightening small fonts may be a good workaround to make them
      *  more readable.  */
     var rasterizerMultiply = 1f

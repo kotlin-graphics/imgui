@@ -62,7 +62,7 @@ class FontAtlas {
             fontCfg.dstFont = fonts.last()
         if (!fontCfg.fontDataOwnedByAtlas)
             fontCfg.fontDataOwnedByAtlas = true
-//            memcpy(new_font_cfg.FontData, font_cfg->FontData, (size_t)new_font_cfg.FontDataSize) TODO check, same object?
+        //            memcpy(new_font_cfg.FontData, font_cfg->FontData, (size_t)new_font_cfg.FontDataSize) TODO check, same object?
 
         if (fontCfg.dstFont!!.ellipsisChar == '\uffff')
             fontCfg.dstFont!!.ellipsisChar = fontCfg.ellipsisChar
@@ -199,11 +199,22 @@ class FontAtlas {
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
     fun build(): Boolean {
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
-        return when(builder) {
-            "stbTrueType" -> buildWithStbTrueType()
-            "freeType" -> TODO()
-            else -> false
-        }
+
+        // Select builder
+        // - Note that we do not reassign to atlas->FontBuilderIO, since it is likely to point to static data which
+        //   may mess with some hot-reloading schemes. If you need to assign to this (for dynamic selection) AND are
+        //   using a hot-reloading scheme that messes up static data, store your own instance of ImFontBuilderIO somewhere
+        //   and point to it instead of pointing directly to return value of the GetBuilderXXX functions.
+        val builderIo = fontBuilderIO ?:
+        //            #ifdef IMGUI_ENABLE_FREETYPE
+        // TODO builderIo = ImGuiFreeType::GetBuilderForFreeType()
+        //            #elif defined(IMGUI_ENABLE_STB_TRUETYPE)
+        getBuilderForStbTruetype()
+        //            #else
+        //            IM_ASSERT(0) // Invalid Build function
+
+        // Build
+        return builderIo.build()
     }
 
     /** 1 byte per-pixel    */
@@ -243,44 +254,44 @@ class FontAtlas {
         get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
 
 
-//    //-----------------------------------------------------------------------------
-//    +// ImFontAtlas::GlyphRangesBuilder
-//    +//-----------------------------------------------------------------------------
-//    +
-//    +void ImFontAtlas::GlyphRangesBuilder::AddText(const char* text, const char* text_end)
-//    +{
-//        while (text_end ? (text < text_end) : *text)
-//        {
-//                unsigned int c = 0;
-//                int c_len = ImTextCharFromUtf8(&c, text, text_end);
-//                text += c_len;
-//                if (c_len == 0)
-//                        break;
-//                if (c < 0x10000)
-//                        AddChar((ImWchar)c);
-//            }
-//        +}
-//    +
-//    +void ImFontAtlas::GlyphRangesBuilder::AddRanges(const ImWchar* ranges)
-//    +{
-//        for (; ranges[0]; ranges += 2)
-//            for (ImWchar c = ranges[0]; c <= ranges[1]; c++)
-//                AddChar(c);
-//        +}
-//    +
-//    +void ImFontAtlas::GlyphRangesBuilder::BuildRanges(ImVector<ImWchar>* out_ranges)
-//    +{
-//          int max_codepoint = 0x10000;
-//          for (int n = 0; n <= UNICODE_CODEPOINT_MAX; n++)
-//            if (GetBit(n))
-//                {
-//                        out_ranges->push_back((ImWchar)n);
-//                        while (n < max_codepoint && GetBit(n + 1))
-//                                n++;
-//                        out_ranges->push_back((ImWchar)n);
-//                    }
-//        out_ranges->push_back(0);
-//        +}
+    //    //-----------------------------------------------------------------------------
+    //    +// ImFontAtlas::GlyphRangesBuilder
+    //    +//-----------------------------------------------------------------------------
+    //    +
+    //    +void ImFontAtlas::GlyphRangesBuilder::AddText(const char* text, const char* text_end)
+    //    +{
+    //        while (text_end ? (text < text_end) : *text)
+    //        {
+    //                unsigned int c = 0;
+    //                int c_len = ImTextCharFromUtf8(&c, text, text_end);
+    //                text += c_len;
+    //                if (c_len == 0)
+    //                        break;
+    //                if (c < 0x10000)
+    //                        AddChar((ImWchar)c);
+    //            }
+    //        +}
+    //    +
+    //    +void ImFontAtlas::GlyphRangesBuilder::AddRanges(const ImWchar* ranges)
+    //    +{
+    //        for (; ranges[0]; ranges += 2)
+    //            for (ImWchar c = ranges[0]; c <= ranges[1]; c++)
+    //                AddChar(c);
+    //        +}
+    //    +
+    //    +void ImFontAtlas::GlyphRangesBuilder::BuildRanges(ImVector<ImWchar>* out_ranges)
+    //    +{
+    //          int max_codepoint = 0x10000;
+    //          for (int n = 0; n <= UNICODE_CODEPOINT_MAX; n++)
+    //            if (GetBit(n))
+    //                {
+    //                        out_ranges->push_back((ImWchar)n);
+    //                        while (n < max_codepoint && GetBit(n + 1))
+    //                                n++;
+    //                        out_ranges->push_back((ImWchar)n);
+    //                    }
+    //        out_ranges->push_back(0);
+    //        +}
 
 
     //-------------------------------------------
@@ -346,10 +357,10 @@ class FontAtlas {
     }
 
     fun addCustomRectFontGlyph(font: Font, id: Int, width: Int, height: Int, advanceX: Float, offset: Vec2 = Vec2()): Int {
-//        #ifdef IMGUI_USE_WCHAR32
-//                IM_ASSERT(id <= IM_UNICODE_CODEPOINT_MAX);
-//        #endif
-//        IM_ASSERT(font != NULL);
+        //        #ifdef IMGUI_USE_WCHAR32
+        //                IM_ASSERT(id <= IM_UNICODE_CODEPOINT_MAX);
+        //        #endif
+        //        IM_ASSERT(font != NULL);
         assert(width in 1..0xFFFF)
         assert(height in 1..0xFFFF)
         val r = CustomRect()
@@ -450,9 +461,6 @@ class FontAtlas {
      *  If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
     var texGlyphPadding = 1
 
-    /** Select font builder/rasterizer. Default to "stb_truetype". Set to "freetype" to enable Freetype (default if IMGUI_ENABLE_FREETYPE is defined). */
-    var builder = "stbTrueType"
-
 
     /** = (1.0f/TexWidth, 1.0f/TexHeight)   */
     var texUvScale = Vec2()
@@ -473,6 +481,13 @@ class FontAtlas {
     /** UVs for baked anti-aliased lines */
     val texUvLines = Array(DRAWLIST_TEX_LINES_WIDTH_MAX + 1) { Vec4() }
 
+    // [Internal] Font builder
+
+    /** Opaque interface to a font builder (default to stb_truetype, can be changed to use FreeType by defining IMGUI_ENABLE_FREETYPE). */
+    var fontBuilderIO: FontBuilderIO? = null
+
+    /** Shared flags (for all fonts) for custom font builder. THIS IS BUILD IMPLEMENTATION DEPENDENT. Per-font override is also available in ImFontConfig. */
+    var fontBuilderFlags = 0
 
     // [Internal] Packing data
 
@@ -582,8 +597,8 @@ class FontAtlas {
             packRange.arrayOfUnicodeCodepoints?.free()
             packRange.free()
             // dummies
-//            rects.free()
-//            packedChars.free()
+            //            rects.free()
+            //            packedChars.free()
         }
     }
 
@@ -598,7 +613,15 @@ class FontAtlas {
         var glyphsSet: BitVector? = null
     }
 
-    // ImFontAtlas internals
+    //-----------------------------------------------------------------------------
+    // [SECTION] ImFontAtlas internal API
+    //-----------------------------------------------------------------------------
+
+    // This structure is likely to evolve as we add support for incremental atlas updates
+    /** Opaque interface to a font builder (stb_truetype or FreeType). */
+    abstract inner class FontBuilderIO {
+        abstract fun build(): Boolean
+    }
 
     fun buildWithStbTrueType(): Boolean {
 
@@ -683,7 +706,7 @@ class FontAtlas {
             assert(srcTmp.glyphsList.size == srcTmp.glyphsCount)
         }
         dstTmpArray.forEach { it.glyphsSet!!.clear() }
-//        dstTmpArray.clear()
+        //        dstTmpArray.clear()
 
         // Allocate packing character data and flag packed characters buffer as non-packed (x0=y0=x1=y1=0)
         // (We technically don't need to zero-clear buf_rects, but let's do it for the sake of sanity)
@@ -802,7 +825,7 @@ class FontAtlas {
                         buildMultiplyRectAlpha8(multiplyTable, texPixelsAlpha8!!, r, texSize.x)
                 }
             }
-//            srcTmp.rects = NULL // JVM dont free, it's a dummy container custom offset'ed
+            //            srcTmp.rects = NULL // JVM dont free, it's a dummy container custom offset'ed
         }
 
         // End packing
@@ -837,7 +860,7 @@ class FontAtlas {
                 val pc = srcTmp.packedChars[glyphIdx]
                 stbtt_GetPackedQuad(srcTmp.packedChars, texSize, glyphIdx, q)
                 dstFont.addGlyph(cfg, codepoint, q.x0 + fontOff.x, q.y0 + fontOff.y,
-                        q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
+                                 q.x1 + fontOff.x, q.y1 + fontOff.y, q.s0, q.t0, q.s1, q.t1, pc.xAdvance)
             }
         }
         bufPackedchars.free()
@@ -848,6 +871,14 @@ class FontAtlas {
 
         buildFinish()
         return true
+    }
+
+    // Helper for font builder
+    fun getBuilderForStbTruetype(): FontBuilderIO {
+        val io = object : FontBuilderIO() {
+            override fun build(): Boolean = buildWithStbTrueType()
+        }
+        return io
     }
 
     /** ~ImFontAtlasBuildInit
@@ -926,7 +957,7 @@ class FontAtlas {
             val uv1 = Vec2()
             calcCustomRectUV(r, uv0, uv1)
             font.addGlyph(null, r.glyphID, r.glyphOffset.x, r.glyphOffset.y, r.glyphOffset.x + r.width, r.glyphOffset.y + r.height,
-                    uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
+                          uv0.x, uv0.y, uv1.x, uv1.y, r.glyphAdvanceX)
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
@@ -954,7 +985,7 @@ class FontAtlas {
         var offY = 0
         while (offY < h) {
             for (offX in 0 until w)
-                outPixel[ptr + offX] = if(inStr[offX] == inMarkerChar) inMarkerPixelValue else 0x00
+                outPixel[ptr + offX] = if (inStr[offX] == inMarkerChar) inMarkerPixelValue else 0x00
             offY++
             ptr += texSize.x
             ptr2 += w
@@ -1023,7 +1054,7 @@ class FontAtlas {
                 val padRight = r.width - (padLeft + lineWidth)
 
                 // Write each slice
-                assert(padLeft + lineWidth + padRight == r.width && y < r.height){"Make sure we're inside the texture bounds before we start writing pixels"}
+                assert(padLeft + lineWidth + padRight == r.width && y < r.height) { "Make sure we're inside the texture bounds before we start writing pixels" }
                 val writePtr = atlas.texPixelsAlpha8!!.adr + r.x + (r.y + y) * atlas.texSize.x
                 nmemset(writePtr, 0x00, padLeft.L)
                 nmemset(writePtr + padLeft, 0xFF, lineWidth.L)
@@ -1076,14 +1107,14 @@ class FontAtlas {
         }
 
         val cursorDatas = arrayOf(
-                // Pos ........ Size ......... Offset ......
-                arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
-                arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(1, 8)),   // MouseCursor.TextInput
-                arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
-                arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(4, 11)),  // MouseCursor.ResizeNS
-                arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 4)), // MouseCursor.ResizeEW
-                arrayOf(Vec2(73, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNESW
-                arrayOf(Vec2(55, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNWSE
-                arrayOf(Vec2(91, 0), Vec2(17, 22), Vec2(5, 0))) // ImGuiMouseCursor_Hand
+            // Pos ........ Size ......... Offset ......
+            arrayOf(Vec2(0, 3), Vec2(12, 19), Vec2(0)),         // MouseCursor.Arrow
+            arrayOf(Vec2(13, 0), Vec2(7, 16), Vec2(1, 8)),   // MouseCursor.TextInput
+            arrayOf(Vec2(31, 0), Vec2(23), Vec2(11)),              // MouseCursor.Move
+            arrayOf(Vec2(21, 0), Vec2(9, 23), Vec2(4, 11)),  // MouseCursor.ResizeNS
+            arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 4)), // MouseCursor.ResizeEW
+            arrayOf(Vec2(73, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNESW
+            arrayOf(Vec2(55, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNWSE
+            arrayOf(Vec2(91, 0), Vec2(17, 22), Vec2(5, 0))) // ImGuiMouseCursor_Hand
     }
 }
