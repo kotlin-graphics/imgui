@@ -270,10 +270,11 @@ internal interface basicHelpersForWidgetCode {
         val window = currentWindow
         val wItemOne = 1f max floor((wFull - (style.itemInnerSpacing.x) * (components - 1)) / components.f)
         val wItemLast = 1f max floor(wFull - (wItemOne + style.itemInnerSpacing.x) * (components - 1))
+        window.dc.itemWidthStack.push(window.dc.itemWidth) // Backup current width
         window.dc.itemWidthStack.push(wItemLast)
-        for (i in 0 until components - 1)
+        for (i in 0 until components - 2)
             window.dc.itemWidthStack.push(wItemOne)
-        window.dc.itemWidth = window.dc.itemWidthStack.last()
+        window.dc.itemWidth = if (components == 1) wItemLast else wItemOne
         g.nextItemData.flags = g.nextItemData.flags wo NextItemDataFlag.HasWidth
     }
 

@@ -131,14 +131,16 @@ class WindowTempData {
     /** == g.ItemFlagsStack.back() */
     var itemFlags = ItemFlag.None.i
 
-    /** == ItemWidthStack.back(). 0.0: default, >0.0: width in pixels, <0.0: align xx pixels to the right of window */
+    /** Current item width (>0.0: width in pixels, <0.0: align xx pixels to the right of window). */
     var itemWidth = 0f
 
-    /** == TextWrapPosStack.back() [empty == -1.0f] */
+    /** Current text wrap pos. */
     var textWrapPos = 0f
 
+    /** Store item widths to restore (attention: .back() is not == ItemWidth) */
     val itemWidthStack = Stack<Float>()
 
+    /** Store text wrap pos to restore (attention: .back() is not == TextWrapPos) */
     val textWrapPosStack = Stack<Float>()
 
     /** Store size of various stacks for asserting  */

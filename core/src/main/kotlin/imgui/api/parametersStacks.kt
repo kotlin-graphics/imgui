@@ -1,7 +1,6 @@
 package imgui.api
 
 import glm_.f
-import glm_.i
 import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
@@ -213,21 +212,22 @@ interface parametersStacks {
     // Parameters stacks (current window)
 
     /** push width of items for common large "item+label" widgets. >0.0f: width in pixels, <0.0f align xx pixels to the
-     *  right of window (so -FLT_MIN always align width to the right side). 0.0f = default to ~2/3 of windows width, */
+     *  right of window (so -FLT_MIN always align width to the right side). */
     fun pushItemWidth(itemWidth: Int) = pushItemWidth(itemWidth.f)
 
+    // FIXME: Remove the == 0.0f behavior?
     fun pushItemWidth(itemWidth: Float) {
         currentWindow.apply {
+            dc.itemWidthStack.push(dc.itemWidth) // Backup current width
             dc.itemWidth = if (itemWidth == 0f) itemWidthDefault else itemWidth
-            dc.itemWidthStack.push(dc.itemWidth)
         }
         g.nextItemData.flags = g.nextItemData.flags wo NextItemDataFlag.HasWidth
     }
 
     fun popItemWidth() {
-        with(currentWindow) {
-            dc.itemWidthStack.pop()
-            dc.itemWidth = if (dc.itemWidthStack.empty()) itemWidthDefault else dc.itemWidthStack.last()
+        with(currentWindow.dc) {
+            itemWidth = itemWidthStack.last()
+            itemWidthStack.pop()
         }
     }
 
@@ -259,13 +259,13 @@ interface parametersStacks {
 
     /** push word-wrapping position for Text*() commands. < 0.0f: no wrapping; 0.0f: wrap to end of window (or column);
      *  > 0.0f: wrap at 'wrapLocalPosX' position in window local space */
-    fun pushTextWrapPos(wrapLocalPosX: Float = 0f) = with(currentWindow.dc) {
-        textWrapPos = wrapLocalPosX
-        textWrapPosStack.push(wrapLocalPosX)
+    fun pushTextWrapPos(wrapPosX: Float = 0f) = with(currentWindow.dc) {
+        textWrapPosStack.push(textWrapPos)
+        textWrapPos = wrapPosX
     }
 
     fun popTextWrapPos() = with(currentWindow.dc) {
+        textWrapPos = textWrapPosStack.last()
         textWrapPosStack.pop()
-        textWrapPos = textWrapPosStack.lastOrNull() ?: -1f
     }
 }
