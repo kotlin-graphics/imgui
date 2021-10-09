@@ -591,7 +591,7 @@ fun bezierCubicCalc(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, t: Float): Vec2 {
 
 /** For curves with explicit number of segments */
 fun bezierCubicClosestPoint(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, p: Vec2, numSegments: Int): Vec2 {
-    assert(numSegments > 0) { "Use ImBezierClosestPointCasteljau()" }
+    assert(numSegments > 0) { "Use ImBezierCubicClosestPointCasteljau()" }
     val pLast = Vec2(p1)
     val pClosest = Vec2()
     var pClosestDist2 = Float.MAX_VALUE

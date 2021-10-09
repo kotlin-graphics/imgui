@@ -1,5 +1,6 @@
 package imgui.internal.sections
 
+import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.min
@@ -18,6 +19,7 @@ import kotlin.math.sin
 
 
 // ImDrawList: Helper function to calculate a circle's segment count given its radius and a "maximum error" value.
+// FIXME: the minimum number of auto-segment may be undesirably high for very small radiuses (e.g. 1.0f)
 const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 12
 const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX = 512
 fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((glm.πf * 2f) / acos((_RAD - _MAXERROR) / _RAD)).i, DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
@@ -58,7 +60,7 @@ class DrawListSharedData {
         Vec2(cos(a), sin(a))
     }
 
-    /** Precomputed segment count for given radius (array index + 1) before we calculate it dynamically (to avoid calculation overhead) */
+    /** Precomputed segment count for given radius before we calculate it dynamically (to avoid calculation overhead) */
     val circleSegmentCounts = IntArray(64)
 
     /** UV of anti-aliased lines in the atlas */
@@ -69,7 +71,7 @@ class DrawListSharedData {
             return
         circleSegmentMaxError = maxError
         for (i in circleSegmentCounts.indices) {
-            val radius = i + 1f
+            val radius = i.f
             val segmentCount = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError)
             circleSegmentCounts[i] = segmentCount min 255
         }

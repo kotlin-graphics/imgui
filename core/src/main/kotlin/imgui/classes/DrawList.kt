@@ -262,7 +262,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val numSegments = when {
             numSegments_ <= 0 -> {
                 // Automatic segment count
-                val radiusIdx = radius.i - 1
+                val radiusIdx = radius.i
                 _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
                     DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
                 }
@@ -288,7 +288,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val numSegments = when {
             numSegments_ <= 0 -> {
                 // Automatic segment count
-                val radiusIdx = radius.i - 1
+                val radiusIdx = radius.i
                 _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
                     DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
                 }
