@@ -66,10 +66,13 @@ class FontConfig {
  *  Hold rendering data for one glyph.
  *  (Note: some language parsers may fail to convert the 31+1 bitfield members, in this case maybe drop store a single u32 or we can rework this) */
 class FontGlyph {
-    /** 0x0000..0xFFFF  */
-    var codepoint = NUL
-    /** Flag to allow early out when rendering */
+
+    /** Flag to indicate glyph is colored and should generally ignore tinting (make it usable with no shift on little-endian as this is used in loops) */
+    var colored = false
+    /** lag to indicate glyph has no visible pixels (e.g. space). Allow early out when rendering. */
     var visible = false
+    /** 0x0000..0x10FFFF  */
+    var codepoint = NUL
     /** Distance to next character (= data from font + FontConfig.glyphExtraSpacing.x baked in)  */
     var advanceX = 0f
     // Glyph corners

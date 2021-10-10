@@ -281,10 +281,13 @@ class Font {
         return s
     }
 
-    fun renderChar(drawList: DrawList, size: Float, pos: Vec2, col: Int, c: Char) {
+    fun renderChar(drawList: DrawList, size: Float, pos: Vec2, col_: Int, c: Char) {
+        var col = col_
         val glyph = findGlyph(c)
         if (glyph == null || !glyph.visible)
             return
+        if (glyph.colored)
+            col = col or COL32_A_MASK.inv()
         val scale = if (size >= 0f) size / fontSize else 1f
         val x = floor(pos.x)
         val y = floor(pos.y)
@@ -346,6 +349,8 @@ class Font {
         var vtxWrite = drawList._vtxWritePtr
         var idxWrite = drawList._idxWritePtr
         var vtxCurrentIdx = drawList._vtxCurrentIdx
+
+        var colUntinted = col or COL32_A_MASK.inv()
 
         while (s < textEnd) {
 
@@ -439,6 +444,9 @@ class Font {
                         }
                     }
 
+                    // Support for untinted glyphs
+                    val glyphCol = if(glyph.colored) colUntinted else col
+
                     // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
                     drawList.apply {
                         idxBuffer.let {
@@ -446,10 +454,10 @@ class Font {
                             it += vtxCurrentIdx; it += vtxCurrentIdx + 2; it += vtxCurrentIdx + 3
                         }
                         vtxBuffer.let {
-                            it += x1; it += y1; it += u1; it += v1; it += col
-                            it += x2; it += y1; it += u2; it += v1; it += col
-                            it += x2; it += y2; it += u2; it += v2; it += col
-                            it += x1; it += y2; it += u1; it += v2; it += col
+                            it += x1; it += y1; it += u1; it += v1; it += glyphCol
+                            it += x2; it += y1; it += u2; it += v1; it += glyphCol
+                            it += x2; it += y2; it += u2; it += v2; it += glyphCol
+                            it += x1; it += y2; it += u1; it += v2; it += glyphCol
                         }
                         vtxWrite += 4
                         vtxCurrentIdx += 4
@@ -583,6 +591,7 @@ class Font {
         glyphs += glyph
         glyph.codepoint = codepoint.c
         glyph.visible = x0 != x1 && y0 != y1
+        glyph.colored = false
         glyph.x0 = x0
         glyph.y0 = y0
         glyph.x1 = x1

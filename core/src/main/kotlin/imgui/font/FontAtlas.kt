@@ -976,8 +976,8 @@ class FontAtlas {
         }
     }
 
-    fun buildRender8bppRectFromString(x: Int, y: Int, w: Int, h: Int,
-                                      inStr: CharArray, inMarkerChar: Char, inMarkerPixelValue: Byte) {
+    fun buildRender8bppRectFromString(x: Int, y: Int, w: Int, h: Int, inStr: CharArray,
+                                      inMarkerChar: Char, inMarkerPixelValue: Byte) {
         assert(x >= 0 && x + w <= texWidth)
         assert(y >= 0 && y + h <= texHeight)
         val outPixel = texPixelsAlpha8!!
@@ -993,10 +993,11 @@ class FontAtlas {
         }
     }
 
-    fun buildRender32bppRectFromString(x: Int, y: Int, w: Int, h: Int, str: CharArray, /*pStr_: Int,*/ inMarkerChar: Char, inMarkerPixelValue: Int) {
+    fun buildRender32bppRectFromString(x: Int, y: Int, w: Int, h: Int, str: CharArray, /*pStr_: Int,*/
+                                       inMarkerChar: Char, inMarkerPixelValue: Int) {
         assert(x >= 0 && x + w <= texWidth)
         assert(y >= 0 && y + h <= texHeight)
-        var pStr = 0//pStr_
+        var pStr = 0 //pStr_
         fun inStr(i: Int) = str[pStr + i]
         var outPixel = IntPtr(texPixelsRGBA32!!.adr + x + (y * texWidth))
         var offY = 0
