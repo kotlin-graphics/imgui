@@ -44,6 +44,21 @@ interface tablesCandidatesForPublicAPI {
         }
     }
 
+    /** For the getter you can use (TableGetColumnFlags() & ImGuiTableColumnFlags_IsEnabled) */
+    fun tableSetColumnEnabled(columnN_: Int, enabled: Boolean) {
+        var columnN = columnN_
+        val table = g.currentTable
+        assert(table != null)
+        if (table == null)
+            return
+        if (columnN < 0)
+            columnN = table.currentColumn
+        assert(columnN >= 0 && columnN < table.columnsCount)
+        val column = table.columns[columnN]
+        column.isEnabledNextFrame = enabled
+    }
+
+
     /** 'width' = inner column width, without padding */
     fun tableSetColumnWidth(columnN: Int, width: Float)     {
         val table = g.currentTable
