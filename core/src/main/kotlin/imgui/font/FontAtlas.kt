@@ -7,12 +7,10 @@ import glm_.vec2.Vec2i
 import glm_.vec2.operators.div
 import glm_.vec2.operators.times
 import glm_.vec4.Vec4
+import imgui.*
 import imgui.ImGui.style
-import imgui.MouseCursor
-import imgui.TextureID
 import imgui.internal.*
 import imgui.stb.*
-import imgui.toByteArray
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
@@ -452,6 +450,9 @@ class FontAtlas {
 
     /** Texture size calculated during Build(). */
     var texSize = Vec2i()
+
+    val texWidth get() = texSize.x
+    val texHeight get() = texSize.y
 
     /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
      *  texture size restrictions you may want to increase texture width to decrease height.    */
@@ -941,7 +942,7 @@ class FontAtlas {
      *  This is called/shared by both the stb_truetype and the FreeType builder. */
     fun buildFinish() {
         // Render into our custom data blocks
-        assert(texPixelsAlpha8 != null)
+        assert(texPixelsAlpha8 != null || texPixelsRGBA32 != null)
         buildRenderDefaultTexData()
         buildRenderLinesTexData(this)
 
@@ -977,8 +978,8 @@ class FontAtlas {
 
     fun buildRender8bppRectFromString(x: Int, y: Int, w: Int, h: Int,
                                       inStr: CharArray, inMarkerChar: Char, inMarkerPixelValue: Byte) {
-        assert(x >= 0 && x + w <= texSize.x)
-        assert(y >= 0 && y + h <= texSize.y)
+        assert(x >= 0 && x + w <= texWidth)
+        assert(y >= 0 && y + h <= texHeight)
         val outPixel = texPixelsAlpha8!!
         var ptr = x + y * texSize.x
         var ptr2 = 0
@@ -989,6 +990,22 @@ class FontAtlas {
             offY++
             ptr += texSize.x
             ptr2 += w
+        }
+    }
+
+    fun buildRender32bppRectFromString(x: Int, y: Int, w: Int, h: Int, str: CharArray, /*pStr_: Int,*/ inMarkerChar: Char, inMarkerPixelValue: Int) {
+        assert(x >= 0 && x + w <= texWidth)
+        assert(y >= 0 && y + h <= texHeight)
+        var pStr = 0//pStr_
+        fun inStr(i: Int) = str[pStr + i]
+        var outPixel = IntPtr(texPixelsRGBA32!!.adr + x + (y * texWidth))
+        var offY = 0
+        while (offY < h) {
+            for (offX in 0 until w)
+                outPixel[offX] = if (inStr(offX) == inMarkerChar) inMarkerPixelValue else COL32_BLACK_TRANS
+            offY++
+            outPixel += texWidth
+            pStr += w
         }
     }
 
@@ -1004,8 +1021,13 @@ class FontAtlas {
             assert(r.width == DefaultTexData.w * 2 + 1 && r.height == DefaultTexData.h)
             val xForWhite = r.x
             val xForBlack = r.x + DefaultTexData.w + 1
-            buildRender8bppRectFromString(xForWhite, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, '.', 0xFF.b)
-            buildRender8bppRectFromString(xForBlack, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, 'X', 0xFF.b)
+            texPixelsAlpha8?.run {
+                buildRender8bppRectFromString(xForWhite, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, '.', 0xFF.b)
+                buildRender8bppRectFromString(xForBlack, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, 'X', 0xFF.b)
+            } ?: run {
+                buildRender32bppRectFromString(xForWhite, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, '.', COL32_WHITE)
+                buildRender32bppRectFromString(xForBlack, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, 'X', COL32_WHITE)
+            }
         } else {
             // Render 4 white pixels
             assert(r.width == 2 && r.height == 2)
@@ -1055,10 +1077,27 @@ class FontAtlas {
 
                 // Write each slice
                 assert(padLeft + lineWidth + padRight == r.width && y < r.height) { "Make sure we're inside the texture bounds before we start writing pixels" }
-                val writePtr = atlas.texPixelsAlpha8!!.adr + r.x + (r.y + y) * atlas.texSize.x
-                nmemset(writePtr, 0x00, padLeft.L)
-                nmemset(writePtr + padLeft, 0xFF, lineWidth.L)
-                nmemset(writePtr + padLeft + lineWidth, 0x00, padRight.L)
+                atlas.texPixelsAlpha8?.let {
+                    val writePtr = BytePtr(it.adr + r.x + ((r.y + y) * atlas.texWidth))
+                    for (i in 0 until padLeft)
+                        writePtr[i] = 0x00
+
+                    for (i in 0 until lineWidth)
+                        writePtr[padLeft + i] = 0xFF.b
+
+                    for (i in 0 until padRight)
+                        writePtr[padLeft + lineWidth + i] = 0x00
+                } ?: run {
+                    val writePtr = BytePtr(atlas.texPixelsRGBA32!!.adr + r.x + ((r.y + y) * atlas.texWidth))
+                    for (i in 0 until padLeft)
+                        writePtr[i] = COL32_BLACK_TRANS.b
+
+                    for (i in 0 until lineWidth)
+                        writePtr[padLeft + i] = COL32_WHITE.b
+
+                    for (i in 0 until padRight)
+                        writePtr[padLeft + lineWidth + i] = COL32_BLACK_TRANS.b
+                }
 
                 // Calculate UVs for this line
                 val uv0 = Vec2(r.x + padLeft - 1, r.y + y) * atlas.texUvScale
