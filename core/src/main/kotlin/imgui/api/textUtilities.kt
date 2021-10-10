@@ -29,7 +29,12 @@ interface textUtilities {
             0 -> Vec2(0f, fontSize)
             else -> font.calcTextSizeA(fontSize, Float.MAX_VALUE, wrapWidth, text, textEnd = textDisplayEnd).apply {
                 // Round
-                x = floor(x + 0.95f)
+                // FIXME: This has been here since Dec 2015 (7b0bf230) but down the line we want this out.
+                // FIXME: Investigate using ceilf or e.g.
+                // - https://git.musl-libc.org/cgit/musl/tree/src/math/ceilf.c
+                // - https://embarkstudios.github.io/rust-gpu/api/src/libm/math/ceilf.rs.html
+                x = floor(x + 0.99999f)
+
             }
         }
     }
