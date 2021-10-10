@@ -419,7 +419,7 @@ internal interface templateFunctions {
                              logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Int {
 
         if (vMin == vMax)
-            return 0
+            return vMin
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Int = when {
@@ -494,7 +494,7 @@ internal interface templateFunctions {
                              logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Uint {
 
         if (vMin == vMax)
-            return Uint(0)
+            return vMin
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Uint = when {
@@ -566,7 +566,7 @@ internal interface templateFunctions {
                              logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Long {
 
         if (vMin == vMax)
-            return 0L
+            return vMin
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Long = when {
@@ -641,7 +641,7 @@ internal interface templateFunctions {
                              logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Ulong {
 
         if (vMin == vMax)
-            return Ulong(0)
+            return vMin
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Ulong = when {
@@ -713,7 +713,7 @@ internal interface templateFunctions {
                              logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Float {
 
         if (vMin == vMax)
-            return 0f
+            return vMin
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Float = when {
@@ -787,7 +787,7 @@ internal interface templateFunctions {
                              logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Double {
 
         if (vMin == vMax)
-            return 0.0
+            return vMin
         val isDecimal = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcIsLogarithmic(): Double = when {
