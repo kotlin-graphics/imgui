@@ -301,7 +301,7 @@ internal interface renderHelpers {
 
         val window = g.currentWindow!!
 
-        val logNewLine = refPos?.let { it.y > g.logLinePosY + 1 } ?: false
+        val logNewLine = refPos?.let { it.y > g.logLinePosY + g.style.framePadding.y + 1 } ?: false
 
         refPos?.let { g.logLinePosY = it.y }
         if (logNewLine)
@@ -326,6 +326,10 @@ internal interface renderHelpers {
                     g.logLineFirstItem -> logText("%s%s", "", lineStart)
                     else -> logText("%s", lineStart)
                 }
+                g.logLineFirstItem = false
+
+                if (lineStart[lineEnd] == '\n')
+                    logRenderedTextNewLine()
             } else if (logNewLine) {
                 // An empty "" string at a different Y position should output a carriage return.
                 logText("\n")
@@ -337,6 +341,11 @@ internal interface renderHelpers {
                 break
             textRemaining = textRemaining.substring(lineEnd + 1)
         }
+    }
+
+    fun logRenderedTextNewLine() {
+        // To enforce Log carriage return
+        g.logLinePosY = -Float.MAX_VALUE
     }
 
     // Render helpers (those functions don't access any ImGui state!)

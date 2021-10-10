@@ -8,6 +8,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
+import imgui.ImGui.logRenderedTextNewLine
 import imgui.ImGui.separatorEx
 import imgui.ImGui.style
 import imgui.internal.classes.GroupData
@@ -126,7 +127,7 @@ interface cursorLayout {
             dc.cursorMaxPos put dc.cursorPos
             dc.currLineSize.y = 0f
             if (g.logEnabled)
-                g.logLinePosY = -Float.MAX_VALUE// To enforce Log carriage return
+                logRenderedTextNewLine()
         }
     }
 
@@ -150,7 +151,7 @@ interface cursorLayout {
             currLineSize put groupData.backupCurrLineSize
             currLineTextBaseOffset = groupData.backupCurrLineTextBaseOffset
             if (g.logEnabled)
-                g.logLinePosY = -Float.MAX_VALUE // To enforce Log carriage return
+                logRenderedTextNewLine()
         }
 
         if (!groupData.emitItem) {

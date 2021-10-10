@@ -693,9 +693,9 @@ internal interface widgetsLowLevelBehaviors {
             if (g.logEnabled) {
                 /*  NB: '##' is normally used to hide text (as a library-wide feature), so we need to specify the text
                     range to make sure the ## aren't stripped out here.                 */
-                logRenderedText(textPos, "\n##", 3)
+                logRenderedText(textPos, "##", 2)
                 renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
-                logRenderedText(textPos, "#", 2) // TODO check me
+                logRenderedText(textPos, "##", 2) // TODO check me
             } else
                 renderTextClipped(textPos, frameBb.max, label, labelEnd, labelSize)
         } else {

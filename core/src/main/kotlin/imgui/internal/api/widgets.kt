@@ -22,6 +22,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.logRenderedText
+import imgui.ImGui.logRenderedTextNewLine
 import imgui.ImGui.logText
 import imgui.ImGui.popColumnsBackground
 import imgui.ImGui.pushColumnsBackground
@@ -173,7 +174,13 @@ internal interface widgets {
         val col = if (hovered && held) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
-        renderTextClipped(bb.min + style.framePadding, bb.max - style.framePadding, label, labelSize, style.buttonTextAlign, bb)
+
+        val renderTextPos = Rect(bb.min + style.framePadding, bb.max - style.framePadding);
+        if (g.logEnabled)
+            logRenderedText(renderTextPos.min, "[")
+        renderTextClipped(renderTextPos.min, renderTextPos.max, label, labelSize, style.buttonTextAlign, bb)
+        if (g.logEnabled)
+            logRenderedText(renderTextPos.min, "]")
 
         // Automatically close popups
         //if (pressed && !(flags & ImGuiButtonFlags_DontClosePopups) && (window->Flags & ImGuiWindowFlags_Popup))
@@ -465,8 +472,10 @@ internal interface widgets {
             if (itemVisible) {
                 // Draw
                 window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
-                if (g.logEnabled)
+                if (g.logEnabled) {
                     logRenderedText(bb.min, "--------------------------------")
+                    logRenderedTextNewLine() // Separator isn't tall enough to trigger a new line automatically in LogRenderText
+                }
             }
             columns?.let {
                 popColumnsBackground()
