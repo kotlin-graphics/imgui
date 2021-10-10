@@ -975,7 +975,7 @@ class FontAtlas {
         }
     }
 
-    fun buildRender1bppRectFromString(x: Int, y: Int, w: Int, h: Int,
+    fun buildRender8bppRectFromString(x: Int, y: Int, w: Int, h: Int,
                                       inStr: CharArray, inMarkerChar: Char, inMarkerPixelValue: Byte) {
         assert(x >= 0 && x + w <= texSize.x)
         assert(y >= 0 && y + h <= texSize.y)
@@ -1004,8 +1004,8 @@ class FontAtlas {
             assert(r.width == DefaultTexData.w * 2 + 1 && r.height == DefaultTexData.h)
             val xForWhite = r.x
             val xForBlack = r.x + DefaultTexData.w + 1
-            buildRender1bppRectFromString(xForWhite, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, '.', 0xFF.b)
-            buildRender1bppRectFromString(xForBlack, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, 'X', 0xFF.b)
+            buildRender8bppRectFromString(xForWhite, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, '.', 0xFF.b)
+            buildRender8bppRectFromString(xForBlack, r.y, DefaultTexData.w, DefaultTexData.h, DefaultTexData.pixels, 'X', 0xFF.b)
         } else {
             // Render 4 white pixels
             assert(r.width == 2 && r.height == 2)

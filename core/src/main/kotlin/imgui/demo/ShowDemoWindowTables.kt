@@ -362,7 +362,7 @@ object ShowDemoWindowTables {
                 tableHeadersRow()
 
                 tableNextColumn()
-                text("A0 Cell 0")
+                text("A0 Row 0")
                 run {
                     val rowsHeight = TEXT_BASE_HEIGHT * 2
                     table("table_nested2", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
@@ -372,19 +372,19 @@ object ShowDemoWindowTables {
 
                         tableNextRow(Trf.None.i, rowsHeight)
                         tableNextColumn()
-                        text("B0 Cell 0")
+                        text("B0 Row 0")
                         tableNextColumn()
-                        text("B0 Cell 1")
+                        text("B1 Row 0")
                         tableNextRow(Trf.None.i, rowsHeight)
                         tableNextColumn()
-                        text("B1 Cell 0")
+                        text("B0 Row 1")
                         tableNextColumn()
-                        text("B1 Cell 1")
+                        text("B1 Row 1")
                     }
                 }
-                tableNextColumn(); text("A0 Cell 1")
-                tableNextColumn(); text("A1 Cell 0")
-                tableNextColumn(); text("A1 Cell 1")
+                tableNextColumn(); text("A1 Row 0")
+                tableNextColumn(); text("A0 Row 1")
+                tableNextColumn(); text("A1 Row 1")
             }
         }
 
