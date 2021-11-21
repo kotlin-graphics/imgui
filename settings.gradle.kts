@@ -4,14 +4,14 @@ pluginManagement {
         gradlePluginPortal()
         maven("https://raw.githubusercontent.com/kotlin-graphics/mary/master")
     }
-//    includeBuild("../build-logic")
+    includeBuild("../build-logic")
 }
 
 rootProject.name = "imgui"
 
 include("core", "glfw", "gl", "vk", /*"jogl",*/ "openjfx"/*, "bgfx"*/)
 
-enableFeaturePreview("VERSION_CATALOGS")
+//enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 gradle.rootProject {

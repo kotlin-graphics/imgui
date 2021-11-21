@@ -125,9 +125,9 @@ interface cursorLayout {
             dc.groupOffset = dc.cursorPos.x - pos.x - dc.columnsOffset
             dc.indent = dc.groupOffset
             dc.cursorMaxPos put dc.cursorPos
-            dc.currLineSize.y = 0f
+            dc.currLineSize put 0f
             if (g.logEnabled)
-                logRenderedTextNewLine()
+                g.logLinePosY = -Float.MAX_VALUE // To enforce a carriage return
         }
     }
 
@@ -151,7 +151,7 @@ interface cursorLayout {
             currLineSize put groupData.backupCurrLineSize
             currLineTextBaseOffset = groupData.backupCurrLineTextBaseOffset
             if (g.logEnabled)
-                logRenderedTextNewLine()
+                g.logLinePosY = -Float.MAX_VALUE // To enforce a carriage return
         }
 
         if (!groupData.emitItem) {

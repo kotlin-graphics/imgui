@@ -297,9 +297,16 @@ internal interface renderHelpers {
         return textDisplayEnd
     }
 
+    /** Internal version that takes a position to decide on newline placement and pad items according to their depth.
+     *  We split text into individual lines to add current tree level padding
+     *  FIXME: This code is a little complicated perhaps, considering simplifying the whole system. */
     fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = findRenderedTextEnd(text)) { // TODO ByteArray?
 
         val window = g.currentWindow!!
+
+//        const char* prefix = g.LogNextPrefix;
+//        const char* suffix = g.LogNextSuffix;
+//        g.LogNextPrefix = g.LogNextSuffix = NULL;
 
         val logNewLine = refPos?.let { it.y > g.logLinePosY + g.style.framePadding.y + 1 } ?: false
 

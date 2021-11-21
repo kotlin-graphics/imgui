@@ -19,35 +19,35 @@ var STBRPRect.wasPacked: Boolean
 
 var STBRPRect.x: Int
     get() = STBRPRect.nx(adr).i
-    set(value) = STBRPRect.nx(adr, value.s)
+    set(value) = STBRPRect.nx(adr, value)
 
 var STBRPRect.y: Int
     get() = STBRPRect.ny(adr).i
-    set(value) = STBRPRect.ny(adr, value.s)
+    set(value) = STBRPRect.ny(adr, value)
 
 var STBRPRect.w: Int
     get() = STBRPRect.nw(adr).i
-    set(value) = STBRPRect.nw(adr, value.s)
+    set(value) = STBRPRect.nw(adr, value)
 
 var STBRPRect.h: Int
     get() = STBRPRect.nh(adr).i
-    set(value) = STBRPRect.nh(adr, value.s)
+    set(value) = STBRPRect.nh(adr, value)
 
 
 var STBRPRect.Buffer.x: Int
     get() = STBRPRect.nx(adr).i
-    set(value) = STBRPRect.nx(adr, value.s)
+    set(value) = STBRPRect.nx(adr, value)
 
 var STBRPRect.Buffer.y: Int
     get() = STBRPRect.ny(adr).i
-    set(value) = STBRPRect.ny(adr, value.s)
+    set(value) = STBRPRect.ny(adr, value)
 
 var STBRPRect.Buffer.w: Int
     get() = STBRPRect.nw(adr).i
-    set(value) = STBRPRect.nw(adr, value.s)
+    set(value) = STBRPRect.nw(adr, value)
 var STBRPRect.Buffer.h: Int
     get() = STBRPRect.nh(adr).i
-    set(value) = STBRPRect.nh(adr, value.s)
+    set(value) = STBRPRect.nh(adr, value)
 
 
 var STBTTPackRange.fontSize: Float

@@ -77,5 +77,6 @@ interface childWindows {
                 itemAdd(bb, 0)
         }
         g.withinEndChild = false
+        g.logLinePosY = -Float.MAX_VALUE // To enforce a carriage return
     }
 }
