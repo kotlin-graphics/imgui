@@ -12,7 +12,7 @@ plugins {
 repositories { github("kotlin-graphics/mary") }
 dependencies {
     implementation(kotlin("reflect"))
-    implementation(unsigned, kool, glm, gli/*, uno.core*/)
+    //    implementation(unsigned, kool, glm, gli/*, uno.core*/)
     implementation("kotlin.graphics:uno-core:0.7.10")
-    org.lwjgl.Lwjgl { implementation(org.lwjgl.Lwjgl.Module.jemalloc, org.lwjgl.Lwjgl.Module.stb) }
+    //    org.lwjgl.Lwjgl { implementation(org.lwjgl.Lwjgl.Module.jemalloc, org.lwjgl.Lwjgl.Module.stb) }
 }
