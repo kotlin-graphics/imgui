@@ -4,7 +4,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.isItemVisible
 import imgui.ImGui.setScrollHereY
 import imgui.internal.classes.Rect
-import imgui.static.navUpdateAnyRequestFlag
+import imgui.statics.navUpdateAnyRequestFlag
 
 
 /** Focus, Activation

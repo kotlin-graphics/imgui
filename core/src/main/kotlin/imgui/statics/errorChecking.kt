@@ -1,4 +1,4 @@
-package imgui.static
+package imgui.statics
 
 import imgui.*
 import imgui.ImGui.end
@@ -6,7 +6,6 @@ import imgui.ImGui.io
 import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.classes.Window
 
 
 //-----------------------------------------------------------------------------

@@ -13,7 +13,7 @@ import imgui.ImGui.format
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
-import imgui.static.patchFormatStringFloatToInt
+import imgui.statics.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
 import unsigned.Ubyte

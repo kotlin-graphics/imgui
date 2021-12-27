@@ -25,7 +25,7 @@ import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.sections.*
-import imgui.static.navProcessItem
+import imgui.statics.navProcessItem
 import java.util.*
 
 //-----------------------------------------------------------------------------

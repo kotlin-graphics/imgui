@@ -29,7 +29,7 @@ import imgui.ImGui.textEx
 import imgui.internal.api.DRAG_MOUSE_THRESHOLD_FACTOR
 import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
-import imgui.static.patchFormatStringFloatToInt
+import imgui.statics.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 

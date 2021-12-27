@@ -9,7 +9,7 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
-import imgui.static.navUpdateAnyRequestFlag
+import imgui.statics.navUpdateAnyRequestFlag
 
 /** Gamepad/Keyboard Navigation */
 internal interface navigation {

@@ -10,9 +10,9 @@ import imgui.*
 import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.textCharFromUtf8
-import imgui.static.getClipboardTextFn_DefaultImpl
-import imgui.static.imeSetInputScreenPosFn_Win32
-import imgui.static.setClipboardTextFn_DefaultImpl
+import imgui.statics.getClipboardTextFn_DefaultImpl
+import imgui.statics.imeSetInputScreenPosFn_Win32
+import imgui.statics.setClipboardTextFn_DefaultImpl
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 import uno.glfw.HWND
