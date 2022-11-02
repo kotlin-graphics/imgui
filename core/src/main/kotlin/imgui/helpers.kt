@@ -1,6 +1,6 @@
 package imgui
 
-import com.sun.jdi.VirtualMachine
+//import com.sun.jdi.VirtualMachine
 import glm_.L
 import glm_.b
 import glm_.vec4.Vec4
@@ -60,7 +60,7 @@ infix fun CharArray.cmp(other: CharArray): Boolean {
 
 object Debug {
 
-    var vm: VirtualMachine? = null
+//    var vm: VirtualMachine? = null
 
     /** Instance count update interval in seconds   */
     var updateInterval = 5
@@ -91,7 +91,7 @@ object Debug {
             return cachedInstanceCounts
         }
 
-    private fun countInstances() = vm?.instanceCounts(vm?.allClasses())?.sum() ?: -1
+    private fun countInstances() = 0L//vm?.instanceCounts(vm?.allClasses())?.sum() ?: -1
 
     private var cachedInstanceCounts = countInstances()
 }

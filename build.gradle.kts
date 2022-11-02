@@ -1,24 +1,21 @@
-import kx.*
 import magik.github
-import org.gradle.internal.os.OperatingSystem.*
-import org.lwjgl.Lwjgl
-import org.lwjgl.Lwjgl.Module.*
 
 plugins {
-    for ((p, v) in listOf("align" to "0.0.7",
-                          "base" to "0.0.10",
-                          "publish" to "0.0.7",
-                          "utils" to "0.0.5"))
-        id("io.github.kotlin-graphics.$p") version v
-    id("org.lwjgl.plugin") version "0.0.20"
+    kotlin("jvm") version embeddedKotlinVersion
+    id("org.lwjgl.plugin") version "0.0.29"
+    id("elect86.magik") version "0.3.1"
+    `maven-publish`
 }
 
-repositories { github("kotlin-graphics/mary") }
+repositories {
+    mavenCentral()
+//    github("kotlin-graphics/mary")
+}
 
-//dependencies {
-////    implementation("kotlin.graphics:glm:0.9.9.1-4")
-////    implementation("kotlin.graphics:uno-core:0.7.10")
-//}
+dependencies {
+//    implementation(kotlin("stdlib-jdk8"))
+//    implementation("kotlin.graphics:uno-core:0.7.10")
+}
 //subprojects {
 //    version = rootProject.version
 //    fun kx(vararg p: String) = p.forEach { apply(plugin = "io.github.kotlin-graphics.$it") }
