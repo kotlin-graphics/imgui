@@ -56,3 +56,5 @@ publishing {
         }
     }
 }
+
+java { withSourcesJar() }

@@ -7,20 +7,6 @@ plugins {
     `maven-publish`
 }
 
-repositories {
-    mavenCentral()
-//    github("kotlin-graphics/mary")
-}
-
-dependencies {
-//    implementation(kotlin("stdlib-jdk8"))
-//    implementation("kotlin.graphics:uno-core:0.7.10")
-}
-//subprojects {
-//    version = rootProject.version
-//    fun kx(vararg p: String) = p.forEach { apply(plugin = "io.github.kotlin-graphics.$it") }
-//    kx("align", "base", "publish", "utils")
-//}
 
 //projects.core.dependencyProject.apply {
 //    repositories { github("kotlin-graphics/mary") }

@@ -62,11 +62,4 @@ publishing {
     }
 }
 
-//projects.gl.dependencyProject.dependencies {
-//    implementation(projects.core)
-//    implementation(projects.glfw)
-//    implementation(kotlin("reflect"))
-//    implementation(unsigned, kool, glm, gli, gln, uno)
-//    Lwjgl { implementation(jemalloc, glfw, opengl, remotery, stb) }
-//    testImplementation("com.github.ajalt:mordant:1.2.1")
-//}
+java { withSourcesJar() }
