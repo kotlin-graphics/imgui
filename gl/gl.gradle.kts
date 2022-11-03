@@ -8,6 +8,7 @@ plugins {
     id("elect86.magik")
     `maven-publish`
     kotlin("jvm")
+    id("com.github.johnrengelman.shadow")
 }
 
 group = rootProject.group
