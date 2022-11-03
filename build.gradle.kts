@@ -5,6 +5,7 @@ plugins {
     id("org.lwjgl.plugin") version "0.0.29"
     id("elect86.magik") version "0.3.1"
     `maven-publish`
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 
