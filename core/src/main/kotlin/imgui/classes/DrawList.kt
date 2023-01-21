@@ -858,6 +858,8 @@ class DrawList(sharedData: DrawListSharedData?) {
             _path += center
             return
         }
+        assert(aMin <= aMax)
+
         // Note that we are adding a point at both a_min and a_max.
         // If you are trying to draw a full closed circle you don't want the overlapping points!
         for (i in 0..numSegments) {
@@ -871,10 +873,11 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         var aMinOf12 = aMinOf12_
         var aMaxOf12 = aMaxOf12_
-        if (radius == 0f || aMinOf12 > aMaxOf12) {
+        if (radius == 0f) {
             _path += center
             return
         }
+        assert(aMinOf12 > aMaxOf12)
 
         // For legacy reason the PathArcToFast() always takes angles where 2*PI is represented by 12,
         // but it is possible to set IM_DRAWLIST_ARCFAST_TESSELATION_MULTIPLIER to a higher value. This should compile to a no-op otherwise.

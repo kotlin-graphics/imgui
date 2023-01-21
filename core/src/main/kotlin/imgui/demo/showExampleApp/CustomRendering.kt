@@ -104,8 +104,8 @@ object CustomRendering {
 
                 // Draw a bunch of primitives
                 text("All primitives")
-                dragFloat("Size", ::sz, 0.2f, 2.0f, 72.0f, "%.0f")
-                dragFloat("Thickness", ::thickness, 0.05f, 1.0f, 8.0f, "%.02f")
+                dragFloat("Size", ::sz, 0.2f, 2f, 100f, "%.0f")
+                dragFloat("Thickness", ::thickness, 0.05f, 1f, 8f, "%.02f")
                 sliderInt("N-gon sides", ::ngonSides, 3, 12)
                 checkbox("##circlesegmentoverride", ::circleSegmentsOverride)
                 sameLine(0f, style.itemInnerSpacing.x)
@@ -121,6 +121,7 @@ object CustomRendering {
                 val cornersNone = DrawCornerFlag.None.i
                 val cornersAll = DrawCornerFlag.All.i
                 val cornersTlBr = DrawCornerFlag.TopLeft or DrawCornerFlag.BotRight
+                val rounding = sz / 5f
                 val circleSegments = if (circleSegmentsOverride) circleSegmentsOverrideV else 0
                 val curveSegments = if(curveSegmentsOverride) curveSegmentsOverrideV else 0
                 var (x, y) = p + 4f
@@ -131,8 +132,8 @@ object CustomRendering {
                         addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // N-gon
                         addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, circleSegments, th); x += sz + spacing  // Circle
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0.0f, cornersNone, th); x += sz + spacing  // Square
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersAll, th); x += sz + spacing  // Square with all rounded corners
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 10f, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, cornersAll, th); x += sz + spacing  // Square with all rounded corners
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
                         addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col, th); x += sz + spacing      // Triangle
 //                        addTriangle(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col, th); x += sz * 0.4f + spacing // Thin triangle
                         addLine(Vec2(x, y), Vec2(x + sz, y), col, th); x += sz + spacing  // Horizontal line (note: drawing a filled rectangle will be faster!)
