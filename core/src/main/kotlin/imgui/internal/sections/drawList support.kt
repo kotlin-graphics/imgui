@@ -72,7 +72,7 @@ class DrawListSharedData {
         circleSegmentMaxError = maxError
         for (i in circleSegmentCounts.indices) {
             val radius = i.f
-            val segmentCount = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError)
+            val segmentCount = if(i > 0) DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError) else 0
             circleSegmentCounts[i] = segmentCount min 255
         }
     }
