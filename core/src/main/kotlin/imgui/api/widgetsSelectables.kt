@@ -64,7 +64,7 @@ interface widgetsSelectables {
         itemSize(size, 0f)
 
         // Fill horizontal space
-        // We don't support (size < 0.0f) in Selectable() because the ItemSpacing extension would make explicitely right-aligned sizes not visibly match other widgets.
+        // We don't support (size < 0.0f) in Selectable() because the ItemSpacing extension would make explicitly right-aligned sizes not visibly match other widgets.
         val spanAllColumns = flags has Sf.SpanAllColumns
         val minX = if (spanAllColumns) window.parentWorkRect.min.x else pos.x
         val maxX = if (spanAllColumns) window.parentWorkRect.max.x else window.workRect.max.x

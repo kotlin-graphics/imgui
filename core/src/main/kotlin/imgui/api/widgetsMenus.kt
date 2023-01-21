@@ -82,7 +82,7 @@ interface widgetsMenus {
         pushClipRect(clipRect.min, clipRect.max, false)
 
         with(window.dc) {
-            // We overwrite CursorMaxPos because BeginGroup sets it to CursorPos (essentially the .EmitItem hack in EndMenuBar() would need something analoguous here, maybe a BeginGroupEx() with flags).
+            // We overwrite CursorMaxPos because BeginGroup sets it to CursorPos (essentially the .EmitItem hack in EndMenuBar() would need something analogous here, maybe a BeginGroupEx() with flags).
             cursorMaxPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
             cursorPos put cursorMaxPos
             layoutType = Lt.Horizontal

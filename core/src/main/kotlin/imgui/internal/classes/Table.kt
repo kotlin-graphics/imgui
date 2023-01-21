@@ -294,7 +294,7 @@ class Table {
     /** Redirect non-visible columns here. */
     var dummyDrawChannel: TableDrawChannelIdx = 0
 
-    /** For Selectable() and other widgets drawing accross columns after the freezing line. Index within DrawSplitter.Channels[] */
+    /** For Selectable() and other widgets drawing across columns after the freezing line. Index within DrawSplitter.Channels[] */
     var bg2DrawChannelCurrent: TableDrawChannelIdx = 0
 
     var bg2DrawChannelUnfrozen: TableDrawChannelIdx = 0
@@ -330,7 +330,7 @@ class Table {
     /** Set when we got past the frozen row. */
     var isUnfrozenRows = false
 
-    /** Set if user didn't explicitely set a sizing policy in BeginTable() */
+    /** Set if user didn't explicitly set a sizing policy in BeginTable() */
     var isDefaultSizingPolicy = false
 
     var memoryCompacted = false

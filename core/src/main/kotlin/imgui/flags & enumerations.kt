@@ -682,7 +682,7 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Columns default to _WidthStretch with default weights proportional to each columns contents widths. */
     SizingStretchProp(3 shl 13),
 
-    /** Columns default to _WidthStretch with default weights all equal, unless overriden by TableSetupColumn(). */
+    /** Columns default to _WidthStretch with default weights all equal, unless overridden by TableSetupColumn(). */
     SizingStretchSame(4 shl 13),
 
     /** Make outer width auto-fit to columns, overriding outer_size.x value. Only available when ScrollX/ScrollY are disabled and Stretch columns are not used. */
