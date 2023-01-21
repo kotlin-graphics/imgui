@@ -133,8 +133,8 @@ internal interface inputText {
             pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
             pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
             pushStyleVar(StyleVar.WindowPadding, style.framePadding)
-            val childVisible = beginChildEx(label, id, frameBb.size, true, Wf.NoMove or Wf.AlwaysUseWindowPadding)
-            popStyleVar(3)
+            val childVisible = beginChildEx(label, id, frameBb.size, true, Wf.NoMove.i)
+            popStyleVar(2)
             popStyleColor()
             if (!childVisible) {
                 endChild()
@@ -144,6 +144,7 @@ internal interface inputText {
             drawWindow = g.currentWindow!!  // Child window
             // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
             drawWindow.dc.navLayerActiveMaskNext = drawWindow.dc.navLayerActiveMaskNext or (1 shl drawWindow.dc.navLayerCurrent)
+            drawWindow.dc.cursorPos += style.framePadding
             innerSize.x -= drawWindow.scrollbarSizes.x
         } else {
             itemSize(totalBb, style.framePadding.y)
@@ -306,7 +307,7 @@ internal interface inputText {
             // Edit in progress
             val mouseX = io.mousePos.x - frameBb.min.x - style.framePadding.x + state.scrollX
             val mouseY = when {
-                isMultiline -> io.mousePos.y - drawWindow.dc.cursorPos.y - style.framePadding.y
+                isMultiline -> io.mousePos.y - drawWindow.dc.cursorPos.y
                 else -> g.fontSize * 0.5f
             }
 
@@ -760,10 +761,11 @@ internal interface inputText {
                 // Horizontal scroll in chunks of quarter width
                 if (flags hasnt Itf.NoHorizontalScroll) {
                     val scrollIncrementX = innerSize.x * 0.25f
+                    val visibleWidth = innerSize.x - style.framePadding.x
                     if (cursorOffset.x < state.scrollX)
                         state.scrollX = floor(glm.max(0f, cursorOffset.x - scrollIncrementX))
-                    else if (cursorOffset.x - innerSize.x >= state.scrollX)
-                        state.scrollX = floor(cursorOffset.x - innerSize.x + scrollIncrementX)
+                    else if (cursorOffset.x - visibleWidth >= state.scrollX)
+                        state.scrollX = floor(cursorOffset.x - visibleWidth + scrollIncrementX)
                 } else
                     state.scrollX = 0f
 
@@ -861,7 +863,7 @@ internal interface inputText {
             popFont()
 
         if (isMultiline) {
-            dummy(textSize)
+            dummy(Vec2(textSize.x, textSize.y + style.framePadding.y))
             endChild()
             endGroup()
         }
