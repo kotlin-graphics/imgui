@@ -297,64 +297,6 @@ internal interface renderHelpers {
         return textDisplayEnd
     }
 
-    /** Internal version that takes a position to decide on newline placement and pad items according to their depth.
-     *  We split text into individual lines to add current tree level padding
-     *  FIXME: This code is a little complicated perhaps, considering simplifying the whole system. */
-    fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = findRenderedTextEnd(text)) { // TODO ByteArray?
-
-        val window = g.currentWindow!!
-
-//        const char* prefix = g.LogNextPrefix;
-//        const char* suffix = g.LogNextSuffix;
-//        g.LogNextPrefix = g.LogNextSuffix = NULL;
-
-        val logNewLine = refPos?.let { it.y > g.logLinePosY + g.style.framePadding.y + 1 } ?: false
-
-        refPos?.let { g.logLinePosY = it.y }
-        if (logNewLine)
-            g.logLineFirstItem = true
-
-        var textRemaining = text
-        if (g.logDepthRef > window.dc.treeDepth) // Re-adjust padding if we have popped out of our starting depth
-            g.logDepthRef = window.dc.treeDepth
-        val treeDepth = window.dc.treeDepth - g.logDepthRef
-        while (true) {
-            // TODO re-sync
-            // Split the string. Each new line (after a '\n') is followed by spacing corresponding to the current depth of our log entry.
-            // We don't add a trailing \n to allow a subsequent item on the same line to be captured.
-            val lineStart = textRemaining
-            val lineEnd = if (lineStart.indexOf('\n') == -1) lineStart.length else lineStart.indexOf('\n')
-            val isFirstLine = text.startsWith(lineStart)
-            val isLastLine = text.endsWith(lineStart.substring(0, lineEnd))
-            if (!isLastLine or lineStart.isNotEmpty()) {
-                val charCount = lineStart.length
-                when {
-                    logNewLine or !isFirstLine -> logText("%s%s", "", lineStart)
-                    g.logLineFirstItem -> logText("%s%s", "", lineStart)
-                    else -> logText("%s", lineStart)
-                }
-                g.logLineFirstItem = false
-
-                if (lineStart[lineEnd] == '\n')
-                    logRenderedTextNewLine()
-            } else if (logNewLine) {
-                // An empty "" string at a different Y position should output a carriage return.
-                logText("\n")
-                break
-            }
-
-
-            if (isLastLine)
-                break
-            textRemaining = textRemaining.substring(lineEnd + 1)
-        }
-    }
-
-    fun logRenderedTextNewLine() {
-        // To enforce Log carriage return
-        g.logLinePosY = -Float.MAX_VALUE
-    }
-
     // Render helpers (those functions don't access any ImGui state!)
     // these are all in the DrawList class
 }
