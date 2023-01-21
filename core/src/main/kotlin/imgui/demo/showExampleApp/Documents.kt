@@ -4,6 +4,7 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
+import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginPopupContextItem
@@ -15,25 +16,26 @@ import imgui.ImGui.checkbox
 import imgui.ImGui.closeCurrentPopup
 import imgui.ImGui.colorEdit3
 import imgui.ImGui.end
+import imgui.ImGui.endChildFrame
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
+import imgui.ImGui.fontSize
+import imgui.ImGui.getID
 import imgui.ImGui.isPopupOpen
-import imgui.ImGui.listBoxFooter
-import imgui.ImGui.listBoxHeader
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushID
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setTabItemClosed
 import imgui.ImGui.text
+import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textWrapped
 import kotlin.reflect.KMutableProperty0
 
@@ -240,15 +242,16 @@ object Documents {
 
                 if (!isPopupOpen("Save?"))
                     openPopup("Save?")
-                if (beginPopupModal("Save?")) {
+                if (beginPopupModal("Save?", null, WindowFlag.AlwaysAutoResize.i)) {
                     text("Save change to the following items?")
-                    pushItemWidth(-Float.MIN_VALUE)
-                    if (listBoxHeader("##", closeQueueUnsavedDocuments, 6)) {
+                    val itemHeight = textLineHeightWithSpacing
+                    if (beginChildFrame(getID("frame"), Vec2(-Float.MIN_VALUE, 6.25f * itemHeight))) {
                         closeQueue.forEach { if (it.dirty) text(it.name) }
-                        listBoxFooter()
+                        endChildFrame()
                     }
 
-                    if (button("Yes", Vec2(80, 0))) {
+                    val buttonSize = Vec2(fontSize * 7f, 0f)
+                    if (button("Yes", buttonSize)) {
                         closeQueue.forEach {
                             if (it.dirty)
                                 it.doSave()
@@ -258,13 +261,13 @@ object Documents {
                         closeCurrentPopup()
                     }
                     sameLine()
-                    if (button("No", Vec2(80, 0))) {
+                    if (button("No", buttonSize)) {
                         closeQueue.forEach { it.doForceClose() }
                         closeQueue.clear()
                         closeCurrentPopup()
                     }
                     sameLine()
-                    if (button("Cancel", Vec2(80, 0))) {
+                    if (button("Cancel", buttonSize)) {
                         closeQueue.clear()
                         closeCurrentPopup()
                     }

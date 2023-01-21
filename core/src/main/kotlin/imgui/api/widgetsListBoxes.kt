@@ -1,6 +1,7 @@
 package imgui.api
 
 import glm_.glm
+import glm_.min
 import glm_.vec2.Vec2
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginGroup
@@ -18,7 +19,6 @@ import imgui.ImGui.markItemEdited
 import imgui.ImGui.popID
 import imgui.ImGui.pushID
 import imgui.ImGui.renderText
-import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.style
@@ -119,13 +119,9 @@ interface widgetsListBoxes {
     }
 
     /** FIXME: In principle this function should be called BeginListBox(). We should rename it after re-evaluating if we want to keep the same signature. */
-    fun listBoxHeader(label: String, itemsCount: Int, heightInItems_: Int = -1): Boolean {
-        /*  Size default to hold ~7.25 items.
-            We add +25% worth of item height to allow the user to see at a glance if there are more items up/down, without looking at the scrollbar.
-            We don't add this extra bit if items_count <= height_in_items. It is slightly dodgy,
-            because it means a dynamic list of items will make the widget resize occasionally when it crosses that size.     */
-        val heightInItems = if (heightInItems_ < 0) glm.min(itemsCount, 7) else heightInItems_
-        val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.25f else 0f
+    fun listBoxHeader(label: String, itemsCount: Int, heightInItems: Int = -1): Boolean {
+        // If height_in_items == -1, default height is maximum 7.
+        val heightInItemsF = (if(heightInItems < 0) itemsCount min 7 else heightInItems) + 0.25f
 
         val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + g.style.framePadding.y * 2f)
         return listBoxHeader(label, size)
