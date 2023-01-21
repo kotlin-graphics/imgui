@@ -435,6 +435,10 @@ object ShowDemoWindowWidgets {
                 run { // List box
                     val items = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
                     listBox("listbox\n(single select)", ::itemCurrent, items, 4)
+
+                    //static int listbox_item_current2 = 2;
+                    //ImGui::SetNextItemWidth(-FLT_MIN);
+                    //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
                 }
             }
         }

@@ -242,7 +242,7 @@ object Documents {
                     openPopup("Save?")
                 if (beginPopupModal("Save?")) {
                     text("Save change to the following items?")
-                    pushItemWidth(-1f)
+                    pushItemWidth(-Float.MIN_VALUE)
                     if (listBoxHeader("##", closeQueueUnsavedDocuments, 6)) {
                         closeQueue.forEach { if (it.dirty) text(it.name) }
                         listBoxFooter()

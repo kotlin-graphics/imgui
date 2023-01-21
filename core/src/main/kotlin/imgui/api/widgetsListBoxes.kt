@@ -48,7 +48,8 @@ interface widgetsListBoxes {
         var currentItem by currentItemPtr
         val itemsCount = items.size
         if (!listBoxHeader(label, itemsCount, heightInItems)) return false
-        // Assume all items have even height (= 1 line of text). If you need items of different or variable sizes you can create a custom version of ListBox() in your code without using the clipper.
+        // Assume all items have even height (= 1 line of text). If you need items of different or variable height,
+        // you can create a custom version of ListBox() in your code without using the clipper.
         var valueChanged = false
         // We know exactly our line height here so we pass it as a minor optimization, but generally you don't need to.
         val clipper = ListClipper()
@@ -56,9 +57,10 @@ interface widgetsListBoxes {
         while (clipper.step())
             for (i in clipper.display)
                 withBool { itemSelected ->
-                    itemSelected.set(i == currentItem)
                     val itemText = items.getOrElse(i) { "*Unknown item*" }
+
                     pushID(i)
+                    itemSelected.set(i == currentItem)
                     if (selectable(itemText, itemSelected)) {
                         currentItem = i
                         valueChanged = true
@@ -75,13 +77,13 @@ interface widgetsListBoxes {
 
     //-------------------------------------------------------------------------
     // FIXME: This is an old API. We should redesign some of it, rename ListBoxHeader->BeginListBox, ListBoxFooter->EndListBox
-    // and promote using them over existing ListBox() functions, similarly to change with combo boxes.
+    // and promote using them over existing ListBox() functions, similarly to how we now use combo boxes.
     //-------------------------------------------------------------------------
 
     /** FIXME: In principle this function should be called BeginListBox(). We should rename it after re-evaluating if we
      *  want to keep the same signature.
-     *  Helper to calculate the size of a listbox and display a label on the right.
-     *  Tip: To have a list filling the entire window width, PushItemWidth(-1) and pass an non-visible label e.g. "##empty" */
+     *  Tip: To have a list filling the entire window width, use `size.x = -FLT_MI` and pass an non-visible label e.g. "##empty"
+     *  Tip: If your vertical size is calculated from an item count (e.g. 10 * item_height) consider adding a fractional part to facilitate seeing scrolling boundaries (e.g. 10.25 * item_height).*/
     fun listBoxHeader(label: String, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
@@ -90,12 +92,13 @@ interface widgetsListBoxes {
         val id = getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
-        // Size default to hold ~7 items. Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
-        val size = calcItemSize(sizeArg, calcItemWidth(), textLineHeightWithSpacing * 7.4f + style.itemSpacing.y)
+        // Size default to hold ~7.25 items.
+        // Fractional number of items helps seeing that we can scroll down/up without looking at scrollbar.
+        val size = floor(calcItemSize(sizeArg, calcItemWidth(), textLineHeightWithSpacing * 7.25f + style.framePadding.y * 2f))
         val frameSize = Vec2(size.x, glm.max(size.y, labelSize.y))
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + frameSize)
         val bb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
-        window.dc.lastItemRect put bb   // Forward storage for ListBoxFooter.. dodgy.
+        g.nextItemData.clearFlags()
 
         if (!isRectVisible(bb.min, bb.max)) {
             itemSize(bb.size, style.framePadding.y)
@@ -103,15 +106,19 @@ interface widgetsListBoxes {
             return false
         }
 
+        // FIXME-OPT: We could omit the BeginGroup() if label_size.x but would need to omit the EndGroup() as well.
         beginGroup()
-        if (labelSize.x > 0)
-            renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
+        if (labelSize.x > 0f) {
+            val labelPos = Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y)
+            renderText(labelPos, label)
+            window.dc.cursorMaxPos maxAssign (labelPos + labelSize)
+        }
 
         beginChildFrame(id, frameBb.size)
         return true
     }
 
-    /** FIXME: In principle this function should be called EndListBox(). We should rename it after re-evaluating if we want to keep the same signature. */
+    /** FIXME: In principle this function should be called BeginListBox(). We should rename it after re-evaluating if we want to keep the same signature. */
     fun listBoxHeader(label: String, itemsCount: Int, heightInItems_: Int = -1): Boolean {
         /*  Size default to hold ~7.25 items.
             We add +25% worth of item height to allow the user to see at a glance if there are more items up/down, without looking at the scrollbar.
@@ -119,27 +126,19 @@ interface widgetsListBoxes {
             because it means a dynamic list of items will make the widget resize occasionally when it crosses that size.     */
         val heightInItems = if (heightInItems_ < 0) glm.min(itemsCount, 7) else heightInItems_
         val heightInItemsF = heightInItems + if (heightInItems < itemsCount) 0.25f else 0f
-        /*  We include ItemSpacing.y so that a list sized for the exact number of items doesn't make a scrollbar
-            appears. We could also enforce that by passing a flag to BeginChild().         */
-        val size = Vec2(0f, floor(textLineHeightWithSpacing * heightInItemsF + style.framePadding.y * 2f))
+
+        val size = Vec2(0f, textLineHeightWithSpacing * heightInItemsF + g.style.framePadding.y * 2f)
         return listBoxHeader(label, size)
     }
 
     /** FIXME: In principle this function should be called EndListBox(). We should rename it after re-evaluating if we want to keep the same signature.
      *  Terminate the scrolling region. Only call ListBoxFooter() if ListBoxHeader() returned true!  */
     fun listBoxFooter() {
-        val window = currentWindow
+        val window = g.currentWindow!!
         assert(window.flags has WindowFlag._ChildWindow) { "Mismatched ListBoxHeader/ListBoxFooter calls. Did you test the return value of ListBoxHeader()?" }
-        val parentWindow = window.parentWindow!!
-        val bb = parentWindow.dc.lastItemRect // assign is safe, itemSize() won't modify bb
 
         endChildFrame()
 
-        /*  Redeclare item size so that it includes the label (we have stored the full size in LastItemRect)
-            We call SameLine() to restore DC.CurrentLine* data         */
-        sameLine()
-        parentWindow.dc.cursorPos put bb.min
-        itemSize(bb, style.framePadding.y)
-        endGroup()
+        endGroup() // This is only required to be able to do IsItemXXX query on the whole ListBox including label
     }
 }

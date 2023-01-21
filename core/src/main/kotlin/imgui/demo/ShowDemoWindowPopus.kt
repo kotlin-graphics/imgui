@@ -158,7 +158,7 @@ object ShowDemoWindowPopups {
                 popupContextItem("item context menu") {
                     if (selectable("Set to zero")) value = 0f
                     if (selectable("Set to PI")) value = glm.PIf
-                    withItemWidth(-1) {
+                    withItemWidth(-Float.MIN_VALUE) {
                         dragFloat("##Value", ::value, 0.1f, 0f, 0f)
                     }
                 }
