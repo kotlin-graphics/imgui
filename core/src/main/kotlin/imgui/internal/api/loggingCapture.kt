@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.vec2.Vec2
+import imgui.ImGui
 import imgui.api.g
 import imgui.internal.sections.LogType
 
@@ -33,7 +34,7 @@ internal interface loggingCapture {
     /** Internal version that takes a position to decide on newline placement and pad items according to their depth.
      *  We split text into individual lines to add current tree level padding
      *  FIXME: This code is a little complicated perhaps, considering simplifying the whole system. */
-    fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = findRenderedTextEnd(text)) { // TODO ByteArray?
+    fun logRenderedText(refPos: Vec2?, text: String, textEnd: Int = ImGui.findRenderedTextEnd(text)) { // TODO ByteArray?
 
         TODO()
         //        ImGuiContext& g = *GImGui;

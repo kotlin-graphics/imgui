@@ -48,8 +48,8 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.imageButton
 import imgui.ImGui.indent
 import imgui.ImGui.invisibleButton
-import imgui.ImGui.listBoxFooter
-import imgui.ImGui.listBoxHeader
+import imgui.ImGui.endListBox
+import imgui.ImGui.beginListBox
 import imgui.ImGui.menuItem
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.popButtonRepeat
@@ -533,9 +533,9 @@ object dsl {
     // listBox
 
     inline fun listBox(label: String, sizeArg: Vec2 = Vec2(), block: () -> Unit) {
-        if (listBoxHeader(label, sizeArg)) {
+        if (beginListBox(label, sizeArg)) {
             block()
-            listBoxFooter()
+            endListBox()
         }
     }
 

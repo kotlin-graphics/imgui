@@ -46,8 +46,8 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectSize
 import imgui.ImGui.listBox
-import imgui.ImGui.listBoxFooter
-import imgui.ImGui.listBoxHeader
+import imgui.ImGui.beginListBox
+import imgui.ImGui.endListBox
 import imgui.ImGui.nextColumn
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popID
@@ -153,10 +153,10 @@ object ShowDemoWindowLayout {
             button("LEVERAGE\nBUZZWORD", size)
             sameLine()
 
-            if (listBoxHeader("List", size)) {
+            if (beginListBox("List", size)) {
                 selectable("Selected", true)
                 selectable("Not Selected", false)
-                listBoxFooter()
+                endListBox()
             }
         }
 

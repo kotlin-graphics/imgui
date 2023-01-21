@@ -22,7 +22,6 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.logRenderedText
-import imgui.ImGui.logRenderedTextNewLine
 import imgui.ImGui.logText
 import imgui.ImGui.popColumnsBackground
 import imgui.ImGui.pushColumnsBackground
@@ -474,7 +473,6 @@ internal interface widgets {
                 window.drawList.addLine(bb.min, Vec2(bb.max.x, bb.min.y), Col.Separator.u32)
                 if (g.logEnabled) {
                     logRenderedText(bb.min, "--------------------------------")
-                    logRenderedTextNewLine() // Separator isn't tall enough to trigger a new line automatically in LogRenderText
                 }
             }
             columns?.let {

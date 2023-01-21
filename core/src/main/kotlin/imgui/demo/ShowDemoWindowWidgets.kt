@@ -14,6 +14,7 @@ import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
+import imgui.ImGui.beginListBox
 import imgui.ImGui.beginPopupContextItem
 import imgui.ImGui.beginTable
 import imgui.ImGui.bullet
@@ -47,6 +48,7 @@ import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
 import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
+import imgui.ImGui.endListBox
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTable
 import imgui.ImGui.fontSize
@@ -128,6 +130,7 @@ import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textLineHeight
+import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textWrapped
 import imgui.ImGui.time
 import imgui.ImGui.treeNode
@@ -346,12 +349,10 @@ object ShowDemoWindowWidgets {
 
                 run {
                     // Using the _simplified_ one-liner Combo() api here
-                    // See "Combo" section for examples of how to use the more complete BeginCombo()/EndCombo() api.
+                    // See "Combo" section for examples of how to use the more flexible BeginCombo()/EndCombo() api.
                     val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIIIIII", "JJJJ", "KKKKKKK")
                     combo("combo", ::currentItem0, items)
-                    sameLine(); helpMarker(
-                    "Refer to the \"Combo\" section below for an explanation of the full BeginCombo/EndCombo API, " +
-                            "and demonstration of various flags.\n")
+                    sameLine(); helpMarker("Using the simplified one-liner Combo API here.\nRefer to the \"Combo\" section below for an explanation of how to use the more flexible and general BeginCombo/EndCombo API.")
                 }
 
                 run {
@@ -432,13 +433,13 @@ object ShowDemoWindowWidgets {
                     colorEdit4("color 2", col2)
                 }
 
-                run { // List box
+                run {
+                    // Using the _simplified_ one-liner ListBox() api here
+                    // See "List boxes" section for examples of how to use the more flexible BeginListBox()/EndListBox() api.
                     val items = arrayOf("Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon")
-                    listBox("listbox\n(single select)", ::itemCurrent, items, 4)
+                    listBox("listbox", ::itemCurrent, items, 4)
 
-                    //static int listbox_item_current2 = 2;
-                    //ImGui::SetNextItemWidth(-FLT_MIN);
-                    //ImGui::ListBox("##listbox2", &listbox_item_current2, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
+                    sameLine(); helpMarker("Using the simplified one-liner ListBox API here.\nRefer to the \"List boxes\" section below for an explanation of how to use the more flexible and general BeginListBox/EndListBox API.")
                 }
             }
         }
@@ -719,7 +720,7 @@ object ShowDemoWindowWidgets {
                 // (your selection data could be an index, a pointer to the object, an id for the object, a flag intrusively
                 // stored in the object itself, etc.)
                 val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
-                // Here our selection data is an index.
+                // Here we store our selection data as an index.
                 if (beginCombo("combo 1", items[0], flags)) { // Label to preview before opening the combo (technically could be anything)(
                     items.forEachIndexed { n, it ->
                         val isSelected = itemCurrentIdx == n
@@ -741,6 +742,47 @@ object ShowDemoWindowWidgets {
 
                 // Simplified one-liner Combo() using an accessor function
                 combo("combo 4 (function)", ::itemCurrent4, Funcs0.itemGetter, items.toTypedArray())
+            }
+        }
+    }
+
+    object ListBoxes {
+
+        var itemCurrentIdx = 0
+        operator fun invoke() {
+            treeNode("List boxes") {
+                // Using the generic BeginListBox() API, you have full control over how to display the combo contents.
+                // (your selection data could be an index, a pointer to the object, an id for the object, a flag intrusively
+                // stored in the object itself, etc.)
+                val items = listOf("AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO")
+                // Here we store our selection data as an index.
+                if (beginListBox("listbox 1")) {
+                    for (n in items.indices) {
+                        val isSelected = itemCurrentIdx == n
+                        if (selectable(items[n], isSelected))
+                            itemCurrentIdx = n
+
+                        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if (isSelected)
+                            setItemDefaultFocus()
+                    }
+                    endListBox()
+                }
+
+                // Custom size: use all width, 5 items tall
+                text("Full-width:")
+                if (beginListBox("##listbox 2", Vec2(-Float.MIN_VALUE, 5 * textLineHeightWithSpacing))) {
+                    for (n in items.indices) {
+                        val isSelected = itemCurrentIdx == n
+                        if (selectable(items[n], isSelected))
+                            itemCurrentIdx = n
+
+                        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                        if (isSelected)
+                            setItemDefaultFocus()
+                    }
+                    endListBox()
+                }
             }
         }
     }
@@ -1117,7 +1159,7 @@ object ShowDemoWindowWidgets {
         var displayCount = 70
 
         object Funcs3 {
-            fun sin(i: Int) = kotlin.math.sin(i * 0.1f)
+            fun sin(i: Int) = sin(i * 0.1f)
             fun saw(i: Int) = if (i has 1) 1f else -1f
         }
 
@@ -1658,7 +1700,9 @@ object ShowDemoWindowWidgets {
     object `Drag and Drop` {
         val col1 = floatArrayOf(1f, 0f, 0.2f)
         val col2 = floatArrayOf(0.4f, 0.7f, 0f, 0.5f)
+
         enum class Mode { Copy, Move, Swap }
+
         var mode = Mode.Copy
         val names = arrayOf(
             "Bobby", "Beatrice", "Betty",

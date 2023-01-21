@@ -595,11 +595,11 @@ public class Jdsl {
     // listBox
 
     public static void listBox(String label, Vec2 sizeArg, Runnable block) {
-        if (imgui.listBoxHeader(label, sizeArg))
+        if (imgui.beginListBox(label, sizeArg))
             try {
                 block.run();
             } finally {
-                imgui.listBoxFooter();
+                imgui.endListBox();
             }
     }
 
