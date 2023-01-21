@@ -319,14 +319,14 @@ class DrawData {
     /** Only valid after Render() is called and before the next NewFrame() is called.   */
     var valid = false
 
-    /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
-    val cmdLists = ArrayList<DrawList>()
-
     /** For convenience, sum of all DrawList's IdxBuffer.Size   */
     var totalIdxCount = 0
 
     /** For convenience, sum of all DrawList's VtxBuffer.Size   */
     var totalVtxCount = 0
+
+    /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
+    val cmdLists = ArrayList<DrawList>()
 
     /** Upper-left position of the viewport to render (== upper-left of the orthogonal projection matrix to use) */
     var displayPos = Vec2()

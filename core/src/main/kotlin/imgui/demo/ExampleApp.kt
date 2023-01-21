@@ -57,6 +57,7 @@ object ExampleApp {
         var autoResize = false
         var constrainedResize = false
         var simpleOverlay = false
+        var fullscreen = false
         var windowTitles = false
         var customRendering = false
 
@@ -95,6 +96,7 @@ object ExampleApp {
         if (show.autoResize) AutoResize(show::autoResize)
         if (show.constrainedResize) ConstrainedResize(show::constrainedResize)
         if (show.simpleOverlay) SimpleOverlay(show::simpleOverlay)
+        if (show.fullscreen) Fullscreen(show::fullscreen)
         if (show.windowTitles) WindowTitles()
         if (show.customRendering) CustomRendering(show::customRendering)
 
@@ -151,6 +153,7 @@ object ExampleApp {
                 menuItem("Auto-resizing window", "", show::autoResize)
                 menuItem("Constrained-resizing window", "", show::constrainedResize)
                 menuItem("Simple overlay", "", show::simpleOverlay)
+                menuItem("Fullscreen window", "", show::fullscreen)
                 menuItem("Manipulating window titles", "", show::windowTitles)
                 menuItem("Custom rendering", "", show::customRendering)
                 menuItem("Documents", "", show::documents)
