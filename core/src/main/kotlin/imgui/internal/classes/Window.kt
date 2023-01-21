@@ -508,6 +508,7 @@ class Window(var context: Context,
         val offset = this.pos - oldPos
         dc.cursorPos plusAssign offset         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least offset the cursor
         dc.cursorMaxPos plusAssign offset      // And more importantly we need to offset CursorMaxPos/CursorStartPos this so ContentSize calculation doesn't get affected.
+        dc.idealMaxPos += offset
         dc.cursorStartPos plusAssign offset
     }
 

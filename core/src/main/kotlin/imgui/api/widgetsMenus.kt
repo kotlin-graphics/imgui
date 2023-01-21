@@ -321,7 +321,7 @@ interface widgetsMenus {
         if (wantOpen) openPopup(label)
 
         if (menuIsOpen) {
-            setNextWindowPos(popupPos, Cond.Always)
+            setNextWindowPos(popupPos, Cond.Always) // Note: this is super misleading! The value will serve as reference for FindBestWindowPosForPopup(), not actual pos.
             menuIsOpen = beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
         } else
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
