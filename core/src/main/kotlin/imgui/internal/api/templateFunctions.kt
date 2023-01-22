@@ -2298,6 +2298,31 @@ internal interface templateFunctions {
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
         val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
+        // TODO
+//        char fmt[32];
+//        const char* fmt_end = ImParseFormatFindEnd(fmt_start);
+//        IM_ASSERT(fmt_end - fmt_start < IM_ARRAYSIZE(fmt) && "Number format is too long!");
+//        #ifdef IMGUI_USE_STB_SPRINTF
+//                // stb_sprintf.h supports several new modifiers which format numbers in a way that makes them incompatible with
+//                // ImAtof()/ImAtoi(). Copy format string omitting incompatible modifiers and anything past the end of format specifier.
+//                int fmt_len = 0;
+//        for (int i = 0, end = fmt_end - fmt_start; i < end; i++)
+//        {
+//            char c = fmt_start[i];
+//            if (c == '\'' || c == '$' || c == '_')                                  // Custom flags provided by stb_sprintf.h
+//                continue;
+//            fmt[fmt_len++] = c;
+//        }
+//        fmt[fmt_len] = 0;
+//        fmt_start = fmt;
+//        #else
+//        // Extra characters after format specifier may confuse ImAtof()/ImAtoi(), therefore copying is performed, excluding anything beyond.
+//        if (*fmt_end != 0)
+//        {
+//            ImStrncpy(fmt, fmt_start, fmt_end - fmt_start + 1);
+//            fmt_start = fmt;
+//        }
+//        #endif
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.i
             else -> vStr.i
