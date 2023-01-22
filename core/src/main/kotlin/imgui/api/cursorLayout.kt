@@ -233,11 +233,12 @@ interface cursorLayout {
     val cursorStartPos: Vec2
         get() = with(currentWindowRead!!) { dc.cursorStartPos - pos }
 
-    /** cursor position in absolute screen coordinates [0..io.DisplaySize] (useful to work with ImDrawList API) */
+    /** cursor position in absolute coordinates (useful to work with ImDrawList API). generally top-left == GetMainViewport()->Pos == (0,0) in single viewport mode, and bottom-right == GetMainViewport()->Pos+Size == io.DisplaySize in single-viewport mode. */
     var cursorScreenPos: Vec2
         /** ~GetCursorScreenPos */
         get() = currentWindowRead!!.dc.cursorPos
-        /** ~SetCursorScreenPos */
+        /** ~SetCursorScreenPos
+         *  cursor position in absolute coordinates */
         set(value) = with(currentWindow.dc) {
             cursorPos put value
             cursorMaxPos maxAssign cursorPos

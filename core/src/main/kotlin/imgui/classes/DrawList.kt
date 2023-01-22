@@ -30,9 +30,8 @@ import kotlin.math.sqrt
  *  Each dear imgui window contains its own ImDrawList. You can use ImGui::GetWindowDrawList() to
  *  access the current window draw list and draw custom primitives.
  *  You can interleave normal ImGui:: calls and adding primitives to the current draw list.
- *  All positions are generally in pixel coordinates (top-left at (0,0), bottom-right at io.DisplaySize),
- *  but you are totally free to apply whatever transformation matrix to want to the data
- *  (if you apply such transformation you'll want to apply it to ClipRect as well)
+ *  In single viewport mode, top-left is == GetMainViewport()->Pos (generally 0,0), bottom-right is == GetMainViewport()->Pos+Size (generally io.DisplaySize).
+ *  You are totally free to apply whatever transformation matrix to want to the data (depending on the use of the transformation you may want to apply it to ClipRect as well!)
  *  Important: Primitives are always added to the list and not culled (culling is done at render time and
  *  at a higher-level by ImGui::functions), if you use this API a lot consider coarse culling your drawn objects.
  *
@@ -135,7 +134,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         _onChangedClipRect()
     }
 
-    fun pushTextureId(textureId: TextureID) {
+    infix fun pushTextureID(textureId: TextureID) {
         _textureIdStack += textureId
         _cmdHeader.textureId = textureId
         _onChangedTextureID()
@@ -785,7 +784,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (col hasnt COL32_A_MASK) return
 
         val pushTextureId = userTextureId != _cmdHeader.textureId
-        if (pushTextureId) pushTextureId(userTextureId)
+        if (pushTextureId) pushTextureID(userTextureId)
 
         primReserve(6, 4)
         primRectUV(pMin, pMax, uvMin, uvMax, col)
@@ -803,7 +802,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         val pushTextureId = userTextureId != _cmdHeader.textureId
         if (pushTextureId)
-            pushTextureId(userTextureId)
+            pushTextureID(userTextureId)
 
         primReserve(6, 4)
         primQuadUV(p1, p2, p3, p4, uv1, uv2, uv3, uv4, col)
@@ -824,7 +823,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
 
         val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
-        if (pushTextureId) pushTextureId(userTextureId)
+        if (pushTextureId) pushTextureID(userTextureId)
 
         val vertStartIdx = vtxBuffer.size
         pathRect(pMin, pMax, rounding, roundingCorners)
@@ -1416,7 +1415,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
             pos -= offset
             val texId: TextureID = fontAtlas.texID
-            pushTextureId(texId)
+            pushTextureID(texId)
             addImage(texId, pos + Vec2(1, 0) * scale, pos + Vec2(1, 0) * scale + size * scale, uv[2], uv[3], colShadow)
             addImage(texId, pos + Vec2(2, 0) * scale, pos + Vec2(2, 0) * scale + size * scale, uv[2], uv[3], colShadow)
             addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)

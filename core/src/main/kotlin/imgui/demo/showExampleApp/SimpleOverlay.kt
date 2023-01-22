@@ -5,6 +5,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowBgAlpha
@@ -24,12 +25,17 @@ object SimpleOverlay {
     // + a context-menu to choose which corner of the screen to use.
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-        val DISTANCE = 10f
+        val PAD = 10f
 
         var windowFlags = Wf.NoDecoration or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
         if (corner != -1) {
-            val windowPos = Vec2{ if (corner has it + 1) io.displaySize[it] - DISTANCE else DISTANCE }
-            val windowPosPivot = Vec2(if (corner has 1) 1f else 0f, if (corner has 2) 1f else 0f)
+            val viewport = mainViewport
+            val workPos = viewport.workPos // Use work area to avoid menu-bar/task-bar, if any!
+            val workSize = viewport.workSize
+            val windowPos = Vec2(workPos.x + if (corner has 1) workSize.x - PAD else PAD,
+                                 workPos.y + if (corner has 2) workSize.y - PAD else PAD)
+            val windowPosPivot = Vec2(if (corner has 1) 1f else 0f,
+                                      if (corner has 2) 1f else 0f)
             setNextWindowPos(windowPos, Cond.Always, windowPosPivot)
             windowFlags = windowFlags or Wf.NoMove
         }

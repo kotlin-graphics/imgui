@@ -125,7 +125,8 @@ internal interface newFrame {
         // Unless we just made a window/popup appear
         if (g.navWindow?.appearing == true) return
 
-        // Click on empty space to focus window and start moving (after we're done with all our widgets)
+        // Click on empty space to focus window and start moving
+        // (after we're done with all our widgets)
         if (io.mouseClicked[0]) {
             // Handle the edge case of a popup being closed while clicking in its empty space.
             // If we try to focus it, FocusWindow() > ClosePopupsOverWindow() will accidentally close any parent popups because they are not linked together any more.

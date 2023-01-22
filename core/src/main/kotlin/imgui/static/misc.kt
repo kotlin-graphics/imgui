@@ -35,9 +35,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 
-//-----------------------------------------------------------------------------
-// [SECTION] SETTINGS
-//-----------------------------------------------------------------------------
+// Misc
 
 /** Called by NewFrame() */
 fun updateSettings() {
@@ -216,150 +214,11 @@ fun updateMouseWheel() {
     }
 }
 
-/** Handle resize for: Resize Grips, Borders, Gamepad
- * @return [JVM] borderHelf to Boolean   */
-fun updateWindowManualResize(
-        window: Window, sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
-        resizeGripCol: IntArray, visibilityRect: Rect,
-): Pair<Int, Boolean> {
-
-    var borderHeld = borderHeld_
-
-    val flags = window.flags
-
-    if (flags has WindowFlag.NoResize || flags has WindowFlag.AlwaysAutoResize || window.autoFitFrames anyGreaterThan 0)
-        return borderHeld to false
-    if (!window.wasActive) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
-        return borderHeld to false
-
-    var retAutoFit = false
-    val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
-    val gripDrawSize = floor(max(g.fontSize * 1.35f, window.windowRounding + 1f + g.fontSize * 0.2f))
-    val gripHoverInnerSize = floor(gripDrawSize * 0.75f)
-    val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS else 0f
-
-    val posTarget = Vec2(Float.MAX_VALUE)
-    val sizeTarget = Vec2(Float.MAX_VALUE)
-
-    // Resize grips and borders are on layer 1
-    window.dc.navLayerCurrent = NavLayer.Menu
-
-    // Manual resize grips
-    pushID("#RESIZE")
-    for (resizeGripN in 0 until resizeGripCount) {
-
-        val grip = resizeGripDef[resizeGripN]
-        val corner = window.pos.lerp(window.pos + window.size, grip.cornerPosN)
-
-        // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
-        val resizeRect = Rect(corner - grip.innerDir * gripHoverOuterSize, corner + grip.innerDir * gripHoverInnerSize)
-        if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
-        if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
-
-        val f = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
-        val (_, hovered, held) = buttonBehavior(resizeRect, window.getID(resizeGripN), f)
-        //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
-        if (hovered || held)
-            g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
-
-        if (held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
-            // Manual auto-fit when double-clicking
-            sizeTarget put window.calcSizeAfterConstraint(sizeAutoFit)
-            retAutoFit = true
-            clearActiveID()
-        } else if (held) {
-            // Resize from any of the four corners
-            // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
-            // Corner of the window corresponding to our corner grip
-            var cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPosN)
-            val clampMin = Vec2 { if (grip.cornerPosN[it] == 1f) visibilityRect.min[it] else -Float.MAX_VALUE }
-            val clampMax = Vec2 { if (grip.cornerPosN[it] == 0f) visibilityRect.max[it] else Float.MAX_VALUE }
-            cornerTarget = glm.clamp(cornerTarget, clampMin, clampMax)
-            window.calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPosN, posTarget, sizeTarget)
-        }
-        if (resizeGripN == 0 || held || hovered)
-            resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
-    }
-    for (borderN in 0 until resizeBorderCount) {
-        val borderRect = window.getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
-        val (_, hovered, held) = buttonBehavior(borderRect, window.getID((borderN + 4)), ButtonFlag.FlattenChildren)
-        //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
-        if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
-            g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
-            if (held)
-                borderHeld = borderN
-        }
-        if (held) {
-            var borderTarget = Vec2(window.pos)
-            val borderPosN = when (borderN) {
-                0 -> {
-                    borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                    Vec2(0, 0)
-                }
-                1 -> {
-                    borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                    Vec2(1, 0)
-                }
-                2 -> {
-                    borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                    Vec2(0, 1)
-                }
-                3 -> {
-                    borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                    Vec2(0, 0)
-                }
-                else -> Vec2(0, 0)
-            }
-            val clampMin = Vec2 { if (borderN == it + 1) visibilityRect.min[it] else -Float.MAX_VALUE }
-            val clampMax = Vec2 { if (borderN == (if (it == 0) 3 else 0)) visibilityRect.max[it] else Float.MAX_VALUE }
-            borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
-            window.calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
-        }
-    }
-    popID()
-
-    // Restore nav layer
-    window.dc.navLayerCurrent = NavLayer.Main
-
-    // Navigation resize (keyboard/gamepad)
-    if (g.navWindowingTarget?.rootWindow === window) {
-        val navResizeDelta = Vec2()
-        if (g.navInputSource == InputSource.NavKeyboard && g.io.keyShift)
-            navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
-        if (g.navInputSource == InputSource.NavGamepad)
-            navResizeDelta put getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
-        if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
-            val NAV_RESIZE_SPEED = 600f
-            navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
-            navResizeDelta put glm.max(navResizeDelta, visibilityRect.min - window.pos - window.size)
-            g.navWindowingToggleLayer = false
-            g.navDisableMouseHover = true
-            resizeGripCol[0] = Col.ResizeGripActive.u32
-            // FIXME-NAV: Should store and accumulate into a separate size buffer to handle sizing constraints properly, right now a constraint will make us stuck.
-            sizeTarget put window.calcSizeAfterConstraint(window.sizeFull + navResizeDelta)
-        }
-    }
-
-    // Apply back modified position/size to window
-    if (sizeTarget.x != Float.MAX_VALUE) {
-        window.sizeFull put sizeTarget
-        window.markIniSettingsDirty()
-    }
-    if (posTarget.x != Float.MAX_VALUE) {
-        window.pos = floor(posTarget)
-        window.markIniSettingsDirty()
-    }
-
-    window.size put window.sizeFull
-
-    return borderHeld to retAutoFit
-}
-
 fun updateTabFocus() {
 
     // Pressing TAB activate widget focus
     g.focusTabPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed }
-            ?: false
+        ?: false
     if (g.activeId == 0 && g.focusTabPressed) {
         // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
         // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
@@ -411,6 +270,11 @@ fun updateDebugToolItemPicker() {
         }
     }
 }
+
+// UpdateWindowManualResize,
+// RenderWindowOuterBorders,
+// RenderWindowDecorations,
+// RenderWindowTitleBarContents -> window class
 
 // truly miscellaneous
 

@@ -328,10 +328,10 @@ class DrawData {
     /** Array of ImDrawList* to render. The ImDrawList are owned by ImGuiContext and only pointed to from here. */
     val cmdLists = ArrayList<DrawList>()
 
-    /** Upper-left position of the viewport to render (== upper-left of the orthogonal projection matrix to use) */
+    /** Top-left position of the viewport to render (== top-left of the orthogonal projection matrix to use) (== GetMainViewport()->Pos for the main viewport, == (0.0) in most single-viewport applications) */
     var displayPos = Vec2()
 
-    /** Size of the viewport to render (== io.displaySize for the main viewport) (displayPos + displaySize == lower-right of the orthogonal projection matrix to use) */
+    /** Size of the viewport to render (== GetMainViewport()->Size for the main viewport, == io.DisplaySize in most single-viewport applications) */
     var displaySize = Vec2()
 
     /** Amount of pixels for each unit of DisplaySize. Based on io.DisplayFramebufferScale. Generally (1,1) on normal display, (2,2) on OSX with Retina display. */
@@ -390,22 +390,5 @@ class DrawData {
         ret.framebufferScale put framebufferScale
 
         return ret
-    }
-
-    /** ~SetupDrawData */
-    infix fun setup(drawLists: ArrayList<DrawList>) {
-        valid = true
-        cmdLists.clear()
-        if (drawLists.isNotEmpty())
-            cmdLists += drawLists
-        totalIdxCount = 0
-        totalVtxCount = 0
-        displayPos put 0f
-        displaySize put io.displaySize
-        framebufferScale put io.displayFramebufferScale
-        for (n in 0 until drawLists.size) {
-            totalVtxCount += drawLists[n].vtxBuffer.lim
-            totalIdxCount += drawLists[n].idxBuffer.lim
-        }
     }
 }

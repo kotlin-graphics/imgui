@@ -239,6 +239,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Which level of BeginPopup() we are in (reset every frame)   */
     val beginPopupStack = Stack<PopupData>()
 
+    //------------------------------------------------------------------
+    // Viewports
+    //------------------------------------------------------------------
+
+    /** Active viewports (Size==1 in 'master' branch). Each viewports hold their copy of ImDrawData. */
+    val viewports = ArrayList<ViewportP>()
 
     //------------------------------------------------------------------
     // Gamepad/keyboard Navigation
@@ -400,22 +406,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Render
     //------------------------------------------------------------------
 
-    /** Main ImDrawData instance to pass render information to the user */
-    var drawData = DrawData()
-
     val drawDataBuilder = DrawDataBuilder()
 
     /** 0.0..1.0 animation when fading in a dimming background (for modal window and CTRL+TAB list) */
     var dimBgRatio = 0f
-
-    val backgroundDrawList: DrawList = DrawList(drawListSharedData).apply {
-        _ownerName = "##Background" // Give it a name for debugging
-    }
-
-    /** Optional software render of mouse cursors, if io.MouseDrawCursor is set + a few debug overlays  */
-    val foregroundDrawList: DrawList = DrawList(drawListSharedData).apply {
-        _ownerName = "##Foreground" // Give it a name for debugging
-    }
 
     var mouseCursor = MouseCursor.Arrow
 
@@ -670,6 +664,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         // Add .ini handle for ImGuiTable type
         tableSettingsInstallHandler(this)
 
+        // Create default viewport
+        val viewport = ViewportP()
+        g.viewports += viewport
+
 //        #ifdef IMGUI_HAS_DOCK
 //        #endif // #ifdef IMGUI_HAS_DOCK
 
@@ -730,8 +728,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         openPopupStack.clear()
         beginPopupStack.clear()
         drawDataBuilder.clear()
-        backgroundDrawList._clearFreeMemory(destroy = true)
-        foregroundDrawList._clearFreeMemory(destroy = true)
+
+        viewports.clear()
 
         tabBars.clear()
         currentTabBarStack.clear()

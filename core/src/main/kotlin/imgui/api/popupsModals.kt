@@ -13,6 +13,7 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseReleased
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.isWindowHovered
+import imgui.ImGui.mainViewport
 import imgui.ImGui.navMoveRequestTryWrapping
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.setNextWindowPos
@@ -74,8 +75,10 @@ interface popupsModals {
         // Center modal windows by default for increased visibility
         // (this won't really last as settings will kick in, and is mostly for backward compatibility. user may do the same themselves)
         // FIXME: Should test for (PosCond & window->SetWindowPosAllowFlags) with the upcoming window.
-        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasPos)
-            setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.FirstUseEver, Vec2(0.5f))
+        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasPos) {
+            val viewport = mainViewport
+            setNextWindowPos(viewport.center, Cond.FirstUseEver, Vec2(0.5f))
+        }
 
         val flags = flags_ or Wf._Popup or Wf._Modal or Wf.NoCollapse
         val isOpen = begin(name, pOpen, flags)

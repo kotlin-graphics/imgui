@@ -14,6 +14,7 @@ import imgui.ImGui.clearIniSettings
 import imgui.ImGui.combo
 import imgui.ImGui.debugNodeDrawList
 import imgui.ImGui.debugNodeTabBar
+import imgui.ImGui.debugNodeViewport
 import imgui.ImGui.debugNodeWindowSettings
 import imgui.ImGui.debugNodeWindowsList
 import imgui.ImGui.debugStartItemPicker
@@ -54,6 +55,7 @@ import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
+import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.classes.Style
@@ -197,7 +199,7 @@ interface demoDebugInformations {
                             for (columnN in 0 until table.columnsCount) {
                                 val r = Funcs.getTableRect(table, rectN, columnN)
                                 val buf = "(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col $columnN ${rectN.name}"
-                                    .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
+                                        .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
                                     foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
@@ -215,12 +217,26 @@ interface demoDebugInformations {
                 }
         }
 
-        // Contents
+        // Windows
         debugNodeWindowsList(g.windows, "Windows")
         //DebugNodeWindowList(&g.WindowsFocusOrder, "WindowsFocusOrder");
-        treeNode("DrawLists", "Active DrawLists (${g.drawDataBuilder.layers[0].size})") {
-            for (layer in g.drawDataBuilder.layers[0])
-                debugNodeDrawList(null, layer, "DrawList")
+
+        // DrawLists
+        val drawlistCount = g.viewports.sumOf { it.drawDataBuilder!!.drawListCount }
+        treeNode("DrawLists", "Active DrawLists ($drawlistCount)") {
+            for (viewport in g.viewports)
+                for (layer in viewport.drawDataBuilder!!.layers)
+                    for (drawListIdx in layer.indices)
+                        debugNodeDrawList(null, layer[drawListIdx], "DrawList")
+        }
+
+        // Viewports
+        treeNode("Viewports", "Viewports (${g.viewports.size})") {
+            indent(treeNodeToLabelSpacing) {
+                renderViewportsThumbnails()
+            }
+            for (viewport in g.viewports)
+                debugNodeViewport(viewport)
         }
 
         // Details for Popups
@@ -459,6 +475,7 @@ interface demoDebugInformations {
 
     object ShowStyleSelector {
         var styleIdx = -1
+
         /** Demo helper function to select among default colors. See showStyleEditor() for more advanced options.
          *  Here we use the simplified Combo() api that packs items into a single literal string.
          *  Useful for quick combo boxes where the choices are known locally.
@@ -622,6 +639,23 @@ interface demoDebugInformations {
                 popTextWrapPos()
                 endTooltip()
             }
+        }
+
+        fun renderViewportsThumbnails() {
+            val window = g.currentWindow!!
+
+            // We don't display full monitor bounds (we could, but it often looks awkward), instead we display just enough to cover all of our viewports.
+            val SCALE = 1f / 8f
+            val bbFull = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+            for (viewport in g.viewports)
+                bbFull add viewport.mainRect
+            val p = window.dc.cursorPos // careful, class instance
+            val off = p - bbFull.min * SCALE
+            for (viewport in g.viewports) {
+                val viewportDrawBb = Rect(off + (viewport.pos) * SCALE, off + (viewport.pos + viewport.size) * SCALE)
+                ImGui.debugRenderViewportThumbnail(window.drawList, viewport, viewportDrawBb)
+            }
+            ImGui.dummy(bbFull.size * SCALE)
         }
     }
 }

@@ -12,7 +12,9 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
+import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.foregroundDrawList
+import imgui.ImGui.getColorU32
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.isItemHovered
@@ -27,6 +29,7 @@ import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
+import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.smallButton
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -40,10 +43,7 @@ import imgui.classes.ListClipper
 import imgui.internal.DrawCmd
 import imgui.internal.classes.*
 import imgui.internal.floor
-import imgui.internal.sections.DrawListFlag
-import imgui.internal.sections.OldColumns
-import imgui.internal.sections.WindowSettings
-import imgui.internal.sections.wo
+import imgui.internal.sections.*
 import imgui.internal.triangleArea
 import kool.lib.isNotEmpty
 import kool.rem
@@ -173,7 +173,7 @@ internal interface debugTools {
                 cmd.elemCount / 3, cmd.textureId, cmd.clipRect.x, cmd.clipRect.y, cmd.clipRect.z, cmd.clipRect.w)
             val pcmdNodeOpen = treeNode(drawList.cmdBuffer.indexOf(cmd), buf)
             if (isItemHovered() && (cfg.showDrawCmdMesh || cfg.showDrawCmdBoundingBoxes) /*&& fgDrawList != null*/)
-                debugNodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, cfg.showDrawCmdMesh, cfg.showDrawCmdBoundingBoxes)
+                debugNodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, cfg.showDrawCmdMesh, cfg.showDrawCmdBoundingBoxes)
             if (!pcmdNodeOpen)
                 continue
 
@@ -195,7 +195,7 @@ internal interface debugTools {
             buf = "Mesh: ElemCount: ${cmd.elemCount}, VtxOffset: +${cmd.vtxOffset}, IdxOffset: +${cmd.idxOffset}, Area: ~%0.f px".format(totalArea)
             selectable(buf)
             if (isItemHovered() /*&& fgDrawList != null*/)
-                debugNodeDrawCmdShowMeshAndBoundingBox(window, drawList, cmd, true, false)
+                debugNodeDrawCmdShowMeshAndBoundingBox(fgDrawList, drawList, cmd, true, false)
 
             // Display individual triangles/vertices. Hover on to get the corresponding triangle highlighted.
             val clipper = ListClipper()
@@ -210,7 +210,7 @@ internal interface debugTools {
                         triangle[n] put v.pos
                         val isFirst = if (n == 0) "Vert:" else "     "
                         bufP += "$isFirst %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                            .format(idx_i, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                                .format(idx_i, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
                         idx_i++
                     }
                     buf = bufP.toString()
@@ -229,9 +229,8 @@ internal interface debugTools {
     }
 
     /** [DEBUG] Display mesh/aabb of a ImDrawCmd */
-    fun debugNodeDrawCmdShowMeshAndBoundingBox(window: Window?, drawList: DrawList, drawCmd: DrawCmd, showMesh: Boolean, showAabb: Boolean) {
+    fun debugNodeDrawCmdShowMeshAndBoundingBox(outDrawList: DrawList, drawList: DrawList, drawCmd: DrawCmd, showMesh: Boolean, showAabb: Boolean) {
         assert(showMesh || showAabb)
-        val fgDrawList = getForegroundDrawList(window) // Render additional visuals into the top-most draw list
         val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
         val vtxBuffer = drawList.vtxBuffer
         val vtxPointer = drawCmd.vtxOffset
@@ -239,8 +238,8 @@ internal interface debugTools {
         // Draw wire-frame version of all triangles
         val clipRect = Rect(drawCmd.clipRect)
         val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
-        val backupFlags = fgDrawList.flags
-        fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
+        val backupFlags = outDrawList.flags
+        outDrawList.flags = outDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
         var idxN = drawCmd.idxOffset
         while (idxN < drawCmd.idxOffset + drawCmd.elemCount) {
             val triangle = Array(3) { Vec2() }
@@ -250,14 +249,14 @@ internal interface debugTools {
                 idxN++
             }
             if (showMesh)
-                fgDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
+                outDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
         }
         // Draw bounding boxes
         if (showAabb) {
-            fgDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255)) // In pink: clipping rectangle submitted to GPU
-            fgDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(0, 255, 255, 255)) // In cyan: bounding box of triangles
+            outDrawList.addRect(floor(clipRect.min), floor(clipRect.max), COL32(255, 0, 255, 255)) // In pink: clipping rectangle submitted to GPU
+            outDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(0, 255, 255, 255)) // In cyan: bounding box of triangles
         }
-        fgDrawList.flags = backupFlags
+        outDrawList.flags = backupFlags
     }
 
     /** [DEBUG] Display contents of ImGuiStorage */
@@ -475,5 +474,51 @@ internal interface debugTools {
             popID()
         }
         treePop()
+    }
+
+    fun debugNodeViewport(viewport: ViewportP) {
+        setNextItemOpen(true, Cond.Once)
+        if (treeNode("viewport0", "Viewport #0")) {
+            val flags = viewport.flags
+            bulletText("Main Pos: (%.0f,%.0f), Size: (%.0f,%.0f)\nWorkArea Offset Left: %.0f Top: %.0f, Right: %.0f, Bottom: %.0f",
+                       viewport.pos.x, viewport.pos.y, viewport.size.x, viewport.size.y,
+                       viewport.workOffsetMin.x, viewport.workOffsetMin.y, viewport.workOffsetMax.x, viewport.workOffsetMax.y)
+            bulletText("Flags: 0x%04X =%s%s%s", viewport.flags,
+                       if (flags has ViewportFlag.IsPlatformWindow) " IsPlatformWindow" else "",
+                       if (flags has ViewportFlag.IsPlatformMonitor) " IsPlatformMonitor" else "",
+                       if (flags has ViewportFlag.OwnedByApp) " OwnedByApp" else "")
+            for (layer in viewport.drawDataBuilder!!.layers)
+                for (drawListIdx in layer.indices)
+                    debugNodeDrawList(null, layer[drawListIdx], "DrawList")
+            treePop()
+        }
+    }
+
+    fun debugRenderViewportThumbnail(drawList: DrawList, viewport: ViewportP, bb: Rect) {
+        val window = g.currentWindow!!
+
+        val scale = bb.size / viewport.size
+        val off = bb.min - viewport.pos * scale
+        val alphaMul = 1f
+        window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.Border, alphaMul * 0.4f))
+        for (thumbWindow in g.windows) {
+            if (!thumbWindow.wasActive || (thumbWindow.flags has WindowFlag._ChildWindow))
+                continue
+
+            var thumbR = thumbWindow.rect()
+            var titleR = thumbWindow.titleBarRect()
+            thumbR = Rect(floor(off + thumbR.min * scale), floor(off + thumbR.max * scale))
+            titleR = Rect(floor(off + titleR.min * scale), floor(off + Vec2(titleR.max.x, titleR.min.y) * scale) + Vec2(0, 5)) // Exaggerate title bar height
+            thumbR clipWithFull bb
+            titleR clipWithFull bb
+            val windowIsFocused = g.navWindow != null && thumbWindow.rootWindowForTitleBarHighlight == g.navWindow!!.rootWindowForTitleBarHighlight
+            window.drawList.apply {
+                addRectFilled(thumbR.min, thumbR.max, getColorU32(Col.WindowBg, alphaMul))
+                addRectFilled(titleR.min, titleR.max, getColorU32(if (windowIsFocused) Col.TitleBgActive else Col.TitleBg, alphaMul))
+                addRect(thumbR.min, thumbR.max, getColorU32(Col.Border, alphaMul))
+                addText(g.font, g.fontSize * 1f, titleR.min, getColorU32(Col.Text, alphaMul), thumbWindow.name/*, findRenderedTextEnd(thumbWindow.name)*/)
+            }
+        }
+        drawList.addRect(bb.min, bb.max, getColorU32(Col.Border, alphaMul))
     }
 }

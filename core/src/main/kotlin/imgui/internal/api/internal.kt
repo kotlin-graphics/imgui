@@ -5,6 +5,7 @@ import glm_.parseInt
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
+import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.DrawList
@@ -137,10 +138,10 @@ internal interface internal {
     val defaultFont: Font
         get() = io.fontDefault ?: io.fonts.fonts[0]
 
-    fun getForegroundDrawList(window: Window?): DrawList {
-        return g.foregroundDrawList // This seemingly unnecessary wrapper simplifies compatibility between the 'master' and 'docking' branches.
-    }
+    fun getForegroundDrawList(window: Window?): DrawList = foregroundDrawList // This seemingly unnecessary wrapper simplifies compatibility between the 'master' and 'docking' branches.
 
+    // GetBackgroundDrawList(ImGuiViewport* viewport)
+    // GetForegroundDrawList(ImGuiViewport* viewport); -> Viewport class
 
     val formatArgPattern: Pattern
         get() = Pattern.compile("%(\\d+\\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])")

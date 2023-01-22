@@ -39,7 +39,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom backend to communicate features supported by the backend. */
     var backendFlags: BackendFlags = BackendFlag.None.i
 
-    /** Main display size, in pixels.   */
+    /** Main display size, in pixels (generally == GetMainViewport()->Size)   */
     var displaySize = Vec2i(-1)
 
     /** Time elapsed since last frame, in seconds.  */

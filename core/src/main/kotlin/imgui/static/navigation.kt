@@ -25,6 +25,7 @@ import imgui.ImGui.isActiveIdUsingNavInput
 import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestForward
@@ -53,7 +54,7 @@ fun navUpdate() {
 
     io.wantSetMousePos = false
 
-//    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
+    //    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
 
     // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
     // (do it before we map Keyboard input!)
@@ -131,7 +132,7 @@ fun navUpdate() {
     }
     g.navIdIsAlive = false
     g.navJustTabbedId = 0
-//    assert(g.navLayer == 0 || g.navLayer == 1) useless on jvm
+    //    assert(g.navLayer == 0 || g.navLayer == 1) useless on jvm
 
     // Store our return window (for returning from Layer 1 to Layer 0) and clear it as soon as we step back in our own Layer 0
     g.navWindow?.let {
@@ -219,19 +220,19 @@ fun navUpdate() {
                 val readMode = InputReadMode.Repeat
                 if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft.isTest(readMode) || NavInput._KeyLeft.isTest(
                         readMode
-                    ))
+                                                                                                                       ))
                 ) g.navMoveDir = Dir.Left
                 if (!isActiveIdUsingNavDir(Dir.Right) && (NavInput.DpadRight.isTest(readMode) || NavInput._KeyRight.isTest(
                         readMode
-                    ))
+                                                                                                                          ))
                 ) g.navMoveDir = Dir.Right
                 if (!isActiveIdUsingNavDir(Dir.Up) && (NavInput.DpadUp.isTest(readMode) || NavInput._KeyUp.isTest(
                         readMode
-                    ))
+                                                                                                                 ))
                 ) g.navMoveDir = Dir.Up
                 if (!isActiveIdUsingNavDir(Dir.Down) && (NavInput.DpadDown.isTest(readMode) || NavInput._KeyDown.isTest(
                         readMode
-                    ))
+                                                                                                                       ))
                 ) g.navMoveDir = Dir.Down
             }
         }
@@ -309,7 +310,7 @@ fun navUpdate() {
             windowRectRel expand Vec2(
                 -min(windowRectRel.width, pad),
                 -min(windowRectRel.height, pad)
-            ) // Terrible approximation for the intent of starting navigation from first fully visible item
+                                     ) // Terrible approximation for the intent of starting navigation from first fully visible item
             window.navRectRel[g.navLayer] clipWithFull windowRectRel
             g.navFocusScopeId = 0
             g.navId = 0
@@ -319,7 +320,7 @@ fun navUpdate() {
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
     g.navWindow.let {
         val navRectRel = it?.run { Rect(navRectRel[g.navLayer]) } ?: Rect()
-        g.navScoringRect.put(it?.run { Rect(navRectRel.min + it.pos, navRectRel.max + it.pos) } ?: viewportRect)
+        g.navScoringRect.put(it?.run { Rect(navRectRel.min + it.pos, navRectRel.max + it.pos) } ?: Rect(0f, 0f, 0f, 0f))
     }
     g.navScoringRect translateY navScoringRectOffsetY
     g.navScoringRect.min.x = min(g.navScoringRect.min.x + 1f, g.navScoringRect.max.x)
@@ -335,7 +336,7 @@ fun navUpdate() {
                     nav.pos + nav.navRectRel[layer].min,
                     nav.pos + nav.navRectRel[layer].max,
                     COL32(255, 200, 0, 255)
-                )  // [DEBUG]
+                                                  )  // [DEBUG]
             val col = if (!nav.hidden) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
             val p = navCalcPreferredRefPos()
             val buf = "${g.navLayer}".toByteArray()
@@ -385,7 +386,7 @@ fun navUpdateWindowing() {
             g.navWindowingHighlightAlpha = max(
                 g.navWindowingHighlightAlpha,
                 saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f)
-            )
+                                              )
 
             // Select window to focus
             val focusChangeDir =
@@ -414,7 +415,7 @@ fun navUpdateWindowing() {
             g.navWindowingHighlightAlpha = max(
                 g.navWindowingHighlightAlpha,
                 saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f)
-            ) // 1.0f
+                                              ) // 1.0f
             if (Key.Tab.isPressed(true))
                 navUpdateWindowingHighlightWindow(if (io.keyShift) 1 else -1)
             if (!io.keyCtrl)
@@ -428,7 +429,7 @@ fun navUpdateWindowing() {
         g.navWindowingToggleLayer = true
     if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isTest(
             InputReadMode.Released
-        )
+                                                                                                            )
     )
         if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
             applyToggleLayer = true
@@ -447,8 +448,8 @@ fun navUpdateWindowing() {
                     NAV_MOVE_SPEED * io.deltaTime * min(
                         io.displayFramebufferScale.x,
                         io.displayFramebufferScale.y
-                    )
-                ) // FIXME: Doesn't handle variable framerate very well
+                                                       )
+                                     ) // FIXME: Doesn't handle variable framerate very well
                 it.rootWindow!!.apply { // movingWindow
                     setPos(pos + moveDelta * moveSpeed, Cond.Always)
                     markIniSettingsDirty()
@@ -516,8 +517,9 @@ fun navUpdateWindowingOverlay() {
 
     if (g.navWindowingListWindow == null)
         g.navWindowingListWindow = findWindowByName("###NavWindowingList")
-    setNextWindowSizeConstraints(Vec2(io.displaySize.x * 0.2f, io.displaySize.y * 0.2f), Vec2(Float.MAX_VALUE))
-    setNextWindowPos(Vec2(io.displaySize.x * 0.5f, io.displaySize.y * 0.5f), Cond.Always, Vec2(0.5f))
+    val viewport = mainViewport
+    setNextWindowSizeConstraints(Vec2(viewport.size.x * 0.2f, viewport.size.y * 0.2f), Vec2(Float.MAX_VALUE, Float.MAX_VALUE))
+    setNextWindowPos(viewport.center, Cond.Always, Vec2(0.5f))
     pushStyleVar(StyleVar.WindowPadding, style.windowPadding * 2f)
     val flags =
         Wf.NoTitleBar or Wf.NoFocusOnAppearing or Wf.NoResize or Wf.NoMove or Wf.NoInputs or Wf.AlwaysAutoResize or Wf.NoSavedSettings
@@ -766,7 +768,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     val dbY = navScoreItemDistInterval(
         lerp(cand.min.y, cand.max.y, 0.2f), lerp(cand.min.y, cand.max.y, 0.8f),
         lerp(curr.min.y, curr.max.y, 0.2f), lerp(curr.min.y, curr.max.y, 0.8f)
-    )
+                                      )
     if (dbY != 0f && dbX != 0f)
         dbX = dbX / 1000f + if (dbX > 0f) 1f else -1f
     val distBox = abs(dbX) + abs(dbY)
@@ -803,7 +805,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
         if (isMouseHoveringRect(cand)) {
             val buf =
                 "dbox (%.2f,%.2f->%.4f)\ndcen (%.2f,%.2f->%.4f)\nd (%.2f,%.2f->%.4f)\nnav WENS${g.navMoveDir}, quadrant WENS$quadrant"
-                    .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial).toByteArray()
+                        .format(style.locale, dbX, dbY, distBox, dcX, dcY, distCenter, dax, day, distAxial).toByteArray()
             getForegroundDrawList(window).apply {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
@@ -906,7 +908,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         FIXME-NAV: Consider policy for double scoring
         (scoring from NavScoringRectScreen + scoring from a rect wrapped according to current wrapping policy)     */
     if ((g.navId != id || g.navMoveRequestFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
-        val result = if(window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
+        val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
         val newBest = when {
             IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
                 if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
@@ -950,15 +952,9 @@ fun navCalcPreferredRefPos(): Vec2 {
         val pos = g.navWindow!!.pos + Vec2(
             rectRel.min.x + min(style.framePadding.x * 4, rectRel.width),
             rectRel.max.y - min(style.framePadding.y, rectRel.height)
-        )
-        val visibleRect = viewportRect
-        return glm.floor(
-            glm.clamp(
-                pos,
-                visibleRect.min,
-                visibleRect.max
-            )
-        )   // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
+                                          )
+        val viewport = mainViewport
+        return floor(glm.clamp(pos, viewport.pos, viewport.pos + viewport.size)) // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }
 }
 

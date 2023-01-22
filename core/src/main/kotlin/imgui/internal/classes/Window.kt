@@ -8,23 +8,26 @@ import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import imgui.*
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveID
+import imgui.ImGui.mainViewport
+import imgui.ImGui.popID
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveID
 import imgui.ImGui.style
+import imgui.WindowFlag
 import imgui.api.g
 import imgui.classes.Context
 import imgui.classes.DrawList
 import imgui.classes.SizeCallbackData
 import imgui.internal.*
 import imgui.internal.sections.*
-import imgui.static.viewportRect
 import kool.cap
 import java.util.*
 import kotlin.collections.ArrayList
@@ -486,12 +489,14 @@ class Window(var context: Context,
     val isNavFocusable: Boolean
         get() = wasActive && this === rootWindow && flags hasnt Wf.NoNavFocus
 
-    /** ~GetWindowAllowedExtentRect */
-    fun getAllowedExtentRect(): Rect {
-        val padding = style.displaySafeAreaPadding
-        return viewportRect.apply {
-            expand(Vec2(if (width > padding.x * 2) -padding.x else 0f, if (height > padding.y * 2) -padding.y else 0f))
-        }
+    /** ~GetWindowAllowedExtentRect
+     *  Note that this is used for popups, which can overlap the non work-area of individual viewports. */
+    val allowedExtentRect: Rect
+        get() {
+            val rScreen = (mainViewport as ViewportP).mainRect
+            val padding = g.style.displaySafeAreaPadding
+            rScreen expand Vec2(if(rScreen.width > padding.x * 2) -padding.x else 0f, if(rScreen.height > padding.y * 2) -padding.y else 0f)
+            return rScreen
     }
 
     /** ~ SetWindowPos */
@@ -741,7 +746,146 @@ class Window(var context: Context,
 
     // static - Misc
 
+    /** ~updateWindowManualResize
+     *  Handle resize for: Resize Grips, Borders, Gamepad
+     *  @return [JVM] borderHelf to Boolean   */
+    fun updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
+        resizeGripCol: IntArray, visibilityRect: Rect,
+                                ): Pair<Int, Boolean> {
 
+        var borderHeld = borderHeld_
+
+        val flags = flags
+
+        if (flags has WindowFlag.NoResize || flags has WindowFlag.AlwaysAutoResize || autoFitFrames anyGreaterThan 0)
+            return borderHeld to false
+        if (!wasActive) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
+            return borderHeld to false
+
+        var retAutoFit = false
+        val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
+        val gripDrawSize = floor(kotlin.math.max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f))
+        val gripHoverInnerSize = floor(gripDrawSize * 0.75f)
+        val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS else 0f
+
+        val posTarget = Vec2(Float.MAX_VALUE)
+        val sizeTarget = Vec2(Float.MAX_VALUE)
+
+        // Resize grips and borders are on layer 1
+        dc.navLayerCurrent = NavLayer.Menu
+
+        // Manual resize grips
+        ImGui.pushID("#RESIZE")
+        for (resizeGripN in 0 until resizeGripCount) {
+
+            val grip = resizeGripDef[resizeGripN]
+            val corner = pos.lerp(pos + size, grip.cornerPosN)
+
+            // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
+            val resizeRect = Rect(corner - grip.innerDir * gripHoverOuterSize, corner + grip.innerDir * gripHoverInnerSize)
+            if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
+            if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
+
+            val f = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
+            val (_, hovered, held) = ImGui.buttonBehavior(resizeRect, getID(resizeGripN), f)
+            //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
+            if (hovered || held)
+                g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
+
+            if (held && g.io.mouseDoubleClicked[0] && resizeGripN == 0) {
+                // Manual auto-fit when double-clicking
+                sizeTarget put calcSizeAfterConstraint(sizeAutoFit)
+                retAutoFit = true
+                clearActiveID()
+            } else if (held) {
+                // Resize from any of the four corners
+                // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
+                // Corner of the window corresponding to our corner grip
+                var cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPosN)
+                val clampMin = Vec2 { if (grip.cornerPosN[it] == 1f) visibilityRect.min[it] else -Float.MAX_VALUE }
+                val clampMax = Vec2 { if (grip.cornerPosN[it] == 0f) visibilityRect.max[it] else Float.MAX_VALUE }
+                cornerTarget = glm.clamp(cornerTarget, clampMin, clampMax)
+                calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPosN, posTarget, sizeTarget)
+            }
+            if (resizeGripN == 0 || held || hovered)
+                resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
+        }
+        for (borderN in 0 until resizeBorderCount) {
+            val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
+            val (_, hovered, held) = ImGui.buttonBehavior(borderRect, getID((borderN + 4)), ButtonFlag.FlattenChildren)
+            //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
+            if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
+                g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
+                if (held)
+                    borderHeld = borderN
+            }
+            if (held) {
+                var borderTarget = Vec2(pos)
+                val borderPosN = when (borderN) {
+                    0 -> {
+                        borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
+                        Vec2(0, 0)
+                    }
+                    1 -> {
+                        borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
+                        Vec2(1, 0)
+                    }
+                    2 -> {
+                        borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
+                        Vec2(0, 1)
+                    }
+                    3 -> {
+                        borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
+                        Vec2(0, 0)
+                    }
+                    else -> Vec2(0, 0)
+                }
+                val clampMin = Vec2 { if (borderN == it + 1) visibilityRect.min[it] else -Float.MAX_VALUE }
+                val clampMax = Vec2 { if (borderN == (if (it == 0) 3 else 0)) visibilityRect.max[it] else Float.MAX_VALUE }
+                borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
+                calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
+            }
+        }
+        popID()
+
+        // Restore nav layer
+        dc.navLayerCurrent = NavLayer.Main
+
+        // Navigation resize (keyboard/gamepad)
+        if (g.navWindowingTarget?.rootWindow === this) {
+            val navResizeDelta = Vec2()
+            if (g.navInputSource == InputSource.NavKeyboard && g.io.keyShift)
+                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
+            if (g.navInputSource == InputSource.NavGamepad)
+                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
+            if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
+                val NAV_RESIZE_SPEED = 600f
+                navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * kotlin.math.min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
+                navResizeDelta put glm.max(navResizeDelta, visibilityRect.min - pos - size)
+                g.navWindowingToggleLayer = false
+                g.navDisableMouseHover = true
+                resizeGripCol[0] = Col.ResizeGripActive.u32
+                // FIXME-NAV: Should store and accumulate into a separate size buffer to handle sizing constraints properly, right now a constraint will make us stuck.
+                sizeTarget put calcSizeAfterConstraint(sizeFull + navResizeDelta)
+            }
+        }
+
+        // Apply back modified position/size to window
+        if (sizeTarget.x != Float.MAX_VALUE) {
+            sizeFull put sizeTarget
+            markIniSettingsDirty()
+        }
+        if (posTarget.x != Float.MAX_VALUE) {
+            pos = floor(posTarget)
+            markIniSettingsDirty()
+        }
+
+        size put sizeFull
+
+        return borderHeld to retAutoFit
+    }
+
+    // ~RenderWindowOuterBorders
     fun renderOuterBorders() {
 
         val rounding = windowRounding
@@ -872,7 +1016,8 @@ class Window(var context: Context,
         }
     }
 
-    /** Render title text, collapse button, close button */
+    /** ~RenderWindowTitleBarContents
+     *  Render title text, collapse button, close button */
     fun renderTitleBarContents(titleBarRect: Rect, name: String, pOpen: KMutableProperty0<Boolean>?) {
 
         val hasCloseButton = pOpen != null
@@ -1051,9 +1196,12 @@ class Window(var context: Context,
                 val sizeMin =
                     Vec2(style.windowMinSize) // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
                 if (isPopup || isMenu) sizeMin minAssign 4f
+
+                // FIXME-VIEWPORT-WORKAREA: May want to use GetWorkSize() instead of Size depending on the type of windows?
+                val availSize = ImGui.mainViewport.size
                 val sizeAutoFit = glm.clamp(sizeDesired,
                                             sizeMin,
-                                            glm.max(sizeMin, Vec2(io.displaySize) - style.displaySafeAreaPadding * 2f))
+                                            glm.max(sizeMin, availSize - style.displaySafeAreaPadding * 2f))
 
                 // When the window cannot fit all contents (either because of constraints, either because screen is too small),
                 // we are growing the size on the other axis to compensate for expected scrollbar.
@@ -1071,18 +1219,19 @@ class Window(var context: Context,
     }
 
     /** AddWindowToDrawData */
-    infix fun addToDrawData(outList: ArrayList<DrawList>) {
+    infix fun addToDrawData(layer: Int) {
+        val viewport = g.viewports[0]
         io.metricsRenderWindows++
-        drawList addTo outList
-        dc.childWindows.filter { it.isActiveAndVisible }  // clipped children may have been marked not active
-            .forEach { it addToDrawData outList }
+        drawList addTo viewport.drawDataBuilder!!.layers[layer]
+        dc.childWindows.filter { it.isActiveAndVisible }  // Clipped children may have been marked not active
+            .forEach { it addToDrawData layer }
     }
 
     /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)
      *  ~AddRootWindowToDrawData    */
-    fun addToDrawData() {
+    fun addRootToDrawData() {
         val layer = (flags has Wf._Tooltip).i
-        addToDrawData(g.drawDataBuilder.layers[layer])
+        addToDrawData(layer)
     }
 
     /** ~SetWindowConditionAllowFlags */

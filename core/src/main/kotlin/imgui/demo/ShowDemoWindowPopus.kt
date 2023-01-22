@@ -20,6 +20,7 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
 import imgui.ImGui.openPopup
 import imgui.ImGui.openPopupOnItemClick
@@ -198,7 +199,7 @@ object ShowDemoWindowPopups {
                     openPopup("Delete?")
 
                 // Always center this window when appearing
-                val center = Vec2(io.displaySize * 0.5f)
+                val center = mainViewport.center
                 setNextWindowPos(center, Cond.Appearing, Vec2(0.5f))
 
                 popupModal("Delete?", null, Wf.AlwaysAutoResize.i) {

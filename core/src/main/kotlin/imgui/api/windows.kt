@@ -14,6 +14,7 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
+import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
@@ -26,8 +27,6 @@ import imgui.internal.lengthSqr
 import imgui.internal.sections.*
 import imgui.static.createNewWindow
 import imgui.static.setCurrentWindow
-import imgui.static.updateWindowManualResize
-import imgui.static.viewportRect
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -97,7 +96,7 @@ interface windows {
         val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
         if (flags has Wf._Popup) {
             val popupRef =
-                    g.openPopupStack[g.beginPopupStack.size] // We recycle popups so treat window as activated if popup id changed
+                g.openPopupStack[g.beginPopupStack.size] // We recycle popups so treat window as activated if popup id changed
             windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
         }
@@ -155,14 +154,14 @@ interface windows {
                 window.setWindowPosVal put g.nextWindowData.posVal
                 window.setWindowPosPivot put g.nextWindowData.posPivotVal
                 window.setWindowPosAllowFlags =
-                        window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
+                    window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
             } else window.setPos(g.nextWindowData.posVal, g.nextWindowData.posCond)
         }
         if (g.nextWindowData.flags has NextWindowDataFlag.HasSize) {
             windowSizeXsetByApi =
-                    window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
+                window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
             windowSizeYsetByApi =
-                    window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
+                window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
         }
         if (g.nextWindowData.flags has NextWindowDataFlag.HasScroll) {
@@ -178,14 +177,14 @@ interface windows {
         if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize) window.contentSizeExplicit put g.nextWindowData.contentSizeVal
         else if (firstBeginOfTheFrame) window.contentSizeExplicit put 0f
         if (g.nextWindowData.flags has NextWindowDataFlag.HasCollapsed) window.setCollapsed(g.nextWindowData.collapsedVal,
-                g.nextWindowData.collapsedCond)
+                                                                                            g.nextWindowData.collapsedCond)
         if (g.nextWindowData.flags has NextWindowDataFlag.HasFocus) focusWindow(window)
         if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, false)
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) { // Initialize
             val windowIsChildTooltip =
-                    flags has Wf._ChildWindow && flags has Wf._Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
+                flags has Wf._ChildWindow && flags has Wf._Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
 
             window.active = true
             window.hasCloseButton = pOpen != null
@@ -254,12 +253,12 @@ interface windows {
             }
             window.windowPadding put style.windowPadding
             if (flags has Wf._ChildWindow && !(flags has (Wf.AlwaysUseWindowPadding or Wf._Popup)) && window.windowBorderSize == 0f) window.windowPadding.put(
-                    0f,
-                    if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
+                0f,
+                if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
 
             // Lock menu offset so size calculation can use it as menu-bar windows need a minimum size.
             window.dc.menuBarOffset.x =
-                    (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
+                (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
             window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
 
             // Collapse window by double-clicking on title bar
@@ -269,7 +268,7 @@ interface windows {
                     so verify that we don't have items over the title bar.                 */
                 val titleBarRect = window.titleBarRect()
                 if (g.hoveredWindow === window && g.hoveredId == 0 && g.hoveredIdPreviousFrame == 0 && isMouseHoveringRect(
-                                titleBarRect) && io.mouseDoubleClicked[0]
+                        titleBarRect) && io.mouseDoubleClicked[0]
                 ) window.wantCollapseToggle = true
                 if (window.wantCollapseToggle) {
                     window.collapsed = !window.collapsed
@@ -299,12 +298,12 @@ interface windows {
                     but otherwise don't honor WindowFlag.AlwaysAutoResize when collapsed.                 */
                 if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
                     window.sizeFull.x =
-                            if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
+                        if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
                     useCurrentSizeForScrollbarX = true
                 }
                 if (!windowSizeYsetByApi && window.autoFitFrames.y > 0) {
                     window.sizeFull.y =
-                            if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
+                        if (window.autoFitOnlyGrows) max(window.sizeFull.y, sizeAutoFit.y) else sizeAutoFit.y
                     useCurrentSizeForScrollbarY = true
                 }
                 if (!window.collapsed) window.markIniSettingsDirty()
@@ -339,20 +338,22 @@ interface windows {
             }
 
             val windowPosWithPivot =
-                    window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
+                window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
             if (windowPosWithPivot) // Position given a pivot (e.g. for centering)
                 window.setPos(window.setWindowPosVal - window.size * window.setWindowPosPivot, Cond.None)
             else if (flags has Wf._ChildMenu) window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf._Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) window.pos =
-                    findBestWindowPosForPopup(window)
+                findBestWindowPosForPopup(window)
             else if (flags has Wf._Tooltip && !windowPosSetByApi && !windowIsChildTooltip) window.pos =
-                    findBestWindowPosForPopup(window)
+                findBestWindowPosForPopup(window)
 
             // Calculate the range of allowed position for that window (to be movable and visible past safe area padding)
             // When clamping to stay visible, we will enforce that window->Pos stays inside of visibility_rect.
-            val viewportRect = viewportRect
+            val viewport = mainViewport as ViewportP
+            val viewportRect = viewport.mainRect
+            val viewportWorkRect = viewport.workRect
             val visibilityPadding = style.displayWindowPadding max style.displaySafeAreaPadding
-            val visibilityRect = Rect(viewportRect.min + visibilityPadding, viewportRect.max - visibilityPadding)
+            val visibilityRect = Rect(viewportWorkRect.min + visibilityPadding, viewportWorkRect.max - visibilityPadding)
 
             // Clamp position/size so window stays visible within its viewport or monitor
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
@@ -387,15 +388,14 @@ interface windows {
             var borderHeld = -1
             val resizeGripCol = IntArray(4)
             val resizeGripCount =
-                    if (io.configWindowsResizeFromEdges) 2 else 1 // Allow resize from lower-left if we have the mouse cursor feedback for it.
+                if (io.configWindowsResizeFromEdges) 2 else 1 // Allow resize from lower-left if we have the mouse cursor feedback for it.
             val resizeGripDrawSize = floor(max(g.fontSize * 1.1f, window.windowRounding + 1f + g.fontSize * 0.2f))
             if (!window.collapsed) {
-                val (borderHeld_, ret) = updateWindowManualResize(window,
-                        sizeAutoFit,
-                        borderHeld,
-                        resizeGripCount,
-                        resizeGripCol,
-                        visibilityRect)
+                val (borderHeld_, ret) = window.updateManualResize(sizeAutoFit,
+                                                                   borderHeld,
+                                                                   resizeGripCount,
+                                                                   resizeGripCol,
+                                                                   visibilityRect)
                 if (ret) {
                     useCurrentSizeForScrollbarX = true
                     useCurrentSizeForScrollbarY = true
@@ -412,19 +412,19 @@ interface windows {
                 val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - decorationUpHeight)
                 val availSizeFromLastFrame = window.innerRect.size + window.scrollbarSizes
                 val neededSizeFromLastFrame =
-                        if (windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
+                    if (windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
                 val sizeXforScrollbars =
-                        if (useCurrentSizeForScrollbarX) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
+                    if (useCurrentSizeForScrollbarX) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
                 val sizeYforScrollbars =
-                        if (useCurrentSizeForScrollbarY) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y //bool scrollbar_y_from_last_frame = window->ScrollbarY; // FIXME: May want to use that in the ScrollbarX expression? How many pros vs cons?
+                    if (useCurrentSizeForScrollbarY) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y //bool scrollbar_y_from_last_frame = window->ScrollbarY; // FIXME: May want to use that in the ScrollbarX expression? How many pros vs cons?
                 window.scrollbar.y =
-                        flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
+                    flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
                 window.scrollbar.x =
-                        flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+                    flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 if (window.scrollbar.x && !window.scrollbar.y) window.scrollbar.y =
-                        neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
+                    neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f,
-                        if (window.scrollbar.x) style.scrollbarSize else 0f)
+                                          if (window.scrollbar.x) style.scrollbarSize else 0f)
             }
 
             val titleBarRect: Rect
@@ -454,9 +454,9 @@ interface windows {
                 // - NavUpdatePageUpPageDown()
                 // - Scrollbar()
                 innerRect.put(minX = pos.x,
-                        minY = pos.y + decorationUpHeight,
-                        maxX = pos.x + size.x - scrollbarSizes.x,
-                        maxY = pos.y + size.y - scrollbarSizes.y)
+                              minY = pos.y + decorationUpHeight,
+                              maxX = pos.x + size.x - scrollbarSizes.x,
+                              maxY = pos.y + size.y - scrollbarSizes.y)
 
                 // Inner clipping rectangle.
                 // Will extend a little bit outside the normal work region.
@@ -470,10 +470,10 @@ interface windows {
                     else -> window.windowBorderSize
                 }
                 innerClipRect.put(
-                        minX = floor(0.5f + innerRect.min.x + max(floor(windowPadding.x * 0.5f), windowBorderSize)),
-                        minY = floor(0.5f + innerRect.min.y + topBorderSize),
-                        maxX = floor(0.5f + innerRect.max.x - max(floor(windowPadding.x * 0.5f), windowBorderSize)),
-                        maxY = floor(0.5f + innerRect.max.y - windowBorderSize))
+                    minX = floor(0.5f + innerRect.min.x + max(floor(windowPadding.x * 0.5f), windowBorderSize)),
+                    minY = floor(0.5f + innerRect.min.y + topBorderSize),
+                    maxX = floor(0.5f + innerRect.max.x - max(floor(windowPadding.x * 0.5f), windowBorderSize)),
+                    maxY = floor(0.5f + innerRect.max.y - windowBorderSize))
                 innerClipRect clipWithFull hostRect
             }
 
@@ -499,16 +499,16 @@ interface windows {
 
             // Setup draw list and outer clipping rectangle
             assert(window.drawList.cmdBuffer.size == 1 && window.drawList.cmdBuffer[0].elemCount == 0)
-            window.drawList.pushTextureId(g.font.containerAtlas.texID)
+            window.drawList.pushTextureID(g.font.containerAtlas.texID)
             pushClipRect(hostRect.min, hostRect.max, false)
 
             // Draw modal window background (darkens what is behind them, all viewports)
             val dimBgForModal =
-                    flags has Wf._Modal && window === topMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
+                flags has Wf._Modal && window === topMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
             val dimBgForWindowList = g.navWindowingTargetAnim?.rootWindow === window
             if (dimBgForModal || dimBgForWindowList) {
                 val dimBgCol =
-                        getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
+                    getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
             }
 
@@ -518,9 +518,9 @@ interface windows {
                 bb expand g.fontSize
                 if (viewportRect !in bb) // Avoid drawing if the window covers all the viewport anyway
                     window.drawList.addRectFilled(bb.min,
-                            bb.max,
-                            getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f),
-                            g.style.windowRounding)
+                                                  bb.max,
+                                                  getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f),
+                                                  g.style.windowRounding)
             }
 
             // Since 1.71, child window can render their decoration (bg color, border, scrollbars, etc.) within their parent to save a draw call.
@@ -531,18 +531,18 @@ interface windows {
             run {
                 var renderDecorationsInParent = false
                 if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip) if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0) renderDecorationsInParent =
-                        true
+                    true
                 if (renderDecorationsInParent) window.drawList = parentWindow!!.drawList
 
                 // Handle title bar, scrollbar, resize grips and resize borders
                 val windowToHighlight = g.navWindowingTarget ?: g.navWindow
                 val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
-                        ?: false)
+                    ?: false)
                 window.renderDecorations(titleBarRect,
-                        titleBarIsHighlight,
-                        resizeGripCount,
-                        resizeGripCol,
-                        resizeGripDrawSize)
+                                         titleBarIsHighlight,
+                                         resizeGripCount,
+                                         resizeGripCol,
+                                         resizeGripDrawSize)
 
                 if (renderDecorationsInParent) window.drawList = window.drawListInst
             } // Draw navigation selection/windowing rectangle border
@@ -555,11 +555,11 @@ interface windows {
                     rounding = window.windowRounding
                 }
                 window.drawList.addRect(bb.min,
-                        bb.max,
-                        getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha),
-                        rounding,
-                        0.inv(),
-                        3f)
+                                        bb.max,
+                                        getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha),
+                                        rounding,
+                                        0.inv(),
+                                        3f)
             }
 
             with(window) {
@@ -574,13 +574,13 @@ interface windows {
                 val allowScrollbarX = flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
                 val workRectSizeX =
-                        if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f,
-                                                                                        size.x - windowPadding.x * 2f - scrollbarSizes.x)
+                    if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f,
+                                                                                    size.x - windowPadding.x * 2f - scrollbarSizes.x)
                 val workRectSizeY =
-                        if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f,
-                                                                                        size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y)
+                    if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f,
+                                                                                    size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y)
                 workRect.min.put(floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
-                        floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
+                                 floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
                 parentWorkRect put workRect
 
@@ -590,7 +590,7 @@ interface windows {
                 // Used by:
                 // - Mouse wheel scrolling + many other things
                 contentRegionRect.min.put( // need to split min max, because max relies on min
-                        x = pos.x - scroll.x + windowPadding.x, y = pos.y - scroll.y + windowPadding.y + decorationUpHeight)
+                    x = pos.x - scroll.x + windowPadding.x, y = pos.y - scroll.y + windowPadding.y + decorationUpHeight)
                 contentRegionRect.max.put(x = contentRegionRect.min.x + when (contentSizeExplicit.x) {
                     0f -> size.x - windowPadding.x * 2f - scrollbarSizes.x
                     else -> contentSizeExplicit.x
@@ -605,7 +605,7 @@ interface windows {
                 dc.groupOffset = 0f
                 dc.columnsOffset = 0f
                 dc.cursorStartPos.put(pos.x + dc.indent + dc.columnsOffset,
-                        pos.y + decorationUpHeight + windowPadding.y - scroll.y)
+                                      pos.y + decorationUpHeight + windowPadding.y - scroll.y)
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos
@@ -619,7 +619,7 @@ interface windows {
                 dc.navLayerActiveMask = dc.navLayerActiveMaskNext
                 dc.navLayerActiveMaskNext = 0x00
                 dc.navFocusScopeIdCurrent =
-                        if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
+                    if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = scrollMax.y > 0f
 

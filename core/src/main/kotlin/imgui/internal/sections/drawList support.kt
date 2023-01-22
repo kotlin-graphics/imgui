@@ -85,6 +85,9 @@ class DrawDataBuilder {
 
     fun clear() = layers.forEach { it.clear() }
 
+    val drawListCount: Int
+        get() = layers.sumOf { it.size }
+
     fun flattenIntoSingleLayer() {
         val size = layers.map { it.size }.count()
         layers[0].ensureCapacity(size)

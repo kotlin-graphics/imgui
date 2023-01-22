@@ -261,7 +261,7 @@ internal interface PopupsModalsTooltips {
 
     fun findBestWindowPosForPopup(window: Window): Vec2 {
 
-        val rOuter = window.getAllowedExtentRect()
+        val rOuter = window.allowedExtentRect
         if (window.flags has Wf._ChildMenu) {/*  Child menus typically request _any_ position within the parent menu item,
                 and then we move the new menu outside the parent bounds.
                 This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
@@ -302,7 +302,10 @@ internal interface PopupsModalsTooltips {
     }
 
     /** rAvoid = the rectangle to avoid (e.g. for tooltip it is a rectangle around the mouse cursor which we want to avoid. for popups it's a small point around the cursor.)
-     *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it. */
+     *  rOuter = the visible area rectangle, minus safe area padding. If our popup size won't fit because of safe area padding we ignore it.
+     *  (r_outer is usually equivalent to the viewport rectangle minus padding, but when multi-viewports are enabled and monitor
+     *  information are available, it may represent the entire platform monitor from the frame of reference of the current viewport.
+     *  this allows us to have tooltips/popups displayed out of the parent viewport.)*/
     fun findBestWindowPosForPopupEx(refPos: Vec2, size: Vec2, lastDirPtr: KMutableProperty0<Dir>, rOuter: Rect,
                                     rAvoid: Rect, policy: PopupPositionPolicy): Vec2 {
 

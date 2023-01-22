@@ -93,7 +93,8 @@ interface windowsUtilities {
 
     // Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
 
-    /** set next window position. call before Begin()   */
+    /** set next window position. call before Begin()
+     *  @param pos: safe, no writes */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
@@ -105,7 +106,8 @@ interface windowsUtilities {
         }
     }
 
-    /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()   */
+    /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()
+     *  @param size: safe, no writes */
     fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
 //        JVM, useless
 //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }

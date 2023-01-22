@@ -17,6 +17,7 @@ import imgui.ImGui.logButtons
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
+import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -49,6 +50,7 @@ object ExampleApp {
         // Examples Apps (accessible from the "Examples" menu)
         var mainMenuBar = false
         var documents = false
+
         var console = false
         var log = false
         var layout = false
@@ -120,7 +122,8 @@ object ExampleApp {
         if (noClose) open = null // Don't pass our bool* to Begin
         // We specify a default position/size in case there's no data in the .ini file.
         // We only do it to make the demo applications a little more welcoming, but typically this isn't required.
-        setNextWindowPos(Vec2(650, 20), Cond.FirstUseEver)
+        val mainViewport = mainViewport
+        setNextWindowPos(Vec2(mainViewport.workPos.x + 650, mainViewport.workPos.y + 20), Cond.FirstUseEver)
         setNextWindowSize(Vec2(550, 680), Cond.FirstUseEver)
 
         // Main body of the Demo window starts here.

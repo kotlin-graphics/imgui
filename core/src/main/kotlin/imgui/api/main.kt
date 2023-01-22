@@ -5,7 +5,6 @@ import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.callHooks
@@ -32,7 +31,7 @@ import imgui.classes.IO
 import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.*
-import imgui.internal.classes.PoolIdx
+import imgui.internal.classes.Rect
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or
 import imgui.static.*
@@ -53,12 +52,12 @@ interface main {
     /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
     val io: IO
         get() = gImGui?.io
-                ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
+            ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
     /** access the Style structure (colors, sizes). Always use PushStyleCol(), PushStyleVar() to modify style mid-frame! */
     val style: Style
         get() = gImGui?.style
-                ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
+            ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
 
     fun newFrame() {
 
@@ -89,13 +88,18 @@ interface main {
         g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
         g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        io.framerate = if(g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size.f) else Float.MAX_VALUE
+        io.framerate = if (g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size.f) else Float.MAX_VALUE
+
+        updateViewportsNewFrame()
 
         // Setup current font and draw list shared data
         io.fonts.locked = true
         setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
-        g.drawListSharedData.clipRectFullscreen = Vec4(0f, 0f, io.displaySize.x, io.displaySize.y)
+        val virtualSpace = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+        for (v in g.viewports)
+            virtualSpace add v.mainRect
+        g.drawListSharedData.clipRectFullscreen = virtualSpace.toVec4()
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
         g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
         var flags = Dlf.None.i
@@ -109,16 +113,9 @@ interface main {
             flags = flags or Dlf.AllowVtxOffset
         g.drawListSharedData.initialFlags = flags
 
-        g.backgroundDrawList._resetForNewFrame()
-        g.backgroundDrawList.pushTextureId(io.fonts.texID)
-        g.backgroundDrawList.pushClipRectFullScreen()
-
-        g.foregroundDrawList._resetForNewFrame()
-        g.foregroundDrawList.pushTextureId(io.fonts.texID)
-        g.foregroundDrawList.pushClipRectFullScreen()
-
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
-        g.drawData.clear()
+        for (v in g.viewports)
+            v.drawDataP!!.clear()
 
         // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
         if (g.dragDropActive && g.dragDropPayload.sourceId == g.activeId)
@@ -280,7 +277,7 @@ interface main {
         if (io.imeSetInputScreenPosFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
             if (DEBUG)
                 Unit // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
-//            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
+            //            io.imeSetInputScreenPosFn!!(g.platformImePos.x.i, g.platformImePos.y.i)
             io.imeSetInputScreenPosFn!!(1000, 1000)
             g.platformImeLastPos put g.platformImePos
         }
@@ -350,46 +347,57 @@ interface main {
         if (g.frameCountEnded != g.frameCount) endFrame()
         g.frameCountRendered = g.frameCount
         io.metricsRenderWindows = 0
-        g.drawDataBuilder.clear()
 
         g callHooks ContextHookType.RenderPre
 
-        // Add background ImDrawList
-        if (g.backgroundDrawList.vtxBuffer.hasRemaining())
-            g.backgroundDrawList addTo g.drawDataBuilder.layers[0]
+        // Add background ImDrawList (for each active viewport)
+        for (viewport in g.viewports) {
+            viewport.drawDataBuilder!!.clear()
+            if (viewport.drawLists[0] != null)
+                viewport.backgroundDrawList addTo viewport.drawDataBuilder!!.layers[0]
+        }
 
         // Add ImDrawList to render
         val windowsToRenderTopMost = arrayOf(
-                g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
-                g.navWindowingTarget?.let { g.navWindowingListWindow })
+            g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
+            g.navWindowingTarget?.let { g.navWindowingListWindow })
         g.windows
                 .filter { it.isActiveAndVisible && it.flags hasnt Wf._ChildWindow && it !== windowsToRenderTopMost[0] && it !== windowsToRenderTopMost[1] }
-                .forEach { it.addToDrawData() }
+                .forEach { it.addRootToDrawData() }
         windowsToRenderTopMost
                 .filterNotNull()
                 .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
-                .forEach { it.addToDrawData() }
-        g.drawDataBuilder.flattenIntoSingleLayer()
+                .forEach { it.addRootToDrawData() }
 
-        // Draw software mouse cursor if requested
-        if (io.mouseDrawCursor)
-            g.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
-        // Add foreground ImDrawList
-        if (g.foregroundDrawList.vtxBuffer.hasRemaining())
-            g.foregroundDrawList addTo g.drawDataBuilder.layers[0]
+        // Setup ImDrawData structures for end-user
+        io.metricsRenderVertices = 0
+        io.metricsRenderIndices = 0
+        for (viewport in g.viewports) {
+            viewport.drawDataBuilder!!.flattenIntoSingleLayer()
 
-        // Setup ImDrawData structure for end-user
-        g.drawData setup g.drawDataBuilder.layers[0]
-        io.metricsRenderVertices = g.drawData.totalVtxCount
-        io.metricsRenderIndices = g.drawData.totalIdxCount
+            // Draw software mouse cursor if requested by io.MouseDrawCursor flag
+            if (io.mouseDrawCursor)
+                viewport.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
+            // Add foreground ImDrawList (for each active viewport)
+            if (viewport.drawLists[1] != null)
+                viewport.foregroundDrawList addTo viewport.drawDataBuilder!!.layers[0]
+
+            viewport.setupDrawData(viewport.drawDataBuilder!!.layers[0])
+            val drawData = viewport.drawDataP!!
+            io.metricsRenderVertices += drawData.totalVtxCount
+            io.metricsRenderIndices += drawData.totalIdxCount
+        }
 
         g callHooks ContextHookType.RenderPost
     }
 
     /** Pass this to your backend rendering function! Valid after Render() and until the next call to NewFrame() */
     val drawData: DrawData?
-        get() = when (Platform.get()) {
-            Platform.MACOSX -> g.drawData.clone()
-            else -> g.drawData
-        }.takeIf { it.valid }
+        get() {
+            val viewport = g.viewports[0]
+            return when (Platform.get()) {
+                Platform.MACOSX -> viewport.drawDataP!!.clone()
+                else -> viewport.drawDataP!!
+            }.takeIf { it.valid }
+        }
 }

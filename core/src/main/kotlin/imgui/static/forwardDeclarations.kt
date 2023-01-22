@@ -2,7 +2,6 @@ package imgui.static
 
 import gli_.has
 import glm_.L
-import glm_.f
 import glm_.i
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
@@ -13,7 +12,6 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
-import imgui.internal.classes.PoolIdx
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.SettingsHandler
@@ -111,7 +109,7 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
     g.windowsById[id] = this
 
     // Default/arbitrary window position. Use SetNextWindowPos() with the appropriate condition flag to change the initial position of a window.
-    pos put 60f
+    pos put (ImGui.mainViewport.pos + 60f)
 
     // User can disable loading and saving of settings. Tooltip and child windows also don't store settings.
     if (flags hasnt Wf.NoSavedSettings) {
@@ -143,10 +141,6 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 // CheckStacksSize, CalcNextScrollFromScrollTargetAndClamp and AddWindowToSortBuffer are Window class methods
 
 // AddDrawListToDrawData is a DrawList class method
-
-/** ~GetViewportRect */
-val viewportRect: Rect
-    get() = Rect(0f, 0f, io.displaySize.x.f, io.displaySize.y.f)
 
 //-----------------------------------------------------------------------------
 // Settings
