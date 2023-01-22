@@ -71,6 +71,8 @@ class TabBar {
 
     /** Selected tab/window */
     var selectedTabId: ID = 0
+
+    /** Next selected tab/window. Will also trigger a scrolling animation */
     var nextSelectedTabId: ID = 0
 
     /** Can occasionally be != SelectedTabId (e.g. when previewing contents for CTRL+TAB preview) */
@@ -501,17 +503,17 @@ class TabBar {
             if (sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
 
         // Setup next selected tab
-        var scrollTrackSelectedTabID: ID = 0
+        var scrollToTabID: ID = 0
         if (nextSelectedTabId != 0) {
             selectedTabId = nextSelectedTabId
             nextSelectedTabId = 0
-            scrollTrackSelectedTabID = selectedTabId
+            scrollToTabID = selectedTabId
         }
 
         // Process order change request (we could probably process it when requested but it's just saner to do it in a single spot).
         if (reorderRequestTabId != 0) {
             if (processReorder() && reorderRequestTabId == selectedTabId)
-                scrollTrackSelectedTabID = reorderRequestTabId
+                scrollToTabID = reorderRequestTabId
             reorderRequestTabId = 0
         }
 
@@ -519,7 +521,7 @@ class TabBar {
         val tabListPopupButton = flags has TabBarFlag.TabListPopupButton
         if (tabListPopupButton) tabListPopupButton()?.let { tabToSelect -> // NB: Will alter BarRect.Min.x!
             selectedTabId = tabToSelect.id
-            scrollTrackSelectedTabID = tabToSelect.id
+            scrollToTabID = tabToSelect.id
         }
 
         // Leading/Trailing tabs will be shrink only if central one aren't visible anymore, so layout the shrink data as: leading, trailing, central
@@ -541,8 +543,8 @@ class TabBar {
                 mostRecentlySelectedTab = tab
             if (tab.id == selectedTabId) foundSelectedTabID = true
 
-            if (scrollTrackSelectedTabID == 0 && g.navJustMovedToId == tab.id)
-                scrollTrackSelectedTabID = tab.id
+            if (scrollToTabID == 0 && g.navJustMovedToId == tab.id)
+                scrollToTabID = tab.id
 
             // Refresh tab width immediately, otherwise changes of style e.g. style.FramePadding.x would noticeably lag in the tab bar.
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
@@ -574,10 +576,10 @@ class TabBar {
         // Horizontal scrolling buttons
         // (note that TabBarScrollButtons() will alter BarRect.Max.x)
         if ((widthAllTabsIdeal > barRect.width && tabs.size > 1) && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll)
-            scrollingButtons()?.let { scrollTrackSelectedTab ->
-                scrollTrackSelectedTabID = scrollTrackSelectedTab.id
-                if (scrollTrackSelectedTab.flags hasnt TabItemFlag._Button)
-                    selectedTabId = scrollTrackSelectedTabID
+            scrollingButtons()?.let { scrollAndSelectTab ->
+                scrollToTabID = scrollAndSelectTab.id
+                if (scrollAndSelectTab.flags == 0)
+                    selectedTabId = scrollToTabID
             }
 
         // Shrink widths if full tabs don't fit in their allocated space
@@ -635,7 +637,7 @@ class TabBar {
         if (selectedTabId == 0 && nextSelectedTabId == 0)
             mostRecentlySelectedTab?.let {
                 selectedTabId = it.id
-                scrollTrackSelectedTabID = selectedTabId
+                scrollToTabID = selectedTabId
             }
 
         // Lock in visible tab
@@ -643,8 +645,8 @@ class TabBar {
         visibleTabWasSubmitted = false
 
         // Update scrolling
-        if (scrollTrackSelectedTabID != 0)
-            findTabByID(scrollTrackSelectedTabID)?.let { scrollToTab(it, sections) }
+        if (scrollToTabID != 0)
+            scrollToTab(scrollToTabID, sections)
         scrollingAnim = scrollClamp(scrollingAnim)
         scrollingTarget = scrollClamp(scrollingTarget)
         if (scrollingAnim != scrollingTarget) { // Scrolling speed adjust itself so we can always reach our target in 1/3 seconds.
@@ -688,9 +690,14 @@ class TabBar {
     /** ~TabBarScrollClamp */
     fun scrollClamp(scrolling: Float): Float = (scrolling min (widthAllTabs - barRect.width)) max 0f
 
-    /** ~TabBarScrollToTab */
-    fun scrollToTab(tab: TabItem, sections: Array<TabBarSection>) {
-        if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing)) return
+    /** ~TabBarScrollToTab
+     *
+     *  Note: we may scroll to tab that are not selected! e.g. using keyboard arrow keys */
+    fun scrollToTab(tabId: ID, sections: Array<TabBarSection>) {
+
+        val tab = findTabByID(tabId) ?: return
+        if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing))
+            return
 
         val margin =
             g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
