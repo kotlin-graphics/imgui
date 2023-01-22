@@ -17,39 +17,61 @@ import imgui.internal.*
 import imgui.internal.sections.*
 import imgui.DragDropFlag as Ddf
 
-/** Drag and Drop
- *  - If you stop calling BeginDragDropSource() the payload is preserved however it won't have a preview tooltip (we currently display a fallback "..." tooltip as replacement) */
+// Drag and Drop
+// - On source items, call BeginDragDropSource(), if it returns true also call SetDragDropPayload() + EndDragDropSource().
+// - On target candidates, call BeginDragDropTarget(), if it returns true also call AcceptDragDropPayload() + EndDragDropTarget().
+// - If you stop calling BeginDragDropSource() the payload is preserved however it won't have a preview tooltip (we currently display a fallback "..." tooltip, see #1725)
+// - An item can be both drag source and drop target.
 interface dragAndDrop {
 
-    /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
+    /** call after submitting an item which may be dragged. when this return true, you can call SetDragDropPayload() + EndDragDropSource()
      *
-     *  When this returns true you need to:
-     *      a) call setDragDropPayload() exactly once
-     *      b) you may render the payload visual/description,
-     *      c) call endDragDropSource()     */
+     *  When this returns true you need to: a) call SetDragDropPayload() exactly once, b) you may render the payload visual/description, c) call EndDragDropSource()
+     *  If the item has an identifier:
+     *  - This assume/require the item to be activated (typically via ButtonBehavior).
+     *  - Therefore if you want to use this with a mouse button other than left mouse button, it is up to the item itself to activate with another button.
+     *  - We then pull and use the mouse button that was used to activate the item and use it to carry on the drag.
+     *  If the item has no identifier:
+     *  - Currently always assume left mouse button. */
     fun beginDragDropSource(flag: Ddf): Boolean = beginDragDropSource(flag.i)
 
-    /** Call when the current item is active. If this return true, you can call SetDragDropPayload() + EndDragDropSource()
+    /** call after submitting an item which may be dragged. when this return true, you can call SetDragDropPayload() + EndDragDropSource()
      *
-     *  When this returns true you need to:
-     *      a) call setDragDropPayload() exactly once
-     *      b) you may render the payload visual/description,
-     *      c) call endDragDropSource()     */
+     *  When this returns true you need to: a) call SetDragDropPayload() exactly once, b) you may render the payload visual/description, c) call EndDragDropSource()
+     *  If the item has an identifier:
+     *  - This assume/require the item to be activated (typically via ButtonBehavior).
+     *  - Therefore if you want to use this with a mouse button other than left mouse button, it is up to the item itself to activate with another button.
+     *  - We then pull and use the mouse button that was used to activate the item and use it to carry on the drag.
+     *  If the item has no identifier:
+     *  - Currently always assume left mouse button. */
     fun beginDragDropSource(flags: DragDropFlags = 0): Boolean {
 
         var window: Window? = g.currentWindow!!
 
+        // FIXME-DRAGDROP: While in the common-most "drag from non-zero active id" case we can tell the mouse button,
+        // in both SourceExtern and id==0 cases we may requires something else (explicit flags or some heuristic).
+        var mouseButton = MouseButton.Left
+
         val sourceDragActive: Boolean
         var sourceId: ID
         var sourceParentId: ID = 0
-        val mouseButton = MouseButton.Left
         if (flags hasnt Ddf.SourceExtern) {
             sourceId = window!!.dc.lastItemId
-            if (sourceId != 0 && g.activeId != sourceId) // Early out for most common case
-                return false
+            if (sourceId != 0) {
+                // Common path: items with ID
+                if (g.activeId != sourceId)
+                    return false
+                if (g.activeIdMouseButton != -1)
+                    mouseButton = MouseButton.of(g.activeIdMouseButton)
+                if (!g.io.mouseDown[mouseButton.i])
+                    return false
+                g.activeIdAllowOverlap = false
+            }
+            else {
+                // Uncommon path: items without ID
+                if (!g.io.mouseDown[mouseButton.i])
+                    return false
 
-            if (!io.mouseDown[mouseButton.i]) return false
-            if (sourceId == 0) {
                 /*  If you want to use beginDragDropSource() on an item with no unique identifier for interaction,
                     such as text() or image(), you need to:
                     A) Read the explanation below
@@ -76,8 +98,7 @@ interface dragAndDrop {
                 }
                 if(g.activeId == sourceId) // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
                     g.activeIdAllowOverlap = isHovered
-            } else
-                g.activeIdAllowOverlap = false
+            }
             if (g.activeId != sourceId)
                 return false
             sourceParentId = window.idStack.last()
@@ -230,7 +251,7 @@ interface dragAndDrop {
         // Render default drop visuals
         payload.preview = wasAcceptedPreviously
         if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview) {
-            // FIXME-DRAG: Settle on a proper default visuals for drop target.
+            // FIXME-DRAGDROP: Settle on a proper default visuals for drop target.
             r expand 3.5f
             val pushClipRect = r !in window.clipRect
             if (pushClipRect) window.drawList.pushClipRect(r.min - 1, r.max + 1)

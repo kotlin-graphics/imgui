@@ -38,6 +38,7 @@ internal interface basicAccessors {
             g.activeIdTimer = 0f
             g.activeIdHasBeenPressedBefore = false
             g.activeIdHasBeenEditedBefore = false
+            g.activeIdMouseButton = -1
             if (id != 0) {
                 g.lastActiveId = id
                 g.lastActiveIdTimer = 0f

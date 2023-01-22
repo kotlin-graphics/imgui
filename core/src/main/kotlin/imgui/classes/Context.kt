@@ -186,7 +186,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Activating with mouse or nav (gamepad/keyboard) */
     var activeIdSource = InputSource.None
 
-    var activeIdMouseButton = 0
+    var activeIdMouseButton = -1
 
     var activeIdPreviousFrame: ID = 0
 
