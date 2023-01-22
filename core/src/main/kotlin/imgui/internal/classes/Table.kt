@@ -362,9 +362,9 @@ class Table {
         }
         displayOrderToIndex += IntArray(columnsCount)
         rowCellData += Array(columnsCount) { TableCellData() }
-        //        span_allocator.ReserveBytes(0, columnsCount1 * sizeof(ImGuiTableColumn));
-        //        span_allocator.ReserveBytes(1, columnsCount1 * sizeof(ImGuiTableColumnIdx));
-        //        span_allocator.ReserveBytes(2, columnsCount1 * sizeof(ImGuiTableCellData));
+        //        span_allocator.Reserve(0, columnsCount1 * sizeof(ImGuiTableColumn));
+        //        span_allocator.Reserve(1, columnsCount1 * sizeof(ImGuiTableColumnIdx));
+        //        span_allocator.Reserve(2, columnsCount1 * sizeof(ImGuiTableCellData), 4);
         //        table->RawData = IM_ALLOC(span_allocator.GetArenaSizeInBytes());
         //        memset(table->RawData, 0, span_allocator.GetArenaSizeInBytes());
         //        span_allocator.SetArenaBasePtr(table->RawData);
