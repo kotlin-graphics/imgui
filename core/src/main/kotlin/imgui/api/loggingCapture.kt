@@ -10,6 +10,7 @@ import imgui.ImGui.pushID
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.sliderInt
+import imgui.classes.Context
 import imgui.internal.sections.LogType
 import java.io.File
 import java.io.FileWriter
@@ -20,7 +21,7 @@ import java.io.FileWriter
 interface loggingCapture {
 
     /** Start logging/capturing text output to TTY */
-    fun logToTTY(autoOpenDepth: Int  = -1): Nothing = TODO()
+    fun logToTTY(autoOpenDepth: Int = -1): Nothing = TODO()
 
     /** Start logging/capturing text output to given file */
     fun logToFile(maxDepth: Int = -1, file_: File? = null) {
@@ -52,8 +53,8 @@ interface loggingCapture {
         logText("%s", "\n")
 
         when (g.logType) {
-            LogType.TTY -> TODO()//fflush(g.LogFile)
-            LogType.File -> TODO()//fclose(g.LogFile)
+            LogType.TTY -> TODO() //fflush(g.LogFile)
+            LogType.File -> TODO() //fclose(g.LogFile)
             LogType.Buffer -> Unit
             LogType.Clipboard -> {
                 if (g.logBuffer.length > 1) { // TODO 1? maybe 0?
@@ -90,14 +91,26 @@ interface loggingCapture {
     }
 
     /** pass text data straight to log (without being displayed)    */
+    fun logTextV(g: Context, fmt: String, vararg args: Any) {
+        if (g.logFile != null) {
+            val writer = FileWriter(g.logFile!!, true)
+            writer.write(String.format(fmt, *args))
+        } else
+            g.logBuffer.append(fmt.format(*args))
+    }
+
     fun logText(fmt: String, vararg args: Any) {
         if (!g.logEnabled)
             return
 
-        if (g.logFile != null) {
-            val writer = FileWriter(g.logFile, true)
-            writer.write(String.format(fmt, *args))
-        } else
-            g.logBuffer.append(fmt.format(*args))
+        logTextV(g, fmt, args)
+    }
+
+    fun logTextV(fmt: String, vararg args: Any) {
+
+        if (!g.logEnabled)
+            return
+
+        logTextV(g, fmt, args)
     }
 }
