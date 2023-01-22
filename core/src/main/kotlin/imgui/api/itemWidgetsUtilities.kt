@@ -11,9 +11,9 @@ import imgui.internal.sections.has
 import imgui.internal.sections.hasnt
 import imgui.HoveredFlag as Hf
 
-/** Item/Widgets Utilities
- *  - Most of the functions are referring to the last/previous item we submitted.
- *  - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those functions. */
+// Item/Widgets Utilities
+// - Most of the functions are referring to the previous Item that has been submitted.
+// - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those functions.
 interface itemWidgetsUtilities {
 
     /** This is roughly matching the behavior of internal-facing ItemHoverable()
@@ -70,7 +70,10 @@ interface itemWidgetsUtilities {
     val isItemFocused: Boolean
         get() = !(g.navId != g.currentWindow!!.dc.lastItemId || g.navId == 0)
 
-    /** Is the last item clicked? (e.g. button/node just clicked on) == IsMouseClicked(mouse_button) && IsItemHovered() */
+    /** is the last item hovered and mouse clicked on? (**)  == IsMouseClicked(mouse_button) && IsItemHovered()Important. (**) this it NOT equivalent to the behavior of e.g. Button(). Read comments in function definition.
+     *
+     *  Important: this can be useful but it is NOT equivalent to the behavior of e.g.Button()!
+     *  Most widgets have specific reactions based on mouse-up/down state, mouse position etc. */
     fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =
             isMouseClicked(mouseButton) && isItemHovered(Hf.None)
 

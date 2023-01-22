@@ -100,7 +100,7 @@ fun navUpdate() {
         }
 
     // Process navigation init request (select first/default focus)
-    if (g.navInitResultId != 0 && (!g.navDisableHighlight || g.navInitRequestFromMove))
+    if (g.navInitResultId != 0)
         navUpdateInitResult()
     g.navInitRequest = false
     g.navInitRequestFromMove = false

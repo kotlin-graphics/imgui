@@ -122,7 +122,6 @@ interface widgetsMenus {
                 assert(window.dc.navLayerActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 focusWindow(window)
                 setNavIDWithRectRel(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
-                g.navLayer = layer
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navMoveRequestForward = NavForward.ForwardQueued
                 navMoveRequestCancel()

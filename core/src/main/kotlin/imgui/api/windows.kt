@@ -137,8 +137,6 @@ interface windows {
             window.popupId = popupRef.popupId
         }
 
-        if (windowJustAppearingAfterHiddenForResize && flags hasnt Wf._ChildWindow) window.navLastIds[0] = 0
-
         // Update ->RootWindow and others pointers (before any possible call to FocusWindow)
         if (firstBeginOfTheFrame) window.updateParentAndRootLinks(flags, parentWindow)
 

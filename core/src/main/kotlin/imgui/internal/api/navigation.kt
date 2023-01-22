@@ -18,8 +18,9 @@ internal interface navigation {
 
         assert(window == g.navWindow)
         var initForNav = false
-        if (window.flags hasnt WindowFlag.NoNavInputs) if (window.flags hasnt WindowFlag._ChildWindow || window.flags has WindowFlag._Popup || window.navLastIds[0] == 0 || forceReinit) initForNav =
-            true
+        if (window.flags hasnt WindowFlag.NoNavInputs)
+            if (window === window.rootWindow || window.flags has WindowFlag._Popup || window.navLastIds[0] == 0 || forceReinit)
+                initForNav = true
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=$initForNav, window=\"${window.name}\", layer=${g.navLayer}")
         if (initForNav) {
             setNavID(0, g.navLayer, 0)
@@ -73,17 +74,17 @@ internal interface navigation {
             else -> when (mode) { // Return 1.0f when just pressed, no repeat, ignore analog input.
                 InputReadMode.Pressed -> if (t == 0f) 1 else 0
                 InputReadMode.Repeat -> calcTypematicRepeatAmount(t - io.deltaTime,
-                    t,
-                    io.keyRepeatDelay * 0.72f,
-                    io.keyRepeatRate * 0.8f)
+                                                                  t,
+                                                                  io.keyRepeatDelay * 0.72f,
+                                                                  io.keyRepeatRate * 0.8f)
                 InputReadMode.RepeatSlow -> calcTypematicRepeatAmount(t - io.deltaTime,
-                    t,
-                    io.keyRepeatDelay * 1.25f,
-                    io.keyRepeatRate * 2f)
+                                                                      t,
+                                                                      io.keyRepeatDelay * 1.25f,
+                                                                      io.keyRepeatRate * 2f)
                 InputReadMode.RepeatFast -> calcTypematicRepeatAmount(t - io.deltaTime,
-                    t,
-                    io.keyRepeatDelay * 0.72f,
-                    io.keyRepeatRate * 0.3f)
+                                                                      t,
+                                                                      io.keyRepeatDelay * 0.72f,
+                                                                      io.keyRepeatRate * 0.3f)
                 else -> 0
             }.f
         }
@@ -96,14 +97,14 @@ internal interface navigation {
                             fastFactor: Float = 0f): Vec2 {
         val delta = Vec2()
         if (dirSources has NavDirSourceFlag.Keyboard) delta += Vec2(getNavInputAmount(NavInput._KeyRight,
-            mode) - getNavInputAmount(NavInput._KeyLeft, mode),
-            getNavInputAmount(NavInput._KeyDown, mode) - getNavInputAmount(NavInput._KeyUp, mode))
+                                                                                      mode) - getNavInputAmount(NavInput._KeyLeft, mode),
+                                                                    getNavInputAmount(NavInput._KeyDown, mode) - getNavInputAmount(NavInput._KeyUp, mode))
         if (dirSources has NavDirSourceFlag.PadDPad) delta += Vec2(getNavInputAmount(NavInput.DpadRight,
-            mode) - getNavInputAmount(NavInput.DpadLeft, mode),
-            getNavInputAmount(NavInput.DpadDown, mode) - getNavInputAmount(NavInput.DpadUp, mode))
+                                                                                     mode) - getNavInputAmount(NavInput.DpadLeft, mode),
+                                                                   getNavInputAmount(NavInput.DpadDown, mode) - getNavInputAmount(NavInput.DpadUp, mode))
         if (dirSources has NavDirSourceFlag.PadLStick) delta += Vec2(getNavInputAmount(NavInput.LStickRight,
-            mode) - getNavInputAmount(NavInput.LStickLeft, mode),
-            getNavInputAmount(NavInput.LStickDown, mode) - getNavInputAmount(NavInput.LStickUp, mode))
+                                                                                       mode) - getNavInputAmount(NavInput.LStickLeft, mode),
+                                                                     getNavInputAmount(NavInput.LStickDown, mode) - getNavInputAmount(NavInput.LStickUp, mode))
         if (slowFactor != 0f && NavInput.TweakSlow.isDown()) delta *= slowFactor
         if (fastFactor != 0f && NavInput.TweakFast.isDown()) delta *= fastFactor
         return delta
@@ -133,10 +134,11 @@ internal interface navigation {
     }
 
     /** FIXME-NAV: Refactor those functions into a single, more explicit one. */
-    fun setNavID(id: ID,
-                 navLayer: NavLayer,
-                 focusScopeId: ID) { // assert(navLayer == 0 || navLayer == 1) useless on jvm
+    fun setNavID(id: ID, navLayer: NavLayer, focusScopeId: ID) { // assert(navLayer == 0 || navLayer == 1) useless on jvm
+        assert(g.navWindow != null)
+        assert(navLayer == NavLayer.Main || navLayer == NavLayer.Menu)
         g.navId = id
+        g.navLayer = navLayer
         g.navFocusScopeId = focusScopeId
         g.navWindow!!.navLastIds[navLayer] = id
     }
