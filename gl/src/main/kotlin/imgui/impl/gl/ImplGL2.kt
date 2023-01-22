@@ -43,6 +43,7 @@ class ImplGL2 : GLInterface {
         glEnable(GL_BLEND)
         glBlendEquation(GL_FUNC_ADD)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        //glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // In order to composite our output buffer we need to preserve alpha
         glDisable(GL_CULL_FACE)
         glDisable(GL_DEPTH_TEST)
         glDisable(GL_STENCIL_TEST)
