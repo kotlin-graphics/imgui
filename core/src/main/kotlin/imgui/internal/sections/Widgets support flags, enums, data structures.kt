@@ -58,6 +58,8 @@ typealias ItemStatusFlags = Int
 enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     None(0),
     HoveredRect(1 shl 0),
+
+    /** LastItemDisplayRect is valid */
     HasDisplayRect(1 shl 1),
 
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
@@ -75,6 +77,9 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
 
     /** Only valid if ImGuiItemStatusFlags_HasDeactivated is set. */
     Deactivated(1 shl 6),
+
+    /** Override the HoveredWindow test to allow cross-window hover testing. */
+    HoveredWindow(1 shl 7),
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
 //  [imgui-test only]

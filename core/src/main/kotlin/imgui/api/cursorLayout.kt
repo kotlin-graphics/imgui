@@ -118,6 +118,7 @@ interface cursorLayout {
                 backupCurrLineSize put dc.currLineSize
                 backupCurrLineTextBaseOffset = dc.currLineTextBaseOffset
                 backupActiveIdIsAlive = g.activeIdIsAlive
+                backupHoveredIdIsAlive = g.hoveredId != 0
                 backupActiveIdPreviousFrameIsAlive = g.activeIdPreviousFrameIsAlive
                 emitItem = true
             }
@@ -174,6 +175,12 @@ interface cursorLayout {
         else if (groupContainsPrevActiveId)
             window.dc.lastItemId = g.activeIdPreviousFrame
         window.dc.lastItemRect put groupBb
+
+        // Forward Hovered flag
+        val groupContainsCurrHoveredId = !groupData.backupHoveredIdIsAlive && g.hoveredId != 0
+        if (groupContainsCurrHoveredId)
+            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HoveredWindow
+
 
         // Forward Edited flag
         if (groupContainsCurrActiveId && g.activeIdHasBeenEditedThisFrame)

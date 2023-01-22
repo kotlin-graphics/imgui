@@ -42,6 +42,7 @@ class GroupData {
     var backupCurrLineTextBaseOffset = 0f
     var backupActiveIdIsAlive = 0
     var backupActiveIdPreviousFrameIsAlive = false
+    var backupHoveredIdIsAlive = false
     var emitItem = false
 }
 

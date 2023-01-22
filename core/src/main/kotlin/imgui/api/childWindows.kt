@@ -10,10 +10,8 @@ import imgui.ImGui.end
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.renderNavHighlight
-import imgui.internal.sections.Axis
-import imgui.internal.sections.NavHighlightFlag
 import imgui.internal.classes.Rect
-import imgui.internal.sections.shl
+import imgui.internal.sections.*
 import imgui.WindowFlag as Wf
 
 
@@ -75,6 +73,8 @@ interface childWindows {
                     renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlag.TypeThin.i)
             } else // Not navigable into
                 itemAdd(bb, 0)
+            if (g.hoveredWindow === window)
+                parentWindow.dc.lastItemStatusFlags = parentWindow.dc.lastItemStatusFlags or ItemStatusFlag.HoveredWindow
         }
         g.withinEndChild = false
         g.logLinePosY = -Float.MAX_VALUE // To enforce a carriage return

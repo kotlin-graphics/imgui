@@ -28,19 +28,19 @@ interface itemWidgetsUtilities {
             return isItemFocused
 
         val window = g.currentWindow!!
+        val statusFlags = window.dc.lastItemStatusFlags
         return when {
             // Test for bounding box overlap, as updated as ItemAdd()
-            window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect -> false
+            statusFlags hasnt ItemStatusFlag.HoveredRect -> false
             else -> {
                 assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) { "Flags not supported by this function" }
                 when {
-                    /*  Test if we are hovering the right window (our window could be behind another window)
-                        [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to
-                        NOT test for rootWindow but this leaves us unable to use isItemHovered after endChild() itself.
-                        Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
-                        the test that has been running for a long while. */
-                    // g.hoveredWindow !== window -> false
-                    g.hoveredRootWindow !== window.rootWindow && flags hasnt Hf.AllowWhenOverlapped -> false
+                    // Test if we are hovering the right window (our window could be behind another window)
+                    // [2021/03/02] Reworked / reverted the revert, finally. Note we want e.g. BeginGroup/ItemAdd/EndGroup to work as well. (#3851)
+                    // [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT test for RootWindow but this leaves us unable
+                    // to use IsItemHovered() after EndChild() itself. Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
+                    // the test that has been running for a long while.
+                    g.hoveredWindow !== window && statusFlags hasnt ItemStatusFlag.HoveredWindow && flags hasnt Hf.AllowWhenOverlapped -> false
                     // Test if another item is active (e.g. being dragged)
                     flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != window.dc.lastItemId &&
                             !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
