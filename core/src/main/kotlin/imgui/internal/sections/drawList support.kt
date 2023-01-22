@@ -10,6 +10,7 @@ import imgui.clamp
 import imgui.classes.DrawList
 import imgui.font.Font
 import kotlin.math.acos
+import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -19,10 +20,28 @@ import kotlin.math.sin
 
 
 // ImDrawList: Helper function to calculate a circle's segment count given its radius and a "maximum error" value.
-// FIXME: the minimum number of auto-segment may be undesirably high for very small radiuses (e.g. 1.0f)
-const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 12
+//
+// Estimation of number of circle segment based on error is derived using method described in
+// this post (https://stackoverflow.com/a/2244088/15194693).
+// Number of segments (N) is calculated using equation:
+//
+//            +-                     -+
+//            |           pi          |
+//   N = ceil | --------------------- |     where r > 0, error <= r
+//            |  acos(1 - error / r)  |
+//            +-                     -+
+//
+// Note:
+//     Equation is significantly simpler that one in the post thanks for choosing segment
+//     that is perpendicular to X axis. Follow steps in the article from this starting condition
+//     and you will get this result.
+//
+// Rendering circles with an odd number of segments, while mathematically correct will produce
+// asymmetrical results on the raster grid. Therefore we're rounding N to next even number.
+// (7 became 8, 11 became 12, but 8 will still be 8).
+const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 4
 const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX = 512
-fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((glm.πf * 2f) / acos((_RAD - _MAXERROR) / _RAD)).i, DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(((ceil(glm.πf / acos(1 - (_MAXERROR min _RAD) / _RAD)).i + 1) / 2) * 2, DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
 
 /** ImDrawList: You may set this to higher values (e.g. 2 or 3) to increase tessellation of fast rounded corners path. */
 var DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER = 1
@@ -66,14 +85,16 @@ class DrawListSharedData {
     /** UV of anti-aliased lines in the atlas */
     lateinit var texUvLines: Array<Vec4>
 
-    fun setCircleSegmentMaxError_(maxError: Float) {
+    fun setCircleTessellationMaxError_(maxError: Float) {
         if (circleSegmentMaxError == maxError)
             return
         circleSegmentMaxError = maxError
         for (i in circleSegmentCounts.indices) {
             val radius = i.f
-            val segmentCount = if(i > 0) DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError) else 0
-            circleSegmentCounts[i] = segmentCount min 255
+            circleSegmentCounts[i] = when {
+                i > 0 -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError)
+                else -> 0
+            }
         }
     }
 }

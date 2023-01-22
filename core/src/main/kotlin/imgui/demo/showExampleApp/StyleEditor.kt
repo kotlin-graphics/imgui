@@ -4,6 +4,7 @@ import gli_.hasnt
 import glm_.c
 import glm_.f
 import glm_.i
+import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -40,9 +41,11 @@ import imgui.ImGui.setWindowFontScale
 import imgui.ImGui.showFontSelector
 import imgui.ImGui.sliderFloat
 import imgui.ImGui.sliderVec2
+import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
+import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowDrawList
@@ -54,6 +57,7 @@ import imgui.classes.Style
 import imgui.classes.TextFilter
 import imgui.dsl.button
 import imgui.dsl.child
+import imgui.dsl.group
 import imgui.dsl.radioButton
 import imgui.dsl.smallButton
 import imgui.dsl.tooltip
@@ -62,6 +66,7 @@ import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.font.Font
 import uno.kotlin.NUL
+import kotlin.math.floor
 import kotlin.math.sqrt
 import imgui.ColorEditFlag as Cef
 import imgui.WindowFlag as Wf
@@ -291,21 +296,43 @@ object StyleEditor {
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
 
                 // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-                dragFloat("Circle Segment Max Error", style::circleSegmentMaxError, 0.01f, 0.1f, 10f, "%.2f")
+                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 10f, "%.2f", SliderFlag.AlwaysClamp.i)
                 if (ImGui.isItemActive) {
                     setNextWindowPos(ImGui.cursorScreenPos)
                     tooltip {
-                        val p = ImGui.cursorScreenPos
+                        textUnformatted("N - number of segments")
+                        textUnformatted("R - radius")
+                        spacing()
                         val drawList = ImGui.windowDrawList
-                        val RAD_MIN = 10f
+                        val minWidgetWidth = ImGui.calcTextSize("N: MM\nR: MM.MM").x
+                        val RAD_MIN = 5f
                         val RAD_MAX = 80f
-                        var offX = 10f
-                        for (n in 0..6) {
-                            val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n.f / (7f - 1f)
-                            drawList.addCircle(Vec2(p.x + offX + rad, p.y + RAD_MAX), rad, Col.Text.u32, 0)
-                            offX += 10f + rad * 2f
+                        for (n in 0..8) {
+
+                            val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n / (9f - 1f)
+                            val segmentCount = drawList._calcCircleAutoSegmentCount(rad)
+
+                            group {
+                                text("R: %.f", rad)
+                                text("N: $segmentCount")
+
+                                val circleDiameter = rad * 2f
+                                val canvasWidth = minWidgetWidth max circleDiameter
+                                val offsetX = floor(canvasWidth * 0.5f)
+                                val offsetY = floor(RAD_MAX)
+                                val p = cursorScreenPos
+                                drawList.addCircle(Vec2(p.x+offsetX, p.y+offsetY), rad, Col.Text.u32)
+
+                                dummy(Vec2(canvasWidth, RAD_MAX * 2))
+                                text("N: $segmentCount")
+
+                                val p2 = cursorScreenPos
+                                drawList.addCircleFilled(Vec2(p2.x+offsetX, p2.y+offsetY), rad, Col.Text.u32)
+
+                                dummy(Vec2(canvasWidth, RAD_MAX * 2))
+                            }
+                            sameLine()
                         }
-                        ImGui.dummy(Vec2(offX, RAD_MAX * 2f))
                     }
                 }
                 ImGui.sameLine()

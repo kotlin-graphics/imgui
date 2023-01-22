@@ -6,7 +6,6 @@ import imgui.ImGui.io
 import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.classes.Window
 
 
 //-----------------------------------------------------------------------------
@@ -24,7 +23,7 @@ fun errorCheckNewFrameSanityChecks() {
     assert(io.fonts.fonts.size > 0) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8()?" }
     assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8()?" }
     assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
-    assert(style.circleSegmentMaxError > 0f) { "Invalid style setting!" }
+    assert(style.circleTessellationMaxError > 0f) { "Invalid style setting!" }
     assert(style.alpha in 0f..1f) { "Invalid style setting!" } // Allows us to avoid a few clamps in color computations
     assert(style.windowMinSize.x >= 1f && style.windowMinSize.y >= 1f) { "Invalid style setting." } // TODO glm
     assert(style.windowMenuButtonPosition == Dir.None || style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)

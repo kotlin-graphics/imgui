@@ -142,7 +142,7 @@ class Style {
 
     /** Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled() or drawing rounded corner rectangles
      *  with no explicit segment count specified. Decrease for higher quality but more geometry. */
-    var circleSegmentMaxError = 1.6f
+    var circleTessellationMaxError = 0.25f
 
     val colors = ArrayList<Vec4>()
 
@@ -196,7 +196,7 @@ class Style {
         antiAliasedLinesUseTex = style.antiAliasedLinesUseTex
         antiAliasedFill = style.antiAliasedFill
         curveTessellationTol = style.curveTessellationTol
-        circleSegmentMaxError = style.circleSegmentMaxError
+        circleTessellationMaxError = style.circleTessellationMaxError
         style.colors.forEach { colors += Vec4(it) }
 //        locale = style.locale
     }

@@ -20,6 +20,7 @@ import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
+import kotlin.math.ceil
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -259,13 +260,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // Obtain segment count
         val numSegments = when {
-            numSegments_ <= 0 -> {
-                // Automatic segment count
-                val radiusIdx = radius.i
-                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
-                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
-                }
-            }
+            // Automatic segment count
+            numSegments_ <= 0 -> _calcCircleAutoSegmentCount(radius)
             else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
                 clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
         }
@@ -285,13 +281,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // Obtain segment count
         val numSegments = when {
-            numSegments_ <= 0 -> {
-                // Automatic segment count
-                val radiusIdx = radius.i
-                _data.circleSegmentCounts.getOrElse(radiusIdx) { // Use cached value
-                    DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
-                }
-            }
+            // Automatic segment count
+            numSegments_ <= 0 -> _calcCircleAutoSegmentCount(radius)
             else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
                 clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
         }
@@ -1308,6 +1299,17 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
         assert(currCmd.userCallback == null)
         currCmd.vtxOffset = _cmdHeader.vtxOffset
+    }
+
+    fun _calcCircleAutoSegmentCount(radius: Float): Int {
+
+        val radiusIdx = ceil(radius).i // Use ceil to never reduce accuracy
+
+        // Automatic segment count
+        return when (radiusIdx) {
+            in _data.circleSegmentCounts.indices -> _data.circleSegmentCounts[radiusIdx] // Use cached value
+            else -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
+        }
     }
 
 

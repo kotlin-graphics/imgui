@@ -101,7 +101,7 @@ interface main {
             virtualSpace add v.mainRect
         g.drawListSharedData.clipRectFullscreen = virtualSpace.toVec4()
         g.drawListSharedData.curveTessellationTol = style.curveTessellationTol
-        g.drawListSharedData.setCircleSegmentMaxError_(style.circleSegmentMaxError)
+        g.drawListSharedData.setCircleTessellationMaxError_(style.circleTessellationMaxError)
         var flags = Dlf.None.i
         if (style.antiAliasedLines)
             flags = flags or Dlf.AntiAliasedLines
