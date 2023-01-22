@@ -16,6 +16,7 @@ import imgui.internal.hashStr
 import imgui.internal.sections.NavLayer
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
+import imgui.static.navUpdateAnyRequestFlag
 import uno.kotlin.NUL
 import java.util.*
 import java.util.regex.Pattern
@@ -61,11 +62,13 @@ internal interface internal {
             g.navWindow = window
             if (window != null && g.navDisableMouseHover)
                 g.navMousePosDirty = true
-            g.navInitRequest = false
             g.navId = window?.navLastIds?.get(0) ?: 0 // Restore NavId
             g.navFocusScopeId = 0
             g.navIdIsAlive = false
             g.navLayer = NavLayer.Main
+            g.navInitRequest = false
+            g.navMoveRequest = false
+            navUpdateAnyRequestFlag()
             //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
         }
 
