@@ -607,7 +607,7 @@ object ShowDemoWindowWidgets {
                     // so you can safely copy & paste garbled characters into another application.
                     textWrapped(
                         "CJK text will only appears if the font was loaded with the appropriate CJK character ranges." +
-                                "Call io.Font->AddFontFromFileTTF() manually to load extra character ranges." +
+                                "Call io.Fonts->AddFontFromFileTTF() manually to load extra character ranges." +
                                 "Read docs/FONTS.txt for details.")
                     text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)") // Normally we would use u8"blah blah" with the proper characters directly in the string.
                     text("Kanjis: \u65e5\u672c\u8a9e (nihongo)")
