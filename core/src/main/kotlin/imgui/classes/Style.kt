@@ -142,7 +142,7 @@ class Style {
 
     /** Maximum error (in pixels) allowed when using AddCircle()/AddCircleFilled() or drawing rounded corner rectangles
      *  with no explicit segment count specified. Decrease for higher quality but more geometry. */
-    var circleTessellationMaxError = 0.25f
+    var circleTessellationMaxError = 0.30f
 
     val colors = ArrayList<Vec4>()
 

@@ -296,40 +296,36 @@ object StyleEditor {
                 if (style.curveTessellationTol < 10f) style.curveTessellationTol = 0.1f
 
                 // When editing the "Circle Segment Max Error" value, draw a preview of its effect on auto-tessellated circles.
-                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 10f, "%.2f", SliderFlag.AlwaysClamp.i)
+                dragFloat("Circle Tessellation Max Error", style::circleTessellationMaxError, 0.005f, 0.1f, 5f, "%.2f", SliderFlag.AlwaysClamp.i)
                 if (ImGui.isItemActive) {
                     setNextWindowPos(ImGui.cursorScreenPos)
                     tooltip {
-                        textUnformatted("N - number of segments")
-                        textUnformatted("R - radius")
+                        textUnformatted("(R = radius, N = number of segments)")
                         spacing()
                         val drawList = ImGui.windowDrawList
-                        val minWidgetWidth = ImGui.calcTextSize("N: MM\nR: MM.MM").x
-                        val RAD_MIN = 5f
-                        val RAD_MAX = 80f
-                        for (n in 0..8) {
+                        val minWidgetWidth = ImGui.calcTextSize("N: MMM\nR: MMM").x
+                        for (n in 0..7) {
 
-                            val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n / (9f - 1f)
+                            val RAD_MIN = 5f
+                            val RAD_MAX = 70f
+                            val rad = RAD_MIN + (RAD_MAX - RAD_MIN) * n / (8f - 1f)
                             val segmentCount = drawList._calcCircleAutoSegmentCount(rad)
 
                             group {
-                                text("R: %.f", rad)
-                                text("N: $segmentCount")
+                                text("R: %.f\nN: ${drawList._calcCircleAutoSegmentCount(rad)}", rad)
 
-                                val circleDiameter = rad * 2f
-                                val canvasWidth = minWidgetWidth max circleDiameter
+                                val canvasWidth = minWidgetWidth max (rad * 2f)
                                 val offsetX = floor(canvasWidth * 0.5f)
                                 val offsetY = floor(RAD_MAX)
-                                val p = cursorScreenPos
-                                drawList.addCircle(Vec2(p.x+offsetX, p.y+offsetY), rad, Col.Text.u32)
 
+                                val p1 = cursorScreenPos
+                                drawList.addCircle(Vec2(p1.x + offsetX, p1.y + offsetY), rad, Col.Text.u32)
                                 dummy(Vec2(canvasWidth, RAD_MAX * 2))
-                                text("N: $segmentCount")
-
+                                /*
                                 val p2 = cursorScreenPos
                                 drawList.addCircleFilled(Vec2(p2.x+offsetX, p2.y+offsetY), rad, Col.Text.u32)
-
                                 dummy(Vec2(canvasWidth, RAD_MAX * 2))
+                                 */
                             }
                             sameLine()
                         }

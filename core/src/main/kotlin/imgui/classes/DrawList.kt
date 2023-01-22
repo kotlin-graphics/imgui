@@ -20,7 +20,6 @@ import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
-import kotlin.math.ceil
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -1301,16 +1300,12 @@ class DrawList(sharedData: DrawListSharedData?) {
         currCmd.vtxOffset = _cmdHeader.vtxOffset
     }
 
-    fun _calcCircleAutoSegmentCount(radius: Float): Int {
-
-        val radiusIdx = ceil(radius).i // Use ceil to never reduce accuracy
-
+    fun _calcCircleAutoSegmentCount(radius: Float): Int =
         // Automatic segment count
-        return when (radiusIdx) {
+        when (val radiusIdx = (radius + 0.999f).i) { // ceil to never reduce accuracy
             in _data.circleSegmentCounts.indices -> _data.circleSegmentCounts[radiusIdx] // Use cached value
             else -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
         }
-    }
 
 
     //-------------------------------------------------------------------------
