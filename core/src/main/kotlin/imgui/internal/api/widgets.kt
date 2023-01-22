@@ -174,7 +174,7 @@ internal interface widgets {
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col.u32, true, style.frameRounding)
 
-        val renderTextPos = Rect(bb.min + style.framePadding, bb.max - style.framePadding);
+        val renderTextPos = Rect(bb.min + style.framePadding, bb.max - style.framePadding)
         if (g.logEnabled)
             logRenderedText(renderTextPos.min, "[")
         renderTextClipped(renderTextPos.min, renderTextPos.max, label, labelSize, style.buttonTextAlign, bb)
@@ -194,16 +194,23 @@ internal interface widgets {
 
         val window = currentWindow
 
-        /*  We intentionally allow interaction when clipped so that a mechanical Alt, Right, Validate sequence close
-            a window. (this isn't the regular behavior of buttons, but it doesn't affect the user much because
-            navigation tends to keep items visible).   */
+        // Tweak 1: Shrink hit-testing area if button covers an abnormally large proportion of the visible region. That's in order to facilitate moving the window away. (#3825)
+        // This may better be applied as a general hit-rect reduction mechanism for all widgets to ensure the area to move window is always accessible?
         val bb = Rect(pos, pos + g.fontSize + style.framePadding * 2f)
-        val isClipped = !itemAdd(bb, id)
+        val bbInteract = Rect(bb)
+        val areaToVisibleRatio = window.outerRectClipped.area / bb.area
+        if (areaToVisibleRatio < 1.5f)
+            bbInteract expand floor(bbInteract.size * -0.25f)
 
-        val (pressed, hovered, held) = buttonBehavior(bb, id)
+        // Tweak 2: We intentionally allow interaction when clipped so that a mechanical Alt,Right,Activate sequence can always close a window.
+        // (this isn't the regular behavior of buttons, but it doesn't affect the user much because navigation tends to keep items visible).
+        val isClipped = !itemAdd(bbInteract, id)
+
+        val (pressed, hovered, held) = buttonBehavior(bbInteract, id) // JVM, check bbInteract instance
         if (isClipped) return pressed
 
         // Render
+        // FIXME: Clarify this mess
         val center = Vec2(bb.center)
         if (hovered) {
             val col = if (held) Col.ButtonActive else Col.ButtonHovered

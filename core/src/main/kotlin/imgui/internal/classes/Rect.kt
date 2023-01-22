@@ -61,6 +61,7 @@ class Rect {
     val size get() = max - min
     val width get() = max.x - min.x
     val height get() = max.y - min.y
+    val area get() = (max.x - min.x) * (max.y - min.y)
 
     /** Top-left    */
     val tl get() = Vec2(min)
