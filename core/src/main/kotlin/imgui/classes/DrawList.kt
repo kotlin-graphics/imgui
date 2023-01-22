@@ -95,7 +95,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Render-level scissoring. This is passed down to your render function but not used for CPU-side coarse clipping.
      *  Prefer using higher-level ImGui::PushClipRect() to affect logic (hit-testing and widget culling)    */
     fun pushClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false) =
-            pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
+        pushClipRect(rect.min, rect.max, intersectWithCurrentClipRect)
 
     fun pushClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false) {
 
@@ -119,7 +119,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** [JVM] */
     inline fun withClipRect(rect: Rect, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) =
-            withClipRect(rect.min, rect.max, intersectWithCurrentClipRect, block)
+        withClipRect(rect.min, rect.max, intersectWithCurrentClipRect, block)
 
     /** [JVM] */
     inline fun withClipRect(crMin: Vec2, crMax: Vec2, intersectWithCurrentClipRect: Boolean = false, block: DrawList.() -> Unit) {
@@ -377,7 +377,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             //      could be improved.
             // - If AA_SIZE is not 1.0f we cannot use the texture path.
             val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex &&
-                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f  && AA_SIZE == 1f
+                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f && AA_SIZE == 1f
 
             ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) {
                 "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off"
@@ -450,7 +450,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-//                    IM_FIXNORMAL2F(dm_x, dm_y)
+                    //                    IM_FIXNORMAL2F(dm_x, dm_y)
                     run {
                         var d2 = dmX * dmX + dmY * dmY
                         if (d2 < 0.5f)
@@ -544,7 +544,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-//                    IM_FIXNORMAL2F(dm_x, dm_y)
+                    //                    IM_FIXNORMAL2F(dm_x, dm_y)
                     run {
                         var d2 = dmX * dmX + dmY * dmY
                         if (d2 < 0.5f)
@@ -606,7 +606,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
                 var dX = p2.x - p1.x
                 var dY = p2.y - p1.y
-//                IM_NORMALIZE2F_OVER_ZERO(dX, dY)
+                //                IM_NORMALIZE2F_OVER_ZERO(dX, dY)
                 val d2 = dX * dX + dY * dY
                 if (d2 > 0f) {
                     val invLen = 1f / sqrt(d2)
@@ -669,7 +669,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 val p1 = points[i1]
                 var dX = p1.x - p0.x
                 var dY = p1.y - p0.y
-//                IM_NORMALIZE2F_OVER_ZERO(dx, dy)
+                //                IM_NORMALIZE2F_OVER_ZERO(dx, dy)
                 val d2 = dX * dX + dY * dY
                 if (d2 > 0f) {
                     val invLen = 1f / sqrt(d2)
@@ -689,7 +689,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 val n1 = tempNormals[i1]
                 var dmX = (n0.x + n1.x) * 0.5f
                 var dmY = (n0.y + n1.y) * 0.5f
-//                    IM_FIXNORMAL2F(dm_x, dm_y)
+                //                    IM_FIXNORMAL2F(dm_x, dm_y)
                 run {
                     var d2 = dmX * dmX + dmY * dmY
                     if (d2 < 0.5f)
@@ -767,9 +767,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     // -----------------------------------------------------------------------------------------------------------------
 
     fun addImage(
-            userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
-            uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
-    ) {
+        userTextureId: TextureID, pMin: Vec2, pMax: Vec2,
+        uvMin: Vec2 = Vec2(0), uvMax: Vec2 = Vec2(1), col: Int = COL32_WHITE,
+                ) {
 
         if (col hasnt COL32_A_MASK) return
 
@@ -783,10 +783,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun addImageQuad(
-            userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
-            uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
-            uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
-    ) {
+        userTextureId: TextureID, p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2,
+        uv1: Vec2 = Vec2(0), uv2: Vec2 = Vec2(1, 0),
+        uv3: Vec2 = Vec2(1), uv4: Vec2 = Vec2(0, 1), col: Int = COL32_WHITE,
+                    ) {
 
         if (col hasnt COL32_A_MASK) return
 
@@ -801,18 +801,17 @@ class DrawList(sharedData: DrawListSharedData?) {
             popTextureId()
     }
 
-    fun addImageRounded(
-            userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float,
-            roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i,
-    ) {
-        if (col hasnt COL32_A_MASK) return
+    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float,
+                        roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i) {
+        if (col hasnt COL32_A_MASK)
+            return
 
         if (rounding <= 0f || roundingCorners hasnt DrawCornerFlag.All) {
             addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
             return
         }
 
-        val pushTextureId = _textureIdStack.isEmpty() || userTextureId != _textureIdStack.last()
+        val pushTextureId = userTextureId != _cmdHeader.textureId
         if (pushTextureId) pushTextureID(userTextureId)
 
         val vertStartIdx = vtxBuffer.size
@@ -898,13 +897,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Closely mimics ImBezierCubicClosestPointCasteljau() in imgui.cpp */
     private fun pathBezierCubicCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
-                                        x3: Float, y3: Float, x4: Float, y4: Float, tessTol: Float, level: Int) {
+                                                x3: Float, y3: Float, x4: Float, y4: Float, tessTol: Float, level: Int) {
         val dx = x4 - x1
         val dy = y4 - y1
         var d2 = (x2 - x4) * dy - (y2 - y4) * dx
         var d3 = (x3 - x4) * dy - (y3 - y4) * dx
-        d2 = if(d2 >= 0) d2 else -d2
-        d3 = if(d3 >= 0) d3 else -d3
+        d2 = if (d2 >= 0) d2 else -d2
+        d3 = if (d3 >= 0) d3 else -d3
         if ((d2 + d3) * (d2 + d3) < tessTol * (dx * dx + dy * dy))
             path += Vec2(x4, y4)
         else if (level < 10) {
@@ -931,7 +930,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathBezierQuadraticCurveTo(p2: Vec2, p3: Vec2, numSegments: Int) {
         val p1 = _path.last()
         if (numSegments == 0)
-            pathBezierQuadraticCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _data.curveTessellationTol, 0)// Auto-tessellated
+            pathBezierQuadraticCurveToCasteljau(_path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, _data.curveTessellationTol, 0) // Auto-tessellated
         else {
             val tStep = 1f / numSegments
             for (iStep in 1..numSegments)
@@ -945,7 +944,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val dy = y3 - y1
         val det = (x2 - x3) * dy - (y2 - y3) * dx
         if (det * det * 4f < tessTol * (dx * dx + dy * dy))
-                path += Vec2(x3, y3)
+            path += Vec2(x3, y3)
         else if (level < 10) {
             val x12 = (x1 + x2) * 0.5f
             val y12 = (y1 + y2) * 0.5f
@@ -1118,27 +1117,27 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-// On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
-// Those macros expects l-values.
-//    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
-//        val d2 = vX * vX + vY * vY
-//        if (d2 > 0.0f) {
-//            val invLen = 1f / sqrt(d2)
-//            vX *= invLen
-//            vY *= invLen
-//        }
-//    }
-//
-//    fun NORMALIZE2F_OVER_EPSILON_CLAMP(vX: Float, vY: Float, eps: Float, invLenMax: Float) {
-//        val d2 = vX * vX + vY * vY
-//        if (d2 > eps) {
-//            var invLen = 1f / sqrt(d2)
-//            if (invLen > invLenMax)
-//                invLen = invLenMax
-//            vX *= invLen
-//            vY *= invLen
-//        }
-//    }
+    // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
+    // Those macros expects l-values.
+    //    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
+    //        val d2 = vX * vX + vY * vY
+    //        if (d2 > 0.0f) {
+    //            val invLen = 1f / sqrt(d2)
+    //            vX *= invLen
+    //            vY *= invLen
+    //        }
+    //    }
+    //
+    //    fun NORMALIZE2F_OVER_EPSILON_CLAMP(vX: Float, vY: Float, eps: Float, invLenMax: Float) {
+    //        val d2 = vX * vX + vY * vY
+    //        if (d2 > eps) {
+    //            var invLen = 1f / sqrt(d2)
+    //            if (invLen > invLenMax)
+    //                invLen = invLenMax
+    //            vX *= invLen
+    //            vY *= invLen
+    //        }
+    //    }
 
     fun primQuadUV(a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2, uvB: Vec2, uvC: Vec2, uvD: Vec2, col: Int) {
 
@@ -1188,9 +1187,9 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // Verify that the ImDrawCmd fields we want to memcmp() are contiguous in memory.
         // (those should be IM_STATIC_ASSERT() in theory but with our pre C++11 setup the whole check doesn't compile with GCC)
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
-//        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID))
+        //        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, ClipRect) == 0);
+        //        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, TextureId) == sizeof(ImVec4));
+        //        IM_ASSERT(IM_OFFSETOF(ImDrawCmd, VtxOffset) == sizeof(ImVec4) + sizeof(ImTextureID))
 
         cmdBuffer.clear()
         // we dont assign because it wont create a new instance for sure
@@ -1228,8 +1227,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         _path.clear()
         _splitter.clearFreeMemory()
         // TODO check
-//        resetForNewFrame()
-//        _splitter.clearFreeMemory(destroy)
+        //        resetForNewFrame()
+        //        _splitter.clearFreeMemory(destroy)
     }
 
     /** Pop trailing draw command (used before merging or presenting to user)
@@ -1291,7 +1290,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // We don't need to compare curr_cmd->VtxOffset != _CmdHeader.VtxOffset because we know it'll be different at the time we call this.
         _vtxCurrentIdx = 0
         val currCmd = cmdBuffer.last()
-//        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset) // See #3349
+        //        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset) // See #3349
         if (currCmd.elemCount != 0) {
             addDrawCmd()
             return
@@ -1399,9 +1398,9 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun renderMouseCursor(
-            pos: Vec2, scale: Float, mouseCursor: MouseCursor,
-            colFill: Int, colBorder: Int, colShadow: Int,
-    ) {
+        pos: Vec2, scale: Float, mouseCursor: MouseCursor,
+        colFill: Int, colBorder: Int, colShadow: Int,
+                         ) {
         if (mouseCursor == MouseCursor.None)
             return
 
@@ -1423,13 +1422,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
     fun renderArrowPointingAt(pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) =
-            when (direction) {
-                Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
-                Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
-                Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
-                Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
-                else -> Unit
-            }
+        when (direction) {
+            Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
+            Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
+            Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
+            Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
+            else -> Unit
+        }
 
     /** FIXME: Cleanup and move code to ImDrawList. */
     fun renderRectFilledRangeH(rect: Rect, col: Int, xStartNorm_: Float, xEndNorm_: Float, rounding_: Float) {
@@ -1486,10 +1485,10 @@ class DrawList(sharedData: DrawListSharedData?) {
         val fillR = inner.max.x < outer.max.x
         val fillU = inner.min.y > outer.min.y
         val fillD = inner.max.y < outer.max.y
-        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding, (if(fillU) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if(fillD) DrawCornerFlag.None else DrawCornerFlag.BotLeft)
-        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding, (if(fillU) DrawCornerFlag.None else DrawCornerFlag.TopRight) or if(fillD) DrawCornerFlag.None else DrawCornerFlag.BotRight)
-        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding, (if(fillL) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if(fillR) DrawCornerFlag.None else DrawCornerFlag.TopRight)
-        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding, (if(fillL) DrawCornerFlag.None else DrawCornerFlag.BotLeft) or if(fillR) DrawCornerFlag.None else DrawCornerFlag.BotRight)
+        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding, (if (fillU) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if (fillD) DrawCornerFlag.None else DrawCornerFlag.BotLeft)
+        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding, (if (fillU) DrawCornerFlag.None else DrawCornerFlag.TopRight) or if (fillD) DrawCornerFlag.None else DrawCornerFlag.BotRight)
+        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding, (if (fillL) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if (fillR) DrawCornerFlag.None else DrawCornerFlag.TopRight)
+        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding, (if (fillL) DrawCornerFlag.None else DrawCornerFlag.BotLeft) or if (fillR) DrawCornerFlag.None else DrawCornerFlag.BotRight)
         if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawCornerFlag.TopLeft.i)
         if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawCornerFlag.TopRight.i)
         if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawCornerFlag.BotLeft.i)
@@ -1503,9 +1502,9 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Generic linear color gradient, write to RGB fields, leave A untouched.  */
     fun shadeVertsLinearColorGradientKeepAlpha(
-            vertStart: Int, vertEnd: Int, gradientP0: Vec2,
-            gradientP1: Vec2, col0: Int, col1: Int,
-    ) {
+        vertStart: Int, vertEnd: Int, gradientP0: Vec2,
+        gradientP1: Vec2, col0: Int, col1: Int,
+                                              ) {
         val gradientExtent = gradientP1 - gradientP0
         val gradientInvLength2 = 1f / gradientExtent.lengthSqr
         val col0R = (col0 ushr COL32_R_SHIFT) and 0xFF
@@ -1534,8 +1533,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         val size = b - a
         val uvSize = uvB - uvA
         val scale = Vec2(
-                if (size.x != 0f) uvSize.x / size.x else 0f,
-                if (size.y != 0f) uvSize.y / size.y else 0f)
+            if (size.x != 0f) uvSize.x / size.x else 0f,
+            if (size.y != 0f) uvSize.y / size.y else 0f)
         if (clamp) {
             val min = uvA min uvB
             val max = uvA max uvB
@@ -1566,9 +1565,9 @@ private fun DrawVert_Buffer(size: Int = 0) = DrawVert_Buffer(ByteBuffer(size))
 inline class DrawVert_Buffer(val data: ByteBuffer) {
 
     operator fun get(index: Int) = DrawVert(
-            Vec2(data, index * DrawVert.SIZE),
-            Vec2(data, index * DrawVert.SIZE + DrawVert.OFS_UV),
-            data.getInt(index * DrawVert.SIZE + DrawVert.OFS_COL))
+        Vec2(data, index * DrawVert.SIZE),
+        Vec2(data, index * DrawVert.SIZE + DrawVert.OFS_UV),
+        data.getInt(index * DrawVert.SIZE + DrawVert.OFS_COL))
 
     operator fun plusAssign(v: Vec2) {
         data.putFloat(v.x)

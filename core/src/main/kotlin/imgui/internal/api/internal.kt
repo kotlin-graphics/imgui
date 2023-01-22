@@ -121,6 +121,7 @@ internal interface internal {
 
     // Fonts, drawing
 
+    /** Important: this alone doesn't alter current ImDrawList state. This is called by PushFont/PopFont only. */
     fun setCurrentFont(font: Font) {
         assert(font.isLoaded) { "Font Atlas not created. Did you call io.Fonts->GetTexDataAsRGBA32 / GetTexDataAsAlpha8 ?" }
         assert(font.scale > 0f)
