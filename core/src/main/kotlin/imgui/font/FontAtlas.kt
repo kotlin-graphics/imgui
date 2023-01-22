@@ -168,6 +168,7 @@ class FontAtlas {
         texPixelsAlpha8 = null
         texPixelsRGBA32?.free()
         texPixelsRGBA32 = null
+        texPixelsUseColors = false
     }
 
     /** Clear output font data (glyphs storage, UV coordinates).    */
@@ -297,11 +298,12 @@ class FontAtlas {
     //-------------------------------------------
 
     /** You can request arbitrary rectangles to be packed into the atlas, for your own purposes.
-     *  After calling Build(), you can query the rectangle position and render your pixels.
-     *  You can also request your rectangles to be mapped as font glyph (given a font + Unicode point),
+     *  - After calling Build(), you can query the rectangle position and render your pixels.
+     *  - If you render colored output, set 'atlas->TexPixelsUseColors = true' as this may help some backends decide of prefered texture format.
+     *  - You can also request your rectangles to be mapped as font glyph (given a font + Unicode point),
      *  so you can render e.g. custom colorful icons and use them as regular glyphs.
-     *  Read docs/FONTS.txt for more details about using colorful icons.
-     *  Note: this API may be redesigned later in order to support multi-monitor varying DPI settings. */
+     *  - Read docs/FONTS.txt for more details about using colorful icons.
+     *  - Note: this API may be redesigned later in order to support multi-monitor varying DPI settings. */
     class CustomRect {
 
         /** Input    // Desired rectangle dimension */
@@ -432,15 +434,30 @@ class FontAtlas {
     infix fun Int.has(flag: Flag) = and(flag.i) != 0
     infix fun Int.hasnt(flag: Flag) = and(flag.i) == 0
 
-    /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
-    var locked = false
-
     /** Build flags (see ImFontAtlasFlags_) */
     var flags = Flag.None.i
 
     /** User data to refer to the texture once it has been uploaded to user's graphic systems. It is passed back to you
     during rendering via the DrawCmd structure.   */
     var texID: TextureID = 0
+
+    /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
+     *  texture size restrictions you may want to increase texture width to decrease height.    */
+    var texDesiredWidth = 0
+
+    /** Padding between glyphs within texture in pixels. Defaults to 1.
+     *  If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
+    var texGlyphPadding = 1
+
+    /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
+    var locked = false
+
+
+    // [Internal]
+    // NB: Access texture data via GetTexData*() calls! Which will setup a default font for you.
+
+    /** Tell whether our texture data is known to use colors (rather than just alpha channel), in order to help backend select a format. */
+    var texPixelsUseColors = false
 
     /** 1 component per pixel, each component is unsigned 8-bit. Total size = texSize.x * texSize.y  */
     var texPixelsAlpha8: ByteBuffer? = null
@@ -450,17 +467,9 @@ class FontAtlas {
 
     /** Texture size calculated during Build(). */
     var texSize = Vec2i()
-
     val texWidth get() = texSize.x
+
     val texHeight get() = texSize.y
-
-    /** Texture width desired by user before Build(). Must be a power-of-two. If have many glyphs your graphics API have
-     *  texture size restrictions you may want to increase texture width to decrease height.    */
-    var texDesiredWidth = 0
-
-    /** Padding between glyphs within texture in pixels. Defaults to 1.
-     *  If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
-    var texGlyphPadding = 1
 
 
     /** = (1.0f/TexWidth, 1.0f/TexHeight)   */
