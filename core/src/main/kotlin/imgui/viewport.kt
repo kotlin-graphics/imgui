@@ -48,7 +48,7 @@ open class Viewport {
     /** See ImGuiViewportFlags_ */
     var flags: ViewportFlags = 0
 
-    /** Main Area: Position of the viewport (Dear Imgui coordinates are the same as OS desktop/native coordinates) */
+    /** Main Area: Position of the viewport (Dear ImGui coordinates are the same as OS desktop/native coordinates) */
     val pos = Vec2()
 
     /** Main Area: Size of the viewport. */
