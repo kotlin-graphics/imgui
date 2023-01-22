@@ -103,9 +103,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Window the mouse is hovering. Will typically catch mouse inputs. */
     var hoveredWindow: Window? = null
 
-    /** == HoveredWindow ? HoveredWindow->RootWindow : NULL, merely a shortcut to avoid null test in some situation. */
-    var hoveredRootWindow: Window? = null
-
     /** Hovered window ignoring MovingWindow. Only set if MovingWindow is set. */
     var hoveredWindowUnderMovingWindow: Window? = null
 
@@ -716,7 +713,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         windowsById.clear()
         navWindow = null
         hoveredWindow = null
-        hoveredRootWindow = null
         hoveredWindowUnderMovingWindow = null
         activeIdWindow = null
         activeIdPreviousFrameWindow = null

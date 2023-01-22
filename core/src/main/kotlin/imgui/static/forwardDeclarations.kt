@@ -94,7 +94,6 @@ fun findHoveredWindow() {
     }
 
     g.hoveredWindow = hoveredWindow
-    g.hoveredRootWindow = g.hoveredWindow?.rootWindow
     g.hoveredWindowUnderMovingWindow = hoveredWindow
 }
 

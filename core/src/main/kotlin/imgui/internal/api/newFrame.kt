@@ -29,8 +29,8 @@ internal interface newFrame {
 
         // Modal windows prevents mouse from hovering behind them.
         val modalWindow = topMostPopupModal
-        val hovered = g.hoveredRootWindow
-        if (modalWindow != null && hovered != null && !hovered.isChildOf(modalWindow))
+        val hovered = g.hoveredWindow
+        if (modalWindow != null && hovered != null && !(hovered.rootWindow!! isChildOf modalWindow))
             clearHoveredWindows = true
         // Disabled mouse?
         if (io.configFlags has ConfigFlag.NoMouse)
@@ -57,7 +57,6 @@ internal interface newFrame {
 
         if(clearHoveredWindows) {
             g.hoveredWindow = null
-            g.hoveredRootWindow = null
             g.hoveredWindowUnderMovingWindow = null
         }
 
@@ -130,7 +129,7 @@ internal interface newFrame {
         if (io.mouseClicked[0]) {
             // Handle the edge case of a popup being closed while clicking in its empty space.
             // If we try to focus it, FocusWindow() > ClosePopupsOverWindow() will accidentally close any parent popups because they are not linked together any more.
-            val rootWindow = g.hoveredRootWindow
+            val rootWindow = g.hoveredWindow?.rootWindow
             val isClosedPopup = rootWindow != null && rootWindow.flags has WindowFlag._Popup && !isPopupOpen(rootWindow.popupId, PopupFlag.AnyPopupLevel.i)
 
             if (rootWindow != null && !isClosedPopup) {

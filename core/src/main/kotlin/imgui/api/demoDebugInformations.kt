@@ -309,7 +309,7 @@ interface demoDebugInformations {
             text("WINDOWING")
             indent {
                 text("HoveredWindow: '${g.hoveredWindow?.name}'")
-                text("HoveredRootWindow: '${g.hoveredWindow?.name}'")
+                text("HoveredWindow->Root: '${g.hoveredWindow?.rootWindow!!.name}'")
                 text("HoveredWindowUnderMovingWindow: '${g.hoveredWindowUnderMovingWindow?.name}'")/*  Data is "in-flight" so depending on when the Metrics window is called we may see current frame
                     information or not                 */
                 text("MovingWindow: '${g.movingWindow?.name ?: "NULL"}'")

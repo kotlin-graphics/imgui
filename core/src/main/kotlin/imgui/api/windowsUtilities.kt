@@ -51,19 +51,21 @@ interface windowsUtilities {
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
     fun isWindowHovered(flags: HoveredFlags = Hf.None.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped) { "Flags not supported by this function" }
-        if (flags has Hf.AnyWindow) {
-            if (g.hoveredWindow == null)
-                return false
-        } else when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
-            Hf.RootWindow or Hf.ChildWindows -> if (g.hoveredRootWindow !== g.currentWindow!!.rootWindow) return false
-            Hf.RootWindow.i -> if (g.hoveredWindow != g.currentWindow!!.rootWindow) return false
-            Hf.ChildWindows.i -> g.hoveredWindow.let { if (it == null || !it.isChildOf(g.currentWindow)) return false }
-            else -> if (g.hoveredWindow !== g.currentWindow) return false
+        val hoveredWindow = g.hoveredWindow ?: return false
+
+        if (flags hasnt Hf.AnyWindow) {
+            val window = g.currentWindow!!
+            when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
+                Hf.RootWindow or Hf.ChildWindows -> if (hoveredWindow.rootWindow !== window.rootWindow) return false
+                Hf.RootWindow.i -> if (hoveredWindow != window.rootWindow) return false
+                Hf.ChildWindows.i -> if (!(hoveredWindow isChildOf window)) return false
+                else -> if (hoveredWindow !== window) return false
+            }
         }
 
         return when {
-            !g.hoveredWindow!!.isContentHoverable(flags) -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != g.hoveredWindow!!.moveId -> false
+            !hoveredWindow.isContentHoverable(flags) -> false
+            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != hoveredWindow.moveId -> false
             else -> true
         }
     }
@@ -96,8 +98,8 @@ interface windowsUtilities {
     /** set next window position. call before Begin()
      *  @param pos: safe, no writes */
     fun setNextWindowPos(pos: Vec2, cond: Cond = Cond.Always, pivot: Vec2 = Vec2()) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+        //        JVM, useless
+        //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasPos
             posVal put pos
@@ -109,8 +111,8 @@ interface windowsUtilities {
     /** set next window size. set axis to 0.0f to force an auto-fit on this axis. call before Begin()
      *  @param size: safe, no writes */
     fun setNextWindowSize(size: Vec2, cond: Cond = Cond.Always) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+        //        JVM, useless
+        //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasSize
             sizeVal put size
@@ -144,8 +146,8 @@ interface windowsUtilities {
 
     /** Set next window collapsed state. call before Begin()    */
     fun setNextWindowCollapsed(collapsed: Boolean, cond: Cond = Cond.Always) {
-//        JVM, useless
-//        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
+        //        JVM, useless
+        //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
             flags = flags or NextWindowDataFlag.HasCollapsed
             collapsedVal = collapsed

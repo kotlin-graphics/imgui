@@ -140,7 +140,8 @@ internal interface widgetsLowLevelBehaviors {
             flags = flags or Bf.PressedOnDefault_
 
         val backupHoveredWindow = g.hoveredWindow
-        val flattenHoveredChildren = flags has Bf.FlattenChildren && g.hoveredRootWindow === window
+        val hoveredWindow = g.hoveredWindow
+        val flattenHoveredChildren = flags has Bf.FlattenChildren && hoveredWindow != null && hoveredWindow.rootWindow === window
         if (flattenHoveredChildren)
             g.hoveredWindow = window
 
