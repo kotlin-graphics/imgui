@@ -1281,8 +1281,8 @@ class Window(var context: Context,
     }
 
     /** ~CalcWindowSizeAfterConstraint */
-    fun calcSizeAfterConstraint(newSize_: Vec2): Vec2 {
-        val newSize = Vec2(newSize_)
+    fun calcSizeAfterConstraint(sizeDesired: Vec2): Vec2 {
+        val newSize = Vec2(sizeDesired)
         if (g.nextWindowData.flags has NextWindowDataFlag.HasSizeConstraint) { // Using -1,-1 on either X/Y axis to preserve the current size.
             val cr = g.nextWindowData.sizeConstraintRect
             newSize.x = if (cr.min.x >= 0 && cr.max.x >= 0) glm.clamp(newSize.x, cr.min.x, cr.max.x) else sizeFull.x
