@@ -13,8 +13,7 @@ import imgui.classes.Context
 import imgui.impl.gl.ImplGL2
 import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.glClear
+import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryStack
 import uno.glfw.GlfwWindow
 import uno.glfw.VSync
@@ -170,7 +169,7 @@ private class ImGuiOpenGL2 {
             // Rendering
             render()
             glViewport(window.framebufferSize)
-            glClearColor(clearColor)
+            glClearColor(clearColor.x * clearColor.w, clearColor.y * clearColor.w, clearColor.z * clearColor.w, clearColor.w)
             glClear(GL_COLOR_BUFFER_BIT)
 
             // If you are using this code with non-legacy OpenGL header/contexts (which you should not, prefer using imgui_impl_opengl3.cpp!!),

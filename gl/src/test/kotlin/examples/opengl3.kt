@@ -13,8 +13,8 @@ import imgui.impl.gl.ImplGL3
 import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.glClear
+import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.Platform
 import uno.glfw.GlfwWindow
@@ -205,7 +205,7 @@ private class ImGuiOpenGL3 {
         // Rendering
         ImGui.render()
         glViewport(window.framebufferSize)
-        glClearColor(clearColor)
+        glClearColor(clearColor.x * clearColor.w, clearColor.y * clearColor.w, clearColor.z * clearColor.w, clearColor.w)
         glClear(GL_COLOR_BUFFER_BIT)
 
         implGl3.renderDrawData(ImGui.drawData!!)
