@@ -2296,33 +2296,16 @@ internal interface templateFunctions {
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
+
+        //TODO, also other `T`
+        // Sanitize format
+//        char fmt_sanitized[32];
+//        SanitizeFormatString(fmt_start, fmt_sanitized, IM_ARRAYSIZE(fmt_sanitized));
+//        fmt_start = fmt_sanitized;
+
+        // Format value with our rounding, and read back
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
         val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
-        // TODO
-//        char fmt[32];
-//        const char* fmt_end = ImParseFormatFindEnd(fmt_start);
-//        IM_ASSERT(fmt_end - fmt_start < IM_ARRAYSIZE(fmt) && "Number format is too long!");
-//        #ifdef IMGUI_USE_STB_SPRINTF
-//                // stb_sprintf.h supports several new modifiers which format numbers in a way that makes them incompatible with
-//                // ImAtof()/ImAtoi(). Copy format string omitting incompatible modifiers and anything past the end of format specifier.
-//                int fmt_len = 0;
-//        for (int i = 0, end = fmt_end - fmt_start; i < end; i++)
-//        {
-//            char c = fmt_start[i];
-//            if (c == '\'' || c == '$' || c == '_')                                  // Custom flags provided by stb_sprintf.h
-//                continue;
-//            fmt[fmt_len++] = c;
-//        }
-//        fmt[fmt_len] = 0;
-//        fmt_start = fmt;
-//        #else
-//        // Extra characters after format specifier may confuse ImAtof()/ImAtoi(), therefore copying is performed, excluding anything beyond.
-//        if (*fmt_end != 0)
-//        {
-//            ImStrncpy(fmt, fmt_start, fmt_end - fmt_start + 1);
-//            fmt_start = fmt;
-//        }
-//        #endif
         return when (dataType) {
             DataType.Float, DataType.Double -> vStr.replace(',', '.').d.i
             else -> vStr.i
