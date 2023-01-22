@@ -12,10 +12,12 @@ import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isKeyDown
 import imgui.ImGui.isKeyPressed
 import imgui.ImGui.isKeyReleased
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDoubleClicked
+import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isMouseReleased
@@ -48,13 +50,14 @@ object ShowDemoWindowMisc {
             text("WantMoveMouse: ${io.wantSetMousePos}")
             text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
 
-            treeNode("Keyboard, Mouse & Navigation State") {
+            // Display Mouse state
+            treeNode("Mouse State") {
                 if (isMousePosValid()) text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
                 else text("Mouse pos: <INVALID>")
                 text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
                 text("Mouse down:")
                 for (i in 0 until io.mouseDown.size)
-                    if (io.mouseDownDuration[i] >= 0f) {
+                    if (isMouseDown(MouseButton.of(i))) {
                         sameLine()
                         text("b$i (%.02f secs)", io.mouseDownDuration[i])
                     }
@@ -77,10 +80,14 @@ object ShowDemoWindowMisc {
                         text("b$i")
                     }
                 text("Mouse wheel: %.1f", io.mouseWheel)
+                text("Pen Pressure: %.1f", io.penPressure) // Note: currently unused
+            }
 
+            // Display Keyboard/Mouse state
+            treeNode("Keyboard & Navigation State") {
                 text("Keys down:")
                 for (i in io.keysDown.indices)
-                    if (io.keysDownDuration[i] >= 0f) {
+                    if (isKeyDown(i)) {
                         sameLine()
                         text("$i (0x%X) (%.02f secs)", i, io.keysDownDuration[i])
                     }
@@ -110,17 +117,17 @@ object ShowDemoWindowMisc {
                 }
 
                 text("NavInputs down:")
-                io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
+                io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f (%.02f secs)", it, io.navInputsDownDuration[i]) }
                 text("NavInputs pressed:")
                 io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, _ -> sameLine(); text("[$i]") }
-                text("NavInputs duration:")
-                io.navInputsDownDuration.filter { it >= 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f", it) }
 
                 button("Hovering me sets the\nkeyboard capture flag")
-                if (isItemHovered()) captureKeyboardFromApp(true)
+                if (isItemHovered())
+                    captureKeyboardFromApp(true)
                 sameLine()
                 button("Holding me clears the\nthe keyboard capture flag")
-                if (isItemActive) captureKeyboardFromApp(false)
+                if (isItemActive)
+                    captureKeyboardFromApp(false)
             }
 
             Tabbing()
