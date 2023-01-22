@@ -264,14 +264,17 @@ class Table {
     /** -1 or +1 */
     var reorderColumnDir: TableColumnIdx = 0
 
+    /** Index of left-most non-hidden column. */
+    var leftMostEnabledColumn: TableColumnIdx = 0
+
+    /** Index of right-most non-hidden column. */
+    var rightMostEnabledColumn: TableColumnIdx = 0
+
     /** Index of left-most stretched column. */
     var leftMostStretchedColumn: TableColumnIdx = 0
 
     /** Index of right-most stretched column. */
     var rightMostStretchedColumn: TableColumnIdx = 0
-
-    /** Index of right-most non-hidden column. */
-    var rightMostEnabledColumn: TableColumnIdx = 0
 
     /** Column right-clicked on, of -1 if opening context menu from a neutral/empty spot */
     var contextPopupColumn: TableColumnIdx = 0
@@ -503,13 +506,14 @@ class Table {
         columnsEnabledCount = 0
         enabledMaskByIndex = 0x00
         enabledMaskByDisplayOrder = 0x00
+        leftMostEnabledColumn = -1
         minColumnWidth = 1f max (g.style.framePadding.x * 1f) // g.Style.ColumnsMinSpacing; // FIXME-TABLE
 
         // [Part 1] Apply/lock Enabled and Order states. Calculate auto/ideal width for columns. Count fixed/stretch columns.
         // Process columns in their visible orders as we are building the Prev/Next indices.
         var countFixed = 0                // Number of columns that have fixed sizing policies
         var countStretch = 0              // Number of columns that have stretch sizing policies
-        var lastVisibleColumnIdx = -1
+        var prevVisibleColumnIdx = -1
         var hasAutoFitRequest = false
         var hasResizable = false
         var stretchSumWidthAuto = 0f
@@ -558,14 +562,16 @@ class Table {
             }
 
             // Mark as enabled and link to previous/next enabled column
-            column.prevEnabledColumn = lastVisibleColumnIdx
+            column.prevEnabledColumn = prevVisibleColumnIdx
             column.nextEnabledColumn = -1
-            if (lastVisibleColumnIdx != -1)
-                columns[lastVisibleColumnIdx].nextEnabledColumn = columnN
+            if (prevVisibleColumnIdx != -1)
+                columns[prevVisibleColumnIdx].nextEnabledColumn = columnN
+            else
+                leftMostEnabledColumn = columnN
             column.indexWithinEnabledSet = columnsEnabledCount++
             enabledMaskByIndex = enabledMaskByIndex or (1L shl columnN)
             enabledMaskByDisplayOrder = enabledMaskByDisplayOrder or (1L shl column.displayOrder)
-            lastVisibleColumnIdx = columnN
+            prevVisibleColumnIdx = columnN
             assert(column.indexWithinEnabledSet <= column.displayOrder)
 
             // Calculate ideal/auto column width (that's the width required for all contents to be visible without clipping)
@@ -592,8 +598,8 @@ class Table {
         }
         if (flags has Tf.Sortable && sortSpecsCount == 0 && flags hasnt Tf.SortTristate)
             isSortSpecsDirty = true
-        rightMostEnabledColumn = lastVisibleColumnIdx
-        assert(rightMostEnabledColumn >= 0)
+        rightMostEnabledColumn = prevVisibleColumnIdx
+        assert(leftMostEnabledColumn >= 0 && rightMostEnabledColumn >= 0)
 
         // [Part 2] Disable child window clipping while fitting columns. This is not strictly necessary but makes it possible
         // to avoid the column fitting having to wait until the first visible frame of the child container (may or not be a good thing).

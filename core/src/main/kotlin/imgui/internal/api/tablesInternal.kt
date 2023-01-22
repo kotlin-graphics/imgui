@@ -21,6 +21,9 @@ import imgui.WindowFlag as Wf
 // Tables: Internals
 interface tablesInternal {
 
+    val currentTable: Table?
+        get() = g.currentTable
+
     fun tableFindByID(id: ID): Table? = g.tables.getByKey(id)
 
     fun beginTableEx(name: String, id: ID, columnsCount: Int, flags_: TableFlags = Tf.None.i, outerSize: Vec2 = Vec2(),

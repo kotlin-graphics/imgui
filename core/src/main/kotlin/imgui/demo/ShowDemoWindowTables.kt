@@ -457,6 +457,9 @@ object ShowDemoWindowTables {
             setNextItemOpen(openAction != 0)
         Sorting()
 
+        // In this example we'll expose most table flags and settings.
+        // For specific flags and settings refer to the corresponding section for more detailed explanation.
+        // This section is mostly useful to experiment with combining certain flags or settings with each others.
         //ImGui::SetNextItemOpen(true, ImGuiCond_Once); // [DEBUG]
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
@@ -1628,7 +1631,7 @@ object ShowDemoWindowTables {
                     spacing()
                 }
 
-                // Recreate/reset item list if we changed the number of items
+                // Update item list if we changed the number of items
                 if (items.size != itemsCount) {
                     items = Array(itemsCount) { items.getOrElse(it) { MyItem() } }
                     for (n in 0 until itemsCount) {
@@ -1646,6 +1649,7 @@ object ShowDemoWindowTables {
                 val tableScrollMax = Vec2()         // "
                 var tableDrawList: DrawList? = null // "
 
+                // Submit table
                 val innerWidthToUse = if (flags has Tf.ScrollX) innerWidthWithScroll else 0f
                 table("table_advanced", 6, flags, if (outerSizeEnabled) outerSizeValue else Vec2(0), innerWidthToUse) {
                     // Declare columns
@@ -1701,9 +1705,9 @@ object ShowDemoWindowTables {
                             val itemIsSelected = item.id in selection
                             pushID(item.id)
                             tableNextRow(Trf.None.i, rowMinHeight)
-                            tableNextColumn()
 
                             // For the demo purpose we can select among different type of items submitted in the first column
+                            tableSetColumnIndex(0)
                             val label = "%04d".format(item.id)
                             val type = ContentsType.values().first { it.ordinal == contentsType }
                             if (type == ContentsType.Text)
@@ -1731,14 +1735,14 @@ object ShowDemoWindowTables {
                                     }
                             }
 
-                            if (tableNextColumn())
+                            if (tableSetColumnIndex(1))
                                 textUnformatted(item.name)
 
                             // Here we demonstrate marking our data set as needing to be sorted again if we modified a quantity,
                             // and we are currently sorting on the column showing the Quantity.
                             // To avoid triggering a sort while holding the button, we only trigger it when the button has been released.
                             // You will probably need a more advanced system in your code if you want to automatically sort when a specific entry changes.
-                            if (tableNextColumn()) {
+                            if (tableSetColumnIndex(2)) {
                                 if (smallButton("Chop")) item.quantity += 1
                                 if (sortsSpecsUsingQuantity && ImGui.isItemDeactivated) itemsNeedSort = true
                                 sameLine()
@@ -1746,16 +1750,16 @@ object ShowDemoWindowTables {
                                 if (sortsSpecsUsingQuantity && ImGui.isItemDeactivated) itemsNeedSort = true
                             }
 
-                            if (tableNextColumn())
+                            if (tableSetColumnIndex(3))
                                 text("${item.quantity}")
 
-                            tableNextColumn()
+                            tableSetColumnIndex(4)
                             if (showWrappedText)
                                 textWrapped("Lorem ipsum dolor sit amet")
                             else
                                 text("Lorem ipsum dolor sit amet")
 
-                            if (tableNextColumn())
+                            if (tableSetColumnIndex(5))
                                 text("1234")
 
                             popID()
