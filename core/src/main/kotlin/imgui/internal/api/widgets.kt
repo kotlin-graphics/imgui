@@ -292,16 +292,16 @@ internal interface widgets {
 
         // Calculate scrollbar bounding box
         val bb = window getScrollbarRect axis
-        var roundingCorners = DrawCornerFlag.None.i
+        var roundingCorners = DrawFlag.NoRoundCorners.i
         if (axis == Axis.X) {
-            roundingCorners = roundingCorners or DrawCornerFlag.BotLeft
+            roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerBL
             if (!window.scrollbar.y)
-                roundingCorners = roundingCorners or DrawCornerFlag.BotRight
+                roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerBL
         } else {
             if (window.flags has WindowFlag.NoTitleBar && window.flags hasnt WindowFlag.MenuBar)
-                roundingCorners = roundingCorners or DrawCornerFlag.TopRight
+                roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerTR
             if (!window.scrollbar.x)
-                roundingCorners = roundingCorners or DrawCornerFlag.BotRight
+                roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerBR
         }
         val sizeAvail = window.innerRect.max[axis] - window.innerRect.min[axis]
         val sizeContents = window.contentSize[axis] + window.windowPadding[axis] * 2f
@@ -314,7 +314,7 @@ internal interface widgets {
      *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on a scrollbar
      *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal.
      *  Still, the code should probably be made simpler..   */
-    fun scrollbarEx(bbFrame: Rect, id: ID, axis: Axis, pScrollV: KMutableProperty0<Float>, sizeAvailV: Float, sizeContentsV: Float, roundingCorners: DrawCornerFlags): Boolean {
+    fun scrollbarEx(bbFrame: Rect, id: ID, axis: Axis, pScrollV: KMutableProperty0<Float>, sizeAvailV: Float, sizeContentsV: Float, flags: DrawFlags): Boolean {
 
         var scrollV by pScrollV
 
@@ -390,11 +390,11 @@ internal interface widgets {
         // Render
         val bgCol = Col.ScrollbarBg.u32
         val grabCol = getColorU32(when {
-            held -> Col.ScrollbarGrabActive
-            hovered -> Col.ScrollbarGrabHovered
-            else -> Col.ScrollbarGrab
-        }, alpha)
-        window.drawList.addRectFilled(bbFrame.min, bbFrame.max, bgCol, window.windowRounding, roundingCorners)
+                                      held -> Col.ScrollbarGrabActive
+                                      hovered -> Col.ScrollbarGrabHovered
+                                      else -> Col.ScrollbarGrab
+                                  }, alpha)
+        window.drawList.addRectFilled(bbFrame.min, bbFrame.max, bgCol, window.windowRounding, flags)
         val grabRect = when (axis) {
             Axis.X -> Rect(lerp(bb.min.x, bb.max.x, grabVNorm), bb.min.y, lerp(bb.min.x, bb.max.x, grabVNorm) + grabHPixels, bb.max.y)
             else -> Rect(bb.min.x, lerp(bb.min.y, bb.max.y, grabVNorm), bb.max.x, lerp(bb.min.y, bb.max.y, grabVNorm) + grabHPixels)
@@ -406,9 +406,7 @@ internal interface widgets {
 
     /** ImageButton() is flawed as 'id' is always derived from 'texture_id' (see #2464 #1390)
      *  We provide this internal helper to write your own variant while we figure out how to redesign the public ImageButton() API. */
-    fun imageButtonEx(
-            id: ID, textureId: TextureID, size: Vec2, uv0: Vec2, uv1: Vec2, padding: Vec2, bgCol: Vec4, tintCol: Vec4,
-    ): Boolean {
+    fun imageButtonEx(id: ID, textureId: TextureID, size: Vec2, uv0: Vec2, uv1: Vec2, padding: Vec2, bgCol: Vec4, tintCol: Vec4): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
@@ -422,7 +420,7 @@ internal interface widgets {
         val (pressed, hovered, held) = buttonBehavior(bb, id)
 
         // Render
-        val col = getColorU32(if(held && hovered) Col.ButtonActive else if(hovered) Col.ButtonHovered else Col.Button)
+        val col = getColorU32(if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button)
         renderNavHighlight(bb, id)
         renderFrame(bb.min, bb.max, col, true, clamp(min(padding.x, padding.y), 0f, style.frameRounding))
         if (bgCol.w > 0f)

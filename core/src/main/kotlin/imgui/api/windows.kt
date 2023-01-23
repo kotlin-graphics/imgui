@@ -552,12 +552,7 @@ interface windows {
                     bb expand (-g.fontSize - 1f)
                     rounding = window.windowRounding
                 }
-                window.drawList.addRect(bb.min,
-                                        bb.max,
-                                        getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha),
-                                        rounding,
-                                        0.inv(),
-                                        3f)
+                window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), rounding, 0, 3f)
             }
 
             with(window) {

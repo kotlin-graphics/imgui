@@ -37,7 +37,7 @@ import imgui.ImGui.windowSize
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.dsl.menuItem
 import imgui.internal.sections.ButtonFlag
-import imgui.internal.sections.DrawCornerFlag
+import imgui.internal.sections.DrawFlag
 import kotlin.reflect.KMutableProperty0
 
 object CustomRendering {
@@ -118,9 +118,9 @@ object CustomRendering {
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
                 val spacing = 10f
-                val cornersNone = DrawCornerFlag.None.i
-                val cornersAll = DrawCornerFlag.All.i
-                val cornersTlBr = DrawCornerFlag.TopLeft or DrawCornerFlag.BotRight
+                val cornersNone = DrawFlag.NoRoundCorners.i
+                val cornersAll = 0
+                val cornersTlBr = DrawFlag.NoRoundCornerTR or DrawFlag.NoRoundCornerBL
                 val rounding = sz / 5f
                 val circleSegments = if (circleSegmentsOverride) circleSegmentsOverrideV else 0
                 val curveSegments = if(curveSegmentsOverride) curveSegmentsOverrideV else 0

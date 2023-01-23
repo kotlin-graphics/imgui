@@ -1110,7 +1110,7 @@ class Table {
             val outerBorder = Rect(outerRect) // [JVM] we need a local copy, shadowing is fine
             val outerCol = borderColorStrong
             if ((flags and Tf.BordersOuter) == Tf.BordersOuter.i)
-                innerDrawlist.addRect(outerBorder.min, outerBorder.max, outerCol, 0f, 0.inv(), borderSize)
+                innerDrawlist.addRect(outerBorder.min, outerBorder.max, outerCol, 0f, 0, borderSize)
             else if (flags has Tf.BordersOuterV) {
                 innerDrawlist.addLine(outerBorder.min, Vec2(outerBorder.min.x, outerBorder.max.y), outerCol, borderSize)
                 innerDrawlist.addLine(Vec2(outerBorder.max.x, outerBorder.min.y), outerBorder.max, outerCol, borderSize)
@@ -1367,7 +1367,7 @@ class Table {
                     if (mergeGroupN has 2 && flags hasnt Tf.NoHostExtendY)
                         mergeClipRect.max.y = mergeClipRect.max.y max hostRect.max.y
                     //                    #if 0
-                    //                    GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, ~0, 1.0f)
+                    //                    GetOverlayDrawList()->AddRect(merge_group->ClipRect.Min, merge_group->ClipRect.Max, IM_COL32(255, 0, 0, 200), 0.0f, 0, 1.0f)
                     //                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Min, merge_clip_rect.Min, IM_COL32(255, 100, 0, 200))
                     //                    GetOverlayDrawList()->AddLine(merge_group->ClipRect.Max, merge_clip_rect.Max, IM_COL32(255, 100, 0, 200))
                     //                    #endif

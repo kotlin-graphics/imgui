@@ -495,9 +495,9 @@ class Window(var context: Context,
         get() {
             val rScreen = (mainViewport as ViewportP).mainRect
             val padding = g.style.displaySafeAreaPadding
-            rScreen expand Vec2(if(rScreen.width > padding.x * 2) -padding.x else 0f, if(rScreen.height > padding.y * 2) -padding.y else 0f)
+            rScreen expand Vec2(if (rScreen.width > padding.x * 2) -padding.x else 0f, if (rScreen.height > padding.y * 2) -padding.y else 0f)
             return rScreen
-    }
+        }
 
     /** ~ SetWindowPos */
     fun setPos(pos: Vec2, cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
@@ -749,9 +749,10 @@ class Window(var context: Context,
     /** ~updateWindowManualResize
      *  Handle resize for: Resize Grips, Borders, Gamepad
      *  @return [JVM] borderHelf to Boolean   */
-    fun updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
+    fun updateManualResize(
+        sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
         resizeGripCol: IntArray, visibilityRect: Rect,
-                                ): Pair<Int, Boolean> {
+                          ): Pair<Int, Boolean> {
 
         var borderHeld = borderHeld_
 
@@ -890,12 +891,7 @@ class Window(var context: Context,
 
         val rounding = windowRounding
         val borderSize = windowBorderSize
-        if (borderSize > 0f && flags hasnt Wf.NoBackground) drawList.addRect(pos,
-                                                                             pos + size,
-                                                                             Col.Border.u32,
-                                                                             rounding,
-                                                                             DrawCornerFlag.All.i,
-                                                                             borderSize)
+        if (borderSize > 0f && flags hasnt Wf.NoBackground) drawList.addRect(pos, pos + size, Col.Border.u32, rounding, 0, borderSize)
 
         val borderHeld = resizeBorderHeld
         if (borderHeld != -1) {
@@ -956,21 +952,14 @@ class Window(var context: Context,
                     else -> 1f
                 }
                 if (overrideAlpha) bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
-                drawList.addRectFilled(pos + Vec2(0f, titleBarHeight),
-                                       pos + size,
-                                       bgCol,
-                                       windowRounding,
-                                       if (flags has Wf.NoTitleBar) DrawCornerFlag.All.i else DrawCornerFlag.Bot.i)
+                drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
+                                       if (flags has Wf.NoTitleBar) 0 else DrawFlag.NoRoundCornerT.i)
             }
 
             // Title bar
             if (flags hasnt Wf.NoTitleBar) {
                 val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
-                drawList.addRectFilled(titleBarRect.min,
-                                       titleBarRect.max,
-                                       titleBarCol.u32,
-                                       windowRounding,
-                                       DrawCornerFlag.Top.i)
+                drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, DrawFlag.NoRoundCornerB.i)
             }
 
             // Menu bar
@@ -980,13 +969,9 @@ class Window(var context: Context,
                 val rounding = if (flags has Wf.NoTitleBar) windowRounding else 0f
                 drawList.addRectFilled(menuBarRect.min + Vec2(windowBorderSize, 0f),
                                        menuBarRect.max - Vec2(windowBorderSize, 0f),
-                                       Col.MenuBarBg.u32,
-                                       rounding,
-                                       DrawCornerFlag.Top.i)
-                if (style.frameBorderSize > 0f && menuBarRect.max.y < pos.y + size.y) drawList.addLine(menuBarRect.bl,
-                                                                                                       menuBarRect.br,
-                                                                                                       Col.Border.u32,
-                                                                                                       style.frameBorderSize)
+                                       Col.MenuBarBg.u32, rounding, DrawFlag.NoRoundCornerB.i)
+                if (style.frameBorderSize > 0f && menuBarRect.max.y < pos.y + size.y)
+                    drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
             }
 
             // Scrollbars
@@ -998,15 +983,11 @@ class Window(var context: Context,
                 val grip = resizeGripDef[resizeGripN]
                 val corner = pos.lerp(pos + size, grip.cornerPosN)
                 with(drawList) {
-                    pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize,
-                                                                                     resizeGripDrawSize) else Vec2(resizeGripDrawSize, windowBorderSize)))
-                    pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(resizeGripDrawSize,
-                                                                                     windowBorderSize) else Vec2(windowBorderSize, resizeGripDrawSize)))
+                    pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, resizeGripDrawSize) else Vec2(resizeGripDrawSize, windowBorderSize)))
+                    pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(resizeGripDrawSize, windowBorderSize) else Vec2(windowBorderSize, resizeGripDrawSize)))
                     pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize),
                                        corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)),
-                                  windowRounding,
-                                  grip.angleMin12,
-                                  grip.angleMax12)
+                                  windowRounding, grip.angleMin12, grip.angleMax12)
                     pathFillConvex(resizeGripCol[resizeGripN])
                 }
             }
@@ -1224,7 +1205,7 @@ class Window(var context: Context,
         io.metricsRenderWindows++
         drawList addTo viewport.drawDataBuilder!!.layers[layer]
         dc.childWindows.filter { it.isActiveAndVisible }  // Clipped children may have been marked not active
-            .forEach { it addToDrawData layer }
+                .forEach { it addToDrawData layer }
     }
 
     /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)

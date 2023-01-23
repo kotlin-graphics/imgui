@@ -2,6 +2,7 @@ package imgui.classes
 
 import gli_.hasnt
 import glm_.*
+import glm_.func.common.abs
 import glm_.func.common.max
 import glm_.func.cos
 import glm_.func.sin
@@ -171,22 +172,22 @@ class DrawList(sharedData: DrawListSharedData?) {
      * @param pMin: upper-left
      * @param pMax: lower-right
      * (== upper-left + size)   */
-    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i, thickness: Float = 1f) {
+    fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = 0, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
         if (flags has DrawListFlag.AntiAliasedLines)
-            pathRect(pMin + 0.5f, pMax - 0.5f, rounding, roundingCorners)
+            pathRect(pMin + 0.5f, pMax - 0.5f, rounding, flags)
         else    // Better looking lower-right corner and rounded non-AA shapes.
-            pathRect(pMin + 0.5f, pMax - 0.49f, rounding, roundingCorners)
+            pathRect(pMin + 0.5f, pMax - 0.49f, rounding, flags)
         pathStroke(col, DrawFlag.Closed.i, thickness)
     }
 
     /** @param pMin: upper-left
      *  @param pMax: lower-right
      *  (== upper-left + size) */
-    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i) {
+    fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = 0) {
         if (col hasnt COL32_A_MASK) return
-        if (rounding > 0f) {
-            pathRect(pMin, pMax, rounding, roundingCorners)
+        if (rounding > 0f && (flags and DrawFlag.NoRoundCorners) != DrawFlag.NoRoundCorners.i) {
+            pathRect(pMin, pMax, rounding, flags)
             pathFillConvex(col)
         } else {
             primReserve(6, 4)
@@ -804,12 +805,12 @@ class DrawList(sharedData: DrawListSharedData?) {
             popTextureId()
     }
 
-    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float,
-                        roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i) {
+    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags: DrawFlags = 0) {
         if (col hasnt COL32_A_MASK)
             return
 
-        if (rounding <= 0f || roundingCorners hasnt DrawCornerFlag.All) {
+        assert(flags hasnt 0x0E) { "Legacy use of ~0 or 0x0F as ImDrawCornerFlags value. Please update your code to use ImDrawFlags_NoRoundCorner* flags." }
+        if (rounding <= 0f || (flags and DrawFlag.NoRoundCorners) == DrawFlag.NoRoundCorners.i) {
             addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
             return
         }
@@ -818,7 +819,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (pushTextureId) pushTextureID(userTextureId)
 
         val vertStartIdx = vtxBuffer.size
-        pathRect(pMin, pMax, rounding, roundingCorners)
+        pathRect(pMin, pMax, rounding, flags)
         pathFillConvex(col)
         val vertEndIdx = vtxBuffer.size
         shadeVertsLinearUV(vertStartIdx, vertEndIdx, pMin, pMax, uvMin, uvMax, true)
@@ -870,7 +871,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             val aEmitStart = (aMinSegmentAngle - aMin) > 0f
             val aEmitEnd = (aMax - aMaxSegmentAngle) > 0f
 
-//            _path.reserve(_Path.Size + (a_mid_samples + 1 + (a_emit_start ? 1 : 0)+(a_emit_end ? 1 : 0)))
+            //            _path.reserve(_Path.Size + (a_mid_samples + 1 + (a_emit_start ? 1 : 0)+(a_emit_end ? 1 : 0)))
             if (aEmitStart)
                 _path += Vec2(center.x + aMin.cos * radius, center.y + aMin.sin * radius)
             if (aMaxSample >= aMinSample)
@@ -976,23 +977,23 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, roundingCorners: DrawCornerFlags = DrawCornerFlag.All.i) {
+    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags: DrawFlags = 0) {
+        assert(flags hasnt 0x0E) { "Legacy use of ~0 or 0x0F as ImDrawCornerFlags value. Please update your code to use ImDrawFlags_NoRoundCorner* flags." }
+        var tmp = if (flags hasnt DrawFlag.NoRoundCornerT || flags hasnt DrawFlag.NoRoundCornerB) 0.5f else 1f
+        var rounding = rounding_ min ((b.x - a.x).abs * tmp - 1f)
+        tmp = if (flags hasnt DrawFlag.NoRoundCornerL || flags hasnt DrawFlag.NoRoundCornerR) 0.5f else 1f
+        rounding = rounding min ((b.y - a.y).abs * tmp - 1f)
 
-        var cond = ((roundingCorners and DrawCornerFlag.Top) == DrawCornerFlag.Top.i) || ((roundingCorners and DrawCornerFlag.Bot) == DrawCornerFlag.Bot.i) // TODO consider simplyfing
-        var rounding = glm.min(rounding_, glm.abs(b.x - a.x) * (if (cond) 0.5f else 1f) - 1f)
-        cond = ((roundingCorners and DrawCornerFlag.Left) == DrawCornerFlag.Left.i) || ((roundingCorners and DrawCornerFlag.Right) == DrawCornerFlag.Right.i)
-        rounding = glm.min(rounding, glm.abs(b.y - a.y) * (if (cond) 0.5f else 1f) - 1f)
-
-        if (rounding <= 0f || roundingCorners == 0) {
+        if (rounding <= 0f || (flags and DrawFlag.NoRoundCorners) == DrawFlag.NoRoundCorners.i) {
             pathLineTo(a)
             pathLineTo(Vec2(b.x, a.y))
             pathLineTo(b)
             pathLineTo(Vec2(a.x, b.y))
         } else {
-            val roundingTL = if (roundingCorners has DrawCornerFlag.TopLeft) rounding else 0f
-            val roundingTR = if (roundingCorners has DrawCornerFlag.TopRight) rounding else 0f
-            val roundingBR = if (roundingCorners has DrawCornerFlag.BotRight) rounding else 0f
-            val roundingBL = if (roundingCorners has DrawCornerFlag.BotLeft) rounding else 0f
+            val roundingTL = if (flags has DrawFlag.NoRoundCornerTL) 0f else rounding
+            val roundingTR = if (flags has DrawFlag.NoRoundCornerTR) 0f else rounding
+            val roundingBR = if (flags has DrawFlag.NoRoundCornerBR) 0f else rounding
+            val roundingBL = if (flags has DrawFlag.NoRoundCornerBL) 0f else rounding
             pathArcToFast(Vec2(a.x + roundingTL, a.y + roundingTL), roundingTL, 6, 9)
             pathArcToFast(Vec2(b.x - roundingTR, a.y + roundingTR), roundingTR, 9, 12)
             pathArcToFast(Vec2(b.x - roundingBR, b.y - roundingBR), roundingBR, 0, 3)
@@ -1595,14 +1596,18 @@ class DrawList(sharedData: DrawListSharedData?) {
         val fillR = inner.max.x < outer.max.x
         val fillU = inner.min.y > outer.min.y
         val fillD = inner.max.y < outer.max.y
-        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding, (if (fillU) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if (fillD) DrawCornerFlag.None else DrawCornerFlag.BotLeft)
-        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding, (if (fillU) DrawCornerFlag.None else DrawCornerFlag.TopRight) or if (fillD) DrawCornerFlag.None else DrawCornerFlag.BotRight)
-        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding, (if (fillL) DrawCornerFlag.None else DrawCornerFlag.TopLeft) or if (fillR) DrawCornerFlag.None else DrawCornerFlag.TopRight)
-        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding, (if (fillL) DrawCornerFlag.None else DrawCornerFlag.BotLeft) or if (fillR) DrawCornerFlag.None else DrawCornerFlag.BotRight)
-        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawCornerFlag.TopLeft.i)
-        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawCornerFlag.TopRight.i)
-        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawCornerFlag.BotLeft.i)
-        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawCornerFlag.BotRight.i)
+        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
+                                          (if (fillU) DrawFlag.NoRoundCornerTL else DrawFlag.None) or if (fillD) DrawFlag.NoRoundCornerBL else DrawFlag.None)
+        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
+                                          (if (fillU) DrawFlag.NoRoundCornerTR else DrawFlag.None) or if (fillD) DrawFlag.NoRoundCornerBR else DrawFlag.None)
+        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
+                                          (if(fillL) DrawFlag.NoRoundCornerTL else DrawFlag.None) or if(fillR) DrawFlag.NoRoundCornerTR else DrawFlag.None)
+        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
+                                          (if(fillL) DrawFlag.NoRoundCornerBL else DrawFlag.None) or if(fillR) DrawFlag.NoRoundCornerBR else DrawFlag.None)
+        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.NoRoundCornerB or DrawFlag.NoRoundCornerTR)
+        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.NoRoundCornerB or DrawFlag.NoRoundCornerTL)
+        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.NoRoundCornerT or DrawFlag.NoRoundCornerBR)
+        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.NoRoundCornerT or DrawFlag.NoRoundCornerBL)
     }
 
     // Internal API, Shade functions

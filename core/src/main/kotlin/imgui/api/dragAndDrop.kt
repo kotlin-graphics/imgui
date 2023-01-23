@@ -255,7 +255,7 @@ interface dragAndDrop {
             r expand 3.5f
             val pushClipRect = r !in window.clipRect
             if (pushClipRect) window.drawList.pushClipRect(r.min - 1, r.max + 1)
-            window.drawList.addRect(r.min, r.max, Col.DragDropTarget.u32, 0f, 0.inv(), 2f)
+            window.drawList.addRect(r.min, r.max, Col.DragDropTarget.u32, 0f, 0, 2f)
             if (pushClipRect) window.drawList.popClipRect()
         }
 

@@ -437,39 +437,6 @@ infix fun Int.shl(layer: NavLayer): Int = shl(layer.ordinal)
 enum class PopupPositionPolicy { Default, ComboBox, Tooltip }
 
 
-typealias DrawCornerFlags = Int
-
-/** Flags: for ImDrawList functions: AddRect(), AddRectFilled() etc. */
-enum class DrawCornerFlag(val i: DrawCornerFlags) {
-    None(0),
-    TopLeft(1 shl 0), // 0x1
-    TopRight(1 shl 1), // 0x2
-    BotLeft(1 shl 2), // 0x4
-    BotRight(1 shl 3), // 0x8
-    Top(TopLeft or TopRight),   // 0x3
-    Bot(BotLeft or BotRight),   // 0xC
-    Left(TopLeft or BotLeft),    // 0x5
-    Right(TopRight or BotRight),  // 0xA
-
-    /** In your function calls you may use ~0 (= all bits sets) instead of DrawCornerFlags.All, as a convenience  */
-    All(0xF);
-
-    infix fun and(b: DrawCornerFlag): DrawCornerFlags = i and b.i
-    infix fun and(b: DrawCornerFlags): DrawCornerFlags = i and b
-    infix fun or(b: DrawCornerFlag): DrawCornerFlags = i or b.i
-    infix fun or(b: DrawCornerFlags): DrawCornerFlags = i or b
-    infix fun xor(b: DrawCornerFlag): DrawCornerFlags = i xor b.i
-    infix fun xor(b: DrawCornerFlags): DrawCornerFlags = i xor b
-    infix fun wo(b: DrawCornerFlags): DrawCornerFlags = and(b.inv())
-}
-
-infix fun DrawCornerFlags.and(b: DrawCornerFlag): DrawCornerFlags = and(b.i)
-infix fun DrawCornerFlags.or(b: DrawCornerFlag): DrawCornerFlags = or(b.i)
-infix fun DrawCornerFlags.xor(b: DrawCornerFlag): DrawCornerFlags = xor(b.i)
-infix fun DrawCornerFlags.has(b: DrawCornerFlag): Boolean = and(b.i) != 0
-infix fun DrawCornerFlags.hasnt(b: DrawCornerFlag): Boolean = and(b.i) == 0
-infix fun DrawCornerFlags.wo(b: DrawCornerFlag): DrawCornerFlags = and(b.i.inv())
-
 typealias DrawFlags = Int
 
 /** Flags: for ImDrawList functions: AddRect(), AddRectFilled() etc. */
@@ -477,7 +444,19 @@ enum class DrawFlag(val i: DrawFlags) {
     None(0),
 
     /** PathStroke(), AddPolyline(): specify that (LEGACY: this must always stay == 1 to be backward compatible with old API using a bool) */
-    Closed(1 shl 0);
+    Closed(1 shl 0),
+
+    // (bits 1..3 unused to facilitate handling of legacy behavior and detection of Flags = 0x0F)
+
+    NoRoundCornerTL             (1 shl 4),
+    NoRoundCornerTR             (1 shl 5),
+    NoRoundCornerBL             (1 shl 6),
+    NoRoundCornerBR             (1 shl 7),
+    NoRoundCornerT              (NoRoundCornerTL or NoRoundCornerTR),
+    NoRoundCornerR              (NoRoundCornerTR or NoRoundCornerBR),
+    NoRoundCornerL              (NoRoundCornerTL or NoRoundCornerBL),
+    NoRoundCornerB              (NoRoundCornerBL or NoRoundCornerBR),
+    NoRoundCorners              (NoRoundCornerTL or NoRoundCornerTR or NoRoundCornerBL or NoRoundCornerBR);
 
     infix fun and(b: DrawFlag): DrawFlags = i and b.i
     infix fun and(b: DrawFlags): DrawFlags = i and b

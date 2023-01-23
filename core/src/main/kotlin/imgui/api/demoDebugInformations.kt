@@ -190,7 +190,7 @@ interface demoDebugInformations {
 
                     bulletText("Table 0x%08X (${table.columnsCount} columns, in '${table.outerWindow!!.name}')", table.id)
                     if (isItemHovered())
-                        foregroundDrawList.addRect(table.outerRect.min - 1, table.outerRect.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                        foregroundDrawList.addRect(table.outerRect.min - 1, table.outerRect.max + 1, COL32(255, 255, 0, 255), 0f, 0, 2f)
                     indent()
                     for (rectN in TRT.values()) {
                         if (rectN >= TRT.ColumnsRect) {
@@ -202,7 +202,7 @@ interface demoDebugInformations {
                                         .format(r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                                 selectable(buf)
                                 if (isItemHovered())
-                                    foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                                    foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0, 2f)
                             }
                         } else {
                             val r = Funcs.getTableRect(table, rectN, -1)
@@ -210,7 +210,7 @@ interface demoDebugInformations {
                                 r.min.x, r.min.y, r.max.x, r.max.y, r.width, r.height)
                             selectable(buf)
                             if (isItemHovered())
-                                foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0.inv(), 2f)
+                                foregroundDrawList.addRect(r.min - 1, r.max + 1, COL32(255, 255, 0, 255), 0f, 0, 2f)
                         }
                     }
                     unindent()
@@ -372,7 +372,7 @@ interface demoDebugInformations {
                         val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], columnN)
                         val col = if (table.hoveredColumnBody == columnN) COL32(255, 255, 128, 255) else COL32(255, 0, 128, 255)
                         val thickness = if (table.hoveredColumnBody == columnN) 3f else 1f
-                        drawList.addRect(r.min, r.max, col, 0f, 0.inv(), thickness)
+                        drawList.addRect(r.min, r.max, col, 0f, 0, thickness)
                     }
                 } else {
                     val r = Funcs.getTableRect(table, TRT.values()[cfg.showTablesRectsType], -1)

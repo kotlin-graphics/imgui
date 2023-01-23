@@ -67,12 +67,12 @@ import imgui.classes.DrawList
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.sections.DrawFlag
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
 import imgui.internal.sections.has
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
-import imgui.internal.sections.DrawCornerFlag as Dcf
 
 
 /** Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little color square that can be
@@ -735,9 +735,8 @@ interface widgetsColorEditorPicker {
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(window.drawList, Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max,
-                    getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, Dcf.TopRight or Dcf.BotRight)
-            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding,
-                    Dcf.TopLeft or Dcf.BotLeft)
+                    getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, DrawFlag.NoRoundCornerL.i)
+            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding, DrawFlag.NoRoundCornerR.i)
         } else {
             /*  Because getColorU32() multiplies by the global style alpha and we don't want to display a checkerboard 
                 if the source code had no alpha */
@@ -745,7 +744,7 @@ interface widgetsColorEditorPicker {
             if (colSource.w < 1f)
                 renderColorRectWithAlphaCheckerboard(window.drawList, bbInner.min, bbInner.max, colSource.u32, gridStep, Vec2(off), rounding)
             else
-                window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding, Dcf.All.i)
+                window.drawList.addRectFilled(bbInner.min, bbInner.max, getColorU32(colSource), rounding)
         }
         renderNavHighlight(bb, id)
         // Color button are often in need of some sort of border

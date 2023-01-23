@@ -1,7 +1,6 @@
 package imgui.internal.api
 
 import glm_.b
-import glm_.bool
 import glm_.f
 import glm_.func.common.max
 import glm_.vec1.Vec1i
@@ -12,7 +11,6 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.getColorU32
 import imgui.ImGui.logRenderedText
-import imgui.ImGui.logText
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
@@ -21,7 +19,6 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import unsigned.toUInt
 import kotlin.math.max
-import imgui.internal.sections.DrawCornerFlag as Dcf
 
 /** Render helpers
  *  AVOID USING OUTSIDE OF IMGUI.CPP! NOT FOR PUBLIC CONSUMPTION. THOSE FUNCTIONS ARE A MESS. THEIR SIGNATURE AND BEHAVIOR WILL CHANGE, THEY NEED TO BE REFACTORED INTO SOMETHING DECENT.
@@ -156,7 +153,7 @@ internal interface renderHelpers {
             // We can now claim the space between pos_max.x and ellipsis_max.x
             val textAvailWidth = ((max(posMax.x, ellipsisMaxX) - ellipsisTotalWidth) - posMin.x) max 1f
             var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text,
-                    textEnd = textEndFull, remaining = textEndEllipsis).x
+                                                      textEnd = textEndFull, remaining = textEndEllipsis).x
             if (0 == textEndEllipsis[0] && textEndEllipsis[0] < textEndFull) {
                 // Always display at least 1 character if there's no room for character + ellipsis
                 textEndEllipsis[0] = textCountUtf8BytesFromChar(text, textEndFull)
@@ -166,7 +163,7 @@ internal interface renderHelpers {
                 // Trim trailing space before ellipsis (FIXME: Supporting non-ascii blanks would be nice, for this we need a function to backtrack in UTF-8 text)
                 textEndEllipsis[0]--
                 textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text,
-                        textEndEllipsis[0], textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
+                                                       textEndEllipsis[0], textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
             }
 
             // Render text, render ellipsis
@@ -192,16 +189,16 @@ internal interface renderHelpers {
         window.drawList.addRectFilled(pMin, pMax, fillCol, rounding)
         val borderSize = style.frameBorderSize
         if (border && borderSize > 0f) {
-            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
-            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
+            window.drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0, borderSize)
+            window.drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0, borderSize)
         }
     }
 
     fun renderFrameBorder(pMin: Vec2, pMax: Vec2, rounding: Float = 0f) = with(g.currentWindow!!) {
         val borderSize = style.frameBorderSize
         if (borderSize > 0f) {
-            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, Dcf.All.i, borderSize)
-            drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0.inv(), borderSize)
+            drawList.addRect(pMin + 1, pMax + 1, Col.BorderShadow.u32, rounding, 0, borderSize)
+            drawList.addRect(pMin, pMax, Col.Border.u32, rounding, 0, borderSize)
         }
     }
 
@@ -211,11 +208,11 @@ internal interface renderHelpers {
      * FIXME: uses ImGui::GetColorU32
      * [JVM] safe passing Vec2 instances */
     fun renderColorRectWithAlphaCheckerboard(drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
-                                             gridOff: Vec2, rounding: Float = 0f, roundingCornersFlags: Int = -1) {
+                                             gridOff: Vec2, rounding: Float = 0f, flags: DrawFlags = 0) {
         if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
             val colBg1 = getColorU32(alphaBlendColors(COL32(204, 204, 204, 255), col))
             val colBg2 = getColorU32(alphaBlendColors(COL32(128, 128, 128, 255), col))
-            drawList.addRectFilled(pMin, pMax, colBg1, rounding, roundingCornersFlags)
+            drawList.addRectFilled(pMin, pMax, colBg1, rounding, flags)
 
             var yi = 0
             var y = pMin.y + gridOff.y
@@ -235,24 +232,24 @@ internal interface renderHelpers {
                         x += gridStep * 2f
                         continue
                     }
-                    var roundingCornersFlagsCell = 0
+                    var cellFlags = DrawFlag.NoRoundCorners.i
                     if (y1 <= pMin.y) {
-                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopLeft
-                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.TopRight
+                        if (x1 <= pMin.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerTL
+                        if (x2 >= pMax.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerTR
                     }
                     if (y2 >= pMax.y) {
-                        if (x1 <= pMin.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotLeft
-                        if (x2 >= pMax.x) roundingCornersFlagsCell = roundingCornersFlagsCell or Dcf.BotRight
+                        if (x1 <= pMin.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerBL
+                        if (x2 >= pMax.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerBR
                     }
-                    roundingCornersFlagsCell = roundingCornersFlagsCell and roundingCornersFlags
-                    drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, if (roundingCornersFlagsCell.bool) rounding else 0f, roundingCornersFlagsCell)
+                    cellFlags = cellFlags or flags
+                    drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, rounding, cellFlags)
                     x += gridStep * 2f
                 }
                 y += gridStep
                 yi++
             }
         } else
-            drawList.addRectFilled(pMin, pMax, col, rounding, roundingCornersFlags)
+            drawList.addRectFilled(pMin, pMax, col, rounding, flags)
     }
 
     /** Navigation highlight
@@ -275,12 +272,12 @@ internal interface renderHelpers {
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
             window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
-                    Col.NavHighlight.u32, rounding, Dcf.All.i, THICKNESS)
+                                    Col.NavHighlight.u32, rounding, 0, THICKNESS)
             if (!fullyVisible)
                 window.drawList.popClipRect()
         }
         if (flags has NavHighlightFlag.TypeThin)
-            window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, 0.inv(), 1f)
+            window.drawList.addRect(displayRect.min, displayRect.max, Col.NavHighlight.u32, rounding, 0, 1f)
     }
 
     /** Find the optional ## from which we stop displaying text.    */
@@ -293,7 +290,7 @@ internal interface renderHelpers {
     fun findRenderedTextEnd(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.size): Int {
         var textDisplayEnd = textBegin
         while (textDisplayEnd < textEnd && text[textDisplayEnd] != 0.b &&
-                (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
+            (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
             textDisplayEnd++
         return textDisplayEnd
     }
