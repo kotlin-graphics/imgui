@@ -214,8 +214,8 @@ internal interface inputText {
                 if (!isMultiline && focusRequestedByCode)
                     selectAll = true
             }
-            if (flags has Itf.AlwaysInsertMode)
-                state.stb.insertMode = true
+            if (flags has Itf.AlwaysOverwrite)
+                state.stb.insertMode = true // stb field name is indeed incorrect (see #2863)
             if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
                 selectAll = true
         }

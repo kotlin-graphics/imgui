@@ -183,8 +183,8 @@ enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flag
     /** Disable following the cursor horizontally   */
     NoHorizontalScroll(1 shl 12),
 
-    /** Insert mode */
-    AlwaysInsertMode(1 shl 13),
+    /** Overwrite mode */
+    AlwaysOverwrite(1 shl 13),
 
     /** Read-only mode  */
     ReadOnly(1 shl 14),
