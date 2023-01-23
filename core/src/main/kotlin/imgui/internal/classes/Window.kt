@@ -953,13 +953,13 @@ class Window(var context: Context,
                 }
                 if (overrideAlpha) bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
                 drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
-                                       if (flags has Wf.NoTitleBar) 0 else DrawFlag.NoRoundCornerT.i)
+                                       if (flags has Wf.NoTitleBar) 0 else DrawFlag.RoundCornersBottom.i)
             }
 
             // Title bar
             if (flags hasnt Wf.NoTitleBar) {
                 val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
-                drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, DrawFlag.NoRoundCornerB.i)
+                drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, DrawFlag.RoundCornersTop.i)
             }
 
             // Menu bar
@@ -969,7 +969,7 @@ class Window(var context: Context,
                 val rounding = if (flags has Wf.NoTitleBar) windowRounding else 0f
                 drawList.addRectFilled(menuBarRect.min + Vec2(windowBorderSize, 0f),
                                        menuBarRect.max - Vec2(windowBorderSize, 0f),
-                                       Col.MenuBarBg.u32, rounding, DrawFlag.NoRoundCornerB.i)
+                                       Col.MenuBarBg.u32, rounding, DrawFlag.RoundCornersTop.i)
                 if (style.frameBorderSize > 0f && menuBarRect.max.y < pos.y + size.y)
                     drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, style.frameBorderSize)
             }

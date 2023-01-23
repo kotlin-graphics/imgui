@@ -292,16 +292,16 @@ internal interface widgets {
 
         // Calculate scrollbar bounding box
         val bb = window getScrollbarRect axis
-        var roundingCorners = DrawFlag.NoRoundCorners.i
+        var roundingCorners = DrawFlag.RoundCornersNone.i
         if (axis == Axis.X) {
-            roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerBL
+            roundingCorners = roundingCorners or DrawFlag.RoundCornersBottomLeft
             if (!window.scrollbar.y)
-                roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerBL
+                roundingCorners = roundingCorners or DrawFlag.RoundCornersBottomLeft
         } else {
             if (window.flags has WindowFlag.NoTitleBar && window.flags hasnt WindowFlag.MenuBar)
-                roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerTR
+                roundingCorners = roundingCorners or DrawFlag.RoundCornersTopRight
             if (!window.scrollbar.x)
-                roundingCorners = roundingCorners wo DrawFlag.NoRoundCornerBR
+                roundingCorners = roundingCorners or DrawFlag.RoundCornersBottomRight
         }
         val sizeAvail = window.innerRect.max[axis] - window.innerRect.min[axis]
         val sizeContents = window.contentSize[axis] + window.windowPadding[axis] * 2f

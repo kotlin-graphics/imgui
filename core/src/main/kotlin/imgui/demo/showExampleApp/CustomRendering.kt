@@ -118,7 +118,7 @@ object CustomRendering {
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
                 val spacing = 10f
-                val cornersTlBr = DrawFlag.NoRoundCornerTR or DrawFlag.NoRoundCornerBL
+                val cornersTlBr = DrawFlag.RoundCornersTopLeft or DrawFlag.RoundCornersBottomRight
                 val rounding = sz / 5f
                 val circleSegments = if (circleSegmentsOverride) circleSegmentsOverrideV else 0
                 val curveSegments = if(curveSegmentsOverride) curveSegmentsOverrideV else 0

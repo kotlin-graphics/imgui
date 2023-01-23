@@ -440,11 +440,7 @@ enum class PopupPositionPolicy { Default, ComboBox, Tooltip }
 typealias DrawFlags = Int
 
 /** Flags for ImDrawList functions
- *  (Before version 1.82: functions like AddRect(), AddRectFilled(), AddImageRounded(), PathRect() used ImDrawCornerFlags,
- *  we have moved those in 1.82 to ImDrawList but using opposite "opt-out" logic instead of "opt-in" logic:
- *  Old: ImDrawCornerFlags_BotLeft          New: ImDrawFlags_NoRoundCornerBL
- *  The old enums are defined under ImDrawCornerFlags_ in the "Obsolete functions and types" section of this header)
- *  (Legacy: bit 0 must always correspond to ImDrawFlags_Closed to be backward compatible with old API using a bool. Bits 1..3 must b unused) */
+ *  (Legacy: bit 0 must always correspond to ImDrawFlags_Closed to be backward compatible with old API using a bool. Bits 1..3 must be unused) */
 enum class DrawFlag(val i: DrawFlags) {
     None(0),
 
@@ -453,22 +449,29 @@ enum class DrawFlag(val i: DrawFlags) {
 
     // (bits 1..3 unused to facilitate handling of legacy behavior and detection of Flags = 0x0F)
 
-    /** AddRect(), AddRectFilled(), PathRect(): disable rounding top-left corner when rounding > 0.0f */
-    NoRoundCornerTL(1 shl 4),
+    /** AddRect(), AddRectFilled(), PathRect(): enable rounding top-left corner only (when rounding > 0.0f, we default to all corners). Was 0x01. */
+    RoundCornersTopLeft(1 shl 4),
 
-    /** AddRect(), AddRectFilled(), PathRect(): disable rounding top-right corner when rounding > 0.0f */
-    NoRoundCornerTR(1 shl 5),
+    /** AddRect(), AddRectFilled(), PathRect(): enable rounding top-right corner only (when rounding > 0.0f, we default to all corners). Was 0x02. */
+    RoundCornersTopRight(1 shl 5),
 
-    /** AddRect(), AddRectFilled(), PathRect(): disable rounding bottom-left corner when rounding > 0.0f */
-    NoRoundCornerBL(1 shl 6),
+    /** AddRect(), AddRectFilled(), PathRect(): enable rounding bottom-left corner only (when rounding > 0.0f, we default to all corners). Was 0x04. */
+    RoundCornersBottomLeft(1 shl 6),
 
-    /** AddRect(), AddRectFilled(), PathRect(): disable rounding bottom-right corner when rounding > 0.0f */
-    NoRoundCornerBR(1 shl 7),
-    NoRoundCornerT(NoRoundCornerTL or NoRoundCornerTR),
-    NoRoundCornerR(NoRoundCornerTR or NoRoundCornerBR),
-    NoRoundCornerL(NoRoundCornerTL or NoRoundCornerBL),
-    NoRoundCornerB(NoRoundCornerBL or NoRoundCornerBR),
-    NoRoundCorners(NoRoundCornerTL or NoRoundCornerTR or NoRoundCornerBL or NoRoundCornerBR);
+    /** AddRect(), AddRectFilled(), PathRect(): enable rounding bottom-right corner only (when rounding > 0.0f, we default to all corners). Wax 0x08. */
+    RoundCornersBottomRight(1 shl 7),
+
+    /** AddRect(), AddRectFilled(), PathRect(): disable rounding on all corners (when rounding > 0.0f). This is NOT zero, NOT an implicit flag! */
+    RoundCornersNone(1 shl 8),
+    RoundCornersTop(RoundCornersTopLeft or RoundCornersTopRight),
+    RoundCornersBottom(RoundCornersBottomLeft or RoundCornersBottomRight),
+    RoundCornersLeft(RoundCornersBottomLeft or RoundCornersTopLeft),
+    RoundCornersRight(RoundCornersBottomRight or RoundCornersTopRight),
+    RoundCornersAll(RoundCornersTopLeft or RoundCornersTopRight or RoundCornersBottomLeft or RoundCornersBottomRight),
+
+    /** Default to ALL corners if none of the _RoundCornersXX flags are specified. */
+    RoundCornersDefault_(RoundCornersAll.i),
+    RoundCornersMask_(RoundCornersAll or RoundCornersNone);
 
     infix fun and(b: DrawFlag): DrawFlags = i and b.i
     infix fun and(b: DrawFlags): DrawFlags = i and b

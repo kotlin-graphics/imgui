@@ -186,12 +186,13 @@ class DrawList(sharedData: DrawListSharedData?) {
      *  (== upper-left + size) */
     fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = 0) {
         if (col hasnt COL32_A_MASK) return
-        if (rounding > 0f && (flags and DrawFlag.NoRoundCorners) != DrawFlag.NoRoundCorners.i) {
-            pathRect(pMin, pMax, rounding, flags)
-            pathFillConvex(col)
-        } else {
+        if (rounding <= 0f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             primReserve(6, 4)
             primRect(pMin, pMax, col)
+        }
+        else {
+            pathRect(pMin, pMax, rounding, flags)
+            pathFillConvex(col)
         }
     }
 
@@ -809,8 +810,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (col hasnt COL32_A_MASK)
             return
 
-        val flags = fixDrawCornerFlags(flags_)
-        if (rounding <= 0f || (flags and DrawFlag.NoRoundCorners) == DrawFlag.NoRoundCorners.i) {
+        val flags = fixRectCornerFlags(flags_)
+        if (rounding <= 0f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
             return
         }
@@ -959,7 +960,17 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     // Assert and return same value
-    fun fixDrawCornerFlags(flags: DrawFlags) = flags.also { check(flags hasnt 0x0E) }
+    fun fixRectCornerFlags(flags_: DrawFlags): DrawFlags {
+        var flags = flags_
+        // If this triggers, please update your code replacing hardcoded values with new ImDrawFlags_RoundCorners* values.
+        // Note that ImDrawFlags_Closed (== 0x01) is an invalid flag for AddRect(), AddRectFilled(), PathRect() etc...
+        check(flags hasnt 0x0F) { "Misuse of legacy hardcoded ImDrawCornerFlags values!" }
+
+        if (flags hasnt DrawFlag.RoundCornersMask_)
+            flags = flags or DrawFlag.RoundCornersAll
+
+        return flags
+    }
 
     private fun pathBezierQuadraticCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
                                                     x3: Float, y3: Float, tessTol: Float, level: Int) {
@@ -981,22 +992,22 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags_: DrawFlags = 0) {
-        val flags = fixDrawCornerFlags(flags_)
-        var tmp = if (flags hasnt DrawFlag.NoRoundCornerT || flags hasnt DrawFlag.NoRoundCornerB) 0.5f else 1f
-        var rounding = rounding_ min ((b.x - a.x).abs * tmp - 1f)
-        tmp = if (flags hasnt DrawFlag.NoRoundCornerL || flags hasnt DrawFlag.NoRoundCornerR) 0.5f else 1f
-        rounding = rounding min ((b.y - a.y).abs * tmp - 1f)
+        val flags = fixRectCornerFlags(flags_)
+        var cond = ((flags and DrawFlag.RoundCornersTop) == DrawFlag.RoundCornersTop.i) or ((flags and DrawFlag.RoundCornersBottom) == DrawFlag.RoundCornersBottom.i)
+        var rounding = rounding_ min ((b.x - a.x).abs * (if (cond) 0.5f else 1f) - 1f)
+        cond = ((flags and DrawFlag.RoundCornersLeft) == DrawFlag.RoundCornersLeft.i) or ((flags and DrawFlag.RoundCornersRight) == DrawFlag.RoundCornersRight.i)
+        rounding = rounding min ((b.y - a.y).abs * (if (cond) 0.5f else 1f) - 1f)
 
-        if (rounding <= 0f || (flags and DrawFlag.NoRoundCorners) == DrawFlag.NoRoundCorners.i) {
+        if (rounding <= 0f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             pathLineTo(a)
             pathLineTo(Vec2(b.x, a.y))
             pathLineTo(b)
             pathLineTo(Vec2(a.x, b.y))
         } else {
-            val roundingTL = if (flags has DrawFlag.NoRoundCornerTL) 0f else rounding
-            val roundingTR = if (flags has DrawFlag.NoRoundCornerTR) 0f else rounding
-            val roundingBR = if (flags has DrawFlag.NoRoundCornerBR) 0f else rounding
-            val roundingBL = if (flags has DrawFlag.NoRoundCornerBL) 0f else rounding
+            val roundingTL = if (flags has DrawFlag.RoundCornersTopLeft) rounding else 0f
+            val roundingTR = if (flags has DrawFlag.RoundCornersTopRight) rounding else 0f
+            val roundingBR = if (flags has DrawFlag.RoundCornersBottomRight) rounding else 0f
+            val roundingBL = if (flags has DrawFlag.RoundCornersBottomLeft) rounding else 0f
             pathArcToFast(Vec2(a.x + roundingTL, a.y + roundingTL), roundingTL, 6, 9)
             pathArcToFast(Vec2(b.x - roundingTR, a.y + roundingTR), roundingTR, 9, 12)
             pathArcToFast(Vec2(b.x - roundingBR, b.y - roundingBR), roundingBR, 0, 3)
@@ -1600,17 +1611,17 @@ class DrawList(sharedData: DrawListSharedData?) {
         val fillU = inner.min.y > outer.min.y
         val fillD = inner.max.y < outer.max.y
         if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
-                                          (if (fillU) DrawFlag.NoRoundCornerTL else DrawFlag.None) or if (fillD) DrawFlag.NoRoundCornerBL else DrawFlag.None)
+                                          (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomLeft)
         if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
-                                          (if (fillU) DrawFlag.NoRoundCornerTR else DrawFlag.None) or if (fillD) DrawFlag.NoRoundCornerBR else DrawFlag.None)
+                                          (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopRight) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
         if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
-                                          (if(fillL) DrawFlag.NoRoundCornerTL else DrawFlag.None) or if(fillR) DrawFlag.NoRoundCornerTR else DrawFlag.None)
+                                          (if (fillL) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersTopRight)
         if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
-                                          (if(fillL) DrawFlag.NoRoundCornerBL else DrawFlag.None) or if(fillR) DrawFlag.NoRoundCornerBR else DrawFlag.None)
-        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.NoRoundCornerB or DrawFlag.NoRoundCornerTR)
-        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.NoRoundCornerB or DrawFlag.NoRoundCornerTL)
-        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.NoRoundCornerT or DrawFlag.NoRoundCornerBR)
-        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.NoRoundCornerT or DrawFlag.NoRoundCornerBL)
+                                          (if (fillL) DrawFlag.None else DrawFlag.RoundCornersBottomLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
+        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft.i)
+        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight.i)
+        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft.i)
+        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomRight.i)
     }
 
     // Internal API, Shade functions

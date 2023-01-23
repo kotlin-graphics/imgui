@@ -83,7 +83,8 @@ interface widgetsComboBox {
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, id, frameBb)) return false
+        if (!itemAdd(totalBb, id, frameBb))
+            return false
 
         val (pressed, hovered, _) = buttonBehavior(frameBb, id)
         var popupOpen = isPopupOpen(id)
@@ -93,10 +94,10 @@ interface widgetsComboBox {
         renderNavHighlight(frameBb, id)
         if (flags hasnt Cf.NoPreview)
             window.drawList.addRectFilled(frameBb.min, Vec2(valueX2, frameBb.max.y), frameCol.u32,
-                    style.frameRounding, if (flags has Cf.NoArrowButton) 0 else DrawFlag.NoRoundCornerR.i)
+                    style.frameRounding, if (flags has Cf.NoArrowButton) DrawFlag.RoundCornersAll.i else DrawFlag.RoundCornersLeft.i)
         if (flags hasnt Cf.NoArrowButton) {
             val bgCol = if (popupOpen || hovered) Col.ButtonHovered else Col.Button
-            window.drawList.addRectFilled(Vec2(valueX2, frameBb.min.y), frameBb.max, bgCol.u32, style.frameRounding, if (w <= arrowSize) 0 else DrawFlag.NoRoundCornerL.i)
+            window.drawList.addRectFilled(Vec2(valueX2, frameBb.min.y), frameBb.max, bgCol.u32, style.frameRounding, if (w <= arrowSize) DrawFlag.RoundCornersAll.i else DrawFlag.RoundCornersRight.i)
             if (valueX2 + arrowSize - style.framePadding.x <= frameBb.max.x)
                 window.drawList.renderArrow(Vec2(valueX2 + style.framePadding.y, frameBb.min.y + style.framePadding.y), Col.Text.u32, Dir.Down, 1f)
         }

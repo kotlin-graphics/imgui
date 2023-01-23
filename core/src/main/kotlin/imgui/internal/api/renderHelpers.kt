@@ -208,7 +208,11 @@ internal interface renderHelpers {
      * FIXME: uses ImGui::GetColorU32
      * [JVM] safe passing Vec2 instances */
     fun renderColorRectWithAlphaCheckerboard(drawList: DrawList, pMin: Vec2, pMax: Vec2, col: Int, gridStep: Float,
-                                             gridOff: Vec2, rounding: Float = 0f, flags: DrawFlags = 0) {
+                                             gridOff: Vec2, rounding: Float = 0f, flags_: DrawFlags = 0) {
+        val flags = when {
+            flags_ hasnt DrawFlag.RoundCornersMask_ -> DrawFlag.RoundCornersDefault_.i
+            else -> flags_
+        }
         if (((col and COL32_A_MASK) ushr COL32_A_SHIFT) < 0xFF) {
             val colBg1 = getColorU32(alphaBlendColors(COL32(204, 204, 204, 255), col))
             val colBg2 = getColorU32(alphaBlendColors(COL32(128, 128, 128, 255), col))
@@ -232,16 +236,20 @@ internal interface renderHelpers {
                         x += gridStep * 2f
                         continue
                     }
-                    var cellFlags = DrawFlag.NoRoundCorners.i
+                    var cellFlags = DrawFlag.RoundCornersNone.i
                     if (y1 <= pMin.y) {
-                        if (x1 <= pMin.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerTL
-                        if (x2 >= pMax.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerTR
+                        if (x1 <= pMin.x) cellFlags = cellFlags or DrawFlag.RoundCornersTopLeft
+                        if (x2 >= pMax.x) cellFlags = cellFlags or DrawFlag.RoundCornersTopRight
                     }
                     if (y2 >= pMax.y) {
-                        if (x1 <= pMin.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerBL
-                        if (x2 >= pMax.x) cellFlags = cellFlags wo DrawFlag.NoRoundCornerBR
+                        if (x1 <= pMin.x) cellFlags = cellFlags or DrawFlag.RoundCornersBottomLeft
+                        if (x2 >= pMax.x) cellFlags = cellFlags or DrawFlag.RoundCornersBottomRight
                     }
-                    cellFlags = cellFlags or flags
+                    // Combine flags
+                    cellFlags = when {
+                        flags == DrawFlag.RoundCornersNone.i || cellFlags == DrawFlag.RoundCornersNone.i -> DrawFlag.RoundCornersNone.i
+                        else -> cellFlags or flags
+                    }
                     drawList.addRectFilled(Vec2(x1, y1), Vec2(x2, y2), colBg2, rounding, cellFlags)
                     x += gridStep * 2f
                 }

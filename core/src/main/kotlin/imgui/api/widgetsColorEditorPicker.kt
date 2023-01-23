@@ -735,8 +735,8 @@ interface widgetsColorEditorPicker {
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(window.drawList, Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max,
-                    getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, DrawFlag.NoRoundCornerL.i)
-            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding, DrawFlag.NoRoundCornerR.i)
+                    getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, DrawFlag.RoundCornersRight.i)
+            window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding, DrawFlag.RoundCornersLeft.i)
         } else {
             /*  Because getColorU32() multiplies by the global style alpha and we don't want to display a checkerboard 
                 if the source code had no alpha */
