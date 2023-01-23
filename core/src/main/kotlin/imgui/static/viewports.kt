@@ -20,10 +20,10 @@ fun updateViewportsNewFrame() {
     for (viewport in g.viewports)
         viewport.apply {
             // Lock down space taken by menu bars and status bars, reset the offset for fucntions like BeginMainMenuBar() to alter them again.
-            workOffsetMin put currWorkOffsetMin
-            workOffsetMax put currWorkOffsetMax
-            currWorkOffsetMin put 0f
-            currWorkOffsetMax put 0f
+            workOffsetMin put buildWorkOffsetMin
+            workOffsetMax put buildWorkOffsetMax
+            buildWorkOffsetMin put 0f
+            buildWorkOffsetMax put 0f
             updateWorkRect()
         }
 }

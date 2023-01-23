@@ -10,6 +10,7 @@ import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopupEx
+import imgui.ImGui.beginViewportSideBar
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.contentRegionAvail
@@ -20,6 +21,7 @@ import imgui.ImGui.endPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.focusWindow
+import imgui.ImGui.frameHeight
 import imgui.ImGui.io
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemHoverable
@@ -147,42 +149,22 @@ interface widgetsMenus {
     fun beginMainMenuBar(): Boolean {
 
         val viewport = mainViewport as ViewportP
-        var menuBarWindow = findWindowByName("##MainMenuBar")
 
         // For the main menu bar, which cannot be moved, we honor g.Style.DisplaySafeAreaPadding to ensure text can be visible on a TV set.
+        // FIXME: This could be generalized as an opt-in way to clamp window->DC.CursorStartPos to avoid SafeArea?
+        // FIXME: Consider removing support for safe area down the line... it's messy. Nowadays consoles have support for TV calibration in OS settings.
         g.nextWindowData.menuBarOffsetMinVal.put(style.displaySafeAreaPadding.x, max(style.displaySafeAreaPadding.y - style.framePadding.y, 0f))
-
-        // Get our rectangle at the top of the work area
-        if (menuBarWindow == null || menuBarWindow.beginCount == 0) {
-            // Set window position
-            // We don't attempt to calculate our height ahead, as it depends on the per-viewport font size.
-            // However menu-bar will affect the minimum window size so we'll get the right height.
-            val menuBarPos = viewport.pos + viewport.currWorkOffsetMin
-            val menuBarSize = Vec2(viewport.size.x - viewport.currWorkOffsetMin.x + viewport.currWorkOffsetMax.x, 1f)
-            setNextWindowPos(menuBarPos)
-            setNextWindowSize(menuBarSize)
-        }
-
-        // Create window
-        pushStyleVar(StyleVar.WindowRounding, 0f)
-        pushStyleVar(StyleVar.WindowMinSize, Vec2i()) // Lift normal size constraint, however the presence of a menu-bar will give us the minimum height we want.
-        val windowFlags = Wf.NoTitleBar or Wf.NoResize or Wf.NoMove or Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
-        val isOpen = begin("##MainMenuBar", null, windowFlags) && beginMenuBar()
-        popStyleVar(2)
-
-        // Report our size into work area (for next frame) using actual window size
-        menuBarWindow = currentWindow
-        if (menuBarWindow.beginCount == 1)
-            viewport.currWorkOffsetMin.y += menuBarWindow.size.y
-
+        val windowFlags = Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
+        val height = frameHeight
+        val isOpen = beginViewportSideBar("##MainMenuBar",viewport, Dir.Up, height, windowFlags)
         g.nextWindowData.menuBarOffsetMinVal put 0f
-        return when {
-            !isOpen -> {
-                end()
-                false
-            }
-            else -> true
-        }
+
+        if (isOpen)
+            beginMenuBar()
+        else
+            end()
+
+        return isOpen
     }
 
     /** Only call EndMainMenuBar() if BeginMainMenuBar() returns true! */

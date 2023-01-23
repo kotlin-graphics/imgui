@@ -36,11 +36,21 @@ class ViewportP : Viewport() {
 
     val workOffsetMax = Vec2()
 
-    /** Work Area: Offset being built/increased during current frame */
-    val currWorkOffsetMin = Vec2()
+    /** Work Area: Offset being built during current frame. Generally >= 0.0f. */
+    val buildWorkOffsetMin = Vec2()
 
-    /** Work Area: Offset being built/decreased during current frame */
-    val currWorkOffsetMax = Vec2()
+    /** Work Area: Offset being built during current frame. Generally <= 0.0f. */
+    val buildWorkOffsetMax = Vec2()
+
+    // Calculate work rect pos/size given a set of offset (we have 1 pair of offset for rect locked from last frame data, and 1 pair for currently building rect)
+    fun calcWorkRectPos(offMin: Vec2) = Vec2(pos.x + offMin.x, pos.y + offMin.y)
+    fun calcWorkRectSize(offMin: Vec2, offMax: Vec2) = Vec2(0f max (size.x - offMin.x + offMax.x), 0f max (size.y - offMin.y + offMax.y))
+    fun updateWorkRect() { // Update public fields
+        workPos put calcWorkRectPos(workOffsetMin)
+        workSize  put calcWorkRectSize(workOffsetMin, workOffsetMax)
+    }
+
+    // Helpers to retrieve ImRect (we don't need to store BuildWorkRect as every access tend to change it, hence the code asymmetry)
 
     val mainRect: Rect
         get() = Rect(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
@@ -48,10 +58,12 @@ class ViewportP : Viewport() {
     val workRect: Rect
         get() = Rect(workPos.x, workPos.y, workPos.x + workSize.x, workPos.y + workSize.y)
 
-    fun updateWorkRect() {
-        workPos.put(pos.x + workOffsetMin.x, pos.y + workOffsetMin.y)
-        workSize.put(0f max (size.x - workOffsetMin.x + workOffsetMax.x), 0f max (size.y - workOffsetMin.y + workOffsetMax.y))
-    }
+    val buildWorkRect: Rect
+        get() {
+            val pos = calcWorkRectPos(buildWorkOffsetMin)
+            val size = calcWorkRectSize(buildWorkOffsetMin, buildWorkOffsetMax)
+            return Rect(pos.x, pos.y, pos.x + size.x, pos.y + size.y)
+        }
 
     /** ~GetViewportDrawList */
     fun getDrawList(drawlistNo: Int, drawlistName: String): DrawList {
