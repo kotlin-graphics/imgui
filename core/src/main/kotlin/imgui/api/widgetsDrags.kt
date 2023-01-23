@@ -224,6 +224,7 @@ interface widgetsDrags {
 
         val id = window.getID(label)
         val w = ImGui.calcItemWidth()
+
         val labelSize = ImGui.calcTextSize(label, hideTextAfterDoubleHash = true)
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
