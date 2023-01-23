@@ -805,11 +805,11 @@ class DrawList(sharedData: DrawListSharedData?) {
             popTextureId()
     }
 
-    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags: DrawFlags = 0) {
+    fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags_: DrawFlags = 0) {
         if (col hasnt COL32_A_MASK)
             return
 
-        assert(flags hasnt 0x0E) { "Legacy use of ~0 or 0x0F as ImDrawCornerFlags value. Please update your code to use ImDrawFlags_NoRoundCorner* flags." }
+        val flags = fixDrawCornerFlags(flags_)
         if (rounding <= 0f || (flags and DrawFlag.NoRoundCorners) == DrawFlag.NoRoundCorners.i) {
             addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
             return
@@ -958,6 +958,9 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
+    // Assert and return same value
+    fun fixDrawCornerFlags(flags: DrawFlags) = flags.also { check(flags hasnt 0x0E) }
+
     private fun pathBezierQuadraticCurveToCasteljau(path: ArrayList<Vec2>, x1: Float, y1: Float, x2: Float, y2: Float,
                                                     x3: Float, y3: Float, tessTol: Float, level: Int) {
         val dx = x3 - x1
@@ -977,8 +980,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags: DrawFlags = 0) {
-        assert(flags hasnt 0x0E) { "Legacy use of ~0 or 0x0F as ImDrawCornerFlags value. Please update your code to use ImDrawFlags_NoRoundCorner* flags." }
+    fun pathRect(a: Vec2, b: Vec2, rounding_: Float = 0f, flags_: DrawFlags = 0) {
+        val flags = fixDrawCornerFlags(flags_)
         var tmp = if (flags hasnt DrawFlag.NoRoundCornerT || flags hasnt DrawFlag.NoRoundCornerB) 0.5f else 1f
         var rounding = rounding_ min ((b.x - a.x).abs * tmp - 1f)
         tmp = if (flags hasnt DrawFlag.NoRoundCornerL || flags hasnt DrawFlag.NoRoundCornerR) 0.5f else 1f

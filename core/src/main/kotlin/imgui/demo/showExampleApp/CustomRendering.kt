@@ -118,8 +118,6 @@ object CustomRendering {
                 val p = cursorScreenPos
                 val col = getColorU32(colf)
                 val spacing = 10f
-                val cornersNone = DrawFlag.NoRoundCorners.i
-                val cornersAll = 0
                 val cornersTlBr = DrawFlag.NoRoundCornerTR or DrawFlag.NoRoundCornerBL
                 val rounding = sz / 5f
                 val circleSegments = if (circleSegmentsOverride) circleSegmentsOverrideV else 0
@@ -131,8 +129,8 @@ object CustomRendering {
                     drawList.apply {
                         addNgon(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, ngonSides, th); x += sz + spacing  // N-gon
                         addCircle(Vec2(x + sz * 0.5f, y + sz * 0.5f), sz * 0.5f, col, circleSegments, th); x += sz + spacing  // Circle
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0.0f, cornersNone, th); x += sz + spacing  // Square
-                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, cornersAll, th); x += sz + spacing  // Square with all rounded corners
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, 0f, DrawFlag.None.i, th); x += sz + spacing  // Square
+                        addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, DrawFlag.None.i, th); x += sz + spacing  // Square with all rounded corners
                         addRect(Vec2(x, y), Vec2(x + sz, y + sz), col, rounding, cornersTlBr, th); x += sz + spacing  // Square with two rounded corners
                         addTriangle(Vec2(x + sz * 0.5f, y), Vec2(x + sz, y + sz - 0.5f), Vec2(x, y + sz - 0.5f), col, th); x += sz + spacing      // Triangle
 //                        addTriangle(Vec2(x + sz * 0.2f, y), Vec2(x, y + sz - 0.5f), Vec2(x + sz * 0.4f, y + sz - 0.5f), col, th); x += sz * 0.4f + spacing // Thin triangle
