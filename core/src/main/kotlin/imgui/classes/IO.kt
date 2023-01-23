@@ -228,7 +228,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
                 // Invalid low surrogate
                 (ci and 0xFC00) != 0xDC00 -> inputQueueCharacters += UNICODE_CODEPOINT_INVALID.c
                 // Codepoint will not fit in ImWchar (extra parenthesis around 0xFFFF somehow fixes -Wunreachable-code with Clang)
-                UNICODE_CODEPOINT_MAX == 0xFFFF -> cp = UNICODE_CODEPOINT_INVALID.c
+                UNICODE_CODEPOINT_MAX == 0xFFFF -> cp = UNICODE_CODEPOINT_INVALID.c // Codepoint will not fit in ImWchar
                 else -> cp = (((inputQueueSurrogate - 0xD800) shl 10) + (c - 0xDC00).i + 0x10000).c
             }
             inputQueueSurrogate = NUL

@@ -1339,7 +1339,7 @@ class Table {
 
             val remainingMask = BitArray(TABLE_MAX_DRAW_CHANNELS)                       // We need 132-bit of storage
             remainingMask.clearAllBits()
-            remainingMask.setBitRange(LEADING_DRAW_CHANNELS, splitter._count )
+            remainingMask.setBitRange(LEADING_DRAW_CHANNELS, splitter._count)
             remainingMask.clearBit(bg2DrawChannelUnfrozen)
             assert(!hasFreezeV || bg2DrawChannelUnfrozen != TABLE_DRAW_CHANNEL_BG2_FROZEN)
             var remainingCount = splitter._count - if (hasFreezeV) LEADING_DRAW_CHANNELS + 1 else LEADING_DRAW_CHANNELS
@@ -1417,7 +1417,7 @@ class Table {
             }
             assert(dstTmp == /*~g.drawChannelsTempMergeBuffer.Data */ g.drawChannelsTempMergeBuffer.size)
             //            memcpy(splitter._channels.Data + LEADING_DRAW_CHANNELS, g.DrawChannelsTempMergeBuffer.Data, (splitter->_Count - LEADING_DRAW_CHANNELS) * sizeof(ImDrawChannel))
-            for(i in 0 until splitter._count - LEADING_DRAW_CHANNELS)
+            for (i in 0 until splitter._count - LEADING_DRAW_CHANNELS)
                 splitter._channels[LEADING_DRAW_CHANNELS + i] = g.drawChannelsTempMergeBuffer[i]
 
             g.drawChannelsTempMergeBuffer.clear() // [JVM]
@@ -1498,22 +1498,27 @@ class Table {
             repeat(sortSpecsCount) {
                 sortSpecsMulti += TableColumnSortSpecs()
             }
-        var sortSpecs: TableColumnSortSpecs? = null
-        for (columnN in 0 until columnsCount) {
-            val column = columns[columnN]
-            if (column.sortOrder == -1)
-                continue
-            assert(column.sortOrder < sortSpecsCount)
-            sortSpecs = when (sortSpecsCount) {
-                0 -> null
-                1 -> sortSpecsSingle
-                else -> sortSpecsMulti[column.sortOrder]
-            }!!
-            sortSpecs.columnUserID = column.userID
-            sortSpecs.columnIndex = columnN
-            sortSpecs.sortOrder = column.sortOrder
-            sortSpecs.sortDirection = column.sortDirection
+        var sortSpecs: TableColumnSortSpecs? = when (sortSpecsCount) {
+            0 -> null
+            1 -> sortSpecsSingle
+            else -> sortSpecsMulti.first()
         }
+        if (sortSpecs != null)
+            for (columnN in 0 until columnsCount) {
+                val column = columns[columnN]
+                if (column.sortOrder == -1)
+                    continue
+                assert(column.sortOrder < sortSpecsCount)
+                sortSpecs = when (sortSpecsCount) {
+                    0 -> null
+                    1 -> sortSpecsSingle
+                    else -> sortSpecsMulti[column.sortOrder]
+                }!!
+                sortSpecs.columnUserID = column.userID
+                sortSpecs.columnIndex = columnN
+                sortSpecs.sortOrder = column.sortOrder
+                sortSpecs.sortDirection = column.sortDirection
+            }
         this.sortSpecs.specs = sortSpecs
         this.sortSpecs.specsCount = sortSpecsCount
         this.sortSpecs.specsDirty = true // Mark as dirty for user
