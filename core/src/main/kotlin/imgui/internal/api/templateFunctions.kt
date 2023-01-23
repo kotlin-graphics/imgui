@@ -420,7 +420,7 @@ internal interface templateFunctions {
 
         if (vMin == vMax)
             return vMin
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Int = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -473,7 +473,7 @@ internal interface templateFunctions {
             isLogarithmic -> calcLogarithmic()
             else -> when {
                 // Linear slider
-                isDecimal -> lerp(vMin, vMax, t)
+                isFloatingPoint -> lerp(vMin, vMax, t)
                 // - For integer values we want the clicking position to match the grab box so we round above
                 //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                 // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
@@ -495,7 +495,7 @@ internal interface templateFunctions {
 
         if (vMin == vMax)
             return vMin
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Uint = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -545,7 +545,7 @@ internal interface templateFunctions {
         return when {
             isLogarithmic -> calcLogarithmic()
             else -> when { // Linear slider
-                isDecimal -> lerp(vMin, vMax, t)
+                isFloatingPoint -> lerp(vMin, vMax, t)
                 // - For integer values we want the clicking position to match the grab box so we round above
                 //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                 // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
@@ -567,7 +567,7 @@ internal interface templateFunctions {
 
         if (vMin == vMax)
             return vMin
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Long = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -620,7 +620,7 @@ internal interface templateFunctions {
             isLogarithmic -> calcLogarithmic()
             else -> when {
                 // Linear slider
-                isDecimal -> lerp(vMin, vMax, t)
+                isFloatingPoint -> lerp(vMin, vMax, t)
                 // - For integer values we want the clicking position to match the grab box so we round above
                 //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                 // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
@@ -642,7 +642,7 @@ internal interface templateFunctions {
 
         if (vMin == vMax)
             return vMin
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Ulong = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -692,7 +692,7 @@ internal interface templateFunctions {
         return when {
             isLogarithmic -> calcLogarithmic()
             else -> when { // Linear slider
-                isDecimal -> lerp(vMin, vMax, t)
+                isFloatingPoint -> lerp(vMin, vMax, t)
                 // - For integer values we want the clicking position to match the grab box so we round above
                 //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                 // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
@@ -714,7 +714,7 @@ internal interface templateFunctions {
 
         if (vMin == vMax)
             return vMin
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcLogarithmic(): Float = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -766,7 +766,7 @@ internal interface templateFunctions {
         return when {
             isLogarithmic -> calcLogarithmic()
             else -> when { // Linear slider
-                isDecimal -> lerp(vMin, vMax, t)
+                isFloatingPoint -> lerp(vMin, vMax, t)
                 // - For integer values we want the clicking position to match the grab box so we round above
                 //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                 // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
@@ -788,7 +788,7 @@ internal interface templateFunctions {
 
         if (vMin == vMax)
             return vMin
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         fun calcIsLogarithmic(): Double = when {
             // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
@@ -840,7 +840,7 @@ internal interface templateFunctions {
         return when {
             isLogarithmic -> calcIsLogarithmic()
             else -> when {
-                isDecimal -> lerp(vMin, vMax, t)
+                isFloatingPoint -> lerp(vMin, vMax, t)
                 // - For integer values we want the clicking position to match the grab box so we round above
                 //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
                 // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
@@ -862,9 +862,9 @@ internal interface templateFunctions {
                       vMin: Int, vMax: Int, format: String, flags: SliderFlags): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         // Default tweak speed
         var vSpeed = when {
@@ -881,7 +881,7 @@ internal interface templateFunctions {
             if (io.keyShift)
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
             adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
@@ -917,7 +917,7 @@ internal interface templateFunctions {
         val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
@@ -949,9 +949,9 @@ internal interface templateFunctions {
 
         // Clamp values (+ handle overflow/wrap-around for integer types)
         if (v() != vCur && isClamped) {
-            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isFloatingPoint))
                 vCur = vMin
-            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isFloatingPoint))
                 vCur = vMax
         }
 
@@ -968,9 +968,9 @@ internal interface templateFunctions {
                       vMin: Uint, vMax: Uint, format: String, flags: SliderFlags): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         // Default tweak speed
         var vSpeed = when {
@@ -987,7 +987,7 @@ internal interface templateFunctions {
             if (io.keyShift)
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
             adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
@@ -1023,7 +1023,7 @@ internal interface templateFunctions {
         val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
@@ -1055,9 +1055,9 @@ internal interface templateFunctions {
 
         // Clamp values (+ handle overflow/wrap-around for integer types)
         if (v() != vCur && isClamped) {
-            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isFloatingPoint))
                 vCur = vMin
-            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isFloatingPoint))
                 vCur = vMax
         }
 
@@ -1074,9 +1074,9 @@ internal interface templateFunctions {
                       vMin: Long, vMax: Long, format: String, flags: SliderFlags): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         // Default tweak speed
         var vSpeed = when {
@@ -1093,7 +1093,7 @@ internal interface templateFunctions {
             if (io.keyShift)
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
             adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
@@ -1129,7 +1129,7 @@ internal interface templateFunctions {
         val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
@@ -1161,9 +1161,9 @@ internal interface templateFunctions {
 
         // Clamp values (+ handle overflow/wrap-around for integer types)
         if (v() != vCur && isClamped) {
-            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isFloatingPoint))
                 vCur = vMin
-            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isFloatingPoint))
                 vCur = vMax
         }
 
@@ -1180,9 +1180,9 @@ internal interface templateFunctions {
                       vMin: Ulong, vMax: Ulong, format: String, flags: SliderFlags): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         // Default tweak speed
         var vSpeed = when {
@@ -1199,7 +1199,7 @@ internal interface templateFunctions {
             if (io.keyShift)
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
             adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
@@ -1235,7 +1235,7 @@ internal interface templateFunctions {
         val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
@@ -1267,9 +1267,9 @@ internal interface templateFunctions {
 
         // Clamp values (+ handle overflow/wrap-around for integer types)
         if (v() != vCur && isClamped) {
-            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isFloatingPoint))
                 vCur = vMin
-            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isFloatingPoint))
                 vCur = vMax
         }
 
@@ -1286,9 +1286,9 @@ internal interface templateFunctions {
                       vMin: Float, vMax: Float, format: String, flags: SliderFlags): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         // Default tweak speed
         var vSpeed = when {
@@ -1305,7 +1305,7 @@ internal interface templateFunctions {
             if (io.keyShift)
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
             adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
@@ -1341,7 +1341,7 @@ internal interface templateFunctions {
         val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
@@ -1373,9 +1373,9 @@ internal interface templateFunctions {
 
         // Clamp values (+ handle overflow/wrap-around for integer types)
         if (v() != vCur && isClamped) {
-            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isFloatingPoint))
                 vCur = vMin
-            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isFloatingPoint))
                 vCur = vMax
         }
 
@@ -1392,9 +1392,9 @@ internal interface templateFunctions {
                       vMin: Double, vMax: Double, format: String, flags: SliderFlags): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
         val isClamped = vMin < vMax
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         // Default tweak speed
         var vSpeed = when {
@@ -1411,7 +1411,7 @@ internal interface templateFunctions {
             if (io.keyShift)
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
             adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
@@ -1447,7 +1447,7 @@ internal interface templateFunctions {
         val zeroDeadzoneHalfsize = 0f // Drag widgets have no deadzone (as it doesn't make sense)
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
 
             // Convert to parametric space, apply delta, convert back
@@ -1479,9 +1479,9 @@ internal interface templateFunctions {
 
         // Clamp values (+ handle overflow/wrap-around for integer types)
         if (v() != vCur && isClamped) {
-            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isDecimal))
+            if (vCur < vMin || (vCur > v() && adjustDelta < 0f && !isFloatingPoint))
                 vCur = vMin
-            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isDecimal))
+            if (vCur > vMax || (vCur < v() && adjustDelta > 0f && !isFloatingPoint))
                 vCur = vMax
         }
 
@@ -1498,14 +1498,14 @@ internal interface templateFunctions {
                         vMin: Int, vMax: Int, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
         val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)                                  // v_range < 0 may happen on integer overflows
+        if (!isFloatingPoint && vRange >= 0)                                  // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
@@ -1516,7 +1516,7 @@ internal interface templateFunctions {
         var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
             zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
@@ -1548,7 +1548,7 @@ internal interface templateFunctions {
                 val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
@@ -1631,14 +1631,14 @@ internal interface templateFunctions {
                         vMin: Uint, vMax: Uint, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
         val vRange = (if (vMin < vMax) vMax - vMin else vMin - vMax).v
-        if (!isDecimal && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
+        if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
@@ -1649,7 +1649,7 @@ internal interface templateFunctions {
         var zeroDeadzoneSize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f.pow(decimalPrecision.f)
             zeroDeadzoneSize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
@@ -1679,7 +1679,7 @@ internal interface templateFunctions {
                 val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
@@ -1763,14 +1763,14 @@ internal interface templateFunctions {
                         vMin: Long, vMax: Long, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
         val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
+        if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
@@ -1781,7 +1781,7 @@ internal interface templateFunctions {
         var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
             zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
@@ -1811,7 +1811,7 @@ internal interface templateFunctions {
                 val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
@@ -1896,14 +1896,14 @@ internal interface templateFunctions {
                         vMin: Ulong, vMax: Ulong, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
         val vRange = (if (vMin < vMax) vMax - vMin else vMin - vMax).v
-        if (!isDecimal && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
+        if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
@@ -1914,7 +1914,7 @@ internal interface templateFunctions {
         var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
             zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
@@ -1945,7 +1945,7 @@ internal interface templateFunctions {
                 val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
@@ -2030,14 +2030,14 @@ internal interface templateFunctions {
                         vMin: Float, vMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
         val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
+        if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
@@ -2048,7 +2048,7 @@ internal interface templateFunctions {
         var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
             zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
@@ -2078,7 +2078,7 @@ internal interface templateFunctions {
                 val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
@@ -2163,14 +2163,14 @@ internal interface templateFunctions {
                         vMin: Double, vMax: Double, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
-        val isDecimal = dataType == DataType.Float || dataType == DataType.Double
-        val isLogarithmic = flags has SliderFlag.Logarithmic && isDecimal
+        val isLogarithmic = flags has SliderFlag.Logarithmic
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
 
         val grabPadding = 2f
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
         val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
-        if (!isDecimal && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
+        if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
         val sliderUsableSz = sliderSz - grabSz
@@ -2181,7 +2181,7 @@ internal interface templateFunctions {
         var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
-            val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 1
+            val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f pow decimalPrecision.f
             zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
@@ -2211,7 +2211,7 @@ internal interface templateFunctions {
                 val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
-                    val decimalPrecision = if (isDecimal) parseFormatPrecision(format, 3) else 0
+                    val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
                         if (NavInput.TweakSlow.isDown())
