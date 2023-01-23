@@ -609,7 +609,7 @@ interface widgetsColorEditorPicker {
                 val a1 = (n + 1f) / 6f * 2f * glm.PIf + aeps
                 val vertStartIdx = drawList.vtxBuffer.size
                 drawList.pathArcTo(wheelCenter, (wheelRInner + wheelROuter) * 0.5f, a0, a1, segmentPerArc)
-                drawList.pathStroke(colWhite, false, wheelThickness)
+                drawList.pathStroke(colWhite, 0, wheelThickness)
                 val vertEndIdx = drawList.vtxBuffer.size
 
                 // Paint colors over existing vertices

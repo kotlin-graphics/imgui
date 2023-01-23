@@ -910,7 +910,7 @@ class Window(var context: Context,
                           rounding,
                           def.outerAngle,
                           def.outerAngle + glm.PIf * 0.25f)
-                pathStroke(Col.SeparatorActive.u32, false, 2f max borderSize) // Thicker than usual
+                pathStroke(Col.SeparatorActive.u32, 0, 2f max borderSize) // Thicker than usual
             }
         }
         if (style.frameBorderSize > 0f && flags hasnt Wf.NoTitleBar) {

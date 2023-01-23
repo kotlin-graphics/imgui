@@ -443,7 +443,7 @@ enum class PopupPositionPolicy { Default, ComboBox, Tooltip }
 
 typealias DrawCornerFlags = Int
 
-/** Flags: for ImDrawList::AddRect(), AddRectFilled() etc. */
+/** Flags: for ImDrawList functions: AddRect(), AddRectFilled() etc. */
 enum class DrawCornerFlag(val i: DrawCornerFlags) {
     None(0),
     TopLeft(1 shl 0), // 0x1
@@ -474,10 +474,34 @@ infix fun DrawCornerFlags.has(b: DrawCornerFlag): Boolean = and(b.i) != 0
 infix fun DrawCornerFlags.hasnt(b: DrawCornerFlag): Boolean = and(b.i) == 0
 infix fun DrawCornerFlags.wo(b: DrawCornerFlag): DrawCornerFlags = and(b.i.inv())
 
+typealias DrawFlags = Int
+
+/** Flags: for ImDrawList functions: AddRect(), AddRectFilled() etc. */
+enum class DrawFlag(val i: DrawFlags) {
+    None(0),
+    /** PathStroke(), AddPolyline(): specify that (LEGACY: this must always stay == 1 to be backward compatible with old API using a bool) */
+    Closed(1 shl 0);
+
+    infix fun and(b: DrawFlag): DrawFlags = i and b.i
+    infix fun and(b: DrawFlags): DrawFlags = i and b
+    infix fun or(b: DrawFlag): DrawFlags = i or b.i
+    infix fun or(b: DrawFlags): DrawFlags = i or b
+    infix fun xor(b: DrawFlag): DrawFlags = i xor b.i
+    infix fun xor(b: DrawFlags): DrawFlags = i xor b
+    infix fun wo(b: DrawFlags): DrawFlags = and(b.inv())
+}
+
+infix fun DrawFlags.and(b: DrawFlag): DrawFlags = and(b.i)
+infix fun DrawFlags.or(b: DrawFlag): DrawFlags = or(b.i)
+infix fun DrawFlags.xor(b: DrawFlag): DrawFlags = xor(b.i)
+infix fun DrawFlags.has(b: DrawFlag): Boolean = and(b.i) != 0
+infix fun DrawFlags.hasnt(b: DrawFlag): Boolean = and(b.i) == 0
+infix fun DrawFlags.wo(b: DrawFlag): DrawFlags = and(b.i.inv())
+
 
 typealias DrawListFlags = Int
 
-/** Flags for ImDrawList. Those are set automatically by ImGui:: functions from ImGuiIO settings, and generally not
+/** Flags: for ImDrawList instance. Those are set automatically by ImGui:: functions from ImGuiIO settings, and generally not
  *  manipulated directly. It is however possible to temporarily alter flags between calls to ImDrawList:: functions. */
 enum class DrawListFlag(val i: DrawListFlags) {
     None(0),

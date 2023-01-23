@@ -218,7 +218,7 @@ internal interface debugTools {
                     if (/*fgDrawList != null &&*/ isItemHovered()) {
                         val backupFlags = fgDrawList.flags
                         fgDrawList.flags = fgDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
-                        fgDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), true, 1f)
+                        fgDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), DrawFlag.Closed.i, 1f)
                         fgDrawList.flags = backupFlags
                     }
                 }
@@ -249,7 +249,7 @@ internal interface debugTools {
                 idxN++
             }
             if (showMesh)
-                outDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), true, 1f) // In yellow: mesh triangles
+                outDrawList.addPolyline(triangle.asList(), COL32(255, 255, 0, 255), DrawFlag.Closed.i, 1f) // In yellow: mesh triangles
         }
         // Draw bounding boxes
         if (showAabb) {

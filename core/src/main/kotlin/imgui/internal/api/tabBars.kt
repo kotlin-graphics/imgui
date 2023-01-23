@@ -55,7 +55,7 @@ internal interface tabBars {
                 pathArcToFast(Vec2(bb.min.x + rounding + 0.5f, y1 + rounding + 0.5f), rounding, 6, 9)
                 pathArcToFast(Vec2(bb.max.x - rounding - 0.5f, y1 + rounding + 0.5f), rounding, 9, 12)
                 pathLineTo(Vec2(bb.max.x - 0.5f, y2))
-                pathStroke(Col.Border.u32, false, style.tabBorderSize)
+                pathStroke(Col.Border.u32, 0, style.tabBorderSize)
             }
         }
     }

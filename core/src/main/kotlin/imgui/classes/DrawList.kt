@@ -161,7 +161,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (col hasnt COL32_A_MASK) return
         pathLineTo(p1 + Vec2(0.5f))
         pathLineTo(p2 + Vec2(0.5f))
-        pathStroke(col, false, thickness)
+        pathStroke(col, 0, thickness)
     }
 
     /** Note we don't render 1 pixels sized rectangles properly.
@@ -174,7 +174,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             pathRect(pMin + 0.5f, pMax - 0.5f, rounding, roundingCorners)
         else    // Better looking lower-right corner and rounded non-AA shapes.
             pathRect(pMin + 0.5f, pMax - 0.49f, rounding, roundingCorners)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed.i, thickness)
     }
 
     /** @param pMin: upper-left
@@ -219,7 +219,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(p2)
         pathLineTo(p3)
         pathLineTo(p4)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed.i, thickness)
     }
 
     fun addQuadFilled(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2, col: Int) {
@@ -240,7 +240,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(p1)
         pathLineTo(p2)
         pathLineTo(p3)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed.i, thickness)
     }
 
     fun addTriangleFilled(p1: Vec2, p2: Vec2, p3: Vec2, col: Int) {
@@ -271,7 +271,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             pathArcToFast(center, radius - 0.5f, 0, 12 - 1)
         else
             pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed.i, thickness)
     }
 
     fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0) {
@@ -303,7 +303,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Because we are filling a closed shape we remove 1 from the count of segments/points
         val aMax = (glm.πf * 2f) * (numSegments.f - 1f) / numSegments.f
         pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
-        pathStroke(col, true, thickness)
+        pathStroke(col, DrawFlag.Closed.i, thickness)
     }
 
     /** Guaranteed to honor 'num_segments' */
@@ -351,14 +351,14 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** TODO: Thickness anti-aliased lines cap are missing their AA fringe.
      *  We avoid using the ImVec2 math operators here to reduce cost to a minimum for debug/non-inlined builds. */
-    fun addPolyline(points: List<Vec2>, col: Int, closed: Boolean, thickness_: Float) {
+    fun addPolyline(points: List<Vec2>, col: Int, flags: DrawFlags, thickness_: Float) {
 
         var thickness = thickness_
 
         if (points.size < 2) return
 
+        val closed = flags has DrawFlag.Closed
         val opaqueUv = Vec2(_data.texUvWhitePixel)
-
         val count = if (closed) points.size else points.lastIndex // The number of line segments we need to draw
         val thickLine = thickness > _fringeScale
 
@@ -743,7 +743,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         pathLineTo(p1)
         pathBezierCubicCurveTo(p2, p3, p4, numSegments)
-        pathStroke(col, false, thickness)
+        pathStroke(col, 0, thickness)
     }
 
     /** Quad Bezier (3 control points)
@@ -755,7 +755,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         pathLineTo(p1)
         pathBezierQuadraticCurveTo(p2, p3, numSegments)
-        pathStroke(col, false, thickness)
+        pathStroke(col, 0, thickness)
     }
 
 
@@ -839,7 +839,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
     /** rounding_corners_flags: 4 bits corresponding to which corner to round   */
-    fun pathStroke(col: Int, closed: Boolean, thickness: Float = 1.0f) = addPolyline(_path, col, closed, thickness).also { pathClear() }
+    fun pathStroke(col: Int, flags: DrawFlags = 0, thickness: Float = 1.0f) = addPolyline(_path, col, flags, thickness).also { pathClear() }
 
     fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
         if (radius == 0f) {
@@ -1394,7 +1394,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(Vec2(bx - third, by - third))
         pathLineTo(Vec2(bx, by))
         pathLineTo(Vec2(bx + third * 2f, by - third * 2f))
-        pathStroke(col, false, thickness)
+        pathStroke(col, 0, thickness)
     }
 
     fun renderMouseCursor(
