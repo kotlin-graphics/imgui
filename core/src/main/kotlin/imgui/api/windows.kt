@@ -271,7 +271,6 @@ interface windows {
                 if (window.wantCollapseToggle) {
                     window.collapsed = !window.collapsed
                     window.markIniSettingsDirty()
-                    focusWindow(window)
                 }
             } else window.collapsed = false
             window.wantCollapseToggle = false

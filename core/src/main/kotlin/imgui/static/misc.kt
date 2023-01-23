@@ -1,14 +1,10 @@
 package imgui.static
 
-import gli_.has
 import glm_.glm
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.buttonBehavior
-import imgui.ImGui.clearActiveID
-import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isMouseClicked
@@ -17,22 +13,14 @@ import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
-import imgui.ImGui.popID
-import imgui.ImGui.pushID
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setNextWindowBgAlpha
-import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g
 import imgui.dsl.tooltip
 import imgui.internal.*
-import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.classes.Window.Companion.resizeGripDef
-import imgui.internal.sections.*
-import kotlin.math.max
-import kotlin.math.min
 
 
 // Misc
@@ -217,32 +205,32 @@ fun updateMouseWheel() {
 fun updateTabFocus() {
 
     // Pressing TAB activate widget focus
-    g.focusTabPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed }
+    g.tabFocusPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed }
         ?: false
-    if (g.activeId == 0 && g.focusTabPressed) {
+    if (g.activeId == 0 && g.tabFocusPressed) {
         // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
         // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
-        g.focusRequestNextWindow = g.navWindow
-        g.focusRequestNextCounterRegular = Int.MAX_VALUE
-        g.focusRequestNextCounterTabStop = when {
+        g.tabFocusRequestNextWindow = g.navWindow
+        g.tabFocusRequestNextCounterRegular = Int.MAX_VALUE
+        g.tabFocusRequestNextCounterTabStop = when {
             g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
             else -> if (io.keyShift) -1 else 0
         }
     }
 
     // Turn queued focus request into current one
-    g.focusRequestCurrWindow = null
-    g.focusRequestCurrCounterRegular = Int.MAX_VALUE
-    g.focusRequestCurrCounterTabStop = Int.MAX_VALUE
-    g.focusRequestNextWindow?.let { window ->
-        g.focusRequestCurrWindow = window
-        if (g.focusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
-            g.focusRequestCurrCounterRegular = modPositive(g.focusRequestNextCounterRegular, window.dc.focusCounterRegular + 1)
-        if (g.focusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
-            g.focusRequestCurrCounterTabStop = modPositive(g.focusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
-        g.focusRequestNextWindow = null
-        g.focusRequestNextCounterRegular = Int.MAX_VALUE
-        g.focusRequestNextCounterTabStop = Int.MAX_VALUE
+    g.tabFocusRequestCurrWindow = null
+    g.tabFocusRequestCurrCounterRegular = Int.MAX_VALUE
+    g.tabFocusRequestCurrCounterTabStop = Int.MAX_VALUE
+    g.tabFocusRequestNextWindow?.let { window ->
+        g.tabFocusRequestCurrWindow = window
+        if (g.tabFocusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
+            g.tabFocusRequestCurrCounterRegular = modPositive(g.tabFocusRequestNextCounterRegular, window.dc.focusCounterRegular + 1)
+        if (g.tabFocusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
+            g.tabFocusRequestCurrCounterTabStop = modPositive(g.tabFocusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
+        g.tabFocusRequestNextWindow = null
+        g.tabFocusRequestNextCounterRegular = Int.MAX_VALUE
+        g.tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
     }
 
     g.navIdTabCounter = Int.MAX_VALUE

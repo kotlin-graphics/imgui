@@ -158,7 +158,7 @@ internal interface inputText {
 
         val focusRequested = focusableItemRegister(window, id)
         val focusRequestedByCode =
-            focusRequested && g.focusRequestCurrWindow === window && g.focusRequestCurrCounterRegular == window.dc.focusCounterRegular
+            focusRequested && g.tabFocusRequestCurrWindow === window && g.tabFocusRequestCurrCounterRegular == window.dc.focusCounterRegular
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
         val userClicked = hovered && io.mouseClicked[0]

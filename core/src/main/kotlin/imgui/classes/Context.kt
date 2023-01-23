@@ -11,12 +11,10 @@ import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.DrawChannel
-import imgui.internal.DrawData
 import imgui.internal.classes.*
 import imgui.internal.hashStr
 import imgui.internal.sections.*
 import imgui.static.*
-import kool.free
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
@@ -380,23 +378,23 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Legacy Focus/Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
 
-    var focusRequestCurrWindow: Window? = null
+    var tabFocusRequestCurrWindow: Window? = null
 
-    var focusRequestNextWindow: Window? = null
+    var tabFocusRequestNextWindow: Window? = null
 
     /** Any item being requested for focus, stored as an index (we on layout to be stable between the frame pressing TAB and the next frame, semi-ouch) */
-    var focusRequestCurrCounterRegular = Int.MAX_VALUE
+    var tabFocusRequestCurrCounterRegular = Int.MAX_VALUE
 
     /** Tab item being requested for focus, stored as an index */
-    var focusRequestCurrCounterTabStop = Int.MAX_VALUE
+    var tabFocusRequestCurrCounterTabStop = Int.MAX_VALUE
 
     /** Stored for next frame */
-    var focusRequestNextCounterRegular = Int.MAX_VALUE
+    var tabFocusRequestNextCounterRegular = Int.MAX_VALUE
 
     /** Stored for next frame */
-    var focusRequestNextCounterTabStop = Int.MAX_VALUE
+    var tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
 
-    var focusTabPressed = false
+    var tabFocusPressed = false
 
 
     // ------------------------------------------------------------------

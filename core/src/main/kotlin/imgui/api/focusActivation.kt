@@ -32,8 +32,8 @@ interface focusActivation {
     fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
         assert(offset >= -1) { "-1 is allowed but not below" }
         val window = g.currentWindow!!
-        g.focusRequestNextWindow = window
-        g.focusRequestNextCounterRegular = window.dc.focusCounterRegular + 1 + offset
-        g.focusRequestNextCounterTabStop = Int.MAX_VALUE
+        g.tabFocusRequestNextWindow = window
+        g.tabFocusRequestNextCounterRegular = window.dc.focusCounterRegular + 1 + offset
+        g.tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
     }
 }
