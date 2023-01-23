@@ -82,6 +82,7 @@ class TabBar {
     var barRect = Rect()
 
     var currTabsContentsHeight = 0f
+
     /** Record the height of contents submitted below the tab bar */
     var prevTabsContentsHeight = 0f
 
@@ -106,8 +107,10 @@ class TabBar {
 
     /** Set to true when a new tab item or button has been added to the tab bar during last frame */
     var tabsAddedNew = false
+
     /** Number of tabs submitted this frame. */
     var tabsActiveCount = 0
+
     /** Index of last BeginTabItem() tab for use by EndTabItem()  */
     var lastTabItemIdx = -1
 
@@ -192,7 +195,7 @@ class TabBar {
     }
 
     // comfortable util
-    val tabBarRef: PtrOrIndex?
+    val tabBarRef: PtrOrIndex
         get() = when (this) {
             in g.tabBars -> PtrOrIndex(g.tabBars.getIndex(this))
             else -> PtrOrIndex(this)
@@ -236,6 +239,51 @@ class TabBar {
         reorderRequestDir = dir
     }
 
+    /** ~TabBarQueueReorderFromMousePos */
+    fun queueReorderFromMousePos(tab: TabItem, mousePos: Vec2) {
+
+        assert(reorderRequestTabId == 0)
+
+        if (flags hasnt TabBarFlag.Reorderable)
+            return
+
+        val sourceIdx = tabs.indexOf(tab)
+        val barX = barRect.min.x
+        val dir = if (barX + tab.offset > mousePos.x) -1 else +1
+        var targetIdx = sourceIdx
+
+        var i = sourceIdx
+        while (0 <= i && i < tabs.size) {
+            val targetTab = tabs[i]
+
+            // Reorder only within tab groups with _Leading, _Trailing flag or without either of them.
+            if ((targetTab.flags and TabItemFlag.Leading) != (tab.flags and TabItemFlag.Leading))
+                break
+            if ((targetTab.flags and TabItemFlag.Trailing) != (tab.flags and TabItemFlag.Trailing))
+                break
+
+            // Do not reorder past tabs with _NoReorder flag.
+            if (targetTab.flags has TabItemFlag.NoReorder)
+                break
+
+            targetIdx = i     // target_tab can be swapped with dragged tab.
+
+            // Current tab is destination tab under mouse position. Also include space after tab, so when mouse cursor is
+            // between tabs we would not continue checking further tabs that are not hovered.
+            if (dir > 0 && mousePos.x < barX + targetTab.offset + targetTab.width + g.style.itemInnerSpacing.x)       // End of tab is past mouse_pos.
+                break
+            if (dir < 0 && mousePos.x > barX + targetTab.offset - g.style.itemInnerSpacing.x)                           // Mouse pos is past start of tab.
+                break
+
+            i += dir
+        }
+
+        if (targetIdx != sourceIdx) {
+            reorderRequestTabId = tab.id
+            reorderRequestDir = targetIdx - sourceIdx
+        }
+    }
+
     /** ~TabBarProcessReorder */
     fun processReorder(): Boolean {
         val tab1 = findTabByID(reorderRequestTabId)
@@ -247,13 +295,24 @@ class TabBar {
 
         // Reordered TabItem must share the same position flags than target
         val tab2 = tabs[tab2Order]
-        if (tab2.flags has TabItemFlag.NoReorder) return false
-        if ((tab1.flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) != (tab2.flags and (TabItemFlag.Leading or TabItemFlag.Trailing))) return false
+        if (tab2.flags has TabItemFlag.NoReorder)
+            return false
+        if ((tab1.flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) != (tab2.flags and (TabItemFlag.Leading or TabItemFlag.Trailing)))
+            return false
 
-        //        ImGuiTabItem* tab2 = &tab_bar->Tabs[tab2_order];
-        //        ImGuiTabItem item_tmp = *tab1;
-        //        *tab1 = *tab2;
-        //        *tab2 = item_tmp;
+        // TODO
+        //        ImGuiTabItem* src, *dst;
+        //        if (tab_bar->ReorderRequestDir > 0)
+        //        {
+        //            dst = tab1;
+        //            src = tab1 + 1;
+        //        }
+        //        else
+        //        {
+        //            dst = tab2 + 1;
+        //            src = tab2;
+        //        }
+        //        memmove(dst, src, abs(tab_bar->ReorderRequestDir) * sizeof(ImGuiTabItem));
         val itemTmp = tabs[reorderRequestTabId]
         tabs[reorderRequestTabId] = tabs[tab2Order]
         tabs[tab2Order] = itemTmp
@@ -383,13 +442,15 @@ class TabBar {
             setItemAllowOverlap()
 
         // Drag and drop: re-order tabs
-        if (held && !tabAppearing && isMouseDragging(MouseButton.Left)) if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable) // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
-            if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
-                if (this.flags has TabBarFlag.Reorderable) queueReorder(tab, -1)
-            } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x) if (this.flags has TabBarFlag.Reorderable) queueReorder(
-                tab,
-                +1
-            )
+        if (held && !tabAppearing && isMouseDragging(MouseButton.Left))
+        // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
+            if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable)
+                if (io.mouseDelta.x < 0f && io.mousePos.x < bb.min.x) {
+                    if (this.flags has TabBarFlag.Reorderable)
+                        queueReorderFromMousePos(tab, g.io.mousePos)
+                } else if (io.mouseDelta.x > 0f && io.mousePos.x > bb.max.x)
+                    if (this.flags has TabBarFlag.Reorderable)
+                        queueReorderFromMousePos(tab, g.io.mousePos)
 
         //        if (false)
         //            if (hovered && g.hoveredIdNotActiveTimer > TOOLTIP_DELAY && bb.width < tab.widthContents)        {
@@ -428,7 +489,7 @@ class TabBar {
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) getIDWithSeed("#CLOSE", -1, id) else 0
         val (justClosed, textClipped) = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding,
-                label.toByteArray(), id, closeButtonId, tabContentsVisible)
+                                                                   label.toByteArray(), id, closeButtonId, tabContentsVisible)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
@@ -658,7 +719,7 @@ class TabBar {
                 scrollingAnim,
                 scrollingTarget,
                 io.deltaTime * scrollingSpeed
-            )
+                                                                          )
         } else scrollingSpeed = 0f
 
         scrollingRectMinX = barRect.min.x + sections[0].width + sections[0].spacing
@@ -754,7 +815,7 @@ class TabBar {
                 Dir.Right,
                 arrowButtonSize,
                 ButtonFlag.PressedOnClick or ButtonFlag.Repeat
-            )
+                         )
         ) selectDir = +1
         popStyleColor(2)
         io.keyRepeatRate = backupRepeatRate
