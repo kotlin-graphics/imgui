@@ -665,6 +665,22 @@ interface tables {
         }
     }
 
+    /** change enabled/disabled state of a column, set to false to hide the column. Note that end-user can use the context menu to change this themselves (right-click in headers, or right-click in columns body with ImGuiTableFlags_ContextMenuInBody)
+     *
+     *  For the getter you can use (TableGetColumnFlags() & ImGuiTableColumnFlags_IsEnabled) */
+    fun tableSetColumnEnabled(columnN_: Int, enabled: Boolean) {
+        var columnN = columnN_
+        val table = g.currentTable
+        assert(table != null)
+        if (table == null)
+            return
+        if (columnN < 0)
+            columnN = table.currentColumn
+        assert(columnN >= 0 && columnN < table.columnsCount)
+        val column = table.columns[columnN]
+        column.isEnabledNextFrame = enabled
+    }
+
     /** change the color of a cell, row, or column. See ImGuiTableBgTarget_ flags for details. */
     fun tableSetBgColor(target: TableBgTarget, color_: Int, columnN_: Int = -1) {
 
