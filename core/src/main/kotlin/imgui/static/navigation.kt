@@ -32,7 +32,6 @@ import imgui.ImGui.navMoveRequestForward
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
-import imgui.ImGui.setNavIDWithRectRel
 import imgui.ImGui.setNavID
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
@@ -159,12 +158,9 @@ fun navUpdate() {
             val childWindow = g.navWindow!!
             val parentWindow = childWindow.parentWindow!!
             assert(childWindow.childId != 0)
+            val childRect = childWindow.rect()
             focusWindow(parentWindow)
-            setNavID(childWindow.childId, NavLayer.Main, 0)
-            // Reassigning with same value, we're being explicit here.
-            g.navIdIsAlive = false  // -V1048
-            if (g.navDisableMouseHover)
-                g.navMousePosDirty = true
+            setNavID(childWindow.childId, NavLayer.Main, 0, Rect(childRect.min - parentWindow.pos, childRect.max - parentWindow.pos))
         } else if (g.openPopupStack.isNotEmpty()) {
             // Close open popup/menu
             if (g.openPopupStack.last().window!!.flags hasnt Wf._Modal)
@@ -592,7 +588,9 @@ fun navUpdateMoveResult() {
         g.navJustMovedToKeyMods = g.navMoveRequestKeyMods
     }
     IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
-    setNavIDWithRectRel(result.id, g.navLayer, result.focusScopeId, result.rectRel)
+    setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
+    g.navDisableHighlight = false
+    g.navDisableMouseHover = true; g.navMousePosDirty = true
 }
 
 fun navUpdateInitResult() {
@@ -601,11 +599,11 @@ fun navUpdateInitResult() {
 
     // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
     IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${nav.name}\"", g.navInitResultId)
-    if (g.navInitRequestFromMove)
-        setNavIDWithRectRel(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
-    else
-        setNavID(g.navInitResultId, g.navLayer, 0)
-    nav.navRectRel[g.navLayer] = g.navInitResultRectRel
+    setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
+    if (g.navInitRequestFromMove) {
+        g.navDisableHighlight = false
+        g.navDisableMouseHover = true; g.navMousePosDirty = true
+    }
 }
 
 /** Handle PageUp/PageDown/Home/End keys */
@@ -970,6 +968,21 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
         parent.navLastChildNavWindow = navWindow
 }
 
+fun navRestoreLayer(layer: NavLayer) {
+    if (layer == NavLayer.Main)
+        g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
+    val window = g.navWindow!!
+    if (window.navLastIds[layer] != 0) {
+        setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
+        g.navDisableHighlight = false
+        g.navDisableMouseHover = true; g.navMousePosDirty = true
+    } else {
+        g.navLayer = layer
+        navInitWindow(window, true)
+    }
+}
+
+
 /** Restore the last focused child.
  *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
 fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow?.takeIf { it.wasActive } ?: window
@@ -986,17 +999,6 @@ fun findWindowFocusIndex(window: Window): Int {
 }
 
 // static spare functions
-
-fun navRestoreLayer(layer: NavLayer) {
-    g.navLayer = layer
-    if (layer == NavLayer.Main)
-        g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
-    val window = g.navWindow!!
-    if (window.navLastIds[layer] != 0)
-        setNavIDWithRectRel(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
-    else
-        navInitWindow(window, true)
-}
 
 fun navScoreItemDistInterval(a0: Float, a1: Float, b0: Float, b1: Float) = when {
     a1 < b0 -> a1 - b0

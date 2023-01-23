@@ -37,14 +37,16 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderText
 import imgui.ImGui.selectable
-import imgui.ImGui.setNavIDWithRectRel
+import imgui.ImGui.setNavID
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
-import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.floor
+import imgui.internal.round
 import imgui.internal.sections.*
+import imgui.internal.triangleContainsPoint
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -115,14 +117,14 @@ interface widgetsMenus {
 
             navEarliestChild = navEarliestChild.getParent()
             if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveRequestForward == NavForward.None) {
-                /*  To do so we claim focus back, restore NavId and then process the movement request for yet another
-                    frame. This involve a one-frame delay which isn't very problematic in this situation.
-                    We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)   */
+                // To do so we claim focus back, restore NavId and then process the movement request for yet another frame.
+                // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)
                 val layer = NavLayer.Menu
                 assert(window.dc.navLayerActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 focusWindow(window)
-                setNavIDWithRectRel(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
+                setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
+                g.navDisableMouseHover = true; g.navMousePosDirty = true
                 g.navMoveRequestForward = NavForward.ForwardQueued
                 navMoveRequestCancel()
             }

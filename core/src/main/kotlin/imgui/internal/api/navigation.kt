@@ -23,7 +23,7 @@ internal interface navigation {
                 initForNav = true
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=$initForNav, window=\"${window.name}\", layer=${g.navLayer}")
         if (initForNav) {
-            setNavID(0, g.navLayer, 0)
+            setNavID(0, g.navLayer, 0, Rect())
             g.navInitRequest = true
             g.navInitRequestFromMove = false
             g.navInitResultId = 0
@@ -133,21 +133,16 @@ internal interface navigation {
         g.navNextActivateId = id
     }
 
-    /** FIXME-NAV: Refactor those functions into a single, more explicit one. */
-    fun setNavID(id: ID, navLayer: NavLayer, focusScopeId: ID) { // assert(navLayer == 0 || navLayer == 1) useless on jvm
-        assert(g.navWindow != null)
+    /** FIXME-NAV: The existence of SetNavID vs SetFocusID properly needs to be clarified/reworked. */
+    fun setNavID(id: ID, navLayer: NavLayer, focusScopeId: ID, rectRel: Rect) { // assert(navLayer == 0 || navLayer == 1) useless on jvm
+        val navWindow = g.navWindow!!
         assert(navLayer == NavLayer.Main || navLayer == NavLayer.Menu)
         g.navId = id
         g.navLayer = navLayer
         g.navFocusScopeId = focusScopeId
-        g.navWindow!!.navLastIds[navLayer] = id
-    }
-
-    fun setNavIDWithRectRel(id: ID, navLayer: NavLayer, focusScopeId: ID, rectRel: Rect) {
-        setNavID(id, navLayer, focusScopeId)
-        g.navWindow!!.navRectRel[navLayer] put rectRel
-        g.navMousePosDirty = true
-        g.navDisableHighlight = false
-        g.navDisableMouseHover = true
+        navWindow.navLastIds[navLayer] = id
+        navWindow.navRectRel[navLayer] = rectRel
+        //g.NavDisableHighlight = false;
+        //g.NavDisableMouseHover = g.NavMousePosDirty = true;
     }
 }
