@@ -60,12 +60,12 @@ fun navUpdate() {
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
 
-    if (navGamepadActive && g.navInputSource != InputSource.NavGamepad)
+    if (navGamepadActive && g.navInputSource != InputSource.Gamepad)
         io.navInputs.also {
             if (it[NavInput.Activate] > 0f || it[NavInput.Input] > 0f || it[NavInput.Cancel] > 0f || it[NavInput.Menu] > 0f
                 || it[NavInput.DpadLeft] > 0f || it[NavInput.DpadRight] > 0f || it[NavInput.DpadUp] > 0f || it[NavInput.DpadDown] > 0f
             )
-                g.navInputSource = InputSource.NavGamepad
+                g.navInputSource = InputSource.Gamepad
         }
 
     // Update Keyboard->Nav inputs mapping
@@ -73,7 +73,7 @@ fun navUpdate() {
         fun navMapKey(key: Key, navInput: NavInput) {
             if (isKeyDown(io.keyMap[key])) {
                 io.navInputs[navInput] = 1f
-                g.navInputSource = InputSource.NavKeyboard
+                g.navInputSource = InputSource.Keyboard
             }
         }
         navMapKey(Key.Space, NavInput.Activate)
@@ -297,7 +297,7 @@ fun navUpdate() {
     // When using gamepad, we project the reference nav bounding box into window visible area.
     // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
     // (can't focus a visible object like we can with the mouse).
-    if (g.navMoveRequest && g.navInputSource == InputSource.NavGamepad && g.navLayer == NavLayer.Main) {
+    if (g.navMoveRequest && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main) {
         val window = g.navWindow!!
         val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
         if (window.navRectRel[g.navLayer] !in windowRectRel) {
@@ -370,13 +370,13 @@ fun navUpdateWindowing() {
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingTimer = 0f
             g.navWindowingToggleLayer = !startWindowingWithKeyboard
-            g.navInputSource = if (startWindowingWithKeyboard) InputSource.NavKeyboard else InputSource.NavGamepad
+            g.navInputSource = if (startWindowingWithKeyboard) InputSource.Keyboard else InputSource.Gamepad
         }
 
     // Gamepad update
     g.navWindowingTimer += io.deltaTime
     g.navWindowingTarget?.let {
-        if (g.navInputSource == InputSource.NavGamepad) {
+        if (g.navInputSource == InputSource.Gamepad) {
             /*  Highlight only appears after a brief time holding the button, so that a fast tap on PadMenu
                 (to toggle NavLayer) doesn't add visual noise             */
             g.navWindowingHighlightAlpha = max(
@@ -406,7 +406,7 @@ fun navUpdateWindowing() {
     }
     // Keyboard: Focus
     g.navWindowingTarget?.let {
-        if (g.navInputSource == InputSource.NavKeyboard) {
+        if (g.navInputSource == InputSource.Keyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
             g.navWindowingHighlightAlpha = max(
                 g.navWindowingHighlightAlpha,
@@ -434,9 +434,9 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (it.flags hasnt Wf.NoMove) {
             var moveDelta = Vec2()
-            if (g.navInputSource == InputSource.NavKeyboard && !io.keyShift)
+            if (g.navInputSource == InputSource.Keyboard && !io.keyShift)
                 moveDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
-            if (g.navInputSource == InputSource.NavGamepad)
+            if (g.navInputSource == InputSource.Gamepad)
                 moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f

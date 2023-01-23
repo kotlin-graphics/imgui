@@ -854,9 +854,9 @@ class Window(var context: Context,
         // Navigation resize (keyboard/gamepad)
         if (g.navWindowingTarget?.rootWindow === this) {
             val navResizeDelta = Vec2()
-            if (g.navInputSource == InputSource.NavKeyboard && g.io.keyShift)
+            if (g.navInputSource == InputSource.Keyboard && g.io.keyShift)
                 navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
-            if (g.navInputSource == InputSource.NavGamepad)
+            if (g.navInputSource == InputSource.Gamepad)
                 navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
             if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
                 val NAV_RESIZE_SPEED = 600f

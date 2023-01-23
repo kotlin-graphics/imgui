@@ -82,7 +82,7 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     HoveredWindow(1 shl 7),
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
-//  [imgui-test only]
+    //  [imgui-test only]
     Openable(1 shl 10),
     Opened(1 shl 11),
     Checkable(1 shl 12),
@@ -220,7 +220,6 @@ infix fun SeparatorFlags.hasnt(b: SeparatorFlag): Boolean = and(b.i) == 0
 infix fun SeparatorFlags.wo(b: SeparatorFlag): SeparatorFlags = and(b.i.inv())
 
 
-
 typealias TextFlags = Int
 
 enum class TextFlag {
@@ -304,13 +303,11 @@ enum class PlotType { Lines, Histogram }
 
 
 enum class InputSource {
-    None, Mouse, Nav,
+    None, Mouse, Keyboard,
+    Gamepad,
 
-    /** Only used occasionally for storage, not tested/handled by most code */
-    NavKeyboard,
-
-    /** Only used occasionally for storage, not tested/handled by most code */
-    NavGamepad
+    /** Stored in g.ActiveIdSource only */
+    Nav
 }
 
 
@@ -344,7 +341,6 @@ infix fun NavHighlightFlags.xor(b: NavHighlightFlag): NavHighlightFlags = xor(b.
 infix fun NavHighlightFlags.has(b: NavHighlightFlag): Boolean = and(b.i) != 0
 infix fun NavHighlightFlags.hasnt(b: NavHighlightFlag): Boolean = and(b.i) == 0
 infix fun NavHighlightFlags.wo(b: NavHighlightFlag): NavHighlightFlags = and(b.i.inv())
-
 
 
 typealias NavDirSourceFlags = Int
@@ -479,6 +475,7 @@ typealias DrawFlags = Int
 /** Flags: for ImDrawList functions: AddRect(), AddRectFilled() etc. */
 enum class DrawFlag(val i: DrawFlags) {
     None(0),
+
     /** PathStroke(), AddPolyline(): specify that (LEGACY: this must always stay == 1 to be backward compatible with old API using a bool) */
     Closed(1 shl 0);
 
@@ -534,7 +531,6 @@ infix fun DrawListFlags.xor(b: DrawListFlag): DrawListFlags = xor(b.i)
 infix fun DrawListFlags.has(b: DrawListFlag): Boolean = and(b.i) != 0
 infix fun DrawListFlags.hasnt(b: DrawListFlag): Boolean = and(b.i) == 0
 infix fun DrawListFlags.wo(b: DrawListFlag): DrawListFlags = and(b.i.inv())
-
 
 
 typealias NextWindowDataFlags = Int

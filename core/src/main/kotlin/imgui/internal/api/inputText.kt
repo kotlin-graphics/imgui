@@ -162,7 +162,7 @@ internal interface inputText {
         val focusRequestedByTab = focusRequested && !focusRequestedByCode
 
         val userClicked = hovered && io.mouseClicked[0]
-        val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.NavKeyboard))
+        val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.Keyboard))
         val userScrollFinish = isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == drawWindow getScrollbarID Axis.Y
         val userScrollActive = isMultiline && state != null && g.activeId == drawWindow getScrollbarID Axis.Y
 
