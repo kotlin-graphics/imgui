@@ -202,12 +202,12 @@ interface widgetsDrags {
      *  e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
      *  Speed are per-pixel of mouse movement (vSpeed = 0.2f: mouse needs to move by 5 pixels to increase value by 1).
      *  For gamepad/keyboard navigation, minimum speed is Max(vSpeed, minimumStepAtGivenPrecision). */
-    fun dragScalar(label: String, pData: FloatArray, vSpeed: Float, pMin: Float? = null, pMax: Float? = null,
+    fun dragScalar(label: String, pData: FloatArray, vSpeed: Float = 1f, pMin: Float? = null, pMax: Float? = null,
                    format: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean =
         dragScalar(label, pData, 0, vSpeed, pMin, pMax, format, flags)
 
     /** If vMin >= vMax we have no bound  */
-    fun dragScalar(label: String, pData: FloatArray, ptr: Int = 0, vSpeed: Float, pMin: Float? = null,
+    fun dragScalar(label: String, pData: FloatArray, ptr: Int = 0, vSpeed: Float = 1f, pMin: Float? = null,
                    pMax: Float? = null, format: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean =
         withFloat(pData, ptr) {
             dragScalar(label, DataType.Float, it, vSpeed, pMin, pMax, format, flags)
@@ -215,7 +215,7 @@ interface widgetsDrags {
 
     /** ote: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a Drag widget, p_min and p_max are optional.
      *  Read code of e.g. DragFloat(), DragInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
-    fun <N> dragScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>, vSpeed: Float,
+    fun <N> dragScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>, vSpeed: Float = 1f,
                        pMin: N? = null, pMax: N? = null, format_: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean
             where N : Number, N : Comparable<N> {
 
@@ -302,7 +302,7 @@ interface widgetsDrags {
      *  p_min and p_max are optional.
      *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand
      *  how to use this function directly. */
-    fun <N> dragScalarN(label: String, dataType: DataType, v: Any, components: Int, vSpeed: Float,
+    fun <N> dragScalarN(label: String, dataType: DataType, v: Any, components: Int, vSpeed: Float = 1f,
                         vMin: N? = null, vMax: N? = null, format: String? = null, flags: SliderFlags = SliderFlag.None.i): Boolean
             where N : Number, N : Comparable<N> {
 
