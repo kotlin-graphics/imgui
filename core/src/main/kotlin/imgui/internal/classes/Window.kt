@@ -162,6 +162,9 @@ class Window(var context: Context,
     /** Hide the window until frame N at Render() time only */
     var hiddenFramesForRenderOnly = 0
 
+    /** Disable window interactions for N frames */
+    var disableInputsFrames = 0
+
     /** store acceptable condition flags for SetNextWindowPos() use. */
     var setWindowPosAllowFlags = Cond.Always or Cond.Once or Cond.FirstUseEver or Cond.Appearing
 

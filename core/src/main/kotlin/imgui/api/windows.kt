@@ -706,6 +706,12 @@ interface windows {
                 // Update the Hidden flag
                 hidden = hiddenFramesCanSkipItems > 0 || hiddenFramesCannotSkipItems > 0 || hiddenFramesForRenderOnly > 0
 
+                // Disable inputs for requested number of frames
+                if (disableInputsFrames > 0) {
+                        disableInputsFrames--
+                        flags = flags or Wf.NoInputs
+                }
+
                 // Update the SkipItems flag, used to early out of all items functions (no layout required)
                 skipItems = (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0
             }
