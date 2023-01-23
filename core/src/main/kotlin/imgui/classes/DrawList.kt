@@ -842,7 +842,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun pathStroke(col: Int, flags: DrawFlags = 0, thickness: Float = 1.0f) = addPolyline(_path, col, flags, thickness).also { pathClear() }
 
     fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
-        if (radius == 0f) {
+        if (radius <= 0f) {
             _path += center
             return
         }
@@ -856,12 +856,14 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
     }
 
-    /** Use precomputed angles for a 12 steps circle    */
+    /** Use precomputed angles for a 12 steps circle
+     *
+     *  0: East, 3: South, 6: West, 9: North, 12: East */
     fun pathArcToFast(center: Vec2, radius: Float, aMinOf12_: Int, aMaxOf12_: Int) {
 
         var aMinOf12 = aMinOf12_
         var aMaxOf12 = aMaxOf12_
-        if (radius == 0f) {
+        if (radius <= 0f) {
             _path += center
             return
         }
@@ -1301,7 +1303,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun _calcCircleAutoSegmentCount(radius: Float): Int =
         // Automatic segment count
-        when (val radiusIdx = (radius + 0.999f).i) { // ceil to never reduce accuracy
+        when (val radiusIdx = (radius + 0.999999f).i) { // ceil to never reduce accuracy
             in _data.circleSegmentCounts.indices -> _data.circleSegmentCounts[radiusIdx] // Use cached value
             else -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
         }
