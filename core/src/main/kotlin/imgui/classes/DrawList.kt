@@ -3,6 +3,8 @@ package imgui.classes
 import gli_.hasnt
 import glm_.*
 import glm_.func.common.max
+import glm_.func.cos
+import glm_.func.sin
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -20,6 +22,7 @@ import org.lwjgl.system.MemoryUtil
 import uno.kotlin.plusAssign
 import java.nio.ByteBuffer
 import java.util.Stack
+import kotlin.math.ceil
 import kotlin.math.sqrt
 
 /** A single draw command list (generally one per window, conceptually you may see this as a dynamic "mesh" builder)
@@ -841,45 +844,59 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** rounding_corners_flags: 4 bits corresponding to which corner to round   */
     fun pathStroke(col: Int, flags: DrawFlags = 0, thickness: Float = 1.0f) = addPolyline(_path, col, flags, thickness).also { pathClear() }
 
-    fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 10) {
+    /** @param center must be a new instance */
+    fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 0) {
         if (radius <= 0f) {
             _path += center
             return
         }
         assert(aMin <= aMax)
 
-        // Note that we are adding a point at both a_min and a_max.
-        // If you are trying to draw a full closed circle you don't want the overlapping points!
-        for (i in 0..numSegments) {
-            val a = aMin + (i.f / numSegments) * (aMax - aMin)
-            _path += Vec2(center.x + glm.cos(a) * radius, center.y + glm.sin(a) * radius)
+        if (numSegments > 0) {
+            _pathArcToN(center, radius, aMin, aMax, numSegments)
+            return
+        }
+
+        // Automatic segment count
+        if (radius <= _data.arcFastRadiusCutoff) {
+            // We are going to use precomputed values for mid samples.
+            // Determine first and last sample in lookup table that belong to the arc.
+            val aMinSample = ceil(DRAWLIST_ARCFAST_SAMPLE_MAX * aMin / (glm.πf * 2f)).i
+            val aMaxSample = (DRAWLIST_ARCFAST_SAMPLE_MAX * aMax / (glm.πf * 2f)).i
+            val aMidSamples = (aMaxSample - aMinSample) max 0
+
+            val aMinSegmentAngle = aMinSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
+            val aMaxSegmentAngle = aMaxSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
+            val aEmitStart = (aMinSegmentAngle - aMin) > 0f
+            val aEmitEnd = (aMax - aMaxSegmentAngle) > 0f
+
+//            _path.reserve(_Path.Size + (a_mid_samples + 1 + (a_emit_start ? 1 : 0)+(a_emit_end ? 1 : 0)))
+            if (aEmitStart)
+                _path += Vec2(center.x + aMin.cos * radius, center.y + aMin.sin * radius)
+            if (aMaxSample >= aMinSample)
+                _pathArcToFastEx(center, radius, aMinSample, aMaxSample, 0)
+            if (aEmitEnd)
+                _path += Vec2(center.x + aMax.cos * radius, center.y + aMax.sin * radius)
+        } else {
+            val arcLength = aMax - aMin
+            val circleSegmentCount = _calcCircleAutoSegmentCount(radius)
+            val arcSegmentCount = ceil(circleSegmentCount * arcLength / (glm.πf * 2f)).i max (2f * glm.πf / arcLength).i
+            _pathArcToN(center, radius, aMin, aMax, arcSegmentCount)
         }
     }
 
     /** Use precomputed angles for a 12 steps circle
      *
-     *  0: East, 3: South, 6: West, 9: North, 12: East */
-    fun pathArcToFast(center: Vec2, radius: Float, aMinOf12_: Int, aMaxOf12_: Int) {
-
-        var aMinOf12 = aMinOf12_
-        var aMaxOf12 = aMaxOf12_
+     *  0: East, 3: South, 6: West, 9: North, 12: East
+     *
+     *  @param center must be a new instance */
+    fun pathArcToFast(center: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
         if (radius <= 0f) {
             _path += center
             return
         }
-        assert(aMinOf12 > aMaxOf12)
-
-        // For legacy reason the PathArcToFast() always takes angles where 2*PI is represented by 12,
-        // but it is possible to set IM_DRAWLIST_ARCFAST_TESSELATION_MULTIPLIER to a higher value. This should compile to a no-op otherwise.
-        if (DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER != 1) {
-            aMinOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
-            aMaxOf12 *= DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER
-        }
-
-        for (a in aMinOf12..aMaxOf12) {
-            val c = _data.arcFastVtx[a % _data.arcFastVtx.size]
-            _path += Vec2(center.x + c.x * radius, center.y + c.y * radius)
-        }
+        assert(aMinOf12 <= aMaxOf12)
+        _pathArcToFastEx(center, radius, aMinOf12 * DRAWLIST_ARCFAST_SAMPLE_MAX / 12, aMaxOf12 * DRAWLIST_ARCFAST_SAMPLE_MAX / 12, 0)
     }
 
     /** Cubic bezier
@@ -1307,6 +1324,97 @@ class DrawList(sharedData: DrawListSharedData?) {
             in _data.circleSegmentCounts.indices -> _data.circleSegmentCounts[radiusIdx] // Use cached value
             else -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, _data.circleSegmentMaxError)
         }
+
+    /** @center must be a new instance */
+    fun _pathArcToFastEx(center: Vec2, radius: Float, aMinSample_: Int, aMaxSample_: Int, aStep_: Int) {
+        if (radius <= 0f) {
+            _path += center
+            return
+        }
+        var aMaxSample = aMaxSample_
+        var aMinSample = aMinSample_
+        assert(aMinSample <= aMaxSample)
+
+        // Calculate arc auto segment step size
+        var aStep = when {
+            aStep_ <= 0 -> DRAWLIST_ARCFAST_SAMPLE_MAX / _calcCircleAutoSegmentCount(radius)
+            else -> aStep_
+        }
+
+        // Make sure we never do steps larger than one quarter of the circle
+        aStep = clamp(aStep, 1, DRAWLIST_ARCFAST_TABLE_SIZE / 4)
+
+        // Normalize a_min_sample to always start lie in [0..IM_DRAWLIST_ARCFAST_SAMPLE_MAX] range.
+        if (aMinSample < 0) {
+            var normalizedSample = aMinSample % DRAWLIST_ARCFAST_SAMPLE_MAX
+            if (normalizedSample < 0)
+                normalizedSample += DRAWLIST_ARCFAST_SAMPLE_MAX
+            aMaxSample += (normalizedSample - aMinSample)
+            aMinSample = normalizedSample
+        }
+
+        val sampleRange = aMaxSample - aMinSample
+        val aNextStep = aStep
+        var samples = sampleRange + 1
+        var extraMaxSample = false
+        if (aStep > 1) {
+            samples = sampleRange / aStep + 1
+            val overstep = sampleRange % aStep
+            if (overstep > 0) {
+                extraMaxSample = true
+                samples++
+
+                // When we have overstep to avoid awkwardly looking one long line and one tiny one at the end,
+                // distribute first step range evenly between them by reducing first step size.
+                if (sampleRange > 0)
+                    aStep -= (aStep - overstep) / 2
+            }
+        }
+        //        _path.resize(_Path.Size + samples);
+        //        val out_ptr = _Path.Data + (_Path.Size - samples);
+
+        var sampleIndex = aMinSample
+        var a = aMinSample
+        while (a <= aMaxSample) {
+            // a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over range twice or more
+            if (sampleIndex >= DRAWLIST_ARCFAST_SAMPLE_MAX)
+                sampleIndex -= DRAWLIST_ARCFAST_SAMPLE_MAX
+
+            val s = _data.arcFastVtx[sampleIndex]
+            _path += Vec2(center.x + s.x * radius,
+                          center.y + s.y * radius)
+
+            a += aStep; sampleIndex += aStep; aStep = aNextStep
+        }
+
+        if (extraMaxSample) {
+            var normalizedMaxSample = aMaxSample % DRAWLIST_ARCFAST_SAMPLE_MAX
+            if (normalizedMaxSample < 0)
+                normalizedMaxSample += DRAWLIST_ARCFAST_SAMPLE_MAX
+
+            val s = _data.arcFastVtx[normalizedMaxSample]
+            _path += Vec2(center.x + s.x * radius,
+                          center.y + s.y * radius)
+        }
+
+        //        IM_ASSERT_PARANOID(_Path.Data + _Path.Size == out_ptr)
+    }
+
+    /** @param center must be new instance */
+    fun _pathArcToN(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int) {
+        if (radius <= 0f) {
+            _path += center
+            return
+        }
+        assert(aMin <= aMax)
+
+        // Note that we are adding a point at both a_min and a_max.
+        // If you are trying to draw a full closed circle you don't want the overlapping points!
+        for (i in 0..numSegments) {
+            val a = aMin + (i.f / numSegments) * (aMax - aMin)
+            _path += Vec2(center.x + glm.cos(a) * radius, center.y + glm.sin(a) * radius)
+        }
+    }
 
 
     //-------------------------------------------------------------------------

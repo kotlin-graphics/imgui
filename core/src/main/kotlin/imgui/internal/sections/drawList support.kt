@@ -1,9 +1,6 @@
 package imgui.internal.sections
 
-import glm_.f
-import glm_.glm
-import glm_.i
-import glm_.min
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.clamp
@@ -37,8 +34,16 @@ const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN = 4
 const val DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX = 512
 fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(_RAD: Float, _MAXERROR: Float) = clamp(ROUNDUP_TO_EVEN(ceil(glm.πf / acos(1 - (_MAXERROR min _RAD) / _RAD)).i), DRAWLIST_CIRCLE_AUTO_SEGMENT_MIN, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
 
-/** ImDrawList: You may set this to higher values (e.g. 2 or 3) to increase tessellation of fast rounded corners path. */
-var DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER = 1
+// Raw equation from IM_DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC rewritten for 'r' and 'error'.
+fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC_R(_N: Int, _MAXERROR: Float) = _MAXERROR / (1 - cos(glm.πf / (_N.f max glm.πf)))
+fun DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC_ERROR(_N: Int, _RAD: Float) = (1 - cos(glm.πf / (_N.f max glm.πf))) / _RAD
+
+// ImDrawList: Lookup table size for adaptive arc drawing, cover full circle.
+//#ifndef IM_DRAWLIST_ARCFAST_TABLE_SIZE
+const val DRAWLIST_ARCFAST_TABLE_SIZE = 48 // Number of samples in lookup table.
+
+//#endif
+val DRAWLIST_ARCFAST_SAMPLE_MAX = DRAWLIST_ARCFAST_TABLE_SIZE // Sample index _PathArcToFastEx() for 360 angle.
 
 /** Data shared between all ImDrawList instances
  *  You may want to create your own instance of this if you want to use ImDrawList completely without ImGui. In that case, watch out for future changes to this structure.
@@ -66,12 +71,15 @@ class DrawListSharedData {
 
     // [Internal] Lookup tables
 
-    // Lookup tables
-    val arcFastVtx = Array(12 * DRAWLIST_ARCFAST_TESSELLATION_MULTIPLIER) {
+    /** Sample points on the quarter of the circle. */
+    val arcFastVtx = Array(DRAWLIST_ARCFAST_TABLE_SIZE) {
         // FIXME: Bake rounded corners fill/borders in atlas
         val a = it * 2 * glm.PIf / 12
         Vec2(cos(a), sin(a))
     }
+
+    /** Cutoff radius after which arc drawing will fallback to slower PathArcTo() */
+    var arcFastRadiusCutoff = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC_R(DRAWLIST_ARCFAST_SAMPLE_MAX, circleSegmentMaxError)
 
     /** Precomputed segment count for given radius before we calculate it dynamically (to avoid calculation overhead) */
     val circleSegmentCounts = IntArray(64)
@@ -82,6 +90,8 @@ class DrawListSharedData {
     fun setCircleTessellationMaxError_(maxError: Float) {
         if (circleSegmentMaxError == maxError)
             return
+
+        assert(maxError > 0f)
         circleSegmentMaxError = maxError
         for (i in circleSegmentCounts.indices) {
             val radius = i.f
@@ -90,6 +100,7 @@ class DrawListSharedData {
                 else -> 0
             }
         }
+        arcFastRadiusCutoff = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC_R(DRAWLIST_ARCFAST_SAMPLE_MAX, circleSegmentMaxError)
     }
 }
 
