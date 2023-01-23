@@ -624,12 +624,13 @@ object ShowDemoWindowLayout {
                         setScrollFromPosX(cursorStartPos.x + scrollToPosPx, i * 0.25f)
                     if (childIsVisible) // Avoid calling SetScrollHereY when running with culled items
                         for (item in 0..99) {
+                            if (item > 0)
+                                sameLine()
                             if (enableTrack && item == trackItem) {
                                 textColored(Vec4(1, 1, 0, 1), "Item $item")
                                 setScrollHereX(i * 0.25f) // 0.0f:left, 0.5f:center, 1.0f:right
                             } else
                                 text("Item $item")
-                            sameLine()
                         }
                     endChild()
                     sameLine()

@@ -45,9 +45,8 @@ interface windowScrolling {
      *  adjust scrolling amount to make current cursor position visible. center_x_ratio=0.0: left, 0.5: center, 1.0: right. When using to make a "default/current item" visible, consider using SetItemDefaultFocus() instead. */
     fun setScrollHereX(centerXRatio: Float) {
         val window = g.currentWindow!!
-        val spacingX = style.itemSpacing.x
-        val targetPosX =
-            lerp(window.dc.lastItemRect.min.x - spacingX, window.dc.lastItemRect.max.x + spacingX, centerXRatio)
+        val spacingX = window.windowPadding.x max style.itemSpacing.x
+        val targetPosX = lerp(window.dc.lastItemRect.min.x - spacingX, window.dc.lastItemRect.max.x + spacingX, centerXRatio)
         window.setScrollFromPosX(targetPosX - window.pos.x, centerXRatio) // Convert from absolute to local pos
 
         // Tweak: snap on edges when aiming at an item very close to the edge
@@ -59,10 +58,8 @@ interface windowScrolling {
      *   When using to make a "default/current item" visible, consider using setItemDefaultFocus() instead.*/
     fun setScrollHereY(centerYRatio: Float = 0.5f) {
         val window = g.currentWindow!!
-        val spacingY = style.itemSpacing.y
-        val targetPosY = lerp(window.dc.cursorPosPrevLine.y - spacingY,
-            window.dc.cursorPosPrevLine.y + window.dc.prevLineSize.y + spacingY,
-            centerYRatio)
+        val spacingY = window.windowPadding.y max style.itemSpacing.y
+        val targetPosY = lerp(window.dc.cursorPosPrevLine.y - spacingY, window.dc.cursorPosPrevLine.y + window.dc.prevLineSize.y + spacingY, centerYRatio)
         window.setScrollFromPosY(targetPosY - window.pos.y, centerYRatio) // Convert from absolute to local pos
 
         // Tweak: snap on edges when aiming at an item very close to the edge
