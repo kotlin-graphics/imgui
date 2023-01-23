@@ -165,7 +165,7 @@ fun updateMouseWheel() {
         val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
         val scale = newFontScale / window.fontWindowScale
         window.fontWindowScale = newFontScale
-        if (window.flags hasnt WindowFlag._ChildWindow) {
+        if (window === window.rootWindow) {
             val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
             window.setPos(window.pos + offset)
             window.size = floor(window.size * scale)

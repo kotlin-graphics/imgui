@@ -154,7 +154,7 @@ fun navUpdate() {
         if (g.activeId != 0) {
             if (!isActiveIdUsingNavInput(NavInput.Cancel))
                 clearActiveID()
-        } else if (g.navWindow != null && g.navWindow!!.flags has Wf._ChildWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
+        } else if (g.navWindow != null && g.navWindow!! !== g.navWindow!!.rootWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
             // Exit child window
             val childWindow = g.navWindow!!
             val parentWindow = childWindow.parentWindow!!
@@ -318,9 +318,9 @@ fun navUpdate() {
     }
 
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
-    g.navWindow.let {
-        val navRectRel = it?.run { Rect(navRectRel[g.navLayer]) } ?: Rect()
-        g.navScoringRect.put(it?.run { Rect(navRectRel.min + it.pos, navRectRel.max + it.pos) } ?: Rect(0f, 0f, 0f, 0f))
+    g.navWindow.let { navWindow ->
+        val navRectRel = navWindow?.navRectRel?.get(g.navLayer)?.takeUnless { it.isInverted } ?: Rect()
+        g.navScoringRect.put(navWindow?.run { Rect(navRectRel.min + navWindow.pos, navRectRel.max + navWindow.pos) } ?: Rect(0f, 0f, 0f, 0f))
     }
     g.navScoringRect translateY navScoringRectOffsetY
     g.navScoringRect.min.x = min(g.navScoringRect.min.x + 1f, g.navScoringRect.max.x)
@@ -499,11 +499,13 @@ fun navUpdateWindowing() {
             }
             g.navDisableHighlight = false
             g.navDisableMouseHover = true
-            // When entering a regular menu bar with the Alt key, we always reinitialize the navigation ID.
+            // Reinitialize navigation when entering menu bar with the Alt key.
             val newNavLayer = when {
                 it.dc.navLayerActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
                 else -> NavLayer.Main
             }
+            if (newNavLayer == NavLayer.Menu)
+                g.navWindow!!.navLastIds[newNavLayer] = 0
             navRestoreLayer(newNavLayer)
         }
 }
@@ -961,16 +963,11 @@ fun navCalcPreferredRefPos(): Vec2 {
 /** FIXME: This could be replaced by updating a frame number in each window when (window == NavWindow) and (NavLayer == 0).
  *  This way we could find the last focused window among our children. It would be much less confusing this way? */
 fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
-
-    tailrec fun Window.getParent(): Window {
-        val parent = parentWindow
-        return when {
-            parent != null && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
-            else -> this
-        }
-    }
-
-    navWindow?.getParent()?.let { if (it !== navWindow) it.navLastChildNavWindow = navWindow }
+    var parent = navWindow
+    while (parent != null && parent.rootWindow !== parent && parent.flags hasnt (Wf._Popup or Wf._ChildMenu))
+        parent = parent.parentWindow
+    if (parent != null && parent !== navWindow)
+        parent.navLastChildNavWindow = navWindow
 }
 
 /** Restore the last focused child.
@@ -991,13 +988,12 @@ fun findWindowFocusIndex(window: Window): Int {
 // static spare functions
 
 fun navRestoreLayer(layer: NavLayer) {
-
     g.navLayer = layer
     if (layer == NavLayer.Main)
         g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
     val window = g.navWindow!!
-    if (layer == NavLayer.Main && window.navLastIds[0] != 0)
-        setNavIDWithRectRel(window.navLastIds[0], layer, 0, window.navRectRel[0])
+    if (window.navLastIds[layer] != 0)
+        setNavIDWithRectRel(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
     else
         navInitWindow(window, true)
 }
