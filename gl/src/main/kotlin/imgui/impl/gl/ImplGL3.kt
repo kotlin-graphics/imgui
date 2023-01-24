@@ -87,7 +87,7 @@ class ImplGL3 : GLInterface {
 
         // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
         val clipOriginLowerLeft = when {
-            CLIP_ORIGIN && Platform.get() != Platform.MACOSX -> glGetInteger(GL_CLIP_ORIGIN) != GL_UPPER_LEFT
+            CLIP_ORIGIN && gGlVersion >= 450 -> glGetInteger(GL_CLIP_ORIGIN) != GL_UPPER_LEFT
             else -> true
         }
 
@@ -99,7 +99,7 @@ class ImplGL3 : GLInterface {
         val R = drawData.displayPos.x + drawData.displaySize.x
         var T = drawData.displayPos.y
         var B = drawData.displayPos.y + drawData.displaySize.y
-        if (CLIP_ORIGIN && Platform.get() != Platform.MACOSX)
+        if (CLIP_ORIGIN)
             if (!clipOriginLowerLeft) {
                 val tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
         val orthoProjection = glm.ortho(L, R, B, T, mat)
