@@ -1714,7 +1714,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
 
-        const val FIXNORMAL2F_MAX_INVLEN2 = 500f
+        const val FIXNORMAL2F_MAX_INVLEN2 = 100f // 500.0f (see #4053, #3366)
         //        fun FIXNORMAL2F(VX: Float, VY: Float) {
         //            val d2 = VX * VX + VY * VY
         //            if (d2 > 0.000001f) {
