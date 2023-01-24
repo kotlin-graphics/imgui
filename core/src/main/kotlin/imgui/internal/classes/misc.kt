@@ -393,7 +393,7 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
     val buf = ArrayList<T>()        // Contiguous data
     val map = mutableMapOf<ID, PoolIdx>()        // ID->Index
 
-    /** Number of active/alive items (for display purpose only) */
+    /** Number of active/alive items (for display purpose) */
     var aliveCount = PoolIdx(0)
 
     fun destroy() = clear()
@@ -440,13 +440,16 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
     }
     //    void        Reserve(int capacity) { Buf.reserve(capacity); Map.Data.reserve(capacity); }
 
-    // To iterate a ImPool: for (int n = 0; n < pool.GetBufSize(); n++) if (T* t = pool.TryGetBufData(n)) { ... }
-    // Can be avoided if you know .Remove() has never been called on the pool, or AliveCount == GetBufSize()
+    // To iterate a ImPool: for (int n = 0; n < pool.GetMapSize(); n++) if (T* t = pool.TryGetMapData(n)) { ... }
+    // Can be avoided if you know .Remove() has never been called on the pool, or AliveCount == GetMapSize()
     val bufSize: Int
         get() {
             assert(buf.size == map.size)
             return buf.size
         }
+
+    /** It is the map we need iterate to find valid items, since we don't have "alive" storage anywhere */
+    val mapSize get() = map.size
 //    T*          TryGetBufData(ImPoolIdx n) { int idx = Map . Data [n].val_i; if (idx == -1) return NULL; return GetByIndex(idx); }
 
     val size get() = buf.size
