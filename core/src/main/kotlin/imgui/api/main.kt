@@ -88,7 +88,8 @@ interface main {
         g.framerateSecPerFrameAccum += io.deltaTime - g.framerateSecPerFrame[g.framerateSecPerFrameIdx]
         g.framerateSecPerFrame[g.framerateSecPerFrameIdx] = io.deltaTime
         g.framerateSecPerFrameIdx = (g.framerateSecPerFrameIdx + 1) % g.framerateSecPerFrame.size
-        io.framerate = if (g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrame.size.f) else Float.MAX_VALUE
+        g.framerateSecPerFrameCount = (g.framerateSecPerFrameCount + 1) min g.framerateSecPerFrame.size
+        io.framerate = if (g.framerateSecPerFrameAccum > 0f) 1f / (g.framerateSecPerFrameAccum / g.framerateSecPerFrameCount.f) else Float.MAX_VALUE
 
         updateViewportsNewFrame()
 

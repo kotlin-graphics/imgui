@@ -278,7 +278,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Keyboard/Gamepad navigation is visible and allowed (will handle ImGuiKey_NavXXX events). */
     var navVisible = false
 
-    /** Application framerate estimate, in frame per second. Solely for convenience. Rolling average estimation based on io.DeltaTime over 120 frames. */
+    /** Rough estimate of application framerate, in frame per second. Solely for convenience. Rolling average estimation based on io.DeltaTime over 120 frames. */
     var framerate = 0f
 
     /** Number of active memory allocations */

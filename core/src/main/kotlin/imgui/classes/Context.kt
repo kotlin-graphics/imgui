@@ -625,6 +625,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var framerateSecPerFrameIdx = 0
 
+    var framerateSecPerFrameCount = 0
+
     var framerateSecPerFrameAccum = 0f
 
     /** Explicit capture via CaptureKeyboardFromApp()/CaptureMouseFromApp() sets those flags   */
