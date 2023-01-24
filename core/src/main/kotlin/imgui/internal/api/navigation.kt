@@ -17,10 +17,15 @@ internal interface navigation {
     fun navInitWindow(window: Window, forceReinit: Boolean) {
 
         assert(window == g.navWindow)
+
+        if (window.flags has WindowFlag.NoNavInputs) {
+            g.navId = 0; g.navFocusScopeId = 0
+            return
+        }
+
         var initForNav = false
-        if (window.flags hasnt WindowFlag.NoNavInputs)
-            if (window === window.rootWindow || window.flags has WindowFlag._Popup || window.navLastIds[0] == 0 || forceReinit)
-                initForNav = true
+        if (window === window.rootWindow || window.flags has WindowFlag._Popup || window.navLastIds[0] == 0 || forceReinit)
+            initForNav = true
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=$initForNav, window=\"${window.name}\", layer=${g.navLayer}")
         if (initForNav) {
             setNavID(0, g.navLayer, 0, Rect())
