@@ -505,7 +505,7 @@ class Window(var context: Context,
 
     /** ~GetWindowAllowedExtentRect
      *  Note that this is used for popups, which can overlap the non work-area of individual viewports. */
-    val allowedExtentRect: Rect
+    val popupAllowedExtentRect: Rect
         get() {
             val rScreen = (mainViewport as ViewportP).mainRect
             val padding = g.style.displaySafeAreaPadding

@@ -66,8 +66,7 @@ interface widgetsComboBox {
 
         val arrowSize = if (flags has Cf.NoArrowButton) 0f else frameHeight
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
-        val expectedW = calcItemWidth()
-        val w = if (flags has Cf.NoPreview) arrowSize else expectedW
+        val w = if (flags has Cf.NoPreview) arrowSize else calcItemWidth()
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
         itemSize(totalBb, style.framePadding.y)
@@ -98,8 +97,6 @@ interface widgetsComboBox {
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
 
         if ((pressed || g.navActivateId == id) && !popupOpen) {
-            if (window.dc.navLayerCurrent == NavLayer.Main)
-                window.navLastIds[0] = id
             openPopupEx(popupId)
             popupOpen = true
         }
@@ -130,11 +127,8 @@ interface widgetsComboBox {
             if (it.wasActive) {
                 // Always override 'AutoPosLastDirection' to not leave a chance for a past value to affect us.
                 val sizeExpected = it.calcNextAutoFitSize()
-                it.autoPosLastDirection = when {
-                    flags has Cf.PopupAlignLeft -> Dir.Left // "Below, Toward Left"
-                    else -> Dir.Down // "Below, Toward Right (default)"
-                }
-                val rOuter = it.allowedExtentRect
+                it.autoPosLastDirection = if(flags has Cf.PopupAlignLeft) Dir.Left else Dir.Down // Left = "Below, Toward Left", Down = "Below, Toward Right (default)"
+                val rOuter = it.popupAllowedExtentRect
                 val pos = findBestWindowPosForPopupEx(frameBb.bl, sizeExpected, it::autoPosLastDirection, rOuter, frameBb, PopupPositionPolicy.ComboBox)
                 setNextWindowPos(pos)
             }

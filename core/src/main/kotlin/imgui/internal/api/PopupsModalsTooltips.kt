@@ -264,7 +264,7 @@ internal interface PopupsModalsTooltips {
 
     fun findBestWindowPosForPopup(window: Window): Vec2 {
 
-        val rOuter = window.allowedExtentRect
+        val rOuter = window.popupAllowedExtentRect
         if (window.flags has Wf._ChildMenu) {/*  Child menus typically request _any_ position within the parent menu item,
                 and then we move the new menu outside the parent bounds.
                 This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
