@@ -87,8 +87,16 @@ fun navUpdate() {
             io.navInputs[NavInput.TweakSlow] = 1f
         if (io.keyShift)
             io.navInputs[NavInput.TweakFast] = 1f
-        if (io.keyAlt && !io.keyCtrl) // AltGR is Alt+Ctrl, also even on keyboards without AltGR we don't want Alt+Ctrl to open menu.
-            io.navInputs[NavInput._KeyMenu] = 1f
+
+        // AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl)
+        // But also even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
+        if (io.keyAlt && !io.keyCtrl)
+            io.navInputs[NavInput._KeyMenu]  = 1f
+
+        // We automatically cancel toggling nav layer when any text has been typed while holding Alt. (See #370)
+        if (io.keyAlt && !io.keyCtrl && g.navWindowingToggleLayer && io.inputQueueCharacters.size > 0)
+            g.navWindowingToggleLayer = false
+
     }
     for (i in io.navInputsDownDuration.indices)
         io.navInputsDownDurationPrev[i] = io.navInputsDownDuration[i]
