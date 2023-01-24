@@ -309,7 +309,7 @@ class StyleMod(val idx: StyleVar) {
     val floats = FloatArray(2)
 }
 
-/** Storage for one active tab item (sizeof() 28~32 bytes) */
+/** Storage for one active tab item (sizeof() 40 bytes) */
 class TabItem {
     var id: ID = 0
     var flags = TabItemFlag.None.i
