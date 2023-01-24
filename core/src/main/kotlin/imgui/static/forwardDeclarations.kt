@@ -131,7 +131,11 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
         autoFitOnlyGrows = autoFitFrames.x > 0 || autoFitFrames.y > 0
     }
 
-    g.windowsFocusOrder += this
+    if (flags hasnt Wf._ChildWindow) {
+        g.windowsFocusOrder += this
+        focusOrder = g.windowsFocusOrder.lastIndex
+    }
+
     if (flags has Wf.NoBringToFrontOnFocus)
         g.windows.add(0, this) // Quite slow but rare and only once
     else g.windows += this

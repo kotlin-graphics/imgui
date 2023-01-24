@@ -136,11 +136,14 @@ class Window(var context: Context,
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
 
-    /** Order within immediate parent window, if we are a child window. Otherwise 0. */
+    /** Begin() order within immediate parent window, if we are a child window. Otherwise 0. */
     var beginOrderWithinParent = 0
 
-    /** Order within entire imgui context. This is mostly used for debugging submission order related issues. */
+    /** Begin() order within entire imgui context. This is mostly used for debugging submission order related issues. */
     var beginOrderWithinContext = 0
+
+    /** Order within WindowsFocusOrder[], altered when windows are focused. */
+    var focusOrder = 0
 
     /** ID in the popup stack when this window is used as a popup/menu (because we use generic Name/ID for recycling)   */
     var popupId: ID = 0
@@ -407,13 +410,21 @@ class Window(var context: Context,
 
     /** ~BringWindowToFocusFront */
     fun bringToFocusFront() {
-        if (g.windowsFocusOrder.last() === this) return
-        for (i in g.windowsFocusOrder.size - 2 downTo 0) // We can ignore the top-most window
-            if (g.windowsFocusOrder[i] === this) {
-                g.windowsFocusOrder.removeAt(i)
-                g.windowsFocusOrder += this
-                break
-            }
+        assert(this === rootWindow)
+
+        val curOrder = focusOrder
+        assert(g.windowsFocusOrder[curOrder] === this)
+        if (g.windowsFocusOrder.last() === this)
+            return
+
+        val newOrder = g.windowsFocusOrder.lastIndex
+        for (n in curOrder until newOrder) {
+            g.windowsFocusOrder[n] = g.windowsFocusOrder[n + 1]
+            g.windowsFocusOrder[n].focusOrder--
+            assert(g.windowsFocusOrder[n].focusOrder == n)
+        }
+        g.windowsFocusOrder[newOrder] = this
+        focusOrder = newOrder
     }
 
     /** ~BringWindowToDisplayFront */

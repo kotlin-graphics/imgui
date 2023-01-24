@@ -98,16 +98,12 @@ internal interface internal {
     }
 
     fun focusTopMostWindowUnderOne(underThisWindow: Window? = null, ignoreWindow: Window? = null) {
-        var startIdx = g.windowsFocusOrder.lastIndex
-        underThisWindow?.let {
-            val underThisWindowIdx = findWindowFocusIndex(it)
-            if (underThisWindowIdx != -1)
-                startIdx = underThisWindowIdx - 1
-        }
+        val startIdx = (underThisWindow?.let { findWindowFocusIndex(it)} ?: g.windowsFocusOrder.size) - 1
         for (i in startIdx downTo 0) {
             // We may later decide to test for different NoXXXInputs based on the active navigation input (mouse vs nav) but that may feel more confusing to the user.
             val window = g.windowsFocusOrder[i]
-            if (window !== ignoreWindow && window.wasActive && window.flags hasnt Wf._ChildWindow)
+            assert(window === window.rootWindow)
+            if (window !== ignoreWindow && window.wasActive)
                 if ((window.flags and (Wf.NoMouseInputs or Wf.NoNavInputs)) != (Wf.NoMouseInputs or Wf.NoNavInputs)) {
                     focusWindow(navRestoreLastChildNavWindow(window))
                     return

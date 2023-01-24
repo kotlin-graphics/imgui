@@ -81,8 +81,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Windows, sorted in display order, back to front */
     val windows = ArrayList<Window>()
 
-    /** Windows, sorted in focus order, back to front.
-     * (FIXME: We could only store root windows here! Need to sort out the Docking equivalent which is RootWindowDockStop and is unfortunately a little more dynamic) */
+    /** Root windows, sorted in focus order, back to front. */
     val windowsFocusOrder = ArrayList<Window>()
 
     val windowsTempSortBuffer = ArrayList<Window>()
