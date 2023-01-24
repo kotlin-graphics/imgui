@@ -1,5 +1,6 @@
 package imgui.api
 
+import glm_.max
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -28,7 +29,7 @@ interface widgetsText {
      *  A) doesn't require null terminated string if 'text_end' is specified,
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
     fun textUnformatted(text: String, textEnd: Int = -1) =
-            textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText)
+        textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText)
 
     /** formatted text */
     fun text(fmt: String, vararg args: Any) {
@@ -53,7 +54,7 @@ interface widgetsText {
     fun textColoredV(col: Vec4, fmt: String, vararg args: Any) = dsl.withStyleColor(Col.Text, col) {
         if (fmt == "%s")
             TODO()
-//            textEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+        //            textEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
         else
             text(fmt, *args)
     }
@@ -65,7 +66,7 @@ interface widgetsText {
     fun textDisabled(fmt: String, vararg args: Any) = dsl.withStyleColor(Col.Text, style.colors[Col.TextDisabled]) {
         if (fmt == "%s")
             TODO()
-//            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+        //            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
         else
             text(fmt, *args)
     }
@@ -79,14 +80,14 @@ interface widgetsText {
             pushTextWrapPos(0f)
         if (fmt == "%s")
             TODO()
-//            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+        //            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
         else
             text(fmt, *args)
         if (needBackup)
             popTextWrapPos()
     }
 
-//    IMGUI_API void          TextWrappedV(const char* fmt, va_list args)                     IM_FMTLIST(1);
+    //    IMGUI_API void          TextWrappedV(const char* fmt, va_list args)                     IM_FMTLIST(1);
 
     /** Display text+label aligned the same way as value+label widgets  */
     fun labelText(label: String, fmt: String, vararg args: Any) = labelTextV(label, fmt, args)
@@ -98,14 +99,19 @@ interface widgetsText {
         if (window.skipItems) return
         val w = calcItemWidth()
 
-        val labelSize = calcTextSize(label, hideTextAfterDoubleHash =  true)
-        val valueBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2))
-        val totalBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x else 0f, style.framePadding.y * 2) + labelSize)
+        val valueTextBegin = g.tempBuffer
+        val valueTextEnd = formatString(g.tempBuffer, fmt, args)
+        val valueSize = calcTextSize(valueTextBegin, valueTextEnd, hideTextAfterDoubleHash = false)
+        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
+
+        val pos = window.dc.cursorPos // [JVM] careful, same instance
+        val valueBb = Rect(pos, pos + Vec2(w, valueSize.y + style.framePadding.y * 2))
+        val totalBb = Rect(pos, pos + Vec2(w + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, (valueSize.y max labelSize.y) + style.framePadding.y * 2))
         itemSize(totalBb, style.framePadding.y)
-        if (!itemAdd(totalBb, 0)) return
+        if (!itemAdd(totalBb, 0))
+            return
         // Render
-        val text = fmt.format(style.locale, *args)
-        renderTextClipped(valueBb.min, valueBb.max, text, null, Vec2(0f, 0.5f))
+        renderTextClipped(valueBb.min + style.framePadding, valueBb.max, valueTextBegin, valueTextEnd, valueSize, Vec2(0f, 0.5f))
         if (labelSize.x > 0f)
             renderText(Vec2(valueBb.max.x + style.itemInnerSpacing.x, valueBb.min.y + style.framePadding.y), label)
     }
@@ -120,8 +126,8 @@ interface widgetsText {
         if (window.skipItems) return
 
         val text = fmt.format(style.locale, *args)
-        val labelSize = calcTextSize(text, hideTextAfterDoubleHash =  false)
-        val totalSize = Vec2(g.fontSize + if(labelSize.x > 0f) (labelSize.x + style.framePadding.x * 2) else 0f, labelSize.y)  // Empty text doesn't add padding
+        val labelSize = calcTextSize(text, hideTextAfterDoubleHash = false)
+        val totalSize = Vec2(g.fontSize + if (labelSize.x > 0f) (labelSize.x + style.framePadding.x * 2) else 0f, labelSize.y)  // Empty text doesn't add padding
         val pos = Vec2(window.dc.cursorPos)
         pos.y += window.dc.currLineTextBaseOffset
         itemSize(totalSize, 0f)
