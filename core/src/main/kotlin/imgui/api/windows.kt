@@ -672,7 +672,7 @@ interface windows {
             setCurrentWindow(window)
 
         // Pull/inherit current state
-        window.dc.itemFlags = g.itemFlagsStack.last() // Inherit from shared stack
+        g.currentItemFlags = g.itemFlagsStack.last() // Inherit from shared stack
         window.dc.navFocusScopeIdCurrent = if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0 // Inherit from parent only // -V595
 
         pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)

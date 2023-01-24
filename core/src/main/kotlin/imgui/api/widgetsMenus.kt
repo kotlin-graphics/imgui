@@ -310,7 +310,7 @@ interface widgetsMenus {
             closePopupToLevel(g.beginPopupStack.size, true)
 
         val f = ItemStatusFlag.Openable or if(menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags or f)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.currentItemFlags or f)
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.

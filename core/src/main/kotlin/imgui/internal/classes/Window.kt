@@ -1021,8 +1021,8 @@ class Window(var context: Context,
         val hasCollapseButton = flags hasnt Wf.NoCollapse && style.windowMenuButtonPosition != Dir.None
 
         // Close & Collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
-        val itemFlagsBackup = dc.itemFlags
-        dc.itemFlags = dc.itemFlags or ItemFlag.NoNavDefaultFocus
+        val itemFlagsBackup = g.currentItemFlags
+        g.currentItemFlags = g.currentItemFlags or ItemFlag.NoNavDefaultFocus
         dc.navLayerCurrent = NavLayer.Menu
 
         // Layout buttons
@@ -1056,7 +1056,7 @@ class Window(var context: Context,
                 pOpen!!.set(false)
 
         dc.navLayerCurrent = NavLayer.Main
-        dc.itemFlags = itemFlagsBackup
+        g.currentItemFlags = itemFlagsBackup
 
         // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
         // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..

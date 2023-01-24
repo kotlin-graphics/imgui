@@ -307,7 +307,7 @@ internal interface widgetsLowLevelBehaviors {
 
         if (g.activeId != id)
             return false
-        if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
+        if (g.currentItemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
             return false
 
         var v by pV
@@ -412,7 +412,7 @@ internal interface widgetsLowLevelBehaviors {
             Invalid ImGuiSliderFlags flag!  Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
         }
 
-        if (g.currentWindow!!.dc.itemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
+        if (g.currentItemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
             return false
 
         var v by pV
@@ -484,12 +484,12 @@ internal interface widgetsLowLevelBehaviors {
         var size2 by size2ptr
         val window = g.currentWindow!!
 
-        val itemFlagsBackup = window.dc.itemFlags
+        val itemFlagsBackup = g.currentItemFlags
 
-        window.dc.itemFlags = window.dc.itemFlags or (ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus)
+        g.currentItemFlags = g.currentItemFlags or (ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus)
 
         val itemAdd = itemAdd(bb, id)
-        window.dc.itemFlags = itemFlagsBackup
+        g.currentItemFlags = itemFlagsBackup
         if (!itemAdd) return false
 
         val bbInteract = Rect(bb)

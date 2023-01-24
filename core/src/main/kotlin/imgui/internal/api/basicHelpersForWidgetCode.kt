@@ -139,7 +139,7 @@ internal interface basicHelpersForWidgetCode {
             g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
             !isMouseHoveringRect(bb) -> false
             g.navDisableMouseHover -> false
-            !window.isContentHoverable(HoveredFlag.None) || window.dc.itemFlags has ItemFlag.Disabled -> {
+            !window.isContentHoverable(HoveredFlag.None) || g.currentItemFlags has ItemFlag.Disabled -> {
                 g.hoveredIdDisabled = true
                 false
             }
@@ -187,7 +187,7 @@ internal interface basicHelpersForWidgetCode {
     fun focusableItemRegister(window: Window, id: ID): Boolean {
 
         // Increment counters
-        val isTabStop = window.dc.itemFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
+        val isTabStop = g.currentItemFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
         window.dc.focusCounterRegular++
         if (isTabStop)
             window.dc.focusCounterTabStop++
@@ -281,22 +281,20 @@ internal interface basicHelpersForWidgetCode {
     /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
      *  @param option = ItemFlag   */
     fun pushItemFlag(option: ItemFlags, enabled: Boolean) {
-        val window = g.currentWindow!!
-        var itemFlags = window.dc.itemFlags
+        var itemFlags = g.currentItemFlags
         assert(itemFlags == g.itemFlagsStack.last())
         itemFlags = when {
             enabled -> itemFlags or option
             else -> itemFlags wo option
         }
-        window.dc.itemFlags = itemFlags
+        g.currentItemFlags = itemFlags
         g.itemFlagsStack += itemFlags
     }
 
     fun popItemFlag() {
-        val window = g.currentWindow!!
         assert(g.itemFlagsStack.size > 1) { "Too many calls to PopItemFlag() - we always leave a 0 at the bottom of the stack." }
         g.itemFlagsStack.pop()
-        window.dc.itemFlags = g.itemFlagsStack.last()
+        g.currentItemFlags = g.itemFlagsStack.last()
     }
 
     /** Was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */

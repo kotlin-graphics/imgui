@@ -119,6 +119,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Item/widgets state and tracking information
 
+    /** == g.ItemFlagsStack.back() */
+    var currentItemFlags = ItemFlag.None.i
+
     /** Hovered widget, filled during the frame  */
     var hoveredId: ID = 0
 

@@ -2385,10 +2385,10 @@ internal interface templateFunctions {
         val pressed = when {
             !allOn && anyOn -> {
                 val window = currentWindow
-                val backupItemFlags = window.dc.itemFlags
-                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
+                val backupItemFlags = g.currentItemFlags
+                g.currentItemFlags = g.currentItemFlags or ItemFlag.MixedValue
                 checkbox(label, ::_b).also {
-                    window.dc.itemFlags = backupItemFlags
+                    g.currentItemFlags = backupItemFlags
                 }
             }
             else -> checkbox(label, ::_b)
@@ -2410,10 +2410,10 @@ internal interface templateFunctions {
         val pressed = when {
             !allOn && anyOn -> {
                 val window = currentWindow
-                val backupItemFlags = window.dc.itemFlags
-                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
+                val backupItemFlags = g.currentItemFlags
+                g.currentItemFlags = g.currentItemFlags or ItemFlag.MixedValue
                 checkbox(label, ::_b).also {
-                    window.dc.itemFlags = backupItemFlags
+                    g.currentItemFlags = backupItemFlags
                 }
             }
             else -> checkbox(label, ::_b)
@@ -2435,10 +2435,10 @@ internal interface templateFunctions {
         val pressed = when {
             !allOn && anyOn -> {
                 val window = currentWindow
-                val backupItemFlags = window.dc.itemFlags
-                window.dc.itemFlags = window.dc.itemFlags or ItemFlag.MixedValue
+                val backupItemFlags = g.currentItemFlags
+                g.currentItemFlags = g.currentItemFlags or ItemFlag.MixedValue
                 checkbox(label, ::_b).also {
-                    window.dc.itemFlags = backupItemFlags
+                    g.currentItemFlags = backupItemFlags
                 }
             }
             else -> checkbox(label, ::_b)

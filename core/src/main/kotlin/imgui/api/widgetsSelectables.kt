@@ -99,10 +99,10 @@ interface widgetsSelectables {
 
         val itemAdd = when {
             flags has Sf.Disabled -> {
-                val backupItemFlags = window.dc.itemFlags
-                window.dc.itemFlags = window.dc.itemFlags or If.Disabled or If.NoNavDefaultFocus
+                val backupItemFlags = g.currentItemFlags
+                g.currentItemFlags = g.currentItemFlags or If.Disabled or If.NoNavDefaultFocus
                 itemAdd(bb, id).also {
-                    window.dc.itemFlags = backupItemFlags
+                    g.currentItemFlags = backupItemFlags
                 }
             }
             else -> itemAdd(bb, id)
@@ -174,7 +174,7 @@ interface widgetsSelectables {
         if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
-        if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && window.dc.itemFlags hasnt If.SelectableDontClosePopup)
+        if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && g.currentItemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)

@@ -125,12 +125,6 @@ class WindowTempData {
 
     // Local parameters stacks
 
-    /*  We store the current settings outside of the vectors to increase memory locality (reduce cache misses).
-        The vectors are rarely modified. Also it allows us to not heap allocate for short-lived windows which are not
-        using those settings.   */
-    /** == g.ItemFlagsStack.back() */
-    var itemFlags = ItemFlag.None.i
-
     /** Current item width (>0.0: width in pixels, <0.0: align xx pixels to the right of window). */
     var itemWidth = 0f
 

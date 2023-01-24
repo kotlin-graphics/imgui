@@ -30,7 +30,7 @@ internal interface basicAccessors {
 
     /** ~GetItemsFlags */
     val itemFlags: ItemFlags
-        get() = g.currentWindow!!.dc.itemFlags
+        get() = g.currentItemFlags
 
     fun setActiveID(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id

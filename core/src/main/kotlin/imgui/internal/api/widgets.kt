@@ -166,7 +166,7 @@ internal interface widgets {
         if (!itemAdd(bb, id)) return false
 
         var flags = flags_
-        if (window.dc.itemFlags has ItemFlag.ButtonRepeat) flags = flags or ButtonFlag.Repeat
+        if (g.currentItemFlags has ItemFlag.ButtonRepeat) flags = flags or ButtonFlag.Repeat
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 
         // Render
@@ -261,7 +261,7 @@ internal interface widgets {
         itemSize(size, if (size.y >= defaultSize) style.framePadding.y else -1f)
         if (!itemAdd(bb, id)) return false
 
-        if (window.dc.itemFlags has ItemFlag.ButtonRepeat)
+        if (g.currentItemFlags has ItemFlag.ButtonRepeat)
             flags = flags or ButtonFlag.Repeat
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)

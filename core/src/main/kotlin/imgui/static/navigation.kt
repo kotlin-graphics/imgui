@@ -901,7 +901,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
     //if (!g.io.NavActive)  // [2017/10/06] Removed this possibly redundant test but I am not sure of all the side-effects yet. Some of the feature here will need to work regardless of using a _NoNavInputs flag.
     //    return;
 
-    val itemFlags = window.dc.itemFlags
+    val itemFlags = g.currentItemFlags
     val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
 
     // Process Init Request
