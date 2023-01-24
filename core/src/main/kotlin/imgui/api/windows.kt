@@ -91,16 +91,14 @@ interface windows {
         window.isFallbackWindow = g.currentWindowStack.isEmpty() && g.withinFrameScopeWithImplicitWindow
 
         // Update the Appearing flag
-        // Not using !WasActive because the implicit "Debug" window would always toggle off->on
-        var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1
-        val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
+        var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1 // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         if (flags has Wf._Popup) {
             val popupRef =
                 g.openPopupStack[g.beginPopupStack.size] // We recycle popups so treat window as activated if popup id changed
             windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
         }
-        window.appearing = windowJustActivatedByUser || windowJustAppearingAfterHiddenForResize
+        window.appearing = windowJustActivatedByUser
         if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
 
         // Update Flags, LastFrameActive, BeginOrderXXX fields
@@ -334,15 +332,15 @@ interface windows {
                 if (flags hasnt Wf._Popup && !windowPosSetByApi && !windowIsChildTooltip) window.pos put parentWindow.dc.cursorPos
             }
 
-            val windowPosWithPivot =
-                window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
+            val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
+            val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
             if (windowPosWithPivot) // Position given a pivot (e.g. for centering)
                 window.setPos(window.setWindowPosVal - window.size * window.setWindowPosPivot, Cond.None)
             else if (flags has Wf._ChildMenu) window.pos = findBestWindowPosForPopup(window)
-            else if (flags has Wf._Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize) window.pos =
-                findBestWindowPosForPopup(window)
-            else if (flags has Wf._Tooltip && !windowPosSetByApi && !windowIsChildTooltip) window.pos =
-                findBestWindowPosForPopup(window)
+            else if (flags has Wf._Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
+                window.pos = findBestWindowPosForPopup(window)
+            else if (flags has Wf._Tooltip && !windowPosSetByApi && !windowIsChildTooltip)
+                window.pos = findBestWindowPosForPopup(window)
 
             // Calculate the range of allowed position for that window (to be movable and visible past safe area padding)
             // When clamping to stay visible, we will enforce that window->Pos stays inside of visibility_rect.
@@ -354,7 +352,9 @@ interface windows {
 
             // Clamp position/size so window stays visible within its viewport or monitor
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
-            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0) if (viewportRect.width > 0f && viewportRect.height > 0f) window clampRect visibilityRect
+            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0)
+                if (viewportRect.width > 0f && viewportRect.height > 0f)
+                    window clampRect visibilityRect
             window.pos put floor(window.pos)
 
             // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)
@@ -708,8 +708,8 @@ interface windows {
 
                 // Disable inputs for requested number of frames
                 if (disableInputsFrames > 0) {
-                        disableInputsFrames--
-                        flags = flags or Wf.NoInputs
+                    disableInputsFrames--
+                    flags = flags or Wf.NoInputs
                 }
 
                 // Update the SkipItems flag, used to early out of all items functions (no layout required)
