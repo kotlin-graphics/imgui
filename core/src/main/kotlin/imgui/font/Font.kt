@@ -281,6 +281,7 @@ class Font {
         return s
     }
 
+    /** Note: as with every ImDrawList drawing function, this expects that the font atlas texture is bound. */
     fun renderChar(drawList: DrawList, size: Float, pos: Vec2, col_: Int, c: Char) {
         var col = col_
         val glyph = findGlyph(c)
@@ -296,6 +297,8 @@ class Font {
     }
 
     //    const ImVec4& clipRect, const char* text, const char* textEnd, float wrapWidth = 0.0f, bool cpuFineClip = false) const;
+
+    /** Note: as with every ImDrawList drawing function, this expects that the font atlas texture is bound. */
     fun renderText(drawList: DrawList, size: Float, pos: Vec2, col: Int, clipRect: Vec4, text: ByteArray,
                    textBegin: Int, textEnd_: Int = text.strlen(textBegin), // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
                    wrapWidth: Float = 0f, cpuFineClip: Boolean = false) {
