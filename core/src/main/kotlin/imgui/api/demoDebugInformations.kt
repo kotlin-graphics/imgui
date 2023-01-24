@@ -14,6 +14,8 @@ import imgui.ImGui.clearIniSettings
 import imgui.ImGui.combo
 import imgui.ImGui.debugNodeDrawList
 import imgui.ImGui.debugNodeTabBar
+import imgui.ImGui.debugNodeTable
+import imgui.ImGui.debugNodeTableSettings
 import imgui.ImGui.debugNodeViewport
 import imgui.ImGui.debugNodeWindowSettings
 import imgui.ImGui.debugNodeWindowsList
@@ -44,6 +46,7 @@ import imgui.ImGui.saveIniSettingsToMemory
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
+import imgui.ImGui.showFontAtlas
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
 import imgui.ImGui.styleColorsClassic
@@ -258,15 +261,17 @@ interface demoDebugInformations {
 
         }
 
-        //        #ifdef IMGUI_HAS_TABLE
-        //                if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
-        //                {
-        //                    for (int n = 0; n < g.Tables.GetSize(); n++)
-        //                    Funcs::NodeTable(g.Tables.GetByIndex(n));
-        //                    ImGui::TreePop();
-        //                }
-        //        #endif // #define IMGUI_HAS_TABLE
-        //
+        treeNode("Tables", "Tables (${g.tables.size})") {
+            for (n in 0 until g.tables.size)
+                debugNodeTable(g.tables.getByIndex(n))
+        }
+
+        // Details for Fonts
+        val atlas = g.io.fonts
+        treeNode("Fonts", "Fonts (${atlas.fonts.size})") {
+            showFontAtlas(atlas)
+        }
+
         // Details for Docking
         //        #ifdef IMGUI_HAS_DOCK
         treeNode("Dock nodes") {
@@ -289,11 +294,11 @@ interface demoDebugInformations {
             }
             treeNode("SettingsWindows", "Settings packed data: Windows: ${g.settingsWindows.size} bytes") {
                 g.settingsWindows.forEach(::debugNodeWindowSettings)
-            } //            #ifdef IMGUI_HAS_TABLE
-            //            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
-            //                g.settingsTables.forEach(Funcs::nodeTableSettings)
-            //            }
-            //            #endif
+            }
+
+            treeNode("SettingsTables", "Settings packed data: Tables: ${g.settingsTables.size} bytes") {
+                g.settingsTables.forEach(::debugNodeTableSettings)
+            }
 
             //            #ifdef IMGUI_HAS_DOCK
             //            #endif
@@ -308,7 +313,7 @@ interface demoDebugInformations {
         if (treeNode("Internal state")) {
 
             // [JVM] redundant
-//            const char* input_source_names[] = { "None", "Mouse", "Keyboard", "Gamepad", "Nav", "Clipboard" }; IM_ASSERT(IM_ARRAYSIZE(input_source_names) == ImGuiInputSource_COUNT);
+            //            const char* input_source_names[] = { "None", "Mouse", "Keyboard", "Gamepad", "Nav", "Clipboard" }; IM_ASSERT(IM_ARRAYSIZE(input_source_names) == ImGuiInputSource_COUNT);
 
             text("WINDOWING")
             indent {

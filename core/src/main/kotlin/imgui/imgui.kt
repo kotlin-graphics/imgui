@@ -1,9 +1,14 @@
 package imgui
 
 import glm_.i
+import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
+import imgui.demo.showExampleApp.StyleEditor
+import imgui.dsl.treeNode
+import imgui.font.FontAtlas
 import imgui.internal.api.*
 import kool.Stack
 
@@ -14,6 +19,7 @@ const val IMGUI_BUILD = 0
 /** get the compiled version string e.g. "1.80 WIP" (essentially the value for IMGUI_VERSION from the compiled version of imgui.cpp) */
 const val IMGUI_VERSION = "1.83 WIP"
 const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
+
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
 const val IMGUI_VERSION_NUM = 18210
@@ -110,83 +116,97 @@ object ImGui :
 // (Note that ImGui:: being a namespace, you can add extra ImGui:: functions in your own separate file. Please don't modify imgui source files!)
 //-----------------------------------------------------------------------------
 // context doesnt exist, only Context class
-        main,
-        demoDebugInformations,
-        styles,
-        windows,
-        childWindows,
-        windowsUtilities,
-        contentRegion,
-        windowScrolling,
-        parametersStacks,
-        styleReadAccess,
-        cursorLayout,
-        idStackScopes,
-        viewports,
-        widgetsText,
-        widgetsMain,
-        widgetsComboBox,
-        widgetsDrags,
-        widgetsSliders,
-        widgetsInputWithKeyboard,
-        widgetsColorEditorPicker,
-        widgetsTrees,
-        widgetsSelectables,
-        widgetsListBoxes,
-        widgetsDataPlotting,
-        // value
-        widgetsMenus,
-        tooltips,
-        popupsModals,
-        tables,
-        columns,
-        tabBarsTabs,
-        loggingCapture,
-        dragAndDrop,
-        clipping,
-        focusActivation,
-        itemWidgetsUtilities,
-        miscellaneousUtilities,
-        textUtilities,
-        colorUtilities,
-        inputUtilitiesKeyboard,
-        inputUtilitiesMouse,
-        clipboardUtilities,
-        settingsIniUtilities,
+    main,
+    demoDebugInformations,
+    styles,
+    windows,
+    childWindows,
+    windowsUtilities,
+    contentRegion,
+    windowScrolling,
+    parametersStacks,
+    styleReadAccess,
+    cursorLayout,
+    idStackScopes,
+    viewports,
+    widgetsText,
+    widgetsMain,
+    widgetsComboBox,
+    widgetsDrags,
+    widgetsSliders,
+    widgetsInputWithKeyboard,
+    widgetsColorEditorPicker,
+    widgetsTrees,
+    widgetsSelectables,
+    widgetsListBoxes,
+    widgetsDataPlotting,
+    // value
+    widgetsMenus,
+    tooltips,
+    popupsModals,
+    tables,
+    columns,
+    tabBarsTabs,
+    loggingCapture,
+    dragAndDrop,
+    clipping,
+    focusActivation,
+    itemWidgetsUtilities,
+    miscellaneousUtilities,
+    textUtilities,
+    colorUtilities,
+    inputUtilitiesKeyboard,
+    inputUtilitiesMouse,
+    clipboardUtilities,
+    settingsIniUtilities,
 
-//-----------------------------------------------------------------------------
-// Internal API
-// No guarantee of forward compatibility here.
-//-----------------------------------------------------------------------------
-        internal,
-        // init in Context class
-        newFrame,
-        genericContextHooks,
-        settings,
-        basicAccessors,
-        basicHelpersForWidgetCode,
-        imgui.internal.api.loggingCapture,
-        PopupsModalsTooltips,
-        navigation,
-        focusScope,
-        inputs,
-        imgui.internal.api.dragAndDrop,
-        internalColumnsAPI,
-        tablesCandidatesForPublicAPI,
-        tablesInternal,
-        tableSettings,
-        tabBars,
-        renderHelpers,
-        widgets,
-        widgetsLowLevelBehaviors,
-        templateFunctions,
-        dataTypeHelpers,
-        inputText,
-        color,
-        plot,
-        // shade functions in DrawList class
-        garbageCollection,
-        debugTools
+    //-----------------------------------------------------------------------------
+    // Internal API
+    // No guarantee of forward compatibility here.
+    //-----------------------------------------------------------------------------
+    internal,
+    // init in Context class
+    newFrame,
+    genericContextHooks,
+    settings,
+    basicAccessors,
+    basicHelpersForWidgetCode,
+    imgui.internal.api.loggingCapture,
+    PopupsModalsTooltips,
+    navigation,
+    focusScope,
+    inputs,
+    imgui.internal.api.dragAndDrop,
+    internalColumnsAPI,
+    tablesCandidatesForPublicAPI,
+    tablesInternal,
+    tableSettings,
+    tabBars,
+    renderHelpers,
+    widgets,
+    widgetsLowLevelBehaviors,
+    templateFunctions,
+    dataTypeHelpers,
+    inputText,
+    color,
+    plot,
+    // shade functions in DrawList class
+    garbageCollection,
+    debugTools {
+
+    internal fun showFontAtlas(atlas: FontAtlas) {
+        for (font in atlas.fonts) {
+            pushID(font)
+            StyleEditor.showFont(font)
+            popID()
+        }
+        treeNode("Atlas texture", "Atlas texture (${atlas.texWidth}x${atlas.texHeight} pixels)") {
+            val tintCol = Vec4(1f)
+            val borderCol = Vec4(1f, 1f, 1f, 0.5f)
+            image(atlas.texID, Vec2(atlas.texWidth, atlas.texHeight), Vec2(), Vec2(1), tintCol, borderCol)
+        }
+    }
+}
 
 
 @JvmField

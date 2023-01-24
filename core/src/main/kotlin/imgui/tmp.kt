@@ -4,7 +4,6 @@ import gli_.has
 import uno.kotlin.NUL
 
 var IMGUI_HAS_DOCK = false
-var IMGUI_HAS_TABLE = false
 var IMGUI_DEBUG_TEST_ENGINE = true
 
 infix fun Byte.has(i: Int): Boolean = toInt().has(i)

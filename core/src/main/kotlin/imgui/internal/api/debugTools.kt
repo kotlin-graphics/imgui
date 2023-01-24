@@ -12,6 +12,7 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
+import imgui.ImGui.endTable
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getForegroundDrawList
@@ -61,12 +62,10 @@ internal interface debugTools {
     fun errorCheckEndFrameRecover(logCallback: ErrorLogCallback?, userData: Any? = null) {
         // PVS-Studio V1044 is "Loop break conditions do not depend on the number of iterations"
         while (g.currentWindowStack.isNotEmpty()) {
-            //            if(IMGUI_HAS_TABLE)
-            //                    while (g.currentTable && (g.CurrentTable->OuterWindow == g.CurrentWindow || g.CurrentTable->InnerWindow == g.CurrentWindow))
-            //            {
-            //                if (log_callback) log_callback(userData, "Recovered from missing EndTable() in '%s'", g.CurrentTable->OuterWindow->Name);
-            //                EndTable();
-            //            }
+            while (g.currentTable != null && (g.currentTable!!.outerWindow === g.currentWindow || g.currentTable!!.innerWindow === g.currentWindow)) {
+                logCallback?.invoke(userData, "Recovered from missing EndTable() in '${g.currentTable!!.outerWindow!!.name}'")
+                endTable()
+            }
             val window = g.currentWindow!!
             //            assert(window != null)
             while (g.currentTabBar != null) { //-V1044

@@ -48,6 +48,7 @@ import imgui.ImGui.itemRectSize
 import imgui.ImGui.listBox
 import imgui.ImGui.beginListBox
 import imgui.ImGui.endListBox
+import imgui.ImGui.fontSize
 import imgui.ImGui.nextColumn
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popID
@@ -342,7 +343,7 @@ object ShowDemoWindowLayout {
                 // - Using ImGui::GetItemRectMin/Max() to query the "item" state (because the child window is an item from
                 //   the POV of the parent window). See 'Demo->Querying Status (Active/Focused/Hovered etc.)' for details.
                 run {
-                    setNextItemWidth(100f)
+                    setNextItemWidth(fontSize * 8)
                     dragInt("Offset X", ::offsetX, 1f, -1000, 1000)
 
                     ImGui.cursorPosX += offsetX
@@ -370,12 +371,12 @@ object ShowDemoWindowLayout {
         operator fun invoke() {
             treeNode("Widgets Width") {
 
+                checkbox("Show indented items", ::showIndentedItems)
+
                 // Use SetNextItemWidth() to set the width of a single upcoming item.
                 // Use PushItemWidth()/PopItemWidth() to set the width of a group of items.
                 // In real code use you'll probably want to choose width values that are proportional to your font size
                 // e.g. Using '20.0f * GetFontSize()' as width instead of '200.0f', etc.
-
-                checkbox("Show indented items", ::showIndentedItems)
 
                 text("SetNextItemWidth/PushItemWidth(100)")
                 sameLine(); helpMarker("Fixed width.")

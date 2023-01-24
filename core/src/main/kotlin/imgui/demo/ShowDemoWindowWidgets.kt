@@ -1199,7 +1199,7 @@ object ShowDemoWindowWidgets {
                 // FIXME: This is rather awkward because current plot API only pass in indices.
                 // We probably want an API passing floats and user provide sample rate/count.
                 separator()
-                withItemWidth(100) { combo("func", ::funcType, "Sin\u0000Saw\u0000") }
+                withItemWidth(fontSize * 8) { combo("func", ::funcType, "Sin\u0000Saw\u0000") }
                 sameLine()
                 sliderInt("Sample count", ::displayCount, 1, 400)
                 val func = if (funcType == 0) Funcs3::sin else Funcs3::saw
