@@ -293,7 +293,7 @@ internal interface inputText {
             state.apply {
                 edited = false
                 bufCapacityA = buf.size
-                userFlags = flags
+                this.flags = flags
                 userCallback = callback
                 userCallbackData = callbackUserData
             }
@@ -652,7 +652,7 @@ internal interface inputText {
 
             // Clear temporary user storage
             state.apply {
-                userFlags = 0
+                this.flags = InputTextFlag.None.i
                 userCallback = null
                 userCallbackData = null
             }

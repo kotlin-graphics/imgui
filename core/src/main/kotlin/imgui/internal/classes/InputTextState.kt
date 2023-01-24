@@ -55,8 +55,8 @@ class InputTextState {
     /** edited this frame */
     var edited = false
 
-    /** Temporarily set when active */
-    var userFlags: InputTextFlags = 0
+    /** copy of InputText() flags */
+    var flags: InputTextFlags = 0
 
     /** Temporarily set when active */
     var userCallback: InputTextCallback? = null
@@ -159,17 +159,21 @@ class InputTextState {
         }
     }
 
+    // When ImGuiInputTextFlags_Password is set, we don't want actions such as CTRL+Arrow to leak the fact that underlying data are blanks or separators.
+
     val Char.isSeparator: Boolean
         get() = let { c ->
             isBlankW || c == ',' || c == ';' || c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == '|'
         }
 
     infix fun isWordBoundaryFromRight(idx: Int): Boolean = when {
+        flags has InputTextFlag.Password -> false
         idx > 0 -> textW[idx - 1].isSeparator && !textW[idx].isSeparator
         else -> true
     }
 
     infix fun isWordBoundaryFromLeft(idx: Int): Boolean = when {
+        flags has InputTextFlag.Password -> false
         idx > 0 -> !textW[idx - 1].isSeparator && textW[idx].isSeparator
         else -> true
     }
@@ -217,7 +221,7 @@ class InputTextState {
 
     fun insertChars(pos: Int, newText: CharArray, ptr: Int, newTextLen: Int): Boolean {
 
-        val isResizable = userFlags has InputTextFlag.CallbackResize
+        val isResizable = flags has InputTextFlag.CallbackResize
         val textLen = curLenW
         assert(pos <= textLen)
 
