@@ -396,6 +396,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Stored for next frame */
     var tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
 
+    /** Set in NewFrame() when user pressed Tab */
     var tabFocusPressed = false
 
 

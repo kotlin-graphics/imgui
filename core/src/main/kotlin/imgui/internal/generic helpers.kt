@@ -739,9 +739,13 @@ fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
 
 
 // Helper: ImBitArray class (wrapper over ImBitArray functions)
-// Store 1-bit per value. NOT CLEARED by constructor.
+// Store 1-bit per value.
 //template<int BITCOUNT>
 class BitArray(val bitCount: Int) {
+
+    init {
+        clearAllBits()
+    }
 
     val storage = IntArray((bitCount + 31) ushr 5)
 

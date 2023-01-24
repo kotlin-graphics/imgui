@@ -1338,7 +1338,6 @@ class Table {
             }
 
             val remainingMask = BitArray(TABLE_MAX_DRAW_CHANNELS)                       // We need 132-bit of storage
-            remainingMask.clearAllBits()
             remainingMask.setBitRange(LEADING_DRAW_CHANNELS, splitter._count)
             remainingMask.clearBit(bg2DrawChannelUnfrozen)
             assert(!hasFreezeV || bg2DrawChannelUnfrozen != TABLE_DRAW_CHANNEL_BG2_FROZEN)
