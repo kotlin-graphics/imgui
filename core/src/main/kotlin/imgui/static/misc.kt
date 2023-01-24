@@ -141,7 +141,7 @@ fun updateMouseWheel() {
         return
 
     if ((g.activeId != 0 && g.activeIdUsingMouseWheel) || (g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrameUsingMouseWheel))
-        return;
+        return
     var window = g.wheelingWindow ?: g.hoveredWindow
     if (window == null || window.collapsed)
         return
@@ -164,10 +164,17 @@ fun updateMouseWheel() {
 
     // Mouse wheel scrolling
     // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent
+    if (g.io.keyCtrl)
+        return
+
+    // As a standard behavior holding SHIFT while using Vertical Mouse Wheel triggers Horizontal scroll instead
+    // (we avoid doing it on OSX as it the OS input layer handles this already)
+    val swapAxis = g.io.keyShift && !g.io.configMacOSXBehaviors
+    val wheelY = if(swapAxis) 0f else g.io.mouseWheel
+    val wheelX = if(swapAxis) g.io.mouseWheel else g.io.mouseWheelH
 
     // Vertical Mouse Wheel scrolling
-    val wheelY = if (io.mouseWheel != 0f && !io.keyShift) io.mouseWheel else 0f
-    if (wheelY != 0f && !io.keyCtrl) {
+    if (wheelY != 0f) {
         window.startLockWheeling()
         tailrec fun Window.getParent(): Window = when {
             flags has WindowFlag._ChildWindow && (scrollMax.y == 0f || (flags has WindowFlag.NoScrollWithMouse && flags hasnt WindowFlag.NoMouseInputs)) -> parentWindow!!.getParent()
@@ -182,12 +189,7 @@ fun updateMouseWheel() {
     }
 
     // Horizontal Mouse Wheel scrolling, or Vertical Mouse Wheel w/ Shift held
-    val wheelX = when {
-        io.mouseWheelH != 0f && !io.keyShift -> io.mouseWheelH
-        io.mouseWheel != 0f && io.keyShift -> io.mouseWheel
-        else -> 0f
-    }
-    if (wheelX != 0f && !io.keyCtrl) {
+    if (wheelX != 0f) {
         window.startLockWheeling()
         tailrec fun Window.getParent(): Window = when {
             flags has WindowFlag._ChildWindow && (scrollMax.x == 0f || (flags has WindowFlag.NoScrollWithMouse && flags hasnt WindowFlag.NoMouseInputs)) -> parentWindow!!.getParent()
