@@ -11,6 +11,8 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.hoveredId
 import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.api.g
@@ -291,6 +293,24 @@ internal interface basicHelpersForWidgetCode {
         assert(g.itemFlagsStack.size > 1) { "Too many calls to PopItemFlag() - we always leave a 0 at the bottom of the stack." }
         g.itemFlagsStack.pop()
         g.currentItemFlags = g.itemFlagsStack.last()
+    }
+
+    // PushDisabled()/PopDisabled()
+    // - Those are not yet exposed in imgui.h because we are unsure of how to alter the style in a way that works for everyone.
+    //   We may rework this. Hypothetically, a future styling system may set a flag which make widgets use different colors.
+    // - Feedback welcome at https://github.com/ocornut/imgui/issues/211
+    // - You may trivially implement your own variation of this if needed.
+    //   Here we test (CurrentItemFlags & ImGuiItemFlags_Disabled) to allow nested PushDisabled() calls.
+    fun pushDisabled() {
+        if (g.currentItemFlags hasnt ItemFlag.Disabled)
+            pushStyleVar(StyleVar.Alpha, g.style.alpha * 0.6f)
+        pushItemFlag(ItemFlag.Disabled.i, true)
+    }
+
+    fun popDisabled() {
+        popItemFlag()
+        if (g.currentItemFlags hasnt ItemFlag.Disabled)
+            popStyleVar()
     }
 
     /** Was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
