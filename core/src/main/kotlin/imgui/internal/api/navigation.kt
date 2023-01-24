@@ -11,7 +11,7 @@ import imgui.internal.classes.Window
 import imgui.internal.sections.*
 import imgui.static.navUpdateAnyRequestFlag
 
-/** Gamepad/Keyboard Navigation */
+// Gamepad/Keyboard Navigation
 internal interface navigation {
 
     fun navInitWindow(window: Window, forceReinit: Boolean) {
