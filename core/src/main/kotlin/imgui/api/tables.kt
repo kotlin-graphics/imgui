@@ -690,7 +690,11 @@ interface tables {
         }
     }
 
-    /** change enabled/disabled state of a column, set to false to hide the column. Note that end-user can use the context menu to change this themselves (right-click in headers, or right-click in columns body with ImGuiTableFlags_ContextMenuInBody)
+    /** Change user accessible enabled/disabled state of a column (often perceived as "showing/hiding" from users point of view)
+     *  Note that end-user can use the context menu to change this themselves (right-click in headers, or right-click in columns body with ImGuiTableFlags_ContextMenuInBody)
+     *  - Require table to have the ImGuiTableFlags_Hideable flag because we are manipulating user accessible state.
+     *  - Request will be applied during next layout, which happens on the first call to TableNextRow() after BeginTable().
+     *  - For the getter you can test (TableGetColumnFlags() & ImGuiTableColumnFlags_IsEnabled) != 0.
      *
      *  For the getter you can use (TableGetColumnFlags() & ImGuiTableColumnFlags_IsEnabled) */
     fun tableSetColumnEnabled(columnN_: Int, enabled: Boolean) {
@@ -699,6 +703,7 @@ interface tables {
         assert(table != null)
         if (table == null)
             return
+        assert(table.flags has Tf.Hideable) { "See comments above" }
         if (columnN < 0)
             columnN = table.currentColumn
         assert(columnN >= 0 && columnN < table.columnsCount)
