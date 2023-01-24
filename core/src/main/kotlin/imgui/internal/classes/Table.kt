@@ -1042,7 +1042,7 @@ class Table {
                 val isHovered = hoveredColumnBorder == columnN
                 val isResized = resizedColumn == columnN && instanceInteracted == instanceCurrent
                 val isResizable = column.flags hasnt (Tcf.NoResize or Tcf.NoDirectResize_)
-                val isFrozenSeparator = freezeColumnsCount != -1 && freezeColumnsCount == orderN + 1
+                val isFrozenSeparator = freezeColumnsCount == orderN + 1
                 if (column.maxX > innerClipRect.max.x && !isResized)
                     continue
 
@@ -1792,6 +1792,7 @@ class Table {
         val minColumnDistance = minColumnWidth + cellPaddingX * 2f + cellSpacingX1 + cellSpacingX2
         if (flags has Tf.ScrollX) {
             // Frozen columns can't reach beyond visible width else scrolling will naturally break.
+            // (we use DisplayOrder as within a set of multiple frozen column reordering is possible)
             if (column.displayOrder < freezeColumnsRequest) {
                 maxWidth = (innerClipRect.max.x - (freezeColumnsRequest - column.displayOrder) * minColumnDistance) - column.minX
                 maxWidth = maxWidth - outerPaddingX - cellPaddingX - cellSpacingX2

@@ -423,11 +423,28 @@ interface tables {
         assert(columns in 0 until TABLE_MAX_COLUMNS)
         assert(rows in 0..127) // Arbitrary limit
 
-        table.freezeColumnsRequest = if (table.flags has Tf.ScrollX) columns else 0
+        table.freezeColumnsRequest = if (table.flags has Tf.ScrollX) (columns min table.columnsCount) else 0
         table.freezeColumnsCount = if (table.innerWindow!!.scroll.x != 0f) table.freezeColumnsRequest else 0
         table.freezeRowsRequest = if (table.flags has Tf.ScrollY) rows else 0
         table.freezeRowsCount = if (table.innerWindow!!.scroll.y != 0f) table.freezeRowsRequest else 0
         table.isUnfrozenRows = table.freezeRowsCount == 0 // Make sure this is set before TableUpdateLayout() so ImGuiListClipper can benefit from it.b
+
+
+        // Ensure frozen columns are ordered in their section. We still allow multiple frozen columns to be reordered.
+        for (columnN in 0 until table.freezeColumnsRequest) {
+            val orderN = table.displayOrderToIndex[columnN]
+            if (orderN != columnN && orderN >= table.freezeColumnsRequest)
+                table.apply {
+                    //                    ImSwap(table->Columns[table->DisplayOrderToIndex[order_n]].DisplayOrder, table->Columns[table->DisplayOrderToIndex[column_n]].DisplayOrder)
+                    var order = this.columns[displayOrderToIndex[orderN]].displayOrder
+                    this.columns[displayOrderToIndex[orderN]].displayOrder = this.columns[displayOrderToIndex[columnN]].displayOrder
+                    this.columns[displayOrderToIndex[columnN]].displayOrder = order
+                    //                    ImSwap(table->DisplayOrderToIndex[order_n], table->DisplayOrderToIndex[column_n])
+                    order = displayOrderToIndex[orderN]
+                    displayOrderToIndex[orderN] = displayOrderToIndex[columnN]
+                    displayOrderToIndex[columnN] = order
+                }
+        }
     }
 
     /** [Public] This is a helper to output TableHeader() calls based on the column names declared in TableSetupColumn().
