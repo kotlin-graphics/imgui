@@ -456,8 +456,18 @@ class DrawList(sharedData: DrawListSharedData?) {
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
                     //                    IM_FIXNORMAL2F(dm_x, dm_y)
                     run {
+                        val d2 = dmX * dmX + dmY * dmY
+                        if (d2 > 0.000001f) {
+                            var invLen2 = 1f / d2
+                            if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
+                                invLen2 = FIXNORMAL2F_MAX_INVLEN2
+                            dmX *= invLen2
+                            dmY *= invLen2
+                        }
+                    }
+                    run {
                         var d2 = dmX * dmX + dmY * dmY
-                        if (d2 < 0.5f)
+                        if (d2 > 0.000001f)
                             d2 = 0.5f
                         val invLensq = 1f / d2
                         dmX *= invLensq
@@ -550,12 +560,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
                     //                    IM_FIXNORMAL2F(dm_x, dm_y)
                     run {
-                        var d2 = dmX * dmX + dmY * dmY
-                        if (d2 < 0.5f)
-                            d2 = 0.5f
-                        val invLensq = 1f / d2
-                        dmX *= invLensq
-                        dmY *= invLensq
+                        val d2 = dmX * dmX + dmY * dmY
+                        if (d2 > 0.000001f) {
+                            var invLen2 = 1f / d2
+                            if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
+                                invLen2 = FIXNORMAL2F_MAX_INVLEN2
+                            dmX *= invLen2
+                            dmY *= invLen2
+                        }
                     }
                     val dmOutX = dmX * (halfInnerThickness + AA_SIZE)
                     val dmOutY = dmY * (halfInnerThickness + AA_SIZE)
@@ -695,12 +707,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                 var dmY = (n0.y + n1.y) * 0.5f
                 //                    IM_FIXNORMAL2F(dm_x, dm_y)
                 run {
-                    var d2 = dmX * dmX + dmY * dmY
-                    if (d2 < 0.5f)
-                        d2 = 0.5f
-                    val invLensq = 1f / d2
-                    dmX *= invLensq
-                    dmY *= invLensq
+                    val d2 = dmX * dmX + dmY * dmY
+                    if (d2 > 0.000001f) {
+                        var invLen2 = 1f / d2
+                        if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
+                            invLen2 = FIXNORMAL2F_MAX_INVLEN2
+                        dmX *= invLen2
+                        dmY *= invLen2
+                    }
                 }
                 dmX *= AA_SIZE * 0.5f
                 dmY *= AA_SIZE * 0.5f
@@ -866,9 +880,9 @@ class DrawList(sharedData: DrawListSharedData?) {
             val aMinSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMin / (glm.πf * 2f)
             val aMaxSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMax / (glm.πf * 2f)
 
-            val aMinSample = if(aIsReverse) floor(aMinSampleF).i else ceil(aMinSampleF).i
-            val aMaxSample = if(aIsReverse) ceil(aMaxSampleF).i else floor(aMaxSampleF).i
-            val aMidSamples = if(aIsReverse) max(aMinSample - aMaxSample, 0) else max(aMaxSample - aMinSample, 0)
+            val aMinSample = if (aIsReverse) floor(aMinSampleF).i else ceil(aMinSampleF).i
+            val aMaxSample = if (aIsReverse) ceil(aMaxSampleF).i else floor(aMaxSampleF).i
+            val aMidSamples = if (aIsReverse) max(aMinSample - aMaxSample, 0) else max(aMaxSample - aMinSample, 0)
 
             val aMinSegmentAngle = aMinSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
             val aMaxSegmentAngle = aMaxSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
@@ -1408,8 +1422,8 @@ class DrawList(sharedData: DrawListSharedData?) {
                     sampleIndex += DRAWLIST_ARCFAST_SAMPLE_MAX
 
                 val s = _data.arcFastVtx[sampleIndex]
-                _path += Vec2(center.x+s.x * radius,
-                              center.y+s.y * radius)
+                _path += Vec2(center.x + s.x * radius,
+                              center.y + s.y * radius)
 
                 a -= aStep; sampleIndex -= aStep; aStep = aNextStep
             }
@@ -1699,6 +1713,18 @@ class DrawList(sharedData: DrawListSharedData?) {
             else -> glm.acos(x)
             //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
+
+        const val FIXNORMAL2F_MAX_INVLEN2 = 500f
+        //        fun FIXNORMAL2F(VX: Float, VY: Float) {
+        //            val d2 = VX * VX + VY * VY
+        //            if (d2 > 0.000001f) {
+        //                var invLen2 = 1f / d2
+        //                if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
+        //                    invLen2 = FIXNORMAL2F_MAX_INVLEN2
+        //                VX *= invLen2
+        //                VY *= invLen2
+        //            }
+        //        }
     }
 }
 
