@@ -1,14 +1,9 @@
 package imgui
 
 import glm_.i
-import glm_.vec2.Vec2
-import glm_.vec4.Vec4
 import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
-import imgui.demo.showExampleApp.StyleEditor
-import imgui.dsl.treeNode
-import imgui.font.FontAtlas
 import imgui.internal.api.*
 import kool.Stack
 
@@ -192,21 +187,7 @@ object ImGui :
     plot,
     // shade functions in DrawList class
     garbageCollection,
-    debugTools {
-
-    internal fun showFontAtlas(atlas: FontAtlas) {
-        for (font in atlas.fonts) {
-            pushID(font)
-            StyleEditor.showFont(font)
-            popID()
-        }
-        treeNode("Atlas texture", "Atlas texture (${atlas.texWidth}x${atlas.texHeight} pixels)") {
-            val tintCol = Vec4(1f)
-            val borderCol = Vec4(1f, 1f, 1f, 0.5f)
-            image(atlas.texID, Vec2(atlas.texWidth, atlas.texHeight), Vec2(), Vec2(1), tintCol, borderCol)
-        }
-    }
-}
+    debugTools
 
 
 @JvmField
