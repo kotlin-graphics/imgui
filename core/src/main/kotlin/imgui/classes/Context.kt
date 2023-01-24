@@ -95,6 +95,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Number of unique windows submitted by frame */
     var windowsActiveCount = 0
 
+    /** Padding around resizable windows for which hovering on counts as hovering the window == ImMax(style.TouchExtraPadding, WINDOWS_HOVER_PADDING) */
+    var windowsHoverPadding = Vec2()
+
     /** Window being drawn into    */
     var currentWindow: Window? = null
 

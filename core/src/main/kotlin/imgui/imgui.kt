@@ -4,10 +4,7 @@ import glm_.i
 import imgui.api.*
 import imgui.api.dragAndDrop
 import imgui.api.loggingCapture
-import imgui.classes.Context
-import imgui.internal.sections.ItemStatusFlags
 import imgui.internal.api.*
-import imgui.internal.classes.Rect
 import kool.Stack
 
 
@@ -75,8 +72,8 @@ const val NAV_WINDOWING_LIST_APPEAR_DELAY = 0.15f
 
 // Window resizing from edges (when io.configWindowsResizeFromEdges = true and BackendFlag.HasMouseCursors is set in io.backendFlags by backend)
 
-/** Extend outside and inside windows. Affect FindHoveredWindow(). */
-const val WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS = 4f
+/** Extend outside window for hovering/resizing (maxxed with TouchPadding) and inside windows for borders. Affect FindHoveredWindow(). */
+const val WINDOWS_HOVER_PADDING = 4f
 
 /** Reduce visual noise by only highlighting the border after a certain time. */
 const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f

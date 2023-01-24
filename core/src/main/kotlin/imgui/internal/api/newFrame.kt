@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.f
+import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
@@ -19,6 +20,8 @@ internal interface newFrame {
     /** The reason this is exposed in imgui_internal.h is: on touch-based system that don't have hovering,
      *  we want to dispatch inputs to the right target (imgui vs imgui+app) */
     fun updateHoveredWindowAndCaptureFlags() {
+
+        g.windowsHoverPadding = g.style.touchExtraPadding max Vec2(WINDOWS_HOVER_PADDING)
 
         // Find the window hovered by mouse:
         // - Child windows can extend beyond the limit of their parent so we need to derive HoveredRootWindow from HoveredWindow.

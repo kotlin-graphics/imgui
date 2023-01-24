@@ -785,7 +785,7 @@ class Window(var context: Context,
         val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
         val gripDrawSize = floor(kotlin.math.max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f))
         val gripHoverInnerSize = floor(gripDrawSize * 0.75f)
-        val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS else 0f
+        val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_HOVER_PADDING else 0f
 
         val posTarget = Vec2(Float.MAX_VALUE)
         val sizeTarget = Vec2(Float.MAX_VALUE)
@@ -834,7 +834,7 @@ class Window(var context: Context,
         for (borderN in 0 until resizeBorderCount) {
             val def = resizeBorderDef[borderN]
             val axis = if (borderN == Dir.Left.i || borderN == Dir.Right.i) Axis.X else Axis.Y
-            val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
+            val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_HOVER_PADDING)
             val borderId = getID(borderN + 4) // == GetWindowResizeBorderID()
             val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren)
             //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
@@ -847,7 +847,7 @@ class Window(var context: Context,
                 val clampMin = Vec2(if(borderN == Dir.Right.i) visibilityRect.min.x else -Float.MAX_VALUE, if(borderN == Dir.Down.i) visibilityRect.min.y else -Float.MAX_VALUE)
                 val clampMax = Vec2(if(borderN == Dir.Left.i) visibilityRect.max.x else +Float.MAX_VALUE, if(borderN == Dir.Up.i) visibilityRect.max.y else +Float.MAX_VALUE)
                 var borderTarget = Vec2(pos)
-                borderTarget[axis] = g.io.mousePos[axis] - g.activeIdClickOffset[axis] + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
+                borderTarget[axis] = g.io.mousePos[axis] - g.activeIdClickOffset[axis] + WINDOWS_HOVER_PADDING
                 borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
                 calcResizePosSizeFromAnyCorner(borderTarget, def.segmentN1 min  def.segmentN2, posTarget, sizeTarget)
             }

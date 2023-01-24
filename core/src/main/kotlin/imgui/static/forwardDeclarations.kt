@@ -54,8 +54,8 @@ fun findHoveredWindow() {
     var hoveredWindowIgnoringMovingWindow: Window? = null
 
     val paddingRegular = style.touchExtraPadding // [JVM] careful, no copy
-    val paddingForResizeFromEdges = when { // [JVM] careful, no copy
-        io.configWindowsResizeFromEdges -> style.touchExtraPadding max WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
+    val paddingForResize = when { // [JVM] careful, no copy
+        io.configWindowsResizeFromEdges -> g.windowsHoverPadding
         else -> paddingRegular
     }
 
@@ -69,7 +69,7 @@ fun findHoveredWindow() {
         val bb = Rect(window.outerRectClipped) // [JVM] we need a copy
         bb expand when {
             window.flags has (Wf._ChildWindow or Wf.NoResize or Wf.AlwaysAutoResize) -> paddingRegular
-            else -> paddingForResizeFromEdges
+            else -> paddingForResize
         }
 
         if (io.mousePos !in bb)
