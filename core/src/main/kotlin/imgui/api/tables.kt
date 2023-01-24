@@ -258,7 +258,7 @@ interface tables {
         assert(g.currentWindow === outerWindow && g.currentTable === table)
         assert(g.currentTableStackIdx >= 0)
         g.currentTableStackIdx--
-        tempData = if(g.currentTableStackIdx >= 0) g.tablesTempDataStack[g.currentTableStackIdx] else null
+        tempData = if (g.currentTableStackIdx >= 0) g.tablesTempDataStack[g.currentTableStackIdx] else null
         g.currentTable = tempData?.let { g.tables.getByIndex(it.tableIndex) }
         g.currentTable?.let {
             it.tempData = tempData
@@ -463,7 +463,7 @@ interface tables {
             // Push an id to allow unnamed labels (generally accidental, but let's behave nicely with them)
             // - in your own code you may omit the PushID/PopID all-together, provided you know they won't collide
             // - table->InstanceCurrent is only >0 when we use multiple BeginTable/EndTable calls with same identifier.
-            val name = tableGetColumnName(columnN)!!
+            val name = if (tableGetColumnFlags(columnN) has Tcf.NoHeaderLabel) "" else tableGetColumnName(columnN)!!
             pushID(table.instanceCurrent * table.columnsCount + columnN)
             tableHeader(name)
             popID()

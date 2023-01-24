@@ -150,6 +150,7 @@ object ShowDemoWindowTables {
         checkboxFlags("_NoSort", ::_i, Tcf.NoSort.i)
         checkboxFlags("_NoSortAscending", ::_i, Tcf.NoSortAscending.i)
         checkboxFlags("_NoSortDescending", ::_i, Tcf.NoSortDescending.i)
+        checkboxFlags("_NoHeaderLabel", ::_i, Tcf.NoHeaderLabel.i)
         checkboxFlags("_NoHeaderWidth", ::_i, Tcf.NoHeaderWidth.i)
         checkboxFlags("_PreferSortAscending", ::_i, Tcf.PreferSortAscending.i)
         checkboxFlags("_PreferSortDescending", ::_i, Tcf.PreferSortDescending.i)

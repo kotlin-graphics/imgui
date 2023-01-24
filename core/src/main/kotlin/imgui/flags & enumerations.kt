@@ -810,6 +810,9 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
     /** Ignore current Indent value when entering cell (default for columns > 0). Indentation changes _within_ the cell will still be honored. */
     IndentDisable(1 shl 15),
 
+    /** TableHeadersRow() will not submit label for this column. Convenient for some small columns. Name will still appear in context menu. */
+    NoHeaderLabel(1 shl 16),
+
     // Output status flags, read-only via TableGetColumnFlags()
 
     /** Status: is enabled == not hidden by user/api (referred to as "Hide" in _DefaultHide and _NoHide) flags. */

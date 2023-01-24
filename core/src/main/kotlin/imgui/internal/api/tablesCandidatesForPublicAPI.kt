@@ -45,7 +45,7 @@ interface tablesCandidatesForPublicAPI {
     }
 
     /** 'width' = inner column width, without padding */
-    fun tableSetColumnWidth(columnN: Int, width: Float)     {
+    fun tableSetColumnWidth(columnN: Int, width: Float) {
         val table = g.currentTable
         check(table != null && !table.isLayoutLocked)
         assert(columnN >= 0 && columnN < table.columnsCount)
@@ -143,7 +143,7 @@ interface tablesCandidatesForPublicAPI {
         if (column.sortDirection == SortDirection.None)
             column.sortOrder = -1
         else if (column.sortOrder == -1 || !appendToSortSpecs)
-            column.sortOrder = if(appendToSortSpecs) sortOrderMax + 1 else 0
+            column.sortOrder = if (appendToSortSpecs) sortOrderMax + 1 else 0
 
         for (otherColumnN in 0 until table.columnsCount) {
             val otherColumn = table.columns[otherColumnN]
@@ -167,9 +167,11 @@ interface tablesCandidatesForPublicAPI {
         // In your custom header row you may omit this all together and just call TableNextRow() without a height...
         var rowHeight = ImGui.textLineHeight
         val columnsCount = tableGetColumnCount()
-        for (columnN in 0 until columnsCount)
-        if (tableGetColumnFlags(columnN) has Tcf.IsEnabled)
-            rowHeight = rowHeight max calcTextSize(tableGetColumnName(columnN)!!).y
+        for (columnN in 0 until columnsCount) {
+            val flags = tableGetColumnFlags(columnN)
+            if (flags has Tcf.IsEnabled && flags hasnt Tcf.NoHeaderLabel)
+                rowHeight = rowHeight max calcTextSize(tableGetColumnName(columnN)!!).y
+        }
         rowHeight += style.cellPadding.y * 2f
         return rowHeight
     }
