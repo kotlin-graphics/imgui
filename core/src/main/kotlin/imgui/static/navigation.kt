@@ -466,7 +466,8 @@ fun navUpdateWindowing() {
         if (applyFocusWindow!!.navLastIds[0] == 0)
             navInitWindow(applyFocusWindow!!, false)
 
-        // If the window only has a menu layer, select it directly
+        // If the window has ONLY a menu layer (no main layer), select it directly
+        // FIXME-NAV: This should be done in NavInit.. or in FocusWindow..
         if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl NavLayer.Menu)
             g.navLayer = NavLayer.Menu
     }
@@ -598,6 +599,7 @@ fun navUpdateInitResult() {
     val nav = g.navWindow ?: return
 
     // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
+    // FIXME-NAV: On _NavFlattened windows, g.NavWindow will only be updated during subsequent frame. Not a problem currently.
     IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${nav.name}\"", g.navInitResultId)
     setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
     if (g.navInitRequestFromMove) {

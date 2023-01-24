@@ -16,12 +16,12 @@ interface focusActivation {
     /** make last item the default focused item of a window. */
     fun setItemDefaultFocus() {
         val window = g.currentWindow!!
-        if (!window.appearing) return
-        val nav = g.navWindow!!
-        if (nav === window.rootWindowForNav && (g.navInitRequest || g.navInitResultId != 0) && g.navLayer == nav.dc.navLayerCurrent) {
+        if (!window.appearing)
+            return
+        if (g.navWindow === window.rootWindowForNav && (g.navInitRequest || g.navInitResultId != 0) && g.navLayer == window.dc.navLayerCurrent) {
             g.navInitRequest = false
-            g.navInitResultId = nav.dc.lastItemId
-            g.navInitResultRectRel = Rect(nav.dc.lastItemRect.min - nav.pos, nav.dc.lastItemRect.max - nav.pos)
+            g.navInitResultId = window.dc.lastItemId
+            g.navInitResultRectRel = Rect(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
             navUpdateAnyRequestFlag()
             if (!isItemVisible) setScrollHereY()
         }

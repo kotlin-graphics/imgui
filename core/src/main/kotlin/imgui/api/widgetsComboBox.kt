@@ -4,31 +4,22 @@ import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
-import imgui.ImGui.beginChild
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
-import imgui.ImGui.closeCurrentPopup
-import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
-import imgui.ImGui.cursorPos
-import imgui.ImGui.endChild
 import imgui.ImGui.endPopup
 import imgui.ImGui.findBestWindowPosForPopupEx
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.frameHeight
-import imgui.ImGui.inputTextEx
 import imgui.ImGui.isPopupOpen
-import imgui.ImGui.isWindowAppearing
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popID
-import imgui.ImGui.popItemWidth
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushID
-import imgui.ImGui.pushItemWidth
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
@@ -36,12 +27,9 @@ import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
-import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
-import imgui.ImGui.setScrollHereY
 import imgui.ImGui.style
-import imgui.ImGui.windowWidth
 import imgui.classes.SizeCallbackData
 import imgui.has
 import imgui.hasnt
@@ -53,7 +41,6 @@ import kool.setValue
 import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
-import imgui.InputTextFlag as Itf
 import imgui.WindowFlag as Wf
 
 // Widgets: Combo Box

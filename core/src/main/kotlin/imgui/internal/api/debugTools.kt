@@ -436,13 +436,17 @@ internal interface debugTools {
         val cannot = window.hiddenFramesCannotSkipItems
         val skipItems = window.skipItems.i
         bulletText("Appearing: $appearing, Hidden: $hidden (CanSkip $canSkip Cannot $cannot), SkipItems: $skipItems")
-        bulletText("NavLastIds: 0x%08X,0x%08X, NavLayerActiveMask: %X", window.navLastIds[0], window.navLastIds[1], window.dc.navLayerActiveMask)
-        bulletText("NavLastChildNavWindow: ${window.navLastChildNavWindow?.name ?: "NULL"}")
-        val r = window.navRectRel[0]
-        if (!r.isInverted)
-            bulletText("NavRectRel[0]: (%.1f,%.1f)(%.1f,%.1f)", r.min.x, r.min.y, r.max.x, r.max.y)
-        else
-            bulletText("NavRectRel[0]: <None>")
+        for (layer in 0 until NavLayer.COUNT) {
+            val r = window.navRectRel[layer]
+            if (r.min.x >= r.max.y && r.min.y >= r.max.y) {
+                bulletText("NavLastIds[$layer]: 0x%08X", window.navLastIds[layer])
+                continue
+            }
+            bulletText("NavLastIds[$layer]: 0x%08X at +(%.1f,%.1f)(%.1f,%.1f)", window.navLastIds[layer], r.min.x, r.min.y, r.max.x, r.max.y)
+            if (isItemHovered())
+                getForegroundDrawList(window).addRect(r.min + window.pos, r.max + window.pos, COL32(255, 255, 0, 255))
+        }
+        bulletText("NavLayerActiveMask: %X, NavLastChildNavWindow: %s", window.dc.navLayerActiveMask, window.navLastChildNavWindow?.name ?: "NULL")
         if (window.rootWindow !== window) debugNodeWindow(window.rootWindow, "RootWindow")
         window.parentWindow?.let { debugNodeWindow(it, "ParentWindow") }
         if (window.dc.childWindows.isNotEmpty()) debugNodeWindowsList(window.dc.childWindows, "ChildWindows")
