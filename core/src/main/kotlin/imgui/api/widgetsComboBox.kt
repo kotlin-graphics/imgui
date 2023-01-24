@@ -34,6 +34,7 @@ import imgui.classes.SizeCallbackData
 import imgui.has
 import imgui.hasnt
 import imgui.internal.classes.Rect
+import imgui.internal.hashStr
 import imgui.internal.isPowerOfTwo
 import imgui.internal.sections.*
 import kool.getValue
@@ -74,7 +75,9 @@ interface widgetsComboBox {
             return false
 
         val (pressed, hovered, _) = buttonBehavior(frameBb, id)
-        var popupOpen = isPopupOpen(id)
+
+        val popupId = hashStr("##ComboPopup", 0, id)
+        var popupOpen = isPopupOpen(popupId, PopupFlag.None.i)
 
         val frameCol = if (hovered) Col.FrameBgHovered else Col.FrameBg
         val valueX2 = frameBb.min.x max (frameBb.max.x - arrowSize)
@@ -97,7 +100,7 @@ interface widgetsComboBox {
         if ((pressed || g.navActivateId == id) && !popupOpen) {
             if (window.dc.navLayerCurrent == NavLayer.Main)
                 window.navLastIds[0] = id
-            openPopupEx(id)
+            openPopupEx(popupId)
             popupOpen = true
         }
 
