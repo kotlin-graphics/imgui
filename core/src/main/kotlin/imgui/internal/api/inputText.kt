@@ -831,7 +831,7 @@ internal interface inputText {
             if (renderCursor) {
                 state.cursorAnim += io.deltaTime
                 val cursorIsVisible = !io.configInputTextCursorBlink || state.cursorAnim <= 0f || glm.mod(state.cursorAnim, 1.2f) <= 0.8f
-                val cursorScreenPos = drawPos + cursorOffset - drawScroll
+                val cursorScreenPos = floor(drawPos + cursorOffset - drawScroll)
                 val cursorScreenRect = Rect(cursorScreenPos.x, cursorScreenPos.y - g.fontSize + 0.5f,
                                             cursorScreenPos.x + 1f, cursorScreenPos.y - 1.5f)
                 if (cursorIsVisible && cursorScreenRect overlaps clipRect)
