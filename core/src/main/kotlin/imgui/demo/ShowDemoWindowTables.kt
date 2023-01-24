@@ -137,6 +137,7 @@ object ShowDemoWindowTables {
 
     fun editTableColumnsFlags(flags: TableColumnFlags): TableColumnFlags {
         _i = flags
+        checkboxFlags("_Disabled", ::_i, Tcf.Disabled.i); sameLine(); helpMarker("Master disable flag (also hide from context menu)")
         checkboxFlags("_DefaultHide", ::_i, Tcf.DefaultHide.i)
         checkboxFlags("_DefaultSort", ::_i, Tcf.DefaultSort.i)
         if (checkboxFlags("_WidthStretch", ::_i, Tcf.WidthStretch.i))

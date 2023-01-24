@@ -762,6 +762,9 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
 
     None(0),
 
+    /** Overriding/master disable flag: hide column, won't show in context menu (unlike calling TableSetColumnEnabled() which manipulates the user accessible state) */
+    Disabled(1 shl 0),
+
     /** Default as a hidden/disabled column. */
     DefaultHide(1 shl 1),
 

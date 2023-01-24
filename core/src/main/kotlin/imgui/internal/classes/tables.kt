@@ -104,10 +104,13 @@ class TableColumn {
     /** Draw channels for unfrozen rows */
     var drawChannelUnfrozen: TableDrawChannelIdx = -1
 
-    /** Is the column not marked Hidden by the user? (even if off view, e.g. clipped by scrolling). */
+    /** IsUserEnabled && (Flags & ImGuiTableColumnFlags_Disabled) == 0 */
     var isEnabled = false
 
-    var isEnabledNextFrame = false
+    /** Is the column not marked Hidden by the user? (unrelated to being off view, e.g. clipped by scrolling). */
+    var isUserEnabled = false
+
+    var isUserEnabledNextFrame = false
 
     /** Is actually in view (e.g. overlapping the host window clipping rectangle, not scrolled). */
     var isVisibleX = false

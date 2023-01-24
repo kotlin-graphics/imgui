@@ -505,15 +505,17 @@ class Table {
                 column.initStretchWeightOrWidth = -1f
             }
 
-            // Update Enabled state, mark settings/sortspecs dirty
+            // Update Enabled state, mark settings and sort specs dirty
             if (flags hasnt Tf.Hideable || flags has Tcf.NoHide)
-                column.isEnabledNextFrame = true
-            if (column.isEnabled != column.isEnabledNextFrame) {
-                column.isEnabled = column.isEnabledNextFrame
+                column.isUserEnabledNextFrame = true
+            if (column.isUserEnabled != column.isUserEnabledNextFrame) {
+                column.isUserEnabled = column.isUserEnabledNextFrame
                 isSettingsDirty = true
-                if (!column.isEnabled && column.sortOrder != -1)
-                    isSortSpecsDirty = true
             }
+            column.isEnabled = column.isUserEnabled && column.flags hasnt Tcf.Disabled
+
+            if (column.sortOrder != -1 && !column.isEnabled)
+                isSortSpecsDirty = true
             if (column.sortOrder > 0 && flags hasnt Tf.SortMulti)
                 isSortSpecsDirty = true
 
@@ -1166,16 +1168,19 @@ class Table {
             pushItemFlag(ItemFlag.SelectableDontClosePopup.i, true)
             for (otherColumnN in 0 until columnsCount) {
                 val otherColumn = columns[otherColumnN]
+                if (otherColumn.flags has Tcf.Disabled)
+                    continue
+
                 var name = getColumnName(otherColumnN)
                 if (name == null || name.isEmpty())
                     name = "<Unknown>"
 
                 // Make sure we can't hide the last active column
                 var menuItemActive = flags hasnt Tcf.NoHide
-                if (otherColumn.isEnabled && columnsEnabledCount <= 1)
+                if (otherColumn.isUserEnabled && columnsEnabledCount <= 1)
                     menuItemActive = false
-                if (menuItem(name, "", otherColumn.isEnabled, menuItemActive))
-                    otherColumn.isEnabledNextFrame = !otherColumn.isEnabled
+                if (menuItem(name, "", otherColumn.isUserEnabled, menuItemActive))
+                    otherColumn.isUserEnabledNextFrame = !otherColumn.isUserEnabled
             }
             popItemFlag()
         }
@@ -1935,8 +1940,8 @@ class Table {
                 else -> columnN
             }
             displayOrderMask = displayOrderMask or (1L shl column.displayOrder)
-            column.isEnabled = columnSettings.isEnabled
-            column.isEnabledNextFrame = columnSettings.isEnabled
+            column.isUserEnabled = columnSettings.isEnabled
+            column.isUserEnabledNextFrame = columnSettings.isEnabled
             column.sortOrder = columnSettings.sortOrder
             column.sortDirection = columnSettings.sortDirection
         }
@@ -1982,7 +1987,7 @@ class Table {
             columnSettings.displayOrder = column.displayOrder
             columnSettings.sortOrder = column.sortOrder
             columnSettings.sortDirection = column.sortDirection
-            columnSettings.isEnabled = column.isEnabled
+            columnSettings.isEnabled = column.isUserEnabled
             columnSettings.isStretch = column.flags has Tcf.WidthStretch
             if (column.flags hasnt Tcf.WidthStretch)
                 saveRefScale = true
@@ -1996,7 +2001,7 @@ class Table {
                 settings.saveFlags = settings.saveFlags or Tf.Reorderable
             if (column.sortOrder != -1)
                 settings.saveFlags = settings.saveFlags or Tf.Sortable
-            if (column.isEnabled != column.flags hasnt Tcf.DefaultHide)
+            if (column.isUserEnabled != column.flags hasnt Tcf.DefaultHide)
                 settings.saveFlags = settings.saveFlags or Tf.Hideable
         }
         settings.saveFlags = settings.saveFlags and flags

@@ -393,8 +393,8 @@ interface tables {
             }
             // Init default visibility/sort state
             if (flags has Tcf.DefaultHide && table.settingsLoadedFlags hasnt Tf.Hideable) {
-                column.isEnabled = false
-                column.isEnabledNextFrame = false
+                column.isUserEnabled = false
+                column.isUserEnabledNextFrame = false
             }
             if (flags has Tcf.DefaultSort && table.settingsLoadedFlags hasnt Tf.Sortable) {
                 column.sortOrder = 0 // Multiple columns using _DefaultSort will be reassigned unique SortOrder values when building the sort specs.
@@ -695,8 +695,9 @@ interface tables {
      *  - Require table to have the ImGuiTableFlags_Hideable flag because we are manipulating user accessible state.
      *  - Request will be applied during next layout, which happens on the first call to TableNextRow() after BeginTable().
      *  - For the getter you can test (TableGetColumnFlags() & ImGuiTableColumnFlags_IsEnabled) != 0.
+     *  - Alternative: the ImGuiTableColumnFlags_Disabled is an overriding/master disable flag which will also hide the column from context menu.
      *
-     *  For the getter you can use (TableGetColumnFlags() & ImGuiTableColumnFlags_IsEnabled) */
+     *  change user accessible enabled/disabled state of a column. Set to false to hide the column. User can use the context menu to change this themselves (right-click in headers, or right-click in columns body with ImGuiTableFlags_ContextMenuInBody) */
     fun tableSetColumnEnabled(columnN_: Int, enabled: Boolean) {
         var columnN = columnN_
         val table = g.currentTable
@@ -708,7 +709,7 @@ interface tables {
             columnN = table.currentColumn
         assert(columnN >= 0 && columnN < table.columnsCount)
         val column = table.columns[columnN]
-        column.isEnabledNextFrame = enabled
+        column.isUserEnabledNextFrame = enabled
     }
 
     /** change the color of a cell, row, or column. See ImGuiTableBgTarget_ flags for details. */

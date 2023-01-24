@@ -251,12 +251,12 @@ interface tablesInternal {
                     column = table.columns[n]
                     column.widthAuto = widthAuto
                     column.isPreserveWidthAuto = true // Preserve WidthAuto when reinitializing a live table: not technically necessary but remove a visible flicker
-                    column.isEnabled = true; column.isEnabledNextFrame = true
+                    column.isEnabled = true; column.isUserEnabled = true; column.isUserEnabledNextFrame = true
                 }
                 column.displayOrder = n
                 table.displayOrderToIndex[n] = n
                 column.isEnabled = true
-                column.isEnabledNextFrame = true
+                column.isUserEnabledNextFrame = true
             }
         }
 //        if (old_columns_raw_data)
