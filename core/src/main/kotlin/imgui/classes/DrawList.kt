@@ -189,8 +189,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (rounding <= 0f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             primReserve(6, 4)
             primRect(pMin, pMax, col)
-        }
-        else {
+        } else {
             pathRect(pMin, pMax, rounding, flags)
             pathFillConvex(col)
         }
@@ -852,7 +851,6 @@ class DrawList(sharedData: DrawListSharedData?) {
             _path += center
             return
         }
-        assert(aMin <= aMax)
 
         if (numSegments > 0) {
             _pathArcToN(center, radius, aMin, aMax, numSegments)
@@ -861,26 +859,31 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // Automatic segment count
         if (radius <= _data.arcFastRadiusCutoff) {
+            val aIsReverse = aMax < aMin
+
             // We are going to use precomputed values for mid samples.
             // Determine first and last sample in lookup table that belong to the arc.
-            val aMinSample = ceil(DRAWLIST_ARCFAST_SAMPLE_MAX * aMin / (glm.πf * 2f)).i
-            val aMaxSample = (DRAWLIST_ARCFAST_SAMPLE_MAX * aMax / (glm.πf * 2f)).i
-            val aMidSamples = (aMaxSample - aMinSample) max 0
+            val aMinSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMin / (glm.πf * 2f)
+            val aMaxSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMax / (glm.πf * 2f)
+
+            val aMinSample = if(aIsReverse) floor(aMinSampleF).i else ceil(aMinSampleF).i
+            val aMaxSample = if(aIsReverse) ceil(aMaxSampleF).i else floor(aMaxSampleF).i
+            val aMidSamples = if(aIsReverse) max(aMinSample - aMaxSample, 0) else max(aMaxSample - aMinSample, 0)
 
             val aMinSegmentAngle = aMinSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
             val aMaxSegmentAngle = aMaxSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
-            val aEmitStart = (aMinSegmentAngle - aMin) > 0f
-            val aEmitEnd = (aMax - aMaxSegmentAngle) > 0f
+            val aEmitStart = aMinSegmentAngle - aMin != 0f
+            val aEmitEnd = aMax - aMaxSegmentAngle != 0f
 
             //            _path.reserve(_Path.Size + (a_mid_samples + 1 + (a_emit_start ? 1 : 0)+(a_emit_end ? 1 : 0)))
             if (aEmitStart)
                 _path += Vec2(center.x + aMin.cos * radius, center.y + aMin.sin * radius)
-            if (aMaxSample >= aMinSample)
+            if (aMidSamples >= 0)
                 _pathArcToFastEx(center, radius, aMinSample, aMaxSample, 0)
             if (aEmitEnd)
                 _path += Vec2(center.x + aMax.cos * radius, center.y + aMax.sin * radius)
         } else {
-            val arcLength = aMax - aMin
+            val arcLength = (aMax - aMin).abs
             val circleSegmentCount = _calcCircleAutoSegmentCount(radius)
             val arcSegmentCount = ceil(circleSegmentCount * arcLength / (glm.πf * 2f)).i max (2f * glm.πf / arcLength).i
             _pathArcToN(center, radius, aMin, aMax, arcSegmentCount)
@@ -897,7 +900,6 @@ class DrawList(sharedData: DrawListSharedData?) {
             _path += center
             return
         }
-        assert(aMinOf12 <= aMaxOf12)
         _pathArcToFastEx(center, radius, aMinOf12 * DRAWLIST_ARCFAST_SAMPLE_MAX / 12, aMaxOf12 * DRAWLIST_ARCFAST_SAMPLE_MAX / 12, 0)
     }
 
@@ -1348,7 +1350,6 @@ class DrawList(sharedData: DrawListSharedData?) {
         }
         var aMaxSample = aMaxSample_
         var aMinSample = aMinSample_
-        assert(aMinSample <= aMaxSample)
 
         // Calculate arc auto segment step size
         var aStep = when {
@@ -1359,16 +1360,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         // Make sure we never do steps larger than one quarter of the circle
         aStep = clamp(aStep, 1, DRAWLIST_ARCFAST_TABLE_SIZE / 4)
 
-        // Normalize a_min_sample to always start lie in [0..IM_DRAWLIST_ARCFAST_SAMPLE_MAX] range.
-        if (aMinSample < 0) {
-            var normalizedSample = aMinSample % DRAWLIST_ARCFAST_SAMPLE_MAX
-            if (normalizedSample < 0)
-                normalizedSample += DRAWLIST_ARCFAST_SAMPLE_MAX
-            aMaxSample += (normalizedSample - aMinSample)
-            aMinSample = normalizedSample
-        }
-
-        val sampleRange = aMaxSample - aMinSample
+        val sampleRange = (aMaxSample - aMinSample).abs
         val aNextStep = aStep
         var samples = sampleRange + 1
         var extraMaxSample = false
@@ -1389,17 +1381,38 @@ class DrawList(sharedData: DrawListSharedData?) {
         //        val out_ptr = _Path.Data + (_Path.Size - samples);
 
         var sampleIndex = aMinSample
-        var a = aMinSample
-        while (a <= aMaxSample) {
-            // a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over range twice or more
-            if (sampleIndex >= DRAWLIST_ARCFAST_SAMPLE_MAX)
-                sampleIndex -= DRAWLIST_ARCFAST_SAMPLE_MAX
+        if (sampleIndex < 0 || sampleIndex >= DRAWLIST_ARCFAST_SAMPLE_MAX) {
+            sampleIndex = sampleIndex % DRAWLIST_ARCFAST_SAMPLE_MAX
+            if (sampleIndex < 0)
+                sampleIndex += DRAWLIST_ARCFAST_SAMPLE_MAX
+        }
 
-            val s = _data.arcFastVtx[sampleIndex]
-            _path += Vec2(center.x + s.x * radius,
-                          center.y + s.y * radius)
+        if (aMaxSample >= aMinSample) {
+            var a = aMinSample
+            while (a <= aMaxSample) {
+                // a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over range twice or more
+                if (sampleIndex >= DRAWLIST_ARCFAST_SAMPLE_MAX)
+                    sampleIndex -= DRAWLIST_ARCFAST_SAMPLE_MAX
 
-            a += aStep; sampleIndex += aStep; aStep = aNextStep
+                val s = _data.arcFastVtx[sampleIndex]
+                _path += Vec2(center.x + s.x * radius,
+                              center.y + s.y * radius)
+
+                a += aStep; sampleIndex += aStep; aStep = aNextStep
+            }
+        } else {
+            var a = aMinSample
+            while (a >= aMaxSample) {
+                // a_step is clamped to IM_DRAWLIST_ARCFAST_SAMPLE_MAX, so we have guaranteed that it will not wrap over range twice or more
+                if (sampleIndex < 0)
+                    sampleIndex += DRAWLIST_ARCFAST_SAMPLE_MAX
+
+                val s = _data.arcFastVtx[sampleIndex]
+                _path += Vec2(center.x+s.x * radius,
+                              center.y+s.y * radius)
+
+                a -= aStep; sampleIndex -= aStep; aStep = aNextStep
+            }
         }
 
         if (extraMaxSample) {
@@ -1421,7 +1434,6 @@ class DrawList(sharedData: DrawListSharedData?) {
             _path += center
             return
         }
-        assert(aMin <= aMax)
 
         // Note that we are adding a point at both a_min and a_max.
         // If you are trying to draw a full closed circle you don't want the overlapping points!
