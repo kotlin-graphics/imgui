@@ -1,6 +1,5 @@
 package imgui.internal.classes
 
-import glm_.has
 import glm_.hasnt
 import glm_.max
 import glm_.min
@@ -99,7 +98,7 @@ class TabBar {
     var scrollingRectMinX = 0f
     var scrollingRectMaxX = 0f
     var reorderRequestTabId: ID = 0
-    var reorderRequestDir = 0
+    var reorderRequestOffset = 0
     var beginCount = 0
 
     var wantLayout = false
@@ -232,56 +231,54 @@ class TabBar {
     }
 
     /** ~TabBarQueueReorder */
-    fun queueReorder(tab: TabItem, dir: Int) {
-        assert(dir == -1 || dir == +1)
+    fun queueReorder(tab: TabItem, offset: Int) {
+        assert(offset != 0)
         assert(reorderRequestTabId == 0)
         reorderRequestTabId = tab.id
-        reorderRequestDir = dir
+        reorderRequestOffset = offset
     }
 
     /** ~TabBarQueueReorderFromMousePos */
-    fun queueReorderFromMousePos(tab: TabItem, mousePos: Vec2) {
+    fun queueReorderFromMousePos(srcTab: TabItem, mousePos: Vec2) {
 
         assert(reorderRequestTabId == 0)
-
         if (flags hasnt TabBarFlag.Reorderable)
             return
 
-        val sourceIdx = tabs.indexOf(tab)
-        val barX = barRect.min.x
-        val dir = if (barX + tab.offset > mousePos.x) -1 else +1
-        var targetIdx = sourceIdx
+        val isCentralSection = srcTab.flags hasnt TabItemFlag._SectionMask_
+        val barOffset = barRect.min.x - if (isCentralSection) scrollingTarget else 0f
 
-        var i = sourceIdx
-        while (0 <= i && i < tabs.size) {
-            val targetTab = tabs[i]
-
-            // Reorder only within tab groups with _Leading, _Trailing flag or without either of them.
-            if ((targetTab.flags and TabItemFlag.Leading) != (tab.flags and TabItemFlag.Leading))
+        // Count number of contiguous tabs we are crossing over
+        val dir = if (barOffset + srcTab.offset > mousePos.x) -1 else +1
+        val srcIdx = tabs.indexOf(srcTab)
+        var dstIdx = srcIdx
+        var i = srcIdx
+        while (i >= 0 && i < tabs.size) {
+            // Reordered tabs must share the same section
+            val dstTab = tabs[i]
+            if (dstTab.flags has TabItemFlag.NoReorder) {
+                i += dir
                 break
-            if ((targetTab.flags and TabItemFlag.Trailing) != (tab.flags and TabItemFlag.Trailing))
+            }
+            if (dstTab.flags and TabItemFlag._SectionMask_ != srcTab.flags and TabItemFlag._SectionMask_) {
+                i += dir
                 break
+            }
+            dstIdx = i
 
-            // Do not reorder past tabs with _NoReorder flag.
-            if (targetTab.flags has TabItemFlag.NoReorder)
+            // Include spacing after tab, so when mouse cursor is between tabs we would not continue checking further tabs that are not hovered.
+            val x1 = barOffset + dstTab.offset - g.style.itemInnerSpacing.x
+            val x2 = barOffset + dstTab.offset + dstTab.width + g.style.itemInnerSpacing.x
+            //GetForegroundDrawList()->AddRect(ImVec2(x1, tab_bar->BarRect.Min.y), ImVec2(x2, tab_bar->BarRect.Max.y), IM_COL32(255, 0, 0, 255));
+            if ((dir < 0 && mousePos.x > x1) || (dir > 0 && mousePos.x < x2)) {
+                i += dir
                 break
-
-            targetIdx = i     // target_tab can be swapped with dragged tab.
-
-            // Current tab is destination tab under mouse position. Also include space after tab, so when mouse cursor is
-            // between tabs we would not continue checking further tabs that are not hovered.
-            if (dir > 0 && mousePos.x < barX + targetTab.offset + targetTab.width + g.style.itemInnerSpacing.x)       // End of tab is past mouse_pos.
-                break
-            if (dir < 0 && mousePos.x > barX + targetTab.offset - g.style.itemInnerSpacing.x)                           // Mouse pos is past start of tab.
-                break
-
+            }
             i += dir
         }
 
-        if (targetIdx != sourceIdx) {
-            reorderRequestTabId = tab.id
-            reorderRequestDir = targetIdx - sourceIdx
-        }
+        if (dstIdx != srcIdx)
+            queueReorder(srcTab, dstIdx - srcIdx)
     }
 
     /** ~TabBarProcessReorder */
@@ -290,29 +287,23 @@ class TabBar {
         if (tab1 == null || tab1.flags has TabItemFlag.NoReorder) return false
 
         //IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_Reorderable); // <- this may happen when using debug tools
-        val tab2Order = tab1.order + reorderRequestDir
+        val tab2Order = tab1.order + reorderRequestOffset
         if (tab2Order < 0 || tab2Order >= tabs.size) return false
 
-        // Reordered TabItem must share the same position flags than target
+        // Reordered tabs must share the same section
+        // (Note: TabBarQueueReorderFromMousePos() also has a similar test but since we allow direct calls to TabBarQueueReorder() we do it here too)
         val tab2 = tabs[tab2Order]
         if (tab2.flags has TabItemFlag.NoReorder)
             return false
-        if ((tab1.flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) != (tab2.flags and (TabItemFlag.Leading or TabItemFlag.Trailing)))
+        if (tab1.flags and TabItemFlag._SectionMask_ != tab2.flags and TabItemFlag._SectionMask_)
             return false
 
-        // TODO
-        //        ImGuiTabItem* src, *dst;
-        //        if (tab_bar->ReorderRequestDir > 0)
-        //        {
-        //            dst = tab1;
-        //            src = tab1 + 1;
-        //        }
-        //        else
-        //        {
-        //            dst = tab2 + 1;
-        //            src = tab2;
-        //        }
-        //        memmove(dst, src, abs(tab_bar->ReorderRequestDir) * sizeof(ImGuiTabItem));
+        TODO()
+        //        ImGuiTabItem item_tmp = *tab1;
+        //        ImGuiTabItem* src_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1 + 1 : tab2;
+        //        ImGuiTabItem* dst_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1 : tab2 + 1;
+        //        const int move_count = (tab_bar->ReorderRequestOffset > 0) ? tab_bar->ReorderRequestOffset : -tab_bar->ReorderRequestOffset;
+        //        memmove(dst_tab, src_tab, move_count * sizeof(ImGuiTabItem));
         val itemTmp = tabs[reorderRequestTabId]
         tabs[reorderRequestTabId] = tabs[tab2Order]
         tabs[tab2Order] = itemTmp
@@ -407,7 +398,7 @@ class TabBar {
         val backupMainCursorPos = Vec2(window.dc.cursorPos)
 
         // Layout
-        val isCentralSection = tab.flags hasnt (TabItemFlag.Leading or TabItemFlag.Trailing)
+        val isCentralSection = tab.flags hasnt TabItemFlag._SectionMask_
         size.x = tab.width
         val x = if (isCentralSection) floor(tab.offset - scrollingAnim) else tab.offset
         window.dc.cursorPos = barRect.min + Vec2(x, 0f)
@@ -534,12 +525,10 @@ class TabBar {
                 tabs[tabDstN] = tabs[tabSrcN]
 
             // We will need sorting if tabs have changed section (e.g. moved from one of Leading/Central/Trailing to another)
-            val currTabSectionN =
-                if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+            val currTabSectionN = tabItemGetSectionIdx(tab)
             if (tabDstN > 0) {
                 val prevTab = tabs[tabDstN - 1]
-                val prevTabSectionN =
-                    if (prevTab.flags has TabItemFlag.Leading) 0 else if (prevTab.flags has TabItemFlag.Trailing) 2 else 1
+                val prevTabSectionN = tabItemGetSectionIdx(prevTab)
                 if (currTabSectionN == 0 && prevTabSectionN != 0)
                     needSortBySection = true
                 if (prevTabSectionN == 2 && currTabSectionN != 2)
@@ -613,8 +602,7 @@ class TabBar {
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
             tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
 
-            val sectionN =
-                if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+            val sectionN = tabItemGetSectionIdx(tab)
             val section = sections[sectionN]
             section.width += tab.contentWidth + if (sectionN == currSectionN) g.style.itemInnerSpacing.x else 0f
             currSectionN = sectionN
@@ -667,8 +655,7 @@ class TabBar {
                 if (shrinkedWidth < 0f)
                     continue
 
-                val sectionN =
-                    if (tab.flags has TabItemFlag.Leading) 0 else if (tab.flags has TabItemFlag.Trailing) 2 else 1
+                val sectionN = tabItemGetSectionIdx(tab)
                 sections[sectionN].width -= tab.width - shrinkedWidth
                 tab.width = shrinkedWidth
             }
@@ -757,7 +744,7 @@ class TabBar {
     fun scrollToTab(tabId: ID, sections: Array<TabBarSection>) {
 
         val tab = findTabByID(tabId) ?: return
-        if (tab.flags has (TabItemFlag.Leading or TabItemFlag.Trailing))
+        if (tab.flags has TabItemFlag._SectionMask_)
             return
 
         val margin =
@@ -883,10 +870,16 @@ class TabBar {
         fun calcMaxTabWidth() = g.fontSize * 20f
 
         val tabItemComparerBySection = Comparator<TabItem> { a, b ->
-            val aSection = if (a.flags has TabItemFlag.Leading) 0 else if (a.flags has TabItemFlag.Trailing) 2 else 1
-            val bSection = if (b.flags has TabItemFlag.Leading) 0 else if (b.flags has TabItemFlag.Trailing) 2 else 1
+            val aSection = tabItemGetSectionIdx(a)
+            val bSection = tabItemGetSectionIdx(b)
             if (aSection != bSection) aSection - bSection
             else a.indexDuringLayout - b.indexDuringLayout
+        }
+
+        fun tabItemGetSectionIdx(tab: TabItem) = when {
+            tab.flags has TabItemFlag.Leading -> 0
+            tab.flags has TabItemFlag.Trailing -> 2
+            else -> 1
         }
     }
 }

@@ -561,6 +561,8 @@ enum class TabItemFlag(@JvmField val i: TabItemFlags) {
 
     // [Internal]
 
+    _SectionMask_(Leading or Trailing),
+
     /** Track whether p_open was set or not (we'll need this info on the next frame to recompute ContentWidth during layout) */
     _NoCloseButton(1 shl 20),
 
