@@ -68,6 +68,7 @@ private class ImGuiOpenGL3 {
 
                 // Decide GL+GLSL versions
                 when (Platform.get()) {
+                    // TODO Opengl_es2? GL ES 2.0 + GLSL 100
                     Platform.MACOSX -> {    // GL 3.2 + GLSL 150
                         glslVersion = 150
                         context.version = "3.2"
