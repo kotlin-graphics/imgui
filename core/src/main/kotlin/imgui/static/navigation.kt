@@ -475,6 +475,8 @@ fun navUpdateWindowing() {
 
     // Apply menu/layer toggle
     if (applyToggleLayer)
+        clearActiveID()
+
         g.navWindow?.let {
             // Move to parent menu if necessary
             var newNavWindow = it
