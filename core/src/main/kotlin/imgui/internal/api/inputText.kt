@@ -183,7 +183,7 @@ internal interface inputText {
             // From the moment we focused we are ignoring the content of 'buf' (unless we are in read-only mode)
             val bufLen = buf.strlen()
             if (state.initialTextA.size < bufLen)
-                // [JVM] we don't need the +1 for the termination char
+            // [JVM] we don't need the +1 for the termination char
                 state.initialTextA = ByteArray(bufLen)   // UTF-8. we use +1 to make sure that .Data is always pointing to at least an empty string.
             else if (state.initialTextA.size > bufLen)
                 state.initialTextA[bufLen] = 0
@@ -340,7 +340,7 @@ internal interface inputText {
                 if ('\t' !in io.inputQueueCharacters)
                     withChar {
                         it.set('\t') // Insert TAB
-                        if (inputTextFilterCharacter(it, flags, callback, callbackUserData))
+                        if (inputTextFilterCharacter(it, flags, callback, callbackUserData, InputSource.Keyboard))
                             state.onKeyPressed(it().i)
                     }
 
@@ -351,7 +351,7 @@ internal interface inputText {
                     io.inputQueueCharacters.filter { it != NUL || (it == '\t' && io.keyShift) }.map {
                         // TODO check
                         withChar { c -> // Insert character if they pass filtering
-                            if (inputTextFilterCharacter(c(it), flags, callback, callbackUserData))
+                            if (inputTextFilterCharacter(c(it), flags, callback, callbackUserData, InputSource.Keyboard))
                                 state.onKeyPressed(c().i)
                         }
                     }
@@ -436,7 +436,7 @@ internal interface inputText {
                     } else if (!isReadOnly)
                         withChar('\n') { c ->
                             // Insert new line
-                            if (inputTextFilterCharacter(c, flags, callback, callbackUserData))
+                            if (inputTextFilterCharacter(c, flags, callback, callbackUserData, InputSource.Keyboard))
                                 state.onKeyPressed(c().i)
                         }
                 }
@@ -479,7 +479,7 @@ internal interface inputText {
                         if (c == NUL)
                             break
                         _c = c
-                        if (!inputTextFilterCharacter(::_c, flags, callback, callbackUserData))
+                        if (!inputTextFilterCharacter(::_c, flags, callback, callbackUserData, InputSource.Keyboard))
                             continue
                         clipboardFiltered[clipboardFilteredLen++] = _c
                     }
@@ -964,13 +964,10 @@ internal interface inputText {
 
     companion object {
         /** Return false to discard a character.    */
-        fun inputTextFilterCharacter(
-            char: KMutableProperty0<Char>,
-            flags: InputTextFlags,
-            callback: InputTextCallback?,
-            userData: Any?
-                                    ): Boolean {
+        fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?,
+                                     userData: Any?, inputSource: InputSource): Boolean {
 
+            assert(inputSource == InputSource.Keyboard || inputSource == InputSource.Clipboard)
             var c by char
 
             // Filter non-printable (NB: isprint is unreliable! see #2467) [JVM we can rely on custom ::isPrintable]
@@ -981,14 +978,17 @@ internal interface inputText {
                 if (!pass) return false
             }
 
-            // We ignore Ascii representation of delete (emitted from Backspace on OSX, see #2578, #2817)
-            if (c.i == 127)
-                return false
+            if (inputSource != InputSource.Clipboard) {
+                // We ignore Ascii representation of delete (emitted from Backspace on OSX, see #2578, #2817)
+                if (c.i == 127)
+                    return false
 
-            // Filter private Unicode range. GLFW on OSX seems to send private characters for special keys like arrow keys (FIXME)
-            if (c >= 0xE000 && c <= 0xF8FF) return false
+                // Filter private Unicode range. GLFW on OSX seems to send private characters for special keys like arrow keys (FIXME)
+                if (c >= 0xE000 && c <= 0xF8FF)
+                    return false
+            }
 
-            // Filter Unicode ranges we are not handling in this build.
+            // Filter Unicode ranges we are not handling in this build
             if (c > UNICODE_CODEPOINT_MAX)
                 return false
 

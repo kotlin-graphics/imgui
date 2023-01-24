@@ -307,7 +307,9 @@ enum class InputSource {
     Gamepad,
 
     /** Stored in g.ActiveIdSource only */
-    Nav
+    Nav,
+    /** Currently only used by InputText() */
+    Clipboard
 }
 
 
