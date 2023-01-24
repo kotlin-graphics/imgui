@@ -35,7 +35,7 @@ import imgui.WindowFlag as Wf
 import imgui.internal.sections.ButtonFlag as Bf
 
 
-/** FIXME-TABLE: transient data could be stored in a per-stacked table structure: DrawSplitter, SortSpecs, incoming RowData */
+/** FIXME-TABLE: more transient data could be stored in a per-stacked table structure: DrawSplitter, SortSpecs, incoming RowData */
 class Table {
 
     var id: ID = 0
@@ -44,6 +44,9 @@ class Table {
 
     /** Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[] */
     //    var rawData: Any? = null
+
+    /** Transient data while table is active. Point within g.CurrentTableStack[] */
+    var tempData: TableTempData? = null
 
     /** Point within RawData[] */
     val columns = ArrayList<TableColumn>()
@@ -179,35 +182,8 @@ class Table {
     /** This is used to check if we can eventually merge our columns draw calls into the current draw call of the current window. */
     val hostClipRect = Rect()
 
-    /** Backup of InnerWindow->WorkRect at the end of BeginTable() */
-    val hostBackupWorkRect = Rect()
-
-    /** Backup of InnerWindow->ParentWorkRect at the end of BeginTable() */
-    val hostBackupParentWorkRect = Rect()
-
     /** Backup of InnerWindow->ClipRect during PushTableBackground()/PopTableBackground() */
     val hostBackupInnerClipRect = Rect()
-
-    /** Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable() */
-    val hostBackupPrevLineSize = Vec2()
-
-    /** Backup of InnerWindow->DC.CurrLineSize at the end of BeginTable() */
-    val hostBackupCurrLineSize = Vec2()
-
-    /** Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable() */
-    val hostBackupCursorMaxPos = Vec2()
-
-    /** outer_size.x passed to BeginTable() */
-    val userOuterSize = Vec2()
-
-    /** Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable() */
-    var hostBackupColumnsOffset = 0f
-
-    /** Backup of OuterWindow->DC.ItemWidth at the end of BeginTable() */
-    var hostBackupItemWidth = 0f
-
-    /** Backup of OuterWindow->DC.ItemWidthStack.Size at the end of BeginTable() */
-    var hostBackupItemWidthStackSize = 0
 
     /** Parent window for the table */
     var outerWindow: Window? = null
@@ -218,12 +194,12 @@ class Table {
     /** Contiguous buffer holding columns names */
     val columnsNames = ArrayList<String>()
 
-    /** We carry our own ImDrawList splitter to allow recursion (FIXME: could be stored outside, worst case we need 1 splitter per recursing table) */
+    /** We carry our own ImDrawList splitter to allow recursion (should move to ImGuiTableTempDataB) */
     val drawSplitter = DrawListSplitter()
 
     val sortSpecsSingle = TableColumnSortSpecs()
 
-    /** FIXME-OPT: Using a small-vector pattern would work be good. */
+    /** FIXME-OPT: Using a small-vector pattern would be good. */
     val sortSpecsMulti = ArrayList<TableColumnSortSpecs>()
 
     /** Public facing sorts specs, this is what we return in TableGetSortSpecs() */

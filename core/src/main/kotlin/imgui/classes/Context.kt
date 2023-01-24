@@ -466,8 +466,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Table
 
     var currentTable: Table? = null
+    var currentTableStackIdx = -1
     val tables = Pool { Table() }
-    val currentTableStack = ArrayList<PtrOrIndex>()
+    val tablesTempDataStack = ArrayList<TableTempData>()
 
     /** Last used timestamp of each tables (SOA, for efficient GC) */
     val tablesLastTimeActive = ArrayList<Float>()
@@ -669,8 +670,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         val viewport = ViewportP()
         g.viewports += viewport
 
-//        #ifdef IMGUI_HAS_DOCK
-//        #endif // #ifdef IMGUI_HAS_DOCK
+        //        #ifdef IMGUI_HAS_DOCK
+        //        #endif // #ifdef IMGUI_HAS_DOCK
 
         initialized = true
     }
@@ -736,7 +737,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         shrinkWidthBuffer.clear()
 
         g.tables.clear()
-        g.currentTableStack.clear()
+        g.tablesTempDataStack.clear()
         g.drawChannelsTempMergeBuffer.clear() // TODO check if this needs proper deallocation
 
         clipboardHandlerData = ""
@@ -766,8 +767,8 @@ enum class ContextHookType { NewFramePre, NewFramePost, EndFramePre, EndFramePos
 /** Hook for extensions like ImGuiTestEngine */
 class ContextHook(
     // A unique ID assigned by AddContextHook()
-        var hookId: ID = 0,
-        var type: ContextHookType = ContextHookType.NewFramePre,
-        var owner: ID = 0,
-        var callback: ContextHookCallback? = null,
-        var userData: Any? = null)
+    var hookId: ID = 0,
+    var type: ContextHookType = ContextHookType.NewFramePre,
+    var owner: ID = 0,
+    var callback: ContextHookCallback? = null,
+    var userData: Any? = null)

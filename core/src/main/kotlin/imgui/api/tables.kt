@@ -93,6 +93,7 @@ interface tables {
         val flags = table.flags
         val innerWindow = table.innerWindow!!
         val outerWindow = table.outerWindow!!
+        var tempData = table.tempData
         assert(innerWindow === g.currentWindow)
         assert(outerWindow === innerWindow || outerWindow === innerWindow.parentWindow)
 
@@ -105,9 +106,9 @@ interface tables {
                 tableOpenContextMenu(table.hoveredColumnBody)
 
         // Finalize table height
-        innerWindow.dc.prevLineSize put table.hostBackupPrevLineSize
-        innerWindow.dc.currLineSize put table.hostBackupCurrLineSize
-        innerWindow.dc.cursorMaxPos put table.hostBackupCursorMaxPos
+        innerWindow.dc.prevLineSize put tempData!!.hostBackupPrevLineSize
+        innerWindow.dc.currLineSize put tempData.hostBackupCurrLineSize
+        innerWindow.dc.cursorMaxPos put tempData.hostBackupCursorMaxPos
         val innerContentMaxY = table.rowPosY2
         assert(table.rowPosY2 == innerWindow.dc.cursorPos.y)
         if (innerWindow !== outerWindow)
@@ -157,10 +158,11 @@ interface tables {
         //        #endif
 
         // Flatten channels and merge draw calls
-        table.drawSplitter.setCurrentChannel(innerWindow.drawList, 0)
+        val splitter = table.drawSplitter
+        splitter.setCurrentChannel(innerWindow.drawList, 0)
         if (table.flags hasnt Tf.NoClip)
             table.mergeDrawChannels()
-        table.drawSplitter.merge(innerWindow.drawList)
+        splitter.merge(innerWindow.drawList)
 
         // Update ColumnsAutoFitWidth to get us ahead for host using our size to auto-resize without waiting for next BeginTable()
         val widthSpacings = table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
@@ -197,21 +199,21 @@ interface tables {
 
         // Pop from id stack
         assert(innerWindow.idStack.last() == table.id + table.instanceCurrent) { "Mismatching PushID/PopID!" }
-        assert(outerWindow.dc.itemWidthStack.size >= table.hostBackupItemWidthStackSize) { "Too many PopItemWidth!" }
+        assert(outerWindow.dc.itemWidthStack.size >= tempData.hostBackupItemWidthStackSize) { "Too many PopItemWidth!" }
         popID()
 
         // Restore window data that we modified
         val backupOuterMaxPos = Vec2(outerWindow.dc.cursorMaxPos)
-        innerWindow.workRect put table.hostBackupWorkRect
-        innerWindow.parentWorkRect put table.hostBackupParentWorkRect
+        innerWindow.workRect put tempData.hostBackupWorkRect
+        innerWindow.parentWorkRect put tempData.hostBackupParentWorkRect
         innerWindow.skipItems = table.hostSkipItems
         outerWindow.dc.cursorPos put table.outerRect.min
-        outerWindow.dc.itemWidth = table.hostBackupItemWidth
-        for (i in outerWindow.dc.itemWidthStack.size until table.hostBackupItemWidthStackSize)
+        outerWindow.dc.itemWidth = tempData.hostBackupItemWidth
+        for (i in outerWindow.dc.itemWidthStack.size until tempData.hostBackupItemWidthStackSize)
             outerWindow.dc.itemWidthStack += 0f
-        for (i in table.hostBackupItemWidthStackSize until outerWindow.dc.itemWidthStack.size)
+        for (i in tempData.hostBackupItemWidthStackSize until outerWindow.dc.itemWidthStack.size)
             outerWindow.dc.itemWidthStack.pop()
-        outerWindow.dc.columnsOffset = table.hostBackupColumnsOffset
+        outerWindow.dc.columnsOffset = tempData.hostBackupColumnsOffset
 
         // Layout in outer window
         // (FIXME: To allow auto-fit and allow desirable effect of SameLine() we dissociate 'used' vs 'ideal' size by overriding
@@ -229,15 +231,15 @@ interface tables {
             // ColumnsAutoFitWidth may be one frame ahead here since for Fixed+NoResize is calculated from latest contents
             assert(table.flags hasnt Tf.ScrollX)
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth)
-        } else if (table.userOuterSize.x <= 0f) {
+        } else if (tempData.userOuterSize.x <= 0f) {
             val decorationSize = if (table.flags has Tf.ScrollX) innerWindow.scrollbarSizes.x else 0f
-            outerWindow.dc.idealMaxPos.x = outerWindow.dc.idealMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth + decorationSize - table.userOuterSize.x)
+            outerWindow.dc.idealMaxPos.x = outerWindow.dc.idealMaxPos.x max (table.outerRect.min.x + table.columnsAutoFitWidth + decorationSize - tempData.userOuterSize.x)
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max (table.outerRect.max.x min table.outerRect.min.x + table.columnsAutoFitWidth)
         } else
             outerWindow.dc.cursorMaxPos.x = backupOuterMaxPos.x max table.outerRect.max.x
-        if (table.userOuterSize.y <= 0f) {
+        if (tempData.userOuterSize.y <= 0f) {
             val decorationSize = if (table.flags has Tf.ScrollY) innerWindow.scrollbarSizes.y else 0f
-            outerWindow.dc.idealMaxPos.y = outerWindow.dc.idealMaxPos.y max (innerContentMaxY + decorationSize - table.userOuterSize.y)
+            outerWindow.dc.idealMaxPos.y = outerWindow.dc.idealMaxPos.y max (innerContentMaxY + decorationSize - tempData.userOuterSize.y)
             outerWindow.dc.cursorMaxPos.y = backupOuterMaxPos.y max (table.outerRect.max.y min innerContentMaxY)
         } else
         // OuterRect.Max.y may already have been pushed downward from the initial value (unless ImGuiTableFlags_NoHostExtendY is set)
@@ -254,8 +256,11 @@ interface tables {
 
         // Clear or restore current table, if any
         assert(g.currentWindow === outerWindow && g.currentTable === table)
-        g.currentTableStack.pop()
-        g.currentTable = if (g.currentTableStack.isNotEmpty()) g.tables.getByIndex(g.currentTableStack.last().index) else null
+        assert(g.currentTableStackIdx >= 0)
+        g.currentTableStackIdx--
+        tempData = if(g.currentTableStackIdx >= 0) g.tablesTempDataStack[g.currentTableStackIdx] else null
+        g.currentTable = tempData?.let { g.tables.getByIndex(it.tableIndex) }
+        g.currentTable?.tempData = tempData
         outerWindow.dc.currentTableIdx = g.currentTable?.let { g.tables.getIndex(it).i } ?: -1
     }
 

@@ -7,7 +7,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-/** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame)
+/** Temporary storage for one window(, that's the data which in theory we could ditch at the end of the frame, in practice we currently keep it for each window)
  *
  *  Transient per-window data, reset at the beginning of the frame. This used to be called ImGuiDrawContext, hence the DC variable name in ImGuiWindow.
  *  (That's theory, in practice the delimitation between ImGuiWindow and ImGuiWindowTempData is quite tenuous and could be reconsidered..)

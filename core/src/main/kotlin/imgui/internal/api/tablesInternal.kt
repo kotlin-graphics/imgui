@@ -57,6 +57,16 @@ interface tablesInternal {
         if (instanceNo > 0)
             assert(table.columnsCount == columnsCount) { "BeginTable(): Cannot change columns count mid-frame while preserving same ID" }
 
+        // Acquire temporary buffers
+        val tableIdx = g.tables.getIndex(table).i
+        g.currentTableStackIdx++
+        if (g.currentTableStackIdx + 1 > g.tablesTempDataStack.size)
+            for (i in g.tablesTempDataStack.size until g.currentTableStackIdx + 1)
+                g.tablesTempDataStack += TableTempData()
+        val tempData = g.tablesTempDataStack[g.currentTableStackIdx]
+        table.tempData = tempData
+        tempData.tableIndex = tableIdx
+
         // Fix flags
         table.isDefaultSizingPolicy = flags hasnt Tf._SizingMask
         flags = tableFixFlags(flags, outerWindow)
@@ -71,7 +81,7 @@ interface tablesInternal {
         table.columnsCount = columnsCount
         table.isLayoutLocked = false
         table.innerWidth = innerWidth
-        table.userOuterSize put outerSize
+        tempData.userOuterSize put outerSize
 
         // When not using a child window, WorkRect.Max will grow as we append contents.
         if (useChildWindow) {
@@ -120,14 +130,14 @@ interface tablesInternal {
         table.hostIndentX = innerWindow.dc.indent
         table.hostClipRect put innerWindow.clipRect
         table.hostSkipItems = innerWindow.skipItems
-        table.hostBackupWorkRect put innerWindow.workRect
-        table.hostBackupParentWorkRect put innerWindow.parentWorkRect
-        table.hostBackupColumnsOffset = outerWindow.dc.columnsOffset
-        table.hostBackupPrevLineSize put innerWindow.dc.prevLineSize
-        table.hostBackupCurrLineSize put innerWindow.dc.currLineSize
-        table.hostBackupCursorMaxPos put innerWindow.dc.cursorMaxPos
-        table.hostBackupItemWidth = outerWindow.dc.itemWidth
-        table.hostBackupItemWidthStackSize = outerWindow.dc.itemWidthStack.size
+        tempData.hostBackupWorkRect put innerWindow.workRect
+        tempData.hostBackupParentWorkRect put innerWindow.parentWorkRect
+        tempData.hostBackupColumnsOffset = outerWindow.dc.columnsOffset
+        tempData.hostBackupPrevLineSize put innerWindow.dc.prevLineSize
+        tempData.hostBackupCurrLineSize put innerWindow.dc.currLineSize
+        tempData.hostBackupCursorMaxPos put innerWindow.dc.cursorMaxPos
+        tempData.hostBackupItemWidth = outerWindow.dc.itemWidth
+        tempData.hostBackupItemWidthStackSize = outerWindow.dc.itemWidthStack.size
         innerWindow.dc.prevLineSize put 0f
         innerWindow.dc.currLineSize put 0f
 
@@ -180,8 +190,6 @@ interface tablesInternal {
         table.borderColorLight = Col.TableBorderLight.u32
 
         // Make table current
-        val tableIdx = g.tables.getIndex(table)
-        g.currentTableStack += PtrOrIndex(tableIdx)
         g.currentTable = table
         outerWindow.dc.currentTableIdx = tableIdx.i
         if (innerWindow !== outerWindow) // So EndChild() within the inner window can restore the table properly.

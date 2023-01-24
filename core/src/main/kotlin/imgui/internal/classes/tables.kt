@@ -1,6 +1,7 @@
 package imgui.internal.classes
 
 import glm_.*
+import glm_.vec2.Vec2
 import imgui.*
 import imgui.internal.*
 import imgui.internal.sections.NavLayer
@@ -138,6 +139,37 @@ class TableColumn {
 
     /** Ordered of available sort directions (2-bits each) */
     var sortDirectionsAvailList = 0
+}
+
+/** Temporary storage for one table (one per table in the stack), shared between tables.
+ *
+ *  Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared.
+ *  Accessing those requires chasing an extra pointer so for very frequently used data we leave them in the main table structure.
+ *  FIXME-TABLE: more transient data could be stored here: DrawSplitter (!), SortSpecs? incoming RowData? */
+class TableTempData {
+
+    /** Index in g.Tables.Buf[] pool */
+    var tableIndex = 0
+
+    /** outer_size.x passed to BeginTable() */
+    val userOuterSize = Vec2()
+
+    /** Backup of InnerWindow->WorkRect at the end of BeginTable() */
+    val hostBackupWorkRect = Rect()
+    /** Backup of InnerWindow->ParentWorkRect at the end of BeginTable() */
+    val hostBackupParentWorkRect = Rect()
+    /** Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable() */
+    val hostBackupPrevLineSize = Vec2()
+    /** Backup of InnerWindow->DC.CurrLineSize at the end of BeginTable() */
+    val hostBackupCurrLineSize = Vec2()
+    /** Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable() */
+    val hostBackupCursorMaxPos = Vec2()
+    /** Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable() */
+    var hostBackupColumnsOffset = 0f
+    /** Backup of OuterWindow->DC.ItemWidth at the end of BeginTable() */
+    var hostBackupItemWidth = 0f
+    /** Backup of OuterWindow->DC.ItemWidthStack.Size at the end of BeginTable() */
+    var hostBackupItemWidthStackSize = 0
 }
 
 /** Transient cell data stored per row.
