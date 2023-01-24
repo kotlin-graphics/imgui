@@ -984,9 +984,8 @@ class Table {
             if (flags has Tf.NoBordersInBody && !isUsingHeaders)
                 continue
 
-            if (freezeColumnsCount > 0)
-                if (column.maxX < columns[displayOrderToIndex[freezeColumnsCount - 1]].maxX)
-                    continue
+            if (!column.isVisibleX && lastResizedColumn != columnN)
+                continue
 
             val columnId = getColumnResizeID(columnN, instanceCurrent)
             val hitRect = Rect(column.maxX - hitHalfWidth, hitY1, column.maxX + hitHalfWidth, borderY2Hit)

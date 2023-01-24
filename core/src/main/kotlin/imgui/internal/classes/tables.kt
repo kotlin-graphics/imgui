@@ -98,8 +98,10 @@ class TableColumn {
     /** Index within DrawSplitter.Channels[] */
     var drawChannelCurrent: TableDrawChannelIdx = -1
 
+    /** Draw channels for frozen rows (often headers) */
     var drawChannelFrozen: TableDrawChannelIdx = -1
 
+    /** Draw channels for unfrozen rows */
     var drawChannelUnfrozen: TableDrawChannelIdx = -1
 
     /** Is the column not marked Hidden by the user? (even if off view, e.g. clipped by scrolling). */
