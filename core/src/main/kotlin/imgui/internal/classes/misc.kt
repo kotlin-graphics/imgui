@@ -254,10 +254,10 @@ class ShrinkWidthItem(var index: Int = 0, var width: Float = 0f) {
 }
 
 class PtrOrIndex(
-        /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
-        val ptr: TabBar?,
-        /** Usually index in a main pool. */
-        val index: PoolIdx) {
+    /** Either field can be set, not both. e.g. Dock node tab bars are loose while BeginTabBar() ones are in a pool. */
+    val ptr: TabBar?,
+    /** Usually index in a main pool. */
+    val index: PoolIdx) {
 
     constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
 
@@ -267,21 +267,21 @@ class PtrOrIndex(
 
 /* Storage for current popup stack  */
 class PopupData(
-        /** Set on OpenPopup()  */
-        var popupId: ID = 0,
-        /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
-        var window: Window? = null,
-        /** Set on OpenPopup() copy of NavWindow at the time of opening the popup  */
-        var sourceWindow: Window? = null,
-        /** Set on OpenPopup()  */
-        var openFrameCount: Int = -1,
-        /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
-         *  (e.g. inside menu bar vs loose menu items)    */
-        var openParentId: ID = 0,
-        /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
-        var openPopupPos: Vec2 = Vec2(),
-        /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
-        var openMousePos: Vec2 = Vec2())
+    /** Set on OpenPopup()  */
+    var popupId: ID = 0,
+    /** Resolved on BeginPopup() - may stay unresolved if user never calls OpenPopup()  */
+    var window: Window? = null,
+    /** Set on OpenPopup() copy of NavWindow at the time of opening the popup  */
+    var sourceWindow: Window? = null,
+    /** Set on OpenPopup()  */
+    var openFrameCount: Int = -1,
+    /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others
+     *  (e.g. inside menu bar vs loose menu items)    */
+    var openParentId: ID = 0,
+    /** Set on OpenPopup(), preferred popup position (typically == OpenMousePos when using mouse)   */
+    var openPopupPos: Vec2 = Vec2(),
+    /** Set on OpenPopup(), copy of mouse position at the time of opening popup */
+    var openMousePos: Vec2 = Vec2())
 
 
 /** Clear all settings data */
@@ -365,11 +365,12 @@ class TabBarPool {
 
     /** ~GetByKey */
     operator fun get(key: ID): TabBar? = map[key]?.let { list[it.i] }
+
     /** ~GetByIndex */
     operator fun get(n: PoolIdx): TabBar? = list.getOrNull(n.i)
     fun getIndex(p: TabBar): PoolIdx = PoolIdx(list.indexOf(p))
     fun getOrAddByKey(key: ID): TabBar = map[key]?.let { list[it.i] }
-            ?: add().also { map[key] = PoolIdx(list.lastIndex) }
+        ?: add().also { map[key] = PoolIdx(list.lastIndex) }
 
     operator fun contains(p: TabBar): Boolean = p in list
     fun clear() {
@@ -378,11 +379,11 @@ class TabBarPool {
     }
 
     fun add(): TabBar = TabBar().also { list += it }
-//    fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
-//    fun remove(key: ID, idx: PoolIdx) {
-//        list[idx.i] = null
-//        map -= key
-//    }
+    //    fun remove(key: ID, p: TabBar) = remove(key, getIndex(p))
+    //    fun remove(key: ID, idx: PoolIdx) {
+    //        list[idx.i] = null
+    //        map -= key
+    //    }
 
     val size: Int
         get() = list.size
@@ -391,6 +392,9 @@ class TabBarPool {
 class Pool<T>(val placementNew: () -> T) : Iterable<T> {
     val buf = ArrayList<T>()        // Contiguous data
     val map = mutableMapOf<ID, PoolIdx>()        // ID->Index
+
+    /** Number of active/alive items (for display purpose only) */
+    var aliveCount = PoolIdx(0)
 
     fun destroy() = clear()
 
@@ -413,11 +417,13 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
     fun clear() {
         map.clear()
         buf.clear()
+        aliveCount = PoolIdx(0)
     }
 
     fun add(): T {
         val new = placementNew()
         buf += new
+        aliveCount++
         return new
     }
 
@@ -430,9 +436,18 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
         map.remove(key)
         // update indices in map
         map.replaceAll { _, i -> i - (i > idx).i }
+        aliveCount--
     }
-//    void        Reserve(int capacity)
-//    { Buf.reserve(capacity); Map.Data.reserve(capacity); }
+    //    void        Reserve(int capacity) { Buf.reserve(capacity); Map.Data.reserve(capacity); }
+
+    // To iterate a ImPool: for (int n = 0; n < pool.GetBufSize(); n++) if (T* t = pool.TryGetBufData(n)) { ... }
+    // Can be avoided if you know .Remove() has never been called on the pool, or AliveCount == GetBufSize()
+    val bufSize: Int
+        get() {
+            assert(buf.size == map.size)
+            return buf.size
+        }
+//    T*          TryGetBufData(ImPoolIdx n) { int idx = Map . Data [n].val_i; if (idx == -1) return NULL; return GetByIndex(idx); }
 
     val size get() = buf.size
     override fun iterator(): Iterator<T> = buf.iterator()
