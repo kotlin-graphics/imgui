@@ -3,10 +3,13 @@ package imgui.internal.api
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.popClipRect
+import imgui.ImGui.pushClipRect
 import imgui.api.g
 import imgui.api.widgetsComboBox
 import imgui.internal.classes.Rect
 import imgui.internal.isPowerOfTwo
+import imgui.internal.sections.LayoutType
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.PopupPositionPolicy
 import imgui.internal.sections.has
@@ -51,7 +54,7 @@ internal interface combos {
             if (it.wasActive) {
                 // Always override 'AutoPosLastDirection' to not leave a chance for a past value to affect us.
                 val sizeExpected = it.calcNextAutoFitSize()
-                it.autoPosLastDirection = if(flags has ComboFlag.PopupAlignLeft) Dir.Left else Dir.Down // Left = "Below, Toward Left", Down = "Below, Toward Right (default)"
+                it.autoPosLastDirection = if (flags has ComboFlag.PopupAlignLeft) Dir.Left else Dir.Down // Left = "Below, Toward Left", Down = "Below, Toward Right (default)"
                 val rOuter = it.popupAllowedExtentRect
                 val pos = ImGui.findBestWindowPosForPopupEx(bb.bl, sizeExpected, it::autoPosLastDirection, rOuter, bb, PopupPositionPolicy.ComboBox)
                 ImGui.setNextWindowPos(pos)
@@ -71,4 +74,53 @@ internal interface combos {
         }
         return true
     }
+
+    /** Call directly after the BeginCombo/EndCombo block. The preview is designed to only host non-interactive elements
+     *  (Experimental, see GitHub issues: #1658, #4168) */
+    fun beginComboPreview(): Boolean {
+        val window = g.currentWindow!!
+        val previewData = g.comboPreviewData
+
+        if (window.skipItems || !window.clipRect.overlaps(window.dc.lastItemRect)) // FIXME: Because we don't have a ImGuiItemStatusFlags_Visible flag to test last ItemAdd() result
+            return false
+        assert(window.dc.lastItemRect.min.x == previewData.previewRect.min.x && window.dc.lastItemRect.min.y == previewData.previewRect.min.y) { "Didn't call after BeginCombo/EndCombo block or forgot to pass ImGuiComboFlags_CustomPreview flag?" }
+        if (!window.clipRect.contains(previewData.previewRect)) // Narrower test (optional)
+            return false
+
+        // FIXME: This could be contained in a PushWorkRect() api
+        previewData.backupCursorPos put window.dc.cursorPos
+        previewData.backupCursorMaxPos put window.dc.cursorMaxPos
+        previewData.backupCursorPosPrevLine put window.dc.cursorPosPrevLine
+        previewData.backupPrevLineTextBaseOffset = window.dc.prevLineTextBaseOffset
+        previewData.backupLayout = window.dc.layoutType
+        window.dc.cursorPos = previewData.previewRect.min + g.style.framePadding
+        window.dc.cursorMaxPos put window.dc.cursorPos
+        window.dc.layoutType = LayoutType.Horizontal
+        pushClipRect(previewData.previewRect.min, previewData.previewRect.max, true)
+
+        return true
+    }
+
+    fun endComboPreview() {
+        val window = g.currentWindow!!
+        val previewData = g.comboPreviewData
+
+        // FIXME: Using CursorMaxPos approximation instead of correct AABB which we will store in ImDrawCmd in the future
+        val drawList = window.drawList
+        if (window.dc.cursorMaxPos.x < previewData.previewRect.max.x && window.dc.cursorMaxPos.y < previewData.previewRect.max.y)
+        if (drawList.cmdBuffer.size > 1) { // Unlikely case that the PushClipRect() didn't create a command
+            val rect = drawList.cmdBuffer[drawList.cmdBuffer.size-2].clipRect
+            drawList.cmdBuffer[drawList.cmdBuffer.lastIndex].clipRect put rect
+            drawList._cmdHeader.clipRect put rect
+            drawList._tryMergeDrawCmds()
+        }
+        popClipRect()
+        window.dc.cursorPos put previewData.backupCursorPos
+        window.dc.cursorMaxPos = window.dc.cursorMaxPos max previewData.backupCursorMaxPos
+        window.dc.cursorPosPrevLine = previewData.backupCursorPosPrevLine
+        window.dc.prevLineTextBaseOffset = previewData.backupPrevLineTextBaseOffset
+        window.dc.layoutType = previewData.backupLayout
+        previewData.previewRect put Rect()
+    }
+
 }

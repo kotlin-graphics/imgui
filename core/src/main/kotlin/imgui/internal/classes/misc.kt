@@ -309,6 +309,16 @@ class StyleMod(val idx: StyleVar) {
     val floats = FloatArray(2)
 }
 
+/** Storage data for BeginComboPreview()/EndComboPreview() */
+class ComboPreviewData {
+    val previewRect = Rect()
+    val backupCursorPos = Vec2()
+    val backupCursorMaxPos = Vec2()
+    val backupCursorPosPrevLine = Vec2()
+    var backupPrevLineTextBaseOffset = 0f
+    var backupLayout = LayoutType.Horizontal
+}
+
 /** Storage for one active tab item (sizeof() 40 bytes) */
 class TabItem {
     var id: ID = 0

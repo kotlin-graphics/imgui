@@ -3,15 +3,12 @@ package imgui.api
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.begin
 import imgui.ImGui.beginComboPopup
 import imgui.ImGui.buttonBehavior
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endPopup
-import imgui.ImGui.findBestWindowPosForPopupEx
-import imgui.ImGui.findWindowByName
 import imgui.ImGui.frameHeight
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemAdd
@@ -20,16 +17,13 @@ import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.openPopupEx
 import imgui.ImGui.popID
-import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushID
-import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.selectable
 import imgui.ImGui.setItemDefaultFocus
-import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
 import imgui.classes.SizeCallbackData
@@ -37,22 +31,21 @@ import imgui.has
 import imgui.hasnt
 import imgui.internal.classes.Rect
 import imgui.internal.hashStr
-import imgui.internal.isPowerOfTwo
 import imgui.internal.sections.*
 import kool.getValue
 import kool.setValue
 import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 import imgui.ComboFlag as Cf
-import imgui.WindowFlag as Wf
 
 // Widgets: Combo Box
 // - The BeginCombo()/EndCombo() api allows you to manage your contents and selection state however you want it, by creating e.g. Selectable() items.
 // - The old Combo() api are helpers over BeginCombo()/EndCombo() which are kept available for convenience purpose. This is analogous to how ListBox are created.
 interface widgetsComboBox {
 
-    fun beginCombo(label: String, previewValue: String?, flags_: ComboFlags = 0): Boolean {
+    fun beginCombo(label: String, previewValue_: String?, flags_: ComboFlags = 0): Boolean {
 
+        var previewValue = previewValue_
         var flags = flags_
 
         val window = currentWindow
@@ -98,6 +91,13 @@ interface widgetsComboBox {
         }
         renderFrameBorder(bb.min, bb.max, style.frameRounding)
 
+        // Custom preview
+        if (flags has Cf._CustomPreview) {
+            g.comboPreviewData.previewRect.put(bb.min.x, bb.min.y, valueX2, bb.max.y)
+            assert(previewValue == null || previewValue[0] == NUL)
+            previewValue = null
+        }
+
         // Render preview and label
         if (previewValue != null && flags hasnt Cf.NoPreview) {
             if (g.logEnabled)
@@ -119,7 +119,7 @@ interface widgetsComboBox {
 
     /** Combo box helper allowing to pass an array of strings.  */
     fun combo(label: String, currentItem: KMutableProperty0<Int>, items: Array<String>, heightInItems: Int = -1): Boolean =
-            combo(label, currentItem, items.toList(), heightInItems)
+        combo(label, currentItem, items.toList(), heightInItems)
 
     /** Combo box helper allowing to pass all items in a single string literal holding multiple zero-terminated items "item1\0item2\0" */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {

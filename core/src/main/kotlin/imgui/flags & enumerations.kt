@@ -453,7 +453,12 @@ enum class ComboFlag(@JvmField val i: ComboFlags) {
 
     /** Display only a square arrow button  */
     NoPreview(1 shl 6),
-    HeightMask_(HeightSmall or HeightRegular or HeightLarge or HeightLargest);
+    HeightMask_(HeightSmall or HeightRegular or HeightLarge or HeightLargest),
+
+    // private
+
+    /** enable BeginComboPreview() */
+    _CustomPreview(1 shl 20);
 
     infix fun and(b: ComboFlag): ComboFlags = i and b.i
     infix fun and(b: ComboFlags): ComboFlags = i and b

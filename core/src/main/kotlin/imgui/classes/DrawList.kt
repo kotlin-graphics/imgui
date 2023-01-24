@@ -1292,6 +1292,16 @@ class DrawList(sharedData: DrawListSharedData?) {
             cmdBuffer.pop()
     }
 
+    /** Try to merge two last draw commands */
+    fun _tryMergeDrawCmds() {
+        val currCmd = cmdBuffer.last()
+        val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
+        if (currCmd headerCompare prevCmd && currCmd.userCallback == null && prevCmd.userCallback == null) {
+            prevCmd.elemCount += currCmd.elemCount
+            cmdBuffer.pop()
+        }
+    }
+
     /** Our scheme may appears a bit unusual, basically we want the most-common calls AddLine AddRect etc. to not have
     to perform any check so we always have a command ready in the stack.
     The cost of figuring out if a new command has to be added or if we can merge is paid in those Update**

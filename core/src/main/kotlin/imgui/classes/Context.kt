@@ -508,6 +508,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Initial/reference color at the time of opening the color picker. */
     val colorPickerRef = Vec4()
 
+    val comboPreviewData = ComboPreviewData()
+
     /** Accumulated slider delta when using navigation controls. */
     var sliderCurrentAccum = 0f
 
