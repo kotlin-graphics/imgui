@@ -195,8 +195,10 @@ interface widgetsColorEditorPicker {
             if (inputText("##Text", buf.toByteArray(64), Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
-                while (buf[p] == '#' || buf[p].isBlankA) p++
-                i.fill(0)
+                while (buf[p] == '#' || buf[p].isBlankA)
+                    p++
+                i[0] = 0; i[1] = 0; i[2] = 0
+                i[3] = 0xFF // alpha default to 255 is not parsed by scanf (e.g. inputting #FFFFFF omitting alpha)
                 buf.substring(p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
             if (flags hasnt Cef.NoOptions)
