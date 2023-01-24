@@ -8,7 +8,7 @@ import imgui.Viewport
 // - In the future we will extend this concept further to also represent Platform Monitor and support a "no main platform window" operation mode.
 interface viewports {
 
-    /** return primary/default viewport. */
+    /** return primary/default viewport. This can never be NULL. */
     val mainViewport: Viewport
         get() = g.viewports[0]
 }

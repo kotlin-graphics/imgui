@@ -117,12 +117,12 @@ interface popupsModals {
     //  - CloseCurrentPopup(): use inside the BeginPopup()/EndPopup() scope to close manually.
     //  - CloseCurrentPopup() is called by default by Selectable()/MenuItem() when activated (FIXME: need some options).
     //  - Use ImGuiPopupFlags_NoOpenOverExistingPopup to avoid opening a popup if there's already one at the same level. This is equivalent to e.g. testing for !IsAnyPopupOpen() prior to OpenPopup().
-
+    //  - Use IsWindowAppearing() after BeginPopup() to tell if a window just opened.
 
     /** call to mark popup as open (don't call every frame!). */
     fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) = openPopupEx(g.currentWindow!!.getID(strId), popupFlags)
 
-    /** helper to open popup when clicked on last item. return true when just opened.
+    /** helper to open popup when clicked on last item. Default to ImGuiPopupFlags_MouseButtonRight == 1.
      *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
      *
      *  Helper to open a popup if mouse button is released over the item
@@ -225,7 +225,7 @@ interface popupsModals {
     }
 
 
-    // Popups: test function
+    // Popups: query functions
     //  - IsPopupOpen(): return true if the popup is open at the current BeginPopup() level of the popup stack.
     //  - IsPopupOpen() with ImGuiPopupFlags_AnyPopupId: return true if any popup is open at the current BeginPopup() level of the popup stack.
     //  - IsPopupOpen() with ImGuiPopupFlags_AnyPopupId + ImGuiPopupFlags_AnyPopupLevel: return true if any popup is open.

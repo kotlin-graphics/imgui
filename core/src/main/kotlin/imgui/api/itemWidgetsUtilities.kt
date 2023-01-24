@@ -11,7 +11,7 @@ import imgui.internal.sections.has
 import imgui.internal.sections.hasnt
 import imgui.HoveredFlag as Hf
 
-// Item/Widgets Utilities
+// Item/Widgets Utilities and Query Functions
 // - Most of the functions are referring to the previous Item that has been submitted.
 // - See Demo Window under "Widgets->Querying Status" for an interactive visualization of most of those functions.
 interface itemWidgetsUtilities {

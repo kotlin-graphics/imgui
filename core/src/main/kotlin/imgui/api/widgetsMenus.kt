@@ -56,10 +56,11 @@ import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.sections.LayoutType as Lt
 
-/** Menu
- *  - Use BeginMenuBar() on a window ImGuiWindowFlags_MenuBar to append to its menu bar.
- *  - Use BeginMainMenuBar() to create a menu bar at the top of the screen and append to it.
- *  - Use BeginMenu() to create a menu. You can call BeginMenu() multiple time with the same identifier to append more items to it. */
+// Widgets: Menus
+// - Use BeginMenuBar() on a window ImGuiWindowFlags_MenuBar to append to its menu bar.
+// - Use BeginMainMenuBar() to create a menu bar at the top of the screen and append to it.
+// - Use BeginMenu() to create a menu. You can call BeginMenu() multiple time with the same identifier to append more items to it.
+// - Not that MenuItem() keyboardshortcuts are displayed as a convenience but _not processed_ by Dear ImGui at the moment.
 interface widgetsMenus {
 
     /** Append to menu-bar of current window (requires WindowFlag.MenuBar flag set on parent window).
@@ -350,7 +351,7 @@ interface widgetsMenus {
         endPopup()
     }
 
-    /** return true when activated. shortcuts are displayed for convenience but not processed by ImGui at the moment    */
+    /** return true when activated. */
     fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true): Boolean {
 
         val window = currentWindow
