@@ -33,6 +33,8 @@ import imgui.ImGui.setTooltip
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
+import imgui.api.demoDebugInformations
+import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.dsl.button
 import imgui.dsl.menu
 import imgui.dsl.popup
@@ -150,38 +152,70 @@ object ShowDemoWindowPopups {
             treeNode("Context menus") {
 
                 // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
-                //    if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
-                //       OpenPopup(id);
-                //    return BeginPopup(id);
-                // For more advanced uses you may want to replicate and customize this code.
-                // See details in BeginPopupContextItem().
-                text("Value = %.3f (<-- right-click here)", value)
-                popupContextItem("item context menu") {
-                    if (selectable("Set to zero")) value = 0f
-                    if (selectable("Set to PI")) value = glm.PIf
-                    withItemWidth(-Float.MIN_VALUE) {
-                        dragFloat("##Value", ::value, 0.1f, 0f, 0f)
+                //     if (id == 0)
+                //         id = GetItemID(); // Use last item id
+                //     if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
+                //         OpenPopup(id);
+                //     return BeginPopup(id);
+                // For advanced advanced uses you may want to replicate and customize this code.
+                // See more details in BeginPopupContextItem().
+
+                // Example 1
+                // When used after an item that has an ID (e.g. Button), we can skip providing an ID to BeginPopupContextItem(),
+                // and BeginPopupContextItem() will use the last item ID as the popup ID.
+                run {
+                    val names = listOf("Label1", "Label2", "Label3", "Label4", "Label5")
+                    for (n in 0..4) {
+                        selectable(names[n])
+                        popupContextItem { // <-- use last item id as popup id
+                            text("This a popup for \"${names[n]}\"!")
+                            if (button("Close"))
+                                closeCurrentPopup()
+                        }
+                        if (isItemHovered())
+                            setTooltip("Right-click to open popup")
                     }
                 }
 
-                // We can also use OpenPopupOnItemClick() which is the same as BeginPopupContextItem() but without the
-                // Begin() call. So here we will make it that clicking on the text field with the right mouse button (1)
-                // will toggle the visibility of the popup above.
-                text("(You can also right-click me to open the same popup as above.)")
-                openPopupOnItemClick("item context menu", MouseButton.Right.i)
+                // Example 2
+                // Popup on a Text() element which doesn't have an identifier: we need to provide an identifier to BeginPopupContextItem().
+                // Using an explicit identifier is also convenient if you want to activate the popups from different locations.
+                run {
+                    helpMarker("Text() elements don't have stable identifiers so we need to provide one.")
+                    text("Value = %.3f (<-- right-click here)", value)
+                    popupContextItem("item context menu") {
+                        if (selectable("Set to zero")) value = 0f
+                        if (selectable("Set to PI")) value = glm.πf
+                        withItemWidth(-Float.MIN_VALUE) {
+                            dragFloat("##Value", ::value, 0.1f, 0f, 0f)
+                        }
+                    }
 
-                // When used after an item that has an ID (e.g.Button), we can skip providing an ID to BeginPopupContextItem().
-                // BeginPopupContextItem() will use the last item ID as the popup ID.
-                // In addition here, we want to include your editable label inside the button label.
-                // We use the ### operator to override the ID (read FAQ about ID for details)
-                val text = "Button: ${name.cStr}###Button" // ### operator override id ignoring the preceding label
-                button(text)
-                popupContextItem {
-                    text("Edit name")
-                    inputText("##edit", name)
-                    if (button("Close")) closeCurrentPopup()
+                    // We can also use OpenPopupOnItemClick() to toggle the visibility of a given popup.
+                    // Here we make it that right-clicking this other text element opens the same popup as above.
+                    // The popup itself will be submitted by the code above.
+                    text("(2) Or right-click this text")
+                    openPopupOnItemClick("my popup", PopupFlag.MouseButtonRight.i)
+
+                    // Back to square one : manually open the same popup .
+                    if (button("(3) Or click this button"))
+                        openPopup("my popup")
                 }
-                sameLine(); text("(<-- right-click here)")
+                /// Example 3
+                // When using BeginPopupContextItem() with an implicit identifier (NULL == use last item ID),
+                // we need to make sure your item identifier is stable.
+                // In this example we showcase altering the item label while preserving its identifier, using the ### operator (see FAQ).
+                run {
+                    helpMarker("Showcase using a popup ID linked to item ID, with the item having a changing label + stable ID using the ### operator.")
+                    val text = "Button: ${name.cStr}###Button" // ### operator override id ignoring the preceding label
+                    button(text)
+                    popupContextItem {
+                        text("Edit name")
+                        inputText("##edit", name)
+                        if (button("Close")) closeCurrentPopup()
+                    }
+                    sameLine(); text("(<-- right-click here)")
+                }
             }
         }
     }
