@@ -65,6 +65,7 @@ import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.internal.*
 import imgui.internal.classes.*
+import imgui.internal.sections.InputSource
 import kool.BYTES
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -305,6 +306,9 @@ interface demoDebugInformations {
 
         // Misc Details
         if (treeNode("Internal state")) {
+
+            // [JVM] redundant
+//            const char* input_source_names[] = { "None", "Mouse", "Keyboard", "Gamepad", "Nav", "Clipboard" }; IM_ASSERT(IM_ARRAYSIZE(input_source_names) == ImGuiInputSource_COUNT);
 
             text("WINDOWING")
             indent {
