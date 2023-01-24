@@ -199,11 +199,16 @@ interface tablesInternal {
 
         // Setup memory buffer (clear data if columns count changed)
         val storedSize = table.columns.size
-        if (storedSize != 0 && storedSize != columnsCount) {
-//            IM_FREE(table->RawData);
-//            table->RawData = NULL;
+        var oldColumnsToPreserve: ArrayList<TableColumn>? = null
+        //        void* old_columns_raw_data = NULL
+        val oldColumnsCount = table.columns.size
+        if (oldColumnsCount != 0 && oldColumnsCount != columnsCount) {
+            // Attempt to preserve width on column count change (#4046) TODO
+            oldColumnsToPreserve = table.columns
+            //            old_columns_raw_data = table->RawData
+            //            table->RawData = NULL;
         }
-//        if (table->RawData == NULL)
+        //        if (table->RawData == NULL)
         if (table.columns.isEmpty()) {
             table beginInitMemory columnsCount
             table.isInitializing = true
@@ -225,18 +230,26 @@ interface tablesInternal {
             table.hoveredColumnBorder = -1
             for (n in 0 until columnsCount) {
                 var column = table.columns[n]
-                val widthAuto = column.widthAuto
-//                *column = ImGuiTableColumn()
-                table.columns[n] = TableColumn()
-                column = table.columns[n]
-                column.widthAuto = widthAuto
-                column.isPreserveWidthAuto = true // Preserve WidthAuto when reinitializing a live table: not technically necessary but remove a visible flicker
+                if (oldColumnsToPreserve != null && n < oldColumnsCount) {
+                    // FIXME: We don't attempt to preserve column order in this path.
+//                    *column = old_columns_to_preserve[n];
+                } else {
+                    val widthAuto = column.widthAuto
+                    //                *column = ImGuiTableColumn()
+                    table.columns[n] = TableColumn()
+                    column = table.columns[n]
+                    column.widthAuto = widthAuto
+                    column.isPreserveWidthAuto = true // Preserve WidthAuto when reinitializing a live table: not technically necessary but remove a visible flicker
+                    column.isEnabled = true; column.isEnabledNextFrame = true
+                }
                 column.displayOrder = n
                 table.displayOrderToIndex[n] = n
                 column.isEnabled = true
                 column.isEnabledNextFrame = true
             }
         }
+//        if (old_columns_raw_data)
+//            IM_FREE(old_columns_raw_data);
 
         // Load settings
         if (table.isSettingsRequestLoad)
@@ -272,22 +285,22 @@ interface tablesInternal {
         return true
     }
 
-//  -> Table class
-//    IMGUI_API void          TableBeginInitMemory(ImGuiTable* table, int columns_count);
-//    IMGUI_API void          TableBeginApplyRequests(ImGuiTable* table);
-//    IMGUI_API void          TableSetupDrawChannels(ImGuiTable* table);
-//    IMGUI_API void          TableUpdateLayout(ImGuiTable* table);
-//    IMGUI_API void          TableUpdateBorders(ImGuiTable* table);
-//    IMGUI_API void          TableDrawBorders(ImGuiTable* table);
-//    IMGUI_API void          TableDrawContextMenu(ImGuiTable* table);
-//    IMGUI_API void          TableMergeDrawChannels(ImGuiTable* table);
-//    IMGUI_API void          TableSortSpecsSanitize(ImGuiTable* table);
-//    IMGUI_API void          TableSortSpecsBuild(ImGuiTable* table);
+    //  -> Table class
+    //    IMGUI_API void          TableBeginInitMemory(ImGuiTable* table, int columns_count);
+    //    IMGUI_API void          TableBeginApplyRequests(ImGuiTable* table);
+    //    IMGUI_API void          TableSetupDrawChannels(ImGuiTable* table);
+    //    IMGUI_API void          TableUpdateLayout(ImGuiTable* table);
+    //    IMGUI_API void          TableUpdateBorders(ImGuiTable* table);
+    //    IMGUI_API void          TableDrawBorders(ImGuiTable* table);
+    //    IMGUI_API void          TableDrawContextMenu(ImGuiTable* table);
+    //    IMGUI_API void          TableMergeDrawChannels(ImGuiTable* table);
+    //    IMGUI_API void          TableSortSpecsSanitize(ImGuiTable* table);
+    //    IMGUI_API void          TableSortSpecsBuild(ImGuiTable* table);
 
     /** Calculate next sort direction that would be set after clicking the column
      *  - If the PreferSortDescending flag is set, we will default to a Descending direction on the first click.
      *  - Note that the PreferSortAscending flag is never checked, it is essentially the default and therefore a no-op. */
-//    IM_STATIC_ASSERT(ImGuiSortDirection_None == 0 && ImGuiSortDirection_Ascending == 1 && ImGuiSortDirection_Descending == 2);
+    //    IM_STATIC_ASSERT(ImGuiSortDirection_None == 0 && ImGuiSortDirection_Ascending == 1 && ImGuiSortDirection_Descending == 2);
     fun tableGetColumnNextSortDirection(column: TableColumn): SortDirection {
         assert(column.sortDirectionsAvailCount > 0)
         if (column.sortOrder == -1)
@@ -300,35 +313,35 @@ interface tablesInternal {
     }
 
     //  -> Table class
-//    IMGUI_API void          TableBeginRow(ImGuiTable* table)
-//    IMGUI_API void          TableEndRow(ImGuiTable* table)
-//    IMGUI_API void          TableBeginCell(ImGuiTable* table, int column_n)
-//    IMGUI_API void          TableEndCell(ImGuiTable* table)
-//    IMGUI_API ImRect        TableGetCellBgRect(const ImGuiTable* table, int column_n)
-//    IMGUI_API const char*   TableGetColumnName(const ImGuiTable* table, int column_n)
-//    IMGUI_API ImGuiID       TableGetColumnResizeID(const ImGuiTable* table, int column_n, int instance_no = 0)
+    //    IMGUI_API void          TableBeginRow(ImGuiTable* table)
+    //    IMGUI_API void          TableEndRow(ImGuiTable* table)
+    //    IMGUI_API void          TableBeginCell(ImGuiTable* table, int column_n)
+    //    IMGUI_API void          TableEndCell(ImGuiTable* table)
+    //    IMGUI_API ImRect        TableGetCellBgRect(const ImGuiTable* table, int column_n)
+    //    IMGUI_API const char*   TableGetColumnName(const ImGuiTable* table, int column_n)
+    //    IMGUI_API ImGuiID       TableGetColumnResizeID(const ImGuiTable* table, int column_n, int instance_no = 0)
 
     //  -> Table class
-//    IMGUI_API float         TableGetMaxColumnWidth(const ImGuiTable* table, int column_n);
-//    IMGUI_API void          TableSetColumnWidthAutoSingle(ImGuiTable* table, int column_n)
-//    IMGUI_API void          TableSetColumnWidthAutoAll(ImGuiTable* table)
-//    IMGUI_API void          TableRemove(ImGuiTable* table)
-//    IMGUI_API void          TableGcCompactTransientBuffers(ImGuiTable* table)
+    //    IMGUI_API float         TableGetMaxColumnWidth(const ImGuiTable* table, int column_n);
+    //    IMGUI_API void          TableSetColumnWidthAutoSingle(ImGuiTable* table, int column_n)
+    //    IMGUI_API void          TableSetColumnWidthAutoAll(ImGuiTable* table)
+    //    IMGUI_API void          TableRemove(ImGuiTable* table)
+    //    IMGUI_API void          TableGcCompactTransientBuffers(ImGuiTable* table)
 
     /** Compact and remove unused settings data (currently only used by TestEngine) */
     fun tableGcCompactSettings() {
         g.settingsTables.removeIf { it.id == 0 }
-//        var requiredMemory = 0;
-//        for (settings in g.settingsTables)
-//            if (settings.id != 0)
-//                requiredMemory += tableSettingsCalcChunkSize(settings.columnsCount);
-//        if (requiredMemory == g.settingsTables.Buf.Size)
-//            return;
-//        ImChunkStream<ImGuiTableSettings> new_chunk_stream;
-//        new_chunk_stream.Buf.reserve(requiredMemory);
-//        for (ImGuiTableSettings* settings = g.SettingsTables.begin(); settings != NULL; settings = g.SettingsTables.next_chunk(settings))
-//        if (settings->ID != 0)
-//        memcpy(new_chunk_stream.alloc_chunk(TableSettingsCalcChunkSize(settings->ColumnsCount)), settings, TableSettingsCalcChunkSize(settings->ColumnsCount));
-//        g.SettingsTables.swap(new_chunk_stream);
+        //        var requiredMemory = 0;
+        //        for (settings in g.settingsTables)
+        //            if (settings.id != 0)
+        //                requiredMemory += tableSettingsCalcChunkSize(settings.columnsCount);
+        //        if (requiredMemory == g.settingsTables.Buf.Size)
+        //            return;
+        //        ImChunkStream<ImGuiTableSettings> new_chunk_stream;
+        //        new_chunk_stream.Buf.reserve(requiredMemory);
+        //        for (ImGuiTableSettings* settings = g.SettingsTables.begin(); settings != NULL; settings = g.SettingsTables.next_chunk(settings))
+        //        if (settings->ID != 0)
+        //        memcpy(new_chunk_stream.alloc_chunk(TableSettingsCalcChunkSize(settings->ColumnsCount)), settings, TableSettingsCalcChunkSize(settings->ColumnsCount));
+        //        g.SettingsTables.swap(new_chunk_stream);
     }
 }

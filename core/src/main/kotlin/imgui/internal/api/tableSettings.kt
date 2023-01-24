@@ -151,6 +151,9 @@ fun tableSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: S
         for (columnN in 0 until settings.columnsCount) {
             val column = settings.columnSettings[columnN]
             // "Column 0  UserID=0x42AD2D21 Width=100 Visible=1 Order=0 Sort=0v"
+            val saveColumn = column.userID != 0 || saveSize || saveVisible || saveOrder || (saveSort && column.sortOrder != -1)
+            if (!saveColumn)
+                continue
             buf += "Column %-2d".format(columnN)
             if (column.userID != 0) buf += " UserID=%08X".format(column.userID)
             if (saveSize && column.isStretch) buf += " Weight=%.4f".format(column.widthOrWeight)
