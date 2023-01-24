@@ -208,6 +208,7 @@ interface windows {
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
+            val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
             window.calcContentSizes(window.contentSize, window.contentSize)
             if (window.hiddenFramesCanSkipItems > 0) window.hiddenFramesCanSkipItems--
             if (window.hiddenFramesCannotSkipItems > 0) window.hiddenFramesCannotSkipItems--
@@ -332,7 +333,6 @@ interface windows {
                 if (flags hasnt Wf._Popup && !windowPosSetByApi && !windowIsChildTooltip) window.pos put parentWindow.dc.cursorPos
             }
 
-            val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0
             if (windowPosWithPivot) // Position given a pivot (e.g. for centering)
                 window.setPos(window.setWindowPosVal - window.size * window.setWindowPosPivot, Cond.None)
