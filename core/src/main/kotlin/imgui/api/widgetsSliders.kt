@@ -10,6 +10,7 @@ import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.format
+import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
@@ -249,6 +250,8 @@ interface widgetsSliders {
             is Ulong -> data.v
             else -> data
         })
+        if (g.logEnabled)
+            logSetNextTextDecoration("{", "}");
         ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
         if (labelSize.x > 0f) {
@@ -256,7 +259,7 @@ interface widgetsSliders {
             ImGui.renderText(pos, label)
         }
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
         return valueChanged
     }
 

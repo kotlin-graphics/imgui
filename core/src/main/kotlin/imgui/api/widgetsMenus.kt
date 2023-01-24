@@ -391,7 +391,7 @@ interface widgetsMenus {
         }
 
         val f = ItemStatusFlag.Checkable or if(selected) ItemStatusFlag.Checked else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label, window.dc.itemFlags or f)
+        IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label, window.dc.lastItemStatusFlags or f)
         return pressed
     }
 

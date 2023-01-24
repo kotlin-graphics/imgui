@@ -599,7 +599,7 @@ internal interface widgetsLowLevelBehaviors {
                 treePushOverrideID(id)
             val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
             val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-            IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label.cStr, window.dc.itemFlags or f or f2)
+            IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label.cStr, window.dc.lastItemStatusFlags or f or f2)
             return isOpen
         }
 
@@ -719,7 +719,7 @@ internal interface widgetsLowLevelBehaviors {
             treePushOverrideID(id)
         val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
         val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, window.dc.itemFlags or f or f2)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, window.dc.lastItemStatusFlags or f or f2)
         return isOpen
     }
 

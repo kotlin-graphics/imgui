@@ -94,7 +94,7 @@ internal interface loggingCapture {
     }
 
     /** Important: doesn't copy underlying data, use carefully (prefix/suffix must be in scope at the time of the next LogRenderedText) */
-    fun logSetNextTextDecoration(prefix: String, suffix: String) {
+    fun logSetNextTextDecoration(prefix: String, suffix: String) { // TODO check where this is called, missed some porting
         g.logNextPrefix = prefix
         g.logNextSuffix = suffix
     }

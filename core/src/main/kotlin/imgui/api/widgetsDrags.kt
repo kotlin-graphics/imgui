@@ -18,6 +18,7 @@ import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.format
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDragPastThreshold
+import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushID
@@ -290,12 +291,14 @@ interface widgetsDrags {
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
         val value = pData.format(dataType, format)
+        if (g.logEnabled)
+            logSetNextTextDecoration("{", "}")
         ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))
 
         if (labelSize.x > 0f)
             ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
         return valueChanged
     }
 

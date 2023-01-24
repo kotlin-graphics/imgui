@@ -82,10 +82,10 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
     //  [imgui-test only]
-    Openable(1 shl 10),
-    Opened(1 shl 11),
-    Checkable(1 shl 12),
-    Checked(1 shl 13);
+    Openable(1 shl 20),
+    Opened(1 shl 21),
+    Checkable(1 shl 22),
+    Checked(1 shl 23);
 
     infix fun and(b: ItemStatusFlag): ItemStatusFlags = i and b.i
     infix fun and(b: ItemStatusFlags): ItemStatusFlags = i and b

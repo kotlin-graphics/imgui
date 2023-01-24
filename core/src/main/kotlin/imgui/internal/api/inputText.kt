@@ -33,6 +33,7 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
+import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.parseFormatTrimDecorations
@@ -869,8 +870,10 @@ internal interface inputText {
         }
 
         // Log as text
-        if (g.logEnabled && (!isPassword || isDisplayingHint))
+        if (g.logEnabled && (!isPassword || isDisplayingHint)) {
+            logSetNextTextDecoration("{", "}")
             logRenderedText(drawPos, String(bufDisplay, 0, bufDisplayEnd), bufDisplayEnd)
+        }
 
         if (labelSize.x > 0)
             renderText(Vec2(frameBb.max.x + style.itemInnerSpacing.x, frameBb.min.y + style.framePadding.y), label)
@@ -878,7 +881,7 @@ internal interface inputText {
         if (valueChanged && flags hasnt Itf._NoMarkEdited)
             markItemEdited(id)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.itemFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
         return when {
             flags has Itf.EnterReturnsTrue -> enterPressed
             else -> valueChanged
