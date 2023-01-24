@@ -1,19 +1,14 @@
 package imgui.internal.api
 
-import gli_.hasnt
-import glm_.f
+import glm_.*
 import glm_.func.common.max
 import glm_.func.common.min
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
-import glm_.wo
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.hoveredId
-import imgui.ImGui.io
 import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.sameLine
@@ -83,7 +78,7 @@ internal interface basicHelpersForWidgetCode {
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over available surface
      *  declare their minimum size requirement to ItemSize() and provide a larger region to ItemAdd() which is used drawing/interaction. */
-    fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null): Boolean {
+    fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null, flags: ItemAddFlags = 0): Boolean {
 
         val window = g.currentWindow!!
         if (id != 0) {
@@ -123,6 +118,11 @@ internal interface basicHelpersForWidgetCode {
         // Clipping test
         if (isClippedEx(bb, id, false)) return false
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
+
+        // Tab stop handling (previously was using internal ItemFocusable() api)
+        // FIXME-NAV: We would now want to move this above the clipping test, but this would require being able to scroll and currently this would mean an extra frame. (#4079, #343)
+        if (flags has ItemAddFlag.Focusable)
+            itemFocusable(window, id)
 
         // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
         if (isMouseHoveringRect(bb))
@@ -164,6 +164,45 @@ internal interface basicHelpersForWidgetCode {
         }
     }
 
+    fun itemFocusable(window: Window, id: ID) {
+
+        assert(id != 0 && id == window.dc.lastItemId)
+
+        // Increment counters
+        // FIXME: ImGuiItemFlags_Disabled should disable more.
+        val isTabStop = g.currentItemFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
+        window.dc.focusCounterRegular++
+        if (isTabStop) {
+            window.dc.focusCounterTabStop++
+            if (g.navId == id)
+                g.navIdTabCounter = window.dc.focusCounterTabStop
+        }
+
+        // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
+        // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
+        if (g.activeId == id && g.tabFocusPressed && !isActiveIdUsingKey(Key.Tab) && g.tabFocusRequestNextWindow == null) {
+            g.tabFocusRequestNextWindow = window
+            g.tabFocusRequestNextCounterTabStop = window.dc.focusCounterTabStop + if (g.io.keyShift) if (isTabStop) -1 else 0 else +1 // Modulo on index will be applied at the end of frame once we've got the total counter of items.
+        }
+
+        // Handle focus requests
+        if (g.tabFocusRequestCurrWindow === window) {
+            if (window.dc.focusCounterRegular == g.tabFocusRequestCurrCounterRegular) {
+                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.FocusedByCode
+                return
+            }
+            if (isTabStop && window.dc.focusCounterTabStop == g.tabFocusRequestCurrCounterTabStop) {
+                g.navJustTabbedId = id
+                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.FocusedByTabbing
+                return
+            }
+
+            // If another item is about to be focused, we clear our own active id
+            if (g.activeId == id)
+                clearActiveID()
+        }
+    }
+
     fun isClippedEx(bb: Rect, id: ID, clipEvenWhenLogged: Boolean): Boolean {
         val window = g.currentWindow!!
         if (!(bb overlaps window.clipRect))
@@ -179,52 +218,6 @@ internal interface basicHelpersForWidgetCode {
         window.dc.lastItemId = itemId
         window.dc.lastItemStatusFlags = itemFlags
         window.dc.lastItemRect put itemRect
-    }
-
-    /** Return true if focus is requested
-     *  Process TAB/Shift+TAB. Be mindful that this function may _clear_ the ActiveID when tabbing out. */
-    // TODO move both methods into Window class?
-    fun focusableItemRegister(window: Window, id: ID): Boolean {
-
-        // Increment counters
-        val isTabStop = g.currentItemFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
-        window.dc.focusCounterRegular++
-        if (isTabStop) {
-            window.dc.focusCounterTabStop++
-            if (g.navId == id)
-                g.navIdTabCounter = window.dc.focusCounterTabStop
-        }
-
-        // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
-        // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
-        if (g.activeId == id && g.tabFocusPressed && !isActiveIdUsingKey(Key.Tab) && g.tabFocusRequestNextWindow == null) {
-            g.tabFocusRequestNextWindow = window
-            g.tabFocusRequestNextCounterTabStop = window.dc.focusCounterTabStop + when {
-                // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-                io.keyShift -> if (isTabStop) -1 else 0
-                else -> +1
-            }
-        }
-        // Handle focus requests
-        if (g.tabFocusRequestCurrWindow === window) {
-            if (window.dc.focusCounterRegular == g.tabFocusRequestCurrCounterRegular)
-                return true
-            if (isTabStop && window.dc.focusCounterTabStop == g.tabFocusRequestCurrCounterTabStop) {
-                g.navJustTabbedId = id
-                return true
-            }
-
-            // If another item is about to be focused, we clear our own active id
-            if (g.activeId == id)
-                clearActiveID()
-        }
-
-        return false
-    }
-
-    fun focusableItemUnregister(window: Window) {
-        window.dc.focusCounterRegular--
-        window.dc.focusCounterTabStop--
     }
 
     /** [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == CalcItemWidth().

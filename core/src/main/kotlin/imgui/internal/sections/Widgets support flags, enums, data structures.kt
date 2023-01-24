@@ -50,6 +50,33 @@ infix fun ItemFlags.hasnt(b: ItemFlag): Boolean = and(b.i) == 0
 infix fun ItemFlags.wo(b: ItemFlag): ItemFlags = and(b.i.inv())
 
 
+typealias ItemAddFlags = Int
+
+/** Flags for ItemAdd()
+ *  FIXME-NAV: _Focusable is _ALMOST_ what you would expect to be called '_TabStop' but because SetKeyboardFocusHere() works on items with no TabStop we distinguish Focusable from TabStop. */
+enum class ItemAddFlag(@JvmField val i: ItemAddFlags) {
+    None(0),
+
+    /** FIXME-NAV: In current/legacy scheme, Focusable+TabStop support are opt-in by widgets. We will transition it toward being opt-out, so this flag is expected to eventually disappear. */
+    Focusable(1 shl 0);
+
+    infix fun and(b: ItemAddFlag): ItemAddFlags = i and b.i
+    infix fun and(b: ItemAddFlags): ItemAddFlags = i and b
+    infix fun or(b: ItemAddFlag): ItemAddFlags = i or b.i
+    infix fun or(b: ItemAddFlags): ItemAddFlags = i or b
+    infix fun xor(b: ItemAddFlag): ItemAddFlags = i xor b.i
+    infix fun xor(b: ItemAddFlags): ItemAddFlags = i xor b
+    infix fun wo(b: ItemAddFlags): ItemAddFlags = and(b.inv())
+}
+
+infix fun ItemAddFlags.and(b: ItemAddFlag): ItemAddFlags = and(b.i)
+infix fun ItemAddFlags.or(b: ItemAddFlag): ItemAddFlags = or(b.i)
+infix fun ItemAddFlags.xor(b: ItemAddFlag): ItemAddFlags = xor(b.i)
+infix fun ItemAddFlags.has(b: ItemAddFlag): Boolean = and(b.i) != 0
+infix fun ItemAddFlags.hasnt(b: ItemAddFlag): Boolean = and(b.i) == 0
+infix fun ItemAddFlags.wo(b: ItemAddFlag): ItemAddFlags = and(b.i.inv())
+
+
 typealias ItemStatusFlags = Int
 
 /** Storage for LastItem data   */
@@ -79,6 +106,13 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
 
     /** Override the HoveredWindow test to allow cross-window hover testing. */
     HoveredWindow(1 shl 7),
+
+    /** Set when the Focusable item just got focused from code. */
+    FocusedByCode(1 shl 8),
+
+    /** Set when the Focusable item just got focused by Tabbing. */
+    FocusedByTabbing(1 shl 9),
+    Focused(FocusedByCode or FocusedByTabbing),
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
     //  [imgui-test only]
@@ -307,6 +341,7 @@ enum class InputSource {
 
     /** Stored in g.ActiveIdSource only */
     Nav,
+
     /** Currently only used by InputText() */
     Clipboard
 }

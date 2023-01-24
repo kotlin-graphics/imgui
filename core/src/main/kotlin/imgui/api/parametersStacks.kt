@@ -196,7 +196,9 @@ interface parametersStacks {
         }
     }
 
-    // FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
+    /** FIXME: Look into renaming this once we have settled the new Focus/Activation/TabStop system.
+     *
+     *  == tab stop enable. Allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets */
     fun pushAllowKeyboardFocus(allowKeyboardFocus: Boolean) = pushItemFlag(If.NoTabStop.i, !allowKeyboardFocus)
 
     fun popAllowKeyboardFocus() = popItemFlag()

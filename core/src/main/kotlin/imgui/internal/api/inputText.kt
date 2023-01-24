@@ -25,7 +25,6 @@ import imgui.ImGui.dummy
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.focusWindow
-import imgui.ImGui.focusableItemRegister
 import imgui.ImGui.format
 import imgui.ImGui.getColorU32
 import imgui.ImGui.io
@@ -50,16 +49,14 @@ import imgui.ImGui.scrollMaxY
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.style
+import imgui.InputTextFlag
 import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.internal.*
 import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.Rect
-import imgui.internal.sections.Axis
-import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
-import imgui.internal.sections.InputSource
-import imgui.internal.sections.shl
+import imgui.internal.sections.*
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag
@@ -124,7 +121,7 @@ internal interface inputText {
         val innerSize = Vec2(frameSize)
         val bufEnd = Vec1i()
         if (isMultiline) {
-            if (!itemAdd(totalBb, id, frameBb)) {
+            if (!itemAdd(totalBb, id, frameBb, ItemAddFlag.Focusable.i)) {
                 itemSize(totalBb, style.framePadding.y)
                 endGroup()
                 return false
@@ -148,8 +145,11 @@ internal interface inputText {
             drawWindow.dc.cursorPos plusAssign style.framePadding
             innerSize.x -= drawWindow.scrollbarSizes.x
         } else {
+            // Support for internal ImGuiInputTextFlags_MergedItem flag, which could be redesigned as an ItemFlags if needed (with test performed in ItemAdd)
             itemSize(totalBb, style.framePadding.y)
-            if (!itemAdd(totalBb, id, frameBb)) return false
+            if (flags hasnt InputTextFlag._MergedItem)
+                if (!itemAdd(totalBb, id, frameBb, ItemAddFlag.Focusable.i))
+                    return false
         }
         val hovered = itemHoverable(frameBb, id)
         if (hovered) g.mouseCursor = MouseCursor.TextInput
@@ -157,10 +157,8 @@ internal interface inputText {
         // We are only allowed to access the state if we are already the active widget.
         var state = getInputTextState(id)
 
-        val focusRequested = focusableItemRegister(window, id)
-        val focusRequestedByCode =
-            focusRequested && g.tabFocusRequestCurrWindow === window && g.tabFocusRequestCurrCounterRegular == window.dc.focusCounterRegular
-        val focusRequestedByTab = focusRequested && !focusRequestedByCode
+        val focusRequestedByCode = window.dc.lastItemStatusFlags has ItemStatusFlag.FocusedByCode
+        val focusRequestedByTabbing = window.dc.lastItemStatusFlags has ItemStatusFlag.FocusedByTabbing
 
         val userClicked = hovered && io.mouseClicked[0]
         val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.Keyboard))
@@ -173,7 +171,7 @@ internal interface inputText {
         var scrollY = if (isMultiline) drawWindow.scroll.y else Float.MAX_VALUE
 
         val initChangedSpecs = state != null && state.stb.singleLine != !isMultiline
-        val initMakeActive = focusRequested || userClicked || userScrollFinish || userNavInputStart
+        val initMakeActive = userClicked || userScrollFinish || userNavInputStart || focusRequestedByCode || focusRequestedByTabbing
         val initState = initMakeActive || userScrollActive
         if ((initState && g.activeId != id) || initChangedSpecs) {
             // Access state even if we don't own it yet.
@@ -217,7 +215,7 @@ internal interface inputText {
             }
             if (flags has Itf.AlwaysOverwrite)
                 state.stb.insertMode = true // stb field name is indeed incorrect (see #2863)
-            if (!isMultiline && (focusRequestedByTab || (userClicked && io.keyCtrl)))
+            if (!isMultiline && (focusRequestedByTabbing || (userClicked && io.keyCtrl)))
                 selectAll = true
         }
 
@@ -899,7 +897,7 @@ internal interface inputText {
             clearActiveID()
 
         g.currentWindow!!.dc.cursorPos put bb.min
-        val valueChanged = inputTextEx(label, null, buf, bb.size, flags)
+        val valueChanged = inputTextEx(label, null, buf, bb.size, flags or InputTextFlag._MergedItem)
         if (init) {
             // First frame we started displaying the InputText widget, we expect it to take the active id.
             assert(g.activeId == id)

@@ -14,7 +14,6 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
-import imgui.ImGui.focusableItemUnregister
 import imgui.ImGui.format
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDragPastThreshold
@@ -30,6 +29,9 @@ import imgui.ImGui.textEx
 import imgui.internal.api.DRAG_MOUSE_THRESHOLD_FACTOR
 import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.internal.sections.ItemAddFlag
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.has
 import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
@@ -68,7 +70,7 @@ interface widgetsDrags {
     fun dragVec2(label: String, v: Vec2, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                  format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
         dragScalarN(label, DataType.Float, v to _fa, 2, vSpeed, vMin, vMax, format, flags)
-            .also { v put _fa }
+                .also { v put _fa }
 
     fun dragFloat3(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                    format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
@@ -77,7 +79,7 @@ interface widgetsDrags {
     fun dragVec3(label: String, v: Vec3, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                  format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
         dragScalarN(label, DataType.Float, v to _fa, 3, vSpeed, vMin, vMax, format, flags)
-            .also { v put _fa }
+                .also { v put _fa }
 
     fun dragFloat4(label: String, v: FloatArray, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                    format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
@@ -86,7 +88,7 @@ interface widgetsDrags {
     fun dragVec4(label: String, v: Vec4, vSpeed: Float = 1f, vMin: Float = 0f, vMax: Float = 0f,
                  format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
         dragScalarN(label, DataType.Float, v to _fa, 4, vSpeed, vMin, vMax, format, flags)
-            .also { v put _fa }
+                .also { v put _fa }
 
     /** NB: You likely want to specify the ImGuiSliderFlags_AlwaysClamp when using this. */
     fun dragFloatRange2(label: String, vCurrentMinPtr: KMutableProperty0<Float>, vCurrentMaxPtr: KMutableProperty0<Float>,
@@ -141,7 +143,7 @@ interface widgetsDrags {
     fun dragVec2i(label: String, v: Vec2i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
                   format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
         dragScalarN(label, DataType.Int, v to _ia, 2, vSpeed, vMin, vMax, format, flags)
-            .also { v put _ia }
+                .also { v put _ia }
 
     fun dragInt3(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
                  format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
@@ -150,7 +152,7 @@ interface widgetsDrags {
     fun dragVec3i(label: String, v: Vec3i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
                   format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
         dragScalarN(label, DataType.Int, v to _ia, 3, vSpeed, vMin, vMax, format, flags)
-            .also { v put _ia }
+                .also { v put _ia }
 
     fun dragInt4(label: String, v: IntArray, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
                  format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
@@ -159,7 +161,7 @@ interface widgetsDrags {
     fun dragVec4i(label: String, v: Vec4i, vSpeed: Float = 1f, vMin: Int = 0, vMax: Int = 0,
                   format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
         dragScalarN(label, DataType.Int, v to _ia, 4, vSpeed, vMin, vMax, format, flags)
-            .also { v put _ia }
+                .also { v put _ia }
 
     /** NB: You likely want to specify the ImGuiSliderFlags_AlwaysClamp when using this. */
     fun dragIntRange2(label: String, vCurrentMinPtr: KMutableProperty0<Int>, vCurrentMaxPtr: KMutableProperty0<Int>,
@@ -230,8 +232,9 @@ interface widgetsDrags {
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
+        val tempInputAllowed = flags hasnt SliderFlag.NoInput
         ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
-        if (!ImGui.itemAdd(totalBb, id, frameBb))
+        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemAddFlag.Focusable.i else 0))
             return false
 
         // Default format string when passing NULL
@@ -246,10 +249,9 @@ interface widgetsDrags {
 
         // Tabbing or CTRL-clicking on Drag turns it into an InputText
         val hovered = ImGui.itemHoverable(frameBb, id)
-        val tempInputAllowed = flags hasnt SliderFlag.NoInput
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = tempInputAllowed && ImGui.focusableItemRegister(window, id)
+            val focusRequested = tempInputAllowed && window.dc.lastItemStatusFlags has ItemStatusFlag.Focused
             val clicked = hovered && ImGui.io.mouseClicked[0]
             val doubleClicked = hovered && ImGui.io.mouseDoubleClicked[0]
             if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
@@ -257,10 +259,8 @@ interface widgetsDrags {
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
-                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navInputId == id)) {
+                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navInputId == id))
                     tempInputIsActive = true
-                    ImGui.focusableItemUnregister(window)
-                }
             }
             // Experimental: simple click (without moving) turns Drag into an InputText
             // FIXME: Currently polling ImGuiConfigFlags_IsTouchScreen, may either poll an hypothetical ImGuiBackendFlags_HasKeyboard and/or an explicit drag settings.
@@ -268,7 +268,6 @@ interface widgetsDrags {
                 if (g.activeId == id && hovered && io.mouseReleased[0] && !isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
                     g.navInputId = id
                     tempInputIsActive = true
-                    focusableItemUnregister(window)
                 }
         }
 

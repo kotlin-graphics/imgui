@@ -134,7 +134,6 @@ infix fun WindowFlags.hasnt(b: WindowFlag): Boolean = and(b.i) == 0
 infix fun WindowFlags.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
 
 
-
 typealias InputTextFlags = Int
 
 /** Flags for ImGui::InputText(), InputTextMultiline()    */
@@ -210,11 +209,14 @@ enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flag
 
     // [Internal]
 
-    /** For internal use by InputTextMultiline()    */
-    _Multiline(1 shl 20),
+    /** For internal use by InputTextMultiline() */
+    _Multiline(1 shl 26),
 
     /** For internal use by functions using InputText() before reformatting data */
-    _NoMarkEdited(1 shl 21);
+    _NoMarkEdited(1 shl 27),
+
+    /** For internal use by TempInputText(), will skip calling ItemAdd(). Require bounding-box to strictly match. */
+    _MergedItem(1 shl 28);
 
     infix fun and(b: InputTextFlag): InputTextFlags = i and b.i
     infix fun and(b: InputTextFlags): InputTextFlags = i and b
@@ -1129,15 +1131,19 @@ enum class Key {
     Space, Enter, Escape, KeyPadEnter,
 
     _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
+
     /** for text edit CTRL+A: select all */
     A,
     B,
+
     /** for text edit CTRL+C: copy */
     C,
     D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U,
+
     /** for text edit CTRL+V: paste */
     V,
     W,
+
     /** for text edit CTRL+X: cut */
     X,
 
@@ -1830,7 +1836,7 @@ enum class Cond(@JvmField val i: CondFlags) {
     /** Set the variable if the object/window is appearing after being hidden/inactive (or the first time) */
     Appearing(1 shl 3);
 
-//    val isPowerOfTwo = i.isPowerOfTwo // JVM, kind of useless since it's used on cpp to avoid Cond masks
+    //    val isPowerOfTwo = i.isPowerOfTwo // JVM, kind of useless since it's used on cpp to avoid Cond masks
 
     infix fun and(b: Cond): CondFlags = i and b.i
     infix fun and(b: CondFlags): CondFlags = i and b

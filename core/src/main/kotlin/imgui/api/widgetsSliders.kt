@@ -14,6 +14,9 @@ import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.internal.sections.ItemAddFlag
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.has
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
@@ -181,8 +184,9 @@ interface widgetsSliders {
         val frameBb = Rect(window.dc.cursorPos, window.dc.cursorPos + Vec2(w, labelSize.y + ImGui.style.framePadding.y * 2f))
         val totalBb = Rect(frameBb.min, frameBb.max + Vec2(if (labelSize.x > 0f) ImGui.style.itemInnerSpacing.x + labelSize.x else 0f, 0f))
 
+        val tempInputAllowed = flags hasnt SliderFlag.NoInput
         ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
-        if (!ImGui.itemAdd(totalBb, id, frameBb))
+        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemAddFlag.Focusable.i else 0))
             return false
 
         // Default format string when passing NULL
@@ -197,20 +201,17 @@ interface widgetsSliders {
 
         // Tabbing or CTRL-clicking on Slider turns it into an input box
         val hovered = ImGui.itemHoverable(frameBb, id)
-        val tempInputAllowed = flags hasnt SliderFlag.NoInput
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = tempInputAllowed && ImGui.focusableItemRegister(window, id)
+            val focusRequested = tempInputAllowed && window.dc.lastItemStatusFlags has ItemStatusFlag.Focused
             val clicked = hovered && ImGui.io.mouseClicked[0]
             if (focusRequested || clicked || g.navActivateId == id || g.navInputId == id) {
                 ImGui.setActiveID(id, window)
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
-                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || g.navInputId == id)) {
+                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || g.navInputId == id))
                     tempInputIsActive = true
-                    ImGui.focusableItemUnregister(window)
-                }
             }
         }
 

@@ -713,7 +713,8 @@ interface widgetsColorEditorPicker {
             size.y = defaultSize
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
-        if (!itemAdd(bb, id)) return false
+        if (!itemAdd(bb, id))
+            return false
 
         val (pressed, hovered, _) = buttonBehavior(bb, id)
 
