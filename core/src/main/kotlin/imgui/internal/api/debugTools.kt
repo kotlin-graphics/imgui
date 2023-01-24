@@ -12,7 +12,6 @@ import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
-import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getForegroundDrawList
@@ -446,7 +445,7 @@ internal interface debugTools {
             if (isItemHovered())
                 getForegroundDrawList(window).addRect(r.min + window.pos, r.max + window.pos, COL32(255, 255, 0, 255))
         }
-        bulletText("NavLayerActiveMask: %X, NavLastChildNavWindow: %s", window.dc.navLayerActiveMask, window.navLastChildNavWindow?.name ?: "NULL")
+        bulletText("NavLayersActiveMask: %X, NavLastChildNavWindow: %s", window.dc.navLayersActiveMask, window.navLastChildNavWindow?.name ?: "NULL")
         if (window.rootWindow !== window) debugNodeWindow(window.rootWindow, "RootWindow")
         window.parentWindow?.let { debugNodeWindow(it, "ParentWindow") }
         if (window.dc.childWindows.isNotEmpty()) debugNodeWindowsList(window.dc.childWindows, "ChildWindows")

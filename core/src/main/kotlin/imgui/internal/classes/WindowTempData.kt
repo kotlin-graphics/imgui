@@ -70,10 +70,10 @@ class WindowTempData {
     var navLayerCurrent = NavLayer.Main
 
     /** Which layers have been written to (result from previous frame)   */
-    var navLayerActiveMask = 0
+    var navLayersActiveMask = 0
 
     /** Which layers have been written to (accumulator for current frame) */
-    var navLayerActiveMaskNext = 0x00
+    var navLayersActiveMaskNext = 0x00
 
     /** Current focus scope ID while appending */
     var navFocusScopeIdCurrent: ID = 0

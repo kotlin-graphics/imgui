@@ -39,7 +39,7 @@ import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.*
-import imgui.internal.classes.NavMoveResult
+import imgui.internal.classes.NavItemData
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
@@ -272,7 +272,7 @@ fun navUpdate() {
             // *Fallback* manual-scroll with Nav directional keys when window has no navigable item
             val scrollSpeed =
                 round(it.calcFontSize() * 100 * io.deltaTime) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
-            if (it.dc.navLayerActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
+            if (it.dc.navLayersActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
                 if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
                     it setScrollX floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed)
                 if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down)
@@ -468,7 +468,7 @@ fun navUpdateWindowing() {
 
         // If the window has ONLY a menu layer (no main layer), select it directly
         // FIXME-NAV: This should be done in NavInit.. or in FocusWindow..
-        if (applyFocusWindow!!.dc.navLayerActiveMask == 1 shl NavLayer.Menu)
+        if (applyFocusWindow!!.dc.navLayersActiveMask == 1 shl NavLayer.Menu)
             g.navLayer = NavLayer.Menu
     }
     applyFocusWindow?.let { g.navWindowingTarget = null }
@@ -482,7 +482,7 @@ fun navUpdateWindowing() {
             tailrec fun Window.getParent(): Window { // TODO, now we can use construct `parent?.`..
                 val parent = parentWindow
                 return when {
-                    parent != null && dc.navLayerActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
+                    parent != null && dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
                     else -> this
                 }
             }
@@ -498,7 +498,7 @@ fun navUpdateWindowing() {
             g.navDisableMouseHover = true
             // Reinitialize navigation when entering menu bar with the Alt key.
             val newNavLayer = when {
-                it.dc.navLayerActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
+                it.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
                 else -> NavLayer.Main
             }
             if (newNavLayer == NavLayer.Menu)
@@ -623,7 +623,7 @@ fun navUpdatePageUpPageDown(): Float {
     val endPressed = Key.End.isPressed && !isActiveIdUsingKey(Key.End)
     if (pageUpHeld != pageDownHeld || homePressed != endPressed) { // If either (not both) are pressed
 
-        if (window.dc.navLayerActiveMask == 0x00 && window.dc.navHasScroll) {
+        if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
             // Fallback manual-scroll when window has no navigable item
             when {
                 Key.PageUp.isPressed(true) -> window.setScrollY(window.scroll.y - window.innerRect.height)
@@ -741,7 +741,7 @@ fun navEndFrame() {
 
 
 /** Scoring function for gamepad/keyboard directional navigation. Based on https://gist.github.com/rygorous/6981057  */
-fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
+fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
 
     val window = g.currentWindow!!
     if (g.navLayer != window.dc.navLayerCurrent) return false
@@ -877,7 +877,7 @@ fun navScoreItem(result: NavMoveResult, cand: Rect): Boolean {
     return newBest
 }
 
-fun navApplyItemToResult(result: NavMoveResult, window: Window, id: ID, navBbRel: Rect) {
+fun navApplyItemToResult(result: NavItemData, window: Window, id: ID, navBbRel: Rect) {
     result.window = window
     result.id = id
     result.focusScopeId = window.dc.navFocusScopeIdCurrent

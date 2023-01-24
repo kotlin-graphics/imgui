@@ -4,10 +4,8 @@ import gli_.has
 import glm_.glm
 import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
-import imgui.ImGui.begin
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopupEx
 import imgui.ImGui.beginViewportSideBar
@@ -18,7 +16,6 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.end
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
-import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.focusWindow
 import imgui.ImGui.frameHeight
@@ -41,7 +38,6 @@ import imgui.ImGui.renderText
 import imgui.ImGui.selectable
 import imgui.ImGui.setNavID
 import imgui.ImGui.setNextWindowPos
-import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.style
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -123,7 +119,7 @@ interface widgetsMenus {
                 // To do so we claim focus back, restore NavId and then process the movement request for yet another frame.
                 // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)
                 val layer = NavLayer.Menu
-                assert(window.dc.navLayerActiveMaskNext has (1 shl layer)) { "Sanity check" }
+                assert(window.dc.navLayersActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 focusWindow(window)
                 setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.

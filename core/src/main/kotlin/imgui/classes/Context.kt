@@ -345,13 +345,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navMoveClipDir = Dir.None
 
     /** Best move request candidate within NavWindow    */
-    var navMoveResultLocal = NavMoveResult()
+    var navMoveResultLocal = NavItemData()
 
     /** Best move request candidate within NavWindow that are mostly visible (when using NavMoveFlags.AlsoScoreVisibleSet flag) */
-    val navMoveResultLocalVisibleSet = NavMoveResult()
+    val navMoveResultLocalVisibleSet = NavItemData()
 
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
-    var navMoveResultOther = NavMoveResult()
+    var navMoveResultOther = NavItemData()
 
     /** Window which requested trying nav wrap-around. */
     var navWrapRequestWindow: Window? = null

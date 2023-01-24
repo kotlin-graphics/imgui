@@ -608,8 +608,8 @@ interface windows {
                 dc.currLineTextBaseOffset = 0f
 
                 dc.navLayerCurrent = NavLayer.Main
-                dc.navLayerActiveMask = dc.navLayerActiveMaskNext
-                dc.navLayerActiveMaskNext = 0x00
+                dc.navLayersActiveMask = dc.navLayersActiveMaskNext
+                dc.navLayersActiveMaskNext = 0x00
                 dc.navFocusScopeIdCurrent =
                     if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
                 dc.navHideHighlightOneFrame = false

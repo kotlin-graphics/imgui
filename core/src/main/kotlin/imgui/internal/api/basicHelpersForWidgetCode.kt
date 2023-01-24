@@ -96,7 +96,7 @@ internal interface basicHelpersForWidgetCode {
             //      to reach unclipped widgets. This would work if user had explicit scrolling control (e.g. mapped on a stick).
             // We intentionally don't check if g.NavWindow != NULL because g.NavAnyRequest should only be set when it is non null.
             // If we crash on a NULL g.NavWindow we need to fix the bug elsewhere.
-            window.dc.navLayerActiveMaskNext = window.dc.navLayerActiveMaskNext or (1 shl window.dc.navLayerCurrent)
+            window.dc.navLayersActiveMaskNext = window.dc.navLayersActiveMaskNext or (1 shl window.dc.navLayerCurrent)
             if (g.navId == id || g.navAnyRequest)
                 if (g.navWindow!!.rootWindowForNav === window.rootWindowForNav)
                     if (window == g.navWindow || (window.flags or g.navWindow!!.flags) has WindowFlag._NavFlattened)

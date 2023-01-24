@@ -64,12 +64,12 @@ interface childWindows {
             val parentWindow = currentWindow
             val bb = Rect(parentWindow.dc.cursorPos, parentWindow.dc.cursorPos + sz)
             itemSize(sz)
-            if ((window.dc.navLayerActiveMask != 0 || window.dc.navHasScroll) && window.flags hasnt Wf._NavFlattened) {
+            if ((window.dc.navLayersActiveMask != 0 || window.dc.navHasScroll) && window.flags hasnt Wf._NavFlattened) {
                 itemAdd(bb, window.childId)
                 renderNavHighlight(bb, window.childId)
 
                 // When browsing a window that has no activable items (scroll only) we keep a highlight on the child
-                if (window.dc.navLayerActiveMask == 0 && window === g.navWindow)
+                if (window.dc.navLayersActiveMask == 0 && window === g.navWindow)
                     renderNavHighlight(Rect(bb.min - 2, bb.max + 2), g.navId, NavHighlightFlag.TypeThin.i)
             } else // Not navigable into
                 itemAdd(bb, 0)

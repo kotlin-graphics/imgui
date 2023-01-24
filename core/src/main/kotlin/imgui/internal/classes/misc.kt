@@ -107,26 +107,27 @@ class MenuColumns {
 }
 
 /** Result of a gamepad/keyboard directional navigation move query result */
-class NavMoveResult {
-    /** Best candidate window   */
+class NavItemData {
+    /** Init,Move    // Best candidate window (result->ItemWindow->RootWindowForNav == request->Window) */
     var window: Window? = null
 
-    /** Best candidate ID  */
+    /** Init,Move    // Best candidate item ID */
     var id: ID = 0
 
-    /** Best candidate focus scope ID */
+    /** Init,Move    // Best candidate focus scope ID */
     var focusScopeId: ID = 0
 
-    /** Best candidate box distance to current NavId    */
+    /** Init,Move    // Best candidate bounding box in window relative space */
+    var rectRel = Rect()
+
+    /**      Move    // Best candidate box distance to current NavId */
     var distBox = Float.MAX_VALUE
 
-    /** Best candidate center distance to current NavId */
+    /**      Move    // Best candidate center distance to current NavId */
     var distCenter = Float.MAX_VALUE
 
+    /**      Move    // Best candidate axial distance to current NavId */
     var distAxial = Float.MAX_VALUE
-
-    /** Best candidate bounding box in window relative space    */
-    var rectRel = Rect()
 
     fun clear() {
         id = 0
