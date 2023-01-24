@@ -7,7 +7,6 @@ import imgui.ImGui.beginPopupEx
 import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
-import imgui.ImGui.io
 import imgui.ImGui.isAnyItemHovered
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseReleased
@@ -121,6 +120,9 @@ interface popupsModals {
 
     /** call to mark popup as open (don't call every frame!). */
     fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) = openPopupEx(g.currentWindow!!.getID(strId), popupFlags)
+
+    /** id overload to facilitate calling from nested stacks */
+    fun openPopup(id: ID, popupFlags: PopupFlags = 0) = openPopupEx(id, popupFlags)
 
     /** helper to open popup when clicked on last item. Default to ImGuiPopupFlags_MouseButtonRight == 1.
      *  (note: actually triggers on the mouse _released_ event to be consistent with popup behaviors)
