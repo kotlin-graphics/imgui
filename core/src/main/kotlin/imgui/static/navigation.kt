@@ -947,9 +947,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         g.navLayer = window.dc.navLayerCurrent
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         g.navIdIsAlive = true
-        g.navIdTabCounter = window.dc.focusCounterTabStop
-        window.navRectRel[window.dc.navLayerCurrent] =
-            navBbRel    // Store item bounding box (relative to window position)
+        window.navRectRel[window.dc.navLayerCurrent] = navBbRel    // Store item bounding box (relative to window position)
     }
 }
 

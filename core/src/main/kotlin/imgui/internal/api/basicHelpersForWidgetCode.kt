@@ -189,8 +189,11 @@ internal interface basicHelpersForWidgetCode {
         // Increment counters
         val isTabStop = g.currentItemFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
         window.dc.focusCounterRegular++
-        if (isTabStop)
+        if (isTabStop) {
             window.dc.focusCounterTabStop++
+            if (g.navId == id)
+                g.navIdTabCounter = window.dc.focusCounterTabStop
+        }
 
         // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
         // (Note that we can always TAB out of a widget that doesn't allow tabbing in)

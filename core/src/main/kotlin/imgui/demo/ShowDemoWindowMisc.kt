@@ -204,7 +204,7 @@ object ShowDemoWindowMisc {
                 inputText("3", buf)
                 pushAllowKeyboardFocus(false)
                 inputText("4 (tab skip)", buf)
-                //SameLine(); ShowHelperMarker("Use PushAllowKeyboardFocus(bool) to disable tabbing through certain widgets.");
+                sameLine(); helpMarker("Item won't be cycled through when using TAB or Shift+Tab.")
                 popAllowKeyboardFocus()
                 inputText("5", buf)
             }
@@ -233,6 +233,7 @@ object ShowDemoWindowMisc {
                 if (focus3) setKeyboardFocusHere()
                 inputText("3 (tab skip)", buf)
                 if (isItemActive) hasFocus = 3
+                sameLine(); helpMarker("Item won't be cycled through when using TAB or Shift+Tab.")
                 popAllowKeyboardFocus()
 
                 text("Item with focus: ${if (hasFocus != 0) "$hasFocus" else "<none>"}")

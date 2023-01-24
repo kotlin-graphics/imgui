@@ -210,12 +210,14 @@ fun updateTabFocus() {
     g.tabFocusPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed }
         ?: false
     if (g.activeId == 0 && g.tabFocusPressed) {
-        // Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
-        // manipulate the Next fields even, even though they will be turned into Curr fields by the code below.
+        // - This path is only taken when no widget are active/tabbed-into yet.
+        //   Subsequent tabbing will be processed by FocusableItemRegister()
+        // - Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
+        //   manipulate the Next fields here even though they will be turned into Curr fields below.
         g.tabFocusRequestNextWindow = g.navWindow
         g.tabFocusRequestNextCounterRegular = Int.MAX_VALUE
         g.tabFocusRequestNextCounterTabStop = when {
-            g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 1
+            g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 0
             else -> if (io.keyShift) -1 else 0
         }
     }
