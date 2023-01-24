@@ -1169,7 +1169,7 @@ object ShowDemoWindowWidgets {
             // Plot/Graph widgets are not very good.
             // Consider writing your own, or using a third-party one, see:
             // - ImPlot https://github.com/epezent/implot
-            // - others https://github.com/ocornut/imgui/wiki/Useful-Widgets
+            // - others https://github.com/ocornut/imgui/wiki/Useful-Extensions
             treeNode("Plots Widgets") {
 
                 checkbox("Animate", ::animate)
