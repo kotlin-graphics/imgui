@@ -38,6 +38,8 @@ class ImplGL3 : GLInterface {
     val buffers = GlBuffers<Buffer>()
     var vao = GlVertexArray()
 
+    var hasClipOrigin = false
+
     /** ~ImGui_ImplOpenGL3_Init */
     init {
 
@@ -58,7 +60,18 @@ class ImplGL3 : GLInterface {
         // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl3"
 
-        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX)
+        // Detect extensions we support
+        hasClipOrigin = gGlVersion >= 450
+        if (OPENGL_MAY_HAVE_EXTENSIONS) {
+            val numExtensions = glGetInteger(GL_NUM_EXTENSIONS)
+            for (i in 0 until numExtensions) {
+                val extension = glGetStringi(GL_EXTENSIONS, i)
+                if (extension == "GL_ARB_clip_control")
+                    hasClipOrigin = true
+            }
+        }
+
+        if (OPENGL_MAY_HAVE_VTX_OFFSET)
             if (gGlVersion >= 320)
                 io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     }
@@ -87,7 +100,7 @@ class ImplGL3 : GLInterface {
 
         // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
         val clipOriginLowerLeft = when {
-            CLIP_ORIGIN && gGlVersion >= 450 -> glGetInteger(GL_CLIP_ORIGIN) != GL_UPPER_LEFT
+            CLIP_ORIGIN && hasClipOrigin -> glGetInteger(GL_CLIP_ORIGIN) != GL_UPPER_LEFT
             else -> true
         }
 
@@ -198,7 +211,7 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
-                        if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && gGlVersion >= 320)
+                        if (OPENGL_MAY_HAVE_VTX_OFFSET && gGlVersion >= 320)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
                             glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
@@ -323,7 +336,7 @@ class ImplGL3 : GLInterface {
         var OPENGL_ES3 = false
 
         // Desktop GL 3.2+ has glDrawElementsBaseVertex() which GL ES and WebGL don't have.
-        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
+        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 320 }
 
         // Desktop GL 3.3+ has glBindSampler()
         val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
@@ -331,14 +344,14 @@ class ImplGL3 : GLInterface {
         // Desktop GL 3.1+ has GL_PRIMITIVE_RESTART state
         val OPENGL_MAY_HAVE_PRIMITIVE_RESTART by lazy { OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 310 }
 
+        // Desktop GL use extension detection
+        val OPENGL_MAY_HAVE_EXTENSIONS = true
+
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
         var POLYGON_MODE = true
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
-
-        // #if defined(IMGUI_IMPL_OPENGL_ES2) || defined(IMGUI_IMPL_OPENGL_ES3) || !defined(GL_VERSION_3_2) -> false
-        var MAY_HAVE_DRAW_WITH_BASE_VERTEX = true
     }
 
     /*private fun debugSave(fbWidth: Int, fbHeight: Int) {
