@@ -476,8 +476,13 @@ fun navUpdateWindowing() {
             navInitWindow(applyFocusWindow!!, false)
 
         // If the window has ONLY a menu layer (no main layer), select it directly
-        // FIXME-NAV: This should be done in NavInit.. or in FocusWindow..
-        if (applyFocusWindow!!.dc.navLayersActiveMask == 1 shl NavLayer.Menu)
+        // Use NavLayersActiveMaskNext since windows didn't have a chance to be Begin()-ed on this frame,
+        // so CTRL+Tab where the keys are only held for 1 frame will be able to use correct layers mask since
+        // the target window as already been previewed once.
+        // FIXME-NAV: This should be done in NavInit.. or in FocusWindow... However in both of those cases,
+        // we won't have a guarantee that windows has been visible before and therefore NavLayersActiveMask*
+        // won't be valid.
+        if (applyFocusWindow!!.dc.navLayersActiveMaskNext == 1 shl NavLayer.Menu)
             g.navLayer = NavLayer.Menu
     }
     applyFocusWindow?.let { g.navWindowingTarget = null }
