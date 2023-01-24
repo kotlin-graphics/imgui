@@ -91,7 +91,7 @@ fun navUpdate() {
         // AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl)
         // But also even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
         if (io.keyAlt && !io.keyCtrl)
-            io.navInputs[NavInput._KeyMenu]  = 1f
+            io.navInputs[NavInput._KeyMenu] = 1f
 
         // We automatically cancel toggling nav layer when any text has been typed while holding Alt. (See #370)
         if (io.keyAlt && !io.keyCtrl && g.navWindowingToggleLayer && io.inputQueueCharacters.size > 0)
@@ -161,7 +161,10 @@ fun navUpdate() {
         if (g.activeId != 0) {
             if (!isActiveIdUsingNavInput(NavInput.Cancel))
                 clearActiveID()
-        } else if (g.navWindow != null && g.navWindow!! !== g.navWindow!!.rootWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
+        } else if (g.navLayer != NavLayer.Main)
+            // Leave the "menu" layer
+            navRestoreLayer(NavLayer.Main)
+        else if (g.navWindow != null && g.navWindow!! !== g.navWindow!!.rootWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
             // Exit child window
             val childWindow = g.navWindow!!
             val parentWindow = childWindow.parentWindow!!
@@ -173,9 +176,7 @@ fun navUpdate() {
             // Close open popup/menu
             if (g.openPopupStack.last().window!!.flags hasnt Wf._Modal)
                 closePopupToLevel(g.openPopupStack.lastIndex, true)
-        } else if (g.navLayer != NavLayer.Main)
-            navRestoreLayer(NavLayer.Main)  // Leave the "menu" layer
-        else {
+        } else {
             // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
             if (g.navWindow != null && (g.navWindow!!.flags has Wf._Popup || g.navWindow!!.flags hasnt Wf._ChildWindow))
                 g.navWindow!!.navLastIds[0] = 0
@@ -485,36 +486,36 @@ fun navUpdateWindowing() {
     if (applyToggleLayer)
         clearActiveID()
 
-        g.navWindow?.let {
-            // Move to parent menu if necessary
-            var newNavWindow = it
+    g.navWindow?.let {
+        // Move to parent menu if necessary
+        var newNavWindow = it
 
-            tailrec fun Window.getParent(): Window { // TODO, now we can use construct `parent?.`..
-                val parent = parentWindow
-                return when {
-                    parent != null && dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
-                    else -> this
-                }
+        tailrec fun Window.getParent(): Window { // TODO, now we can use construct `parent?.`..
+            val parent = parentWindow
+            return when {
+                parent != null && dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
+                else -> this
             }
-
-            newNavWindow = newNavWindow.getParent()
-
-            if (newNavWindow !== it) {
-                val oldNavWindow = it
-                focusWindow(newNavWindow)
-                newNavWindow.navLastChildNavWindow = oldNavWindow
-            }
-            g.navDisableHighlight = false
-            g.navDisableMouseHover = true
-            // Reinitialize navigation when entering menu bar with the Alt key.
-            val newNavLayer = when {
-                it.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
-                else -> NavLayer.Main
-            }
-            if (newNavLayer == NavLayer.Menu)
-                g.navWindow!!.navLastIds[newNavLayer] = 0
-            navRestoreLayer(newNavLayer)
         }
+
+        newNavWindow = newNavWindow.getParent()
+
+        if (newNavWindow !== it) {
+            val oldNavWindow = it
+            focusWindow(newNavWindow)
+            newNavWindow.navLastChildNavWindow = oldNavWindow
+        }
+        g.navDisableHighlight = false
+        g.navDisableMouseHover = true
+        // Reinitialize navigation when entering menu bar with the Alt key.
+        val newNavLayer = when {
+            it.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
+            else -> NavLayer.Main
+        }
+        if (newNavLayer == NavLayer.Menu)
+            g.navWindow!!.navLastIds[newNavLayer] = 0
+        navRestoreLayer(newNavLayer)
+    }
 }
 
 /** Overlay displayed when using CTRL+TAB. Called by EndFrame(). */
