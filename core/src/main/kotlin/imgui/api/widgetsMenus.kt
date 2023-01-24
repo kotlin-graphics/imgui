@@ -361,13 +361,12 @@ interface widgetsMenus {
         val flags = Sf._SelectOnRelease or Sf._SetNavIdOnHover or if (enabled) Sf.None else Sf.Disabled
         val pressed: Boolean
         if (window.dc.layoutType == Lt.Horizontal) {
-            /*  Mimic the exact layout spacing of beginMenu() to allow menuItem() inside a menu bar, which is a little 
-                misleading but may be useful 
-                Note that in this situation we render neither the shortcut neither the selected tick mark   */
+            // Mimic the exact layout spacing of BeginMenu() to allow MenuItem() inside a menu bar, which is a little misleading but may be useful
+            // Note that in this situation: we don't render the shortcut, we render a highlight instead of the selected tick mark.
             val w = labelSize.x
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
-            pressed = selectable(label, false, flags, Vec2(w, 0f))
+            pressed = selectable(label, selected, flags, Vec2(w, 0f))
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
                 to call sameLine() ourselves after the popStyleVar().             */
