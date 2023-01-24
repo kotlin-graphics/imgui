@@ -66,6 +66,8 @@ interface tablesInternal {
         val tempData = g.tablesTempDataStack[g.currentTableStackIdx]
         table.tempData = tempData
         tempData.tableIndex = tableIdx
+        table.drawSplitter = table.tempData!!.drawSplitter
+        table.drawSplitter.clear()
 
         // Fix flags
         table.isDefaultSizingPolicy = flags hasnt Tf._SizingMask
@@ -203,6 +205,7 @@ interface tablesInternal {
             for (i in g.tablesLastTimeActive.size..tableIdx.i)
                 g.tablesLastTimeActive += -1f
         g.tablesLastTimeActive[tableIdx.i] = g.time.f
+        tempData.lastTimeActive = g.time.f
         table.memoryCompacted = false
 
         // Setup memory buffer (clear data if columns count changed)

@@ -3,6 +3,7 @@ package imgui.internal.classes
 import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.classes.TableColumnSortSpecs
 import imgui.internal.*
 import imgui.internal.sections.NavLayer
 import imgui.TableColumnFlag as Tcf
@@ -143,16 +144,24 @@ class TableColumn {
 
 /** Temporary storage for one table (one per table in the stack), shared between tables.
  *
- *  Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared.
- *  Accessing those requires chasing an extra pointer so for very frequently used data we leave them in the main table structure.
+ *  Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared (1 per level of stacked table).
+ *  - Accessing those requires chasing an extra pointer so for very frequently used data we leave them in the main table structure.
+ *  - We also leave out of this structure data that tend to be particularly useful for debugging/metrics.
  *  FIXME-TABLE: more transient data could be stored here: DrawSplitter (!), SortSpecs? incoming RowData? */
 class TableTempData {
 
     /** Index in g.Tables.Buf[] pool */
     var tableIndex = 0
 
+    /** Last timestamp this structure was used */
+    var lastTimeActive = -1f
+
     /** outer_size.x passed to BeginTable() */
     val userOuterSize = Vec2()
+
+    lateinit var drawSplitter: DrawListSplitter
+    lateinit var sortSpecsSingle: TableColumnSortSpecs
+    val sortSpecsMulti = ArrayList<TableColumnSortSpecs>()     // FIXME-OPT: Using a small-vector pattern would be good.
 
     /** Backup of InnerWindow->WorkRect at the end of BeginTable() */
     val hostBackupWorkRect = Rect()

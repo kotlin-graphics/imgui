@@ -260,7 +260,10 @@ interface tables {
         g.currentTableStackIdx--
         tempData = if(g.currentTableStackIdx >= 0) g.tablesTempDataStack[g.currentTableStackIdx] else null
         g.currentTable = tempData?.let { g.tables.getByIndex(it.tableIndex) }
-        g.currentTable?.tempData = tempData
+        g.currentTable?.let {
+            it.tempData = tempData
+            it.drawSplitter = tempData!!.drawSplitter
+        }
         outerWindow.dc.currentTableIdx = g.currentTable?.let { g.tables.getIndex(it).i } ?: -1
     }
 

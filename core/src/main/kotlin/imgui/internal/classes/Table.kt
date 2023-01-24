@@ -194,13 +194,8 @@ class Table {
     /** Contiguous buffer holding columns names */
     val columnsNames = ArrayList<String>()
 
-    /** We carry our own ImDrawList splitter to allow recursion (should move to ImGuiTableTempDataB) */
-    val drawSplitter = DrawListSplitter()
-
-    val sortSpecsSingle = TableColumnSortSpecs()
-
-    /** FIXME-OPT: Using a small-vector pattern would be good. */
-    val sortSpecsMulti = ArrayList<TableColumnSortSpecs>()
+    /** Shortcut to TempData->DrawSplitter while in table. Isolate draw commands per columns to avoid switching clip rect constantly */
+    var drawSplitter = DrawListSplitter()
 
     /** Public facing sorts specs, this is what we return in TableGetSortSpecs() */
     val sortSpecs = TableSortSpecs()
@@ -1468,15 +1463,15 @@ class Table {
 
         // Write output
         if (sortSpecsCount <= 1)
-            sortSpecsMulti.clear()
+            tempData!!.sortSpecsMulti.clear()
         else
             repeat(sortSpecsCount) {
-                sortSpecsMulti += TableColumnSortSpecs()
+                tempData!!.sortSpecsMulti += TableColumnSortSpecs()
             }
-        var sortSpecs: TableColumnSortSpecs? = when (sortSpecsCount) {
+        val sortSpecs: TableColumnSortSpecs? = when (sortSpecsCount) {
             0 -> null
-            1 -> sortSpecsSingle
-            else -> sortSpecsMulti.first()
+            1 -> tempData!!.sortSpecsSingle
+            else -> tempData!!.sortSpecsMulti.first()
         }
         if (sortSpecs != null)
             for (columnN in 0 until columnsCount) {
@@ -1484,15 +1479,15 @@ class Table {
                 if (column.sortOrder == -1)
                     continue
                 assert(column.sortOrder < sortSpecsCount)
-                sortSpecs = when (sortSpecsCount) {
+                val sortSpec = when (sortSpecsCount) {
                     0 -> null
-                    1 -> sortSpecsSingle
-                    else -> sortSpecsMulti[column.sortOrder]
+                    1 -> tempData!!.sortSpecsSingle
+                    else -> tempData!!.sortSpecsMulti[column.sortOrder]
                 }!!
-                sortSpecs.columnUserID = column.userID
-                sortSpecs.columnIndex = columnN
-                sortSpecs.sortOrder = column.sortOrder
-                sortSpecs.sortDirection = column.sortDirection
+                sortSpec.columnUserID = column.userID
+                sortSpec.columnIndex = columnN
+                sortSpec.sortOrder = column.sortOrder
+                sortSpec.sortDirection = column.sortDirection
             }
         this.sortSpecs.specs = sortSpecs
         this.sortSpecs.specsCount = sortSpecsCount
@@ -1856,8 +1851,6 @@ class Table {
     fun gcCompactTransientBuffers() {
         //IMGUI_DEBUG_LOG("TableGcCompactTransientBuffers() id=0x%08X\n", table->ID);
         assert(!memoryCompacted)
-        drawSplitter.clearFreeMemory()
-        sortSpecsMulti.clear()
         sortSpecs.specs = null
         isSortSpecsDirty = true
         columnsNames.clear()
@@ -1865,6 +1858,13 @@ class Table {
         for (n in 0 until columnsCount)
             columns[n].nameOffset = -1
         g.tablesLastTimeActive[g.tables.getIndex(this).i] = -1f
+    }
+
+    /** ~TableGcCompactTransientBuffers */
+    fun gcCompactTransientBuffers(tempData: TableTempData) {
+        tempData.drawSplitter.clearFreeMemory()
+        tempData.sortSpecsMulti.clear()
+        tempData.lastTimeActive = -1f
     }
 
     /** ~static void TableUpdateColumnsWeightFromWidth(ImGuiTable* table) */
