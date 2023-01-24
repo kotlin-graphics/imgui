@@ -301,7 +301,7 @@ class Window(var context: Context,
     /** [JVM] */
     fun getID(ptrID: Any): ID {
         val seed: ID = idStack.last()
-        val id: ID = hash(System.identityHashCode(ptrID), seed)
+        val id: ID = hashData(System.identityHashCode(ptrID), seed)
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType._Pointer, ptrID)
@@ -312,7 +312,7 @@ class Window(var context: Context,
     fun getID(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
         val seed: ID = idStack.last()
-        val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed)
+        val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed)
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Long, intPtr) // TODO check me
@@ -321,7 +321,7 @@ class Window(var context: Context,
 
     fun getID(n: Int): ID {
         val seed = idStack.last()
-        val id = hash(n, seed)
+        val id = hashData(n, seed)
         keepAliveID(id)
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Int, n)
@@ -336,7 +336,7 @@ class Window(var context: Context,
     }
 
     fun getIdNoKeepAlive(ptrID: Any): ID {
-        val id = hash(System.identityHashCode(ptrID), seed = idStack.last())
+        val id = hashData(System.identityHashCode(ptrID), seed = idStack.last())
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType._Pointer, ptrID)
         return id
@@ -344,14 +344,14 @@ class Window(var context: Context,
 
     fun getIdNoKeepAlive(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
-        val id = hash(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
+        val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Long, intPtr) // TODO checkMe
         return id
     }
 
     fun getIdNoKeepAlive(n: Int): ID {
-        val id = hash(n, seed = idStack.last())
+        val id = hashData(n, seed = idStack.last())
         if (IMGUI_ENABLE_TEST_ENGINE)
             IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Int, n)
         return id
@@ -366,7 +366,7 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val rRel =
             intArrayOf((rAbs.min.x - pos.x).i, (rAbs.min.y - pos.y).i, (rAbs.max.x - pos.x).i, (rAbs.max.y - pos.y).i)
-        return hash(rRel, seed).also { keepAliveID(it) } // id
+        return hashData(rRel, seed).also { keepAliveID(it) } // id
     }
 
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
@@ -738,12 +738,27 @@ class Window(var context: Context,
     /** ~GetWindowScrollbarID */
     infix fun getScrollbarID(axis: Axis): ID = getIdNoKeepAlive(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
 
-    /** 0..3: corners (Lower-right, Lower-left, Unused, Unused)
-     *  4..7: borders (Top, Right, Bottom, Left) */
-    infix fun getResizeID(n: Int): ID {
-        assert(n in 0..7)
-        val id = hashStr("#RESIZE", 0, id)
-        return hash(intArrayOf(n), id)
+    /** ~GetWindowResizeCornerID
+     *
+     *  0..3: corners (Lower-right, Lower-left, Unused, Unused) */
+    infix fun getResizeCornerID(n: Int): ID {
+        assert(n in 0..3)
+        var id = this.id
+        id = hashStr("#RESIZE", 0, id)
+        id = hashData(n, id)
+        return id
+    }
+
+    /** ~GetWindowResizeBorderID
+     *
+     *  Borders (Left, Right, Up, Down) */
+    infix fun getResizeBorderID(dir: Dir): ID {
+        assert(dir.i in 0..3)
+        val n = dir.i + 4
+        var id = this.id
+        id = hashStr("#RESIZE", 0, id)
+        id = hashData(n, id)
+        return id
     }
 
 
@@ -782,16 +797,16 @@ class Window(var context: Context,
         ImGui.pushID("#RESIZE")
         for (resizeGripN in 0 until resizeGripCount) {
 
-            val grip = resizeGripDef[resizeGripN]
-            val corner = pos.lerp(pos + size, grip.cornerPosN)
+            val def = resizeGripDef[resizeGripN]
+            val corner = pos.lerp(pos + size, def.cornerPosN)
 
             // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
-            val resizeRect = Rect(corner - grip.innerDir * gripHoverOuterSize, corner + grip.innerDir * gripHoverInnerSize)
+            val resizeRect = Rect(corner - def.innerDir * gripHoverOuterSize, corner + def.innerDir * gripHoverInnerSize)
             if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
             if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
 
-            val f = ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus
-            val (_, hovered, held) = ImGui.buttonBehavior(resizeRect, getID(resizeGripN), f)
+            val resizeGripId = getID(resizeGripN) // == GetWindowResizeCornerID()
+            val (_, hovered, held) = ImGui.buttonBehavior(resizeRect, resizeGripId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
             //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
             if (hovered || held)
                 g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
@@ -805,49 +820,36 @@ class Window(var context: Context,
                 // Resize from any of the four corners
                 // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
                 // Corner of the window corresponding to our corner grip
-                var cornerTarget = g.io.mousePos - g.activeIdClickOffset + (grip.innerDir * gripHoverOuterSize).lerp(grip.innerDir * -gripHoverInnerSize, grip.cornerPosN)
-                val clampMin = Vec2 { if (grip.cornerPosN[it] == 1f) visibilityRect.min[it] else -Float.MAX_VALUE }
-                val clampMax = Vec2 { if (grip.cornerPosN[it] == 0f) visibilityRect.max[it] else Float.MAX_VALUE }
+                val clampMin = Vec2 { if (def.cornerPosN[it] == 1f) visibilityRect.min[it] else -Float.MAX_VALUE }
+                val clampMax = Vec2 { if (def.cornerPosN[it] == 0f) visibilityRect.max[it] else Float.MAX_VALUE }
+                var cornerTarget = g.io.mousePos - g.activeIdClickOffset + (def.innerDir * gripHoverOuterSize).lerp(def.innerDir * -gripHoverInnerSize, def.cornerPosN)
                 cornerTarget = glm.clamp(cornerTarget, clampMin, clampMax)
-                calcResizePosSizeFromAnyCorner(cornerTarget, grip.cornerPosN, posTarget, sizeTarget)
+                calcResizePosSizeFromAnyCorner(cornerTarget, def.cornerPosN, posTarget, sizeTarget)
             }
+
+            // Only lower-left grip is visible before hovering/activating
             if (resizeGripN == 0 || held || hovered)
                 resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
         }
         for (borderN in 0 until resizeBorderCount) {
+            val def = resizeBorderDef[borderN]
+            val axis = if (borderN == Dir.Left.i || borderN == Dir.Right.i) Axis.X else Axis.Y
             val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS)
-            val (_, hovered, held) = ImGui.buttonBehavior(borderRect, getID((borderN + 4)), ButtonFlag.FlattenChildren)
+            val borderId = getID(borderN + 4) // == GetWindowResizeBorderID()
+            val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren)
             //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
             if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
-                g.mouseCursor = if (borderN has 1) MouseCursor.ResizeEW else MouseCursor.ResizeNS
+                g.mouseCursor = if (axis == Axis.X) MouseCursor.ResizeEW else MouseCursor.ResizeNS
                 if (held)
                     borderHeld = borderN
             }
             if (held) {
+                val clampMin = Vec2(if(borderN == Dir.Right.i) visibilityRect.min.x else -Float.MAX_VALUE, if(borderN == Dir.Down.i) visibilityRect.min.y else -Float.MAX_VALUE)
+                val clampMax = Vec2(if(borderN == Dir.Left.i) visibilityRect.max.x else +Float.MAX_VALUE, if(borderN == Dir.Up.i) visibilityRect.max.y else +Float.MAX_VALUE)
                 var borderTarget = Vec2(pos)
-                val borderPosN = when (borderN) {
-                    0 -> {
-                        borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                        Vec2(0, 0)
-                    }
-                    1 -> {
-                        borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                        Vec2(1, 0)
-                    }
-                    2 -> {
-                        borderTarget.y = g.io.mousePos.y - g.activeIdClickOffset.y + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                        Vec2(0, 1)
-                    }
-                    3 -> {
-                        borderTarget.x = g.io.mousePos.x - g.activeIdClickOffset.x + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
-                        Vec2(0, 0)
-                    }
-                    else -> Vec2(0, 0)
-                }
-                val clampMin = Vec2 { if (borderN == it + 1) visibilityRect.min[it] else -Float.MAX_VALUE }
-                val clampMax = Vec2 { if (borderN == (if (it == 0) 3 else 0)) visibilityRect.max[it] else Float.MAX_VALUE }
+                borderTarget[axis] = g.io.mousePos[axis] - g.activeIdClickOffset[axis] + WINDOWS_RESIZE_FROM_EDGES_HALF_THICKNESS
                 borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
-                calcResizePosSizeFromAnyCorner(borderTarget, borderPosN, posTarget, sizeTarget)
+                calcResizePosSizeFromAnyCorner(borderTarget, def.segmentN1 min  def.segmentN2, posTarget, sizeTarget)
             }
         }
         popID()
@@ -901,11 +903,11 @@ class Window(var context: Context,
             val def = resizeBorderDef[borderHeld]
             val borderR = getResizeBorderRect(borderHeld, rounding, 0f)
             drawList.apply {
-                pathArcTo(borderR.min.lerp(borderR.max, def.cornerPosN1) + Vec2(0.5f) + def.innerDir * rounding,
+                pathArcTo(borderR.min.lerp(borderR.max, def.segmentN1) + Vec2(0.5f) + def.innerDir * rounding,
                           rounding,
                           def.outerAngle - glm.PIf * 0.25f,
                           def.outerAngle)
-                pathArcTo(borderR.min.lerp(borderR.max, def.cornerPosN2) + Vec2(0.5f) + def.innerDir * rounding,
+                pathArcTo(borderR.min.lerp(borderR.max, def.segmentN2) + Vec2(0.5f) + def.innerDir * rounding,
                           rounding,
                           def.outerAngle,
                           def.outerAngle + glm.PIf * 0.25f)
@@ -1245,25 +1247,14 @@ class Window(var context: Context,
 
     fun getResizeBorderRect(borderN: Int, perpPadding: Float, thickness: Float): Rect {
         val rect = rect()
-        if (thickness == 0f) rect.max minusAssign 1
-        return when (borderN) {
-            0 -> Rect(rect.min.x + perpPadding,
-                      rect.min.y - thickness,
-                      rect.max.x - perpPadding,
-                      rect.min.y + thickness)   // Top
-            1 -> Rect(rect.max.x - thickness,
-                      rect.min.y + perpPadding,
-                      rect.max.x + thickness,
-                      rect.max.y - perpPadding)   // Right
-            2 -> Rect(rect.min.x + perpPadding,
-                      rect.max.y - thickness,
-                      rect.max.x - perpPadding,
-                      rect.max.y + thickness)   // Bottom
-            3 -> Rect(rect.min.x - thickness,
-                      rect.min.y + perpPadding,
-                      rect.min.x + thickness,
-                      rect.max.y - perpPadding)   // Left
-            else -> throw Error()
+        if (thickness == 0f)
+            rect.max minusAssign 1
+        return when (Dir.of(borderN)) {
+            Dir.Left -> Rect(rect.min.x - thickness, rect.min.y + perpPadding, rect.min.x + thickness, rect.max.y - perpPadding)
+            Dir.Right -> Rect(rect.max.x - thickness, rect.min.y + perpPadding, rect.max.x + thickness, rect.max.y - perpPadding)
+            Dir.Up -> Rect(rect.min.x + perpPadding, rect.min.y - thickness, rect.max.x - perpPadding, rect.min.y + thickness)
+            Dir.Down -> Rect(rect.min.x + perpPadding, rect.max.y - thickness, rect.max.x - perpPadding, rect.max.y + thickness)
+            else -> error("invalid dir")
         }
     }
 
@@ -1345,19 +1336,23 @@ class Window(var context: Context,
         private val childWindowComparer =
             compareBy<Window>({ it.flags has Wf._Popup }, { it.flags has Wf._Tooltip }, { it.beginOrderWithinParent })
 
+        /** Data for resizing from corner */
         class ResizeGripDef(val cornerPosN: Vec2, val innerDir: Vec2, val angleMin12: Int, val angleMax12: Int)
 
-        val resizeGripDef = arrayOf(ResizeGripDef(Vec2(1, 1), Vec2(-1, -1), 0, 3),  // Lower-right
-                                    ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower-left
-                                    ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper-left (Unused)
-                                    ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper-right (Unused)
+        val resizeGripDef = arrayOf(
+            ResizeGripDef(Vec2(1, 1), Vec2(-1, -1), 0, 3),  // Lower-right
+            ResizeGripDef(Vec2(0, 1), Vec2(+1, -1), 3, 6),  // Lower-left
+            ResizeGripDef(Vec2(0, 0), Vec2(+1, +1), 6, 9),  // Upper-left (Unused)
+            ResizeGripDef(Vec2(1, 0), Vec2(-1, +1), 9, 12)) // Upper-right (Unused)
 
-        class ResizeBorderDef(val innerDir: Vec2, val cornerPosN1: Vec2, val cornerPosN2: Vec2, val outerAngle: Float)
+        /** Data for resizing from borders */
+        class ResizeBorderDef(val innerDir: Vec2, val segmentN1: Vec2, val segmentN2: Vec2, val outerAngle: Float)
 
-        val resizeBorderDef = arrayOf(ResizeBorderDef(Vec2(0, +1), Vec2(0, 0), Vec2(1, 0), glm.PIf * 1.5f), // Top
-                                      ResizeBorderDef(Vec2(-1, 0), Vec2(1, 0), Vec2(1, 1), glm.PIf * 0.0f), // Right
-                                      ResizeBorderDef(Vec2(0, -1), Vec2(1, 1), Vec2(0, 1), glm.PIf * 0.5f), // Bottom
-                                      ResizeBorderDef(Vec2(+1, 0), Vec2(0, 1), Vec2(0, 0), glm.PIf * 1.0f))  // Left
+        val resizeBorderDef = arrayOf(
+            ResizeBorderDef(Vec2(+1, 0), Vec2(0, 1), Vec2(0, 0), glm.πf * 1.0f),  // Left
+            ResizeBorderDef(Vec2(-1, 0), Vec2(1, 0), Vec2(1, 1), glm.πf * 0.0f), // Right
+            ResizeBorderDef(Vec2(0, +1), Vec2(0, 0), Vec2(1, 0), glm.πf * 1.5f), // Up
+            ResizeBorderDef(Vec2(0, -1), Vec2(1, 1), Vec2(0, 1), glm.πf * 0.5f)) // Down
 
         fun getWindowBgColorIdxFromFlags(flags: Int) = when {
             flags has (Wf._Tooltip or Wf._Popup) -> Col.PopupBg

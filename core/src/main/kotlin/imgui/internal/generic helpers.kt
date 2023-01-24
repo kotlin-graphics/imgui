@@ -52,14 +52,14 @@ fun fileLoadToMemory(filename: String): CharArray? =
         }
 
 /** [JVM] */
-fun hash(data: Int, seed: Int = 0): ID {
+fun hashData(data: Int, seed: Int = 0): ID {
     val buffer = ByteBuffer.allocate(Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     buffer.putInt(0, data)
-    return hash(buffer, seed)
+    return hashData(buffer, seed)
 }
 
 /** [JVM] */
-fun hash(data: IntArray, seed: Int = 0): ID {
+fun hashData(data: IntArray, seed: Int = 0): ID {
     val buffer = ByteBuffer.allocate(data.size * Int.BYTES).order(ByteOrder.LITTLE_ENDIAN) // as C
     for (i in data.indices) buffer.putInt(i * Int.BYTES, data[i])
     val bytes = ByteArray(buffer.rem) { buffer[it] }
@@ -91,7 +91,7 @@ val GCrc32LookupTable = longArrayOf(
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
-fun hash(data: ByteArray, seed: Int = 0): ID {
+fun hashData(data: ByteArray, seed: Int = 0): ID {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable
     var b = 0
@@ -104,7 +104,7 @@ fun hash(data: ByteArray, seed: Int = 0): ID {
 /** Known size hash
  *  It is ok to call ImHashData on a string with known length but the ### operator won't be supported.
  *  FIXME-OPT: Replace with e.g. FNV1a hash? CRC32 pretty much randomly access 1KB. Need to do proper measurements. */
-fun hash(data: ByteBuffer, seed: Int = 0): ID {
+fun hashData(data: ByteBuffer, seed: Int = 0): ID {
     var crc = seed.inv()
     val crc32Lut = GCrc32LookupTable
     var dataSize = data.rem
