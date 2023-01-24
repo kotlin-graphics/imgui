@@ -240,7 +240,7 @@ interface main {
         g.currentWindowStack.clear()
         g.beginPopupStack.clear()
         g.itemFlagsStack.clear()
-        g.itemFlagsStack += ItemFlag.Default_.i
+        g.itemFlagsStack += ItemFlag.None.i
         g.groupStack.clear()
         closePopupsOverWindow(g.navWindow, false)
 

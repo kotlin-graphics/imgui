@@ -31,9 +31,7 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     MixedValue(1 shl 6),  // false
 
     /** [ALPHA] Allow hovering interactions but underlying value is not changed. */
-    ReadOnly(1 shl 7),  // false
-
-    Default_(0);
+    ReadOnly(1 shl 7);  // false
 
     infix fun and(b: ItemFlag): ItemFlags = i and b.i
     infix fun and(b: ItemFlags): ItemFlags = i and b
@@ -57,16 +55,17 @@ typealias ItemStatusFlags = Int
 /** Storage for LastItem data   */
 enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     None(0),
+
+    /** Mouse position is within item rectangle (does NOT mean that the window is in correct z-order and can be hovered!, this is only one part of the most-common IsItemHovered test) */
     HoveredRect(1 shl 0),
 
-    /** LastItemDisplayRect is valid */
+    /** window->DC.LastItemDisplayRect is valid */
     HasDisplayRect(1 shl 1),
 
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */
     Edited(1 shl 2),
 
-    /** Set when Selectable(), TreeNode() reports toggling a selection. We can't report "Selected" because reporting
-     *  the change allows us to handle clipping with less issues. */
+    /** Set when Selectable(), TreeNode() reports toggling a selection. We can't report "Selected", only state changes, in order to easily handle clipping with less issues. */
     ToggledSelection(1 shl 3),
 
     /** Set when TreeNode() reports toggling their open state. */
