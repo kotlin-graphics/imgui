@@ -250,24 +250,31 @@ val Char.isBlankW: Boolean
 // [SECTION] MISC HELPERS/UTILITIES (ImText* functions)
 // -----------------------------------------------------------------------------------------------------------------
 
+/* return out_buf */
+fun textCharToUtf8(outBuf: ByteArray, c: Int): ByteArray {
+    val count = textCharToUtf8Inline(outBuf, 5, c)
+    outBuf[count] = 0
+    return outBuf
+}
+
 /** return output UTF-8 bytes count */
-fun textStrToUtf8(buf: ByteArray, text: CharArray): Int {
+fun textStrToUtf8(outBuf: ByteArray, text: CharArray): Int {
     var b = 0
     var t = 0
-    while (b < buf.size && t < text.size && text[t] != NUL) {
+    while (b < outBuf.size && t < text.size && text[t] != NUL) {
         val c = text[t++].i
         if (c < 0x80)
-            buf[b++] = c.b
+            outBuf[b++] = c.b
         else
-            b += textCharToUtf8(buf, b, c)
+            b += textCharToUtf8Inline(outBuf, b, c)
     }
-    if (b < buf.size) buf[b] = 0
+    if (b < outBuf.size) outBuf[b] = 0
     return b
 }
 
 /** Based on stb_to_utf8() from github.com/nothings/stb/
  *  ~ImTextCharToUtf8   */
-fun textCharToUtf8(buf: ByteArray, b: Int, c: Int): Int {
+fun textCharToUtf8Inline(buf: ByteArray, b: Int, c: Int): Int {
     if (c < 0x80) {
         buf[b + 0] = c.b
         return 1

@@ -67,6 +67,7 @@ import imgui.dsl.treeNode
 import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.font.Font
+import imgui.internal.textCharToUtf8
 import uno.kotlin.NUL
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -362,8 +363,9 @@ object StyleEditor {
                         |
                         |(Glimmer of hope: the atlas system should hopefully be rewritten in the future to make scaling more natural and automatic.)""".trimMargin())
         text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
-        text("Fallback character: '${font.fallbackChar}' (U+%04X)", font.fallbackChar)
-        text("Ellipsis character: '${font.ellipsisChar}' (U+%04X)", font.ellipsisChar)
+        val cStr = ByteArray(5)
+        text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar.code)}' (U+%04X)", font.fallbackChar)
+        text("Ellipsis character: '${textCharToUtf8(cStr, font.ellipsisChar.code)}' (U+%04X)", font.ellipsisChar)
         val side = sqrt(font.metricsTotalSurface.f).i
         text("Texture Area: about ${font.metricsTotalSurface} px ~${side}x$side px")
         for (c in 0 until font.configDataCount)
