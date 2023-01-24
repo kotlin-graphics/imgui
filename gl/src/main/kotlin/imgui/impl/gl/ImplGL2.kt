@@ -142,7 +142,7 @@ class ImplGL2 : GLInterface {
                         glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
 
                         // Bind texture, Draw
-                        glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
+                        glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
                         glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
                     }
                 }

@@ -68,6 +68,10 @@ class DrawCmd : DrawCmdHeader {
     var userCallbackData: Any? = null
 //    void*           UserCallbackData;       // The draw callback code can access this.
 
+    /** Since 1.83: returns ImTextureID associated with this draw call. Warning: DO NOT assume this is always same as 'TextureId' (we will change this function for an upcoming feature) */
+    val texID: TextureID?
+        get() = textureId
+
     infix fun put(drawCmd: DrawCmd) {
         elemCount = drawCmd.elemCount
         clipRect put drawCmd.clipRect

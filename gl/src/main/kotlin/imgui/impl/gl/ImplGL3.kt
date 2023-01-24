@@ -197,7 +197,7 @@ class ImplGL3 : GLInterface {
                         glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
 
                         // Bind texture, Draw
-                        glBindTexture(GL_TEXTURE_2D, cmd.textureId!!)
+                        glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
                         if (MAY_HAVE_DRAW_WITH_BASE_VERTEX && gGlVersion >= 320)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
