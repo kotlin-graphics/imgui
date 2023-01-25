@@ -48,7 +48,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Minimum time between saving positions/sizes to .ini file, in seconds.   */
     var iniSavingRate = 5f
 
-    /** Path to .ini file. Set NULL to disable automatic .ini loading/saving, if e.g. you want to manually load/save from memory. */
+    /** Path to .ini file (important: default "imgui.ini" is relative to current working dir!). Set NULL to disable automatic .ini loading/saving or if you want to manually call LoadIniSettingsXXX() / SaveIniSettingsXXX() functions. */
     var iniFilename: String? = "imgui.ini"
 
     /** Path to .log file (default parameter to ImGui::LogToFile when no file is specified).    */
