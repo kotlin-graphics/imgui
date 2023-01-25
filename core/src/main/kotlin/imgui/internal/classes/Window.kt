@@ -855,12 +855,12 @@ class Window(var context: Context,
                     borderHeld = borderN
             }
             if (held) {
-                val clampMin = Vec2(if(borderN == Dir.Right.i) visibilityRect.min.x else -Float.MAX_VALUE, if(borderN == Dir.Down.i) visibilityRect.min.y else -Float.MAX_VALUE)
-                val clampMax = Vec2(if(borderN == Dir.Left.i) visibilityRect.max.x else +Float.MAX_VALUE, if(borderN == Dir.Up.i) visibilityRect.max.y else +Float.MAX_VALUE)
+                val clampMin = Vec2(if (borderN == Dir.Right.i) visibilityRect.min.x else -Float.MAX_VALUE, if (borderN == Dir.Down.i) visibilityRect.min.y else -Float.MAX_VALUE)
+                val clampMax = Vec2(if (borderN == Dir.Left.i) visibilityRect.max.x else +Float.MAX_VALUE, if (borderN == Dir.Up.i) visibilityRect.max.y else +Float.MAX_VALUE)
                 var borderTarget = Vec2(pos)
                 borderTarget[axis] = g.io.mousePos[axis] - g.activeIdClickOffset[axis] + WINDOWS_HOVER_PADDING
                 borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
-                calcResizePosSizeFromAnyCorner(borderTarget, def.segmentN1 min  def.segmentN2, posTarget, sizeTarget)
+                calcResizePosSizeFromAnyCorner(borderTarget, def.segmentN1 min def.segmentN2, posTarget, sizeTarget)
             }
         }
         popID()
@@ -1061,10 +1061,7 @@ class Window(var context: Context,
         // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
         // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
         val UNSAVED_DOCUMENT_MARKER = "*"
-        val markerSizeX = when {
-            flags has Wf.UnsavedDocument -> calcTextSize(UNSAVED_DOCUMENT_MARKER, hideTextAfterDoubleHash = false).x
-            else -> 0f
-        }
+        val markerSizeX = if (flags has Wf.UnsavedDocument) buttonSz * 0.8f else 0f
         val textSize = calcTextSize(name, hideTextAfterDoubleHash = true) + Vec2(markerSizeX, 0f)
 
         // As a nice touch we try to ensure that centered title text doesn't get affected by visibility of Close/Collapse button,
@@ -1079,20 +1076,18 @@ class Window(var context: Context,
         }
 
         val layoutR = Rect(titleBarRect.min.x + padL, titleBarRect.min.y, titleBarRect.max.x - padR, titleBarRect.max.y)
-        val clipR = Rect(
-            x1 = layoutR.min.x, layoutR.min.y,
-            x2 = min(layoutR.max.x + style.itemInnerSpacing.x, titleBarRect.max.x),
-            y2 = layoutR.max.y)
+        val clipR = Rect(layoutR.min.x, layoutR.min.y, (layoutR.max.x + style.itemInnerSpacing.x) min titleBarRect.max.x, layoutR.max.y)
+        if (flags has Wf.UnsavedDocument) {
+            val markerPos = Vec2(clamp(layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x + textSize.x, layoutR.min.x, layoutR.max.x),
+                                 (layoutR.min.y + layoutR.max.y) * 0.5f)
+            if (markerPos.x > layoutR.min.x) {
+                drawList.renderBullet(markerPos, Col.Text.u32)
+                clipR.max.x = clipR.max.x min (markerPos.x - (markerSizeX * 0.5f).i)
+            }
+        }
         //if (g.IO.KeyShift) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
         //if (g.IO.KeyCtrl) window->DrawList->AddRect(clip_r.Min, clip_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
         renderTextClipped(layoutR.min, layoutR.max, name, textSize, style.windowTitleAlign, clipR)
-
-        if (flags has Wf.UnsavedDocument) {
-            val markerPos = Vec2(max(layoutR.min.x, layoutR.min.x + (layoutR.width - textSize.x) * style.windowTitleAlign.x) + textSize.x, layoutR.min.y) + Vec2(2 - markerSizeX, 0f)
-            val off = Vec2(0f, floor(-g.fontSize * 0.25f))
-            renderTextClipped(markerPos + off, layoutR.max + off, UNSAVED_DOCUMENT_MARKER,
-                              null, Vec2(0, style.windowTitleAlign.y), clipR)
-        }
     }
 
     /** ~ClampWindowRect */

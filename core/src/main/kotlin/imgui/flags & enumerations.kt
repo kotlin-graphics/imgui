@@ -85,9 +85,7 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
     /** No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)  */
     NoNavFocus(1 shl 19),
 
-    /** Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator.
-     *  When used in a tab/docking context, tab is selected on closure and closure is deferred by one frame
-     *  to allow code to cancel the closure (with a confirmation popup, etc.) without flicker. */
+    /** Display a dot next to the title. When used in a tab/docking context, tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar. */
     UnsavedDocument(1 shl 20),
 
     NoNav(NoNavInputs or NoNavFocus),
@@ -543,7 +541,7 @@ typealias TabItemFlags = Int
 enum class TabItemFlag(@JvmField val i: TabItemFlags) {
     None(0),
 
-    /** Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator. Also: tab is selected on closure and closure is deferred by one frame to allow code to undo it without flicker. */
+    /** Display a dot next to the title + tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar. */
     UnsavedDocument(1 shl 0),
 
     /** Trigger flag to programmatically make the tab selected when calling BeginTabItem() */

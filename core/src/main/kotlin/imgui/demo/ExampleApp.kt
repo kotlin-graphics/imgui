@@ -80,6 +80,7 @@ object ExampleApp {
     var noNav = false
     var noBackground = false
     var noBringToFront = false
+    var unsavedDocument = false
 
     var filter = TextFilter()
     var lineWidth = 1f
@@ -119,6 +120,7 @@ object ExampleApp {
         if (noNav) windowFlags = windowFlags or Wf.NoNav
         if (noBackground) windowFlags = windowFlags or Wf.NoBackground
         if (noBringToFront) windowFlags = windowFlags or Wf.NoBringToFrontOnFocus
+        if (unsavedDocument) windowFlags = windowFlags or Wf.UnsavedDocument
         if (noClose) open = null // Don't pass our bool* to Begin
         // We specify a default position/size in case there's no data in the .ini file.
         // We only do it to make the demo applications a little more welcoming, but typically this isn't required.
@@ -274,6 +276,7 @@ object ExampleApp {
                 tableNextColumn(); checkbox("No nav", ::noNav); sameLine(300)
                 tableNextColumn(); checkbox("No background", ::noBackground)
                 tableNextColumn(); checkbox("No bring to front", ::noBringToFront)
+                tableNextColumn(); checkbox("Unsaved document", ::unsavedDocument)
                 endTable()
             }
         }

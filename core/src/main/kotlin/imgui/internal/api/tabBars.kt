@@ -1,5 +1,6 @@
 package imgui.internal.api
 
+import glm_.func.common.max
 import glm_.func.common.min
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2bool
@@ -9,7 +10,6 @@ import imgui.ImGui.closeButton
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
-import imgui.ImGui.renderTextClippedEx
 import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.style
 import imgui.api.g
@@ -17,7 +17,6 @@ import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
 import imgui.internal.classes.lastItemDataBackup
-import imgui.internal.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -41,7 +40,7 @@ internal interface tabBars {
         // While rendering tabs, we trim 1 pixel off the top of our bounding box so they can fit within a regular frame height while looking "detached" from it.
         val width = bb.width
         assert(width > 0f)
-        val rounding = max(0f, min(if(flags has TabItemFlag._Button) g.style.frameRounding else style.tabRounding, width * 0.5f - 1f))
+        val rounding = max(0f, min(if (flags has TabItemFlag._Button) g.style.frameRounding else style.tabRounding, width * 0.5f - 1f))
         val y1 = bb.min.y + 1f
         val y2 = bb.max.y - 1f
         drawList.apply {
@@ -66,7 +65,7 @@ internal interface tabBars {
     fun tabItemLabelAndCloseButton(drawList: DrawList, bb: Rect, flags: TabItemFlags, framePadding: Vec2,
                                    label: ByteArray, tabId: ID, closeButtonId: ID, isContentsVisible: Boolean): Vec2bool {
 
-        val labelSize = calcTextSize(label, 0, hideTextAfterDoubleHash =  true)
+        val labelSize = calcTextSize(label, 0, hideTextAfterDoubleHash = true)
 
         var justClosed = false
         var textClipped = false
@@ -76,27 +75,24 @@ internal interface tabBars {
 
         // In Style V2 we'll have full override of all colors per state (e.g. focused, selected)
         // But right now if you want to alter text color of tabs this is what you need to do.
-//        #if 0
-//        const float backup_alpha = g.Style.Alpha;
-//        if (!is_contents_visible)
-//            g.Style.Alpha *= 0.7f;
-//        #endif
+        //        #if 0
+        //        const float backup_alpha = g.Style.Alpha;
+        //        if (!is_contents_visible)
+        //            g.Style.Alpha *= 0.7f;
+        //        #endif
 
         // Render text label (with clipping + alpha gradient) + unsaved marker
-        val TAB_UNSAVED_MARKER = "*".toByteArray()
         val textPixelClipBb = Rect(bb.min.x + framePadding.x, bb.min.y + framePadding.y, bb.max.x - framePadding.x, bb.max.y)
-        if (flags has TabItemFlag.UnsavedDocument) {
-            textPixelClipBb.max.x -= calcTextSize(TAB_UNSAVED_MARKER, 0, -1, false).x
-            val unsavedMarkerPos = Vec2(min(bb.min.x + framePadding.x + labelSize.x + 2, textPixelClipBb.max.x), bb.min.y + framePadding.y + floor(-g.fontSize * 0.25f))
-            renderTextClippedEx(drawList, unsavedMarkerPos, bb.max - framePadding, TAB_UNSAVED_MARKER, 0, null)
-        }
         val textEllipsisClipBb = Rect(textPixelClipBb)
 
         // Return clipped state ignoring the close button
         textClipped = (textEllipsisClipBb.min.x + labelSize.x) > textPixelClipBb.max.x
-            //draw_list->AddCircle(text_ellipsis_clip_bb.Min, 3.0f, *out_text_clipped ? IM_COL32(255, 0, 0, 255) : IM_COL32(0, 255, 0, 255));
+        //draw_list->AddCircle(text_ellipsis_clip_bb.Min, 3.0f, *out_text_clipped ? IM_COL32(255, 0, 0, 255) : IM_COL32(0, 255, 0, 255));
 
-        // Close Button
+        val buttonSz = g.fontSize
+        val buttonPos = Vec2(bb.min.x max (bb.max.x - framePadding.x * 2f - buttonSz), bb.min.y)
+
+        // Close Button & Unsaved Marker
         // We are relying on a subtle and confusing distinction between 'hovered' and 'g.HoveredId' which happens because we are using ImGuiButtonFlags_AllowOverlapMode + SetItemAllowOverlap()
         //  'hovered' will be true when hovering the Tab but NOT when hovering the close button
         //  'g.HoveredId==id' will be true when hovering the Tab including when hovering the close button
@@ -104,14 +100,15 @@ internal interface tabBars {
         var closeButtonPressed = false
         var closeButtonVisible = false
         if (closeButtonId != 0)
-            if (isContentsVisible || bb.width >= style.tabMinWidthForCloseButton)
+            if (isContentsVisible || bb.width >= buttonSz max style.tabMinWidthForCloseButton)
                 if (g.hoveredId == tabId || g.hoveredId == closeButtonId || g.activeId == tabId || g.activeId == closeButtonId)
                     closeButtonVisible = true
+        val unsavedMarkerVisible = flags hasnt TabItemFlag.UnsavedDocument && buttonPos.x + buttonSz <= bb.max.x
+
         if (closeButtonVisible) {
-            val closeButtonSz = g.fontSize
             pushStyleVar(StyleVar.FramePadding, framePadding)
             lastItemDataBackup {
-                if (closeButton(closeButtonId, Vec2(bb.max.x - framePadding.x * 2f - closeButtonSz, bb.min.y)))
+                if (closeButton(closeButtonId, buttonPos))
                     closeButtonPressed = true
             }
             popStyleVar()
@@ -119,17 +116,27 @@ internal interface tabBars {
             // Close with middle mouse button
             if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(MouseButton.Middle))
                 closeButtonPressed = true
-
-            textPixelClipBb.max.x -= closeButtonSz
+        } else if (unsavedMarkerVisible) {
+            val bulletBb = Rect(buttonPos, buttonPos + buttonSz + g.style.framePadding * 2f)
+            g.currentWindow!!.drawList.renderBullet(bulletBb.center, Col.Text.u32) // ~RenderBullet(bullet_bb.GetCenter());
         }
 
+        // This is all rather complicated
+        // (the main idea is that because the close button only appears on hover, we don't want it to alter the ellipsis position)
         // FIXME: if FramePadding is noticeably large, ellipsis_max_x will be wrong here (e.g. #3497), maybe for consistency that parameter of RenderTextEllipsis() shouldn't exist..
-        val ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x - 1f
+        var ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x - 1f
+        if (closeButtonVisible || unsavedMarkerVisible) {
+            textPixelClipBb.max.x -= if(closeButtonVisible) buttonSz else buttonSz * 0.8f
+            textEllipsisClipBb.max.x -= if(unsavedMarkerVisible) buttonSz * 0.8f else 0f
+            ellipsisMaxX = textPixelClipBb.max.x
+        }
         renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x,
-                ellipsisMaxX, label, textSizeIfKnown = labelSize)
+                           ellipsisMaxX, label, textSizeIfKnown = labelSize)
 
-//        if(!isContentsVisible)
-//            style.alpha = backupAlpha
+//        #if 0
+//        if (!is_contents_visible)
+//            g.Style.Alpha = backup_alpha;
+//        #endif
 
         justClosed = closeButtonPressed
         return Vec2bool(justClosed, textClipped)

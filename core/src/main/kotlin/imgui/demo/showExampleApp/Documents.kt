@@ -185,6 +185,16 @@ object Documents {
 
         separator()
 
+        // About the ImGuiWindowFlags_UnsavedDocument / ImGuiTabItemFlags_UnsavedDocument flags.
+        // They have multiple effects:
+        // - Display a dot next to the title.
+        // - Tab is selected when clicking the X close button.
+        // - Closure is not assumed (will wait for user to stop submitting the tab).
+        //   Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar.
+        //   We need to assume closure by default otherwise waiting for "lack of submission" on the next frame would leave an empty
+        //   hole for one-frame, both in the tab-bar and in tab-contents when closing a tab/window.
+        //   The rarely used SetTabItemClosed() function is a way to notify of programmatic closure to avoid the one-frame hole.
+
         // Submit Tab Bar and Tabs
         run {
             val tabBarFlags: TabBarFlags = optFittingFlags or if (optReorderable) TabBarFlag.Reorderable else TabBarFlag.None
