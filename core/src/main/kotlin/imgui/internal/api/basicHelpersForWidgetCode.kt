@@ -11,8 +11,6 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.hoveredId
 import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isMouseHoveringRect
-import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushStyleVar
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.api.g
@@ -110,6 +108,7 @@ internal interface basicHelpersForWidgetCode {
         val dc = g.currentWindow!!.dc.apply {
             lastItemId = id
             lastItemRect = bb
+            lastItemInFlags = g.currentItemFlags
             lastItemStatusFlags = ItemStatusFlag.None.i
         }
         g.nextItemData.flags = NextItemDataFlag.None.i
@@ -227,9 +226,10 @@ internal interface basicHelpersForWidgetCode {
 
     /** This is also inlined in ItemAdd()
      *  Note: if ImGuiItemStatusFlags_HasDisplayRect is set, user needs to set window->DC.LastItemDisplayRect! */
-    fun setLastItemData(window: Window, itemId: ID, itemFlags: ItemStatusFlags, itemRect: Rect) {
+    fun setLastItemData(window: Window, itemId: ID, itemFlags: ItemFlags, itemStatusFlags: ItemStatusFlags, itemRect: Rect) {
         window.dc.lastItemId = itemId
-        window.dc.lastItemStatusFlags = itemFlags
+        window.dc.lastItemInFlags = itemFlags
+        window.dc.lastItemStatusFlags = itemStatusFlags
         window.dc.lastItemRect put itemRect
     }
 

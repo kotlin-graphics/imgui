@@ -54,6 +54,9 @@ class WindowTempData {
     /** ID for last item */
     var lastItemId: ID = 0
 
+    /** Copy of flags for last item (see ImGuiItemflags_), named "In" to avoid probably confusion with status flags */
+    var lastItemInFlags: ItemFlags = 0
+
     /** Status flags for last item (see ImGuiItemStatusFlags_) */
     var lastItemStatusFlags = ItemStatusFlag.None.i
 

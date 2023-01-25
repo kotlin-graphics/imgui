@@ -664,7 +664,7 @@ interface windows {
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
             val flag = if (isMouseHoveringRect(titleBarRect, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
-            setLastItemData(window, window.moveId, flag.i, titleBarRect)
+            setLastItemData(window, window.moveId, g.currentItemFlags, flag.i, titleBarRect)
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
                 IMGUI_TEST_ENGINE_ITEM_ADD(window.dc.lastItemRect, window.dc.lastItemId)

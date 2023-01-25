@@ -24,16 +24,16 @@ interface itemWidgetsUtilities {
 
     fun isItemHovered(flags: Int = Hf.None.i): Boolean {
 
+        val window = g.currentWindow!!
         if (g.navDisableMouseHover && !g.navDisableHighlight) {
-            if (g.currentItemFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled)
+            if (window.dc.lastItemInFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled)
                 return false
             return isItemFocused
         }
 
-        val window = g.currentWindow!!
+        // Test for bounding box overlap, as updated as ItemAdd()
         val statusFlags = window.dc.lastItemStatusFlags
         return when {
-            // Test for bounding box overlap, as updated as ItemAdd()
             statusFlags hasnt ItemStatusFlag.HoveredRect -> false
             else -> {
                 assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) { "Flags not supported by this function" }
@@ -51,7 +51,7 @@ interface itemWidgetsUtilities {
                     // The ImGuiHoveredFlags_AllowWhenBlockedByPopup flag will be tested here.
                     g.navDisableMouseHover || !window.isContentHoverable(flags) -> false
                     // Test if the item is disabled
-                    g.currentItemFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled -> false
+                    window.dc.lastItemInFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled -> false
                     /*  Special handling for calling after Begin() which represent the title bar or tab.
                         When the window is collapsed (SkipItems==true) that last item will never be overwritten
                         so we need to detect the case.  */

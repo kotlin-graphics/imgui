@@ -53,6 +53,7 @@ fun lastItemDataBackup(block: () -> Unit) {
     // backup
     var window = g.currentWindow!!
     val lastItemId = window.dc.lastItemId
+    val lastItemInFlags = window.dc.lastItemInFlags
     val lastItemStatusFlags = window.dc.lastItemStatusFlags
     val lastItemRect = Rect(window.dc.lastItemRect)
     val lastItemDisplayRect = Rect(window.dc.lastItemDisplayRect)
@@ -62,6 +63,7 @@ fun lastItemDataBackup(block: () -> Unit) {
     // restore
     window = g.currentWindow!!
     window.dc.lastItemId = lastItemId
+    window.dc.lastItemInFlags = lastItemInFlags
     window.dc.lastItemRect put lastItemRect
     window.dc.lastItemStatusFlags = lastItemStatusFlags
     window.dc.lastItemDisplayRect = lastItemDisplayRect
