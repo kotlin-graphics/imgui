@@ -22,8 +22,10 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
 import imgui.ImGui.markItemEdited
+import imgui.ImGui.popDisabled
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
+import imgui.ImGui.pushDisabled
 import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
@@ -195,7 +197,7 @@ interface widgetsInputWithKeyboard {
             style.framePadding.x = style.framePadding.y
             var buttonFlags = Bf.Repeat or Bf.DontClosePopups
             if (flags has Itf.ReadOnly)
-                buttonFlags = buttonFlags or Bf.Disabled
+                pushDisabled(true)
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", Vec2(buttonSize), buttonFlags)) {
                 data = dataTypeApplyOp(dataType, '-', data, stepFast?.takeIf { io.keyCtrl } ?: step)
@@ -206,6 +208,8 @@ interface widgetsInputWithKeyboard {
                 data = dataTypeApplyOp(dataType, '+', data, stepFast?.takeIf { io.keyCtrl } ?: step)
                 valueChanged = true
             }
+            if (flags has Itf.ReadOnly)
+                popDisabled()
 
             val labelEnd = findRenderedTextEnd(label)
             if (0 != labelEnd) {
