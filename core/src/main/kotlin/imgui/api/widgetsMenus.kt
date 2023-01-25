@@ -259,7 +259,7 @@ interface widgetsMenus {
             popStyleColor()
         popID()
 
-        val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
+        val hovered = g.hoveredId == id && enabled
 
         if (menusetIsOpen)
             g.navWindow = backedNavWindow
