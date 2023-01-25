@@ -246,6 +246,10 @@ internal interface widgetsLowLevelBehaviors {
             }
         }
 
+        // Release active id if turning disabled
+        if (g.activeId == id && g.currentItemFlags has ItemFlag.Disabled)
+            clearActiveID()
+
         // Process while held
         var held = false
         if (g.activeId == id) {
