@@ -243,7 +243,7 @@ interface widgetsMenus {
             val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or Sf._SpanAvailWidth
             pressed = selectable(label, menuIsOpen, f or if (enabled) Sf.None else Sf.Disabled, Vec2(minW, 0f))
             val textCol = if (enabled) Col.Text else Col.TextDisabled
-            window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
+            window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.offsets[1] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
         }
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
@@ -381,11 +381,11 @@ interface widgetsMenus {
             pressed = selectable(label, false, flags or Sf._SpanAvailWidth, Vec2(minW, 0f))
             if (shortcutW > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-                renderText(pos + Vec2(window.dc.menuColumns.pos[1] + extraW, 0f), shortcut, false)
+                renderText(pos + Vec2(window.dc.menuColumns.offsets[0] + extraW, 0f), shortcut, false)
                 popStyleColor()
             }
             if (selected)
-                window.drawList.renderCheckMark(pos + Vec2(window.dc.menuColumns.pos[2] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
+                window.drawList.renderCheckMark(pos + Vec2(window.dc.menuColumns.offsets[1] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 

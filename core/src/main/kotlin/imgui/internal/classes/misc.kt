@@ -70,40 +70,36 @@ fun lastItemDataBackup(block: () -> Unit) {
 /** Simple column measurement, currently used for MenuItem() only.. This is very short-sighted/throw-away code and NOT a generic helper. */
 class MenuColumns {
 
+    var totalWidth = 0
+    var nextTotalWidth = 0
     var spacing = 0f
-    var width = 0f
-    var nextWidth = 0f
-    val pos = FloatArray(3)
-    var nextWidths = FloatArray(3)
+    val offsets = IntArray(2) // Offset of:         Shortcut, Check mark (locked in Update)
+    var widths = IntArray(3) // Width of:   Label, Shortcut, Check mark (accumulator for current frame)
 
-    fun update(count: Int, spacing: Float, clear: Boolean) {
-        assert(count == pos.size)
-        nextWidth = 0f
-        width = 0f
+    fun update(spacing: Float, windowReappearing: Boolean) {
+        if (windowReappearing)
+            widths.fill(0)
+        totalWidth = 0; nextTotalWidth = 0
         this.spacing = spacing
-        if (clear)
-            nextWidths.fill(0f)
-        for (i in pos.indices) {
-            if (i > 0 && nextWidths[i] > 0f)
-                width += spacing
-            pos[i] = floor(width)
-            width += nextWidths[i]
-            nextWidths[i] = 0f
+        for (i in widths.indices) {
+            if (i > 0 && widths[i] > 0)
+                totalWidth += spacing.i
+            if (i > 0)
+                offsets[i - 1] = totalWidth
+            totalWidth += widths[i]
+            widths[i] = 0
         }
     }
 
-    fun declColumns(w0: Float, w1: Float, w2: Float): Float {
-        nextWidth = 0f
-        nextWidths[0] = nextWidths[0] max w0
-        nextWidths[1] = nextWidths[1] max w1
-        nextWidths[2] = nextWidths[2] max w2
-        for (i in pos.indices)
-            nextWidth += nextWidths[i] + (if (i > 0 && nextWidths[i] > 0f) spacing else 0f)
-        return width max nextWidth.i.f // JVM only TODO why?
+    fun declColumns(wLabel: Float, wShortcut: Float, wCheckmark: Float): Float {
+        widths[0] = widths[0] max wLabel.i
+        widths[1] = widths[1] max wShortcut.i
+        widths[2] = widths[2] max wCheckmark.i
+        nextTotalWidth = 0
+        for (i in widths.indices)
+            nextTotalWidth += widths[i] + if(i > 0 && widths[i] > 0) spacing.i else 0
+        return (totalWidth max nextTotalWidth).f
     }
-
-
-    fun calcExtraSpace(availW: Float) = glm.max(0f, availW - width)
 }
 
 /** Result of a gamepad/keyboard directional navigation move query result */
@@ -460,7 +456,7 @@ class Pool<T>(val placementNew: () -> T) : Iterable<T> {
 
     /** It is the map we need iterate to find valid items, since we don't have "alive" storage anywhere */
     val mapSize get() = map.size
-//    T*          TryGetBufData(ImPoolIdx n) { int idx = Map . Data [n].val_i; if (idx == -1) return NULL; return GetByIndex(idx); }
+    //    T*          TryGetBufData(ImPoolIdx n) { int idx = Map . Data [n].val_i; if (idx == -1) return NULL; return GetByIndex(idx); }
 
     val size get() = buf.size
     override fun iterator(): Iterator<T> = buf.iterator()
