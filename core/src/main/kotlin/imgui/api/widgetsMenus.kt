@@ -23,6 +23,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.mainViewport
+import imgui.ImGui.menuItemEx
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopup
@@ -80,7 +81,7 @@ interface widgetsMenus {
         // We remove 1 worth of rounding to Max.x to that text in long menus and small windows don't tend to display over the lower-right rounded area, which looks particularly glitchy.
         val barRect = window.menuBarRect()
         val clipRect = Rect(round(barRect.min.x + window.windowBorderSize), round(barRect.min.y + window.windowBorderSize),
-                round(barRect.min.x max (barRect.max.x - (window.windowRounding max window.windowBorderSize))), round(barRect.max.y))
+                            round(barRect.min.x max (barRect.max.x - (window.windowRounding max window.windowBorderSize))), round(barRect.max.y))
         clipRect clipWith window.outerRectClipped
         pushClipRect(clipRect.min, clipRect.max, false)
 
@@ -153,7 +154,7 @@ interface widgetsMenus {
         g.nextWindowData.menuBarOffsetMinVal.put(style.displaySafeAreaPadding.x, max(style.displaySafeAreaPadding.y - style.framePadding.y, 0f))
         val windowFlags = Wf.NoScrollbar or Wf.NoSavedSettings or Wf.MenuBar
         val height = frameHeight
-        val isOpen = beginViewportSideBar("##MainMenuBar",viewport, Dir.Up, height, windowFlags)
+        val isOpen = beginViewportSideBar("##MainMenuBar", viewport, Dir.Up, height, windowFlags)
         g.nextWindowData.menuBarOffsetMinVal put 0f
 
         if (isOpen)
@@ -214,11 +215,15 @@ interface widgetsMenus {
         // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
             g.navWindow = window
 
-        /*  The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child menu,
-            However the final position is going to be different! It is chosen by FindBestWindowPosForPopup().
-            e.g. Menus tend to overlap each other horizontally to amplify relative Z-ordering.         */
-        val popupPos = Vec2()
+        // The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child menu,
+        // However the final position is going to be different! It is chosen by FindBestWindowPosForPopup().
+        // e.g. Menus tend to overlap each other horizontally to amplify relative Z-ordering.
+        val popupPos = Vec2();
         val pos = Vec2(window.dc.cursorPos)
+        pushID(label)
+        if (!enabled)
+            pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
+        val offsets = window.dc.menuColumns
         if (window.dc.layoutType == Lt.Horizontal) {
             /*  Menu inside an horizontal menu bar
                 Selectable extend their highlight by half ItemSpacing in each direction.
@@ -227,8 +232,10 @@ interface widgetsMenus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
-            val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
-            pressed = selectable(label, menuIsOpen, f, Vec2(w, 0f))
+            val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
+            val f = Sf._NoHoldingActiveID or Sf._SelectOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
+            pressed = selectable("", menuIsOpen, f, Vec2(w, 0f))
+            renderText(textPos, label)
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
                 to call sameLine() ourselves after the popStyleVar().   */
@@ -238,13 +245,20 @@ interface widgetsMenus {
             // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.
             //  Only when they are other items sticking out we're going to add spacing, yet only register minimum width into the layout system.
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
-            val minW = window.dc.menuColumns.declColumns(labelSize.x, 0f, floor(g.fontSize * 1.2f)) // Feedback to next frame
-            val extraW = glm.max(0f, contentRegionAvail.x - minW)
-            val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or Sf._SpanAvailWidth
-            pressed = selectable(label, menuIsOpen, f or if (enabled) Sf.None else Sf.Disabled, Vec2(minW, 0f))
-            val textCol = if (enabled) Col.Text else Col.TextDisabled
-            window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.offsetMark + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
+            val iconW = 0f // FIXME: This not currently exposed for BeginMenu() however you can call window->DC.MenuColumns.DeclColumns(w, 0, 0, 0) yourself
+            val checkmarkW = floor(g.fontSize * 1.2f)
+            val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, 0f, checkmarkW) // Feedback to next frame
+            val extraW = 0f max (contentRegionAvail.x - minW)
+            val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
+            pressed = selectable("", menuIsOpen, Sf._NoHoldingActiveID or Sf._SelectOnClick or Sf.DontClosePopups or Sf._SpanAvailWidth or
+                    if (!enabled) Sf.Disabled else Sf.None, Vec2(minW, 0f))
+            renderText(textPos, label)
+            window.drawList.renderArrow(pos + Vec2(offsets.offsetMark + extraW + g.fontSize * 0.3f, 0f), Col.Text.u32, Dir.Right)
         }
+        if (!enabled)
+            popStyleColor()
+        popID()
+
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
         if (menusetIsOpen)
@@ -310,7 +324,7 @@ interface widgetsMenus {
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.beginPopupStack.size, true)
 
-        val f = ItemStatusFlag.Openable or if(menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+        val f = ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.currentItemFlags or f)
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
@@ -348,61 +362,16 @@ interface widgetsMenus {
         endPopup()
     }
 
-    /** return true when activated. */
-    fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true): Boolean {
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        val pos = Vec2(window.dc.cursorPos)
-        val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
-
-        // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
-        // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
-        val flags = Sf._SelectOnRelease or Sf._SetNavIdOnHover or if (enabled) Sf.None else Sf.Disabled
-        val pressed: Boolean
-        if (window.dc.layoutType == Lt.Horizontal) {
-            // Mimic the exact layout spacing of BeginMenu() to allow MenuItem() inside a menu bar, which is a little misleading but may be useful
-            // Note that in this situation: we don't render the shortcut, we render a highlight instead of the selected tick mark.
-            val w = labelSize.x
-            window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
-            pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
-            pressed = selectable(label, selected, flags, Vec2(w, 0f))
-            popStyleVar()
-            /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
-                to call sameLine() ourselves after the popStyleVar().             */
-            window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
-        } else {
-            // Menu item inside a vertical menu
-            // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.
-            //  Only when they are other items sticking out we're going to add spacing, yet only register minimum width into the layout system.
-            val shortcutW = if(shortcut.isNotEmpty()) calcTextSize(shortcut).x else 0f
-            val minW = window.dc.menuColumns.declColumns(labelSize.x, shortcutW, floor(g.fontSize * 1.2f)) // Feedback for next frame
-            val extraW = max(0f, contentRegionAvail.x - minW)
-            pressed = selectable(label, false, flags or Sf._SpanAvailWidth, Vec2(minW, 0f))
-            if (shortcutW > 0f) {
-                pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-                renderText(pos + Vec2(window.dc.menuColumns.offsetShortcut + extraW, 0f), shortcut, false)
-                popStyleColor()
-            }
-            if (selected)
-                window.drawList.renderCheckMark(pos + Vec2(window.dc.menuColumns.offsetMark + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
-                        (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
-        }
-
-        val f = ItemStatusFlag.Checkable or if(selected) ItemStatusFlag.Checked else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label, window.dc.lastItemStatusFlags or f)
-        return pressed
-    }
+    fun menuItem(label: String, shortcut: String, selected: Boolean, enabled: Boolean): Boolean = menuItemEx(label, "", shortcut, selected, enabled)
 
     /** return true when activated + toggle (*p_selected) if p_selected != NULL */
     fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true): Boolean =
-            if (menuItem(label, shortcut, pSelected?.get(0) == true, enabled)) {
-                pSelected?.let { it[0] = !it[0] }
-                true
-            } else false
+        if (menuItemEx(label, "", shortcut, pSelected?.get(0) == true, enabled)) {
+            pSelected?.let { it[0] = !it[0] }
+            true
+        } else false
 
     fun menuItem(label: String, shortcut: String = "", selected: KMutableProperty0<Boolean>?, enabled: Boolean = true): Boolean =
-            menuItem(label, shortcut, selected?.get() == true, enabled)
-                    .also { if (it) selected?.apply { set(!get()) } }
+        menuItemEx(label, "", shortcut, selected?.get() == true, enabled)
+                .also { if (it) selected?.apply { set(!get()) } }
 }

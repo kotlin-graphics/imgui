@@ -386,7 +386,7 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     // [Internal] NB: need to be in sync with last value of ImGuiSelectableFlags_
 
     /** private  */
-    _NoHoldingActiveId(1 shl 20),
+    _NoHoldingActiveID(1 shl 20),
 
     /** (WIP) Auto-select when moved into. This is not exposed in public API as to handle multi-select and modifiers we will need user to explicitly control focus scope. May be replaced with a BeginSelection() API. */
     _SelectOnNav(1 shl 21),

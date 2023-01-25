@@ -125,7 +125,7 @@ interface widgetsSelectables {
 
         // We use NoHoldingActiveID on menus so user can click and _hold_ on a menu then drag to browse child entries
         var buttonFlags = 0
-        if (flags has Sf._NoHoldingActiveId) buttonFlags = buttonFlags or Bf.NoHoldingActiveId
+        if (flags has Sf._NoHoldingActiveID) buttonFlags = buttonFlags or Bf.NoHoldingActiveId
         if (flags has Sf._SelectOnClick) buttonFlags = buttonFlags or Bf.PressedOnClick
         if (flags has Sf._SelectOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
         if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled

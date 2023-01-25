@@ -73,9 +73,11 @@ class MenuColumns {
     var totalWidth = 0
     var nextTotalWidth = 0
     var spacing = 0
+    var offsetIcon = 0         // Always zero for now
+    var offsetLabel = 0        // Offsets are locked in Update()
     var offsetShortcut = 0 // Offsets are locked in Update()
     var offsetMark = 0
-    var widths = IntArray(3) // Width of:   Label, Shortcut, Mark (accumulators for current frame)
+    var widths = IntArray(4) // Width of:   Icon, Label, Shortcut, Mark  (accumulators for current frame)
 
     fun update(spacing: Float, windowReappearing: Boolean) {
         if (windowReappearing)
@@ -87,10 +89,11 @@ class MenuColumns {
         nextTotalWidth = 0
     }
 
-    fun declColumns(wLabel: Float, wShortcut: Float, wMark: Float): Float {
-        widths[0] = widths[0] max wLabel.i
-        widths[1] = widths[1] max wShortcut.i
-        widths[2] = widths[2] max wMark.i
+    fun declColumns(wIcon: Float, wLabel: Float, wShortcut: Float, wMark: Float): Float {
+        widths[0] = widths[0] max wIcon.i
+        widths[1] = widths[1] max wLabel.i
+        widths[2] = widths[2] max wShortcut.i
+        widths[3] = widths[3] max wMark.i
         calcNextTotalWidth(false)
         return (totalWidth max nextTotalWidth).f
     }
@@ -99,16 +102,16 @@ class MenuColumns {
         var offset = 0
         var wantSpacing = false
         for (i in widths.indices) {
-            val width = widths [i]
+            val width = widths[i]
             if (wantSpacing && width > 0)
                 offset += spacing
             wantSpacing = wantSpacing or (width > 0)
-            if (updateOffsets) {
-                if (i == 1)
-                    offsetShortcut = offset
-                if (i == 2)
-                    offsetMark = offset
-            }
+            if (updateOffsets)
+                when (i) {
+                    1 -> offsetLabel = offset
+                    2 -> offsetShortcut = offset
+                    3 -> offsetMark = offset
+                }
             offset += width
         }
         nextTotalWidth = offset

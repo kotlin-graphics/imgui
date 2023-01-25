@@ -168,6 +168,7 @@ object ImGui :
     basicHelpersForWidgetCode,
     imgui.internal.api.loggingCapture,
     PopupsModalsTooltips,
+    menus,
     combos,
     navigation,
     focusScope,
