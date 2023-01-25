@@ -28,10 +28,12 @@ import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
+import imgui.ImGui.popDisabled
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.pushDisabled
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
@@ -222,7 +224,7 @@ interface widgetsMenus {
         val pos = Vec2(window.dc.cursorPos)
         pushID(label)
         if (!enabled)
-            pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
+            pushDisabled()
         val offsets = window.dc.menuColumns
         if (window.dc.layoutType == Lt.Horizontal) {
             /*  Menu inside an horizontal menu bar
@@ -233,8 +235,7 @@ interface widgetsMenus {
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
             val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
-            val f = Sf._NoHoldingActiveID or Sf._SelectOnClick or Sf.DontClosePopups or if (enabled) 0 else Sf.Disabled.i
-            pressed = selectable("", menuIsOpen, f, Vec2(w, 0f))
+            pressed = selectable("", menuIsOpen, Sf._NoHoldingActiveID or Sf._SelectOnClick or Sf.DontClosePopups, Vec2(w, 0f))
             renderText(textPos, label)
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
@@ -250,13 +251,12 @@ interface widgetsMenus {
             val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, 0f, checkmarkW) // Feedback to next frame
             val extraW = 0f max (contentRegionAvail.x - minW)
             val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
-            pressed = selectable("", menuIsOpen, Sf._NoHoldingActiveID or Sf._SelectOnClick or Sf.DontClosePopups or Sf._SpanAvailWidth or
-                    if (!enabled) Sf.Disabled else Sf.None, Vec2(minW, 0f))
+            pressed = selectable("", menuIsOpen, Sf._NoHoldingActiveID or Sf._SelectOnClick or Sf.DontClosePopups or Sf._SpanAvailWidth, Vec2(minW, 0f))
             renderText(textPos, label)
             window.drawList.renderArrow(pos + Vec2(offsets.offsetMark + extraW + g.fontSize * 0.3f, 0f), Col.Text.u32, Dir.Right)
         }
         if (!enabled)
-            popStyleColor()
+            popDisabled()
         popID()
 
         val hovered = g.hoveredId == id && enabled

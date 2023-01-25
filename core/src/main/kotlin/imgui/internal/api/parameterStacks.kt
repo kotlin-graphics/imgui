@@ -36,7 +36,7 @@ internal interface parameterStacks {
     // - Feedback welcome at https://github.com/ocornut/imgui/issues/211
     // - You may trivially implement your own variation of this if needed.
     //   Here we test (CurrentItemFlags & ImGuiItemFlags_Disabled) to allow nested PushDisabled() calls.
-    fun pushDisabled(disabled: Boolean) {
+    fun pushDisabled(disabled: Boolean = true) {
         val wasDisabled = g.currentItemFlags has ItemFlag.Disabled
         if (!wasDisabled && disabled)
             ImGui.pushStyleVar(StyleVar.Alpha, g.style.alpha * 0.6f)

@@ -123,8 +123,6 @@ interface widgetsSelectables {
         val disabledGlobal = g.currentItemFlags has If.Disabled
         if (disabledItem && !disabledGlobal)
             pushDisabled(true)
-        if (disabledItem || disabledGlobal)
-            selected = false
 
         // FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
         // which would be advantageous since most selectable are not selected.

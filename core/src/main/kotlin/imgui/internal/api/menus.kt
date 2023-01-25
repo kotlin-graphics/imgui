@@ -8,6 +8,7 @@ import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushDisabled
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
@@ -35,11 +36,11 @@ internal interface menus {
 
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
-        val flags = SelectableFlag._SelectOnRelease or SelectableFlag._SetNavIdOnHover or if (enabled) SelectableFlag.None else SelectableFlag.Disabled
         val pressed: Boolean
         pushID(label)
         if (!enabled)
-            pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
+            pushDisabled(true)
+        val flags = SelectableFlag._SelectOnRelease or SelectableFlag._SetNavIdOnHover
         val offsets = window.dc.menuColumns
         if (window.dc.layoutType == LayoutType.Horizontal) {
             // Mimic the exact layout spacing of BeginMenu() to allow MenuItem() inside a menu bar, which is a little misleading but may be useful
