@@ -1806,7 +1806,7 @@ object ShowDemoWindowWidgets {
                 // Select an item type
                 val itemNames = arrayOf(
                     "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputFloat",
-                    "InputFloat3", "ColorEdit4", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "Combo", "ListBox")
+                    "InputFloat3", "ColorEdit4", "Selectable", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "Combo", "ListBox")
                 combo("Item Type", ::itemType, itemNames, itemNames.size)
                 sameLine()
                 helpMarker("Testing how various types of items are interacting with the IsItemXXX functions. Note that the bool return value of most ImGui function is generally equivalent to calling ImGui::IsItemHovered().")
@@ -1822,11 +1822,12 @@ object ShowDemoWindowWidgets {
                     6 -> inputFloat("ITEM: InputFloat", col, 1f)  // Testing +/- buttons on scalar input
                     7 -> inputFloat3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
                     8 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                    9 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
-                    10 -> treeNode("ITEM: TreeNode").also { if (it) treePop() } // Testing tree node
-                    11 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
-                    12 -> combo("ITEM: Combo", ::current1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
-                    13 -> listBox("ITEM: ListBox", ::current2, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                    9 -> selectable("ITEM: Selectable") // Testing selectable item
+                    10 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
+                    11 -> treeNode("ITEM: TreeNode").also { if (it) treePop() } // Testing tree node
+                    12 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
+                    13 -> combo("ITEM: Combo", ::current1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                    14 -> listBox("ITEM: ListBox", ::current2, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                     else -> false
                 }
 

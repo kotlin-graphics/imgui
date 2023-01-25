@@ -126,11 +126,6 @@ internal interface widgetsLowLevelBehaviors {
         val window = currentWindow
         var flags = flags_
 
-        if (flags has Bf.Disabled) {
-            if (g.activeId == id) clearActiveID()
-            return BooleanArray(3)
-        }
-
         // Default only reacts to left mouse button
         if (flags hasnt Bf.MouseButtonMask_)
             flags = flags or Bf.MouseButtonDefault_

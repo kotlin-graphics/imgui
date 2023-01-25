@@ -10,8 +10,10 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popColumnsBackground
+import imgui.ImGui.popDisabled
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushColumnsBackground
+import imgui.ImGui.pushDisabled
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
@@ -52,6 +54,7 @@ interface widgetsSelectables {
      *  size.y > 0f -> specify height   */
     fun selectable(label: String, selected_: Boolean = false, flags: SelectableFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
 
+        var selected = selected_
         val window = currentWindow
         if (window.skipItems) return false
 
@@ -97,8 +100,9 @@ interface widgetsSelectables {
             window.clipRect.max.x = window.parentWorkRect.max.x
         }
 
+        val disabledItem = flags has Sf.Disabled
         val itemAdd = when {
-            flags has Sf.Disabled -> {
+            disabledItem -> {
                 val backupItemFlags = g.currentItemFlags
                 g.currentItemFlags = g.currentItemFlags or If.Disabled
                 itemAdd(bb, id).also {
@@ -116,6 +120,12 @@ interface widgetsSelectables {
         if (!itemAdd)
             return false
 
+        val disabledGlobal = g.currentItemFlags has If.Disabled
+        if (disabledItem && !disabledGlobal)
+            pushDisabled(true)
+        if (disabledItem || disabledGlobal)
+            selected = false
+
         // FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
         // which would be advantageous since most selectable are not selected.
         if (spanAllColumns && window.dc.currentColumns != null)
@@ -128,11 +138,8 @@ interface widgetsSelectables {
         if (flags has Sf._NoHoldingActiveID) buttonFlags = buttonFlags or Bf.NoHoldingActiveId
         if (flags has Sf._SelectOnClick) buttonFlags = buttonFlags or Bf.PressedOnClick
         if (flags has Sf._SelectOnRelease) buttonFlags = buttonFlags or Bf.PressedOnRelease
-        if (flags has Sf.Disabled) buttonFlags = buttonFlags or Bf.Disabled
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
         if (flags has Sf.AllowItemOverlap) buttonFlags = buttonFlags or Bf.AllowItemOverlap
-
-        var selected = if (flags has Sf.Disabled) false else selected_
 
         val wasSelected = selected
 
@@ -181,13 +188,14 @@ interface widgetsSelectables {
         else if (spanAllColumns && g.currentTable != null)
             tablePopBackgroundChannel()
 
-        if (flags has Sf.Disabled) pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
         renderTextClipped(textMin, textMax, label, labelSize, style.selectableTextAlign, bb)
-        if (flags has Sf.Disabled) popStyleColor()
 
         // Automatically close popups
         if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && g.currentItemFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
+
+        if (disabledItem && !disabledGlobal)
+            popDisabled()
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
         return pressed

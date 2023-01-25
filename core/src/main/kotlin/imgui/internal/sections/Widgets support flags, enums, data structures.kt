@@ -187,8 +187,8 @@ enum class ButtonFlag(val i: ButtonFlags) {
     /** disable automatically closing parent popup on press // [UNUSED] */
     DontClosePopups(1 shl 13),
 
-    /** disable interactions */
-    Disabled(1 shl 14),
+    /** disable interactions -> use PushDisabled() or ImGuiItemFlags_Disabled */
+//    Disabled(1 shl 14),
 
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
     AlignTextBaseLine(1 shl 15),
