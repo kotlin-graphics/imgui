@@ -197,7 +197,11 @@ class FontAtlas {
 
     /** Build pixels data. This is automatically for you by the GetTexData*** functions.    */
     fun build(): Boolean {
-        assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
+        assert(!locked) { "Cannot modify a locked ImFontAtlas between NewFrame() and EndFrame/Render()!" }
+
+        // Default font is none are specified
+        if (configData.isEmpty())
+            addFontDefault()
 
         // Select builder
         // - Note that we do not reassign to atlas->FontBuilderIO, since it is likely to point to static data which
@@ -220,11 +224,9 @@ class FontAtlas {
     fun getTexDataAsAlpha8(): Triple<ByteBuffer, Vec2i, Int> {
 
         // Build atlas on demand
-        if (texPixelsAlpha8 == null) {
-            if (configData.isEmpty())
-                addFontDefault()
+        if (texPixelsAlpha8 == null)
             build()
-        }
+
         return Triple(texPixelsAlpha8!!, texSize, 1)
     }
 

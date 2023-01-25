@@ -213,8 +213,6 @@ class ImplGlfw @JvmOverloads constructor(
 
     fun newFrame() {
 
-        assert(io.fonts.isBuilt) { "Font atlas not built! It is generally built by the renderer backend. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame()." }
-
         // Setup display size (every frame to accommodate for window resizing)
         val size = window.size
         val displaySize = window.framebufferSize

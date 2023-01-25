@@ -20,8 +20,7 @@ fun errorCheckNewFrameSanityChecks() {
     assert(io.deltaTime > 0f || g.frameCount == 0) { "Need a positive DeltaTime!" }
     assert(g.frameCount == 0 || g.frameCountEnded == g.frameCount) { "Forgot to call Render() or EndFrame() at the end of the previous frame?" }
     assert(io.displaySize.x >= 0f && io.displaySize.y >= 0f) { "Invalid DisplaySize value!" } // TODO glm
-    assert(io.fonts.fonts.size > 0) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8()?" }
-    assert(io.fonts.fonts[0].isLoaded) { "Font Atlas not built. Did you call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8()?" }
+    assert(io.fonts.isBuilt) { "Font Atlas not built! Make sure you called ImGui_ImplXXXX_NewFrame() function for renderer backend, which should call io.Fonts->GetTexDataAsRGBA32() / GetTexDataAsAlpha8()" }
     assert(style.curveTessellationTol > 0f) { "Invalid style setting!" }
     assert(style.circleTessellationMaxError > 0f) { "Invalid style setting!" }
     assert(style.alpha in 0f..1f) { "Invalid style setting!" } // Allows us to avoid a few clamps in color computations
