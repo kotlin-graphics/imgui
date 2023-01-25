@@ -116,6 +116,7 @@ class ImplGlfw @JvmOverloads constructor(
             window.scrollCBs["imgui"] = scrollCallback
             window.keyCBs["imgui"] = keyCallback
             window.charCBs["imgui"] = charCallback
+            // TODO monitor callback
             imeListener.install(window)
             data.installedCallbacks = installCallbacks
         }
