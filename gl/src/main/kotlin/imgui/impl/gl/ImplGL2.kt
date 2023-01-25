@@ -26,14 +26,22 @@ import org.lwjgl.opengl.GL20C.*
 
 class ImplGL2 : GLInterface {
 
-    init { // Setup backend capabilities flags
+    /** ~ImGui_ImplOpenGL2_Init */
+    init {
+        assert(io.backendRendererUserData == null) { "Already initialized a renderer backend!" }
+
+        // Setup backend capabilities flags
         io.backendRendererName = "imgui_impl_opengl2"
     }
 
-    override fun shutdown() = destroyDeviceObjects()
+    override fun shutdown() {
+        destroyDeviceObjects()
+        io.backendRendererName = null
+        io.backendRendererUserData = null
+    }
 
     override fun newFrame() {
-        if (fontTexture[0] == 0)
+        if (data.fontTexture[0] == 0)
             createDeviceObjects()
     }
 
@@ -181,15 +189,15 @@ class ImplGL2 : GLInterface {
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
-        glGenTextures(fontTexture)
-        glBindTexture(GL_TEXTURE_2D, fontTexture)
+        glGenTextures(data.fontTexture)
+        glBindTexture(GL_TEXTURE_2D, data.fontTexture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
 
         // Store our identifier
-        ImGui.io.fonts.texID = fontTexture[0]
+        ImGui.io.fonts.texID = data.fontTexture[0]
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
@@ -201,12 +209,18 @@ class ImplGL2 : GLInterface {
     }
 
     override fun destroyFontsTexture() {
-        if (fontTexture[0] != 0) {
-            glDeleteTextures(fontTexture)
+        if (data.fontTexture[0] != 0) {
+            glDeleteTextures(data.fontTexture)
             ImGui.io.fonts.texID = 0
-            fontTexture[0] = 0
+            data.fontTexture[0] = 0
         }
     }
 
     override fun destroyDeviceObjects() = destroyFontsTexture()
+
+    companion object {
+        object data {
+            val fontTexture = IntBuffer(1)
+        }
+    }
 }

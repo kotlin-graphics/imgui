@@ -3,17 +3,13 @@ package examples
 
 import glm_.vec4.Vec4
 import gln.checkError
-import gln.glClearColor
 import gln.glViewport
 import imgui.DEBUG
 import imgui.ImGui
 import imgui.classes.Context
-import imgui.dsl
 import imgui.impl.gl.ImplGL3
-import imgui.impl.gl.glslVersion
 import imgui.impl.glfw.ImplGlfw
 import org.lwjgl.opengl.GL
-import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL11.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.Platform
@@ -70,13 +66,13 @@ private class ImGuiOpenGL3 {
                 when (Platform.get()) {
                     // TODO Opengl_es2? GL ES 2.0 + GLSL 100
                     Platform.MACOSX -> {    // GL 3.2 + GLSL 150
-                        glslVersion = 150
+                        ImplGL3.data.glslVersion = 150
                         context.version = "3.2"
                         profile = core      // 3.2+ only
                         forwardComp = true  // Required on Mac
                     }
                     else -> {   // GL 3.0 + GLSL 130
-                        glslVersion = 130
+                        ImplGL3.data.glslVersion = 130
                         context.version = "3.0"
                         //profile = core      // 3.2+ only
                         //forwardComp = true  // 3.0+ only

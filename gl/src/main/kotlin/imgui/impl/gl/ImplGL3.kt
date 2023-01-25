@@ -3,19 +3,20 @@ package imgui.impl.gl
 import glm_.L
 import glm_.glm
 import glm_.i
+import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4ub
 import gln.*
 import gln.glf.semantic
 import gln.identifiers.GlBuffers
 import gln.identifiers.GlProgram
+import gln.identifiers.GlShader
 import gln.identifiers.GlVertexArray
 import gln.uniform.glUniform
 import gln.vertexArray.glVertexAttribPointer
 import imgui.BackendFlag
 import imgui.DEBUG
 import imgui.ImGui.io
-import imgui.impl.mat
 import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
@@ -31,17 +32,27 @@ import org.lwjgl.system.Platform
 
 
 class ImplGL3 : GLInterface {
+    object data {
 
-    var program = GlProgram(0)
-    var matUL = -1
+        /** Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2) */
+        var glVersion = 0
 
-    val buffers = GlBuffers<Buffer>()
-    var vao = GlVertexArray()
+        /** Specified by user or detected based on compile time GL settings. */
+        var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
+        val fontTexture = IntBuffer(1)
+        var shaderHandle = GlProgram(0)
 
-    var hasClipOrigin = false
+        var attribLocationProjMtx = -1
+
+        val buffers = GlBuffers<Buffer>()
+        var vao = GlVertexArray()
+
+        var hasClipOrigin = false
+    }
 
     /** ~ImGui_ImplOpenGL3_Init */
     init {
+        assert(io.backendRendererUserData == null) { "Already initialized a renderer backend!" }
 
         // Query for GL version (e.g. 320 for GL 3.2)
         var major = glGetInteger(GL_MAJOR_VERSION)
@@ -52,7 +63,7 @@ class ImplGL3 : GLInterface {
             major = glVersion.substringBefore('.').i
             minor = glVersion.substringAfter('.').i
         }
-        gGlVersion = when {
+        data.glVersion = when {
             !OPENGL_ES2 -> major * 100 + minor * 10
             else -> 200 // GLES 2
         }
@@ -61,25 +72,29 @@ class ImplGL3 : GLInterface {
         io.backendRendererName = "imgui_impl_opengl3"
 
         // Detect extensions we support
-        hasClipOrigin = gGlVersion >= 450
+        data.hasClipOrigin = data.glVersion >= 450
         if (OPENGL_MAY_HAVE_EXTENSIONS) {
             val numExtensions = glGetInteger(GL_NUM_EXTENSIONS)
             for (i in 0 until numExtensions) {
                 val extension = glGetStringi(GL_EXTENSIONS, i)
                 if (extension == "GL_ARB_clip_control")
-                    hasClipOrigin = true
+                    data.hasClipOrigin = true
             }
         }
 
         if (OPENGL_MAY_HAVE_VTX_OFFSET)
-            if (gGlVersion >= 320)
+            if (data.glVersion >= 320)
                 io.backendFlags = io.backendFlags or BackendFlag.RendererHasVtxOffset  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
     }
 
-    override fun shutdown() = destroyDeviceObjects()
+    override fun shutdown() {
+        destroyDeviceObjects()
+        io.backendRendererName = null
+        io.backendRendererUserData = null
+    }
 
     override fun newFrame() {
-        if (program.isInvalid)
+        if (data.shaderHandle.isInvalid)
             createDeviceObjects()
     }
 
@@ -93,14 +108,14 @@ class ImplGL3 : GLInterface {
         glDisable(GL_DEPTH_TEST)
         glDisable(GL_STENCIL_TEST)
         glEnable(GL_SCISSOR_TEST)
-        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && data.glVersion >= 310)
             glDisable(GL_PRIMITIVE_RESTART)
         if (POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
         // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
         val clipOriginLowerLeft = when {
-            CLIP_ORIGIN && hasClipOrigin -> glGetInteger(GL_CLIP_ORIGIN) != GL_UPPER_LEFT
+            CLIP_ORIGIN && data.hasClipOrigin -> glGetInteger(GL_CLIP_ORIGIN) != GL_UPPER_LEFT
             else -> true
         }
 
@@ -116,16 +131,16 @@ class ImplGL3 : GLInterface {
             if (!clipOriginLowerLeft) {
                 val tmp = T; T = B; B = tmp; } // Swap top and bottom if origin is upper left
         val orthoProjection = glm.ortho(L, R, B, T, mat)
-        glUseProgram(program.name)
-        glUniform(matUL, orthoProjection)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330)
+        glUseProgram(data.shaderHandle.name)
+        glUniform(data.attribLocationProjMtx, orthoProjection)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330)
             glBindSampler(0, 0) // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 
-        vao.bind()
+        data.vao.bind()
 
         // Bind vertex/index buffers and setup attributes for ImDrawVert
-        glBindBuffer(GL_ARRAY_BUFFER, buffers[Buffer.Vertex].name)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[Buffer.Element].name)
+        glBindBuffer(GL_ARRAY_BUFFER, data.buffers[Buffer.Vertex].name)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data.buffers[Buffer.Element].name)
         glEnableVertexAttribArray(semantic.attr.POSITION)
         glEnableVertexAttribArray(semantic.attr.TEX_COORD)
         glEnableVertexAttribArray(semantic.attr.COLOR)
@@ -150,7 +165,7 @@ class ImplGL3 : GLInterface {
         val lastProgram = glGetInteger(GL_CURRENT_PROGRAM)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
         val lastSampler = when {
-            !OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
+            !OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330 -> glGetInteger(GL33C.GL_SAMPLER_BINDING)
             else -> 0
         }
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
@@ -170,7 +185,7 @@ class ImplGL3 : GLInterface {
         val lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST)
         val lastEnableStencilTest = glIsEnabled(GL_STENCIL_TEST)
         val lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST)
-        val lastEnablePrimitiveRestart = OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310 && glIsEnabled(GL_PRIMITIVE_RESTART)
+        val lastEnablePrimitiveRestart = OPENGL_MAY_HAVE_PRIMITIVE_RESTART && data.glVersion >= 310 && glIsEnabled(GL_PRIMITIVE_RESTART)
 
         // Setup desired GL state
         setupRenderState(drawData, fbWidth, fbHeight)
@@ -211,7 +226,7 @@ class ImplGL3 : GLInterface {
 
                         // Bind texture, Draw
                         glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
-                        if (OPENGL_MAY_HAVE_VTX_OFFSET && gGlVersion >= 320)
+                        if (OPENGL_MAY_HAVE_VTX_OFFSET && data.glVersion >= 320)
                             glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
                         else
                             glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
@@ -224,7 +239,7 @@ class ImplGL3 : GLInterface {
         // Restore modified GL state
         glUseProgram(lastProgram)
         glBindTexture(GL_TEXTURE_2D, lastTexture)
-        if (OPENGL_MAY_HAVE_BIND_SAMPLER && gGlVersion > 330)
+        if (OPENGL_MAY_HAVE_BIND_SAMPLER && data.glVersion > 330)
             glBindSampler(0, lastSampler)
         glActiveTexture(lastActiveTexture)
         glBindVertexArray(lastVertexArray)
@@ -237,7 +252,7 @@ class ImplGL3 : GLInterface {
         if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST) else glDisable(GL_DEPTH_TEST)
         if (lastEnableStencilTest) glEnable(GL_STENCIL_TEST) else glDisable(GL_STENCIL_TEST)
         if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST) else glDisable(GL_SCISSOR_TEST)
-        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && gGlVersion >= 310)
+        if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && data.glVersion >= 310)
             when {
                 lastEnablePrimitiveRestart -> glEnable(GL_PRIMITIVE_RESTART)
                 else -> glDisable(GL_PRIMITIVE_RESTART)
@@ -259,8 +274,8 @@ class ImplGL3 : GLInterface {
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
-        glGenTextures(fontTexture)
-        glBindTexture(GL_TEXTURE_2D, fontTexture[0])
+        glGenTextures(data.fontTexture)
+        glBindTexture(GL_TEXTURE_2D, data.fontTexture[0])
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         if (UNPACK_ROW_LENGTH)
@@ -268,7 +283,7 @@ class ImplGL3 : GLInterface {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
 
         // Store our identifier
-        io.fonts.texID = fontTexture[0]
+        io.fonts.texID = data.fontTexture[0]
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
@@ -280,10 +295,10 @@ class ImplGL3 : GLInterface {
     }
 
     override fun destroyFontsTexture() {
-        if (fontTexture[0] != 0) {
-            glDeleteTextures(fontTexture)
+        if (data.fontTexture[0] != 0) {
+            glDeleteTextures(data.fontTexture)
             io.fonts.texID = 0
-            fontTexture[0] = 0
+            data.fontTexture[0] = 0
         }
     }
 
@@ -295,18 +310,18 @@ class ImplGL3 : GLInterface {
         val lastArrayBuffer = glGetInteger(GL_ARRAY_BUFFER_BINDING)
         val lastElementBuffer = glGetInteger(GL_ELEMENT_ARRAY_BUFFER_BINDING)
 
-        program = createProgram()
-        program.use {
-            matUL = "ProjMtx".uniform
+        data.shaderHandle = createProgram()
+        data.shaderHandle.use {
+            data.attribLocationProjMtx = "ProjMtx".uniform
             "Texture".unit = semantic.sampler.DIFFUSE
         }
 
         // Create buffers
-        buffers.gen()
+        data.buffers.gen()
 
         createFontsTexture()
 
-        vao = GlVertexArray.gen()
+        data.vao = GlVertexArray.gen()
 
         // Restore modified GL state
         glUseProgram(lastProgram)
@@ -322,27 +337,36 @@ class ImplGL3 : GLInterface {
 
     override fun destroyDeviceObjects() {
 
-        vao.delete()
-        buffers.delete()
+        data.vao.delete()
+        data.buffers.delete()
 
-        if (program.isValid) program.delete()
+        if (data.shaderHandle.isValid)
+            data.shaderHandle.delete()
 
         destroyFontsTexture()
     }
 
     companion object {
 
+        enum class Buffer {
+            Vertex, Element;
+
+            companion object {
+                val MAX = values().size
+            }
+        }
+
         var OPENGL_ES2 = false
         var OPENGL_ES3 = false
 
         // Desktop GL 3.2+ has glDrawElementsBaseVertex() which GL ES and WebGL don't have.
-        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 320 }
+        val OPENGL_MAY_HAVE_VTX_OFFSET by lazy { !OPENGL_ES2 && !OPENGL_ES3 && data.glVersion >= 320 }
 
         // Desktop GL 3.3+ has glBindSampler()
-        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 330 }
+        val OPENGL_MAY_HAVE_BIND_SAMPLER by lazy { !OPENGL_ES2 && !OPENGL_ES3 && data.glVersion >= 330 }
 
         // Desktop GL 3.1+ has GL_PRIMITIVE_RESTART state
-        val OPENGL_MAY_HAVE_PRIMITIVE_RESTART by lazy { OPENGL_ES2 && !OPENGL_ES3 && gGlVersion >= 310 }
+        val OPENGL_MAY_HAVE_PRIMITIVE_RESTART by lazy { OPENGL_ES2 && !OPENGL_ES3 && data.glVersion >= 310 }
 
         // Desktop GL use extension detection
         val OPENGL_MAY_HAVE_EXTENSIONS = true
@@ -352,6 +376,130 @@ class ImplGL3 : GLInterface {
         var POLYGON_MODE = true
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
+
+        val mat = Mat4()
+
+        val vertexShader_glsl_120: String by lazy {
+            """
+                #version ${data.glslVersion}
+                uniform mat4 ProjMtx;
+                attribute vec2 Position;
+                attribute vec2 UV;
+                attribute vec4 Color;
+                varying vec2 Frag_UV;
+                varying vec4 Frag_Color;
+                void main() {
+                    Frag_UV = UV;
+                    Frag_Color = Color;
+                    gl_Position = ProjMtx * vec4(Position.xy,0,1);
+                }""".trimIndent()
+        }
+
+        val vertexShader_glsl_130: String by lazy {
+            """
+                #version ${data.glslVersion}
+                uniform mat4 ProjMtx;
+                in vec2 Position;
+                in vec2 UV;
+                in vec4 Color;
+                out vec2 Frag_UV;
+                out vec4 Frag_Color;
+                void main() {
+                    Frag_UV = UV;
+                    Frag_Color = Color;
+                    gl_Position = ProjMtx * vec4(Position.xy,0,1);
+                }""".trimIndent()
+        }
+
+        val vertexShader_glsl_410_core: String by lazy {
+            """
+                #version ${data.glslVersion}
+                layout (location = ${semantic.attr.POSITION}) in vec2 Position;
+                layout (location = ${semantic.attr.TEX_COORD}) in vec2 UV;
+                layout (location = ${semantic.attr.COLOR}) in vec4 Color;
+                uniform mat4 ProjMtx;
+                out vec2 Frag_UV;
+                out vec4 Frag_Color;
+                void main() {
+                    Frag_UV = UV;
+                    Frag_Color = Color;
+                    gl_Position = ProjMtx * vec4(Position.xy,0,1);
+                }""".trimIndent()
+        }
+
+        val fragmentShader_glsl_120: String by lazy {
+            """
+                #version ${data.glslVersion}
+                uniform sampler2D Texture;
+                varying vec2 Frag_UV;
+                varying vec4 Frag_Color;
+                void main() {
+                    gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV.st);
+                }""".trimIndent()
+        }
+
+        val fragmentShader_glsl_130: String by lazy {
+            """
+                #version ${data.glslVersion}
+                uniform sampler2D Texture;
+                in vec2 Frag_UV;
+                in vec4 Frag_Color;
+                out vec4 Out_Color;
+                void main() {
+                    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);
+                }""".trimIndent()
+        }
+
+        val fragmentShader_glsl_410_core: String by lazy {
+            """
+                #version ${data.glslVersion}
+                in vec2 Frag_UV;
+                in vec4 Frag_Color;
+                uniform sampler2D Texture;
+                layout (location = ${semantic.frag.COLOR}) out vec4 Out_Color;
+                void main() {
+                    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);
+                }""".trimIndent()
+        }
+
+        fun createProgram(): GlProgram {
+
+            val vertexShader: String
+            val fragmentShader: String
+            when {
+                data.glslVersion < 130 -> {
+                    vertexShader = vertexShader_glsl_120
+                    fragmentShader = fragmentShader_glsl_120
+                }
+                data.glslVersion >= 410 -> {
+                    vertexShader = vertexShader_glsl_410_core
+                    fragmentShader = fragmentShader_glsl_410_core
+                }
+                else -> {
+                    vertexShader = vertexShader_glsl_130
+                    fragmentShader = fragmentShader_glsl_130
+                }
+            }
+
+            val vertHandle = GlShader.createFromSource(ShaderType.VERTEX_SHADER, vertexShader)
+            val fragHandle = GlShader.createFromSource(ShaderType.FRAGMENT_SHADER, fragmentShader)
+
+            return GlProgram.create().apply {
+                attach(vertHandle)
+                attach(fragHandle)
+                if (data.glslVersion < 410) {
+                    bindAttribLocation(semantic.attr.POSITION, "Position")
+                    bindAttribLocation(semantic.attr.TEX_COORD, "UV")
+                    bindAttribLocation(semantic.attr.COLOR, "Color")
+                    bindFragDataLocation(semantic.frag.COLOR, "Out_Color")
+                }
+                link()
+                detach(vertHandle)
+                detach(fragHandle)
+                vertHandle.delete()
+                fragHandle.delete()
+            }
+        }
     }
 
     /*private fun debugSave(fbWidth: Int, fbHeight: Int) {

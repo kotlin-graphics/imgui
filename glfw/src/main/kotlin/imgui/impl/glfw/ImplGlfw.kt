@@ -3,6 +3,7 @@ package imgui.impl.glfw
 import glm_.b
 import glm_.c
 import glm_.f
+import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import glm_.vec2.Vec2i
@@ -10,10 +11,9 @@ import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.mouseCursor
 import imgui.Key
-import imgui.api.g
+import imgui.MouseButton
 import imgui.impl.*
 import imgui.windowsIme.imeListener
-import kool.cap
 import kool.lim
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.MemoryUtil.NULL
@@ -23,16 +23,17 @@ import uno.glfw.GlfwWindow.CursorMode
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import kotlin.collections.set
+enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
 
 // GLFW callbacks
 // - When calling Init with 'install_callbacks=true': GLFW callbacks will be installed for you. They will call user's previously installed callbacks, if any.
 // - When calling Init with 'install_callbacks=false': GLFW callbacks won't be installed. You will need to call those function yourself from your own GLFW callbacks.
 class ImplGlfw @JvmOverloads constructor(
-        /** Main window */
-        val window: GlfwWindow, installCallbacks: Boolean = true,
-        /** for vr environment */
-        val vrTexSize: Vec2i? = null,
-        clientApi: GlfwClientApi = GlfwClientApi.OpenGL) {
+    /** Main window */
+    val window: GlfwWindow, installCallbacks: Boolean = true,
+    /** for vr environment */
+    val vrTexSize: Vec2i? = null,
+    clientApi: GlfwClientApi = GlfwClientApi.OpenGL) {
 
     /** for passing inputs in vr */
     var vrCursorPos: Vec2? = null
@@ -40,11 +41,15 @@ class ImplGlfw @JvmOverloads constructor(
     init {
 
         with(io) {
+            assert(io.backendPlatformUserData == NULL) { "Already initialized a platform backend!" }
+            data.window = window
+            //            Data.time = 0.0
 
             // Setup backend capabilities flags
+            backendPlatformUserData = data
+            backendPlatformName = "imgui_impl_glfw"
             backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
             backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
-            backendPlatformName = "imgui_impl_glfw"
 
             // Keyboard mapping. Dear ImGui will use those indices to peek into the io.KeysDown[] array.
             keyMap[Key.Tab] = GLFW_KEY_TAB
@@ -75,7 +80,7 @@ class ImplGlfw @JvmOverloads constructor(
             backendLanguageUserData = null
             backendRendererUserData = null
             backendPlatformUserData = null
-            setClipboardTextFn = { _, text ->  glfwSetClipboardString(clipboardUserData as Long, text) }
+            setClipboardTextFn = { _, text -> glfwSetClipboardString(clipboardUserData as Long, text) }
             getClipboardTextFn = { glfwGetClipboardString(clipboardUserData as Long) }
             clipboardUserData = window.handle.value
 
@@ -88,19 +93,19 @@ class ImplGlfw @JvmOverloads constructor(
         // GLFW will emit an error which will often be printed by the app, so we temporarily disable error reporting.
         // Missing cursors will return NULL and our _UpdateMouseCursor() function will use the Arrow cursor instead.)
         val prevErrorCallback = glfwSetErrorCallback(null)
-        mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
-        mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
-        mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this. [JVM] TODO
-//         mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR)
-        mouseCursors[MouseCursor.ResizeNS.i] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)
-        mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
-        mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
-        mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
-        // mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR)
-        // mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR)
-        mouseCursors[MouseCursor.Hand.i] = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
-        mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
-//        mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR)
+        data.mouseCursors[MouseCursor.Arrow.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+        data.mouseCursors[MouseCursor.TextInput.i] = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR)
+        data.mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)  // FIXME: GLFW doesn't have this. [JVM] TODO
+        data.mouseCursors[MouseCursor.ResizeAll.i] = glfwCreateStandardCursor(GLFW_RESIZE_ALL_CURSOR)
+        data.mouseCursors[MouseCursor.ResizeNS.i] = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR)
+        data.mouseCursors[MouseCursor.ResizeEW.i] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR)
+        data.mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
+        data.mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR) // FIXME: GLFW doesn't have this.
+        data.mouseCursors[MouseCursor.ResizeNESW.i] = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR)
+        data.mouseCursors[MouseCursor.ResizeNWSE.i] = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR)
+        data.mouseCursors[MouseCursor.Hand.i] = glfwCreateStandardCursor(GLFW_HAND_CURSOR)
+        data.mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR)
+        data.mouseCursors[MouseCursor.NotAllowed.i] = glfwCreateStandardCursor(GLFW_NOT_ALLOWED_CURSOR)
         glfwSetErrorCallback(prevErrorCallback)
 
         // [JVM] Chain GLFW callbacks: our callbacks will be installed in parallel with any other already existing
@@ -111,17 +116,27 @@ class ImplGlfw @JvmOverloads constructor(
             window.keyCBs["imgui"] = keyCallback
             window.charCBs["imgui"] = charCallback
             imeListener.install(window)
+            data.installedCallbacks = installCallbacks
         }
 
-        imgui.impl.clientApi = clientApi
+        data.clientApi = clientApi
     }
 
     fun shutdown() {
 
-        mouseCursors.forEach(::glfwDestroyCursor)
-        mouseCursors.fill(NULL)
+        if (data.installedCallbacks) {
+            window.mouseButtonCBs -= "imgui"
+            window.scrollCBs -= "imgui"
+            window.keyCBs -= "imgui"
+            window.charCBs -= "imgui"
+            data.installedCallbacks = false
+        }
 
-        clientApi = GlfwClientApi.Unknown
+        data.mouseCursors.forEach(::glfwDestroyCursor)
+        data.mouseCursors.fill(NULL)
+
+        io.backendPlatformName = null
+        io.backendPlatformUserData = null
     }
 
     private fun updateMousePosAndButtons() {
@@ -130,8 +145,8 @@ class ImplGlfw @JvmOverloads constructor(
         repeat(io.mouseDown.size) {
             /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
                 events that are shorter than 1 frame.   */
-            io.mouseDown[it] = mouseJustPressed[it] || glfwGetMouseButton(window.handle.value, it) != 0
-            mouseJustPressed[it] = false
+            io.mouseDown[it] = data.mouseJustPressed[it] || glfwGetMouseButton(window.handle.value, it) != 0
+            data.mouseJustPressed[it] = false
         }
 
         // Update mouse position
@@ -158,8 +173,8 @@ class ImplGlfw @JvmOverloads constructor(
         else {
             // Show OS mouse cursor
             // FIXME-PLATFORM: Unfocused windows seems to fail changing the mouse cursor with GLFW 3.2, but 3.3 works here.
-            window.cursor = GlfwCursor(mouseCursors[imguiCursor.i].takeIf { it != NULL }
-                    ?: mouseCursors[MouseCursor.Arrow.i])
+            window.cursor = GlfwCursor(data.mouseCursors[imguiCursor.i].takeIf { it != NULL }
+                                           ?: data.mouseCursors[MouseCursor.Arrow.i])
             window.cursorMode = CursorMode.normal
         }
     }
@@ -222,8 +237,8 @@ class ImplGlfw @JvmOverloads constructor(
 
         // Setup time step
         val currentTime = glfw.time
-        io.deltaTime = if (time > 0) (currentTime - time).f else 1f / 60f
-        time = currentTime
+        io.deltaTime = if (data.time > 0) (currentTime - data.time).f else 1f / 60f
+        data.time = currentTime
 
         updateMousePosAndButtons()
         updateMouseCursor()
@@ -244,8 +259,8 @@ class ImplGlfw @JvmOverloads constructor(
         fun shutdown() = instance.shutdown()
 
         val mouseButtonCallback: MouseButtonCB = { button: Int, action: Int, _: Int ->
-            if (action == GLFW_PRESS && button in 0..2)
-                mouseJustPressed[button] = true
+            if (action == GLFW_PRESS && button in data.mouseJustPressed.indices)
+                data.mouseJustPressed[button] = true
         }
 
         val scrollCallback: ScrollCB = { offset: Vec2d ->
@@ -265,7 +280,7 @@ class ImplGlfw @JvmOverloads constructor(
                 keyCtrl = keysDown[GLFW_KEY_LEFT_CONTROL] || keysDown[GLFW_KEY_RIGHT_CONTROL]
                 keyShift = keysDown[GLFW_KEY_LEFT_SHIFT] || keysDown[GLFW_KEY_RIGHT_SHIFT]
                 keyAlt = keysDown[GLFW_KEY_LEFT_ALT] || keysDown[GLFW_KEY_RIGHT_ALT]
-                keySuper = when(Platform.get()) {
+                keySuper = when (Platform.get()) {
                     Platform.WINDOWS -> false
                     else -> keysDown[GLFW_KEY_LEFT_SUPER] || keysDown[GLFW_KEY_RIGHT_SUPER]
                 }
@@ -275,12 +290,27 @@ class ImplGlfw @JvmOverloads constructor(
         val charCallback: CharCB = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
 
         fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
-                ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.OpenGL)
+            ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.OpenGL)
 
         fun initForVulkan(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
-                ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Vulkan)
+            ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Vulkan)
 
         fun initForOther(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
             ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.Unknown)
+
+        object data {
+            lateinit var window: GlfwWindow
+            lateinit var clientApi: GlfwClientApi
+            var time = 0.0
+            val mouseJustPressed = BooleanArray(MouseButton.COUNT)
+            val mouseCursors = LongArray/*<GlfwCursor>*/(MouseCursor.COUNT)
+            var installedCallbacks = false
+
+            // Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.
+            //            GLFWmousebuttonfun      PrevUserCallbackMousebutton;
+            //            GLFWscrollfun           PrevUserCallbackScroll;
+            //            GLFWkeyfun              PrevUserCallbackKey;
+            //            GLFWcharfun             PrevUserCallbackChar;
+        }
     }
 }
