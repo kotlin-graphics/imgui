@@ -390,25 +390,26 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     /** private  */
     _NoHoldingActiveId(1 shl 20),
 
-    /** private
-     *  Override button behavior to react on Click (default is Click+Release) */
-    _SelectOnClick(1 shl 21),
+    /** (WIP) Auto-select when moved into. This is not exposed in public API as to handle multi-select and modifiers we will need user to explicitly control focus scope. May be replaced with a BeginSelection() API. */
+    _SelectOnNav(1 shl 21),
 
-    /** private
-     *  Override button behavior to react on Release (default is Click+Release) */
-    _SelectOnRelease(1 shl 22),
+    /** Override button behavior to react on Click (default is Click+Release) */
+    _SelectOnClick(1 shl 22),
+
+    /** Override button behavior to react on Release (default is Click+Release) */
+    _SelectOnRelease(1 shl 23),
 
     /** Span all avail width even if we declared less for layout purpose. FIXME: We may be able to remove this (added in 6251d379, 2bcafc86 for menus)  */
-    _SpanAvailWidth(1 shl 23),
+    _SpanAvailWidth(1 shl 24),
 
     /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
-    _DrawHoveredWhenHeld(1 shl 24),
+    _DrawHoveredWhenHeld(1 shl 25),
 
     /** Set Nav/Focus ID on mouse hover (used by MenuItem) */
-    _SetNavIdOnHover(1 shl 25),
+    _SetNavIdOnHover(1 shl 26),
 
     /** Disable padding each side with ItemSpacing * 0.5f */
-    _NoPadWithHalfSpacing(1 shl 26);
+    _NoPadWithHalfSpacing(1 shl 27);
 
     infix fun and(b: SelectableFlag): SelectableFlags = i and b.i
     infix fun and(b: SelectableFlags): SelectableFlags = i and b

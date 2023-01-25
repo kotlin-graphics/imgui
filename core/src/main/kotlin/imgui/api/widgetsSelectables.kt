@@ -132,12 +132,24 @@ interface widgetsSelectables {
         if (flags has Sf.AllowDoubleClick) buttonFlags = buttonFlags or Bf.PressedOnClickRelease or Bf.PressedOnDoubleClick
         if (flags has Sf.AllowItemOverlap) buttonFlags = buttonFlags or Bf.AllowItemOverlap
 
-        val selected = if (flags has Sf.Disabled) false else selected_
+        var selected = if (flags has Sf.Disabled) false else selected_
 
         val wasSelected = selected
 
-        val (pressed, h, held) = buttonBehavior(bb, id, buttonFlags)
+        var (pressed, h, held) = buttonBehavior(bb, id, buttonFlags)
         var hovered = h
+
+        // Auto-select when moved into
+        // - This will be more fully fleshed in the range-select branch
+        // - This is not exposed as it won't nicely work with some user side handling of shift/control
+        // - We cannot do 'if (g.NavJustMovedToId != id) { selected = false; pressed = was_selected; }' for two reasons
+        //   - (1) it would require focus scope to be set, need exposing PushFocusScope() or equivalent (e.g. BeginSelection() calling PushFocusScope())
+        //   - (2) usage will fail with clipped items
+        //   The multi-select API aim to fix those issues, e.g. may be replaced with a BeginSelection() API.
+        if (flags has Sf._SelectOnNav && g.navJustMovedToId != 0 && g.navJustMovedToFocusScopeId == window.dc.navFocusScopeIdCurrent)
+        if (g.navJustMovedToId == id) {
+            selected = true; pressed = true
+        }
 
         // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
         if (pressed || (hovered && flags has Sf._SetNavIdOnHover))

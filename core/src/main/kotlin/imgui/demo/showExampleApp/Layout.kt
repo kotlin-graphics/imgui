@@ -51,6 +51,7 @@ object Layout {
             // Left
             child("left pane", Vec2(150, 0), true) {
                 for (i in 0..99) {
+                    // FIXME: Good candidate to use ImGuiSelectableFlags_SelectOnNav
                     val label = "MyObject $i"
                     if (selectable(label, selected == i))
                         selected = i
