@@ -616,7 +616,7 @@ interface windows {
                 dc.navHasScroll = scrollMax.y > 0f
 
                 dc.menuBarAppending = false
-                dc.menuColumns.update(3, style.itemSpacing.x, windowJustActivatedByUser)
+                dc.menuColumns.update(style.itemSpacing.x, windowJustActivatedByUser)
                 dc.treeDepth = 0
                 dc.treeJumpToParentOnPopMask = 0x00
                 dc.childWindows.clear()
