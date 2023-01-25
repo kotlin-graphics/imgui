@@ -118,7 +118,7 @@ internal interface tabBars {
                 closeButtonPressed = true
         } else if (unsavedMarkerVisible) {
             val bulletBb = Rect(buttonPos, buttonPos + buttonSz + g.style.framePadding * 2f)
-            g.currentWindow!!.drawList.renderBullet(bulletBb.center, Col.Text.u32) // ~RenderBullet(bullet_bb.GetCenter());
+            drawList.renderBullet(bulletBb.center, Col.Text.u32) // ~RenderBullet(bullet_bb.GetCenter());
         }
 
         // This is all rather complicated
