@@ -72,33 +72,46 @@ class MenuColumns {
 
     var totalWidth = 0
     var nextTotalWidth = 0
-    var spacing = 0f
-    val offsets = IntArray(2) // Offset of:         Shortcut, Check mark (locked in Update)
-    var widths = IntArray(3) // Width of:   Label, Shortcut, Check mark (accumulator for current frame)
+    var spacing = 0
+    var offsetShortcut = 0 // Offsets are locked in Update()
+    var offsetMark = 0
+    var widths = IntArray(3) // Width of:   Label, Shortcut, Mark (accumulators for current frame)
 
     fun update(spacing: Float, windowReappearing: Boolean) {
         if (windowReappearing)
             widths.fill(0)
-        totalWidth = 0; nextTotalWidth = 0
-        this.spacing = spacing
-        for (i in widths.indices) {
-            if (i > 0 && widths[i] > 0)
-                totalWidth += spacing.i
-            if (i > 0)
-                offsets[i - 1] = totalWidth
-            totalWidth += widths[i]
-            widths[i] = 0
-        }
+        this.spacing = spacing.i
+        calcNextTotalWidth(true)
+        widths.fill(0)
+        totalWidth = nextTotalWidth
+        nextTotalWidth = 0
     }
 
-    fun declColumns(wLabel: Float, wShortcut: Float, wCheckmark: Float): Float {
+    fun declColumns(wLabel: Float, wShortcut: Float, wMark: Float): Float {
         widths[0] = widths[0] max wLabel.i
         widths[1] = widths[1] max wShortcut.i
-        widths[2] = widths[2] max wCheckmark.i
-        nextTotalWidth = 0
-        for (i in widths.indices)
-            nextTotalWidth += widths[i] + if(i > 0 && widths[i] > 0) spacing.i else 0
+        widths[2] = widths[2] max wMark.i
+        calcNextTotalWidth(false)
         return (totalWidth max nextTotalWidth).f
+    }
+
+    fun calcNextTotalWidth(updateOffsets: Boolean) {
+        var offset = 0
+        var wantSpacing = false
+        for (i in widths.indices) {
+            val width = widths [i]
+            if (wantSpacing && width > 0)
+                offset += spacing
+            wantSpacing = wantSpacing or (width > 0)
+            if (updateOffsets) {
+                if (i == 1)
+                    offsetShortcut = offset
+                if (i == 2)
+                    offsetMark = offset
+            }
+            offset += width
+        }
+        nextTotalWidth = offset
     }
 }
 

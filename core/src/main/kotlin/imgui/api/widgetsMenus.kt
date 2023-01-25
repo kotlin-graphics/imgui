@@ -243,7 +243,7 @@ interface widgetsMenus {
             val f = Sf._NoHoldingActiveId or Sf._SelectOnClick or Sf.DontClosePopups or Sf._SpanAvailWidth
             pressed = selectable(label, menuIsOpen, f or if (enabled) Sf.None else Sf.Disabled, Vec2(minW, 0f))
             val textCol = if (enabled) Col.Text else Col.TextDisabled
-            window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.offsets[1] + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
+            window.drawList.renderArrow(pos + Vec2(window.dc.menuColumns.offsetMark + extraW + g.fontSize * 0.3f, 0f), textCol.u32, Dir.Right)
         }
         val hovered = enabled && itemHoverable(window.dc.lastItemRect, id)
 
@@ -253,9 +253,8 @@ interface widgetsMenus {
         var wantOpen = false
         var wantClose = false
         if (window.dc.layoutType == Lt.Vertical) {    // (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
-            /*  Close menu when not hovering it anymore unless we are moving roughly in the direction of the menu
-                Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers,
-                so menus feels more reactive.             */
+            // Close menu when not hovering it anymore unless we are moving roughly in the direction of the menu
+            // Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers, so menus feels more reactive.
             var movingTowardOtherChildMenu = false
 
             val childMenuWindow = when {
@@ -275,6 +274,8 @@ interface widgetsMenus {
                 movingTowardOtherChildMenu = triangleContainsPoint(ta, tb, tc, io.mousePos)
                 //GetForegroundDrawList()->AddTriangleFilled(ta, tb, tc, moving_within_opened_triangle ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); // [DEBUG]
             }
+
+            // FIXME: Hovering a disabled BeginMenu or MenuItem won't close us
             if (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrame != id && !movingTowardOtherChildMenu)
                 wantClose = true
 
@@ -381,11 +382,11 @@ interface widgetsMenus {
             pressed = selectable(label, false, flags or Sf._SpanAvailWidth, Vec2(minW, 0f))
             if (shortcutW > 0f) {
                 pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
-                renderText(pos + Vec2(window.dc.menuColumns.offsets[0] + extraW, 0f), shortcut, false)
+                renderText(pos + Vec2(window.dc.menuColumns.offsetShortcut + extraW, 0f), shortcut, false)
                 popStyleColor()
             }
             if (selected)
-                window.drawList.renderCheckMark(pos + Vec2(window.dc.menuColumns.offsets[1] + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
+                window.drawList.renderCheckMark(pos + Vec2(window.dc.menuColumns.offsetMark + extraW + g.fontSize * 0.4f, g.fontSize * 0.134f * 0.5f),
                         (if (enabled) Col.Text else Col.TextDisabled).u32, g.fontSize * 0.866f)
         }
 
