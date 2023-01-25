@@ -62,15 +62,18 @@ class Font {
     var configDataCount = 0                     // 2     // in  // ~ 1
 
     /** Replacement character if a glyph isn't found. Only set via SetFallbackChar()    */
-    var fallbackChar = '?'                      // 2     // in  // = '?'
+    var fallbackChar = '\uffff'                      // 2     // in  // = '?'
         /** ~SetFallbackChar */
         set(value) {
             field = value
             buildLookupTable()
         }
 
-    /** Override a codepoint used for ellipsis rendering. */
-    var ellipsisChar = '\uffff'                 // out //
+    /** Character used for ellipsis rendering. */
+    var ellipsisChar = '\uffff'                 // out // = '...'
+
+    /** Dot character used for fallback ellipsis rendering. */
+    var dotChar = '\uffff'            // 2     // out
 
     var dirtyLookupTables = true                // 1     // out //
 
@@ -524,9 +527,29 @@ class Font {
         setGlyphVisible(' ', false)
         setGlyphVisible('\t', false)
 
-        // Setup fall-backs
+        // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
+        // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
+        // FIXME: Note that 0x2026 is rarely included in our font ranges. Because of this we are more likely to use three individual dots.
+        val ellipsisChars = listOf('\u2026', '\u0085')
+        val dotsChars = listOf('.', '\uFF0E')
+        if (ellipsisChar == '\uFFFF')
+            ellipsisChar = findFirstExistingGlyph(ellipsisChars)
+        if (dotChar == '\uFFFF')
+            dotChar = findFirstExistingGlyph(dotsChars)
+
+        // Setup fallback character
+        val fallbackChars = listOf(UNICODE_CODEPOINT_INVALID.toChar(), '?', ' ') // TODO JVM check `UNICODE_CODEPOINT_INVALID.toChar`
         fallbackGlyph = findGlyphNoFallback(fallbackChar)
-        fallbackAdvanceX = fallbackGlyph?.advanceX ?: 0f
+        if (fallbackGlyph == null) {
+            fallbackChar = findFirstExistingGlyph(fallbackChars)
+            fallbackGlyph = findGlyphNoFallback(fallbackChar)
+            if (fallbackGlyph == null) {
+                fallbackGlyph = glyphs.last()
+                fallbackChar = fallbackGlyph!!.codepoint
+            }
+        }
+
+        fallbackAdvanceX = fallbackGlyph!!.advanceX
         for (i in 0 until maxCodepoint + 1)
             if (indexAdvanceX[i] < 0f)
                 indexAdvanceX[i] = fallbackAdvanceX
@@ -661,10 +684,14 @@ class Font {
         g.drawListSharedData.fontSize = g.fontSize
     }
 
+
+    // [JVM] cant be static because we need the Font class instance to call `findGlyphNoFallback`
+    fun findFirstExistingGlyph(candidateChars: List<Char>) = candidateChars.find { findGlyphNoFallback(it) != null } ?: '\uFFFF'
+
     companion object {
 
         internal fun Char.remapCodepointIfProblematic(): Int {
-            val i = toInt()
+            val i = code
             return when (Platform.get()) {
                 /*  https://en.wikipedia.org/wiki/Windows-1252#Character_set
                  *  manually remap the difference from  ISO-8859-1 */

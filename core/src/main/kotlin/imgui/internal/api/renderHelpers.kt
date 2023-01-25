@@ -135,7 +135,7 @@ internal interface renderHelpers {
             var ellipsisChar = font.ellipsisChar
             var ellipsisCharCount = 1
             if (ellipsisChar == '\uffff') {
-                ellipsisChar = '.'
+                ellipsisChar = font.dotChar
                 ellipsisCharCount = 3
             }
             val glyph = font.findGlyph(ellipsisChar)!!

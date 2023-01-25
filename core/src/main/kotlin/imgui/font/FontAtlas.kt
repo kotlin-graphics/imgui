@@ -971,18 +971,6 @@ class FontAtlas {
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
-
-        // Ellipsis character is required for rendering elided text. We prefer using U+2026 (horizontal ellipsis).
-        // However some old fonts may contain ellipsis at U+0085. Here we auto-detect most suitable ellipsis character.
-        // FIXME: Also note that 0x2026 is currently seldom included in our font ranges. Because of this we are more likely to use three individual dots.
-        fonts.filter { it.ellipsisChar == '\uffff' }.forEach { font ->
-            for (ellipsisVariant in charArrayOf('\u2026', '\u0085')) {
-                if (font.findGlyphNoFallback(ellipsisVariant) != null) { // Verify glyph exists
-                    font.ellipsisChar = ellipsisVariant
-                    break
-                }
-            }
-        }
     }
 
     fun buildRender8bppRectFromString(x: Int, y: Int, w: Int, h: Int, inStr: CharArray,
