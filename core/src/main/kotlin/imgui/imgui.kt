@@ -166,6 +166,7 @@ object ImGui :
     settings,
     basicAccessors,
     basicHelpersForWidgetCode,
+    parameterStacks,
     imgui.internal.api.loggingCapture,
     PopupsModalsTooltips,
     menus,

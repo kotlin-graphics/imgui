@@ -276,43 +276,6 @@ internal interface basicHelpersForWidgetCode {
         g.nextItemData.flags = g.nextItemData.flags wo NextItemDataFlag.HasWidth
     }
 
-    /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets
-     *  @param option = ItemFlag   */
-    fun pushItemFlag(option: ItemFlags, enabled: Boolean) {
-        var itemFlags = g.currentItemFlags
-        assert(itemFlags == g.itemFlagsStack.last())
-        itemFlags = when {
-            enabled -> itemFlags or option
-            else -> itemFlags wo option
-        }
-        g.currentItemFlags = itemFlags
-        g.itemFlagsStack += itemFlags
-    }
-
-    fun popItemFlag() {
-        assert(g.itemFlagsStack.size > 1) { "Too many calls to PopItemFlag() - we always leave a 0 at the bottom of the stack." }
-        g.itemFlagsStack.pop()
-        g.currentItemFlags = g.itemFlagsStack.last()
-    }
-
-    // PushDisabled()/PopDisabled()
-    // - Those are not yet exposed in imgui.h because we are unsure of how to alter the style in a way that works for everyone.
-    //   We may rework this. Hypothetically, a future styling system may set a flag which make widgets use different colors.
-    // - Feedback welcome at https://github.com/ocornut/imgui/issues/211
-    // - You may trivially implement your own variation of this if needed.
-    //   Here we test (CurrentItemFlags & ImGuiItemFlags_Disabled) to allow nested PushDisabled() calls.
-    fun pushDisabled() {
-        if (g.currentItemFlags hasnt ItemFlag.Disabled)
-            pushStyleVar(StyleVar.Alpha, g.style.alpha * 0.6f)
-        pushItemFlag(ItemFlag.Disabled.i, true)
-    }
-
-    fun popDisabled() {
-        popItemFlag()
-        if (g.currentItemFlags hasnt ItemFlag.Disabled)
-            popStyleVar()
-    }
-
     /** Was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
     val isItemToggledSelection: Boolean
         get() = g.currentWindow!!.dc.lastItemStatusFlags has ItemStatusFlag.ToggledSelection
