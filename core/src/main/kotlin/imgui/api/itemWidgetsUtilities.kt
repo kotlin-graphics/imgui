@@ -24,8 +24,11 @@ interface itemWidgetsUtilities {
 
     fun isItemHovered(flags: Int = Hf.None.i): Boolean {
 
-        if (g.navDisableMouseHover && !g.navDisableHighlight)
+        if (g.navDisableMouseHover && !g.navDisableHighlight) {
+            if (g.currentItemFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled)
+                return false
             return isItemFocused
+        }
 
         val window = g.currentWindow!!
         val statusFlags = window.dc.lastItemStatusFlags
@@ -75,14 +78,14 @@ interface itemWidgetsUtilities {
      *  Important: this can be useful but it is NOT equivalent to the behavior of e.g.Button()!
      *  Most widgets have specific reactions based on mouse-up/down state, mouse position etc. */
     fun isItemClicked(mouseButton: MouseButton = MouseButton.Left): Boolean =
-            isMouseClicked(mouseButton) && isItemHovered(Hf.None)
+        isMouseClicked(mouseButton) && isItemHovered(Hf.None)
 
     /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
     val isItemVisible: Boolean
         get() = currentWindowRead!!.run { clipRect overlaps dc.lastItemRect }
 
     val isItemEdited: Boolean
-        get () = currentWindowRead!!.run { dc.lastItemStatusFlags has ItemStatusFlag.Edited }
+        get() = currentWindowRead!!.run { dc.lastItemStatusFlags has ItemStatusFlag.Edited }
 
     /** was the last item just made active (item was previously inactive). */
     val isItemActivated: Boolean
