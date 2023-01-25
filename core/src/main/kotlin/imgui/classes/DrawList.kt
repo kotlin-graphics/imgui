@@ -1167,28 +1167,6 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-    // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
-    // Those macros expects l-values.
-    //    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
-    //        val d2 = vX * vX + vY * vY
-    //        if (d2 > 0.0f) {
-    //            val invLen = 1f / sqrt(d2)
-    //            vX *= invLen
-    //            vY *= invLen
-    //        }
-    //    }
-    //
-    //    fun NORMALIZE2F_OVER_EPSILON_CLAMP(vX: Float, vY: Float, eps: Float, invLenMax: Float) {
-    //        val d2 = vX * vX + vY * vY
-    //        if (d2 > eps) {
-    //            var invLen = 1f / sqrt(d2)
-    //            if (invLen > invLenMax)
-    //                invLen = invLenMax
-    //            vX *= invLen
-    //            vY *= invLen
-    //        }
-    //    }
-
     fun primQuadUV(a: Vec2, b: Vec2, c: Vec2, d: Vec2, uvA: Vec2, uvB: Vec2, uvC: Vec2, uvD: Vec2, col: Int) {
 
         vtxBuffer.pos = _vtxWritePtr
@@ -1723,6 +1701,18 @@ class DrawList(sharedData: DrawListSharedData?) {
             else -> glm.acos(x)
             //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
         }
+
+        // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
+        // - Those macros expects l-values and need to be used as their own statement.
+        // - Those macros are intentionally not surrounded by the 'do {} while (0)' idiom because even that translates to runtime with debug compilers.
+        //    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
+        //        val d2 = vX * vX + vY * vY
+        //        if (d2 > 0.0f) {
+        //            val invLen = 1f / sqrt(d2)
+        //            vX *= invLen
+        //            vY *= invLen
+        //        }
+        //    }
 
         const val FIXNORMAL2F_MAX_INVLEN2 = 100f // 500.0f (see #4053, #3366)
         //        fun FIXNORMAL2F(VX: Float, VY: Float) {
