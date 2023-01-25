@@ -651,8 +651,7 @@ interface tables {
         if (!table.isLayoutLocked)
             table.updateLayout()
 
-        if (table.isSortSpecsDirty)
-            table.sortSpecsBuild()
+        table.sortSpecsBuild()
 
         return table.sortSpecs
     }

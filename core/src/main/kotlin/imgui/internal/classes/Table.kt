@@ -197,6 +197,10 @@ class Table {
     /** Shortcut to TempData->DrawSplitter while in table. Isolate draw commands per columns to avoid switching clip rect constantly */
     var drawSplitter = DrawListSplitter()
 
+    lateinit var sortSpecsSingle: TableColumnSortSpecs
+
+    val sortSpecsMulti = ArrayList<TableColumnSortSpecs>()     // FIXME-OPT: Using a small-vector pattern would be good.
+
     /** Public facing sorts specs, this is what we return in TableGetSortSpecs() */
     val sortSpecs = TableSortSpecs()
 
@@ -1462,22 +1466,26 @@ class Table {
     /** ~TableSortSpecsBuild */
     fun sortSpecsBuild() {
 
-        assert(isSortSpecsDirty)
-        sortSpecsSanitize()
+        val dirty = isSortSpecsDirty
+        if (dirty) {
+            sortSpecsSanitize()
+            //            sortSpecsMulti.resize(table->SortSpecsCount <= 1 ? 0 : table->SortSpecsCount);
+            if (sortSpecsCount == 0)
+                sortSpecsMulti.clear()
+            else
+                for (i in sortSpecsMulti.size until sortSpecsCount)
+                    sortSpecsMulti += TableColumnSortSpecs()
+            sortSpecs.specsDirty = true // Mark as dirty for user
+            isSortSpecsDirty = false // Mark as not dirty for us
+        }
 
         // Write output
-        if (sortSpecsCount <= 1)
-            tempData!!.sortSpecsMulti.clear()
-        else
-            repeat(sortSpecsCount) {
-                tempData!!.sortSpecsMulti += TableColumnSortSpecs()
-            }
         val sortSpecs: TableColumnSortSpecs? = when (sortSpecsCount) {
             0 -> null
-            1 -> tempData!!.sortSpecsSingle
-            else -> tempData!!.sortSpecsMulti.first()
+            1 -> sortSpecsSingle
+            else -> sortSpecsMulti.first()
         }
-        if (sortSpecs != null)
+        if (dirty && sortSpecs != null)
             for (columnN in 0 until columnsCount) {
                 val column = columns[columnN]
                 if (column.sortOrder == -1)
@@ -1485,18 +1493,17 @@ class Table {
                 assert(column.sortOrder < sortSpecsCount)
                 val sortSpec = when (sortSpecsCount) {
                     0 -> null
-                    1 -> tempData!!.sortSpecsSingle
-                    else -> tempData!!.sortSpecsMulti[column.sortOrder]
+                    1 -> sortSpecsSingle
+                    else -> sortSpecsMulti[column.sortOrder]
                 }!!
                 sortSpec.columnUserID = column.userID
                 sortSpec.columnIndex = columnN
                 sortSpec.sortOrder = column.sortOrder
                 sortSpec.sortDirection = column.sortDirection
             }
+
         this.sortSpecs.specs = sortSpecs
         this.sortSpecs.specsCount = sortSpecsCount
-        this.sortSpecs.specsDirty = true // Mark as dirty for user
-        isSortSpecsDirty = false // Mark as not dirty for us
     }
 
     /** Fix sort direction if currently set on a value which is unavailable (e.g. activating NoSortAscending/NoSortDescending)
@@ -1857,7 +1864,8 @@ class Table {
         //IMGUI_DEBUG_LOG("TableGcCompactTransientBuffers() id=0x%08X\n", table->ID);
         assert(!memoryCompacted)
         sortSpecs.specs = null
-        isSortSpecsDirty = true
+        sortSpecsMulti.clear()
+        isSortSpecsDirty = true // FIXME: shouldn't have to leak into user performing a sort
         columnsNames.clear()
         memoryCompacted = true
         for (n in 0 until columnsCount)
@@ -1868,7 +1876,6 @@ class Table {
     /** ~TableGcCompactTransientBuffers */
     fun gcCompactTransientBuffers(tempData: TableTempData) {
         tempData.drawSplitter.clearFreeMemory()
-        tempData.sortSpecsMulti.clear()
         tempData.lastTimeActive = -1f
     }
 
