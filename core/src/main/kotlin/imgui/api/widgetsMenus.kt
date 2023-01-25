@@ -257,7 +257,6 @@ interface widgetsMenus {
         }
         if (!enabled)
             popDisabled()
-        popID()
 
         val hovered = g.hoveredId == id && enabled
 
@@ -326,6 +325,7 @@ interface widgetsMenus {
 
         val f = ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.currentItemFlags or f)
+        popID()
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.

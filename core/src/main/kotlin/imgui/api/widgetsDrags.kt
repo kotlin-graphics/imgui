@@ -122,6 +122,7 @@ interface widgetsDrags {
         ImGui.textEx(label, ImGui.findRenderedTextEnd(label))
         ImGui.endGroup()
         ImGui.popID()
+
         return valueChanged
     }
 
