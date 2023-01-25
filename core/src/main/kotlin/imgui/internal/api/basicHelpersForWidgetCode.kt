@@ -141,27 +141,35 @@ internal interface basicHelpersForWidgetCode {
             g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
             !isMouseHoveringRect(bb) -> false
             g.navDisableMouseHover -> false
-            !window.isContentHoverable(HoveredFlag.None) || g.currentItemFlags has ItemFlag.Disabled -> {
+            !window.isContentHoverable(HoveredFlag.None) -> {
                 g.hoveredIdDisabled = true
                 false
             }
             else -> {
                 // We exceptionally allow this function to be called with id==0 to allow using it for easy high-level
                 // hover test in widgets code. We could also decide to split this function is two.
-                if (id != 0) {
+                if (id != 0)
                     hoveredId = id
 
-                    // [DEBUG] Item Picker tool!
-                    // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
-                    // the cost of this tool near-zero. We can get slightly better call-stack and support picking non-hovered
-                    // items if we perform the test in ItemAdd(), but that would incur a small runtime cost.
-                    // #define IMGUI_DEBUG_TOOL_ITEM_PICKER_EX in imconfig.h if you want this check to also be performed in ItemAdd().
-                    if (g.debugItemPickerActive && g.hoveredIdPreviousFrame == id)
-                        foregroundDrawList.addRect(bb.min, bb.max, COL32(255, 255, 0, 255))
-                    if (g.debugItemPickerBreakId == id)
-                        IM_DEBUG_BREAK()
+                // When disabled we'll return false but still set HoveredId
+                if (g.currentItemFlags has ItemFlag.Disabled) {
+                    g.hoveredIdDisabled = true
+                    false
                 }
-                true
+                else {
+                    if (id != 0) {
+                        // [DEBUG] Item Picker tool!
+                        // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
+                        // the cost of this tool near-zero. We can get slightly better call-stack and support picking non-hovered
+                        // items if we perform the test in ItemAdd(), but that would incur a small runtime cost.
+                        // #define IMGUI_DEBUG_TOOL_ITEM_PICKER_EX in imconfig.h if you want this check to also be performed in ItemAdd().
+                        if (g.debugItemPickerActive && g.hoveredIdPreviousFrame == id)
+                            foregroundDrawList.addRect(bb.min, bb.max, COL32(255, 255, 0, 255))
+                        if (g.debugItemPickerBreakId == id)
+                            IM_DEBUG_BREAK()
+                    }
+                    true
+                }
             }
         }
     }

@@ -499,7 +499,7 @@ internal interface widgetsLowLevelBehaviors {
         if (g.activeId != id)
             setItemAllowOverlap()
 
-        if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
+        if (held || (hovered && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
             mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
 
         val bbRender = Rect(bb)

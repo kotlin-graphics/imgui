@@ -279,7 +279,11 @@ interface widgetsDrags {
         }
 
         // Draw frame
-        val frameCol = if (g.activeId == id) Col.FrameBgActive else if (g.hoveredId == id) Col.FrameBgHovered else Col.FrameBg
+        val frameCol = when {
+            g.activeId == id -> Col.FrameBgActive
+            hovered -> Col.FrameBgHovered
+            else -> Col.FrameBg
+        }
         ImGui.renderNavHighlight(frameBb, id)
         ImGui.renderFrame(frameBb.min, frameBb.max, frameCol.u32, true, ImGui.style.frameRounding)
 

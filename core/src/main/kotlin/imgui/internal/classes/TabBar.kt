@@ -424,9 +424,8 @@ class TabBar {
         var buttonFlags =
             (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
         if (g.dragDropActive) buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
-        val (pressed, hovered_, held) = buttonBehavior(bb, id, buttonFlags)
+        val (pressed, hovered, held) = buttonBehavior(bb, id, buttonFlags)
         if (pressed && !isTabButton) nextSelectedTabId = id
-        val hovered = hovered_ || g.hoveredId == id
 
         // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
         if (g.activeId != id)
@@ -490,8 +489,11 @@ class TabBar {
         if (wantClipRect) popClipRect()
         window.dc.cursorPos = backupMainCursorPos
 
-        // Tooltip (FIXME: Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer)
-        // We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar (which g.HoveredId ignores)
+        // Tooltip
+        // (Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer-> seems ok)
+        // (We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar, which g.HoveredId ignores)
+        // FIXME: This is a mess.
+        // FIXME: We may want disabled tab to still display the tooltip?
         if (textClipped && g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > g.tooltipSlowDelay && isItemHovered())
             if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
                 setTooltip(label.substring(0, findRenderedTextEnd(label)))
