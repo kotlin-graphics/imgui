@@ -61,18 +61,13 @@ class Font {
     /** Number of ImFontConfig involved in creating this font. Bigger than 1 when merging multiple font sources into one ImFont.    */
     var configDataCount = 0                     // 2     // in  // ~ 1
 
-    /** Replacement character if a glyph isn't found. Only set via SetFallbackChar()    */
-    var fallbackChar = '\uffff'                      // 2     // in  // = '?'
-        /** ~SetFallbackChar */
-        set(value) {
-            field = value
-            buildLookupTable()
-        }
+    /** Character used if a glyph isn't found. */
+    var fallbackChar = '\uffff'                      // out // = FFFD/'?'
 
     /** Character used for ellipsis rendering. */
     var ellipsisChar = '\uffff'                 // out // = '...'
 
-    /** Dot character used for fallback ellipsis rendering. */
+    /** Character used for ellipsis rendering (if a single '...' character isn't found) */
     var dotChar = '\uffff'            // 2     // out
 
     var dirtyLookupTables = true                // 1     // out //

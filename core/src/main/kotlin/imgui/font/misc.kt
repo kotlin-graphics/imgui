@@ -119,7 +119,8 @@ object glyphRanges {
         get() = arrayOf(
                 *default, // Basic Latin + Latin Supplement
                 IntRange(0x3131, 0x3163), // Korean alphabets
-                IntRange(0xAC00, 0xD7A3)) // Korean characters
+                IntRange(0xAC00, 0xD7A3), // Korean characters
+                IntRange(0xFFFD, 0xFFFD)) // Invalid
 
     /** Default + Hiragana, Katakana, Half-Width, Selection of 1946 Ideographs  */
     val japanese: Array<IntRange> by lazy {
@@ -168,7 +169,8 @@ object glyphRanges {
                 *default, // Basic Latin + Latin Supplement
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
-                IntRange(0xFF00, 0xFFEF)) // Half-width characters
+                IntRange(0xFF00, 0xFFEF), // Half-width characters
+                IntRange(0xFFFD, 0xFFFD)) // Invalid
 
         Array(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1) {
             baseRanges.getOrElse(it) { IntRange.EMPTY }
@@ -185,6 +187,7 @@ object glyphRanges {
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
                 IntRange(0xFF00, 0xFFEF), // Half-width characters
+                IntRange(0xFFFD, 0xFFFD), // Invalid
                 IntRange(0x4e00, 0x9FAF)) // CJK Ideograms
 
     /** Default + Half-Width + Japanese Hiragana/Katakana + set of 2500 CJK Unified Ideographs for common simplified Chinese */
@@ -243,7 +246,8 @@ object glyphRanges {
                 IntRange(0x2000, 0x206F), // General Punctuation
                 IntRange(0x3000, 0x30FF), // CJK Symbols and Punctuations, Hiragana, Katakana
                 IntRange(0x31F0, 0x31FF), // Katakana Phonetic Extensions
-                IntRange(0xFF00, 0xFFEF)) // Half-width characters
+                IntRange(0xFF00, 0xFFEF), // Half-width characters
+                IntRange(0xFFFD, 0xFFFD)) // Invalid
 
         Array(baseRanges.size + accumulativeOffsetsFrom0x4E00.size * 2 + 1) {
             baseRanges.getOrElse(it) { IntRange.EMPTY }
