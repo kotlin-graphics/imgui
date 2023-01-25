@@ -362,7 +362,8 @@ interface widgetsMenus {
         endPopup()
     }
 
-    fun menuItem(label: String, shortcut: String, selected: Boolean, enabled: Boolean): Boolean = menuItemEx(label, "", shortcut, selected, enabled)
+    fun menuItem(label: String, shortcut: String = "", selected: Boolean = false, enabled: Boolean = true): Boolean =
+        menuItemEx(label, "", shortcut, selected, enabled)
 
     /** return true when activated + toggle (*p_selected) if p_selected != NULL */
     fun menuItem(label: String, shortcut: String = "", pSelected: BooleanArray?, enabled: Boolean = true): Boolean =
