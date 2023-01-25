@@ -495,7 +495,10 @@ internal interface widgetsLowLevelBehaviors {
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
         val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
-        if (g.activeId != id) setItemAllowOverlap()
+        if (hovered)
+            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HoveredRect // for IsItemHovered(), because bb_interact is larger than bb
+        if (g.activeId != id)
+            setItemAllowOverlap()
 
         if (held || (g.hoveredId == id && g.hoveredIdPreviousFrame == id && g.hoveredIdTimer >= hoverVisibilityDelay))
             mouseCursor = if (axis == Axis.Y) MouseCursor.ResizeNS else MouseCursor.ResizeEW
