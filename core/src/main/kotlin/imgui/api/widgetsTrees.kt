@@ -1,6 +1,7 @@
 package imgui.api
 
 import gli_.has
+import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.closeButton
@@ -17,8 +18,6 @@ import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.internal.classes.Rect
 import imgui.internal.sections.NextItemDataFlag
-import imgui.max
-import imgui.internal.classes.lastItemDataBackup
 import imgui.internal.formatString
 import imgui.internal.sections.or
 import kotlin.reflect.KMutableProperty0
@@ -82,7 +81,7 @@ interface widgetsTrees {
         return treeNodeBehavior(window.getID(intPtr), flags, g.tempBuffer, labelEnd)
     }
 
-//    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
+    //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
 
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call TreePush/TreePop yourself if desired.  */
     fun treePush(strId: String = "#TreePush") {
@@ -143,7 +142,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        if (visible?.get()  == false) return false
+        if (visible?.get() == false) return false
 
         val id = window.getID(label)
         var flags = flags_ or Tnf.CollapsingHeader
@@ -154,15 +153,14 @@ interface widgetsTrees {
             // Create a small overlapping close button
             // FIXME: We can evolve this into user accessible helpers to add extra buttons on title bars, headers, etc.
             // FIXME: CloseButton can overlap into text, need find a way to clip the text somehow.
+            val lastItemBackup = g.lastItemData
             val buttonSize = g.fontSize
-            val buttonPos = Vec2(
-                    max(window.dc.lastItemRect.min.x, window.dc.lastItemRect.max.x - style.framePadding.x * 2f - buttonSize),
-                    (window.dc.lastItemRect.min.y))
-            lastItemDataBackup {
-                val closeButtonId = getIDWithSeed("#CLOSE", -1, id)
-                if (closeButton(closeButtonId, buttonPos))
-                    visible.set(false)
-            }
+            val buttonX = g.lastItemData.rect.min.x max (g.lastItemData.rect.max.x - g.style.framePadding.x * 2f - buttonSize)
+            val buttonY = g.lastItemData.rect.min.y
+            val closeButtonId = getIDWithSeed("#CLOSE", -1, id)
+            if (closeButton(closeButtonId, Vec2(buttonX, buttonY)))
+                visible.set(false)
+            g.lastItemData = lastItemBackup
         }
         return isOpen
     }

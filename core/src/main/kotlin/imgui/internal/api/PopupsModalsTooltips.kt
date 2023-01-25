@@ -269,13 +269,11 @@ internal interface PopupsModalsTooltips {
                 and then we move the new menu outside the parent bounds.
                 This is how we end up with child menus appearing (most-commonly) on the right of the parent menu. */
             assert(g.currentWindow === window)
-            val parentWindow =
-                g.currentWindowStack[g.currentWindowStack.size - 2] // We want some overlap to convey the relative depth of each menu (currently the amount of overlap is hard-coded to style.ItemSpacing.x).
+            val parentWindow = g.currentWindowStack[g.currentWindowStack.size - 2].window
             val horizontalOverlap = style.itemInnerSpacing.x
             val rAvoid = parentWindow.run {
                 when {
-                    dc.menuBarAppending -> Rect(-Float.MAX_VALUE, clipRect.min.y, Float.MAX_VALUE,
-                                                clipRect.max.y) // Avoid parent menu-bar. If we wanted multi-line menu-bar, we may instead want to have the calling window setup e.g. a NextWindowData.PosConstraintAvoidRect field
+                    dc.menuBarAppending -> Rect(-Float.MAX_VALUE, clipRect.min.y, Float.MAX_VALUE, clipRect.max.y) // Avoid parent menu-bar. If we wanted multi-line menu-bar, we may instead want to have the calling window setup e.g. a NextWindowData.PosConstraintAvoidRect field
                     else -> Rect(pos.x + horizontalOverlap, -Float.MAX_VALUE,
                                  pos.x + size.x - horizontalOverlap - scrollbarSizes.x, Float.MAX_VALUE)
                 }

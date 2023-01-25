@@ -57,7 +57,7 @@ interface dragAndDrop {
         var sourceId: ID
         var sourceParentId: ID = 0
         if (flags hasnt Ddf.SourceExtern) {
-            sourceId = window!!.dc.lastItemId
+            sourceId = g.lastItemData.id
             if (sourceId != 0) {
                 // Common path: items with ID
                 if (g.activeId != sourceId)
@@ -81,18 +81,17 @@ interface dragAndDrop {
                 if (flags hasnt Ddf.SourceAllowNullID) throw Error()
 
                 // Early out
-                if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect && (g.activeId == 0 || g.activeIdWindow !== window))
+                if (g.lastItemData.statusFlags hasnt ItemStatusFlag.HoveredRect && (g.activeId == 0 || g.activeIdWindow !== window))
                     return false
 
-                /*  Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. text(), image()
-                    We build a throwaway ID based on current ID stack + relative AABB of items in window.
-                    THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING OF THE WIDGET, so if your widget moves
-                    your dragging operation will be canceled.
-                    We don't need to maintain/call clearActiveID() as releasing the button will early out this function
-                    and trigger !activeIdIsAlive. */
-                window.dc.lastItemId = window.getIdFromRectangle(window.dc.lastItemRect)
-                sourceId = window.dc.lastItemId
-                val isHovered = itemHoverable(window.dc.lastItemRect, sourceId)
+                // Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. Text(), Image()
+                // We build a throwaway ID based on current ID stack + relative AABB of items in window.
+                // THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING OF THE WIDGET, so if your widget moves your dragging operation will be canceled.
+                // We don't need to maintain/call ClearActiveID() as releasing the button will early out this function and trigger !ActiveIdIsAlive.
+                // Rely on keeping other window->LastItemXXX fields intact.
+                g.lastItemData.id = window!!.getIdFromRectangle(g.lastItemData.rect)
+                sourceId = g.lastItemData.id
+                val isHovered = itemHoverable(g.lastItemData.rect, sourceId)
                 if (isHovered && io.mouseClicked[mouseButton.i]) {
                     setActiveID(sourceId, window)
                     focusWindow(window)
@@ -102,7 +101,7 @@ interface dragAndDrop {
             }
             if (g.activeId != sourceId)
                 return false
-            sourceParentId = window.idStack.last()
+            sourceParentId = window!!.idStack.last()
             sourceDragActive = isMouseDragging(mouseButton)
 
             // Disable navigation and key inputs while dragging + cancel existing request if any
@@ -131,8 +130,8 @@ interface dragAndDrop {
             g.dragDropWithinSource = true
 
             if (flags hasnt Ddf.SourceNoPreviewTooltip) {
-                /*  Target can request the Source to not display its tooltip (we use a dedicated flag to make this request explicit)
-                    We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.                 */
+                // Target can request the Source to not display its tooltip (we use a dedicated flag to make this request explicit)
+                // We unfortunately can't just modify the source flags and skip the call to BeginTooltip, as caller may be emitting contents.
                 beginTooltip()
                 if (g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
                     g.currentWindow!!.apply {
@@ -143,7 +142,7 @@ interface dragAndDrop {
             }
 
             if (flags hasnt Ddf.SourceNoDisableHover && flags hasnt Ddf.SourceExtern)
-                window!!.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags wo ItemStatusFlag.HoveredRect
+                g.lastItemData.statusFlags -= ItemStatusFlag.HoveredRect
 
             return true
         }
@@ -207,15 +206,16 @@ interface dragAndDrop {
         if (!g.dragDropActive) return false
 
         val window = g.currentWindow!!
-        if (window.dc.lastItemStatusFlags hasnt ItemStatusFlag.HoveredRect) return false
+        if (g.lastItemData.statusFlags hasnt ItemStatusFlag.HoveredRect)
+            return false
         val hoveredWindow = g.hoveredWindowUnderMovingWindow
         if (hoveredWindow == null || window.rootWindow !== hoveredWindow.rootWindow) return false
 
         val displayRect = when {
-            window.dc.lastItemStatusFlags has ItemStatusFlag.HasDisplayRect -> window.dc.lastItemDisplayRect
-            else -> window.dc.lastItemRect
+            g.lastItemData.statusFlags has ItemStatusFlag.HasDisplayRect -> g.lastItemData.displayRect
+            else -> g.lastItemData.rect
         }
-        var id = window.dc.lastItemId
+        var id = g.lastItemData.id
         if (id == 0)
             id = window.getIdFromRectangle(displayRect) // [JVM] save to pass the reference
         if (g.dragDropPayload.sourceId == id) return false

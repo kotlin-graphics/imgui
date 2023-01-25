@@ -131,8 +131,7 @@ interface popupsModals {
             with(g.currentWindow!!) {
                 val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
                 if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup)) {
-                    // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
-                    val id = if (strId.isNotEmpty()) getID(strId) else dc.lastItemId
+                    val id = if (strId.isNotEmpty()) getID(strId) else g.lastItemData.id // If user hasn't passed an ID, we can use the LastItemID. Using LastItemID as a Popup ID won't conflict!
                     assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a Text() item)" }
                     openPopupEx(id, popupFlags)
                 }
@@ -197,9 +196,9 @@ interface popupsModals {
      *    open+begin popup when clicked on last item. Use str_id==NULL to associate the popup to previous item. If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here. read comments in .cpp! */
     fun beginPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean {
         val window = currentWindow
-        if (window.skipItems) return false
-        // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
-        val id = if (strId.isNotEmpty()) window.getID(strId) else window.dc.lastItemId
+        if (window.skipItems)
+            return false
+        val id = if (strId.isNotEmpty()) window.getID(strId) else g.lastItemData.id // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!
         assert(id != 0) { "You cannot pass a NULL str_id if the last item has no identifier (e.g. a text() item)" }
         val mouseButton = popupFlags and PopupFlag.MouseButtonMask_
         if (isMouseReleased(mouseButton) && isItemHovered(Hf.AllowWhenBlockedByPopup))

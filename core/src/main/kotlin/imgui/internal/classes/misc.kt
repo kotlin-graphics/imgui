@@ -46,29 +46,6 @@ class GroupData {
     var emitItem = false
 }
 
-/** Backup and restore just enough data to be able to use isItemHovered() on item A after another B in the same window
- *  has overwritten the data.
- *  ¬ItemHoveredDataBackup, we optimize by using a function accepting a lambda */
-fun lastItemDataBackup(block: () -> Unit) {
-    // backup
-    var window = g.currentWindow!!
-    val lastItemId = window.dc.lastItemId
-    val lastItemInFlags = window.dc.lastItemInFlags
-    val lastItemStatusFlags = window.dc.lastItemStatusFlags
-    val lastItemRect = Rect(window.dc.lastItemRect)
-    val lastItemDisplayRect = Rect(window.dc.lastItemDisplayRect)
-
-    block()
-
-    // restore
-    window = g.currentWindow!!
-    window.dc.lastItemId = lastItemId
-    window.dc.lastItemInFlags = lastItemInFlags
-    window.dc.lastItemRect put lastItemRect
-    window.dc.lastItemStatusFlags = lastItemStatusFlags
-    window.dc.lastItemDisplayRect = lastItemDisplayRect
-}
-
 /** Simple column measurement, currently used for MenuItem() only.. This is very short-sighted/throw-away code and NOT a generic helper. */
 class MenuColumns {
 
@@ -259,6 +236,21 @@ class NextItemData {
         flags = NextItemDataFlag.None.i
     }
 }
+
+/** Status storage for last submitted items */
+class LastItemData {
+    var id: ID = 0
+    var inFlags: ItemFlags = 0
+    var statusFlags: ItemStatusFlags = 0
+    lateinit var rect: Rect
+    lateinit var displayRect: Rect
+}
+
+/** Data saved for each window pushed into the stack */
+class WindowStackData {
+    lateinit var window: Window
+    lateinit var parentLastItemDataBackup: LastItemData
+};
 
 class ShrinkWidthItem(var index: Int = 0, var width: Float = 0f) {
     infix fun put(other: ShrinkWidthItem) {

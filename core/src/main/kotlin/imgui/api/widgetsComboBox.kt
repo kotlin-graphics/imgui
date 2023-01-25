@@ -211,8 +211,9 @@ interface widgetsComboBox {
         }
 
         endCombo()
+
         if (valueChanged)
-            markItemEdited(g.currentWindow!!.dc.lastItemId)
+            markItemEdited(g.lastItemData.id)
 
         return valueChanged
     }

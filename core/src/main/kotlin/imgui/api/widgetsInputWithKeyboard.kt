@@ -224,7 +224,7 @@ interface widgetsInputWithKeyboard {
             valueChanged = dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData, format)
 
         if (valueChanged)
-            markItemEdited(window.dc.lastItemId)
+            markItemEdited(g.lastItemData.id)
 
         return valueChanged
     }

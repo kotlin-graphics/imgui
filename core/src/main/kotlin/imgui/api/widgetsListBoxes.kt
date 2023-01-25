@@ -127,8 +127,9 @@ interface widgetsListBoxes {
                     popID()
                 }
         endListBox()
+
         if (valueChanged)
-            markItemEdited(g.currentWindow!!.dc.lastItemId)
+            markItemEdited(g.lastItemData.id)
 
         return valueChanged
     }

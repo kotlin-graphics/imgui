@@ -142,6 +142,8 @@ infix fun ItemStatusFlags.xor(b: ItemStatusFlag): ItemStatusFlags = xor(b.i)
 infix fun ItemStatusFlags.has(b: ItemStatusFlag): Boolean = and(b.i) != 0
 infix fun ItemStatusFlags.hasnt(b: ItemStatusFlag): Boolean = and(b.i) == 0
 infix fun ItemStatusFlags.wo(b: ItemStatusFlag): ItemStatusFlags = and(b.i.inv())
+operator fun ItemStatusFlags.minus(flag: ItemStatusFlag): ItemStatusFlags = wo(flag)
+operator fun ItemStatusFlags.div(flag: ItemStatusFlag): ItemStatusFlags = or(flag)
 
 
 enum class ButtonFlag(val i: ButtonFlags) {

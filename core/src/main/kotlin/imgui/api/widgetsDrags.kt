@@ -252,7 +252,7 @@ interface widgetsDrags {
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = tempInputAllowed && window.dc.lastItemStatusFlags has ItemStatusFlag.Focused
+            val focusRequested = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.Focused
             val clicked = hovered && ImGui.io.mouseClicked[0]
             val doubleClicked = hovered && ImGui.io.mouseDoubleClicked[0]
             if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
@@ -302,7 +302,7 @@ interface widgetsDrags {
         if (labelSize.x > 0f)
             ImGui.renderText(Vec2(frameBb.max.x + ImGui.style.itemInnerSpacing.x, frameBb.min.y + ImGui.style.framePadding.y), label)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return valueChanged
     }
 

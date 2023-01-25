@@ -46,7 +46,7 @@ interface windowScrolling {
     fun setScrollHereX(centerXRatio: Float) {
         val window = g.currentWindow!!
         val spacingX = window.windowPadding.x max style.itemSpacing.x
-        val targetPosX = lerp(window.dc.lastItemRect.min.x - spacingX, window.dc.lastItemRect.max.x + spacingX, centerXRatio)
+        val targetPosX = lerp(g.lastItemData.rect.min.x - spacingX, g.lastItemData.rect.max.x + spacingX, centerXRatio)
         window.setScrollFromPosX(targetPosX - window.pos.x, centerXRatio) // Convert from absolute to local pos
 
         // Tweak: snap on edges when aiming at an item very close to the edge

@@ -8,17 +8,20 @@ import imgui.internal.classes.Window
 import imgui.internal.hashStr
 import imgui.internal.sections.*
 
-/** Basic Accessors */
+// Basic Accessors
 internal interface basicAccessors {
 
     /** ~GetItemID
      *  Get ID of last item (~~ often same ImGui::GetID(label) beforehand) */
     val itemID: ID
-        get() = g.currentWindow!!.dc.lastItemId
+        get() = g.lastItemData.id
 
     /** ~GetItemStatusFlags */
     val itemStatusFlags: ItemStatusFlags
-        get() = g.currentWindow!!.dc.lastItemStatusFlags
+        get() = g.lastItemData.statusFlags
+
+    val itemFlags: ItemFlags
+        get() = g.lastItemData.inFlags
 
     /** ~GetActiveID */
     val activeID: ID
@@ -27,10 +30,6 @@ internal interface basicAccessors {
     /** ~GetFocusID */
     val focusID: ID
         get() = g.navId
-
-    /** ~GetItemsFlags */
-    val itemFlags: ItemFlags
-        get() = g.currentItemFlags
 
     fun setActiveID(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
@@ -80,8 +79,8 @@ internal interface basicAccessors {
         g.navLayer = navLayer
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         window.navLastIds[navLayer] = id
-        if (window.dc.lastItemId == id)
-            window.navRectRel[navLayer].put(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
+        if (g.lastItemData.id == id)
+            window.navRectRel[navLayer].put(g.lastItemData.rect.min - window.pos, g.lastItemData.rect.max - window.pos)
 
         if (g.activeIdSource == InputSource.Nav)
             g.navDisableMouseHover = true
@@ -114,14 +113,13 @@ internal interface basicAccessors {
 
     /** Mark data associated to given item as "edited", used by IsItemDeactivatedAfterEdit() function. */
     fun markItemEdited(id: ID) {
-        /*  This marking is solely to be able to provide info for ::isItemDeactivatedAfterEdit().
-            ActiveId might have been released by the time we call this (as in the typical press/release button behavior)
-            but still need need to fill the data.         */
+        // This marking is solely to be able to provide info for IsItemDeactivatedAfterEdit().
+        // ActiveId might have been released by the time we call this (as in the typical press/release button behavior) but still need need to fill the data.
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
         g.activeIdHasBeenEditedThisFrame = true
         g.activeIdHasBeenEditedBefore = true
-        g.currentWindow!!.dc.apply { lastItemStatusFlags = lastItemStatusFlags or ItemStatusFlag.Edited }
+        g.lastItemData.statusFlags /= ItemStatusFlag.Edited
     }
 
     /** Push a given id value ignoring the ID stack as a seed.

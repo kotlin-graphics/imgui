@@ -170,7 +170,7 @@ interface widgetsSelectables {
 
         // In this branch, Selectable() cannot toggle the selection so this will never trigger.
         if (selected != wasSelected)
-            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
+            g.lastItemData.statusFlags /= ItemStatusFlag.ToggledSelection
 
         // Render
         if (held && flags has Sf._DrawHoveredWhenHeld)
@@ -195,7 +195,7 @@ interface widgetsSelectables {
         if (disabledItem && !disabledGlobal)
             popDisabled()
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return pressed
     }
 

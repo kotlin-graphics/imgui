@@ -20,8 +20,8 @@ interface focusActivation {
             return
         if (g.navWindow === window.rootWindowForNav && (g.navInitRequest || g.navInitResultId != 0) && g.navLayer == window.dc.navLayerCurrent) {
             g.navInitRequest = false
-            g.navInitResultId = window.dc.lastItemId
-            g.navInitResultRectRel = Rect(window.dc.lastItemRect.min - window.pos, window.dc.lastItemRect.max - window.pos)
+            g.navInitResultId = g.lastItemData.id
+            g.navInitResultRectRel = Rect(g.lastItemData.rect.min - window.pos, g.lastItemData.rect.max - window.pos)
             navUpdateAnyRequestFlag()
             if (!isItemVisible) setScrollHereY()
         }

@@ -1729,8 +1729,8 @@ class Table {
 
         window.skipItems = column.isSkipItems
         if (column.isSkipItems) {
-            window.dc.lastItemId = 0
-            window.dc.lastItemStatusFlags = 0
+            g.lastItemData.id = 0
+            g.lastItemData.statusFlags = 0
         }
 
         if (flags has Tf.NoClip) {

@@ -169,7 +169,7 @@ interface widgetsSliders {
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = tempInputAllowed && window.dc.lastItemStatusFlags has ItemStatusFlag.Focused
+            val focusRequested = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.Focused
             val clicked = hovered && ImGui.io.mouseClicked[0]
             if (focusRequested || clicked || g.navActivateId == id || g.navInputId == id) {
                 ImGui.setActiveID(id, window)
@@ -225,7 +225,7 @@ interface widgetsSliders {
             ImGui.renderText(pos, label)
         }
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return valueChanged
     }
 

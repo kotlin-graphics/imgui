@@ -316,15 +316,13 @@ interface widgetsMenus {
                 wantOpen = true
                 navMoveRequestCancel()
             }
-        /*  explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as
-            'if (BeginMenu("options", has_object)) { ..use object.. }'         */
-        if (!enabled)
+
+        if (!enabled) // explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as 'if (BeginMenu("options", has_object)) { ..use object.. }'
             wantClose = true
         if (wantClose && isPopupOpen(id))
             closePopupToLevel(g.beginPopupStack.size, true)
 
-        val f = ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.currentItemFlags or f)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         popID()
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {

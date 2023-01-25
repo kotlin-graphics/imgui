@@ -153,7 +153,7 @@ interface widgetsMain {
         val totalBb = Rect(pos, pos + Vec2(squareSz + if (labelSize.x > 0f) style.itemInnerSpacing.x + labelSize.x else 0f, labelSize.y + style.framePadding.y * 2f))
         itemSize(totalBb, style.framePadding.y)
         if (!itemAdd(totalBb, id)) {
-            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
+            IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None)
             return false
         }
 
@@ -186,7 +186,7 @@ interface widgetsMain {
             renderText(renderTextPos, label)
 
         val flags = ItemStatusFlag.Checkable or if(v) ItemStatusFlag.Checked else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags or flags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or flags)
 
         return pressed
     }
@@ -270,7 +270,7 @@ interface widgetsMain {
         if (labelSize.x > 0f)
             renderText(renderTextPos, label)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return pressed
     }
 

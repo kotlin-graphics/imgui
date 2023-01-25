@@ -218,9 +218,10 @@ interface widgetsColorEditorPicker {
                 if (flags hasnt Cef.NoPicker) { // Store current color and open a picker
                     g.colorPickerRef put colVec4
                     openPopup("picker")
-                    setNextWindowPos(window.dc.lastItemRect.bl + Vec2(-1, style.itemSpacing.y))
+                    setNextWindowPos(g.lastItemData.rect.bl + Vec2(-1, style.itemSpacing.y))
                 }
-            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
+            if (flags hasnt Cef.NoOptions)
+                openPopupOnItemClick("context")
 
             if (beginPopup("picker")) {
                 pickerActiveWindow = g.currentWindow
@@ -268,7 +269,7 @@ interface widgetsColorEditorPicker {
         // Drag and Drop Target
 
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
-        if (window.dc.lastItemStatusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
+        if (g.lastItemData.statusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             var acceptedDragDrop = false
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
                 val data = it.data!! as Vec4
@@ -293,10 +294,10 @@ interface widgetsColorEditorPicker {
 
         // When picker is being actively used, use its active id so IsItemActive() will function on ColorEdit4().
         if (pickerActiveWindow != null && g.activeId != 0 && g.activeIdWindow === pickerActiveWindow)
-            window.dc.lastItemId = g.activeId
+            g.lastItemData.id = g.activeId
 
         if (valueChanged)
-            markItemEdited(window.dc.lastItemId)
+            markItemEdited(g.lastItemData.id)
 
         return valueChanged
     }
@@ -689,7 +690,7 @@ interface widgetsColorEditorPicker {
         if (valueChanged && compare)
             valueChanged = false
         if (valueChanged)
-            markItemEdited(window.dc.lastItemId)
+            markItemEdited(g.lastItemData.id)
 
         popID()
 

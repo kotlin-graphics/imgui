@@ -46,8 +46,8 @@ class ImplGlfw @JvmOverloads constructor(
             // Setup backend capabilities flags
             backendPlatformUserData = data
             backendPlatformName = "imgui_impl_glfw"
-            backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
-            backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
+            backendFlags /= BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
+            backendFlags /= BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
 
             data.window = window
             //            Data.time = 0.0

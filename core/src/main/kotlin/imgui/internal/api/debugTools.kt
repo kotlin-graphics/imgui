@@ -1,15 +1,15 @@
 package imgui.internal.api
 
-import glm_.*
+import glm_.L
+import glm_.d
+import glm_.i
+import glm_.min
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
-import imgui.ImGui.cursorScreenPos
-import imgui.ImGui.dragFloat
-import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
@@ -21,29 +21,22 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getStyleColorVec4
-import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemVisible
-import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
 import imgui.ImGui.popFocusScope
-import imgui.ImGui.popFont
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
-import imgui.ImGui.pushFont
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
-import imgui.ImGui.separator
 import imgui.ImGui.setNextItemOpen
-import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.smallButton
-import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
@@ -51,14 +44,12 @@ import imgui.ImGui.textUnformatted
 import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeEx
 import imgui.ImGui.treePop
-import imgui.ImGui.windowDrawList
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.treeNode
 import imgui.dsl.withID
-import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.DrawCmd
 import imgui.internal.classes.*
@@ -68,7 +59,6 @@ import imgui.internal.triangleArea
 import kool.lib.isNotEmpty
 import kool.rem
 import uno.kotlin.plusAssign
-import kotlin.math.sqrt
 
 typealias ErrorLogCallback = (userData: Any?, fmt: String) -> Unit
 
@@ -136,7 +126,7 @@ internal interface debugTools {
 
     fun debugDrawItemRect(col: Int = COL32(255, 0, 0, 255)) {
         val window = g.currentWindow!!
-        getForegroundDrawList(window).addRect(window.dc.lastItemRect.min, window.dc.lastItemRect.max, col)
+        getForegroundDrawList(window).addRect(g.lastItemData.rect.min, g.lastItemData.rect.max, col)
     }
 
     fun debugStartItemPicker() {

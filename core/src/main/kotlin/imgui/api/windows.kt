@@ -18,10 +18,10 @@ import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.setLastItemData
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.internal.classes.Rect
+import imgui.internal.classes.WindowStackData
 import imgui.internal.floor
 import imgui.internal.lengthSqr
 import imgui.internal.sections.*
@@ -111,7 +111,7 @@ interface windows {
         } else flags = window.flags
 
         // Parent window is latched only on the first call to Begin() of the frame, so further append-calls can be done from a different window stack
-        val parentWindowInStack = g.currentWindowStack.lastOrNull()
+        val parentWindowInStack = g.currentWindowStack.lastOrNull()?.window
         val parentWindow = when {
             firstBeginOfTheFrame -> parentWindowInStack.takeIf { flags has (Wf._ChildWindow or Wf._Popup) }
             else -> window.parentWindow
@@ -123,7 +123,10 @@ interface windows {
 
         // Add to stack
         // We intentionally set g.CurrentWindow to NULL to prevent usage until when the viewport is set, then will call SetCurrentWindow()
-        g.currentWindowStack += window
+        val windowStackData = WindowStackData()
+        windowStackData.window = window
+        windowStackData.parentLastItemDataBackup = g.lastItemData
+        g.currentWindowStack += windowStackData
         g.currentWindow = window
         window.dc.stackSizesOnBegin.setToCurrentState()
         g.currentWindow = null
@@ -663,11 +666,14 @@ interface windows {
 
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
-            val flag = if (isMouseHoveringRect(titleBarRect, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
-            setLastItemData(window, window.moveId, g.currentItemFlags, flag.i, titleBarRect)
+            g.lastItemData.id = window.moveId
+            g.lastItemData.inFlags = g.currentItemFlags
+            g.lastItemData.statusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect.i else 0
+            g.lastItemData.rect put titleBarRect
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
-                IMGUI_TEST_ENGINE_ITEM_ADD(window.dc.lastItemRect, window.dc.lastItemId)
+                IMGUI_TEST_ENGINE_ITEM_ADD(g.lastItemData.rect, g.lastItemData.id)
+
         } else   // Append
             setCurrentWindow(window)
 
@@ -745,10 +751,11 @@ interface windows {
             logFinish()
 
         // Pop from window stack
+        g.lastItemData = g.currentWindowStack.last().parentLastItemDataBackup
         g.currentWindowStack.pop()
         if (window.flags has Wf._Popup)
             g.beginPopupStack.pop()
         window.dc.stackSizesOnBegin.compareWithCurrentState()
-        setCurrentWindow(g.currentWindowStack.lastOrNull())
+        setCurrentWindow(g.currentWindowStack.lastOrNull()?.window)
     }
 }

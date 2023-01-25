@@ -49,24 +49,6 @@ class WindowTempData {
     var groupOffset = 0f
 
 
-    // Last item status
-
-    /** ID for last item */
-    var lastItemId: ID = 0
-
-    /** Copy of flags for last item (see ImGuiItemflags_), named "In" to avoid probably confusion with status flags */
-    var lastItemInFlags: ItemFlags = 0
-
-    /** Status flags for last item (see ImGuiItemStatusFlags_) */
-    var lastItemStatusFlags = ItemStatusFlag.None.i
-
-    /** Interaction rect for last item    */
-    var lastItemRect = Rect()
-
-    /** End-user display rect for last item (only valid if LastItemStatusFlags & ImGuiItemStatusFlags_HasDisplayRect) */
-    var lastItemDisplayRect = Rect()
-
-
     // Keyboard/Gamepad navigation
 
     /** Current layer, 0..31 (we currently only use 0..1)   */

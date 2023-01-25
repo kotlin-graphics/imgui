@@ -74,7 +74,7 @@ interface childWindows {
             } else // Not navigable into
                 itemAdd(bb, 0)
             if (g.hoveredWindow === window)
-                parentWindow.dc.lastItemStatusFlags = parentWindow.dc.lastItemStatusFlags or ItemStatusFlag.HoveredWindow
+                g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.HoveredWindow
         }
         g.withinEndChild = false
         g.logLinePosY = -Float.MAX_VALUE // To enforce a carriage return

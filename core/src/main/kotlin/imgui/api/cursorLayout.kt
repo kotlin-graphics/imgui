@@ -14,6 +14,7 @@ import imgui.internal.classes.GroupData
 import imgui.internal.classes.Rect
 import imgui.internal.sections.ItemStatusFlag
 import imgui.internal.sections.SeparatorFlag
+import imgui.internal.sections.div
 import imgui.internal.sections.or
 import imgui.internal.sections.LayoutType as Lt
 
@@ -171,25 +172,25 @@ interface cursorLayout {
         val groupContainsCurrActiveId = groupData.backupActiveIdIsAlive != g.activeId && g.activeIdIsAlive == g.activeId && g.activeId != 0
         val groupContainsPrevActiveId = !groupData.backupActiveIdPreviousFrameIsAlive && g.activeIdPreviousFrameIsAlive
         if (groupContainsCurrActiveId)
-            window.dc.lastItemId = g.activeId
+            g.lastItemData.id = g.activeId
         else if (groupContainsPrevActiveId)
-            window.dc.lastItemId = g.activeIdPreviousFrame
-        window.dc.lastItemRect put groupBb
+            g.lastItemData.id = g.activeIdPreviousFrame
+        g.lastItemData.rect put groupBb
 
         // Forward Hovered flag
         val groupContainsCurrHoveredId = !groupData.backupHoveredIdIsAlive && g.hoveredId != 0
         if (groupContainsCurrHoveredId)
-            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HoveredWindow
+            g.lastItemData.statusFlags /= ItemStatusFlag.HoveredWindow
 
 
         // Forward Edited flag
         if (groupContainsCurrActiveId && g.activeIdHasBeenEditedThisFrame)
-            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.Edited
+            g.lastItemData.statusFlags /= ItemStatusFlag.Edited
 
         // Forward Deactivated flag
-        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDeactivated
+        g.lastItemData.statusFlags /= ItemStatusFlag.HasDeactivated
         if (groupContainsPrevActiveId && g.activeId != g.activeIdPreviousFrame)
-            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.Deactivated
+            g.lastItemData.statusFlags /= ItemStatusFlag.Deactivated
 
         g.groupStack.pop()
         //window->DrawList->AddRect(groupBb.Min, groupBb.Max, IM_COL32(255,0,255,255));   // [Debug]

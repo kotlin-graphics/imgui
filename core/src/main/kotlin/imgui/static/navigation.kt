@@ -817,7 +817,7 @@ fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
     /* Degenerate case: two overlapping buttons with same center, break ties arbitrarily (note that lastItemId here is
         really the _previous_ item order, but it doesn't matter)     */
     else
-        quadrant = if (window.dc.lastItemId < g.navId) Dir.Left else Dir.Right
+        quadrant = if (g.lastItemData.id < g.navId) Dir.Left else Dir.Right
 
     if (IMGUI_DEBUG_NAV_SCORING)
         if (isMouseHoveringRect(cand)) {
@@ -906,7 +906,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
     //if (!g.io.NavActive)  // [2017/10/06] Removed this possibly redundant test but I am not sure of all the side-effects yet. Some of the feature here will need to work regardless of using a _NoNavInputs flag.
     //    return;
 
-    val itemFlags = g.currentItemFlags
+    val itemFlags = g.lastItemData.inFlags
     val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
 
     // Process Init Request

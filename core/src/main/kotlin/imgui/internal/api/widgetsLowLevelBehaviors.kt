@@ -53,8 +53,9 @@ import imgui.internal.sections.ButtonFlag as Bf
 
 // Widgets
 
-/** Time for drag-hold to activate items accepting the ImGuiButtonFlags_PressedOnDragDropHold button behavior. */
+        /** Time for drag-hold to activate items accepting the ImGuiButtonFlags_PressedOnDragDropHold button behavior. */
 val DRAGDROP_HOLD_TO_OPEN_TIMER = 0.7f
+
 /** Multiplier for the default value of io.MouseDragThreshold to make DragFloat/DragInt react faster to mouse drags. */
 val DRAG_MOUSE_THRESHOLD_FACTOR = 0.5f
 
@@ -140,7 +141,7 @@ internal interface widgetsLowLevelBehaviors {
         if (flattenHoveredChildren)
             g.hoveredWindow = window
 
-        if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && window.dc.lastItemId != id)
+        if (IMGUI_ENABLE_TEST_ENGINE && id != 0 && g.lastItemData.id != id)
             IMGUI_TEST_ENGINE_ITEM_ADD(bb, id)
 
         var pressed = false
@@ -283,13 +284,14 @@ internal interface widgetsLowLevelBehaviors {
 
     fun dragBehavior(id: ID, dataType: DataType, pV: FloatArray, ptr: Int, vSpeed: Float, pMin: Float?, pMax: Float?,
                      format: String, flags: SliderFlags): Boolean =
-            withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, flags) }
+        withFloat(pV, ptr) { dragBehavior(id, DataType.Float, it, vSpeed, pMin, pMax, format, flags) }
 
     fun <N> dragBehavior(id: ID, dataType: DataType, pV: KMutableProperty0<N>, vSpeed: Float, pMin: Number?,
                          pMax: Number?, format: String, flags: SliderFlags): Boolean
             where N : Number, N : Comparable<N> {
 
-        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) { """
+        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) {
+            """
             Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
             Invalid ImGuiSliderFlags flags! Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
         }
@@ -383,26 +385,27 @@ internal interface widgetsLowLevelBehaviors {
      *  It would be possible to lift that limitation with some work but it doesn't seem to be worth it for sliders. */
     fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, pMin: Float, pMax: Float, format: String,
                        flags: SliderFlags, outGrabBb: Rect): Boolean =
-            sliderBehavior(bb, id, pV, 0, pMin, pMax, format, flags, outGrabBb)
+        sliderBehavior(bb, id, pV, 0, pMin, pMax, format, flags, outGrabBb)
 
     fun sliderBehavior(bb: Rect, id: ID, pV: FloatArray, ptr: Int, pMin: Float, pMax: Float,
                        format: String, flags: SliderFlags, outGrabBb: Rect): Boolean =
-            withFloat(pV, ptr) {
-                sliderBehavior(bb, id, DataType.Float, it, pMin, pMax, format, flags, outGrabBb)
-            }
+        withFloat(pV, ptr) {
+            sliderBehavior(bb, id, DataType.Float, it, pMin, pMax, format, flags, outGrabBb)
+        }
 
-//    fun <N> sliderBehavior(bb: Rect, id: ID,
-//                           v: KMutableProperty0<N>,
-//                           vMin: Float, vMax: Float,
-//                           format: String, power: Float,
-//                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
-//            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
+    //    fun <N> sliderBehavior(bb: Rect, id: ID,
+    //                           v: KMutableProperty0<N>,
+    //                           vMin: Float, vMax: Float,
+    //                           format: String, power: Float,
+    //                           flags: SliderFlags, outGrabBb: Rect): Boolean where N : Number, N : Comparable<N> =
+    //            sliderBehavior(bb, id, DataType.Float, v, vMin, vMax, format, power, flags, outGrabBb)
 
     fun <N> sliderBehavior(bb: Rect, id: ID, dataType: DataType, pV: KMutableProperty0<N>, pMin: N, pMax: N,
                            format: String, flags: SliderFlags, outGrabBb: Rect): Boolean
             where N : Number, N : Comparable<N> {
 
-        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) {"""
+        assert(flags == 1 || flags hasnt SliderFlag.InvalidMask_.i) {
+            """
             Read imgui.cpp "API BREAKING CHANGES" section for 1.78 if you hit this assert.
             Invalid ImGuiSliderFlags flag!  Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
         }
@@ -491,7 +494,7 @@ internal interface widgetsLowLevelBehaviors {
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)
         val (_, hovered, held) = buttonBehavior(bbInteract, id, Bf.FlattenChildren or Bf.AllowItemOverlap)
         if (hovered)
-            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HoveredRect // for IsItemHovered(), because bb_interact is larger than bb
+            g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect // for IsItemHovered(), because bb_interact is larger than bb
         if (g.activeId != id)
             setItemAllowOverlap()
 
@@ -558,10 +561,10 @@ internal interface widgetsLowLevelBehaviors {
         // We vertically grow up to current line height up the typical widget height.
         val frameHeight = glm.max(glm.min(window.dc.currLineSize.y, g.fontSize + style.framePadding.y * 2), labelSize.y + padding.y * 2)
         val frameBb = Rect(
-                x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
-                y1 = window.dc.cursorPos.y,
-                x2 = window.workRect.max.x,
-                y2 = window.dc.cursorPos.y + frameHeight)
+            x1 = if (flags has Tnf.SpanFullWidth) window.workRect.min.x else window.dc.cursorPos.x,
+            y1 = window.dc.cursorPos.y,
+            x2 = window.workRect.max.x,
+            y2 = window.dc.cursorPos.y + frameHeight)
         if (displayFrame) {
             // Framed header expand a little outside the default padding, to the edge of InnerClipRect
             // (FIXME: May remove this at some point and make InnerClipRect align with WindowPadding.x instead of WindowPadding.x*0.5f)
@@ -589,15 +592,15 @@ internal interface widgetsLowLevelBehaviors {
             window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask or (1 shl window.dc.treeDepth)
 
         val itemAdd = itemAdd(interactBb, id)
-        window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.HasDisplayRect
-        window.dc.lastItemDisplayRect put frameBb
+        g.lastItemData.statusFlags /= ItemStatusFlag.HasDisplayRect
+        g.lastItemData.displayRect put frameBb
 
         if (!itemAdd) {
             if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
                 treePushOverrideID(id)
-            val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
-            val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-            IMGUI_TEST_ENGINE_ITEM_INFO(window.dc.lastItemId, label.cStr, window.dc.lastItemStatusFlags or f or f2)
+            val f = if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
+            val f2 = if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+            IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label.cStr, g.lastItemData.statusFlags or f or f2)
             return isOpen
         }
 
@@ -663,7 +666,7 @@ internal interface widgetsLowLevelBehaviors {
             if (toggled) {
                 isOpen = !isOpen
                 window.dc.stateStorage[id] = isOpen
-                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledOpen
+                g.lastItemData.statusFlags /= ItemStatusFlag.ToggledOpen
             }
         }
         if (flags has Tnf.AllowItemOverlap)
@@ -671,7 +674,7 @@ internal interface widgetsLowLevelBehaviors {
 
         // In this branch, TreeNodeBehavior() cannot toggle the selection so this will never trigger.
         if (selected != wasSelected)
-            window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.ToggledSelection
+            g.lastItemData.statusFlags /= ItemStatusFlag.ToggledSelection
 
         // Render
         val textCol = Col.Text.u32
@@ -715,9 +718,9 @@ internal interface widgetsLowLevelBehaviors {
 
         if (isOpen && flags hasnt Tnf.NoTreePushOnOpen)
             treePushOverrideID(id)
-        val f = if(isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
-        val f2 = if(isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, window.dc.lastItemStatusFlags or f or f2)
+        val f = if (isLeaf) ItemStatusFlag.None else ItemStatusFlag.Openable
+        val f2 = if (isOpen) ItemStatusFlag.Opened else ItemStatusFlag.None
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label.cStr, g.lastItemData.statusFlags or f or f2)
         return isOpen
     }
 

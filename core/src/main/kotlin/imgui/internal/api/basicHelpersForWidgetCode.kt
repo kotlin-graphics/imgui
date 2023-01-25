@@ -104,13 +104,11 @@ internal interface basicHelpersForWidgetCode {
             g.debugItemPickerBreakId = 0
         }
 
-        // Equivalent to calling SetLastItemData()
-        val dc = g.currentWindow!!.dc.apply {
-            lastItemId = id
-            lastItemRect = bb
-            lastItemInFlags = g.currentItemFlags
-            lastItemStatusFlags = ItemStatusFlag.None.i
-        }
+        // Set item data
+        g.lastItemData.id = id
+        g.lastItemData.rect = bb
+        g.lastItemData.inFlags = g.currentItemFlags
+        g.lastItemData.statusFlags = ItemStatusFlag.None.i
         g.nextItemData.flags = NextItemDataFlag.None.i
 
         if (IMGUI_ENABLE_TEST_ENGINE && id != 0)
@@ -127,7 +125,7 @@ internal interface basicHelpersForWidgetCode {
 
         // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
         if (isMouseHoveringRect(bb))
-            dc.lastItemStatusFlags = dc.lastItemStatusFlags or ItemStatusFlag.HoveredRect
+            g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect
         return true
     }
 
@@ -178,7 +176,7 @@ internal interface basicHelpersForWidgetCode {
 
     fun itemFocusable(window: Window, id: ID) {
 
-        assert(id != 0 && id == window.dc.lastItemId)
+        assert(id != 0 && id == g.lastItemData.id)
 
         // Increment counters
         // FIXME: ImGuiItemFlags_Disabled should disable more.
@@ -200,12 +198,12 @@ internal interface basicHelpersForWidgetCode {
         // Handle focus requests
         if (g.tabFocusRequestCurrWindow === window) {
             if (window.dc.focusCounterRegular == g.tabFocusRequestCurrCounterRegular) {
-                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.FocusedByCode
+                g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.FocusedByCode
                 return
             }
             if (isTabStop && window.dc.focusCounterTabStop == g.tabFocusRequestCurrCounterTabStop) {
                 g.navJustTabbedId = id
-                window.dc.lastItemStatusFlags = window.dc.lastItemStatusFlags or ItemStatusFlag.FocusedByTabbing
+                g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.FocusedByTabbing
                 return
             }
 
@@ -222,15 +220,6 @@ internal interface basicHelpersForWidgetCode {
                 if (clipEvenWhenLogged || !g.logEnabled)
                     return true
         return false
-    }
-
-    /** This is also inlined in ItemAdd()
-     *  Note: if ImGuiItemStatusFlags_HasDisplayRect is set, user needs to set window->DC.LastItemDisplayRect! */
-    fun setLastItemData(window: Window, itemId: ID, itemFlags: ItemFlags, itemStatusFlags: ItemStatusFlags, itemRect: Rect) {
-        window.dc.lastItemId = itemId
-        window.dc.lastItemInFlags = itemFlags
-        window.dc.lastItemStatusFlags = itemStatusFlags
-        window.dc.lastItemRect put itemRect
     }
 
     /** [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == CalcItemWidth().
@@ -289,7 +278,7 @@ internal interface basicHelpersForWidgetCode {
 
     /** Was the last item selection toggled? (after Selectable(), TreeNode() etc. We only returns toggle _event_ in order to handle clipping correctly) */
     val isItemToggledSelection: Boolean
-        get() = g.currentWindow!!.dc.lastItemStatusFlags has ItemStatusFlag.ToggledSelection
+        get() = g.lastItemData.statusFlags has ItemStatusFlag.ToggledSelection
 
     /** [Internal] Absolute coordinate. Saner. This is not exposed until we finishing refactoring work rect features.
      *  ~GetContentRegionMaxAbs */

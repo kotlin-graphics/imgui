@@ -157,8 +157,8 @@ internal interface inputText {
         // We are only allowed to access the state if we are already the active widget.
         var state = getInputTextState(id)
 
-        val focusRequestedByCode = window.dc.lastItemStatusFlags has ItemStatusFlag.FocusedByCode
-        val focusRequestedByTabbing = window.dc.lastItemStatusFlags has ItemStatusFlag.FocusedByTabbing
+        val focusRequestedByCode = g.lastItemData.statusFlags has ItemStatusFlag.FocusedByCode
+        val focusRequestedByTabbing = g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
 
         val userClicked = hovered && io.mouseClicked[0]
         val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.Keyboard))
@@ -879,7 +879,7 @@ internal interface inputText {
         if (valueChanged && flags hasnt Itf._NoMarkEdited)
             markItemEdited(id)
 
-        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window.dc.lastItemStatusFlags)
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return when {
             flags has Itf.EnterReturnsTrue -> enterPressed
             else -> valueChanged

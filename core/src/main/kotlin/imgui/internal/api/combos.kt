@@ -81,9 +81,9 @@ internal interface combos {
         val window = g.currentWindow!!
         val previewData = g.comboPreviewData
 
-        if (window.skipItems || !window.clipRect.overlaps(window.dc.lastItemRect)) // FIXME: Because we don't have a ImGuiItemStatusFlags_Visible flag to test last ItemAdd() result
+        if (window.skipItems || !window.clipRect.overlaps(g.lastItemData.rect)) // FIXME: Because we don't have a ImGuiItemStatusFlags_Visible flag to test last ItemAdd() result
             return false
-        assert(window.dc.lastItemRect.min.x == previewData.previewRect.min.x && window.dc.lastItemRect.min.y == previewData.previewRect.min.y) { "Didn't call after BeginCombo/EndCombo block or forgot to pass ImGuiComboFlags_CustomPreview flag?" }
+        assert(g.lastItemData.rect.min.x == previewData.previewRect.min.x && g.lastItemData.rect.min.y == previewData.previewRect.min.y) { "Didn't call after BeginCombo/EndCombo block or forgot to pass ImGuiComboFlags_CustomPreview flag?" }
         if (!window.clipRect.contains(previewData.previewRect)) // Narrower test (optional)
             return false
 

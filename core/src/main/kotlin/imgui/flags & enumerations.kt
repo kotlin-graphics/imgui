@@ -1421,6 +1421,7 @@ infix fun BackendFlags.xor(b: BackendFlag): BackendFlags = xor(b.i)
 infix fun BackendFlags.has(b: BackendFlag): Boolean = and(b.i) != 0
 infix fun BackendFlags.hasnt(b: BackendFlag): Boolean = and(b.i) == 0
 infix fun BackendFlags.wo(b: BackendFlag): BackendFlags = and(b.i.inv())
+operator fun BackendFlags.div(flag: BackendFlag): BackendFlags = or(flag)
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
 /** A color identifier for styling */

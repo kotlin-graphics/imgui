@@ -16,7 +16,6 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
-import imgui.internal.classes.lastItemDataBackup
 import kotlin.math.max
 import kotlin.math.min
 
@@ -106,12 +105,12 @@ internal interface tabBars {
         val unsavedMarkerVisible = flags hasnt TabItemFlag.UnsavedDocument && buttonPos.x + buttonSz <= bb.max.x
 
         if (closeButtonVisible) {
+            val lastItemBackup = g.lastItemData
             pushStyleVar(StyleVar.FramePadding, framePadding)
-            lastItemDataBackup {
-                if (closeButton(closeButtonId, buttonPos))
-                    closeButtonPressed = true
-            }
+            if (closeButton(closeButtonId, buttonPos))
+                closeButtonPressed = true
             popStyleVar()
+            g.lastItemData = lastItemBackup
 
             // Close with middle mouse button
             if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(MouseButton.Middle))
@@ -126,17 +125,17 @@ internal interface tabBars {
         // FIXME: if FramePadding is noticeably large, ellipsis_max_x will be wrong here (e.g. #3497), maybe for consistency that parameter of RenderTextEllipsis() shouldn't exist..
         var ellipsisMaxX = if (closeButtonVisible) textPixelClipBb.max.x else bb.max.x - 1f
         if (closeButtonVisible || unsavedMarkerVisible) {
-            textPixelClipBb.max.x -= if(closeButtonVisible) buttonSz else buttonSz * 0.8f
-            textEllipsisClipBb.max.x -= if(unsavedMarkerVisible) buttonSz * 0.8f else 0f
+            textPixelClipBb.max.x -= if (closeButtonVisible) buttonSz else buttonSz * 0.8f
+            textEllipsisClipBb.max.x -= if (unsavedMarkerVisible) buttonSz * 0.8f else 0f
             ellipsisMaxX = textPixelClipBb.max.x
         }
         renderTextEllipsis(drawList, textEllipsisClipBb.min, textEllipsisClipBb.max, textPixelClipBb.max.x,
                            ellipsisMaxX, label, textSizeIfKnown = labelSize)
 
-//        #if 0
-//        if (!is_contents_visible)
-//            g.Style.Alpha = backup_alpha;
-//        #endif
+        //        #if 0
+        //        if (!is_contents_visible)
+        //            g.Style.Alpha = backup_alpha;
+        //        #endif
 
         justClosed = closeButtonPressed
         return Vec2bool(justClosed, textClipped)

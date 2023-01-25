@@ -86,7 +86,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     val windowsTempSortBuffer = ArrayList<Window>()
 
-    val currentWindowStack = Stack<Window>()
+    val currentWindowStack = Stack<WindowStackData>()
 
     /** Map window's ImGuiID to ImGuiWindow* */
     val windowsById = mutableMapOf<Int, Window>()
@@ -118,9 +118,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 
     // Item/widgets state and tracking information
-
-    /** == g.ItemFlagsStack.back() */
-    var currentItemFlags = ItemFlag.None.i
 
     /** Hovered widget, filled during the frame  */
     var hoveredId: ID = 0
@@ -208,11 +205,15 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Next window/item data
 
+    /** == g.ItemFlagsStack.back() */
+    var currentItemFlags = ItemFlag.None.i
+    /** Storage for SetNextItem** functions */
+    lateinit var nextItemData: NextItemData
+    /** Storage for last submitted item (setup by ItemAdd) */
+    lateinit var lastItemData: LastItemData
+
     /** Storage for SetNextWindow** functions   */
     val nextWindowData = NextWindowData()
-
-    /** Storage for SetNextItem** functions */
-    var nextItemData = NextItemData()
 
 
     /** Stack for PushStyleColor()/PopStyleColor() - inherited by Begin()  */
