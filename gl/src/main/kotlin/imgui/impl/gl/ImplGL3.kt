@@ -38,6 +38,10 @@ class ImplGL3 : GLInterface {
     init {
         assert(io.backendRendererUserData == null) { "Already initialized a renderer backend!" }
 
+        // Setup backend capabilities flags
+        io.backendRendererUserData = data
+        io.backendRendererName = "imgui_impl_opengl3"
+
         // Query for GL version (e.g. 320 for GL 3.2)
         var major = glGetInteger(GL_MAJOR_VERSION)
         var minor = glGetInteger(GL_MINOR_VERSION)
@@ -51,9 +55,6 @@ class ImplGL3 : GLInterface {
             !OPENGL_ES2 -> major * 100 + minor * 10
             else -> 200 // GLES 2
         }
-
-        // Setup backend capabilities flags
-        io.backendRendererName = "imgui_impl_opengl3"
 
         // Detect extensions we support
         data.hasClipOrigin = data.glVersion >= 450

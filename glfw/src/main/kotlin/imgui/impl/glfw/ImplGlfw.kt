@@ -42,14 +42,15 @@ class ImplGlfw @JvmOverloads constructor(
 
         with(io) {
             assert(io.backendPlatformUserData == NULL) { "Already initialized a platform backend!" }
-            data.window = window
-            //            Data.time = 0.0
 
             // Setup backend capabilities flags
             backendPlatformUserData = data
             backendPlatformName = "imgui_impl_glfw"
             backendFlags = backendFlags or BackendFlag.HasMouseCursors   // We can honor GetMouseCursor() values (optional)
             backendFlags = backendFlags or BackendFlag.HasSetMousePos    // We can honor io.WantSetMousePos requests (optional, rarely used)
+
+            data.window = window
+            //            Data.time = 0.0
 
             // Keyboard mapping. Dear ImGui will use those indices to peek into the io.KeysDown[] array.
             keyMap[Key.Tab] = GLFW_KEY_TAB
