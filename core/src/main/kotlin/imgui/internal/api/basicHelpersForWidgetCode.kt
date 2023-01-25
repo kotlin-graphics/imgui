@@ -153,6 +153,9 @@ internal interface basicHelpersForWidgetCode {
 
                 // When disabled we'll return false but still set HoveredId
                 if (g.currentItemFlags has ItemFlag.Disabled) {
+                    // Release active id if turning disabled
+                    if (g.activeId == id)
+                        clearActiveID()
                     g.hoveredIdDisabled = true
                     false
                 }
