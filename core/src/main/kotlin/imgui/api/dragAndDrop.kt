@@ -248,15 +248,10 @@ interface dragAndDrop {
         }
 
         // Render default drop visuals
+        // FIXME-DRAGDROP: Settle on a proper default visuals for drop target.
         payload.preview = wasAcceptedPreviously
-        if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview) {
-            // FIXME-DRAGDROP: Settle on a proper default visuals for drop target.
-            r expand 3.5f
-            val pushClipRect = r !in window.clipRect
-            if (pushClipRect) window.drawList.pushClipRect(r.min - 1, r.max + 1)
-            window.drawList.addRect(r.min, r.max, Col.DragDropTarget.u32, 0f, 0, 2f)
-            if (pushClipRect) window.drawList.popClipRect()
-        }
+        if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview)
+            window.drawList.addRect(r.min - 3.5f, r.max + 3.5f, Col.DragDropTarget.u32, 0f, 0, 2f)
 
         g.dragDropAcceptFrameCount = g.frameCount
         // For extern drag sources affecting os window focus, it's easier to just test !isMouseDown() instead of isMouseReleased()
