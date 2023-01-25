@@ -100,7 +100,7 @@ interface widgetsSelectables {
         val itemAdd = when {
             flags has Sf.Disabled -> {
                 val backupItemFlags = g.currentItemFlags
-                g.currentItemFlags = g.currentItemFlags or If.Disabled or If.NoNavDefaultFocus
+                g.currentItemFlags = g.currentItemFlags or If.Disabled
                 itemAdd(bb, id).also {
                     g.currentItemFlags = backupItemFlags
                 }
@@ -109,7 +109,7 @@ interface widgetsSelectables {
         }
 
         if (spanAllColumns) {
-            window.clipRect.min.x = backupClipRectMaxX
+            window.clipRect.min.x = backupClipRectMinX
             window.clipRect.max.x = backupClipRectMaxX
         }
 

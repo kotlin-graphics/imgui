@@ -160,7 +160,7 @@ internal interface widgetsLowLevelBehaviors {
             if (isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)) {
                 hovered = true
                 hoveredId = id
-                if (calcTypematicRepeatAmount(g.hoveredIdTimer + 0.0001f - io.deltaTime, g.hoveredIdTimer + 0.0001f - io.deltaTime, DRAGDROP_HOLD_TO_OPEN_TIMER, 0f) != 0) {
+                if (g.hoveredIdTimer - io.deltaTime <= DRAGDROP_HOLD_TO_OPEN_TIMER && g.hoveredIdTimer >= DRAGDROP_HOLD_TO_OPEN_TIMER) {
                     pressed = true
                     g.dragDropHoldJustPressedId = id
                     focusWindow(window)

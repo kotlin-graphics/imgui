@@ -329,7 +329,7 @@ interface demoDebugInformations {
                 text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
                 text("ActiveIdUsing: Wheel: ${g.activeIdUsingMouseWheel}, NavDirMask: %X, NavInputMask: %X, KeyInputMask: %llX", g.activeIdUsingNavDirMask, g.activeIdUsingNavInputMask, g.activeIdUsingKeyInputMask)
-                text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredId, g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
+                text("HoveredId: 0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Not displaying g.HoveredId as it is update mid-frame
                 text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)",
                      g.dragDropPayload.sourceId)
             }

@@ -912,11 +912,12 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
     // Process Init Request
     if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent) {
         // Even if 'ImGuiItemFlags_NoNavDefaultFocus' is on (typically collapse/close button) we record the first ResultId so they can be used as a fallback
-        if (itemFlags hasnt If.NoNavDefaultFocus || g.navInitResultId == 0) {
+        val candidateForNavDefaultFocus = itemFlags hasnt (If.NoNavDefaultFocus or If.Disabled)
+        if (candidateForNavDefaultFocus || g.navInitResultId == 0) {
             g.navInitResultId = id
             g.navInitResultRectRel = navBbRel
         }
-        if (itemFlags hasnt If.NoNavDefaultFocus) {
+        if (candidateForNavDefaultFocus) {
             g.navInitRequest = false // Found a match, clear request
             navUpdateAnyRequestFlag()
         }
