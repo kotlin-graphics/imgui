@@ -8,6 +8,7 @@ import imgui.*
 import imgui.font.Font
 
 // Style read access
+// - Use the style editor (ShowStyleEditor() function) to interactively see what the colors are)
 interface styleReadAccess {
 
     /** get current font

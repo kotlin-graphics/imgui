@@ -93,7 +93,11 @@ interface windowsUtilities {
     val windowHeight: Float
         get() = g.currentWindow!!.size.y
 
-    // Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Window manipulation
+    // - Prefer using SetNextXXX functions (before Begin) rather that SetXXX functions (after Begin).
+    // -----------------------------------------------------------------------------------------------------------------
 
     /** set next window position. call before Begin()
      *  @param pos: safe, no writes */
@@ -186,7 +190,7 @@ interface windowsUtilities {
 
     /** per-window font scale. Adjust io.FontGlobalScale if you want to scale all windows
      *
-     *  set font scale. Adjust IO.FontGlobalScale if you want to scale all windows. This is an old API! For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes(). */
+     *  [OBSOLETE] set font scale. Adjust IO.FontGlobalScale if you want to scale all windows. This is an old API! For correct scaling, prefer to reload font + rebuild ImFontAtlas + call style.ScaleAllSizes(). */
     fun setWindowFontScale(scale: Float) = with(currentWindow) {
         assert(scale > 0f)
         fontWindowScale = scale

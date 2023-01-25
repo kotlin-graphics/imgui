@@ -340,7 +340,11 @@ interface main {
         g callHooks ContextHookType.EndFramePost
     }
 
-    /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData(). */
+    /** ends the Dear ImGui frame, finalize the draw data. You can then get call GetDrawData().
+     *
+     *  Prepare the data for rendering so you can call GetDrawData()
+     *  (As with anything within the ImGui:: namspace this doesn't touch your GPU or graphics API at all:
+     *  it is the role of the ImGui_ImplXXXX_RenderDrawData() function provided by the renderer backend) */
     fun render() {
 
         assert(g.initialized)

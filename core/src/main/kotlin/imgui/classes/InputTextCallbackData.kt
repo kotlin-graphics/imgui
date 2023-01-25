@@ -126,16 +126,20 @@ class InputTextCallbackData {
         bufTextLen += newTextLen
     }
 
-    fun selectAll() {
-        selectionStart = 0
-        selectionEnd = bufTextLen
-    }
+    val hasSelection: Boolean
+        get() = selectionStart != selectionEnd
 
     fun clearSelection() {
         selectionEnd = bufTextLen
         selectionStart = selectionEnd
     }
 
-    val hasSelection: Boolean
-        get() = selectionStart != selectionEnd
+//    val cursorPos get() = cursor; }
+//    val selectionStart get() = selectionStart
+//    int         GetSelectionEnd() const     { return Stb.select_end; }
+
+    fun selectAll() {
+        selectionStart = 0
+        selectionEnd = bufTextLen
+    }
 }

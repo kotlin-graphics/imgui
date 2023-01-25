@@ -22,8 +22,8 @@ import kotlin.math.max
 import kotlin.math.min
 import imgui.internal.sections.OldColumnsFlag as Cf
 
-/** Legacy Columns API (2020: prefer using Tables!)
- *  - You can also use SameLine(pos_x) to mimic simplified columns. */
+// Legacy Columns API (prefer using Tables!)
+// - You can also use SameLine(pos_x) to mimic simplified columns.
 interface columns {
 
     fun columns(columnsCount: Int = 1, id: String = "", border: Boolean = true) {
