@@ -161,8 +161,8 @@ interface widgetsSelectables {
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(bb.min, bb.max, col.u32, false, 0f)
-            renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         }
+        renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
 
         if (spanAllColumns && window.dc.currentColumns != null)
             popColumnsBackground()

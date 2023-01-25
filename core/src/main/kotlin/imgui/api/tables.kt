@@ -559,10 +559,10 @@ interface tables {
             val col = if (held) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             //RenderFrame(bb.Min, bb.Max, col, false, 0.0f);
             tableSetBgColor(TableBgTarget.CellBg, col.u32, table.currentColumn)
-            renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         } else  // Submit single cell bg color in the case we didn't submit a full header row
             if (table.rowFlags hasnt Trf.Headers)
                 tableSetBgColor(TableBgTarget.CellBg, Col.TableHeaderBg.u32, table.currentColumn)
+        renderNavHighlight(bb, id, NavHighlightFlag.TypeThin or NavHighlightFlag.NoRounding)
         if (held)
             table.heldHeaderColumn = columnN
         window.dc.cursorPos.y -= g.style.itemSpacing.y * 0.5f

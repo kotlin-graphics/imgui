@@ -707,8 +707,8 @@ internal interface widgetsLowLevelBehaviors {
             if (hovered || selected) {
                 val bgCol = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
                 renderFrame(frameBb.min, frameBb.max, bgCol.u32, false)
-                renderNavHighlight(frameBb, id, navHighlightFlags)
             }
+            renderNavHighlight(frameBb, id, navHighlightFlags)
             if (flags has Tnf.Bullet)
                 window.drawList.renderBullet(Vec2(textPos.x - textOffsetX * 0.5f, textPos.y + g.fontSize * 0.5f), textCol)
             else if (!isLeaf)

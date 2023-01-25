@@ -810,7 +810,7 @@ object ShowDemoWindowWidgets {
                 treeNode("Basic") {
                     selectable("1. I am selectable", selection0, 0)
                     selectable("2. I am selectable", selection0, 1)
-                    text("3. I am not selectable")
+                    text("(I am not selectable)")
                     selectable("4. I am selectable", selection0, 2)
                     if (selectable("5. I am double clickable", selection0[3], Sf.AllowDoubleClick.i))
                         if (isMouseDoubleClicked(MouseButton.Left)) selection0[3] = !selection0[3]
