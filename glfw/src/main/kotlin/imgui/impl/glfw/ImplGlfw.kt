@@ -226,6 +226,8 @@ class ImplGlfw @JvmOverloads constructor(
 
     fun newFrame() {
 
+        assert(data != null) { "Did you call ImGui_ImplGlfw_InitForXXX()?" }
+
         // Setup display size (every frame to accommodate for window resizing)
         val size = window.size
         val displaySize = window.framebufferSize

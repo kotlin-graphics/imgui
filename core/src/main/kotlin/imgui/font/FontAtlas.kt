@@ -66,6 +66,7 @@ class FontAtlas {
             fontCfg.dstFont!!.ellipsisChar = fontCfg.ellipsisChar
 
         // Invalidate texture
+        texReady = false
         clearTexData()
         return fontCfg.dstFont!!
     }
@@ -148,7 +149,7 @@ class FontAtlas {
             it.fontDataBuffer.free()
         }
 
-        // When clearing this we lose access to  the font name and other information used to build the font.
+        // When clearing this we lose access to the font name and other information used to build the font.
         fonts.filter {
             if (it.configData.isNotEmpty()) configData.contains(it.configData[0]) else false
         }.forEach {
@@ -159,6 +160,7 @@ class FontAtlas {
         customRects.clear()
         packIdMouseCursors = -1
         packIdLines = -1
+        texReady = false
     }
 
     /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
@@ -169,6 +171,7 @@ class FontAtlas {
         texPixelsRGBA32?.free()
         texPixelsRGBA32 = null
         texPixelsUseColors = false
+        // Important: we leave TexReady untouched
     }
 
     /** Clear output font data (glyphs storage, UV coordinates).    */
@@ -176,6 +179,7 @@ class FontAtlas {
         assert(!locked) { "Cannot modify a locked FontAtlas between NewFrame() and EndFrame/Render()!" }
         for (font in fonts) font.clearOutputData()
         fonts.clear()
+        texReady = false
     }
 
     /** Clear all input and output. ~ destroy  */
@@ -252,7 +256,7 @@ class FontAtlas {
     }
 
     val isBuilt: Boolean
-        get() = fonts.size > 0 && (texPixelsAlpha8 != null || texPixelsRGBA32 != null)
+        get() = fonts.size > 0 && texReady // Bit ambiguous: used to detect when user didn't built texture but effectively we should check TexID != 0 except that would be backend dependent...
 
 
     //    //-----------------------------------------------------------------------------
@@ -457,6 +461,9 @@ class FontAtlas {
 
     // [Internal]
     // NB: Access texture data via GetTexData*() calls! Which will setup a default font for you.
+
+    /** Set when texture was built matching current font input */
+    var texReady = false
 
     /** Tell whether our texture data is known to use colors (rather than just alpha channel), in order to help backend select a format. */
     var texPixelsUseColors = false
@@ -973,6 +980,8 @@ class FontAtlas {
         }
         // Build all fonts lookup tables
         fonts.filter { it.dirtyLookupTables }.forEach { it.buildLookupTable() }
+
+        texReady = true
     }
 
     fun buildRender8bppRectFromString(x: Int, y: Int, w: Int, h: Int, inStr: CharArray,

@@ -9,6 +9,7 @@ import gln.glf.semantic
 import gln.texture.glBindTexture
 import imgui.*
 import imgui.ImGui.io
+import imgui.impl.glfw.ImplGlfw
 import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
@@ -41,6 +42,7 @@ class ImplGL2 : GLInterface {
     }
 
     override fun newFrame() {
+        assert(ImplGlfw.Companion.data != null) { "Did you call ImGui_ImplGlfw_InitForXXX()?" }
         if (data.fontTexture[0] == 0)
             createDeviceObjects()
     }
