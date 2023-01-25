@@ -129,11 +129,9 @@ class ImplGlfw @JvmOverloads constructor(
             window.scrollCBs -= "imgui"
             window.keyCBs -= "imgui"
             window.charCBs -= "imgui"
-            data.installedCallbacks = false
         }
 
         data.mouseCursors.forEach(::glfwDestroyCursor)
-        data.mouseCursors.fill(NULL)
 
         io.backendPlatformName = null
         io.backendPlatformUserData = null

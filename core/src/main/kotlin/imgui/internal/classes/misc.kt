@@ -218,7 +218,7 @@ class NextWindowData {
     /** Override background alpha */
     var bgAlphaVal = Float.MAX_VALUE
 
-    /** *Always on* This is not exposed publicly, so we don't clear it. */
+    /** (Always on) This is not exposed publicly, so we don't clear it and it doesn't have a corresponding flag (could we? for consistency?) */
     var menuBarOffsetMinVal = Vec2()
 
     fun clearFlags() {

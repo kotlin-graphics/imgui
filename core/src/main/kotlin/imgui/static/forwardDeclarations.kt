@@ -201,6 +201,7 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
         assert(settings.id == window.id)
         settings.pos put window.pos
         settings.size put window.sizeFull
+
         settings.collapsed = window.collapsed
     }
 

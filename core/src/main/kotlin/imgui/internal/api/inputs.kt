@@ -3,6 +3,7 @@ package imgui.internal.api
 import gli_.has
 import imgui.*
 import imgui.ImGui.io
+import imgui.ImGui.navMoveRequestCancel
 import imgui.api.g
 
 /** Inputs
@@ -15,6 +16,14 @@ internal interface inputs {
             g.hoveredIdUsingMouseWheel = true
         if (g.activeId == id)
             g.activeIdUsingMouseWheel = true
+    }
+
+    fun setActiveIdUsingNavAndKeys() {
+        assert(g.activeId != 0)
+        g.activeIdUsingNavDirMask = 0.inv()
+        g.activeIdUsingNavInputMask = 0.inv()
+        g.activeIdUsingKeyInputMask = 0.inv()
+        navMoveRequestCancel()
     }
 
     infix fun isActiveIdUsingNavDir(dir: Dir): Boolean = g.activeIdUsingNavDirMask has (1 shl dir)

@@ -10,7 +10,7 @@ import imgui.internal.sections.ViewportP
 
 typealias ViewportFlags = Int
 
-/** Flags stored in ImGuiViewport::Flags */
+/** Flags stored in ImGuiViewport::Flags, giving indications to the platform backends. */
 enum class ViewportFlag(val i: ViewportFlags) {
     None(0),
     /** Represent a Platform Window */

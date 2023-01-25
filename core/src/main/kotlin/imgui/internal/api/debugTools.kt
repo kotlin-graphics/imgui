@@ -304,7 +304,13 @@ internal interface debugTools {
     fun debugNodeTabBar(tabBar: TabBar, label: String) {
         // Standalone tab bars (not associated to docking/windows functionality) currently hold no discernible strings.
         val isActive = tabBar.prevFrameVisible >= ImGui.frameCount - 2
-        val text = "$label 0x%08X (${tabBar.tabs.size} tabs)${if (isActive) "" else " *Inactive*"}".format(tabBar.id)
+        var text = "$label 0x%08X (${tabBar.tabs.size} tabs)${if (isActive) "" else " *Inactive*"}".format(tabBar.id)
+        text += "  { "
+        for (tabN in 0 until (tabBar.tabs.size min 3)) {
+            val tab = tabBar.tabs[tabN]
+            text += (if (tabN > 0) ", " else "") + "'" + if (tab.nameOffset != -1) tabBar.getTabName(tab) else "???" + "'"
+        }
+        text += if(tabBar.tabs.size > 3) " ... }" else " } "
         if (!isActive)
             pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
         val open = treeNode(tabBar, text)
@@ -327,9 +333,8 @@ internal interface debugTools {
                     tabBar.queueReorder(tab, +1)
                 sameLine()
                 val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
-                val name = if (tab.nameOffset != -1) tabBar.getTabName(tab) else ""
-                text("%02d$c Tab 0x%08X '$name' Offset: %.1f, Width: %.1f/%.1f",
-                     tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
+                val name = if (tab.nameOffset != -1) tabBar.getTabName(tab) else "???"
+                text("%02d$c Tab 0x%08X '$name' Offset: %.1f, Width: %.1f/%.1f", tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
                 popID()
             }
             treePop()

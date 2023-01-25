@@ -20,6 +20,7 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveID
+import imgui.ImGui.setActiveIdUsingNavAndKeys
 import imgui.ImGui.style
 import imgui.WindowFlag
 import imgui.api.g
@@ -610,16 +611,16 @@ class Window(var context: Context,
 
 
     /** ~ StartMouseMovingWindow */
-    fun startMouseMoving() {/*  Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would
-            activate hover on other windows.
-            We _also_ call this when clicking in a window empty space when io.ConfigWindowsMoveFromTitleBarOnly is set,
-            but clear g.MovingWindow afterward.
-            This is because we want ActiveId to be set even when the window is not permitted to move.   */
+    fun startMouseMoving() {
+        // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
+        // We _also_ call this when clicking in a window empty space when io.ConfigWindowsMoveFromTitleBarOnly is set, but clear g.MovingWindow afterward.
+        // This is because we want ActiveId to be set even when the window is not permitted to move.
         focusWindow(this)
         setActiveID(moveId, this)
         g.navDisableHighlight = true
+        g.activeIdClickOffset = g.io.mouseClickedPos[0] - rootWindow!!.pos
         g.activeIdNoClearOnFocusLoss = true
-        g.activeIdClickOffset = io.mousePos - rootWindow!!.pos
+        setActiveIdUsingNavAndKeys()
 
         val canMoveWindow = flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove
         if (canMoveWindow) g.movingWindow = this

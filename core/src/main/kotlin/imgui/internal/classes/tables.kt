@@ -297,12 +297,7 @@ fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
         flags = flags or Tf.NoSavedSettings
 
     // Inherit _NoSavedSettings from top-level window (child windows always have _NoSavedSettings set)
-//    #ifdef IMGUI_HAS_DOCK
-//        ImGuiWindow* window_for_settings = outerWindow->RootWindowDockStop
-//    #else
-    val windowForSettings = outerWindow.rootWindow!!
-//    #endif
-    if (windowForSettings.flags has WindowFlag.NoSavedSettings)
+    if (outerWindow.rootWindow!!.flags has WindowFlag.NoSavedSettings)
         flags = flags or Tf.NoSavedSettings
 
     return flags

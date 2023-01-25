@@ -25,10 +25,9 @@ object SimpleOverlay {
     // + a context-menu to choose which corner of the screen to use.
     operator fun invoke(open: KMutableProperty0<Boolean>) {
 
-        val PAD = 10f
-
         var windowFlags = Wf.NoDecoration or Wf.AlwaysAutoResize or Wf.NoSavedSettings or Wf.NoFocusOnAppearing or Wf.NoNav
         if (corner != -1) {
+            val PAD = 10f
             val viewport = mainViewport
             val workPos = viewport.workPos // Use work area to avoid menu-bar/task-bar, if any!
             val workSize = viewport.workSize

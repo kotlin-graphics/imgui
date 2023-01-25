@@ -105,12 +105,11 @@ internal interface newFrame {
                 }
                 focusWindow(mov)
             } else {
-                clearActiveID()
                 g.movingWindow = null
+                clearActiveID()
             }
         } else
-        /*  When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order
-            to prevent hovering others.                 */
+        // When clicking/dragging from a window that has the _NoMove flag, we still set the ActiveId in order to prevent hovering others.
             if (g.activeIdWindow?.moveId == g.activeId) {
                 keepAliveID(g.activeId)
                 if (!io.mouseDown[0])
