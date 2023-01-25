@@ -28,8 +28,8 @@ class ImplGL2_mac : GLInterface {
     override fun shutdown() = destroyDeviceObjects()
 
     override fun newFrame() {
-        if (fontTexture[0] == 0)
-            createDeviceObjects()
+//        if (fontTexture[0] == 0)
+//            createDeviceObjects()
     }
 
     fun setupRenderState(drawData: DrawData, fbWidth: Int, fbHeight: Int) {
@@ -165,15 +165,15 @@ class ImplGL2_mac : GLInterface {
         // Upload texture to graphics system
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
-        glGenTextures(fontTexture)
-        glBindTexture(GL_TEXTURE_2D, fontTexture)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
-
-        // Store our identifier
-        ImGui.io.fonts.texID = fontTexture[0]
+//        glGenTextures(fontTexture)
+//        glBindTexture(GL_TEXTURE_2D, fontTexture)
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+//        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+//
+//        // Store our identifier
+//        ImGui.io.fonts.texID = fontTexture[0]
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, lastTexture)
@@ -185,11 +185,11 @@ class ImplGL2_mac : GLInterface {
     }
 
     override fun destroyFontsTexture() {
-        if (fontTexture[0] != 0) {
-            glDeleteTextures(fontTexture)
-            ImGui.io.fonts.texID = 0
-            fontTexture[0] = 0
-        }
+//        if (fontTexture[0] != 0) {
+//            glDeleteTextures(fontTexture)
+//            ImGui.io.fonts.texID = 0
+//            fontTexture[0] = 0
+//        }
     }
 
     override fun destroyDeviceObjects() = destroyFontsTexture()

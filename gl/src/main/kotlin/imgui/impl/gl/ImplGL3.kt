@@ -32,23 +32,6 @@ import org.lwjgl.system.Platform
 
 
 class ImplGL3 : GLInterface {
-    object data {
-
-        /** Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2) */
-        var glVersion = 0
-
-        /** Specified by user or detected based on compile time GL settings. */
-        var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
-        val fontTexture = IntBuffer(1)
-        var shaderHandle = GlProgram(0)
-
-        var attribLocationProjMtx = -1
-
-        val buffers = GlBuffers<Buffer>()
-        var vao = GlVertexArray()
-
-        var hasClipOrigin = false
-    }
 
     /** ~ImGui_ImplOpenGL3_Init */
     init {
@@ -499,6 +482,25 @@ class ImplGL3 : GLInterface {
                 vertHandle.delete()
                 fragHandle.delete()
             }
+        }
+
+        val data = Data()
+        class Data {
+
+            /** Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2) */
+            var glVersion = 0
+
+            /** Specified by user or detected based on compile time GL settings. */
+            var glslVersion = if (Platform.get() == Platform.MACOSX) 150 else 130
+            val fontTexture = IntBuffer(1)
+            var shaderHandle = GlProgram(0)
+
+            var attribLocationProjMtx = -1
+
+            val buffers = GlBuffers<Buffer>()
+            var vao = GlVertexArray()
+
+            var hasClipOrigin = false
         }
     }
 

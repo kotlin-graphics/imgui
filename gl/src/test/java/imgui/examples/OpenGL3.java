@@ -8,10 +8,8 @@ import imgui.ImGui;
 import imgui.MutableProperty0;
 import imgui.classes.Context;
 import imgui.classes.IO;
-import imgui.classes.InputTextCallbackData;
 import imgui.impl.gl.ImplGL3;
 import imgui.impl.glfw.ImplGlfw;
-import kotlin.jvm.functions.Function1;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
@@ -22,7 +20,6 @@ import uno.glfw.VSync;
 import static gln.GlnKt.glClearColor;
 import static gln.GlnKt.glViewport;
 import static imgui.ImguiKt.DEBUG;
-import static imgui.impl.gl.CommonGLKt.setGlslVersion;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static uno.glfw.windowHint.Profile.core;
@@ -62,15 +59,14 @@ public class OpenGL3 {
 
         // Decide GL+GLSL versions
         if (Platform.get() == Platform.MACOSX) { // GL 3.2 + GLSL 150
-
-            setGlslVersion(150);
+            ImplGL3.Companion.getData().setGlslVersion(150);
             windowHint.getContext().setVersion("3.2");
             windowHint.setProfile(core);     // 3.2+ only
             windowHint.setForwardComp(true); // Required on Mac
 
         } else {   // GL 3.0 + GLSL 130
 
-            setGlslVersion(130);
+            ImplGL3.Companion.getData().setGlslVersion(130);
             windowHint.getContext().setVersion("3.0");
             //profile = core      // 3.2+ only
             //forwardComp = true  // 3.0+ only
