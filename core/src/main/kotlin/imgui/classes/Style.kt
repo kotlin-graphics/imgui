@@ -20,7 +20,7 @@ class Style {
     /**  Global alpha applies to everything in Dear ImGui.    */
     var alpha = 1f
 
-    /** Additional alpha multiplier for disabled items (multiply over current value of Alpha). */
+    /** Additional alpha multiplier applied by BeginDisabled(). Multiply over current value of Alpha. */
     var disabledAlpha = 0.6f
 
     /** Padding within a window. */

@@ -54,6 +54,8 @@ infix fun ItemFlags.xor(b: ItemFlag): ItemFlags = xor(b.i)
 infix fun ItemFlags.has(b: ItemFlag): Boolean = and(b.i) != 0
 infix fun ItemFlags.hasnt(b: ItemFlag): Boolean = and(b.i) == 0
 infix fun ItemFlags.wo(b: ItemFlag): ItemFlags = and(b.i.inv())
+operator fun ItemFlags.minus(flag: ItemFlag): ItemFlags = wo(flag)
+operator fun ItemFlags.div(flag: ItemFlag): ItemFlags = or(flag)
 
 
 typealias ItemAddFlags = Int
