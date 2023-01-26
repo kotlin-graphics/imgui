@@ -1,6 +1,7 @@
 package imgui
 
 import glm_.has
+import glm_.hasnt
 import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getNavInputAmount
@@ -1209,6 +1210,7 @@ enum class KeyMod(val i: KeyModFlags) {
 }
 
 infix fun Int.has(f: KeyMod): Boolean = has(f.i)
+infix fun Int.hasnt(f: KeyMod): Boolean = hasnt(f.i)
 
 typealias KeyModFlags = Int
 
@@ -1297,7 +1299,7 @@ enum class NavInput {
 
     companion object {
         val COUNT = values().size
-        val InternalStart = _KeyMenu.i
+        val InternalStart = _KeyLeft.i
     }
 
     /** Equivalent of isKeyDown() for NavInputs[]

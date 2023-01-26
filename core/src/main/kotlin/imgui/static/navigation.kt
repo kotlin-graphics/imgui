@@ -88,20 +88,6 @@ fun navUpdate() {
         if (io.keyShift)
             io.navInputs[NavInput.TweakFast] = 1f
 
-        // AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl)
-        // But also even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
-        if (io.keyAlt && !io.keyCtrl)
-            io.navInputs[NavInput._KeyMenu] = 1f
-
-        // We cancel toggling nav layer when any text has been typed while holding Alt. (See #370)
-        // We cancel toggling nav layer when other modifiers are pressed. (See #4439)
-        if (g.navWindowingToggleLayer && g.navInputSource == InputSource.Keyboard) {
-            if (io.keyAlt && !io.keyCtrl && io.inputQueueCharacters.size > 0)
-                g.navWindowingToggleLayer = false
-            if (io.keyCtrl || io.keyShift || io.keySuper)
-                g.navWindowingToggleLayer = false
-        }
-
     }
     for (i in io.navInputsDownDuration.indices)
         io.navInputsDownDurationPrev[i] = io.navInputsDownDuration[i]
@@ -434,17 +420,27 @@ fun navUpdateWindowing() {
     }
 
     // Keyboard: Press and Release ALT to toggle menu layer
-    // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of backend clearing releases all keys on ALT-TAB
-    if (NavInput._KeyMenu.isTest(InputReadMode.Pressed) && g.io.keyMods == KeyMod.Alt.i) {
+    // - Testing that only Alt is tested prevents Alt+Shift or AltGR from toggling menu layer.
+    // - AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl). But even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
+    if (io.keyMods == KeyMod.Alt.i && io.keyModsPrev hasnt KeyMod.Alt) {
         g.navWindowingToggleLayer = true
         g.navInputSource = InputSource.Keyboard
     }
-    if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isTest(
-            InputReadMode.Released
-                                                                                                            )
-    )
-        if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
-            applyToggleLayer = true
+    if (g.navWindowingToggleLayer && g.navInputSource == InputSource.Keyboard) {
+        // We cancel toggling nav layer when any text has been typed (generally while holding Alt). (See #370)
+        // We cancel toggling nav layer when other modifiers are pressed. (See #4439)
+        if (io.inputQueueCharacters.isNotEmpty() || io.keyCtrl || io.keyShift || io.keySuper)
+            g.navWindowingToggleLayer = false
+
+        // Apply layer toggle on release
+        // FIXME: We lack an explicit IO variable for "is the platform window focused", so compare mouse validity to detect the common case of backend clearing releases all keys on ALT-TAB
+        if (!io.keyAlt && g.navWindowingToggleLayer)
+            if (g.activeId == 0 || g.activeIdAllowOverlap)
+                if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
+        applyToggleLayer = true
+        if (!io.keyAlt)
+            g.navWindowingToggleLayer = false
+    }
 
     // Move window
     g.navWindowingTarget?.let {

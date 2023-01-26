@@ -169,6 +169,7 @@ interface main {
 
         // Update keyboard input state
         // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
+        io.keyModsPrev = g.io.keyMods
         io.keyMods = mergedKeyModFlags
         for (i in io.keysDownDuration.indices)
             io.keysDownDurationPrev[i] = io.keysDownDuration[i]
