@@ -18,7 +18,6 @@ import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endPopup
 import imgui.ImGui.inputText
-import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItem
@@ -33,7 +32,6 @@ import imgui.ImGui.setTooltip
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.ImGui.textWrapped
-import imgui.api.demoDebugInformations
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.dsl.button
 import imgui.dsl.menu
