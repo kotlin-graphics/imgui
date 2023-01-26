@@ -55,9 +55,9 @@ fun navUpdate() {
 
     io.wantSetMousePos = false
 
-    //    #if 0
-    //    if (g.NavScoringCount > 0) IMGUI_DEBUG_LOG("NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
-    //    #endif
+//    #if 0
+//    if (g.NavScoringDebugCount > 0) IMGUI_DEBUG_LOG("NavScoringDebugCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringDebugCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
+//    #endif
 
     // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
     // (do it before we map Keyboard input!)
@@ -204,8 +204,14 @@ fun navUpdate() {
             window.setScrollY(floor(window.scroll.y + scrollDir.y * scrollSpeed))
     }
 
+    // Always prioritize mouse highlight if navigation is disabled
+    if (!navKeyboardActive && !navGamepadActive) {
+        g.navDisableHighlight = true
+        g.navDisableMouseHover = true; g.navMousePosDirty = false
+    }
+
     // [DEBUG]
-    g.navScoringCount = 0
+    g.navScoringDebugCount = 0
     //    #if IMGUI_DEBUG_NAV_RECTS
     //    if (g.NavWindow) {
     //        ImDrawList * draw_list = GetForegroundDrawList(g.NavWindow)
@@ -726,7 +732,7 @@ fun navScoreItem(result: NavItemData): Boolean {
     val curr = Rect(g.navScoringRect)
     // FIXME: Those are not good variables names
     val cand = g.lastItemData.navRect   // Current item nav rectangle
-    g.navScoringCount++
+    g.navScoringDebugCount++
 
     // When entering through a NavFlattened border, we consider child window items as fully clipped for scoring
     if (window.parentWindow === g.navWindow) {
@@ -879,14 +885,7 @@ fun navProcessItem() {
     if (g.navMoveScoringItems)
         if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
-            var newBest = navScoreItem(result)
-
-            if (IMGUI_DEBUG_NAV_SCORING)
-            // [DEBUG] Scoring all items in NavWindow at all times
-                if (g.navMoveFlags has NavMoveFlag.DebugNoResult)
-                    newBest = false
-
-            if (newBest)
+            if(navScoreItem(result))
                 navApplyItemToResult(result)
 
             // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
@@ -913,7 +912,7 @@ fun navCalcPreferredRefPos(): Vec2 {
         // Mouse (we need a fallback in case the mouse becomes invalid after being used)
         if (isMousePosValid(io.mousePos))
             return Vec2(io.mousePos)
-        return Vec2(g.lastValidMousePos)
+        return Vec2(g.mouseLastValidPos)
     } else {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
         val rectRel = g.navWindow!!.navRectRel[g.navLayer]

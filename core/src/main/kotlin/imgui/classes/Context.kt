@@ -351,7 +351,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val navScoringRect = Rect()
     
     /** Metrics for debugging   */
-    var navScoringCount = 0
+    var navScoringDebugCount = 0
     
     /** Best move request candidate within NavWindow    */
     var navMoveResultLocal = NavItemData()
@@ -487,7 +487,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Widget state
     //------------------------------------------------------------------
 
-    var lastValidMousePos = Vec2()
+    val mouseLastValidPos = Vec2()
 
     var inputTextState = InputTextState()
 

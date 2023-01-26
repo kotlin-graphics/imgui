@@ -55,8 +55,8 @@ fun updateMouseInputs() {
 
         // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
         if (isMousePosValid(mousePos)) {
-            g.lastValidMousePos = floor(mousePos)
-            mousePos = Vec2(g.lastValidMousePos)
+            g.mouseLastValidPos put floor(mousePos)
+            mousePos = Vec2(g.mouseLastValidPos)
         }
 
         // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component) we cancel out movement in MouseDelta
@@ -64,6 +64,8 @@ fun updateMouseInputs() {
             mouseDelta = mousePos - mousePosPrev
         else
             mouseDelta put 0f
+
+        // If mouse moved we re-enable mouse hovering in case it was disabled by gamepad/keyboard. In theory should use a >0.0f threshold but would need to reset in everywhere we set this to true.
         if (mouseDelta.x != 0f || mouseDelta.y != 0f)
             g.navDisableMouseHover = false
 

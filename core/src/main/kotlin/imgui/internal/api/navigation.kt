@@ -48,6 +48,7 @@ internal interface navigation {
         assert(g.navWindow != null)
         g.navMoveSubmitted = true; g.navMoveScoringItems = true
         g.navMoveDir = moveDir
+        g.navMoveDirForDebug = moveDir
         g.navMoveClipDir = clipDir
         g.navMoveFlags = moveFlags
         g.navMoveForwardToNextFrame = false
@@ -75,6 +76,10 @@ internal interface navigation {
 
     /** Apply result from previous frame navigation directional move request. Always called from NavUpdate() */
     fun navMoveRequestApplyResult() {
+
+        if (IMGUI_DEBUG_NAV_SCORING)
+            if (g.navMoveFlags has NavMoveFlag.DebugNoResult) // [DEBUG] Scoring all items in NavWindow at all times
+                return
 
         // No result
         // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
