@@ -31,6 +31,7 @@ import imgui.ImGui.navInitWindow
 import imgui.ImGui.navMoveRequestApplyResult
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestForward
+import imgui.ImGui.navMoveRequestSubmit
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
@@ -54,9 +55,9 @@ fun navUpdate() {
 
     io.wantSetMousePos = false
 
-//    #if 0
-//    if (g.NavScoringCount > 0) IMGUI_DEBUG_LOG("NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
-//    #endif
+    //    #if 0
+    //    if (g.NavScoringCount > 0) IMGUI_DEBUG_LOG("NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
+    //    #endif
 
     // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
     // (do it before we map Keyboard input!)
@@ -494,7 +495,6 @@ fun navUpdateCreateMoveRequest() {
         assert(g.navMoveDir != Dir.None && g.navMoveClipDir != Dir.None)
         assert(g.navMoveFlags has NavMoveFlag.Forwarded)
         IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}\n")
-        g.navMoveForwardToNextFrame = false
     } else {
         // Initiate directional inputs request
         g.navMoveDir = Dir.None
@@ -530,19 +530,12 @@ fun navUpdateCreateMoveRequest() {
         }
     }
 
-    // If we initiate a movement request and have no current NavId, we initiate a InitDefaultRequest that will be used as a fallback if the direction fails to find a match
-    // FIXME: Would be nice to call a single function to initiate a new request
-    if (g.navMoveDir != Dir.None) {
-        assert(window != null)
-        g.navMoveSubmitted = true; g.navMoveScoringItems = true
-        g.navMoveKeyMods = io.keyMods
-        g.navMoveDirForDebug = g.navMoveDir
-        g.navMoveResultLocal.clear()
-        g.navMoveResultLocalVisible.clear()
-        g.navMoveResultOther.clear()
-    }
+    // Submit
+    g.navMoveForwardToNextFrame = false
+    if (g.navMoveDir != Dir.None)
+        navMoveRequestSubmit(g.navMoveDir, g.navMoveClipDir, g.navMoveFlags)
 
-    // Moving with no reference triggers a init request
+    // Moving with no reference triggers a init request (will be used as a fallback if the direction fails to find a match)
     if (g.navMoveSubmitted && g.navId == 0) {
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${g.navWindow!!.name}\", layer=${g.navLayer}")
         g.navInitRequest = true
@@ -582,6 +575,7 @@ fun navUpdateCreateMoveRequest() {
 
 /** Handle PageUp/PageDown/Home/End keys
  *  Called from NavUpdateCreateMoveRequest() which will use our output to create a move request
+ *  FIXME-NAV: This doesn't work properly with NavFlattened siblings as we use NavWindow rectangle for reference
  *  FIXME-NAV: how to get Home/End to aim at the beginning/end of a 2D grid? */
 fun navUpdatePageUpPageDown(): Float {
 
@@ -843,18 +837,19 @@ fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
     return newBest
 }
 
-fun navApplyItemToResult(result: NavItemData, window: Window, id: ID, navBbRel: Rect) {
+fun navApplyItemToResult(result: NavItemData, window: Window, id: ID, navBb: Rect) {
+    assert(g.lastItemData.id == id) { "Otherwise pulling from window->DC wouldn't be right" }
     result.window = window
     result.id = id
     result.focusScopeId = window.dc.navFocusScopeIdCurrent
-    result.rectRel put navBbRel
+    result.rectRel put Rect(navBb.min - window.pos, navBb.max - window.pos)
 }
 
-/** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
-fun navProcessItem(window: Window, navBb: Rect, id: ID) {
+/** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)
+ *  // This is called after LastItemData is set. */
+fun navProcessItem(window: Window, id: ID, navBb: Rect) {
 
     val itemFlags = g.lastItemData.inFlags
-    val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
 
     // Process Init Request
     if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent) {
@@ -862,7 +857,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         val candidateForNavDefaultFocus = itemFlags hasnt (If.NoNavDefaultFocus or If.Disabled)
         if (candidateForNavDefaultFocus || g.navInitResultId == 0) {
             g.navInitResultId = id
-            g.navInitResultRectRel = navBbRel
+            g.navInitResultRectRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
         }
         if (candidateForNavDefaultFocus) {
             g.navInitRequest = false // Found a match, clear request
@@ -883,14 +878,14 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
                     newBest = false
 
             if (newBest)
-                navApplyItemToResult(result, window, id, navBbRel)
+                navApplyItemToResult(result, window, id, navBb)
 
             // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
             val VISIBLE_RATIO = 0.7f
             if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
                 if (clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
                     if (navScoreItem(g.navMoveResultLocalVisible, navBb))
-                        navApplyItemToResult(g.navMoveResultLocalVisible, window, id, navBbRel)
+                        navApplyItemToResult(g.navMoveResultLocalVisible, window, id, navBb)
         }
 
     // Update window-relative bounding box of navigated item
@@ -900,7 +895,7 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         g.navLayer = window.dc.navLayerCurrent
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         g.navIdIsAlive = true
-        window.navRectRel[window.dc.navLayerCurrent] = navBbRel    // Store item bounding box (relative to window position)
+        window.navRectRel[window.dc.navLayerCurrent] = Rect(navBb.min - window.pos, navBb.max - window.pos)    // Store item bounding box (relative to window position)
     }
 }
 

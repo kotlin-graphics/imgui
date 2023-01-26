@@ -43,6 +43,19 @@ internal interface navigation {
 
     fun navMoveRequestButNoResultYet(): Boolean = g.navMoveScoringItems && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
+    fun navMoveRequestSubmit(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
+        assert(g.navWindow != null)
+        g.navMoveSubmitted = true; g.navMoveScoringItems = true
+        g.navMoveDir = moveDir
+        g.navMoveClipDir = clipDir
+        g.navMoveFlags = moveFlags
+        g.navMoveForwardToNextFrame = false
+        g.navMoveKeyMods = g.io.keyMods
+        g.navMoveResultLocal.clear()
+        g.navMoveResultLocalVisible.clear()
+        g.navMoveResultOther.clear()
+    }
+
     /** Forward will reuse the move request again on the next frame (generally with modifications done to it) */
     fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
 

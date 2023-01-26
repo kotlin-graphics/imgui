@@ -1,56 +1,37 @@
 package imgui.api
 
 import gli_.has
-import glm_.glm
 import glm_.max
-import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
-import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginMenuEx
-import imgui.ImGui.beginPopupEx
 import imgui.ImGui.beginViewportSideBar
-import imgui.ImGui.calcTextSize
 import imgui.ImGui.closePopupToLevel
-import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
-import imgui.ImGui.endDisabled
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.focusWindow
 import imgui.ImGui.frameHeight
-import imgui.ImGui.io
-import imgui.ImGui.isPopupOpen
 import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItemEx
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.navMoveRequestForward
-import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popID
-import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushID
-import imgui.ImGui.pushStyleVar
-import imgui.ImGui.renderText
-import imgui.ImGui.selectable
 import imgui.ImGui.setNavID
-import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.style
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.floor
 import imgui.internal.round
 import imgui.internal.sections.*
-import imgui.internal.triangleContainsPoint
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
-import imgui.SelectableFlag as Sf
 import imgui.WindowFlag as Wf
 import imgui.internal.sections.LayoutType as Lt
 

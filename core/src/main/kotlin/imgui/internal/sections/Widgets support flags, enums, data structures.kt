@@ -96,7 +96,7 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     /** Mouse position is within item rectangle (does NOT mean that the window is in correct z-order and can be hovered!, this is only one part of the most-common IsItemHovered test) */
     HoveredRect(1 shl 0),
 
-    /** window->DC.LastItemDisplayRect is valid */
+    /** g.LastItemData.DisplayRect is valid */
     HasDisplayRect(1 shl 1),
 
     /** Value exposed by item was edited in the current frame (should match the bool return value of most widgets) */

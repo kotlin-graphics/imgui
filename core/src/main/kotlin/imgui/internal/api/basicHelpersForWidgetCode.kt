@@ -83,6 +83,7 @@ internal interface basicHelpersForWidgetCode {
         val window = g.currentWindow!!
 
         // Set item data
+        // (DisplayRect is left untouched, made valid when ImGuiItemStatusFlags_HasDisplayRect is set)
         g.lastItemData.id = id
         g.lastItemData.rect = bb
         g.lastItemData.inFlags = g.currentItemFlags
@@ -103,7 +104,7 @@ internal interface basicHelpersForWidgetCode {
             if (g.navId == id || g.navAnyRequest)
                 if (g.navWindow!!.rootWindowForNav === window.rootWindowForNav)
                     if (window == g.navWindow || (window.flags or g.navWindow!!.flags) has WindowFlag._NavFlattened)
-                        navProcessItem(window, navBbArg ?: bb, id)
+                        navProcessItem(window, id, navBbArg ?: bb)
 
             // [DEBUG] Item Picker tool, when enabling the "extended" version we perform the check in ItemAdd()
             if (IMGUI_DEBUG_TOOL_ITEM_PICKER_EX && id == g.debugItemPickerBreakId) {
