@@ -209,8 +209,9 @@ class LastItemData {
     var id: ID = 0
     var inFlags: ItemFlags = 0 // See ImGuiItemFlags_
     var statusFlags: ItemStatusFlags = 0 // See ImGuiItemStatusFlags_
-    lateinit var rect: Rect // Full rectangle
-    lateinit var displayRect: Rect // Display rectangle (only if ImGuiItemStatusFlags_HasDisplayRect is set)
+    val rect = Rect() // Full rectangle
+    val navRect = Rect() // Navigation scoring rectangle (not displayed)
+    val displayRect = Rect() // Display rectangle (only if ImGuiItemStatusFlags_HasDisplayRect is set)
 }
 
 /** Data saved for each window pushed into the stack */

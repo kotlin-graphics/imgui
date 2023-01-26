@@ -69,8 +69,8 @@ internal interface basicAccessors {
 
         assert(id != 0)
 
-        /*  Assume that SetFocusID() is called in the context where its window->DC.NavLayerCurrent and window->DC.NavFocusScopeIdCurrent are valid.
-            Note that window may be != g.CurrentWindow (e.g. SetFocusID call in InputTextEx for multi-line text)         */
+        // Assume that SetFocusID() is called in the context where its window->DC.NavLayerCurrent and window->DC.NavFocusScopeIdCurrent are valid.
+        // Note that window may be != g.CurrentWindow (e.g. SetFocusID call in InputTextEx for multi-line text)
         val navLayer = window.dc.navLayerCurrent
         if (g.navWindow !== window)
             g.navInitRequest = false
@@ -80,7 +80,7 @@ internal interface basicAccessors {
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         window.navLastIds[navLayer] = id
         if (g.lastItemData.id == id)
-            window.navRectRel[navLayer].put(g.lastItemData.rect.min - window.pos, g.lastItemData.rect.max - window.pos)
+            window.navRectRel[navLayer].put(g.lastItemData.navRect.min - window.pos, g.lastItemData.navRect.max - window.pos)
 
         if (g.activeIdSource == InputSource.Nav)
             g.navDisableMouseHover = true

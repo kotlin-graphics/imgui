@@ -157,7 +157,7 @@ interface widgetsSelectables {
         // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
         if (pressed || (hovered && flags has Sf._SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
-                setNavID(id, window.dc.navLayerCurrent, window.dc.navFocusScopeIdCurrent, Rect(bb.min - window.pos, bb.max - window.pos))
+                setNavID(id, window.dc.navLayerCurrent, window.dc.navFocusScopeIdCurrent, Rect(bb.min - window.pos, bb.max - window.pos)) // (bb == NavRect)
                 g.navDisableHighlight = true
             }
         if (pressed)
