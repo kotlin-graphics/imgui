@@ -72,7 +72,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** When holding a key/button, rate at which it repeats, in seconds.    */
     var keyRepeatRate = 0.05f
 
-//    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
+    //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
     /** Font atlas: load, rasterize and pack one or more fonts into a single texture.    */
     val fonts = sharedFontAtlas ?: FontAtlas()
@@ -144,10 +144,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     var clipboardUserData: Any? = null
 
     //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
-//    // (default to posix malloc/free)
-//    void*       (*MemAllocFn)(size_t sz);
-//    void        (*MemFreeFn)(void* ptr);
-//
+    //    // (default to posix malloc/free)
+    //    void*       (*MemAllocFn)(size_t sz);
+    //    void        (*MemFreeFn)(void* ptr);
+    //
     // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
     val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
@@ -249,6 +249,24 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Clear the text input buffer manually */
     fun clearInputCharacters() = inputQueueCharacters.clear()
+
+    /** Notifies Dear ImGui when hosting platform windows lose or gain input focus */
+    fun addFocusEvent(focused: Boolean) {
+        if (focused)
+            return
+
+        // Clear buttons state when focus is lost
+        // (this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle)
+        keysDown.fill(false)
+        for (n in keysDownDuration.indices) {
+            keysDownDuration[n] = -1f; keysDownDurationPrev[n] = -1f
+        }
+        keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
+        keyMods = KeyMod.None.i; keyModsPrev = KeyMod.None.i
+        for (n in navInputsDownDuration.indices) {
+            navInputsDownDuration[n] = -1f; navInputsDownDurationPrev[n] = -1f
+        }
+    }
 
 
     //------------------------------------------------------------------

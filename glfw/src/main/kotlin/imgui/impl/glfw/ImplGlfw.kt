@@ -118,6 +118,8 @@ class ImplGlfw @JvmOverloads constructor(
             window.scrollCBs["imgui"] = scrollCallback
             window.keyCBs["imgui"] = keyCallback
             window.charCBs["imgui"] = charCallback
+            window.cursorEnterCBs["imgui"] = cursorEnterCallback
+            window.windowFocusCBs["imgui"] = cursorEnterCallback
             // TODO monitor callback
             imeListener.install(window)
             data.installedCallbacks = installCallbacks
@@ -307,12 +309,19 @@ class ImplGlfw @JvmOverloads constructor(
         val charCallback: CharCB = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
 
         val cursorEnterCallback: CursorEnterCB = { entered ->
-            //            if (bd->PrevUserCallbackCursorEnter != NULL)
+            //            if (bd->PrevUserCallbackCursorEnter != NULL && window == bd->Window)
             //            bd->PrevUserCallbackCursorEnter(window, entered);
             if (entered)
                 data.mouseWindow = data.window
             if (!entered && data.mouseWindow === data.window)
                 data.mouseWindow = null
+        }
+
+        val windowFocusCallback: WindowFocusCB = { focused ->
+//            if (bd->PrevUserCallbackWindowFocus != NULL && window == bd->Window)
+//            bd->PrevUserCallbackWindowFocus(window, focused);
+
+            io.addFocusEvent(focused)
         }
 
         fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =

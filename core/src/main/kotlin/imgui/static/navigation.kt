@@ -433,8 +433,9 @@ fun navUpdateWindowing() {
             g.navWindowingToggleLayer = false
 
         // Apply layer toggle on release
-        // FIXME: We lack an explicit IO variable for "is the platform window focused", so compare mouse validity to detect the common case of backend clearing releases all keys on ALT-TAB
-        if (!io.keyAlt && g.navWindowingToggleLayer)
+        // Important: we don't assume that Alt was previously held in order to handle loss of focus when backend calls io.AddFocusEvent(false)
+        // Important: as before version <18314 we lacked an explicit IO event for focus gain/loss, we also compare mouse validity to detect old backends clearing mouse pos on focus loss.
+        if (io.keyMods hasnt KeyMod.Alt.i && io.keyModsPrev has KeyMod.Alt && g.navWindowingToggleLayer)
             if (g.activeId == 0 || g.activeIdAllowOverlap)
                 if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
         applyToggleLayer = true
