@@ -71,7 +71,7 @@ interface widgetsComboBox {
         val (pressed, hovered, _) = buttonBehavior(bb, id)
         val popupId = hashStr("##ComboPopup", 0, id)
         var popupOpen = isPopupOpen(popupId, PopupFlag.None.i)
-        if ((pressed || g.navActivateId == id) && !popupOpen) {
+        if (pressed && !popupOpen) {
             openPopupEx(popupId, PopupFlag.None.i)
             popupOpen = true
         }

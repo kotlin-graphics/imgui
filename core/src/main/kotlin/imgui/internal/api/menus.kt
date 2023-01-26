@@ -121,38 +121,32 @@ internal interface menus {
             // Close menu when not hovering it anymore unless we are moving roughly in the direction of the menu
             // Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers, so menus feels more reactive.
             var movingTowardOtherChildMenu = false
-
             val childMenuWindow = when {
                 g.beginPopupStack.size < g.openPopupStack.size && g.openPopupStack[g.beginPopupStack.size].sourceWindow == window -> g.openPopupStack[g.beginPopupStack.size].window
                 else -> null
             }
             if (g.hoveredWindow === window && childMenuWindow != null && window.flags hasnt WindowFlag.MenuBar) {
-                // FIXME-DPI: Values should be derived from a master "scale" factor.
+                val refUnit = g.fontSize // FIXME-DPI
                 val nextWindowRect = childMenuWindow.rect()
                 val ta = ImGui.io.mousePos - ImGui.io.mouseDelta
                 val tb = if (window.pos.x < childMenuWindow.pos.x) nextWindowRect.tl else nextWindowRect.tr
                 val tc = if (window.pos.x < childMenuWindow.pos.x) nextWindowRect.bl else nextWindowRect.br
-                val extra = glm.clamp(abs(ta.x - tb.x) * 0.3f, 5f, 30f)    // add a bit of extra slack.
-                ta.x += if (window.pos.x < childMenuWindow.pos.x) -0.5f else +0.5f // to avoid numerical issues
-                tb.y = ta.y + kotlin.math.max((tb.y - extra) - ta.y, -100f)                // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus // FIXME: Multiply by fb_scale?
-                tc.y = ta.y + min((tc.y + extra) - ta.y, +100f)
+                val extra = glm.clamp(abs(ta.x - tb.x) * 0.3f, refUnit * 0.5f, refUnit * 2.5f)    // add a bit of extra slack.
+                ta.x += if (window.pos.x < childMenuWindow.pos.x) -0.5f else +0.5f // to avoid numerical issues (FIXME: ??)
+                tb.y = ta.y + kotlin.math.max((tb.y - extra) - ta.y, -refUnit * 8f)                // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus // FIXME: Multiply by fb_scale?
+                tc.y = ta.y + min((tc.y + extra) - ta.y, +refUnit * 8f)
                 movingTowardOtherChildMenu = triangleContainsPoint(ta, tb, tc, ImGui.io.mousePos)
-                //GetForegroundDrawList()->AddTriangleFilled(ta, tb, tc, moving_within_opened_triangle ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); // [DEBUG]
+                //GetForegroundDrawList()->AddTriangleFilled(ta, tb, tc, moving_toward_other_child_menu ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); // [DEBUG]
             }
-
-            // FIXME: Hovering a disabled BeginMenu or MenuItem won't close us
             if (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrame != id && !movingTowardOtherChildMenu)
                 wantClose = true
 
-            if (!menuIsOpen && hovered && pressed) // Click to open
+            // Open
+            if (!menuIsOpen && pressed) // Click/activate to open
                 wantOpen = true
             else if (!menuIsOpen && hovered && !movingTowardOtherChildMenu) // Hover to open
                 wantOpen = true
 
-            if (g.navActivateId == id) {
-                wantClose = menuIsOpen
-                wantOpen = !menuIsOpen
-            }
             if (g.navId == id && g.navMoveDir == Dir.Right) { // Nav-Right to open
                 wantOpen = true
                 ImGui.navMoveRequestCancel()
