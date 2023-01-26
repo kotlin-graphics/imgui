@@ -76,7 +76,8 @@ enum class NavMoveFlag {
 
     /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible (used by PageUp/PageDown) */
     AlsoScoreVisibleSet,
-    ScrollToEdge;
+    ScrollToEdge,
+    Forwarded;
 
     val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl ordinal
 
@@ -97,8 +98,10 @@ infix fun NavMoveFlags.hasnt(b: NavMoveFlag): Boolean = and(b.i) == 0
 infix fun NavMoveFlags.wo(b: NavMoveFlag): NavMoveFlags = and(b.i.inv())
 
 
-
-enum class NavForward { None, ForwardQueued, ForwardActive }
+enum class NavForward(val i: Int) {
+    ScrollToEdge(1 shl 6),
+    Forwarded(1 shl 7)
+}
 
 enum class NavLayer {
     /** Main scrolling layer */

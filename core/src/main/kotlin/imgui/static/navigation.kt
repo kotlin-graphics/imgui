@@ -108,6 +108,7 @@ fun navUpdate() {
     // Process navigation move request
     if (g.navMoveRequest)
         navMoveRequestApplyResult()
+    g.navMoveRequest = false
 
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
@@ -161,7 +162,6 @@ fun navUpdate() {
     g.navWindow?.let { if (it.flags has Wf.NoNavInputs) g.navDisableHighlight = true }
     if (g.navActivateId != 0)
         assert(g.navActivateDownId == g.navActivateId)
-    g.navMoveRequest = false
 
     // Process programmatic activation request
     if (g.navNextActivateId != 0) {
@@ -172,8 +172,15 @@ fun navUpdate() {
     }
     g.navNextActivateId = 0
 
-    // Initiate directional inputs request
-    if (g.navMoveRequestForward == NavForward.None) {
+    if (g.navMoveRequestForwardToNextFrame) {
+        // Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with a starting rectangle at the other side of the window)
+        // (Preserve g.NavMoveRequestFlags, g.NavMoveClipDir which were set by the NavMoveRequestForward() function)
+        assert(g.navMoveDir != Dir.None && g.navMoveClipDir != Dir.None)
+        assert(g.navMoveRequestFlags has NavMoveFlag.Forwarded)
+        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}\n")
+        g.navMoveRequestForwardToNextFrame = false
+    } else {
+        // Initiate directional inputs request
         g.navMoveDir = Dir.None
         g.navMoveRequestFlags = NavMoveFlag.None.i
         g.navWindow?.let {
@@ -198,12 +205,6 @@ fun navUpdate() {
             }
         }
         g.navMoveDir = g.navMoveDir
-    } else if (g.navMoveRequestForward == NavForward.ForwardQueued) {
-        // Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with a starting rectangle at the other side of the window)
-        // (Preserve g.NavMoveRequestFlags, g.NavMoveClipDir which were set by the NavMoveRequestForward() function)
-        assert(g.navMoveDir != Dir.None && g.navMoveDir != Dir.None)
-        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}")
-        g.navMoveRequestForward = NavForward.ForwardActive
     }
 
     // Update PageUp/PageDown/Home/End scroll
@@ -228,6 +229,8 @@ fun navUpdate() {
         g.navDisableHighlight = false
     }
     navUpdateAnyRequestFlag()
+    if (g.navMoveDir != Dir.None)
+        assert(g.navMoveRequest)
 
     // Scrolling
     g.navWindow?.let {
@@ -587,56 +590,56 @@ fun navUpdatePageUpPageDown(): Float {
     val pageDownHeld = Key.PageDown.isDown && !isActiveIdUsingKey(Key.PageDown)
     val homePressed = Key.Home.isPressed && !isActiveIdUsingKey(Key.Home)
     val endPressed = Key.End.isPressed && !isActiveIdUsingKey(Key.End)
-    if (pageUpHeld != pageDownHeld || homePressed != endPressed) { // If either (not both) are pressed
+    if (pageUpHeld == pageDownHeld && homePressed == endPressed) // Proceed if either (not both) are pressed, otherwise early out
+        return 0f
 
-        if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
-            // Fallback manual-scroll when window has no navigable item
-            when {
-                Key.PageUp.isPressed(true) -> window.setScrollY(window.scroll.y - window.innerRect.height)
-                Key.PageDown.isPressed(true) -> window.setScrollY(window.scroll.y + window.innerRect.height)
-                homePressed -> window setScrollY 0f
-                endPressed -> window setScrollY window.scrollMax.y
-            }
-        } else {
-            val navRectRel = window.navRectRel[g.navLayer]
-            val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() * 1f + navRectRel.height)
-            var navScoringRectOffsetY = 0f
-            if (Key.PageUp.isPressed(true)) {
-                navScoringRectOffsetY = -pageOffsetY
-                g.navMoveDir =
-                    Dir.Down // Because our scoring rect is offset up, we request the down direction (so we can always land on the last item)
-                g.navMoveClipDir = Dir.Up
-                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
-            } else if (Key.PageDown.isPressed(true)) {
-                navScoringRectOffsetY = +pageOffsetY
-                g.navMoveDir =
-                    Dir.Up // Because our scoring rect is offset down, we request the up direction (so we can always land on the last item)
-                g.navMoveClipDir = Dir.Down
-                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
-            } else if (homePressed) {
-                // FIXME-NAV: handling of Home/End is assuming that the top/bottom most item will be visible with Scroll.y == 0/ScrollMax.y
-                // Scrolling will be handled via the ImGuiNavMoveFlags_ScrollToEdge flag, we don't scroll immediately to avoid scrolling happening before nav result.
-                // Preserve current horizontal position if we have any.
-                navRectRel.min.y = -window.scroll.y
-                navRectRel.max.y = -window.scroll.y
-                if (navRectRel.isInverted) {
-                    navRectRel.min.x = 0f
-                    navRectRel.max.x = 0f
-                }
-                g.navMoveDir = Dir.Down
-                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
-            } else if (endPressed) {
-                navRectRel.min.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
-                navRectRel.max.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
-                if (navRectRel.isInverted) {
-                    navRectRel.min.x = 0f
-                    navRectRel.max.x = 0f
-                }
-                g.navMoveDir = Dir.Up
-                g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
-            }
-            return navScoringRectOffsetY
+    if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
+        // Fallback manual-scroll when window has no navigable item
+        when {
+            Key.PageUp.isPressed(true) -> window.setScrollY(window.scroll.y - window.innerRect.height)
+            Key.PageDown.isPressed(true) -> window.setScrollY(window.scroll.y + window.innerRect.height)
+            homePressed -> window setScrollY 0f
+            endPressed -> window setScrollY window.scrollMax.y
         }
+    } else {
+        val navRectRel = window.navRectRel[g.navLayer]
+        val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() * 1f + navRectRel.height)
+        var navScoringRectOffsetY = 0f
+        if (Key.PageUp.isPressed(true)) {
+            navScoringRectOffsetY = -pageOffsetY
+            g.navMoveDir =
+                Dir.Down // Because our scoring rect is offset up, we request the down direction (so we can always land on the last item)
+            g.navMoveClipDir = Dir.Up
+            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+        } else if (Key.PageDown.isPressed(true)) {
+            navScoringRectOffsetY = +pageOffsetY
+            g.navMoveDir =
+                Dir.Up // Because our scoring rect is offset down, we request the up direction (so we can always land on the last item)
+            g.navMoveClipDir = Dir.Down
+            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+        } else if (homePressed) {
+            // FIXME-NAV: handling of Home/End is assuming that the top/bottom most item will be visible with Scroll.y == 0/ScrollMax.y
+            // Scrolling will be handled via the ImGuiNavMoveFlags_ScrollToEdge flag, we don't scroll immediately to avoid scrolling happening before nav result.
+            // Preserve current horizontal position if we have any.
+            navRectRel.min.y = -window.scroll.y
+            navRectRel.max.y = -window.scroll.y
+            if (navRectRel.isInverted) {
+                navRectRel.min.x = 0f
+                navRectRel.max.x = 0f
+            }
+            g.navMoveDir = Dir.Down
+            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+        } else if (endPressed) {
+            navRectRel.min.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
+            navRectRel.max.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
+            if (navRectRel.isInverted) {
+                navRectRel.min.x = 0f
+                navRectRel.max.x = 0f
+            }
+            g.navMoveDir = Dir.Up
+            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+        }
+        return navScoringRectOffsetY
     }
     return 0f
 }
@@ -659,7 +662,7 @@ fun navEndFrame() {
     val window = g.navWindow
     val moveFlags = g.navMoveRequestFlags
     val wantedFlags = NavMoveFlag.WrapX or NavMoveFlag.LoopX or NavMoveFlag.WrapY or NavMoveFlag.LoopY
-    if (window != null && navMoveRequestButNoResultYet() && g.navMoveRequestFlags has wantedFlags && g.navMoveRequestForward == NavForward.None) {
+    if (window != null && navMoveRequestButNoResultYet() && g.navMoveRequestFlags has wantedFlags && g.navMoveRequestFlags hasnt NavMoveFlag.Forwarded) {
 
         var doForward = false
         val bbRel = Rect(window.navRectRel[g.navLayer])

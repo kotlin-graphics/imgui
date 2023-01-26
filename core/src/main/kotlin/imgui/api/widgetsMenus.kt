@@ -116,7 +116,7 @@ interface widgetsMenus {
             }
 
             navEarliestChild = navEarliestChild.getParent()
-            if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveRequestForward == NavForward.None) {
+            if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveRequestFlags hasnt NavMoveFlag.Forwarded) {
                 // To do so we claim focus back, restore NavId and then process the movement request for yet another frame.
                 // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth bothering)
                 val layer = NavLayer.Menu
@@ -298,7 +298,7 @@ interface widgetsMenus {
                 wantClose = menuIsOpen
                 wantOpen = !menuIsOpen
             }
-            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Right) { // Nav-Right to open
+            if (g.navId == id && g.navMoveDir == Dir.Right) { // Nav-Right to open
                 wantOpen = true
                 navMoveRequestCancel()
             }
@@ -309,7 +309,7 @@ interface widgetsMenus {
                 menuIsOpen = false
             } else if (pressed || (hovered && menusetIsOpen && !menuIsOpen)) // First click to open, then hover to open others
                 wantOpen = true
-            else if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Down) { // Nav-Down to open
+            else if (g.navId == id && g.navMoveDir == Dir.Down) { // Nav-Down to open
                 wantOpen = true
                 navMoveRequestCancel()
             }

@@ -315,7 +315,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** When user starts using gamepad/keyboard, we hide mouse hovering highlight until mouse is touched again. */
     var navDisableMouseHover = false
 
-    /** ~~ navMoveRequest || navInitRequest */
+    /** ~~ navMoveRequest || navInitRequest this is to perform early out in ItemAdd() */
     var navAnyRequest = false
 
     /** Init request for appearing window to select first item  */
@@ -332,10 +332,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Move request for this frame */
     var navMoveRequest = false
 
-    var navMoveRequestFlags = NavMoveFlag.None.i
+    var navMoveRequestForwardToNextFrame = false
 
-    /** None / ForwardQueued / ForwardActive (this is used to navigate sibling parent menus from a child menu)  */
-    var navMoveRequestForward = NavForward.None
+    var navMoveRequestFlags = NavMoveFlag.None.i
 
     var navMoveRequestKeyMods: KeyModFlags = KeyMod.None.i
 

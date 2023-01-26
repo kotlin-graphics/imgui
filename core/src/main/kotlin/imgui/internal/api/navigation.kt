@@ -47,12 +47,12 @@ internal interface navigation {
     /** Forward will reuse the move request again on the next frame (generally with modifications done to it) */
     fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
 
-        assert(g.navMoveRequestForward == NavForward.None)
+        assert(!g.navMoveRequestForwardToNextFrame)
         navMoveRequestCancel()
+        g.navMoveRequestForwardToNextFrame = true
         g.navMoveDir = moveDir
         g.navMoveDir = clipDir
-        g.navMoveRequestForward = NavForward.ForwardQueued
-        g.navMoveRequestFlags = moveFlags
+        g.navMoveRequestFlags = moveFlags or NavMoveFlag.Forwarded
     }
 
     fun navMoveRequestCancel() {
@@ -62,9 +62,6 @@ internal interface navigation {
 
     /** Apply result from previous frame navigation directional move request. Always called from NavUpdate() */
     fun navMoveRequestApplyResult() {
-
-        if (g.navMoveRequestForward == NavForward.ForwardActive)
-            g.navMoveRequestForward = NavForward.None
 
         if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0) {
             // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)

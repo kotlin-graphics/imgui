@@ -654,12 +654,12 @@ internal interface widgetsLowLevelBehaviors {
                     toggled = true
             }
 
-            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Left && isOpen) {
+            if (g.navId == id && g.navMoveDir == Dir.Left && isOpen) {
                 toggled = true
                 navMoveRequestCancel()
             }
             // If there's something upcoming on the line we may want to give it the priority?
-            if (g.navId == id && g.navMoveRequest && g.navMoveDir == Dir.Right && !isOpen) {
+            if (g.navId == id && g.navMoveDir == Dir.Right && !isOpen) {
                 toggled = true
                 navMoveRequestCancel()
             }
