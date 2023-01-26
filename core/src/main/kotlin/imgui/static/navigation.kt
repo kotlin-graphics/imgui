@@ -713,13 +713,15 @@ fun navEndFrame() {
 
 
 /** Scoring function for gamepad/keyboard directional navigation. Based on https://gist.github.com/rygorous/6981057  */
-fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
+fun navScoreItem(result: NavItemData): Boolean {
 
     val window = g.currentWindow!!
     if (g.navLayer != window.dc.navLayerCurrent) return false
 
     // Current modified source rect (NB: we've applied max.x = min.x in navUpdate() to inhibit the effect of having varied item width)
     val curr = Rect(g.navScoringRect)
+    // FIXME: Those are not good variables names
+    val cand = g.lastItemData.navRect   // Current item nav rectangle
     g.navScoringCount++
 
     // When entering through a NavFlattened border, we consider child window items as fully clipped for scoring
@@ -784,14 +786,14 @@ fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
                 addRect(curr.min, curr.max, COL32(255, 200, 0, 100))
                 addRect(cand.min, cand.max, COL32(255, 255, 0, 200))
                 addRectFilled(cand.max - Vec2(4), cand.max + calcTextSize(buf, 0) + Vec2(4), COL32(40, 0, 0, 150))
-                addText(io.fontDefault, 13f, cand.max, 0.inv(), buf)
+                addText(cand.max, 0.inv(), buf.cStr)
             }
         } else if (io.keyCtrl) { // Hold to preview score in matching quadrant. Press C to rotate.
             if (quadrant == g.navMoveDir) {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toByteArray()
                 getForegroundDrawList(window).apply {
                     addRectFilled(cand.min, cand.max, COL32(255, 0, 0, 200))
-                    addText(io.fontDefault, 13f, cand.min, COL32(255), buf)
+                    addText(cand.min, COL32(255), buf.cStr)
                 }
             }
         }
@@ -837,18 +839,21 @@ fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
     return newBest
 }
 
-fun navApplyItemToResult(result: NavItemData, window: Window, id: ID, navBb: Rect) {
-    assert(g.lastItemData.id == id) { "Otherwise pulling from window->DC wouldn't be right" }
+fun navApplyItemToResult(result: NavItemData) {
+    val window = g.currentWindow!!
     result.window = window
-    result.id = id
+    result.id = g.lastItemData.id
     result.focusScopeId = window.dc.navFocusScopeIdCurrent
-    result.rectRel put Rect(navBb.min - window.pos, navBb.max - window.pos)
+    result.rectRel put Rect(g.lastItemData.navRect.min - window.pos, g.lastItemData.navRect.max - window.pos)
 }
 
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)
  *  // This is called after LastItemData is set. */
-fun navProcessItem(window: Window, id: ID, navBb: Rect) {
+fun navProcessItem() {
 
+    val window = g.currentWindow!!
+    val id = g.lastItemData.id
+    val navBb = g.lastItemData.navRect
     val itemFlags = g.lastItemData.inFlags
 
     // Process Init Request
@@ -870,7 +875,7 @@ fun navProcessItem(window: Window, id: ID, navBb: Rect) {
     if (g.navMoveScoringItems)
         if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
-            var newBest = navScoreItem(result, navBb)
+            var newBest = navScoreItem(result)
 
             if (IMGUI_DEBUG_NAV_SCORING)
             // [DEBUG] Scoring all items in NavWindow at all times
@@ -878,14 +883,14 @@ fun navProcessItem(window: Window, id: ID, navBb: Rect) {
                     newBest = false
 
             if (newBest)
-                navApplyItemToResult(result, window, id, navBb)
+                navApplyItemToResult(result)
 
             // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
             val VISIBLE_RATIO = 0.7f
             if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
                 if (clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
-                    if (navScoreItem(g.navMoveResultLocalVisible, navBb))
-                        navApplyItemToResult(g.navMoveResultLocalVisible, window, id, navBb)
+                    if (navScoreItem(g.navMoveResultLocalVisible))
+                        navApplyItemToResult(g.navMoveResultLocalVisible)
         }
 
     // Update window-relative bounding box of navigated item
@@ -965,7 +970,7 @@ fun navClampRectToVisibleAreaForMoveDir(moveDir: Dir, r: Rect, clipRect: Rect) =
         r.min.y = glm.clamp(r.min.y, clipRect.min.y, clipRect.max.y)
         r.max.y = glm.clamp(r.max.y, clipRect.min.y, clipRect.max.y)
     }
-    else -> {
+    else -> { // FIXME: PageUp/PageDown are leaving move_dir == None
         r.min.x = glm.clamp(r.min.x, clipRect.min.x, clipRect.max.x)
         r.max.x = glm.clamp(r.max.x, clipRect.min.x, clipRect.max.x)
     }
