@@ -12,12 +12,12 @@ import kool.Stack
 const val IMGUI_BUILD = 0
 
 /** get the compiled version string e.g. "1.80 WIP" (essentially the value for IMGUI_VERSION from the compiled version of imgui.cpp) */
-const val IMGUI_VERSION = "1.84.1"
+const val IMGUI_VERSION = "1.84.2"
 const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 18404
+const val IMGUI_VERSION_NUM = 18405
 
 
 // Helpers macros to generate 32-bits encoded colors
