@@ -3,7 +3,6 @@ package imgui.impl.glfw
 import glm_.b
 import glm_.c
 import glm_.f
-import glm_.mat4x4.Mat4
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import glm_.vec2.Vec2i
@@ -23,6 +22,7 @@ import uno.glfw.GlfwWindow.CursorMode
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 import kotlin.collections.set
+
 enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
 
 // GLFW callbacks
@@ -149,16 +149,30 @@ class ImplGlfw @JvmOverloads constructor(
             data.mouseJustPressed[it] = false
         }
 
+        //        // Update mouse position
+        //        val mousePosBackup = Vec2d(io.mousePos)
+        //        io.mousePos put -Float.MAX_VALUE
+        //        if (window.isFocused)
+        //            if (io.wantSetMousePos)
+        //                window.cursorPos = mousePosBackup
+        //            else
+        //                io.mousePos put (vrCursorPos ?: window.cursorPos)
+        //        else
+        //            vrCursorPos?.let(io.mousePos::put) // window is usually unfocused in vr
+
+        val focused = data.window.isFocused
+        val mouseWindow = if (data.mouseWindow == data.window || focused) data.window else null
+
         // Update mouse position
-        val mousePosBackup = Vec2d(io.mousePos)
-        io.mousePos put -Float.MAX_VALUE
-        if (window.isFocused)
-            if (io.wantSetMousePos)
-                window.cursorPos = mousePosBackup
+        val mousePosBackup = io.mousePos
+        io.mousePos = Vec2(-Float.MAX_VALUE)
+        if (io.wantSetMousePos) {
+            if (focused)
+                data.window.cursorPos = Vec2d(mousePosBackup)
             else
-                io.mousePos put (vrCursorPos ?: window.cursorPos)
-        else
-            vrCursorPos?.let(io.mousePos::put) // window is usually unfocused in vr
+                vrCursorPos?.let(io.mousePos::put) // window is usually unfocused in vr
+        } else if (mouseWindow != null)
+            io.mousePos put (vrCursorPos ?: mouseWindow.cursorPos)
     }
 
     private fun updateMouseCursor() {
@@ -291,6 +305,15 @@ class ImplGlfw @JvmOverloads constructor(
 
         val charCallback: CharCB = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
 
+        val cursorEnterCallback: CursorEnterCB = { entered ->
+            //            if (bd->PrevUserCallbackCursorEnter != NULL)
+            //            bd->PrevUserCallbackCursorEnter(window, entered);
+            if (entered)
+                data.mouseWindow = data.window
+            if (!entered && data.mouseWindow === data.window)
+                data.mouseWindow = null
+        }
+
         fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
             ImplGlfw(window, installCallbacks, vrTexSize, GlfwClientApi.OpenGL)
 
@@ -304,6 +327,7 @@ class ImplGlfw @JvmOverloads constructor(
             lateinit var window: GlfwWindow
             lateinit var clientApi: GlfwClientApi
             var time = 0.0
+            var mouseWindow: GlfwWindow? = null
             val mouseJustPressed = BooleanArray(MouseButton.COUNT)
             val mouseCursors = LongArray/*<GlfwCursor>*/(MouseCursor.COUNT)
             var installedCallbacks = false
