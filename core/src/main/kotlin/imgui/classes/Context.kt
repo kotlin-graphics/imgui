@@ -496,7 +496,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var tempInputId: ID = 0
 
     /** Store user options for color edit widgets   */
-    var colorEditOptions: ColorEditFlags = ColorEditFlag._OptionsDefault.i
+    var colorEditOptions: ColorEditFlags = ColorEditFlag.DefaultOptions.i
 
     /** Backup of last Hue associated to LastColor[3], so we can restore Hue in lossy RGB<>HSV round trips */
     var colorEditLastHue = 0f

@@ -367,9 +367,9 @@ interface widgetsColorEditorPicker {
 
         // Read stored options
         if (flags hasnt Cef._PickerMask)
-            flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._PickerMask)
+            flags = flags or ((if (g.colorEditOptions has Cef._PickerMask) g.colorEditOptions else Cef.DefaultOptions.i) and Cef._PickerMask)
         if (flags hasnt Cef._InputMask)
-            flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef._OptionsDefault.i) and Cef._InputMask)
+            flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef.DefaultOptions.i) and Cef._InputMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
         assert((flags and Cef._InputMask).isPowerOfTwo);  // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
@@ -786,13 +786,13 @@ interface widgetsColorEditorPicker {
     fun setColorEditOptions(flags_: ColorEditFlags) {
         var flags = flags_
         if (flags hasnt Cef._DisplayMask)
-            flags = flags or (Cef._OptionsDefault and Cef._DisplayMask)
+            flags = flags or (Cef.DefaultOptions and Cef._DisplayMask)
         if (flags hasnt Cef._DataTypeMask)
-            flags = flags or (Cef._OptionsDefault and Cef._DataTypeMask)
+            flags = flags or (Cef.DefaultOptions and Cef._DataTypeMask)
         if (flags hasnt Cef._PickerMask)
-            flags = flags or (Cef._OptionsDefault and Cef._PickerMask)
+            flags = flags or (Cef.DefaultOptions and Cef._PickerMask)
         if (flags hasnt Cef._InputMask)
-            flags = flags or (Cef._OptionsDefault and Cef._InputMask)
+            flags = flags or (Cef.DefaultOptions and Cef._InputMask)
         assert((flags and Cef._DisplayMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._DataTypeMask).isPowerOfTwo) { "Check only 1 option is selected" }
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check only 1 option is selected" }

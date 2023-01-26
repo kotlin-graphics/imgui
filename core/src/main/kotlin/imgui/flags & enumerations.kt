@@ -1696,7 +1696,7 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
 
     /** Defaults Options. You can set application defaults using SetColorEditOptions(). The intent is that you probably don't want to
      *  override them in most of your calls. Let the user choose via the option menu and/or call SetColorEditOptions() once during startup. */
-    _OptionsDefault(Uint8 or DisplayRGB or InputRGB or PickerHueBar),
+    DefaultOptions(Uint8 or DisplayRGB or InputRGB or PickerHueBar),
 
     // [Internal] Masks
     _DisplayMask(DisplayRGB or DisplayHSV or DisplayHEX),
