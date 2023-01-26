@@ -243,7 +243,6 @@ interface main {
         g.itemFlagsStack.clear()
         g.itemFlagsStack += ItemFlag.None.i
         g.groupStack.clear()
-        closePopupsOverWindow(g.navWindow, false)
 
         // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
         updateDebugToolItemPicker()
