@@ -136,7 +136,7 @@ interface dragAndDrop {
                 if (g.dragDropAcceptIdPrev != 0 && g.dragDropAcceptFlags has Ddf.AcceptNoPreviewTooltip)
                     g.currentWindow!!.apply {
                         // tooltipWindow
-                        skipItems = true
+                        hidden = true; skipItems = true
                         hiddenFramesCanSkipItems = 1
                     }
             }
