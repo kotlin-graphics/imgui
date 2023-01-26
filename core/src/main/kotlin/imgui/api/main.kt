@@ -169,7 +169,6 @@ interface main {
 
         // Update keyboard input state
         // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
-        io.keyModsPrev = g.io.keyMods
         io.keyMods = mergedKeyModFlags
         for (i in io.keysDownDuration.indices)
             io.keysDownDurationPrev[i] = io.keysDownDuration[i]
@@ -335,6 +334,7 @@ interface main {
         io.mouseWheel = 0f
         io.mouseWheelH = 0f
         io.inputQueueCharacters.clear()
+        io.keyModsPrev = io.keyMods // doing it here is better than in NewFrame() as we'll tolerate backend writing to KeyMods. If we want to firmly disallow it we should detect it.
         io.navInputs.fill(0f)
 
         g callHooks ContextHookType.EndFramePost
