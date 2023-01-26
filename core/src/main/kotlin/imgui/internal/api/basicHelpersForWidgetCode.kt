@@ -149,7 +149,8 @@ internal interface basicHelpersForWidgetCode {
                     hoveredId = id
 
                 // When disabled we'll return false but still set HoveredId
-                if (g.currentItemFlags has ItemFlag.Disabled) {
+                val itemFlags = if(g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
+                if (itemFlags has ItemFlag.Disabled) {
                     // Release active id if turning disabled
                     if (g.activeId == id)
                         clearActiveID()
@@ -180,7 +181,7 @@ internal interface basicHelpersForWidgetCode {
 
         // Increment counters
         // FIXME: ImGuiItemFlags_Disabled should disable more.
-        val isTabStop = g.currentItemFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
+        val isTabStop = g.lastItemData.inFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
         window.dc.focusCounterRegular++
         if (isTabStop) {
             window.dc.focusCounterTabStop++

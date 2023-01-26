@@ -237,11 +237,11 @@ class NextItemData {
     }
 }
 
-/** Status storage for last submitted items */
+/** Status storage for last submitted item */
 class LastItemData {
     var id: ID = 0
-    var inFlags: ItemFlags = 0
-    var statusFlags: ItemStatusFlags = 0
+    var inFlags: ItemFlags = 0 // See ImGuiItemFlags_
+    var statusFlags: ItemStatusFlags = 0 // See ImGuiItemStatusFlags_
     lateinit var rect: Rect
     lateinit var displayRect: Rect
 }

@@ -304,7 +304,7 @@ internal interface widgetsLowLevelBehaviors {
 
         if (g.activeId != id)
             return false
-        if (g.currentItemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
+        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
             return false
 
         var v by pV
@@ -410,7 +410,7 @@ internal interface widgetsLowLevelBehaviors {
             Invalid ImGuiSliderFlags flag!  Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
         }
 
-        if (g.currentItemFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
+        if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
             return false
 
         var v by pV

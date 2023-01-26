@@ -168,7 +168,7 @@ interface widgetsMain {
         val col = if (held && hovered) Col.FrameBgActive else if (hovered) Col.FrameBgHovered else Col.FrameBg
         renderFrame(checkBb.min, checkBb.max, col.u32, true, style.frameRounding)
         val checkCol = Col.CheckMark.u32
-        val mixedValue = g.currentItemFlags has ItemFlag.MixedValue
+        val mixedValue = g.lastItemData.inFlags has ItemFlag.MixedValue
         if (mixedValue) {
             // Undocumented tristate/mixed/indeterminate checkbox (#2644)
             val pad = Vec2(1f max floor(squareSz / 3.6f))

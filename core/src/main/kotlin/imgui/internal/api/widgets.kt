@@ -155,9 +155,7 @@ internal interface widgets {
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pos = Vec2(window.dc.cursorPos)
-        /*  Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky,
-            since it shouldn't be a flag)         */
-        if (flags_ has ButtonFlag.AlignTextBaseLine && style.framePadding.y < window.dc.currLineTextBaseOffset)
+        if (flags_ has ButtonFlag.AlignTextBaseLine && style.framePadding.y < window.dc.currLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
             pos.y += window.dc.currLineTextBaseOffset - style.framePadding.y
         val size = calcItemSize(sizeArg, labelSize.x + style.framePadding.x * 2f, labelSize.y + style.framePadding.y * 2f)
 
@@ -166,7 +164,7 @@ internal interface widgets {
         if (!itemAdd(bb, id)) return false
 
         var flags = flags_
-        if (g.currentItemFlags has ItemFlag.ButtonRepeat)
+        if (g.lastItemData.inFlags has ItemFlag.ButtonRepeat)
             flags = flags or ButtonFlag.Repeat
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
@@ -263,7 +261,7 @@ internal interface widgets {
         itemSize(size, if (size.y >= defaultSize) style.framePadding.y else -1f)
         if (!itemAdd(bb, id)) return false
 
-        if (g.currentItemFlags has ItemFlag.ButtonRepeat)
+        if (g.lastItemData.inFlags has ItemFlag.ButtonRepeat)
             flags = flags or ButtonFlag.Repeat
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)

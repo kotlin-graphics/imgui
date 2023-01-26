@@ -121,7 +121,7 @@ interface widgetsSelectables {
             return false
 
         val disabledGlobal = g.currentItemFlags has If.Disabled
-        if (disabledItem && !disabledGlobal)
+        if (disabledItem && !disabledGlobal) // Only testing this as an optimization
             pushDisabled(true)
 
         // FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
@@ -189,7 +189,7 @@ interface widgetsSelectables {
         renderTextClipped(textMin, textMax, label, labelSize, style.selectableTextAlign, bb)
 
         // Automatically close popups
-        if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && g.currentItemFlags hasnt If.SelectableDontClosePopup)
+        if (pressed && window.flags has Wf._Popup && flags hasnt Sf.DontClosePopups && g.lastItemData.inFlags hasnt If.SelectableDontClosePopup)
             closeCurrentPopup()
 
         if (disabledItem && !disabledGlobal)
