@@ -84,9 +84,9 @@ class DrawCmd : DrawCmdHeader {
     }
 }
 
-/** Vertex index, default to 16-bit
- *  To allow large meshes with 16-bit indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer backend (recommended).
- *  To use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h. */
+/** ImDrawIdx: vertex index. [Compile-time configurable type]
+ *  - To use 16-bit indices + allow large meshes: backend need to set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset (recommended).
+ *  - To use 32-bit indices: override with '#define ImDrawIdx unsigned int' in your imconfig.h file. */
 typealias DrawIdx = Int
 
 /** Vertex layout

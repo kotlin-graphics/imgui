@@ -26,10 +26,12 @@ operator fun StringBuilder.plusAssign(string: String) {
     append(string)
 }
 
-/** Unique ID used by widgets (typically hashed from a stack of string) */
+/** A unique ID used by widgets (typically the result of hashing a stack of string) */
 typealias ID = Int
 
-/** User data to identify a texture */
+/** ImTexture: user data for renderer backend to identify a texture [Compile-time configurable type]
+ *  - To use something else than an opaque void* pointer: override with e.g. '#define ImTextureID MyTextureType*' in your imconfig.h file.
+ *  - This can be whatever to you want it to be! read the FAQ about ImTextureID for details. */
 typealias TextureID = Int
 
 /** Return false = pass

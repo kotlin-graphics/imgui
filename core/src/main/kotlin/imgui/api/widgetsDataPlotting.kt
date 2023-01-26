@@ -5,7 +5,7 @@ import imgui.ImGui.plotEx
 import imgui.internal.sections.PlotType
 
 // Widgets: Data Plotting
-// - Consider using ImPlot (https://github.com/epezent/implot)
+// - Consider using ImPlot (https://github.com/epezent/implot) which is much better!
 interface widgetsDataPlotting {
 
     fun plotLines(label: String, values: FloatArray, valuesOffset: Int = 0, overlayText: String = "", scaleMin: Float = Float.MAX_VALUE,
