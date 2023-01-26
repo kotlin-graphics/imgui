@@ -39,23 +39,29 @@ internal interface newFrame {
         if (io.configFlags has ConfigFlag.NoMouse)
             clearHoveredWindows = true
 
-        // We track click ownership. When clicked outside of a window the click is owned by the application and won't report hovering nor request capture even while dragging over our windows afterward.
-        var mouseEarliestButtonDown = -1
+        // We track click ownership. When clicked outside of a window the click is owned by the application and
+        // won't report hovering nor request capture even while dragging over our windows afterward.
+        val hasOpenPopup = g.openPopupStack.isNotEmpty()
+        val hasOpenModal = modalWindow != null
+        var mouseEarliestDown = -1
         var mouseAnyDown = false
         for (i in io.mouseDown.indices) {
-            if (io.mouseClicked[i])
-                io.mouseDownOwned[i] = g.hoveredWindow != null || g.openPopupStack.isNotEmpty()
+            if (io.mouseClicked[i]) {
+                io.mouseDownOwned[i] = g.hoveredWindow != null || hasOpenPopup
+                io.mouseDownOwnedUnlessPopupClose[i] = g.hoveredWindow != null || hasOpenModal
+            }
             mouseAnyDown = mouseAnyDown || io.mouseDown[i]
             if (io.mouseDown[i])
-                if (mouseEarliestButtonDown == -1 || io.mouseClickedTime[i] < io.mouseClickedTime[mouseEarliestButtonDown])
-                    mouseEarliestButtonDown = i
+                if (mouseEarliestDown == -1 || io.mouseClickedTime[i] < io.mouseClickedTime[mouseEarliestDown])
+                    mouseEarliestDown = i
         }
-        val mouseAvailToImgui = mouseEarliestButtonDown == -1 || io.mouseDownOwned[mouseEarliestButtonDown]
+        val mouseAvail = mouseEarliestDown == -1 || io.mouseDownOwned[mouseEarliestDown]
+        val mouseAvailUnlessPopupClose = mouseEarliestDown == -1 || io.mouseDownOwnedUnlessPopupClose[mouseEarliestDown]
 
         // If mouse was first clicked outside of ImGui bounds we also cancel out hovering.
         // FIXME: For patterns of drag and drop across OS windows, we may need to rework/remove this test (first committed 311c0ca9 on 2015/02)
         val mouseDraggingExternPayload = g.dragDropActive && g.dragDropSourceFlags has DragDropFlag.SourceExtern
-        if (!mouseAvailToImgui && !mouseDraggingExternPayload)
+        if (!mouseAvail && !mouseDraggingExternPayload)
             clearHoveredWindows = true
 
         if(clearHoveredWindows) {
@@ -63,13 +69,16 @@ internal interface newFrame {
             g.hoveredWindowUnderMovingWindow = null
         }
 
-        // Update io.WantCaptureMouse for the user application (true = dispatch mouse info to Dear ImGui, false = dispatch mouse info to imgui + app)
-        if (g.wantCaptureMouseNextFrame != -1)
-            io.wantCaptureMouse = g.wantCaptureMouseNextFrame != 0
-        else
-            io.wantCaptureMouse = (mouseAvailToImgui && (g.hoveredWindow != null || mouseAnyDown)) || g.openPopupStack.isNotEmpty()
+        // Update io.WantCaptureMouse for the user application (true = dispatch mouse info to Dear ImGui only, false = dispatch mouse to Dear ImGui + underlying app)
+        // Update io.WantCaptureMouseAllowPopupClose (experimental) to give a chance for app to react to popup closure with a drag
+        if (g.wantCaptureMouseNextFrame != -1) {
+            io.wantCaptureMouse = g.wantCaptureMouseNextFrame != 0; io.wantCaptureMouseUnlessPopupClose = g.wantCaptureMouseNextFrame != 0
+        } else {
+            io.wantCaptureMouse = (mouseAvail && (g.hoveredWindow != null || mouseAnyDown)) || hasOpenPopup
+            io.wantCaptureMouseUnlessPopupClose = (mouseAvailUnlessPopupClose && (g.hoveredWindow != null || mouseAnyDown)) || hasOpenModal
+        }
 
-        // Update io.WantCaptureKeyboard for the user application (true = dispatch keyboard info to Dear ImGui, false = dispatch keyboard info to imgui + app)
+        // Update io.WantCaptureKeyboard for the user application (true = dispatch keyboard info to Dear ImGui only, false = dispatch keyboard info to Dear ImGui + underlying app)
         if (g.wantCaptureKeyboardNextFrame != -1)
             io.wantCaptureKeyboard = g.wantCaptureKeyboardNextFrame != 0
         else

@@ -45,6 +45,7 @@ object ShowDemoWindowMisc {
 
             // Display ImGuiIO output flags
             text("WantCaptureMouse: ${io.wantCaptureMouse}")
+            text("WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose}")
             text("WantCaptureKeyboard: ${io.wantCaptureKeyboard}")
             text("WantTextInput: ${io.wantTextInput}")
             text("WantMoveMouse: ${io.wantSetMousePos}")

@@ -326,6 +326,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // [Private] ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
 
+    /** Alternative to WantCaptureMouse: (WantCaptureMouse == true && WantCaptureMouseUnlessPopupClose == false) when a click over void is expected to close a popup. */
+    var wantCaptureMouseUnlessPopupClose = false
+
     /** Key mods flags (same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags), updated by NewFrame() */
     var keyMods: KeyModFlags = KeyMod.None.i
 
@@ -350,8 +353,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse button went from Down to !Down    */
     val mouseReleased = BooleanArray(5)
 
-    /** Track if button was clicked inside a dear imgui window. We don't request mouse capture from the application if click started outside ImGui bounds.   */
+    /** Track if button was clicked inside a dear imgui window or over void blocked by a popup. We don't request mouse capture from the application if click started outside ImGui bounds. */
     var mouseDownOwned = BooleanArray(5)
+
+    /** Track if button was clicked inside a dear imgui window. */
+    val mouseDownOwnedUnlessPopupClose = BooleanArray(5)
 
     /** Track if button down was a double-click */
     var mouseDownWasDoubleClick = BooleanArray(5)
