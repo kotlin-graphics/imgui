@@ -25,6 +25,8 @@ import kotlin.collections.set
 
 enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
 
+// TODO chain previously installed callbacks
+
 // GLFW callbacks
 // - When calling Init with 'install_callbacks=true': GLFW callbacks will be installed for you. They will call user's previously installed callbacks, if any.
 // - When calling Init with 'install_callbacks=false': GLFW callbacks won't be installed. You will need to call those function yourself from your own GLFW callbacks.
@@ -141,10 +143,12 @@ class ImplGlfw @JvmOverloads constructor(
 
     private fun updateMousePosAndButtons() {
 
-        // Update buttons
+        val mousePosPrev = io.mousePos
+        io.mousePos put -Float.MAX_VALUE
+
+        // Update mouse buttons
+        // (if a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame)
         repeat(io.mouseDown.size) {
-            /*  If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release
-                events that are shorter than 1 frame.   */
             io.mouseDown[it] = data.mouseJustPressed[it] || glfwGetMouseButton(window.handle.value, it) != 0
             data.mouseJustPressed[it] = false
         }
@@ -163,16 +167,13 @@ class ImplGlfw @JvmOverloads constructor(
         val focused = data.window.isFocused
         val mouseWindow = if (data.mouseWindow == data.window || focused) data.window else null
 
-        // Update mouse position
-        val mousePosBackup = io.mousePos
-        io.mousePos = Vec2(-Float.MAX_VALUE)
-        if (io.wantSetMousePos) {
-            if (focused)
-                data.window.cursorPos = Vec2d(mousePosBackup)
-            else
-                vrCursorPos?.let(io.mousePos::put) // window is usually unfocused in vr
-        } else if (mouseWindow != null)
-            io.mousePos put (vrCursorPos ?: mouseWindow.cursorPos)
+        // Set OS mouse position from Dear ImGui if requested (rarely used, only when ImGuiConfigFlags_NavEnableSetMousePos is enabled by user)
+        if (io.wantSetMousePos && focused)
+            data.window.cursorPos = Vec2d(mousePosPrev)
+
+        // Set Dear ImGui mouse position from OS position
+        if (mouseWindow != null)
+            io.mousePos put mouseWindow.cursorPos
     }
 
     private fun updateMouseCursor() {
