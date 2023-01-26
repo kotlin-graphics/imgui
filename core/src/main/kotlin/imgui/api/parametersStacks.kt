@@ -71,9 +71,13 @@ interface parametersStacks {
                     it.floats[0] = style.alpha
                     style.alpha = value as Float
                 }
+                StyleVar.DisabledAlpha -> {
+                    it.floats[0] = style.disabledAlpha
+                    style.disabledAlpha = value as Float
+                }
                 StyleVar.WindowPadding -> {
                     style.windowPadding to it.floats
-                    style.windowPadding put (value as Vec2)
+                    style.windowPadding put value as Vec2
                 }
                 StyleVar.WindowRounding -> {
                     it.floats[0] = style.windowRounding
@@ -85,11 +89,11 @@ interface parametersStacks {
                 }
                 StyleVar.WindowMinSize -> {
                     style.windowMinSize to it.ints
-                    style.windowMinSize put (value as Vec2i)
+                    style.windowMinSize put value as Vec2i
                 }
                 StyleVar.WindowTitleAlign -> {
                     style.windowTitleAlign to it.floats
-                    style.windowTitleAlign put (value as Vec2)
+                    style.windowTitleAlign put value as Vec2
                 }
                 StyleVar.ChildRounding -> {
                     it.floats[0] = style.childRounding
@@ -109,7 +113,7 @@ interface parametersStacks {
                 }
                 StyleVar.FramePadding -> {
                     style.framePadding to it.floats
-                    style.framePadding put (value as Vec2)
+                    style.framePadding put value as Vec2
                 }
                 StyleVar.FrameRounding -> {
                     it.floats[0] = style.frameRounding
@@ -121,11 +125,11 @@ interface parametersStacks {
                 }
                 StyleVar.ItemSpacing -> {
                     style.itemSpacing to it.floats
-                    style.itemSpacing put (value as Vec2)
+                    style.itemSpacing put value as Vec2
                 }
                 StyleVar.ItemInnerSpacing -> {
                     style.itemInnerSpacing to it.floats
-                    style.itemInnerSpacing put (value as Vec2)
+                    style.itemInnerSpacing put value as Vec2
                 }
                 StyleVar.IndentSpacing -> {
                     it.floats[0] = style.indentSpacing
@@ -133,7 +137,7 @@ interface parametersStacks {
                 }
                 StyleVar.CellPadding -> {
                     style.cellPadding to it.floats
-                    style.cellPadding put (value as Vec2)
+                    style.cellPadding put value as Vec2
                 }
                 StyleVar.ScrollbarSize -> {
                     it.floats[0] = style.scrollbarSize
@@ -157,11 +161,11 @@ interface parametersStacks {
                 }
                 StyleVar.ButtonTextAlign -> {
                     style.buttonTextAlign to it.floats
-                    style.buttonTextAlign put (value as Vec2)
+                    style.buttonTextAlign put value as Vec2
                 }
                 StyleVar.SelectableTextAlign -> {
                     style.selectableTextAlign to it.floats
-                    style.selectableTextAlign put (value as Vec2)
+                    style.selectableTextAlign put value as Vec2
                 }
             }
         })
@@ -171,6 +175,7 @@ interface parametersStacks {
         val backup = g.styleVarStack.pop()
         when (backup.idx) {
             StyleVar.Alpha -> style.alpha = backup.floats[0]
+            StyleVar.DisabledAlpha -> style.disabledAlpha = backup.floats[0]
             StyleVar.WindowPadding -> style.windowPadding put backup.floats
             StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
             StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
@@ -186,6 +191,7 @@ interface parametersStacks {
             StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
             StyleVar.ItemInnerSpacing -> style.itemInnerSpacing put backup.floats
             StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
+            StyleVar.CellPadding -> style.cellPadding put backup.floats
             StyleVar.ScrollbarSize -> style.scrollbarSize = backup.floats[0]
             StyleVar.ScrollbarRounding -> style.scrollbarRounding = backup.floats[0]
             StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]

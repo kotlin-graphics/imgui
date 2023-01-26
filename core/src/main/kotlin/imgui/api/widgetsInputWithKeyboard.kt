@@ -22,17 +22,16 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.popDisabled
+import imgui.ImGui.endDisabled
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.pushDisabled
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
 import imgui.ImGui.textEx
-import imgui.internal.sections.or
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -197,7 +196,7 @@ interface widgetsInputWithKeyboard {
             style.framePadding.x = style.framePadding.y
             var buttonFlags = Bf.Repeat or Bf.DontClosePopups
             if (flags has Itf.ReadOnly)
-                pushDisabled(true)
+                beginDisabled(true)
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", Vec2(buttonSize), buttonFlags)) {
                 data = dataTypeApplyOp(dataType, '-', data, stepFast?.takeIf { io.keyCtrl } ?: step)
@@ -209,7 +208,7 @@ interface widgetsInputWithKeyboard {
                 valueChanged = true
             }
             if (flags has Itf.ReadOnly)
-                popDisabled()
+                endDisabled()
 
             val labelEnd = findRenderedTextEnd(label)
             if (0 != labelEnd) {

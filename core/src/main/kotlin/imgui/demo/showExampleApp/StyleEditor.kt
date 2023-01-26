@@ -329,6 +329,7 @@ object StyleEditor {
                 /*  Not exposing zero here so user doesn't "lose" the UI (zero alpha clips all widgets).
                     But application code could have a toggle to switch between zero and non-zero.             */
                 dragFloat("Global Alpha", style::alpha, 0.005f, 0.2f, 1f, "%.2f")
+                dragFloat("Disabled Alpha", style::disabledAlpha, 0.005f, 0f, 1f, "%.2f"); sameLine(); helpMarker("Additional alpha multiplier for disabled items (multiply over current value of Alpha).")
                 popItemWidth()
 
                 endTabItem()

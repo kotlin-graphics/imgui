@@ -21,7 +21,7 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     /** Button() will return true multiple times based on io.KeyRepeatDelay and io.KeyRepeatRate settings. */
     ButtonRepeat(1 shl 1),  // false
 
-    /** Disable interactions but doesn't affect visuals. See PushDisabled()/PushDisabled(). See github.com/ocornut/imgui/issues/211 */
+    /** Disable interactions but doesn't affect visuals. See BeginDisabled()/EndDisabled(). See github.com/ocornut/imgui/issues/211 */
     Disabled(1 shl 2),  // false
 
     /** Disable keyboard/gamepad directional navigation (FIXME: should merge with _NoTabStop) */
@@ -189,7 +189,7 @@ enum class ButtonFlag(val i: ButtonFlags) {
     /** disable automatically closing parent popup on press // [UNUSED] */
     DontClosePopups(1 shl 13),
 
-    /** disable interactions -> use PushDisabled() or ImGuiItemFlags_Disabled */
+    /** disable interactions -> use BeginDisabled() or ImGuiItemFlags_Disabled */
 //    Disabled(1 shl 14),
 
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */

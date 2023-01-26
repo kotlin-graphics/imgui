@@ -10,11 +10,9 @@ import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.popColumnsBackground
-import imgui.ImGui.popDisabled
-import imgui.ImGui.popStyleColor
+import imgui.ImGui.endDisabled
 import imgui.ImGui.pushColumnsBackground
-import imgui.ImGui.pushDisabled
-import imgui.ImGui.pushStyleColor
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderTextClipped
@@ -122,7 +120,7 @@ interface widgetsSelectables {
 
         val disabledGlobal = g.currentItemFlags has If.Disabled
         if (disabledItem && !disabledGlobal) // Only testing this as an optimization
-            pushDisabled(true)
+            beginDisabled(true)
 
         // FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
         // which would be advantageous since most selectable are not selected.
@@ -193,7 +191,7 @@ interface widgetsSelectables {
             closeCurrentPopup()
 
         if (disabledItem && !disabledGlobal)
-            popDisabled()
+            endDisabled()
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return pressed

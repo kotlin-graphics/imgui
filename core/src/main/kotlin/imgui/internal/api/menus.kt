@@ -8,7 +8,7 @@ import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushDisabled
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
@@ -39,7 +39,7 @@ internal interface menus {
         val pressed: Boolean
         pushID(label)
         if (!enabled)
-            pushDisabled(true)
+            beginDisabled(true)
         val flags = SelectableFlag._SelectOnRelease or SelectableFlag._SetNavIdOnHover
         val offsets = window.dc.menuColumns
         if (window.dc.layoutType == LayoutType.Horizontal) {

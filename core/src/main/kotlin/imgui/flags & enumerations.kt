@@ -1540,6 +1540,9 @@ enum class StyleVar {
     /** float   */
     Alpha,
 
+    /** WindowPadding */
+    DisabledAlpha,
+
     /** vec2    */
     WindowPadding,
 

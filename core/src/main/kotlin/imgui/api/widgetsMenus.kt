@@ -21,21 +21,18 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.frameHeight
 import imgui.ImGui.io
 import imgui.ImGui.isPopupOpen
-import imgui.ImGui.itemHoverable
 import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItemEx
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popDisabled
+import imgui.ImGui.endDisabled
 import imgui.ImGui.popID
-import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.pushDisabled
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.pushID
-import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderText
 import imgui.ImGui.selectable
@@ -224,7 +221,7 @@ interface widgetsMenus {
         val pos = Vec2(window.dc.cursorPos)
         pushID(label)
         if (!enabled)
-            pushDisabled()
+            beginDisabled()
         val offsets = window.dc.menuColumns
         if (window.dc.layoutType == Lt.Horizontal) {
             /*  Menu inside an horizontal menu bar
@@ -256,7 +253,7 @@ interface widgetsMenus {
             window.drawList.renderArrow(pos + Vec2(offsets.offsetMark + extraW + g.fontSize * 0.3f, 0f), Col.Text.u32, Dir.Right)
         }
         if (!enabled)
-            popDisabled()
+            endDisabled()
 
         val hovered = g.hoveredId == id && enabled
 
