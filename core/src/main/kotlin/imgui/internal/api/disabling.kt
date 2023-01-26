@@ -20,11 +20,9 @@ internal interface disabling {
      *  - Optimized shortcuts instead of PushStyleVar() + PushItemFlag() */
     fun beginDisabled(disabled: Boolean = true) {
         val wasDisabled = g.currentItemFlags has ItemFlag.Disabled
-        if (!wasDisabled && disabled) {
-            //PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * g.Style.DisabledAlpha);
-            g.disabledAlphaBackup = g.style.alpha
-            g.style.alpha *= g.style.disabledAlpha
-        }
+        g.disabledAlphaBackup = g.style.alpha
+        if (!wasDisabled && disabled)
+            g.style.alpha *= g.style.disabledAlpha // PushStyleVar(ImGuiStyleVar_Alpha, g.Style.Alpha * g.Style.DisabledAlpha);
         //PushItemFlag(ImGuiItemFlags_Disabled, was_disabled || disabled);
         g.currentItemFlags /= ItemFlag.Disabled
         g.itemFlagsStack += g.currentItemFlags
