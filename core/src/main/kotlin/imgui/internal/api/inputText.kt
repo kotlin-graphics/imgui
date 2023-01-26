@@ -972,11 +972,14 @@ internal interface inputText {
             var c by char
 
             // Filter non-printable (NB: isprint is unreliable! see #2467) [JVM we can rely on custom ::isPrintable]
+            var applyNamedFilters = true
             if (c < 0x20 && !c.isPrintable) {
                 var pass = false
                 pass = pass or (c == '\n' && flags has Itf._Multiline)
                 pass = pass or (c == '\t' && flags has Itf.AllowTabInput)
-                if (!pass) return false
+                if (!pass)
+                    return false
+                applyNamedFilters = false // Override named filters below so newline and tabs can still be inserted.
             }
 
             if (inputSource != InputSource.Clipboard) {
@@ -994,7 +997,7 @@ internal interface inputText {
                 return false
 
             // Generic named filters
-            if (flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
+            if (applyNamedFilters && flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
 
                 // The libc allows overriding locale, with e.g. 'setlocale(LC_NUMERIC, "de_DE.UTF-8");' which affect the output/input of printf/scanf.
                 // The standard mandate that programs starts in the "C" locale where the decimal point is '.'.
