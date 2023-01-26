@@ -98,7 +98,7 @@ class ImplGL3 : GLInterface {
         glEnable(GL_SCISSOR_TEST)
         if (OPENGL_MAY_HAVE_PRIMITIVE_RESTART && data.glVersion >= 310)
             glDisable(GL_PRIMITIVE_RESTART)
-        if (POLYGON_MODE)
+        if (IMPL_HAS_POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
         // Support for GL 4.5 rarely used glClipControl(GL_UPPER_LEFT)
@@ -245,7 +245,7 @@ class ImplGL3 : GLInterface {
                 lastEnablePrimitiveRestart -> glEnable(GL_PRIMITIVE_RESTART)
                 else -> glDisable(GL_PRIMITIVE_RESTART)
             }
-        if (POLYGON_MODE)
+        if (IMPL_HAS_POLYGON_MODE)
             glPolygonMode(GL_FRONT_AND_BACK, lastPolygonMode)
         glViewport(lastViewport)
         glScissor(lastScissorBox)
@@ -266,7 +266,7 @@ class ImplGL3 : GLInterface {
         glBindTexture(GL_TEXTURE_2D, data.fontTexture[0])
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        if (UNPACK_ROW_LENGTH)
+        if (UNPACK_ROW_LENGTH) // Not on WebGL/ES
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
 
@@ -361,7 +361,8 @@ class ImplGL3 : GLInterface {
 
         var CLIP_ORIGIN = false && Platform.get() != Platform.MACOSX
 
-        var POLYGON_MODE = true
+        // Desktop GL 2.0+ has glPolygonMode() which GL ES and WebGL don't have.
+        var IMPL_HAS_POLYGON_MODE = true
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
 

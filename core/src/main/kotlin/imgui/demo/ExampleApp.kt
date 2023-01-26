@@ -232,7 +232,7 @@ object ExampleApp {
             treeNode("Backend Flags") {
                 helpMarker("""
                     Those flags are set by the backends (imgui_impl_xxx files) to specify their capabilities.
-                    Here we expose then as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
+                    Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
 
                 // Make a local copy to avoid modifying actual backend flags.
                 val backendFlags = intArrayOf(io.backendFlags)
