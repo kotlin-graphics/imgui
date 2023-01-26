@@ -142,19 +142,17 @@ class ImplGL2 : GLInterface {
                         userCB(cmdList, cmd)
                 } else {
                     // Project scissor/clipping rectangles into framebuffer space
-                    val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
-                    val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
-                    val clipRectZ = (cmd.clipRect.z - clipOff.x) * clipScale.x
-                    val clipRectW = (cmd.clipRect.w - clipOff.y) * clipScale.y
+                    val clipMin = Vec2((cmd.clipRect.x - clipOff.x) * clipScale.x, (cmd.clipRect.y - clipOff.y) * clipScale.y)
+                    val clipMax = Vec2((cmd.clipRect.z - clipOff.x) * clipScale.x, (cmd.clipRect.w - clipOff.y) * clipScale.y)
+                    if (clipMax.x < clipMin.x || clipMax.y < clipMin.y)
+                        continue
 
-                    if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0f && clipRectW >= 0f) {
-                        // Apply scissor/clipping rectangle
-                        glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
+                    // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
+                    glScissor(clipMin.x.i, (fbHeight - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i)
 
-                        // Bind texture, Draw
-                        glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
-                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
-                    }
+                    // Bind texture, Draw
+                    glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
+                    glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
                 }
                 idxBufferOffset += cmd.elemCount * DrawIdx.BYTES
             }

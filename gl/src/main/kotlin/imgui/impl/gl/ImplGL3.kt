@@ -203,22 +203,20 @@ class ImplGL3 : GLInterface {
                         userCB(cmdList, cmd)
                 } else {
                     // Project scissor/clipping rectangles into framebuffer space
-                    val clipRectX = (cmd.clipRect.x - clipOff.x) * clipScale.x
-                    val clipRectY = (cmd.clipRect.y - clipOff.y) * clipScale.y
-                    val clipRectZ = (cmd.clipRect.z - clipOff.x) * clipScale.x
-                    val clipRectW = (cmd.clipRect.w - clipOff.y) * clipScale.y
+                    val clipMin = Vec2((cmd.clipRect.x - clipOff.x) * clipScale.x, (cmd.clipRect.y - clipOff.y) * clipScale.y)
+                    val clipMax = Vec2((cmd.clipRect.z - clipOff.x) * clipScale.x, (cmd.clipRect.w - clipOff.y) * clipScale.y)
+                    if (clipMax.x < clipMin.x || clipMax.y < clipMin.y)
+                        continue
 
-                    if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0f && clipRectW >= 0f) {
-                        // Apply scissor/clipping rectangle
-                        glScissor(clipRectX.i, (fbHeight - clipRectW).i, (clipRectZ - clipRectX).i, (clipRectW - clipRectY).i)
+                    // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
+                    glScissor(clipMin.x.i, (fbHeight - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i)
 
-                        // Bind texture, Draw
-                        glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
-                        if (OPENGL_MAY_HAVE_VTX_OFFSET && data.glVersion >= 320)
-                            glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
-                        else
-                            glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
-                    }
+                    // Bind texture, Draw
+                    glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
+                    if (OPENGL_MAY_HAVE_VTX_OFFSET && data.glVersion >= 320)
+                        glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
+                    else
+                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
                 }
                 idxBufferOffset += cmd.elemCount * DrawIdx.BYTES
             }
@@ -491,6 +489,7 @@ class ImplGL3 : GLInterface {
         }
 
         val data = Data()
+
         class Data {
 
             /** Extracted at runtime using GL_MAJOR_VERSION, GL_MINOR_VERSION queries (e.g. 320 for GL 3.2) */
