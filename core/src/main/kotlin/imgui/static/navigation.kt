@@ -147,34 +147,7 @@ fun navUpdate() {
     io.navVisible = (io.navActive && g.navId != 0 && !g.navDisableHighlight) || g.navWindowingTarget != null
 
     // Process NavCancel input (to close a popup, get back to parent, clear focus)
-    if (NavInput.Cancel.isTest(InputReadMode.Pressed)) {
-        IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel")
-        if (g.activeId != 0) {
-            if (!isActiveIdUsingNavInput(NavInput.Cancel))
-                clearActiveID()
-        } else if (g.navLayer != NavLayer.Main)
-        // Leave the "menu" layer
-            navRestoreLayer(NavLayer.Main)
-        else if (g.navWindow != null && g.navWindow!! !== g.navWindow!!.rootWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
-            // Exit child window
-            val childWindow = g.navWindow!!
-            val parentWindow = childWindow.parentWindow!!
-            assert(childWindow.childId != 0)
-            val childRect = childWindow.rect()
-            focusWindow(parentWindow)
-            setNavID(childWindow.childId, NavLayer.Main, 0, Rect(childRect.min - parentWindow.pos, childRect.max - parentWindow.pos))
-        } else if (g.openPopupStack.isNotEmpty()) {
-            // Close open popup/menu
-            if (g.openPopupStack.last().window!!.flags hasnt Wf._Modal)
-                closePopupToLevel(g.openPopupStack.lastIndex, true)
-        } else {
-            // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
-            if (g.navWindow != null && (g.navWindow!!.flags has Wf._Popup || g.navWindow!!.flags hasnt Wf._ChildWindow))
-                g.navWindow!!.navLastIds[0] = 0
-            g.navFocusScopeId = 0
-            g.navId = 0
-        }
-    }
+    navUpdateCancelRequest()
 
     // Process manual activation request
     g.navActivateId = 0
@@ -438,7 +411,7 @@ fun navUpdateWindowing() {
         if (io.keyMods hasnt KeyMod.Alt.i && io.keyModsPrev has KeyMod.Alt && g.navWindowingToggleLayer)
             if (g.activeId == 0 || g.activeIdAllowOverlap)
                 if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
-        applyToggleLayer = true
+                    applyToggleLayer = true
         if (!io.keyAlt)
             g.navWindowingToggleLayer = false
     }
@@ -627,6 +600,44 @@ fun navUpdateInitResult() {
         g.navDisableMouseHover = true; g.navMousePosDirty = true
     }
 }
+
+/** Process NavCancel input (to close a popup, get back to parent, clear focus)
+ *  FIXME: In order to support e.g. Escape to clear a selection we'll need:
+ *  - either to store the equivalent of ActiveIdUsingKeyInputMask for a FocusScope and test for it.
+ *  - either to move most/all of those tests to the epilogue/end functions of the scope they are dealing with (e.g. exit child window in EndChild()) or in EndFrame(), to allow an earlier intercept */
+fun navUpdateCancelRequest() {
+
+    if (!NavInput.Cancel.isTest(InputReadMode.Pressed))
+        return
+
+    IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel\n")
+    val navWindow = g.navWindow
+    if (g.activeId != 0) {
+        if (!isActiveIdUsingNavInput(NavInput.Cancel))
+            clearActiveID()
+    } else if (g.navLayer != NavLayer.Main)
+    // Leave the "menu" layer
+        navRestoreLayer(NavLayer.Main)
+    else if (navWindow != null && navWindow !== navWindow.rootWindow && navWindow.flags hasnt Wf._Popup && navWindow.parentWindow != null) {
+        // Exit child window
+        val childWindow = navWindow
+        val parentWindow = navWindow.parentWindow!!
+        assert(childWindow.childId != 0)
+        val childRect = childWindow.rect()
+        focusWindow(parentWindow)
+        setNavID(childWindow.childId, NavLayer.Main, 0, Rect(childRect.min - parentWindow.pos, childRect.max - parentWindow.pos))
+    } else if (g.openPopupStack.isNotEmpty()) {
+        // Close open popup/menu
+        if (g.openPopupStack.last().window!!.flags hasnt Wf._Modal)
+            closePopupToLevel(g.openPopupStack.lastIndex, true)
+    } else {
+        // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
+        if (navWindow != null && (navWindow.flags has Wf._Popup || navWindow.flags hasnt Wf._ChildWindow))
+            navWindow.navLastIds[0] = 0
+        g.navId = 0; g.navFocusScopeId = 0
+    }
+}
+
 
 /** Handle PageUp/PageDown/Home/End keys */
 fun navUpdatePageUpPageDown(): Float {

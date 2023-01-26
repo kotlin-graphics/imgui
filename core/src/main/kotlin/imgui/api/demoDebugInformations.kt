@@ -66,9 +66,11 @@ import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
 import imgui.dsl.treeNode
-import imgui.internal.*
-import imgui.internal.classes.*
-import imgui.internal.sections.InputSource
+import imgui.internal.DrawIdx
+import imgui.internal.DrawVert
+import imgui.internal.classes.Rect
+import imgui.internal.classes.Table
+import imgui.internal.classes.Window
 import kool.BYTES
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
