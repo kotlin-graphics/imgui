@@ -93,9 +93,14 @@ fun navUpdate() {
         if (io.keyAlt && !io.keyCtrl)
             io.navInputs[NavInput._KeyMenu] = 1f
 
-        // We automatically cancel toggling nav layer when any text has been typed while holding Alt. (See #370)
-        if (io.keyAlt && !io.keyCtrl && g.navWindowingToggleLayer && io.inputQueueCharacters.size > 0)
-            g.navWindowingToggleLayer = false
+        // We cancel toggling nav layer when any text has been typed while holding Alt. (See #370)
+        // We cancel toggling nav layer when other modifiers are pressed. (See #4439)
+        if (g.navWindowingToggleLayer && g.navInputSource == InputSource.Keyboard) {
+            if (io.keyAlt && !io.keyCtrl && io.inputQueueCharacters.size > 0)
+                g.navWindowingToggleLayer = false
+            if (io.keyCtrl || io.keyShift || io.keySuper)
+                g.navWindowingToggleLayer = false
+        }
 
     }
     for (i in io.navInputsDownDuration.indices)
@@ -162,7 +167,7 @@ fun navUpdate() {
             if (!isActiveIdUsingNavInput(NavInput.Cancel))
                 clearActiveID()
         } else if (g.navLayer != NavLayer.Main)
-            // Leave the "menu" layer
+        // Leave the "menu" layer
             navRestoreLayer(NavLayer.Main)
         else if (g.navWindow != null && g.navWindow!! !== g.navWindow!!.rootWindow && g.navWindow!!.flags hasnt Wf._Popup && g.navWindow!!.parentWindow != null) {
             // Exit child window
@@ -378,7 +383,7 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = it.rootWindow
             g.navWindowingHighlightAlpha = 0f
             g.navWindowingTimer = 0f
-            g.navWindowingToggleLayer = !startWindowingWithKeyboard
+            g.navWindowingToggleLayer = startWindowingWithGamepad // Gamepad starts toggling layer
             g.navInputSource = if (startWindowingWithKeyboard) InputSource.Keyboard else InputSource.Gamepad
         }
 
@@ -430,8 +435,10 @@ fun navUpdateWindowing() {
 
     // Keyboard: Press and Release ALT to toggle menu layer
     // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of backend clearing releases all keys on ALT-TAB
-    if (NavInput._KeyMenu.isTest(InputReadMode.Pressed))
+    if (NavInput._KeyMenu.isTest(InputReadMode.Pressed) && g.io.keyMods == KeyMod.Alt.i) {
         g.navWindowingToggleLayer = true
+        g.navInputSource = InputSource.Keyboard
+    }
     if ((g.activeId == 0 || g.activeIdAllowOverlap) && g.navWindowingToggleLayer && NavInput._KeyMenu.isTest(
             InputReadMode.Released
                                                                                                             )
