@@ -8,7 +8,7 @@ var IMGUI_DEBUG_TEST_ENGINE = true
 
 infix fun Byte.has(i: Int): Boolean = toInt().has(i)
 
-fun <T> ArrayList<T>.pop(): T = removeAt(lastIndex)
+fun <T> ArrayList<T>.pop(): T = removeLast()
 
 class StringPointer(val string: String) {
     var pointer = 0

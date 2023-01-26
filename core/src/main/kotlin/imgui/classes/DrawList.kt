@@ -259,43 +259,43 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     fun addCircle(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0, thickness: Float = 1f) {
 
-        if (col hasnt COL32_A_MASK || radius <= 0f) return
+        var numSegments = numSegments_
+        if (col hasnt COL32_A_MASK || radius <= 0f)
+            return
 
-        // Obtain segment count
-        val numSegments = when {
-            // Automatic segment count
-            numSegments_ <= 0 -> _calcCircleAutoSegmentCount(radius)
-            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
-                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+        if (numSegments <= 0) {
+            // Use arc with automatic segment count
+            _pathArcToFastEx(center, radius - 0.5f, 0, DRAWLIST_ARCFAST_SAMPLE_MAX, 0)
+            _path.removeLast()
+        } else {
+            // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+            numSegments = clamp(numSegments, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+            // Because we are filling a closed shape we remove 1 from the count of segments/points
+            val aMax = (glm.πf * 2f) * (numSegments - 1f) / numSegments
+            pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         }
 
-        // Because we are filling a closed shape we remove 1 from the count of segments/points
-        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        if (numSegments == 12)
-            pathArcToFast(center, radius - 0.5f, 0, 12 - 1)
-        else
-            pathArcTo(center, radius - 0.5f, 0f, aMax, numSegments - 1)
         pathStroke(col, DrawFlag.Closed.i, thickness)
     }
 
     fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0) {
 
-        if (col hasnt COL32_A_MASK || radius <= 0f) return
+        var numSegments = numSegments_
+        if (col hasnt COL32_A_MASK || radius <= 0f)
+            return
 
-        // Obtain segment count
-        val numSegments = when {
-            // Automatic segment count
-            numSegments_ <= 0 -> _calcCircleAutoSegmentCount(radius)
-            else -> // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
-                clamp(numSegments_, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+        if (numSegments <= 0) {
+            // Use arc with automatic segment count
+            _pathArcToFastEx(center, radius, 0, DRAWLIST_ARCFAST_SAMPLE_MAX, 0)
+            _path.removeLast()
+        } else {
+            // Explicit segment count (still clamp to avoid drawing insanely tessellated shapes)
+            numSegments = clamp(numSegments, 3, DRAWLIST_CIRCLE_AUTO_SEGMENT_MAX)
+            // Because we are filling a closed shape we remove 1 from the count of segments/points
+            val aMax = (glm.πf * 2f) * (numSegments - 1f) / numSegments
+            pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         }
 
-        // Because we are filling a closed shape we remove 1 from the count of segments/points
-        val aMax = glm.PIf * 2f * (numSegments - 1f) / numSegments
-        if (numSegments == 12)
-            pathArcToFast(center, radius, 0, 12 - 1)
-        else
-            pathArcTo(center, radius, 0f, aMax, numSegments - 1)
         pathFillConvex(col)
     }
 
