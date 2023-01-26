@@ -11,7 +11,7 @@ import imgui.api.g
 internal interface inputs {
 
     fun setItemUsingMouseWheel() {
-        val id = g.currentWindow!!.dc.lastItemId
+        val id = g.lastItemData.id
         if (g.hoveredId == id)
             g.hoveredIdUsingMouseWheel = true
         if (g.activeId == id)
