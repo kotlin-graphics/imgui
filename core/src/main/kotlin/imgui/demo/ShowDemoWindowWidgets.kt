@@ -1167,15 +1167,16 @@ object ShowDemoWindowWidgets {
         var progressDir = 1f
         operator fun invoke() {
             // Plot/Graph widgets are not very good.
-            // Consider writing your own, or using a third-party one, see:
-            // - ImPlot https://github.com/epezent/implot
-            // - others https://github.com/ocornut/imgui/wiki/Useful-Extensions
+            // Consider using a third-party library such as ImPlot: https://github.com/epezent/implot
+            // (see others https://github.com/ocornut/imgui/wiki/Useful-Extensions)
             treeNode("Plots Widgets") {
 
                 checkbox("Animate", ::animate)
 
+                // Plot as lines and plot as histogram
                 val arr = floatArrayOf(0.6f, 0.1f, 1f, 0.5f, 0.92f, 0.1f, 0.2f)
                 plotLines("Frame Times", arr)
+                plotHistogram("Histogram", arr, 0, "", 0f, 1f, Vec2(0, 80f))
 
                 // Fill an array of contiguous float values to plot
                 // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
@@ -1193,7 +1194,6 @@ object ShowDemoWindowWidgets {
                     val overlay = "avg ${values.average()}"
                     plotLines("Lines", values, valuesOffset, overlay, -1f, 1f, Vec2(0f, 80f))
                 }
-                plotHistogram("Histogram", arr, 0, "", 0f, 1f, Vec2(0f, 80f))
 
                 // Use functions to generate output
                 // FIXME: This is rather awkward because current plot API only pass in indices.

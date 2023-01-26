@@ -94,8 +94,7 @@ internal interface plot {
             var t0 = 0f
             // Point in the normalized space of our target rectangle
             val tp0 = Vec2(t0, 1f - saturate((v0 - scaleMin) * invScale))
-            // Where does the zero line stands
-            val histogramZeroLineT = if (scaleMin * scaleMax < 0f) -scaleMin * invScale else if (scaleMin < 0f) 0f else 1f
+            val histogramZeroLineT = if (scaleMin * scaleMax < 0f) (1 + scaleMin * invScale) else if (scaleMin < 0f) 0f else 1f // Where does the zero line stands
 
             val colBase = (if (plotType == PlotType.Lines) Col.PlotLines else Col.PlotHistogram).u32
             val colHovered = (if (plotType == PlotType.Lines) Col.PlotLinesHovered else Col.PlotHistogramHovered).u32
