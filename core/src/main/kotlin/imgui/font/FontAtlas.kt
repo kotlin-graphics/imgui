@@ -160,7 +160,7 @@ class FontAtlas {
         customRects.clear()
         packIdMouseCursors = -1
         packIdLines = -1
-        texReady = false
+        // Important: we leave TexReady untouched
     }
 
     /** Clear output texture data (CPU side). Saves RAM once the texture has been copied to graphics memory. */
