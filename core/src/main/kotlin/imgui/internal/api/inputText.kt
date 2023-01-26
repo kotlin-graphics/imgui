@@ -120,12 +120,15 @@ internal interface inputText {
         var drawWindow = window
         val innerSize = Vec2(frameSize)
         val bufEnd = Vec1i()
+        var itemStatusFlags = ItemStatusFlag.None.i
         if (isMultiline) {
             if (!itemAdd(totalBb, id, frameBb, ItemAddFlag.Focusable.i)) {
                 itemSize(totalBb, style.framePadding.y)
                 endGroup()
                 return false
             }
+            itemStatusFlags = g.lastItemData.statusFlags
+
             // We reproduce the contents of BeginChildFrame() in order to provide 'label' so our window internal data are easier to read/debug.
             pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
             pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
@@ -150,6 +153,7 @@ internal interface inputText {
             if (flags hasnt InputTextFlag._MergedItem)
                 if (!itemAdd(totalBb, id, frameBb, ItemAddFlag.Focusable.i))
                     return false
+            itemStatusFlags = g.lastItemData.statusFlags
         }
         val hovered = itemHoverable(frameBb, id)
         if (hovered) g.mouseCursor = MouseCursor.TextInput
@@ -157,8 +161,8 @@ internal interface inputText {
         // We are only allowed to access the state if we are already the active widget.
         var state = getInputTextState(id)
 
-        val focusRequestedByCode = g.lastItemData.statusFlags has ItemStatusFlag.FocusedByCode
-        val focusRequestedByTabbing = g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
+        val focusRequestedByCode = itemStatusFlags has ItemStatusFlag.FocusedByCode
+        val focusRequestedByTabbing = itemStatusFlags has ItemStatusFlag.FocusedByTabbing
 
         val userClicked = hovered && io.mouseClicked[0]
         val userNavInputStart = g.activeId != id && (g.navInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.Keyboard))
