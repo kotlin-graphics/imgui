@@ -120,14 +120,17 @@ internal interface inputText {
         var drawWindow = window
         val innerSize = Vec2(frameSize)
         val bufEnd = Vec1i()
-        var itemStatusFlags = ItemStatusFlag.None.i
+        val itemStatusFlags: ItemStatusFlags
         if (isMultiline) {
+            val backupPos = Vec2(window.dc.cursorPos)
+            itemSize(totalBb, style.framePadding.y)
             if (!itemAdd(totalBb, id, frameBb, ItemAddFlag.Focusable.i)) {
                 itemSize(totalBb, style.framePadding.y)
                 endGroup()
                 return false
             }
             itemStatusFlags = g.lastItemData.statusFlags
+            window.dc.cursorPos = backupPos
 
             // We reproduce the contents of BeginChildFrame() in order to provide 'label' so our window internal data are easier to read/debug.
             pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
