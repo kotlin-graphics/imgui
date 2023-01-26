@@ -89,7 +89,8 @@ internal interface inputText {
         var buf = buf_
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         assert(buf.isNotEmpty())
         assert(!(flags has Itf.CallbackHistory && flags has Itf._Multiline)) { "Can't use both together (they both use up/down keys)" }

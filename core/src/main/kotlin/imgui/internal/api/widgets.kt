@@ -58,7 +58,14 @@ internal interface widgets {
     fun textEx(text: ByteArray, textEnd: Int = text.strlen(), flags: TextFlags = TextFlag.None.i) {
 
         val window = currentWindow
-        if (window.skipItems) return
+        if (window.skipItems)
+            return
+
+        // Accept null ranges
+        if (text.strlen() == textEnd)
+            text[0] = 0// = text_end = "";
+
+        // Calculate length
 
         val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
         val wrapPosX = window.dc.textWrapPos
