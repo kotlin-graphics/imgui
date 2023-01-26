@@ -59,12 +59,12 @@ internal interface navigation {
         g.navWindow!!.navRectRel[g.navLayer] = bbRel
     }
 
-    fun navMoveRequestTryWrapping(window: Window, moveFlags: NavMoveFlags) {
-
-        // Navigation wrap-around logic is delayed to the end of the frame because this operation is only valid after entire
-        // popup is assembled and in case of appended popups it is not clear which EndPopup() call is final.
-        g.navWrapRequestWindow = window
-        g.navWrapRequestFlags = moveFlags
+    /** Navigation wrap-around logic is delayed to the end of the frame because this operation is only valid after entire
+     *  popup is assembled and in case of appended popups it is not clear which EndPopup() call is final. */
+    fun navMoveRequestTryWrapping(window: Window, wrapFlags: NavMoveFlags) {
+        assert(wrapFlags != 0) { "Call with _WrapX, _WrapY, _LoopX, _LoopY" }
+        if (g.navWindow === window && g.navMoveRequest && g.navLayer == NavLayer.Main)
+            g.navMoveRequestFlags = g.navMoveRequestFlags or wrapFlags
     }
 
     fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?

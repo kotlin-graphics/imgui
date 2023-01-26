@@ -95,7 +95,7 @@ interface popupsModals {
         assert(window.flags has Wf._Popup) { "Mismatched BeginPopup()/EndPopup() calls" }
         assert(g.beginPopupStack.isNotEmpty())
 
-        // Make all menus and popups wrap around for now, may need to expose that policy.
+        // Make all menus and popups wrap around for now, may need to expose that policy (e.g. focus scope could include wrap/loop policy flags used by new move requests)
         if (g.navWindow === window)
             navMoveRequestTryWrapping(window, NavMoveFlag.LoopY.i)
 

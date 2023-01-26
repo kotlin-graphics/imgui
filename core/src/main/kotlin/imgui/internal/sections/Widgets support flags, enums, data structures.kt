@@ -425,7 +425,7 @@ enum class NavMoveFlag {
     /** On failed request, request from opposite side one line down (when NavDir==right) or one line up (when NavDir==left) */
     WrapX,
 
-    /** This is not super useful for provided for completeness */
+    /** This is not super useful for provided but completeness */
     WrapY,
 
     /** Allow scoring and considering the current NavId as a move target candidate.
@@ -433,7 +433,7 @@ enum class NavMoveFlag {
      *  if we are pressing PageDown from the bottom-most item we need to stay in place) */
     AllowCurrentNavId,
 
-    /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible.; */
+    /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible (used by PageUp/PageDown) */
     AlsoScoreVisibleSet,
     ScrollToEdge;
 
@@ -454,6 +454,7 @@ infix fun NavMoveFlags.xor(b: NavMoveFlag): NavMoveFlags = xor(b.i)
 infix fun NavMoveFlags.has(b: NavMoveFlag): Boolean = and(b.i) != 0
 infix fun NavMoveFlags.hasnt(b: NavMoveFlag): Boolean = and(b.i) == 0
 infix fun NavMoveFlags.wo(b: NavMoveFlag): NavMoveFlags = and(b.i.inv())
+
 
 
 enum class NavForward { None, ForwardQueued, ForwardActive }

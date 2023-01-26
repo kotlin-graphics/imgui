@@ -720,13 +720,12 @@ fun navEndFrame() {
         navUpdateWindowingOverlay()
 
     // Perform wrap-around in menus
-    val window = g.navWrapRequestWindow
-    val moveFlags: NavMoveFlags = g.navWrapRequestFlags
-    if (window != null && g.navWindow === window && navMoveRequestButNoResultYet() &&
-        g.navMoveRequestForward == NavForward.None && g.navLayer == NavLayer.Main
-    ) {
+    // FIXME-NAV: Wrap support could be moved to the scoring function and than WrapX would function without an extra frame. This is essentially same as tabbing!
+    val window = g.navWindow
+    val moveFlags = g.navMoveRequestFlags
+    val wantedFlags = NavMoveFlag.WrapX or NavMoveFlag.LoopX or NavMoveFlag.WrapY or NavMoveFlag.LoopY
+    if (window != null && navMoveRequestButNoResultYet() && g.navMoveRequestFlags has wantedFlags && g.navMoveRequestForward == NavForward.None) {
 
-        assert(moveFlags != 0) // No points calling this with no wrapping
         val bbRel = Rect(window.navRectRel[0])
 
         var clipDir = g.navMoveDir

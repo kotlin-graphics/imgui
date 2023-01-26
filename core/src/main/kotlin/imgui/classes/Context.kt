@@ -357,12 +357,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavItemData()
 
-    /** Window which requested trying nav wrap-around. */
-    var navWrapRequestWindow: Window? = null
-
-    /** Wrap-around operation flags. */
-    var navWrapRequestFlags: NavMoveFlags = NavMoveFlag.None.i
-
 
     // Navigation: Windowing (CTRL+TAB for list, or Menu button + keys or directional pads to move/resize)
 
