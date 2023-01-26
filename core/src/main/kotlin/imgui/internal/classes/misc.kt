@@ -97,39 +97,6 @@ class MenuColumns {
     }
 }
 
-/** Result of a gamepad/keyboard directional navigation move query result */
-class NavItemData {
-    /** Init,Move    // Best candidate window (result->ItemWindow->RootWindowForNav == request->Window) */
-    var window: Window? = null
-
-    /** Init,Move    // Best candidate item ID */
-    var id: ID = 0
-
-    /** Init,Move    // Best candidate focus scope ID */
-    var focusScopeId: ID = 0
-
-    /** Init,Move    // Best candidate bounding box in window relative space */
-    var rectRel = Rect()
-
-    /**      Move    // Best candidate box distance to current NavId */
-    var distBox = Float.MAX_VALUE
-
-    /**      Move    // Best candidate center distance to current NavId */
-    var distCenter = Float.MAX_VALUE
-
-    /**      Move    // Best candidate axial distance to current NavId */
-    var distAxial = Float.MAX_VALUE
-
-    fun clear() {
-        id = 0
-        window = null
-        distBox = Float.MAX_VALUE
-        distCenter = Float.MAX_VALUE
-        distAxial = Float.MAX_VALUE
-        rectRel = Rect()
-    }
-}
-
 //-----------------------------------------------------------------------------
 // [SECTION] Metrics, Debug
 //-----------------------------------------------------------------------------

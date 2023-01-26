@@ -40,7 +40,6 @@ import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.*
-import imgui.internal.classes.NavItemData
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
