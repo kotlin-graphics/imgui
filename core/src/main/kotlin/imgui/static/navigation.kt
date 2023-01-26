@@ -5,6 +5,7 @@ import gli_.hasnt
 import glm_.glm
 import glm_.i
 import glm_.max
+import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -149,14 +150,14 @@ fun navUpdate() {
     g.navInputId = 0
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
         val activateDown = NavInput.Activate.isDown()
-        val activatePressed = activateDown && NavInput.Activate.isTest(InputReadMode.Pressed)
+        val activatePressed = activateDown && NavInput.Activate isTest InputReadMode.Pressed
         if (g.activeId == 0 && activatePressed)
             g.navActivateId = g.navId
         if ((g.activeId == 0 || g.activeId == g.navId) && activateDown)
             g.navActivateDownId = g.navId
         if ((g.activeId == 0 || g.activeId == g.navId) && activatePressed)
             g.navActivatePressedId = g.navId
-        if ((g.activeId == 0 || g.activeId == g.navId) && NavInput.Input.isTest(InputReadMode.Pressed))
+        if ((g.activeId == 0 || g.activeId == g.navId) && NavInput.Input isTest InputReadMode.Pressed)
             g.navInputId = g.navId
     }
     g.navWindow?.let { if (it.flags has Wf.NoNavInputs) g.navDisableHighlight = true }
@@ -172,140 +173,45 @@ fun navUpdate() {
     }
     g.navNextActivateId = 0
 
-    if (g.navMoveRequestForwardToNextFrame) {
-        // Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with a starting rectangle at the other side of the window)
-        // (Preserve g.NavMoveRequestFlags, g.NavMoveClipDir which were set by the NavMoveRequestForward() function)
-        assert(g.navMoveDir != Dir.None && g.navMoveClipDir != Dir.None)
-        assert(g.navMoveRequestFlags has NavMoveFlag.Forwarded)
-        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}\n")
-        g.navMoveRequestForwardToNextFrame = false
-    } else {
-        // Initiate directional inputs request
-        g.navMoveDir = Dir.None
-        g.navMoveRequestFlags = NavMoveFlag.None.i
-        g.navWindow?.let {
-            if (g.navWindowingTarget == null && it.flags hasnt Wf.NoNavInputs) {
-                val readMode = InputReadMode.Repeat
-                if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft.isTest(readMode) || NavInput._KeyLeft.isTest(
-                        readMode
-                                                                                                                       ))
-                ) g.navMoveDir = Dir.Left
-                if (!isActiveIdUsingNavDir(Dir.Right) && (NavInput.DpadRight.isTest(readMode) || NavInput._KeyRight.isTest(
-                        readMode
-                                                                                                                          ))
-                ) g.navMoveDir = Dir.Right
-                if (!isActiveIdUsingNavDir(Dir.Up) && (NavInput.DpadUp.isTest(readMode) || NavInput._KeyUp.isTest(
-                        readMode
-                                                                                                                 ))
-                ) g.navMoveDir = Dir.Up
-                if (!isActiveIdUsingNavDir(Dir.Down) && (NavInput.DpadDown.isTest(readMode) || NavInput._KeyDown.isTest(
-                        readMode
-                                                                                                                       ))
-                ) g.navMoveDir = Dir.Down
-            }
-        }
-        g.navMoveDir = g.navMoveDir
-    }
-
-    // Update PageUp/PageDown/Home/End scroll
-    // FIXME-NAV: Consider enabling those keys even without the master ImGuiConfigFlags_NavEnableKeyboard flag?
-    val navScoringRectOffsetY = when {
-        navKeyboardActive -> navUpdatePageUpPageDown()
-        else -> 0f
-    }
-
-    // If we initiate a movement request and have no current NavId, we initiate a InitDefaultRequest that will be used as a fallback if the direction fails to find a match
-    if (g.navMoveDir != Dir.None) {
-        g.navMoveRequest = true
-        g.navMoveRequestKeyMods = io.keyMods
-        g.navMoveDirLast = g.navMoveDir
-    }
-    if (g.navMoveRequest && g.navId == 0) {
-        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${g.navWindow!!.name}\", layer=${g.navLayer}")
-        g.navInitRequest = true
-        g.navInitRequestFromMove = true
-        // Reassigning with same value, we're being explicit here.
-        g.navInitResultId = 0    // -V1048
-        g.navDisableHighlight = false
-    }
+    // Process move requests
+    navUpdateCreateMoveRequest()
     navUpdateAnyRequestFlag()
-    if (g.navMoveDir != Dir.None)
-        assert(g.navMoveRequest)
 
     // Scrolling
-    g.navWindow?.let {
-
-        if (it.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null) {
-            // *Fallback* manual-scroll with Nav directional keys when window has no navigable item
-            val scrollSpeed =
-                round(it.calcFontSize() * 100 * io.deltaTime) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
-            if (it.dc.navLayersActiveMask == 0 && it.dc.navHasScroll && g.navMoveRequest) {
-                if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
-                    it setScrollX floor(it.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else 1f) * scrollSpeed)
-                if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down)
-                    it setScrollY floor(it.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else 1f) * scrollSpeed)
-            }
-
-            // *Normal* Manual scroll with NavScrollXXX keys
-            // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
-            val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
-            if (scrollDir.x != 0f && it.scrollbar.x)
-                it setScrollX floor(it.scroll.x + scrollDir.x * scrollSpeed)
-            if (scrollDir.y != 0f)
-                it setScrollY floor(it.scroll.y + scrollDir.y * scrollSpeed)
+    val navWindow = g.navWindow
+    if (navWindow != null && navWindow.flags hasnt Wf.NoNavInputs && g.navWindowingTarget == null) {
+        // *Fallback* manual-scroll with Nav directional keys when window has no navigable item
+        val window = navWindow
+        val scrollSpeed = round(window.calcFontSize() * 100 * io.deltaTime) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
+        if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll && g.navMoveRequest) { //-V560
+            if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
+                window.setScrollX(floor(window.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else +1f) * scrollSpeed))
+            if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down)
+                window.setScrollY(floor(window.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else +1f) * scrollSpeed))
         }
+
+        // *Normal* Manual scroll with NavScrollXXX keys
+        // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
+        val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
+        if (scrollDir.x != 0f && window.scrollbar.x)
+            window.setScrollX(floor(window.scroll.x + scrollDir.x * scrollSpeed))
+        if (scrollDir.y != 0f)
+            window.setScrollY(floor(window.scroll.y + scrollDir.y * scrollSpeed))
     }
 
-    // Reset search results
-    g.navMoveResultLocal.clear()
-    g.navMoveResultLocalVisibleSet.clear()
-    g.navMoveResultOther.clear()
-
-    // When using gamepad, we project the reference nav bounding box into window visible area.
-    // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
-    // (can't focus a visible object like we can with the mouse).
-    if (g.navMoveRequest && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main) {
-        val window = g.navWindow!!
-        val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
-        if (window.navRectRel[g.navLayer] !in windowRectRel) {
-            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel")
-            val pad = window.calcFontSize() * 0.5f
-            windowRectRel expand Vec2(
-                -min(windowRectRel.width, pad),
-                -min(windowRectRel.height, pad)
-                                     ) // Terrible approximation for the intent of starting navigation from first fully visible item
-            window.navRectRel[g.navLayer] clipWithFull windowRectRel
-            g.navFocusScopeId = 0
-            g.navId = 0
-        }
-    }
-
-    // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
-    g.navWindow.let { navWindow ->
-        val navRectRel = navWindow?.navRectRel?.get(g.navLayer)?.takeUnless { it.isInverted } ?: Rect()
-        g.navScoringRect.put(navWindow?.run { Rect(navRectRel.min + navWindow.pos, navRectRel.max + navWindow.pos) } ?: Rect(0f, 0f, 0f, 0f))
-    }
-    g.navScoringRect translateY navScoringRectOffsetY
-    g.navScoringRect.min.x = min(g.navScoringRect.min.x + 1f, g.navScoringRect.max.x)
-    g.navScoringRect.max.x = g.navScoringRect.min.x
-    // Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous abs() calls in navScoreItem().
-    assert(!g.navScoringRect.isInverted)
-    //g.OverlayDrawList.AddRect(g.NavScoringRectScreen.Min, g.NavScoringRectScreen.Max, IM_COL32(255,200,0,255)); // [DEBUG]
+    // [DEBUG]
     g.navScoringCount = 0
-    if (IMGUI_DEBUG_NAV_RECTS)
-        g.navWindow?.let { nav ->
-            for (layer in 0..1)
-                getForegroundDrawList(nav).addRect(
-                    nav.pos + nav.navRectRel[layer].min,
-                    nav.pos + nav.navRectRel[layer].max,
-                    COL32(255, 200, 0, 255)
-                                                  )  // [DEBUG]
-            val col = if (!nav.hidden) COL32(255, 0, 255, 255) else COL32(255, 0, 0, 255)
-            val p = navCalcPreferredRefPos()
-            val buf = "${g.navLayer}".toByteArray()
-            getForegroundDrawList(nav).addCircleFilled(p, 3f, col)
-            getForegroundDrawList(nav).addText(null, 13f, p + Vec2(8, -4), col, buf)
-        }
+    //    #if IMGUI_DEBUG_NAV_RECTS
+    //    if (g.NavWindow) {
+    //        ImDrawList * draw_list = GetForegroundDrawList(g.NavWindow)
+    //        if (1) {
+    //            for (int layer = 0; layer < 2; layer++) draw_list->AddRect(g.NavWindow->Pos+g.NavWindow->NavRectRel[layer].Min, g.NavWindow->Pos+g.NavWindow->NavRectRel[layer].Max, IM_COL32(255, 200, 0, 255));
+    //        } // [DEBUG]
+    //        if (1) {
+    //            ImU32 col =(!g.NavWindow->Hidden) ? IM_COL32(255, 0, 255, 255) : IM_COL32(255, 0, 0, 255); ImVec2 p = NavCalcPreferredRefPos (); char buf [32]; ImFormatString(buf, 32, "%d", g.NavLayer); draw_list->AddCircleFilled(p, 3.0f, col); draw_list->AddText(NULL, 13.0f, p+ImVec2(8, -4), col, buf);
+    //        }
+    //    }
+    //    #endif
 }
 
 /** Windowing management mode
@@ -328,7 +234,7 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL-TAB or Square+L/R window selection
-    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu.isTest(InputReadMode.Pressed)
+    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu isTest InputReadMode.Pressed
     val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
@@ -526,11 +432,11 @@ fun navUpdateWindowingOverlay() {
 
 fun navUpdateInitResult() {
     // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
-    val nav = g.navWindow ?: return
+    val navWindow = g.navWindow ?: return
 
     // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
     // FIXME-NAV: On _NavFlattened windows, g.NavWindow will only be updated during subsequent frame. Not a problem currently.
-    IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${nav.name}\"", g.navInitResultId)
+    IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"\n", g.navInitResultId)
     setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
     if (g.navInitRequestFromMove) {
         g.navDisableHighlight = false
@@ -575,6 +481,87 @@ fun navUpdateCancelRequest() {
     }
 }
 
+fun navUpdateCreateMoveRequest() {
+
+    val window = g.navWindow
+
+    if (g.navMoveRequestForwardToNextFrame) {
+        // Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with a starting rectangle at the other side of the window)
+        // (preserve most state, which were already set by the NavMoveRequestForward() function)
+        assert(g.navMoveDir != Dir.None && g.navMoveClipDir != Dir.None)
+        assert(g.navMoveRequestFlags has NavMoveFlag.Forwarded)
+        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}\n")
+        g.navMoveRequestForwardToNextFrame = false
+    } else {
+        // Initiate directional inputs request
+        g.navMoveDir = Dir.None
+        g.navMoveRequestFlags = NavMoveFlag.None.i
+        if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
+            val readMode = InputReadMode.Repeat
+            if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft isTest readMode || NavInput._KeyLeft isTest readMode))
+                g.navMoveDir = Dir.Left
+            if (!isActiveIdUsingNavDir(Dir.Right) && (NavInput.DpadRight isTest readMode || NavInput._KeyRight isTest readMode))
+                g.navMoveDir = Dir.Right
+            if (!isActiveIdUsingNavDir(Dir.Up) && (NavInput.DpadUp isTest readMode || NavInput._KeyUp isTest readMode))
+                g.navMoveDir = Dir.Up
+            if (!isActiveIdUsingNavDir(Dir.Down) && (NavInput.DpadDown isTest readMode || NavInput._KeyDown isTest readMode))
+                g.navMoveDir = Dir.Down
+        }
+        g.navMoveDir = g.navMoveDir
+    }
+
+    // Update PageUp/PageDown/Home/End scroll
+    // FIXME-NAV: Consider enabling those keys even without the master ImGuiConfigFlags_NavEnableKeyboard flag?
+    val navKeyboardActive = io.configFlags hasnt ConfigFlag.NavEnableKeyboard
+    val navScoringRectOffsetY = if (navKeyboardActive) navUpdatePageUpPageDown() else 0f
+
+    // If we initiate a movement request and have no current NavId, we initiate a InitDefaultRequest that will be used as a fallback if the direction fails to find a match
+    if (g.navMoveDir != Dir.None) {
+        assert(window != null)
+        g.navMoveRequest = true
+        g.navMoveRequestKeyMods = io.keyMods
+        g.navMoveDirLast = g.navMoveDir
+        g.navMoveResultLocal.clear()
+        g.navMoveResultLocalVisibleSet.clear()
+        g.navMoveResultOther.clear()
+    }
+
+    // Moving with no reference triggers a init request
+    if (g.navMoveRequest && g.navId == 0) {
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${g.navWindow!!.name}\", layer=${g.navLayer}")
+        g.navInitRequest = true
+        g.navInitRequestFromMove = true
+        g.navInitResultId = 0
+        g.navDisableHighlight = false
+    }
+
+    // When using gamepad, we project the reference nav bounding box into window visible area.
+    // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
+    // (can't focus a visible object like we can with the mouse).
+    if (g.navMoveRequest && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) {
+        val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
+        if (window.navRectRel[g.navLayer] !in windowRectRel) {
+            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel")
+            val pad = window.calcFontSize() * 0.5f
+            windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
+            window.navRectRel[g.navLayer] clipWithFull windowRectRel
+            g.navFocusScopeId = 0
+            g.navId = 0
+        }
+    }
+
+    // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
+    g.navScoringRect = Rect()
+    if (window != null) {
+        val navRectRel = if(!window.navRectRel[g.navLayer].isInverted) window.navRectRel[g.navLayer] else Rect()
+        g.navScoringRect = Rect(window.pos+navRectRel.min, window.pos+navRectRel.max)
+        g.navScoringRect translateY navScoringRectOffsetY
+        g.navScoringRect.min.x = (g.navScoringRect.min.x + 1f) min g.navScoringRect.max.x
+        g.navScoringRect.max.x = g.navScoringRect.min.x
+        assert(!g.navScoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous ImFabs() calls in NavScoreItem()." }
+        //GetForegroundDrawList()->AddRect(g.NavScoringRect.Min, g.NavScoringRect.Max, IM_COL32(255,200,0,255)); // [DEBUG]
+    }
+}
 
 /** Handle PageUp/PageDown/Home/End keys
  *  FIXME-NAV: how to get Home/End to aim at the beginning/end of a 2D grid? */
