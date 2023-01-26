@@ -76,6 +76,8 @@ internal interface navigation {
     /** Apply result from previous frame navigation directional move request. Always called from NavUpdate() */
     fun navMoveRequestApplyResult() {
 
+        // No result
+        // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
         if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0) {
             // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
             if (g.navId != 0) {
@@ -124,8 +126,12 @@ internal interface navigation {
 
             g.navJustMovedToKeyMods = g.navMoveKeyMods
         }
+
+        // Focus
         IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
         setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
+
+        // Enable nav highlight
         g.navDisableHighlight = false
         g.navDisableMouseHover = true; g.navMousePosDirty = true
     }
@@ -211,7 +217,8 @@ internal interface navigation {
         g.navNextActivateId = id
     }
 
-    /** FIXME-NAV: The existence of SetNavID vs SetFocusID properly needs to be clarified/reworked. */
+    /** FIXME-NAV: The existence of SetNavID vs SetFocusID properly needs to be clarified/reworked.
+     *  In our terminology those should be interchangeable. Those two functions are merely a legacy artifact, so at minimum naming should be clarified. */
     fun setNavID(id: ID, navLayer: NavLayer, focusScopeId: ID, rectRel: Rect) { // assert(navLayer == 0 || navLayer == 1) useless on jvm
         val navWindow = g.navWindow!!
         assert(navLayer == NavLayer.Main || navLayer == NavLayer.Menu)

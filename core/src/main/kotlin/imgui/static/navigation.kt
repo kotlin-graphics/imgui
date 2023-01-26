@@ -122,6 +122,7 @@ fun navUpdate() {
                 io.mousePos = navCalcPreferredRefPos()
                 io.mousePosPrev = Vec2(io.mousePos)
                 io.wantSetMousePos = true
+                //IMGUI_DEBUG_LOG("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
             }
         g.navMousePosDirty = false
     }
@@ -391,16 +392,18 @@ fun navUpdateWindowing() {
             focusWindow(newNavWindow)
             newNavWindow.navLastChildNavWindow = oldNavWindow
         }
-        g.navDisableHighlight = false
-        g.navDisableMouseHover = true
-        // Reinitialize navigation when entering menu bar with the Alt key.
+
+        // Toggle layer
         val newNavLayer = when {
             it.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
             else -> NavLayer.Main
         }
-        if (newNavLayer == NavLayer.Menu)
-            g.navWindow!!.navLastIds[newNavLayer] = 0
-        navRestoreLayer(newNavLayer)
+        if (newNavLayer != g.navLayer) {
+            // Reinitialize navigation when entering menu bar with the Alt key (FIXME: could be a properly of the layer?)
+            if (newNavLayer == NavLayer.Menu)
+                g.navWindow!!.navLastIds[newNavLayer] = 0
+            navRestoreLayer(newNavLayer)
+        }
     }
 }
 
@@ -442,6 +445,7 @@ fun navUpdateInitResult() {
     // FIXME-NAV: On _NavFlattened windows, g.NavWindow will only be updated during subsequent frame. Not a problem currently.
     IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"\n", g.navInitResultId)
     setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
+    g.navIdIsAlive = true // Mark as alive from previous frame as we got a result
     if (g.navInitRequestFromMove) {
         g.navDisableHighlight = false
         g.navDisableMouseHover = true; g.navMousePosDirty = true
@@ -936,14 +940,14 @@ fun navRestoreLayer(layer: NavLayer) {
     if (layer == NavLayer.Main)
         g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
     val window = g.navWindow!!
-    if (window.navLastIds[layer] != 0) {
+    if (window.navLastIds[layer] != 0)
         setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
-        g.navDisableHighlight = false
-        g.navDisableMouseHover = true; g.navMousePosDirty = true
-    } else {
+    else {
         g.navLayer = layer
         navInitWindow(window, true)
     }
+    g.navDisableHighlight = false
+    g.navDisableMouseHover = true; g.navMousePosDirty = true
 }
 
 
