@@ -11,6 +11,7 @@ import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginGroup
+import imgui.ImGui.beginListBox
 import imgui.ImGui.beginMenu
 import imgui.ImGui.beginMenuBar
 import imgui.ImGui.beginTabBar
@@ -32,11 +33,13 @@ import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endGroup
+import imgui.ImGui.endListBox
 import imgui.ImGui.endMenu
 import imgui.ImGui.endMenuBar
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.endTable
+import imgui.ImGui.fontSize
 import imgui.ImGui.getColumnWidth
 import imgui.ImGui.getID
 import imgui.ImGui.invisibleButton
@@ -46,9 +49,6 @@ import imgui.ImGui.isItemHovered
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectSize
 import imgui.ImGui.listBox
-import imgui.ImGui.beginListBox
-import imgui.ImGui.endListBox
-import imgui.ImGui.fontSize
 import imgui.ImGui.nextColumn
 import imgui.ImGui.plotHistogram
 import imgui.ImGui.popID
@@ -87,7 +87,6 @@ import imgui.ImGui.textWrapped
 import imgui.ImGui.treeNode
 import imgui.ImGui.treePop
 import imgui.ImGui.windowContentRegionMax
-import imgui.ImGui.windowContentRegionWidth
 import imgui.ImGui.windowDrawList
 import imgui.ImGui.windowPos
 import imgui.api.demoDebugInformations.Companion.helpMarker
@@ -297,7 +296,7 @@ object ShowDemoWindowLayout {
                     var windowFlags = Wf.HorizontalScrollbar.i
                     if (disableMouseWheel)
                         windowFlags = windowFlags or Wf.NoScrollWithMouse
-                    child("ChildL", Vec2(windowContentRegionWidth * 0.5f, 260), false, windowFlags) {
+                    child("ChildL", Vec2(contentRegionAvail.x * 0.5f, 260), false, windowFlags) {
                         for (i in 0..99)
                             text("%04d: scrollable region", i)
                     }
