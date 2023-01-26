@@ -523,27 +523,29 @@ interface windows {
                                                   g.style.windowRounding)
             }
 
-            // Since 1.71, child window can render their decoration (bg color, border, scrollbars, etc.) within their parent to save a draw call.
+            // Child windows can render their decoration (bg color, border, scrollbars, etc.) within their parent to save a draw call (since 1.71)
             // When using overlapping child windows, this will break the assumption that child z-order is mapped to submission order.
-            // We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping child.
-            // We also disabled this when we have dimming overlay behind this specific one child.
-            // FIXME: More code may rely on explicit sorting of overlapping child window and would need to disable this somehow. Please get in contact if you are affected.
+            // FIXME: User code may rely on explicit sorting of overlapping child window and would need to disable this somehow. Please get in contact if you are affected (github #4493)
             run {
                 var renderDecorationsInParent = false
-                if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip) if (window.drawList.cmdBuffer.last().elemCount == 0 && parentWindow!!.drawList.vtxBuffer.rem > 0) renderDecorationsInParent =
-                    true
-                if (renderDecorationsInParent) window.drawList = parentWindow!!.drawList
+                if (flags has Wf._ChildWindow && flags hasnt Wf._Popup && !windowIsChildTooltip) {
+
+                    // - We test overlap with the previous child window only (testing all would end up being O(log N) not a good investment here)
+                    // - We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping childs
+                    val previousChild = if(parentWindow!!.dc.childWindows.size >= 2) parentWindow.dc.childWindows[parentWindow.dc.childWindows.size - 2] else null
+                    val previousChildOverlapping = previousChild?.rect()?.overlaps(window.rect()) ?: false
+                    val parentIsEmpty = parentWindow.drawList.vtxBuffer.rem > 0
+                    if (window.drawList.cmdBuffer.last().elemCount == 0 && parentIsEmpty && !previousChildOverlapping)
+                        renderDecorationsInParent = true
+                }
+                if (renderDecorationsInParent)
+                    window.drawList = parentWindow!!.drawList
 
                 // Handle title bar, scrollbar, resize grips and resize borders
                 val windowToHighlight = g.navWindowingTarget ?: g.navWindow
                 val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
                     ?: false)
-                window.renderDecorations(titleBarRect,
-                                         titleBarIsHighlight,
-                                         resizeGripCount,
-                                         resizeGripCol,
-                                         resizeGripDrawSize)
-
+                window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
                 if (renderDecorationsInParent) window.drawList = window.drawListInst
             } // Draw navigation selection/windowing rectangle border
             if (g.navWindowingTargetAnim === window) {
