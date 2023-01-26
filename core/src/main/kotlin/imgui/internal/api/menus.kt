@@ -210,7 +210,7 @@ internal interface menus {
         val pressed: Boolean
         pushID(label)
         if (!enabled)
-            beginDisabled(true)
+            beginDisabled()
         val flags = SelectableFlag._SelectOnRelease or SelectableFlag._SetNavIdOnHover
         val offsets = window.dc.menuColumns
         if (window.dc.layoutType == LayoutType.Horizontal) {

@@ -13,10 +13,7 @@ import imgui.ImGui.format
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
-import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
-import imgui.internal.sections.ItemAddFlag
-import imgui.internal.sections.ItemStatusFlag
-import imgui.internal.sections.has
+import imgui.internal.sections.*
 import imgui.static.patchFormatStringFloatToInt
 import kool.getValue
 import kool.setValue
@@ -152,7 +149,7 @@ interface widgetsSliders {
 
         val tempInputAllowed = flags hasnt SliderFlag.NoInput
         ImGui.itemSize(totalBb, ImGui.style.framePadding.y)
-        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemAddFlag.Focusable.i else 0))
+        if (!ImGui.itemAdd(totalBb, id, frameBb, if (tempInputAllowed) ItemFlag.Inputable.i else 0))
             return false
 
         // Default format string when passing NULL

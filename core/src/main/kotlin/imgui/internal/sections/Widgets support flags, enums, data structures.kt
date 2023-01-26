@@ -39,7 +39,10 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     MixedValue(1 shl 6),  // false
 
     /** [ALPHA] Allow hovering interactions but underlying value is not changed. */
-    ReadOnly(1 shl 7);  // false
+    ReadOnly(1 shl 7),  // false
+
+    /** [WIP] Auto-activate item when focused. Currently only used and supported by a few items before it becomes a generic feature. */
+    Inputable(1 shl 8);   // false
 
     infix fun and(b: ItemFlag): ItemFlags = i and b.i
     infix fun and(b: ItemFlags): ItemFlags = i and b
@@ -58,33 +61,6 @@ infix fun ItemFlags.hasnt(b: ItemFlag): Boolean = and(b.i) == 0
 infix fun ItemFlags.wo(b: ItemFlag): ItemFlags = and(b.i.inv())
 operator fun ItemFlags.minus(flag: ItemFlag): ItemFlags = wo(flag)
 operator fun ItemFlags.div(flag: ItemFlag): ItemFlags = or(flag)
-
-
-typealias ItemAddFlags = Int
-
-/** Flags for ItemAdd()
- *  FIXME-NAV: _Focusable is _ALMOST_ what you would expect to be called '_TabStop' but because SetKeyboardFocusHere() works on items with no TabStop we distinguish Focusable from TabStop. */
-enum class ItemAddFlag(@JvmField val i: ItemAddFlags) {
-    None(0),
-
-    /** FIXME-NAV: In current/legacy scheme, Focusable+TabStop support are opt-in by widgets. We will transition it toward being opt-out, so this flag is expected to eventually disappear. */
-    Focusable(1 shl 0);
-
-    infix fun and(b: ItemAddFlag): ItemAddFlags = i and b.i
-    infix fun and(b: ItemAddFlags): ItemAddFlags = i and b
-    infix fun or(b: ItemAddFlag): ItemAddFlags = i or b.i
-    infix fun or(b: ItemAddFlags): ItemAddFlags = i or b
-    infix fun xor(b: ItemAddFlag): ItemAddFlags = i xor b.i
-    infix fun xor(b: ItemAddFlags): ItemAddFlags = i xor b
-    infix fun wo(b: ItemAddFlags): ItemAddFlags = and(b.inv())
-}
-
-infix fun ItemAddFlags.and(b: ItemAddFlag): ItemAddFlags = and(b.i)
-infix fun ItemAddFlags.or(b: ItemAddFlag): ItemAddFlags = or(b.i)
-infix fun ItemAddFlags.xor(b: ItemAddFlag): ItemAddFlags = xor(b.i)
-infix fun ItemAddFlags.has(b: ItemAddFlag): Boolean = and(b.i) != 0
-infix fun ItemAddFlags.hasnt(b: ItemAddFlag): Boolean = and(b.i) == 0
-infix fun ItemAddFlags.wo(b: ItemAddFlag): ItemAddFlags = and(b.i.inv())
 
 
 typealias ItemStatusFlags = Int
@@ -194,7 +170,7 @@ enum class ButtonFlag(val i: ButtonFlags) {
     DontClosePopups(1 shl 13),
 
     /** disable interactions -> use BeginDisabled() or ImGuiItemFlags_Disabled */
-//    Disabled(1 shl 14),
+    //    Disabled(1 shl 14),
 
     /** vertically align button to match text baseline - ButtonEx() only // FIXME: Should be removed and handled by SmallButton(), not possible currently because of DC.CursorPosPrevLine */
     AlignTextBaseLine(1 shl 15),

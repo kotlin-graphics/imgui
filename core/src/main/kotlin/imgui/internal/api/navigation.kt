@@ -43,6 +43,7 @@ internal interface navigation {
 
     fun navMoveRequestButNoResultYet(): Boolean = g.navMoveScoringItems && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
+    /** FIXME: ScoringRect is not set */
     fun navMoveRequestSubmit(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
         assert(g.navWindow != null)
         g.navMoveSubmitted = true; g.navMoveScoringItems = true

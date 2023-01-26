@@ -196,7 +196,7 @@ interface widgetsInputWithKeyboard {
             style.framePadding.x = style.framePadding.y
             var buttonFlags = Bf.Repeat or Bf.DontClosePopups
             if (flags has Itf.ReadOnly)
-                beginDisabled(true)
+                beginDisabled()
             sameLine(0f, style.itemInnerSpacing.x)
             if (buttonEx("-", Vec2(buttonSize), buttonFlags)) {
                 data = dataTypeApplyOp(dataType, '-', data, stepFast?.takeIf { io.keyCtrl } ?: step)

@@ -125,7 +125,7 @@ internal interface inputText {
         if (isMultiline) {
             val backupPos = Vec2(window.dc.cursorPos)
             itemSize(totalBb, style.framePadding.y)
-            if (!itemAdd(totalBb, id, frameBb, ItemAddFlag.Focusable.i)) {
+            if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable.i)) {
                 itemSize(totalBb, style.framePadding.y)
                 endGroup()
                 return false
@@ -155,7 +155,7 @@ internal interface inputText {
             // Support for internal ImGuiInputTextFlags_MergedItem flag, which could be redesigned as an ItemFlags if needed (with test performed in ItemAdd)
             itemSize(totalBb, style.framePadding.y)
             if (flags hasnt InputTextFlag._MergedItem)
-                if (!itemAdd(totalBb, id, frameBb, ItemAddFlag.Focusable.i))
+                if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable.i))
                     return false
             itemStatusFlags = g.lastItemData.statusFlags
         }

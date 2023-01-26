@@ -99,16 +99,7 @@ interface widgetsSelectables {
         }
 
         val disabledItem = flags has Sf.Disabled
-        val itemAdd = when {
-            disabledItem -> {
-                val backupItemFlags = g.currentItemFlags
-                g.currentItemFlags = g.currentItemFlags or If.Disabled
-                itemAdd(bb, id).also {
-                    g.currentItemFlags = backupItemFlags
-                }
-            }
-            else -> itemAdd(bb, id)
-        }
+        val itemAdd = itemAdd(bb, id, null, if(disabledItem) If.Disabled.i else If.None.i)
 
         if (spanAllColumns) {
             window.clipRect.min.x = backupClipRectMinX
@@ -120,7 +111,7 @@ interface widgetsSelectables {
 
         val disabledGlobal = g.currentItemFlags has If.Disabled
         if (disabledItem && !disabledGlobal) // Only testing this as an optimization
-            beginDisabled(true)
+            beginDisabled()
 
         // FIXME: We can standardize the behavior of those two, we could also keep the fast path of override ClipRect + full push on render only,
         // which would be advantageous since most selectable are not selected.

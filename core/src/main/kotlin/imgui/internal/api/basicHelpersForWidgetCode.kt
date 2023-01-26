@@ -78,7 +78,7 @@ internal interface basicHelpersForWidgetCode {
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over available surface
      *  declare their minimum size requirement to ItemSize() and provide a larger region to ItemAdd() which is used drawing/interaction. */
-    fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null, flags: ItemAddFlags = 0): Boolean {
+    fun itemAdd(bb: Rect, id: ID, navBbArg: Rect? = null, extraFlags: ItemFlags = 0): Boolean {
 
         val window = g.currentWindow!!
 
@@ -87,7 +87,7 @@ internal interface basicHelpersForWidgetCode {
         g.lastItemData.id = id
         g.lastItemData.rect put bb
         g.lastItemData.navRect put (navBbArg ?: bb)
-        g.lastItemData.inFlags = g.currentItemFlags
+        g.lastItemData.inFlags = g.currentItemFlags or extraFlags
         g.lastItemData.statusFlags = ItemStatusFlag.None.i
 
         // Directional navigation processing
@@ -122,10 +122,10 @@ internal interface basicHelpersForWidgetCode {
         if (isClippedEx(bb, id, false)) return false
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
-        // Tab stop handling (previously was using internal ItemFocusable() api)
-        // FIXME-NAV: We would now want to move this above the clipping test, but this would require being able to scroll and currently this would mean an extra frame. (#4079, #343)
-        if (flags has ItemAddFlag.Focusable)
-            itemFocusable(window, id)
+        // [WIP] Tab stop handling (previously was using internal FocusableItemRegister() api)
+        // FIXME-NAV: We would now want to move this before the clipping test, but this would require being able to scroll and currently this would mean an extra frame. (#4079, #343)
+        if (extraFlags has ItemFlag.Inputable)
+            itemInputable(window, id)
 
         // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
         if (isMouseHoveringRect(bb))
@@ -179,7 +179,11 @@ internal interface basicHelpersForWidgetCode {
         }
     }
 
-    fun itemFocusable(window: Window, id: ID) {
+    /** Called by ItemAdd()
+     * Process TAB/Shift+TAB. Be mindful that this function may _clear_ the ActiveID when tabbing out.
+     *
+     * [WIP] This will eventually be refactored and moved into NavProcessItem() */
+    fun itemInputable(window: Window, id: ID) {
 
         assert(id != 0 && id == g.lastItemData.id)
 
