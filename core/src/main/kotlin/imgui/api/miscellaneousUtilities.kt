@@ -76,21 +76,21 @@ interface miscellaneousUtilities {
             g.logEnabled -> 0 to itemsCount // If logging is active, do not perform any clipping
             skipItemForListClipping -> 0 to 0
             else -> {
-                // We create the union of the ClipRect and the NavScoringRect which at worst should be 1 page away from ClipRect
+                // We create the union of the ClipRect and the scoring rect which at worst should be 1 page away from ClipRect
                 val unclippedRect = window.clipRect
-                if (g.navMoveRequest)
+                if (g.navMoveScoringItems)
                     unclippedRect add g.navScoringRect
                 if (g.navJustMovedToId != 0 && window.navLastIds[0] == g.navJustMovedToId)
-                    unclippedRect add Rect(window.pos + window.navRectRel[0].min, window.pos + window.navRectRel[0].max)
+                    unclippedRect add Rect(window.pos + window.navRectRel[0].min, window.pos + window.navRectRel[0].max) // Could store and use NavJustMovedToRectRel
 
                 val pos = window.dc.cursorPos
                 var start = ((unclippedRect.min.y - pos.y) / itemsHeight).i
                 var end = ((unclippedRect.max.y - pos.y) / itemsHeight).i
 
                 // When performing a navigation request, ensure we have one item extra in the direction we are moving to
-                if (g.navMoveRequest && g.navMoveDir == Dir.Up)
+                if (g.navMoveScoringItems && g.navMoveDir == Dir.Up)
                     start--
-                if (g.navMoveRequest && g.navMoveDir == Dir.Down)
+                if (g.navMoveScoringItems && g.navMoveDir == Dir.Down)
                     end++
                 start = glm.clamp(start, 0, itemsCount)
                 end = glm.clamp(end + 1, start, itemsCount)

@@ -54,7 +54,9 @@ fun navUpdate() {
 
     io.wantSetMousePos = false
 
-    //    if (g.NavScoringCount > 0) printf("[%05d] NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.FrameCount, g.NavScoringCount, g.NavWindow ? g . NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest)
+//    #if 0
+//    if (g.NavScoringCount > 0) IMGUI_DEBUG_LOG("NavScoringCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
+//    #endif
 
     // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
     // (do it before we map Keyboard input!)
@@ -107,9 +109,9 @@ fun navUpdate() {
     g.navJustMovedToId = 0
 
     // Process navigation move request
-    if (g.navMoveRequest)
+    if (g.navMoveSubmitted)
         navMoveRequestApplyResult()
-    g.navMoveRequest = false
+    g.navMoveSubmitted = false; g.navMoveScoringItems = false
 
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
@@ -183,11 +185,12 @@ fun navUpdate() {
         // *Fallback* manual-scroll with Nav directional keys when window has no navigable item
         val window = navWindow
         val scrollSpeed = round(window.calcFontSize() * 100 * io.deltaTime) // We need round the scrolling speed because sub-pixel scroll isn't reliably supported.
-        if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll && g.navMoveRequest) { //-V560
-            if (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right)
-                window.setScrollX(floor(window.scroll.x + (if (g.navMoveDir == Dir.Left) -1f else +1f) * scrollSpeed))
-            if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down)
-                window.setScrollY(floor(window.scroll.y + (if (g.navMoveDir == Dir.Up) -1f else +1f) * scrollSpeed))
+        val moveDir = g.navMoveDir
+        if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll && moveDir != Dir.None) {
+            if (moveDir == Dir.Left || moveDir == Dir.Right)
+                window.setScrollX(floor(window.scroll.x + (if (moveDir == Dir.Left) -1f else +1f) * scrollSpeed))
+            if (moveDir == Dir.Up || moveDir == Dir.Down)
+                window.setScrollY(floor(window.scroll.y + (if (moveDir == Dir.Up) -1f else +1f) * scrollSpeed))
         }
 
         // *Normal* Manual scroll with NavScrollXXX keys
@@ -485,17 +488,17 @@ fun navUpdateCreateMoveRequest() {
 
     val window = g.navWindow
 
-    if (g.navMoveRequestForwardToNextFrame) {
+    if (g.navMoveForwardToNextFrame) {
         // Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with a starting rectangle at the other side of the window)
         // (preserve most state, which were already set by the NavMoveRequestForward() function)
         assert(g.navMoveDir != Dir.None && g.navMoveClipDir != Dir.None)
-        assert(g.navMoveRequestFlags has NavMoveFlag.Forwarded)
+        assert(g.navMoveFlags has NavMoveFlag.Forwarded)
         IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}\n")
-        g.navMoveRequestForwardToNextFrame = false
+        g.navMoveForwardToNextFrame = false
     } else {
         // Initiate directional inputs request
         g.navMoveDir = Dir.None
-        g.navMoveRequestFlags = NavMoveFlag.None.i
+        g.navMoveFlags = NavMoveFlag.None.i
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
             val readMode = InputReadMode.Repeat
             if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft isTest readMode || NavInput._KeyLeft isTest readMode))
@@ -513,21 +516,34 @@ fun navUpdateCreateMoveRequest() {
     // Update PageUp/PageDown/Home/End scroll
     // FIXME-NAV: Consider enabling those keys even without the master ImGuiConfigFlags_NavEnableKeyboard flag?
     val navKeyboardActive = io.configFlags hasnt ConfigFlag.NavEnableKeyboard
-    val navScoringRectOffsetY = if (navKeyboardActive) navUpdatePageUpPageDown() else 0f
+    var scoringRectOffsetY = 0f
+    if (window != null && g.navMoveDir == Dir.None && navKeyboardActive)
+        scoringRectOffsetY = navUpdatePageUpPageDown()
+
+    // [DEBUG] Always send a request
+    if (IMGUI_DEBUG_NAV_SCORING) {
+        if (io.keyCtrl && Key.C.isPressed)
+            g.navMoveDirForDebug = Dir.of((g.navMoveDirForDebug.i + 1) and 3)
+        if (io.keyCtrl && g.navMoveDir == Dir.None) {
+            g.navMoveDir = g.navMoveDirForDebug
+            g.navMoveFlags /= NavMoveFlag.DebugNoResult
+        }
+    }
 
     // If we initiate a movement request and have no current NavId, we initiate a InitDefaultRequest that will be used as a fallback if the direction fails to find a match
+    // FIXME: Would be nice to call a single function to initiate a new request
     if (g.navMoveDir != Dir.None) {
         assert(window != null)
-        g.navMoveRequest = true
-        g.navMoveRequestKeyMods = io.keyMods
-        g.navMoveDirLast = g.navMoveDir
+        g.navMoveSubmitted = true; g.navMoveScoringItems = true
+        g.navMoveKeyMods = io.keyMods
+        g.navMoveDirForDebug = g.navMoveDir
         g.navMoveResultLocal.clear()
-        g.navMoveResultLocalVisibleSet.clear()
+        g.navMoveResultLocalVisible.clear()
         g.navMoveResultOther.clear()
     }
 
     // Moving with no reference triggers a init request
-    if (g.navMoveRequest && g.navId == 0) {
+    if (g.navMoveSubmitted && g.navId == 0) {
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${g.navWindow!!.name}\", layer=${g.navLayer}")
         g.navInitRequest = true
         g.navInitRequestFromMove = true
@@ -538,7 +554,7 @@ fun navUpdateCreateMoveRequest() {
     // When using gamepad, we project the reference nav bounding box into window visible area.
     // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
     // (can't focus a visible object like we can with the mouse).
-    if (g.navMoveRequest && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) {
+    if (g.navMoveSubmitted && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) {
         val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
         if (window.navRectRel[g.navLayer] !in windowRectRel) {
             IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel")
@@ -551,25 +567,25 @@ fun navUpdateCreateMoveRequest() {
     }
 
     // For scoring we use a single segment on the left side our current item bounding box (not touching the edge to avoid box overlap with zero-spaced items)
-    g.navScoringRect = Rect()
+    val scoringRect = Rect()
     if (window != null) {
-        val navRectRel = if(!window.navRectRel[g.navLayer].isInverted) window.navRectRel[g.navLayer] else Rect()
-        g.navScoringRect = Rect(window.pos+navRectRel.min, window.pos+navRectRel.max)
-        g.navScoringRect translateY navScoringRectOffsetY
-        g.navScoringRect.min.x = (g.navScoringRect.min.x + 1f) min g.navScoringRect.max.x
-        g.navScoringRect.max.x = g.navScoringRect.min.x
-        assert(!g.navScoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous ImFabs() calls in NavScoreItem()." }
-        //GetForegroundDrawList()->AddRect(g.NavScoringRect.Min, g.NavScoringRect.Max, IM_COL32(255,200,0,255)); // [DEBUG]
+        val navRectRel = if (!window.navRectRel[g.navLayer].isInverted) window.navRectRel[g.navLayer] else Rect()
+        scoringRect.put(window.pos + navRectRel.min, window.pos + navRectRel.max)
+        scoringRect translateY scoringRectOffsetY
+        scoringRect.min.x = (scoringRect.min.x + 1f) min scoringRect.max.x
+        scoringRect.max.x = scoringRect.min.x
+        assert(!scoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous ImFabs() calls in NavScoreItem()." }
+        //GetForegroundDrawList()->AddRect(scoring_rect.Min, scoring_rect.Max, IM_COL32(255,200,0,255)); // [DEBUG]
     }
+    g.navScoringRect put scoringRect
 }
 
 /** Handle PageUp/PageDown/Home/End keys
+ *  Called from NavUpdateCreateMoveRequest() which will use our output to create a move request
  *  FIXME-NAV: how to get Home/End to aim at the beginning/end of a 2D grid? */
 fun navUpdatePageUpPageDown(): Float {
 
-    val window = g.navWindow
-    if (g.navMoveDir != Dir.None || window == null)
-        return 0f
+    val window = g.navWindow!!
     if (window.flags has Wf.NoNavInputs || g.navWindowingTarget != null || g.navLayer != NavLayer.Main)
         return 0f
 
@@ -597,13 +613,13 @@ fun navUpdatePageUpPageDown(): Float {
             g.navMoveDir =
                 Dir.Down // Because our scoring rect is offset up, we request the down direction (so we can always land on the last item)
             g.navMoveClipDir = Dir.Up
-            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
         } else if (Key.PageDown.isPressed(true)) {
             navScoringRectOffsetY = +pageOffsetY
             g.navMoveDir =
                 Dir.Up // Because our scoring rect is offset down, we request the up direction (so we can always land on the last item)
             g.navMoveClipDir = Dir.Down
-            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
+            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
         } else if (homePressed) {
             // FIXME-NAV: handling of Home/End is assuming that the top/bottom most item will be visible with Scroll.y == 0/ScrollMax.y
             // Scrolling will be handled via the ImGuiNavMoveFlags_ScrollToEdge flag, we don't scroll immediately to avoid scrolling happening before nav result.
@@ -615,7 +631,8 @@ fun navUpdatePageUpPageDown(): Float {
                 navRectRel.max.x = 0f
             }
             g.navMoveDir = Dir.Down
-            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+            // FIXME-NAV: MoveClipDir left to _None, intentional?
         } else if (endPressed) {
             navRectRel.min.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
             navRectRel.max.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
@@ -624,7 +641,8 @@ fun navUpdatePageUpPageDown(): Float {
                 navRectRel.max.x = 0f
             }
             g.navMoveDir = Dir.Up
-            g.navMoveRequestFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+            // FIXME-NAV: MoveClipDir left to _None, intentional?
         }
         return navScoringRectOffsetY
     }
@@ -632,7 +650,7 @@ fun navUpdatePageUpPageDown(): Float {
 }
 
 fun navUpdateAnyRequestFlag() {
-    g.navAnyRequest = g.navMoveRequest || g.navInitRequest || (IMGUI_DEBUG_NAV_SCORING && g.navWindow != null)
+    g.navAnyRequest = g.navMoveScoringItems || g.navInitRequest || (IMGUI_DEBUG_NAV_SCORING && g.navWindow != null)
     if (g.navAnyRequest)
         assert(g.navWindow != null)
 }
@@ -647,9 +665,9 @@ fun navEndFrame() {
     // Perform wrap-around in menus
     // FIXME-NAV: Wrap (not Loop) support could be handled by the scoring function and then WrapX would function without an extra frame.
     val window = g.navWindow
-    val moveFlags = g.navMoveRequestFlags
+    val moveFlags = g.navMoveFlags
     val wantedFlags = NavMoveFlag.WrapX or NavMoveFlag.LoopX or NavMoveFlag.WrapY or NavMoveFlag.LoopY
-    if (window != null && navMoveRequestButNoResultYet() && g.navMoveRequestFlags has wantedFlags && g.navMoveRequestFlags hasnt NavMoveFlag.Forwarded) {
+    if (window != null && navMoveRequestButNoResultYet() && g.navMoveFlags has wantedFlags && g.navMoveFlags hasnt NavMoveFlag.Forwarded) {
 
         var doForward = false
         val bbRel = Rect(window.navRectRel[g.navLayer])
@@ -775,10 +793,6 @@ fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
                 addText(io.fontDefault, 13f, cand.max, 0.inv(), buf)
             }
         } else if (io.keyCtrl) { // Hold to preview score in matching quadrant. Press C to rotate.
-            if (Key.C.isPressed) {
-                g.navMoveDirLast = Dir.of((g.navMoveDirLast.i + 1) and 3)
-                io.keysDownDuration[io.keyMap[Key.C]] = 0.01f
-            }
             if (quadrant == g.navMoveDir) {
                 val buf = "%.0f/%.0f".format(style.locale, distBox, distCenter).toByteArray()
                 getForegroundDrawList(window).apply {
@@ -790,7 +804,8 @@ fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
 
     // Is it in the quadrant we're interesting in moving to?
     var newBest = false
-    if (quadrant == g.navMoveDir) {
+    val moveDir = g.navMoveDir
+    if (quadrant == moveDir) {
         // Does it beat the current best candidate?
         if (distBox < result.distBox) {
             result.distBox = distBox
@@ -803,33 +818,24 @@ fun navScoreItem(result: NavItemData, cand: Rect): Boolean {
                 result.distCenter = distCenter
                 newBest = true
             } else if (distCenter == result.distCenter) {
-                /*  Still tied! we need to be extra-careful to make sure everything gets linked properly.
-                    We consistently break ties by symbolically moving "later" items (with higher index) to the
-                    right/downwards by an infinitesimal amount since we the current "best" button already
-                    (so it must have a lower index), this is fairly easy.
-                    This rule ensures that all buttons with dx == dy == 0 will end up being linked in order
-                    of appearance along the x axis. */
-                val db = if (g.navMoveDir == Dir.Up || g.navMoveDir == Dir.Down) dbY else dbX
+                // Still tied! we need to be extra-careful to make sure everything gets linked properly. We consistently break ties by symbolically moving "later" items
+                // (with higher index) to the right/downwards by an infinitesimal amount since we the current "best" button already (so it must have a lower index),
+                // this is fairly easy. This rule ensures that all buttons with dx==dy==0 will end up being linked in order of appearance along the x axis.
+                val db = if (moveDir == Dir.Up || moveDir == Dir.Down) dbY else dbX
                 if (db < 0f) // moving bj to the right/down decreases distance
                     newBest = true
             }
         }
     }
 
-    /*  Axial check: if 'curr' has no link at all in some direction and 'cand' lies roughly in that direction,
-        add a tentative link. This will only be kept if no "real" matches are found, so it only augments the graph
-        produced by the above method using extra links. (important, since it doesn't guarantee strong connectedness)
-        This is just to avoid buttons having no links in a particular direction when there's a suitable neighbor.
-        You get good graphs without this too.
-        2017/09/29: FIXME: This now currently only enabled inside menu bars, ideally we'd disable it everywhere.
-        Menus in particular need to catch failure. For general navigation it feels awkward.
-        Disabling it may lead to disconnected graphs when nodes are very spaced out on different axis.
-        Perhaps consider offering this as an option?    */
+    // Axial check: if 'curr' has no link at all in some direction and 'cand' lies roughly in that direction, add a tentative link. This will only be kept if no "real" matches
+    // are found, so it only augments the graph produced by the above method using extra links. (important, since it doesn't guarantee strong connectedness)
+    // This is just to avoid buttons having no links in a particular direction when there's a suitable neighbor. you get good graphs without this too.
+    // 2017/09/29: FIXME: This now currently only enabled inside menu bars, ideally we'd disable it everywhere. Menus in particular need to catch failure. For general navigation it feels awkward.
+    // Disabling it may lead to disconnected graphs when nodes are very spaced out on different axis. Perhaps consider offering this as an option?
     if (result.distBox == Float.MAX_VALUE && distAxial < result.distAxial)  // Check axial match
         if (g.navLayer == NavLayer.Menu && g.navWindow!!.flags hasnt Wf._ChildMenu)
-            if ((g.navMoveDir == Dir.Left && dax < 0f) || (g.navMoveDir == Dir.Right && dax > 0f) ||
-                (g.navMoveDir == Dir.Up && day < 0f) || (g.navMoveDir == Dir.Down && day > 0f)
-            ) {
+            if ((moveDir == Dir.Left && dax < 0f) || (moveDir == Dir.Right && dax > 0f) || (moveDir == Dir.Up && day < 0f) || (moveDir == Dir.Down && day > 0f)) {
                 result.distAxial = distAxial
                 newBest = true
             }
@@ -846,9 +852,6 @@ fun navApplyItemToResult(result: NavItemData, window: Window, id: ID, navBbRel: 
 
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)    */
 fun navProcessItem(window: Window, navBb: Rect, id: ID) {
-
-    //if (!g.io.NavActive)  // [2017/10/06] Removed this possibly redundant test but I am not sure of all the side-effects yet. Some of the feature here will need to work regardless of using a _NoNavInputs flag.
-    //    return;
 
     val itemFlags = g.lastItemData.inFlags
     val navBbRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
@@ -867,28 +870,28 @@ fun navProcessItem(window: Window, navBb: Rect, id: ID) {
         }
     }
 
-    /*  Process Move Request (scoring for navigation)
-        FIXME-NAV: Consider policy for double scoring
-        (scoring from NavScoringRectScreen + scoring from a rect wrapped according to current wrapping policy)     */
-    if ((g.navId != id || g.navMoveRequestFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
-        val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
-        val newBest = when {
-            IMGUI_DEBUG_NAV_SCORING -> {  // [DEBUG] Score all items in NavWindow at all times
-                if (!g.navMoveRequest) g.navMoveDir = g.navMoveDirLast
-                navScoreItem(result, navBb) && g.navMoveRequest
-            }
-            else -> g.navMoveRequest && navScoreItem(result, navBb)
-        }
-        if (newBest)
-            navApplyItemToResult(result, window, id, navBbRel)
+    // Process Move Request (scoring for navigation)
+    // FIXME-NAV: Consider policy for double scoring (scoring from NavScoringRect + scoring from a rect wrapped according to current wrapping policy)     */
+    if (g.navMoveScoringItems)
+        if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
+            val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
+            var newBest = navScoreItem(result, navBb)
 
-        // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
-        val VISIBLE_RATIO = 0.7f
-        if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
-            if (glm.clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - glm.clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
-                if (navScoreItem(g.navMoveResultLocalVisibleSet, navBb))
-                    navApplyItemToResult(g.navMoveResultLocalVisibleSet, window, id, navBbRel)
-    }
+            if (IMGUI_DEBUG_NAV_SCORING)
+            // [DEBUG] Scoring all items in NavWindow at all times
+                if (g.navMoveFlags has NavMoveFlag.DebugNoResult)
+                    newBest = false
+
+            if (newBest)
+                navApplyItemToResult(result, window, id, navBbRel)
+
+            // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
+            val VISIBLE_RATIO = 0.7f
+            if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
+                if (clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
+                    if (navScoreItem(g.navMoveResultLocalVisible, navBb))
+                        navApplyItemToResult(g.navMoveResultLocalVisible, window, id, navBbRel)
+        }
 
     // Update window-relative bounding box of navigated item
     if (g.navId == id) {

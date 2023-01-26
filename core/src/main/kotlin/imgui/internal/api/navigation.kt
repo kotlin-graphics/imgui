@@ -41,22 +41,21 @@ internal interface navigation {
         }
     }
 
-    /** Should be called ~NavMoveRequestIsActiveButNoResultYet() */
-    fun navMoveRequestButNoResultYet(): Boolean = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
+    fun navMoveRequestButNoResultYet(): Boolean = g.navMoveScoringItems && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
     /** Forward will reuse the move request again on the next frame (generally with modifications done to it) */
     fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
 
-        assert(!g.navMoveRequestForwardToNextFrame)
+        assert(!g.navMoveForwardToNextFrame)
         navMoveRequestCancel()
-        g.navMoveRequestForwardToNextFrame = true
+        g.navMoveForwardToNextFrame = true
         g.navMoveDir = moveDir
         g.navMoveDir = clipDir
-        g.navMoveRequestFlags = moveFlags or NavMoveFlag.Forwarded
+        g.navMoveFlags = moveFlags or NavMoveFlag.Forwarded
     }
 
     fun navMoveRequestCancel() {
-        g.navMoveRequest = false
+        g.navMoveSubmitted = false; g.navMoveScoringItems = false
         navUpdateAnyRequestFlag()
     }
 
@@ -75,9 +74,9 @@ internal interface navigation {
         var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
 
         // PageUp/PageDown behavior first jumps to the bottom/top mostly visible item, _otherwise_ use the result from the previous/next page.
-        if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet)
-            if (g.navMoveResultLocalVisibleSet.id != 0 && g.navMoveResultLocalVisibleSet.id != g.navId)
-                result = g.navMoveResultLocalVisibleSet
+        if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet)
+            if (g.navMoveResultLocalVisible.id != 0 && g.navMoveResultLocalVisible.id != g.navId)
+                result = g.navMoveResultLocalVisible
 
         // Maybe entering a flattened child from the outside? In this case solve the tie using the regular scoring rules.
         if (result != g.navMoveResultOther && g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
@@ -88,7 +87,7 @@ internal interface navigation {
         // Scroll to keep newly navigated item fully into view.
         if (g.navLayer == NavLayer.Main) {
             val deltaScroll = Vec2()
-            if (g.navMoveRequestFlags has NavMoveFlag.ScrollToEdge) {
+            if (g.navMoveFlags has NavMoveFlag.ScrollToEdge) {
                 val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
                 deltaScroll.y = window.scroll.y - scrollTarget
                 window setScrollY scrollTarget
@@ -109,7 +108,7 @@ internal interface navigation {
             g.navJustMovedToId = result.id
             g.navJustMovedToFocusScopeId = result.focusScopeId
 
-            g.navJustMovedToKeyMods = g.navMoveRequestKeyMods
+            g.navJustMovedToKeyMods = g.navMoveKeyMods
         }
         IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
         setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
@@ -122,8 +121,9 @@ internal interface navigation {
      *  popup is assembled and in case of appended popups it is not clear which EndPopup() call is final. */
     fun navMoveRequestTryWrapping(window: Window, wrapFlags: NavMoveFlags) {
         assert(wrapFlags != 0) { "Call with _WrapX, _WrapY, _LoopX, _LoopY" }
-        if (g.navWindow === window && g.navMoveRequest && g.navLayer == NavLayer.Main)
-            g.navMoveRequestFlags = g.navMoveRequestFlags or wrapFlags
+        // In theory we should test for NavMoveRequestButNoResultYet() but there's no point doing it, NavEndFrame() will do the same test
+        if (g.navWindow === window && g.navMoveScoringItems && g.navLayer == NavLayer.Main)
+            g.navMoveFlags = g.navMoveFlags or wrapFlags
     }
 
     fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?

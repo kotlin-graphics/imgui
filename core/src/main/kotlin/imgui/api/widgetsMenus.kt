@@ -117,7 +117,7 @@ interface widgetsMenus {
             }
 
             navEarliestChild = navEarliestChild.getParent()
-            if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveRequestFlags hasnt NavMoveFlag.Forwarded) {
+            if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveFlags hasnt NavMoveFlag.Forwarded) {
                 // To do so we claim focus back, restore NavId and then process the movement request for yet another frame.
                 // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth bothering)
                 val layer = NavLayer.Menu
@@ -126,7 +126,7 @@ interface widgetsMenus {
                 setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navDisableMouseHover = true; g.navMousePosDirty = true
-                navMoveRequestForward(g.navMoveDir, g.navMoveClipDir, g.navMoveRequestFlags) // Repeat
+                navMoveRequestForward(g.navMoveDir, g.navMoveClipDir, g.navMoveFlags) // Repeat
             }
         }
 

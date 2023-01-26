@@ -66,8 +66,7 @@ internal interface internal {
             g.navFocusScopeId = 0
             g.navIdIsAlive = false
             g.navLayer = NavLayer.Main
-            g.navInitRequest = false
-            g.navMoveRequest = false
+            g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
             navUpdateAnyRequestFlag()
             //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
         }

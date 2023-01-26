@@ -74,10 +74,11 @@ enum class NavMoveFlag {
      *  if we are pressing PageDown from the bottom-most item we need to stay in place) */
     AllowCurrentNavId,
 
-    /** Store alternate result in NavMoveResultLocalVisibleSet that only comprise elements that are already fully visible (used by PageUp/PageDown) */
+    /** Store alternate result in NavMoveResultLocalVisible that only comprise elements that are already fully visible (used by PageUp/PageDown) */
     AlsoScoreVisibleSet,
     ScrollToEdge,
-    Forwarded;
+    Forwarded,
+    DebugNoResult;
 
     val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl ordinal
 
@@ -96,6 +97,9 @@ infix fun NavMoveFlags.xor(b: NavMoveFlag): NavMoveFlags = xor(b.i)
 infix fun NavMoveFlags.has(b: NavMoveFlag): Boolean = and(b.i) != 0
 infix fun NavMoveFlags.hasnt(b: NavMoveFlag): Boolean = and(b.i) == 0
 infix fun NavMoveFlags.wo(b: NavMoveFlag): NavMoveFlags = and(b.i.inv())
+operator fun NavMoveFlags.minus(flag: NavMoveFlag): NavMoveFlags = wo(flag)
+operator fun NavMoveFlags.div(flag: NavMoveFlag): NavMoveFlags = or(flag)
+
 
 
 enum class NavForward(val i: Int) {

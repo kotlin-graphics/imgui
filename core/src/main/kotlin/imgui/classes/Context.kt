@@ -289,12 +289,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
     var navInputSource = InputSource.None
 
-    /** Rectangle used for scoring, in screen space. Based of window.NavRectRel[], modified for directional navigation scoring.  */
-    var navScoringRect = Rect()
-
-    /** Metrics for debugging   */
-    var navScoringCount = 0
-
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
     var navLayer = NavLayer.Main
@@ -315,6 +309,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** When user starts using gamepad/keyboard, we hide mouse hovering highlight until mouse is touched again. */
     var navDisableMouseHover = false
 
+    //------------------------------------------------------------------
+    // Navigation: Init & Move Requests
+    //------------------------------------------------------------------
+
     /** ~~ navMoveRequest || navInitRequest this is to perform early out in ItemAdd() */
     var navAnyRequest = false
 
@@ -329,35 +327,45 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Init request result rectangle (relative to parent window) */
     var navInitResultRectRel = Rect()
 
-    /** Move request for this frame */
-    var navMoveRequest = false
+    /** Move request submitted, will process result on next NewFrame() */
+    var navMoveSubmitted = false
 
-    var navMoveRequestForwardToNextFrame = false
+    /** Move request submitted, still scoring incoming items */
+    var navMoveScoringItems = false
 
-    var navMoveRequestFlags = NavMoveFlag.None.i
+    var navMoveForwardToNextFrame = false
 
-    var navMoveRequestKeyMods: KeyModFlags = KeyMod.None.i
+    var navMoveFlags: NavMoveFlags = NavMoveFlag.None.i
+
+    var navMoveKeyMods: KeyModFlags = KeyMod.None.i
 
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
     var navMoveDir = Dir.None
 
-    /** Direction of the move request (left/right/up/down), direction of the previous move request  */
-    var navMoveDirLast = Dir.None
+    var navMoveDirForDebug = Dir.None
 
     /** FIXME-NAV: Describe the purpose of this better. Might want to rename? */
     var navMoveClipDir = Dir.None
 
+    /** Rectangle used for scoring, in screen space. Based of window.NavRectRel[], modified for directional navigation scoring.  */
+    val navScoringRect = Rect()
+    
+    /** Metrics for debugging   */
+    var navScoringCount = 0
+    
     /** Best move request candidate within NavWindow    */
     var navMoveResultLocal = NavItemData()
 
     /** Best move request candidate within NavWindow that are mostly visible (when using NavMoveFlags.AlsoScoreVisibleSet flag) */
-    val navMoveResultLocalVisibleSet = NavItemData()
+    val navMoveResultLocalVisible = NavItemData()
 
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavItemData()
 
 
+    //------------------------------------------------------------------
     // Navigation: Windowing (CTRL+TAB for list, or Menu button + keys or directional pads to move/resize)
+    //------------------------------------------------------------------
 
     /** Target window when doing CTRL+Tab (or Pad Menu + FocusPrev/Next), this window is temporarily displayed top-most! */
     var navWindowingTarget: Window? = null
