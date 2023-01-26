@@ -27,6 +27,7 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitWindow
+import imgui.ImGui.navMoveRequestApplyResult
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestForward
 import imgui.ImGui.popStyleVar
@@ -107,15 +108,7 @@ fun navUpdate() {
 
     // Process navigation move request
     if (g.navMoveRequest)
-        navUpdateMoveResult()
-
-    // When a forwarded move request failed, we restore the highlight that we disabled during the forward frame
-    if (g.navMoveRequestForward == NavForward.ForwardActive) {
-        assert(g.navMoveRequest)
-        if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0)
-            g.navDisableHighlight = false
-        g.navMoveRequestForward = NavForward.None
-    }
+        navMoveRequestApplyResult()
 
     // Apply application mouse position movement, after we had a chance to process move request result.
     if (g.navMousePosDirty && g.navIdIsAlive) {
@@ -132,7 +125,7 @@ fun navUpdate() {
     g.navJustTabbedId = 0
     //    assert(g.navLayer == 0 || g.navLayer == 1) useless on jvm
 
-    // Store our return window (for returning from Layer 1 to Layer 0) and clear it as soon as we step back in our own Layer 0
+    // Store our return window (for returning from Menu Layer to Main Layer) and clear it as soon as we step back in our own Layer 0
     g.navWindow?.let {
         navSaveLastChildNavWindowIntoParent(it)
         if (it.navLastChildNavWindow != null && g.navLayer == NavLayer.Main)
@@ -206,11 +199,10 @@ fun navUpdate() {
             }
         }
         g.navMoveDir = g.navMoveDir
-    } else {
+    } else if (g.navMoveRequestForward == NavForward.ForwardQueued) {
         // Forwarding previous request (which has been modified, e.g. wrap around menus rewrite the requests with a starting rectangle at the other side of the window)
         // (Preserve g.NavMoveRequestFlags, g.NavMoveClipDir which were set by the NavMoveRequestForward() function)
         assert(g.navMoveDir != Dir.None && g.navMoveDir != Dir.None)
-        assert(g.navMoveRequestForward == NavForward.ForwardQueued)
         IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}")
         g.navMoveRequestForward = NavForward.ForwardActive
     }
@@ -222,7 +214,7 @@ fun navUpdate() {
         else -> 0f
     }
 
-    // If we initiate a movement request and have no current NavId, we initiate a InitDefautRequest that will be used as a fallback if the direction fails to find a match
+    // If we initiate a movement request and have no current NavId, we initiate a InitDefaultRequest that will be used as a fallback if the direction fails to find a match
     if (g.navMoveDir != Dir.None) {
         g.navMoveRequest = true
         g.navMoveRequestKeyMods = io.keyMods
@@ -530,63 +522,6 @@ fun navUpdateWindowingOverlay() {
     popStyleVar()
 }
 
-/** Apply result from previous frame navigation directional move request */
-fun navUpdateMoveResult() {
-
-    if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0) {
-        // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
-        if (g.navId != 0) {
-            g.navDisableHighlight = false
-            g.navDisableMouseHover = true
-        }
-        return
-    }
-    // Select which result to use
-    var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
-
-    // PageUp/PageDown behavior first jumps to the bottom/top mostly visible item, _otherwise_ use the result from the previous/next page.
-    if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet)
-        if (g.navMoveResultLocalVisibleSet.id != 0 && g.navMoveResultLocalVisibleSet.id != g.navId)
-            result = g.navMoveResultLocalVisibleSet
-
-    // Maybe entering a flattened child from the outside? In this case solve the tie using the regular scoring rules.
-    if (result != g.navMoveResultOther && g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
-        if (g.navMoveResultOther.distBox < result.distBox || (g.navMoveResultOther.distBox == result.distBox && g.navMoveResultOther.distCenter < result.distCenter))
-            result = g.navMoveResultOther
-    val window = result.window!!
-    assert(g.navWindow != null)
-    // Scroll to keep newly navigated item fully into view.
-    if (g.navLayer == NavLayer.Main) {
-        val deltaScroll = Vec2()
-        if (g.navMoveRequestFlags has NavMoveFlag.ScrollToEdge) {
-            val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
-            deltaScroll.y = window.scroll.y - scrollTarget
-            window setScrollY scrollTarget
-        } else {
-            val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
-            deltaScroll put window.scrollToBringRectIntoView(rectAbs)
-        }
-
-        // Offset our result position so mouse position can be applied immediately after in NavUpdate()
-        result.rectRel translateX -deltaScroll.x
-        result.rectRel translateY -deltaScroll.y
-    }
-
-    clearActiveID()
-    g.navWindow = window
-    if (g.navId != result.id) {
-        // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
-        g.navJustMovedToId = result.id
-        g.navJustMovedToFocusScopeId = result.focusScopeId
-
-        g.navJustMovedToKeyMods = g.navMoveRequestKeyMods
-    }
-    IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
-    setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
-    g.navDisableHighlight = false
-    g.navDisableMouseHover = true; g.navMousePosDirty = true
-}
-
 fun navUpdateInitResult() {
     // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
     val nav = g.navWindow ?: return
@@ -639,7 +574,8 @@ fun navUpdateCancelRequest() {
 }
 
 
-/** Handle PageUp/PageDown/Home/End keys */
+/** Handle PageUp/PageDown/Home/End keys
+ *  FIXME-NAV: how to get Home/End to aim at the beginning/end of a 2D grid? */
 fun navUpdatePageUpPageDown(): Float {
 
     val window = g.navWindow
@@ -720,13 +656,14 @@ fun navEndFrame() {
         navUpdateWindowingOverlay()
 
     // Perform wrap-around in menus
-    // FIXME-NAV: Wrap support could be moved to the scoring function and than WrapX would function without an extra frame. This is essentially same as tabbing!
+    // FIXME-NAV: Wrap (not Loop) support could be handled by the scoring function and then WrapX would function without an extra frame.
     val window = g.navWindow
     val moveFlags = g.navMoveRequestFlags
     val wantedFlags = NavMoveFlag.WrapX or NavMoveFlag.LoopX or NavMoveFlag.WrapY or NavMoveFlag.LoopY
     if (window != null && navMoveRequestButNoResultYet() && g.navMoveRequestFlags has wantedFlags && g.navMoveRequestForward == NavForward.None) {
 
-        val bbRel = Rect(window.navRectRel[0])
+        var doForward = false
+        val bbRel = Rect(window.navRectRel[g.navLayer])
 
         var clipDir = g.navMoveDir
         if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
@@ -737,7 +674,7 @@ fun navEndFrame() {
                 bbRel.translateY(-bbRel.height)
                 clipDir = Dir.Up
             }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+            doForward = true
         }
         if (g.navMoveDir == Dir.Right && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
             bbRel.max.x = -window.scroll.x
@@ -746,7 +683,7 @@ fun navEndFrame() {
                 bbRel.translateY(+bbRel.height)
                 clipDir = Dir.Down
             }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+            doForward = true
         }
         if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
             bbRel.max.y = max(window.sizeFull.y, window.contentSize.y + window.windowPadding.y * 2f) - window.scroll.y
@@ -755,7 +692,7 @@ fun navEndFrame() {
                 bbRel.translateX(-bbRel.width)
                 clipDir = Dir.Left
             }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+            doForward = true
         }
         if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
             bbRel.max.y = -window.scroll.y
@@ -764,7 +701,11 @@ fun navEndFrame() {
                 bbRel.translateX(+bbRel.width)
                 clipDir = Dir.Right
             }
-            navMoveRequestForward(g.navMoveDir, clipDir, bbRel, moveFlags)
+            doForward = true
+        }
+        if (doForward) {
+            window.navRectRel[g.navLayer] = bbRel
+            navMoveRequestForward(g.navMoveDir, clipDir, moveFlags)
         }
     }
 }

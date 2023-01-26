@@ -4,6 +4,7 @@ import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.clearActiveID
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.internal.classes.Rect
@@ -40,15 +41,11 @@ internal interface navigation {
         }
     }
 
-    fun navMoveRequestButNoResultYet(): Boolean =
-        g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
+    /** Should be called ~NavMoveRequestIsActiveButNoResultYet() */
+    fun navMoveRequestButNoResultYet(): Boolean = g.navMoveRequest && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
-    fun navMoveRequestCancel() {
-        g.navMoveRequest = false
-        navUpdateAnyRequestFlag()
-    }
-
-    fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, bbRel: Rect, moveFlags: NavMoveFlags) {
+    /** Forward will reuse the move request again on the next frame (generally with modifications done to it) */
+    fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
 
         assert(g.navMoveRequestForward == NavForward.None)
         navMoveRequestCancel()
@@ -56,8 +53,73 @@ internal interface navigation {
         g.navMoveDir = clipDir
         g.navMoveRequestForward = NavForward.ForwardQueued
         g.navMoveRequestFlags = moveFlags
-        g.navWindow!!.navRectRel[g.navLayer] = bbRel
     }
+
+    fun navMoveRequestCancel() {
+        g.navMoveRequest = false
+        navUpdateAnyRequestFlag()
+    }
+
+    /** Apply result from previous frame navigation directional move request. Always called from NavUpdate() */
+    fun navMoveRequestApplyResult() {
+
+        if (g.navMoveRequestForward == NavForward.ForwardActive)
+            g.navMoveRequestForward = NavForward.None
+
+        if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0) {
+            // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
+            if (g.navId != 0) {
+                g.navDisableHighlight = false
+                g.navDisableMouseHover = true
+            }
+            return
+        }
+        // Select which result to use
+        var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
+
+        // PageUp/PageDown behavior first jumps to the bottom/top mostly visible item, _otherwise_ use the result from the previous/next page.
+        if (g.navMoveRequestFlags has NavMoveFlag.AlsoScoreVisibleSet)
+            if (g.navMoveResultLocalVisibleSet.id != 0 && g.navMoveResultLocalVisibleSet.id != g.navId)
+                result = g.navMoveResultLocalVisibleSet
+
+        // Maybe entering a flattened child from the outside? In this case solve the tie using the regular scoring rules.
+        if (result != g.navMoveResultOther && g.navMoveResultOther.id != 0 && g.navMoveResultOther.window!!.parentWindow === g.navWindow)
+            if (g.navMoveResultOther.distBox < result.distBox || (g.navMoveResultOther.distBox == result.distBox && g.navMoveResultOther.distCenter < result.distCenter))
+                result = g.navMoveResultOther
+        val window = result.window!!
+        assert(g.navWindow != null)
+        // Scroll to keep newly navigated item fully into view.
+        if (g.navLayer == NavLayer.Main) {
+            val deltaScroll = Vec2()
+            if (g.navMoveRequestFlags has NavMoveFlag.ScrollToEdge) {
+                val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
+                deltaScroll.y = window.scroll.y - scrollTarget
+                window setScrollY scrollTarget
+            } else {
+                val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
+                deltaScroll put window.scrollToBringRectIntoView(rectAbs)
+            }
+
+            // Offset our result position so mouse position can be applied immediately after in NavUpdate()
+            result.rectRel translateX -deltaScroll.x
+            result.rectRel translateY -deltaScroll.y
+        }
+
+        clearActiveID()
+        g.navWindow = window
+        if (g.navId != result.id) {
+            // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
+            g.navJustMovedToId = result.id
+            g.navJustMovedToFocusScopeId = result.focusScopeId
+
+            g.navJustMovedToKeyMods = g.navMoveRequestKeyMods
+        }
+        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
+        setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
+        g.navDisableHighlight = false
+        g.navDisableMouseHover = true; g.navMousePosDirty = true
+    }
+
 
     /** Navigation wrap-around logic is delayed to the end of the frame because this operation is only valid after entire
      *  popup is assembled and in case of appended popups it is not clear which EndPopup() call is final. */

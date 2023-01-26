@@ -6,6 +6,7 @@ import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginGroup
 import imgui.ImGui.beginPopupEx
 import imgui.ImGui.beginViewportSideBar
@@ -14,6 +15,7 @@ import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.currentWindow
 import imgui.ImGui.end
+import imgui.ImGui.endDisabled
 import imgui.ImGui.endGroup
 import imgui.ImGui.endPopup
 import imgui.ImGui.focusTopMostWindowUnderOne
@@ -25,13 +27,12 @@ import imgui.ImGui.mainViewport
 import imgui.ImGui.menuItemEx
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestCancel
+import imgui.ImGui.navMoveRequestForward
 import imgui.ImGui.openPopup
 import imgui.ImGui.popClipRect
-import imgui.ImGui.endDisabled
 import imgui.ImGui.popID
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.beginDisabled
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderText
@@ -117,15 +118,14 @@ interface widgetsMenus {
             navEarliestChild = navEarliestChild.getParent()
             if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveRequestForward == NavForward.None) {
                 // To do so we claim focus back, restore NavId and then process the movement request for yet another frame.
-                // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth the hassle/cost)
+                // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth bothering)
                 val layer = NavLayer.Menu
                 assert(window.dc.navLayersActiveMaskNext has (1 shl layer)) { "Sanity check" }
                 focusWindow(window)
                 setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navDisableMouseHover = true; g.navMousePosDirty = true
-                g.navMoveRequestForward = NavForward.ForwardQueued
-                navMoveRequestCancel()
+                navMoveRequestForward(g.navMoveDir, g.navMoveClipDir, g.navMoveRequestFlags) // Repeat
             }
         }
 
