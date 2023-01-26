@@ -97,7 +97,7 @@ interface main {
         io.fonts.locked = true
         setCurrentFont(defaultFont)
         assert(g.font.isLoaded)
-        val virtualSpace = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+        val virtualSpace = Rect(Float.MAX_VALUE, -Float.MAX_VALUE)
         for (v in g.viewports)
             virtualSpace add v.mainRect
         g.drawListSharedData.clipRectFullscreen = virtualSpace.toVec4()

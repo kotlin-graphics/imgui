@@ -252,17 +252,18 @@ internal interface debugTools {
     /** [DEBUG] Display mesh/aabb of a ImDrawCmd */
     fun debugNodeDrawCmdShowMeshAndBoundingBox(outDrawList: DrawList, drawList: DrawList, drawCmd: DrawCmd, showMesh: Boolean, showAabb: Boolean) {
         assert(showMesh || showAabb)
-        val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
-        val vtxBuffer = drawList.vtxBuffer
-        val vtxPointer = drawCmd.vtxOffset
 
         // Draw wire-frame version of all triangles
         val clipRect = Rect(drawCmd.clipRect)
-        val vtxsRect = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+        val vtxsRect = Rect(Float.MAX_VALUE, -Float.MAX_VALUE)
         val backupFlags = outDrawList.flags
         outDrawList.flags = outDrawList.flags wo DrawListFlag.AntiAliasedLines // Disable AA on triangle outlines is more readable for very large and thin triangles.
         var idxN = drawCmd.idxOffset
         while (idxN < drawCmd.idxOffset + drawCmd.elemCount) {
+            val idxBuffer = drawList.idxBuffer.takeIf { it.isNotEmpty() }
+            val vtxBuffer = drawList.vtxBuffer
+            val vtxPointer = drawCmd.vtxOffset
+
             val triangle = Array(3) { Vec2() }
             for (n in 0..2) {
                 triangle[n] put vtxBuffer[vtxPointer + (idxBuffer?.get(idxN) ?: idxN)].pos

@@ -650,7 +650,7 @@ interface demoDebugInformations {
 
             // We don't display full monitor bounds (we could, but it often looks awkward), instead we display just enough to cover all of our viewports.
             val SCALE = 1f / 8f
-            val bbFull = Rect(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE)
+            val bbFull = Rect(Float.MAX_VALUE, -Float.MAX_VALUE)
             for (viewport in g.viewports)
                 bbFull add viewport.mainRect
             val p = window.dc.cursorPos // careful, class instance
