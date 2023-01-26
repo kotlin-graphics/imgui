@@ -211,7 +211,7 @@ internal interface basicHelpersForWidgetCode {
                 return
             }
             if (isTabStop && window.dc.focusCounterTabStop == g.tabFocusRequestCurrCounterTabStop) {
-                g.navJustTabbedId = id
+                g.navJustTabbedId = id // FIXME-NAV: aim to eventually set in NavUpdate() once we finish the refactor
                 g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.FocusedByTabbing
                 return
             }

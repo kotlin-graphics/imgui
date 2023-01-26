@@ -41,6 +41,21 @@ internal interface navigation {
         }
     }
 
+    fun navInitRequestApplyResult() {
+        // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
+        val navWindow = g.navWindow ?: return
+
+        // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
+        // FIXME-NAV: On _NavFlattened windows, g.NavWindow will only be updated during subsequent frame. Not a problem currently.
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"\n", g.navInitResultId)
+        setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
+        g.navIdIsAlive = true // Mark as alive from previous frame as we got a result
+        if (g.navInitRequestFromMove) {
+            g.navDisableHighlight = false
+            g.navDisableMouseHover = true; g.navMousePosDirty = true
+        }
+    }
+
     fun navMoveRequestButNoResultYet(): Boolean = g.navMoveScoringItems && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
     /** FIXME: ScoringRect is not set */
@@ -56,6 +71,7 @@ internal interface navigation {
         g.navMoveResultLocal.clear()
         g.navMoveResultLocalVisible.clear()
         g.navMoveResultOther.clear()
+        navUpdateAnyRequestFlag()
     }
 
     /** Forward will reuse the move request again on the next frame (generally with modifications done to it) */
@@ -81,9 +97,11 @@ internal interface navigation {
             if (g.navMoveFlags has NavMoveFlag.DebugNoResult) // [DEBUG] Scoring all items in NavWindow at all times
                 return
 
-        // No result
+        // Select which result to use
+        var result = if(g.navMoveResultLocal.id != 0) g.navMoveResultLocal else if(g.navMoveResultOther.id != 0) g.navMoveResultOther else null
+
         // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
-        if (g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0) {
+        if (result == null) {
             // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
             if (g.navId != 0) {
                 g.navDisableHighlight = false
@@ -91,8 +109,6 @@ internal interface navigation {
             }
             return
         }
-        // Select which result to use
-        var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else g.navMoveResultOther
 
         // PageUp/PageDown behavior first jumps to the bottom/top mostly visible item, _otherwise_ use the result from the previous/next page.
         if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet)

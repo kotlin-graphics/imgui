@@ -27,6 +27,7 @@ import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mainViewport
+import imgui.ImGui.navInitRequestApplyResult
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.navMoveRequestApplyResult
 import imgui.ImGui.navMoveRequestButNoResultYet
@@ -55,9 +56,7 @@ fun navUpdate() {
 
     io.wantSetMousePos = false
 
-//    #if 0
-//    if (g.NavScoringDebugCount > 0) IMGUI_DEBUG_LOG("NavScoringDebugCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringDebugCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
-//    #endif
+    //if (g.navScoringDebugCount > 0) IMGUI_DEBUG_LOG("NavScoringDebugCount ${g.navScoringDebugCount} for '${g.navWindow?.name ?: "NULL"}' layer ${g.navLayer} (Init:${(g.navInitRequest || g.navInitResultId != 0).i}, Move:${g.navMoveRequest})\n")
 
     // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
     // (do it before we map Keyboard input!)
@@ -103,7 +102,7 @@ fun navUpdate() {
 
     // Process navigation init request (select first/default focus)
     if (g.navInitResultId != 0)
-        navUpdateInitResult()
+        navInitRequestApplyResult()
     g.navInitRequest = false
     g.navInitRequestFromMove = false
     g.navInitResultId = 0
@@ -169,6 +168,7 @@ fun navUpdate() {
         assert(g.navActivateDownId == g.navActivateId)
 
     // Process programmatic activation request
+    // FIXME-NAV: Those should eventually be queued (unlike focus they don't cancel each others)
     if (g.navNextActivateId != 0) {
         g.navInputId = g.navNextActivateId
         g.navActivatePressedId = g.navNextActivateId
@@ -441,21 +441,6 @@ fun navUpdateWindowingOverlay() {
     }
     end()
     popStyleVar()
-}
-
-fun navUpdateInitResult() {
-    // In very rare cases g.NavWindow may be null (e.g. clearing focus after requesting an init request, which does happen when releasing Alt while clicking on void)
-    val navWindow = g.navWindow ?: return
-
-    // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
-    // FIXME-NAV: On _NavFlattened windows, g.NavWindow will only be updated during subsequent frame. Not a problem currently.
-    IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"\n", g.navInitResultId)
-    setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
-    g.navIdIsAlive = true // Mark as alive from previous frame as we got a result
-    if (g.navInitRequestFromMove) {
-        g.navDisableHighlight = false
-        g.navDisableMouseHover = true; g.navMousePosDirty = true
-    }
 }
 
 /** Process NavCancel input (to close a popup, get back to parent, clear focus)

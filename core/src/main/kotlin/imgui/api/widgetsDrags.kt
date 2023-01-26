@@ -261,7 +261,6 @@ interface widgetsDrags {
                     tempInputIsActive = true
             }
             // Experimental: simple click (without moving) turns Drag into an InputText
-            // FIXME: Currently polling ImGuiConfigFlags_IsTouchScreen, may either poll an hypothetical ImGuiBackendFlags_HasKeyboard and/or an explicit drag settings.
             if (io.configDragClickToInputText && tempInputAllowed && !tempInputIsActive)
                 if (g.activeId == id && hovered && io.mouseReleased[0] && !isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
                     g.navInputId = id
