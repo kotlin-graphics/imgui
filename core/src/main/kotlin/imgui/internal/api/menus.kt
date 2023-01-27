@@ -92,7 +92,7 @@ internal interface menus {
                 to call sameLine() ourselves after the popStyleVar().   */
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
         } else {
-            // Menu inside a menu
+            // Menu inside a regular/vertical menu
             // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.
             //  Only when they are other items sticking out we're going to add spacing, yet only register minimum width into the layout system.
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
@@ -212,10 +212,11 @@ internal interface menus {
             // Note that in this situation: we don't render the shortcut, we render a highlight instead of the selected tick mark.
             val w = labelSize.x
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
+            val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             pressed = selectable("", selected, flags, Vec2(w, 0f))
             popStyleVar()
-            renderText(pos + Vec2(offsets.offsetLabel, 0f), label)
+            renderText(textPos, label)
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f)) // -1 spacing to compensate the spacing added when Selectable() did a SameLine(). It would also work to call SameLine() ourselves after the PopStyleVar().
         } else {
             // Menu item inside a vertical menu

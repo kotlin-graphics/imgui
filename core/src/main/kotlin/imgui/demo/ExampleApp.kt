@@ -163,6 +163,7 @@ object ExampleApp {
                 menuItem("Custom rendering", "", show::customRendering)
                 menuItem("Documents", "", show::documents)
             }
+            //if (ImGui::MenuItem("MenuItem")) {} // You can also use MenuItem() inside a menu bar!
             menu("Tools") {
                 menuItem("Metrics/Debugger", "", show::metrics)
                 menuItem("Style Editor", "", show::styleEditor)
