@@ -158,6 +158,7 @@ val Int.vec4: Vec4
                 ((this ushr COL32_A_SHIFT) and 0xFF) * s)
     }
 
+/** ~ColorConvertFloat4ToU32 */
 val Vec4.u32: Int
     get() {
         var out = F32_TO_INT8_SAT(x) shl COL32_R_SHIFT

@@ -86,18 +86,18 @@ interface widgetsColorEditorPicker {
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
     fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-            colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
-                    .also { col put _fa }
+        colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
+                .also { col put _fa }
 
     fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean =
-            colorEdit4(label, col, flags or Cef.NoAlpha)
+        colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on color square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
     fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-            colorEdit4(label, col to _fa, flags).also { col put _fa }
+        colorEdit4(label, col to _fa, flags).also { col put _fa }
 
     fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = 0): Boolean {
 
@@ -144,12 +144,7 @@ interface widgetsColorEditorPicker {
         else if (flags has Cef.InputRGB && flags has Cef.DisplayHSV) {
             // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
             f.rgbToHSV()
-            if (g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) {
-                if (f[1] == 0f)
-                    f[0] = g.colorEditLastHue
-                if (f[2] == 0f)
-                    f[1] = g.colorEditLastSat
-            }
+            colorEditRestoreHS(col, f)
         }
 
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
@@ -170,7 +165,7 @@ interface widgetsColorEditorPicker {
             val hidePrefix = wItemOne <= calcTextSize(if (flags has Cef.Float) "M:0.000" else "M:000").x
             val fmtIdx = if (hidePrefix) 0 else if (flags has Cef.DisplayHSV) 2 else 1
 
-            repeat (components) { n ->
+            repeat(components) { n ->
                 if (n > 0)
                     sameLine(0f, style.itemInnerSpacing.x)
                 setNextItemWidth(if (n + 1 < components) wItemOne else wItemLast)
@@ -252,9 +247,7 @@ interface widgetsColorEditorPicker {
                 g.colorEditLastHue = f[0]
                 g.colorEditLastSat = f[1]
                 f.hsvToRGB()
-                g.colorEditLastColor[0] = f[0]
-                g.colorEditLastColor[1] = f[1]
-                g.colorEditLastColor[2] = f[2]
+                g.colorEditLastColor = Vec4(f[0], f[1], f[2], 0f).u32
             }
             if (flags has Cef.DisplayRGB && flags has Cef.InputHSV)
                 f.rgbToHSV()
@@ -335,8 +328,8 @@ interface widgetsColorEditorPicker {
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
     fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean =
-            colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
-                    .also { col put _fa; refCol?.put(_fa2) }
+        colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
+                .also { col put _fa; refCol?.put(_fa2) }
 
     /** ColorPicker
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
@@ -371,7 +364,7 @@ interface widgetsColorEditorPicker {
         if (flags hasnt Cef._InputMask)
             flags = flags or ((if (g.colorEditOptions has Cef._InputMask) g.colorEditOptions else Cef.DefaultOptions.i) and Cef._InputMask)
         assert((flags and Cef._PickerMask).isPowerOfTwo) { "Check that only 1 is selected" }
-        assert((flags and Cef._InputMask).isPowerOfTwo);  // Check that only 1 is selected
+        assert((flags and Cef._InputMask).isPowerOfTwo)  // Check that only 1 is selected
         if (flags hasnt Cef.NoOptions)
             flags = flags or (g.colorEditOptions and Cef.AlphaBar)
 
@@ -405,12 +398,7 @@ interface widgetsColorEditorPicker {
         if (flags has Cef.InputRGB) {
             // Hue is lost when converting from greyscale rgb (saturation=0). Restore it.
             colorConvertRGBtoHSV(rgb, hsv)
-            if (g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) {
-                if (hsv[1] == 0f)
-                    hsv[0] = g.colorEditLastHue
-                if (hsv[2] == 0f)
-                    hsv[1] = g.colorEditLastSat
-            }
+            colorEditRestoreHS(col, hsv)
         } else if (flags has Cef.InputHSV)
             colorConvertHSVtoRGB(hsv, rgb)
         var (H, S, V) = hsv
@@ -458,8 +446,11 @@ interface widgetsColorEditorPicker {
             if (isItemActive) {
                 S = saturate((io.mousePos.x - pickerPos.x) / (svPickerSize - 1))
                 V = 1f - saturate((io.mousePos.y - pickerPos.y) / (svPickerSize - 1))
-                valueChangedSv = true
-                valueChanged = true
+
+                // Greatly reduces hue jitter and reset to 0 when hue == 255 and color is rapidly modified using SV square.
+                if (g.colorEditLastColor == Vec4(col[0], col[1], col[2], 0f).u32)
+                    H = g.colorEditLastHue
+                valueChangedSv = true; valueChanged = true
             }
             if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
             // Hue bar logic
@@ -522,9 +513,7 @@ interface widgetsColorEditorPicker {
                 colorConvertHSVtoRGB(if (H >= 1f) H - 10 * 1e-6f else H, if (S > 0f) S else 10 * 1e-6f, if (V > 0f) V else 1e-6f, col)
                 g.colorEditLastHue = H
                 g.colorEditLastSat = S
-                g.colorEditLastColor[0] = col[0]
-                g.colorEditLastColor[1] = col[1]
-                g.colorEditLastColor[2] = col[2]
+                g.colorEditLastColor = Vec4(col[0], col[1], col[2], 0f).u32
             } else if (flags has Cef.InputHSV) {
                 col[0] = H
                 col[1] = S
@@ -573,12 +562,9 @@ interface widgetsColorEditorPicker {
                     S = it[1]
                     V = it[2]
                 }
-                if (g.colorEditLastColor[0] == col[0] && g.colorEditLastColor[1] == col[1] && g.colorEditLastColor[2] == col[2]) { // Fix local Hue as display below will use it immediately.
-                    if (S == 0f)
-                        H = g.colorEditLastHue
-                    if (V == 0f)
-                        S = g.colorEditLastSat
-                }
+                hsv[0] = H; hsv[1] = S; hsv[2] = V
+                colorEditRestoreHS(col, hsv) // Fix local Hue as display below will use it immediately.
+                H = hsv[0]; S = hsv[1]; V = hsv[2]
             } else if (flags has Cef.InputHSV) {
                 H = col[0]
                 S = col[1]
@@ -625,7 +611,7 @@ interface widgetsColorEditorPicker {
             val cosHueAngle = glm.cos(H * 2f * glm.PIf)
             val sinHueAngle = glm.sin(H * 2f * glm.PIf)
             val hueCursorPos = Vec2(wheelCenter.x + cosHueAngle * (wheelRInner + wheelROuter) * 0.5f,
-                    wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
+                                    wheelCenter.y + sinHueAngle * (wheelRInner + wheelROuter) * 0.5f)
             val hueCursorRad = wheelThickness * if (valueChangedH) 0.65f else 0.55f
             val hueCursorSegments = glm.clamp((hueCursorRad / 1.4f).i, 9, 32)
             drawList.addCircleFilled(hueCursorPos, hueCursorRad, hueColor32, hueCursorSegments)
@@ -739,7 +725,7 @@ interface widgetsColorEditorPicker {
         if (flags has Cef.AlphaPreviewHalf && colRgb.w < 1f) {
             val midX = round((bbInner.min.x + bbInner.max.x) * 0.5f)
             renderColorRectWithAlphaCheckerboard(window.drawList, Vec2(bbInner.min.x + gridStep, bbInner.min.y), bbInner.max,
-                    getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, DrawFlag.RoundCornersRight.i)
+                                                 getColorU32(colRgb), gridStep, Vec2(-gridStep + off, off), rounding, DrawFlag.RoundCornersRight.i)
             window.drawList.addRectFilled(bbInner.min, Vec2(midX, bbInner.max.y), getColorU32(colRgbWithoutAlpha), rounding, DrawFlag.RoundCornersLeft.i)
         } else {
             /*  Because getColorU32() multiplies by the global style alpha and we don't want to display a checkerboard 
@@ -803,13 +789,13 @@ interface widgetsColorEditorPicker {
     companion object {
         val ids = arrayOf("##X", "##Y", "##Z", "##W")
         val fmtTableInt = arrayOf(
-                arrayOf("%3d", "%3d", "%3d", "%3d"),             // Short display
-                arrayOf("R:%3d", "G:%3d", "B:%3d", "A:%3d"),     // Long display for RGBA
-                arrayOf("H:%3d", "S:%3d", "V:%3d", "A:%3d"))     // Long display for HSVA
+            arrayOf("%3d", "%3d", "%3d", "%3d"),             // Short display
+            arrayOf("R:%3d", "G:%3d", "B:%3d", "A:%3d"),     // Long display for RGBA
+            arrayOf("H:%3d", "S:%3d", "V:%3d", "A:%3d"))     // Long display for HSVA
         val fmtTableFloat = arrayOf(
-                arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
-                arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
-                arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
+            arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
+            arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
+            arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
 
         fun DrawList.renderArrowsForVerticalBar(pos: Vec2, halfSz: Vec2, barW: Float, alpha: Float) {
             val alpha8 = F32_TO_INT8_SAT(alpha)
@@ -819,6 +805,31 @@ interface widgetsColorEditorPicker {
             renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32(0, 0, 0, alpha8))
             renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32(255, 255, 255, alpha8))
             // @formatter:on
+        }
+
+        /** ColorEdit supports RGB and HSV inputs. In case of RGB input resulting color may have undefined hue and/or saturation.
+         *  Since widget displays both RGB and HSV values we must preserve hue and saturation to prevent these values resetting. */
+        fun colorEditRestoreHS(col: FloatArray, hsv: FloatArray) {
+            // This check is optional. Suppose we have two color widgets side by side, both widgets display different colors, but both colors have hue and/or saturation undefined.
+            // With color check: hue/saturation is preserved in one widget. Editing color in one widget would reset hue/saturation in another one.
+            // Without color check: common hue/saturation would be displayed in all widgets that have hue/saturation undefined.
+            // g.ColorEditLastColor is stored as ImU32 RGB value: this essentially gives us color equality check with reduced precision.
+            // Tiny external color changes would not be detected and this check would still pass. This is OK, since we only restore hue/saturation _only_ if they are undefined,
+            // therefore this change flipping hue/saturation from undefined to a very tiny value would still be represented in color picker.
+            if (g.colorEditLastColor != Vec4(col[0], col[1], col[2], 0).u32)
+                return
+
+            val H = 0;
+            val S = 1;
+            val V = 2
+            // When S == 0, H is undefined.
+            // When H == 1 it wraps around to 0.
+            if (hsv[S] == 0f || (hsv[H] == 0f && g.colorEditLastHue == 1f))
+                hsv[H] = g.colorEditLastHue
+
+            // When V == 0, S is undefined.
+            if (hsv[V] == 0f)
+                hsv[S] = g.colorEditLastSat
         }
     }
 }

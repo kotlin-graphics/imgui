@@ -27,8 +27,7 @@ interface styleReadAccess {
         get() = g.drawListSharedData.texUvWhitePixel
 
     /** retrieve given style color with style alpha applied and optional extra alpha multiplier */
-    fun getColorU32(idx: Col, alphaMul: Float = 1f): Int =
-            getColorU32(idx.i, alphaMul)
+    fun getColorU32(idx: Col, alphaMul: Float = 1f): Int = getColorU32(idx.i, alphaMul)
 
     fun getColorU32(idx: Int, alphaMul: Float = 1f): Int {
         val c = Vec4(ImGui.style.colors[idx])

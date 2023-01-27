@@ -507,8 +507,7 @@ interface windows {
                 flags has Wf._Modal && window === topMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
             val dimBgForWindowList = g.navWindowingTargetAnim?.rootWindow === window
             if (dimBgForModal || dimBgForWindowList) {
-                val dimBgCol =
-                    getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
+                val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
                 window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
             }
 
@@ -517,10 +516,7 @@ interface windows {
                 val bb = window.rect()
                 bb expand g.fontSize
                 if (viewportRect !in bb) // Avoid drawing if the window covers all the viewport anyway
-                    window.drawList.addRectFilled(bb.min,
-                                                  bb.max,
-                                                  getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f),
-                                                  g.style.windowRounding)
+                    window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
             }
 
             // Child windows can render their decoration (bg color, border, scrollbars, etc.) within their parent to save a draw call (since 1.71)
@@ -532,7 +528,7 @@ interface windows {
 
                     // - We test overlap with the previous child window only (testing all would end up being O(log N) not a good investment here)
                     // - We disable this when the parent window has zero vertices, which is a common pattern leading to laying out multiple overlapping childs
-                    val previousChild = if(parentWindow!!.dc.childWindows.size >= 2) parentWindow.dc.childWindows[parentWindow.dc.childWindows.size - 2] else null
+                    val previousChild = if (parentWindow!!.dc.childWindows.size >= 2) parentWindow.dc.childWindows[parentWindow.dc.childWindows.size - 2] else null
                     val previousChildOverlapping = previousChild?.rect()?.overlaps(window.rect()) ?: false
                     val parentIsEmpty = parentWindow.drawList.vtxBuffer.rem > 0
                     if (window.drawList.cmdBuffer.last().elemCount == 0 && parentIsEmpty && !previousChildOverlapping)

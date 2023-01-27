@@ -503,13 +503,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Store user options for color edit widgets   */
     var colorEditOptions: ColorEditFlags = ColorEditFlag.DefaultOptions.i
 
-    /** Backup of last Hue associated to LastColor[3], so we can restore Hue in lossy RGB<>HSV round trips */
+    /** Backup of last Hue associated to LastColor, so we can restore Hue in lossy RGB<>HSV round trips */
     var colorEditLastHue = 0f
 
-    /** Backup of last Saturation associated to LastColor[3], so we can restore Saturation in lossy RGB<>HSV round trips */
+    /** Backup of last Saturation associated to LastColor, so we can restore Saturation in lossy RGB<>HSV round trips */
     var colorEditLastSat = 0f
 
-    var colorEditLastColor = FloatArray(3) { Float.MAX_VALUE }
+    var colorEditLastColor = 0
 
     /** Initial/reference color at the time of opening the color picker. */
     val colorPickerRef = Vec4()
