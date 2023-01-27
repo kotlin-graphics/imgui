@@ -500,6 +500,7 @@ fun navUpdateCreateMoveRequest() {
         // Initiate directional inputs request
         g.navMoveDir = Dir.None
         g.navMoveFlags = NavMoveFlag.None.i
+        g.navMoveScrollFlags = ScrollFlag.None.i
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
             val readMode = InputReadMode.Repeat
             if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft isTest readMode || NavInput._KeyLeft isTest readMode))
@@ -534,7 +535,7 @@ fun navUpdateCreateMoveRequest() {
     // Submit
     g.navMoveForwardToNextFrame = false
     if (g.navMoveDir != Dir.None)
-        navMoveRequestSubmit(g.navMoveDir, g.navMoveClipDir, g.navMoveFlags)
+        navMoveRequestSubmit(g.navMoveDir, g.navMoveClipDir, g.navMoveFlags, g.navMoveScrollFlags)
 
     // Moving with no reference triggers a init request (will be used as a fallback if the direction fails to find a match)
     if (g.navMoveSubmitted && g.navId == 0) {
@@ -617,7 +618,7 @@ fun navUpdatePageUpPageDown(): Float {
             g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
         } else if (homePressed) {
             // FIXME-NAV: handling of Home/End is assuming that the top/bottom most item will be visible with Scroll.y == 0/ScrollMax.y
-            // Scrolling will be handled via the ImGuiNavMoveFlags_ScrollToEdge flag, we don't scroll immediately to avoid scrolling happening before nav result.
+            // Scrolling will be handled via the ImGuiNavMoveFlags_ScrollToEdgeY flag, we don't scroll immediately to avoid scrolling happening before nav result.
             // Preserve current horizontal position if we have any.
             navRectRel.min.y = -window.scroll.y
             navRectRel.max.y = -window.scroll.y
@@ -626,7 +627,7 @@ fun navUpdatePageUpPageDown(): Float {
                 navRectRel.max.x = 0f
             }
             g.navMoveDir = Dir.Down
-            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdgeY
             // FIXME-NAV: MoveClipDir left to _None, intentional?
         } else if (endPressed) {
             navRectRel.min.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
@@ -636,7 +637,7 @@ fun navUpdatePageUpPageDown(): Float {
                 navRectRel.max.x = 0f
             }
             g.navMoveDir = Dir.Up
-            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdge
+            g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdgeY
             // FIXME-NAV: MoveClipDir left to _None, intentional?
         }
         return navScoringRectOffsetY
@@ -707,7 +708,7 @@ fun navEndFrame() {
         }
         if (doForward) {
             window.navRectRel[g.navLayer] = bbRel
-            navMoveRequestForward(g.navMoveDir, clipDir, moveFlags)
+            navMoveRequestForward(g.navMoveDir, clipDir, moveFlags, g.navMoveScrollFlags)
         }
     }
 }

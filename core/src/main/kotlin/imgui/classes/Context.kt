@@ -341,6 +341,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navMoveFlags: NavMoveFlags = NavMoveFlag.None.i
 
+    var navMoveScrollFlags = ScrollFlag.None.i
+
     var navMoveKeyMods: KeyModFlags = KeyMod.None.i
 
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */

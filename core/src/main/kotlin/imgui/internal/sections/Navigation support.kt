@@ -10,10 +10,13 @@ typealias ActivateFlags = Int
 
 enum class ActivateFlag {
     None,
+
     /** Favor activation that requires keyboard text input (e.g. for Slider/Drag). Default if keyboard is available. */
     PreferInput,
+
     /** Favor activation for tweaking with arrows or gamepad (e.g. for Slider/Drag). Default if keyboard is not available. */
     PreferTweak,
+
     /** Request widget to preserve state if it can (e.g. InputText will try to preserve cursor/selection) */
     TryToPreserveState;
 
@@ -34,6 +37,52 @@ infix fun ActivateFlags.xor(b: ActivateFlag): ActivateFlags = xor(b.i)
 infix fun ActivateFlags.has(b: ActivateFlag): Boolean = and(b.i) != 0
 infix fun ActivateFlags.hasnt(b: ActivateFlag): Boolean = and(b.i) == 0
 infix fun ActivateFlags.wo(b: ActivateFlag): ActivateFlags = and(b.i.inv())
+
+
+typealias ScrollFlags = Int
+
+enum class ScrollFlag(@JvmField val i: ScrollFlags) {
+    None(0),
+
+    /** If item is not visible: scroll as little as possible on X axis to bring item back into view [default for X axis] */
+    KeepVisibleEdgeX(1 shl 0),
+
+    /** If item is not visible: scroll as little as possible on Y axis to bring item back into view [default for Y axis for windows that are already visible] */
+    KeepVisibleEdgeY(1 shl 1),
+
+    /** If item is not visible: scroll to make the item centered on X axis [rarely used] */
+    KeepVisibleCenterX(1 shl 2),
+
+    /** If item is not visible: scroll to make the item centered on Y axis */
+    KeepVisibleCenterY(1 shl 3),
+
+    /** Always center the result item on X axis [rarely used] */
+    AlwaysCenterX(1 shl 4),
+
+    /** Always center the result item on Y axis [default for Y axis for appearing window) */
+    AlwaysCenterY(1 shl 5),
+
+    /** Disable forwarding scrolling to parent window if required to keep item/rect visible (only scroll window the function was applied to). */
+    NoScrollParent(1 shl 6),
+    MaskX_(KeepVisibleEdgeX or KeepVisibleCenterX or AlwaysCenterX),
+    MaskY_(KeepVisibleEdgeY or KeepVisibleCenterY or AlwaysCenterY);
+    infix fun and(b: ScrollFlag): ScrollFlags = i and b.i
+    infix fun and(b: ScrollFlags): ScrollFlags = i and b
+    infix fun or(b: ScrollFlag): ScrollFlags = i or b.i
+    infix fun or(b: ScrollFlags): ScrollFlags = i or b
+    infix fun xor(b: ScrollFlag): ScrollFlags = i xor b.i
+    infix fun xor(b: ScrollFlags): ScrollFlags = i xor b
+    infix fun wo(b: ScrollFlags): ScrollFlags = and(b.inv())
+}
+
+infix fun ScrollFlags.and(b: ScrollFlag): ScrollFlags = and(b.i)
+infix fun ScrollFlags.or(b: ScrollFlag): ScrollFlags = or(b.i)
+infix fun ScrollFlags.xor(b: ScrollFlag): ScrollFlags = xor(b.i)
+infix fun ScrollFlags.has(b: ScrollFlag): Boolean = and(b.i) != 0
+infix fun ScrollFlags.hasnt(b: ScrollFlag): Boolean = and(b.i) == 0
+infix fun ScrollFlags.wo(b: ScrollFlag): ScrollFlags = and(b.i.inv())
+operator fun ScrollFlags.minus(flag: ScrollFlag): ScrollFlags = wo(flag)
+operator fun ScrollFlags.div(flag: ScrollFlag): ScrollFlags = or(flag)
 
 
 typealias NavHighlightFlags = Int
@@ -110,7 +159,9 @@ enum class NavMoveFlag {
 
     /** Store alternate result in NavMoveResultLocalVisible that only comprise elements that are already fully visible (used by PageUp/PageDown) */
     AlsoScoreVisibleSet,
-    ScrollToEdge,
+
+    /** Force scrolling to min/max (used by Home/End) // FIXME-NAV: Aim to remove or reword, probably unnecessary */
+    ScrollToEdgeY,
     Forwarded,
     DebugNoResult;
 

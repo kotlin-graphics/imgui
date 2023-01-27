@@ -107,7 +107,7 @@ interface widgetsMenus {
                 setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.
                 g.navDisableMouseHover = true; g.navMousePosDirty = true
-                navMoveRequestForward(g.navMoveDir, g.navMoveClipDir, g.navMoveFlags) // Repeat
+                navMoveRequestForward(g.navMoveDir, g.navMoveClipDir, g.navMoveFlags, g.navMoveScrollFlags) // Repeat
             }
         }
 

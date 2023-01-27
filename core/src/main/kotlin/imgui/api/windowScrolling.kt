@@ -11,11 +11,6 @@ import imgui.lerp
 /** Windows Scrolling */
 interface windowScrolling {
 
-    fun setNextWindowScroll(scroll: Vec2) {
-        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasScroll
-        g.nextWindowData.scrollVal put scroll
-    }
-
     /** Scrolling amount [0..GetScrollMaxX()] */
     var scrollX: Float
         /** ~GetScrollX */

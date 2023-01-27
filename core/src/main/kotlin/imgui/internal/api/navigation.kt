@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.io
+import imgui.ImGui.scrollToRectEx
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -59,13 +60,14 @@ internal interface navigation {
     fun navMoveRequestButNoResultYet(): Boolean = g.navMoveScoringItems && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
     /** FIXME: ScoringRect is not set */
-    fun navMoveRequestSubmit(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
+    fun navMoveRequestSubmit(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags, scrollFlags: ScrollFlags) {
         assert(g.navWindow != null)
         g.navMoveSubmitted = true; g.navMoveScoringItems = true
         g.navMoveDir = moveDir
         g.navMoveDirForDebug = moveDir
         g.navMoveClipDir = clipDir
         g.navMoveFlags = moveFlags
+        g.navMoveScrollFlags = scrollFlags
         g.navMoveForwardToNextFrame = false
         g.navMoveKeyMods = g.io.keyMods
         g.navMoveResultLocal.clear()
@@ -75,7 +77,7 @@ internal interface navigation {
     }
 
     /** Forward will reuse the move request again on the next frame (generally with modifications done to it) */
-    fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags) {
+    fun navMoveRequestForward(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags, scrollFlags: ScrollFlags) {
 
         assert(!g.navMoveForwardToNextFrame)
         navMoveRequestCancel()
@@ -83,6 +85,7 @@ internal interface navigation {
         g.navMoveDir = moveDir
         g.navMoveDir = clipDir
         g.navMoveFlags = moveFlags or NavMoveFlag.Forwarded
+        g.navMoveScrollFlags = scrollFlags
     }
 
     fun navMoveRequestCancel() {
@@ -124,13 +127,14 @@ internal interface navigation {
         // Scroll to keep newly navigated item fully into view.
         if (g.navLayer == NavLayer.Main) {
             val deltaScroll = Vec2()
-            if (g.navMoveFlags has NavMoveFlag.ScrollToEdge) {
+            if (g.navMoveFlags has NavMoveFlag.ScrollToEdgeY) {
+                // FIXME: Should remove this
                 val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
                 deltaScroll.y = window.scroll.y - scrollTarget
                 window setScrollY scrollTarget
             } else {
                 val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
-                deltaScroll put window.scrollToBringRectIntoView(rectAbs)
+                deltaScroll put scrollToRectEx(result.window!!, rectAbs, g.navMoveScrollFlags)
             }
 
             // Offset our result position so mouse position can be applied immediately after in NavUpdate()
