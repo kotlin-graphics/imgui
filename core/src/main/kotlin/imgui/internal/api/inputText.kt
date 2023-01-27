@@ -393,6 +393,10 @@ internal interface inputText {
             val isUndo = ((isShortcutKey && Key.Z.isPressed) && !isReadOnly && isUndoable)
             val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
 
+            // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
+            val isValidate = Key.Enter.isPressed || Key.KeyPadEnter.isPressed || NavInput.Activate isTest InputReadMode.Pressed || NavInput.Input isTest InputReadMode.Pressed
+            val isCancel   = Key.Escape.isPressed || NavInput.Cancel isTest InputReadMode.Pressed
+
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(
                     when {
@@ -435,7 +439,7 @@ internal interface inputText {
                             state.onKeyPressed(K.LINESTART or K.SHIFT)
                     state.onKeyPressed(K.BACKSPACE or kMask)
                 }
-                Key.Enter.isPressed || Key.KeyPadEnter.isPressed -> {
+                isValidate -> {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
                     if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         clearActiveId = true
@@ -447,7 +451,7 @@ internal interface inputText {
                                 state.onKeyPressed(c().i)
                         }
                 }
-                Key.Escape.isPressed -> {
+                isCancel -> {
                     cancelEdit = true
                     clearActiveId = true
                 }

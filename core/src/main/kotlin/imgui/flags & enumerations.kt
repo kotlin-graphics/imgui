@@ -1173,7 +1173,7 @@ enum class Key {
     @JvmField
     val i = ordinal
 
-    /** JVM implementation of IsKeyPressedMap   */
+    /** [JVM] ~IsKeyPressedMap   */
     fun isPressed(repeat: Boolean = true) = isKeyPressed(io.keyMap[i], repeat)
 
     val isPressed: Boolean
