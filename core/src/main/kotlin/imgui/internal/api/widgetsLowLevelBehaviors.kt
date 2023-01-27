@@ -228,8 +228,8 @@ internal interface widgetsLowLevelBehaviors {
                 g.navDisableHighlight = true
         }
 
-        /*  Gamepad/Keyboard navigation
-            We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.         */
+        // Gamepad/Keyboard navigation
+        // We report navigated item as hovered but we don't set g.HoveredId to not interfere with mouse.
         if (g.navId == id && !g.navDisableHighlight && g.navDisableMouseHover && (g.activeId == 0 || g.activeId == id || g.activeId == window.moveId))
             if (flags hasnt Bf.NoHoveredOnFocus)
                 hovered = true
@@ -237,12 +237,12 @@ internal interface widgetsLowLevelBehaviors {
             val navActivatedByCode = g.navActivateId == id
             val navActivatedByInputs = NavInput.Activate isTest if (flags has Bf.Repeat) InputReadMode.Repeat else InputReadMode.Pressed
             if (navActivatedByCode || navActivatedByInputs)
-                pressed = true
-            if (navActivatedByCode || navActivatedByInputs || g.activeId == id) {
+            {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
-                g.navActivateId = id // This is so SetActiveId assign a Nav source
+                pressed = true
                 setActiveID(id, window)
-                if ((navActivatedByCode || navActivatedByInputs) && flags hasnt Bf.NoNavFocus)
+                g.activeIdSource = InputSource.Nav
+                if (flags hasnt Bf.NoNavFocus)
                     setFocusID(id, window)
             }
         }
