@@ -12,6 +12,7 @@ import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.end
 import imgui.ImGui.endChild
+import imgui.ImGui.endDisabled
 import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTable
@@ -27,6 +28,7 @@ import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
 import imgui.ImGui.popFocusScope
 import imgui.ImGui.popID
+import imgui.ImGui.popItemFlag
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
@@ -95,11 +97,19 @@ internal interface debugTools {
                 logCallback?.invoke(userData, "Recovered from missing PopID() in '${window.name}'")
                 popID()
             }
+            while (g.disabledStackSize > window.dc.stackSizesOnBegin.sizeOfDisabledStack) {
+                logCallback?.invoke(userData, "Recovered from missing EndDisabled() in '${window.name}'")
+                endDisabled()
+            }
             while (g.colorStack.size > window.dc.stackSizesOnBegin.sizeOfColorStack) {
                 val name = window.name
                 val col = g.colorStack.last().col
                 logCallback?.invoke(userData, "Recovered from missing PopStyleColor() in '$name' for ImGuiCol_$col")
                 popStyleColor()
+            }
+            while (g.itemFlagsStack.size > window.dc.stackSizesOnBegin.sizeOfItemFlagsStack) {
+                logCallback?.invoke(userData, "Recovered from missing PopItemFlag() in '${window.name}'")
+                popItemFlag()
             }
             while (g.styleVarStack.size > window.dc.stackSizesOnBegin.sizeOfStyleVarStack) {
                 logCallback?.invoke(userData, "Recovered from missing PopStyleVar() in '${window.name}'")
@@ -301,7 +311,7 @@ internal interface debugTools {
             val tab = tabBar.tabs[tabN]
             text += (if (tabN > 0) ", " else "") + "'" + if (tab.nameOffset != -1) tabBar.getTabName(tab) else "???" + "'"
         }
-        text += if(tabBar.tabs.size > 3) " ... }" else " } "
+        text += if (tabBar.tabs.size > 3) " ... }" else " } "
         if (!isActive)
             pushStyleColor(Col.Text, getStyleColorVec4(Col.TextDisabled))
         val open = treeNode(tabBar, text)

@@ -530,11 +530,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** If speed == 0.0f, uses (max-min) * DragSpeedDefaultRatio    */
     var dragSpeedDefaultRatio = 1f / 100f
 
+    /** Distance between mouse and center of grab box, normalized in parent space. Use storage? */
+    var scrollbarClickDeltaToGrabCenter = 0f
+
     /** Backup for style.Alpha for BeginDisabled() */
     var disabledAlphaBackup = 0f
 
-    /** Distance between mouse and center of grab box, normalized in parent space. Use storage? */
-    var scrollbarClickDeltaToGrabCenter = 0f
+    var disabledStackSize = 0
 
     var tooltipOverrideCount = 0
 

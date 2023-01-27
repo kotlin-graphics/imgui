@@ -119,7 +119,9 @@ class StackSizes {
     var sizeOfFontStack = 0
     var sizeOfFocusScopeStack = 0
     var sizeOfGroupStack = 0
+    var sizeOfItemFlagsStack = 0
     var sizeOfBeginPopupStack = 0
+    var sizeOfDisabledStack = 0
 
     /** Save current stack sizes for later compare */
     fun setToCurrentState() {
@@ -130,7 +132,9 @@ class StackSizes {
         sizeOfFontStack = g.fontStack.size
         sizeOfFocusScopeStack = g.focusScopeStack.size
         sizeOfGroupStack = g.groupStack.size
+        sizeOfItemFlagsStack = g.itemFlagsStack.size
         sizeOfBeginPopupStack = g.beginPopupStack.size
+        sizeOfDisabledStack = g.disabledStackSize
     }
 
     /** Compare to detect usage errors */
@@ -148,6 +152,8 @@ class StackSizes {
         // For color, style and font stacks there is an incentive to use Push/Begin/Pop/.../End patterns, so we relax our checks a little to allow them.
         assert(sizeOfGroupStack == g.groupStack.size) { "BeginGroup/EndGroup Mismatch!" }
         assert(sizeOfBeginPopupStack == g.beginPopupStack.size) { "BeginPopup/EndPopup or BeginMenu/EndMenu Mismatch!" }
+        assert(sizeOfDisabledStack == g.disabledStackSize) { "BeginDisabled/EndDisabled Mismatch!" }
+        assert(sizeOfItemFlagsStack >= g.itemFlagsStack.size) { "PushItemFlag/PopItemFlag Mismatch!" }
         assert(sizeOfColorStack >= g.colorStack.size) { "PushStyleColor/PopStyleColor Mismatch!" }
         assert(sizeOfStyleVarStack >= g.styleVarStack.size) { "PushStyleVar/PopStyleVar Mismatch!" }
         assert(sizeOfFontStack >= g.fontStack.size) { "PushFont/PopFont Mismatch!" }

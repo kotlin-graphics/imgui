@@ -122,6 +122,6 @@ class WindowTempData {
     /** Store text wrap pos to restore (attention: .back() is not == TextWrapPos) */
     val textWrapPosStack = Stack<Float>()
 
-    /** Store size of various stacks for asserting  */
+    /** Store size of various stacks for asserting // FIXME: Can be moved to ImGuiWindowStackData  */
     val stackSizesOnBegin = StackSizes()
 }

@@ -24,9 +24,12 @@ internal interface disabling {
         if (wasDisabled || disabled)
         g.currentItemFlags /= ItemFlag.Disabled
         g.itemFlagsStack += g.currentItemFlags
+        g.disabledStackSize++
     }
 
     fun endDisabled() {
+        assert(g.disabledStackSize > 0)
+        g.disabledStackSize--
         val wasDisabled = g.currentItemFlags has ItemFlag.Disabled
         //popItemFlag()
         g.itemFlagsStack.pop()
