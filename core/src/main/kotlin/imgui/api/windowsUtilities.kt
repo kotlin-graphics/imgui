@@ -31,15 +31,19 @@ interface windowsUtilities {
     /** is current window focused? or its root/child, depending on flags. see flags for options.    */
     fun isWindowFocused(flags: FocusedFlags = Ff.None.i): Boolean {
 
-        if (flags has Ff.AnyWindow)
-            return g.navWindow != null
+        val refWindow = g.navWindow ?: return false
+        var curWindow = g.currentWindow
 
-        val curr = g.currentWindow!!     // Not inside a Begin()/End()
-        return when (flags and (Ff.RootWindow or Ff.ChildWindows)) {
-            Ff.RootWindow or Ff.ChildWindows -> g.navWindow?.let { it.rootWindow === curr.rootWindow } ?: false
-            Ff.RootWindow.i -> g.navWindow === curr.rootWindow
-            Ff.ChildWindows.i -> g.navWindow?.isChildOf(curr) ?: false
-            else -> g.navWindow === curr
+        if (flags has Ff.AnyWindow)
+            return true
+        assert(curWindow != null) { "Not inside a Begin () / End()" }
+
+        if (flags has Hf.RootWindow)
+            curWindow = curWindow!!.rootWindow
+
+        return when {
+            flags has Hf.ChildWindows -> refWindow isChildOf curWindow
+            else -> refWindow === curWindow
         }
     }
 
@@ -51,23 +55,29 @@ interface windowsUtilities {
      *  the 'io.wantCaptureMouse' boolean for that! Please read the FAQ!    */
     fun isWindowHovered(flags: HoveredFlags = Hf.None.i): Boolean {
         assert(flags hasnt Hf.AllowWhenOverlapped) { "Flags not supported by this function" }
-        val hoveredWindow = g.hoveredWindow ?: return false
+        val refWindow = g.hoveredWindow ?: return false
+        var curWindow = g.currentWindow
 
         if (flags hasnt Hf.AnyWindow) {
-            val window = g.currentWindow!!
-            when (flags and (Hf.RootWindow or Hf.ChildWindows)) {
-                Hf.RootWindow or Hf.ChildWindows -> if (hoveredWindow.rootWindow !== window.rootWindow) return false
-                Hf.RootWindow.i -> if (hoveredWindow != window.rootWindow) return false
-                Hf.ChildWindows.i -> if (!(hoveredWindow isChildOf window)) return false
-                else -> if (hoveredWindow !== window) return false
+            assert(curWindow != null) { "Not inside a Begin () / End()" }
+
+            if (flags has Hf.RootWindow)
+                curWindow = curWindow!!.rootWindow
+
+            val result = when {
+                flags has Hf.ChildWindows -> refWindow isChildOf curWindow
+                else -> refWindow === curWindow
             }
+            if (!result)
+                return false
         }
 
-        return when {
-            !hoveredWindow.isContentHoverable(flags) -> false
-            flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != hoveredWindow.moveId -> false
-            else -> true
-        }
+        if (!refWindow.isContentHoverable(flags))
+            return false
+        if (flags hasnt Hf.AllowWhenBlockedByActiveItem)
+            if (g.activeId != 0 && !g.activeIdAllowOverlap && g.activeId != refWindow.moveId)
+                return false
+        return true
     }
 
     /** get draw list associated to the current window, to append your own drawing primitives

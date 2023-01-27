@@ -937,15 +937,16 @@ typealias FocusedFlags = Int
 enum class FocusedFlag(@JvmField val i: FocusedFlags) {
     None(0),
 
-    /** isWindowFocused(): Return true if any children of the window is focused */
+    /** Return true if any children of the window is focused */
     ChildWindows(1 shl 0),
 
-    /** isWindowFocused(): Test from root window (top most parent of the current hierarchy) */
+    /** Test from root window (top most parent of the current hierarchy) */
     RootWindow(1 shl 1),
 
-    /** IsWindowFocused(): Return true if any window is focused.
+    /** Return true if any window is focused.
      *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
     AnyWindow(1 shl 2),
+    //ImGuiFocusedFlags_DockHierarchy               = 1 << 3,   // Consider docking hierarchy (treat dockspace host as parent of docked window)
     RootAndChildWindows(RootWindow or ChildWindows);
 
     infix fun and(b: FocusedFlag): FocusedFlags = i and b.i
@@ -983,10 +984,12 @@ enum class HoveredFlag(@JvmField val i: HoveredFlags) {
 
     /** IsWindowHovered() only: Return true if any window is hovered    */
     AnyWindow(1 shl 2),
+    //ImGuiHoveredFlags_DockHierarchy               = 1 << 3,   // IsWindowHovered() only: Consider docking hierarchy (treat dockspace host as parent of docked window)
 
     /** Return true even if a popup window is normally blocking access to this item/window  */
-    AllowWhenBlockedByPopup(1 shl 3),
+    AllowWhenBlockedByPopup(1 shl 4),
     //AllowWhenBlockedByModal     (1 shl 4),   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
+
     /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
     AllowWhenBlockedByActiveItem(1 shl 5),
 
