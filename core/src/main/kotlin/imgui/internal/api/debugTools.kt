@@ -99,6 +99,7 @@ internal interface debugTools {
             endTable()
         }
         val window = g.currentWindow!!
+        val stackSizes = g.currentWindowStack.last().stackSizesOnBegin
         while (g.currentTabBar != null) { //-V1044
             logCallback?.invoke(userData, "Recovered from missing EndTabBar() in '${window.name}'")
             endTabBar()
@@ -107,7 +108,7 @@ internal interface debugTools {
             logCallback?.invoke(userData, "Recovered from missing TreePop() in '${window.name}'")
             treePop()
         }
-        while (g.groupStack.size > window.dc.stackSizesOnBegin.sizeOfGroupStack) {
+        while (g.groupStack.size > stackSizes.sizeOfGroupStack) {
             logCallback?.invoke(userData, "Recovered from missing EndGroup() in '${window.name}'")
             endGroup()
         }
@@ -115,25 +116,25 @@ internal interface debugTools {
             logCallback?.invoke(userData, "Recovered from missing PopID() in '${window.name}'")
             popID()
         }
-        while (g.disabledStackSize > window.dc.stackSizesOnBegin.sizeOfDisabledStack) {
+        while (g.disabledStackSize > stackSizes.sizeOfDisabledStack) {
             logCallback?.invoke(userData, "Recovered from missing EndDisabled() in '${window.name}'")
             endDisabled()
         }
-        while (g.colorStack.size > window.dc.stackSizesOnBegin.sizeOfColorStack) {
+        while (g.colorStack.size > stackSizes.sizeOfColorStack) {
             val name = window.name
             val col = g.colorStack.last().col
             logCallback?.invoke(userData, "Recovered from missing PopStyleColor() in '$name' for ImGuiCol_$col")
             popStyleColor()
         }
-        while (g.itemFlagsStack.size > window.dc.stackSizesOnBegin.sizeOfItemFlagsStack) {
+        while (g.itemFlagsStack.size > stackSizes.sizeOfItemFlagsStack) {
             logCallback?.invoke(userData, "Recovered from missing PopItemFlag() in '${window.name}'")
             popItemFlag()
         }
-        while (g.styleVarStack.size > window.dc.stackSizesOnBegin.sizeOfStyleVarStack) {
+        while (g.styleVarStack.size > stackSizes.sizeOfStyleVarStack) {
             logCallback?.invoke(userData, "Recovered from missing PopStyleVar() in '${window.name}'")
             popStyleVar()
         }
-        while (g.focusScopeStack.size > window.dc.stackSizesOnBegin.sizeOfFocusScopeStack) {
+        while (g.focusScopeStack.size > stackSizes.sizeOfFocusScopeStack) {
             logCallback?.invoke(userData, "Recovered from missing PopFocusScope() in '${window.name}'")
             popFocusScope()
         }
