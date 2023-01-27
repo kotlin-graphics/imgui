@@ -36,7 +36,7 @@ interface itemWidgetsUtilities {
         return when {
             statusFlags hasnt ItemStatusFlag.HoveredRect -> false
             else -> {
-                assert(flags hasnt (Hf.RootWindow or Hf.ChildWindows)) { "Flags not supported by this function" }
+                assert(flags hasnt (Hf.AnyWindow or Hf.RootWindow or Hf.ChildWindows or Hf.NoPopupHierarchy)) { "Flags not supported by this function" }
                 when {
                     // Test if we are hovering the right window (our window could be behind another window)
                     // [2021/03/02] Reworked / reverted the revert, finally. Note we want e.g. BeginGroup/ItemAdd/EndGroup to work as well. (#3851)

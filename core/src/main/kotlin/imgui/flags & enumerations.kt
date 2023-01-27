@@ -998,10 +998,10 @@ enum class HoveredFlag(@JvmField val i: HoveredFlags) {
     /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
     AllowWhenBlockedByActiveItem(1 shl 7),
 
-    /** Return true even if the position is obstructed or overlapped by another window,   */
+    /** IsItemHovered() only: Return true even if the position is obstructed or overlapped by another window,   */
     AllowWhenOverlapped(1 shl 8),
 
-    /** Return true even if the item is disabled */
+    /** IsItemHovered() only: Return true even if the item is disabled */
     AllowWhenDisabled(1 shl 9),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
     RootAndChildWindows(RootWindow or ChildWindows);

@@ -201,7 +201,7 @@ internal interface basicHelpersForWidgetCode {
 
         // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
         // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
-        if (g.activeId == id && g.tabFocusPressed && !isActiveIdUsingKey(Key.Tab) && g.tabFocusRequestNextWindow == null) {
+        if (g.activeId == id && g.tabFocusPressed && g.tabFocusRequestNextWindow == null) {
             g.tabFocusRequestNextWindow = window
             g.tabFocusRequestNextCounterTabStop = window.dc.focusCounterTabStop + if (g.io.keyShift) if (isTabStop) -1 else 0 else +1 // Modulo on index will be applied at the end of frame once we've got the total counter of items.
         }

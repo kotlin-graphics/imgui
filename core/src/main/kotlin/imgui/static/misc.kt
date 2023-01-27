@@ -7,6 +7,7 @@ import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
+import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.loadIniSettingsFromDisk
@@ -172,8 +173,8 @@ fun updateMouseWheel() {
     // As a standard behavior holding SHIFT while using Vertical Mouse Wheel triggers Horizontal scroll instead
     // (we avoid doing it on OSX as it the OS input layer handles this already)
     val swapAxis = g.io.keyShift && !g.io.configMacOSXBehaviors
-    val wheelY = if(swapAxis) 0f else g.io.mouseWheel
-    val wheelX = if(swapAxis) g.io.mouseWheel else g.io.mouseWheelH
+    val wheelY = if (swapAxis) 0f else g.io.mouseWheel
+    val wheelX = if (swapAxis) g.io.mouseWheel else g.io.mouseWheelH
 
     // Vertical Mouse Wheel scrolling
     if (wheelY != 0f) {
@@ -209,7 +210,7 @@ fun updateMouseWheel() {
 fun updateTabFocus() {
 
     // Pressing TAB activate widget focus
-    g.tabFocusPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed }
+    g.tabFocusPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed && !isActiveIdUsingKey(Key.Tab) }
         ?: false
     if (g.activeId == 0 && g.tabFocusPressed) {
         // - This path is only taken when no widget are active/tabbed-into yet.
@@ -290,7 +291,7 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
 
     val iCurrent = findWindowFocusIndex(target)
     val windowTarget = findWindowNavFocusable(iCurrent + focusChangeDir, -Int.MAX_VALUE, focusChangeDir)
-            ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windowsFocusOrder.lastIndex else 0, iCurrent, focusChangeDir)
+        ?: findWindowNavFocusable(if (focusChangeDir < 0) g.windowsFocusOrder.lastIndex else 0, iCurrent, focusChangeDir)
     // Don't reset windowing target if there's a single window in the list
     windowTarget?.let {
         g.navWindowingTarget = it
