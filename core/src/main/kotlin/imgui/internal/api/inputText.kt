@@ -134,6 +134,7 @@ internal interface inputText {
             window.dc.cursorPos = backupPos
 
             // We reproduce the contents of BeginChildFrame() in order to provide 'label' so our window internal data are easier to read/debug.
+            // FIXME-NAV: Pressing NavActivate will trigger general child activation right before triggering our own below. Harmless but bizarre.
             pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
             pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
             pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
@@ -169,7 +170,7 @@ internal interface inputText {
         val focusRequestedByTabbing = itemStatusFlags has ItemStatusFlag.FocusedByTabbing
 
         val userClicked = hovered && io.mouseClicked[0]
-        val userNavInputStart = g.activeId != id && (g.navActivateInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.Keyboard))
+        val userNavInputStart = g.activeId != id && (g.navActivateInputId == id || g.navActivateId == id)
         val userScrollFinish = isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == drawWindow getScrollbarID Axis.Y
         val userScrollActive = isMultiline && state != null && g.activeId == drawWindow getScrollbarID Axis.Y
 
@@ -394,7 +395,8 @@ internal interface inputText {
             val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
-            val isValidate = Key.Enter.isPressed || Key.KeyPadEnter.isPressed || NavInput.Activate isTest InputReadMode.Pressed || NavInput.Input isTest InputReadMode.Pressed
+            val isValidateEnter = Key.Enter.isPressed || Key.KeyPadEnter.isPressed
+            val isValidateNav = (g.navInputSource == InputSource.Gamepad && NavInput.Activate isTest InputReadMode.Pressed) || NavInput.Input isTest InputReadMode.Pressed
             val isCancel   = Key.Escape.isPressed || NavInput.Cancel isTest InputReadMode.Pressed
 
             when {
@@ -439,7 +441,7 @@ internal interface inputText {
                             state.onKeyPressed(K.LINESTART or K.SHIFT)
                     state.onKeyPressed(K.BACKSPACE or kMask)
                 }
-                isValidate -> {
+                isValidateEnter -> {
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
                     if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         clearActiveId = true
@@ -450,6 +452,10 @@ internal interface inputText {
                             if (inputTextFilterCharacter(c, flags, callback, callbackUserData, InputSource.Keyboard))
                                 state.onKeyPressed(c().i)
                         }
+                }
+                isValidateNav -> {
+                    assert(!isValidateEnter)
+                    enterPressed = true; clearActiveId = true
                 }
                 isCancel -> {
                     cancelEdit = true
