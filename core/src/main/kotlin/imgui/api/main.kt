@@ -167,6 +167,13 @@ interface main {
         g.dragDropWithinTarget = false
         g.dragDropHoldJustPressedId = 0
 
+        // Clear buttons state when focus is lost
+        // (this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle)
+        if (g.io.appFocusLost) {
+            g.io.clearInputKeys()
+            g.io.appFocusLost = false
+        }
+
         // Update keyboard input state
         // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
         io.keyMods = mergedKeyModFlags

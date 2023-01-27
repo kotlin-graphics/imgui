@@ -247,16 +247,18 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         }
     }
 
-    /** Clear the text input buffer manually */
-    fun clearInputCharacters() = inputQueueCharacters.clear()
-
     /** Notifies Dear ImGui when hosting platform windows lose or gain input focus */
     fun addFocusEvent(focused: Boolean) {
-        if (focused)
-            return
+        // We intentionally overwrite this and process in NewFrame(), in order to give a chance
+        // to multi-viewports backends to queue AddFocusEvent(false),AddFocusEvent(true) in same frame.
+        appFocusLost = !focused
+    }
 
-        // Clear buttons state when focus is lost
-        // (this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle)
+    /** [Internal] Clear the text input buffer manually */
+    fun clearInputCharacters() = inputQueueCharacters.clear()
+
+    /** [Internal] Release all keys */
+    fun clearInputKeys() {
         keysDown.fill(false)
         for (n in keysDownDuration.indices) {
             keysDownDuration[n] = -1f; keysDownDurationPrev[n] = -1f
@@ -386,6 +388,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Touch/Pen pressure (0.0f to 1.0f, should be >0.0f only when MouseDown[0] == true). Helper storage currently unused by Dear ImGui. */
     var penPressure = 0f
+
+    var appFocusLost = false
 
     /** For AddInputCharacterUTF16 */
     var inputQueueSurrogate = NUL
