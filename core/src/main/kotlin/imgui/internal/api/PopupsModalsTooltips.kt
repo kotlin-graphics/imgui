@@ -13,10 +13,7 @@ import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitWindow
-import imgui.ImGui.popStyleVar
-import imgui.ImGui.pushStyleVar
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.setNextWindowPos
@@ -182,6 +179,18 @@ internal interface PopupsModalsTooltips {
             IMGUI_DEBUG_LOG_POPUP("ClosePopupsOverWindow(\"${refWindow?.name}\") -> ClosePopupToLevel($popupCountToKeep)")
             closePopupToLevel(popupCountToKeep, restoreFocusToWindowUnderPopup)
         }
+    }
+
+    fun closePopupsExceptModals() {
+        var popupCountToKeep = g.openPopupStack.size
+        while (popupCountToKeep > 0) {
+            val window = g.openPopupStack[popupCountToKeep - 1].window
+            if (window == null || window.flags has Wf._Modal)
+                break
+            popupCountToKeep--
+        }
+        if (popupCountToKeep < g.openPopupStack.size) // This test is not required but it allows to set a convenient breakpoint on the statement below
+            closePopupToLevel(popupCountToKeep, true)
     }
 
     /** Supported flags: ImGuiPopupFlags_AnyPopupId, ImGuiPopupFlags_AnyPopupLevel
@@ -370,44 +379,5 @@ internal interface PopupsModalsTooltips {
                 y = max(min(y + size.y, rOuter.max.y) - size.y, rOuter.min.y)
             }
         }
-    }
-
-    /** Important: calling order matters!
-     *  FIXME: Somehow overlapping with docking tech.
-     *  FIXME: The "rect-cut" aspect of this could be formalized into a lower-level helper (rect-cut: https://halt.software/dead-simple-layouts) */
-    fun beginViewportSideBar(name: String, viewportP: Viewport?, dir: Dir, axisSize: Float, windowFlags_: WindowFlags): Boolean {
-        assert(dir != Dir.None)
-
-        val barWindow = findWindowByName(name)
-        if (barWindow == null || barWindow.beginCount == 0) {
-            // Calculate and set window size/position
-            val viewport = (viewportP ?: mainViewport) as ViewportP
-            val availRect = viewport.buildWorkRect
-            val axis = when (dir) {
-                Dir.Up, Dir.Down -> Axis.Y
-                else -> Axis.X
-            }
-            val pos = Vec2(availRect.min)
-            if (dir == Dir.Right || dir == Dir.Down)
-                pos[axis] = availRect.max[axis] - axisSize
-            val size = availRect.size
-            size[axis] = axisSize
-            setNextWindowPos(pos)
-            setNextWindowSize(size)
-
-            // Report our size into work area (for next frame) using actual window size
-            if (dir == Dir.Up || dir == Dir.Left)
-                viewport.buildWorkOffsetMin[axis] += axisSize
-            else if (dir == Dir.Down || dir == Dir.Right)
-                viewport.buildWorkOffsetMax[axis] -= axisSize
-        }
-
-        val windowFlags = windowFlags_ or Wf.NoTitleBar or Wf.NoResize or Wf.NoMove
-        pushStyleVar(StyleVar.WindowRounding, 0f)
-        pushStyleVar(StyleVar.WindowMinSize, Vec2(0, 0)) // Lift normal size constraint
-        val isOpen = begin(name, null, windowFlags)
-        popStyleVar(2)
-
-        return isOpen
     }
 }

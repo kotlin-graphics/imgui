@@ -167,6 +167,10 @@ interface main {
         g.dragDropWithinTarget = false
         g.dragDropHoldJustPressedId = 0
 
+        // Close popups on focus lost (currently wip/opt-in)
+        //if (g.IO.AppFocusLost)
+        //    ClosePopupsExceptModals();
+
         // Clear buttons state when focus is lost
         // (this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle)
         if (g.io.appFocusLost) {

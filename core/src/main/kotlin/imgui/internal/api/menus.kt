@@ -19,15 +19,52 @@ import imgui.ImGui.selectable
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.floor
-import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
-import imgui.internal.sections.ItemStatusFlag
-import imgui.internal.sections.LayoutType
-import imgui.internal.sections.or
+import imgui.internal.sections.*
 import imgui.internal.triangleContainsPoint
 import kotlin.math.abs
 
 // Menus
 internal interface menus {
+
+
+    /** Important: calling order matters!
+     *  FIXME: Somehow overlapping with docking tech.
+     *  FIXME: The "rect-cut" aspect of this could be formalized into a lower-level helper (rect-cut: https://halt.software/dead-simple-layouts) */
+    fun beginViewportSideBar(name: String, viewportP: Viewport?, dir: Dir, axisSize: Float, windowFlags_: WindowFlags): Boolean {
+        assert(dir != Dir.None)
+
+        val barWindow = ImGui.findWindowByName(name)
+        if (barWindow == null || barWindow.beginCount == 0) {
+            // Calculate and set window size/position
+            val viewport = (viewportP ?: ImGui.mainViewport) as ViewportP
+            val availRect = viewport.buildWorkRect
+            val axis = when (dir) {
+                Dir.Up, Dir.Down -> Axis.Y
+                else -> Axis.X
+            }
+            val pos = Vec2(availRect.min)
+            if (dir == Dir.Right || dir == Dir.Down)
+                pos[axis] = availRect.max[axis] - axisSize
+            val size = availRect.size
+            size[axis] = axisSize
+            ImGui.setNextWindowPos(pos)
+            ImGui.setNextWindowSize(size)
+
+            // Report our size into work area (for next frame) using actual window size
+            if (dir == Dir.Up || dir == Dir.Left)
+                viewport.buildWorkOffsetMin[axis] += axisSize
+            else if (dir == Dir.Down || dir == Dir.Right)
+                viewport.buildWorkOffsetMax[axis] -= axisSize
+        }
+
+        val windowFlags = windowFlags_ or WindowFlag.NoTitleBar or WindowFlag.NoResize or WindowFlag.NoMove
+        pushStyleVar(StyleVar.WindowRounding, 0f)
+        pushStyleVar(StyleVar.WindowMinSize, Vec2(0, 0)) // Lift normal size constraint
+        val isOpen = ImGui.begin(name, null, windowFlags)
+        popStyleVar(2)
+
+        return isOpen
+    }
 
     /** create a sub-menu entry. only call EndMenu() if this returns true!  */
     fun beginMenuEx(label: String, icon: String, enabled: Boolean = true): Boolean {
