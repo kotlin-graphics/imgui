@@ -243,29 +243,6 @@ fun updateTabFocus() {
     g.navIdTabCounter = Int.MAX_VALUE
 }
 
-/** [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack. */
-fun updateDebugToolItemPicker() {
-
-    g.debugItemPickerBreakId = 0
-    if (g.debugItemPickerActive) {
-
-        val hoveredId = g.hoveredIdPreviousFrame
-        mouseCursor = MouseCursor.Hand
-        if (Key.Escape.isPressed)
-            g.debugItemPickerActive = false
-        if (isMouseClicked(MouseButton.Left) && hoveredId != 0) {
-            g.debugItemPickerBreakId = hoveredId
-            g.debugItemPickerActive = false
-        }
-        setNextWindowBgAlpha(0.6f)
-        tooltip {
-            text("HoveredId: 0x%08X", hoveredId)
-            text("Press ESC to abort picking.")
-            textColored(getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
-        }
-    }
-}
-
 // UpdateWindowManualResize,
 // RenderWindowOuterBorders,
 // RenderWindowDecorations,

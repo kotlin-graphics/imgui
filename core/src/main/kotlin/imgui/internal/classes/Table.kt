@@ -323,6 +323,7 @@ class Table {
      *  + 0 (for ImGuiTable instance, we are pooling allocations in g.Tables)
      *  + 1 (for table->RawData allocated below)
      *  + 1 (for table->ColumnsNames, if names are used)
+     *  Shared allocations per number of nested tables
      *  + 1 (for table->Splitter._Channels)
      *  + 2 * active_channels_count (for ImDrawCmd and ImDrawIdx buffers inside channels)
      *  Where active_channels_count is variable but often == columns_count or columns_count + 1, see TableSetupDrawChannels() for details.

@@ -11,6 +11,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
+import imgui.ImGui.debugHookIdInfo
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveID
@@ -300,8 +301,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hashStr(strID, end, seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, strID, end)
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType._String, strID, end)
         return id
     }
 
@@ -310,8 +311,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id: ID = hashData(System.identityHashCode(ptrID), seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._Pointer, ptrID)
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType._Pointer, ptrID)
         return id
     }
 
@@ -321,8 +322,8 @@ class Window(var context: Context,
         val seed: ID = idStack.last()
         val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Long, intPtr) // TODO check me
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType.Long, intPtr) // TODO check me
         return id
     }
 
@@ -330,37 +331,37 @@ class Window(var context: Context,
         val seed = idStack.last()
         val id = hashData(n, seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Int, n)
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType.Int, n)
         return id
     }
 
     fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
         val id = hashStr(strID, strID.length - strEnd, seed_ = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, strID, strEnd)
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType._String, strID, strEnd)
         return id
     }
 
     fun getIdNoKeepAlive(ptrID: Any): ID {
         val id = hashData(System.identityHashCode(ptrID), seed = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType._Pointer, ptrID)
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType._Pointer, ptrID)
         return id
     }
 
     fun getIdNoKeepAlive(intPtr: Long): ID {
         if (intPtr >= ptrId.size) increase()
         val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Long, intPtr) // TODO checkMe
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType.Long, intPtr) // TODO checkMe
         return id
     }
 
     fun getIdNoKeepAlive(n: Int): ID {
         val id = hashData(n, seed = idStack.last())
-        if (IMGUI_ENABLE_TEST_ENGINE)
-            IMGUI_TEST_ENGINE_ID_INFO(id, DataType.Int, n)
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType.Int, n)
         return id
     }
 

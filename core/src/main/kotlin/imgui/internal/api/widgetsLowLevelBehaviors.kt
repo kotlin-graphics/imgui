@@ -25,6 +25,7 @@ import imgui.ImGui.logRenderedText
 import imgui.ImGui.markItemEdited
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.navMoveRequestCancel
+import imgui.ImGui.pushOverrideID
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
@@ -762,6 +763,6 @@ internal interface widgetsLowLevelBehaviors {
         val window = g.currentWindow!!
         indent()
         window.dc.treeDepth++
-        window.idStack.push(id)
+        pushOverrideID(id)
     }
 }

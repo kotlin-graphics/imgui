@@ -257,6 +257,7 @@ interface main {
 
         // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
         updateDebugToolItemPicker()
+        updateDebugToolStackQueries()
 
         // Create implicit/fallback window - which we will only render it if the user has added something to it.
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.

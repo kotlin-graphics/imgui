@@ -10,6 +10,7 @@ import imgui.api.g
 
 //-----------------------------------------------------------------------------
 // [SECTION] ERROR CHECKING
+// Error Checking and Debug Tools
 //-----------------------------------------------------------------------------
 
 fun errorCheckNewFrameSanityChecks() {
@@ -63,4 +64,63 @@ fun errorCheckEndFrameSanityChecks() {
             assert(g.currentWindowStack.size == 1) { "Mismatched Begin/BeginChild vs End/EndChild calls: did you call End/EndChild too much?" }
 
     assert(g.groupStack.isEmpty()) { "Missing EndGroup call!" }
+}
+
+/** [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack. */
+fun updateDebugToolItemPicker() {
+
+    g.debugItemPickerBreakId = 0
+    if (g.debugItemPickerActive) {
+
+        val hoveredId = g.hoveredIdPreviousFrame
+        ImGui.mouseCursor = MouseCursor.Hand
+        if (Key.Escape.isPressed)
+            g.debugItemPickerActive = false
+        if (ImGui.isMouseClicked(MouseButton.Left) && hoveredId != 0) {
+            g.debugItemPickerBreakId = hoveredId
+            g.debugItemPickerActive = false
+        }
+        ImGui.setNextWindowBgAlpha(0.6f)
+        dsl.tooltip {
+            ImGui.text("HoveredId: 0x%08X", hoveredId)
+            ImGui.text("Press ESC to abort picking.")
+            ImGui.textColored(ImGui.getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
+        }
+    }
+}
+
+fun updateDebugToolStackQueries() {
+
+    val tool = g.debugStackTool
+
+    // Clear hook when stack tool is not visible
+    g.debugHookIdInfo = 0
+    if (g.frameCount != tool.lastActiveFrame + 1)
+        return
+
+    // Update queries. The steps are: -1: query Stack, >= 0: query each stack item
+    // We can only perform 1 ID Info query every frame. This is designed so the GetID() tests are cheap and constant-time
+    val queryId = if (g.activeId != 0) g.activeId else g.hoveredIdPreviousFrame
+    if (tool.queryId != queryId) {
+        tool.queryId = queryId
+        tool.stackLevel = -1
+        tool.results.clear()
+    }
+    if (queryId == 0)
+        return
+
+    // Advance to next stack level when we got our result, or after 2 frames (in case we never get a result)
+    var stackLevel = tool.stackLevel
+    if (stackLevel in tool.results.indices)
+        if (tool.results[stackLevel].querySuccess || tool.results[stackLevel].queryFrameCount > 2)
+            tool.stackLevel++
+
+    // Update hook
+    stackLevel = tool.stackLevel
+    if (stackLevel == -1)
+        g.debugHookIdInfo = queryId
+    if (stackLevel in tool.results.indices) {
+        g.debugHookIdInfo = tool.results[stackLevel].id
+        tool.results[stackLevel].queryFrameCount++
+    }
 }

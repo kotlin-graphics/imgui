@@ -65,6 +65,7 @@ object ExampleApp {
 
         // Dear ImGui Apps (accessible from the "Tools" menu)
         var metrics = false
+        var stackTool = false
         var styleEditor = false
         var about = false
     }
@@ -104,6 +105,7 @@ object ExampleApp {
         if (show.customRendering) CustomRendering(show::customRendering)
 
         if (show.metrics) showMetricsWindow(show::metrics)
+        if (show.stackTool) showMetricsWindow(show::stackTool)
         if (show.about) ShowAboutWindow(show::about)
         if (show.styleEditor)
             window("Dear ImGui Style Editor", show::styleEditor) {
@@ -165,7 +167,10 @@ object ExampleApp {
             }
             //if (ImGui::MenuItem("MenuItem")) {} // You can also use MenuItem() inside a menu bar!
             menu("Tools") {
-                menuItem("Metrics/Debugger", "", show::metrics)
+                if(IMGUI_DISABLE_METRICS_WINDOW) {
+                    menuItem("Metrics/Debugger", "", show::metrics)
+                    menuItem("Stack Tool", "", show::stackTool)
+                }
                 menuItem("Style Editor", "", show::styleEditor)
                 menuItem("About Dear ImGui", "", show::about)
             }

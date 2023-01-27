@@ -69,9 +69,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Will call test engine hooks: ImGuiTestEngineHook_ItemAdd(), ImGuiTestEngineHook_ItemInfo(), ImGuiTestEngineHook_Log() */
     var testEngineHookItems = false
 
-    /** Will call test engine hooks: ImGuiTestEngineHook_IdInfo() from GetID() */
-    var testEngineHookIdInfo: ID = 0
-
     /** Test engine user data */
     var testEngine: Any? = null
 
@@ -118,6 +115,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
 
     // Item/widgets state and tracking information
+
+    /** Will call core hooks: DebugHookIdInfo() from GetID functions, used by Stack Tool [next HoveredId/ActiveId to not pull in an extra cache-line] */
+    var debugHookIdInfo: ID = 0
 
     /** Hovered widget, filled during the frame  */
     var hoveredId: ID = 0
@@ -626,10 +626,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Item picker is active (started with DebugStartItemPicker()) */
     var debugItemPickerActive = false
 
-    /** Will call IM_DEBUG_BREAK() when encountering this id */
+    /** Will call IM_DEBUG_BREAK() when encountering this ID */
     var debugItemPickerBreakId: ID = 0
 
     var debugMetricsConfig = MetricsConfig()
+
+    val debugStackTool = StackTool()
 
     //------------------------------------------------------------------
     // Misc

@@ -161,6 +161,41 @@ internal interface debugTools {
         }
     }
 
+    fun debugHookIdInfo(id: ID, dataType: DataType, dataId: Any?, dataIdEnd: Int = 0) {
+
+        val window = g.currentWindow!!
+        val tool = g.debugStackTool
+
+        // Step 0: stack query
+        // This assume that the ID was computed with the current ID stack, which tends to be the case for our widget.
+        if (tool.stackLevel == -1) {
+            tool.stackLevel++
+            //            tool.results.resize(window->IDStack.Size + 1, ImGuiStackLevelInfo())
+            for (n in 0..window.idStack.size)
+                tool.results += StackLevelInfo().also { it.id = window.idStack.getOrElse(n) { id } }
+            return
+        }
+
+        // Step 1+: query for individual level
+        assert(tool.stackLevel >= 0)
+        if (tool.stackLevel != window.idStack.size)
+            return
+        val info = tool.results[tool.stackLevel]
+        assert(info.id == id && info.queryFrameCount > 0)
+
+        info.desc = when(dataType) {
+            DataType.Int -> (dataId as Int).toString()
+            DataType._String -> '"' + dataId as String + '"'
+            DataType._Pointer ->  "(void*)0x%p".format(dataId)
+            DataType._ID ->
+                if (info.desc.isEmpty()) // PushOverrideID() is often used to avoid hashing twice, which would lead to 2 calls to DebugHookIdInfo(). We prioritize the first one.
+                    "0x%08X [override]".format(id)
+                else ""
+            else -> error("")
+        }
+        info.querySuccess = true
+    }
+
     /** [DEBUG] Display contents of Columns */
     fun debugNodeColumns(columns: OldColumns) {
         if (!treeNode(columns.id.L, "Columns Id: 0x%08X, Count: ${columns.count}, Flags: 0x%04X", columns.id, columns.flags))

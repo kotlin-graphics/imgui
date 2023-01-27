@@ -3,6 +3,7 @@ package imgui.internal.api
 import imgui.DataType
 import imgui.ID
 import imgui.IMGUI_ENABLE_TEST_ENGINE
+import imgui.ImGui.debugHookIdInfo
 import imgui.api.g
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
@@ -125,7 +126,10 @@ internal interface basicAccessors {
     /** Push a given id value ignoring the ID stack as a seed.
      *  Push given value as-is at the top of the ID stack (whereas PushID combines old and new hashes) */
     fun pushOverrideID(id: ID) {
-        g.currentWindow!!.idStack += id
+        val window = g.currentWindow!!
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType._ID, null)
+        window.idStack += id
     }
 
     /** Helper to avoid a common series of PushOverrideID -> GetID() -> PopID() call
@@ -134,10 +138,8 @@ internal interface basicAccessors {
     fun getIDWithSeed(str: String, strEnd: Int = -1, seed: ID): ID {
         val id = hashStr(str, if (strEnd != -1) strEnd else 0, seed)
         keepAliveID(id)
-        if (IMGUI_ENABLE_TEST_ENGINE) {
-//            val g = gImGui!!
-            IMGUI_TEST_ENGINE_ID_INFO2(id, DataType._String, str, strEnd)
-        }
+        if (g.debugHookIdInfo == id)
+            debugHookIdInfo(id, DataType._String, str, strEnd)
         return id
     }
 }

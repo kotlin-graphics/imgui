@@ -6,9 +6,11 @@ import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
+import imgui.ImGui.beginTable
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
+import imgui.ImGui.calcTextSize
 import imgui.ImGui.checkbox
 import imgui.ImGui.clearIniSettings
 import imgui.ImGui.combo
@@ -23,7 +25,9 @@ import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
+import imgui.ImGui.endTable
 import imgui.ImGui.endTooltip
+import imgui.ImGui.findWindowByID
 import imgui.ImGui.font
 import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
@@ -52,6 +56,10 @@ import imgui.ImGui.style
 import imgui.ImGui.styleColorsClassic
 import imgui.ImGui.styleColorsDark
 import imgui.ImGui.styleColorsLight
+import imgui.ImGui.tableHeadersRow
+import imgui.ImGui.tableNextColumn
+import imgui.ImGui.tableSetBgColor
+import imgui.ImGui.tableSetupColumn
 import imgui.ImGui.text
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
@@ -68,9 +76,11 @@ import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
+import imgui.internal.api.debugTools.Companion.metricsHelpMarker
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Table
 import imgui.internal.classes.Window
+import imgui.internal.sections.testEngine_FindItemDebugLabel
 import kool.BYTES
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -123,19 +133,20 @@ interface demoDebugInformations {
     /** create Metrics/Debugger window. display Dear ImGui internals: windows, draw commands, various internal state, etc. */
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
+        val cfg = g.debugMetricsConfig
+        if (cfg.showStackTool)
+            showStackToolWindow(cfg::showStackTool)
+
         if (!begin("Dear ImGui Metrics/Debugger", open)) {
             end()
             return
         }
 
-        val cfg = g.debugMetricsConfig
-
         // Basic info
         text("Dear ImGui $version")
         text("Application average %.3f ms/frame (%.1f FPS)", 1000f / io.framerate, io.framerate)
         text("${io.metricsRenderVertices} vertices, ${io.metricsRenderIndices} indices (${io.metricsRenderIndices / 3} triangles)")
-        text("${io.metricsActiveWindows} active windows (${io.metricsRenderWindows} visible)")
-        text("${io.metricsAllocs} active allocations")
+        text("${io.metricsRenderWindows} visible windows, ${io.metricsActiveAllocations} active allocations")
         //SameLine(); if (SmallButton("GC")) { g.GcCompactAll = true; }
 
         separator()
@@ -158,10 +169,10 @@ interface demoDebugInformations {
         // Tools
         treeNode("Tools") {
 
-            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
-            if (button("Item Picker..")) debugStartItemPicker()
+            // Stack Tool is your best friend!
+            checkbox("Show stack tool", cfg::showStackTool)
             sameLine()
-            helpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
+            helpMarker("You can also call ImGui::ShowStackToolWindow() from your code.")
 
             checkbox("Show windows begin order", ::showWindowsBeginOrder)
             checkbox("Show windows rectangles", ::showWindowsRects)
@@ -180,8 +191,6 @@ interface demoDebugInformations {
                     }
                 }
             }
-            checkbox("Show ImDrawCmd mesh when hovering", ::showDrawcmdMesh)
-            checkbox("Show ImDrawCmd bounding boxes when hovering", ::showDrawcmdAabb)
 
             checkbox("Show tables rectangles", cfg::showTablesRects)
             sameLine()
@@ -221,6 +230,12 @@ interface demoDebugInformations {
                     }
                     unindent()
                 }
+
+            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
+            if (button("Item Picker.."))
+                debugStartItemPicker()
+            sameLine()
+            metricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
         }
 
         // Windows
@@ -230,6 +245,8 @@ interface demoDebugInformations {
         // DrawLists
         val drawlistCount = g.viewports.sumOf { it.drawDataBuilder!!.drawListCount }
         treeNode("DrawLists", "Active DrawLists ($drawlistCount)") {
+            checkbox("Show ImDrawCmd mesh when hovering", cfg::showDrawCmdMesh)
+            checkbox("Show ImDrawCmd bounding boxes when hovering", cfg::showDrawCmdBoundingBoxes)
             for (viewport in g.viewports)
                 for (layer in viewport.drawDataBuilder!!.layers)
                     for (drawListIdx in layer.indices)
@@ -395,6 +412,63 @@ interface demoDebugInformations {
         //        }
         //        #endif // #define IMGUI_HAS_DOCK
 
+        end()
+    }
+
+    /** create Stack Tool window. hover items with mouse to query information about the source of their unique ID.
+     *
+     *  Stack Tool: Display UI     */
+    fun showStackToolWindow(pOpen: KMutableProperty0<Boolean>? = null) {
+        if (!begin("Dear ImGui Stack Tool", pOpen) || ImGui.currentWindow.beginCount > 1) {
+            end()
+            return
+        }
+
+        // Display hovered/active status
+        val hoveredId = g.hoveredIdPreviousFrame
+        val activeId = g.activeId
+        if (IMGUI_ENABLE_TEST_ENGINE)
+            text("HoveredId: 0x%08X (\"${if (hoveredId != 0) testEngine_FindItemDebugLabel(g, hoveredId) else ""}\"), ActiveId:  0x%08X (\"${if (activeId != 0) testEngine_FindItemDebugLabel(g, activeId) else ""}\")", hoveredId, activeId)
+        else
+            text("HoveredId: 0x%08X, ActiveId:  0x%08X", hoveredId, activeId)
+
+        sameLine()
+        metricsHelpMarker("Hover an item with the mouse to display elements of the ID Stack leading to the item's final ID.\nEach level of the stack correspond to a PushID() call.\nAll levels of the stack are hashed together to make the final ID of a widget (ID displayed at the bottom level of the stack).\nRead FAQ entry about the ID stack for details.")
+
+        // Display decorated stack
+        val tool = g.debugStackTool
+        tool.lastActiveFrame = g.frameCount
+        if (tool.results.isNotEmpty() && beginTable("##table", 3, TableFlag.Borders.i)) {
+
+            val idWidth = calcTextSize("0xDDDDDDDD").x
+            tableSetupColumn("Seed", TableColumnFlag.WidthFixed.i, idWidth)
+            tableSetupColumn("PushID", TableColumnFlag.WidthStretch.i)
+            tableSetupColumn("Result", TableColumnFlag.WidthFixed.i, idWidth)
+            tableHeadersRow()
+            for (n in tool.results.indices) {
+                val info = tool.results[n]
+                tableNextColumn()
+                text("0x%08X", if (n > 0) tool.results[n - 1].id else 0)
+
+                tableNextColumn()
+                val window = if (info.desc.isEmpty() && n == 0) findWindowByID(info.id) else null
+                if (window != null)                                         // Source: window name (because the root ID don't call GetID() and so doesn't get hooked)
+                    text("\"${window.name}\" [window]")
+                else if (info.querySuccess)                        // Source: GetID() hooks (prioritize over ItemInfo() because we frequently use patterns like: PushID(str), Button("") where they both have same id)
+                    textUnformatted(info.desc)
+                else if (tool.stackLevel >= tool.results.size)  // Only start using fallback below when all queries are done, so during queries we don't flickering ??? markers.
+                    if (IMGUI_ENABLE_TEST_ENGINE)
+                        testEngine_FindItemDebugLabel(g, info.id)?.let {    // Source: ImGuiTestEngine's ItemInfo()
+                            text("??? \"$it\"")
+                        } ?: textUnformatted("???")
+
+                tableNextColumn()
+                text("0x%08X", info.id)
+                if (n == tool.results.lastIndex)
+                    tableSetBgColor(TableBgTarget.CellBg, Col.Header.u32)
+            }
+            endTable()
+        }
         end()
     }
 

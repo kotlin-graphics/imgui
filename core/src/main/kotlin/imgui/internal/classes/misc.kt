@@ -98,11 +98,12 @@ class MenuColumns {
 }
 
 //-----------------------------------------------------------------------------
-// [SECTION] Metrics, Debug
+// [SECTION] Metrics, Debug tools
 //-----------------------------------------------------------------------------
 
 /** Storage for ShowMetricsWindow() and DebugNodeXXX() functions */
 class MetricsConfig {
+    var showStackTool = false
     var showWindowsRects = false
     var showWindowsBeginOrder = false
     var showTablesRects = false
@@ -110,6 +111,21 @@ class MetricsConfig {
     var showDrawCmdBoundingBoxes = true
     var showWindowsRectsType = -1
     var showTablesRectsType = -1
+}
+
+class StackLevelInfo {
+    var id: ID = 0
+    var queryFrameCount = 0 // >= 1: Query in progress
+    var querySuccess = false // Obtained result from DebugHookIdInfo()
+    var desc = "" // Arbitrarily sized buffer to hold a result (FIXME: could replace Results[] with a chunk stream?)
+}
+
+// State for Stack tool queries
+class StackTool {
+    var lastActiveFrame = 0
+    var stackLevel = 0 // -1: query stack and resize Results, >= 0: individual stack level
+    var queryId: ID = 0 // ID to query details for
+    val results = ArrayList<StackLevelInfo>()
 }
 
 /** Storage for SetNextWindow** functions    */
@@ -175,8 +191,10 @@ class LastItemData {
 class WindowStackData {
     lateinit var window: Window
     lateinit var parentLastItemDataBackup: LastItemData
+
     /** Store size of various stacks for asserting */
     val stackSizesOnBegin = StackSizes()
+
     class StackSizes {
         var sizeOfIDStack = 0
         var sizeOfColorStack = 0
