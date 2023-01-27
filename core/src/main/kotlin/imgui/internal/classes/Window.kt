@@ -261,11 +261,14 @@ class Window(var context: Context,
         _ownerName = name
     }
 
-    /** If we are a child _or_ popup window, this is pointing to our parent. Otherwise NULL.  */
+    /** If we are a child _or_ popup _or_ docked window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
 
-    /** Point to ourself or first ancestor that is not a child window == Top-level window. */
+    /** Point to ourself or first ancestor that is not a child window. Doesn't cross through popups/dock nodes. */
     var rootWindow: Window? = null
+
+    /** Point to ourself or first ancestor that is not a child window. Cross through popups parent<>child. */
+    var rootWindowPopupTree: Window? = null
 
     /** Point to ourself or first ancestor which will display TitleBgActive color when this window is active.   */
     var rootWindowForTitleBarHighlight: Window? = null
@@ -453,16 +456,17 @@ class Window(var context: Context,
     /** ~UpdateWindowParentAndRootLinks */
     fun updateParentAndRootLinks(flags: WindowFlags, parentWindow: Window?) {
         this.parentWindow = parentWindow
-        rootWindow = this
-        rootWindowForTitleBarHighlight = this
-        rootWindowForNav = this
+        rootWindow = this; rootWindowPopupTree = this; rootWindowForTitleBarHighlight = this; rootWindowForNav = this
         parentWindow?.let {
-            if (flags has Wf._ChildWindow && flags hasnt Wf._Tooltip) rootWindow = it.rootWindow
-            if (flags hasnt Wf._Modal && flags has (Wf._ChildWindow or Wf._Popup)) rootWindowForTitleBarHighlight =
-                it.rootWindowForTitleBarHighlight
+            if (flags has Wf._ChildWindow && flags hasnt Wf._Tooltip)
+                rootWindow = it.rootWindow
+            if (flags has Wf._Popup)
+                rootWindowPopupTree = it.rootWindowPopupTree
+            if (flags hasnt Wf._Modal && flags has (Wf._ChildWindow or Wf._Popup))
+                rootWindowForTitleBarHighlight = it.rootWindowForTitleBarHighlight
         }
-        while (rootWindowForNav!!.flags has Wf._NavFlattened) rootWindowForNav =
-            rootWindowForNav!!.parentWindow!! // ~assert
+        while (rootWindowForNav!!.flags has Wf._NavFlattened)
+            rootWindowForNav = rootWindowForNav!!.parentWindow!! // ~assert
     }
 
     /** ~CalcWindowNextAutoFitSize */
@@ -476,11 +480,16 @@ class Window(var context: Context,
     }
 
     /** ~IsWindowChildOf */
-    infix fun isChildOf(potentialParent: Window?): Boolean {
-        if (rootWindow === potentialParent) return true
+    fun isChildOf(potentialParent: Window?, popupHierarchy: Boolean): Boolean {
+        val windowRoot = getCombinedRootWindow(this, popupHierarchy)
+        if (windowRoot === potentialParent)
+            return true
         var window: Window? = this
         while (window != null) {
-            if (window === potentialParent) return true
+            if (window === potentialParent)
+                return true
+            if (window === windowRoot) // end of chain
+                return false
             window = window.parentWindow
         }
         return false
@@ -1365,6 +1374,14 @@ class Window(var context: Context,
             flags has (Wf._Tooltip or Wf._Popup) -> Col.PopupBg
             flags has Wf._ChildWindow -> Col.ChildBg
             else -> Col.WindowBg
+        }
+
+        fun getCombinedRootWindow(window_: Window, popupHierarchy: Boolean): Window {
+            var window = window_
+            window = window.rootWindow!!
+            if (popupHierarchy)
+                window = window.rootWindowPopupTree!!
+            return window
         }
     }
 

@@ -33,7 +33,7 @@ internal interface newFrame {
         // Modal windows prevents mouse from hovering behind them.
         val modalWindow = topMostPopupModal
         val hovered = g.hoveredWindow
-        if (modalWindow != null && hovered != null && !(hovered.rootWindow!! isChildOf modalWindow))
+        if (modalWindow != null && hovered != null && !(hovered.rootWindow!!.isChildOf(modalWindow, true)))
             clearHoveredWindows = true
         // Disabled mouse?
         if (io.configFlags has ConfigFlag.NoMouse)

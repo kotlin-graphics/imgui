@@ -12,6 +12,7 @@ import imgui.ImGui.arrowButton
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
 import imgui.ImGui.beginCombo
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginDragDropSource
 import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.beginListBox
@@ -46,6 +47,7 @@ import imgui.ImGui.dragVec4
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endCombo
+import imgui.ImGui.endDisabled
 import imgui.ImGui.endDragDropSource
 import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endListBox
@@ -218,9 +220,7 @@ object ShowDemoWindowWidgets {
             return
 
         Basic()
-
         Trees()
-
         `Collapsing Headers`()
 
         treeNode("Bullets") {
@@ -232,34 +232,21 @@ object ShowDemoWindowWidgets {
         }
 
         Text()
-
         Images()
-
         Combo()
-
         Selectables()
-
         `Text Input`()
-
         Tabs()
-
         `Plots Widgets`()
-
         `ColorPicker Widgets`()
-
         `DragSlider Flags`()
-
         `Range Widgets`()
-
         `Data Types`()
-
         `Multi-component Widgets`()
-
         `Vertical Sliders`()
-
         `Drag and Drop`()
-
-        `Querying Status (Edited,Active,Focused,Hovered etc)`()
+        `Querying Item Status (Edited,Active,Focused,Hovered etc)`()
+        `Querying Window Status (Focused-Hovered etc,)`()
     }
 
     object Basic {
@@ -1791,18 +1778,16 @@ object ShowDemoWindowWidgets {
         }
     }
 
-    object `Querying Status (Edited,Active,Focused,Hovered etc)` {
+    object `Querying Item Status (Edited,Active,Focused,Hovered etc)` {
         var itemType = 1
+        var itemDisabled = false
         var b0 = false
         val col = floatArrayOf(1f, 0.5f, 0f, 1f)
         val str = ByteArray(16)
         var current1 = 1
         var current2 = 1
-        var embedAllInsideAChildWindow = false
-        var unusedStr = "This widget is only here to be able to tab-out of the widgets above."
-        var testWindow = false
         operator fun invoke() {
-            treeNode("Querying Status (Edited/Active/Focused/Hovered etc.)") {
+            treeNode("Querying Item Status (Edited/Active/Focused/Hovered etc.)") {
                 // Select an item type
                 val itemNames = arrayOf(
                     "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputFloat",
@@ -1810,8 +1795,11 @@ object ShowDemoWindowWidgets {
                 combo("Item Type", ::itemType, itemNames, itemNames.size)
                 sameLine()
                 helpMarker("Testing how various types of items are interacting with the IsItemXXX functions. Note that the bool return value of most ImGui function is generally equivalent to calling ImGui::IsItemHovered().")
+                checkbox("Item Disabled", ::itemDisabled)
 
                 // Submit selected item item so we can query their status in the code following it.
+                if (itemDisabled)
+                    beginDisabled(true)
                 val ret = when (itemType) {
                     0 -> false.also { text("ITEM: Text") }   // Testing text items with no identifier/interaction
                     1 -> button("ITEM: Button")   // Testing button
@@ -1854,8 +1842,7 @@ object ShowDemoWindowWidgets {
                     IsItemToggledOpen = ${isItemToggledOpen.i}
                     GetItemRectMin() = (%.1f, %.1f)
                     GetItemRectMax() = (%.1f, %.1f)
-                    GetItemRectSize() = (%.1f, %.1f)
-                    """.trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
+                    GetItemRectSize() = (%.1f, %.1f)""".trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
                 else
                     bulletText("""
                     Return value = $ret
@@ -1875,41 +1862,57 @@ object ShowDemoWindowWidgets {
                     IsItemToggledOpen = $isItemToggledOpen
                     GetItemRectMin() = (%.1f, %.1f)
                     GetItemRectMax() = (%.1f, %.1f)
-                    GetItemRectSize() = (%.1f, %.1f)
-                    """.trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
+                    GetItemRectSize() = (%.1f, %.1f)""".trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
 
-                checkbox("Embed everything inside a child window (for additional testing)", ::embedAllInsideAChildWindow)
+                if (itemDisabled)
+                    endDisabled()
+
+                val buf = ByteArray(1)
+                inputText("unused", buf, Itf.ReadOnly.i)
+                sameLine()
+                helpMarker("This widget is only here to be able to tab-out of the widgets above and see e.g. Deactivated() status.")
+            }
+        }
+    }
+
+    object `Querying Window Status (Focused-Hovered etc,)` {
+
+        var embedAllInsideAChildWindow = false
+        var testWindow = false
+        operator fun invoke() {
+            treeNode("Querying Window Status (Focused/Hovered etc.)") {
+                checkbox("Embed everything inside a child window for testing _RootWindow flag.", ::embedAllInsideAChildWindow)
                 if (embedAllInsideAChildWindow)
                     beginChild("outer_child", Vec2(0, fontSize * 20f), true)
 
                 // Testing IsWindowFocused() function with its various flags.
-                // Note that the ImGuiFocusedFlags_XXX flags can be combined.
-                bulletText(
-                    "isWindowFocused() = ${isWindowFocused()}\n" +
-                            "isWindowFocused(ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows)}\n" +
-                            "isWindowFocused(ChildWindows | RootWindow) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow)}\n" +
-                            "isWindowFocused(RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow)}\n" +
-                            "isWindowFocused(AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow)}\n")
+                bulletText("isWindowFocused() = ${isWindowFocused().i}\n" +
+                                   "isWindowFocused(_ChildWindows) = ${isWindowFocused(FocusedFlag.ChildWindows).i}\n" +
+                                   "IsWindowFocused(_ChildWindows|_NoPopupHierarchy) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.NoPopupHierarchy).i}\n" +
+                                   "isWindowFocused(_ChildWindows|_RootWindow) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow).i}\n" +
+                                   "IsWindowFocused(_ChildWindows|_RootWindow|_NoPopupHierarchy) = ${isWindowFocused(FocusedFlag.ChildWindows or FocusedFlag.RootWindow or FocusedFlag.NoPopupHierarchy).i}\n" +
+                                   "isWindowFocused(_RootWindow) = ${isWindowFocused(FocusedFlag.RootWindow).i}\n" +
+                                   "IsWindowFocused(_RootWindow|_NoPopupHierarchy) = ${isWindowFocused(FocusedFlag.RootWindow or FocusedFlag.NoPopupHierarchy).i}\n" +
+                                   "isWindowFocused(_AnyWindow) = ${isWindowFocused(FocusedFlag.AnyWindow).i}\n")
 
                 // Testing IsWindowHovered() function with its various flags.
-                // Note that the ImGuiHoveredFlags_XXX flags can be combined.
-                bulletText(
-                    "isWindowHovered() = ${isWindowHovered()}\n" +
-                            "isWindowHovered(AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup)}\n" +
-                            "isWindowHovered(AllowWhenBlockedByActiveItem) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}\n" +
-                            "isWindowHovered(ChildWindows) = ${isWindowHovered(HoveredFlag.ChildWindows)}\n" +
-                            "isWindowHovered(ChildWindows | RootWindow) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow)}\n" +
-                            "isWindowHovered(ChildWindows | AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.AllowWhenBlockedByPopup)}\n" +
-                            "isWindowHovered(RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow)}\n" +
-                            "isWindowHovered(AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow)}\n")
+                bulletText("isWindowHovered() = ${isWindowHovered()}\n" +
+                                   "isWindowHovered(_AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByPopup).i}\n" +
+                                   "isWindowHovered(_AllowWhenBlockedByActiveItem) = ${isWindowHovered(HoveredFlag.AllowWhenBlockedByActiveItem).i}\n" +
+                                   "isWindowHovered(_ChildWindows) = ${isWindowHovered(HoveredFlag.ChildWindows).i}\n" +
+                                   "IsWindowHovered(_ChildWindows|_NoPopupHierarchy) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.NoPopupHierarchy).i}\n" +
+                                   "isWindowHovered(_ChildWindows|_RootWindow) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow).i}\n" +
+                                   "isWindowHovered(_ChildWindows|_RootWindow|_NoPopupHierarchy) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.RootWindow or HoveredFlag.NoPopupHierarchy).i}\n" +
+                                   "isWindowHovered(_RootWindow) = ${isWindowHovered(HoveredFlag.RootWindow).i}\n" +
+                                   "IsWindowHovered(_RootWindow|_NoPopupHierarchy) = ${isWindowHovered(HoveredFlag.RootWindow or HoveredFlag.NoPopupHierarchy).i}\n" +
+                                   "IsWindowHovered(_ChildWindows|_AllowWhenBlockedByPopup) = ${isWindowHovered(HoveredFlag.ChildWindows or HoveredFlag.AllowWhenBlockedByPopup).i}\n" +
+                                   "isWindowHovered(_AnyWindow) = ${isWindowHovered(HoveredFlag.AnyWindow).i}\n")
 
                 beginChild("child", Vec2(0, 50), true)
                 text("This is another child window for testing the _ChildWindows flag.")
                 endChild()
                 if (embedAllInsideAChildWindow)
                     endChild()
-
-                inputText("unused", unusedStr, Itf.ReadOnly.i)
 
                 // Calling IsItemHovered() after begin returns the hovered status of the title bar.
                 // This is useful in particular if you want to create a context menu associated to the title bar of a window.

@@ -946,7 +946,9 @@ enum class FocusedFlag(@JvmField val i: FocusedFlags) {
     /** Return true if any window is focused.
      *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
     AnyWindow(1 shl 2),
-    //ImGuiFocusedFlags_DockHierarchy               = 1 << 3,   // Consider docking hierarchy (treat dockspace host as parent of docked window)
+    /** Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
+    NoPopupHierarchy(1 shl 3),
+    //ImGuiFocusedFlags_DockHierarchy               = 1 << 4,   // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
     RootAndChildWindows(RootWindow or ChildWindows);
 
     infix fun and(b: FocusedFlag): FocusedFlags = i and b.i
@@ -984,20 +986,23 @@ enum class HoveredFlag(@JvmField val i: HoveredFlags) {
 
     /** IsWindowHovered() only: Return true if any window is hovered    */
     AnyWindow(1 shl 2),
-    //ImGuiHoveredFlags_DockHierarchy               = 1 << 3,   // IsWindowHovered() only: Consider docking hierarchy (treat dockspace host as parent of docked window)
+
+    /** IsWindowHovered() only: Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
+    NoPopupHierarchy(1 shl 3),
+    //ImGuiHoveredFlags_DockHierarchy               = 1 << 4,   // IsWindowHovered() only: Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
 
     /** Return true even if a popup window is normally blocking access to this item/window  */
-    AllowWhenBlockedByPopup(1 shl 4),
-    //AllowWhenBlockedByModal     (1 shl 4),   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
+    AllowWhenBlockedByPopup(1 shl 5),
+    //AllowWhenBlockedByModal     (1 shl 6),   // Return true even if a modal popup window is normally blocking access to this item/window. FIXME-TODO: Unavailable yet.
 
     /** Return true even if an active item is blocking access to this item/window. Useful for Drag and Drop patterns.   */
-    AllowWhenBlockedByActiveItem(1 shl 5),
+    AllowWhenBlockedByActiveItem(1 shl 7),
 
     /** Return true even if the position is obstructed or overlapped by another window,   */
-    AllowWhenOverlapped(1 shl 6),
+    AllowWhenOverlapped(1 shl 8),
 
     /** Return true even if the item is disabled */
-    AllowWhenDisabled(1 shl 7),
+    AllowWhenDisabled(1 shl 9),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
     RootAndChildWindows(RootWindow or ChildWindows);
 

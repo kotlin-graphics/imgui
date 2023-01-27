@@ -7,6 +7,7 @@ import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.classes.DrawList
+import imgui.internal.classes.Window.Companion.getCombinedRootWindow
 import imgui.internal.floor
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.or
@@ -36,13 +37,14 @@ interface windowsUtilities {
 
         if (flags has Ff.AnyWindow)
             return true
-        assert(curWindow != null) { "Not inside a Begin () / End()" }
+        check(curWindow != null) { "Not inside a Begin () / End()" }
 
+        val popupHierarchy = flags hasnt Ff.NoPopupHierarchy
         if (flags has Hf.RootWindow)
-            curWindow = curWindow!!.rootWindow
+            curWindow = getCombinedRootWindow(curWindow, popupHierarchy)
 
         return when {
-            flags has Hf.ChildWindows -> refWindow isChildOf curWindow
+            flags has Hf.ChildWindows -> refWindow.isChildOf(curWindow, popupHierarchy)
             else -> refWindow === curWindow
         }
     }
@@ -59,13 +61,13 @@ interface windowsUtilities {
         var curWindow = g.currentWindow
 
         if (flags hasnt Hf.AnyWindow) {
-            assert(curWindow != null) { "Not inside a Begin () / End()" }
-
+            check(curWindow != null) { "Not inside a Begin () / End()" }
+            val popupHierarchy = flags hasnt Hf.NoPopupHierarchy
             if (flags has Hf.RootWindow)
-                curWindow = curWindow!!.rootWindow
+                curWindow = getCombinedRootWindow(curWindow, popupHierarchy)
 
             val result = when {
-                flags has Hf.ChildWindows -> refWindow isChildOf curWindow
+                flags has Hf.ChildWindows -> refWindow.isChildOf(curWindow, popupHierarchy)
                 else -> refWindow === curWindow
             }
             if (!result)
