@@ -84,7 +84,7 @@ interface widgetsTrees {
     //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
 
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call TreePush/TreePop yourself if desired.  */
-    fun treePush(strId: String = "#TreePush") {
+    fun treePush(strId: String) {
         val window = currentWindow
         indent()
         window.dc.treeDepth++
