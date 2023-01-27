@@ -64,25 +64,20 @@ interface dragAndDrop {
                     return false
                 if (g.activeIdMouseButton != -1)
                     mouseButton = MouseButton.of(g.activeIdMouseButton)
-                if (!g.io.mouseDown[mouseButton.i])
+                if (!g.io.mouseDown[mouseButton.i] || window!!.skipItems)
                     return false
                 g.activeIdAllowOverlap = false
-            }
-            else {
+            } else {
                 // Uncommon path: items without ID
-                if (!g.io.mouseDown[mouseButton.i])
+                if (!g.io.mouseDown[mouseButton.i] || window!!.skipItems)
                     return false
-
-                /*  If you want to use beginDragDropSource() on an item with no unique identifier for interaction,
-                    such as text() or image(), you need to:
-                    A) Read the explanation below
-                    B) Use the DragDropFlag.SourceAllowNullID flag
-                     C) Swallow your programmer pride.  */
-                if (flags hasnt Ddf.SourceAllowNullID) throw Error()
-
-                // Early out
                 if (g.lastItemData.statusFlags hasnt ItemStatusFlag.HoveredRect && (g.activeId == 0 || g.activeIdWindow !== window))
                     return false
+
+                // If you want to use BeginDragDropSource() on an item with no unique identifier for interaction, such as Text() or Image(), you need to:
+                // A) Read the explanation below, B) Use the ImGuiDragDropFlags_SourceAllowNullID flag, C) Swallow your programmer pride.
+                if (flags hasnt Ddf.SourceAllowNullID)
+                    throw Error()
 
                 // Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. Text(), Image()
                 // We build a throwaway ID based on current ID stack + relative AABB of items in window.
@@ -96,7 +91,7 @@ interface dragAndDrop {
                     setActiveID(sourceId, window)
                     focusWindow(window)
                 }
-                if(g.activeId == sourceId) // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
+                if (g.activeId == sourceId) // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
                     g.activeIdAllowOverlap = isHovered
             }
             if (g.activeId != sourceId)
@@ -154,8 +149,8 @@ interface dragAndDrop {
         return setDragDropPayload(type, data, cond_)
     }
 
-//    /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
-//     *  Data is copied and held by imgui.
+    //    /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
+    //     *  Data is copied and held by imgui.
     /** Type is a user defined string. Types starting with '_' are reserved for dear imgui internal types.
      *  Data is held by imgui.
      *  Use 'cond' to choose to submit payload on drag start or every frame */
@@ -164,8 +159,8 @@ interface dragAndDrop {
         val cond = if (cond_ == Cond.None) Cond.Always else cond_
 
         assert(type.isNotEmpty())
-//        assert(type.length < 32) { "Payload type can be at most 32 characters long" }
-//        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
+        //        assert(type.length < 32) { "Payload type can be at most 32 characters long" }
+        //        assert((data != NULL && data_size > 0) || (data == NULL && data_size == 0))
         assert(cond == Cond.Always || cond == Cond.Once)
         assert(payload.sourceId != 0) { "Not called between beginDragDropSource() and endDragDropSource()" }
 
@@ -209,7 +204,8 @@ interface dragAndDrop {
         if (g.lastItemData.statusFlags hasnt ItemStatusFlag.HoveredRect)
             return false
         val hoveredWindow = g.hoveredWindowUnderMovingWindow
-        if (hoveredWindow == null || window.rootWindow !== hoveredWindow.rootWindow) return false
+        if (hoveredWindow == null || window.rootWindow !== hoveredWindow.rootWindow || window.skipItems)
+            return false
 
         val displayRect = when {
             g.lastItemData.statusFlags has ItemStatusFlag.HasDisplayRect -> g.lastItemData.displayRect
