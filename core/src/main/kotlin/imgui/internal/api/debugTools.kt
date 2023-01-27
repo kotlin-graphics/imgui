@@ -75,50 +75,8 @@ internal interface debugTools {
     fun errorCheckEndFrameRecover(logCallback: ErrorLogCallback?, userData: Any? = null) {
         // PVS-Studio V1044 is "Loop break conditions do not depend on the number of iterations"
         while (g.currentWindowStack.isNotEmpty()) {
-            while (g.currentTable != null && (g.currentTable!!.outerWindow === g.currentWindow || g.currentTable!!.innerWindow === g.currentWindow)) {
-                logCallback?.invoke(userData, "Recovered from missing EndTable() in '${g.currentTable!!.outerWindow!!.name}'")
-                endTable()
-            }
+            errorCheckEndWindowRecover(logCallback, userData)
             val window = g.currentWindow!!
-            //            assert(window != null)
-            while (g.currentTabBar != null) { //-V1044
-                logCallback?.invoke(userData, "Recovered from missing EndTabBar() in '${window.name}'")
-                endTabBar()
-            }
-            while (window.dc.treeDepth > 0) {
-                logCallback?.invoke(userData, "Recovered from missing TreePop() in '${window.name}'")
-                treePop()
-            }
-            while (g.groupStack.size > window.dc.stackSizesOnBegin.sizeOfGroupStack) {
-                logCallback?.invoke(userData, "Recovered from missing EndGroup() in '${window.name}'")
-                endGroup()
-            }
-            while (window.idStack.size > 1) {
-                logCallback?.invoke(userData, "Recovered from missing PopID() in '${window.name}'")
-                popID()
-            }
-            while (g.disabledStackSize > window.dc.stackSizesOnBegin.sizeOfDisabledStack) {
-                logCallback?.invoke(userData, "Recovered from missing EndDisabled() in '${window.name}'")
-                endDisabled()
-            }
-            while (g.colorStack.size > window.dc.stackSizesOnBegin.sizeOfColorStack) {
-                val name = window.name
-                val col = g.colorStack.last().col
-                logCallback?.invoke(userData, "Recovered from missing PopStyleColor() in '$name' for ImGuiCol_$col")
-                popStyleColor()
-            }
-            while (g.itemFlagsStack.size > window.dc.stackSizesOnBegin.sizeOfItemFlagsStack) {
-                logCallback?.invoke(userData, "Recovered from missing PopItemFlag() in '${window.name}'")
-                popItemFlag()
-            }
-            while (g.styleVarStack.size > window.dc.stackSizesOnBegin.sizeOfStyleVarStack) {
-                logCallback?.invoke(userData, "Recovered from missing PopStyleVar() in '${window.name}'")
-                popStyleVar()
-            }
-            while (g.focusScopeStack.size > window.dc.stackSizesOnBegin.sizeOfFocusScopeStack) {
-                logCallback?.invoke(userData, "Recovered from missing PopFocusScope() in '${window.name}'")
-                popFocusScope()
-            }
             if (g.currentWindowStack.size == 1) {
                 assert(window.isFallbackWindow)
                 break
@@ -131,6 +89,53 @@ internal interface debugTools {
                 logCallback?.invoke(userData, "Recovered from missing End() for '${window.name}'")
                 end()
             }
+        }
+    }
+
+    fun errorCheckEndWindowRecover(logCallback: ErrorLogCallback?, userData: Any? = null) {
+
+        while (g.currentTable != null && (g.currentTable!!.outerWindow === g.currentWindow || g.currentTable!!.innerWindow === g.currentWindow)) {
+            logCallback?.invoke(userData, "Recovered from missing EndTable() in '${g.currentTable!!.outerWindow!!.name}'")
+            endTable()
+        }
+        val window = g.currentWindow!!
+        while (g.currentTabBar != null) { //-V1044
+            logCallback?.invoke(userData, "Recovered from missing EndTabBar() in '${window.name}'")
+            endTabBar()
+        }
+        while (window.dc.treeDepth > 0) {
+            logCallback?.invoke(userData, "Recovered from missing TreePop() in '${window.name}'")
+            treePop()
+        }
+        while (g.groupStack.size > window.dc.stackSizesOnBegin.sizeOfGroupStack) {
+            logCallback?.invoke(userData, "Recovered from missing EndGroup() in '${window.name}'")
+            endGroup()
+        }
+        while (window.idStack.size > 1) {
+            logCallback?.invoke(userData, "Recovered from missing PopID() in '${window.name}'")
+            popID()
+        }
+        while (g.disabledStackSize > window.dc.stackSizesOnBegin.sizeOfDisabledStack) {
+            logCallback?.invoke(userData, "Recovered from missing EndDisabled() in '${window.name}'")
+            endDisabled()
+        }
+        while (g.colorStack.size > window.dc.stackSizesOnBegin.sizeOfColorStack) {
+            val name = window.name
+            val col = g.colorStack.last().col
+            logCallback?.invoke(userData, "Recovered from missing PopStyleColor() in '$name' for ImGuiCol_$col")
+            popStyleColor()
+        }
+        while (g.itemFlagsStack.size > window.dc.stackSizesOnBegin.sizeOfItemFlagsStack) {
+            logCallback?.invoke(userData, "Recovered from missing PopItemFlag() in '${window.name}'")
+            popItemFlag()
+        }
+        while (g.styleVarStack.size > window.dc.stackSizesOnBegin.sizeOfStyleVarStack) {
+            logCallback?.invoke(userData, "Recovered from missing PopStyleVar() in '${window.name}'")
+            popStyleVar()
+        }
+        while (g.focusScopeStack.size > window.dc.stackSizesOnBegin.sizeOfFocusScopeStack) {
+            logCallback?.invoke(userData, "Recovered from missing PopFocusScope() in '${window.name}'")
+            popFocusScope()
         }
     }
 
