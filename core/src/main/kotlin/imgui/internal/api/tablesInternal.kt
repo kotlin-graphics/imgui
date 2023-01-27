@@ -44,7 +44,7 @@ interface tablesInternal {
         val availSize = ImGui.contentRegionAvail
         val actualOuterSize = calcItemSize(outerSize, availSize.x max 1f, if (useChildWindow) availSize.y max 1f else 0f)
         val outerRect = Rect(outerWindow.dc.cursorPos, outerWindow.dc.cursorPos + actualOuterSize)
-        if (useChildWindow && isClippedEx(outerRect, 0, false)) {
+        if (useChildWindow && isClippedEx(outerRect, 0)) {
             itemSize(outerRect)
             return false
         }

@@ -119,7 +119,9 @@ internal interface basicHelpersForWidgetCode {
             IMGUI_TEST_ENGINE_ITEM_ADD(navBbArg ?: bb, id)
 
         // Clipping test
-        if (isClippedEx(bb, id, false)) return false
+        val isClipped= isClippedEx(bb, id)
+        if (isClipped)
+            return false
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
         // [WIP] Tab stop handling (previously was using internal FocusableItemRegister() api)
@@ -222,11 +224,11 @@ internal interface basicHelpersForWidgetCode {
         }
     }
 
-    fun isClippedEx(bb: Rect, id: ID, clipEvenWhenLogged: Boolean): Boolean {
+    fun isClippedEx(bb: Rect, id: ID): Boolean {
         val window = g.currentWindow!!
         if (!(bb overlaps window.clipRect))
             if (id == 0 || (id != g.activeId && id != g.navId))
-                if (clipEvenWhenLogged || !g.logEnabled)
+                if (!g.logEnabled)
                     return true
         return false
     }

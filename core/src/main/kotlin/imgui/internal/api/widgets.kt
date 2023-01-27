@@ -103,7 +103,7 @@ internal interface widgets {
             if (line < textEnd) {
                 val lineRect = Rect(pos, pos + Vec2(Float.MAX_VALUE, lineHeight))
                 while (line < textEnd) {
-                    if (isClippedEx(lineRect, 0, false))
+                    if (isClippedEx(lineRect, 0))
                         break
 
                     var lineEnd = text.memchr(line, '\n', textEnd - line)

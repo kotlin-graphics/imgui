@@ -149,7 +149,7 @@ internal interface internalColumnsAPI {
                 val columnHitHw = imgui.api.columns.COLUMNS_HIT_RECT_HALF_WIDTH
                 val columnHitRect = Rect(Vec2(x - columnHitHw, y1), Vec2(x + columnHitHw, y2))
                 keepAliveID(columnId)
-                if (isClippedEx(columnHitRect, columnId, false))
+                if (isClippedEx(columnHitRect, columnId)) // FIXME: Can be removed or replaced with a lower-level test
                     continue
 
                 var hovered = false
