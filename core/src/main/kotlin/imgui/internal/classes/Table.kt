@@ -998,7 +998,7 @@ class Table {
             //GetForegroundDrawList()->AddRect(hit_rect.Min, hit_rect.Max, IM_COL32(255, 0, 0, 100));
             keepAliveID(columnId)
 
-            var (pressed, hovered, held) = buttonBehavior(hitRect, columnId, Bf.FlattenChildren or Bf.AllowItemOverlap or Bf.PressedOnClick or Bf.PressedOnDoubleClick)
+            var (pressed, hovered, held) = buttonBehavior(hitRect, columnId, Bf.FlattenChildren or Bf.AllowItemOverlap or Bf.PressedOnClick or Bf.PressedOnDoubleClick or Bf.NoNavFocus)
             if (pressed && isMouseDoubleClicked(MouseButton.Left)) {
                 setColumnWidthAutoSingle(columnN)
                 clearActiveID()

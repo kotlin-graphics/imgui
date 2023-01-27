@@ -204,6 +204,8 @@ internal interface widgetsLowLevelBehaviors {
                             clearActiveID()
                         else
                             setActiveID(id, window) // Hold on ID
+                        if (flags hasnt Bf.NoNavFocus)
+                            setFocusID(id, window)
                         g.activeIdMouseButton = mouseButtonClicked
                         focusWindow(window)
                     }
@@ -213,6 +215,8 @@ internal interface widgetsLowLevelBehaviors {
                     val hasRepeatedAtLeastOnce = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay
                     if (!hasRepeatedAtLeastOnce)
                         pressed = true
+                    if (flags hasnt Bf.NoNavFocus)
+                        setFocusID(id, window)
                     clearActiveID()
                 }
 
