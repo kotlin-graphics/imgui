@@ -510,7 +510,7 @@ interface widgetsColorEditorPicker {
         // Convert back color to RGB
         if (valueChangedH || valueChangedSv)
             if (flags has Cef.InputRGB) {
-                colorConvertHSVtoRGB(if (H >= 1f) H - 10 * 1e-6f else H, if (S > 0f) S else 10 * 1e-6f, if (V > 0f) V else 1e-6f, col)
+                colorConvertHSVtoRGB(H, S, V, col)
                 g.colorEditLastHue = H
                 g.colorEditLastSat = S
                 g.colorEditLastColor = Vec4(col[0], col[1], col[2], 0f).u32
