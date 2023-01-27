@@ -269,8 +269,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** ~~ NavInput.Activate.isPressed() ? navId : 0    */
     var navActivatePressedId: ID = 0
 
-    /** ~~ NavInput.Input.isPressed() ? navId : 0   */
-    var navInputId: ID = 0
+    /** ~~ NavInput.Input.isPressed() ? navId : 0; ImGuiActivateFlags_PreferInput will be set and NavActivateId will be 0.   */
+    var navActivateInputId: ID = 0
+
+    var navActivateFlags = ActivateFlag.None.i
 
     /** Just tabbed to this id. */
     var navJustTabbedId: ID = 0
@@ -285,6 +287,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
+
+    var navNextActivateFlags = ActivateFlag.None.i
 
     /** Keyboard or Gamepad mode? THIS WILL ONLY BE None or NavGamepad or NavKeyboard.  */
     var navInputSource = InputSource.None

@@ -2,6 +2,40 @@ package imgui.internal.sections
 
 import imgui.internal.classes.Rect
 
+//-----------------------------------------------------------------------------
+// [SECTION] Navigation support
+//-----------------------------------------------------------------------------
+
+typealias ActivateFlags = Int
+
+enum class ActivateFlag {
+    None,
+    /** Favor activation that requires keyboard text input (e.g. for Slider/Drag). Default if keyboard is available. */
+    PreferInput,
+    /** Favor activation for tweaking with arrows or gamepad (e.g. for Slider/Drag). Default if keyboard is not available. */
+    PreferTweak,
+    /** Request widget to preserve state if it can (e.g. InputText will try to preserve cursor/selection) */
+    TryToPreserveState;
+
+    val i: ActivateFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+
+    infix fun and(b: ActivateFlag): ActivateFlags = i and b.i
+    infix fun and(b: ActivateFlags): ActivateFlags = i and b
+    infix fun or(b: ActivateFlag): ActivateFlags = i or b.i
+    infix fun or(b: ActivateFlags): ActivateFlags = i or b
+    infix fun xor(b: ActivateFlag): ActivateFlags = i xor b.i
+    infix fun xor(b: ActivateFlags): ActivateFlags = i xor b
+    infix fun wo(b: ActivateFlags): ActivateFlags = and(b.inv())
+}
+
+infix fun ActivateFlags.and(b: ActivateFlag): ActivateFlags = and(b.i)
+infix fun ActivateFlags.or(b: ActivateFlag): ActivateFlags = or(b.i)
+infix fun ActivateFlags.xor(b: ActivateFlag): ActivateFlags = xor(b.i)
+infix fun ActivateFlags.has(b: ActivateFlag): Boolean = and(b.i) != 0
+infix fun ActivateFlags.hasnt(b: ActivateFlag): Boolean = and(b.i) == 0
+infix fun ActivateFlags.wo(b: ActivateFlag): ActivateFlags = and(b.i.inv())
+
+
 typealias NavHighlightFlags = Int
 
 enum class NavHighlightFlag {
@@ -11,7 +45,7 @@ enum class NavHighlightFlag {
     AlwaysDraw,
     NoRounding;
 
-    val i: NavHighlightFlags = if (ordinal == 0) 0 else 1 shl ordinal
+    val i: NavHighlightFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
     infix fun and(b: NavHighlightFlag): NavHighlightFlags = i and b.i
     infix fun and(b: NavHighlightFlags): NavHighlightFlags = i and b
@@ -35,7 +69,7 @@ typealias NavDirSourceFlags = Int
 enum class NavDirSourceFlag {
     None, Keyboard, PadDPad, PadLStick;
 
-    val i: NavDirSourceFlags = if (ordinal == 0) 0 else 1 shl ordinal
+    val i: NavDirSourceFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
     infix fun and(b: NavDirSourceFlag): NavDirSourceFlags = i and b.i
     infix fun and(b: NavDirSourceFlags): NavDirSourceFlags = i and b
@@ -80,7 +114,7 @@ enum class NavMoveFlag {
     Forwarded,
     DebugNoResult;
 
-    val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl ordinal
+    val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
     infix fun and(b: NavMoveFlag): NavMoveFlags = i and b.i
     infix fun and(b: NavMoveFlags): NavMoveFlags = i and b
@@ -99,7 +133,6 @@ infix fun NavMoveFlags.hasnt(b: NavMoveFlag): Boolean = and(b.i) == 0
 infix fun NavMoveFlags.wo(b: NavMoveFlag): NavMoveFlags = and(b.i.inv())
 operator fun NavMoveFlags.minus(flag: NavMoveFlag): NavMoveFlags = wo(flag)
 operator fun NavMoveFlags.div(flag: NavMoveFlag): NavMoveFlags = or(flag)
-
 
 
 enum class NavForward(val i: Int) {

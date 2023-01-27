@@ -434,7 +434,7 @@ class FontAtlas {
          *  features uses them, otherwise they will be rendered using polygons (more expensive for CPU/GPU). */
         NoBakedLines;
 
-        val i = if (ordinal == 0) 0 else 1 shl ordinal
+        val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
     }
 
     infix fun Int.has(flag: Flag) = and(flag.i) != 0

@@ -51,7 +51,7 @@ internal interface basicAccessors {
         if (id != 0) {
             g.activeIdIsAlive = id
             g.activeIdSource = when (id) {
-                g.navActivateId, g.navInputId, g.navJustTabbedId, g.navJustMovedToId -> InputSource.Nav
+                g.navActivateId, g.navActivateInputId, g.navJustTabbedId, g.navJustMovedToId -> InputSource.Nav
                 else -> InputSource.Mouse
             }
         }

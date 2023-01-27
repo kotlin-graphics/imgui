@@ -236,6 +236,7 @@ internal interface navigation {
      *  on the next frame when the item is encountered again.  */
     fun activateItem(id: ID) {
         g.navNextActivateId = id
+        g.navNextActivateFlags = ActivateFlag.None.i
     }
 
     /** FIXME-NAV: The existence of SetNavID vs SetFocusID properly needs to be clarified/reworked.

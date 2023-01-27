@@ -431,6 +431,7 @@ interface tables {
 
 
         // Ensure frozen columns are ordered in their section. We still allow multiple frozen columns to be reordered.
+        // FIXME-TABLE: This work for preserving 2143 into 21|43. How about 4321 turning into 21|43? (preserve relative order in each section)
         for (columnN in 0 until table.freezeColumnsRequest) {
             val orderN = table.displayOrderToIndex[columnN]
             if (orderN != columnN && orderN >= table.freezeColumnsRequest)

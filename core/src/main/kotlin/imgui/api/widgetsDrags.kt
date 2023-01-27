@@ -252,18 +252,20 @@ interface widgetsDrags {
             val focusRequested = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.Focused
             val clicked = hovered && ImGui.io.mouseClicked[0]
             val doubleClicked = hovered && ImGui.io.mouseDoubleClicked[0]
-            if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navInputId == id) {
+            if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id) {
                 ImGui.setActiveID(id, window)
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
-                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navInputId == id))
-                    tempInputIsActive = true
+                if (tempInputAllowed)
+                    if (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id)
+                        tempInputIsActive = true
             }
+
             // Experimental: simple click (without moving) turns Drag into an InputText
             if (io.configDragClickToInputText && tempInputAllowed && !tempInputIsActive)
                 if (g.activeId == id && hovered && io.mouseReleased[0] && !isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
-                    g.navInputId = id
+                    g.navActivateId = id; g.navActivateInputId = id
                     tempInputIsActive = true
                 }
         }

@@ -147,21 +147,25 @@ fun navUpdate() {
     navUpdateCancelRequest()
 
     // Process manual activation request
-    g.navActivateId = 0
-    g.navActivateDownId = 0
-    g.navActivatePressedId = 0
-    g.navInputId = 0
+    g.navActivateId = 0; g.navActivateDownId = 0; g.navActivatePressedId = 0; g.navActivateInputId = 0
+    g.navActivateFlags = ActivateFlag.None.i
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
         val activateDown = NavInput.Activate.isDown()
+        val inputDown = NavInput.Input.isDown()
         val activatePressed = activateDown && NavInput.Activate isTest InputReadMode.Pressed
-        if (g.activeId == 0 && activatePressed)
+        val inputPressed = inputDown && NavInput.Input isTest InputReadMode.Pressed
+        if (g.activeId == 0 && activatePressed) {
             g.navActivateId = g.navId
+            g.navActivateFlags = ActivateFlag.PreferTweak.i
+        }
+        if ((g.activeId == 0 || g.activeId == g.navId) && inputPressed) {
+            g.navActivateInputId = g.navId
+            g.navActivateFlags = ActivateFlag.PreferInput.i
+        }
         if ((g.activeId == 0 || g.activeId == g.navId) && activateDown)
             g.navActivateDownId = g.navId
         if ((g.activeId == 0 || g.activeId == g.navId) && activatePressed)
             g.navActivatePressedId = g.navId
-        if ((g.activeId == 0 || g.activeId == g.navId) && NavInput.Input isTest InputReadMode.Pressed)
-            g.navInputId = g.navId
     }
     g.navWindow?.let { if (it.flags has Wf.NoNavInputs) g.navDisableHighlight = true }
     if (g.navActivateId != 0)
@@ -170,10 +174,11 @@ fun navUpdate() {
     // Process programmatic activation request
     // FIXME-NAV: Those should eventually be queued (unlike focus they don't cancel each others)
     if (g.navNextActivateId != 0) {
-        g.navInputId = g.navNextActivateId
-        g.navActivatePressedId = g.navNextActivateId
-        g.navActivateDownId = g.navNextActivateId
-        g.navActivateId = g.navNextActivateId
+        if (g.navNextActivateFlags has ActivateFlag.PreferInput)
+            g.navActivateInputId = g.navNextActivateId
+        else
+            g.navActivateId = g.navNextActivateId; g.navActivateDownId = g.navNextActivateId; g.navActivatePressedId = g.navNextActivateId
+        g.navActivateFlags = g.navNextActivateFlags
     }
     g.navNextActivateId = 0
 
@@ -870,7 +875,7 @@ fun navProcessItem() {
     if (g.navMoveScoringItems)
         if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
-            if(navScoreItem(result))
+            if (navScoreItem(result))
                 navApplyItemToResult(result)
 
             // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
