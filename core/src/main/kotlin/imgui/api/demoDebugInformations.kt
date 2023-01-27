@@ -137,7 +137,7 @@ interface demoDebugInformations {
         if (cfg.showStackTool)
             showStackToolWindow(cfg::showStackTool)
 
-        if (!begin("Dear ImGui Metrics/Debugger", open)) {
+        if (!begin("Dear ImGui Metrics/Debugger", open) || ImGui.currentWindow.beginCount > 1) {
             end()
             return
         }
