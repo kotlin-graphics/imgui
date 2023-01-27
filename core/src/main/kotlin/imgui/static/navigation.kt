@@ -250,8 +250,9 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL-TAB or Square+L/R window selection
+    val navKeyboardActive = io.configFlags hasnt ConfigFlag.NavEnableKeyboard
     val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu isTest InputReadMode.Pressed
-    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
+    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && navKeyboardActive && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootWindow
@@ -311,7 +312,7 @@ fun navUpdateWindowing() {
     // Keyboard: Press and Release ALT to toggle menu layer
     // - Testing that only Alt is tested prevents Alt+Shift or AltGR from toggling menu layer.
     // - AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl). But even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
-    if (io.keyMods == KeyMod.Alt.i && io.keyModsPrev hasnt KeyMod.Alt) {
+    if (navKeyboardActive && io.keyMods == KeyMod.Alt.i && io.keyModsPrev hasnt KeyMod.Alt) {
         g.navWindowingToggleLayer = true
         g.navInputSource = InputSource.Keyboard
     }
