@@ -324,11 +324,8 @@ interface main {
         // Initiate moving window + handle left-click and right-click focus
         updateMouseMovingWindowEndFrame()
 
-        // Draw modal/window whitening backgrounds
-        endFrameDrawDimmedBackgrounds()
-
-        /*  Sort the window list so that all child windows are after their parent
-            We cannot do that on FocusWindow() because children may not exist yet         */
+        // Sort the window list so that all child windows are after their parent
+        // We cannot do that on FocusWindow() because children may not exist yet
         g.windowsTempSortBuffer.clear()
         g.windowsTempSortBuffer.ensureCapacity(g.windows.size)
         g.windows.filter { !it.active || it.flags hasnt Wf._ChildWindow }  // if a child is active its parent will add it
@@ -386,6 +383,10 @@ interface main {
                 .filterNotNull()
                 .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
                 .forEach { it.addRootToDrawData() }
+
+        // Draw modal/window whitening backgrounds
+        if (firstRenderOfFrame)
+            renderDimmedBackgrounds()
 
         // Setup ImDrawData structures for end-user
         io.metricsRenderVertices = 0

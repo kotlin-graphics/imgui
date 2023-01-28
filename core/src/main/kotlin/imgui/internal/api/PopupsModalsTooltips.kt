@@ -271,6 +271,17 @@ internal interface PopupsModalsTooltips {
             return null
         }
 
+    /** ~GetTopMostAndVisiblePopupModal */
+    val topMostAndVisiblePopupModal: Window?
+        get() {
+            for (n in g.openPopupStack.lastIndex downTo 0)
+                g.openPopupStack[n].window?.let { popup ->
+                    if (popup.flags has Wf._Modal && popup.isActiveAndVisible)
+                        return popup
+                }
+            return null
+        }
+
     fun findBestWindowPosForPopup(window: Window): Vec2 {
 
         val rOuter = window.popupAllowedExtentRect

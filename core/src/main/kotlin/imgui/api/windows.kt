@@ -505,23 +505,6 @@ interface windows {
             window.drawList.pushTextureID(g.font.containerAtlas.texID)
             pushClipRect(hostRect.min, hostRect.max, false)
 
-            // Draw modal window background (darkens what is behind them, all viewports)
-            val dimBgForModal =
-                flags has Wf._Modal && window === topMostPopupModal && window.hiddenFramesCannotSkipItems <= 0
-            val dimBgForWindowList = g.navWindowingTargetAnim?.rootWindow === window
-            if (dimBgForModal || dimBgForWindowList) {
-                val dimBgCol = getColorU32(if (dimBgForModal) Col.ModalWindowDimBg else Col.NavWindowingDimBg, g.dimBgRatio)
-                window.drawList.addRectFilled(viewportRect.min, viewportRect.max, dimBgCol)
-            }
-
-            // Draw navigation selection/windowing rectangle background
-            if (dimBgForWindowList && window == g.navWindowingTargetAnim!!.rootWindow) {
-                val bb = window.rect()
-                bb expand g.fontSize
-                if (viewportRect !in bb) // Avoid drawing if the window covers all the viewport anyway
-                    window.drawList.addRectFilled(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha * 0.25f), g.style.windowRounding)
-            }
-
             // Child windows can render their decoration (bg color, border, scrollbars, etc.) within their parent to save a draw call (since 1.71)
             // When using overlapping child windows, this will break the assumption that child z-order is mapped to submission order.
             // FIXME: User code may rely on explicit sorting of overlapping child window and would need to disable this somehow. Please get in contact if you are affected (github #4493)
@@ -546,16 +529,6 @@ interface windows {
                     ?: false)
                 window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
                 if (renderDecorationsInParent) window.drawList = window.drawListInst
-            } // Draw navigation selection/windowing rectangle border
-            if (g.navWindowingTargetAnim === window) {
-                var rounding = max(window.windowRounding, style.windowRounding)
-                val bb = window.rect()
-                bb expand g.fontSize
-                if (viewportRect in bb) { // If a window fits the entire viewport, adjust its highlight inward
-                    bb expand (-g.fontSize - 1f)
-                    rounding = window.windowRounding
-                }
-                window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), rounding, 0, 3f)
             }
 
             with(window) {
