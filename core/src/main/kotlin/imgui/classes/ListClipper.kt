@@ -177,7 +177,7 @@ class ListClipper {
             val window = g.currentWindow!!
             val offY = posY - window.dc.cursorPos.y
             window.dc.cursorPos.y = posY
-            window.dc.cursorMaxPos.y = window.dc.cursorMaxPos.y max posY
+            window.dc.cursorMaxPos.y = window.dc.cursorMaxPos.y max (posY - g.style.itemSpacing.y)
             window.dc.cursorPosPrevLine.y = window.dc.cursorPos.y - lineHeight  // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
             window.dc.prevLineSize.y = lineHeight - g.style.itemSpacing.y      // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
             window.dc.currentColumns?.let { columns ->
