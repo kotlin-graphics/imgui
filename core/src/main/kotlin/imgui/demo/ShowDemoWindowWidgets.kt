@@ -237,7 +237,7 @@ object ShowDemoWindowWidgets {
         Selectables()
         `Text Input`()
         Tabs()
-        `Plots Widgets`()
+        Plotting()
         `ColorPicker Widgets`()
         `DragSlider Flags`()
         `Range Widgets`()
@@ -1139,7 +1139,7 @@ object ShowDemoWindowWidgets {
         }
     }
 
-    object `Plots Widgets` {
+    object Plotting {
         var animate = true
         var refreshTime = 0.0
         val values = FloatArray(90)
@@ -1159,7 +1159,7 @@ object ShowDemoWindowWidgets {
             // Plot/Graph widgets are not very good.
             // Consider using a third-party library such as ImPlot: https://github.com/epezent/implot
             // (see others https://github.com/ocornut/imgui/wiki/Useful-Extensions)
-            treeNode("Plots Widgets") {
+            treeNode("Plotting") {
 
                 checkbox("Animate", ::animate)
 

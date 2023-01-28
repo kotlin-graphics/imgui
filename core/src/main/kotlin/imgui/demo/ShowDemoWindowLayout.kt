@@ -514,7 +514,7 @@ object ShowDemoWindowLayout {
 
                 // Manually wrapping
                 // (we should eventually provide this as an automatic layout feature, but for now you can do it manually)
-                text("Manually wrapping:")
+                text("Manual wrapping:")
                 val buttonsCount = 20
                 val windowVisibleX2 = windowPos.x + windowContentRegionMax.x
                 for (n in 0 until buttonsCount) {
