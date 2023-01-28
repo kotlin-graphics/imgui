@@ -119,10 +119,8 @@ internal interface navigation {
 
         // Tabbing forward wrap
         if (g.navMoveFlags has NavMoveFlag.Tabbing)
-            if (g.navTabbingCounter == 1 || g.navTabbingDir == 0) {
-                assert(g.navTabbingResultFirst.id != 0)
+            if ((g.navTabbingCounter == 1 || g.navTabbingDir == 0) && g.navTabbingResultFirst.id != 0)
                 result = g.navTabbingResultFirst
-            }
 
         // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
         if (result == null) {
