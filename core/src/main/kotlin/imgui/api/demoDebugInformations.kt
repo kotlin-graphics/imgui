@@ -603,7 +603,9 @@ interface demoDebugInformations {
             (double-click to auto fit window to its contents).""".trimIndent())
         bulletText("CTRL+Click on a slider or drag box to input value as text.")
         bulletText("TAB/SHIFT+TAB to cycle through keyboard editable fields.")
-        if (io.fontAllowUserScaling) bulletText("CTRL+Mouse Wheel to zoom window contents.")
+        bulletText("CTRL+Tab to select a window.")
+        if (io.fontAllowUserScaling)
+            bulletText("CTRL+Mouse Wheel to zoom window contents.")
         bulletText("While inputing text:\n")
         indent {
             bulletText("CTRL+Left/Right to word jump.")
@@ -620,7 +622,6 @@ interface demoDebugInformations {
             bulletText("Return to input text into a widget.")
             bulletText("Escape to deactivate a widget, close popup, exit child window.")
             bulletText("Alt to jump to the menu layer of a window.")
-            bulletText("CTRL+Tab to select a window.")
         }
     }
 
