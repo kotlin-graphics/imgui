@@ -259,7 +259,7 @@ internal interface inputText {
 
         // Lock the decision of whether we are going to take the path displaying the cursor or selection
         val renderCursor = g.activeId == id || (state != null && userScrollActive)
-        var renderSelection = state?.hasSelection == true && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
+        var renderSelection = state != null && (state.hasSelection || selectAll) && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
         var valueChanged = false
         var enterPressed = false
 
