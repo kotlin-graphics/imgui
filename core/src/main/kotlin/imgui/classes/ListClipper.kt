@@ -115,16 +115,16 @@ class ListClipper {
             table.endRow()
 
         // Reached end of list
-        if (itemsCount == 0 || skipItemForListClipping) {
-            end()
+        if (itemsCount == 0 || skipItemForListClipping)
             return false
-        }
 
         // While we are in frozen row state, keep displaying items one by one, unclipped
         // FIXME: Could be stored as a table-agnostic state.
         if (data.stepNo == 0 && table != null && !table.isUnfrozenRows) {
             displayStart = data.itemsFrozen
             displayEnd = data.itemsFrozen + 1
+            if (displayStart >= itemsCount)
+                return /*(void)End(),*/ false
             data.itemsFrozen++
             return true
         }
@@ -138,6 +138,8 @@ class ListClipper {
                 data.ranges += ListClipperRange.fromIndices(data.itemsFrozen, data.itemsFrozen + 1)
                 displayStart = data.ranges[0].min max data.itemsFrozen
                 displayEnd = data.ranges[0].max min itemsCount
+                if (displayStart == displayEnd)
+                    return /*(void)End(), */false
                 data.stepNo = 1
                 return true
             }
