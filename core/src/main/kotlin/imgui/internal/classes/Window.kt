@@ -584,13 +584,13 @@ class Window(var context: Context,
 
     /** ~WindowRectAbsToRel */
     infix fun rectAbsToRel(r: Rect): Rect {
-        val off = pos
+        val off = dc.cursorStartPos
         return Rect(r.min.x - off.x, r.min.y - off.y, r.max.x - off.x, r.max.y - off.y)
     }
 
     /** ~WindowRectRelToAbs */
     infix fun rectRelToAbs(r: Rect): Rect {
-        val off = pos
+        val off = dc.cursorStartPos
         return Rect(r.min.x + off.x, r.min.y + off.y, r.max.x + off.x, r.max.y + off.y)
     }
 

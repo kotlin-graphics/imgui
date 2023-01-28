@@ -209,7 +209,7 @@ fun navUpdate() {
     // Always prioritize mouse highlight if navigation is disabled
     if (!navKeyboardActive && !navGamepadActive) {
         g.navDisableHighlight = true
-        g.navDisableMouseHover = true; g.navMousePosDirty = false
+        g.navDisableMouseHover = true; setMousePos = false
     }
 
     // Update mouse position if requested
@@ -225,7 +225,7 @@ fun navUpdate() {
     //    #if IMGUI_DEBUG_NAV_RECTS
     //    if (g.NavWindow) {
     //        ImDrawList * draw_list = GetForegroundDrawList(g.NavWindow)
-    //        if (1) { for (int layer = 0; layer < 2; layer++) { ImRect r = WindowRectRelToAbs(g.NavWindow, g.NavWindow->NavRectRel[layer]); draw_list->AddRect(r.Min, r.Max, IM_COL32(255,200,0,255)); } // [DEBUG]
+    //        if (1) { for (int layer = 0; layer < 2; layer++) { ImRect r = WindowRectRelToAbs(g.NavWindow, g.NavWindow->NavRectRel[layer]); draw_list->AddRect(r.Min, r.Max, IM_COL32(255,200,0,255)); } } // [DEBUG]
     //        if (1) { ImU32 col =(!g.NavWindow->Hidden) ? IM_COL32(255, 0, 255, 255) : IM_COL32(255, 0, 0, 255); ImVec2 p = NavCalcPreferredRefPos (); char buf [32]; ImFormatString(buf, 32, "%d", g.NavLayer); draw_list->AddCircleFilled(p, 3.0f, col); draw_list->AddText(NULL, 13.0f, p+ImVec2(8, -4), col, buf); }
     //    }
     //    #endif
@@ -621,18 +621,15 @@ fun navUpdatePageUpPageDown(): Float {
             // FIXME-NAV: handling of Home/End is assuming that the top/bottom most item will be visible with Scroll.y == 0/ScrollMax.y
             // Scrolling will be handled via the ImGuiNavMoveFlags_ScrollToEdgeY flag, we don't scroll immediately to avoid scrolling happening before nav result.
             // Preserve current horizontal position if we have any.
-            navRectRel.min.y = -window.scroll.y
-            navRectRel.max.y = -window.scroll.y
+            navRectRel.min.y = 0f; navRectRel.max.y = 0f
             if (navRectRel.isInverted) {
-                navRectRel.min.x = 0f
-                navRectRel.max.x = 0f
+                navRectRel.min.x = 0f; navRectRel.max.x = 0f
             }
             g.navMoveDir = Dir.Down
             g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.ScrollToEdgeY
             // FIXME-NAV: MoveClipDir left to _None, intentional?
         } else if (endPressed) {
-            navRectRel.min.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
-            navRectRel.max.y = window.scrollMax.y + window.sizeFull.y - window.scroll.y
+            navRectRel.min.y = window.contentSize.y; navRectRel.max.y = window.contentSize.y
             if (navRectRel.isInverted) {
                 navRectRel.min.x = 0f
                 navRectRel.max.x = 0f
@@ -652,6 +649,53 @@ fun navUpdateAnyRequestFlag() {
         assert(g.navWindow != null)
 }
 
+fun navUpdateCreateWrappingRequest() {
+
+    val window = g.navWindow!!
+
+    var doForward = false
+    val bbRel = Rect(window.navRectRel[g.navLayer])
+    var clipDir = g.navMoveDir
+    val moveFlags = g.navMoveFlags
+    if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
+        bbRel.min.x = window.contentSize.x + window.windowPadding.x; bbRel.max.x = bbRel.min.x
+
+        if (moveFlags has NavMoveFlag.WrapX) {
+            bbRel translateY -bbRel.height // Previous row
+            clipDir = Dir.Up
+        }
+        doForward = true
+    }
+    if (g.navMoveDir == Dir.Right && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
+        bbRel.max.x = -window.windowPadding.x
+        bbRel.min.x = bbRel.max.x
+        if (moveFlags has NavMoveFlag.WrapX) {
+            bbRel translateY +bbRel.height // Next row
+            clipDir = Dir.Down
+        }
+        doForward = true
+    }
+    if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
+        bbRel.min.y = window.contentSize.y + window.windowPadding.y; bbRel.max.y = bbRel.min.y
+        if (moveFlags has NavMoveFlag.WrapY) {
+            bbRel translateX -bbRel.width // Previous column
+            clipDir = Dir.Left
+        }
+        doForward = true
+    }
+    if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
+        bbRel.min.y = -window.windowPadding.y; bbRel.max.y = bbRel.min.y
+        if (moveFlags has NavMoveFlag.WrapY) {
+            bbRel translateX +bbRel.width // Next column
+            clipDir = Dir.Right
+        }
+        doForward = true
+    }
+    if (!doForward)
+        return
+    window.navRectRel[g.navLayer] = bbRel
+    navMoveRequestForward(g.navMoveDir, clipDir, moveFlags, g.navMoveScrollFlags)
+}
 
 fun navEndFrame() {
 
@@ -660,59 +704,11 @@ fun navEndFrame() {
         navUpdateWindowingOverlay()
 
     // Perform wrap-around in menus
+    // FIXME-NAV: Wrap may need to apply a weight bias on the other axis. e.g. 4x4 grid with 2 last items missing on last item won't handle LoopY/WrapY correctly.
     // FIXME-NAV: Wrap (not Loop) support could be handled by the scoring function and then WrapX would function without an extra frame.
-    val window = g.navWindow
-    val moveFlags = g.navMoveFlags
     val wantedFlags = NavMoveFlag.WrapX or NavMoveFlag.LoopX or NavMoveFlag.WrapY or NavMoveFlag.LoopY
-    if (window != null && navMoveRequestButNoResultYet() && g.navMoveFlags has wantedFlags && g.navMoveFlags hasnt NavMoveFlag.Forwarded) {
-
-        var doForward = false
-        val bbRel = Rect(window.navRectRel[g.navLayer])
-
-        var clipDir = g.navMoveDir
-        if (g.navMoveDir == Dir.Left && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
-            bbRel.max.x = max(window.sizeFull.x, window.contentSize.x + window.windowPadding.x * 2f) - window.scroll.x
-            bbRel.min.x = bbRel.max.x
-
-            if (moveFlags has NavMoveFlag.WrapX) {
-                bbRel.translateY(-bbRel.height)
-                clipDir = Dir.Up
-            }
-            doForward = true
-        }
-        if (g.navMoveDir == Dir.Right && moveFlags has (NavMoveFlag.WrapX or NavMoveFlag.LoopX)) {
-            bbRel.max.x = -window.scroll.x
-            bbRel.min.x = bbRel.max.x
-            if (moveFlags has NavMoveFlag.WrapX) {
-                bbRel.translateY(+bbRel.height)
-                clipDir = Dir.Down
-            }
-            doForward = true
-        }
-        val decorationUpHeight = window.titleBarHeight + window.menuBarHeight
-        if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.max.y = max(window.sizeFull.y, window.contentSize.y + window.windowPadding.y * 2f) - window.scroll.y + decorationUpHeight
-            bbRel.min.y = bbRel.max.y
-            if (moveFlags has NavMoveFlag.WrapY) {
-                bbRel.translateX(-bbRel.width)
-                clipDir = Dir.Left
-            }
-            doForward = true
-        }
-        if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.max.y = -window.scroll.y + decorationUpHeight
-            bbRel.min.y = bbRel.max.y
-            if (moveFlags has NavMoveFlag.WrapY) {
-                bbRel.translateX(+bbRel.width)
-                clipDir = Dir.Right
-            }
-            doForward = true
-        }
-        if (doForward) {
-            window.navRectRel[g.navLayer] = bbRel
-            navMoveRequestForward(g.navMoveDir, clipDir, moveFlags, g.navMoveScrollFlags)
-        }
-    }
+    if (g.navWindow != null && navMoveRequestButNoResultYet() && g.navMoveFlags has wantedFlags && g.navMoveFlags hasnt NavMoveFlag.Forwarded)
+        navUpdateCreateWrappingRequest()
 }
 
 
