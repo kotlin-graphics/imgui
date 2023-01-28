@@ -159,14 +159,15 @@ internal interface newFrame {
                 focusWindow()  // Clicking on void disable focus
         }
 
-        /*  With right mouse button we close popups without changing focus based on where the mouse is aimed
-            Instead, focus will be restored to the window under the bottom-most closed popup.
-            (The left mouse button path calls FocusWindow on the hovered window, which will lead NewFrame->ClosePopupsOverWindow to trigger)    */
+        // With right mouse button we close popups without changing focus based on where the mouse is aimed
+        // Instead, focus will be restored to the window under the bottom-most closed popup.
+        // (The left mouse button path calls FocusWindow on the hovered window, which will lead NewFrame->ClosePopupsOverWindow to trigger)
         if (io.mouseClicked[1]) {
             // Find the top-most window between HoveredWindow and the top-most Modal Window.
             // This is where we can trim the popup stack.
             val modal = topMostPopupModal
-            val hoveredWindowAboveModal = g.hoveredWindow?.isAbove(modal) == true
+            val hoveredWindow = g.hoveredWindow
+            val hoveredWindowAboveModal = hoveredWindow != null && (modal == null || hoveredWindow isAbove modal)
             closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal, true)
         }
     }
