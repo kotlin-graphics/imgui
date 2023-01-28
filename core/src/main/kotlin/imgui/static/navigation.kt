@@ -223,12 +223,8 @@ fun navUpdate() {
     //    #if IMGUI_DEBUG_NAV_RECTS
     //    if (g.NavWindow) {
     //        ImDrawList * draw_list = GetForegroundDrawList(g.NavWindow)
-    //        if (1) {
-    //            for (int layer = 0; layer < 2; layer++) draw_list->AddRect(g.NavWindow->Pos+g.NavWindow->NavRectRel[layer].Min, g.NavWindow->Pos+g.NavWindow->NavRectRel[layer].Max, IM_COL32(255, 200, 0, 255));
-    //        } // [DEBUG]
-    //        if (1) {
-    //            ImU32 col =(!g.NavWindow->Hidden) ? IM_COL32(255, 0, 255, 255) : IM_COL32(255, 0, 0, 255); ImVec2 p = NavCalcPreferredRefPos (); char buf [32]; ImFormatString(buf, 32, "%d", g.NavLayer); draw_list->AddCircleFilled(p, 3.0f, col); draw_list->AddText(NULL, 13.0f, p+ImVec2(8, -4), col, buf);
-    //        }
+    //        if (1) { for (int layer = 0; layer < 2; layer++) { ImRect r = WindowRectRelToAbs(g.NavWindow, g.NavWindow->NavRectRel[layer]); draw_list->AddRect(r.Min, r.Max, IM_COL32(255,200,0,255)); } // [DEBUG]
+    //        if (1) { ImU32 col =(!g.NavWindow->Hidden) ? IM_COL32(255, 0, 255, 255) : IM_COL32(255, 0, 0, 255); ImVec2 p = NavCalcPreferredRefPos (); char buf [32]; ImFormatString(buf, 32, "%d", g.NavLayer); draw_list->AddCircleFilled(p, 3.0f, col); draw_list->AddText(NULL, 13.0f, p+ImVec2(8, -4), col, buf); }
     //    }
     //    #endif
 }
@@ -476,7 +472,7 @@ fun navUpdateCancelRequest() {
         assert(childWindow.childId != 0)
         val childRect = childWindow.rect()
         focusWindow(parentWindow)
-        setNavID(childWindow.childId, NavLayer.Main, 0, Rect(childRect.min - parentWindow.pos, childRect.max - parentWindow.pos))
+        setNavID(childWindow.childId, NavLayer.Main, 0, parentWindow rectAbsToRel childRect)
     } else if (g.openPopupStack.isNotEmpty()) {
         // Close open popup/menu
         if (g.openPopupStack.last().window!!.flags hasnt Wf._Modal)
@@ -553,7 +549,7 @@ fun navUpdateCreateMoveRequest() {
     // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
     // (can't focus a visible object like we can with the mouse).
     if (g.navMoveSubmitted && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) {
-        val windowRectRel = Rect(window.innerRect.min - window.pos - 1, window.innerRect.max - window.pos + 1)
+        val windowRectRel = window rectAbsToRel Rect(window.innerRect.min - 1, window.innerRect.max + 1)
         if (window.navRectRel[g.navLayer] !in windowRectRel) {
             IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel")
             val pad = window.calcFontSize() * 0.5f
@@ -568,7 +564,7 @@ fun navUpdateCreateMoveRequest() {
     val scoringRect = Rect()
     if (window != null) {
         val navRectRel = if (!window.navRectRel[g.navLayer].isInverted) window.navRectRel[g.navLayer] else Rect()
-        scoringRect.put(window.pos + navRectRel.min, window.pos + navRectRel.max)
+        scoringRect.put(window rectRelToAbs navRectRel)
         scoringRect translateY scoringRectOffsetY
         scoringRect.min.x = (scoringRect.min.x + 1f) min scoringRect.max.x
         scoringRect.max.x = scoringRect.min.x
@@ -851,7 +847,7 @@ fun navApplyItemToResult(result: NavItemData) {
     result.id = g.lastItemData.id
     result.focusScopeId = window.dc.navFocusScopeIdCurrent
     result.inFlags = g.lastItemData.inFlags
-    result.rectRel put Rect(g.lastItemData.navRect.min - window.pos, g.lastItemData.navRect.max - window.pos)
+    result.rectRel put (window rectAbsToRel g.lastItemData.navRect)
 }
 
 /** We get there when either navId == id, or when g.navAnyRequest is set (which is updated by navUpdateAnyRequestFlag above)
@@ -869,7 +865,7 @@ fun navProcessItem() {
         val candidateForNavDefaultFocus = itemFlags hasnt (If.NoNavDefaultFocus or If.Disabled)
         if (candidateForNavDefaultFocus || g.navInitResultId == 0) {
             g.navInitResultId = id
-            g.navInitResultRectRel = Rect(navBb.min - window.pos, navBb.max - window.pos)
+            g.navInitResultRectRel = window rectAbsToRel navBb
         }
         if (candidateForNavDefaultFocus) {
             g.navInitRequest = false // Found a match, clear request
@@ -911,7 +907,7 @@ fun navProcessItem() {
         g.navLayer = window.dc.navLayerCurrent
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         g.navIdIsAlive = true
-        window.navRectRel[window.dc.navLayerCurrent] = Rect(navBb.min - window.pos, navBb.max - window.pos)    // Store item bounding box (relative to window position)
+        window.navRectRel[window.dc.navLayerCurrent] = window rectAbsToRel navBb    // Store item bounding box (relative to window position)
     }
 }
 
@@ -923,11 +919,10 @@ fun navCalcPreferredRefPos(): Vec2 {
         return Vec2(g.mouseLastValidPos)
     } else {
         // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
-        val rectRel = g.navWindow!!.navRectRel[g.navLayer]
-        val pos = g.navWindow!!.pos + Vec2(
-            rectRel.min.x + min(style.framePadding.x * 4, rectRel.width),
-            rectRel.max.y - min(style.framePadding.y, rectRel.height)
-                                          )
+        val navWindow = g.navWindow!!
+        val rectRel = navWindow rectRelToAbs navWindow.navRectRel[g.navLayer]
+        val pos = Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width),
+                       rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val viewport = mainViewport
         return floor(glm.clamp(pos, viewport.pos, viewport.pos + viewport.size)) // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }

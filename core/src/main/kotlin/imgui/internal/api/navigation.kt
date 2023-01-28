@@ -148,7 +148,7 @@ internal interface navigation {
                 deltaScroll.y = scrollTarget - window.scroll.y
                 window setScrollY scrollTarget
             } else {
-                val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
+                val rectAbs = result.window!! rectRelToAbs result.rectRel
                 deltaScroll put scrollToRectEx(result.window!!, rectAbs, g.navMoveScrollFlags)
             }
 

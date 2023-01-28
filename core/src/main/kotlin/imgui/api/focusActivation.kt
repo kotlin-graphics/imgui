@@ -30,7 +30,7 @@ interface focusActivation {
 
         g.navInitRequest = false
         g.navInitResultId = g.lastItemData.id
-        g.navInitResultRectRel = Rect(g.lastItemData.rect.min - window.pos, g.lastItemData.rect.max - window.pos)
+        g.navInitResultRectRel = window rectAbsToRel g.lastItemData.rect
         navUpdateAnyRequestFlag()
 
         // Scroll could be done in NavInitRequestApplyResult() via a opt-in flag (we however don't want regular init requests to scroll)

@@ -81,7 +81,7 @@ internal interface basicAccessors {
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         window.navLastIds[navLayer] = id
         if (g.lastItemData.id == id)
-            window.navRectRel[navLayer].put(g.lastItemData.navRect.min - window.pos, g.lastItemData.navRect.max - window.pos)
+            window.navRectRel[navLayer].put(window rectAbsToRel g.lastItemData.navRect)
 
         if (g.activeIdSource == InputSource.Nav)
             g.navDisableMouseHover = true

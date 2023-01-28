@@ -582,6 +582,18 @@ class Window(var context: Context,
         hitTestHoleOffset put (pos - this.pos)
     }
 
+    /** ~WindowRectAbsToRel */
+    infix fun rectAbsToRel(r: Rect): Rect {
+        val off = pos
+        return Rect(r.min.x - off.x, r.min.y - off.y, r.max.x - off.x, r.max.y - off.y)
+    }
+
+    /** ~WindowRectRelToAbs */
+    infix fun rectRelToAbs(r: Rect): Rect {
+        val off = pos
+        return Rect(r.min.x + off.x, r.min.y + off.y, r.max.x + off.x, r.max.y + off.y)
+    }
+
 
     // Garbage collection
 

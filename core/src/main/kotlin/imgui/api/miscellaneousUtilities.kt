@@ -81,7 +81,7 @@ interface miscellaneousUtilities {
                 if (g.navMoveScoringItems)
                     unclippedRect add g.navScoringRect
                 if (g.navJustMovedToId != 0 && window.navLastIds[0] == g.navJustMovedToId)
-                    unclippedRect add Rect(window.pos + window.navRectRel[0].min, window.pos + window.navRectRel[0].max) // Could store and use NavJustMovedToRectRel
+                    unclippedRect add (window rectRelToAbs window.navRectRel[0]) // Could store and use NavJustMovedToRectRel
 
                 val pos = window.dc.cursorPos
                 var start = ((unclippedRect.min.y - pos.y) / itemsHeight).i
