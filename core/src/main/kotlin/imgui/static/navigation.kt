@@ -691,8 +691,9 @@ fun navEndFrame() {
             }
             doForward = true
         }
+        val decorationUpHeight = window.titleBarHeight + window.menuBarHeight
         if (g.navMoveDir == Dir.Up && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.max.y = max(window.sizeFull.y, window.contentSize.y + window.windowPadding.y * 2f) - window.scroll.y
+            bbRel.max.y = max(window.sizeFull.y, window.contentSize.y + window.windowPadding.y * 2f) - window.scroll.y + decorationUpHeight
             bbRel.min.y = bbRel.max.y
             if (moveFlags has NavMoveFlag.WrapY) {
                 bbRel.translateX(-bbRel.width)
@@ -701,7 +702,7 @@ fun navEndFrame() {
             doForward = true
         }
         if (g.navMoveDir == Dir.Down && moveFlags has (NavMoveFlag.WrapY or NavMoveFlag.LoopY)) {
-            bbRel.max.y = -window.scroll.y
+            bbRel.max.y = -window.scroll.y + decorationUpHeight
             bbRel.min.y = bbRel.max.y
             if (moveFlags has NavMoveFlag.WrapY) {
                 bbRel.translateX(+bbRel.width)
