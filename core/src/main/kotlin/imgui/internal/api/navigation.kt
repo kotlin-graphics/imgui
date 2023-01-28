@@ -141,20 +141,14 @@ internal interface navigation {
         assert(g.navWindow != null)
         // Scroll to keep newly navigated item fully into view.
         if (g.navLayer == NavLayer.Main) {
-            val deltaScroll = Vec2()
             if (g.navMoveFlags has NavMoveFlag.ScrollToEdgeY) {
                 // FIXME: Should remove this
                 val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
-                deltaScroll.y = scrollTarget - window.scroll.y
                 window setScrollY scrollTarget
             } else {
                 val rectAbs = result.window!! rectRelToAbs result.rectRel
-                deltaScroll put scrollToRectEx(result.window!!, rectAbs, g.navMoveScrollFlags)
+                scrollToRectEx(result.window!!, rectAbs, g.navMoveScrollFlags)
             }
-
-            // Offset our result position so mouse position can be applied immediately after in NavUpdate()
-            result.rectRel translateX -deltaScroll.x
-            result.rectRel translateY -deltaScroll.y
         }
 
         clearActiveID()

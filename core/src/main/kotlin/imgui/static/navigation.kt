@@ -115,18 +115,12 @@ fun navUpdate() {
     g.navTabbingInputableRemaining = 0
     g.navMoveSubmitted = false; g.navMoveScoringItems = false
 
-    // Apply application mouse position movement, after we had a chance to process move request result.
-    if (g.navMousePosDirty && g.navIdIsAlive) {
-        // Set mouse position given our knowledge of the navigated item position from last frame
-        if (io.configFlags has ConfigFlag.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos)
-            if (!g.navDisableHighlight && g.navDisableMouseHover && g.navWindow != null) {
-                io.mousePos = navCalcPreferredRefPos()
-                io.mousePosPrev = Vec2(io.mousePos)
-                io.wantSetMousePos = true
-                //IMGUI_DEBUG_LOG("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
-            }
-        g.navMousePosDirty = false
-    }
+    // Schedule mouse position update (will be done at the bottom of this function, after 1) processing all move requests and 2) updating scrolling)
+    var setMousePos = false
+    if (g.navMousePosDirty && g.navIdIsAlive)
+        if (!g.navDisableHighlight && g.navDisableMouseHover && g.navWindow != null)
+            setMousePos = true
+    g.navMousePosDirty = false
     g.navIdIsAlive = false
     g.navJustTabbedId = 0
     // [JVM] useless
@@ -216,6 +210,14 @@ fun navUpdate() {
     if (!navKeyboardActive && !navGamepadActive) {
         g.navDisableHighlight = true
         g.navDisableMouseHover = true; g.navMousePosDirty = false
+    }
+
+    // Update mouse position if requested
+    // (This will take into account the possibility that a Scroll was queued in the window to offset our absolute mouse position before scroll has been applied)
+    if (setMousePos && io.configFlags has ConfigFlag.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos) {
+        io.mousePos = navCalcPreferredRefPos(); io.mousePosPrev put io.mousePos
+        io.wantSetMousePos = true
+        //IMGUI_DEBUG_LOG("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
     }
 
     // [DEBUG]
@@ -912,15 +914,20 @@ fun navProcessItem() {
 }
 
 fun navCalcPreferredRefPos(): Vec2 {
-    if (g.navDisableHighlight || !g.navDisableMouseHover || g.navWindow == null) {
+    val window = g.navWindow
+    if (g.navDisableHighlight || !g.navDisableMouseHover || window == null) {
         // Mouse (we need a fallback in case the mouse becomes invalid after being used)
         if (isMousePosValid(io.mousePos))
             return Vec2(io.mousePos)
         return Vec2(g.mouseLastValidPos)
     } else {
-        // When navigation is active and mouse is disabled, decide on an arbitrary position around the bottom left of the currently navigated item.
-        val navWindow = g.navWindow!!
-        val rectRel = navWindow rectRelToAbs navWindow.navRectRel[g.navLayer]
+        // When navigation is active and mouse is disabled, pick a position around the bottom left of the currently navigated item
+        // Take account of upcoming scrolling (maybe set mouse pos should be done in EndFrame?)
+        val rectRel = window rectRelToAbs window.navRectRel[g.navLayer]
+        if (window.lastFrameActive != g.frameCount && (window.scrollTarget.x != Float.MAX_VALUE || window.scrollTarget.y != Float.MAX_VALUE)) {
+            val nextScroll = window.calcNextScrollFromScrollTargetAndClamp()
+            rectRel translate (window.scroll - nextScroll)
+        }
         val pos = Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width),
                        rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val viewport = mainViewport
