@@ -684,11 +684,13 @@ interface windows {
             if (flags has Wf._ChildWindow) { // Child window can be out of sight and have "negative" clip windows.
                 // Mark them as collapsed so commands are skipped earlier (we can't manually collapse them because they have no title bar).
                 assert(flags has Wf.NoTitleBar)
-                if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0)  // FIXME: Doesn't make sense for ChildWindow??
-                    if (!g.logEnabled)
+                if (flags hasnt Wf.AlwaysAutoResize && window.autoFitFrames allLessThanEqual 0) { // FIXME: Doesn't make sense for ChildWindow??
+                    val navWindow = g.navWindow
+                    val navRequest = flags has Wf._NavFlattened && (g.navAnyRequest && navWindow != null && navWindow.rootWindowForNav == window.rootWindowForNav)
+                    if (!g.logEnabled && !navRequest)
                         if (window.outerRectClipped.min.x >= window.outerRectClipped.max.x || window.outerRectClipped.min.y >= window.outerRectClipped.max.y)
                             window.hiddenFramesCanSkipItems = 1
-
+                }
                 // Hide along with parent or if parent is collapsed
                 parentWindow?.let {
                     if (it.collapsed || it.hiddenFramesCanSkipItems > 0) window.hiddenFramesCanSkipItems = 1
