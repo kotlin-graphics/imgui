@@ -475,6 +475,7 @@ object ShowDemoWindowWidgets {
                     var nodeClicked = -1
                     for (i in 0..5) {
                         // Disable the default "open on single-click behavior" + set Selected flag according to our selection.
+                        // To alter selection we use IsItemClicked() && !IsItemToggledOpen(), so clicking on an arrow doesn't alter selection.
                         var nodeFlags = baseFlags
                         val isSelected = selectionMask has (1 shl i)
                         if (isSelected)
@@ -482,7 +483,8 @@ object ShowDemoWindowWidgets {
                         if (i < 3) {
                             // Items 0..2 are Tree Node
                             val nodeOpen = treeNodeEx(i.L, nodeFlags, "Selectable Node $i")
-                            if (isItemClicked()) nodeClicked = i
+                            if (isItemClicked() && !isItemToggledOpen)
+                                nodeClicked = i
                             if (testDragAndDrop && beginDragDropSource()) {
                                 setDragDropPayload("_TREENODE", null)
                                 text("This is a drag and drop source")
@@ -498,7 +500,8 @@ object ShowDemoWindowWidgets {
                             // use BulletText() or advance the cursor by GetTreeNodeToLabelSpacing() and call Text().
                             nodeFlags = nodeFlags or Tnf.Leaf or Tnf.NoTreePushOnOpen // or Tnf.Bullet
                             treeNodeEx(i.L, nodeFlags, "Selectable Leaf $i")
-                            if (isItemClicked()) nodeClicked = i
+                            if (isItemClicked() && !isItemToggledOpen)
+                                nodeClicked = i
                             if (testDragAndDrop && beginDragDropSource()) {
                                 setDragDropPayload("_TREENODE", null)
                                 text("This is a drag and drop source")
