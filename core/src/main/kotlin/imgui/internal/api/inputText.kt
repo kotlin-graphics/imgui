@@ -108,7 +108,7 @@ internal interface inputText {
         if (flags has Itf.CallbackCharFilter)
             assert(callback != null) { "Must provide a callback if you want a char filter!" }
 
-        if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope
+        if (isMultiline) // Open group before calling GetID() because groups tracks id created within their scope (including the scrollbar)
             beginGroup()
         val id = window.getID(label)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -903,9 +903,22 @@ internal interface inputText {
             popFont()
 
         if (isMultiline) {
+            // For focus requests to work on our multiline we need to ensure our child ItemAdd() call specifies the ImGuiItemFlags_Inputable (ref issue #4761)...
             dummy(Vec2(textSize.x, textSize.y + style.framePadding.y))
+            val backupItemFlags = g.currentItemFlags
+            g.currentItemFlags /= ItemFlag.Inputable
             endChild()
+            g.currentItemFlags = backupItemFlags
+
+            // ...and then we need to undo the group overriding last item data, which gets a bit messy as EndGroup() tries to forward scrollbar being active...
+            val itemData = g.lastItemData
             endGroup()
+            if (g.lastItemData.id == 0)
+            {
+                g.lastItemData.id = id
+                g.lastItemData.inFlags = itemData.inFlags
+                g.lastItemData.statusFlags = itemData.statusFlags
+            }
         }
 
         // Log as text
