@@ -607,8 +607,9 @@ internal interface inputText {
                         cbData.flags = flags
                         cbData.userData = callbackUserData
 
+                        val callbackBuf = if(isReadOnly) buf else state.textA
                         cbData.eventKey = eventKey
-                        cbData.buf = state.textA
+                        cbData.buf = callbackBuf
                         cbData.bufTextLen = state.curLenA
                         cbData.bufSize = state.bufCapacityA
                         cbData.bufDirty = false
@@ -626,7 +627,7 @@ internal interface inputText {
                         callback(cbData)
 
                         // Read back what user may have modified
-                        assert(cbData.buf === state.textA) { "Invalid to modify those fields" }
+                        assert(cbData.buf === callbackBuf) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
                         val bufDirty = cbData.bufDirty
