@@ -320,10 +320,10 @@ internal interface inputText {
             }
 
             val isOsx = io.configMacOSXBehaviors
-            if (selectAll || (hovered && !isOsx && io.mouseMultiClickCount[0] == 2)) {
+            if (selectAll || (hovered && !isOsx && io.mouseClickedCount[0] == 2)) {
                 state.selectAll()
                 state.selectedAllMouseLock = true
-            } else if (hovered && isOsx && io.mouseMultiClickCount[0] == 2) {
+            } else if (hovered && isOsx && io.mouseClickedCount[0] == 2) {
                 // Double-click select a word only, OS X style (by simulating keystrokes)
                 state.onKeyPressed(K.WORDLEFT)
                 state.onKeyPressed(K.WORDRIGHT or K.SHIFT)

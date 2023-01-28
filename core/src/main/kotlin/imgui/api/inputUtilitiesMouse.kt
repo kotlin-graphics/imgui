@@ -58,14 +58,14 @@ interface inputUtilitiesMouse {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
 
-        return io.mouseMultiClickCount[button.i] == 2
+        return io.mouseClickedCount[button.i] == 2
     }
 
     /** did mouse button triple-clicked? (note that a triple-click will also report IsMouseClicked() == true) */
     fun isMouseTripleClicked(button: MouseButton): Boolean {
         // [JVM] useless
         //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
-        return g.io.mouseMultiClickCount[button.i] == 3
+        return g.io.mouseClickedCount[button.i] == 3
     }
 
     /** Test if mouse cursor is hovering given rectangle

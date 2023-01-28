@@ -58,32 +58,35 @@ object ShowDemoWindowMisc {
                 else text("Mouse pos: <INVALID>")
                 text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
                 text("Mouse down:")
-                for (i in 0 until io.mouseDown.size)
+                val indices = io.mouseDown.indices
+                for (i in indices)
                     if (isMouseDown(MouseButton.of(i))) {
                         sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i])
                     }
                 text("Mouse clicked:")
-                for (i in io.mouseDown.indices)
+                for (i in indices)
                     if (isMouseClicked(MouseButton of i)) {
                         sameLine(); text("b$i")
                     }
-                text("Mouse dblclick:")
-                for (i in io.mouseDown.indices)
+                text(" - clicked double")
+                for (i in indices)
                     if (isMouseDoubleClicked(MouseButton of i)) {
                         sameLine(); text("b$i")
                     }
-                text("Mouse tripleclick:")
-                for (i in io.mouseDown.indices)
+                text(" - clicked triple:")
+                for (i in indices)
                     if (isMouseTripleClicked(MouseButton of i)) {
                         sameLine(); text("b$i")
                     }
-                text("Mouse clickcount:")
-                for (i in io.mouseDown.indices)
-                    if (io.mouseMultiClickTracker[i] != 0) {
-                        sameLine(); text("b$i (${io.mouseMultiClickTracker[i]})")
+                text(" - clicked count:")
+                for (i in indices)
+                    if (io.mouseClickedCount[i] != 0) {
+                        sameLine(); text("b$i (${io.mouseClickedCount[i]})")
                     }
+                //ImGui::Text(" - last count:");    for (int i = 0; i < count; i++) if (io.MouseClickedLastCount[i])    { ImGui::SameLine(); ImGui::Text("b%d (%d)", i, io.MouseClickedLastCount[i]); }
+
                 text("Mouse released:")
-                for (i in io.mouseDown.indices)
+                for (i in indices)
                     if (isMouseReleased(MouseButton of i)) {
                         sameLine()
                         text("b$i")

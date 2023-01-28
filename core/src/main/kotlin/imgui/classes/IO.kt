@@ -346,13 +346,15 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Time of last click (used to figure out double-click)    */
     val mouseClickedTime = DoubleArray(5)
 
-    /** Mouse button went from !Down to Down    */
+    /** Mouse button went from !Down to Down (same as MouseClickedCount[x] != 0)    */
     val mouseClicked = BooleanArray(5)
 
-    /** Track multiple clicks over multiple frames */
-    val mouseMultiClickTracker = IntArray(5)
-    /** Has mouse button been clicked multiple times in a row? */
-    val mouseMultiClickCount = IntArray(5)
+    /** Has mouse button been double-clicked? (same as MouseClickedCount[x] == 2) */
+    val mouseDoubleClicked = BooleanArray(5)
+    /** == 0 (not clicked), == 1 (same as MouseClicked[]), == 2 (double-clicked), == 3 (triple-clicked) etc. when going from !Down to Down */
+    val mouseClickedCount = IntArray(5)
+    /** Count successive number of clicks. Stays valid after mouse release. Reset after another click is done. */
+    val mouseClickedLastCount = IntArray(5)
 
     /** Mouse button went from Down to !Down    */
     val mouseReleased = BooleanArray(5)
@@ -362,9 +364,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Track if button was clicked inside a dear imgui window. */
     val mouseDownOwnedUnlessPopupClose = BooleanArray(5)
-
-    /** Track number of mouse down clicks in a row */
-    val mouseDownMultiClickCount = IntArray(5)
 
     /** Duration the mouse button has been down (0.0f == just clicked)  */
     val mouseDownDuration = FloatArray(5) { -1f }

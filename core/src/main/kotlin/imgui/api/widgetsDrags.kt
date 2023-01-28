@@ -249,7 +249,7 @@ interface widgetsDrags {
         if (!tempInputIsActive) {
             val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && ImGui.io.mouseClicked[0]
-            val doubleClicked = hovered && g.io.mouseMultiClickCount[0] == 2
+            val doubleClicked = hovered && g.io.mouseClickedCount[0] == 2
             if (inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id) {
                 ImGui.setActiveID(id, window)
                 ImGui.setFocusID(id, window)

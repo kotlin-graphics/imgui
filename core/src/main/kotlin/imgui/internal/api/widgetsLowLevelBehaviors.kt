@@ -199,7 +199,7 @@ internal interface widgetsLowLevelBehaviors {
                             setFocusID(id, window)
                         focusWindow(window)
                     }
-                    if (flags has Bf.PressedOnClick || (flags has Bf.PressedOnDoubleClick && io.mouseMultiClickCount[mouseButtonClicked] == 2)) {
+                    if (flags has Bf.PressedOnClick || (flags has Bf.PressedOnDoubleClick && io.mouseClickedCount[mouseButtonClicked] == 2)) {
                         pressed = true
                         if (flags has Bf.NoHoldingActiveId)
                             clearActiveID()
@@ -268,7 +268,7 @@ internal interface widgetsLowLevelBehaviors {
                     val releaseAnywhere = flags has Bf.PressedOnClickReleaseAnywhere
                     if ((releaseIn || releaseAnywhere) && !g.dragDropActive) {
                         // Report as pressed when releasing the mouse (this is the most common path)
-                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && io.mouseDownMultiClickCount[mouseButton] == 2
+                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && g.io.mouseReleased[mouseButton] && io.mouseClickedLastCount[mouseButton] == 2
                         val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton] >= io.keyRepeatDelay // Repeat mode trumps <on release>
                         if (!isDoubleClickRelease && !isRepeatingAlready)
                             pressed = true
@@ -651,7 +651,7 @@ internal interface widgetsLowLevelBehaviors {
                     toggled = true
                 if (flags has Tnf.OpenOnArrow)
                     toggled = (isMouseXOverArrow && !g.navDisableMouseHover) || toggled // Lightweight equivalent of IsMouseHoveringRect() since ButtonBehavior() already did the job
-                if (flags has Tnf.OpenOnDoubleClick && io.mouseMultiClickCount[0] == 2)
+                if (flags has Tnf.OpenOnDoubleClick && io.mouseClickedCount[0] == 2)
                     toggled = true
             } else if (pressed && g.dragDropHoldJustPressedId == id) {
                 assert(buttonFlags has Bf.PressedOnDragDropHold)

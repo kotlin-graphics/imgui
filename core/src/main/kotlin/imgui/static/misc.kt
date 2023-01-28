@@ -5,21 +5,14 @@ import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isActiveIdUsingKey
-import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.loadIniSettingsFromDisk
-import imgui.ImGui.mouseCursor
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.saveIniSettingsToDisk
-import imgui.ImGui.setNextWindowBgAlpha
-import imgui.ImGui.text
-import imgui.ImGui.textColored
 import imgui.api.g
-import imgui.dsl.tooltip
 import imgui.internal.*
 import imgui.internal.classes.Window
 
@@ -73,6 +66,7 @@ fun updateMouseInputs() {
         mousePosPrev put mousePos
         for (i in mouseDown.indices) {
             mouseClicked[i] = mouseDown[i] && mouseDownDuration[i] < 0f
+            mouseClickedCount[i] = 0 // Will be filled below
             mouseReleased[i] = !mouseDown[i] && mouseDownDuration[i] >= 0f
             mouseDownDurationPrev[i] = mouseDownDuration[i]
             mouseDownDuration[i] = when {
@@ -82,24 +76,23 @@ fun updateMouseInputs() {
                 }
                 else -> -1f
             }
-            mouseMultiClickCount[i] = 0
             if (mouseClicked[i]) {
+                var isRepeatedClick = false
                 if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) {
                     val deltaFromClickPos = when {
                         isMousePosValid(mousePos) -> mousePos - mouseClickedPos[i]
                         else -> Vec2()
                     }
                     if (deltaFromClickPos.lengthSqr < mouseDoubleClickMaxDist * mouseDoubleClickMaxDist)
-                        mouseMultiClickTracker[i]++
-                    else
-                        mouseMultiClickTracker[i] = 1
-                } else
-                    mouseMultiClickTracker[i] = 1
-
+                        isRepeatedClick = true
+                }
+                if (isRepeatedClick)
+                    mouseClickedLastCount[i]++
+                else
+                    mouseClickedLastCount[i] = 1
                 mouseClickedTime[i] = g.time
                 mouseClickedPos[i] put mousePos
-                mouseMultiClickCount[i] = mouseMultiClickTracker[i]
-                mouseDownMultiClickCount[i] = mouseMultiClickTracker[i]
+                mouseClickedCount[i] = mouseClickedLastCount[i]
                 mouseDragMaxDistanceAbs[i] put 0f
                 mouseDragMaxDistanceSqr[i] = 0f
             } else if (mouseDown[i]) {
@@ -123,8 +116,9 @@ fun updateMouseInputs() {
                 mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max mouseDelta.lengthSqr
             }
 
-            if (!mouseDown[i] && !mouseReleased[i])
-                mouseDownMultiClickCount[i] = 0
+            // We provide io.MouseDoubleClicked[] as a legacy service
+            mouseDoubleClicked[i] = mouseClickedCount[i] == 2
+
             // Clicking any mouse button reactivate mouse hovering which may have been deactivated by gamepad/keyboard navigation
             if (mouseClicked[i])
                 g.navDisableMouseHover = false

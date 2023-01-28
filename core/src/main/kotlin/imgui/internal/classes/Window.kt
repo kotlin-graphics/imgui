@@ -833,7 +833,7 @@ class Window(var context: Context,
             if (hovered || held)
                 g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
 
-            if (held && g.io.mouseMultiClickCount[0] == 2 && resizeGripN == 0) {
+            if (held && g.io.mouseClickedCount[0] == 2 && resizeGripN == 0) {
                 // Manual auto-fit when double-clicking
                 sizeTarget put calcSizeAfterConstraint(sizeAutoFit)
                 retAutoFit = true
