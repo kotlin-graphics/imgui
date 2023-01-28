@@ -12,10 +12,7 @@ import imgui.ImGui.separatorEx
 import imgui.ImGui.style
 import imgui.internal.classes.GroupData
 import imgui.internal.classes.Rect
-import imgui.internal.sections.ItemStatusFlag
-import imgui.internal.sections.SeparatorFlag
-import imgui.internal.sections.div
-import imgui.internal.sections.or
+import imgui.internal.sections.*
 import imgui.internal.sections.LayoutType as Lt
 
 
@@ -163,7 +160,7 @@ interface cursorLayout {
 
         window.dc.currLineTextBaseOffset = window.dc.prevLineTextBaseOffset max groupData.backupCurrLineTextBaseOffset      // FIXME: Incorrect, we should grab the base offset from the *first line* of the group but it is hard to obtain now.
         itemSize(groupBb.size)
-        itemAdd(groupBb, 0)
+        itemAdd(groupBb, 0, null, ItemFlag.NoTabStop.i)
 
         // If the current ActiveId was declared within the boundary of our group, we copy it to LastItemId so IsItemActive(), IsItemDeactivated() etc. will be functional on the entire group.
         // It would be be neater if we replaced window.DC.LastItemId by e.g. 'bool LastItemIsActive', but would put a little more burden on individual widgets.

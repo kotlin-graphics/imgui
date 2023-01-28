@@ -55,6 +55,7 @@ import imgui.classes.InputTextCallbackData
 import imgui.internal.*
 import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
+import imgui.internal.classes.LastItemData
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
 import imgui.stb.te.clamp
@@ -123,6 +124,7 @@ internal interface inputText {
         val innerSize = Vec2(frameSize)
         val bufEnd = Vec1i()
         val itemStatusFlags: ItemStatusFlags
+        lateinit var itemDataBackup: LastItemData
         if (isMultiline) {
             val backupPos = Vec2(window.dc.cursorPos)
             itemSize(totalBb, style.framePadding.y)
@@ -132,6 +134,7 @@ internal interface inputText {
                 return false
             }
             itemStatusFlags = g.lastItemData.statusFlags
+            itemDataBackup = g.lastItemData
             window.dc.cursorPos = backupPos
 
             // We reproduce the contents of BeginChildFrame() in order to provide 'label' so our window internal data are easier to read/debug.
@@ -906,18 +909,19 @@ internal interface inputText {
             // For focus requests to work on our multiline we need to ensure our child ItemAdd() call specifies the ImGuiItemFlags_Inputable (ref issue #4761)...
             dummy(Vec2(textSize.x, textSize.y + style.framePadding.y))
             val backupItemFlags = g.currentItemFlags
-            g.currentItemFlags /= ItemFlag.Inputable
+            g.currentItemFlags = g.currentItemFlags or (ItemFlag.Inputable or ItemFlag.NoTabStop)
             endChild()
+            itemDataBackup.statusFlags = itemDataBackup.statusFlags or (g.lastItemData.statusFlags and ItemStatusFlag.HoveredWindow)
             g.currentItemFlags = backupItemFlags
 
             // ...and then we need to undo the group overriding last item data, which gets a bit messy as EndGroup() tries to forward scrollbar being active...
-            val itemData = g.lastItemData
+            // FIXME: This quite messy/tricky, should attempt to get rid of the child window.
             endGroup()
             if (g.lastItemData.id == 0)
             {
                 g.lastItemData.id = id
-                g.lastItemData.inFlags = itemData.inFlags
-                g.lastItemData.statusFlags = itemData.statusFlags
+                g.lastItemData.inFlags = itemDataBackup.inFlags
+                g.lastItemData.statusFlags = itemDataBackup.statusFlags
             }
         }
 

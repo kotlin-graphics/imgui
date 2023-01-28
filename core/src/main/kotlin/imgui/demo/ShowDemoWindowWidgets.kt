@@ -1793,7 +1793,7 @@ object ShowDemoWindowWidgets {
             treeNode("Querying Item Status (Edited/Active/Focused/Hovered etc.)") {
                 // Select an item type
                 val itemNames = arrayOf(
-                    "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputFloat",
+                    "Text", "Button", "Button (w/ repeat)", "Checkbox", "SliderFloat", "InputText", "InputTextMultiline", "InputFloat",
                     "InputFloat3", "ColorEdit4", "Selectable", "MenuItem", "TreeNode", "TreeNode (w/ double-click)", "Combo", "ListBox")
                 combo("Item Type", ::itemType, itemNames, itemNames.size)
                 sameLine()
@@ -1810,15 +1810,16 @@ object ShowDemoWindowWidgets {
                     3 -> checkbox("ITEM: Checkbox", ::b0) // Testing checkbox
                     4 -> sliderFloat("ITEM: SliderFloat", col, 0, 0f, 1f)   // Testing basic item
                     5 -> inputText("ITEM: InputText", str) // Testing input text (which handles tabbing)
-                    6 -> inputFloat("ITEM: InputFloat", col, 1f)  // Testing +/- buttons on scalar input
-                    7 -> inputFloat3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
-                    8 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
-                    9 -> selectable("ITEM: Selectable") // Testing selectable item
-                    10 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
-                    11 -> treeNode("ITEM: TreeNode").also { if (it) treePop() } // Testing tree node
-                    12 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
-                    13 -> combo("ITEM: Combo", ::current1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
-                    14 -> listBox("ITEM: ListBox", ::current2, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                    6 -> inputTextMultiline("ITEM: InputTextMultiline", str) // Testing input text (which uses a child window)
+                    7 -> inputFloat("ITEM: InputFloat", col, 1f)  // Testing +/- buttons on scalar input
+                    8 -> inputFloat3("ITEM: InputFloat3", col)  // Testing multi-component items (IsItemXXX flags are reported merged)
+                    9 -> colorEdit4("ITEM: ColorEdit4", col)    // Testing multi-component items (IsItemXXX flags are reported merged)
+                    10 -> selectable("ITEM: Selectable") // Testing selectable item
+                    11 -> menuItem("ITEM: MenuItem") // Testing menu item (they use ImGuiButtonFlags_PressedOnRelease button policy)
+                    12 -> treeNode("ITEM: TreeNode").also { if (it) treePop() } // Testing tree node
+                    13 -> treeNodeEx("ITEM: TreeNode w/ ImGuiTreeNodeFlags_OpenOnDoubleClick", Tnf.OpenOnDoubleClick or Tnf.NoTreePushOnOpen)   // Testing tree node with ImGuiButtonFlags_PressedOnDoubleClick button policy.
+                    14 -> combo("ITEM: Combo", ::current1, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
+                    15 -> listBox("ITEM: ListBox", ::current2, arrayOf("Apple", "Banana", "Cherry", "Kiwi"))
                     else -> false
                 }
 
