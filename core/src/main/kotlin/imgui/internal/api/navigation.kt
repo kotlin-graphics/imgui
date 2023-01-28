@@ -148,8 +148,9 @@ internal interface navigation {
             }
         }
 
-        clearActiveID()
         g.navWindow = window
+        if (g.activeId != result.id)
+            clearActiveID()
         if (g.navId != result.id) {
             // Don't set NavJustMovedToId if just landed on the same spot (which may happen with ImGuiNavMoveFlags_AllowCurrentNavId)
             g.navJustMovedToId = result.id
