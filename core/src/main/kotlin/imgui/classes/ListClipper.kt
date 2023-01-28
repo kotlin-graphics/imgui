@@ -44,7 +44,10 @@ class ListClipper {
     var startPosY = 0f // [Internal] Cursor position at the time of Begin() or after table frozen rows are all processed
     var tempData: Any? = null // [Internal] Internal data
 
-    fun dispose() = assert(itemsCount == -1) { "Forgot to call End(), or to Step() until false?" }
+    fun dispose() {
+        assert(itemsCount == -1) { "Forgot to call End(), or to Step() until false?" }
+        end()
+    }
 
     fun begin(itemsCount: Int, itemsHeight: Float = -1f) {
 
@@ -73,21 +76,23 @@ class ListClipper {
     /** Automatically called on the last call of Step() that returns false. */
     fun end() {
 
-        if (itemsCount < 0) // Already ended
-            return
-
         // In theory here we should assert that we are already at the right position, but it seems saner to just seek at the end and not assert/crash the user.
-        val data = tempData as ListClipperData
-        if (itemsCount < Int.MAX_VALUE && displayStart >= 0)
+        if (itemsCount >= 0 && itemsCount < Int.MAX_VALUE && displayStart >= 0)
             seekCursorForItem(this, itemsCount)
         itemsCount = -1
-        data.stepNo = data.ranges.size
 
         // Restore temporary buffer and fix back pointers which may be invalidated when nesting
         assert(g.clipperTempDataStacked > 0)
-        tempData = if (--g.clipperTempDataStacked > 0) g.clipperTempData[g.clipperTempDataStacked - 1] else null
-        if (tempData != null)
-            (tempData as ListClipperData).listClipper.tempData = data
+        (tempData as? ListClipperData)?.let { data ->
+            assert(data.listClipper == this)
+            data.stepNo = data.ranges.size
+            if (--g.clipperTempDataStacked > 0) {
+                tempData = g.clipperTempData[g.clipperTempDataStacked - 1].apply {
+                    listClipper.tempData = tempData
+                }
+            }
+            tempData = null
+        }
     }
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those items.  */
