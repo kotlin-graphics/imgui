@@ -12,6 +12,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
 import imgui.static.navApplyItemToResult
+import imgui.static.navRestoreHighlightAfterMove
 import imgui.static.navUpdateAnyRequestFlag
 
 // Gamepad/Keyboard Navigation
@@ -52,10 +53,8 @@ internal interface navigation {
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"\n", g.navInitResultId)
         setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
         g.navIdIsAlive = true // Mark as alive from previous frame as we got a result
-        if (g.navInitRequestFromMove) {
-            g.navDisableHighlight = false
-            g.navDisableMouseHover = true; g.navMousePosDirty = true
-        }
+        if (g.navInitRequestFromMove)
+            navRestoreHighlightAfterMove()
     }
 
     fun navMoveRequestButNoResultYet(): Boolean = g.navMoveScoringItems && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
@@ -121,10 +120,8 @@ internal interface navigation {
         if (result == null) {
             if (g.navMoveFlags has NavMoveFlag.Tabbing)
                 g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
-            if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight) {
-                g.navDisableHighlight = false
-                g.navDisableMouseHover = true
-            }
+            if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight)
+                navRestoreHighlightAfterMove()
             return
         }
 
@@ -179,10 +176,8 @@ internal interface navigation {
         }
 
         // Enable nav highlight
-        if (g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight) {
-            g.navDisableHighlight = false
-            g.navDisableMouseHover = true; g.navMousePosDirty = true
-        }
+        if (g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight)
+            navRestoreHighlightAfterMove()
     }
 
 
@@ -277,7 +272,5 @@ internal interface navigation {
         g.navFocusScopeId = focusScopeId
         navWindow.navLastIds[navLayer] = id
         navWindow.navRectRel[navLayer] = rectRel
-        //g.NavDisableHighlight = false;
-        //g.NavDisableMouseHover = g.NavMousePosDirty = true;
     }
 }

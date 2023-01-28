@@ -362,8 +362,7 @@ fun navUpdateWindowing() {
     // Apply final focus
     if (applyFocusWindow != null && (g.navWindow == null || applyFocusWindow !== g.navWindow!!.rootWindow)) {
         clearActiveID()
-        g.navDisableHighlight = false
-        g.navDisableMouseHover = true
+        navRestoreHighlightAfterMove()
         applyFocusWindow = navRestoreLastChildNavWindow(applyFocusWindow!!)
         closePopupsOverWindow(applyFocusWindow, false)
         focusWindow(applyFocusWindow)
@@ -416,6 +415,7 @@ fun navUpdateWindowing() {
             if (newNavLayer == NavLayer.Menu)
                 g.navWindow!!.navLastIds[newNavLayer] = 0
             navRestoreLayer(newNavLayer)
+            navRestoreHighlightAfterMove()
         }
     }
 }
@@ -464,10 +464,11 @@ fun navUpdateCancelRequest() {
     if (g.activeId != 0) {
         if (!isActiveIdUsingNavInput(NavInput.Cancel))
             clearActiveID()
-    } else if (g.navLayer != NavLayer.Main)
-    // Leave the "menu" layer
+    } else if (g.navLayer != NavLayer.Main) {
+        // Leave the "menu" layer
         navRestoreLayer(NavLayer.Main)
-    else if (navWindow != null && navWindow !== navWindow.rootWindow && navWindow.flags hasnt Wf._Popup && navWindow.parentWindow != null) {
+        navRestoreHighlightAfterMove()
+    } else if (navWindow != null && navWindow !== navWindow.rootWindow && navWindow.flags hasnt Wf._Popup && navWindow.parentWindow != null) {
         // Exit child window
         val childWindow = navWindow
         val parentWindow = navWindow.parentWindow!!
@@ -475,6 +476,7 @@ fun navUpdateCancelRequest() {
         val childRect = childWindow.rect()
         focusWindow(parentWindow)
         setNavID(childWindow.childId, NavLayer.Main, 0, parentWindow rectAbsToRel childRect)
+        navRestoreHighlightAfterMove()
     } else if (g.openPopupStack.isNotEmpty()) {
         // Close open popup/menu
         if (g.openPopupStack.last().window!!.flags hasnt Wf._Modal)
@@ -958,6 +960,10 @@ fun navRestoreLayer(layer: NavLayer) {
     g.navDisableMouseHover = true; g.navMousePosDirty = true
 }
 
+fun navRestoreHighlightAfterMove() {
+    g.navDisableHighlight = false
+    g.navDisableMouseHover = true; g.navMousePosDirty = true
+}
 
 /** Restore the last focused child.
  *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
