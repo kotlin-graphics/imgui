@@ -2,6 +2,7 @@ package imgui.api
 
 import gli_.has
 import gli_.hasnt
+import glm_.d
 import glm_.f
 import glm_.max
 import glm_.vec2.Vec2
@@ -10,7 +11,6 @@ import imgui.ImGui.endColumns
 import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
-import imgui.ImGui.getColorU32
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
@@ -20,7 +20,6 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.setLastItemData
 import imgui.ImGui.style
-import imgui.ImGui.topMostPopupModal
 import imgui.internal.classes.Rect
 import imgui.internal.classes.WindowStackData
 import imgui.internal.floor
@@ -573,8 +572,13 @@ interface windows {
                 dc.indent = 0f + windowPadding.x - scroll.x
                 dc.groupOffset = 0f
                 dc.columnsOffset = 0f
-                dc.cursorStartPos.put(pos.x + dc.indent + dc.columnsOffset,
-                                      pos.y + decorationUpHeight + windowPadding.y - scroll.y)
+
+                // Record the loss of precision of CursorStartPos which can happen due to really large scrolling amount.
+                // This is used by clipper to compensate and fix the most common use case of large scroll area. Easy and cheap, next best thing compared to switching everything to double or ImU64.
+                val startPosHighpX = window.pos.x.d + window.windowPadding.x - window.scroll.x.d + window.dc.columnsOffset
+                val startPosHighpY = window.pos.y.d + window.windowPadding.y - window.scroll.y.d + decorationUpHeight
+                window.dc.cursorStartPos = Vec2(startPosHighpX, startPosHighpY)
+                window.dc.cursorStartPosLossyness.put(startPosHighpX - window.dc.cursorStartPos.x, startPosHighpY - window.dc.cursorStartPos.y)
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos

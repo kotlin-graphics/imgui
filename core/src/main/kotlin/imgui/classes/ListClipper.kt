@@ -69,6 +69,7 @@ class ListClipper {
                 g.clipperTempData += ListClipperData()
         val data = g.clipperTempData[g.clipperTempDataStacked - 1]
         data.reset(this)
+        data.lossynessOffset = window.dc.cursorStartPosLossyness.y
         tempData = data
     }
 
@@ -188,8 +189,8 @@ class ListClipper {
             //   which with the flooring/ceiling tend to lead to 2 items instead of one being submitted.
             for (i in data.ranges.indices)
                 if (data.ranges[i].posToIndexConvert) {
-                    val m1 = ((data.ranges[i].min.d - window.dc.cursorPos.y) / itemsHeight).i
-                    val m2 = (((data.ranges[i].max.d - window.dc.cursorPos.y) / itemsHeight) + 0.999999f).i
+                    val m1 = ((data.ranges[i].min.d - window.dc.cursorPos.y - data.lossynessOffset) / itemsHeight).i
+                    val m2 = (((data.ranges[i].max.d - window.dc.cursorPos.y - data.lossynessOffset) / itemsHeight) + 0.999999f).i
                     data.ranges[i].min = clamp(alreadySubmitted + m1 + floor((data.ranges[i].min - window.dc.cursorPos.y) / itemsHeight).i + data.ranges[i].posToIndexOffsetMin, alreadySubmitted, itemsCount - 1)
                     data.ranges[i].max = clamp(alreadySubmitted + m2 + ceil((data.ranges[i].max - window.dc.cursorPos.y) / itemsHeight).i + 0 + data.ranges[i].posToIndexOffsetMax, data.ranges[i].min + 1, itemsCount)
                     data.ranges[i].posToIndexConvert = false
@@ -245,7 +246,7 @@ class ListClipper {
             // StartPosY starts from ItemsFrozen hence the subtraction
             // Perform the add and multiply with double to allow seeking through larger ranges
             val data = clipper.tempData as ListClipperData
-            val posY = (clipper.startPosY.d + (itemN - data.itemsFrozen).d * clipper.itemsHeight).f
+            val posY = (clipper.startPosY.d + data.lossynessOffset + (itemN - data.itemsFrozen).d * clipper.itemsHeight).f
             seekCursorAndSetupPrevLine(posY, clipper.itemsHeight)
         }
 

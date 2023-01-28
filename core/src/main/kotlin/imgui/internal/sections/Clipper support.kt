@@ -24,6 +24,7 @@ class ListClipperRange {
 // Temporary clipper data, buffers shared/reused between instances
 class ListClipperData {
     lateinit var listClipper: ListClipper
+    var lossynessOffset = 0f
     var stepNo = 0
     var itemsFrozen = 0
     val ranges = ArrayList<ListClipperRange>()

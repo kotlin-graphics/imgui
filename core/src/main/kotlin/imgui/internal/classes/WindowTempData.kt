@@ -48,6 +48,8 @@ class WindowTempData {
 
     var groupOffset = 0f
 
+    /** Record the loss of precision of CursorStartPos due to really large scrolling amount. This is used by clipper to compensentate and fix the most common use case of large scroll area. */
+    val cursorStartPosLossyness = Vec2()
 
     // Keyboard/Gamepad navigation
 
