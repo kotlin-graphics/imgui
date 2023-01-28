@@ -100,7 +100,7 @@ fun updateDebugToolStackQueries() {
 
     // Update queries. The steps are: -1: query Stack, >= 0: query each stack item
     // We can only perform 1 ID Info query every frame. This is designed so the GetID() tests are cheap and constant-time
-    val queryId = if (g.activeId != 0) g.activeId else g.hoveredIdPreviousFrame
+    val queryId = if (g.hoveredIdPreviousFrame != 0) g.hoveredIdPreviousFrame else g.activeId
     if (tool.queryId != queryId) {
         tool.queryId = queryId
         tool.stackLevel = -1
