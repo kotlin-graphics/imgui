@@ -608,7 +608,7 @@ internal interface inputText {
                         cbData.flags = flags
                         cbData.userData = callbackUserData
 
-                        val callbackBuf = if (isReadOnly) buf else state.textA
+                        var callbackBuf = if (isReadOnly) buf else state.textA
                         cbData.eventKey = eventKey
                         cbData.buf = callbackBuf
                         cbData.bufTextLen = state.curLenA
@@ -628,6 +628,7 @@ internal interface inputText {
                         callback(cbData)
 
                         // Read back what user may have modified
+                        callbackBuf = if(isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
                         assert(cbData.buf === callbackBuf) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
