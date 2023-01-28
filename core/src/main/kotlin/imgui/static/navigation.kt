@@ -129,7 +129,8 @@ fun navUpdate() {
     }
     g.navIdIsAlive = false
     g.navJustTabbedId = 0
-    //    assert(g.navLayer == 0 || g.navLayer == 1) useless on jvm
+    // [JVM] useless
+    //    IM_ASSERT(g.NavLayer == ImGuiNavLayer_Main || g.NavLayer == ImGuiNavLayer_Menu)
 
     // Store our return window (for returning from Menu Layer to Main Layer) and clear it as soon as we step back in our own Layer 0
     g.navWindow?.let {

@@ -41,7 +41,7 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     /** [ALPHA] Allow hovering interactions but underlying value is not changed. */
     ReadOnly(1 shl 7),  // false
 
-    /** [WIP] Auto-activate item when focused. Currently only used and supported by a few items before it becomes a generic feature. */
+    /** [WIP] Auto-activate input mode when tab focused. Currently only used and supported by a few items before it becomes a generic feature. */
     Inputable(1 shl 8);   // false
 
     infix fun and(b: ItemFlag): ItemFlags = i and b.i

@@ -5,6 +5,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.isItemVisible
 import imgui.ImGui.navMoveRequestResolveWithLastItem
 import imgui.ImGui.navMoveRequestSubmit
+import imgui.ImGui.scrollToRectEx
 import imgui.ImGui.setScrollHereY
 import imgui.internal.classes.Rect
 import imgui.internal.sections.NavMoveFlag
@@ -24,13 +25,17 @@ interface focusActivation {
         val window = g.currentWindow!!
         if (!window.appearing)
             return
-        if (g.navWindow === window.rootWindowForNav && (g.navInitRequest || g.navInitResultId != 0) && g.navLayer == window.dc.navLayerCurrent) {
-            g.navInitRequest = false
-            g.navInitResultId = g.lastItemData.id
-            g.navInitResultRectRel = Rect(g.lastItemData.rect.min - window.pos, g.lastItemData.rect.max - window.pos)
-            navUpdateAnyRequestFlag()
-            if (!isItemVisible) setScrollHereY()
-        }
+        if (g.navWindow !== window.rootWindowForNav || (!g.navInitRequest && g.navInitResultId == 0) || g.navLayer != window.dc.navLayerCurrent)
+            return
+
+        g.navInitRequest = false
+        g.navInitResultId = g.lastItemData.id
+        g.navInitResultRectRel = Rect(g.lastItemData.rect.min - window.pos, g.lastItemData.rect.max - window.pos)
+        navUpdateAnyRequestFlag()
+
+        // Scroll could be done in NavInitRequestApplyResult() via a opt-in flag (we however don't want regular init requests to scroll)
+        if (!isItemVisible)
+            scrollToRectEx(window, g.lastItemData.rect, ScrollFlag.None.i)
     }
 
     /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.
@@ -40,7 +45,7 @@ interface focusActivation {
         val window = g.currentWindow!!
         assert(offset >= -1) { "-1 is allowed but not below" }
         g.navWindow = window
-        val scrollFlags = if(window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
+        val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
         navMoveRequestSubmit(Dir.None, Dir.None, NavMoveFlag.Tabbing.i, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
         if (offset == -1)
             navMoveRequestResolveWithLastItem()

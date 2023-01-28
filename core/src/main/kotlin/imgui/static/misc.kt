@@ -210,8 +210,12 @@ fun updateMouseWheel() {
 fun updateTabFocus() {
 
     // Pressing TAB activate widget focus
-    g.tabFocusPressed = g.navWindow?.let { it.active && it.flags hasnt WindowFlag.NoNavInputs && !io.keyCtrl && Key.Tab.isPressed && !isActiveIdUsingKey(Key.Tab) }
-        ?: false
+    g.tabFocusPressed = false
+    g.navWindow?.let {
+        if (it.active && it.flags hasnt WindowFlag.NoNavInputs)
+            if (!io.keyCtrl && !io.keyAlt && Key.Tab.isPressed && !isActiveIdUsingKey(Key.Tab))
+                g.tabFocusPressed = true
+    }
     if (g.activeId == 0 && g.tabFocusPressed) {
         // - This path is only taken when no widget are active/tabbed-into yet.
         //   Subsequent tabbing will be processed by FocusableItemRegister()
