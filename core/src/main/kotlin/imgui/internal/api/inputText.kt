@@ -57,6 +57,7 @@ import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
+import imgui.stb.te.clamp
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag
@@ -320,14 +321,33 @@ internal interface inputText {
             }
 
             val isOsx = io.configMacOSXBehaviors
-            if (selectAll || (hovered && !isOsx && io.mouseClickedCount[0] == 2)) {
+            if (selectAll) {
                 state.selectAll()
                 state.selectedAllMouseLock = true
-            } else if (hovered && isOsx && io.mouseClickedCount[0] == 2) {
-                // Double-click select a word only, OS X style (by simulating keystrokes)
-                state.onKeyPressed(K.WORDLEFT)
-                state.onKeyPressed(K.WORDRIGHT or K.SHIFT)
+            } else if (hovered && io.mouseClickedCount[0] >= 2 && !io.keyShift) {
+                state.click(mouseX, mouseY)
+                val multiclickCount = io.mouseClickedCount[0] - 2
+                if (multiclickCount % 2 == 0) {
+                    // Double-click: Select word
+                    // We always use the "Mac" word advance for double-click select vs CTRL+Right which use the platform dependent variant:
+                    // FIXME: There are likely many ways to improve this behavior, but there's no "right" behavior (depends on use-case, software, OS)
+                    val isBol = state.stb.cursor == 0 || state.getChar(state.stb.cursor - 1) == '\n'
+                    if (state.hasSelection || !isBol)
+                        state.onKeyPressed(K.WORDLEFT)
+                    //state->OnKeyPressed(STB_TEXTEDIT_K_WORDRIGHT | STB_TEXTEDIT_K_SHIFT);
+                    if (!state.hasSelection)
+                        state.stb.prepSelectionAtCursor()
+                    state.stb.cursor = state.moveWordRight_MAC(state.stb.cursor)
+                    state.stb.selectEnd = state.stb.cursor
+                    state.clamp()
+                } else {
+                        // Triple-click: Select line
+                        state.onKeyPressed(K.LINESTART)
+                        state.onKeyPressed(K.LINEEND or K.SHIFT)
+                    }
+                state.cursorAnimReset()
             } else if (io.mouseClicked[0] && !state.selectedAllMouseLock) {
+                // FIXME: unselect on late click could be done release?
                 if (hovered) {
                     state.click(mouseX, mouseY)
                     state.cursorAnimReset()
@@ -1016,11 +1036,12 @@ internal interface inputText {
             // Generic named filters
             if (applyNamedFilters && flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
 
-                // The libc allows overriding locale, with e.g. 'setlocale(LC_NUMERIC, "de_DE.UTF-8");' which affect the output/input of printf/scanf.
+                // The libc allows overriding locale, with e.g. 'setlocale(LC_NUMERIC, "de_DE.UTF-8");' which affect the output/input of printf/scanf to use e.g. ',' instead of '.'.
                 // The standard mandate that programs starts in the "C" locale where the decimal point is '.'.
                 // We don't really intend to provide widespread support for it, but out of empathy for people stuck with using odd API, we support the bare minimum aka overriding the decimal point.
                 // Change the default decimal_point with:
                 //   ImGui::GetCurrentContext()->PlatformLocaleDecimalPoint = *localeconv()->decimal_point;
+                // Users of non-default decimal point (in particular ',') may be affected by word-selection logic (is_word_boundary_from_right/is_word_boundary_from_left) functions.
                 val cDecimalPoint = g.platformLocaleDecimalPoint
 
                 // Allow 0-9 . - + * /
