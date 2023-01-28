@@ -256,9 +256,8 @@ interface tables {
 
         // Clear or restore current table, if any
         assert(g.currentWindow === outerWindow && g.currentTable === table)
-        assert(g.currentTableStackIdx >= 0)
-        g.currentTableStackIdx--
-        tempData = if (g.currentTableStackIdx >= 0) g.tablesTempDataStack[g.currentTableStackIdx] else null
+        assert(g.tablesTempDataStacked > 0)
+        tempData = if (--g.tablesTempDataStacked >= 0) g.tablesTempData[g.tablesTempDataStacked - 1] else null
         g.currentTable = tempData?.let { g.tables.getByIndex(it.tableIndex) }
         g.currentTable?.let {
             it.tempData = tempData

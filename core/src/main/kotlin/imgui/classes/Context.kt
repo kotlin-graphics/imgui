@@ -471,9 +471,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Table
 
     var currentTable: Table? = null
-    var currentTableStackIdx = -1
-    val tables = Pool { Table() }
-    val tablesTempDataStack = ArrayList<TableTempData>()
+    var tablesTempDataStacked = 0 // Temporary table data size (because we leave previous instances undestructed, we generally don't use TablesTempData.Size)
+    val tablesTempData = ArrayList<TableTempData>() // Temporary table data (buffers reused/shared across instances, support nesting)
+    val tables = Pool { Table() } // Persistent table data
 
     /** Last used timestamp of each tables (SOA, for efficient GC) */
     val tablesLastTimeActive = ArrayList<Float>()
@@ -753,7 +753,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         shrinkWidthBuffer.clear()
 
         g.tables.clear()
-        g.tablesTempDataStack.clear()
+        g.tablesTempData.clear()
         g.drawChannelsTempMergeBuffer.clear() // TODO check if this needs proper deallocation
 
         clipboardHandlerData = ""

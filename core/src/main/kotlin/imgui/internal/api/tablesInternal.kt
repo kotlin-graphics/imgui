@@ -59,11 +59,10 @@ interface tablesInternal {
 
         // Acquire temporary buffers
         val tableIdx = g.tables.getIndex(table).i
-        g.currentTableStackIdx++
-        if (g.currentTableStackIdx + 1 > g.tablesTempDataStack.size)
-            for (i in g.tablesTempDataStack.size until g.currentTableStackIdx + 1)
-                g.tablesTempDataStack += TableTempData()
-        val tempData = g.tablesTempDataStack[g.currentTableStackIdx]
+        if (++g.tablesTempDataStacked > g.tablesTempData.size)
+            for (i in g.tablesTempData.size until g.tablesTempDataStacked)
+                g.tablesTempData += TableTempData()
+        val tempData = g.tablesTempData[g.tablesTempDataStacked]
         table.tempData = tempData
         tempData.tableIndex = tableIdx
         table.drawSplitter = table.tempData!!.drawSplitter
