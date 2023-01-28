@@ -220,13 +220,13 @@ fun renderDimmedBackgroundBehindWindow(window: Window, col: Int) {
     // Draw behind window by moving the draw command at the FRONT of the draw list
     run {
         val drawList = window.rootWindow!!.drawList
-        drawList.addDrawCmd()
         drawList.pushClipRect(viewportRect.min - 1, viewportRect.max + 1, false) // Ensure ImDrawCmd are not merged
         drawList.addRectFilled(viewportRect.min, viewportRect.max, col)
         val cmd = drawList.cmdBuffer.last()
         assert(cmd.elemCount == 6)
         drawList.cmdBuffer.pop()
         drawList.cmdBuffer += cmd
+        drawList.popClipRect()
     }
 }
 

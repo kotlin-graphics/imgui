@@ -372,6 +372,10 @@ interface main {
                 viewport.backgroundDrawList addTo viewport.drawDataBuilder!!.layers[0]
         }
 
+        // Draw modal/window whitening backgrounds
+        if (firstRenderOfFrame)
+            renderDimmedBackgrounds()
+
         // Add ImDrawList to render
         val windowsToRenderTopMost = arrayOf(
             g.navWindowingTarget?.rootWindow?.takeIf { it.flags has Wf.NoBringToFrontOnFocus },
@@ -383,10 +387,6 @@ interface main {
                 .filterNotNull()
                 .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
                 .forEach { it.addRootToDrawData() }
-
-        // Draw modal/window whitening backgrounds
-        if (firstRenderOfFrame)
-            renderDimmedBackgrounds()
 
         // Setup ImDrawData structures for end-user
         io.metricsRenderVertices = 0
