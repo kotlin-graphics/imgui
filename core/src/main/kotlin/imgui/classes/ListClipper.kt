@@ -2,7 +2,8 @@ package imgui.classes
 
 import glm_.i
 import glm_.max
-import imgui.ImGui
+import glm_.min
+import imgui.ImGui.calcListClipping
 import imgui.api.g
 
 /** Helper: Manually clip large list of items.
@@ -14,6 +15,7 @@ import imgui.api.g
  *  coarse clipping before submission makes this cost and your own data fetching/submission cost almost null)
  *    ImGuiListClipper clipper;
  *    clipper.Begin(1000);         // We have 1000 elements, evenly spaced.
+ *    clipper.ForceDisplay(42);    // Optional, force element with given index to be displayed (use f.e. if you need to update a tooltip for a drag&drop source)
  *    while (clipper.Step())
  *        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
  *            ImGui::Text("line number %d", i);
@@ -33,6 +35,12 @@ class ListClipper {
 
     // [Internal]
     var itemsCount = -1
+    val rangeStart = IntArray(4)  // 1 for the user, rest for internal use
+    val rangeEnd = IntArray(4)
+    var rangeCount = 0
+    val yRangeMin = IntArray(1)
+    val yRangeMax = IntArray(1)
+    var yRangeCount = 0
     var stepNo = 0
     var itemsFrozen = 0
     var itemsHeight = 0f
@@ -74,7 +82,28 @@ class ListClipper {
         if (itemsCount < Int.MAX_VALUE && displayStart >= 0)
             setCursorPosYAndSetupForPrevLine(startPosY + (itemsCount - itemsFrozen) * itemsHeight, itemsHeight)
         itemsCount = -1
-        stepNo = 3
+        stepNo = rangeCount
+    }
+
+    /** Optionally call before the first call to Step() if you need a range of items to be displayed regardless of visibility. */
+    fun forceDisplayRange(itemStart: Int, itemEnd: Int) {
+        if (displayStart < 0 && rangeCount + yRangeCount < 1) { // Only allowed after Begin() and if there has not been a specified range yet.
+            rangeStart[rangeCount] = itemStart
+            rangeEnd[rangeCount] = itemEnd
+            rangeCount++
+        }
+    }
+
+    /** Like ForceDisplayRange, but with a number instead of an end index. */
+    fun forceDisplay(item_start: Int, item_count: Int = 1) = forceDisplayRange(item_start, item_start + item_count)
+
+    /** Like ForceDisplayRange, but with y coordinates instead of item indices. */
+    fun forceDisplayYRange(yMin: Float, yMax: Float) {
+        if (displayStart < 0 && rangeCount + yRangeCount < 1) { // Only allowed after Begin() and if there has not been a specified range yet.
+            yRangeMin[yRangeCount] = yMin.i
+            yRangeMax[yRangeCount] = yMax.i
+            yRangeCount++
+        }
     }
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those
@@ -92,6 +121,9 @@ class ListClipper {
             end()
             return false
         }
+
+        var calcClipping = false
+
         // Step 0: Let you process the first element (regardless of it being visible or not, so we can measure the element height)
         if (stepNo == 0) {
 
@@ -106,66 +138,90 @@ class ListClipper {
 
             startPosY = window.dc.cursorPos.y
             if (itemsHeight <= 0f) {
-                // Submit the first item so we can measure its height (generally it is 0..1)
-                displayStart = itemsFrozen
-                displayEnd = itemsFrozen + 1
+                // Submit the first item (or range) so we can measure its height (generally it is 0..1)
+                rangeStart[rangeCount] = itemsFrozen
+                rangeEnd[rangeCount] = itemsFrozen + 1
+                if (++rangeCount > 1)
+                    rangeCount = sortAndFuseRanges(rangeStart, 0, rangeEnd, 0, rangeCount)
+                displayStart = rangeStart[0] max itemsFrozen
+                displayEnd = rangeEnd[0] min itemsCount
                 stepNo = 1
                 return true
             }
 
-            // Already has item height (given by user in Begin): skip to calculating step
-            displayStart = displayEnd
-            stepNo = 2
+            calcClipping = true // If on the first step with known item height, calculate clipping.
         }
 
-        // Step 1: the clipper infer height from first element
-        if (stepNo == 1) {
-            assert(itemsHeight <= 0f)
+        // Step 1: Let the clipper infer height from first range
+        if (itemsHeight <= 0f) {
+            assert(stepNo == 1)
             if (table != null) {
                 val posY1 = table.rowPosY1   // Using this instead of StartPosY to handle clipper straddling the frozen row
                 val posY2 = table.rowPosY2   // Using this instead of CursorPos.y to take account of tallest cell.
                 itemsHeight = posY2 - posY1
                 window.dc.cursorPos.y = posY2
             } else
-                itemsHeight = window.dc.cursorPos.y - startPosY
+                itemsHeight = (window.dc.cursorPos.y - startPosY) / (displayEnd - displayStart)
             assert(itemsHeight > 0f) { "Unable to calculate item height! First item hasn't moved the cursor vertically!" }
-            stepNo = 2
+
+            calcClipping = true // If item height had to be calculated, calculate clipping afterwards.
         }
 
-        // Reached end of list
-        if (displayEnd >= itemsCount) {
-            end()
-            return false
-        }
-
-        // Step 2: calculate the actual range of elements to display, and position the cursor before the first element
-        if (stepNo == 2) {
+        // Step 0 or 1: Calculate the actual range of visible elements.
+        if (calcClipping) {
             assert(itemsHeight > 0f)
 
             val alreadySubmitted = displayEnd
-            ImGui.calcListClipping(itemsCount - alreadySubmitted, itemsHeight)
-            displayStart += alreadySubmitted
-            displayEnd += alreadySubmitted
+            calcListClipping(itemsCount - alreadySubmitted, itemsHeight).let { (start, end) -> rangeStart[rangeCount] = start; rangeEnd[rangeCount] = end }
+
+            // Only add another range if it hasn't been handled by the initial range.
+            if (rangeStart[rangeCount] < rangeEnd[rangeCount]) {
+                rangeStart[rangeCount] += alreadySubmitted
+                rangeEnd[rangeCount] += alreadySubmitted
+                rangeCount++
+            }
+
+            // Convert specified y ranges to item index ranges.
+            for (i in 0 until yRangeCount) {
+                var start = alreadySubmitted + ((yRangeMin[i] - window.dc.cursorPos.y) / itemsHeight).i
+                var end = alreadySubmitted + ((yRangeMax[i] - window.dc.cursorPos.y) / itemsHeight).i + 1
+
+                start = start max alreadySubmitted
+                end = end min itemsCount
+
+                if (start < end) {
+                    rangeStart[rangeCount] = start
+                    rangeEnd[rangeCount] = end
+                    rangeCount++
+                }
+            }
+
+            // Try to sort and fuse only if there is more than 1 range remaining.
+            if (rangeCount > stepNo + 1)
+                rangeCount = stepNo + sortAndFuseRanges(rangeStart, stepNo, rangeEnd, stepNo, rangeCount - stepNo)
+        }
+
+        // Step 0+ (if item height is given in advance) or 1+: Display the next range in line.
+        if (stepNo < rangeCount) {
+            val alreadySubmitted = displayEnd
+            displayStart = rangeStart[stepNo] max alreadySubmitted
+            displayEnd = rangeEnd[stepNo] min itemsCount
 
             // Seek cursor
             if (displayStart > alreadySubmitted)
                 setCursorPosYAndSetupForPrevLine(startPosY + (displayStart - itemsFrozen) * itemsHeight, itemsHeight)
 
-            stepNo = 3
+            stepNo++
             return true
         }
 
-        // Step 3: the clipper validate that we have reached the expected Y position (corresponding to element DisplayEnd),
+        // After the last step: Let the clipper validate that we have reached the expected Y position (corresponding to element DisplayEnd),
         // Advance the cursor to the end of the list and then returns 'false' to end the loop.
-        if (stepNo == 3) {
-            // Seek cursor
-            if (itemsCount < Int.MAX_VALUE)
-                setCursorPosYAndSetupForPrevLine(startPosY + (itemsCount - itemsFrozen) * itemsHeight, itemsHeight) // advance cursor
-            itemsCount = -1
-            return false
-        }
+        if (itemsCount < Int.MAX_VALUE)
+            setCursorPosYAndSetupForPrevLine(startPosY + (itemsCount - itemsFrozen) * itemsHeight, itemsHeight) // advance cursor
+        itemsCount = -1
 
-        error("game over")
+        return false
     }
 
     companion object {
@@ -191,6 +247,37 @@ class ListClipper {
                 //table->CurrentRow += row_increase; // Can't do without fixing TableEndRow()
                 table.rowBgColorCounter += rowIncrease
             }
+        }
+
+        fun sortAndFuseRanges(rangeStart: IntArray, startOfs: Int, rangeEnd: IntArray, endOfs: Int, rangeCount_: Int): Int {
+            var rangeCount = rangeCount_
+            // Helper to order ranges and fuse them together if possible.
+            // First sort both rangeStart and rangeEnd by rangeStart. Since this helper will just sort 2 or 3 entries, a bubble sort will do fine.
+            for (sortEnd in (rangeCount - 1) downTo 1)
+                for (i in 0 until sortEnd)
+                    if (rangeStart[i] > rangeStart[i + 1]) {
+                        var swap = rangeStart[i]
+                        rangeStart[i] = rangeStart[i + 1]
+                        rangeStart[i + 1] = swap
+                        swap = rangeEnd[i]
+                        rangeEnd[i] = rangeEnd[i + 1]
+                        rangeEnd[i + 1] = swap
+                    }
+
+            // Now fuse ranges together as much as possible.
+            var i = 1
+            while (i < rangeCount)
+                if (rangeEnd[i - 1] >= rangeStart[i]) {
+                    rangeEnd[i - 1] = rangeEnd[i - 1] max rangeEnd[i]
+                    rangeCount--
+                    for (j in i until rangeCount) {
+                        rangeStart[j] = rangeStart[j + 1]
+                        rangeEnd[j] = rangeEnd[j + 1]
+                    }
+                } else
+                    i++
+
+            return rangeCount
         }
     }
 }
