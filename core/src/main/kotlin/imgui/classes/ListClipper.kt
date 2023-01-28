@@ -4,7 +4,6 @@ import glm_.i
 import glm_.max
 import glm_.min
 import imgui.Dir
-import imgui.ImGui
 import imgui.api.g
 import imgui.clamp
 import imgui.internal.floor
@@ -95,6 +94,14 @@ class ListClipper {
             }
             tempData = null
         }
+    }
+
+    fun forceDisplayRangeByIndices(itemMin: Int, itemMax: Int) {
+        val data = tempData as ListClipperData
+        assert(displayStart < 0) { "Only allowed after Begin () and if there has not been a specified range yet ." }
+        assert(itemMin <= itemMax)
+        if (itemMin < itemMax)
+            data.ranges += ListClipperRange.fromIndices(itemMin, itemMax)
     }
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those items.  */
