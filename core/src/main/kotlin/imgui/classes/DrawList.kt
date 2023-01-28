@@ -1625,13 +1625,13 @@ class DrawList(sharedData: DrawListSharedData?) {
         val fillU = inner.min.y > outer.min.y
         val fillD = inner.max.y < outer.max.y
         if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
-                                          (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomLeft)
+                                          DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomLeft)
         if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
-                                          (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopRight) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
+                                          DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopRight) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
         if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
-                                          (if (fillL) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersTopRight)
+                                          DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersTopRight)
         if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
-                                          (if (fillL) DrawFlag.None else DrawFlag.RoundCornersBottomLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
+                                          DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersBottomLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
         if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft.i)
         if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight.i)
         if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft.i)

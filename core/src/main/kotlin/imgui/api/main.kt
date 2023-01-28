@@ -325,6 +325,9 @@ interface main {
         // Initiate moving window + handle left-click and right-click focus
         updateMouseMovingWindowEndFrame()
 
+        // Draw modal/window whitening backgrounds
+        endFrameDrawDimmedBackgrounds()
+
         /*  Sort the window list so that all child windows are after their parent
             We cannot do that on FocusWindow() because children may not exist yet         */
         g.windowsTempSortBuffer.clear()

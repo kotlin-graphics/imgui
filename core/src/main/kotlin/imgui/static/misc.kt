@@ -206,6 +206,10 @@ fun updateMouseWheel() {
     }
 }
 
+fun endFrameDrawDimmedBackgrounds() {
+    // (This is currently empty, left here to facilitate sync/merge with docking branch)
+}
+
 // UpdateWindowManualResize,
 // RenderWindowOuterBorders,
 // RenderWindowDecorations,
