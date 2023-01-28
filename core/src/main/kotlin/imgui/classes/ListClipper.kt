@@ -149,17 +149,10 @@ class ListClipper {
         // Step 1: Let the clipper infer height from first range
         if (itemsHeight <= 0f) {
             assert(data.stepNo == 1)
-            var affectedByFloatingPointPrecision = false
-            if (table != null) {
-                val posY1 = table.rowPosY1   // Using RowPosY1 instead of StartPosY to handle clipper straddling the frozen row
-                val posY2 = table.rowPosY2   // Using RowPosY2 instead of CursorPos.y to take account of tallest cell.
-                itemsHeight = posY2 - posY1
-                window.dc.cursorPos.y = posY2
-                affectedByFloatingPointPrecision = posY1.isAboveGuaranteedIntegerPrecision || posY2.isAboveGuaranteedIntegerPrecision
-            } else {
-                itemsHeight = (window.dc.cursorPos.y - startPosY) / (displayEnd - displayStart)
-                affectedByFloatingPointPrecision = startPosY.isAboveGuaranteedIntegerPrecision || window.dc.cursorPos.y.isAboveGuaranteedIntegerPrecision
-            }
+            if (table != null)
+                assert(table.rowPosY1 == startPosY && table.rowPosY2 == window.dc.cursorPos.y)
+            itemsHeight = (window.dc.cursorPos.y - startPosY) / (displayEnd - displayStart)
+            val affectedByFloatingPointPrecision = startPosY.isAboveGuaranteedIntegerPrecision || window.dc.cursorPos.y.isAboveGuaranteedIntegerPrecision
             if (affectedByFloatingPointPrecision)
                 itemsHeight = window.dc.prevLineSize.y + g.style.itemSpacing.y // FIXME: Technically wouldn't allow multi-line entries.
 
