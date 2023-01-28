@@ -18,6 +18,7 @@ import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.setLastItemData
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.internal.classes.Rect
@@ -661,10 +662,8 @@ interface windows {
 
             // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
             // This is useful to allow creating context menus on title bar only, etc.
-            g.lastItemData.id = window.moveId
-            g.lastItemData.inFlags = g.currentItemFlags
-            g.lastItemData.statusFlags = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect.i else 0
-            g.lastItemData.rect put titleBarRect
+            val itemFlag = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
+            setLastItemData(window.moveId, g.currentItemFlags, itemFlag.i, titleBarRect)
 
             if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
                 IMGUI_TEST_ENGINE_ITEM_ADD(g.lastItemData.rect, g.lastItemData.id)

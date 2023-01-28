@@ -9,7 +9,6 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.hoveredId
-import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
@@ -17,7 +16,6 @@ import imgui.api.g
 import imgui.internal.api.internal.Companion.shrinkWidthItemComparer
 import imgui.internal.classes.Rect
 import imgui.internal.classes.ShrinkWidthItem
-import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.sections.*
 import imgui.static.navProcessItem
@@ -183,6 +181,15 @@ internal interface basicHelpersForWidgetCode {
                 if (!g.logEnabled)
                     return true
         return false
+    }
+
+    // This is also inlined in ItemAdd()
+    // Note: if ImGuiItemStatusFlags_HasDisplayRect is set, user needs to set window->DC.LastItemDisplayRect!
+    fun setLastItemData(itemId: ID, inFlags: ItemFlags, itemFlags: ItemStatusFlags, itemRect: Rect) {
+        g.lastItemData.id = itemId
+        g.lastItemData.inFlags = inFlags
+        g.lastItemData.statusFlags = itemFlags
+        g.lastItemData.rect put itemRect
     }
 
     /** [Internal] Calculate full item size given user provided 'size' parameter and default width/height. Default width is often == CalcItemWidth().

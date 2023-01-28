@@ -988,7 +988,7 @@ class Window(var context: Context,
             style.frameBorderSize = backupBorderSize
         } else { // Window background
             if (flags hasnt Wf.NoBackground) {
-                var bgCol = getWindowBgColorIdxFromFlags(flags).u32
+                var bgCol = bgColorIdx.u32
                 var overrideAlpha = false
                 val alpha = when {
                     g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> {
@@ -1042,6 +1042,13 @@ class Window(var context: Context,
             renderOuterBorders()
         }
     }
+
+    val bgColorIdx: Col
+        get() = when {
+            flags has (Wf._Tooltip or Wf._Popup) -> Col.PopupBg
+            flags has Wf._ChildWindow -> Col.ChildBg
+            else -> Col.WindowBg
+        }
 
     /** ~RenderWindowTitleBarContents
      *  Render title text, collapse button, close button */
@@ -1393,12 +1400,6 @@ class Window(var context: Context,
             ResizeBorderDef(Vec2(-1, 0), Vec2(1, 0), Vec2(1, 1), glm.πf * 0.0f), // Right
             ResizeBorderDef(Vec2(0, +1), Vec2(0, 0), Vec2(1, 0), glm.πf * 1.5f), // Up
             ResizeBorderDef(Vec2(0, -1), Vec2(1, 1), Vec2(0, 1), glm.πf * 0.5f)) // Down
-
-        fun getWindowBgColorIdxFromFlags(flags: Int) = when {
-            flags has (Wf._Tooltip or Wf._Popup) -> Col.PopupBg
-            flags has Wf._ChildWindow -> Col.ChildBg
-            else -> Col.WindowBg
-        }
 
         fun getCombinedRootWindow(window_: Window, popupHierarchy: Boolean): Window {
             var window = window_

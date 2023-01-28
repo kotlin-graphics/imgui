@@ -40,7 +40,7 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
      *  unless noScrollbar is also set.  */
     NoScrollWithMouse(1 shl 4),
 
-    /** Disable user collapsing window by double-clicking on it */
+    /** Disable user collapsing window by double-clicking on it. Also referred to as Window Menu Button (e.g. within a docking node). */
     NoCollapse(1 shl 5),
 
     /** Resize every window to its content every frame  */

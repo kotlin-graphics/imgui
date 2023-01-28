@@ -10,7 +10,6 @@ import imgui.ImGui.begin
 import imgui.ImGui.callHooks
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clearDragDrop
-import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
@@ -361,7 +360,9 @@ interface main {
 
         assert(g.initialized)
 
-        if (g.frameCountEnded != g.frameCount) endFrame()
+        if (g.frameCountEnded != g.frameCount)
+            endFrame()
+        val firstRenderOfFrame = g.frameCountRendered != g.frameCount
         g.frameCountRendered = g.frameCount
         io.metricsRenderWindows = 0
 
@@ -393,7 +394,7 @@ interface main {
             viewport.drawDataBuilder!!.flattenIntoSingleLayer()
 
             // Draw software mouse cursor if requested by io.MouseDrawCursor flag
-            if (io.mouseDrawCursor)
+            if (io.mouseDrawCursor && firstRenderOfFrame)
                 viewport.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
             // Add foreground ImDrawList (for each active viewport)
             if (viewport.drawLists[1] != null)

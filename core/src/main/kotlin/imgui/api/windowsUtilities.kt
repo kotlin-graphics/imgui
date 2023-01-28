@@ -38,8 +38,8 @@ interface windowsUtilities {
 
         if (flags has Ff.AnyWindow)
             return true
-        check(curWindow != null) { "Not inside a Begin () / End()" }
 
+        check(curWindow != null) { "Not inside a Begin() / End()" }
         val popupHierarchy = flags hasnt Ff.NoPopupHierarchy
         if (flags has Hf.RootWindow)
             curWindow = getCombinedRootWindow(curWindow, popupHierarchy)
