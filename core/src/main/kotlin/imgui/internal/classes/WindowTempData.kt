@@ -101,9 +101,6 @@ class WindowTempData {
 
     var parentLayoutType = LayoutType.Horizontal
 
-    /** (Legacy Focus/Tabbing system) Same, but only count widgets which you can Tab through. */
-    var focusCounterTabStop = 0
-
 
     // Local parameters stacks
 

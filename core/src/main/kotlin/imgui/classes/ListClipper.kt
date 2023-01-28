@@ -10,6 +10,8 @@ import imgui.clamp
 import imgui.internal.floor
 import imgui.internal.sections.ListClipperData
 import imgui.internal.sections.ListClipperRange
+import imgui.internal.sections.NavMoveFlag
+import imgui.internal.sections.has
 import kotlin.math.ceil
 
 /** Helper: Manually clip large list of items.
@@ -157,8 +159,12 @@ class ListClipper {
                 data.ranges += ListClipperRange.fromIndices(0, itemsCount)
             else {
                 // Add range selected to be included for navigation
-                if (g.navMoveScoringItems)
+                val navWindow = g.navWindow
+                val isNavRequest = g.navMoveScoringItems && navWindow != null && navWindow.rootWindowForNav === window.rootWindowForNav
+                if (isNavRequest)
                     data.ranges += ListClipperRange.fromPositions(g.navScoringNoClipRect.min.y, g.navScoringNoClipRect.max.y, 0, 0)
+                if (isNavRequest && g.navMoveFlags has NavMoveFlag.Tabbing && g.navTabbingDir == -1)
+                    data.ranges += ListClipperRange.fromIndices(itemsCount - 1, itemsCount)
 
                 // Add focused/active item
                 val navRectAbs = window rectRelToAbs window.navRectRel[0]
@@ -166,8 +172,8 @@ class ListClipper {
                     data.ranges += ListClipperRange.fromPositions(navRectAbs.min.y, navRectAbs.max.y, 0, 0)
 
                 // Add visible range
-                val offMin = if (g.navMoveScoringItems && g.navMoveClipDir == Dir.Up) -1 else 0
-                val offMax = if (g.navMoveScoringItems && g.navMoveClipDir == Dir.Down) 1 else 0
+                val offMin = if (isNavRequest && g.navMoveClipDir == Dir.Up) -1 else 0
+                val offMax = if (isNavRequest && g.navMoveClipDir == Dir.Down) 1 else 0
                 data.ranges += ListClipperRange.fromPositions(window.clipRect.min.y, window.clipRect.max.y, offMin, offMax)
             }
 

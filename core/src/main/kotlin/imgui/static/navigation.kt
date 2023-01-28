@@ -112,7 +112,7 @@ fun navUpdate() {
     // Process navigation move request
     if (g.navMoveSubmitted)
         navMoveRequestApplyResult()
-    g.navTabbingInputableRemaining = 0
+    g.navTabbingCounter = 0
     g.navMoveSubmitted = false; g.navMoveScoringItems = false
 
     // Schedule mouse position update (will be done at the bottom of this function, after 1) processing all move requests and 2) updating scrolling)
@@ -121,8 +121,6 @@ fun navUpdate() {
         if (!g.navDisableHighlight && g.navDisableMouseHover && g.navWindow != null)
             setMousePos = true
     g.navMousePosDirty = false
-    g.navIdIsAlive = false
-    g.navJustTabbedId = 0
     // [JVM] useless
     //    IM_ASSERT(g.NavLayer == ImGuiNavLayer_Main || g.NavLayer == ImGuiNavLayer_Menu)
 
@@ -181,7 +179,10 @@ fun navUpdate() {
 
     // Process move requests
     navUpdateCreateMoveRequest()
+    if (g.navMoveDir == Dir.None)
+        navUpdateCreateTabbingRequest()
     navUpdateAnyRequestFlag()
+    g.navIdIsAlive = false
 
     // Scrolling
     val navWindow = g.navWindow
@@ -585,6 +586,30 @@ fun navUpdateCreateMoveRequest() {
     g.navScoringNoClipRect add scoringRect
 }
 
+fun navUpdateCreateTabbingRequest() {
+
+    val window = g.navWindow
+    assert(g.navMoveDir == Dir.None)
+    if (window == null || g.navWindowingTarget != null || window.flags has Wf.NoNavInputs)
+        return
+
+    val tabPressed = Key.Tab.isPressed(true) && !isActiveIdUsingKey(Key.Tab) && !g.io.keyCtrl && !g.io.keyAlt
+    if (!tabPressed)
+        return
+
+    // Initiate tabbing request
+    // (this is ALWAYS ENABLED, regardless of ImGuiConfigFlags_NavEnableKeyboard flag!)
+    // Initially this was designed to use counters and modulo arithmetic, but that could not work with unsubmitted items (list clipper). Instead we use a strategy close to other move requests.
+    // See NavProcessItemForTabbingRequest() for a description of the various forward/backward tabbing cases with and without wrapping.
+    //// FIXME: We use (g.ActiveId == 0) but (g.NavDisableHighlight == false) might be righter once we can tab through anything
+    g.navTabbingDir = if (g.io.keyShift) -1 else if (g.activeId == 0) 0 else +1
+    val scrollFlags = if(window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
+    val clipDir = if (g.navTabbingDir < 0) Dir.Up else Dir.Down
+    navMoveRequestSubmit(Dir.None, clipDir, NavMoveFlag.Tabbing.i, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
+    g.navTabbingResultFirst.clear()
+    g.navTabbingCounter = -1
+}
+
 /** Handle PageUp/PageDown/Home/End keys
  *  Called from NavUpdateCreateMoveRequest() which will use our output to create a move request
  *  FIXME-NAV: This doesn't work properly with NavFlattened siblings as we use NavWindow rectangle for reference
@@ -887,16 +912,15 @@ fun navProcessItem() {
     // FIXME-NAV: Consider policy for double scoring (scoring from NavScoringRect + scoring from a rect wrapped according to current wrapping policy)     */
     if (g.navMoveScoringItems) {
 
-        if (itemFlags has If.Inputable)
-            g.navTabbingInputableRemaining--
-
-        if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
+        val isTabStop = itemFlags has If.Inputable && itemFlags hasnt (If.NoTabStop or If.Disabled)
+        val isTabbing = g.navMoveFlags hasnt NavMoveFlag.Tabbing
+        if (isTabbing) {
+            if (isTabStop || g.navMoveFlags has NavMoveFlag.FocusApi)
+                navProcessItemForTabbingRequest(window, id)
+        } else if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
 
-            if (g.navMoveFlags has NavMoveFlag.Tabbing) {
-                if (g.navTabbingInputableRemaining == 0)
-                    navMoveRequestResolveWithLastItem()
-            } else {
+            if (!isTabbing) {
                 if (navScoreItem(result))
                     navApplyItemToResult(result)
 
@@ -919,6 +943,38 @@ fun navProcessItem() {
         g.navIdIsAlive = true
         window.navRectRel[window.dc.navLayerCurrent] = window rectAbsToRel navBb    // Store item bounding box (relative to window position)
     }
+}
+
+// Handle "scoring" of an item for a tabbing/focusing request initiated by NavUpdateCreateTabbingRequest().
+// Note that SetKeyboardFocusHere() API calls are considered tabbing requests!
+// - Case 1: no nav/active id:    set result to first eligible item, stop storing.
+// - Case 2: tab forward:         on ref id set counter, on counter elapse store result
+// - Case 3: tab forward wrap:    set result to first eligible item (preemptively), on ref id set counter, on next frame if counter hasn't elapsed store result. // FIXME-TABBING: Could be done as a next-frame forwarded request
+// - Case 4: tab backward:        store all results, on ref id pick prev, stop storing
+// - Case 5: tab backward wrap:   store all results, on ref id if no result keep storing until last // FIXME-TABBING: Could be done as next-frame forwarded requested
+fun navProcessItemForTabbingRequest(window: Window, id: ID) {
+    val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
+    if (g.navTabbingDir == +1) {
+        // Tab Forward or SetKeyboardFocusHere() with >= 0
+        if (g.navTabbingResultFirst.id == 0)
+            navApplyItemToResult(g.navTabbingResultFirst)
+        if (--g.navTabbingCounter == 0)
+            navMoveRequestResolveWithLastItem(result)
+        else if (g.navId == id)
+            g.navTabbingCounter = 1
+    } else if (g.navTabbingDir == -1) {
+        // Tab Backward
+        if (g.navId == id) {
+            if (result.id != 0) {
+                g.navMoveScoringItems = false
+                navUpdateAnyRequestFlag()
+            }
+        } else
+            navApplyItemToResult(result)
+    } else if (g.navTabbingDir == 0)
+    // Tab Init
+        if (g.navTabbingResultFirst.id == 0)
+            navMoveRequestResolveWithLastItem(g.navTabbingResultFirst)
 }
 
 fun navCalcPreferredRefPos(): Vec2 {

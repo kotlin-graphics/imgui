@@ -46,10 +46,12 @@ interface focusActivation {
         assert(offset >= -1) { "-1 is allowed but not below" }
         g.navWindow = window
         val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
-        navMoveRequestSubmit(Dir.None, Dir.None, NavMoveFlag.Tabbing.i, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
+        navMoveRequestSubmit(Dir.None, if (offset < 0) Dir.Up else Dir.Down, NavMoveFlag.Tabbing or NavMoveFlag.FocusApi, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
         if (offset == -1)
-            navMoveRequestResolveWithLastItem()
-        else
-            g.navTabbingInputableRemaining = offset + 1
+            navMoveRequestResolveWithLastItem(g.navMoveResultLocal)
+        else {
+            g.navTabbingDir = 1
+            g.navTabbingCounter = offset + 1
+        }
     }
 }

@@ -218,9 +218,6 @@ interface main {
         // Mouse wheel scrolling, scale
         updateMouseWheel()
 
-        // Update legacy TAB focus
-        updateTabFocus()
-
         // Mark all windows as not visible and compact unused memory.
         assert(g.windowsFocusOrder.size <= g.windows.size)
         val memoryCompactStartTime = if (g.gcCompactAll || io.configMemoryCompactTimer < 0f) Float.MAX_VALUE else g.time.f - io.configMemoryCompactTimer

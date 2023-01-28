@@ -124,11 +124,6 @@ internal interface basicHelpersForWidgetCode {
             return false
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
-        // [WIP] Tab stop handling (previously was using internal FocusableItemRegister() api)
-        // FIXME-NAV: We would now want to move this before the clipping test, but this would require being able to scroll and currently this would mean an extra frame. (#4079, #343)
-        if (extraFlags has ItemFlag.Inputable)
-            itemInputable(window, id)
-
         // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
         if (isMouseHoveringRect(bb))
             g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect
@@ -178,44 +173,6 @@ internal interface basicHelpersForWidgetCode {
                     true
                 }
             }
-        }
-    }
-
-    /** Called by ItemAdd()
-     * Process TAB/Shift+TAB. Be mindful that this function may _clear_ the ActiveID when tabbing out.
-     *
-     * [WIP] This will eventually be refactored and moved into NavProcessItem() */
-    fun itemInputable(window: Window, id: ID) {
-
-        assert(id != 0 && id == g.lastItemData.id)
-
-        // Increment counters
-        // FIXME: ImGuiItemFlags_Disabled should disable more.
-        val isTabStop = g.lastItemData.inFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
-        if (isTabStop) {
-            window.dc.focusCounterTabStop++
-            if (g.navId == id)
-                g.navIdTabCounter = window.dc.focusCounterTabStop
-        }
-
-        // Process TAB/Shift-TAB to tab *OUT* of the currently focused item.
-        // (Note that we can always TAB out of a widget that doesn't allow tabbing in)
-        if (g.activeId == id && g.tabFocusPressed && g.tabFocusRequestNextWindow == null) {
-            g.tabFocusRequestNextWindow = window
-            g.tabFocusRequestNextCounterTabStop = window.dc.focusCounterTabStop + if (g.io.keyShift) if (isTabStop) -1 else 0 else +1 // Modulo on index will be applied at the end of frame once we've got the total counter of items.
-        }
-
-        // Handle focus requests
-        if (g.tabFocusRequestCurrWindow === window) {
-            if (isTabStop && window.dc.focusCounterTabStop == g.tabFocusRequestCurrCounterTabStop) {
-                g.navJustTabbedId = id // FIXME-NAV: aim to eventually set in NavUpdate() once we finish the refactor
-                g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.FocusedByTabbing
-                return
-            }
-
-            // If another item is about to be focused, we clear our own active id
-            if (g.activeId == id)
-                clearActiveID()
         }
     }
 

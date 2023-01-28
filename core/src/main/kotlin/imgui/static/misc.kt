@@ -206,41 +206,6 @@ fun updateMouseWheel() {
     }
 }
 
-fun updateTabFocus() {
-
-    // Pressing TAB activate widget focus
-    g.tabFocusPressed = false
-    g.navWindow?.let {
-        if (it.active && it.flags hasnt WindowFlag.NoNavInputs)
-            if (!io.keyCtrl && !io.keyAlt && Key.Tab.isPressed && !isActiveIdUsingKey(Key.Tab))
-                g.tabFocusPressed = true
-    }
-    if (g.activeId == 0 && g.tabFocusPressed) {
-        // - This path is only taken when no widget are active/tabbed-into yet.
-        //   Subsequent tabbing will be processed by FocusableItemRegister()
-        // - Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
-        //   manipulate the Next fields here even though they will be turned into Curr fields below.
-        g.tabFocusRequestNextWindow = g.navWindow
-        g.tabFocusRequestNextCounterTabStop = when {
-            g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 0
-            else -> if (io.keyShift) -1 else 0
-        }
-    }
-
-    // Turn queued focus request into current one
-    g.tabFocusRequestCurrWindow = null
-    g.tabFocusRequestCurrCounterTabStop = Int.MAX_VALUE
-    g.tabFocusRequestNextWindow?.let { window ->
-        g.tabFocusRequestCurrWindow = window
-        if (g.tabFocusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
-            g.tabFocusRequestCurrCounterTabStop = modPositive(g.tabFocusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
-        g.tabFocusRequestNextWindow = null
-        g.tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
-    }
-
-    g.navIdTabCounter = Int.MAX_VALUE
-}
-
 // UpdateWindowManualResize,
 // RenderWindowOuterBorders,
 // RenderWindowDecorations,

@@ -274,9 +274,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navActivateFlags = ActivateFlag.None.i
 
-    /** Just tabbed to this id. */
-    var navJustTabbedId: ID = 0
-
     /** Just navigated to this id (result of a successfully MoveRequest)    */
     var navJustMovedToId: ID = 0
 
@@ -296,9 +293,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Layer we are navigating on. For now the system is hard-coded for 0 = main contents and 1 = menu/title bar,
      *  may expose layers later. */
     var navLayer = NavLayer.Main
-
-    /** == NavWindow->DC.FocusIdxTabCounter at time of NavId processing */
-    var navIdTabCounter = Int.MAX_VALUE
 
     /** Nav widget has been seen this frame ~~ NavRectRel is valid   */
     var navIdIsAlive = false
@@ -362,8 +356,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Metrics for debugging   */
     var navScoringDebugCount = 0
 
+    /** Generally -1 or +1, 0 when tabbing without a nav id */
+    var navTabbingDir = 0
     /** >0 when counting items for tabbing */
-    var navTabbingInputableRemaining = 0
+    var navTabbingCounter = 0
 
     /** Best move request candidate within NavWindow    */
     var navMoveResultLocal = NavItemData()
@@ -373,6 +369,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Best move request candidate within NavWindow's flattened hierarchy (when using WindowFlags.NavFlattened flag)   */
     var navMoveResultOther = NavItemData()
+
+    /** First tabbing request candidate within NavWindow and flattened hierarchy */
+    val navTabbingResultFirst = NavItemData()
 
 
     //------------------------------------------------------------------
@@ -393,22 +392,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var navWindowingHighlightAlpha = 0f
 
     var navWindowingToggleLayer = false
-
-
-    // Legacy Focus/Tabbing system (older than Nav, active even if Nav is disabled, misnamed. FIXME-NAV: This needs a redesign!)
-
-    var tabFocusRequestCurrWindow: Window? = null
-
-    var tabFocusRequestNextWindow: Window? = null
-
-    /** Tab item being requested for focus, stored as an index */
-    var tabFocusRequestCurrCounterTabStop = Int.MAX_VALUE
-
-    /** Stored for next frame */
-    var tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
-
-    /** Set in NewFrame() when user pressed Tab */
-    var tabFocusPressed = false
 
 
     // ------------------------------------------------------------------

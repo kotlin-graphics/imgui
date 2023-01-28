@@ -621,7 +621,6 @@ interface windows {
                 dc.currentColumns = null
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
-                dc.focusCounterTabStop = -1
 
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled

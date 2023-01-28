@@ -76,7 +76,7 @@ internal interface navigation {
         g.navMoveScrollFlags = scrollFlags
         g.navMoveForwardToNextFrame = false
         g.navMoveKeyMods = g.io.keyMods
-        g.navTabbingInputableRemaining = 0
+        g.navTabbingCounter = 0
         g.navMoveResultLocal.clear()
         g.navMoveResultLocalVisible.clear()
         g.navMoveResultOther.clear()
@@ -95,9 +95,9 @@ internal interface navigation {
         g.navMoveScrollFlags = scrollFlags
     }
 
-    fun navMoveRequestResolveWithLastItem() {
+    fun navMoveRequestResolveWithLastItem(result: NavItemData) {
         g.navMoveScoringItems = false // Ensure request doesn't need more processing
-        navApplyItemToResult(g.navMoveResultLocal)
+        navApplyItemToResult(result)
         navUpdateAnyRequestFlag()
     }
 
@@ -115,6 +115,13 @@ internal interface navigation {
 
         // Select which result to use
         var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else if (g.navMoveResultOther.id != 0) g.navMoveResultOther else null
+
+        // Tabbing forward wrap
+        if (g.navMoveFlags has NavMoveFlag.Tabbing)
+            if (g.navTabbingCounter == 1 || g.navTabbingDir == 0) {
+                assert(g.navTabbingResultFirst.id != 0)
+                result = g.navTabbingResultFirst
+            }
 
         // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
         if (result == null) {

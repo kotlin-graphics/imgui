@@ -167,6 +167,7 @@ enum class NavMoveFlag {
 
     /** Dummy scoring for debug purpose, don't apply result */
     DebugNoResult,
+    FocusApi,
     /** == Focus + Activate if item is Inputable + DontChangeNavHighlight */
     Tabbing,
     Activate,
