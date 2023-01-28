@@ -1,8 +1,6 @@
 package imgui.classes
 
-import glm_.i
-import glm_.max
-import glm_.min
+import glm_.*
 import imgui.Dir
 import imgui.api.g
 import imgui.clamp
@@ -190,8 +188,10 @@ class ListClipper {
             //   which with the flooring/ceiling tend to lead to 2 items instead of one being submitted.
             for (i in data.ranges.indices)
                 if (data.ranges[i].posToIndexConvert) {
-                    data.ranges[i].min = clamp(alreadySubmitted + floor((data.ranges[i].min - window.dc.cursorPos.y) / itemsHeight).i + data.ranges[i].posToIndexOffsetMin, alreadySubmitted, itemsCount - 1)
-                    data.ranges[i].max = clamp(alreadySubmitted + ceil((data.ranges[i].max - window.dc.cursorPos.y) / itemsHeight).i + 0 + data.ranges[i].posToIndexOffsetMax, data.ranges[i].min + 1, itemsCount)
+                    val m1 = ((data.ranges[i].min.d - window.dc.cursorPos.y) / itemsHeight).i
+                    val m2 = (((data.ranges[i].max.d - window.dc.cursorPos.y) / itemsHeight) + 0.999999f).i
+                    data.ranges[i].min = clamp(alreadySubmitted + m1 + floor((data.ranges[i].min - window.dc.cursorPos.y) / itemsHeight).i + data.ranges[i].posToIndexOffsetMin, alreadySubmitted, itemsCount - 1)
+                    data.ranges[i].max = clamp(alreadySubmitted + m2 + ceil((data.ranges[i].max - window.dc.cursorPos.y) / itemsHeight).i + 0 + data.ranges[i].posToIndexOffsetMax, data.ranges[i].min + 1, itemsCount)
                     data.ranges[i].posToIndexConvert = false
                 }
             sortAndFuseRanges(data.ranges, data.stepNo)
@@ -243,8 +243,9 @@ class ListClipper {
 
         fun seekCursorForItem(clipper: ListClipper, itemN: Int) {
             // StartPosY starts from ItemsFrozen hence the subtraction
+            // Perform the add and multiply with double to allow seeking through larger ranges
             val data = clipper.tempData as ListClipperData
-            val posY = clipper.startPosY + (itemN - data.itemsFrozen) * clipper.itemsHeight
+            val posY = (clipper.startPosY.d + (itemN - data.itemsFrozen).d * clipper.itemsHeight).f
             seekCursorAndSetupPrevLine(posY, clipper.itemsHeight)
         }
 

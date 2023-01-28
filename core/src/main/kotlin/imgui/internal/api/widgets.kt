@@ -1,5 +1,7 @@
 package imgui.internal.api
 
+import glm_.L
+import glm_.f
 import glm_.func.common.max
 import glm_.i
 import glm_.vec2.Vec2
@@ -312,7 +314,9 @@ internal interface widgets {
         }
         val sizeAvail = window.innerRect.max[axis] - window.innerRect.min[axis]
         val sizeContents = window.contentSize[axis] + window.windowPadding[axis] * 2f
-        scrollbarEx(bb, id, axis, if (axis == Axis.X) window.scroll::x else window.scroll::y, sizeAvail, sizeContents, roundingCorners)
+        _L = window.scroll[axis].L
+        scrollbarEx(bb, id, axis, ::_L, sizeAvail.L, sizeContents.L, roundingCorners)
+        window.scroll[axis] = _L.f
     }
 
     /** Vertical/Horizontal scrollbar
@@ -321,7 +325,7 @@ internal interface widgets {
      *  - We store values as normalized ratio and in a form that allows the window content to change while we are holding on a scrollbar
      *  - We handle both horizontal and vertical scrollbars, which makes the terminology not ideal.
      *  Still, the code should probably be made simpler..   */
-    fun scrollbarEx(bbFrame: Rect, id: ID, axis: Axis, pScrollV: KMutableProperty0<Float>, sizeAvailV: Float, sizeContentsV: Float, flags: DrawFlags): Boolean {
+    fun scrollbarEx(bbFrame: Rect, id: ID, axis: Axis, pScrollV: KMutableProperty0<Long>, sizeAvailV: Long, sizeContentsV: Long, flags: DrawFlags): Boolean {
 
         var scrollV by pScrollV
 
@@ -352,15 +356,15 @@ internal interface widgets {
         // Calculate the height of our grabbable box. It generally represent the amount visible (vs the total scrollable amount)
         // But we maintain a minimum size in pixel to allow for the user to still aim inside.
         assert(max(sizeContentsV, sizeAvailV) > 0f) { "Adding this assert to check if the ImMax(XXX,1.0f) is still needed. PLEASE CONTACT ME if this triggers." }
-        val winSizeV = max(sizeContentsV max sizeAvailV, 1f)
-        val grabHPixels = clamp(scrollbarSizeV * (sizeAvailV / winSizeV), style.grabMinSize, scrollbarSizeV)
+        val winSizeV = max(sizeContentsV max sizeAvailV, 1L)
+        val grabHPixels = clamp(scrollbarSizeV * (sizeAvailV.f / winSizeV.f), style.grabMinSize, scrollbarSizeV)
         val grabHNorm = grabHPixels / scrollbarSizeV
 
         // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
         val (_, hovered, held) = buttonBehavior(bb, id, ButtonFlag.NoNavFocus)
 
-        val scrollMax = max(1f, sizeContentsV - sizeAvailV)
-        var scrollRatio = saturate(scrollV / scrollMax)
+        val scrollMax = max(1L, sizeContentsV - sizeAvailV)
+        var scrollRatio = saturate(scrollV.f / scrollMax.f)
         var grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV  // Grab position in normalized space
         if (held && allowInteraction && grabHNorm < 1f) {
             val scrollbarPosV = bb.min[axis]
@@ -383,10 +387,10 @@ internal interface widgets {
             // Apply scroll (p_scroll_v will generally point on one member of window->Scroll)
             // It is ok to modify Scroll here because we are being called in Begin() after the calculation of ContentSize and before setting up our starting position
             val scrollVNorm = saturate((clickedVNorm - g.scrollbarClickDeltaToGrabCenter - grabHNorm * 0.5f) / (1f - grabHNorm))
-            scrollV = round(scrollVNorm * scrollMax) //(win_size_contents_v - win_size_v));
+            scrollV = (scrollVNorm * scrollMax).L
 
             // Update values for rendering
-            scrollRatio = saturate(scrollV / scrollMax)
+            scrollRatio = saturate(scrollV.f / scrollMax.f)
             grabVNorm = scrollRatio * (scrollbarSizeV - grabHPixels) / scrollbarSizeV
 
             // Update distance to grab now that we have seeked and saturated
