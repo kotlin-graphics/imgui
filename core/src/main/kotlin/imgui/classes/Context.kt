@@ -355,6 +355,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Rectangle used for scoring, in screen space. Based of window.NavRectRel[], modified for directional navigation scoring.  */
     val navScoringRect = Rect()
+
+    /** Some nav operations (such as PageUp/PageDown) enforce a region which clipper will attempt to always keep submitted */
+    val navScoringNoClipRect = Rect()
     
     /** Metrics for debugging   */
     var navScoringDebugCount = 0
@@ -467,6 +470,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteBuffer.allocate(16)
 
+    // Clipper
+    var clipperTempDataStacked = 0
+
+    val clipperTempData = ArrayList<ListClipperData>()
 
     // Table
 
@@ -752,9 +759,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         currentTabBarStack.clear()
         shrinkWidthBuffer.clear()
 
-        g.tables.clear()
-        g.tablesTempData.clear()
-        g.drawChannelsTempMergeBuffer.clear() // TODO check if this needs proper deallocation
+        clipperTempData.clear()
+
+        tables.clear()
+        tablesTempData.clear()
+        drawChannelsTempMergeBuffer.clear() // TODO check if this needs proper deallocation
 
         clipboardHandlerData = ""
         menusIdSubmittedThisFrame.clear()

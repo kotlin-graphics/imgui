@@ -162,6 +162,11 @@ class Rect {
         this.max put max
     }
 
+    fun put(min: Float, max: Float) {
+        this.min put min
+        this.max put max
+    }
+
     fun put(minX: Float, minY: Float, maxX: Float, maxY: Float) {
         min.put(minX, minY)
         max.put(maxX, maxY)

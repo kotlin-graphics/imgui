@@ -516,6 +516,7 @@ fun navUpdateCreateMoveRequest() {
                 g.navMoveDir = Dir.Down
         }
         g.navMoveDir = g.navMoveDir
+        g.navScoringNoClipRect.put(+Float.MAX_VALUE, -Float.MIN_VALUE)
     }
 
     // Update PageUp/PageDown/Home/End scroll
@@ -524,6 +525,10 @@ fun navUpdateCreateMoveRequest() {
     var scoringRectOffsetY = 0f
     if (window != null && g.navMoveDir == Dir.None && navKeyboardActive)
         scoringRectOffsetY = navUpdatePageUpPageDown()
+    if (scoringRectOffsetY != 0f) {
+        g.navScoringNoClipRect put window!!.innerRect
+        g.navScoringNoClipRect translateY scoringRectOffsetY
+    }
 
     // [DEBUG] Always send a request
     if (IMGUI_DEBUG_NAV_SCORING) {
@@ -574,8 +579,10 @@ fun navUpdateCreateMoveRequest() {
         scoringRect.max.x = scoringRect.min.x
         assert(!scoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous ImFabs() calls in NavScoreItem()." }
         //GetForegroundDrawList()->AddRect(scoring_rect.Min, scoring_rect.Max, IM_COL32(255,200,0,255)); // [DEBUG]
+        //if (!g.NavScoringNoClipRect.IsInverted()) { GetForegroundDrawList()->AddRect(g.NavScoringNoClipRect.Min, g.NavScoringNoClipRect.Max, IM_COL32(255, 200, 0, 255)); } // [DEBUG]
     }
     g.navScoringRect put scoringRect
+    g.navScoringNoClipRect add scoringRect
 }
 
 /** Handle PageUp/PageDown/Home/End keys
