@@ -5,6 +5,7 @@ import imgui.Dir
 import imgui.api.g
 import imgui.clamp
 import imgui.internal.floor
+import imgui.internal.isAboveGuaranteedIntegerPrecision
 import imgui.internal.sections.ListClipperData
 import imgui.internal.sections.ListClipperRange
 import imgui.internal.sections.NavMoveFlag
@@ -146,13 +147,20 @@ class ListClipper {
         // Step 1: Let the clipper infer height from first range
         if (itemsHeight <= 0f) {
             assert(data.stepNo == 1)
+            var affectedByFloatingPointPrecision = false
             if (table != null) {
                 val posY1 = table.rowPosY1   // Using RowPosY1 instead of StartPosY to handle clipper straddling the frozen row
                 val posY2 = table.rowPosY2   // Using RowPosY2 instead of CursorPos.y to take account of tallest cell.
                 itemsHeight = posY2 - posY1
                 window.dc.cursorPos.y = posY2
-            } else
+                affectedByFloatingPointPrecision = posY1.isAboveGuaranteedIntegerPrecision || posY2.isAboveGuaranteedIntegerPrecision
+            } else {
                 itemsHeight = (window.dc.cursorPos.y - startPosY) / (displayEnd - displayStart)
+                affectedByFloatingPointPrecision = startPosY.isAboveGuaranteedIntegerPrecision || window.dc.cursorPos.y.isAboveGuaranteedIntegerPrecision
+            }
+            if (affectedByFloatingPointPrecision)
+                itemsHeight = window.dc.prevLineSize.y + g.style.itemSpacing.y // FIXME: Technically wouldn't allow multi-line entries.
+
             assert(itemsHeight > 0f) { "Unable to calculate item height! First item hasn't moved the cursor vertically!" }
             calcClipping = true // If item height had to be calculated, calculate clipping afterwards.
         }
