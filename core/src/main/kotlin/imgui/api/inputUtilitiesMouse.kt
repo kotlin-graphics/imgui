@@ -23,7 +23,7 @@ interface inputUtilitiesMouse {
         return io.mouseDown[button.i]
     }
 
-    /** did mouse button clicked? (went from !Down to Down) */
+    /** did mouse button clicked? (went from !Down to Down). Same as GetMouseClickedCount() == 1. */
     fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
@@ -53,7 +53,7 @@ interface inputUtilitiesMouse {
     }
 
 
-    /** did mouse button double-clicked? (note that a double-click will also report IsMouseClicked() == true) */
+    /** did mouse button double-clicked? Same as GetMouseClickedCount() == 2. (note that a double-click will also report IsMouseClicked() == true) */
     fun isMouseDoubleClicked(button: MouseButton): Boolean {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
@@ -61,11 +61,11 @@ interface inputUtilitiesMouse {
         return io.mouseClickedCount[button.i] == 2
     }
 
-    /** did mouse button triple-clicked? (note that a triple-click will also report IsMouseClicked() == true) */
-    fun isMouseTripleClicked(button: MouseButton): Boolean {
+    /** return the number of successive mouse-clicks at the time where a click happen (otherwise 0). */
+    fun getMouseClickedCount(button: MouseButton): Int {
         // [JVM] useless
         //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
-        return g.io.mouseClickedCount[button.i] == 3
+        return g.io.mouseClickedCount[button.i]
     }
 
     /** Test if mouse cursor is hovering given rectangle

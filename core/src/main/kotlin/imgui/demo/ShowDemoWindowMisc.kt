@@ -1,12 +1,13 @@
 package imgui.demo
 
 import glm_.i
-import imgui.*
+import imgui.Col
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.captureKeyboardFromApp
 import imgui.ImGui.foregroundDrawList
+import imgui.ImGui.getMouseClickedCount
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
 import imgui.ImGui.io
@@ -16,12 +17,10 @@ import imgui.ImGui.isKeyDown
 import imgui.ImGui.isKeyPressed
 import imgui.ImGui.isKeyReleased
 import imgui.ImGui.isMouseClicked
-import imgui.ImGui.isMouseDoubleClicked
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isMouseReleased
-import imgui.ImGui.isMouseTripleClicked
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.pushAllowKeyboardFocus
@@ -31,10 +30,13 @@ import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
+import imgui.MouseButton
+import imgui.MouseCursor
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
+import imgui.toByteArray
 
 object ShowDemoWindowMisc {
 
@@ -66,25 +68,8 @@ object ShowDemoWindowMisc {
                 text("Mouse clicked:")
                 for (i in indices)
                     if (isMouseClicked(MouseButton of i)) {
-                        sameLine(); text("b$i")
+                        sameLine(); text("b$i (${getMouseClickedCount(MouseButton of i)})")
                     }
-                text(" - clicked double")
-                for (i in indices)
-                    if (isMouseDoubleClicked(MouseButton of i)) {
-                        sameLine(); text("b$i")
-                    }
-                text(" - clicked triple:")
-                for (i in indices)
-                    if (isMouseTripleClicked(MouseButton of i)) {
-                        sameLine(); text("b$i")
-                    }
-                text(" - clicked count:")
-                for (i in indices)
-                    if (io.mouseClickedCount[i] != 0) {
-                        sameLine(); text("b$i (${io.mouseClickedCount[i]})")
-                    }
-                //ImGui::Text(" - last count:");    for (int i = 0; i < count; i++) if (io.MouseClickedLastCount[i])    { ImGui::SameLine(); ImGui::Text("b%d (%d)", i, io.MouseClickedLastCount[i]); }
-
                 text("Mouse released:")
                 for (i in indices)
                     if (isMouseReleased(MouseButton of i)) {
