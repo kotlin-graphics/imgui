@@ -1379,9 +1379,13 @@ class Window(var context: Context,
 
         fun getCombinedRootWindow(window_: Window, popupHierarchy: Boolean): Window {
             var window = window_
-            window = window.rootWindow!!
-            if (popupHierarchy)
-                window = window.rootWindowPopupTree!!
+            var lastWindow: Window? = null
+            while (lastWindow !== window) {
+                lastWindow = window
+                window = window.rootWindow!!
+                if (popupHierarchy)
+                    window = window.rootWindowPopupTree!!
+            }
             return window
         }
     }
