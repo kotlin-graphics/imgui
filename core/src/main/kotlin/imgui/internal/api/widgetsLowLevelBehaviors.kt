@@ -7,7 +7,6 @@ import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
-import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehaviorT

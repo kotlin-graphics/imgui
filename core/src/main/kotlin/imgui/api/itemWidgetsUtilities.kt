@@ -1,9 +1,8 @@
 package imgui.api
 
-import gli_.hasnt
+import glm_.hasnt
 import glm_.vec2.Vec2
 import imgui.*
-import imgui.ImGui.currentWindowRead
 import imgui.ImGui.isMouseClicked
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
@@ -28,38 +27,45 @@ interface itemWidgetsUtilities {
         if (g.navDisableMouseHover && !g.navDisableHighlight) {
             if (g.lastItemData.inFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled)
                 return false
-            return isItemFocused
+            if (!isItemFocused)
+                return false
+        } else {
+            // Test for bounding box overlap, as updated as ItemAdd()
+            val statusFlags = g.lastItemData.statusFlags
+            if (statusFlags hasnt ItemStatusFlag.HoveredRect)
+                return false
+            assert(flags hasnt (Hf.AnyWindow or Hf.RootWindow or Hf.ChildWindows or Hf.NoPopupHierarchy)) { "Flags not supported by this function" }
+
+            // Test if we are hovering the right window (our window could be behind another window)
+            // [2021/03/02] Reworked / reverted the revert, finally. Note we want e.g. BeginGroup/ItemAdd/EndGroup to work as well. (#3851)
+            // [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT test for RootWindow but this leaves us unable
+            // to use IsItemHovered() after EndChild() itself. Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
+            // the test that has been running for a long while.
+            if (g.hoveredWindow !== window && statusFlags hasnt ItemStatusFlag.HoveredWindow)
+                if (flags hasnt Hf.AllowWhenOverlapped)
+                    return false
+
+            // Test if another item is active (e.g. being dragged)
+            if (flags hasnt Hf.AllowWhenBlockedByActiveItem)
+                if (g.activeId != 0 && g.activeId != g.lastItemData.id && !g.activeIdAllowOverlap && g.activeId != window.moveId)
+                    return false
+
+            // Test if interactions on this window are blocked by an active popup or modal.
+            // The ImGuiHoveredFlags_AllowWhenBlockedByPopup flag will be tested here.
+            if (!window.isContentHoverable(flags))
+                return false
+
+            // Test if the item is disabled
+            if (g.lastItemData.inFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled)
+                return false
+
+            // Special handling for calling after Begin() which represent the title bar or tab.
+            // When the window is collapsed (SkipItems==true) that last item will never be overwritten so we need to detect the case.
+            if (g.lastItemData.id == window.moveId && window.writeAccessed)
+                return false
         }
 
-        // Test for bounding box overlap, as updated as ItemAdd()
-        val statusFlags = g.lastItemData.statusFlags
-        return when {
-            statusFlags hasnt ItemStatusFlag.HoveredRect -> false
-            else -> {
-                assert(flags hasnt (Hf.AnyWindow or Hf.RootWindow or Hf.ChildWindows or Hf.NoPopupHierarchy)) { "Flags not supported by this function" }
-                when {
-                    // Test if we are hovering the right window (our window could be behind another window)
-                    // [2021/03/02] Reworked / reverted the revert, finally. Note we want e.g. BeginGroup/ItemAdd/EndGroup to work as well. (#3851)
-                    // [2017/10/16] Reverted commit 344d48be3 and testing RootWindow instead. I believe it is correct to NOT test for RootWindow but this leaves us unable
-                    // to use IsItemHovered() after EndChild() itself. Until a solution is found I believe reverting to the test from 2017/09/27 is safe since this was
-                    // the test that has been running for a long while.
-                    g.hoveredWindow !== window && statusFlags hasnt ItemStatusFlag.HoveredWindow && flags hasnt Hf.AllowWhenOverlapped -> false
-                    // Test if another item is active (e.g. being dragged)
-                    flags hasnt Hf.AllowWhenBlockedByActiveItem && g.activeId != 0 && g.activeId != g.lastItemData.id &&
-                            !g.activeIdAllowOverlap && g.activeId != window.moveId -> false
-                    // Test if interactions on this window are blocked by an active popup or modal
-                    // The ImGuiHoveredFlags_AllowWhenBlockedByPopup flag will be tested here.
-                    g.navDisableMouseHover || !window.isContentHoverable(flags) -> false
-                    // Test if the item is disabled
-                    g.lastItemData.inFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled -> false
-                    /*  Special handling for calling after Begin() which represent the title bar or tab.
-                        When the window is collapsed (SkipItems==true) that last item will never be overwritten
-                        so we need to detect the case.  */
-                    g.lastItemData.id == window.moveId && window.writeAccessed -> false
-                    else -> true
-                }
-            }
-        }
+        return true
     }
 
     /** Is the last item active? (e.g. button being held, text field being edited.
