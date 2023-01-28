@@ -372,9 +372,8 @@ class Window(var context: Context,
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
     fun getIdFromRectangle(rAbs: Rect): ID {
         val seed: ID = idStack.last()
-        val rRel =
-            intArrayOf((rAbs.min.x - pos.x).i, (rAbs.min.y - pos.y).i, (rAbs.max.x - pos.x).i, (rAbs.max.y - pos.y).i)
-        return hashData(rRel, seed).also { keepAliveID(it) } // id
+        val rRel = rectAbsToRel(rAbs)
+        return hashData(intArrayOf(rRel.min.x.i, rRel.min.y.i, rRel.max.x.i, rRel.max.y.i), seed).also { keepAliveID(it) } // id
     }
 
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */

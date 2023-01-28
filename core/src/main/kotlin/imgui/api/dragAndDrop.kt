@@ -75,13 +75,13 @@ interface dragAndDrop {
                     return false
 
                 // If you want to use BeginDragDropSource() on an item with no unique identifier for interaction, such as Text() or Image(), you need to:
-                // A) Read the explanation below, B) Use the ImGuiDragDropFlags_SourceAllowNullID flag, C) Swallow your programmer pride.
+                // A) Read the explanation below, B) Use the ImGuiDragDropFlags_SourceAllowNullID flag
                 if (flags hasnt Ddf.SourceAllowNullID)
                     throw Error()
 
-                // Magic fallback (=somehow reprehensible) to handle items with no assigned ID, e.g. Text(), Image()
+                // Magic fallback to handle items with no assigned ID, e.g. Text(), Image()
                 // We build a throwaway ID based on current ID stack + relative AABB of items in window.
-                // THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING OF THE WIDGET, so if your widget moves your dragging operation will be canceled.
+                // THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING/RESIZING OF THE WIDGET, so if your widget moves your dragging operation will be canceled.
                 // We don't need to maintain/call ClearActiveID() as releasing the button will early out this function and trigger !ActiveIdIsAlive.
                 // Rely on keeping other window->LastItemXXX fields intact.
                 g.lastItemData.id = window!!.getIdFromRectangle(g.lastItemData.rect)
