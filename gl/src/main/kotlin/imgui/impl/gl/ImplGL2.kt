@@ -144,7 +144,7 @@ class ImplGL2 : GLInterface {
                     // Project scissor/clipping rectangles into framebuffer space
                     val clipMin = Vec2((cmd.clipRect.x - clipOff.x) * clipScale.x, (cmd.clipRect.y - clipOff.y) * clipScale.y)
                     val clipMax = Vec2((cmd.clipRect.z - clipOff.x) * clipScale.x, (cmd.clipRect.w - clipOff.y) * clipScale.y)
-                    if (clipMax.x < clipMin.x || clipMax.y < clipMin.y)
+                    if (clipMax.x <= clipMin.x || clipMax.y <= clipMin.y)
                         continue
 
                     // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
