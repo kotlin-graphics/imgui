@@ -235,6 +235,8 @@ infix fun SeparatorFlags.xor(b: SeparatorFlag): SeparatorFlags = xor(b.i)
 infix fun SeparatorFlags.has(b: SeparatorFlag): Boolean = and(b.i) != 0
 infix fun SeparatorFlags.hasnt(b: SeparatorFlag): Boolean = and(b.i) == 0
 infix fun SeparatorFlags.wo(b: SeparatorFlag): SeparatorFlags = and(b.i.inv())
+operator fun SeparatorFlags.minus(flag: SeparatorFlag): SeparatorFlags = wo(flag)
+operator fun SeparatorFlags.div(flag: SeparatorFlag): SeparatorFlags = or(flag)
 
 
 typealias TextFlags = Int

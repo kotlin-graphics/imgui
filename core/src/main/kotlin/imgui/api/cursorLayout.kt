@@ -33,8 +33,9 @@ interface cursorLayout {
             return
 
         // Those flags should eventually be overridable by the user
-        val flags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical else SeparatorFlag.Horizontal
-        separatorEx(flags or SeparatorFlag.SpanAllColumns)
+        var flags = if (window.dc.layoutType == Lt.Horizontal) SeparatorFlag.Vertical.i else SeparatorFlag.Horizontal.i
+        flags /= SeparatorFlag.SpanAllColumns // NB: this only applies to legacy Columns() api as they relied on Separator() a lot.
+        separatorEx(flags)
     }
 
     fun sameLine(offsetFromStartX: Int, spacing: Int = -1) = sameLine(offsetFromStartX.f, spacing.f)

@@ -467,16 +467,24 @@ internal interface widgets {
         } else if (flags has SeparatorFlag.Horizontal) {
             // Horizontal Separator
             var x1 = window.pos.x
-            val x2 = window.pos.x + window.size.x
+            var x2 = window.pos.x + window.size.x
             // FIXME-WORKRECT: old hack (#205) until we decide of consistent behavior with WorkRect/Indent and Separator
             if (g.groupStack.isNotEmpty() && g.groupStack.last().windowID == window.id)
                 x1 += window.dc.indent
+
+            // FIXME-WORKRECT: In theory we should simply be using WorkRect.Min.x/Max.x everywhere but it isn't aesthetically what we want,
+            // need to introduce a variant of WorkRect for that purpose. (#4787)
+            g.currentTable?.let { table ->
+                x1 = table.columns[table.currentColumn].minX
+                x2 = table.columns[table.currentColumn].maxX
+            }
 
             val columns = window.dc.currentColumns.takeIf { flags has SeparatorFlag.SpanAllColumns }
             if (columns != null)
                 pushColumnsBackground()
 
             // We don't provide our width to the layout so that it doesn't get feed back into AutoFit
+            // FIXME: This prevents ->CursorMaxPos based bounding box evaluation from working (e.g. TableEndCell)
             val bb = Rect(Vec2(x1, window.dc.cursorPos.y), Vec2(x2, window.dc.cursorPos.y + thicknessDraw))
             itemSize(Vec2(0f, thicknessLayout))
             val itemVisible = itemAdd(bb, 0)
