@@ -962,7 +962,8 @@ fun navRestoreLayer(layer: NavLayer) {
 fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow?.takeIf { it.wasActive } ?: window
 
 fun findWindowFocusIndex(window: Window): Int {
-    var order = window.focusOrder
+    val order = window.focusOrder
+    assert(window.flags hasnt Wf._ChildWindow)
     assert(g.windowsFocusOrder[order] == window)
     return order
 }

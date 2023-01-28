@@ -96,8 +96,18 @@ internal interface internal {
             displayFrontWindow.bringToDisplayFront()
     }
 
-    fun focusTopMostWindowUnderOne(underThisWindow: Window? = null, ignoreWindow: Window? = null) {
-        val startIdx = (underThisWindow?.let { findWindowFocusIndex(it)} ?: g.windowsFocusOrder.size) - 1
+    fun focusTopMostWindowUnderOne(underThisWindow_: Window? = null, ignoreWindow: Window? = null) {
+        var underThisWindow = underThisWindow_
+        var startIdx = g.windowsFocusOrder.lastIndex
+        if (underThisWindow != null) {
+            // Aim at root window behind us, if we are in a child window that's our own root (see #4640)
+            var offset = -1
+            while (underThisWindow!!.flags has Wf._ChildWindow) {
+                underThisWindow = underThisWindow.parentWindow
+                offset = 0
+            }
+            startIdx = findWindowFocusIndex(underThisWindow) + offset
+        }
         for (i in startIdx downTo 0) {
             // We may later decide to test for different NoXXXInputs based on the active navigation input (mouse vs nav) but that may feel more confusing to the user.
             val window = g.windowsFocusOrder[i]
@@ -213,9 +223,9 @@ internal interface internal {
                     precision = defaultPrecision
             }
         }
-        if (fmt[i].toLowerCase() == 'e')    // Maximum precision with scientific notation
+        if (fmt[i].lowercaseChar() == 'e')    // Maximum precision with scientific notation
             precision = -1
-        if (fmt[i].toLowerCase() == 'g' && precision == Int.MAX_VALUE)
+        if (fmt[i].lowercaseChar() == 'g' && precision == Int.MAX_VALUE)
             precision = -1
         return when (precision) {
             Int.MAX_VALUE -> defaultPrecision
