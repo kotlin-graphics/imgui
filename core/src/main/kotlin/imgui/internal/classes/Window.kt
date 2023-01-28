@@ -496,7 +496,13 @@ class Window(var context: Context,
     }
 
     /** ~IsWindowAbove */
-    infix fun isAbove(potentialBelow: Window?): Boolean {
+    infix fun isAbove(potentialBelow: Window): Boolean {
+
+        // It would be saner to ensure that display layer is always reflected in the g.Windows[] order, which would likely requires altering all manipulations of that array
+        val displayLayerDelta = displayLayer - potentialBelow.displayLayer
+        if (displayLayerDelta != 0)
+            return displayLayerDelta > 0
+
         for (candidateWindow in g.windows.asReversed()) {
             if (candidateWindow === this)
                 return true
@@ -1245,11 +1251,14 @@ class Window(var context: Context,
                 .forEach { it addToDrawData layer }
     }
 
+    /** ~GetWindowDisplayLayer */
+    val displayLayer: Int
+        get() = if (flags has Wf._Tooltip) 1 else 0
+
     /** Layer is locked for the root window, however child windows may use a different viewport (e.g. extruding menu)
      *  ~AddRootWindowToDrawData    */
     fun addRootToDrawData() {
-        val layer = (flags has Wf._Tooltip).i
-        addToDrawData(layer)
+        addToDrawData(displayLayer)
     }
 
     /** ~SetWindowConditionAllowFlags */
