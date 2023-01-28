@@ -1120,37 +1120,39 @@ class FontAtlas {
     // A work of art lies ahead! (. = white layer, X = black layer, others are blank)
     // The 2x2 white texels on the top left are the ones we'll use everywhere in Dear ImGui to render filled shapes.
     object DefaultTexData {
-        val w = 108 // Actual texture will be 2 times that + 1 spacing.
+        /** ~FONT_ATLAS_DEFAULT_TEX_DATA_W */
+        val w = 122 // Actual texture will be 2 times that + 1 spacing.
+        /** ~FONT_ATLAS_DEFAULT_TEX_DATA_H */
         val h = 27
         val pixels = run {
             val s = StringBuilder()
-            s += "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX-     XX          "
-            s += "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X-    X..X         "
-            s += "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X-    X..X         "
-            s += "X           -  X.X  - X.....X -        X.....X        -X...X            -            X...X-    X..X         "
-            s += "XX          -  X.X  -X.......X-       X.......X       -X..X.X           -           X.X..X-    X..X         "
-            s += "X.X         -  X.X  -XXXX.XXXX-       XXXX.XXXX       -X.X X.X          -          X.X X.X-    X..XXX       "
-            s += "X..X        -  X.X  -   X.X   -          X.X          -XX   X.X         -         X.X   XX-    X..X..XXX    "
-            s += "X...X       -  X.X  -   X.X   -    XX    X.X    XX    -      X.X        -        X.X      -    X..X..X..XX  "
-            s += "X....X      -  X.X  -   X.X   -   X.X    X.X    X.X   -       X.X       -       X.X       -    X..X..X..X.X "
-            s += "X.....X     -  X.X  -   X.X   -  X..X    X.X    X..X  -        X.X      -      X.X        -XXX X..X..X..X..X"
-            s += "X......X    -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -         X.X   XX-XX   X.X         -X..XX........X..X"
-            s += "X.......X   -  X.X  -   X.X   -X.....................X-          X.X X.X-X.X X.X          -X...X...........X"
-            s += "X........X  -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -           X.X..X-X..X.X           - X..............X"
-            s += "X.........X -XXX.XXX-   X.X   -  X..X    X.X    X..X  -            X...X-X...X            -  X.............X"
-            s += "X..........X-X.....X-   X.X   -   X.X    X.X    X.X   -           X....X-X....X           -  X.............X"
-            s += "X......XXXXX-XXXXXXX-   X.X   -    XX    X.X    XX    -          X.....X-X.....X          -   X............X"
-            s += "X...X..X    ---------   X.X   -          X.X          -          XXXXXXX-XXXXXXX          -   X...........X "
-            s += "X..X X..X   -       -XXXX.XXXX-       XXXX.XXXX       -------------------------------------    X..........X "
-            s += "X.X  X..X   -       -X.......X-       X.......X       -    XX           XX    -           -    X..........X "
-            s += "XX    X..X  -       - X.....X -        X.....X        -   X.X           X.X   -           -     X........X  "
-            s += "      X..X          -  X...X  -         X...X         -  X..X           X..X  -           -     X........X  "
-            s += "       XX           -   X.X   -          X.X          - X...XXXXXXXXXXXXX...X -           -     XXXXXXXXXX  "
-            s += "------------        -    X    -           X           -X.....................X-           ------------------"
-            s += "                    ----------------------------------- X...XXXXXXXXXXXXX...X -                             "
-            s += "                                                      -  X..X           X..X  -                             "
-            s += "                                                      -   X.X           X.X   -                             "
-            s += "                                                      -    XX           XX    -                             "
+            s += "..-         -XXXXXXX-    X    -           X           -XXXXXXX          -          XXXXXXX-     XX          - XX       XX "
+            s += "..-         -X.....X-   X.X   -          X.X          -X.....X          -          X.....X-    X..X         -X..X     X..X"
+            s += "---         -XXX.XXX-  X...X  -         X...X         -X....X           -           X....X-    X..X         -X...X   X...X"
+            s += "X           -  X.X  - X.....X -        X.....X        -X...X            -            X...X-    X..X         - X...X X...X "
+            s += "XX          -  X.X  -X.......X-       X.......X       -X..X.X           -           X.X..X-    X..X         -  X...X...X  "
+            s += "X.X         -  X.X  -XXXX.XXXX-       XXXX.XXXX       -X.X X.X          -          X.X X.X-    X..XXX       -   X.....X   "
+            s += "X..X        -  X.X  -   X.X   -          X.X          -XX   X.X         -         X.X   XX-    X..X..XXX    -    X...X    "
+            s += "X...X       -  X.X  -   X.X   -    XX    X.X    XX    -      X.X        -        X.X      -    X..X..X..XX  -     X.X     "
+            s += "X....X      -  X.X  -   X.X   -   X.X    X.X    X.X   -       X.X       -       X.X       -    X..X..X..X.X -    X...X    "
+            s += "X.....X     -  X.X  -   X.X   -  X..X    X.X    X..X  -        X.X      -      X.X        -XXX X..X..X..X..X-   X.....X   "
+            s += "X......X    -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -         X.X   XX-XX   X.X         -X..XX........X..X-  X...X...X  "
+            s += "X.......X   -  X.X  -   X.X   -X.....................X-          X.X X.X-X.X X.X          -X...X...........X- X...X X...X "
+            s += "X........X  -  X.X  -   X.X   - X...XXXXXX.XXXXXX...X -           X.X..X-X..X.X           - X..............X-X...X   X...X"
+            s += "X.........X -XXX.XXX-   X.X   -  X..X    X.X    X..X  -            X...X-X...X            -  X.............X-X..X     X..X"
+            s += "X..........X-X.....X-   X.X   -   X.X    X.X    X.X   -           X....X-X....X           -  X.............X- XX       XX "
+            s += "X......XXXXX-XXXXXXX-   X.X   -    XX    X.X    XX    -          X.....X-X.....X          -   X............X--------------"
+            s += "X...X..X    ---------   X.X   -          X.X          -          XXXXXXX-XXXXXXX          -   X...........X -             "
+            s += "X..X X..X   -       -XXXX.XXXX-       XXXX.XXXX       -------------------------------------    X..........X -             "
+            s += "X.X  X..X   -       -X.......X-       X.......X       -    XX           XX    -           -    X..........X -             "
+            s += "XX    X..X  -       - X.....X -        X.....X        -   X.X           X.X   -           -     X........X  -             "
+            s += "      X..X  -       -  X...X  -         X...X         -  X..X           X..X  -           -     X........X  -             "
+            s += "       XX   -       -   X.X   -          X.X          - X...XXXXXXXXXXXXX...X -           -     XXXXXXXXXX  -             "
+            s += "-------------       -    X    -           X           -X.....................X-           -------------------             "
+            s += "                    ----------------------------------- X...XXXXXXXXXXXXX...X -                                           "
+            s += "                                                      -  X..X           X..X  -                                           "
+            s += "                                                      -   X.X           X.X   -                                           "
+            s += "                                                      -    XX           XX    -                                           "
             s.toString().toCharArray()
         }
 
@@ -1163,6 +1165,7 @@ class FontAtlas {
             arrayOf(Vec2(55, 18), Vec2(23, 9), Vec2(11, 4)), // MouseCursor.ResizeEW
             arrayOf(Vec2(73, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNESW
             arrayOf(Vec2(55, 0), Vec2(17), Vec2(8)),               // MouseCursor.ResizeNWSE
-            arrayOf(Vec2(91, 0), Vec2(17, 22), Vec2(5, 0))) // ImGuiMouseCursor_Hand
+            arrayOf(Vec2(91, 0), Vec2(17, 22), Vec2(5, 0)),  // ImGuiMouseCursor_Hand
+            arrayOf(Vec2(109, 0), Vec2(13, 15), Vec2(6, 7))) // ImGuiMouseCursor_NotAllowed
     }
 }
