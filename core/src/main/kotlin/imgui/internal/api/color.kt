@@ -39,7 +39,7 @@ internal interface color {
     /** Note: only access 3 floats if ColorEditFlag.NoAlpha flag is set.   */
     fun colorTooltip(text: String, col: FloatArray, flags: ColorEditFlags) {
 
-        beginTooltipEx(WindowFlag.None.i, TooltipFlag.OverridePreviousTooltip.i)
+        beginTooltipEx(TooltipFlag.OverridePreviousTooltip.i, WindowFlag.None.i)
         val textEnd = if (text.isEmpty()) findRenderedTextEnd(text) else 0
         if (textEnd > 0) {
             textEx(text, textEnd)

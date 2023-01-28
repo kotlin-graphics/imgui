@@ -233,8 +233,8 @@ internal interface PopupsModalsTooltips {
     }
 
     /** Not exposed publicly as BeginTooltip() because bool parameters are evil. Let's see if other needs arise first.
-     *  @param extraFlags WindowFlag   */
-    fun beginTooltipEx(extraFlags: WindowFlags, tooltipFlags_: TooltipFlags) {
+     *  @param extraWindowFlags WindowFlag   */
+    fun beginTooltipEx(tooltipFlags_: TooltipFlags, extraWindowFlags: WindowFlags) {
         var tooltipFlags = tooltipFlags_
         if (g.dragDropWithinSource || g.dragDropWithinTarget) { // The default tooltip position is a little offset to give space to see the context menu (it's also clamped within the current viewport/monitor)
             // In the context of a dragging tooltip we try to reduce that offset and we enforce following the cursor.
@@ -257,7 +257,7 @@ internal interface PopupsModalsTooltips {
         }
         val flags =
             Wf._Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
-        begin(windowName, null, flags or extraFlags)
+        begin(windowName, null, flags or extraWindowFlags)
     }
 
     /** ~GetTopMostPopupModal */
