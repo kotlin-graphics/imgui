@@ -198,26 +198,6 @@ class ListClipper {
         return false
     }
 
-    // Call ForceDisplayRangeXXX functions before first call to Step() if you need a range of items to be displayed regardless of visibility.
-
-    /** item_max is exclusive e.g. use (42, 42+1) to make item 42 always visible BUT due to alignment/padding of certain items it is likely that an extra item may be included on either end of the display range. */
-    fun forceDisplayRangeByIndices(itemMin: Int, itemMax: Int) {
-        val data = tempData as ListClipperData
-        assert(displayStart < 0) { "Only allowed after Begin () and if there has not been a specified range yet ." }
-        assert(itemMin <= itemMax)
-        if (itemMin < itemMax)
-            data.ranges += ListClipperRange.fromIndices(itemMin, itemMax)
-    }
-
-    /** Absolute coordinates */
-    fun forceDisplayRangeByPositions(yMin: Float, yMax: Float) {
-        val data = tempData as ListClipperData
-        assert(displayStart < 0) { "Only allowed after Begin () and if there has not been a specified range yet ." }
-        assert(yMin <= yMax)
-        if (yMin < yMax)
-            data.ranges += ListClipperRange.fromPositions(yMin, yMax, 0, 0)
-    }
-
     companion object {
 
         fun seekCursorAndSetupPrevLine(posY: Float, lineHeight: Float) {
