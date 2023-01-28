@@ -341,10 +341,19 @@ internal interface inputText {
                     state.stb.selectEnd = state.stb.cursor
                     state.clamp()
                 } else {
-                        // Triple-click: Select line
-                        state.onKeyPressed(K.LINESTART)
-                        state.onKeyPressed(K.LINEEND or K.SHIFT)
+                    // Triple-click: Select line
+                    val isEol = state.getChar(state.stb.cursor) == '\n'
+                    state.onKeyPressed(K.LINESTART)
+                    state.onKeyPressed(K.LINEEND or K.SHIFT)
+                    state.onKeyPressed(K.RIGHT or K.SHIFT)
+                    if (!isEol && isMultiline) {
+                        val swap = state.stb.selectStart
+                        state.stb.selectStart = state.stb.selectEnd
+                        state.stb.selectEnd = swap
+                        state.stb.cursor = state.stb.selectEnd
                     }
+                    state.cursorFollow = false
+                }
                 state.cursorAnimReset()
             } else if (io.mouseClicked[0] && !state.selectedAllMouseLock) {
                 // FIXME: unselect on late click could be done release?
