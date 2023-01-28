@@ -340,7 +340,7 @@ fun navUpdateWindowing() {
         if (it.flags hasnt Wf.NoMove) {
             var moveDelta = Vec2()
             if (g.navInputSource == InputSource.Keyboard && !io.keyShift)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard.i, InputReadMode.Down)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlag.RawKeyboard.i, InputReadMode.Down)
             if (g.navInputSource == InputSource.Gamepad)
                 moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {

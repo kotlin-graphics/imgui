@@ -5,6 +5,7 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveID
+import imgui.ImGui.getKeyIndex
 import imgui.ImGui.io
 import imgui.ImGui.scrollToRectEx
 import imgui.api.g
@@ -209,40 +210,32 @@ internal interface navigation {
             t < 0f -> 0f
             else -> when (mode) { // Return 1.0f when just pressed, no repeat, ignore analog input.
                 InputReadMode.Pressed -> if (t == 0f) 1 else 0
-                InputReadMode.Repeat -> calcTypematicRepeatAmount(t - io.deltaTime,
-                                                                  t,
-                                                                  io.keyRepeatDelay * 0.72f,
-                                                                  io.keyRepeatRate * 0.8f)
-                InputReadMode.RepeatSlow -> calcTypematicRepeatAmount(t - io.deltaTime,
-                                                                      t,
-                                                                      io.keyRepeatDelay * 1.25f,
-                                                                      io.keyRepeatRate * 2f)
-                InputReadMode.RepeatFast -> calcTypematicRepeatAmount(t - io.deltaTime,
-                                                                      t,
-                                                                      io.keyRepeatDelay * 0.72f,
-                                                                      io.keyRepeatRate * 0.3f)
+                InputReadMode.Repeat -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.8f)
+                InputReadMode.RepeatSlow -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 1.25f, io.keyRepeatRate * 2f)
+                InputReadMode.RepeatFast -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.3f)
                 else -> 0
             }.f
         }
     }
 
     /** @param dirSources: NavDirSourceFlag    */
-    fun getNavInputAmount2d(dirSources: NavDirSourceFlags,
-                            mode: InputReadMode,
-                            slowFactor: Float = 0f,
-                            fastFactor: Float = 0f): Vec2 {
+    fun getNavInputAmount2d(dirSources: NavDirSourceFlags, mode: InputReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
         val delta = Vec2()
-        if (dirSources has NavDirSourceFlag.Keyboard) delta += Vec2(getNavInputAmount(NavInput._KeyRight,
-                                                                                      mode) - getNavInputAmount(NavInput._KeyLeft, mode),
-                                                                    getNavInputAmount(NavInput._KeyDown, mode) - getNavInputAmount(NavInput._KeyUp, mode))
-        if (dirSources has NavDirSourceFlag.PadDPad) delta += Vec2(getNavInputAmount(NavInput.DpadRight,
-                                                                                     mode) - getNavInputAmount(NavInput.DpadLeft, mode),
-                                                                   getNavInputAmount(NavInput.DpadDown, mode) - getNavInputAmount(NavInput.DpadUp, mode))
-        if (dirSources has NavDirSourceFlag.PadLStick) delta += Vec2(getNavInputAmount(NavInput.LStickRight,
-                                                                                       mode) - getNavInputAmount(NavInput.LStickLeft, mode),
-                                                                     getNavInputAmount(NavInput.LStickDown, mode) - getNavInputAmount(NavInput.LStickUp, mode))
-        if (slowFactor != 0f && NavInput.TweakSlow.isDown()) delta *= slowFactor
-        if (fastFactor != 0f && NavInput.TweakFast.isDown()) delta *= fastFactor
+        if (dirSources has NavDirSourceFlag.RawKeyboard)
+            delta += Vec2(Key.RightArrow.isDown.f - Key.LeftArrow.isDown.f, Key.DownArrow.isDown.f - Key.UpArrow.isDown.f)
+        if (dirSources has NavDirSourceFlag.Keyboard)
+            delta += Vec2(getNavInputAmount(NavInput._KeyRight, mode) - getNavInputAmount(NavInput._KeyLeft, mode),
+                          getNavInputAmount(NavInput._KeyDown, mode) - getNavInputAmount(NavInput._KeyUp, mode))
+        if (dirSources has NavDirSourceFlag.PadDPad)
+            delta += Vec2(getNavInputAmount(NavInput.DpadRight, mode) - getNavInputAmount(NavInput.DpadLeft, mode),
+                          getNavInputAmount(NavInput.DpadDown, mode) - getNavInputAmount(NavInput.DpadUp, mode))
+        if (dirSources has NavDirSourceFlag.PadLStick)
+            delta += Vec2(getNavInputAmount(NavInput.LStickRight, mode) - getNavInputAmount(NavInput.LStickLeft, mode),
+                          getNavInputAmount(NavInput.LStickDown, mode) - getNavInputAmount(NavInput.LStickUp, mode))
+        if (slowFactor != 0f && NavInput.TweakSlow.isDown())
+            delta *= slowFactor
+        if (fastFactor != 0f && NavInput.TweakFast.isDown())
+            delta *= fastFactor
         return delta
     }
 

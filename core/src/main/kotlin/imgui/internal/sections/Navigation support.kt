@@ -117,7 +117,10 @@ infix fun NavHighlightFlags.wo(b: NavHighlightFlag): NavHighlightFlags = and(b.i
 typealias NavDirSourceFlags = Int
 
 enum class NavDirSourceFlag {
-    None, Keyboard, PadDPad, PadLStick;
+    None,
+    /** Raw keyboard (not pulled from nav), faciliate use of some functions before we can unify nav and keys */
+    RawKeyboard,
+    Keyboard, PadDPad, PadLStick;
 
     val i: NavDirSourceFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
