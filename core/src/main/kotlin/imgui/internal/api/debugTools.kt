@@ -50,6 +50,7 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
 import imgui.demo.showExampleApp.StyleEditor
+import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.dsl.withID
 import imgui.font.FontAtlas
@@ -561,13 +562,26 @@ internal interface debugTools {
     fun debugNodeWindowsList(windows: List<Window>, label: String) {
         if (!treeNode(label, "$label (${windows.size})"))
             return
-        text("(In front-to-back order:)")
         for (i in windows.size - 1 downTo 0) { // Iterate front to back
             pushID(windows[i])
             debugNodeWindow(windows[i], "Window")
             popID()
         }
         treePop()
+    }
+
+    fun debugNodeWindowsListByBeginStackParent(windows: List<Window>, parentInBeginStack: Window?) {
+        for (i in windows.indices) {
+            val window = windows[i]
+            if (window.parentWindowInBeginStack !== parentInBeginStack)
+            continue
+            val buf = "[%04d] Window".format(window.beginOrderWithinContext)
+            //BulletText("[%04d] Window '%s'", window->BeginOrderWithinContext, window->Name);
+            debugNodeWindow(window, buf)
+            indent {
+                debugNodeWindowsListByBeginStackParent(windows.drop(i + 1), window)
+            }
+        }
     }
 
     fun debugNodeViewport(viewport: ViewportP) {

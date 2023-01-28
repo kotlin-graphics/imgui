@@ -21,6 +21,7 @@ import imgui.ImGui.debugNodeTableSettings
 import imgui.ImGui.debugNodeViewport
 import imgui.ImGui.debugNodeWindowSettings
 import imgui.ImGui.debugNodeWindowsList
+import imgui.ImGui.debugNodeWindowsListByBeginStackParent
 import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
@@ -239,8 +240,21 @@ interface demoDebugInformations {
         }
 
         // Windows
-        debugNodeWindowsList(g.windows, "Windows")
-        //DebugNodeWindowList(&g.WindowsFocusOrder, "WindowsFocusOrder");
+        treeNode("Windows", "Windows (${g.windows.size})") {
+            //SetNextItemOpen(true, ImGuiCond_Once);
+            debugNodeWindowsList(g.windows, "By display order")
+            debugNodeWindowsList(g.windowsFocusOrder, "By focus order (root windows)")
+            treeNode("By submission order (begin stack)") {
+                // Here we display windows in their submitted order/hierarchy, however note that the Begin stack doesn't constitute a Parent<>Child relationship!
+                val tempBuffer = g.windowsTempSortBuffer
+                tempBuffer.clear()
+                for (i in g.windows.indices)
+                    if (g.windows[i].lastFrameActive + 1 >= g.frameCount)
+                        tempBuffer += g.windows[i]
+                tempBuffer.sortBy(Window::beginOrderWithinContext)
+                debugNodeWindowsListByBeginStackParent(tempBuffer, null)
+            }
+        }
 
         // DrawLists
         val drawlistCount = g.viewports.sumOf { it.drawDataBuilder!!.drawListCount }

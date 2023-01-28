@@ -139,7 +139,10 @@ interface windows {
         }
 
         // Update ->RootWindow and others pointers (before any possible call to FocusWindow)
-        if (firstBeginOfTheFrame) window.updateParentAndRootLinks(flags, parentWindow)
+        if (firstBeginOfTheFrame) {
+            window.updateParentAndRootLinks(flags, parentWindow)
+            window.parentWindowInBeginStack = parentWindowInStack
+        }
 
         // Process SetNextWindow***() calls
         // (FIXME: Consider splitting the HasXXX flags into X/Y components

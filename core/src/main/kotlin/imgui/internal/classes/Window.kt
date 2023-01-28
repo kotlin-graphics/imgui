@@ -265,6 +265,8 @@ class Window(var context: Context,
     /** If we are a child _or_ popup _or_ docked window, this is pointing to our parent. Otherwise NULL.  */
     var parentWindow: Window? = null
 
+    var parentWindowInBeginStack: Window? = null
+
     /** Point to ourself or first ancestor that is not a child window. Doesn't cross through popups/dock nodes. */
     var rootWindow: Window? = null
 
