@@ -264,12 +264,11 @@ interface windows {
             // Collapse window by double-clicking on title bar
             // At this point we don't have a clipping rectangle setup yet, so we can use the title bar area
             // for hit detection and drawing
-            if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse) {/*  We don't use a regular button+id to test for double-click on title bar (mostly due to legacy reason, could be fixed),
-                    so verify that we don't have items over the title bar.                 */
+            if (flags hasnt Wf.NoTitleBar && flags hasnt Wf.NoCollapse) {
+                // We don't use a regular button+id to test for double-click on title bar (mostly due to legacy reason, could be fixed), so verify that we don't have items over the title bar.
                 val titleBarRect = window.titleBarRect()
-                if (g.hoveredWindow === window && g.hoveredId == 0 && g.hoveredIdPreviousFrame == 0 && isMouseHoveringRect(
-                        titleBarRect) && io.mouseDoubleClicked[0]
-                ) window.wantCollapseToggle = true
+                if (g.hoveredWindow === window && g.hoveredId == 0 && g.hoveredIdPreviousFrame == 0 && isMouseHoveringRect(titleBarRect) && io.mouseMultiClickCount[0] == 2)
+                    window.wantCollapseToggle = true
                 if (window.wantCollapseToggle) {
                     window.collapsed = !window.collapsed
                     window.markIniSettingsDirty()

@@ -82,20 +82,24 @@ fun updateMouseInputs() {
                 }
                 else -> -1f
             }
-            mouseDoubleClicked[i] = false
+            mouseMultiClickCount[i] = 0
             if (mouseClicked[i]) {
                 if (g.time - mouseClickedTime[i] < mouseDoubleClickTime) {
                     val deltaFromClickPos = when {
-                        isMousePosValid(io.mousePos) -> io.mousePos - io.mouseClickedPos[i]
+                        isMousePosValid(mousePos) -> mousePos - mouseClickedPos[i]
                         else -> Vec2()
                     }
-                    if (deltaFromClickPos.lengthSqr < io.mouseDoubleClickMaxDist * io.mouseDoubleClickMaxDist)
-                        mouseDoubleClicked[i] = true
-                    mouseClickedTime[i] = -io.mouseDoubleClickTime * 2.0 // Mark as "old enough" so the third click isn't turned into a double-click
+                    if (deltaFromClickPos.lengthSqr < mouseDoubleClickMaxDist * mouseDoubleClickMaxDist)
+                        mouseMultiClickTracker[i]++
+                    else
+                        mouseMultiClickTracker[i] = 1
                 } else
-                    mouseClickedTime[i] = g.time
+                    mouseMultiClickTracker[i] = 1
+
+                mouseClickedTime[i] = g.time
                 mouseClickedPos[i] put mousePos
-                mouseDownWasDoubleClick[i] = mouseDoubleClicked[i]
+                mouseMultiClickCount[i] = mouseMultiClickTracker[i]
+                mouseDownMultiClickCount[i] = mouseMultiClickTracker[i]
                 mouseDragMaxDistanceAbs[i] put 0f
                 mouseDragMaxDistanceSqr[i] = 0f
             } else if (mouseDown[i]) {
@@ -118,8 +122,9 @@ fun updateMouseInputs() {
                 mouseDragMaxDistanceAbs[i].y = mouseDragMaxDistanceAbs[i].y max if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y
                 mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max mouseDelta.lengthSqr
             }
+
             if (!mouseDown[i] && !mouseReleased[i])
-                mouseDownWasDoubleClick[i] = false
+                mouseDownMultiClickCount[i] = 0
             // Clicking any mouse button reactivate mouse hovering which may have been deactivated by gamepad/keyboard navigation
             if (mouseClicked[i])
                 g.navDisableMouseHover = false

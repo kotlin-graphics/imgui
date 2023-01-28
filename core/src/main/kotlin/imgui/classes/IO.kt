@@ -349,8 +349,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse button went from !Down to Down    */
     val mouseClicked = BooleanArray(5)
 
-    /** Has mouse button been double-clicked?    */
-    val mouseDoubleClicked = BooleanArray(5)
+    /** Track multiple clicks over multiple frames */
+    val mouseMultiClickTracker = IntArray(5)
+    /** Has mouse button been clicked multiple times in a row? */
+    val mouseMultiClickCount = IntArray(5)
 
     /** Mouse button went from Down to !Down    */
     val mouseReleased = BooleanArray(5)
@@ -361,8 +363,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Track if button was clicked inside a dear imgui window. */
     val mouseDownOwnedUnlessPopupClose = BooleanArray(5)
 
-    /** Track if button down was a double-click */
-    var mouseDownWasDoubleClick = BooleanArray(5)
+    /** Track number of mouse down clicks in a row */
+    val mouseDownMultiClickCount = IntArray(5)
 
     /** Duration the mouse button has been down (0.0f == just clicked)  */
     val mouseDownDuration = FloatArray(5) { -1f }

@@ -10,6 +10,7 @@ import imgui.MOUSE_INVALID
 import imgui.MouseButton
 import imgui.MouseCursor
 import imgui.internal.classes.Rect
+
 /** Inputs Utilities: Mouse
  *  - To refer to a mouse button, you may use named enums in your code e.g. ImGuiMouseButton_Left, ImGuiMouseButton_Right.
  *  - You can also use regular integer: it is forever guaranteed that 0=Left, 1=Right, 2=Middle.
@@ -57,7 +58,14 @@ interface inputUtilitiesMouse {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
 
-        return io.mouseDoubleClicked[button.i]
+        return io.mouseMultiClickCount[button.i] == 2
+    }
+
+    /** did mouse button triple-clicked? (note that a triple-click will also report IsMouseClicked() == true) */
+    fun isMouseTripleClicked(button: MouseButton): Boolean {
+        // [JVM] useless
+        //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
+        return g.io.mouseMultiClickCount[button.i] == 3
     }
 
     /** Test if mouse cursor is hovering given rectangle
@@ -68,7 +76,7 @@ interface inputUtilitiesMouse {
      *
      *  is mouse hovering given bounding rect (in screen space). clipped by current clipping settings, but disregarding of other consideration of focus/window ordering/popup-block. */
     fun isMouseHoveringRect(r: Rect, clip: Boolean = true): Boolean =
-            isMouseHoveringRect(r.min, r.max, clip)
+        isMouseHoveringRect(r.min, r.max, clip)
 
     fun isMouseHoveringRect(rMin: Vec2, rMax: Vec2, clip: Boolean = true): Boolean {
 
@@ -84,7 +92,7 @@ interface inputUtilitiesMouse {
 
     /** by convention we use (-FLT_MAX,-FLT_MAX) to denote that there is no mouse available  */
     fun isMousePosValid(mousePos: Vec2? = null): Boolean =
-            (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
+        (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
 
     /** is any mouse button held?    */
     val isAnyMouseDown: Boolean

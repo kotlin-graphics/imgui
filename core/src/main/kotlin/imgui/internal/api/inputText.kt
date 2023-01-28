@@ -307,9 +307,8 @@ internal interface inputText {
                 userCallback = callback
                 userCallbackData = callbackUserData
             }
-            /*  Although we are active we don't prevent mouse from hovering other elements unless we are interacting
-                right now with the widget.
-                Down the line we should have a cleaner library-wide concept of Selected vs Active.  */
+            // Although we are active we don't prevent mouse from hovering other elements unless we are interacting right now with the widget.
+            // Down the line we should have a cleaner library-wide concept of Selected vs Active.
             g.activeIdAllowOverlap = !io.mouseDown[0]
             g.wantTextInputNextFrame = 1
 
@@ -320,12 +319,11 @@ internal interface inputText {
                 else -> g.fontSize * 0.5f
             }
 
-            // OS X style: Double click selects by word instead of selecting whole text
             val isOsx = io.configMacOSXBehaviors
-            if (selectAll /*|| (hovered && !isOsx && io.mouseDoubleClicked[0])*/) { // [JVM] https://github.com/ocornut/imgui/pull/2244
+            if (selectAll || (hovered && !isOsx && io.mouseMultiClickCount[0] == 2)) {
                 state.selectAll()
                 state.selectedAllMouseLock = true
-            } else if (hovered /*&& isOsx*/ && io.mouseDoubleClicked[0]) { // [JVM] https://github.com/ocornut/imgui/pull/2244
+            } else if (hovered && isOsx && io.mouseMultiClickCount[0] == 2) {
                 // Double-click select a word only, OS X style (by simulating keystrokes)
                 state.onKeyPressed(K.WORDLEFT)
                 state.onKeyPressed(K.WORDRIGHT or K.SHIFT)

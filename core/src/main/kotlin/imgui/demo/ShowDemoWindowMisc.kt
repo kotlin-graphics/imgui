@@ -21,6 +21,7 @@ import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isMouseReleased
+import imgui.ImGui.isMouseTripleClicked
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.pushAllowKeyboardFocus
@@ -59,20 +60,27 @@ object ShowDemoWindowMisc {
                 text("Mouse down:")
                 for (i in 0 until io.mouseDown.size)
                     if (isMouseDown(MouseButton.of(i))) {
-                        sameLine()
-                        text("b$i (%.02f secs)", io.mouseDownDuration[i])
+                        sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i])
                     }
                 text("Mouse clicked:")
                 for (i in io.mouseDown.indices)
                     if (isMouseClicked(MouseButton of i)) {
-                        sameLine()
-                        text("b$i")
+                        sameLine(); text("b$i")
                     }
                 text("Mouse dblclick:")
                 for (i in io.mouseDown.indices)
                     if (isMouseDoubleClicked(MouseButton of i)) {
-                        sameLine()
-                        text("b$i")
+                        sameLine(); text("b$i")
+                    }
+                text("Mouse tripleclick:")
+                for (i in io.mouseDown.indices)
+                    if (isMouseTripleClicked(MouseButton of i)) {
+                        sameLine(); text("b$i")
+                    }
+                text("Mouse clickcount:")
+                for (i in io.mouseDown.indices)
+                    if (io.mouseMultiClickTracker[i] != 0) {
+                        sameLine(); text("b$i (${io.mouseMultiClickTracker[i]})")
                     }
                 text("Mouse released:")
                 for (i in io.mouseDown.indices)
@@ -137,7 +145,7 @@ object ShowDemoWindowMisc {
 
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
-                for(button in MouseButton.values())
+                for (button in MouseButton.values())
                     if (button != MouseButton.None) {
                         text("IsMouseDragging(${button.i}):")
                         text("  w/ default threshold: ${isMouseDragging(button).i},")
@@ -165,9 +173,9 @@ object ShowDemoWindowMisc {
                 text("Current mouse cursor = ${current.i}: $current")
                 text("Hover to see mouse cursors:")
                 sameLine(); helpMarker(
-                    "Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
-                    "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
-                    "otherwise your backend needs to handle it.")
+                "Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
+                        "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
+                        "otherwise your backend needs to handle it.")
                 for (i in 0 until MouseCursor.COUNT) {
                     bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
                     if (isItemHovered())
