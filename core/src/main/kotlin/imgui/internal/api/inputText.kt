@@ -305,8 +305,6 @@ internal interface inputText {
                 edited = false
                 bufCapacityA = buf.size
                 this.flags = flags
-                userCallback = callback
-                userCallbackData = callbackUserData
             }
             // Although we are active we don't prevent mouse from hovering other elements unless we are interacting right now with the widget.
             // Down the line we should have a cleaner library-wide concept of Selected vs Active.
@@ -540,10 +538,10 @@ internal interface inputText {
         }
 
         // Process callbacks and apply result back to user's buffer.
+        var applyNewText: ByteArray? = null
+        var applyNewTextLength = 0
         if (g.activeId == id) {
             state!!
-            var applyNewText: ByteArray? = null
-            var applyNewTextLength = 0
 
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
@@ -607,7 +605,7 @@ internal interface inputText {
                         cbData.flags = flags
                         cbData.userData = callbackUserData
 
-                        val callbackBuf = if(isReadOnly) buf else state.textA
+                        val callbackBuf = if (isReadOnly) buf else state.textA
                         cbData.eventKey = eventKey
                         cbData.buf = callbackBuf
                         cbData.bufTextLen = state.curLenA
@@ -667,43 +665,39 @@ internal interface inputText {
                     applyNewTextLength = state.curLenA
                 }
             }
-
-            // Copy result to user buffer
-            if (applyNewText != null) {
-                // We cannot test for 'backup_current_text_length != apply_new_text_length' here because we have no guarantee that the size
-                // of our owned buffer matches the size of the string object held by the user, and by design we allow InputText() to be used
-                // without any storage on user's side.
-                assert(applyNewTextLength >= 0)
-                if (isResizable) {
-                    val callbackData = InputTextCallbackData().also {
-                        it.eventFlag = Itf.CallbackResize.i
-                        it.flags = flags
-                        it.buf = buf
-                        it.bufTextLen = applyNewTextLength
-                        it.bufSize = buf.size max applyNewTextLength
-                        it.userData = callbackUserData
-                    }
-                    callback!!(callbackData)
-                    buf = callbackData.buf
-                    //                    buf_size = callback_data.BufSize; TODO?
-                    applyNewTextLength = callbackData.bufTextLen min buf.size
-                    assert(applyNewTextLength <= buf.size)
-                }
-                //IMGUI_DEBUG_LOG("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);
-
-                // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
-                System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)
-                if (applyNewTextLength < buf.size) buf[applyNewTextLength] = 0
-                valueChanged = true
-            }
-
             // Clear temporary user storage
-            state.apply {
-                this.flags = InputTextFlag.None.i
-                userCallback = null
-                userCallbackData = null
-            }
+            state.flags = InputTextFlag.None.i
         }
+
+        // Copy result to user buffer
+        if (applyNewText != null) {
+            // We cannot test for 'backup_current_text_length != apply_new_text_length' here because we have no guarantee that the size
+            // of our owned buffer matches the size of the string object held by the user, and by design we allow InputText() to be used
+            // without any storage on user's side.
+            assert(applyNewTextLength >= 0)
+            if (isResizable) {
+                val callbackData = InputTextCallbackData().also {
+                    it.eventFlag = Itf.CallbackResize.i
+                    it.flags = flags
+                    it.buf = buf
+                    it.bufTextLen = applyNewTextLength
+                    it.bufSize = buf.size max applyNewTextLength
+                    it.userData = callbackUserData
+                }
+                callback!!(callbackData)
+                buf = callbackData.buf
+                //                    buf_size = callback_data.BufSize; TODO?
+                applyNewTextLength = callbackData.bufTextLen min buf.size
+                assert(applyNewTextLength <= buf.size)
+            }
+            //IMGUI_DEBUG_LOG("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);
+
+            // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
+            System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)
+            if (applyNewTextLength < buf.size) buf[applyNewTextLength] = 0
+            valueChanged = true
+        }
+
         // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
         if (clearActiveId && g.activeId == id) clearActiveID()
 

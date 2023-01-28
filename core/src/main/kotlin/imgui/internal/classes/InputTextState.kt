@@ -58,12 +58,6 @@ class InputTextState {
     /** copy of InputText() flags */
     var flags: InputTextFlags = 0
 
-    /** Temporarily set when active */
-    var userCallback: InputTextCallback? = null
-
-    /** Temporarily set when active */
-    var userCallbackData: Any? = null
-
     fun clearText() {
         curLenW = 0
         curLenA = 0

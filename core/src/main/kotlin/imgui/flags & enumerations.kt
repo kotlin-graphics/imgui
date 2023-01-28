@@ -97,7 +97,7 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
 
     // [Internal]
 
-    /** [BETA] Allow gamepad/keyboard navigation to cross over parent border to this child (only use on child that have no scrolling!)   */
+    /** [BETA] On child window: allow gamepad/keyboard navigation to cross over parent border to this child or between sibling child windows. */
     _NavFlattened(1 shl 23),
 
     /** Don't use! For internal use by BeginChild() */
