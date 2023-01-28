@@ -964,7 +964,7 @@ fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow?
 
 fun findWindowFocusIndex(window: Window): Int {
     val order = window.focusOrder
-    assert(window.flags hasnt Wf._ChildWindow)
+    assert(window.rootWindow === window) { "No child window (not testing _ChildWindow because of docking)" }
     assert(g.windowsFocusOrder[order] == window)
     return order
 }
