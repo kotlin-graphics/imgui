@@ -916,7 +916,7 @@ fun navProcessItem() {
         val isTabbing = g.navMoveFlags hasnt NavMoveFlag.Tabbing
         if (isTabbing) {
             if (isTabStop || g.navMoveFlags has NavMoveFlag.FocusApi)
-                navProcessItemForTabbingRequest(window, id)
+                navProcessItemForTabbingRequest(id)
         } else if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
 
@@ -952,8 +952,9 @@ fun navProcessItem() {
 // - Case 3: tab forward wrap:    set result to first eligible item (preemptively), on ref id set counter, on next frame if counter hasn't elapsed store result. // FIXME-TABBING: Could be done as a next-frame forwarded request
 // - Case 4: tab backward:        store all results, on ref id pick prev, stop storing
 // - Case 5: tab backward wrap:   store all results, on ref id if no result keep storing until last // FIXME-TABBING: Could be done as next-frame forwarded requested
-fun navProcessItemForTabbingRequest(window: Window, id: ID) {
-    val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
+fun navProcessItemForTabbingRequest(id: ID) {
+    // Always store in NavMoveResultLocal (unlike directional request which uses NavMoveResultOther on sibling/flattened windows)
+    val result = g.navMoveResultLocal
     if (g.navTabbingDir == +1) {
         // Tab Forward or SetKeyboardFocusHere() with >= 0
         if (g.navTabbingResultFirst.id == 0)
