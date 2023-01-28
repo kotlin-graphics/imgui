@@ -192,7 +192,6 @@ internal interface basicHelpersForWidgetCode {
         // Increment counters
         // FIXME: ImGuiItemFlags_Disabled should disable more.
         val isTabStop = g.lastItemData.inFlags hasnt (ItemFlag.NoTabStop or ItemFlag.Disabled)
-        window.dc.focusCounterRegular++
         if (isTabStop) {
             window.dc.focusCounterTabStop++
             if (g.navId == id)
@@ -208,10 +207,6 @@ internal interface basicHelpersForWidgetCode {
 
         // Handle focus requests
         if (g.tabFocusRequestCurrWindow === window) {
-            if (window.dc.focusCounterRegular == g.tabFocusRequestCurrCounterRegular) {
-                g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.FocusedByCode
-                return
-            }
             if (isTabStop && window.dc.focusCounterTabStop == g.tabFocusRequestCurrCounterTabStop) {
                 g.navJustTabbedId = id // FIXME-NAV: aim to eventually set in NavUpdate() once we finish the refactor
                 g.lastItemData.statusFlags = g.lastItemData.statusFlags or ItemStatusFlag.FocusedByTabbing

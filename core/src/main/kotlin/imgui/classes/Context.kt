@@ -358,7 +358,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     
     /** Metrics for debugging   */
     var navScoringDebugCount = 0
-    
+
+    /** >0 when counting items for tabbing */
+    var navTabbingInputableRemaining = 0
+
     /** Best move request candidate within NavWindow    */
     var navMoveResultLocal = NavItemData()
 
@@ -395,14 +398,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var tabFocusRequestNextWindow: Window? = null
 
-    /** Any item being requested for focus, stored as an index (we on layout to be stable between the frame pressing TAB and the next frame, semi-ouch) */
-    var tabFocusRequestCurrCounterRegular = Int.MAX_VALUE
-
     /** Tab item being requested for focus, stored as an index */
     var tabFocusRequestCurrCounterTabStop = Int.MAX_VALUE
-
-    /** Stored for next frame */
-    var tabFocusRequestNextCounterRegular = Int.MAX_VALUE
 
     /** Stored for next frame */
     var tabFocusRequestNextCounterTabStop = Int.MAX_VALUE

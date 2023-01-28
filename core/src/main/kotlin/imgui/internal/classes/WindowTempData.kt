@@ -101,9 +101,6 @@ class WindowTempData {
 
     var parentLayoutType = LayoutType.Horizontal
 
-    /** (Legacy Focus/Tabbing system) Sequential counter, start at -1 and increase when ImGuiItemFlags_Inputable (FIXME-NAV: Needs redesign) */
-    var focusCounterRegular = 0
-
     /** (Legacy Focus/Tabbing system) Same, but only count widgets which you can Tab through. */
     var focusCounterTabStop = 0
 

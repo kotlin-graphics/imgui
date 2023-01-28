@@ -32,6 +32,7 @@ import imgui.ImGui.navInitWindow
 import imgui.ImGui.navMoveRequestApplyResult
 import imgui.ImGui.navMoveRequestButNoResultYet
 import imgui.ImGui.navMoveRequestForward
+import imgui.ImGui.navMoveRequestResolveWithLastItem
 import imgui.ImGui.navMoveRequestSubmit
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
@@ -111,6 +112,7 @@ fun navUpdate() {
     // Process navigation move request
     if (g.navMoveSubmitted)
         navMoveRequestApplyResult()
+    g.navTabbingInputableRemaining = 0
     g.navMoveSubmitted = false; g.navMoveScoringItems = false
 
     // Apply application mouse position movement, after we had a chance to process move request result.
@@ -846,6 +848,7 @@ fun navApplyItemToResult(result: NavItemData) {
     result.window = window
     result.id = g.lastItemData.id
     result.focusScopeId = window.dc.navFocusScopeIdCurrent
+    result.inFlags = g.lastItemData.inFlags
     result.rectRel put Rect(g.lastItemData.navRect.min - window.pos, g.lastItemData.navRect.max - window.pos)
 }
 
@@ -874,19 +877,30 @@ fun navProcessItem() {
 
     // Process Move Request (scoring for navigation)
     // FIXME-NAV: Consider policy for double scoring (scoring from NavScoringRect + scoring from a rect wrapped according to current wrapping policy)     */
-    if (g.navMoveScoringItems)
+    if (g.navMoveScoringItems) {
+
+        if (itemFlags has If.Inputable)
+            g.navTabbingInputableRemaining--
+
         if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
-            if (navScoreItem(result))
-                navApplyItemToResult(result)
 
-            // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
-            val VISIBLE_RATIO = 0.7f
-            if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
-                if (clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
-                    if (navScoreItem(g.navMoveResultLocalVisible))
-                        navApplyItemToResult(g.navMoveResultLocalVisible)
+            if (g.navMoveFlags has NavMoveFlag.Tabbing) {
+                if (g.navTabbingInputableRemaining == 0)
+                    navMoveRequestResolveWithLastItem()
+            } else {
+                if (navScoreItem(result))
+                    navApplyItemToResult(result)
+
+                // Features like PageUp/PageDown need to maintain a separate score for the visible set of items.
+                val VISIBLE_RATIO = 0.7f
+                if (g.navMoveFlags has NavMoveFlag.AlsoScoreVisibleSet && window.clipRect overlaps navBb)
+                    if (clamp(navBb.max.y, window.clipRect.min.y, window.clipRect.max.y) - clamp(navBb.min.y, window.clipRect.min.y, window.clipRect.max.y) >= (navBb.max.y - navBb.min.y) * VISIBLE_RATIO)
+                        if (navScoreItem(g.navMoveResultLocalVisible))
+                            navApplyItemToResult(g.navMoveResultLocalVisible)
+            }
         }
+    }
 
     // Update window-relative bounding box of navigated item
     if (g.navId == id) {

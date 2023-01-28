@@ -218,7 +218,6 @@ fun updateTabFocus() {
         // - Note that SetKeyboardFocusHere() sets the Next fields mid-frame. To be consistent we also
         //   manipulate the Next fields here even though they will be turned into Curr fields below.
         g.tabFocusRequestNextWindow = g.navWindow
-        g.tabFocusRequestNextCounterRegular = Int.MAX_VALUE
         g.tabFocusRequestNextCounterTabStop = when {
             g.navId != 0 && g.navIdTabCounter != Int.MAX_VALUE -> g.navIdTabCounter + 1 + if (io.keyShift) -1 else 0
             else -> if (io.keyShift) -1 else 0
@@ -227,16 +226,12 @@ fun updateTabFocus() {
 
     // Turn queued focus request into current one
     g.tabFocusRequestCurrWindow = null
-    g.tabFocusRequestCurrCounterRegular = Int.MAX_VALUE
     g.tabFocusRequestCurrCounterTabStop = Int.MAX_VALUE
     g.tabFocusRequestNextWindow?.let { window ->
         g.tabFocusRequestCurrWindow = window
-        if (g.tabFocusRequestNextCounterRegular != Int.MAX_VALUE && window.dc.focusCounterRegular != -1)
-            g.tabFocusRequestCurrCounterRegular = modPositive(g.tabFocusRequestNextCounterRegular, window.dc.focusCounterRegular + 1)
         if (g.tabFocusRequestNextCounterTabStop != Int.MAX_VALUE && window.dc.focusCounterTabStop != -1)
             g.tabFocusRequestCurrCounterTabStop = modPositive(g.tabFocusRequestNextCounterTabStop, window.dc.focusCounterTabStop + 1)
         g.tabFocusRequestNextWindow = null
-        g.tabFocusRequestNextCounterRegular = Int.MAX_VALUE
         g.tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
     }
 

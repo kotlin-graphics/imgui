@@ -93,12 +93,8 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     /** Override the HoveredWindow test to allow cross-window hover testing. */
     HoveredWindow(1 shl 7),
 
-    /** Set when the Focusable item just got focused from code. */
-    FocusedByCode(1 shl 8),
-
-    /** Set when the Focusable item just got focused by Tabbing. */
-    FocusedByTabbing(1 shl 9),
-    Focused(FocusedByCode or FocusedByTabbing),
+    /** Set when the Focusable item just got focused by Tabbing (FIXME: to be removed soon) */
+    FocusedByTabbing(1 shl 8),
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
     //  [imgui-test only]
@@ -492,8 +488,10 @@ class NavItemData {
     var focusScopeId: ID = 0
 
     /** Init,Move    // Best candidate bounding box in window relative space */
-    var rectRel = Rect()
+    lateinit var rectRel: Rect
 
+    /** ????,Move    // Best candidate item flags */
+    var inFlags = ItemFlag.None.i
     /**      Move    // Best candidate box distance to current NavId */
     var distBox = Float.MAX_VALUE
 

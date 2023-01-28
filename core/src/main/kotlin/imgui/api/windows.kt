@@ -602,17 +602,14 @@ interface windows {
                 dc.cursorPos put dc.cursorStartPos
                 dc.cursorPosPrevLine put dc.cursorPos
                 dc.cursorMaxPos put dc.cursorStartPos
-                dc.prevLineSize put 0f
-                dc.currLineSize put 0f
+                dc.currLineSize put 0f; dc.prevLineSize put 0f
                 dc.idealMaxPos put dc.cursorStartPos
-                dc.prevLineTextBaseOffset = 0f
-                dc.currLineTextBaseOffset = 0f
+                dc.currLineTextBaseOffset = 0f; dc.prevLineTextBaseOffset = 0f
 
                 dc.navLayerCurrent = NavLayer.Main
                 dc.navLayersActiveMask = dc.navLayersActiveMaskNext
                 dc.navLayersActiveMaskNext = 0x00
-                dc.navFocusScopeIdCurrent =
-                    if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
+                dc.navFocusScopeIdCurrent = if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = scrollMax.y > 0f
 
@@ -626,7 +623,6 @@ interface windows {
                 dc.layoutType = Lt.Vertical
                 dc.parentLayoutType = parentWindow?.dc?.layoutType ?: Lt.Vertical
                 dc.focusCounterTabStop = -1
-                dc.focusCounterRegular = -1
 
                 dc.itemWidth = itemWidthDefault
                 dc.textWrapPos = -1f // disabled

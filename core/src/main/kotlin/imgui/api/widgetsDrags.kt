@@ -247,16 +247,16 @@ interface widgetsDrags {
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.Focused
+            val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && ImGui.io.mouseClicked[0]
             val doubleClicked = hovered && ImGui.io.mouseDoubleClicked[0]
-            if (focusRequested || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id) {
+            if (inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id) {
                 ImGui.setActiveID(id, window)
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
                 if (tempInputAllowed)
-                    if (focusRequested || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id)
+                    if (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id)
                         tempInputIsActive = true
             }
 

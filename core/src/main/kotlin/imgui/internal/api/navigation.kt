@@ -11,6 +11,7 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
+import imgui.static.navApplyItemToResult
 import imgui.static.navUpdateAnyRequestFlag
 
 // Gamepad/Keyboard Navigation
@@ -60,8 +61,14 @@ internal interface navigation {
     fun navMoveRequestButNoResultYet(): Boolean = g.navMoveScoringItems && g.navMoveResultLocal.id == 0 && g.navMoveResultOther.id == 0
 
     /** FIXME: ScoringRect is not set */
-    fun navMoveRequestSubmit(moveDir: Dir, clipDir: Dir, moveFlags: NavMoveFlags, scrollFlags: ScrollFlags) {
+    fun navMoveRequestSubmit(moveDir: Dir, clipDir: Dir, moveFlags_: NavMoveFlags, scrollFlags: ScrollFlags) {
+
+        var moveFlags = moveFlags_
         assert(g.navWindow != null)
+
+        if (moveFlags has NavMoveFlag.Tabbing)
+            moveFlags /= NavMoveFlag.AllowCurrentNavId
+
         g.navMoveSubmitted = true; g.navMoveScoringItems = true
         g.navMoveDir = moveDir
         g.navMoveDirForDebug = moveDir
@@ -70,6 +77,7 @@ internal interface navigation {
         g.navMoveScrollFlags = scrollFlags
         g.navMoveForwardToNextFrame = false
         g.navMoveKeyMods = g.io.keyMods
+        g.navTabbingInputableRemaining = 0
         g.navMoveResultLocal.clear()
         g.navMoveResultLocalVisible.clear()
         g.navMoveResultOther.clear()
@@ -88,6 +96,12 @@ internal interface navigation {
         g.navMoveScrollFlags = scrollFlags
     }
 
+    fun navMoveRequestResolveWithLastItem() {
+        g.navMoveScoringItems = false // Ensure request doesn't need more processing
+        navApplyItemToResult(g.navMoveResultLocal)
+        navUpdateAnyRequestFlag()
+    }
+
     fun navMoveRequestCancel() {
         g.navMoveSubmitted = false; g.navMoveScoringItems = false
         navUpdateAnyRequestFlag()
@@ -101,12 +115,13 @@ internal interface navigation {
                 return
 
         // Select which result to use
-        var result = if(g.navMoveResultLocal.id != 0) g.navMoveResultLocal else if(g.navMoveResultOther.id != 0) g.navMoveResultOther else null
+        var result = if (g.navMoveResultLocal.id != 0) g.navMoveResultLocal else if (g.navMoveResultOther.id != 0) g.navMoveResultOther else null
 
         // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
         if (result == null) {
-            // In a situation when there is no results but NavId != 0, re-enable the Navigation highlight (because g.NavId is not considered as a possible result)
-            if (g.navId != 0) {
+            if (g.navMoveFlags has NavMoveFlag.Tabbing)
+                g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
+            if (g.navId != 0 && g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight) {
                 g.navDisableHighlight = false
                 g.navDisableMouseHover = true
             }
@@ -156,9 +171,24 @@ internal interface navigation {
         IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: result NavID 0x%08X in Layer ${g.navLayer} Window \"${window.name}\"", result.id) // [JVM] window *is* g.navWindow!!
         setNavID(result.id, g.navLayer, result.focusScopeId, result.rectRel)
 
+        // Tabbing: Activates Inputable or Focus non-Inputable
+        if (g.navMoveFlags has NavMoveFlag.Tabbing && result.inFlags has ItemFlag.Inputable) {
+            g.navNextActivateId = result.id
+            g.navNextActivateFlags = ActivateFlag.PreferInput or ActivateFlag.TryToPreserveState
+            g.navMoveFlags /= NavMoveFlag.DontSetNavHighlight
+        }
+
+        // Activate
+        if (g.navMoveFlags has NavMoveFlag.Activate) {
+            g.navNextActivateId = result.id
+            g.navNextActivateFlags = ActivateFlag.None.i
+        }
+
         // Enable nav highlight
-        g.navDisableHighlight = false
-        g.navDisableMouseHover = true; g.navMousePosDirty = true
+        if (g.navMoveFlags hasnt NavMoveFlag.DontSetNavHighlight) {
+            g.navDisableHighlight = false
+            g.navDisableMouseHover = true; g.navMousePosDirty = true
+        }
     }
 
 

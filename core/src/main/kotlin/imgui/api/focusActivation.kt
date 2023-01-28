@@ -1,9 +1,15 @@
 package imgui.api
 
+import imgui.Dir
 import imgui.ImGui.currentWindow
 import imgui.ImGui.isItemVisible
+import imgui.ImGui.navMoveRequestResolveWithLastItem
+import imgui.ImGui.navMoveRequestSubmit
 import imgui.ImGui.setScrollHereY
 import imgui.internal.classes.Rect
+import imgui.internal.sections.NavMoveFlag
+import imgui.internal.sections.ScrollFlag
+import imgui.internal.sections.or
 import imgui.static.navUpdateAnyRequestFlag
 
 
@@ -32,8 +38,13 @@ interface focusActivation {
     fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
         assert(offset >= -1) { "-1 is allowed but not below" }
         val window = g.currentWindow!!
-        g.tabFocusRequestNextWindow = window
-        g.tabFocusRequestNextCounterRegular = window.dc.focusCounterRegular + 1 + offset
-        g.tabFocusRequestNextCounterTabStop = Int.MAX_VALUE
+        assert(offset >= -1) { "-1 is allowed but not below" }
+        g.navWindow = window
+        val scrollFlags = if(window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
+        navMoveRequestSubmit(Dir.None, Dir.None, NavMoveFlag.Tabbing.i, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
+        if (offset == -1)
+            navMoveRequestResolveWithLastItem()
+        else
+            g.navTabbingInputableRemaining = offset + 1
     }
 }

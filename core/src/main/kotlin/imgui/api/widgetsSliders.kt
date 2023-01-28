@@ -167,14 +167,14 @@ interface widgetsSliders {
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
-            val focusRequested = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.Focused
+            val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && ImGui.io.mouseClicked[0]
-            if (focusRequested || clicked || g.navActivateId == id || g.navActivateInputId == id) {
+            if (inputRequestedByTabbing || clicked || g.navActivateId == id || g.navActivateInputId == id) {
                 ImGui.setActiveID(id, window)
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
-                if (tempInputAllowed && (focusRequested || (clicked && ImGui.io.keyCtrl) || g.navActivateInputId == id))
+                if (tempInputAllowed && (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || g.navActivateInputId == id))
                     tempInputIsActive = true
             }
         }

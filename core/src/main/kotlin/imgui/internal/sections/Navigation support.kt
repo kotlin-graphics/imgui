@@ -66,6 +66,7 @@ enum class ScrollFlag(@JvmField val i: ScrollFlags) {
     NoScrollParent(1 shl 6),
     MaskX_(KeepVisibleEdgeX or KeepVisibleCenterX or AlwaysCenterX),
     MaskY_(KeepVisibleEdgeY or KeepVisibleCenterY or AlwaysCenterY);
+
     infix fun and(b: ScrollFlag): ScrollFlags = i and b.i
     infix fun and(b: ScrollFlags): ScrollFlags = i and b
     infix fun or(b: ScrollFlag): ScrollFlags = i or b.i
@@ -163,7 +164,14 @@ enum class NavMoveFlag {
     /** Force scrolling to min/max (used by Home/End) // FIXME-NAV: Aim to remove or reword, probably unnecessary */
     ScrollToEdgeY,
     Forwarded,
-    DebugNoResult;
+
+    /** Dummy scoring for debug purpose, don't apply result */
+    DebugNoResult,
+    /** == Focus + Activate if item is Inputable + DontChangeNavHighlight */
+    Tabbing,
+    Activate,
+    /** Do not alter the visible state of keyboard vs mouse nav highlight */
+    DontSetNavHighlight;
 
     val i: NavMoveFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 

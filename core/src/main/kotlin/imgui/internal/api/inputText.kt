@@ -166,21 +166,19 @@ internal interface inputText {
         // We are only allowed to access the state if we are already the active widget.
         var state = getInputTextState(id)
 
-        val focusRequestedByCode = itemStatusFlags has ItemStatusFlag.FocusedByCode
-        val focusRequestedByTabbing = itemStatusFlags has ItemStatusFlag.FocusedByTabbing
+        val inputRequestedByTabbing = itemStatusFlags has ItemStatusFlag.FocusedByTabbing
+        val inputRequestedByNav = g.activeId != id && (g.navActivateInputId == id || (g.navActivateId == id && g.navInputSource == InputSource.Keyboard))
 
         val userClicked = hovered && io.mouseClicked[0]
-        val userNavInputStart = g.activeId != id && (g.navActivateInputId == id || g.navActivateId == id)
         val userScrollFinish = isMultiline && state != null && g.activeId == 0 && g.activeIdPreviousFrame == drawWindow getScrollbarID Axis.Y
         val userScrollActive = isMultiline && state != null && g.activeId == drawWindow getScrollbarID Axis.Y
-
         var clearActiveId = false
-        var selectAll = g.activeId != id && (flags has Itf.AutoSelectAll || userNavInputStart) && !isMultiline
+        var selectAll = false
 
         var scrollY = if (isMultiline) drawWindow.scroll.y else Float.MAX_VALUE
 
         val initChangedSpecs = state != null && state.stb.singleLine != !isMultiline
-        val initMakeActive = userClicked || userScrollFinish || userNavInputStart || focusRequestedByCode || focusRequestedByTabbing
+        val initMakeActive = userClicked || userScrollFinish || inputRequestedByNav || inputRequestedByTabbing
         val initState = initMakeActive || userScrollActive
         if ((initState && g.activeId != id) || initChangedSpecs) {
             // Access state even if we don't own it yet.
@@ -211,21 +209,24 @@ internal interface inputText {
                 For non-readonly widgets we might be able to require that TextAIsValid && TextA == buf ? (untested) and discard undo stack if user buffer has changed. */
             val recycleState = state.id == id && !initChangedSpecs
             if (recycleState)
-            /*  Recycle existing cursor/selection/undo stack but clamp position
-                Note a single mouse click will override the cursor/position immediately by calling
-                stb_textedit_click handler.                     */
+            // Recycle existing cursor/selection/undo stack but clamp position
+            // Note a single mouse click will override the cursor/position immediately by calling stb_textedit_click handler.
                 state.cursorClamp()
             else {
                 state.id = id
                 state.scrollX = 0f
                 state.stb initialize !isMultiline
-                if (!isMultiline && focusRequestedByCode)
+            }
+            if (!isMultiline) {
+                if (flags has InputTextFlag.AutoSelectAll)
+                    selectAll = true
+                if (inputRequestedByNav && (!recycleState || g.navActivateFlags hasnt ActivateFlag.TryToPreserveState))
+                    selectAll = true
+                if (inputRequestedByTabbing || (userClicked && io.keyCtrl))
                     selectAll = true
             }
             if (flags has Itf.AlwaysOverwrite)
                 state.stb.insertMode = true // stb field name is indeed incorrect (see #2863)
-            if (!isMultiline && (focusRequestedByTabbing || (userClicked && io.keyCtrl)))
-                selectAll = true
         }
 
         if (g.activeId != id && initMakeActive) {
@@ -355,7 +356,7 @@ internal interface inputText {
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
             if (io.inputQueueCharacters.isNotEmpty()) {
-                if (!ignoreCharInputs && !isReadOnly && !userNavInputStart)
+                if (!ignoreCharInputs && !isReadOnly && !inputRequestedByNav)
                     io.inputQueueCharacters.filter { it != NUL || (it == '\t' && io.keyShift) }.map {
                         // TODO check
                         withChar { c -> // Insert character if they pass filtering
@@ -397,7 +398,7 @@ internal interface inputText {
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
             val isValidateEnter = Key.Enter.isPressed || Key.KeyPadEnter.isPressed
             val isValidateNav = (NavInput.Activate isTest InputReadMode.Pressed && !Key.Space.isPressed) || NavInput.Input isTest InputReadMode.Pressed
-            val isCancel   = Key.Escape.isPressed || NavInput.Cancel isTest InputReadMode.Pressed
+            val isCancel = Key.Escape.isPressed || NavInput.Cancel isTest InputReadMode.Pressed
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(
