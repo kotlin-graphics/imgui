@@ -64,40 +64,6 @@ interface miscellaneousUtilities {
             window.dc.stateStorage = value ?: window.stateStorage
         }
 
-    /** Helper to calculate coarse clipping of large list of evenly sized items.
-     *  NB: Prefer using the ImGuiListClipper higher-level helper if you can! Read comments and instructions there on how those use this sort of pattern.
-     *  NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX
-     *  FIXME: This legacy API is not ideal because it assume we will return a single contiguous rectangle.
-     *  Prefer using ImGuiListClipper which returns disconnected ranges. */
-    fun calcListClipping(itemsCount: Int, itemsHeight: Float): Pair<Int, Int> {
-        val window = g.currentWindow!!
-        return when {
-            g.logEnabled -> 0 to itemsCount // If logging is active, do not perform any clipping
-            skipItemForListClipping -> 0 to 0
-            else -> {
-                // We don't include g.NavId's rectangle in there (unless g.NavJustMovedToId is set) because the rectangle enlargement can get costly.
-                val rect = window.clipRect
-                if (g.navMoveScoringItems)
-                    rect add g.navScoringNoClipRect
-                if (g.navJustMovedToId != 0 && window.navLastIds[0] == g.navJustMovedToId)
-                    rect add (window rectRelToAbs window.navRectRel[0]) // Could store and use NavJustMovedToRectRel
-
-                val pos = window.dc.cursorPos
-                var start = ((rect.min.y - pos.y) / itemsHeight).i
-                var end = ((rect.max.y - pos.y) / itemsHeight).i
-
-                // When performing a navigation request, ensure we have one item extra in the direction we are moving to
-                if (g.navMoveScoringItems && g.navMoveDir == Dir.Up)
-                    start--
-                if (g.navMoveScoringItems && g.navMoveDir == Dir.Down)
-                    end++
-                start = glm.clamp(start, 0, itemsCount)
-                end = glm.clamp(end + 1, start, itemsCount)
-                start to end
-            }
-        }
-    }
-
 
     /** helper to create a child window / scrolling region that looks like a normal widget frame    */
     fun beginChildFrame(id: ID, size: Vec2, extraFlags: WindowFlags = 0): Boolean {
