@@ -54,8 +54,8 @@ internal interface scrolling {
 
         val fullyVisibleX = itemRect.min.x >= windowRect.min.x && itemRect.max.x <= windowRect.max.x
         val fullyVisibleY = itemRect.min.y >= windowRect.min.y && itemRect.max.y <= windowRect.max.y
-        val canBeFullyVisibleX = itemRect.width <= windowRect.width
-        val canBeFullyVisibleY = itemRect.height <= windowRect.height
+        val canBeFullyVisibleX = (itemRect.width + g.style.itemSpacing.x * 2f) <= windowRect.width
+        val canBeFullyVisibleY = (itemRect.height + g.style.itemSpacing.y * 2f) <= windowRect.height
 
         if (flags has ScrollFlag.KeepVisibleEdgeX && !fullyVisibleX) {
             if (itemRect.min.x < windowRect.min.x || !canBeFullyVisibleX)

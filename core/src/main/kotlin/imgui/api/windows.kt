@@ -449,7 +449,7 @@ interface windows {
                 // Inner rectangle
                 // Not affected by window border size. Used by:
                 // - InnerClipRect
-                // - NavScrollToBringItemIntoView()
+                // - ScrollToRectEx()
                 // - NavUpdatePageUpPageDown()
                 // - Scrollbar()
                 innerRect.put(minX = pos.x,
