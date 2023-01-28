@@ -870,7 +870,7 @@ class Window(var context: Context,
             val axis = if (borderN == Dir.Left.i || borderN == Dir.Right.i) Axis.X else Axis.Y
             val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_HOVER_PADDING)
             val borderId = getID(borderN + 4) // == GetWindowResizeBorderID()
-            val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren)
+            val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
             //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
             if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
                 g.mouseCursor = if (axis == Axis.X) MouseCursor.ResizeEW else MouseCursor.ResizeNS
@@ -1044,6 +1044,7 @@ class Window(var context: Context,
         val hasCollapseButton = flags hasnt Wf.NoCollapse && style.windowMenuButtonPosition != Dir.None
 
         // Close & Collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
+        // FIXME-NAV: Might want (or not?) to set the equivalent of ImGuiButtonFlags_NoNavFocus so that mouse clicks on standard title bar items don't necessarily set nav/keyboard ref?
         val itemFlagsBackup = g.currentItemFlags
         g.currentItemFlags = g.currentItemFlags or ItemFlag.NoNavDefaultFocus
         dc.navLayerCurrent = NavLayer.Menu

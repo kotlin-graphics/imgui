@@ -593,6 +593,9 @@ fun navUpdatePageUpPageDown(): Float {
     if (pageUpHeld == pageDownHeld && homePressed == endPressed) // Proceed if either (not both) are pressed, otherwise early out
         return 0f
 
+    if (g.navLayer != NavLayer.Main)
+        navRestoreLayer(NavLayer.Main)
+
     if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
         // Fallback manual-scroll when window has no navigable item
         when {
