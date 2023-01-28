@@ -145,7 +145,7 @@ internal interface navigation {
             if (g.navMoveFlags has NavMoveFlag.ScrollToEdgeY) {
                 // FIXME: Should remove this
                 val scrollTarget = if (g.navMoveDir == Dir.Up) window.scrollMax.y else 0f
-                deltaScroll.y = window.scroll.y - scrollTarget
+                deltaScroll.y = scrollTarget - window.scroll.y
                 window setScrollY scrollTarget
             } else {
                 val rectAbs = Rect(result.rectRel.min + window.pos, result.rectRel.max + window.pos)
