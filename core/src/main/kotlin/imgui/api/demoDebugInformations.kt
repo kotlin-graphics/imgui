@@ -599,7 +599,7 @@ interface demoDebugInformations {
     }
 
     /** Demo helper function to select among loaded fonts.
-     *  Here we use the regular beginCombo()/endCombo() api which is more the more flexible one.
+     *  Here we use the regular BeginCombo()/EndCombo() api which is the more flexible one.
      *
      *  add font selector block (not a window), essentially a combo listing the loaded fonts. */
     fun showFontSelector(label: String) {
