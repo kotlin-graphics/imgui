@@ -22,7 +22,7 @@ internal interface inputs {
         assert(g.activeId != 0)
         g.activeIdUsingNavDirMask = 0.inv()
         g.activeIdUsingNavInputMask = 0.inv()
-        g.activeIdUsingKeyInputMask = 0.inv()
+        g.activeIdUsingKeyInputMask.setAllBits()
         navMoveRequestCancel()
     }
 

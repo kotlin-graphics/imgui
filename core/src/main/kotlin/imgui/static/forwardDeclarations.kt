@@ -270,10 +270,3 @@ val setPlatformImeDataFn_DefaultImpl = { viewport: Viewport, data: PlatformImeDa
         }
     }
 }
-
-// ImGuiKey <-> user key index mapping functions
-fun getKeyDataIndexInternal(imguiKeyOrUserKeyIndex: Int): Int = when {
-    imguiKeyOrUserKeyIndex < 0 -> -1
-    imguiKeyOrUserKeyIndex >= Key.BEGIN && imguiKeyOrUserKeyIndex < Key.END -> imguiKeyOrUserKeyIndex - Key.BEGIN
-    else -> -1
-}

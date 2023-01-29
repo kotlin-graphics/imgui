@@ -90,7 +90,7 @@ object ShowDemoWindowMisc {
                         sameLine(); text("\"$key\" $i (0x%X)", i)
                     }
                 }
-                text("Keys release:")
+                text("Keys released:")
                 for (i in io.keysData.indices) {
                     val key = Key of (i + Key.BEGIN)
                     if (key.isReleased) {
@@ -114,7 +114,9 @@ object ShowDemoWindowMisc {
                 io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f (%.02f secs)", it, io.navInputsDownDuration[i]) }
                 text("NavInputs pressed:")
                 io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, _ -> sameLine(); text("[$i]") }
+            }
 
+            treeNode("Capture override") {
                 button("Hovering me sets the\nkeyboard capture flag")
                 if (isItemHovered())
                     captureKeyboardFromApp(true)

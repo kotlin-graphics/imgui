@@ -156,7 +156,6 @@ interface main {
         if (g.activeId == 0) {
             g.activeIdUsingNavInputMask = 0
             g.activeIdUsingNavDirMask = 0
-            g.activeIdUsingKeyInputMask = 0
         }
 
         // Drag and drop
@@ -179,18 +178,8 @@ interface main {
         }
 
         // Update keyboard input state
-        // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
-        io.keyMods = mergedKeyModFlags
-        for (i in io.keysDownDuration.indices)
-            io.keysDownDurationPrev[i] = io.keysDownDuration[i]
-        for (i in io.keysDown.indices)
-            io.keysDownDuration[i] = when {
-                io.keysDown[i] -> when {
-                    io.keysDownDuration[i] < 0f -> 0f
-                    else -> io.keysDownDuration[i] + io.deltaTime
-                }
-                else -> -1f
-            }
+        updateKeyboardInputs()
+
         // Update gamepad/keyboard navigation
         navUpdate()
 

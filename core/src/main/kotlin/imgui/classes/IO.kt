@@ -11,7 +11,6 @@ import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
-import imgui.static.getKeyDataIndexInternal
 import imgui.static.setClipboardTextFn_DefaultImpl
 import imgui.static.setPlatformImeDataFn_DefaultImpl
 import org.lwjgl.system.Platform
@@ -24,14 +23,17 @@ import uno.kotlin.NUL
 // Access via ::io. Read 'Programmer guide' section in .cpp file for general usage.
 //-----------------------------------------------------------------------------
 
+
+// [Internal] Storage used by IsKeyDown(), IsKeyPressed() etc functions.
+// If prior to 1.87 you used io.KeysDownDuration[] (which was marked as internal), you should use GetKeyData(key)->DownDuration and not io.KeysData[key]->DownDuration.
 class KeyData {
     /** True for if key is down */
     var down = false
 
-    /** Duration the keyboard key has been down (0.0f == just pressed) */
+    /** Duration the key has been down (<0.0f: not pressed, 0.0f: just pressed, >0.0f: time held) */
     var downDuration = 0f
 
-    /** Previous duration the key has been down */
+    /** Last frame duration the key has been down */
     var downDurationPrev = 0f
 }
 
@@ -189,16 +191,20 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // Input Functions
 
 
-    /** Notify Dear ImGui of key down/up event */
-    fun addKeyEvent(key: Key, down: Boolean, native_keycode: Int = -1, native_scancode: Int = -1) {
+    /** Queue a new key down/up event.
+     *  - ImGuiKey key: Translated key (as in, generally ImGuiKey_A matches the key end-user would use to emit an 'A' character)
+     *  - bool down:    Is the key down? use false to signify a key release.
+     *  FIXME: In the current version this is setting key data immediately. This will evolve into a trickling queue. */
+    fun addKeyEvent(key: Key, down: Boolean) {
 //        IM_UNUSED(native_keycode);
 //        IM_UNUSED(native_scancode);
 
-        val keyIndex = getKeyDataIndexInternal(key.i)
-        if (keyIndex < 0)
+        //if (e->Down) { IMGUI_DEBUG_LOG("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
+        if (key == Key.None)
             return
 
-        keysData[keyIndex].down = down
+        backendUsingLegacyKeyArrays = 0
+        keysData[key.i].down = down
     }
 
     /** Queue an hosting application/platform windows gain or loss of focus */
@@ -278,6 +284,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         }
     }
 
+    /** [Optional] Specify index for legacy <1.87 IsKeyXXX() functions with native indices + specify native keycode, scancode. */
+    fun setKeyEventNativeData(key: Key, native_keycode: Int, native_scancode: Int, native_legacy_index: Int = -1) {
+
+    }
+
 
     //------------------------------------------------------------------
     // Output - Updated by NewFrame() or EndFrame()/Render()
@@ -342,7 +353,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Key mods flags (from previous frame) */
     var keyModsPrev: KeyModFlags = KeyMod.None.i
 
-    /** Key state for all known keys. */
+    /** Key state for all known keys. Use IsKeyXXX() functions to access this. */
     val keysData = Array(Key.COUNT) { KeyData().apply { downDuration = -1f; downDurationPrev = -1f } }
 
     /** Alternative to WantCaptureMouse: (WantCaptureMouse == true && WantCaptureMouseUnlessPopupClose == false) when a click over void is expected to close a popup. */
@@ -395,6 +406,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     var penPressure = 0f
 
     var appFocusLost = false
+
+    /** -1: unknown, 0: using AddKeyEvent(), 1: using legacy io.KeysDown[] */
+    var backendUsingLegacyKeyArrays = -1
 
     /** For AddInputCharacterUTF16() */
     var inputQueueSurrogate = NUL

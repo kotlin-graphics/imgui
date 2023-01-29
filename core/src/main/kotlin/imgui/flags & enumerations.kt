@@ -4,12 +4,10 @@ import glm_.has
 import glm_.hasnt
 import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
-import imgui.ImGui.getKeyPressedAmount
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.internal.sections.InputReadMode
-import imgui.static.getKeyDataIndexInternal
 import org.lwjgl.system.Platform
 
 
@@ -1188,6 +1186,12 @@ enum class Key {
     F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
     Count;
 
+    val index: Int
+        get() {
+            check(i >= Key.BEGIN && i < Key.END) { "ImGuiKey and native_index was merged together and native_index is disabled by IMGUI_DISABLE_OBSOLETE_KEYIO. Please switch to ImGuiKey." }
+            return i
+        }
+
     companion object {
         val COUNT = values().size
         val BEGIN = None.i
@@ -1201,17 +1205,12 @@ enum class Key {
 
     /** ~IsKeyDown
      *
-     *  is key being held. == io.KeysData[key - ImGuiKey_FirstKey].Down. */
+     *  is key being held.
+     *
+     *  Note that Dear ImGui doesn't know the meaning/semantic of ImGuiKey from 0..511: they are legacy native keycodes.
+     *  Consider transitioning from 'IsKeyDown(MY_ENGINE_KEY_A)' (<1.87) to IsKeyDown(ImGuiKey_A) (>= 1.87) */
     val isDown: Boolean
-        get() {
-            assert(i in BEGIN until END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
-
-            val keyIndex = getKeyDataIndexInternal(i)
-            if (keyIndex < 0)
-                return false
-            assert(keyIndex in g.io.keysData.indices)
-            return g.io.keysData[keyIndex].down
-        }
+        get() = g.io.keysData[i].down
 
     /** [JVM] ~IsKeyPressed
      *
@@ -1222,15 +1221,12 @@ enum class Key {
     fun isPressed(repeat: Boolean): Boolean {
         assert(i >= Key.BEGIN && i < Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
 
-        val keyIndex = getKeyDataIndexInternal(i)
-        if (i < 0)
-            return false
-        assert(keyIndex in g.io.keysData.indices)
-        val t = g.io.keysData[keyIndex].downDuration
+        assert(i in g.io.keysData.indices)
+        val t = g.io.keysData[i].downDuration
         if (t == 0f)
             return true
         if (repeat && t > io.keyRepeatDelay)
-            return getKeyPressedAmount(i, io.keyRepeatDelay, io.keyRepeatRate) > 0
+            return getPressedAmount(io.keyRepeatDelay, io.keyRepeatRate) > 0
         return false
     }
 
@@ -1242,15 +1238,16 @@ enum class Key {
      *
      *  was key released (went from Down to !Down)?    */
     val isReleased: Boolean
-        get() {
-            assert(i >= Key.BEGIN && i < Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
+        get() = g.io.keysData[i].run { downDurationPrev >= 0f && !down }
 
-            val keyIndex = getKeyDataIndexInternal(i)
-            if (keyIndex < 0)
-                return false
-            assert(keyIndex in g.io.keysData.indices)
-            return g.io.keysData[keyIndex].downDurationPrev >= 0f && !g.io.keysData[keyIndex].down
-        }
+    /** ~getKeyPressedAmount
+     *
+     *  Uses provided repeat rate/delay. return a count, most often 0 or 1 but might be >1 if RepeatRate is small enough
+     *  that DeltaTime > RepeatRate */
+    fun getPressedAmount(repeatDelay: Float, repeatRate: Float): Int {
+        val t = io.keysData[i].downDuration
+        return ImGui.calcTypematicRepeatAmount(t - io.deltaTime, t, repeatDelay, repeatRate)
+    }
 }
 
 infix fun Long.shl(key: Key) = shl(key.i)
@@ -1285,10 +1282,8 @@ typealias KeyModFlags = Int
 
 
 /** Gamepad/Keyboard navigation
- *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[]
- *  based on your io.keysDown[] + io.keyMap[] arrays.
- *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling
- *  ::newFrame(). Note that io.navInputs[] is cleared by ::endFrame().
+ *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[] based on your io.AddKeyEvent() calls.
+ *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling NewFrame(). Note that io.navInputs[] is cleared by EndFrame().
  *  Read instructions in imgui.cpp for more details. Download PNG/PSD at http://dearimgui.org/controls_sheets.
  *
  *  An input identifier for navigation */
@@ -1337,7 +1332,7 @@ enum class NavInput {
     TweakFast,
 
     // [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for behaviors that require to differentiate them.
-    // Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL+TAB) will be directly reading from io.KeysDown[] instead of io.NavInputs[].
+    // Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL+TAB) will be directly reading from keyboard keys instead of io.NavInputs[].
 
     /** Move left = Arrow keys  */
     _KeyLeft,
@@ -1391,7 +1386,7 @@ typealias ConfigFlags = Int
 enum class ConfigFlag(@JvmField val i: ConfigFlags) {
     None(0),
 
-    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.KeysDown[]. */
+    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.AddKeyEvent() calls. */
     NavEnableKeyboard(1 shl 0),
 
     /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].
