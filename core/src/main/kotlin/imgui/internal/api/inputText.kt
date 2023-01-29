@@ -818,7 +818,7 @@ internal interface inputText {
                     // Test if cursor is vertically visible
                     if (cursorOffset.y - g.fontSize < scrollY)
                         scrollY = glm.max(0f, cursorOffset.y - g.fontSize)
-                    else if (cursorOffset.y - innerSize.y >= scrollY)
+                    else if (cursorOffset.y - (innerSize.y - style.framePadding.y * 2f) >= scrollY)
                         scrollY = cursorOffset.y - innerSize.y + style.framePadding.y * 2f
                     val scrollMaxY = ((textSize.y + style.framePadding.y * 2f) - innerSize.y) max 0f
                     scrollY = clamp(scrollY, 0f, scrollMaxY)
