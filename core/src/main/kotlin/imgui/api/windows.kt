@@ -29,6 +29,7 @@ import imgui.internal.sections.*
 import imgui.static.createNewWindow
 import imgui.static.findBlockingModal
 import imgui.static.setCurrentWindow
+import imgui.static.updateWindowInFocusOrderList
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -81,7 +82,8 @@ interface windows {
 
         // Find or create
         var windowJustCreated = false
-        val window = findWindowByName(name) ?: createNewWindow(name, flags).also { windowJustCreated = true }
+        val window = findWindowByName(name)?.also { updateWindowInFocusOrderList(it, windowJustCreated, flags) }
+            ?: createNewWindow(name, flags).also { windowJustCreated = true }
 
         // Automatically disable manual moving/resizing when NoInputs is set
         if ((flags and Wf.NoInputs) == Wf.NoInputs.i) flags = flags or Wf.NoMove or Wf.NoResize

@@ -99,6 +99,23 @@ fun findHoveredWindow() {
 
 // ApplyWindowSettings -> Window class
 
+fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags: WindowFlags) {
+
+    val oldFlags = window.flags
+    val childFlagChanged = newFlags and Wf._ChildWindow != oldFlags and Wf._ChildWindow
+
+    if ((justCreated || childFlagChanged) && newFlags hasnt Wf._ChildWindow) {
+        g.windowsFocusOrder += window
+        window.focusOrder = g.windowsFocusOrder.lastIndex
+    } else if (childFlagChanged && newFlags has Wf._ChildWindow) {
+        assert(g.windowsFocusOrder[window.focusOrder] === window)
+        for (n in window.focusOrder + 1 until g.windowsFocusOrder.size)
+            g.windowsFocusOrder[n].focusOrder--
+        g.windowsFocusOrder.removeAt(window.focusOrder)
+        window.focusOrder = -1
+    }
+}
+
 fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
     //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
@@ -131,14 +148,10 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
         autoFitOnlyGrows = autoFitFrames.x > 0 || autoFitFrames.y > 0
     }
 
-    if (flags hasnt Wf._ChildWindow) {
-        g.windowsFocusOrder += this
-        focusOrder = g.windowsFocusOrder.lastIndex
-    }
-
     if (flags has Wf.NoBringToFrontOnFocus)
         g.windows.add(0, this) // Quite slow but rare and only once
     else g.windows += this
+    updateWindowInFocusOrderList(this, true, this.flags)
 }
 
 // CheckStacksSize, CalcNextScrollFromScrollTargetAndClamp and AddWindowToSortBuffer are Window class methods
