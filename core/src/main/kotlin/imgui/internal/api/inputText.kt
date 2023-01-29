@@ -142,9 +142,9 @@ internal interface inputText {
             pushStyleColor(Col.ChildBg, style.colors[Col.FrameBg])
             pushStyleVar(StyleVar.ChildRounding, style.frameRounding)
             pushStyleVar(StyleVar.ChildBorderSize, style.frameBorderSize)
-            pushStyleVar(StyleVar.WindowPadding, style.framePadding)
+            pushStyleVar(StyleVar.WindowPadding, Vec2()) // Ensure no clip rect so mouse hover can reach FramePadding edges
             val childVisible = beginChildEx(label, id, frameBb.size, true, Wf.NoMove.i)
-            popStyleVar(2)
+            popStyleVar(3)
             popStyleColor()
             if (!childVisible) {
                 endChild()
