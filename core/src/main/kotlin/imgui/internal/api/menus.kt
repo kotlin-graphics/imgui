@@ -97,7 +97,7 @@ internal interface menus {
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         val pressed: Boolean
-        val menusetIsOpen = window.flags hasnt WindowFlag._Popup && g.openPopupStack.size > g.beginPopupStack.size &&
+        val menusetIsOpen = window.flags has WindowFlag.MenuBar && g.openPopupStack.size > g.beginPopupStack.size &&
                 g.openPopupStack[g.beginPopupStack.size].openParentId == window.idStack.last()
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
