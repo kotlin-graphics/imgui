@@ -59,6 +59,12 @@ open class Viewport {
 
     /** Work Area: Size of the viewport minus task bars, menu bars, status bars (<= Size) */
     val workSize = Vec2()
+
+    /** Platform/Backend Dependent Data
+     *
+     *  void* to hold lower-level, platform-native window handle (under Win32 this is expected to be a HWND, unused for other platforms) */
+    var platformHandleRaw: Any? = null
+
     // Helpers
     val center: Vec2
         get() = Vec2(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f)
@@ -75,4 +81,14 @@ open class Viewport {
     /** get foreground draw list for the given viewport. this draw list will be the last rendered one. Useful to quickly draw shapes/text over dear imgui contents. */
     val foregroundDrawList: DrawList
         get() = (this as ViewportP).getDrawList(1, "##Foreground")
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] Platform Dependent Interfaces
+//-----------------------------------------------------------------------------
+
+/** (Optional) Support for IME (Input Method Editor) via the io.SetPlatformImeDataFn() function. */
+class PlatformImeData {
+    /** Position of the input cursor */
+    val inputPos = Vec2()
 }

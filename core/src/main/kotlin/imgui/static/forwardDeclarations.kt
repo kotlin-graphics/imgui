@@ -246,21 +246,19 @@ val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { _
     clipboard.setContents(StringSelection(text), null)
 }
 
-var imeSetInputScreenPosFn_Win32 = { x: Int, y: Int ->
+val setPlatformImeDataFn_DefaultImpl = { viewport: Viewport, data: PlatformImeData ->
     // Notify OS Input Method Editor of text input position
-    val hwnd: HWND = io.imeWindowHandle
-    if (hwnd.L != MemoryUtil.NULL) {
+    val hwnd: HWND = viewport.platformHandleRaw as HWND
+    if (hwnd.L == MemoryUtil.NULL) {
         val himc: HIMC = HIMC(imm.getContext(hwnd))
         if (himc.L != MemoryUtil.NULL) {
             val cf = COMPOSITIONFORM().apply {
-                ptCurrentPos.x = x.L
-                ptCurrentPos.y = y.L
+                ptCurrentPos.x = data.inputPos.x.L
+                ptCurrentPos.y = data.inputPos.y.L
                 dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
             }
-            if (imm.setCompositionWindow(himc, cf) == 0)
-                System.err.println("imm.setCompositionWindow failed")
-            if (imm.releaseContext(hwnd, himc) == 0)
-                System.err.println("imm.releaseContext failed")
+            if (imm.setCompositionWindow(himc, cf) == 0) System.err.println("imm.setCompositionWindow failed")
+            if (imm.releaseContext(hwnd, himc) == 0) System.err.println("imm.releaseContext failed")
             cf.free()
         }
     }

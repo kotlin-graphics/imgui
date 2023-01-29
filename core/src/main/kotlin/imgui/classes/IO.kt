@@ -11,8 +11,8 @@ import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
-import imgui.static.imeSetInputScreenPosFn_Win32
 import imgui.static.setClipboardTextFn_DefaultImpl
+import imgui.static.setPlatformImeDataFn_DefaultImpl
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 import uno.glfw.HWND
@@ -143,17 +143,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     var setClipboardTextFn: ((userData: Any?, text: String) -> Unit)? = setClipboardTextFn_DefaultImpl
     var clipboardUserData: Any? = null
 
-    //    // Optional: override memory allocations. MemFreeFn() may be called with a NULL pointer.
-    //    // (default to posix malloc/free)
-    //    void*       (*MemAllocFn)(size_t sz);
-    //    void        (*MemFreeFn)(void* ptr);
-    //
     // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
-    val imeSetInputScreenPosFn: ((x: Int, y: Int) -> Unit)? = imeSetInputScreenPosFn_Win32.takeIf { Platform.get() == Platform.WINDOWS }
-
-    /** (Windows) Set this to your HWND to get automatic IME cursor positioning.    */
-    var imeWindowHandle: HWND = HWND(MemoryUtil.NULL)
+    val setPlatformImeDataFn: ((viewport: Viewport, data: PlatformImeData) -> Unit)? = setPlatformImeDataFn_DefaultImpl.takeIf { Platform.get() == Platform.WINDOWS }
 
     //------------------------------------------------------------------
     // Input - Fill before calling NewFrame()

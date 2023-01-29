@@ -8,6 +8,7 @@ import glm_.vec2.Vec2d
 import glm_.vec2.Vec2i
 import imgui.*
 import imgui.ImGui.io
+import imgui.ImGui.mainViewport
 import imgui.ImGui.mouseCursor
 import imgui.Key
 import imgui.MouseButton
@@ -87,8 +88,9 @@ class ImplGlfw @JvmOverloads constructor(
             getClipboardTextFn = { glfwGetClipboardString(clipboardUserData as Long) }
             clipboardUserData = window.handle.value
 
+            // Set platform dependent data in viewport
             if (Platform.get() == Platform.WINDOWS)
-                imeWindowHandle = window.hwnd
+                mainViewport.platformHandleRaw = window.hwnd
         }
 
         // Create mouse cursors
