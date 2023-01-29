@@ -1037,6 +1037,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** Your rendering function must check for 'UserCallback' in ImDrawCmd and call the function instead of rendering
     triangles.  */
     fun addCallback(callback: DrawCallback, callbackData: Any? = null) {
+        check(cmdBuffer.isNotEmpty())
         var currCmd = cmdBuffer.last()
         assert(currCmd.userCallback == null)
         if (currCmd.elemCount != 0) {
@@ -1272,6 +1273,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** Try to merge two last draw commands */
     fun _tryMergeDrawCmds() {
+        check(cmdBuffer.isNotEmpty())
         val currCmd = cmdBuffer.last()
         val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
         if (currCmd headerCompare prevCmd && currCmd.userCallback == null && prevCmd.userCallback == null) {
@@ -1285,6 +1287,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     The cost of figuring out if a new command has to be added or if we can merge is paid in those Update**
     functions only. */
     fun _onChangedClipRect() {
+        check(cmdBuffer.isNotEmpty())
         // If current command is used with different settings we need to add a new command
         val currCmd = cmdBuffer.last()
         if (currCmd.elemCount != 0 && currCmd.clipRect != _cmdHeader.clipRect) {
@@ -1305,8 +1308,8 @@ class DrawList(sharedData: DrawListSharedData?) {
     }
 
     fun _onChangedTextureID() {
-
         // If current command is used with different settings we need to add a new command
+        check(cmdBuffer.isNotEmpty())
         val currCmd = cmdBuffer.last()
         if (currCmd.elemCount != 0 && currCmd.textureId != _cmdHeader.textureId) {
             addDrawCmd()
@@ -1327,6 +1330,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun _onChangedVtxOffset() {
         // We don't need to compare curr_cmd->VtxOffset != _CmdHeader.VtxOffset because we know it'll be different at the time we call this.
         _vtxCurrentIdx = 0
+        check(cmdBuffer.isNotEmpty())
         val currCmd = cmdBuffer.last()
         //        assert(currCmd.vtxOffset != _cmdHeader.vtxOffset) // See #3349
         if (currCmd.elemCount != 0) {

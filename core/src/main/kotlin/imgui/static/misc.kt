@@ -219,7 +219,11 @@ fun renderDimmedBackgroundBehindWindow(window: Window, col: Int) {
 
     // Draw behind window by moving the draw command at the FRONT of the draw list
     run {
+        // We've already called AddWindowToDrawData() which called DrawList->ChannelsMerge() on DockNodeHost windows,
+        // and draw list have been trimmed already, hence the explicit recreation of a draw command if missing.
         val drawList = window.rootWindow!!.drawList
+        if (drawList.cmdBuffer.isEmpty())
+            drawList.addDrawCmd()
         drawList.pushClipRect(viewportRect.min - 1, viewportRect.max + 1, false) // Ensure ImDrawCmd are not merged
         drawList.addRectFilled(viewportRect.min, viewportRect.max, col)
         val cmd = drawList.cmdBuffer.last()
@@ -254,6 +258,8 @@ fun renderDimmedBackgrounds() {
         bb expand distance
         if (bb.width >= viewport.size.x && bb.height >= viewport.size.y)
             bb expand (-distance - 1f) // If a window fits the entire viewport, adjust its highlight inward
+        if (window.drawList.cmdBuffer.isEmpty())
+            window.drawList.addDrawCmd()
         window.drawList.pushClipRect(viewport.pos, viewport.pos + viewport.size)
         window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), window.windowRounding, 0, 3f)
         window.drawList.popClipRect()
@@ -286,7 +292,7 @@ fun findBlockingModal(window: Window): Window? {
             if (window isWithinBeginStackOf parent)
                 return popupWindow                                // Place window above its begin stack parent.
             parent = parent.parentWindowInBeginStack!!.rootWindow
-         }
+        }
     }
     return null
 }
