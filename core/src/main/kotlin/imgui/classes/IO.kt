@@ -377,10 +377,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Previous time the mouse button has been down    */
     val mouseDownDurationPrev = FloatArray(5) { -1f }
 
-    /** Maximum distance, absolute, on each axis, of how much mouse has traveled from the clicking point    */
-    val mouseDragMaxDistanceAbs = Array(5) { Vec2() }
-
-    /** Squared maximum distance of how much mouse has traveled from the clicking point */
+    /** Squared maximum distance of how much mouse has traveled from the clicking point (used for moving thresholds) */
     val mouseDragMaxDistanceSqr = FloatArray(5)
 
     val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }

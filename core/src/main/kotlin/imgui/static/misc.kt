@@ -97,27 +97,11 @@ fun updateMouseInputs() {
                 mouseClickedTime[i] = g.time
                 mouseClickedPos[i] put mousePos
                 mouseClickedCount[i] = mouseClickedLastCount[i]
-                mouseDragMaxDistanceAbs[i] put 0f
                 mouseDragMaxDistanceSqr[i] = 0f
             } else if (mouseDown[i]) {
                 // Maintain the maximum distance we reaching from the initial click position, which is used with dragging threshold
-                val deltaFromClickPos = when {
-                    isMousePosValid(io.mousePos) -> io.mousePos - io.mouseClickedPos[i]
-                    else -> Vec2()
-                }
-                io.mouseDragMaxDistanceSqr[i] = io.mouseDragMaxDistanceSqr[i] max deltaFromClickPos.lengthSqr
-                io.mouseDragMaxDistanceAbs[i].x = io.mouseDragMaxDistanceAbs[i].x max when {
-                    deltaFromClickPos.x < 0f -> -deltaFromClickPos.x
-                    else -> deltaFromClickPos.x
-                }
-                io.mouseDragMaxDistanceAbs[i].y = io.mouseDragMaxDistanceAbs[i].y max when {
-                    deltaFromClickPos.y < 0f -> -deltaFromClickPos.y
-                    else -> deltaFromClickPos.y
-                }
-                val mouseDelta = mousePos - mouseClickedPos[i]
-                mouseDragMaxDistanceAbs[i].x = mouseDragMaxDistanceAbs[i].x max if (mouseDelta.x < 0f) -mouseDelta.x else mouseDelta.x
-                mouseDragMaxDistanceAbs[i].y = mouseDragMaxDistanceAbs[i].y max if (mouseDelta.y < 0f) -mouseDelta.y else mouseDelta.y
-                mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max mouseDelta.lengthSqr
+                val deltaSqrClickPos = if(isMousePosValid(mousePos)) (mousePos - mouseClickedPos[i]).lengthSqr else 0f
+                io.mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max deltaSqrClickPos
             }
 
             // We provide io.MouseDoubleClicked[] as a legacy service
