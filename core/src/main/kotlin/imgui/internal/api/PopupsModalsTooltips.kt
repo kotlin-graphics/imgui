@@ -219,10 +219,8 @@ internal interface PopupsModalsTooltips {
 
         var flags = flags_
         val name = when {
-            flags has Wf._ChildMenu -> "##Menu_%02d".format(style.locale,
-                                                            g.beginPopupStack.size)    // Recycle windows based on depth
-            else -> "##Popup_%08x".format(style.locale,
-                                          id)     // Not recycling, so we can close/open during the same frame
+            flags has Wf._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginMenuCount)    // Recycle windows based on depth
+            else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
         }
         flags = flags or Wf._Popup
         val isOpen = begin(name, null, flags)

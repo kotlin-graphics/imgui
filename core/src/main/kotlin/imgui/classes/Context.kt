@@ -240,6 +240,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Which level of BeginPopup() we are in (reset every frame)   */
     val beginPopupStack = Stack<PopupData>()
 
+    var beginMenuCount = 0
+
     //------------------------------------------------------------------
     // Viewports
     //------------------------------------------------------------------
