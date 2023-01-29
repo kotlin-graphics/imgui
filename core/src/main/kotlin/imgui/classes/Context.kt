@@ -207,8 +207,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** == g.ItemFlagsStack.back() */
     var currentItemFlags = ItemFlag.None.i
+
     /** Storage for SetNextItem** functions */
     lateinit var nextItemData: NextItemData
+
     /** Storage for last submitted item (setup by ItemAdd) */
     lateinit var lastItemData: LastItemData
 
@@ -354,12 +356,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Some nav operations (such as PageUp/PageDown) enforce a region which clipper will attempt to always keep submitted */
     val navScoringNoClipRect = Rect()
-    
+
     /** Metrics for debugging   */
     var navScoringDebugCount = 0
 
     /** Generally -1 or +1, 0 when tabbing without a nav id */
     var navTabbingDir = 0
+
     /** >0 when counting items for tabbing */
     var navTabbingCounter = 0
 
@@ -547,7 +550,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var platformImeData = PlatformImeData()
 
     /** Previous frame data (when changing we will call io.SetPlatformImeDataFn */
-    var platformImeDataPrev = PlatformImeData().apply { inputPos put -1f }
+    var platformImeDataPrev = PlatformImeData(inputPos = Vec2(-1f))
 
     /** '.' or *localeconv()->decimal_point */
     var platformLocaleDecimalPoint = '.'

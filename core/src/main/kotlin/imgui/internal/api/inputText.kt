@@ -882,8 +882,10 @@ internal interface inputText {
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
                 // Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.)
-                if (!isReadOnly)
+                if (!isReadOnly) {
+                    g.platformImeData.wantVisible = true
                     g.platformImeData.inputPos.put(cursorScreenPos.x - 1f, cursorScreenPos.y - g.fontSize)
+                }
             }
         } else {
             // Render text only (no selection, no cursor)

@@ -245,7 +245,11 @@ val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { _
 
 val setPlatformImeDataFn_DefaultImpl = { viewport: Viewport, data: PlatformImeData ->
     // Notify OS Input Method Editor of text input position
+
     val hwnd: HWND = viewport.platformHandleRaw as HWND
+
+//    ::ImmAssociateContextEx(hwnd, NULL, data->WantVisible ? IACE_DEFAULT : 0);
+
     if (hwnd.L == MemoryUtil.NULL) {
         val himc: HIMC = HIMC(imm.getContext(hwnd))
         if (himc.L != MemoryUtil.NULL) {

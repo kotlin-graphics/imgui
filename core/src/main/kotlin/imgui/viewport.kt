@@ -13,10 +13,13 @@ typealias ViewportFlags = Int
 /** Flags stored in ImGuiViewport::Flags, giving indications to the platform backends. */
 enum class ViewportFlag(val i: ViewportFlags) {
     None(0),
+
     /** Represent a Platform Window */
     IsPlatformWindow(1 shl 0),
+
     /** Represent a Platform Monitor (unused yet) */
     IsPlatformMonitor(1 shl 1),
+
     /** Platform Window: is created/managed by the application (rather than a dear imgui backend) */
     OwnedByApp(1 shl 2);
 
@@ -89,5 +92,10 @@ open class Viewport {
 
 /** (Optional) Support for IME (Input Method Editor) via the io.SetPlatformImeDataFn() function. */
 data class PlatformImeData(
+    /** A widget wants the IME to be visible */
+    var wantVisible: Boolean = false,
     /** Position of the input cursor */
-    val inputPos: Vec2 = Vec2())
+    val inputPos: Vec2 = Vec2()) {
+
+    constructor(data: PlatformImeData) : this(data.wantVisible, Vec2(data.inputPos))
+}

@@ -213,7 +213,10 @@ interface main {
         g.wantTextInputNextFrame = -1
         g.wantCaptureKeyboardNextFrame = -1
         g.wantCaptureMouseNextFrame = -1
-        g.platformImeData = PlatformImeData(Vec2(g.platformImeData.inputPos)) // OS Input Method Editor showing on top-left of our window by default
+
+        // Platform IME data: reset for the frame
+        g.platformImeData = PlatformImeData(g.platformImeData) // OS Input Method Editor showing on top-left of our window by default
+        g.platformImeData.wantVisible = false
 
         // Mouse wheel scrolling, scale
         updateMouseWheel()
@@ -284,8 +287,8 @@ interface main {
 
         // Notify Platform/OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
         if (io.setPlatformImeDataFn != null && g.platformImeData != g.platformImeDataPrev) {
-//            if (DEBUG)
-                // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
+            //            if (DEBUG)
+            // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
             g.io.setPlatformImeDataFn!!(mainViewport, g.platformImeData)
         }
 
