@@ -42,7 +42,6 @@ import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
 
 // Tables
-// [BETA API] API may evolve slightly! If you use this, please update to the next version when it comes out!
 // - Full-featured replacement for old Columns API.
 // - See Demo->Tables for demo code.
 // - See top of imgui_tables.cpp for general commentary.

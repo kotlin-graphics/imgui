@@ -596,8 +596,7 @@ infix fun TabItemFlags.wo(b: TabItemFlag): TabItemFlags = and(b.i.inv())
 typealias TableFlags = Int
 
 // Flags for ImGui::BeginTable()
-// [BETA API] API may evolve slightly! If you use this, please update to the next version when it comes out!
-// - Important! Sizing policies have complex and subtle side effects, more so than you would expect.
+// - Important! Sizing policies have complex and subtle side effects, much more so than you would expect.
 //   Read comments/demos carefully + experiment with live demos to get acquainted with them.
 // - The DEFAULT sizing policies are:
 //    - Default to ImGuiTableFlags_SizingFixedFit    if ScrollX is on, or if host window has ImGuiWindowFlags_AlwaysAutoResize.
@@ -605,8 +604,8 @@ typealias TableFlags = Int
 // - When ScrollX is off:
 //    - Table defaults to ImGuiTableFlags_SizingStretchSame -> all Columns defaults to ImGuiTableColumnFlags_WidthStretch with same weight.
 //    - Columns sizing policy allowed: Stretch (default), Fixed/Auto.
-//    - Fixed Columns will generally obtain their requested width (unless the table cannot fit them all).
-//    - Stretch Columns will share the remaining width.
+//    - Fixed Columns (if any) will generally obtain their requested width (unless the table cannot fit them all).
+//    - Stretch Columns will share the remaining width according to their respective weight.
 //    - Mixed Fixed/Stretch columns is possible but has various side-effects on resizing behaviors.
 //      The typical use of mixing sizing policies is: any number of LEADING Fixed columns, followed by one or two TRAILING Stretch columns.
 //      (this is because the visible order of columns have subtle but necessary effects on how they react to manual resizing).
@@ -867,7 +866,7 @@ typealias TableRowFlags = Int
 enum class TableRowFlag(@JvmField val i: Int) {
     None(0),
 
-    /** Identify header row (set default background color + width of its contents accounted different for auto column width) */
+    /** Identify header row (set default background color + width of its contents accounted differently for auto column width) */
     Headers(1 shl 0);
 
     infix fun and(b: TableRowFlag): TableRowFlags = i and b.i
@@ -1211,6 +1210,7 @@ enum class KeyMod(val i: KeyModFlags) {
     Ctrl(1 shl 0),
     Shift(1 shl 1),
     Alt(1 shl 2),
+    /** Cmd/Super/Windows key */
     Super(1 shl 3),
     Shortcut(if (Platform.get() == Platform.MACOSX) Super.i else Ctrl.i);
 
@@ -1233,72 +1233,61 @@ typealias KeyModFlags = Int
  *  An input identifier for navigation */
 enum class NavInput {
     // Gamepad Mapping
-    /** activate / open / toggle / tweak value       // e.g. Cross (PS4), A (Xbox), B (Switch), Space (Keyboard)   */
+    /** Activate / Open / Toggle / Tweak value       // e.g. Cross  (PS4), A (Xbox), A (Switch), Space (Keyboard) */
     Activate,
 
-    /** cancel / close / exit                        // e.g. Circle (PS4), B (Xbox), A (Switch), Escape (Keyboard)  */
+    /** Cancel / Close / Exit                        // e.g. Circle (PS4), B (Xbox), B (Switch), Escape (Keyboard) */
     Cancel,
 
-    /** text input / on-screen keyboard              // e.g. Triang.(PS4), Y (Xbox), X (Switch), Return (Keyboard)  */
+    /** Text input / On-Screen keyboard              // e.g. Triang.(PS4), Y (Xbox), X (Switch), Return (Keyboard) */
     Input,
 
-    /** tap: toggle menu / hold: focus, move, resize // e.g. Square (PS4), X (Xbox), Y (Switch), Alt (Keyboard) */
+    /** Tap: Toggle menu / Hold: Focus, Move, Resize // e.g. Square (PS4), X (Xbox), Y (Switch), Alt (Keyboard) */
     Menu,
 
-    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
+    /** Move / Tweak / Resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
     DpadLeft,
 
-    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
     DpadRight,
 
-    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
     DpadUp,
 
-    /** move / tweak / resize window (w/ PadMenu)    // e.g. D-pad Left/Right/Up/Down (Gamepads), Arrow keys (Keyboard) */
     DpadDown,
 
-    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
+    /** Scroll / Move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
     LStickLeft,
 
-    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
     LStickRight,
 
-    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
     LStickUp,
 
-    /** scroll / move window (w/ PadMenu)            // e.g. Left Analog Stick Left/Right/Up/Down   */
     LStickDown,
 
-    /** next window (w/ PadMenu)                     // e.g. L1 or L2 (PS4), LB or LT (Xbox), L or ZL (Switch)  */
+    /** Focus Next window (w/ PadMenu)               // e.g. L1 or L2 (PS4), LB or LT (Xbox), L or ZL (Switch) */
     FocusPrev,
 
-    /** prev window (w/ PadMenu)                     // e.g. R1 or R2 (PS4), RB or RT (Xbox), R or ZL (Switch)  */
+    /** Focus Prev window (w/ PadMenu)               // e.g. R1 or R2 (PS4), RB or RT (Xbox), R or ZL (Switch) */
     FocusNext,
 
-    /** slower tweaks                                // e.g. L1 or L2 (PS4), LB or LT (Xbox), L or ZL (Switch)  */
+    /** Slower tweaks                                // e.g. L1 or L2 (PS4), LB or LT (Xbox), L or ZL (Switch) */
     TweakSlow,
 
-    /** faster tweaks                                // e.g. R1 or R2 (PS4), RB or RT (Xbox), R or ZL (Switch)  */
+    /** Faster tweaks                                // e.g. R1 or R2 (PS4), RB or RT (Xbox), R or ZL (Switch) */
     TweakFast,
 
-    /*  [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for
-        behaviors that require to differentiate them.
-        Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL + TAB) will be directly reading from
-        io.keysDown[] instead of io.navInputs[]. */
+    // [Internal] Don't use directly! This is used internally to differentiate keyboard from gamepad inputs for behaviors that require to differentiate them.
+    // Keyboard behavior that have no corresponding gamepad mapping (e.g. CTRL+TAB) will be directly reading from io.KeysDown[] instead of io.NavInputs[].
 
-    /** toggle menu = io.keyAlt */
-    _KeyMenu,
-
-    /** move left = Arrow keys  */
+    /** Move left = Arrow keys  */
     _KeyLeft,
 
-    /** move right = Arrow keys  */
+    /** Move right = Arrow keys  */
     _KeyRight,
 
-    /** move up = Arrow keys  */
+    /** Move up = Arrow keys  */
     _KeyUp,
 
-    /** move down = Arrow keys  */
+    /** Move down = Arrow keys  */
     _KeyDown,
     Count;
 

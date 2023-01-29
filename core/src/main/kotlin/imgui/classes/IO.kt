@@ -173,16 +173,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all backends.   */
     var mouseWheelH = 0f
 
-    /** Keyboard modifier pressed: Control  */
+    /** Keyboard modifier down: Control  */
     var keyCtrl = false
 
-    /** Keyboard modifier pressed: Shift    */
+    /** Keyboard modifier down: Shift    */
     var keyShift = false
 
-    /** Keyboard modifier pressed: Alt  */
+    /** Keyboard modifier down: Alt  */
     var keyAlt = false
 
-    /** Keyboard modifier pressed: Cmd/Super/Windows    */
+    /** Keyboard modifier down: Cmd/Super/Windows    */
     var keySuper = false
 
     /** Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys,
@@ -192,7 +192,14 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
     val navInputs = FloatArray(NavInput.COUNT)
 
-    // Functions
+    // Input Functions
+
+    /** Queue an hosting application/platform windows gain or loss of focus */
+    fun addFocusEvent(focused: Boolean) {
+        // We intentionally overwrite this and process in NewFrame(), in order to give a chance
+        // to multi-viewports backends to queue AddFocusEvent(false),AddFocusEvent(true) in same frame.
+        appFocusLost = !focused
+    }
 
     /** Queue new character input
      *
@@ -245,13 +252,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             if (c != 0)
                 inputQueueCharacters += c.c
         }
-    }
-
-    /** Notifies Dear ImGui when hosting platform windows lose or gain input focus */
-    fun addFocusEvent(focused: Boolean) {
-        // We intentionally overwrite this and process in NewFrame(), in order to give a chance
-        // to multi-viewports backends to queue AddFocusEvent(false),AddFocusEvent(true) in same frame.
-        appFocusLost = !focused
     }
 
     /** [Internal] Clear the text input buffer manually */
@@ -328,14 +328,20 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // [Private] ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
 
-    /** Alternative to WantCaptureMouse: (WantCaptureMouse == true && WantCaptureMouseUnlessPopupClose == false) when a click over void is expected to close a popup. */
-    var wantCaptureMouseUnlessPopupClose = false
-
     /** Key mods flags (same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags), updated by NewFrame() */
     var keyMods: KeyModFlags = KeyMod.None.i
 
-    /** Previous key mods */
+    /** Key mods flags (from previous frame) */
     var keyModsPrev: KeyModFlags = KeyMod.None.i
+
+    /** Duration the key has been down (<0.0f: not pressed, 0.0f: just pressed, >0.0f: time held) */
+    val keysDownDuration = FloatArray(512) { -1f }
+
+    /** Duration the key has been down (from previous frame) */
+    val keysDownDurationPrev = FloatArray(512) { -1f }
+
+    /** Alternative to WantCaptureMouse: (WantCaptureMouse == true && WantCaptureMouseUnlessPopupClose == false) when a click over void is expected to close a popup. */
+    var wantCaptureMouseUnlessPopupClose = false
 
     /** Previous mouse position (note that MouseDelta is not necessary == MousePos-MousePosPrev, in case either position is invalid)   */
     var mousePosPrev = Vec2(-Float.MAX_VALUE)
@@ -348,11 +354,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Mouse button went from !Down to Down (same as MouseClickedCount[x] != 0)    */
     val mouseClicked = BooleanArray(5)
-
     /** Has mouse button been double-clicked? (same as MouseClickedCount[x] == 2) */
     val mouseDoubleClicked = BooleanArray(5)
     /** == 0 (not clicked), == 1 (same as MouseClicked[]), == 2 (double-clicked), == 3 (triple-clicked) etc. when going from !Down to Down */
     val mouseClickedCount = IntArray(5)
+
     /** Count successive number of clicks. Stays valid after mouse release. Reset after another click is done. */
     val mouseClickedLastCount = IntArray(5)
 
@@ -377,12 +383,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Squared maximum distance of how much mouse has traveled from the clicking point */
     val mouseDragMaxDistanceSqr = FloatArray(5)
 
-    /** Duration the keyboard key has been down (0.0f == just pressed)  */
-    val keysDownDuration = FloatArray(512) { -1f }
-
-    /** Previous duration the key has been down */
-    val keysDownDurationPrev = FloatArray(512) { -1f }
-
     val navInputsDownDuration = FloatArray(NavInput.COUNT) { -1f }
 
     val navInputsDownDurationPrev = FloatArray(NavInput.COUNT)
@@ -392,7 +392,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     var appFocusLost = false
 
-    /** For AddInputCharacterUTF16 */
+    /** For AddInputCharacterUTF16() */
     var inputQueueSurrogate = NUL
 
     /** Queue of _characters_ input (obtained by platform backend). Fill using AddInputCharacter() helper. */
