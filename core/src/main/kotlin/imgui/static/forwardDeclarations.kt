@@ -101,19 +101,20 @@ fun findHoveredWindow() {
 
 fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags: WindowFlags) {
 
-    val oldFlags = window.flags
-    val childFlagChanged = newFlags and Wf._ChildWindow != oldFlags and Wf._ChildWindow
-
-    if ((justCreated || childFlagChanged) && newFlags hasnt Wf._ChildWindow) {
+    val newIsExplicitChild = newFlags has Wf._ChildWindow
+    val childFlagChanged = newIsExplicitChild != window.isExplicitChild
+    if ((justCreated || childFlagChanged) && !newIsExplicitChild) {
+        assert(window in g.windowsFocusOrder)
         g.windowsFocusOrder += window
         window.focusOrder = g.windowsFocusOrder.lastIndex
-    } else if (childFlagChanged && newFlags has Wf._ChildWindow) {
+    } else if (!justCreated && childFlagChanged && newIsExplicitChild) {
         assert(g.windowsFocusOrder[window.focusOrder] === window)
         for (n in window.focusOrder + 1 until g.windowsFocusOrder.size)
             g.windowsFocusOrder[n].focusOrder--
         g.windowsFocusOrder.removeAt(window.focusOrder)
         window.focusOrder = -1
     }
+    window.isExplicitChild = newIsExplicitChild
 }
 
 fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {

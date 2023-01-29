@@ -129,6 +129,9 @@ class Window(var context: Context,
     /** Set on the "Debug##Default" window. */
     var isFallbackWindow = false
 
+    /** Set when passed _ChildWindow, left to false by BeginDocked() */
+    var isExplicitChild = false
+
     /** Set when the window has a close button (p_open != NULL) */
     var hasCloseButton = false
 
