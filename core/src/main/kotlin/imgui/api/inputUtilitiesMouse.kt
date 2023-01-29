@@ -91,12 +91,7 @@ interface inputUtilitiesMouse {
     }
 
     /** by convention we use (-FLT_MAX,-FLT_MAX) to denote that there is no mouse available  */
-    fun isMousePosValid(mousePos: Vec2? = null): Boolean =
-        (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
-
-    /** is any mouse button held?    */
-    val isAnyMouseDown: Boolean
-        get() = io.mouseDown.any()
+    fun isMousePosValid(mousePos: Vec2? = null): Boolean = (mousePos ?: io.mousePos) allGreaterThan MOUSE_INVALID
 
     /** shortcut to io.mousePos provided by user, to be consistent with other calls
      *  ~GetMousePos    */
