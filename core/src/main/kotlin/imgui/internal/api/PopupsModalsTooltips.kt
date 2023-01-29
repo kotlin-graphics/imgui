@@ -165,7 +165,7 @@ internal interface PopupsModalsTooltips {
                 var refWindowIsDescendentOfPopup = false
                 for (n in popupCountToKeep until g.openPopupStack.size) {
                     val popupWindow = g.openPopupStack[n].window
-                    if (popupWindow != null && popupWindow.rootWindow === refWindow.rootWindow) {
+                    if (refWindow isWithinBeginStackOf popupWindow!!) {
                         refWindowIsDescendentOfPopup = true
                         break
                     }

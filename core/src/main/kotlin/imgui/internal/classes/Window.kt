@@ -455,6 +455,45 @@ class Window(var context: Context,
         }
     }
 
+    /** ~BringWindowToDisplayBehind */
+    infix fun bringToDisplayBehind(behindWindow_: Window) {
+        //        IM_ASSERT(window != NULL && behind_window != NULL);
+        val window = rootWindow!!
+        val behindWindow = behindWindow_.rootWindow!!
+        val posWnd = window.displayIndex
+        val posBeh = behindWindow.displayIndex
+        if (posWnd < posBeh) {
+            TODO()
+            //            size_t copy_bytes =(posBeh - posWnd - 1) * sizeof(ImGuiWindow *)
+            //            memmove(& g . Windows . Data [posWnd], &g.Windows.Data[pos_wnd+1], copy_bytes)
+            //            g.Windows[posBeh - 1] = window
+        } else {
+            TODO()
+            //            size_t copy_bytes =(posWnd - posBeh) * sizeof(ImGuiWindow *)
+            //            memmove(& g . Windows . Data [posBeh + 1], &g.Windows.Data[pos_beh], copy_bytes)
+            //            g.Windows[posBeh] = window
+        }
+    }
+
+    /** ~FindWindowDisplayIndex */
+    val displayIndex
+        get() = g.windows.indexOf(this)
+
+    fun findBottomMostVisibleWindowWithinBeginStack(): Window {
+        var bottomMostVisibleWindow = this
+        for (i in displayIndex downTo 0) {
+            val window = g.windows[i]
+            if (window.flags has Wf._ChildWindow)
+                continue
+            if (!window.isWithinBeginStackOf(this))
+                break
+            if (window.isActiveAndVisible)
+                bottomMostVisibleWindow = window
+        }
+        return bottomMostVisibleWindow
+    }
+
+
     /** ~UpdateWindowParentAndRootLinks */
     fun updateParentAndRootLinks(flags: WindowFlags, parentWindow: Window?) {
         this.parentWindow = parentWindow
@@ -493,6 +532,19 @@ class Window(var context: Context,
             if (window === windowRoot) // end of chain
                 return false
             window = window.parentWindow
+        }
+        return false
+    }
+
+    /** ~IsWindowWithinBeginStackOf */
+    infix fun isWithinBeginStackOf(potentialParent: Window): Boolean {
+        if (rootWindow === potentialParent)
+            return true
+        var window: Window? = this
+        while (window != null) {
+            if (window === potentialParent)
+                return true
+            window = window.parentWindowInBeginStack
         }
         return false
     }

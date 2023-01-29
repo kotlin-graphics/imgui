@@ -20,12 +20,14 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.setLastItemData
 import imgui.ImGui.style
+import imgui.ImGui.topMostPopupModal
 import imgui.internal.classes.Rect
 import imgui.internal.classes.WindowStackData
 import imgui.internal.floor
 import imgui.internal.lengthSqr
 import imgui.internal.sections.*
 import imgui.static.createNewWindow
+import imgui.static.findBlockingModal
 import imgui.static.setCurrentWindow
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
@@ -377,12 +379,25 @@ interface windows {
             //    window->WindowRounding = ImMin(window->WindowRounding, g.FontSize + style.FramePadding.y * 2.0f);
 
             // Apply window focus (new and reactivated windows are moved to front)
-            val wantFocus = when {
-                !windowJustActivatedByUser || flags has Wf.NoFocusOnAppearing -> false
-                else -> when {
-                    flags has Wf._Popup -> true
-                    flags hasnt (Wf._ChildWindow or Wf._Tooltip) -> true
-                    else -> false
+            var wantFocus = false
+            if (windowJustActivatedByUser && flags hasnt Wf.NoFocusOnAppearing) {
+                if (flags has Wf._Popup)
+                    wantFocus = true
+                if (flags hasnt (Wf._ChildWindow or Wf._Tooltip))
+                    wantFocus = true
+
+                val modal = topMostPopupModal
+                if (modal != null && !window.isWithinBeginStackOf(modal)) {
+                    // Avoid focusing a window that is created outside of active modal. This will prevent active modal from being closed.
+                    // Since window is not focused it would reappear at the same display position like the last time it was visible.
+                    // In case of completely new windows it would go to the top (over current modal), but input to such window would still be blocked by modal.
+                    // Position window behind a modal that is not a begin-parent of this window.
+                    wantFocus = false
+                    if (window === window.rootWindow) {
+                        val blockingModal = findBlockingModal(window)
+                        check(blockingModal != null)
+                        window bringToDisplayBehind blockingModal
+                    }
                 }
             }
 
