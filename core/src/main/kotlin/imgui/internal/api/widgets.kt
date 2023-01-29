@@ -526,7 +526,7 @@ internal interface widgets {
                 // Instead we don't treat Popup specifically (in order to consistently support menu features in them), maybe the first child menu of a Popup
                 // doesn't have the _ChildWindow flag, and we rely on this IsRootOfOpenMenuSet() check to allow hovering between root window/popup and first chilld menu.
                 val upperPopup = g.openPopupStack[g.beginPopupStack.size]
-                return (upperPopup != null && /*upper_popup->OpenParentId == window->IDStack.back() &&*/ upperPopup.window?.flags?.has(WindowFlag._ChildMenu) == true)
+                return (/*upper_popup->OpenParentId == window->IDStack.back() &&*/ upperPopup.window?.flags?.has(WindowFlag._ChildMenu) == true)
             }
     }
 }

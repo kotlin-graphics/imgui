@@ -29,6 +29,7 @@ import org.lwjgl.opengl.GL32C.glDrawElementsBaseVertex
 import org.lwjgl.opengl.GL33C
 import org.lwjgl.opengl.GL33C.glBindSampler
 import org.lwjgl.opengl.GL45C.GL_CLIP_ORIGIN
+import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 
 
@@ -187,9 +188,22 @@ class ImplGL3 : GLInterface {
 
             var idxBufferOffset = 0L
 
-            // Upload vertex/index buffers
-            nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW)
-            nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW)
+//            // Upload vertex/index buffers
+//            nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW)
+//            nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW)
+
+            val vtxBufferSize = cmdList.vtxBuffer.lim.L
+            val idxBufferSize = cmdList.idxBuffer.lim.L * DrawIdx.BYTES
+            if (data.vertexBufferSize < vtxBufferSize) {
+                data.vertexBufferSize = vtxBufferSize
+                nglBufferData(GL_ARRAY_BUFFER, data.vertexBufferSize, NULL, GL_STREAM_DRAW)
+            }
+            if (data.indexBufferSize < idxBufferSize) {
+                data.indexBufferSize = idxBufferSize
+                nglBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexBufferSize, NULL, GL_STREAM_DRAW)
+            }
+            nglBufferSubData(GL_ARRAY_BUFFER, 0, vtxBufferSize, cmdList.vtxBuffer.adr)
+            nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBufferSize, cmdList.idxBuffer.adr)
 
             for (cmd in cmdList.cmdBuffer) {
 
@@ -504,6 +518,9 @@ class ImplGL3 : GLInterface {
 
             val buffers = GlBuffers<Buffer>()
             var vao = GlVertexArray()
+
+            var vertexBufferSize = 0L
+            var indexBufferSize = 0L
 
             var hasClipOrigin = false
         }
