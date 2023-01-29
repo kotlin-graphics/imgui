@@ -62,7 +62,7 @@ internal interface basicAccessors {
         g.activeIdUsingMouseWheel = false
         g.activeIdUsingNavDirMask = 0x00
         g.activeIdUsingNavInputMask = 0x00
-        g.activeIdUsingKeyInputMask = 0x00
+        g.activeIdUsingKeyInputMask.clearAllBits()
     }
 
     /** FIXME-NAV: The existence of SetNavID/SetNavIDWithRectRel/SetFocusID is incredibly messy and confusing and needs some explanation or refactoring. */

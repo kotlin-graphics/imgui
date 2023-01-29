@@ -23,7 +23,6 @@ import imgui.ImGui.io
 import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isActiveIdUsingNavDir
 import imgui.ImGui.isActiveIdUsingNavInput
-import imgui.ImGui.isKeyDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mainViewport
@@ -75,7 +74,7 @@ fun navUpdate() {
     // Update Keyboard->Nav inputs mapping
     if (navKeyboardActive) {
         fun navMapKey(key: Key, navInput: NavInput) {
-            if (isKeyDown(io.keyMap[key])) {
+            if (key.isDown) {
                 io.navInputs[navInput] = 1f
                 g.navInputSource = InputSource.Keyboard
             }
@@ -299,10 +298,7 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (g.navInputSource == InputSource.Keyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
-            g.navWindowingHighlightAlpha = max(
-                g.navWindowingHighlightAlpha,
-                saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f)
-                                              ) // 1.0f
+            g.navWindowingHighlightAlpha = g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
             if (Key.Tab.isPressed(true))
                 navUpdateWindowingHighlightWindow(if (io.keyShift) 1 else -1)
             if (!io.keyCtrl)

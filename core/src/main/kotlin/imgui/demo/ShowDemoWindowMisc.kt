@@ -1,7 +1,7 @@
 package imgui.demo
 
 import glm_.i
-import imgui.Col
+import imgui.*
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -13,9 +13,6 @@ import imgui.ImGui.inputText
 import imgui.ImGui.io
 import imgui.ImGui.isItemActive
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isKeyDown
-import imgui.ImGui.isKeyPressed
-import imgui.ImGui.isKeyReleased
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
@@ -30,13 +27,10 @@ import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
-import imgui.MouseButton
-import imgui.MouseCursor
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
-import imgui.toByteArray
 
 object ShowDemoWindowMisc {
 
@@ -83,23 +77,26 @@ object ShowDemoWindowMisc {
             // Display Keyboard/Mouse state
             treeNode("Keyboard & Navigation State") {
                 text("Keys down:")
-                for (i in io.keysDown.indices)
-                    if (isKeyDown(i)) {
-                        sameLine()
-                        text("$i (0x%X) (%.02f secs)", i, io.keysDownDuration[i])
+                for (i in io.keysData.indices) {
+                    val key = Key of (i + Key.BEGIN)
+                    if (key.isDown) {
+                        sameLine(); text("\"$key\" $i (0x%X) (%.02f secs)", i, io.keysData[i].downDuration)
                     }
+                }
                 text("Keys pressed:")
-                for (i in io.keysDown.indices)
-                    if (isKeyPressed(i)) {
-                        sameLine()
-                        text("$i (0x%X)", i)
+                for (i in io.keysData.indices) {
+                    val key = Key of (i + Key.BEGIN)
+                    if (key.isPressed) {
+                        sameLine(); text("\"$key\" $i (0x%X)", i)
                     }
+                }
                 text("Keys release:")
-                for (i in io.keysDown.indices)
-                    if (isKeyReleased(i)) {
-                        sameLine()
-                        text("$i (0x%X)", i)
+                for (i in io.keysData.indices) {
+                    val key = Key of (i + Key.BEGIN)
+                    if (key.isReleased) {
+                        sameLine(); text("\"$key\" $i (0x%X)", i)
                     }
+                }
                 val ctrl = if (io.keyCtrl) "CTRL " else ""
                 val shift = if (io.keyShift) "SHIFT " else ""
                 val alt = if (io.keyAlt) "ALT " else ""

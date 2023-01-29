@@ -4,11 +4,12 @@ import glm_.has
 import glm_.hasnt
 import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getKeyPressedAmount
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
-import imgui.ImGui.isKeyDown
-import imgui.ImGui.isKeyPressed
+import imgui.api.g
 import imgui.internal.sections.InputReadMode
+import imgui.static.getKeyDataIndexInternal
 import org.lwjgl.system.Platform
 
 
@@ -945,8 +946,10 @@ enum class FocusedFlag(@JvmField val i: FocusedFlags) {
     /** Return true if any window is focused.
      *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
     AnyWindow(1 shl 2),
+
     /** Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
     NoPopupHierarchy(1 shl 3),
+
     //ImGuiFocusedFlags_DockHierarchy               = 1 << 4,   // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
     RootAndChildWindows(RootWindow or ChildWindows);
 
@@ -1141,56 +1144,113 @@ enum class SortDirection {
 }
 
 
-/** User fill ImGuiio.KeyMap[] array with indices into the ImGuiio.KeysDown[512] array
- *
- *  A key identifier (ImGui-side enum) */
+/** A key identifier (ImGui-side enum) */
 enum class Key {
-    Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
-    Space, Enter, Escape, KeypadEnter,
+    None, Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace, Space, Enter, Escape,
 
-    _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
+    /** ' */
+    Apostrophe,
 
-    /** for text edit CTRL+A: select all */
-    A,
-    B,
+    /** , */
+    Comma,
 
-    /** for text edit CTRL+C: copy */
-    C,
-    D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U,
+    /** - */
+    Minus,
 
-    /** for text edit CTRL+V: paste */
-    V,
-    W,
+    /** . */
+    Period,
 
-    /** for text edit CTRL+X: cut */
-    X,
+    /** / */
+    Slash,
 
-    /** for text edit CTRL+Y: redo */
-    Y,
+    /** ; */
+    Semicolon,
 
-    /** for text edit CTRL+Z: undo */
-    Z,
+    /** = */
+    Equal,
+
+    /** [ */
+    LeftBracket,
+
+    /** \ (this text inhibit multiline comment caused by backlash) */
+    Backslash,
+
+    /** ] */
+    RightBracket,
+
+    /** ` */
+    GraveAccent, CapsLock, ScrollLock, NumLock, PrintScreen, Pause,
+    Keypad0, Keypad1, Keypad2, Keypad3, Keypad4, Keypad5, Keypad6, Keypad7, Keypad8, Keypad9,
+    KeypadDecimal, KeypadDivide, KeypadMultiply, KeypadSubtract, KeypadAdd, KeypadEnter, KeypadEqual,
+    LeftShift, LeftControl, LeftAlt, LeftSuper, RightShift, RightControl, RightAlt, RightSuper, Menu,
+    `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`,
+    A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
     F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
     Count;
 
     companion object {
         val COUNT = values().size
+        val BEGIN = None.i
+        val END = F12.i
+        infix fun of(i: Int) = values().first { it.i == i }
     }
 
     @JvmField
-    val i = ordinal
+    val i = if (ordinal == 0) 0 else 512 + ordinal
 
-    /** [JVM] ~IsKeyPressedMap   */
-    fun isPressed(repeat: Boolean = true) = isKeyPressed(io.keyMap[i], repeat)
 
+    /** ~IsKeyDown
+     *
+     *  is key being held. == io.KeysData[key - ImGuiKey_FirstKey].Down. */
+    val isDown: Boolean
+        get() {
+            assert(i in BEGIN until END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
+
+            val keyIndex = getKeyDataIndexInternal(i)
+            if (keyIndex < 0)
+                return false
+            assert(keyIndex in g.io.keysData.indices)
+            return g.io.keysData[keyIndex].down
+        }
+
+    /** [JVM] ~IsKeyPressed
+     *
+     *  uses user's key indices as stored in the keys_down[] array. if repeat=true.
+     *  uses io.KeyRepeatDelay / KeyRepeatRate
+     *
+     *  was key pressed (went from !Down to Down)? if repeat=true, uses io.KeyRepeatDelay / KeyRepeatRate */
+    fun isPressed(repeat: Boolean): Boolean {
+        assert(i >= Key.BEGIN && i < Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
+
+        val keyIndex = getKeyDataIndexInternal(i)
+        if (i < 0)
+            return false
+        assert(keyIndex in g.io.keysData.indices)
+        val t = g.io.keysData[keyIndex].downDuration
+        if (t == 0f)
+            return true
+        if (repeat && t > io.keyRepeatDelay)
+            return getKeyPressedAmount(i, io.keyRepeatDelay, io.keyRepeatRate) > 0
+        return false
+    }
+
+    /** ~IsKeyPressed() */
     val isPressed: Boolean
         get() = isPressed(true)
 
-    val isDown: Boolean
-        get() = isKeyDown(io.keyMap[i])
+    /** ~IsKeyReleased
+     *
+     *  was key released (went from Down to !Down)?    */
+    val isReleased: Boolean
+        get() {
+            assert(i >= Key.BEGIN && i < Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
 
-    /** map ImGuiKey_* values into user's key index. == io.KeyMap[key]   */
-    val index get() = i
+            val keyIndex = getKeyDataIndexInternal(i)
+            if (keyIndex < 0)
+                return false
+            assert(keyIndex in g.io.keysData.indices)
+            return g.io.keysData[keyIndex].downDurationPrev >= 0f && !g.io.keysData[keyIndex].down
+        }
 }
 
 infix fun Long.shl(key: Key) = shl(key.i)
@@ -1210,6 +1270,7 @@ enum class KeyMod(val i: KeyModFlags) {
     Ctrl(1 shl 0),
     Shift(1 shl 1),
     Alt(1 shl 2),
+
     /** Cmd/Super/Windows key */
     Super(1 shl 3),
     Shortcut(if (Platform.get() == Platform.MACOSX) Super.i else Ctrl.i);

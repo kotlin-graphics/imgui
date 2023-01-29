@@ -47,6 +47,10 @@ fun updateSettings() {
     }
 }
 
+fun updateKeyboardInputs() {
+
+}
+
 fun updateMouseInputs() {
 
     with(io) {

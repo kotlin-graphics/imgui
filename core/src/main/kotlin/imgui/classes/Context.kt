@@ -10,6 +10,7 @@ import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.internal.BitArray
 import imgui.internal.DrawChannel
 import imgui.internal.classes.*
 import imgui.internal.hashStr
@@ -176,7 +177,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var activeIdUsingNavInputMask = 0
 
     /** Active widget will want to read those key inputs. When we grow the ImGuiKey enum we'll need to either to order the enum to make useful keys come first, either redesign this into e.g. a small array. */
-    var activeIdUsingKeyInputMask = 0L
+    val activeIdUsingKeyInputMask = BitArray(Key.COUNT)
 
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
     var activeIdClickOffset = Vec2(-1)

@@ -11,22 +11,30 @@ import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
+import imgui.static.getKeyDataIndexInternal
 import imgui.static.setClipboardTextFn_DefaultImpl
 import imgui.static.setPlatformImeDataFn_DefaultImpl
-import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
-import uno.glfw.HWND
 import uno.kotlin.NUL
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImGuiIO
 //-----------------------------------------------------------------------------
+// Communicate most settings and inputs/outputs to Dear ImGui using this structure.
+// Access via ::io. Read 'Programmer guide' section in .cpp file for general usage.
+//-----------------------------------------------------------------------------
 
-/** -----------------------------------------------------------------------------
- *  IO
- *  Communicate most settings and inputs/outputs to Dear ImGui using this structure.
- *  Access via ::io. Read 'Programmer guide' section in .cpp file for general usage.
- *  ----------------------------------------------------------------------------- */
+class KeyData {
+    /** True for if key is down */
+    var down = false
+
+    /** Duration the keyboard key has been down (0.0f == just pressed) */
+    var downDuration = 0f
+
+    /** Previous duration the key has been down */
+    var downDurationPrev = 0f
+}
+
 class IO(sharedFontAtlas: FontAtlas? = null) {
 
     //------------------------------------------------------------------
@@ -62,9 +70,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Distance threshold before considering we are dragging.   */
     var mouseDragThreshold = 6f
-
-    /** Map of indices into the KeysDown[512] entries array which represent your "native" keyboard state.   */
-    var keyMap = IntArray(Key.COUNT) { -1 }
 
     /** When holding a key/button, time before it starts repeating, in seconds (for buttons in Repeat mode, etc.).  */
     var keyRepeatDelay = 0.275f
@@ -177,14 +182,24 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Keyboard modifier down: Cmd/Super/Windows    */
     var keySuper = false
 
-    /** Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys,
-     *  so you can use your own defines/enums for keys).   */
-    val keysDown = BooleanArray(512)
-
     /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
     val navInputs = FloatArray(NavInput.COUNT)
 
+
     // Input Functions
+
+
+    /** Notify Dear ImGui of key down/up event */
+    fun addKeyEvent(key: Key, down: Boolean, native_keycode: Int = -1, native_scancode: Int = -1) {
+//        IM_UNUSED(native_keycode);
+//        IM_UNUSED(native_scancode);
+
+        val keyIndex = getKeyDataIndexInternal(key.i)
+        if (keyIndex < 0)
+            return
+
+        keysData[keyIndex].down = down
+    }
 
     /** Queue an hosting application/platform windows gain or loss of focus */
     fun addFocusEvent(focused: Boolean) {
@@ -251,9 +266,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** [Internal] Release all keys */
     fun clearInputKeys() {
-        keysDown.fill(false)
-        for (n in keysDownDuration.indices) {
-            keysDownDuration[n] = -1f; keysDownDurationPrev[n] = -1f
+        for (keyData in keysData) {
+            keyData.down = false
+            keyData.downDuration = -1f
+            keyData.downDurationPrev = -1f
         }
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
         keyMods = KeyMod.None.i; keyModsPrev = KeyMod.None.i
@@ -326,11 +342,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Key mods flags (from previous frame) */
     var keyModsPrev: KeyModFlags = KeyMod.None.i
 
-    /** Duration the key has been down (<0.0f: not pressed, 0.0f: just pressed, >0.0f: time held) */
-    val keysDownDuration = FloatArray(512) { -1f }
-
-    /** Duration the key has been down (from previous frame) */
-    val keysDownDurationPrev = FloatArray(512) { -1f }
+    /** Key state for all known keys. */
+    val keysData = Array(Key.COUNT) { KeyData().apply { downDuration = -1f; downDurationPrev = -1f } }
 
     /** Alternative to WantCaptureMouse: (WantCaptureMouse == true && WantCaptureMouseUnlessPopupClose == false) when a click over void is expected to close a popup. */
     var wantCaptureMouseUnlessPopupClose = false
@@ -346,8 +359,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Mouse button went from !Down to Down (same as MouseClickedCount[x] != 0)    */
     val mouseClicked = BooleanArray(5)
+
     /** Has mouse button been double-clicked? (same as MouseClickedCount[x] == 2) */
     val mouseDoubleClicked = BooleanArray(5)
+
     /** == 0 (not clicked), == 1 (same as MouseClicked[]), == 2 (double-clicked), == 3 (triple-clicked) etc. when going from !Down to Down */
     val mouseClickedCount = IntArray(5)
 

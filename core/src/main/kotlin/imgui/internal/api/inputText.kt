@@ -47,6 +47,7 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.setActiveID
+import imgui.ImGui.setActiveIdUsingKey
 import imgui.ImGui.setFocusID
 import imgui.ImGui.style
 import imgui.InputTextFlag
@@ -245,12 +246,14 @@ internal interface inputText {
             if (isMultiline || flags has Itf.CallbackHistory)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
             g.activeIdUsingNavInputMask = g.activeIdUsingNavInputMask or (1 shl NavInput.Cancel)
-            g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or ((1L shl Key.Home) or (1L shl Key.End))
-            if (isMultiline)
-                g.activeIdUsingKeyInputMask =
-                    g.activeIdUsingKeyInputMask or ((1L shl Key.PageUp) or (1L shl Key.PageDown))
+            setActiveIdUsingKey(Key.Home)
+            setActiveIdUsingKey(Key.End)
+            if (isMultiline){
+                setActiveIdUsingKey(Key.PageUp)
+                setActiveIdUsingKey(Key.PageDown)
+            }
             if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
-                g.activeIdUsingKeyInputMask = g.activeIdUsingKeyInputMask or (1L shl Key.Tab)
+                setActiveIdUsingKey(Key.Tab)
         }
 
         // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped), clear id immediately (don't wait until the end of the function)
@@ -584,7 +587,7 @@ internal interface inputText {
                     callback!!
                     // The reason we specify the usage semantic (Completion/History) is that Completion needs to disable keyboard TABBING at the moment.
                     var eventFlag = Itf.None
-                    var eventKey = Key.Count
+                    var eventKey = Key.None
                     when {
                         flags has Itf.CallbackCompletion && Key.Tab.isPressed -> {
                             eventFlag = Itf.CallbackCompletion

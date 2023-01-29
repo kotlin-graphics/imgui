@@ -29,10 +29,9 @@ internal interface inputs {
     infix fun isActiveIdUsingNavDir(dir: Dir): Boolean = g.activeIdUsingNavDirMask has (1 shl dir)
 
     infix fun isActiveIdUsingNavInput(input: NavInput): Boolean = g.activeIdUsingNavInputMask has (1 shl input)
-    infix fun isActiveIdUsingKey(key: Key): Boolean {
-        assert(key.i < 64)
-        return g.activeIdUsingKeyInputMask.and(1L shl key.i) != 0L // TODO Long.has
-    }
+    infix fun isActiveIdUsingKey(key: Key): Boolean = g.activeIdUsingKeyInputMask testBit key.i
+
+    infix fun setActiveIdUsingKey(key: Key) = g.activeIdUsingKeyInputMask setBit key.i
 
     /** Return if a mouse click/drag went past the given threshold. Valid to call during the MouseReleased frame.
      *  [Internal] This doesn't test if the button is pressed */
