@@ -23,9 +23,9 @@ import java.util.logging.Level
 typealias DrawCallback = (DrawList, DrawCmd) -> Unit
 
 // Typically, 1 command = 1 GPU draw call (unless command is a callback)
-// - VtxOffset/IdxOffset: When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset' is enabled,
-//   those fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
-//   Pre-1.71 backends will typically ignore the VtxOffset/IdxOffset fields.
+// - VtxOffset: When 'io.BackendFlags & ImGuiBackendFlags_RendererHasVtxOffset' is enabled,
+//   this fields allow us to render meshes larger than 64K vertices while keeping 16-bit indices.
+//   Backends made for <1.71. will typically ignore the VtxOffset fields.
 // - The ClipRect/TextureId/VtxOffset fields must be contiguous as we memcmp() them together (this is asserted for).
 class DrawCmd : DrawCmdHeader {
 
@@ -48,7 +48,7 @@ class DrawCmd : DrawCmdHeader {
      *  meshes larger than 64K vertices with 16-bit indices. */
     override var vtxOffset = 0
 
-    /** Start offset in index buffer. Always equal to sum of ElemCount drawn so far. */
+    /** Start offset in index buffer. */
     var idxOffset = 0
 
     /** Number of indices (multiple of 3) to be rendered as triangles. Vertices are stored in the callee ImDrawList's
