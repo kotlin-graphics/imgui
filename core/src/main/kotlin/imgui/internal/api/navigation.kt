@@ -5,7 +5,6 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveID
-import imgui.ImGui.getKeyIndex
 import imgui.ImGui.io
 import imgui.ImGui.scrollToRectEx
 import imgui.api.g
