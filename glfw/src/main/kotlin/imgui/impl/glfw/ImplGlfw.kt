@@ -393,11 +393,11 @@ class ImplGlfw @JvmOverloads constructor(
                 GLFW_KEY_KP_ENTER -> Key.KeypadEnter
                 GLFW_KEY_KP_EQUAL -> Key.KeypadEqual
                 GLFW_KEY_LEFT_SHIFT -> Key.LeftShift
-                GLFW_KEY_LEFT_CONTROL -> Key.LeftControl
+                GLFW_KEY_LEFT_CONTROL -> Key.LeftCtrl
                 GLFW_KEY_LEFT_ALT -> Key.LeftAlt
                 GLFW_KEY_LEFT_SUPER -> Key.LeftSuper
                 GLFW_KEY_RIGHT_SHIFT -> Key.RightShift
-                GLFW_KEY_RIGHT_CONTROL -> Key.RightControl
+                GLFW_KEY_RIGHT_CONTROL -> Key.RightCtrl
                 GLFW_KEY_RIGHT_ALT -> Key.RightAlt
                 GLFW_KEY_RIGHT_SUPER -> Key.RightSuper
                 GLFW_KEY_MENU -> Key.Menu
