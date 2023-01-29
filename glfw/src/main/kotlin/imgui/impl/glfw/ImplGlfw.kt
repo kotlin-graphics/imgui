@@ -3,6 +3,7 @@ package imgui.impl.glfw
 import glm_.b
 import glm_.c
 import glm_.f
+import glm_.has
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import glm_.vec2.Vec2i
@@ -233,9 +234,6 @@ class ImplGlfw @JvmOverloads constructor(
         io.deltaTime = if (data.time > 0) (currentTime - data.time).f else 1f / 60f
         data.time = currentTime
 
-        // Update key modifiers
-        updateKeyModifiers()
-
         updateMouseData()
         updateMouseCursor()
 
@@ -254,9 +252,23 @@ class ImplGlfw @JvmOverloads constructor(
         fun newFrame() = instance.newFrame()
         fun shutdown() = instance.shutdown()
 
-        val mouseButtonCallback: MouseButtonCB = { button: Int, action: Int, _: Int ->
+        val mouseButtonCallback: MouseButtonCB = { button: Int, action: Int, mods: Int ->
+
+//            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
+//            if (bd->PrevUserCallbackMousebutton != NULL && window == bd->Window)
+//            bd->PrevUserCallbackMousebutton(window, button, action, mods);
+
+            updateKeyModifiers(mods)
             if (action == GLFW_PRESS && button in data.mouseJustPressed.indices)
                 data.mouseJustPressed[button] = true
+        }
+
+        fun updateKeyModifiers(mods: Int) {
+            val keyMods = (if (mods has GLFW_MOD_CONTROL) KeyMod.Ctrl else KeyMod.None) or
+                    (if (mods has GLFW_MOD_SHIFT) KeyMod.Shift else KeyMod.None) or
+                    (if (mods has GLFW_MOD_ALT) KeyMod.Alt else KeyMod.None) or
+                    (if(mods has GLFW_MOD_SUPER) KeyMod.Super else KeyMod.None)
+            io.addKeyModsEvent(keyMods)
         }
 
         val scrollCallback: ScrollCB = { offset: Vec2d ->
@@ -264,13 +276,13 @@ class ImplGlfw @JvmOverloads constructor(
             io.mouseWheel += offset.y.f
         }
 
-        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, _: Int ->
+        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, mods: Int ->
 
             //            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
             //            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
 
             if (action == GLFW_PRESS || action == GLFW_RELEASE) {
-
+                updateKeyModifiers(mods)
                 val imguiKey = keycode.imguiKey
                 io.addKeyEvent(imguiKey, action == GLFW_PRESS)
                 io.setKeyEventNativeData(imguiKey, keycode, scancode) // To support legacy indexing (<1.87 user code)
@@ -298,9 +310,9 @@ class ImplGlfw @JvmOverloads constructor(
         }
 
         val cursorPosCallback: CursorPosCB = { pos ->
-//            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-//            if (bd->PrevUserCallbackCursorPos != NULL && window == bd->Window)
-//            bd->PrevUserCallbackCursorPos(window, x, y);
+            //            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
+            //            if (bd->PrevUserCallbackCursorPos != NULL && window == bd->Window)
+            //            bd->PrevUserCallbackCursorPos(window, x, y);
 
             io.mousePos put pos
         }
@@ -328,15 +340,6 @@ class ImplGlfw @JvmOverloads constructor(
             //            GLFWscrollfun           PrevUserCallbackScroll;
             //            GLFWkeyfun              PrevUserCallbackKey;
             //            GLFWcharfun             PrevUserCallbackChar;
-        }
-
-        fun updateKeyModifiers() {
-            val wnd = data.window.handle.value
-            var keyMods = (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) KeyMod.Ctrl else KeyMod.None) or
-                    (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) KeyMod.Shift else KeyMod.None) or
-                    (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)) KeyMod.Alt else KeyMod.None) or
-                    (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)) KeyMod.Super else KeyMod.None)
-            io.addKeyModsEvent(keyMods)
         }
 
         val Int.imguiKey: Key
