@@ -51,6 +51,7 @@ import imgui.ImGui.saveIniSettingsToMemory
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
+import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.showFontAtlas
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
@@ -81,6 +82,8 @@ import imgui.internal.api.debugTools.Companion.metricsHelpMarker
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Table
 import imgui.internal.classes.Window
+import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.hasnt
 import imgui.internal.sections.testEngine_FindItemDebugLabel
 import kool.BYTES
 import kotlin.reflect.KMutableProperty0
@@ -433,6 +436,9 @@ interface demoDebugInformations {
      *
      *  Stack Tool: Display UI     */
     fun showStackToolWindow(pOpen: KMutableProperty0<Boolean>? = null) {
+
+        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasSize)
+            setNextWindowSize(Vec2(0f, fontSize * 8f), Cond.FirstUseEver)
         if (!begin("Dear ImGui Stack Tool", pOpen) || ImGui.currentWindow.beginCount > 1) {
             end()
             return
