@@ -231,6 +231,7 @@ fun renderDimmedBackgroundBehindWindow(window: Window, col: Int) {
         drawList.cmdBuffer.pop()
         drawList.cmdBuffer += cmd
         drawList.popClipRect()
+        drawList._popUnusedDrawCmd() // Since are past the calls to AddDrawListToDrawData() we don't have a _PopUnusedDrawCmd() running on commands.
     }
 }
 
@@ -263,6 +264,7 @@ fun renderDimmedBackgrounds() {
         window.drawList.pushClipRect(viewport.pos, viewport.pos + viewport.size)
         window.drawList.addRect(bb.min, bb.max, getColorU32(Col.NavWindowingHighlight, g.navWindowingHighlightAlpha), window.windowRounding, 0, 3f)
         window.drawList.popClipRect()
+        window.drawList._popUnusedDrawCmd() // Since are past the calls to AddDrawListToDrawData() we don't have a _PopUnusedDrawCmd() running on commands.
     }
 }
 
