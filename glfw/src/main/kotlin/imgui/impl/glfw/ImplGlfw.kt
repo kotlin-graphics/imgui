@@ -269,8 +269,8 @@ class ImplGlfw @JvmOverloads constructor(
 
         val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, _: Int ->
 
-//            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
-//            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
+            //            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
+            //            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
 
             if (action == GLFW_PRESS || action == GLFW_RELEASE) {
 
@@ -325,11 +325,13 @@ class ImplGlfw @JvmOverloads constructor(
 
         fun updateKeyModifiers() {
             val wnd = data.window.handle.value
-            io.keyShift = glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS
-            io.keyCtrl  = glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS
-            io.keyAlt   = glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS
-            io.keySuper = glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS
+            var keyMods = (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)) KeyMod.Ctrl else KeyMod.None) or
+                    (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) KeyMod.Shift else KeyMod.None) or
+                    (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)) KeyMod.Alt else KeyMod.None) or
+                    (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)) KeyMod.Super else KeyMod.None)
+            io.addKeyModEvent(keyMods)
         }
+
         val Int.imguiKey: Key
             get() = when (this) {
                 GLFW_KEY_TAB -> Key.Tab

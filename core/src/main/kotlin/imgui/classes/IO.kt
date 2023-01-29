@@ -207,6 +207,15 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         keysData[key.i].down = down
     }
 
+    /** Queue a change of Ctrl/Shift/Alt/Super modifiers */
+    fun addKeyModEvent(modifiers: KeyModFlags) {
+        keyMods = modifiers
+        keyCtrl = modifiers has KeyMod.Ctrl
+        keyShift = modifiers has KeyMod.Shift
+        keyAlt = modifiers has KeyMod.Alt
+        keySuper = modifiers has KeyMod.Super
+    }
+
     /** Queue an hosting application/platform windows gain or loss of focus */
     fun addFocusEvent(focused: Boolean) {
         // We intentionally overwrite this and process in NewFrame(), in order to give a chance

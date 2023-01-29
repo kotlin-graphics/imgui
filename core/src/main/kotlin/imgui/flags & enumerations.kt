@@ -1275,8 +1275,9 @@ enum class KeyMod(val i: KeyModFlags) {
     infix fun or(b: KeyMod): KeyModFlags = i or b.i
 }
 
-infix fun Int.has(f: KeyMod): Boolean = has(f.i)
-infix fun Int.hasnt(f: KeyMod): Boolean = hasnt(f.i)
+infix fun Int.or(k: KeyMod) = or(k.i)
+infix fun Int.has(k: KeyMod): Boolean = has(k.i)
+infix fun Int.hasnt(k: KeyMod): Boolean = hasnt(k.i)
 
 typealias KeyModFlags = Int
 
