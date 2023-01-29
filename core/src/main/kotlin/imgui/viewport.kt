@@ -88,7 +88,6 @@ open class Viewport {
 //-----------------------------------------------------------------------------
 
 /** (Optional) Support for IME (Input Method Editor) via the io.SetPlatformImeDataFn() function. */
-class PlatformImeData {
+data class PlatformImeData(
     /** Position of the input cursor */
-    val inputPos = Vec2()
-}
+    val inputPos: Vec2 = Vec2())

@@ -213,7 +213,7 @@ interface main {
         g.wantTextInputNextFrame = -1
         g.wantCaptureKeyboardNextFrame = -1
         g.wantCaptureMouseNextFrame = -1
-        g.platformImePos put 1f // OS Input Method Editor showing on top-left of our window by default
+        g.platformImeData = PlatformImeData(Vec2(g.platformImeData.inputPos)) // OS Input Method Editor showing on top-left of our window by default
 
         // Mouse wheel scrolling, scale
         updateMouseWheel()
@@ -282,13 +282,11 @@ interface main {
 
         errorCheckEndFrameSanityChecks()
 
-        // Notify OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
-        if (io.setPlatformImeDataFn != null && (g.platformImeLastPos.x == Float.MAX_VALUE || (g.platformImeLastPos - g.platformImePos).lengthSqr > 0.0001f)) {
+        // Notify Platform/OS when our Input Method Editor cursor has moved (e.g. CJK inputs using Microsoft IME)
+        if (io.setPlatformImeDataFn != null && g.platformImeData != g.platformImeDataPrev) {
 //            if (DEBUG)
                 // println("in (${g.platformImePos.x}, ${g.platformImePos.y}) (${g.platformImeLastPos.x}, ${g.platformImeLastPos.y})")
-            val data = PlatformImeData().apply { inputPos put g.platformImePos }
-            io.setPlatformImeDataFn!!(mainViewport, data)
-            g.platformImeLastPos put g.platformImePos
+            g.io.setPlatformImeDataFn!!(mainViewport, g.platformImeData)
         }
 
         // Hide implicit/fallback "Debug" window if it hasn't been used

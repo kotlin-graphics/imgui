@@ -543,11 +543,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Platform support
 
-    /** Cursor position request to the OS Input Method Editor   */
-    var platformImePos = Vec2(Float.MAX_VALUE)
+    /** Data updated by current frame */
+    var platformImeData = PlatformImeData()
 
-    /** Last cursor position passed to the OS Input Method Editor   */
-    var platformImeLastPos = Vec2(Float.MAX_VALUE)
+    /** Previous frame data (when changing we will call io.SetPlatformImeDataFn */
+    var platformImeDataPrev = PlatformImeData().apply { inputPos put -1f }
 
     /** '.' or *localeconv()->decimal_point */
     var platformLocaleDecimalPoint = '.'
