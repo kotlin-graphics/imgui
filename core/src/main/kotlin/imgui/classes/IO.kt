@@ -208,7 +208,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     }
 
     /** Queue a change of Ctrl/Shift/Alt/Super modifiers */
-    fun addKeyModEvent(modifiers: KeyModFlags) {
+    fun addKeyModsEvent(modifiers: KeyModFlags) {
         keyMods = modifiers
         keyCtrl = modifiers has KeyMod.Ctrl
         keyShift = modifiers has KeyMod.Shift

@@ -329,7 +329,7 @@ class ImplGlfw @JvmOverloads constructor(
                     (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) KeyMod.Shift else KeyMod.None) or
                     (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)) KeyMod.Alt else KeyMod.None) or
                     (if ((glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)) KeyMod.Super else KeyMod.None)
-            io.addKeyModEvent(keyMods)
+            io.addKeyModsEvent(keyMods)
         }
 
         val Int.imguiKey: Key
