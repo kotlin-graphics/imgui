@@ -16,10 +16,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
-import imgui.windowsIme.COMPOSITIONFORM
-import imgui.windowsIme.DWORD
-import imgui.windowsIme.HIMC
-import imgui.windowsIme.imm
+import imgui.windowsIme.*
 import org.lwjgl.system.MemoryUtil
 import uno.glfw.HWND
 import java.awt.Toolkit
@@ -252,14 +249,20 @@ val setPlatformImeDataFn_DefaultImpl = { viewport: Viewport, data: PlatformImeDa
     if (hwnd.L == MemoryUtil.NULL) {
         val himc: HIMC = HIMC(imm.getContext(hwnd))
         if (himc.L != MemoryUtil.NULL) {
-            val cf = COMPOSITIONFORM().apply {
+            val compositionForm = COMPOSITIONFORM().apply {
                 ptCurrentPos.x = data.inputPos.x.L
                 ptCurrentPos.y = data.inputPos.y.L
                 dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
             }
-            if (imm.setCompositionWindow(himc, cf) == 0) System.err.println("imm.setCompositionWindow failed")
-            if (imm.releaseContext(hwnd, himc) == 0) System.err.println("imm.releaseContext failed")
-            cf.free()
+            if (imm.setCompositionWindow(himc, compositionForm) == 0) System.err.println("imm::setCompositionWindow failed")
+            val candidateForm = CANDIDATEFORM().apply {
+                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
+                ptCurrentPos.x = data.inputPos.x.L
+                ptCurrentPos.y = data.inputPos.y.L
+            }
+            if (imm.setCandidateWindow(himc, candidateForm) == 0) System.err.println("imm::setCandidateWindow failed")
+            if (imm.releaseContext(hwnd, himc) == 0) System.err.println("imm::releaseContext failed")
+            compositionForm.free()
         }
     }
 }
