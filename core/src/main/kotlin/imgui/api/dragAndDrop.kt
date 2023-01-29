@@ -145,14 +145,12 @@ interface dragAndDrop {
     }
 
     @Deprecated("Replaced by setDragDropPayload without size argument", ReplaceWith("setDragDropPayload(type, data, cond_)"))
-    fun setDragDropPayload(type: String, data: Any, size: Int, cond_: Cond = Cond.None): Boolean {
-        return setDragDropPayload(type, data, cond_)
-    }
+    fun setDragDropPayload(type: String, data: Any, size: Int, cond_: Cond = Cond.None): Boolean = setDragDropPayload(type, data, cond_)
 
     //    /** Type is a user defined string of maximum 32 characters. Strings starting with '_' are reserved for dear imgui internal types.
     //     *  Data is copied and held by imgui.
     /** Type is a user defined string. Types starting with '_' are reserved for dear imgui internal types.
-     *  Data is held by imgui.
+     *  Data is held by imgui. Return true when payload has been accepted.
      *  Use 'cond' to choose to submit payload on drag start or every frame */
     fun setDragDropPayload(type: String, data: Any?, cond_: Cond = Cond.None): Boolean {
         val payload = g.dragDropPayload
@@ -171,6 +169,7 @@ interface dragAndDrop {
         }
         payload.dataFrameCount = g.frameCount
 
+        // Return whether the payload has been accepted
         return g.dragDropAcceptFrameCount == g.frameCount || g.dragDropAcceptFrameCount == g.frameCount - 1
     }
 
