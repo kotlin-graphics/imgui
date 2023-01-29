@@ -461,7 +461,7 @@ internal interface inputText {
                 }
                 Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
                 Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
-                Key.Delete.isPressed && !isReadOnly -> state.onKeyPressed(K.DELETE or kMask)
+                Key.Delete.isPressed && !isReadOnly && !isCut -> state.onKeyPressed(K.DELETE or kMask)
                 Key.Backspace.isPressed && !isReadOnly -> {
                     if (!state.hasSelection)
                         if (isWordmoveKeyDown)
