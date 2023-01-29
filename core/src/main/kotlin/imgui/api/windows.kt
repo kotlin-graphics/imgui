@@ -701,7 +701,8 @@ interface windows {
 
             window.apply {
                 // Update the Hidden flag
-                hidden = hiddenFramesCanSkipItems > 0 || hiddenFramesCannotSkipItems > 0 || hiddenFramesForRenderOnly > 0
+                val hiddenRegulare = hiddenFramesCanSkipItems > 0 || hiddenFramesCannotSkipItems > 0 || hiddenFramesForRenderOnly > 0
+                hidden = hiddenRegulare || hiddenFramesForRenderOnly > 0
 
                 // Disable inputs for requested number of frames
                 if (disableInputsFrames > 0) {
@@ -710,7 +711,7 @@ interface windows {
                 }
 
                 // Update the SkipItems flag, used to early out of all items functions (no layout required)
-                skipItems = (collapsed || !active || hidden) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0
+                skipItems = (collapsed || !active || hiddenRegulare) && autoFitFrames allLessThanEqual 0 && hiddenFramesCannotSkipItems <= 0
             }
         }
 
