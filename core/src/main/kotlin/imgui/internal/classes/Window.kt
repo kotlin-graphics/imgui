@@ -487,7 +487,7 @@ class Window(var context: Context,
                 continue
             if (!window.isWithinBeginStackOf(this))
                 break
-            if (window.isActiveAndVisible)
+            if (window.isActiveAndVisible && window.displayLayer <= parentWindow!!.displayLayer)
                 bottomMostVisibleWindow = window
         }
         return bottomMostVisibleWindow
