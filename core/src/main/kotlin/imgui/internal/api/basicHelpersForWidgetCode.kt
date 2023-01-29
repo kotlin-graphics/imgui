@@ -105,6 +105,11 @@ internal interface basicHelpersForWidgetCode {
                     if (window == g.navWindow || (window.flags or g.navWindow!!.flags) has WindowFlag._NavFlattened)
                         navProcessItem()
 
+            // [DEBUG] People keep stumbling on this problem and using "" as identifier in the root of a window instead of "##something".
+            // Empty identifier are valid and useful in a small amount of cases, but 99.9% of the time you want to use "##something".
+            // READ THE FAQ: https://dearimgui.org/faq
+            assert(id != window.id) { "Cannot have an empty ID at the root of a window. If you need an empty label, use ## and read the FAQ about how the ID Stack works!" }
+
             // [DEBUG] Item Picker tool, when enabling the "extended" version we perform the check in ItemAdd()
             if (IMGUI_DEBUG_TOOL_ITEM_PICKER_EX && id == g.debugItemPickerBreakId) {
                 IM_DEBUG_BREAK()
