@@ -12,7 +12,6 @@ import imgui.ImGui.mainViewport
 import imgui.ImGui.mouseCursor
 import imgui.Key
 import imgui.MouseButton
-import imgui.impl.*
 import imgui.windowsIme.imeListener
 import kool.lim
 import org.lwjgl.glfw.GLFW.*
@@ -71,7 +70,7 @@ class ImplGlfw @JvmOverloads constructor(
             keyMap[Key.Space] = GLFW_KEY_SPACE
             keyMap[Key.Enter] = GLFW_KEY_ENTER
             keyMap[Key.Escape] = GLFW_KEY_ESCAPE
-            keyMap[Key.KeyPadEnter] = GLFW_KEY_KP_ENTER
+            keyMap[Key.KeypadEnter] = GLFW_KEY_KP_ENTER
             keyMap[Key.A] = GLFW_KEY_A
             keyMap[Key.C] = GLFW_KEY_C
             keyMap[Key.V] = GLFW_KEY_V

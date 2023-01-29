@@ -1146,7 +1146,7 @@ enum class SortDirection {
  *  A key identifier (ImGui-side enum) */
 enum class Key {
     Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace,
-    Space, Enter, Escape, KeyPadEnter,
+    Space, Enter, Escape, KeypadEnter,
 
     _0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
 
