@@ -628,7 +628,7 @@ internal interface inputText {
                         callback(cbData)
 
                         // Read back what user may have modified
-                        callbackBuf = if(isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
+                        callbackBuf = if (isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
                         assert(cbData.buf === callbackBuf) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
@@ -882,10 +882,12 @@ internal interface inputText {
                     drawWindow.drawList.addLine(cursorScreenRect.min, cursorScreenRect.bl, Col.Text.u32)
 
                 // Notify OS of text input position for advanced IME (-1 x offset so that Windows IME can cover our cursor. Bit of an extra nicety.)
-                if (!isReadOnly) {
-                    g.platformImeData.wantVisible = true
-                    g.platformImeData.inputPos.put(cursorScreenPos.x - 1f, cursorScreenPos.y - g.fontSize)
-                }
+                if (!isReadOnly)
+                    g.platformImeData.apply {
+                        wantVisible = true
+                        inputPos.put(cursorScreenPos.x - 1f, cursorScreenPos.y - g.fontSize)
+                        inputLineHeight = g.fontSize
+                    }
             }
         } else {
             // Render text only (no selection, no cursor)
@@ -920,8 +922,7 @@ internal interface inputText {
             // ...and then we need to undo the group overriding last item data, which gets a bit messy as EndGroup() tries to forward scrollbar being active...
             // FIXME: This quite messy/tricky, should attempt to get rid of the child window.
             endGroup()
-            if (g.lastItemData.id == 0)
-            {
+            if (g.lastItemData.id == 0) {
                 g.lastItemData.id = id
                 g.lastItemData.inFlags = itemDataBackup.inFlags
                 g.lastItemData.statusFlags = itemDataBackup.statusFlags
