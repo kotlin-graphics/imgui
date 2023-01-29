@@ -152,9 +152,8 @@ class ImplGL2 : GLInterface {
 
                     // Bind texture, Draw
                     glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
-                    glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset)
+                    glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, idxBufferOffset + cmd.idxOffset)
                 }
-                idxBufferOffset += cmd.elemCount * DrawIdx.BYTES
             }
         }
 
