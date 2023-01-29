@@ -54,30 +54,6 @@ class ImplGlfw @JvmOverloads constructor(
             data.window = window
             //            Data.time = 0.0
 
-            // Keyboard mapping. Dear ImGui will use those indices to peek into the io.KeysDown[] array.
-            keyMap[Key.Tab] = GLFW_KEY_TAB
-            keyMap[Key.LeftArrow] = GLFW_KEY_LEFT
-            keyMap[Key.RightArrow] = GLFW_KEY_RIGHT
-            keyMap[Key.UpArrow] = GLFW_KEY_UP
-            keyMap[Key.DownArrow] = GLFW_KEY_DOWN
-            keyMap[Key.PageUp] = GLFW_KEY_PAGE_UP
-            keyMap[Key.PageDown] = GLFW_KEY_PAGE_DOWN
-            keyMap[Key.Home] = GLFW_KEY_HOME
-            keyMap[Key.End] = GLFW_KEY_END
-            keyMap[Key.Insert] = GLFW_KEY_INSERT
-            keyMap[Key.Delete] = GLFW_KEY_DELETE
-            keyMap[Key.Backspace] = GLFW_KEY_BACKSPACE
-            keyMap[Key.Space] = GLFW_KEY_SPACE
-            keyMap[Key.Enter] = GLFW_KEY_ENTER
-            keyMap[Key.Escape] = GLFW_KEY_ESCAPE
-            keyMap[Key.KeypadEnter] = GLFW_KEY_KP_ENTER
-            keyMap[Key.A] = GLFW_KEY_A
-            keyMap[Key.C] = GLFW_KEY_C
-            keyMap[Key.V] = GLFW_KEY_V
-            keyMap[Key.X] = GLFW_KEY_X
-            keyMap[Key.Y] = GLFW_KEY_Y
-            keyMap[Key.Z] = GLFW_KEY_Z
-
             backendRendererName = null
             backendPlatformName = null
             backendLanguageUserData = null
@@ -260,6 +236,9 @@ class ImplGlfw @JvmOverloads constructor(
         io.deltaTime = if (data.time > 0) (currentTime - data.time).f else 1f / 60f
         data.time = currentTime
 
+        // Update key modifiers
+        updateKeyModifiers()
+
         updateMousePosAndButtons()
         updateMouseCursor()
 
@@ -288,22 +267,16 @@ class ImplGlfw @JvmOverloads constructor(
             io.mouseWheel += offset.y.f
         }
 
-        val keyCallback: KeyCB = { key: Int, _: Int, action: Int, _: Int ->
-            with(io) {
-                if (key in keysDown.indices)
-                    if (action == GLFW_PRESS)
-                        keysDown[key] = true
-                    else if (action == GLFW_RELEASE)
-                        keysDown[key] = false
+        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, _: Int ->
 
-                // Modifiers are not reliable across systems
-                keyCtrl = keysDown[GLFW_KEY_LEFT_CONTROL] || keysDown[GLFW_KEY_RIGHT_CONTROL]
-                keyShift = keysDown[GLFW_KEY_LEFT_SHIFT] || keysDown[GLFW_KEY_RIGHT_SHIFT]
-                keyAlt = keysDown[GLFW_KEY_LEFT_ALT] || keysDown[GLFW_KEY_RIGHT_ALT]
-                keySuper = when (Platform.get()) {
-                    Platform.WINDOWS -> false
-                    else -> keysDown[GLFW_KEY_LEFT_SUPER] || keysDown[GLFW_KEY_RIGHT_SUPER]
-                }
+//            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
+//            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
+
+            if (action == GLFW_PRESS || action == GLFW_RELEASE) {
+
+                val imguiKey = keycode.imguiKey
+                io.addKeyEvent(imguiKey, action == GLFW_PRESS)
+                io.setKeyEventNativeData(imguiKey, keycode, scancode) // To support legacy indexing (<1.87 user code)
             }
         }
 
@@ -319,8 +292,8 @@ class ImplGlfw @JvmOverloads constructor(
         }
 
         val windowFocusCallback: WindowFocusCB = { focused ->
-//            if (bd->PrevUserCallbackWindowFocus != NULL && window == bd->Window)
-//            bd->PrevUserCallbackWindowFocus(window, focused);
+            //            if (bd->PrevUserCallbackWindowFocus != NULL && window == bd->Window)
+            //            bd->PrevUserCallbackWindowFocus(window, focused);
 
             io.addFocusEvent(focused)
         }
@@ -349,5 +322,122 @@ class ImplGlfw @JvmOverloads constructor(
             //            GLFWkeyfun              PrevUserCallbackKey;
             //            GLFWcharfun             PrevUserCallbackChar;
         }
+
+        fun updateKeyModifiers() {
+            val wnd = data.window.handle.value
+            io.keyShift = glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS
+            io.keyCtrl  = glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS
+            io.keyAlt   = glfwGetKey(wnd, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS
+            io.keySuper = glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS
+        }
+        val Int.imguiKey: Key
+            get() = when (this) {
+                GLFW_KEY_TAB -> Key.Tab
+                GLFW_KEY_LEFT -> Key.LeftArrow
+                GLFW_KEY_RIGHT -> Key.RightArrow
+                GLFW_KEY_UP -> Key.UpArrow
+                GLFW_KEY_DOWN -> Key.DownArrow
+                GLFW_KEY_PAGE_UP -> Key.PageUp
+                GLFW_KEY_PAGE_DOWN -> Key.PageDown
+                GLFW_KEY_HOME -> Key.Home
+                GLFW_KEY_END -> Key.End
+                GLFW_KEY_INSERT -> Key.Insert
+                GLFW_KEY_DELETE -> Key.Delete
+                GLFW_KEY_BACKSPACE -> Key.Backspace
+                GLFW_KEY_SPACE -> Key.Space
+                GLFW_KEY_ENTER -> Key.Enter
+                GLFW_KEY_ESCAPE -> Key.Escape
+                GLFW_KEY_APOSTROPHE -> Key.Apostrophe
+                GLFW_KEY_COMMA -> Key.Comma
+                GLFW_KEY_MINUS -> Key.Minus
+                GLFW_KEY_PERIOD -> Key.Period
+                GLFW_KEY_SLASH -> Key.Slash
+                GLFW_KEY_SEMICOLON -> Key.Semicolon
+                GLFW_KEY_EQUAL -> Key.Equal
+                GLFW_KEY_LEFT_BRACKET -> Key.LeftBracket
+                GLFW_KEY_BACKSLASH -> Key.Backslash
+                GLFW_KEY_RIGHT_BRACKET -> Key.RightBracket
+                GLFW_KEY_GRAVE_ACCENT -> Key.GraveAccent
+                GLFW_KEY_CAPS_LOCK -> Key.CapsLock
+                GLFW_KEY_SCROLL_LOCK -> Key.ScrollLock
+                GLFW_KEY_NUM_LOCK -> Key.NumLock
+                GLFW_KEY_PRINT_SCREEN -> Key.PrintScreen
+                GLFW_KEY_PAUSE -> Key.Pause
+                GLFW_KEY_KP_0 -> Key.Keypad0
+                GLFW_KEY_KP_1 -> Key.Keypad1
+                GLFW_KEY_KP_2 -> Key.Keypad2
+                GLFW_KEY_KP_3 -> Key.Keypad3
+                GLFW_KEY_KP_4 -> Key.Keypad4
+                GLFW_KEY_KP_5 -> Key.Keypad5
+                GLFW_KEY_KP_6 -> Key.Keypad6
+                GLFW_KEY_KP_7 -> Key.Keypad7
+                GLFW_KEY_KP_8 -> Key.Keypad8
+                GLFW_KEY_KP_9 -> Key.Keypad9
+                GLFW_KEY_KP_DECIMAL -> Key.KeypadDecimal
+                GLFW_KEY_KP_DIVIDE -> Key.KeypadDivide
+                GLFW_KEY_KP_MULTIPLY -> Key.KeypadMultiply
+                GLFW_KEY_KP_SUBTRACT -> Key.KeypadSubtract
+                GLFW_KEY_KP_ADD -> Key.KeypadAdd
+                GLFW_KEY_KP_ENTER -> Key.KeypadEnter
+                GLFW_KEY_KP_EQUAL -> Key.KeypadEqual
+                GLFW_KEY_LEFT_SHIFT -> Key.LeftShift
+                GLFW_KEY_LEFT_CONTROL -> Key.LeftControl
+                GLFW_KEY_LEFT_ALT -> Key.LeftAlt
+                GLFW_KEY_LEFT_SUPER -> Key.LeftSuper
+                GLFW_KEY_RIGHT_SHIFT -> Key.RightShift
+                GLFW_KEY_RIGHT_CONTROL -> Key.RightControl
+                GLFW_KEY_RIGHT_ALT -> Key.RightAlt
+                GLFW_KEY_RIGHT_SUPER -> Key.RightSuper
+                GLFW_KEY_MENU -> Key.Menu
+                GLFW_KEY_0 -> Key.`0`
+                GLFW_KEY_1 -> Key.`1`
+                GLFW_KEY_2 -> Key.`2`
+                GLFW_KEY_3 -> Key.`3`
+                GLFW_KEY_4 -> Key.`4`
+                GLFW_KEY_5 -> Key.`5`
+                GLFW_KEY_6 -> Key.`6`
+                GLFW_KEY_7 -> Key.`7`
+                GLFW_KEY_8 -> Key.`8`
+                GLFW_KEY_9 -> Key.`9`
+                GLFW_KEY_A -> Key.A
+                GLFW_KEY_B -> Key.B
+                GLFW_KEY_C -> Key.C
+                GLFW_KEY_D -> Key.D
+                GLFW_KEY_E -> Key.E
+                GLFW_KEY_F -> Key.F
+                GLFW_KEY_G -> Key.G
+                GLFW_KEY_H -> Key.H
+                GLFW_KEY_I -> Key.I
+                GLFW_KEY_J -> Key.J
+                GLFW_KEY_K -> Key.K
+                GLFW_KEY_L -> Key.L
+                GLFW_KEY_M -> Key.M
+                GLFW_KEY_N -> Key.N
+                GLFW_KEY_O -> Key.O
+                GLFW_KEY_P -> Key.P
+                GLFW_KEY_Q -> Key.Q
+                GLFW_KEY_R -> Key.R
+                GLFW_KEY_S -> Key.S
+                GLFW_KEY_T -> Key.T
+                GLFW_KEY_U -> Key.U
+                GLFW_KEY_V -> Key.V
+                GLFW_KEY_W -> Key.W
+                GLFW_KEY_X -> Key.X
+                GLFW_KEY_Y -> Key.Y
+                GLFW_KEY_Z -> Key.Z
+                GLFW_KEY_F1 -> Key.F1
+                GLFW_KEY_F2 -> Key.F2
+                GLFW_KEY_F3 -> Key.F3
+                GLFW_KEY_F4 -> Key.F4
+                GLFW_KEY_F5 -> Key.F5
+                GLFW_KEY_F6 -> Key.F6
+                GLFW_KEY_F7 -> Key.F7
+                GLFW_KEY_F8 -> Key.F8
+                GLFW_KEY_F9 -> Key.F9
+                GLFW_KEY_F10 -> Key.F10
+                GLFW_KEY_F11 -> Key.F11
+                GLFW_KEY_F12 -> Key.F12
+                else -> Key.None
+            }
     }
 }
