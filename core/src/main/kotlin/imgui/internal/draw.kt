@@ -223,9 +223,7 @@ class DrawListSplitter {
         for (i in 1 until _count) {
 
             val ch = _channels[i]
-
-            // Equivalent of PopUnusedDrawCmd() for this channel's cmdbuffer and except we don't need to test for UserCallback.
-            if (ch._cmdBuffer.lastOrNull()?.elemCount == 0)
+            if (ch._cmdBuffer.lastOrNull()?.elemCount == 0 && ch._cmdBuffer.last().userCallback == null) // Equivalent of PopUnusedDrawCmd()
                 ch._cmdBuffer.pop()
 
             if (ch._cmdBuffer.isNotEmpty() && lastCmd != null) {
