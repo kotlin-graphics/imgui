@@ -43,6 +43,7 @@ import imgui.dsl.withID
 import imgui.dsl.withItemWidth
 import imgui.dsl.withStyleVar
 import imgui.demo.showExampleApp.MenuFile
+import imgui.dsl.menuBar
 import imgui.WindowFlag as Wf
 
 object ShowDemoWindowPopups {
@@ -137,8 +138,20 @@ object ShowDemoWindowPopups {
                 }
 
                 // Call the more complete ShowExampleMenuFile which we use in various places of this demo
-                if (button("File Menu..")) openPopup("my_file_popup")
-                popup("my_file_popup") { MenuFile() }
+                if (button("With a menu.."))
+                    openPopup("my_file_popup", Wf.MenuBar.i)
+                popup("my_file_popup") {
+                    menuBar {
+                        menu("File") {
+                            MenuFile()
+                        }
+                        menu("Edit") {
+                            menuItem("Dummy")
+                        }
+                    }
+                    text("Hello from popup!")
+                    button("This is a dummy button..")
+                }
             }
         }
     }

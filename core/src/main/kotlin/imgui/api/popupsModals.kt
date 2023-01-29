@@ -149,7 +149,7 @@ interface popupsModals {
             val parentPopupWindow = g.openPopupStack[popupIdx - 1].window
             var closeParent = false
             if (popupWindow?.flags?.has(Wf._ChildMenu) == true)
-                if (parentPopupWindow == null || parentPopupWindow.flags hasnt Wf._Modal)
+                if (parentPopupWindow != null && parentPopupWindow.flags hasnt Wf.MenuBar)
                     closeParent = true
             if (!closeParent)
                 break

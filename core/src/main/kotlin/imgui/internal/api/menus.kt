@@ -1,6 +1,5 @@
 package imgui.internal.api
 
-import gli_.has
 import glm_.glm
 import glm_.max
 import glm_.vec2.Vec2
@@ -76,8 +75,9 @@ internal interface menus {
         var menuIsOpen = ImGui.isPopupOpen(id)
 
         // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal focus and not allow hovering on parent menu)
+        // The first menu in a hierarchy isn't so hovering doesn't get accross (otherwise e.g. resizing borders with ImGuiButtonFlags_FlattenChildren would react), but top-most BeginMenu() will bypass that limitation.
         var flags = WindowFlag._ChildMenu or WindowFlag.AlwaysAutoResize or WindowFlag.NoMove or WindowFlag.NoTitleBar or WindowFlag.NoSavedSettings or WindowFlag.NoNavFocus
-        if (window.flags has (WindowFlag._Popup or WindowFlag._ChildMenu))
+        if (window.flags has WindowFlag._ChildMenu)
             flags = flags or WindowFlag._ChildWindow
 
         // If a menu with same the ID was already submitted, we will append to it, matching the behavior of Begin().
@@ -96,23 +96,22 @@ internal interface menus {
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
-        val pressed: Boolean
-        val menusetIsOpen = window.flags has WindowFlag.MenuBar && g.openPopupStack.size > g.beginPopupStack.size &&
-                g.openPopupStack[g.beginPopupStack.size].openParentId == window.idStack.last()
+        // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent without always being a Child window)
+        val menusetIsOpen = widgets.isRootOfOpenMenuSet
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
-        // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent)
             g.navWindow = window
 
         // The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child menu,
         // However the final position is going to be different! It is chosen by FindBestWindowPosForPopup().
         // e.g. Menus tend to overlap each other horizontally to amplify relative Z-ordering.
-        val popupPos = Vec2();
+        val popupPos = Vec2()
         val pos = Vec2(window.dc.cursorPos)
         pushID(label)
         if (!enabled)
             beginDisabled()
         val offsets = window.dc.menuColumns
+        val pressed: Boolean
         if (window.dc.layoutType == LayoutType.Horizontal) {
             /*  Menu inside an horizontal menu bar
                 Selectable extend their highlight by half ItemSpacing in each direction.
@@ -236,13 +235,19 @@ internal interface menus {
         val pos = Vec2(window.dc.cursorPos)
         val labelSize = ImGui.calcTextSize(label, hideTextAfterDoubleHash = true)
 
+        val menusetIsOpen = widgets.isRootOfOpenMenuSet
+        val backedNavWindow = g.navWindow
+        if (menusetIsOpen)
+            g.navWindow = window
+
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
         val pressed: Boolean
         pushID(label)
         if (!enabled)
             beginDisabled()
-        val flags = SelectableFlag._SelectOnRelease or SelectableFlag._SetNavIdOnHover
+
+        val selectableFlags = SelectableFlag._SelectOnRelease or SelectableFlag._SetNavIdOnHover
         val offsets = window.dc.menuColumns
         if (window.dc.layoutType == LayoutType.Horizontal) {
             // Mimic the exact layout spacing of BeginMenu() to allow MenuItem() inside a menu bar, which is a little misleading but may be useful
@@ -251,7 +256,7 @@ internal interface menus {
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
-            pressed = selectable("", selected, flags, Vec2(w, 0f))
+            pressed = selectable("", selected, selectableFlags, Vec2(w, 0f))
             popStyleVar()
             renderText(textPos, label)
             window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f)) // -1 spacing to compensate the spacing added when Selectable() did a SameLine(). It would also work to call SameLine() ourselves after the PopStyleVar().
@@ -264,7 +269,7 @@ internal interface menus {
             val checkmarkW = floor(g.fontSize * 1.2f)
             val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, shortcutW, checkmarkW) // Feedback for next frame
             val stretchW = 0f max (contentRegionAvail.x - minW)
-            pressed = selectable("", false, flags or SelectableFlag._SpanAvailWidth, Vec2(minW, 0f))
+            pressed = selectable("", false, selectableFlags or SelectableFlag._SpanAvailWidth, Vec2(minW, 0f))
             renderText(pos + Vec2(offsets.offsetLabel, 0f), label)
             if (iconW > 0f)
                 renderText(pos + Vec2(offsets.offsetIcon, 0f), icon)
@@ -281,6 +286,8 @@ internal interface menus {
         if (!enabled)
             popStyleColor()
         popID()
+        if (menusetIsOpen)
+            g.navWindow = backedNavWindow
 
         return pressed
     }

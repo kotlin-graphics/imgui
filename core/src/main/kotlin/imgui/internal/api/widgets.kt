@@ -65,7 +65,7 @@ internal interface widgets {
 
         // Accept null ranges
         if (text.strlen() == textEnd)
-            text[0] = 0// = text_end = "";
+            text[0] = 0 // = text_end = "";
 
         // Calculate length
 
@@ -511,4 +511,22 @@ internal interface widgets {
 
     fun checkboxFlags(label: String, flags: KMutableProperty0<Ulong>, flagsValue: Ulong): Boolean =
         checkboxFlagsT(label, flags, flagsValue)
+
+    companion object {
+        val isRootOfOpenMenuSet: Boolean
+            get() {
+                val window = g.currentWindow!!
+                if ((g.openPopupStack.size <= g.beginPopupStack.size) || window.flags has WindowFlag._ChildMenu)
+                    return false
+
+                // Initially we used 'OpenParentId' to differentiate multiple menu sets from each others (e.g. inside menu bar vs loose menu items) based on parent ID.
+                // This would however prevent the use of e.g. PuhsID() user code submitting menus.
+                // Previously this worked between popup and a first child menu because the first child menu always had the _ChildWindow flag,
+                // making  hovering on parent popup possible while first child menu was focused - but this was generally a bug with other side effects.
+                // Instead we don't treat Popup specifically (in order to consistently support menu features in them), maybe the first child menu of a Popup
+                // doesn't have the _ChildWindow flag, and we rely on this IsRootOfOpenMenuSet() check to allow hovering between root window/popup and first chilld menu.
+                val upperPopup = g.openPopupStack[g.beginPopupStack.size]
+                return (upperPopup != null && /*upper_popup->OpenParentId == window->IDStack.back() &&*/ upperPopup.window?.flags?.has(WindowFlag._ChildMenu) == true)
+            }
+    }
 }
