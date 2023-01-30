@@ -17,7 +17,6 @@ import imgui.ImGui.gcCompactTransientMiscBuffers
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mainViewport
-import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
@@ -173,7 +172,7 @@ interface main {
 
         // Process input queue (trickle as many events as possible)
         g.inputEventsTrail.clear()
-        updateInputEvents(g.io.configInputEventQueue)
+        updateInputEvents(g.io.configInputTrickleEventQueue)
 
         // Update keyboard input state
         updateKeyboardInputs()

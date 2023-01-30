@@ -11,7 +11,6 @@ import imgui.api.g
 import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.sections.InputEvent
-import imgui.internal.sections.InputSource
 import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
 import imgui.static.setClipboardTextFn_DefaultImpl
@@ -113,7 +112,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     var configMacOSXBehaviors = false
 
     /** Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates. */
-    var configInputEventQueue = true
+    var configInputTrickleEventQueue = true
 
     /** Enable blinking cursor (optional as some users consider it to be distracting).. */
     var configInputTextCursorBlink = true

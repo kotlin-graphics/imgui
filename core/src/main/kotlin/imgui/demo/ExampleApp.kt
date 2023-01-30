@@ -223,7 +223,7 @@ object ExampleApp {
                 }
                 checkboxFlags("io.ConfigFlags: NoMouseCursorChange", io::configFlags, ConfigFlag.NoMouseCursorChange.i)
                 sameLine(); helpMarker("Instruct backend to not alter mouse cursor shape and visibility.")
-                checkbox("io.ConfigInputEventQueue", io::configInputEventQueue)
+                checkbox("io.ConfigInputTrickleEventQueue", io::configInputTrickleEventQueue)
                 sameLine(); helpMarker("Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
                 sameLine(); helpMarker("Enable blinking cursor (optional as some users consider it to be distracting).")
