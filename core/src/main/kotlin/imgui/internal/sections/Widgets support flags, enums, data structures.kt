@@ -324,13 +324,11 @@ enum class PlotType { Lines, Histogram }
 enum class InputSource {
     None, Mouse, Keyboard, Gamepad,
 
-    // [private]
+    /** Currently only used by InputText() */
+    Clipboard,
 
     /** Stored in g.ActiveIdSource only */
-    _Nav,
-
-    /** Currently only used by InputText() */
-    _Clipboard
+    Nav
 }
 
 // FIXME: Structures in the union below need to be declared as anonymous unions appears to be an extension?
@@ -347,18 +345,22 @@ sealed class InputEvent(val type: Type) {
     class MouseWheel(val wheelX: Float, val wheelY: Float) : InputEvent(Type.MouseWheel) {
         override val source: InputSource = InputSource.Mouse
     }
+
     class MouseButton(val button: Int, val down: Boolean) : InputEvent(Type.MouseButton) {
         override val source: InputSource = InputSource.Mouse
     }
-    class Key(val key: imgui.Key, val down: Boolean, val analogValue: Float) : InputEvent(Type.Key) {
-        override val source: InputSource = InputSource.Keyboard
-    }
+
+    class Key(val key: imgui.Key, val down: Boolean, val analogValue: Float,
+              override val source: InputSource = InputSource.Keyboard) : InputEvent(Type.Key)
+
     class KeyMods(val mods: KeyModFlags) : InputEvent(Type.KeyMods) {
         override val source: InputSource = InputSource.Keyboard
     }
+
     class Text(val char: Char) : InputEvent(Type.Char) {
         override val source: InputSource = InputSource.Keyboard
     }
+
     class AppFocused(val focused: Boolean) : InputEvent(Type.Focus) {
         override val source: InputSource = InputSource.None
     }

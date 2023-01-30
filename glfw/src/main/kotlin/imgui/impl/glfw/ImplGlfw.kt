@@ -180,11 +180,11 @@ class ImplGlfw @JvmOverloads constructor(
         GLFWGamepadState.calloc().use { gamepad ->
             if (!glfwGetGamepadState(GLFW_JOYSTICK_1, gamepad))
                 return
-            fun MAP_BUTTON(key: Key, button: Int, unused: Int) = io.addKeyEvent(key, gamepad.buttons(button).bool, InputSource.Gamepad)
+            fun MAP_BUTTON(key: Key, button: Int, unused: Int) = io.addKeyEvent(key, gamepad.buttons(button).bool)
             fun MAP_ANALOG(key: Key, axis: Int, unused: Int, v0: Float, v1: Float) {
                 var v = gamepad.axes(axis)
                 v = (v - v0) / (v1 - v0)
-                io.addKeyAnalogEvent(key, v > 0.1f, v.saturate, InputSource.Gamepad)
+                io.addKeyAnalogEvent(key, v > 0.1f, v.saturate)
             }
 
             io.backendFlags /= BackendFlag.HasGamepad

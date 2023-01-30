@@ -171,21 +171,20 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Queue a new key down/up event.
      *  - ImGuiKey key: Translated key (as in, generally ImGuiKey_A matches the key end-user would use to emit an 'A' character)
      *  - bool down:    Is the key down? use false to signify a key release. */
-    fun addKeyEvent(key: Key, down: Boolean, inputSource: InputSource = InputSource.Keyboard) = addKeyAnalogEvent(key, down, down.f, inputSource)
+    fun addKeyEvent(key: Key, down: Boolean) = addKeyAnalogEvent(key, down, down.f)
 
     /** Queue a new key down/up event for analog values (e.g. ImGuiKey_Gamepad_ values). Dead-zones should be handled by the backend. */
-    fun addKeyAnalogEvent(key: Key, down: Boolean, analogValue: Float, inputSource: InputSource) {
+    fun addKeyAnalogEvent(key: Key, down: Boolean, analogValue: Float) {
         //if (e->Down) { IMGUI_DEBUG_LOG("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
         if (key == Key.None)
             return
         assert(g.io === this) { "Can only add events to current context." }
-        assert(inputSource == InputSource.Keyboard || inputSource == InputSource.Gamepad)
 
         // Verify that backend isn't mixing up using new io.AddKeyEvent() api and old io.KeysDown[] + io.KeyMap[] data.
         if (key.isGamepad)
             backendUsingLegacyNavInputArray = false
 
-        g.inputEventsQueue += InputEvent.Key(key, down, analogValue)
+        g.inputEventsQueue += InputEvent.Key(key, down, analogValue, if (key.isGamepad) InputSource.Gamepad else InputSource.Keyboard)
     }
 
     /** Queue a change of Ctrl/Shift/Alt/Super modifiers */

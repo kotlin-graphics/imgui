@@ -2,7 +2,6 @@ package imgui.internal.api
 
 import imgui.DataType
 import imgui.ID
-import imgui.IMGUI_ENABLE_TEST_ENGINE
 import imgui.ImGui.debugHookIdInfo
 import imgui.api.g
 import imgui.internal.classes.Window
@@ -52,7 +51,7 @@ internal interface basicAccessors {
         if (id != 0) {
             g.activeIdIsAlive = id
             g.activeIdSource = when (id) {
-                g.navActivateId, g.navActivateInputId, g.navJustMovedToId -> InputSource._Nav
+                g.navActivateId, g.navActivateInputId, g.navJustMovedToId -> InputSource.Nav
                 else -> InputSource.Mouse
             }
         }
@@ -83,7 +82,7 @@ internal interface basicAccessors {
         if (g.lastItemData.id == id)
             window.navRectRel[navLayer].put(window rectAbsToRel g.lastItemData.navRect)
 
-        if (g.activeIdSource == InputSource._Nav)
+        if (g.activeIdSource == InputSource.Nav)
             g.navDisableMouseHover = true
         else
             g.navDisableHighlight = true
