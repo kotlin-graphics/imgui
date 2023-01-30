@@ -1,6 +1,5 @@
 package imgui.internal.classes
 
-import glm_.hasnt
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
@@ -22,10 +21,8 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.markIniSettingsDirty
 import imgui.ImGui.popClipRect
-import imgui.ImGui.popItemFlag
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.pushClipRect
-import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.selectable

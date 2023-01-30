@@ -405,6 +405,15 @@ interface windows {
                 }
             }
 
+            // [Test Engine] Register whole window in the item system
+            if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookItems) {
+                assert(window.idStack.size == 1)
+                val id = window.idStack.pop()
+                IMGUI_TEST_ENGINE_ITEM_ADD(window.rect(), window.id)
+                IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if(g.hoveredWindow === window) ItemStatusFlag.HoveredRect.i else ItemStatusFlag.None.i)
+                window.idStack += id
+            }
+
             // Handle manual resize: Resize Grips, Borders, Gamepad
             var borderHeld = -1
             val resizeGripCol = IntArray(4)
@@ -661,7 +670,8 @@ interface windows {
             val itemFlag = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
             setLastItemData(window.moveId, g.currentItemFlags, itemFlag.i, titleBarRect)
 
-            if (IMGUI_ENABLE_TEST_ENGINE && window.flags hasnt Wf.NoTitleBar)
+            // [Test Engine] Register title bar / tab
+            if (window.flags hasnt Wf.NoTitleBar)
                 IMGUI_TEST_ENGINE_ITEM_ADD(g.lastItemData.rect, g.lastItemData.id)
 
         } else   // Append
