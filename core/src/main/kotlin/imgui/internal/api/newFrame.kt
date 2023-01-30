@@ -11,6 +11,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.keepAliveID
+import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.BitArray
@@ -24,14 +25,13 @@ internal interface newFrame {
     // Process input queue
     // - trickle_fast_inputs = false : process all events, turn into flattened input state (e.g. successive down/up/down/up will be lost)
     // - trickle_fast_inputs = true  : process as many events as possible (successive down/up/down/up will be trickled over several frames so nothing is lost) (new feature in 1.87)
-    fun updateInputEvents(trickle_fast_inputs: Boolean) {
+    fun updateInputEvents(trickleFastInputs: Boolean) {
 
-        var mouseMoved = false
-        var mouseWheeled = false
-        var keyChanged = false
+        var mouseMoved = false;
+        var mouseWheeled = false;
+        var keyChanged = false;
         var textInputed = false
         var mouseButtonChanged = 0x00
-        var keyModsChanged = 0x00
         val keyChangedMask = BitArray(Key.COUNT)
 
         var eventN = 0
@@ -44,7 +44,7 @@ internal interface newFrame {
                         eventPos.put(floorSigned(eventPos.x), floorSigned(eventPos.y)) // Apply same flooring as UpdateMouseInputs()
                     if (io.mousePos.x != eventPos.x || io.mousePos.y != eventPos.y) {
                         // Trickling Rule: Stop processing queued events if we already handled a mouse button change
-                        if (trickle_fast_inputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || keyModsChanged != 0 || textInputed))
+                        if (trickleFastInputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || textInputed))
                             break
                         io.mousePos put eventPos
                         mouseMoved = true
@@ -55,7 +55,7 @@ internal interface newFrame {
                     //                    assert(button >= 0 && button < ImGuiMouseButton_COUNT)
                     if (io.mouseDown[button.i] != e.down) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                        if (trickle_fast_inputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
+                        if (trickleFastInputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
                             break
                         io.mouseDown[button.i] = e.down
                         mouseButtonChanged = mouseButtonChanged or (1 shl button.i)
@@ -64,44 +64,38 @@ internal interface newFrame {
                 is InputEvent.MouseWheel ->
                     if (e.wheelX != 0f || e.wheelY != 0f) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the event
-                        if (trickle_fast_inputs && (mouseWheeled || mouseButtonChanged != 0))
+                        if (trickleFastInputs && (mouseWheeled || mouseButtonChanged != 0))
                             break
                         io.mouseWheelH += e.wheelX
                         io.mouseWheel += e.wheelY
                         mouseWheeled = true
                     }
                 is InputEvent.Key -> {
-                    assert(e.key != Key.None)
-                    val keydataIndex = e.key.i
+                    val key = e.key
+                    assert(key != Key.None)
+                    val keydataIndex = key.i
                     val keyData = io.keysData[keydataIndex]
                     if (keyData.down != e.down || keyData.analogValue != e.analogValue) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                        if (trickle_fast_inputs && keyData.down != e.down && (keyChangedMask testBit keydataIndex || textInputed || mouseButtonChanged != 0))
+                        if (trickleFastInputs && keyData.down != e.down && (keyChangedMask testBit keydataIndex || textInputed || mouseButtonChanged != 0))
                             break
                         keyData.down = e.down
                         keyData.analogValue = e.analogValue
                         keyChanged = true
                         keyChangedMask setBit keydataIndex
-                    }
-                }
-                is InputEvent.KeyMods -> {
-                    val modifiers = e.mods
-                    if (io.keyMods != modifiers) {
-                        // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                        val modifiersThatAreChanging = io.keyMods xor modifiers
-                        if (trickle_fast_inputs && keyModsChanged has modifiersThatAreChanging)
-                            break
-                        io.keyMods = modifiers
-                        io.keyCtrl = modifiers has KeyMod.Ctrl
-                        io.keyShift = modifiers has KeyMod.Shift
-                        io.keyAlt = modifiers has KeyMod.Alt
-                        io.keySuper = modifiers has KeyMod.Super
-                        keyModsChanged = keyModsChanged or modifiersThatAreChanging
+
+                        if (key == Key.ModCtrl || key == Key.ModShift || key == Key.ModAlt || key == Key.ModSuper) {
+                            if (key == Key.ModCtrl) io.keyCtrl = keyData.down
+                            if (key == Key.ModShift) io.keyShift = keyData.down
+                            if (key == Key.ModAlt) io.keyAlt = keyData.down
+                            if (key == Key.ModSuper) io.keySuper = keyData.down
+                            io.keyMods = mergedKeyModFlags
+                        }
                     }
                 }
                 is InputEvent.Text -> {
                     // Trickling Rule: Stop processing queued events if keys/mouse have been interacted with
-                    if (trickle_fast_inputs && (keyChanged || mouseButtonChanged != 0 || mouseMoved || mouseWheeled))
+                    if (trickleFastInputs && (keyChanged || mouseButtonChanged != 0 || mouseMoved || mouseWheeled))
                         break
                     val c = e.char
                     io.inputQueueCharacters += if (c.code <= UNICODE_CODEPOINT_MAX) c else Char(UNICODE_CODEPOINT_INVALID)

@@ -1222,6 +1222,19 @@ enum class Key {
     GamepadRStickLeft,     // [Analog]
     GamepadRStickRight,    // [Analog]
 
+    // Keyboard Modifiers
+    // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
+    //   them to be accessed via standard key API, allowing calls such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
+    // - Code polling every keys (e.g. an interface to detect a key press for input mapping) might want to ignore those
+    //   and prefer using the real keys (e.g. ImGuiKey_LeftCtrl, ImGuiKey_RightCtrl instead of ImGuiKey_ModCtrl).
+    // - In theory the value of keyboard modifiers should be roughly equivalent to a logical or of the equivalent left/right keys.
+    //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky keys and
+    //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
+    ModCtrl,
+    ModShift,
+    ModAlt,
+    ModSuper,
+
     Count;
 
     val index: Int
@@ -1235,7 +1248,7 @@ enum class Key {
         val BEGIN = None.i
         val END = F12.i
         val Gamepad_BEGIN = GamepadStart
-        val Gamepad_END = GamepadRStickRight
+        val Gamepad_END = Count
         infix fun of(i: Int) = values().first { it.i == i }
     }
 
@@ -1244,7 +1257,7 @@ enum class Key {
 
     /** ~IsGamepadKey */
     val isGamepad: Boolean
-        get() = this in Gamepad_BEGIN .. Gamepad_END
+        get() = i in Gamepad_BEGIN.i until Gamepad_END.i
 
     /** ~IsKeyDown
      *
@@ -1302,27 +1315,6 @@ operator fun IntArray.set(index: Key, value: Int) {
 }
 
 operator fun IntArray.get(index: Key): Int = get(index.i)
-
-
-// To test io.KeyMods (which is a combination of individual fields io.KeyCtrl, io.KeyShift, io.KeyAlt set by user/backend)
-enum class KeyMod(val i: KeyModFlags) {
-    None(0),
-    Ctrl(1 shl 0),
-    Shift(1 shl 1),
-    Alt(1 shl 2),
-
-    /** Cmd/Super/Windows key */
-    Super(1 shl 3),
-    Shortcut(if (Platform.get() == Platform.MACOSX) Super.i else Ctrl.i);
-
-    infix fun or(b: KeyMod): KeyModFlags = i or b.i
-}
-
-infix fun Int.or(k: KeyMod) = or(k.i)
-infix fun Int.has(k: KeyMod): Boolean = has(k.i)
-infix fun Int.hasnt(k: KeyMod): Boolean = hasnt(k.i)
-
-typealias KeyModFlags = Int
 
 
 /** Gamepad/Keyboard navigation

@@ -261,11 +261,10 @@ class ImplGlfw @JvmOverloads constructor(
         }
 
         fun updateKeyModifiers(mods: Int) {
-            val keyMods = (if (mods has GLFW_MOD_CONTROL) KeyMod.Ctrl else KeyMod.None) or
-                    (if (mods has GLFW_MOD_SHIFT) KeyMod.Shift else KeyMod.None) or
-                    (if (mods has GLFW_MOD_ALT) KeyMod.Alt else KeyMod.None) or
-                    (if (mods has GLFW_MOD_SUPER) KeyMod.Super else KeyMod.None)
-            io.addKeyModsEvent(keyMods)
+            io.addKeyEvent(Key.ModCtrl, mods has GLFW_MOD_CONTROL)
+            io.addKeyEvent(Key.ModShift, mods has GLFW_MOD_SHIFT)
+            io.addKeyEvent(Key.ModAlt, mods has GLFW_MOD_ALT)
+            io.addKeyEvent(Key.ModSuper, mods has GLFW_MOD_SUPER)
         }
 
         val scrollCallback: ScrollCB = { offset: Vec2d ->

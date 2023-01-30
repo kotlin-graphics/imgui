@@ -187,12 +187,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         g.inputEventsQueue += InputEvent.Key(key, down, analogValue, if (key.isGamepad) InputSource.Gamepad else InputSource.Keyboard)
     }
 
-    /** Queue a change of Ctrl/Shift/Alt/Super modifiers */
-    fun addKeyModsEvent(modifiers: KeyModFlags) {
-        assert(g.io === this) { "Can only add events to current context." }
-        g.inputEventsQueue += InputEvent.KeyMods(modifiers)
-    }
-
     /** Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse (e.g. app not focused and not hovered) */
     fun addMousePosEvent(x: Float, y: Float) {
         assert(g.io === this) { "Can only add events to current context." }
