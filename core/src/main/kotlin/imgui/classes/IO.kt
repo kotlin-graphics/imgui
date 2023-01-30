@@ -9,6 +9,8 @@ import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.sections.InputEvent
 import imgui.internal.sections.InputSource
+import imgui.internal.sections.KeyMod
+import imgui.internal.sections.KeyModFlags
 import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
 import imgui.static.setClipboardTextFn_DefaultImpl
@@ -184,6 +186,21 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (key.isGamepad)
             backendUsingLegacyNavInputArray = false
 
+        // Partial filter of duplicates (not strictly needed, but makes data neater in particular for key mods and gamepad values which are most commonly spmamed)
+        val keyData = key.data
+        if (keyData.down == down && keyData.analogValue == analogValue) {
+            var found = false
+            var n = g.inputEventsQueue.lastIndex
+            while(n >= 0 && !found) {
+                if (g.inputEventsQueue[n].type == InputEvent.Type.Key && (g.inputEventsQueue[n] as InputEvent.Key).key == key)
+                    found = true
+                n--
+            }
+            if (!found)
+                return
+        }
+
+        // Add event
         g.inputEventsQueue += InputEvent.Key(key, down, analogValue, if (key.isGamepad) InputSource.Gamepad else InputSource.Keyboard)
     }
 

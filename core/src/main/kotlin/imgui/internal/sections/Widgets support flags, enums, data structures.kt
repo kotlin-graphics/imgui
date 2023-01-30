@@ -2,7 +2,6 @@ package imgui.internal.sections
 
 import glm_.vec2.Vec2
 import imgui.ID
-import imgui.KeyModFlags
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 

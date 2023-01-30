@@ -7,6 +7,7 @@ import imgui.ImGui.getColorU32
 import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.api.g
+import imgui.classes.KeyData
 import imgui.internal.sections.InputReadMode
 import imgui.internal.sections.ItemStatusFlag
 import imgui.internal.sections.or
@@ -1258,6 +1259,10 @@ enum class Key {
     /** ~IsGamepadKey */
     val isGamepad: Boolean
         get() = i in Gamepad_BEGIN.i until Gamepad_END.i
+
+    /** ~GetKeyData */
+    val data: KeyData
+        get() = g.io.keysData[index]
 
     /** ~IsKeyDown
      *
