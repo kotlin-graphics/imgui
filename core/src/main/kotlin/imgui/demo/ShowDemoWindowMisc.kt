@@ -1,11 +1,13 @@
 package imgui.demo
 
 import glm_.i
+import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.captureKeyboardFromApp
+import imgui.ImGui.dummy
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getMouseClickedCount
 import imgui.ImGui.getMouseDragDelta
@@ -31,6 +33,7 @@ import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
+import imgui.internal.sections.DrawFlag
 
 object ShowDemoWindowMisc {
 
@@ -114,6 +117,48 @@ object ShowDemoWindowMisc {
                 io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f (%.02f secs)", it, io.navInputsDownDuration[i]) }
                 text("NavInputs pressed:")
                 io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, _ -> sameLine(); text("[$i]") }
+            }
+
+            // Draw an arbitrary US keyboard layout to visualize translated keys
+            run {
+                val keySize = Vec2(35f)
+                val keyRounding = 3f
+                val keyfaceSize = Vec2(25f)
+                val keyfacePos = Vec2(5f, 3f)
+                val keyfaceRounding = 2f
+                val keylabelPos = Vec2(7f, 4f)
+                val keyStep = keySize - 1f
+                val keyrowOffset = 9f
+
+                val boardMin = ImGui.cursorScreenPos // [JVM] same instance
+                val boardMax = Vec2(boardMin.x + 3 * keyStep.x + 2 * keyrowOffset + 10f, boardMin.y + 3 * keyStep.y + 10f)
+                val startPos = Vec2(boardMin.x + 5f - keyStep.x, boardMin.y)
+
+                class KeyLayoutData(val row: Int, val col: Int, val label: String, val key: Key)
+
+                val keysToDisplay = listOf(
+                    KeyLayoutData(0, 0, "", Key.Tab), KeyLayoutData(0, 1, "Q", Key.Q), KeyLayoutData(0, 2, "W", Key.W), KeyLayoutData(0, 3, "E", Key.E), KeyLayoutData(0, 4, "R", Key.R),
+                    KeyLayoutData(1, 0, "", Key.CapsLock), KeyLayoutData(1, 1, "A", Key.A), KeyLayoutData(1, 2, "S", Key.S), KeyLayoutData(1, 3, "D", Key.D), KeyLayoutData(1, 4, "F", Key.F),
+                    KeyLayoutData(2, 0, "", Key.LeftShift), KeyLayoutData(2, 1, "Z", Key.Z), KeyLayoutData(2, 2, "X", Key.X), KeyLayoutData(2, 3, "C", Key.C), KeyLayoutData(2, 4, "V", Key.V))
+
+                val drawList = ImGui.windowDrawList
+                drawList.pushClipRect(boardMin, boardMax, true)
+                for (keyData in keysToDisplay) {
+                    val keyMin = Vec2(startPos.x + keyData.col * keyStep.x + keyData.row * keyrowOffset, startPos.y + keyData.row * keyStep.y)
+                    val keyMax = Vec2(keyMin.x + keySize.x, keyMin.y + keySize.y)
+                    drawList.addRectFilled(keyMin, keyMax, COL32(204, 204, 204, 255), keyRounding)
+                    drawList.addRect(keyMin, keyMax, COL32(24, 24, 24, 255), keyRounding)
+                    val faceMin = Vec2(keyMin.x + keyfacePos.x, keyMin.y + keyfacePos.y)
+                    val faceMax = Vec2(faceMin.x + keyfaceSize.x, faceMin.y + keyfaceSize.y)
+                    drawList.addRect(faceMin, faceMax, COL32(193, 193, 193, 255), keyfaceRounding, DrawFlag.None.i, 2f)
+                    drawList.addRectFilled(faceMin, faceMax, COL32(252, 252, 252, 255), keyfaceRounding)
+                    val labelMin = Vec2(keyMin.x + keylabelPos.x, keyMin.y + keylabelPos.y)
+                    drawList.addText(labelMin, COL32(64, 64, 64, 255), keyData.label)
+                    if (keyData.key.isDown)
+                        drawList.addRectFilled(keyMin, keyMax, COL32(255, 0, 0, 128), keyRounding)
+                }
+                drawList.popClipRect()
+                dummy(Vec2(boardMax.x - boardMin.x, boardMax.y - boardMin.y))
             }
 
             treeNode("Capture override") {
