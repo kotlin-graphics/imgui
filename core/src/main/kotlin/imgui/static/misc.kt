@@ -226,6 +226,7 @@ fun renderDimmedBackgroundBehindWindow(window: Window, col: Int) {
     run {
         // We've already called AddWindowToDrawData() which called DrawList->ChannelsMerge() on DockNodeHost windows,
         // and draw list have been trimmed already, hence the explicit recreation of a draw command if missing.
+        // FIXME: This is creating complication, might be simpler if we could inject a drawlist in drawdata at a given position and not attempt to manipulate ImDrawCmd order.
         val drawList = window.rootWindow!!.drawList
         if (drawList.cmdBuffer.isEmpty())
             drawList.addDrawCmd()
@@ -236,12 +237,14 @@ fun renderDimmedBackgroundBehindWindow(window: Window, col: Int) {
         drawList.cmdBuffer.pop()
         drawList.cmdBuffer += cmd
         drawList.popClipRect()
-        drawList._popUnusedDrawCmd() // Since are past the calls to AddDrawListToDrawData() we don't have a _PopUnusedDrawCmd() running on commands.
+        drawList.addDrawCmd() // We need to create a command as CmdBuffer.back().IdxOffset won't be correct if we append to same command.
     }
 }
 
 fun renderDimmedBackgrounds() {
     val modalWindow = topMostAndVisiblePopupModal
+    if (g.dimBgRatio <= 0f && g.navWindowingHighlightAlpha <= 0f)
+        return
     val dimBgForModal = modalWindow != null
     val dimBgForWindowList = g.navWindowingTargetAnim?.active == true
     if (!dimBgForModal && !dimBgForWindowList)

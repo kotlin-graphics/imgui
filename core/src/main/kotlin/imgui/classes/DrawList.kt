@@ -1276,7 +1276,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         check(cmdBuffer.isNotEmpty())
         val currCmd = cmdBuffer.last()
         val prevCmd = cmdBuffer[cmdBuffer.lastIndex - 1]
-        if (currCmd headerCompare prevCmd && currCmd.userCallback == null && prevCmd.userCallback == null) {
+        if (currCmd headerCompare prevCmd && prevCmd areSequentialIdxOffset currCmd && currCmd.userCallback == null && prevCmd.userCallback == null) {
             prevCmd.elemCount += currCmd.elemCount
             cmdBuffer.pop()
         }
@@ -1298,7 +1298,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         // Try to merge with previous command if it matches, else use current command
         cmdBuffer.getOrNull(cmdBuffer.lastIndex - 1)?.let { prevCmd ->
-            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && prevCmd areSequentialIdxOffset currCmd && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
                 cmdBuffer.pop()
                 return
             }
@@ -1318,7 +1318,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         assert(currCmd.userCallback == null)
 
         cmdBuffer.getOrNull(cmdBuffer.lastIndex - 1)?.let { prevCmd ->
-            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd.userCallback == null) {
+            if (currCmd.elemCount == 0 && cmdBuffer.size > 1 && _cmdHeader headerCompare prevCmd && prevCmd areSequentialIdxOffset currCmd && prevCmd.userCallback == null) {
                 cmdBuffer.pop()
                 return
             }

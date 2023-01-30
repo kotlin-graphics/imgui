@@ -82,6 +82,8 @@ class DrawCmd : DrawCmdHeader {
         resetRenderState = drawCmd.resetRenderState
         userCallbackData = drawCmd.userCallbackData
     }
+
+    infix fun areSequentialIdxOffset(cmd: DrawCmd): Boolean = idxOffset + elemCount == cmd.idxOffset
 }
 
 /** ImDrawIdx: vertex index. [Compile-time configurable type]
@@ -227,6 +229,8 @@ class DrawListSplitter {
                 ch._cmdBuffer.pop()
 
             if (ch._cmdBuffer.isNotEmpty() && lastCmd != null) {
+                // Do not include ImDrawCmd_AreSequentialIdxOffset() in the compare as we rebuild IdxOffset values ourselves.
+                // Manipulating IdxOffset (e.g. by reordering draw commands like done by RenderDimmedBackgroundBehindWindow()) is not supported within a splitter.
                 val nextCmd = ch._cmdBuffer[0]
                 if (lastCmd headerCompare nextCmd && lastCmd.userCallback == null && nextCmd.userCallback == null) {
                     // Merge previous channel last draw command with current channel first draw command if matching.
