@@ -19,7 +19,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.clipboardText
 import imgui.ImGui.currentWindow
-import imgui.ImGui.dataTypeApplyOpFromText
+import imgui.ImGui.dataTypeApplyFromText
 import imgui.ImGui.dataTypeClamp
 import imgui.ImGui.dummy
 import imgui.ImGui.endChild
@@ -248,7 +248,7 @@ internal interface inputText {
             g.activeIdUsingNavInputMask = g.activeIdUsingNavInputMask or (1 shl NavInput.Cancel)
             setActiveIdUsingKey(Key.Home)
             setActiveIdUsingKey(Key.End)
-            if (isMultiline){
+            if (isMultiline) {
                 setActiveIdUsingKey(Key.PageUp)
                 setActiveIdUsingKey(Key.PageDown)
             }
@@ -975,10 +975,8 @@ internal interface inputText {
      *  ImGuiSliderFlags_AlwaysClamp flag is set!
      *  This is intended: this way we allow CTRL+Click manual input to set a value out of bounds, for maximum flexibility.
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
-    fun <N> tempInputScalar(
-        bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
-        format_: String, clampMin_: N? = null, clampMax_: N? = null
-                           ): Boolean
+    fun <N> tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
+                            format_: String, clampMin_: N? = null, clampMax_: N? = null): Boolean
             where N : Number, N : Comparable<N> {
 
         var clampMin = clampMin_
@@ -1004,7 +1002,7 @@ internal interface inputText {
             val dataBackup = pData()
 
             // Apply new value (or operations) then clamp
-            dataTypeApplyOpFromText(buf.cStr, g.inputTextState.initialTextA, dataType, pData)
+            dataTypeApplyFromText(buf.cStr, dataType, pData)
             if (clampMin != null && clampMax != null) {
                 if (clampMin > clampMax) {
                     val t = clampMin

@@ -638,7 +638,6 @@ interface demoDebugInformations {
             bulletText("CTRL+X/C/V to use clipboard cut/copy/paste.")
             bulletText("CTRL+Z,CTRL+Y to undo/redo.")
             bulletText("ESCAPE to revert.")
-            bulletText("You can apply arithmetic operators +,*,/ on numerical values.\nUse +- to subtract.")
         }
         bulletText("With keyboard navigation enabled:")
         indent {

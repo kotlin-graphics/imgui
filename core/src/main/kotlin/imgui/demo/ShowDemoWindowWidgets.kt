@@ -363,10 +363,6 @@ object ShowDemoWindowWidgets {
                     inputTextWithHint("input text (w/ hint)", "enter text here", str1)
 
                     inputInt("input int", ::i0)
-                    sameLine(); helpMarker("""
-                    You can apply arithmetic operators +,*,/ on numerical values.
-                      e.g. [ 100 ], input \'*2\', result becomes [ 200 ]
-                    Use +- to subtract.""".trimIndent())
 
                     inputFloat("input float", ::f0, 0.01f, 1f, "%.3f")
 
