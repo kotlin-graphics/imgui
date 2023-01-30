@@ -1,7 +1,11 @@
 package imgui.api
 
+import glm_.b
+import glm_.f
+import glm_.glm
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.begin
 import imgui.ImGui.beginChildFrame
@@ -13,6 +17,7 @@ import imgui.ImGui.button
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.checkbox
 import imgui.ImGui.clearIniSettings
+import imgui.ImGui.clipboardText
 import imgui.ImGui.combo
 import imgui.ImGui.debugNodeDrawList
 import imgui.ImGui.debugNodeTabBar
@@ -63,6 +68,7 @@ import imgui.ImGui.tableNextColumn
 import imgui.ImGui.tableSetBgColor
 import imgui.ImGui.tableSetupColumn
 import imgui.ImGui.text
+import imgui.ImGui.textColored
 import imgui.ImGui.textDisabled
 import imgui.ImGui.textEx
 import imgui.ImGui.textLineHeightWithSpacing
@@ -80,12 +86,16 @@ import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.internal.api.debugTools.Companion.metricsHelpMarker
 import imgui.internal.classes.Rect
+import imgui.internal.classes.StackTool
 import imgui.internal.classes.Table
 import imgui.internal.classes.Window
+import imgui.internal.formatString
 import imgui.internal.sections.NextWindowDataFlag
+import imgui.internal.sections.TestEngine_FindItemDebugLabel
 import imgui.internal.sections.hasnt
 import imgui.internal.sections.testEngine_FindItemDebugLabel
 import kool.BYTES
+import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -450,6 +460,7 @@ interface demoDebugInformations {
         }
 
         // Display hovered/active status
+        val tool = g.debugStackTool
         val hoveredId = g.hoveredIdPreviousFrame
         val activeId = g.activeId
         if (IMGUI_ENABLE_TEST_ENGINE)
@@ -460,8 +471,34 @@ interface demoDebugInformations {
         sameLine()
         metricsHelpMarker("Hover an item with the mouse to display elements of the ID Stack leading to the item's final ID.\nEach level of the stack correspond to a PushID() call.\nAll levels of the stack are hashed together to make the final ID of a widget (ID displayed at the bottom level of the stack).\nRead FAQ entry about the ID stack for details.")
 
+        // CTRL+C to copy path
+        val timeSinceCopy = g.time.f - tool.copyToClipboardLastTime
+        checkbox("Ctrl+C: copy path to clipboard", tool::copyToClipboardOnCtrlC)
+        sameLine()
+        textColored(if (timeSinceCopy >= 0f && timeSinceCopy < 0.75f && glm.mod(timeSinceCopy, 0.25f) < 0.25f * 0.5f) Vec4(1f, 1f, 0.3f, 1f) else Vec4(), "*COPIED*")
+        if (tool.copyToClipboardOnCtrlC && Key.ModCtrl.isDown && Key.C.isPressed) {
+            tool.copyToClipboardLastTime = g.time.f
+            var p = 0 //g.tempBuffer
+            val pEnd = g.tempBuffer.size
+            var stackN = 0
+            while (stackN < tool.results.size && p + 3 < pEnd) {
+                g.tempBuffer[p++] = '/'.code.toByte()
+                val levelDesc = ByteArray(256)
+                stackToolFormatLevelInfo(tool, stackN, false, levelDesc)
+                var n = 0
+                while (levelDesc[n] != 0.b && p + 2 < pEnd) {
+                    if (levelDesc[n] == '/'.code.b)
+                        g.tempBuffer[p++] = '\\'.code.b
+                    g.tempBuffer[p++] = levelDesc[n]
+                    n++
+                }
+                stackN++
+            }
+            g.tempBuffer[p] = 0.b
+            clipboardText = g.tempBuffer.cStr
+        }
+
         // Display decorated stack
-        val tool = g.debugStackTool
         tool.lastActiveFrame = g.frameCount
         if (tool.results.isNotEmpty() && beginTable("##table", 3, TableFlag.Borders.i)) {
 
@@ -474,19 +511,10 @@ interface demoDebugInformations {
                 val info = tool.results[n]
                 tableNextColumn()
                 text("0x%08X", if (n > 0) tool.results[n - 1].id else 0)
-
                 tableNextColumn()
-                val window = if (info.desc.isEmpty() && n == 0) findWindowByID(info.id) else null
-                if (window != null)                                         // Source: window name (because the root ID don't call GetID() and so doesn't get hooked)
-                    text("\"${window.name}\" [window]")
-                else if (info.querySuccess)                        // Source: GetID() hooks (prioritize over ItemInfo() because we frequently use patterns like: PushID(str), Button("") where they both have same id)
-                    textUnformatted(info.desc)
-                else if (tool.stackLevel >= tool.results.size)  // Only start using fallback below when all queries are done, so during queries we don't flickering ??? markers.
-                    if (IMGUI_ENABLE_TEST_ENGINE)
-                        testEngine_FindItemDebugLabel(g, info.id)?.let {    // Source: ImGuiTestEngine's ItemInfo()
-                            text("??? \"$it\"")
-                        } ?: textUnformatted("???")
 
+                stackToolFormatLevelInfo(tool, n, true, g.tempBuffer)
+                textUnformatted(g.tempBuffer.cStr)
                 tableNextColumn()
                 text("0x%08X", info.id)
                 if (n == tool.results.lastIndex)
@@ -762,6 +790,23 @@ interface demoDebugInformations {
                 ImGui.debugRenderViewportThumbnail(window.drawList, viewport, viewportDrawBb)
             }
             ImGui.dummy(bbFull.size * SCALE)
+        }
+
+        fun stackToolFormatLevelInfo(tool: StackTool, n: Int, formatForUi: Boolean, buf: ByteArray): Int {
+            val info = tool.results[n]
+            val desc = info.desc.toByteArray()
+            val window = if (desc[0] == 0.b && n == 0) findWindowByID(info.id) else null
+            if (window != null)                                                                 // Source: window name (because the root ID don't call GetID() and so doesn't get hooked)
+                return formatString(buf, if (formatForUi) "\"%s\" [window]" else "%s", window.name)
+            if (info.querySuccess)                                                     // Source: GetID() hooks (prioritize over ItemInfo() because we frequently use patterns like: PushID(str), Button("") where they both have same id)
+                return formatString(buf, if (formatForUi && info.dataType == DataType._String) "\"%s\"" else "%s", info.desc)
+            if (tool.stackLevel < tool.results.size)                                  // Only start using fallback below when all queries are done, so during queries we don't flickering ??? markers.
+                return 0.also { buf[0] = 0 }
+            if (IMGUI_ENABLE_TEST_ENGINE)
+                testEngine_FindItemDebugLabel(gImGui!!, info.id)?.let { label ->     // Source: ImGuiTestEngine's ItemInfo()
+                    formatString(buf, if (formatForUi) "??? \"%s\"" else "%s", label)
+                }
+            return formatString(buf, "???")
         }
     }
 }

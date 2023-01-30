@@ -186,15 +186,16 @@ internal interface debugTools {
 
         info.desc = when(dataType) {
             DataType.Int -> (dataId as Int).toString()
-            DataType._String -> '"' + dataId as String + '"'
+            DataType._String -> dataId as String
             DataType._Pointer ->  "(void*)0x%p".format(dataId)
             DataType._ID ->
                 if (info.desc.isEmpty()) // PushOverrideID() is often used to avoid hashing twice, which would lead to 2 calls to DebugHookIdInfo(). We prioritize the first one.
                     "0x%08X [override]".format(id)
-                else ""
+                else return
             else -> error("")
         }
         info.querySuccess = true
+        info.dataType = dataType
     }
 
     /** [DEBUG] Display contents of Columns */

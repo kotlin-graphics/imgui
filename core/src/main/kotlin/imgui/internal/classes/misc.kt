@@ -117,7 +117,8 @@ class StackLevelInfo {
     var id: ID = 0
     var queryFrameCount = 0 // >= 1: Query in progress
     var querySuccess = false // Obtained result from DebugHookIdInfo()
-    var desc = "" // Arbitrarily sized buffer to hold a result (FIXME: could replace Results[] with a chunk stream?)
+    lateinit var dataType: DataType
+    var desc = "" // Arbitrarily sized buffer to hold a result (FIXME: could replace Results[] with a chunk stream?) FIXME: Now that we added CTRL+C this should be fixed.
 }
 
 // State for Stack tool queries
@@ -126,6 +127,8 @@ class StackTool {
     var stackLevel = 0 // -1: query stack and resize Results, >= 0: individual stack level
     var queryId: ID = 0 // ID to query details for
     val results = ArrayList<StackLevelInfo>()
+    var copyToClipboardOnCtrlC = false
+    var copyToClipboardLastTime = -Float.MAX_VALUE
 }
 
 /** Storage for SetNextWindow** functions    */
