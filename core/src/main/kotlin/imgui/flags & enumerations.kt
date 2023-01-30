@@ -1322,6 +1322,24 @@ operator fun IntArray.set(index: Key, value: Int) {
 operator fun IntArray.get(index: Key): Int = get(index.i)
 
 
+// Helper "flags" version of key-mods to store and compare multiple key-mods easily. Sometimes used for storage (e.g. io.KeyMods) but otherwise not much used in public API.
+enum class KeyMod {
+    None, Ctrl, Shift, Alt,
+
+    /** Cmd/Super/Windows key */
+    Super;
+
+    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+}
+
+infix fun Int.or(k: KeyMod) = or(k.i)
+infix fun Int.has(k: KeyMod): Boolean = has(k.i)
+infix fun Int.hasnt(k: KeyMod): Boolean = hasnt(k.i)
+
+typealias KeyModFlags = Int
+
+
+
 /** Gamepad/Keyboard navigation
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[] based on your io.AddKeyEvent() calls.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling NewFrame(). Note that io.navInputs[] is cleared by EndFrame().

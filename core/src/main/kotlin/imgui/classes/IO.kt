@@ -9,8 +9,6 @@ import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.sections.InputEvent
 import imgui.internal.sections.InputSource
-import imgui.internal.sections.KeyMod
-import imgui.internal.sections.KeyModFlags
 import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
 import imgui.static.setClipboardTextFn_DefaultImpl
