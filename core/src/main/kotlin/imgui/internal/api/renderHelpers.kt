@@ -303,6 +303,29 @@ internal interface renderHelpers {
         return textDisplayEnd
     }
 
+    fun renderMouseCursor(basePos: Vec2, baseScale: Float, mouseCursor: MouseCursor, colFill: Int, colBorder: Int, colShadow: Int) {
+        //        IM_ASSERT(mouseCursor > ImGuiMouseCursor_None && mouseCursor < ImGuiMouseCursor_COUNT);
+        for (viewport in g.viewports) {
+            val drawList = viewport.foregroundDrawList
+            val fontAtlas = drawList._data.font!!.containerAtlas
+            val offset = Vec2()
+            val size = Vec2()
+            val uv = Array(4) { Vec2() }
+            if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
+                val pos = basePos - offset
+                val scale = baseScale
+                val texId = fontAtlas.texID
+                drawList.pushTextureID(texId)
+                drawList.addImage(texId, pos+Vec2(1, 0) * scale, pos+(Vec2(1, 0)+size) * scale, uv[2], uv[3], colShadow)
+                drawList.addImage(texId, pos+Vec2(2, 0) * scale, pos+(Vec2(2, 0)+size) * scale, uv[2], uv[3], colShadow)
+                drawList.addImage(texId, pos, pos+size * scale, uv[2], uv[3], colBorder)
+                drawList.addImage(texId, pos, pos+size * scale, uv[0], uv[1], colFill)
+                drawList.popTextureID()
+            }
+        }
+    }
+
+
     // Render helpers (those functions don't access any ImGui state!)
     // these are all in the DrawList class
 }

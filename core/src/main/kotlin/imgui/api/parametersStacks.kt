@@ -33,7 +33,7 @@ interface parametersStacks {
     }
 
     fun popFont() {
-        g.currentWindow!!.drawList.popTextureId()
+        g.currentWindow!!.drawList.popTextureID()
         g.fontStack.pop()
         (g.fontStack.lastOrNull() ?: defaultFont).setCurrent()
     }

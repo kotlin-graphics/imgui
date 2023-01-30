@@ -17,6 +17,7 @@ import imgui.ImGui.gcCompactTransientMiscBuffers
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mainViewport
+import imgui.ImGui.renderMouseCursor
 import imgui.ImGui.setCurrentFont
 import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
@@ -381,15 +382,16 @@ interface main {
                 .filter { it.isActiveAndVisible } // NavWindowingTarget is always temporarily displayed as the top-most window
                 .forEach { it.addRootToDrawData() }
 
+        // Draw software mouse cursor if requested by io.MouseDrawCursor flag
+        if (g.io.mouseDrawCursor && firstRenderOfFrame && g.mouseCursor != MouseCursor.None)
+            renderMouseCursor(g.io.mousePos, g.style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
+
         // Setup ImDrawData structures for end-user
         io.metricsRenderVertices = 0
         io.metricsRenderIndices = 0
         for (viewport in g.viewports) {
             viewport.drawDataBuilder!!.flattenIntoSingleLayer()
 
-            // Draw software mouse cursor if requested by io.MouseDrawCursor flag
-            if (io.mouseDrawCursor && firstRenderOfFrame)
-                viewport.foregroundDrawList.renderMouseCursor(Vec2(io.mousePos), style.mouseCursorScale, g.mouseCursor, COL32_WHITE, COL32_BLACK, COL32(0, 0, 0, 48))
             // Add foreground ImDrawList (for each active viewport)
             if (viewport.drawLists[1] != null)
                 viewport.foregroundDrawList addTo viewport.drawDataBuilder!!.layers[0]

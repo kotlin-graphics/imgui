@@ -144,7 +144,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         _onChangedTextureID()
     }
 
-    fun popTextureId() {
+    fun popTextureID() {
         _textureIdStack.pop()
         _cmdHeader.textureId = _textureIdStack.lastOrNull() ?: 0
         _onChangedTextureID()
@@ -797,7 +797,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         primReserve(6, 4)
         primRectUV(pMin, pMax, uvMin, uvMax, col)
 
-        if (pushTextureId) popTextureId()
+        if (pushTextureId) popTextureID()
     }
 
     fun addImageQuad(
@@ -816,7 +816,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         primQuadUV(p1, p2, p3, p4, uv1, uv2, uv3, uv4, col)
 
         if (pushTextureId)
-            popTextureId()
+            popTextureID()
     }
 
     fun addImageRounded(userTextureId: TextureID, pMin: Vec2, pMax: Vec2, uvMin: Vec2, uvMax: Vec2, col: Int, rounding: Float, flags_: DrawFlags = 0) {
@@ -838,7 +838,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val vertEndIdx = vtxBuffer.size
         shadeVertsLinearUV(vertStartIdx, vertEndIdx, pMin, pMax, uvMin, uvMax, true)
 
-        if (pushTextureId) popTextureId()
+        if (pushTextureId) popTextureID()
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -1536,29 +1536,6 @@ class DrawList(sharedData: DrawListSharedData?) {
         pathLineTo(Vec2(bx, by))
         pathLineTo(Vec2(bx + third * 2f, by - third * 2f))
         pathStroke(col, 0, thickness)
-    }
-
-    fun renderMouseCursor(
-        pos: Vec2, scale: Float, mouseCursor: MouseCursor,
-        colFill: Int, colBorder: Int, colShadow: Int,
-                         ) {
-        if (mouseCursor == MouseCursor.None)
-            return
-
-        val fontAtlas = _data.font!!.containerAtlas
-        val offset = Vec2()
-        val size = Vec2()
-        val uv = Array(4) { Vec2() }
-        if (fontAtlas.getMouseCursorTexData(mouseCursor, offset, size, uv)) {
-            pos -= offset
-            val texId: TextureID = fontAtlas.texID
-            pushTextureID(texId)
-            addImage(texId, pos + Vec2(1, 0) * scale, pos + Vec2(1, 0) * scale + size * scale, uv[2], uv[3], colShadow)
-            addImage(texId, pos + Vec2(2, 0) * scale, pos + Vec2(2, 0) * scale + size * scale, uv[2], uv[3], colShadow)
-            addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)
-            addImage(texId, pos, pos + size * scale, uv[0], uv[1], colFill)
-            popTextureId()
-        }
     }
 
     /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
