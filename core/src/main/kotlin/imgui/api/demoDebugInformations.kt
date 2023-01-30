@@ -367,8 +367,8 @@ interface demoDebugInformations {
 
 
                 var activeIdUsingKeyInputCount = 0
-                for (n in 0 until g.activeIdUsingKeyInputMask.bitCount)
-                    activeIdUsingKeyInputCount += if (g.activeIdUsingKeyInputMask.testBit(n)) 1 else 0
+                for (n in Key.values().indices)
+                    activeIdUsingKeyInputCount += if (g.activeIdUsingKeyInputMask[n]) 1 else 0
                 text("ActiveIdUsing: Wheel: ${g.activeIdUsingMouseWheel}, NavDirMask: %X, NavInputMask: %X, KeyInputMask: $activeIdUsingKeyInputCount key(s)", g.activeIdUsingNavDirMask, g.activeIdUsingNavInputMask, g.activeIdUsingKeyInputMask)
                 text("HoveredId: 0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Not displaying g.HoveredId as it is update mid-frame
                 text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)",

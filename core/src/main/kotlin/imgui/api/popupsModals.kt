@@ -46,7 +46,8 @@ interface popupsModals {
             return false
         }
         val flags = flags_ or Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings
-        return beginPopupEx(g.currentWindow!!.getID(strId), flags)
+        val id = g.currentWindow!!.getID(strId)
+        return beginPopupEx(id, flags)
     }
 
     /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)

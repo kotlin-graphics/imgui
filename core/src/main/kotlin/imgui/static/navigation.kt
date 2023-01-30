@@ -1000,7 +1000,7 @@ fun navProcessItemForTabbingRequest(id: ID) {
 
 fun navCalcPreferredRefPos(): Vec2 {
     val window = g.navWindow
-    if (g.navDisableHighlight || !g.navDisableMouseHover || window == null) {
+    return if (g.navDisableHighlight || !g.navDisableMouseHover || window == null) {
         // Mouse (we need a fallback in case the mouse becomes invalid after being used)
         // The +1.0f offset when stored by OpenPopupEx() allows reopening this or another popup (same or another mouse button) while not moving the mouse, it is pretty standard.
         // In theory we could move that +1.0f offset in OpenPopupEx()
@@ -1017,7 +1017,7 @@ fun navCalcPreferredRefPos(): Vec2 {
         val pos = Vec2(rectRel.min.x + min(style.framePadding.x * 4, rectRel.width),
                        rectRel.max.y - min(style.framePadding.y, rectRel.height))
         val viewport = mainViewport
-        return floor(glm.clamp(pos, viewport.pos, viewport.pos + viewport.size)) // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
+        floor(glm.clamp(pos, viewport.pos, viewport.pos + viewport.size)) // ImFloor() is important because non-integer mouse position application in backend might be lossy and result in undesirable non-zero delta.
     }
 }
 

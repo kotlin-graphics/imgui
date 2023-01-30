@@ -112,16 +112,17 @@ internal interface menus {
             beginDisabled()
         val offsets = window.dc.menuColumns
         val pressed: Boolean
+        val selectableFlags = SelectableFlag._NoHoldingActiveID or SelectableFlag._SelectOnClick or SelectableFlag.DontClosePopups
         if (window.dc.layoutType == LayoutType.Horizontal) {
-            /*  Menu inside an horizontal menu bar
-                Selectable extend their highlight by half ItemSpacing in each direction.
-                For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in begin() */
+            // Menu inside an horizontal menu bar
+            // Selectable extend their highlight by half ItemSpacing in each direction.
+            // For ChildMenu, the popup position will be overwritten by the call to FindBestWindowPosForPopup() in Begin()
             popupPos.put(pos.x - 1f - floor(style.itemSpacing.x * 0.5f), pos.y - style.framePadding.y + window.menuBarHeight)
             window.dc.cursorPos.x += floor(style.itemSpacing.x * 0.5f)
             pushStyleVar(StyleVar.ItemSpacing, Vec2(style.itemSpacing.x * 2f, style.itemSpacing.y))
             val w = labelSize.x
             val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
-            pressed = selectable("", menuIsOpen, SelectableFlag._NoHoldingActiveID or SelectableFlag._SelectOnClick or SelectableFlag.DontClosePopups, Vec2(w, 0f))
+            pressed = selectable("", menuIsOpen, selectableFlags, Vec2(w, 0f))
             renderText(textPos, label)
             popStyleVar()
             /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
@@ -137,7 +138,7 @@ internal interface menus {
             val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, 0f, checkmarkW) // Feedback to next frame
             val extraW = 0f max (contentRegionAvail.x - minW)
             val textPos = Vec2(window.dc.cursorPos.x + offsets.offsetLabel, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
-            pressed = selectable("", menuIsOpen, SelectableFlag._NoHoldingActiveID or SelectableFlag._SelectOnClick or SelectableFlag.DontClosePopups or SelectableFlag._SpanAvailWidth, Vec2(minW, 0f))
+            pressed = selectable("", menuIsOpen, selectableFlags or SelectableFlag._SpanAvailWidth, Vec2(minW, 0f))
             renderText(textPos, label)
             if (iconW > 0f)
                 renderText(pos + Vec2(offsets.offsetIcon, 0f), icon)

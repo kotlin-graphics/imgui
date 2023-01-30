@@ -1147,6 +1147,7 @@ enum class SortDirection {
 
 /** A key identifier (ImGui-side enum) */
 enum class Key {
+    // Keyboard
     None, Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace, Space, Enter, Escape,
     LeftCtrl, LeftShift, LeftAlt, LeftSuper,
     RightCtrl, RightShift, RightAlt, RightSuper,
@@ -1195,7 +1196,7 @@ enum class Key {
     Keypad5, Keypad6, Keypad7, Keypad8, Keypad9,
     KeypadDecimal, KeypadDivide, KeypadMultiply, KeypadSubtract, KeypadAdd, KeypadEnter, KeypadEqual,
 
-    // Gamepad (some of those are expected to be analog values from 0.0f to 1.0f) ..............// NAVIGATION action
+    // Gamepad (some of those are analog values, 0.0f to 1.0f)                         // NAVIGATION action
     GamepadStart,          // Menu (Xbox)          + (Switch)      Start/Options (PS)  // --
     GamepadBack,           // View (Xbox)          - (Switch)      Share (PS)          // --
     GamepadFaceUp,         // Y (Xbox)             X (Switch)      Triangle (PS)       // -> ImGuiNavInput_Input
