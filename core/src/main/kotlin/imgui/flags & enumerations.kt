@@ -8,6 +8,9 @@ import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.internal.sections.InputReadMode
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.or
+import imgui.internal.sections.wo
 import org.lwjgl.system.Platform
 
 
@@ -1516,6 +1519,7 @@ infix fun BackendFlags.xor(b: BackendFlag): BackendFlags = xor(b.i)
 infix fun BackendFlags.has(b: BackendFlag): Boolean = and(b.i) != 0
 infix fun BackendFlags.hasnt(b: BackendFlag): Boolean = and(b.i) == 0
 infix fun BackendFlags.wo(b: BackendFlag): BackendFlags = and(b.i.inv())
+operator fun BackendFlags.minus(flag: BackendFlag): BackendFlags = wo(flag)
 operator fun BackendFlags.div(flag: BackendFlag): BackendFlags = or(flag)
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */

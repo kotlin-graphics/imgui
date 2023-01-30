@@ -1,9 +1,6 @@
 package imgui.impl.glfw
 
-import glm_.b
-import glm_.c
-import glm_.f
-import glm_.has
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2d
 import glm_.vec2.Vec2i
@@ -13,9 +10,11 @@ import imgui.ImGui.mainViewport
 import imgui.ImGui.mouseCursor
 import imgui.Key
 import imgui.MouseButton
+import imgui.internal.sections.InputSource
 import imgui.windowsIme.imeListener
 import kool.lim
 import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.glfw.GLFWGamepadState
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.Platform
 import uno.glfw.*
@@ -167,50 +166,52 @@ class ImplGlfw @JvmOverloads constructor(
         }
     }
 
+    // Update gamepad inputs
+    val Float.saturate
+        get() = if (this < 0f) 0f else if (this > 1f) 1f else this
+
     fun updateGamepads() {
 
-        io.navInputs.fill(0f)
-        if (io.configFlags has ConfigFlag.NavEnableGamepad) {
-            // Update gamepad inputs
-            val buttons = Joystick._1.buttons ?: ByteBuffer.allocate(0)
-            val buttonsCount = buttons.lim
-            val axes = Joystick._1.axes ?: FloatBuffer.allocate(0)
-            val axesCount = axes.lim
+        if (io.configFlags hasnt ConfigFlag.NavEnableGamepad)
+            return
 
-            fun mapButton(nav: NavInput, button: Int) {
-                if (buttonsCount > button && buttons[button] == GLFW_PRESS.b)
-                    io.navInputs[nav] = 1f
-            }
-
-            fun mapAnalog(nav: NavInput, axis: Int, v0: Float, v1: Float) {
-                var v = if (axesCount > axis) axes[axis] else v0
+        io.backendFlags -= BackendFlag.HasGamepad
+        //        #if GLFW_HAS_GAMEPAD_API
+        GLFWGamepadState.calloc().use { gamepad ->
+            if (!glfwGetGamepadState(GLFW_JOYSTICK_1, gamepad))
+                return
+            fun MAP_BUTTON(key: Key, button: Int, unused: Int) = io.addKeyEvent(key, gamepad.buttons(button).bool, InputSource.Gamepad)
+            fun MAP_ANALOG(key: Key, axis: Int, unused: Int, v0: Float, v1: Float) {
+                var v = gamepad.axes(axis)
                 v = (v - v0) / (v1 - v0)
-                if (v > 1f) v = 1f
-                if (io.navInputs[nav] < v)
-                    io.navInputs[nav] = v
+                io.addKeyAnalogEvent(key, v > 0.1f, v.saturate, InputSource.Gamepad)
             }
 
-            mapButton(NavInput.Activate, 0)     // Cross / A
-            mapButton(NavInput.Cancel, 1)     // Circle / B
-            mapButton(NavInput.Menu, 2)     // Square / X
-            mapButton(NavInput.Input, 3)     // Triangle / Y
-            mapButton(NavInput.DpadLeft, 13)    // D-Pad Left
-            mapButton(NavInput.DpadRight, 11)    // D-Pad Right
-            mapButton(NavInput.DpadUp, 10)    // D-Pad Up
-            mapButton(NavInput.DpadDown, 12)    // D-Pad Down
-            mapButton(NavInput.FocusPrev, 4)     // L1 / LB
-            mapButton(NavInput.FocusNext, 5)     // R1 / RB
-            mapButton(NavInput.TweakSlow, 4)     // L1 / LB
-            mapButton(NavInput.TweakFast, 5)     // R1 / RB
-            mapAnalog(NavInput.LStickLeft, 0, -0.3f, -0.9f)
-            mapAnalog(NavInput.LStickRight, 0, +0.3f, +0.9f)
-            mapAnalog(NavInput.LStickUp, 1, +0.3f, +0.9f)
-            mapAnalog(NavInput.LStickDown, 1, -0.3f, -0.9f)
-
-            io.backendFlags = when {
-                axesCount > 0 && buttonsCount > 0 -> io.backendFlags or BackendFlag.HasGamepad
-                else -> io.backendFlags wo BackendFlag.HasGamepad
-            }
+            io.backendFlags /= BackendFlag.HasGamepad
+            MAP_BUTTON(Key.GamepadStart, GLFW_GAMEPAD_BUTTON_START, 7)
+            MAP_BUTTON(Key.GamepadBack, GLFW_GAMEPAD_BUTTON_BACK, 6)
+            MAP_BUTTON(Key.GamepadFaceDown, GLFW_GAMEPAD_BUTTON_A, 0)     // Xbox A, PS Cross
+            MAP_BUTTON(Key.GamepadFaceRight, GLFW_GAMEPAD_BUTTON_B, 1)     // Xbox B, PS Circle
+            MAP_BUTTON(Key.GamepadFaceLeft, GLFW_GAMEPAD_BUTTON_X, 2)     // Xbox X, PS Square
+            MAP_BUTTON(Key.GamepadFaceUp, GLFW_GAMEPAD_BUTTON_Y, 3)     // Xbox Y, PS Triangle
+            MAP_BUTTON(Key.GamepadDpadLeft, GLFW_GAMEPAD_BUTTON_DPAD_LEFT, 13)
+            MAP_BUTTON(Key.GamepadDpadRight, GLFW_GAMEPAD_BUTTON_DPAD_RIGHT, 11)
+            MAP_BUTTON(Key.GamepadDpadUp, GLFW_GAMEPAD_BUTTON_DPAD_UP, 10)
+            MAP_BUTTON(Key.GamepadDpadDown, GLFW_GAMEPAD_BUTTON_DPAD_DOWN, 12)
+            MAP_BUTTON(Key.GamepadL1, GLFW_GAMEPAD_BUTTON_LEFT_BUMPER, 4)
+            MAP_BUTTON(Key.GamepadR1, GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER, 5)
+            MAP_ANALOG(Key.GamepadL2, GLFW_GAMEPAD_AXIS_LEFT_TRIGGER, 4, -0.75f, +1.0f)
+            MAP_ANALOG(Key.GamepadR2, GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER, 5, -0.75f, +1.0f)
+            MAP_BUTTON(Key.GamepadL3, GLFW_GAMEPAD_BUTTON_LEFT_THUMB, 8)
+            MAP_BUTTON(Key.GamepadR3, GLFW_GAMEPAD_BUTTON_RIGHT_THUMB, 9)
+            MAP_ANALOG(Key.GamepadLStickLeft, GLFW_GAMEPAD_AXIS_LEFT_X, 0, -0.25f, -1.0f)
+            MAP_ANALOG(Key.GamepadLStickRight, GLFW_GAMEPAD_AXIS_LEFT_X, 0, +0.25f, +1.0f)
+            MAP_ANALOG(Key.GamepadLStickUp, GLFW_GAMEPAD_AXIS_LEFT_Y, 1, -0.25f, -1.0f)
+            MAP_ANALOG(Key.GamepadLStickDown, GLFW_GAMEPAD_AXIS_LEFT_Y, 1, +0.25f, +1.0f)
+            MAP_ANALOG(Key.GamepadRStickLeft, GLFW_GAMEPAD_AXIS_RIGHT_X, 2, -0.25f, -1.0f)
+            MAP_ANALOG(Key.GamepadRStickRight, GLFW_GAMEPAD_AXIS_RIGHT_X, 2, +0.25f, +1.0f)
+            MAP_ANALOG(Key.GamepadRStickUp, GLFW_GAMEPAD_AXIS_RIGHT_Y, 3, -0.25f, -1.0f)
+            MAP_ANALOG(Key.GamepadRStickDown, GLFW_GAMEPAD_AXIS_RIGHT_Y, 3, +0.25f, +1.0f)
         }
     }
 
@@ -250,9 +251,9 @@ class ImplGlfw @JvmOverloads constructor(
 
         val mouseButtonCallback: MouseButtonCB = { button: Int, action: Int, mods: Int ->
 
-//            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-//            if (bd->PrevUserCallbackMousebutton != NULL && window == bd->Window)
-//            bd->PrevUserCallbackMousebutton(window, button, action, mods);
+            //            ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
+            //            if (bd->PrevUserCallbackMousebutton != NULL && window == bd->Window)
+            //            bd->PrevUserCallbackMousebutton(window, button, action, mods);
 
             updateKeyModifiers(mods)
             if (button >= 0 && button < MouseButton.COUNT)
@@ -263,7 +264,7 @@ class ImplGlfw @JvmOverloads constructor(
             val keyMods = (if (mods has GLFW_MOD_CONTROL) KeyMod.Ctrl else KeyMod.None) or
                     (if (mods has GLFW_MOD_SHIFT) KeyMod.Shift else KeyMod.None) or
                     (if (mods has GLFW_MOD_ALT) KeyMod.Alt else KeyMod.None) or
-                    (if(mods has GLFW_MOD_SUPER) KeyMod.Super else KeyMod.None)
+                    (if (mods has GLFW_MOD_SUPER) KeyMod.Super else KeyMod.None)
             io.addKeyModsEvent(keyMods)
         }
 
