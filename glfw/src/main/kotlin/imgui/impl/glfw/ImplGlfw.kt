@@ -286,12 +286,17 @@ class ImplGlfw @JvmOverloads constructor(
 
         val charCallback: CharCB = { c: Int -> if (!imeInProgress) io.addInputCharacter(c.c) }
 
+        // Workaround: X11 seems to send spurious Leave/Enter events which would make us lose our position,
+        // so we back it up and restore on Leave/Enter (see https://github.com/ocornut/imgui/issues/4984)
         val cursorEnterCallback: CursorEnterCB = { entered ->
             //            if (bd->PrevUserCallbackCursorEnter != NULL && window == bd->Window)
             //            bd->PrevUserCallbackCursorEnter(window, entered);
-            if (entered)
+            if (entered) {
                 data.mouseWindow = data.window
-            if (!entered && data.mouseWindow === data.window) {
+                io.addMousePosEvent(data.lastMousePos.x, data.lastMousePos.y)
+            }
+            else if (!entered && data.mouseWindow === data.window) {
+                data.lastMousePos put io.mousePos
                 data.mouseWindow = null
                 io.addMousePosEvent(-Float.MAX_VALUE, -Float.MAX_VALUE)
             }
@@ -310,6 +315,7 @@ class ImplGlfw @JvmOverloads constructor(
             //            bd->PrevUserCallbackCursorPos(window, x, y);
 
             io.addMousePosEvent(pos.x, pos.y)
+            data.lastMousePos put pos
         }
 
         fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
@@ -327,6 +333,7 @@ class ImplGlfw @JvmOverloads constructor(
             var time = 0.0
             var mouseWindow: GlfwWindow? = null
             val mouseCursors = LongArray/*<GlfwCursor>*/(MouseCursor.COUNT)
+            val lastMousePos = Vec2()
             var installedCallbacks = false
 
             // Chain GLFW callbacks: our callbacks will call the user's previously installed callbacks, if any.
