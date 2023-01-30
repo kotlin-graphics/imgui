@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.f
+import glm_.has
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveID
@@ -12,10 +13,119 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
+import imgui.internal.BitArray
+import imgui.internal.sections.InputEvent
 import imgui.static.findHoveredWindow
 
 /** NewFrame */
 internal interface newFrame {
+
+    // Process input queue
+    // - trickle_fast_inputs = false : process all events, turn into flattened input state (e.g. successive down/up/down/up will be lost)
+    // - trickle_fast_inputs = true  : process as many events as possible (successive down/up/down/up will be trickled over several frames so nothing is lost) (new feature in 1.87)
+    fun updateInputEvents(trickle_fast_inputs: Boolean) {
+
+        var mouseMoved = false;
+        var mouseWheeled = false;
+        var keyChanged = false;
+        var textInputed = false
+        var mouseButtonChanged = 0x00;
+        var keyModsChanged = 0x00
+        val keyChangedMask = BitArray(Key.COUNT)
+
+        var eventN = 0
+        while (eventN < g.inputEventsQueue.size) {
+            val e = g.inputEventsQueue[eventN]
+            when (e) {
+                is InputEvent.MousePos ->
+                    if (io.mousePos.x != e.posX || io.mousePos.y != e.posY) {
+                        // Trickling Rule: Stop processing queued events if we already handled a mouse button change
+                        if (trickle_fast_inputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || keyModsChanged != 0 || textInputed))
+                            break
+                        io.mousePos.put(e.posX, e.posY)
+                        mouseMoved = true
+                    }
+                is InputEvent.MouseButton -> {
+                    val button = MouseButton of e.button
+                    //                    assert(button >= 0 && button < ImGuiMouseButton_COUNT)
+                    if (io.mouseDown[button.i] != e.down) {
+                        // Trickling Rule: Stop processing queued events if we got multiple action on the same button
+                        if (trickle_fast_inputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
+                            break
+                        io.mouseDown[button.i] = e.down
+                        mouseButtonChanged = mouseButtonChanged or (1 shl button.i)
+                    }
+                }
+                is InputEvent.MouseWheel ->
+                    if (e.wheelX != 0f || e.wheelY != 0f) {
+                        // Trickling Rule: Stop processing queued events if we got multiple action on the event
+                        if (trickle_fast_inputs && (mouseWheeled || mouseButtonChanged != 0))
+                            break
+                        io.mouseWheelH += e.wheelX
+                        io.mouseWheel += e.wheelY
+                        mouseWheeled = true
+                    }
+                is InputEvent.Key -> {
+                    assert(e.key != Key.None)
+                    val keydataIndex = e.key.i
+                    val keydata = io.keysData[keydataIndex]
+                    if (keydata.down != e.down) {
+                        // Trickling Rule: Stop processing queued events if we got multiple action on the same button
+                        if (trickle_fast_inputs && (keyChangedMask testBit keydataIndex || textInputed || mouseButtonChanged != 0))
+                            break
+                        keydata.down = e.down
+                        keyChanged = true
+                        keyChangedMask setBit keydataIndex
+                    }
+                }
+                is InputEvent.KeyMods -> {
+                    val modifiers = e.mods
+                    if (io.keyMods != modifiers) {
+                        // Trickling Rule: Stop processing queued events if we got multiple action on the same button
+                        val modifiersThatAreChanging = io.keyMods xor modifiers
+                        if (trickle_fast_inputs && keyModsChanged has modifiersThatAreChanging)
+                            break
+                        io.keyMods = modifiers
+                        io.keyCtrl = modifiers has KeyMod.Ctrl
+                        io.keyShift = modifiers has KeyMod.Shift
+                        io.keyAlt = modifiers has KeyMod.Alt
+                        io.keySuper = modifiers has KeyMod.Super
+                        keyModsChanged = keyModsChanged or modifiersThatAreChanging
+                    }
+                }
+                is InputEvent.Text -> {
+                    // Trickling Rule: Stop processing queued events if keys/mouse have been interacted with
+                    if (trickle_fast_inputs && (keyChanged || mouseButtonChanged != 0 || mouseMoved || mouseWheeled))
+                        break
+                    val c = e.char
+                    io.inputQueueCharacters += if (c.code <= UNICODE_CODEPOINT_MAX) c else Char(UNICODE_CODEPOINT_INVALID)
+                    textInputed = true
+                }
+                is InputEvent.AppFocused ->
+                    // We intentionally overwrite this and process lower, in order to give a chance
+                    // to multi-viewports backends to queue AddFocusEvent(false) + AddFocusEvent(true) in same frame.
+                    io.appFocusLost = !e.focused
+            }
+            eventN++
+        }
+
+        // Record trail (for domain-specific applications wanting to access a precise trail)
+        for (n in 0 until eventN)
+            g.inputEventsTrail += g.inputEventsQueue[n]
+
+        // Remaining events will be processed on the next frame
+        if (eventN == g.inputEventsQueue.size)
+            g.inputEventsQueue.clear()
+        else
+            g.inputEventsQueue.drop(eventN)
+
+        // Clear buttons state when focus is lost
+        // (this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle)
+        if (g.io.appFocusLost) {
+            g.io.clearInputKeys()
+            g.io.appFocusLost = false
+        }
+    }
 
     /** The reason this is exposed in imgui_internal.h is: on touch-based system that don't have hovering,
      *  we want to dispatch inputs to the right target (imgui vs imgui+app) */
@@ -64,7 +174,7 @@ internal interface newFrame {
         if (!mouseAvail && !mouseDraggingExternPayload)
             clearHoveredWindows = true
 
-        if(clearHoveredWindows) {
+        if (clearHoveredWindows) {
             g.hoveredWindow = null
             g.hoveredWindowUnderMovingWindow = null
         }
@@ -154,8 +264,7 @@ internal interface newFrame {
                 // Cancel moving if clicked over an item which was disabled or inhibited by popups (note that we know HoveredId == 0 already)
                 if (g.hoveredIdDisabled)
                     g.movingWindow = null
-            }
-            else if (rootWindow == null && g.navWindow != null && topMostPopupModal == null)
+            } else if (rootWindow == null && g.navWindow != null && topMostPopupModal == null)
                 focusWindow()  // Clicking on void disable focus
         }
 

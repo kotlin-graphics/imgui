@@ -35,6 +35,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var io = IO(sharedFontAtlas)
 
+    /** Input events which will be tricked/written into IO structure. */
+    val inputEventsQueue = ArrayList<InputEvent>()
+
+    /** Past input events processed in NewFrame(). This is to allow domain-specific application to access e.g mouse/pen trail. */
+    val inputEventsTrail = ArrayList<InputEvent>()
+
     var style = Style()
 
     lateinit var font: Font

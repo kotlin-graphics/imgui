@@ -10,6 +10,8 @@ import imgui.*
 import imgui.api.g
 import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.internal.sections.InputEvent
+import imgui.internal.sections.InputSource
 import imgui.internal.textCharFromUtf8
 import imgui.static.getClipboardTextFn_DefaultImpl
 import imgui.static.setClipboardTextFn_DefaultImpl
@@ -110,6 +112,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *  by word instead of selecting whole text, Multi-selection in lists uses Cmd/Super instead of Ctrl */
     var configMacOSXBehaviors = false
 
+    /** Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates. */
+    var configInputEventQueue = true
+
     /** Enable blinking cursor (optional as some users consider it to be distracting).. */
     var configInputTextCursorBlink = true
 
@@ -194,54 +199,54 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Queue a new key down/up event.
      *  - ImGuiKey key: Translated key (as in, generally ImGuiKey_A matches the key end-user would use to emit an 'A' character)
-     *  - bool down:    Is the key down? use false to signify a key release.
-     *  FIXME: In the current version this is setting key data immediately. This will evolve into a trickling queue. */
+     *  - bool down:    Is the key down? use false to signify a key release. */
     fun addKeyEvent(key: Key, down: Boolean) {
-//        IM_UNUSED(native_keycode);
-//        IM_UNUSED(native_scancode);
+        //        IM_UNUSED(native_keycode);
+        //        IM_UNUSED(native_scancode);
 
         //if (e->Down) { IMGUI_DEBUG_LOG("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
         if (key == Key.None)
             return
+        assert(g.io === this) { "Can only add events to current context." }
 
         backendUsingLegacyKeyArrays = 0
-        keysData[key.i].down = down
+
+        g.inputEventsQueue += InputEvent.Key(key, down)
     }
 
     /** Queue a change of Ctrl/Shift/Alt/Super modifiers */
     fun addKeyModsEvent(modifiers: KeyModFlags) {
-        keyMods = modifiers
-        keyCtrl = modifiers has KeyMod.Ctrl
-        keyShift = modifiers has KeyMod.Shift
-        keyAlt = modifiers has KeyMod.Alt
-        keySuper = modifiers has KeyMod.Super
+        assert(g.io === this) { "Can only add events to current context." }
+        g.inputEventsQueue += InputEvent.KeyMods(modifiers)
     }
 
     /** Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse (e.g. app not focused and not hovered) */
     fun addMousePosEvent(x: Float, y: Float) {
         assert(g.io === this) { "Can only add events to current context." }
-        g.io.mousePos.put(x, y)
+        g.inputEventsQueue += InputEvent.MousePos(x, y)
     }
+
     /** Queue a mouse button change */
     fun addMouseButtonEvent(mouseButton: Int, down: Boolean) {
         assert(g.io === this) { "Can only add events to current context." }
         assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
-        g.io.mouseDown[mouseButton] = down
+        g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down)
     }
+
     /** Queue a mouse wheel update */
     fun addMouseWheelEvent(wheelX: Float, wheelY: Float) {
         assert(g.io === this) { "Can only add events to current context." }
         if (wheelX == 0f && wheelY == 0f)
             return
-        g.io.mouseWheelH += wheelX
-        g.io.mouseWheel += wheelY
+        g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY)
     }
 
     /** Queue an hosting application/platform windows gain or loss of focus */
     fun addFocusEvent(focused: Boolean) {
         // We intentionally overwrite this and process in NewFrame(), in order to give a chance
         // to multi-viewports backends to queue AddFocusEvent(false),AddFocusEvent(true) in same frame.
-        appFocusLost = !focused
+        assert(g.io === this) { "Can only add events to current context." }
+        g.inputEventsQueue += InputEvent.AppFocused(focused)
     }
 
     /** Queue new character input
@@ -250,11 +255,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      * - with glfw you can get those from the callback set in glfwSetCharCallback()
      * - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
     fun addInputCharacter(c: Char) {
-        if (c != NUL)
-            inputQueueCharacters += when (c.i) {
-                in 1..UNICODE_CODEPOINT_MAX -> c
-                else -> UNICODE_CODEPOINT_INVALID.c
-            }
+        assert(g.io === this) { "Can only add events to current context." }
+        if (c == NUL)
+            return
+
+        g.inputEventsQueue += InputEvent.Text(c)
     }
 
     /** UTF16 strings use surrogate pairs to encode codepoints >= 0x10000, so
@@ -267,7 +272,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         val ci = c.i
         if ((ci and 0xFC00) == 0xD800) { // High surrogate, must save
             if (inputQueueSurrogate != NUL)
-                inputQueueCharacters += UNICODE_CODEPOINT_INVALID.c
+                addInputCharacter(UNICODE_CODEPOINT_INVALID.c)
             inputQueueSurrogate = c
             return
         }
@@ -276,14 +281,14 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (inputQueueSurrogate != NUL) {
             when {
                 // Invalid low surrogate
-                (ci and 0xFC00) != 0xDC00 -> inputQueueCharacters += UNICODE_CODEPOINT_INVALID.c
+                (ci and 0xFC00) != 0xDC00 -> addInputCharacter(UNICODE_CODEPOINT_INVALID.c)
                 // Codepoint will not fit in ImWchar (extra parenthesis around 0xFFFF somehow fixes -Wunreachable-code with Clang)
                 UNICODE_CODEPOINT_MAX == 0xFFFF -> cp = UNICODE_CODEPOINT_INVALID.c // Codepoint will not fit in ImWchar
                 else -> cp = (((inputQueueSurrogate - 0xD800) shl 10) + (c - 0xDC00).i + 0x10000).c
             }
             inputQueueSurrogate = NUL
         }
-        inputQueueCharacters += cp
+        addInputCharacter(cp)
     }
 
     /** Queue new characters input from an UTF-8 string */
@@ -293,7 +298,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             val (c, bytes) = textCharFromUtf8(utf8Chars)
             p += bytes
             if (c != 0)
-                inputQueueCharacters += c.c
+                addInputCharacter(c.c)
         }
     }
 

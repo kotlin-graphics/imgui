@@ -23,6 +23,7 @@ import imgui.ImGui.setNextWindowSize
 import imgui.ImGui.setTooltip
 import imgui.ImGui.topMostPopupModal
 import imgui.ImGui.updateHoveredWindowAndCaptureFlags
+import imgui.ImGui.updateInputEvents
 import imgui.ImGui.updateMouseMovingWindowEndFrame
 import imgui.ImGui.updateMouseMovingWindowNewFrame
 import imgui.classes.ContextHookType
@@ -170,12 +171,9 @@ interface main {
         //if (g.IO.AppFocusLost)
         //    ClosePopupsExceptModals();
 
-        // Clear buttons state when focus is lost
-        // (this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle)
-        if (g.io.appFocusLost) {
-            g.io.clearInputKeys()
-            g.io.appFocusLost = false
-        }
+        // Process input queue (trickle as many events as possible)
+        g.inputEventsTrail.clear()
+        updateInputEvents(g.io.configInputEventQueue)
 
         // Update keyboard input state
         updateKeyboardInputs()
