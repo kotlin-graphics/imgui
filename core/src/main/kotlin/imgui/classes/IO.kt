@@ -7,6 +7,7 @@ import glm_.shl
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
+import imgui.api.g
 import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.internal.textCharFromUtf8
@@ -214,6 +215,26 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         keyShift = modifiers has KeyMod.Shift
         keyAlt = modifiers has KeyMod.Alt
         keySuper = modifiers has KeyMod.Super
+    }
+
+    /** Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse (e.g. app not focused and not hovered) */
+    fun addMousePosEvent(x: Float, y: Float) {
+        assert(g.io === this) { "Can only add events to current context." }
+        g.io.mousePos.put(x, y)
+    }
+    /** Queue a mouse button change */
+    fun addMouseButtonEvent(mouseButton: Int, down: Boolean) {
+        assert(g.io === this) { "Can only add events to current context." }
+        assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
+        g.io.mouseDown[mouseButton] = down
+    }
+    /** Queue a mouse wheel update */
+    fun addMouseWheelEvent(wheelX: Float, wheelY: Float) {
+        assert(g.io === this) { "Can only add events to current context." }
+        if (wheelX == 0f && wheelY == 0f)
+            return
+        g.io.mouseWheelH += wheelX
+        g.io.mouseWheel += wheelY
     }
 
     /** Queue an hosting application/platform windows gain or loss of focus */

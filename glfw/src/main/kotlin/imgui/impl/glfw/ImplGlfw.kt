@@ -142,14 +142,10 @@ class ImplGlfw @JvmOverloads constructor(
                 data.window.cursorPos = Vec2d(io.mousePos)
 
             // (Optional) Fallback to provide mouse position when focused (ImGui_ImplGlfw_CursorPosCallback already provides this when hovered or captured)
-            if (isAppFocused && data.mouseWindow == null)
-                io.mousePos put data.window.cursorPos
-        }
-
-        // Update buttons
-        for (i in io.mouseDown.indices) {
-            io.mouseDown[i] = data.mouseJustPressed[i] || glfwGetMouseButton(data.window.handle.value, i) != 0
-            data.mouseJustPressed[i] = false
+            if (isAppFocused && data.mouseWindow == null) {
+                val mousePos = data.window.cursorPos
+                io.addMousePosEvent(mousePos.x.f, mousePos.y.f)
+            }
         }
     }
 
@@ -259,8 +255,8 @@ class ImplGlfw @JvmOverloads constructor(
 //            bd->PrevUserCallbackMousebutton(window, button, action, mods);
 
             updateKeyModifiers(mods)
-            if (action == GLFW_PRESS && button in data.mouseJustPressed.indices)
-                data.mouseJustPressed[button] = true
+            if (button >= 0 && button < MouseButton.COUNT)
+                io.addMouseButtonEvent(button, action == GLFW_PRESS)
         }
 
         fun updateKeyModifiers(mods: Int) {
@@ -272,8 +268,7 @@ class ImplGlfw @JvmOverloads constructor(
         }
 
         val scrollCallback: ScrollCB = { offset: Vec2d ->
-            io.mouseWheelH += offset.x.f
-            io.mouseWheel += offset.y.f
+            io.addMouseWheelEvent(offset.x.f, offset.y.f)
         }
 
         val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, mods: Int ->
@@ -298,7 +293,7 @@ class ImplGlfw @JvmOverloads constructor(
                 data.mouseWindow = data.window
             if (!entered && data.mouseWindow === data.window) {
                 data.mouseWindow = null
-                io.mousePos put -Float.MAX_VALUE
+                io.addMousePosEvent(-Float.MAX_VALUE, -Float.MAX_VALUE)
             }
         }
 
@@ -314,7 +309,7 @@ class ImplGlfw @JvmOverloads constructor(
             //            if (bd->PrevUserCallbackCursorPos != NULL && window == bd->Window)
             //            bd->PrevUserCallbackCursorPos(window, x, y);
 
-            io.mousePos put pos
+            io.addMousePosEvent(pos.x, pos.y)
         }
 
         fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
@@ -331,7 +326,6 @@ class ImplGlfw @JvmOverloads constructor(
             lateinit var clientApi: GlfwClientApi
             var time = 0.0
             var mouseWindow: GlfwWindow? = null
-            val mouseJustPressed = BooleanArray(MouseButton.COUNT)
             val mouseCursors = LongArray/*<GlfwCursor>*/(MouseCursor.COUNT)
             var installedCallbacks = false
 
