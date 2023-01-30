@@ -573,14 +573,19 @@ fun navUpdateCreateMoveRequest() {
     // When using gamepad, we project the reference nav bounding box into window visible area.
     // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
     // (can't focus a visible object like we can with the mouse).
-    if (g.navMoveSubmitted && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) {
-        val windowRectRel = window rectAbsToRel Rect(window.innerRect.min - 1, window.innerRect.max + 1)
-        if (window.navRectRel[g.navLayer] !in windowRectRel) {
-            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel")
-            val pad = window.calcFontSize() * 0.5f
-            windowRectRel expand Vec2(-min(windowRectRel.width, pad), -min(windowRectRel.height, pad)) // Terrible approximation for the intent of starting navigation from first fully visible item
-            window.navRectRel[g.navLayer] clipWithFull windowRectRel
-            g.navFocusScopeId = 0
+    if (g.navMoveSubmitted && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) { // && (g.NavMoveFlags & ImGuiNavMoveFlags_Forwarded))
+        val clampX = g.navMoveFlags hasnt (NavMoveFlag.LoopX or NavMoveFlag.WrapX)
+        val clampY = g.navMoveFlags hasnt (NavMoveFlag.LoopY or NavMoveFlag.WrapY)
+        val innerRectRel = window rectAbsToRel Rect(window.innerRect.min - 1, window.innerRect.max + 1)
+        if ((clampX || clampY) && window.navRectRel[g.navLayer] !in innerRectRel) {
+            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel for gamepad move")
+            val padX = innerRectRel.width min (window.calcFontSize() * 0.5f)
+            val padY = innerRectRel.height min (window.calcFontSize() * 0.5f) // Terrible approximation for the intent of starting navigation from first fully visible ite
+            innerRectRel.min.x = if (clampX) (innerRectRel.min.x + padX) else -Float.MAX_VALUE
+            innerRectRel.max.x = if (clampX) (innerRectRel.max.x - padX) else +Float.MAX_VALUE
+            innerRectRel.min.y = if (clampY) (innerRectRel.min.y + padY) else -Float.MAX_VALUE
+            innerRectRel.max.y = if (clampY) (innerRectRel.max.y - padY) else +Float.MAX_VALUE
+            window.navRectRel[g.navLayer] clipWithFull innerRectRel
             g.navId = 0
         }
     }
