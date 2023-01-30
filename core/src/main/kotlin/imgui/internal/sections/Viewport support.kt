@@ -97,8 +97,10 @@ class ViewportP : Viewport() {
             displaySize put size
             framebufferScale put ImGui.io.displayFramebufferScale
             for (n in 0 until drawLists.size) {
-                totalVtxCount += drawLists[n].vtxBuffer.lim
-                totalIdxCount += drawLists[n].idxBuffer.lim
+                val drawList = drawLists[n]
+                drawList._popUnusedDrawCmd()
+                totalVtxCount += drawList.vtxBuffer.lim
+                totalIdxCount += drawList.idxBuffer.lim
             }
         }
     }

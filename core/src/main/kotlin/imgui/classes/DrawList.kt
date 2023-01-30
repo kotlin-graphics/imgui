@@ -1457,10 +1457,10 @@ class DrawList(sharedData: DrawListSharedData?) {
     /** AddDrawListToDrawData */
     infix fun addTo(outList: ArrayList<DrawList>) {
 
-        // Remove trailing command if unused.
-        // Technically we could return directly instead of popping, but this make things looks neat in Metrics/Debugger window as well.
-        _popUnusedDrawCmd()
-        if (cmdBuffer.empty()) return
+        if (cmdBuffer.empty())
+            return
+        if (cmdBuffer.size == 1 && cmdBuffer[0].elemCount == 0 && cmdBuffer[0].userCallback == null)
+            return
 
         /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
             May trigger for you if you are using PrimXXX functions incorrectly.   */
