@@ -161,37 +161,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     val setPlatformImeDataFn: ((viewport: Viewport, data: PlatformImeData) -> Unit)? = setPlatformImeDataFn_DefaultImpl.takeIf { Platform.get() == Platform.WINDOWS }
 
     //------------------------------------------------------------------
-    // Input - Fill before calling NewFrame()
+    // Input - Call before calling NewFrame()
     //------------------------------------------------------------------
-
-    /** Mouse position, in pixels. Set to ImVec2(-FLT_MAX, -FLT_MAX) if mouse is unavailable (on another screen, etc.) */
-    var mousePos = Vec2(-Float.MAX_VALUE)
-
-    /** Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear ImGui mostly uses left
-     *  and right buttons. Others buttons allows us to track if the mouse is being used by your application + available
-     *  to user as a convenience via IsMouse** API.   */
-    val mouseDown = BooleanArray(5)
-
-    /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
-    var mouseWheel = 0f
-
-    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all backends.   */
-    var mouseWheelH = 0f
-
-    /** Keyboard modifier down: Control  */
-    var keyCtrl = false
-
-    /** Keyboard modifier down: Shift    */
-    var keyShift = false
-
-    /** Keyboard modifier down: Alt  */
-    var keyAlt = false
-
-    /** Keyboard modifier down: Cmd/Super/Windows    */
-    var keySuper = false
-
-    /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
-    val navInputs = FloatArray(NavInput.COUNT)
 
 
     // Input Functions
@@ -241,7 +212,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY)
     }
 
-    /** Queue an hosting application/platform windows gain or loss of focus */
+    /** Queue a gain/loss of focus for the application (generally based on OS/platform focus of your window) */
     fun addFocusEvent(focused: Boolean) {
         // We intentionally overwrite this and process in NewFrame(), in order to give a chance
         // to multi-viewports backends to queue AddFocusEvent(false),AddFocusEvent(true) in same frame.
@@ -249,7 +220,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         g.inputEventsQueue += InputEvent.AppFocused(focused)
     }
 
-    /** Queue new character input
+    /** Queue a new character input
      *
      *  Pass in translated ASCII characters for text input.
      * - with glfw you can get those from the callback set in glfwSetCharCallback()
@@ -262,8 +233,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         g.inputEventsQueue += InputEvent.Text(c)
     }
 
-    /** UTF16 strings use surrogate pairs to encode codepoints >= 0x10000, so
-     *  we should save the high surrogate. */
+    /** Queue a new character input from an UTF-16 character, it can be a surrogate
+     *
+     *  UTF16 strings use surrogate pairs to encode codepoints >= 0x10000, so we should save the high surrogate. */
     fun addInputCharacterUTF16(c: Char) {
 
         if (c == NUL && inputQueueSurrogate == NUL)
@@ -291,7 +263,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         addInputCharacter(cp)
     }
 
-    /** Queue new characters input from an UTF-8 string */
+    /** Queue a new characters input from an UTF-8 string */
     fun addInputCharactersUTF8(utf8Chars: ByteArray) {
         var p = 0
         while (p < utf8Chars.size || utf8Chars[p] == 0.b) {
@@ -379,8 +351,41 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
 
     //------------------------------------------------------------------
-    // [Private] ImGui will maintain those fields. Forward compatibility not guaranteed!
+    // [Internal] Dear ImGui will maintain those fields. Forward compatibility not guaranteed!
     //------------------------------------------------------------------
+
+    /** Mouse position, in pixels. Set to ImVec2(-FLT_MAX, -FLT_MAX) if mouse is unavailable (on another screen, etc.) */
+    var mousePos = Vec2(-Float.MAX_VALUE)
+
+    /** Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear ImGui mostly uses left
+     *  and right buttons. Others buttons allows us to track if the mouse is being used by your application + available
+     *  to user as a convenience via IsMouse** API.   */
+    val mouseDown = BooleanArray(5)
+
+    /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
+    var mouseWheel = 0f
+
+    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all backends.   */
+    var mouseWheelH = 0f
+
+    /** Keyboard modifier down: Control  */
+    var keyCtrl = false
+
+    /** Keyboard modifier down: Shift    */
+    var keyShift = false
+
+    /** Keyboard modifier down: Alt  */
+    var keyAlt = false
+
+    /** Keyboard modifier down: Cmd/Super/Windows    */
+    var keySuper = false
+
+    /** Gamepad inputs. Cleared back to zero by EndFrame(). Keyboard keys will be auto-mapped and be written here by NewFrame().   */
+    val navInputs = FloatArray(NavInput.COUNT)
+
+
+    // Other state maintained from data above + IO function calls
+
 
     /** Key mods flags (same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags), updated by NewFrame() */
     var keyMods: KeyModFlags = KeyMod.None.i
