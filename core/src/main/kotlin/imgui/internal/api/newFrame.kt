@@ -11,7 +11,7 @@ import imgui.ImGui.isPopupOpen
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
-import imgui.static.findHoveredWindow
+import imgui.statics.findHoveredWindow
 
 /** NewFrame */
 internal interface newFrame {

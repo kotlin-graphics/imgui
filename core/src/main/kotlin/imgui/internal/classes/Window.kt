@@ -24,7 +24,7 @@ import imgui.classes.DrawList
 import imgui.classes.SizeCallbackData
 import imgui.internal.*
 import imgui.internal.sections.*
-import imgui.static.viewportRect
+import imgui.statics.viewportRect
 import kool.cap
 import java.util.*
 import kotlin.collections.ArrayList

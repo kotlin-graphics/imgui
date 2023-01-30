@@ -26,8 +26,8 @@ import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.sections.*
-import imgui.static.navCalcPreferredRefPos
-import imgui.static.navRestoreLastChildNavWindow
+import imgui.statics.navCalcPreferredRefPos
+import imgui.statics.navRestoreLastChildNavWindow
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import kotlin.reflect.KMutableProperty0

@@ -1,4 +1,4 @@
-package imgui.static
+package imgui.statics
 
 import gli_.has
 import glm_.glm
@@ -21,7 +21,6 @@ import imgui.ImGui.popID
 import imgui.ImGui.pushID
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setNextWindowBgAlpha
-import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g

@@ -1,4 +1,4 @@
-package imgui.static
+package imgui.statics
 
 import gli_.has
 import glm_.L
@@ -13,7 +13,6 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
-import imgui.internal.classes.PoolIdx
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.SettingsHandler
