@@ -170,7 +170,7 @@ class Table {
 
     var innerClipRect = Rect()
 
-    /** We use this to cpu-clip cell background color fill */
+    /** We use this to cpu-clip cell background color fill, evolve during the frame as we cross frozen rows boundaries */
     val bgClipRect = Rect()
 
     /** Actual ImDrawCmd clip rect for BG0/1 channel. This tends to be == OuterWindow->ClipRect at BeginTable() because output in BG0/BG1 is cpu-clipped */
@@ -1637,11 +1637,13 @@ class Table {
                 val cellDataEnd = rowCellDataCurrent
                 var idx = 0
                 while (idx <= cellDataEnd) {
+                    // As we render the BG here we need to clip things (for layout we would not)
+                    // FIXME: This cancels the OuterPadding addition done by TableGetCellBgRect(), need to keep it while rendering correctly while scrolling.
                     val cellData = rowCellData[idx++]
                     val column = columns[cellData.column]
                     val cellBgRect = getCellBgRect(cellData.column)
                     cellBgRect.clipWith(bgClipRect)
-                    cellBgRect.min.x = cellBgRect.min.x max column.clipRect.min.x     // So that first column after frozen one gets clipped
+                    cellBgRect.min.x = cellBgRect.min.x max column.clipRect.min.x     // So that first column after frozen one gets clipped when scrolling
                     cellBgRect.max.x = cellBgRect.max.x min column.maxX
                     window.drawList.addRectFilled(cellBgRect.min, cellBgRect.max, cellData.bgColor)
                 }
@@ -1768,19 +1770,22 @@ class Table {
 
     /** Return the cell rectangle based on currently known height.
      *  - Important: we generally don't know our row height until the end of the row, so Max.y will be incorrect in many situations.
-     *    The only case where this is correct is if we provided a min_row_height to TableNextRow() and don't go below it.
+     *    The only case where this is correct is if we provided a min_row_height to TableNextRow() and don't go below it, or in TableEndRow() when we locked that height.
      *  - Important: if ImGuiTableFlags_PadOuterX is set but ImGuiTableFlags_PadInnerX is not set, the outer-most left and right
      *    columns report a small offset so their CellBgRect can extend up to the outer border.
+     *    FIXME: But the rendering code in TableEndRow() nullifies that with clamping required for scrolling.
      *
      *  ~TableGetCellBgRect */
     infix fun getCellBgRect(columnN: Int): Rect {
         val column = columns[columnN]
         var x1 = column.minX
         var x2 = column.maxX
-        if (column.prevEnabledColumn == -1)
-            x1 -= cellSpacingX1
-        if (column.nextEnabledColumn == -1)
-            x2 += cellSpacingX2
+//        if (column.prevEnabledColumn == -1)
+//            x1 -= OuterPaddingX
+//        if (column.nextEnabledColumn == -1)
+//            x2 += OuterPaddingX
+        x1 = x1 max workRect.min.x
+        x2 = x2 min workRect.max.x
         return Rect(x1, rowPosY1, x2, rowPosY2)
     }
 
