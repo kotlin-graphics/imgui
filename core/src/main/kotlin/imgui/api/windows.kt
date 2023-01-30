@@ -191,8 +191,8 @@ interface windows {
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
         if (firstBeginOfTheFrame) { // Initialize
-            val windowIsChildTooltip =
-                flags has Wf._ChildWindow && flags has Wf._Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
+            val windowIsChildTooltip = flags has Wf._ChildWindow && flags has Wf._Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
+            val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
 
             window.active = true
             window.hasCloseButton = pOpen != null
@@ -347,6 +347,8 @@ interface windows {
             if (windowPosWithPivot) // Position given a pivot (e.g. for centering)
                 window.setPos(window.setWindowPosVal - window.size * window.setWindowPosPivot, Cond.None)
             else if (flags has Wf._ChildMenu)
+                window.pos = findBestWindowPosForPopup(window)
+            else if (flags has Wf._Popup && !windowPosSetByApi && windowJustAppearingAfterHiddenForResize)
                 window.pos = findBestWindowPosForPopup(window)
             else if (flags has Wf._Tooltip && !windowPosSetByApi && !windowIsChildTooltip)
                 window.pos = findBestWindowPosForPopup(window)

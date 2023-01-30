@@ -296,9 +296,10 @@ internal interface PopupsModalsTooltips {
                                  pos.x + size.x - horizontalOverlap - scrollbarSizes.x, Float.MAX_VALUE)
                 }
             }
-            return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter,
-                                               rAvoid, PopupPositionPolicy.Default)
+            return findBestWindowPosForPopupEx(window.pos, window.size, window::autoPosLastDirection, rOuter, rAvoid, PopupPositionPolicy.Default)
         }
+        if (window.flags has Wf._Popup)
+            return findBestWindowPosForPopupEx(window.pos, window.size, window::autoPosLastDirection, rOuter, Rect(window.pos, window.pos), PopupPositionPolicy.Default) // Ideally we'd disable r_avoid here
         if (window.flags has Wf._Tooltip) {
             // Position tooltip (always follows mouse)
             val sc = style.mouseCursorScale
@@ -309,8 +310,7 @@ internal interface PopupsModalsTooltips {
                 else -> Rect(refPos.x - 16, refPos.y - 8, refPos.x + 24 * sc,
                              refPos.y + 24 * sc) // FIXME: Hard-coded based on mouse cursor shape expectation. Exact dimension not very important.
             }
-            return findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rOuter, rAvoid,
-                                               PopupPositionPolicy.Default)
+            return findBestWindowPosForPopupEx(refPos, window.size, window::autoPosLastDirection, rOuter, rAvoid, PopupPositionPolicy.Default)
         }
         assert(false)
         return Vec2(window.pos)
