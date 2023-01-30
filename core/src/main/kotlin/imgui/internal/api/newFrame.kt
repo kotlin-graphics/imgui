@@ -73,12 +73,13 @@ internal interface newFrame {
                 is InputEvent.Key -> {
                     assert(e.key != Key.None)
                     val keydataIndex = e.key.i
-                    val keydata = io.keysData[keydataIndex]
-                    if (keydata.down != e.down) {
+                    val keyData = io.keysData[keydataIndex]
+                    if (keyData.down != e.down || keyData.analogValue != e.analogValue) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                        if (trickle_fast_inputs && (keyChangedMask testBit keydataIndex || textInputed || mouseButtonChanged != 0))
+                        if (trickle_fast_inputs && keyData.down != e.down && (keyChangedMask testBit keydataIndex || textInputed || mouseButtonChanged != 0))
                             break
-                        keydata.down = e.down
+                        keyData.down = e.down
+                        keyData.analogValue = e.analogValue
                         keyChanged = true
                         keyChangedMask setBit keydataIndex
                     }
@@ -115,6 +116,7 @@ internal interface newFrame {
         }
 
         // Record trail (for domain-specific applications wanting to access a precise trail)
+        //if (event_n != 0) IMGUI_DEBUG_LOG("Processed: %d / Remaining: %d\n", event_n, g.InputEventsQueue.Size - event_n);
         for (n in 0 until eventN)
             g.inputEventsTrail += g.inputEventsQueue[n]
 

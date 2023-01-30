@@ -11,6 +11,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mainViewport
+import imgui.ImGui.mergedKeyModFlags
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.saveIniSettingsToDisk
@@ -48,7 +49,23 @@ fun updateSettings() {
 }
 
 fun updateKeyboardInputs() {
+    // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
+    io.keyMods = mergedKeyModFlags
 
+    // Import legacy keys or verify they are not used
+
+    // Clear gamepad data if disabled
+    if (io.backendFlags hasnt BackendFlag.HasGamepad)
+        for (i in Key.Gamepad_BEGIN.i..Key.Gamepad_END.i) {
+            io.keysData[i].down = false
+            io.keysData[i].analogValue = 0f
+        }
+
+    // Update keys
+    for (keyData in io.keysData) {
+        keyData.downDurationPrev = keyData.downDuration
+        keyData.downDuration = if (keyData.down) (if (keyData.downDuration < 0f) 0f else keyData.downDuration + io.deltaTime) else -1f
+    }
 }
 
 fun updateMouseInputs() {

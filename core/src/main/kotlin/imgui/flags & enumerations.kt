@@ -1191,11 +1191,38 @@ enum class Key {
     Keypad0, Keypad1, Keypad2, Keypad3, Keypad4,
     Keypad5, Keypad6, Keypad7, Keypad8, Keypad9,
     KeypadDecimal, KeypadDivide, KeypadMultiply, KeypadSubtract, KeypadAdd, KeypadEnter, KeypadEqual,
+
+    // Gamepad (some of those are expected to be analog values from 0.0f to 1.0f) ..............// NAVIGATION action
+    GamepadStart,          // Menu (Xbox)          + (Switch)      Start/Options (PS)  // --
+    GamepadBack,           // View (Xbox)          - (Switch)      Share (PS)          // --
+    GamepadFaceUp,         // Y (Xbox)             X (Switch)      Triangle (PS)       // -> ImGuiNavInput_Input
+    GamepadFaceDown,       // A (Xbox)             B (Switch)      Cross (PS)          // -> ImGuiNavInput_Activate
+    GamepadFaceLeft,       // X (Xbox)             Y (Switch)      Square (PS)         // -> ImGuiNavInput_Menu
+    GamepadFaceRight,      // B (Xbox)             A (Switch)      Circle (PS)         // -> ImGuiNavInput_Cancel
+    GamepadDpadUp,         // D-pad Up                                                 // -> ImGuiNavInput_DpadUp
+    GamepadDpadDown,       // D-pad Down                                               // -> ImGuiNavInput_DpadDown
+    GamepadDpadLeft,       // D-pad Left                                               // -> ImGuiNavInput_DpadLeft
+    GamepadDpadRight,      // D-pad Right                                              // -> ImGuiNavInput_DpadRight
+    GamepadL1,             // L Bumper (Xbox)      L (Switch)      L1 (PS)             // -> ImGuiNavInput_FocusPrev + ImGuiNavInput_TweakSlow
+    GamepadR1,             // R Bumper (Xbox)      R (Switch)      R1 (PS)             // -> ImGuiNavInput_FocusNext + ImGuiNavInput_TweakFast
+    GamepadL2,             // L Trigger (Xbox)     ZL (Switch)     L2 (PS) [Analog]
+    GamepadR2,             // R Trigger (Xbox)     ZR (Switch)     R2 (PS) [Analog]
+    GamepadL3,             // L Thumbstick (Xbox)  L3 (Switch)     L3 (PS)
+    GamepadR3,             // R Thumbstick (Xbox)  R3 (Switch)     R3 (PS)
+    GamepadLStickUp,       // [Analog]                                                 // -> ImGuiNavInput_LStickUp
+    GamepadLStickDown,     // [Analog]                                                 // -> ImGuiNavInput_LStickDown
+    GamepadLStickLeft,     // [Analog]                                                 // -> ImGuiNavInput_LStickLeft
+    GamepadLStickRight,    // [Analog]                                                 // -> ImGuiNavInput_LStickRight
+    GamepadRStickUp,       // [Analog]
+    GamepadRStickDown,     // [Analog]
+    GamepadRStickLeft,     // [Analog]
+    GamepadRStickRight,    // [Analog]
+
     Count;
 
     val index: Int
         get() {
-            check(i >= Key.BEGIN && i < Key.END) { "ImGuiKey and native_index was merged together and native_index is disabled by IMGUI_DISABLE_OBSOLETE_KEYIO. Please switch to ImGuiKey." }
+            check(i in Key.BEGIN until Key.END) { "ImGuiKey and native_index was merged together and native_index is disabled by IMGUI_DISABLE_OBSOLETE_KEYIO. Please switch to ImGuiKey." }
             return i
         }
 
@@ -1203,19 +1230,24 @@ enum class Key {
         val COUNT = values().size
         val BEGIN = None.i
         val END = F12.i
+        val Gamepad_BEGIN = GamepadStart
+        val Gamepad_END = GamepadRStickRight
         infix fun of(i: Int) = values().first { it.i == i }
     }
 
     @JvmField
     val i = if (ordinal == 0) 0 else 512 + ordinal
 
+    /** ~IsGamepadKey */
+    val isGamepad: Boolean
+        get() = this in Gamepad_BEGIN .. Gamepad_END
 
     /** ~IsKeyDown
      *
      *  is key being held.
      *
      *  Note that Dear ImGui doesn't know the meaning/semantic of ImGuiKey from 0..511: they are legacy native keycodes.
-     *  Consider transitioning from 'IsKeyDown(MY_ENGINE_KEY_A)' (<1.87) to IsKeyDown(ImGuiKey_A) (>= 1.87) */
+     *  Consider transitioning from 'IsKeyDown(MY_ENGINE_KEY_A)' (<1.87) to IsKeyDown(A) (>= 1.87) */
     val isDown: Boolean
         get() = g.io.keysData[i].down
 
@@ -1226,7 +1258,7 @@ enum class Key {
      *
      *  was key pressed (went from !Down to Down)? if repeat=true, uses io.KeyRepeatDelay / KeyRepeatRate */
     fun isPressed(repeat: Boolean): Boolean {
-        assert(i >= Key.BEGIN && i < Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
+        assert(i in Key.BEGIN until Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
 
         assert(i in g.io.keysData.indices)
         val t = g.io.keysData[i].downDuration

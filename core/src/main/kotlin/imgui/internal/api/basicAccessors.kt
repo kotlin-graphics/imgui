@@ -52,7 +52,7 @@ internal interface basicAccessors {
         if (id != 0) {
             g.activeIdIsAlive = id
             g.activeIdSource = when (id) {
-                g.navActivateId, g.navActivateInputId, g.navJustMovedToId -> InputSource.Nav
+                g.navActivateId, g.navActivateInputId, g.navJustMovedToId -> InputSource._Nav
                 else -> InputSource.Mouse
             }
         }
@@ -83,7 +83,7 @@ internal interface basicAccessors {
         if (g.lastItemData.id == id)
             window.navRectRel[navLayer].put(window rectAbsToRel g.lastItemData.navRect)
 
-        if (g.activeIdSource == InputSource.Nav)
+        if (g.activeIdSource == InputSource._Nav)
             g.navDisableMouseHover = true
         else
             g.navDisableHighlight = true

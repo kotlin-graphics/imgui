@@ -58,20 +58,39 @@ fun navUpdate() {
 
     //if (g.navScoringDebugCount > 0) IMGUI_DEBUG_LOG("NavScoringDebugCount ${g.navScoringDebugCount} for '${g.navWindow?.name ?: "NULL"}' layer ${g.navLayer} (Init:${(g.navInitRequest || g.navInitResultId != 0).i}, Move:${g.navMoveRequest})\n")
 
+    // Update Gamepad->Nav inputs mapping
     // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
     // (do it before we map Keyboard input!)
-    val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
+
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
 
-    if (navGamepadActive && g.navInputSource != InputSource.Gamepad)
-        io.navInputs.also {
-            if (it[NavInput.Activate] > 0f || it[NavInput.Input] > 0f || it[NavInput.Cancel] > 0f || it[NavInput.Menu] > 0f
-                || it[NavInput.DpadLeft] > 0f || it[NavInput.DpadRight] > 0f || it[NavInput.DpadUp] > 0f || it[NavInput.DpadDown] > 0f
-            )
+    if (navGamepadActive && !g.io.backendUsingLegacyNavInputArray) {
+        assert(io.navInputs.all { it == 0f }) { "Backend needs to either only use io.AddKeyEvent()/io.AddKeyAnalogEvent(), either only fill legacy io.NavInputs[]. Not both!" }
+        fun NAV_MAP_KEY(key: Key, navInput: NavInput, activateNav: Boolean) {
+            io.navInputs[navInput] = io.keysData[key.i].analogValue
+            if (activateNav && io.navInputs[navInput] > 0f)
                 g.navInputSource = InputSource.Gamepad
         }
+        NAV_MAP_KEY(Key.GamepadFaceDown, NavInput.Activate, true)
+        NAV_MAP_KEY(Key.GamepadFaceRight, NavInput.Cancel, true)
+        NAV_MAP_KEY(Key.GamepadFaceLeft, NavInput.Menu, true)
+        NAV_MAP_KEY(Key.GamepadFaceUp, NavInput.Input, true)
+        NAV_MAP_KEY(Key.GamepadDpadLeft, NavInput.DpadLeft, true)
+        NAV_MAP_KEY(Key.GamepadDpadRight, NavInput.DpadRight, true)
+        NAV_MAP_KEY(Key.GamepadDpadUp, NavInput.DpadUp, true)
+        NAV_MAP_KEY(Key.GamepadDpadDown, NavInput.DpadDown, true)
+        NAV_MAP_KEY(Key.GamepadL1, NavInput.FocusPrev, false)
+        NAV_MAP_KEY(Key.GamepadR1, NavInput.FocusNext, false)
+        NAV_MAP_KEY(Key.GamepadL1, NavInput.TweakSlow, false)
+        NAV_MAP_KEY(Key.GamepadR1, NavInput.TweakFast, false)
+        NAV_MAP_KEY(Key.GamepadLStickLeft, NavInput.LStickLeft, false)
+        NAV_MAP_KEY(Key.GamepadLStickRight, NavInput.LStickRight, false)
+        NAV_MAP_KEY(Key.GamepadLStickUp, NavInput.LStickUp, false)
+        NAV_MAP_KEY(Key.GamepadLStickDown, NavInput.LStickDown, false)
+    }
 
     // Update Keyboard->Nav inputs mapping
+    val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
     if (navKeyboardActive) {
         fun navMapKey(key: Key, navInput: NavInput) {
             if (key.isDown) {
@@ -599,7 +618,7 @@ fun navUpdateCreateTabbingRequest() {
     // See NavProcessItemForTabbingRequest() for a description of the various forward/backward tabbing cases with and without wrapping.
     //// FIXME: We use (g.ActiveId == 0) but (g.NavDisableHighlight == false) might be righter once we can tab through anything
     g.navTabbingDir = if (g.io.keyShift) -1 else if (g.activeId == 0) 0 else +1
-    val scrollFlags = if(window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
+    val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
     val clipDir = if (g.navTabbingDir < 0) Dir.Up else Dir.Down
     navMoveRequestSubmit(Dir.None, clipDir, NavMoveFlag.Tabbing.i, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
     g.navTabbingResultFirst.clear()

@@ -75,7 +75,7 @@ object ShowDemoWindowMisc {
             }
 
             // Display Keyboard/Mouse state
-            treeNode("Keyboard & Navigation State") {
+            treeNode("Keyboard, Gamepad & Navigation State") {
                 text("Keys down:")
                 for (i in io.keysData.indices) {
                     val key = Key of (i + Key.BEGIN)

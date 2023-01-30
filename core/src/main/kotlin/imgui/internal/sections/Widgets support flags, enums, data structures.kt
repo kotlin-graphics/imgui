@@ -322,14 +322,15 @@ infix fun Int.shl(b: Axis) = shl(b.ordinal - 1)
 enum class PlotType { Lines, Histogram }
 
 enum class InputSource {
-    None, Mouse, Keyboard,
-    Gamepad,
+    None, Mouse, Keyboard, Gamepad,
+
+    // [private]
 
     /** Stored in g.ActiveIdSource only */
-    Nav,
+    _Nav,
 
     /** Currently only used by InputText() */
-    Clipboard
+    _Clipboard
 }
 
 // FIXME: Structures in the union below need to be declared as anonymous unions appears to be an extension?
@@ -349,7 +350,7 @@ sealed class InputEvent(val type: Type) {
     class MouseButton(val button: Int, val down: Boolean) : InputEvent(Type.MouseButton) {
         override val source: InputSource = InputSource.Mouse
     }
-    class Key(val key: imgui.Key, val down: Boolean) : InputEvent(Type.Key) {
+    class Key(val key: imgui.Key, val down: Boolean, val analogValue: Float) : InputEvent(Type.Key) {
         override val source: InputSource = InputSource.Keyboard
     }
     class KeyMods(val mods: KeyModFlags) : InputEvent(Type.KeyMods) {
