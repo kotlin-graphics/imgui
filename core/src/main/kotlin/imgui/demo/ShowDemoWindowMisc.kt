@@ -80,21 +80,21 @@ object ShowDemoWindowMisc {
                 for (i in io.keysData.indices) {
                     val key = Key of (i + Key.BEGIN)
                     if (key.isDown) {
-                        sameLine(); text("\"$key\" $i (0x%X) (%.02f secs)", i, io.keysData[i].downDuration)
+                        sameLine(); text("\"$key\" $i (%.02f secs)", io.keysData[i].downDuration)
                     }
                 }
                 text("Keys pressed:")
                 for (i in io.keysData.indices) {
                     val key = Key of (i + Key.BEGIN)
                     if (key.isPressed) {
-                        sameLine(); text("\"$key\" $i (0x%X)", i)
+                        sameLine(); text("\"$key\" $i")
                     }
                 }
                 text("Keys released:")
                 for (i in io.keysData.indices) {
                     val key = Key of (i + Key.BEGIN)
                     if (key.isReleased) {
-                        sameLine(); text("\"$key\" $i (0x%X)", i)
+                        sameLine(); text("\"$key\" $i")
                     }
                 }
                 val ctrl = if (io.keyCtrl) "CTRL " else ""

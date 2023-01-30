@@ -2,8 +2,6 @@ package imgui.internal.sections
 
 import glm_.vec2.Vec2
 import imgui.ID
-import imgui.Key
-import imgui.KeyMod
 import imgui.KeyModFlags
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -339,7 +337,7 @@ enum class InputSource {
 
 sealed class InputEvent(val type: Type) {
     abstract val source: InputSource
-    var submittedByTestEngine = false
+    var addedByTestEngine = false
 
     class MousePos(val posX: Float, val posY: Float) : InputEvent(Type.MousePos) {
         override val source: InputSource = InputSource.Mouse

@@ -243,6 +243,7 @@ object ExampleApp {
                     Here we expose them as read-only fields to avoid breaking interactions with your backend.""".trimIndent())
 
                 // Make a local copy to avoid modifying actual backend flags.
+                // FIXME: We don't use BeginDisabled() to keep label bright, maybe we need a BeginReadonly() equivalent..
                 val backendFlags = intArrayOf(io.backendFlags)
                 checkboxFlags("io.BackendFlags: HasGamepad", backendFlags, BackendFlag.HasGamepad.i)
                 checkboxFlags("io.BackendFlags: HasMouseCursors", backendFlags, BackendFlag.HasMouseCursors.i)
