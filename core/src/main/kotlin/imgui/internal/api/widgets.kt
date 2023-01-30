@@ -282,6 +282,7 @@ internal interface widgets {
         renderFrame(bb.min, bb.max, bgCol.u32, true, g.style.frameRounding)
         window.drawList.renderArrow(bb.min + Vec2(max(0f, (size.x - g.fontSize) * 0.5f), max(0f, (size.y - g.fontSize) * 0.5f)), textCol.u32, dir)
 
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, strId, g.lastItemData.statusFlags)
         return pressed
     }
 

@@ -89,6 +89,7 @@ interface widgetsMain {
 
         val (pressed, _, _) = buttonBehavior(bb, id, flags)
 
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, strId, g.lastItemData.statusFlags)
         return pressed
     }
 
