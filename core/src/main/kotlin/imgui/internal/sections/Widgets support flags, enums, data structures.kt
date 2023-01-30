@@ -339,6 +339,7 @@ enum class InputSource {
 
 sealed class InputEvent(val type: Type) {
     abstract val source: InputSource
+    var submittedByTestEngine = false
 
     class MousePos(val posX: Float, val posY: Float) : InputEvent(Type.MousePos) {
         override val source: InputSource = InputSource.Mouse

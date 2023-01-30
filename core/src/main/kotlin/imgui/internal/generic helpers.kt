@@ -555,7 +555,10 @@ fun subClampOverflow(a: BigInteger, b: BigInteger, mn: BigInteger, mx: BigIntege
 // -----------------------------------------------------------------------------------------------------------------
 
 fun floor(a: Float): Float = a.i.f
+// Decent replacement for floorf()
+fun floorSigned(f: Float) = (if(f >= 0 || f.i.f == f) f.i else f.i - 1).f
 fun floor(a: Vec2): Vec2 = Vec2(floor(a.x), floor(a.y))
+fun floorSigned(v: Vec2) = Vec2(floorSigned(v.x), floorSigned(v.y))
 fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t
 fun lerp(a: Double, b: Double, t: Float): Double = a + (b - a) * t
 fun lerp(a: Int, b: Int, t: Float): Int = (a + (b - a) * t).i

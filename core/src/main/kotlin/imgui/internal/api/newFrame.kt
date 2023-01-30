@@ -14,6 +14,7 @@ import imgui.ImGui.keepAliveID
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.BitArray
+import imgui.internal.floorSigned
 import imgui.internal.sections.InputEvent
 import imgui.static.findHoveredWindow
 
@@ -25,11 +26,11 @@ internal interface newFrame {
     // - trickle_fast_inputs = true  : process as many events as possible (successive down/up/down/up will be trickled over several frames so nothing is lost) (new feature in 1.87)
     fun updateInputEvents(trickle_fast_inputs: Boolean) {
 
-        var mouseMoved = false;
-        var mouseWheeled = false;
-        var keyChanged = false;
+        var mouseMoved = false
+        var mouseWheeled = false
+        var keyChanged = false
         var textInputed = false
-        var mouseButtonChanged = 0x00;
+        var mouseButtonChanged = 0x00
         var keyModsChanged = 0x00
         val keyChangedMask = BitArray(Key.COUNT)
 
@@ -37,14 +38,18 @@ internal interface newFrame {
         while (eventN < g.inputEventsQueue.size) {
             val e = g.inputEventsQueue[eventN]
             when (e) {
-                is InputEvent.MousePos ->
-                    if (io.mousePos.x != e.posX || io.mousePos.y != e.posY) {
+                is InputEvent.MousePos -> {
+                    val eventPos = Vec2(e.posX, e.posY)
+                    if (isMousePosValid(eventPos))
+                        eventPos.put(floorSigned(eventPos.x), floorSigned(eventPos.y)) // Apply same flooring as UpdateMouseInputs()
+                    if (io.mousePos.x != eventPos.x || io.mousePos.y != eventPos.y) {
                         // Trickling Rule: Stop processing queued events if we already handled a mouse button change
                         if (trickle_fast_inputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || keyModsChanged != 0 || textInputed))
                             break
-                        io.mousePos.put(e.posX, e.posY)
+                        io.mousePos put eventPos
                         mouseMoved = true
                     }
+                }
                 is InputEvent.MouseButton -> {
                     val button = MouseButton of e.button
                     //                    assert(button >= 0 && button < ImGuiMouseButton_COUNT)

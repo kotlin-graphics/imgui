@@ -880,8 +880,8 @@ class DrawList(sharedData: DrawListSharedData?) {
             val aMinSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMin / (glm.πf * 2f)
             val aMaxSampleF = DRAWLIST_ARCFAST_SAMPLE_MAX * aMax / (glm.πf * 2f)
 
-            val aMinSample = if (aIsReverse) floor(aMinSampleF).i else ceil(aMinSampleF).i
-            val aMaxSample = if (aIsReverse) ceil(aMaxSampleF).i else floor(aMaxSampleF).i
+            val aMinSample = if (aIsReverse) floorSigned(aMinSampleF).i else ceil(aMinSampleF).i
+            val aMaxSample = if (aIsReverse) ceil(aMaxSampleF).i else floorSigned(aMaxSampleF).i
             val aMidSamples = if (aIsReverse) max(aMinSample - aMaxSample, 0) else max(aMaxSample - aMinSample, 0)
 
             val aMinSegmentAngle = aMinSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX

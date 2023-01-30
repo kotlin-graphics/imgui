@@ -57,7 +57,7 @@ fun updateMouseInputs() {
 
         // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
         if (isMousePosValid(mousePos)) {
-            g.mouseLastValidPos put floor(mousePos)
+            g.mouseLastValidPos put floorSigned(mousePos)
             mousePos = Vec2(g.mouseLastValidPos)
         }
 
