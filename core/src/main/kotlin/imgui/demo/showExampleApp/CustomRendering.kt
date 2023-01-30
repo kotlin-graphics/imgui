@@ -224,8 +224,8 @@ object CustomRendering {
 
                 // Context menu (under default mouse threshold)
                 val dragDelta = getMouseDragDelta(MouseButton.Right)
-                if (optEnableContextMenu && isMouseReleased(MouseButton.Right) && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
-                    openPopupOnItemClick("context")
+                if (optEnableContextMenu && dragDelta.x == 0f && dragDelta.y == 0f) // TODO glm
+                    openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
                 dsl.popup("context") {
                     if (addingLine) {
                         points.pop()

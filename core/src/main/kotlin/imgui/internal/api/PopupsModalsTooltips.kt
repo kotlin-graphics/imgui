@@ -299,12 +299,8 @@ internal interface PopupsModalsTooltips {
             return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter,
                                                rAvoid, PopupPositionPolicy.Default)
         }
-        if (window.flags has Wf._Popup) {
-            val rAvoid = Rect(window.pos.x - 1, window.pos.y - 1, window.pos.x + 1, window.pos.y + 1)
-            return findBestWindowPosForPopupEx(Vec2(window.pos), window.size, window::autoPosLastDirection, rOuter,
-                                               rAvoid, PopupPositionPolicy.Default)
-        }
-        if (window.flags has Wf._Tooltip) { // Position tooltip (always follows mouse)
+        if (window.flags has Wf._Tooltip) {
+            // Position tooltip (always follows mouse)
             val sc = style.mouseCursorScale
             val refPos = navCalcPreferredRefPos()
             val rAvoid = when {

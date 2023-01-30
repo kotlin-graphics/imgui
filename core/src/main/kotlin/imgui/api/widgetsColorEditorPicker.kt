@@ -177,7 +177,8 @@ interface widgetsColorEditorPicker {
                         dragScalar(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChanged // ~ valueChangedAsFloat
                     else -> dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
                 }
-                if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
+                if (flags hasnt Cef.NoOptions)
+                    openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
             }
 
         } else if (flags has Cef.DisplayHEX && flags hasnt Cef.NoInputs) {
@@ -197,7 +198,7 @@ interface widgetsColorEditorPicker {
                 buf.substring(p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
             if (flags hasnt Cef.NoOptions)
-                openPopupOnItemClick("context")
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
         }
 
         var pickerActiveWindow: Window? = null
@@ -210,13 +211,14 @@ interface widgetsColorEditorPicker {
 
             val colVec4 = Vec4(col[0], col[1], col[2], if (alpha) col[3] else 1f)
             if (colorButton("##ColorButton", colVec4, flags))
-                if (flags hasnt Cef.NoPicker) { // Store current color and open a picker
+                if (flags hasnt Cef.NoPicker) {
+                    // Store current color and open a picker
                     g.colorPickerRef put colVec4
                     openPopup("picker")
-                    setNextWindowPos(g.lastItemData.rect.bl + Vec2(-1, style.itemSpacing.y))
+                    setNextWindowPos(g.lastItemData.rect.bl + Vec2(0f, style.itemSpacing.y))
                 }
             if (flags hasnt Cef.NoOptions)
-                openPopupOnItemClick("context")
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
 
             if (beginPopup("picker")) {
                 pickerActiveWindow = g.currentWindow
@@ -438,7 +440,8 @@ interface widgetsColorEditorPicker {
                     valueChanged = true
                 }
             }
-            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
+            if (flags hasnt Cef.NoOptions)
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
 
         } else if (flags has Cef.PickerHueBar) {
             // SV rectangle logic
@@ -452,7 +455,8 @@ interface widgetsColorEditorPicker {
                     H = g.colorEditLastHue
                 valueChangedSv = true; valueChanged = true
             }
-            if (flags hasnt Cef.NoOptions) openPopupOnItemClick("context")
+            if (flags hasnt Cef.NoOptions)
+                openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
             // Hue bar logic
             cursorScreenPos = Vec2(bar0PosX, pickerPos.y)
             invisibleButton("hue", Vec2(barsWidth, svPickerSize))

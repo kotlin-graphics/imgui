@@ -115,6 +115,7 @@ interface popupsModals {
     //  - CloseCurrentPopup() is called by default by Selectable()/MenuItem() when activated (FIXME: need some options).
     //  - Use ImGuiPopupFlags_NoOpenOverExistingPopup to avoid opening a popup if there's already one at the same level. This is equivalent to e.g. testing for !IsAnyPopupOpen() prior to OpenPopup().
     //  - Use IsWindowAppearing() after BeginPopup() to tell if a window just opened.
+    //  - IMPORTANT: Notice that for OpenPopupOnItemClick() we exceptionally default flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter
 
     /** call to mark popup as open (don't call every frame!). */
     fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) = openPopupEx(g.currentWindow!!.getID(strId), popupFlags)
@@ -173,7 +174,7 @@ interface popupsModals {
     //  - Helpers to do OpenPopup+BeginPopup where the Open action is triggered by e.g. hovering an item and right-clicking.
     //  - They are convenient to easily create context menus, hence the name.
     //  - IMPORTANT: Notice that BeginPopupContextXXX takes ImGuiPopupFlags just like OpenPopup() and unlike BeginPopup(). For full consistency, we may add ImGuiWindowFlags to the BeginPopupContextXXX functions in the future.
-    //  - IMPORTANT: we exceptionally default their flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter, so if you add other flags remember to re-add the ImGuiPopupFlags_MouseButtonRight.
+    //  - IMPORTANT: Notice that we exceptionally default their flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter, so if you add other flags remember to re-add the ImGuiPopupFlags_MouseButtonRight.
 
 
     /** This is a helper to handle the simplest case of associating one named popup to one given widget.
@@ -184,7 +185,7 @@ interface popupsModals {
      *  - You may want to handle the whole on user side if you have specific needs (e.g. tweaking IsItemHovered() parameters).
      *    This is essentially the same as:
      *        id = str_id ? GetID(str_id) : GetItemID();
-     *        OpenPopupOnItemClick(str_id);
+     *        OpenPopupOnItemClick(str_id, ImGuiPopupFlags_MouseButtonRight);
      *        return BeginPopup(id);
      *    Which is essentially the same as:
      *        id = str_id ? GetID(str_id) : GetItemID();

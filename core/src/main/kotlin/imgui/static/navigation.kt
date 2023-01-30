@@ -1002,9 +1002,10 @@ fun navCalcPreferredRefPos(): Vec2 {
     val window = g.navWindow
     if (g.navDisableHighlight || !g.navDisableMouseHover || window == null) {
         // Mouse (we need a fallback in case the mouse becomes invalid after being used)
-        if (isMousePosValid(io.mousePos))
-            return Vec2(io.mousePos)
-        return Vec2(g.mouseLastValidPos)
+        // The +1.0f offset when stored by OpenPopupEx() allows reopening this or another popup (same or another mouse button) while not moving the mouse, it is pretty standard.
+        // In theory we could move that +1.0f offset in OpenPopupEx()
+        val p = if (isMousePosValid(io.mousePos)) io.mousePos else g.mouseLastValidPos
+        Vec2(p.x + 1f, p.y)
     } else {
         // When navigation is active and mouse is disabled, pick a position around the bottom left of the currently navigated item
         // Take account of upcoming scrolling (maybe set mouse pos should be done in EndFrame?)
