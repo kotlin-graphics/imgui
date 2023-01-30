@@ -104,7 +104,7 @@ fun updateMouseInputs() {
                 mouseDragMaxDistanceSqr[i] = 0f
             } else if (mouseDown[i]) {
                 // Maintain the maximum distance we reaching from the initial click position, which is used with dragging threshold
-                val deltaSqrClickPos = if(isMousePosValid(mousePos)) (mousePos - mouseClickedPos[i]).lengthSqr else 0f
+                val deltaSqrClickPos = if (isMousePosValid(mousePos)) (mousePos - mouseClickedPos[i]).lengthSqr else 0f
                 io.mouseDragMaxDistanceSqr[i] = mouseDragMaxDistanceSqr[i] max deltaSqrClickPos
             }
 
@@ -273,14 +273,16 @@ fun findBlockingModal(window: Window): Window? {
     // Find a modal that has common parent with specified window. Specified window should be positioned behind that modal.
     for (i in g.openPopupStack.lastIndex downTo 0) {
         val popupWindow = g.openPopupStack[i].window
-        if (popupWindow == null || !popupWindow.wasActive || popupWindow.flags hasnt WindowFlag._Modal) // Check WasActive, because this code may run before popup renders on current frame.
+        if (popupWindow == null || popupWindow.flags hasnt WindowFlag._Modal)
             continue
-        if (window isWithinBeginStackOf popupWindow)       // Window is rendered over last modal, no render order change needed.
+        if (!popupWindow.active || popupWindow.wasActive) // Check WasActive, because this code may run before popup renders on current frame, also check Active to handle newly created windows.
+            continue
+        if (window isWithinBeginStackOf popupWindow)      // Window is rendered over last modal, no render order change needed.
             break
         var parent = popupWindow.parentWindowInBeginStack!!.rootWindow
         while (parent != null) {
             if (window isWithinBeginStackOf parent)
-                return popupWindow                                // Place window above its begin stack parent.
+                return popupWindow                        // Place window above its begin stack parent.
             parent = parent.parentWindowInBeginStack!!.rootWindow
         }
     }
