@@ -296,7 +296,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             keyData.downDurationPrev = -1f
         }
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
-        keyMods = KeyMod.None.i
+        keyMods = KeyModFlag.None.i
         for (n in navInputsDownDuration.indices) {
             navInputsDownDuration[n] = -1f; navInputsDownDurationPrev[n] = -1f
         }
@@ -399,7 +399,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
 
     /** Key mods flags (same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags), updated by NewFrame() */
-    var keyMods: KeyModFlags = KeyMod.None.i
+    var keyMods: KeyModFlags = KeyModFlag.None.i
 
     /** Key state for all known keys. Use IsKeyXXX() functions to access this. */
     val keysData = Array(Key.COUNT) { KeyData().apply { downDuration = -1f; downDurationPrev = -1f } }

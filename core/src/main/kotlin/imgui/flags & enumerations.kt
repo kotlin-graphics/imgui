@@ -1,7 +1,5 @@
 package imgui
 
-import glm_.has
-import glm_.hasnt
 import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getNavInputAmount
@@ -9,10 +7,7 @@ import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.KeyData
 import imgui.internal.sections.InputReadMode
-import imgui.internal.sections.ItemStatusFlag
 import imgui.internal.sections.or
-import imgui.internal.sections.wo
-import org.lwjgl.system.Platform
 
 
 //-----------------------------------------------------------------------------
@@ -1323,21 +1318,32 @@ operator fun IntArray.set(index: Key, value: Int) {
 operator fun IntArray.get(index: Key): Int = get(index.i)
 
 
+typealias KeyModFlags = Int
+
 // Helper "flags" version of key-mods to store and compare multiple key-mods easily. Sometimes used for storage (e.g. io.KeyMods) but otherwise not much used in public API.
-enum class KeyMod {
+enum class KeyModFlag {
     None, Ctrl, Shift, Alt,
 
     /** Cmd/Super/Windows key */
     Super;
 
     val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+
+    infix fun and(b: KeyModFlag): KeyModFlags = i and b.i
+    infix fun and(b: KeyModFlags): KeyModFlags = i and b
+    infix fun or(b: KeyModFlag): KeyModFlags = i or b.i
+    infix fun or(b: KeyModFlags): KeyModFlags = i or b
+    infix fun xor(b: KeyModFlag): KeyModFlags = i xor b.i
+    infix fun xor(b: KeyModFlags): KeyModFlags = i xor b
+    infix fun wo(b: KeyModFlags): KeyModFlags = and(b.inv())
 }
 
-infix fun Int.or(k: KeyMod) = or(k.i)
-infix fun Int.has(k: KeyMod): Boolean = has(k.i)
-infix fun Int.hasnt(k: KeyMod): Boolean = hasnt(k.i)
-
-typealias KeyModFlags = Int
+infix fun KeyModFlags.and(b: KeyModFlag): KeyModFlags = and(b.i)
+infix fun KeyModFlags.or(b: KeyModFlag): KeyModFlags = or(b.i)
+infix fun KeyModFlags.xor(b: KeyModFlag): KeyModFlags = xor(b.i)
+infix fun KeyModFlags.has(b: KeyModFlag): Boolean = and(b.i) != 0
+infix fun KeyModFlags.hasnt(b: KeyModFlag): Boolean = and(b.i) == 0
+infix fun KeyModFlags.wo(b: KeyModFlag): KeyModFlags = and(b.i.inv())
 
 
 /** Gamepad/Keyboard navigation

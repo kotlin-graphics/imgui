@@ -51,11 +51,11 @@ internal interface inputs {
     /** ~GetMergedKeyModFlags */
     val mergedKeyModFlags: KeyModFlags
         get() {
-            var keyModFlags: KeyModFlags = KeyMod.None.i
-            if (ImGui.io.keyCtrl) keyModFlags = keyModFlags or KeyMod.Ctrl.i
-            if (ImGui.io.keyShift) keyModFlags = keyModFlags or KeyMod.Shift.i
-            if (ImGui.io.keyAlt) keyModFlags = keyModFlags or KeyMod.Alt.i
-            if (ImGui.io.keySuper) keyModFlags = keyModFlags or KeyMod.Super.i
+            var keyModFlags: KeyModFlags = KeyModFlag.None.i
+            if (ImGui.io.keyCtrl) keyModFlags = keyModFlags or KeyModFlag.Ctrl.i
+            if (ImGui.io.keyShift) keyModFlags = keyModFlags or KeyModFlag.Shift.i
+            if (ImGui.io.keyAlt) keyModFlags = keyModFlags or KeyModFlag.Alt.i
+            if (ImGui.io.keySuper) keyModFlags = keyModFlags or KeyModFlag.Super.i
             return keyModFlags
         }
 }

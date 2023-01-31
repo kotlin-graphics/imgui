@@ -373,28 +373,29 @@ internal interface inputText {
             if (state.selectedAllMouseLock && !io.mouseDown[0])
                 state.selectedAllMouseLock = false
 
-            // It is ill-defined whether the backend needs to send a \t character when pressing the TAB keys.
-            // Win32 and GLFW naturally do it but not SDL.
+            // We except backends to emit a Tab key but some also emit a Tab character which we ignore (#2467, #1336)
+            // (For Tab and Enter: Win32/SFML/Allegro are sending both keys and chars, GLFW and SDL are only sending keys. For Space they all send all threes)
             val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
             if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly)
-                if ('\t' !in io.inputQueueCharacters)
-                    withChar {
-                        it.set('\t') // Insert TAB
-                        if (inputTextFilterCharacter(it, flags, callback, callbackUserData, InputSource.Keyboard))
-                            state.onKeyPressed(it().i)
-                    }
+                withChar {
+                    it.set('\t') // Insert TAB
+                    if (inputTextFilterCharacter(it, flags, callback, callbackUserData, InputSource.Keyboard))
+                        state.onKeyPressed(it().i)
+                }
 
             // Process regular text input (before we check for Return because using some IME will effectively send a Return?)
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
             if (io.inputQueueCharacters.isNotEmpty()) {
                 if (!ignoreCharInputs && !isReadOnly && !inputRequestedByNav)
-                    io.inputQueueCharacters.filter { it != NUL || (it == '\t' && io.keyShift) }.map {
-                        // TODO check
-                        withChar { c -> // Insert character if they pass filtering
-                            if (inputTextFilterCharacter(c(it), flags, callback, callbackUserData, InputSource.Keyboard))
-                                state.onKeyPressed(c().i)
-                        }
-                    }
+                // Insert character if they pass filtering
+                    io.inputQueueCharacters.filter { it != NUL || it == '\t' } // Skip Tab, see above.
+                            .forEach {
+                                // TODO check
+                                withChar { c ->
+                                    if (inputTextFilterCharacter(c(it), flags, callback, callbackUserData, InputSource.Keyboard))
+                                        state.onKeyPressed(c().i)
+                                }
+                            }
                 // Consume characters
                 io.inputQueueCharacters.clear()
             }
@@ -412,13 +413,13 @@ internal interface inputText {
             val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-            val isOsxShiftShortcut = isOsx && io.keyMods == (KeyMod.Super or KeyMod.Shift)
+            val isOsxShiftShortcut = isOsx && io.keyMods == KeyModFlag.Super or KeyModFlag.Shift
             val isWordmoveKeyDown = if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
-            val isCtrlKeyOnly = io.keyMods == KeyMod.Ctrl.i
-            val isShiftKeyOnly = io.keyMods == KeyMod.Shift.i
-            val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) KeyMod.Super.i else KeyMod.Ctrl.i
+            val isCtrlKeyOnly = io.keyMods == KeyModFlag.Ctrl.i
+            val isShiftKeyOnly = io.keyMods == KeyModFlag.Shift.i
+            val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) KeyModFlag.Super.i else KeyModFlag.Ctrl.i
 
             val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
             val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
@@ -1038,7 +1039,7 @@ internal interface inputText {
             var applyNamedFilters = true
             if (c < 0x20 && !c.isPrintable) {
                 var pass = false
-                pass = pass or (c == '\n' && flags has Itf._Multiline)
+                pass = pass or (c == '\n' && flags has Itf._Multiline) // Note that an Enter KEY will emit \r and be ignored (we poll for KEY in InputText() code)
                 pass = pass or (c == '\t' && flags has Itf.AllowTabInput)
                 if (!pass)
                     return false
