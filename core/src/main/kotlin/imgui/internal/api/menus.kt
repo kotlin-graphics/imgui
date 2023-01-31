@@ -157,7 +157,7 @@ internal interface menus {
         if (window.dc.layoutType == LayoutType.Vertical) {    // (window->Flags & (ImGuiWindowFlags_Popup|ImGuiWindowFlags_ChildMenu))
             // Close menu when not hovering it anymore unless we are moving roughly in the direction of the menu
             // Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers, so menus feels more reactive.
-            var movingTowardOtherChildMenu = false
+            var movingTowardChildMenu = false
             val childMenuWindow = when {
                 g.beginPopupStack.size < g.openPopupStack.size && g.openPopupStack[g.beginPopupStack.size].sourceWindow == window -> g.openPopupStack[g.beginPopupStack.size].window
                 else -> null
@@ -170,18 +170,22 @@ internal interface menus {
                 val tc = if (window.pos.x < childMenuWindow.pos.x) nextWindowRect.bl else nextWindowRect.br
                 val extra = glm.clamp(abs(ta.x - tb.x) * 0.3f, refUnit * 0.5f, refUnit * 2.5f)    // add a bit of extra slack.
                 ta.x += if (window.pos.x < childMenuWindow.pos.x) -0.5f else +0.5f // to avoid numerical issues (FIXME: ??)
-                tb.y = ta.y + kotlin.math.max((tb.y - extra) - ta.y, -refUnit * 8f)                // triangle is maximum 200 high to limit the slope and the bias toward large sub-menus // FIXME: Multiply by fb_scale?
+                tb.y = ta.y + kotlin.math.max((tb.y - extra) - ta.y, -refUnit * 8f)                // triangle has maximum height to limit the slope and the bias toward large sub-menus
                 tc.y = ta.y + min((tc.y + extra) - ta.y, +refUnit * 8f)
-                movingTowardOtherChildMenu = triangleContainsPoint(ta, tb, tc, ImGui.io.mousePos)
+                movingTowardChildMenu = triangleContainsPoint(ta, tb, tc, ImGui.io.mousePos)
                 //GetForegroundDrawList()->AddTriangleFilled(ta, tb, tc, moving_toward_other_child_menu ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); // [DEBUG]
             }
-            if (menuIsOpen && !hovered && g.hoveredWindow === window && g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrame != id && !movingTowardOtherChildMenu)
+
+            // The 'HovereWindow == window' check creates an inconsistency (e.g. moving away from menu slowly tends to hit same window, whereas moving away fast does not)
+            // But we also need to not close the top-menu menu when moving over void. Perhaps we should extend the triangle check to a larger polygon.
+            // (Remember to test this on BeginPopup("A")->BeginMenu("B") sequence which behaves slightly differently as B isn't a Child of A and hovering isn't shared.)
+            if (menuIsOpen && !hovered && g.hoveredWindow === window && !movingTowardChildMenu)
                 wantClose = true
 
             // Open
             if (!menuIsOpen && pressed) // Click/activate to open
                 wantOpen = true
-            else if (!menuIsOpen && hovered && !movingTowardOtherChildMenu) // Hover to open
+            else if (!menuIsOpen && hovered && !movingTowardChildMenu) // Hover to open
                 wantOpen = true
 
             if (g.navId == id && g.navMoveDir == Dir.Right) { // Nav-Right to open
