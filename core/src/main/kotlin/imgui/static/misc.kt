@@ -49,10 +49,11 @@ fun updateSettings() {
 }
 
 fun updateKeyboardInputs() {
-    // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
-    io.keyMods = mergedKeyModFlags
 
     // Import legacy keys or verify they are not used
+
+    // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
+    io.keyMods = mergedKeyModFlags
 
     // Clear gamepad data if disabled
     if (io.backendFlags hasnt BackendFlag.HasGamepad)

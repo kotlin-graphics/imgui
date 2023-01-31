@@ -33,12 +33,8 @@ interface inputUtilitiesMouse {
         if (t == 0f)
             return true
 
-        if (repeat && t > io.keyRepeatDelay) {
-            // FIXME: 2019/05/03: Our old repeat code was wrong here and led to doubling the repeat rate, which made it an ok rate for repeat on mouse hold.
-            val amount = calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay, io.keyRepeatRate * 0.5f)
-            if (amount > 0)
-                return true
-        }
+        if (repeat && t > io.keyRepeatDelay)
+            return calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay, io.keyRepeatRate * 0.5f) > 0
         return false
     }
 

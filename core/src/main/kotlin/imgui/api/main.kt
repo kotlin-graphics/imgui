@@ -336,7 +336,6 @@ interface main {
         io.mouseWheel = 0f
         io.mouseWheelH = 0f
         io.inputQueueCharacters.clear()
-        io.keyModsPrev = io.keyMods // doing it here is better than in NewFrame() as we'll tolerate backend writing to KeyMods. If we want to firmly disallow it we should detect it.
         io.navInputs.fill(0f)
 
         g callHooks ContextHookType.EndFramePost

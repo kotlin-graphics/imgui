@@ -189,7 +189,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (keyData.down == down && keyData.analogValue == analogValue) {
             var found = false
             var n = g.inputEventsQueue.lastIndex
-            while(n >= 0 && !found) {
+            while (n >= 0 && !found) {
                 if (g.inputEventsQueue[n].type == InputEvent.Type.Key && (g.inputEventsQueue[n] as InputEvent.Key).key == key)
                     found = true
                 n--
@@ -296,7 +296,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             keyData.downDurationPrev = -1f
         }
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
-        keyMods = KeyMod.None.i; keyModsPrev = KeyMod.None.i
+        keyMods = KeyMod.None.i
         for (n in navInputsDownDuration.indices) {
             navInputsDownDuration[n] = -1f; navInputsDownDurationPrev[n] = -1f
         }
@@ -400,9 +400,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Key mods flags (same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags), updated by NewFrame() */
     var keyMods: KeyModFlags = KeyMod.None.i
-
-    /** Key mods flags (from previous frame) */
-    var keyModsPrev: KeyModFlags = KeyMod.None.i
 
     /** Key state for all known keys. Use IsKeyXXX() functions to access this. */
     val keysData = Array(Key.COUNT) { KeyData().apply { downDuration = -1f; downDurationPrev = -1f } }
