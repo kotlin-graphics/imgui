@@ -1056,15 +1056,15 @@ class FontAtlas {
                     for (i in 0 until padRight)
                         writePtr[padLeft + lineWidth + i] = 0x00
                 } ?: run {
-                    val writePtr = BytePtr(atlas.texPixelsRGBA32!!.adr + r.x + ((r.y + y) * atlas.texWidth))
+                    val writePtr = IntPtr(atlas.texPixelsRGBA32!!.adr + r.x + (r.y + y) * atlas.texWidth)
                     for (i in 0 until padLeft)
-                        writePtr[i] = COL32_BLACK_TRANS.b
+                        writePtr[i] = COL32(255, 255, 255, 0)
 
                     for (i in 0 until lineWidth)
-                        writePtr[padLeft + i] = COL32_WHITE.b
+                        writePtr[padLeft + i] = COL32_WHITE
 
                     for (i in 0 until padRight)
-                        writePtr[padLeft + lineWidth + i] = COL32_BLACK_TRANS.b
+                        writePtr[padLeft + lineWidth + i] = COL32(255, 255, 255, 0)
                 }
 
                 // Calculate UVs for this line
