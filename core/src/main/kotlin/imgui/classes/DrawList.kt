@@ -261,7 +261,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun addCircle(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0, thickness: Float = 1f) {
 
         var numSegments = numSegments_
-        if (col hasnt COL32_A_MASK || radius <= 0f)
+        if (col hasnt COL32_A_MASK || radius < 0.5f)
             return
 
         if (numSegments <= 0) {
@@ -282,7 +282,7 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun addCircleFilled(center: Vec2, radius: Float, col: Int, numSegments_: Int = 0) {
 
         var numSegments = numSegments_
-        if (col hasnt COL32_A_MASK || radius <= 0f)
+        if (col hasnt COL32_A_MASK || radius < 0.5f)
             return
 
         if (numSegments <= 0) {
