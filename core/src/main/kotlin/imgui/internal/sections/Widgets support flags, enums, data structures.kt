@@ -391,7 +391,7 @@ enum class DrawListFlag(val i: DrawListFlags) {
      *  drawn using textures, otherwise *3 the number of triangles) */
     AntiAliasedLines(1 shl 0),
 
-    /** Enable anti-aliased lines/borders using textures when possible. Require backend to render with bilinear filtering. */
+    /** Enable anti-aliased lines/borders using textures when possible. Require backend to render with bilinear filtering (NOT point/nearest filtering). */
     AntiAliasedLinesUseTex(1 shl 1),
 
     /** Enable anti-aliased edge around filled shapes (rounded rectangles, circles). */

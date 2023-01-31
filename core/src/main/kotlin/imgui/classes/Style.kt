@@ -132,7 +132,7 @@ class Style {
     var antiAliasedLines = true
 
     /** Enable anti-aliased lines/borders using textures where possible. Require backend to render with
-     *  bilinear filtering. Latched at the beginning of the frame (copied to ImDrawList). */
+     *  bilinear filtering (NOT point/nearest filtering). Latched at the beginning of the frame (copied to ImDrawList). */
     var antiAliasedLinesUseTex = true
 
     /**  Enable anti-aliased on filled shapes (rounded rectangles, circles, etc.).. Disable if you are really tight

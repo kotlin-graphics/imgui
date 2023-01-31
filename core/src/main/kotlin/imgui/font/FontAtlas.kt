@@ -389,8 +389,7 @@ class FontAtlas {
         /** Don't build software mouse cursors into the atlas (save a little texture memory) */
         NoMouseCursors,
 
-        /** Don't build thick line textures into the atlas (save a little texture memory). The AntiAliasedLinesUseTex
-         *  features uses them, otherwise they will be rendered using polygons (more expensive for CPU/GPU). */
+        /** Don't build thick line textures into the atlas (save a little texture memory, allow support for point/nearest filtering). The AntiAliasedLinesUseTex features uses them, otherwise they will be rendered using polygons (more expensive for CPU/GPU). */
         NoBakedLines;
 
         val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
@@ -410,8 +409,7 @@ class FontAtlas {
      *  texture size restrictions you may want to increase texture width to decrease height.    */
     var texDesiredWidth = 0
 
-    /** Padding between glyphs within texture in pixels. Defaults to 1.
-     *  If your rendering method doesn't rely on bilinear filtering you may set this to 0. */
+    /** Padding between glyphs within texture in pixels. Defaults to 1. If your rendering method doesn't rely on bilinear filtering you may set this to 0 (will also need to set AntiAliasedLinesUseTex = false). */
     var texGlyphPadding = 1
 
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */

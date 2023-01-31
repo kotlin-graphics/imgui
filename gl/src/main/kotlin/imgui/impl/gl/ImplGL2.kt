@@ -186,6 +186,7 @@ class ImplGL2 : GLInterface {
         val (pixels, size) = ImGui.io.fonts.getTexDataAsRGBA32()
 
         // Upload texture to graphics system
+        // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
         val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
 
         glGenTextures(data.fontTexture)
