@@ -3,9 +3,10 @@ package imgui.classes
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.addSettingsHandler
 import imgui.ImGui.callHooks
 import imgui.ImGui.saveIniSettingsToDisk
-import imgui.ImGui.tableSettingsInstallHandler
+import imgui.ImGui.tableSettingsAddSettingsHandler
 import imgui.api.g
 import imgui.api.gImGui
 import imgui.font.Font
@@ -671,7 +672,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         assert(!initialized && !g.settingsLoaded)
 
         // Add .ini handle for ImGuiWindow type
-        settingsHandlers += SettingsHandler().apply {
+        val iniHandler = SettingsHandler().apply {
             typeName = "Window"
             typeHash = hashStr("Window")
             clearAllFn = ::windowSettingsHandler_ClearAll
@@ -680,9 +681,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             applyAllFn = ::windowSettingsHandler_ApplyAll
             writeAllFn = ::windowSettingsHandler_WriteAll
         }
+        addSettingsHandler(iniHandler)
 
         // Add .ini handle for ImGuiTable type
-        tableSettingsInstallHandler(this)
+        tableSettingsAddSettingsHandler()
 
         // Create default viewport
         val viewport = ViewportP()

@@ -5,6 +5,7 @@ import glm_.f
 import glm_.i
 import glm_.parseInt
 import imgui.*
+import imgui.ImGui.addSettingsHandler
 import imgui.ImGui.tableSettingsFindByID
 import imgui.api.g
 import imgui.classes.Context
@@ -21,9 +22,8 @@ interface tableSettings {
 //    IMGUI_API void                  TableResetSettings(ImGuiTable* table);
 //    IMGUI_API ImGuiTableSettings*   TableGetBoundSettings(ImGuiTable* table);
 
-    fun tableSettingsInstallHandler(context: Context) {
-        val g = context
-        g.settingsHandlers += SettingsHandler().apply {
+    fun tableSettingsAddSettingsHandler() {
+        val iniHandler = SettingsHandler().apply {
             typeName = "Table"
             typeHash = hashStr("Table")
             clearAllFn = ::tableSettingsHandler_ClearAll
@@ -32,6 +32,7 @@ interface tableSettings {
             applyAllFn = ::tableSettingsHandler_ApplyAll
             writeAllFn = ::tableSettingsHandler_WriteAll
         }
+        addSettingsHandler(iniHandler)
     }
 
 //    -> TableSettings constructor

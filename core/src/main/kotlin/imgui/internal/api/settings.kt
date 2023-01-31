@@ -37,11 +37,20 @@ internal interface settings {
         }
     }
 
-    fun findWindowSettings(id: ID): WindowSettings? =
-            g.settingsWindows.find { it.id == id }
+    fun findWindowSettings(id: ID): WindowSettings? = g.settingsWindows.find { it.id == id }
 
-    fun findOrCreateWindowSettings(name: String): WindowSettings =
-            findWindowSettings(hashStr(name)) ?: createNewWindowSettings(name)
+    fun findOrCreateWindowSettings(name: String): WindowSettings = findWindowSettings(hashStr(name)) ?: createNewWindowSettings(name)
+
+    fun addSettingsHandler(handler: SettingsHandler) {
+        assert(findSettingsHandler(handler.typeName) == null)
+        g.settingsHandlers += handler
+    }
+
+    fun removeSettingsHandler(typeName: String) {
+        findSettingsHandler(typeName)?.let { handler ->
+            g.settingsHandlers -= handler
+        }
+    }
 
     fun findSettingsHandler(typeName: String): SettingsHandler? {
         val typeHash = hashStr(typeName)
