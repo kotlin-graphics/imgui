@@ -886,8 +886,8 @@ class DrawList(sharedData: DrawListSharedData?) {
 
             val aMinSegmentAngle = aMinSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
             val aMaxSegmentAngle = aMaxSample * glm.πf * 2f / DRAWLIST_ARCFAST_SAMPLE_MAX
-            val aEmitStart = aMinSegmentAngle - aMin != 0f
-            val aEmitEnd = aMax - aMaxSegmentAngle != 0f
+            val aEmitStart = (aMinSegmentAngle - aMin).abs >= 1e-5f
+            val aEmitEnd = (aMax - aMaxSegmentAngle).abs >= 1e-5f
 
             //            _path.reserve(_Path.Size + (a_mid_samples + 1 + (a_emit_start ? 1 : 0)+(a_emit_end ? 1 : 0)))
             if (aEmitStart)
