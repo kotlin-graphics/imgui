@@ -250,6 +250,9 @@ interface windows {
 
             // SELECT VIEWPORT
             // FIXME-VIEWPORT: In the docking/viewport branch, this is the point where we select the current viewport (which may affect the style)
+
+            val viewport = ImGui.mainViewport as ViewportP
+            window.viewport = viewport
             setCurrentWindow(window)
 
             // LOCK BORDER SIZE AND PADDING FOR THE FRAME (so that altering them doesn't cause inconsistencies)
@@ -355,7 +358,6 @@ interface windows {
 
             // Calculate the range of allowed position for that window (to be movable and visible past safe area padding)
             // When clamping to stay visible, we will enforce that window->Pos stays inside of visibility_rect.
-            val viewport = mainViewport as ViewportP
             val viewportRect = viewport.mainRect
             val viewportWorkRect = viewport.workRect
             val visibilityPadding = style.displayWindowPadding max style.displaySafeAreaPadding

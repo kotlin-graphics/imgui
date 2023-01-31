@@ -703,7 +703,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
      *  ~DestroyContext */
     fun destroy() {
         val prevCtx = ImGui.currentContext
-//        if (ctx/this == NULL)
+//        if (ctx/this == NULL) //-V1051
 //            ctx = GImGui;
         setCurrent()
         shutdown()

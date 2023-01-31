@@ -17,7 +17,7 @@ const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 18711
+const val IMGUI_VERSION_NUM = 18712
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -125,7 +125,7 @@ object ImGui :
     styleReadAccess,
     cursorLayout,
     idStackScopes,
-    viewports,
+    imgui.api.viewports,
     widgetsText,
     widgetsMain,
     widgetsComboBox,
@@ -165,6 +165,7 @@ object ImGui :
     // init in Context class
     newFrame,
     genericContextHooks,
+    imgui.internal.api.viewports,
     settings,
     scrolling,
     basicAccessors,

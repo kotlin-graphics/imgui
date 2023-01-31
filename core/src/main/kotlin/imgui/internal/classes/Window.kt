@@ -46,8 +46,11 @@ class Window(var context: Context,
     /** == ImHashStr(Name) */
     val id: ID = hashStr(name)
 
-    /** See enum WindowFlags */
+    /** See enum ImGuiWindowFlags_ */
     var flags = Wf.None.i
+
+    /** Always set in Begin(). Inactive windows may have a NULL value here if their viewport was discarded. */
+    var viewport: ViewportP? = null
 
     /** Position (always rounded-up to nearest pixel)    */
     var pos = Vec2()
