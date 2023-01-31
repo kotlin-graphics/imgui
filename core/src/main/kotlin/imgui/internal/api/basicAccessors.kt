@@ -139,7 +139,6 @@ internal interface basicAccessors {
      *  for that to work we would need to do PushOverrideID() -> ItemAdd() -> PopID() which would alter widget code a little more) */
     fun getIDWithSeed(str: String, strEnd: Int = -1, seed: ID): ID {
         val id = hashStr(str, if (strEnd != -1) strEnd else 0, seed)
-        keepAliveID(id)
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType._String, str, strEnd)
         return id
