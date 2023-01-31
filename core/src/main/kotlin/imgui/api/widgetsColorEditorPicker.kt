@@ -237,8 +237,7 @@ interface widgetsColorEditorPicker {
         }
 
         if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
-            val textOffsetX = if (flags has Cef.NoInputs) wButton else wFull + style.itemInnerSpacing.x
-            window.dc.cursorPos.put(pos.x + textOffsetX, pos.y + style.framePadding.y)
+            sameLine(0f, style.itemInnerSpacing.x)
             textEx(label, labelDisplayEnd)
         }
 
