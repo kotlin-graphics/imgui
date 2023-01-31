@@ -171,12 +171,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Queue a new key down/up event.
      *  - ImGuiKey key: Translated key (as in, generally ImGuiKey_A matches the key end-user would use to emit an 'A' character)
      *  - bool down:    Is the key down? use false to signify a key release. */
-    fun addKeyEvent(key: Key, down: Boolean) = addKeyAnalogEvent(key, down, down.f)
+    fun addKeyEvent(key: Key, down: Boolean) {
+        if (!appAcceptingEvents)
+            return
+        addKeyAnalogEvent(key, down, down.f)
+    }
 
     /** Queue a new key down/up event for analog values (e.g. ImGuiKey_Gamepad_ values). Dead-zones should be handled by the backend. */
     fun addKeyAnalogEvent(key: Key, down: Boolean, analogValue: Float) {
         //if (e->Down) { IMGUI_DEBUG_LOG("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
-        if (key == Key.None)
+        if (key == Key.None || !appAcceptingEvents)
             return
         assert(g.io === this) { "Can only add events to current context." }
 
@@ -205,6 +209,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Queue a mouse position update. Use -FLT_MAX,-FLT_MAX to signify no mouse (e.g. app not focused and not hovered) */
     fun addMousePosEvent(x: Float, y: Float) {
         assert(g.io === this) { "Can only add events to current context." }
+        if (!appAcceptingEvents)
+            return
+
         g.inputEventsQueue += InputEvent.MousePos(x, y)
     }
 
@@ -212,13 +219,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     fun addMouseButtonEvent(mouseButton: Int, down: Boolean) {
         assert(g.io === this) { "Can only add events to current context." }
         assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
+        if (!appAcceptingEvents)
+            return
+
         g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down)
     }
 
     /** Queue a mouse wheel update */
     fun addMouseWheelEvent(wheelX: Float, wheelY: Float) {
         assert(g.io === this) { "Can only add events to current context." }
-        if (wheelX == 0f && wheelY == 0f)
+        if ((wheelX == 0f && wheelY == 0f) || !appAcceptingEvents)
             return
         g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY)
     }
@@ -238,7 +248,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      * - on Windows you can get those using ToAscii+keyboard state, or via the WM_CHAR message */
     fun addInputCharacter(c: Char) {
         assert(g.io === this) { "Can only add events to current context." }
-        if (c == NUL)
+        if (c == NUL || !appAcceptingEvents)
             return
 
         g.inputEventsQueue += InputEvent.Text(c)
@@ -249,7 +259,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
      *  UTF16 strings use surrogate pairs to encode codepoints >= 0x10000, so we should save the high surrogate. */
     fun addInputCharacterUTF16(c: Char) {
 
-        if (c == NUL && inputQueueSurrogate == NUL)
+        if ((c == NUL && inputQueueSurrogate == NUL) || !appAcceptingEvents)
             return
 
         val ci = c.i
@@ -276,6 +286,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Queue a new characters input from an UTF-8 string */
     fun addInputCharactersUTF8(utf8Chars: ByteArray) {
+        if (!appAcceptingEvents)
+            return
         var p = 0
         while (p < utf8Chars.size || utf8Chars[p] == 0.b) {
             val (c, bytes) = textCharFromUtf8(utf8Chars)
@@ -283,6 +295,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             if (c != 0)
                 addInputCharacter(c.c)
         }
+    }
+
+    /** [Optional] Specify index for legacy <1.87 IsKeyXXX() functions with native indices + specify native keycode, scancode. */
+    fun setKeyEventNativeData(key: Key, native_keycode: Int, native_scancode: Int, native_legacy_index: Int = -1) {
+
+    }
+
+    /** Set master flag for accepting key/mouse/text events (default to true). Useful if you have native dialog boxes that are interrupting your application loop/refresh, and you want to disable events being queued while your app is frozen. */
+    fun setAppAcceptingEvents_(acceptingEvents: Boolean) {
+        appAcceptingEvents = acceptingEvents
     }
 
     /** [Internal] Clear the text input buffer manually */
@@ -300,11 +322,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         for (n in navInputsDownDuration.indices) {
             navInputsDownDuration[n] = -1f; navInputsDownDurationPrev[n] = -1f
         }
-    }
-
-    /** [Optional] Specify index for legacy <1.87 IsKeyXXX() functions with native indices + specify native keycode, scancode. */
-    fun setKeyEventNativeData(key: Key, native_keycode: Int, native_scancode: Int, native_legacy_index: Int = -1) {
-
     }
 
 
@@ -453,7 +470,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Touch/Pen pressure (0.0f to 1.0f, should be >0.0f only when MouseDown[0] == true). Helper storage currently unused by Dear ImGui. */
     var penPressure = 0f
 
+    /** Only modify via AddFocusEvent() */
     var appFocusLost = false
+
+    /** Only modify via SetAppAcceptingEvents() */
+    var appAcceptingEvents = true
 
     /** -1: unknown, 0: using AddKeyEvent(), 1: using legacy io.KeysDown[] */
     var backendUsingLegacyKeyArrays = -1
