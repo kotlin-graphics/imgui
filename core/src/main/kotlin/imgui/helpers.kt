@@ -25,6 +25,9 @@ internal var ptrId: Array<Int> = Array(512) { it }
 operator fun StringBuilder.plusAssign(string: String) {
     append(string)
 }
+operator fun StringBuilder.plusAssign(char: Char) {
+    append(char)
+}
 
 /** A unique ID used by widgets (typically the result of hashing a stack of string) */
 typealias ID = Int

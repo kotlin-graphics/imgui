@@ -6,6 +6,7 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.parseFormatFindEnd
 import imgui.api.g
 import kool.BYTES
 import kool.rem
@@ -246,6 +247,27 @@ fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
 //IMGUI_API const char*   ImParseFormatFindStart(const char* format);
 //IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
 //IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
+
+// Sanitize format
+// - Zero terminate so extra characters after format (e.g. "%f123") don't confuse atof/atoi
+// - stb_sprintf.h supports several new modifiers which format numbers in a way that also makes them incompatible atof/atoi.
+fun parseFormatSanitizeForPrinting(fmt: String): String = fmt.filter { it != '\'' && it != '$' && it != '_' } // Custom flags provided by stb_sprintf.h. POSIX 2008 also supports '.
+
+fun parseFormatSanitizeForScanning(fmt: String): String {
+    val fmtEnd = parseFormatFindEnd(fmt)
+    //    IM_UNUSED(fmt_out_size)
+    //    IM_ASSERT((size_t)(fmtEnd - fmt_in + 1) < fmt_out_size) // Format is too long, let us know if this happens to you!
+    var hasType = false
+    val out = StringBuilder()
+    for (c in fmt) {
+        if (!hasType && (c in '0'..'9' || c == '.'))
+            continue
+        hasType = hasType || c in 'a'..'z' || c in 'A'..'Z' // Stop skipping digits
+        if (c != '\'' && c != '$' && c != '_') // Custom flags provided by stb_sprintf.h. POSIX 2008 also supports '.
+            out += c
+    }
+    return out.toString()
+}
 //IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
 
 

@@ -990,12 +990,13 @@ internal interface inputText {
             clearActiveID()
 
         val format = parseFormatTrimDecorations(format_)
-        val dataBuf = pData.format(dataType, format).trim()
+        val dataBuf = pData.format(dataType, format)
+                .trim()
+        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        val isHexadecimal = !isFloatingPoint && format[0] != NUL && format.last().uppercaseChar() == 'X'
 
-        val flags = Itf.AutoSelectAll or Itf._NoMarkEdited or when (dataType) {
-            DataType.Float, DataType.Double -> Itf.CharsScientific
-            else -> Itf.CharsDecimal
-        }
+        var flags = Itf.AutoSelectAll or Itf._NoMarkEdited
+        flags /= if (isFloatingPoint) Itf.CharsScientific else if (isHexadecimal) Itf.CharsHexadecimal else Itf.CharsDecimal
         val buf = dataBuf.toByteArray(32)
         var valueChanged = false
         if (tempInputText(bb, id, label, buf, flags)) {
@@ -1003,7 +1004,7 @@ internal interface inputText {
             val dataBackup = pData()
 
             // Apply new value (or operations) then clamp
-            dataTypeApplyFromText(buf.cStr, dataType, pData)
+            dataTypeApplyFromText(buf.cStr, dataType, pData, format)
             if (clampMin != null && clampMax != null) {
                 if (clampMin > clampMax) {
                     val t = clampMin

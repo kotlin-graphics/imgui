@@ -120,15 +120,33 @@ internal interface dataTypeHelpers {
         if (buf.isEmpty())
             return false
 
-        when (dataType) {
-            DataType.Int -> (pData as KMutableProperty0<Int>).set(buf.format(format ?: "%d").i)
-            DataType.Uint -> (pData as KMutableProperty0<UInt>).set(buf.format(format ?: "%d").toUInt())
-            DataType.Long -> (pData as KMutableProperty0<Long>).set(buf.format(format ?: "%d").L)
-            DataType.Ulong -> (pData as KMutableProperty0<ULong>).set(buf.format(format ?: "%d").toULong())
-            DataType.Float -> (pData as KMutableProperty0<Float>).set(buf.format(format ?: "%d").f)
-            DataType.Double -> (pData as KMutableProperty0<Double>).set(buf.format(format ?: "%d").d)
-            else -> error("invalid")
-        }
+TODO()
+        // Sanitize format
+        // For float/double we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in, so force them into %f and %lf
+//        char format_sanitized[32];
+//        if (dataType == DataType.Float || dataType == DataType.Double)
+//            format = ""
+//        else
+//        format = ImParseFormatSanitizeForScanning(format, format_sanitized, IM_ARRAYSIZE(format_sanitized));
+//
+//        // Small types need a 32-bit buffer to receive the result from scanf()
+//        int v32 = 0;
+//        if (sscanf(buf, format, type_info->Size >= 4 ? p_data : &v32) < 1)
+//        return false;
+//        if (type_info->Size < 4)
+//        {
+//            if (data_type == ImGuiDataType_S8)
+//            *(ImS8*)p_data = (ImS8)ImClamp(v32, (int)IM_S8_MIN, (int)IM_S8_MAX);
+//            else if (data_type == ImGuiDataType_U8)
+//            *(ImU8*)p_data = (ImU8)ImClamp(v32, (int)IM_U8_MIN, (int)IM_U8_MAX);
+//            else if (data_type == ImGuiDataType_S16)
+//            *(ImS16*)p_data = (ImS16)ImClamp(v32, (int)IM_S16_MIN, (int)IM_S16_MAX);
+//            else if (data_type == ImGuiDataType_U16)
+//            *(ImU16*)p_data = (ImU16)ImClamp(v32, (int)IM_U16_MIN, (int)IM_U16_MAX);
+//            else
+//            IM_ASSERT(0);
+//        }
+
         return dataBackup != pData()
     }
 

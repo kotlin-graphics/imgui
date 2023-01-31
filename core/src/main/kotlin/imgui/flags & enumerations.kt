@@ -231,6 +231,8 @@ infix fun InputTextFlags.xor(b: InputTextFlag): InputTextFlags = xor(b.i)
 infix fun InputTextFlags.has(b: InputTextFlag): Boolean = and(b.i) != 0
 infix fun InputTextFlags.hasnt(b: InputTextFlag): Boolean = and(b.i) == 0
 infix fun InputTextFlags.wo(b: InputTextFlag): InputTextFlags = and(b.i.inv())
+operator fun InputTextFlags.minus(flag: InputTextFlag): InputTextFlags = wo(flag)
+operator fun InputTextFlags.div(flag: InputTextFlag): InputTextFlags = or(flag)
 
 
 typealias TreeNodeFlags = Int
