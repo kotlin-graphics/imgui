@@ -7,6 +7,7 @@ import glm_.vec4.Vec4
 import glm_.wo
 import imgui.*
 import imgui.ImGui.alignTextToFramePadding
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginTable
 import imgui.ImGui.button
 import imgui.ImGui.calcTextSize
@@ -19,6 +20,7 @@ import imgui.ImGui.contentRegionAvail
 import imgui.ImGui.dragFloat
 import imgui.ImGui.dragInt
 import imgui.ImGui.dragVec2
+import imgui.ImGui.endDisabled
 import imgui.ImGui.endTable
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
@@ -1004,14 +1006,16 @@ object ShowDemoWindowTables {
                         for (column in 0 until columnCount) {
                             tableNextColumn()
                             pushID(column)
-                            alignTextToFramePadding() // FIXME-TABLE: Workaround for wrong text baseline propagation
+                            alignTextToFramePadding() // FIXME-TABLE: Workaround for wrong text baseline propagation across columns
                             text("'${columnNames[column]}'")
                             spacing()
                             text("Input flags:")
                             columnFlags[column] = editTableColumnsFlags(columnFlags[column])
                             spacing()
                             text("Output flags:")
+                            beginDisabled()
                             showTableColumnsStatusFlags(columnFlagsOut[column])
+                            endDisabled()
                             popID()
                         }
                     }

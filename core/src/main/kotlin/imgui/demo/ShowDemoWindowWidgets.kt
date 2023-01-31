@@ -28,6 +28,7 @@ import imgui.ImGui.colorButton
 import imgui.ImGui.colorConvertHSVtoRGB
 import imgui.ImGui.colorEdit3
 import imgui.ImGui.colorEdit4
+import imgui.ImGui.colorPicker3
 import imgui.ImGui.colorPicker4
 import imgui.ImGui.combo
 import imgui.ImGui.cursorPos
@@ -111,6 +112,7 @@ import imgui.ImGui.setColorEditOptions
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setItemDefaultFocus
 import imgui.ImGui.setNextItemOpen
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setTooltip
 import imgui.ImGui.sliderAngle
 import imgui.ImGui.sliderFloat
@@ -1348,15 +1350,23 @@ object ShowDemoWindowWidgets {
                 colorPicker4("MyColor##4", color, flags, refColorV.takeIf { refColor })
 
                 text("Set defaults in code:")
-                sameLine(); helpMarker(
-                "SetColorEditOptions() is designed to allow you to set boot-time default.\n" +
-                        "We don't have Push/Pop functions because you can force options on a per-widget basis if needed," +
-                        "and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid" +
-                        "encouraging you to persistently save values that aren't forward-compatible.")
+                sameLine(); helpMarker("SetColorEditOptions() is designed to allow you to set boot-time default.\n" +
+                                               "We don't have Push/Pop functions because you can force options on a per-widget basis if needed," +
+                                               "and the user can change non-forced ones with the options menu.\nWe don't have a getter to avoid" +
+                                               "encouraging you to persistently save values that aren't forward-compatible.")
                 if (button("Default: Uint8 + HSV + Hue Bar"))
                     setColorEditOptions(Cef.Uint8 or Cef.DisplayHSV or Cef.PickerHueBar)
                 if (button("Default: Float + HDR + Hue Wheel"))
                     setColorEditOptions(Cef.Float or Cef.HDR or Cef.PickerHueWheel)
+
+                // Always both a small version of both types of pickers (to make it more visible in the demo to people who are skimming quickly through it)
+                text("Both types:")
+                val w = (ImGui.contentRegionAvail.x - style.itemSpacing.y) * 0.4f
+                setNextItemWidth(w)
+                colorPicker3("##MyColor##5", color, Cef.PickerHueBar or Cef.NoSidePreview or Cef.NoInputs or Cef.NoAlpha)
+                sameLine()
+                setNextItemWidth(w)
+                colorPicker3("##MyColor##6", color, Cef.PickerHueWheel or Cef.NoSidePreview or Cef.NoInputs or Cef.NoAlpha)
 
                 // HSV encoded support (to avoid RGB<>HSV round trips and singularities when S==0 or V==0)
                 spacing()

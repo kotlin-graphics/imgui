@@ -72,7 +72,20 @@ internal interface widgets {
         val textPos = Vec2(window.dc.cursorPos.x, window.dc.cursorPos.y + window.dc.currLineTextBaseOffset)
         val wrapPosX = window.dc.textWrapPos
         val wrapEnabled = wrapPosX >= 0f
-        if (textEnd > 2000 && !wrapEnabled) {
+        if (textEnd <= 2000 || wrapEnabled) {
+            // Common case
+            val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
+            val textSize = calcTextSize(text, 0, textEnd, false, wrapWidth)
+
+            val bb = Rect(textPos, textPos + textSize)
+            itemSize(textSize, 0f)
+            if (!itemAdd(bb, 0))
+                return
+
+            // Render (we don't hide text after ## in this end-user function)
+            renderTextWrapped(bb.min, text, textEnd, wrapWidth)
+        }
+        else {
             // Long text!
             // Perform manual coarse clipping to optimize for long multi-line text
             // - From this point we will only compute the width of lines that are visible. Optimization only available when word-wrapping is disabled.
@@ -137,16 +150,6 @@ internal interface widgets {
             val bb = Rect(textPos, textPos + textSize)
             itemSize(textSize, 0f)
             itemAdd(bb, 0)
-        } else {
-            val wrapWidth = if (wrapEnabled) calcWrapWidthForPos(window.dc.cursorPos, wrapPosX) else 0f
-            val textSize = calcTextSize(text, 0, textEnd, false, wrapWidth)
-
-            val bb = Rect(textPos, textPos + textSize)
-            itemSize(textSize, 0f)
-            if (!itemAdd(bb, 0)) return
-
-            // Render (we don't hide text after ## in this end-user function)
-            renderTextWrapped(bb.min, text, textEnd, wrapWidth)
         }
     }
 

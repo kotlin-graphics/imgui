@@ -46,17 +46,25 @@ interface cursorLayout {
      *      offset_from_start_x != 0 : align to specified x position (relative to window/group left)
      *      spacing_w < 0            : use default spacing if pos_x == 0, no spacing if pos_x != 0
      *      spacing_w >= 0           : enforce spacing amount    */
-    fun sameLine(offsetFromStartX: Float = 0f, spacing: Float = -1f) {
+    fun sameLine(offsetFromStartX: Float = 0f, spacingW_: Float = -1f) {
 
+        var spacingW = spacingW_
         val window = currentWindow
-        if (window.skipItems) return
+        if (window.skipItems)
+            return
 
         with(window) {
-            dc.cursorPos.put(
-                    if (offsetFromStartX != 0f)
-                        pos.x - scroll.x + offsetFromStartX + glm.max(0f, spacing) + dc.groupOffset + dc.columnsOffset
-                    else
-                        dc.cursorPosPrevLine.x + if (spacing < 0f) style.itemSpacing.x else spacing, dc.cursorPosPrevLine.y)
+            if (offsetFromStartX != 0f) {
+                if (spacingW < 0f)
+                    spacingW = 0f
+                dc.cursorPos.x = pos.x - scroll.x + offsetFromStartX + spacingW + dc.groupOffset + dc.columnsOffset
+                dc.cursorPos.y = dc.cursorPosPrevLine.y
+            } else {
+                if (spacingW < 0f)
+                    spacingW = g.style.itemSpacing.x
+                dc.cursorPos.x = dc.cursorPosPrevLine.x+spacingW
+                dc.cursorPos.y = dc.cursorPosPrevLine.y
+            }
             dc.currLineSize.y = dc.prevLineSize.y
             dc.currLineTextBaseOffset = dc.prevLineTextBaseOffset
         }

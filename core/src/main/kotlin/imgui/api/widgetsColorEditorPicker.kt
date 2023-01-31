@@ -315,6 +315,10 @@ interface widgetsColorEditorPicker {
         return valueChanged
     }
 
+    fun colorPicker3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
+        colorPicker3(label, col to _fa, flags)
+                .also { col put _fa }
+
     fun colorPicker3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean {
         val col4 = floatArrayOf(*col, 1f)
         if (!colorPicker4(label, col4, flags or Cef.NoAlpha)) return false
