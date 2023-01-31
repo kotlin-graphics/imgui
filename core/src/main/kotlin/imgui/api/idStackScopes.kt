@@ -16,19 +16,19 @@ import imgui.ID
 interface idStackScopes {
 
     /** [JVM] */
-    fun pushID(ptrID: Any) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(ptrID) }
+    fun pushID(ptrID: Any) = with(g.currentWindow!!) { idStack += getID(ptrID) }
 
     /** push string into the ID stack (will hash string).  */
-    fun pushID(strID: String) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strID) }
+    fun pushID(strID: String) = with(g.currentWindow!!) { idStack += getID(strID) }
 
     /** push string into the ID stack (will hash string).  */
-    fun pushID(strID: String, strIdEnd: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(strID, strIdEnd) }
+    fun pushID(strID: String, strIdEnd: Int) = with(g.currentWindow!!) { idStack += getID(strID, strIdEnd) }
 
     /** push pointer into the ID stack (will hash pointer).  */
-    fun pushID(intPtr: Long) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intPtr) }
+    fun pushID(intPtr: Long) = with(g.currentWindow!!) { idStack += getID(intPtr) }
 
     /** push integer into the ID stack (will hash integer). */
-    fun pushID(intId: Int) = with(g.currentWindow!!) { idStack += getIdNoKeepAlive(intId) }
+    fun pushID(intId: Int) = with(g.currentWindow!!) { idStack += getID(intId) }
 
     /** pop from the ID stack. */
     fun popID() {

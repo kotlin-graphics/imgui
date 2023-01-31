@@ -337,35 +337,6 @@ class Window(var context: Context,
         return id
     }
 
-    fun getIdNoKeepAlive(strID: String, strEnd: Int = strID.length): ID {
-        val id = hashStr(strID, strID.length - strEnd, seed_ = idStack.last())
-        if (g.debugHookIdInfo == id)
-            debugHookIdInfo(id, DataType._String, strID, strEnd)
-        return id
-    }
-
-    fun getIdNoKeepAlive(ptrID: Any): ID {
-        val id = hashData(System.identityHashCode(ptrID), seed = idStack.last())
-        if (g.debugHookIdInfo == id)
-            debugHookIdInfo(id, DataType._Pointer, ptrID)
-        return id
-    }
-
-    fun getIdNoKeepAlive(intPtr: Long): ID {
-        if (intPtr >= ptrId.size) increase()
-        val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed = idStack.last())
-        if (g.debugHookIdInfo == id)
-            debugHookIdInfo(id, DataType.Long, intPtr) // TODO checkMe
-        return id
-    }
-
-    fun getIdNoKeepAlive(n: Int): ID {
-        val id = hashData(n, seed = idStack.last())
-        if (g.debugHookIdInfo == id)
-            debugHookIdInfo(id, DataType.Int, n)
-        return id
-    }
-
     private fun increase() {
         ptrId = Array(ptrId.size + 512) { i -> ptrId.getOrElse(i) { i } }
     }
@@ -829,7 +800,7 @@ class Window(var context: Context,
     }
 
     /** ~GetWindowScrollbarID */
-    infix fun getScrollbarID(axis: Axis): ID = getIdNoKeepAlive(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
+    infix fun getScrollbarID(axis: Axis): ID = getID(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
 
     /** ~GetWindowResizeCornerID
      *
