@@ -223,42 +223,43 @@ class ImplGlfw @JvmOverloads constructor(
     }
 
     fun installCallbacks(window: GlfwWindow) {
-//        ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-//        IM_ASSERT(bd->InstalledCallbacks == false && "Callbacks already installed!");
-//        IM_ASSERT(bd->Window == window);
-//
-//        bd->PrevUserCallbackWindowFocus = glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
-//        bd->PrevUserCallbackCursorEnter = glfwSetCursorEnterCallback(window, ImGui_ImplGlfw_CursorEnterCallback);
-//        bd->PrevUserCallbackCursorPos = glfwSetCursorPosCallback(window, ImGui_ImplGlfw_CursorPosCallback);
-//        bd->PrevUserCallbackMousebutton = glfwSetMouseButtonCallback(window, ImGui_ImplGlfw_MouseButtonCallback);
-//        bd->PrevUserCallbackScroll = glfwSetScrollCallback(window, ImGui_ImplGlfw_ScrollCallback);
-//        bd->PrevUserCallbackKey = glfwSetKeyCallback(window, ImGui_ImplGlfw_KeyCallback);
-//        bd->PrevUserCallbackChar = glfwSetCharCallback(window, ImGui_ImplGlfw_CharCallback);
-//        bd->PrevUserCallbackMonitor = glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
+        //        ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
+        //        IM_ASSERT(bd->InstalledCallbacks == false && "Callbacks already installed!");
+        //        IM_ASSERT(bd->Window == window);
+        //
+        //        bd->PrevUserCallbackWindowFocus = glfwSetWindowFocusCallback(window, ImGui_ImplGlfw_WindowFocusCallback);
+        //        bd->PrevUserCallbackCursorEnter = glfwSetCursorEnterCallback(window, ImGui_ImplGlfw_CursorEnterCallback);
+        //        bd->PrevUserCallbackCursorPos = glfwSetCursorPosCallback(window, ImGui_ImplGlfw_CursorPosCallback);
+        //        bd->PrevUserCallbackMousebutton = glfwSetMouseButtonCallback(window, ImGui_ImplGlfw_MouseButtonCallback);
+        //        bd->PrevUserCallbackScroll = glfwSetScrollCallback(window, ImGui_ImplGlfw_ScrollCallback);
+        //        bd->PrevUserCallbackKey = glfwSetKeyCallback(window, ImGui_ImplGlfw_KeyCallback);
+        //        bd->PrevUserCallbackChar = glfwSetCharCallback(window, ImGui_ImplGlfw_CharCallback);
+        //        bd->PrevUserCallbackMonitor = glfwSetMonitorCallback(ImGui_ImplGlfw_MonitorCallback);
         data.installedCallbacks = true
     }
+
     fun restoreCallbacks(window: GlfwWindow) {
-//        ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
-//        IM_ASSERT(bd->InstalledCallbacks == true && "Callbacks not installed!");
-//        IM_ASSERT(bd->Window == window);
-//
-//        glfwSetWindowFocusCallback(window, bd->PrevUserCallbackWindowFocus);
-//        glfwSetCursorEnterCallback(window, bd->PrevUserCallbackCursorEnter);
-//        glfwSetCursorPosCallback(window, bd->PrevUserCallbackCursorPos);
-//        glfwSetMouseButtonCallback(window, bd->PrevUserCallbackMousebutton);
-//        glfwSetScrollCallback(window, bd->PrevUserCallbackScroll);
-//        glfwSetKeyCallback(window, bd->PrevUserCallbackKey);
-//        glfwSetCharCallback(window, bd->PrevUserCallbackChar);
-//        glfwSetMonitorCallback(bd->PrevUserCallbackMonitor);
-//        bd->InstalledCallbacks = false;
-//        bd->PrevUserCallbackWindowFocus = NULL;
-//        bd->PrevUserCallbackCursorEnter = NULL;
-//        bd->PrevUserCallbackCursorPos = NULL;
-//        bd->PrevUserCallbackMousebutton = NULL;
-//        bd->PrevUserCallbackScroll = NULL;
-//        bd->PrevUserCallbackKey = NULL;
-//        bd->PrevUserCallbackChar = NULL;
-//        bd->PrevUserCallbackMonitor = NULL;
+        //        ImGui_ImplGlfw_Data* bd = ImGui_ImplGlfw_GetBackendData();
+        //        IM_ASSERT(bd->InstalledCallbacks == true && "Callbacks not installed!");
+        //        IM_ASSERT(bd->Window == window);
+        //
+        //        glfwSetWindowFocusCallback(window, bd->PrevUserCallbackWindowFocus);
+        //        glfwSetCursorEnterCallback(window, bd->PrevUserCallbackCursorEnter);
+        //        glfwSetCursorPosCallback(window, bd->PrevUserCallbackCursorPos);
+        //        glfwSetMouseButtonCallback(window, bd->PrevUserCallbackMousebutton);
+        //        glfwSetScrollCallback(window, bd->PrevUserCallbackScroll);
+        //        glfwSetKeyCallback(window, bd->PrevUserCallbackKey);
+        //        glfwSetCharCallback(window, bd->PrevUserCallbackChar);
+        //        glfwSetMonitorCallback(bd->PrevUserCallbackMonitor);
+        //        bd->InstalledCallbacks = false;
+        //        bd->PrevUserCallbackWindowFocus = NULL;
+        //        bd->PrevUserCallbackCursorEnter = NULL;
+        //        bd->PrevUserCallbackCursorPos = NULL;
+        //        bd->PrevUserCallbackMousebutton = NULL;
+        //        bd->PrevUserCallbackScroll = NULL;
+        //        bd->PrevUserCallbackKey = NULL;
+        //        bd->PrevUserCallbackChar = NULL;
+        //        bd->PrevUserCallbackMonitor = NULL;
     }
 
     companion object {
@@ -283,6 +284,14 @@ class ImplGlfw @JvmOverloads constructor(
                 io.addMouseButtonEvent(button, action == GLFW_PRESS)
         }
 
+        fun keyToModifier(key: Int): Int = when (key) {
+            GLFW_KEY_LEFT_CONTROL, GLFW_KEY_RIGHT_CONTROL -> GLFW_MOD_CONTROL
+            GLFW_KEY_LEFT_SHIFT, GLFW_KEY_RIGHT_SHIFT -> GLFW_MOD_SHIFT
+            GLFW_KEY_LEFT_ALT, GLFW_KEY_RIGHT_ALT -> GLFW_MOD_ALT
+            GLFW_KEY_LEFT_SUPER, GLFW_KEY_RIGHT_SUPER -> GLFW_MOD_SUPER
+            else -> 0
+        }
+
         fun updateKeyModifiers(mods: Int) {
             io.addKeyEvent(Key.ModCtrl, mods has GLFW_MOD_CONTROL)
             io.addKeyEvent(Key.ModShift, mods has GLFW_MOD_SHIFT)
@@ -294,13 +303,24 @@ class ImplGlfw @JvmOverloads constructor(
             io.addMouseWheelEvent(offset.x.f, offset.y.f)
         }
 
-        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, mods: Int ->
+        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, mods_: Int ->
+
+            var mods = mods_
 
             //            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
             //            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
 
             if (action == GLFW_PRESS || action == GLFW_RELEASE) {
+
+                // Workaround: X11 does not include current pressed/released modifier key in 'mods' flags. https://github.com/glfw/glfw/issues/1630
+                run {
+                    val keycodeToMod = keyToModifier(keycode)
+                    if (keycodeToMod != 0)
+                        mods = if (action == GLFW_PRESS) mods or keycodeToMod else mods wo keycodeToMod
+                }
+
                 updateKeyModifiers(mods)
+
                 val imguiKey = keycode.imguiKey
                 io.addKeyEvent(imguiKey, action == GLFW_PRESS)
                 io.setKeyEventNativeData(imguiKey, keycode, scancode) // To support legacy indexing (<1.87 user code)
@@ -317,8 +337,7 @@ class ImplGlfw @JvmOverloads constructor(
             if (entered) {
                 data.mouseWindow = data.window
                 io.addMousePosEvent(data.lastValidMousePos.x, data.lastValidMousePos.y)
-            }
-            else if (!entered && data.mouseWindow === data.window) {
+            } else if (!entered && data.mouseWindow === data.window) {
                 data.lastValidMousePos put io.mousePos
                 data.mouseWindow = null
                 io.addMousePosEvent(-Float.MAX_VALUE, -Float.MAX_VALUE)
