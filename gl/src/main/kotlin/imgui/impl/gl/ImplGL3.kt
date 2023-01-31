@@ -186,24 +186,27 @@ class ImplGL3 : GLInterface {
         // Render command lists
         for (cmdList in drawData.cmdLists) {
 
-            var idxBufferOffset = 0L
-
-//            // Upload vertex/index buffers
-//            nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW)
-//            nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW)
-
+            // - On Intel windows drivers we got reports that regular glBufferData() led to accumulating leaks when using multi-viewports, so we started using orphaning + glBufferSubData(). (See https://github.com/ocornut/imgui/issues/4468)
+            // - On NVIDIA drivers we got reports that using orphaning + glBufferSubData() led to glitches when using multi-viewports.
+            // - OpenGL drivers are in a very sorry state in 2022, for now we are switching code path based on vendors.
             val vtxBufferSize = cmdList.vtxBuffer.lim.L
             val idxBufferSize = cmdList.idxBuffer.lim.L * DrawIdx.BYTES
-            if (data.vertexBufferSize < vtxBufferSize) {
-                data.vertexBufferSize = vtxBufferSize
-                nglBufferData(GL_ARRAY_BUFFER, data.vertexBufferSize, NULL, GL_STREAM_DRAW)
+
+            if (data.useBufferSubData) {
+                if (data.vertexBufferSize < vtxBufferSize) {
+                    data.vertexBufferSize = vtxBufferSize
+                    nglBufferData(GL_ARRAY_BUFFER, data.vertexBufferSize, NULL, GL_STREAM_DRAW)
+                }
+                if (data.indexBufferSize < idxBufferSize) {
+                    data.indexBufferSize = idxBufferSize
+                    nglBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexBufferSize, NULL, GL_STREAM_DRAW)
+                }
+                nglBufferSubData(GL_ARRAY_BUFFER, 0, vtxBufferSize, cmdList.vtxBuffer.adr)
+                nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBufferSize, cmdList.idxBuffer.adr)
+            } else {
+                nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW)
+                nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW)
             }
-            if (data.indexBufferSize < idxBufferSize) {
-                data.indexBufferSize = idxBufferSize
-                nglBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexBufferSize, NULL, GL_STREAM_DRAW)
-            }
-            nglBufferSubData(GL_ARRAY_BUFFER, 0, vtxBufferSize, cmdList.vtxBuffer.adr)
-            nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBufferSize, cmdList.idxBuffer.adr)
 
             for (cmd in cmdList.cmdBuffer) {
 
@@ -232,7 +235,6 @@ class ImplGL3 : GLInterface {
                     else
                         glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
                 }
-                idxBufferOffset += cmd.elemCount * DrawIdx.BYTES
             }
         }
 
@@ -524,37 +526,40 @@ class ImplGL3 : GLInterface {
             var indexBufferSize = 0L
 
             var hasClipOrigin = false
+            var useBufferSubData = run { // Query vendor to enable glBufferSubData kludge
+                Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false
+            }
         }
 
         // b7686a88e950f95250c1e88e301bef1ebca22523
-//        // OpenGL vertex attribute state
-//        #ifndef IMGUI_IMPL_OPENGL_USE_VERTEX_ARRAY
-//        struct ImGui_ImplOpenGL3_VtxAttribState
-//        {
-//            GLint   Enabled;
-//            GLint   Size;
-//            GLint   Type;
-//            GLint   Normalized;
-//            GLint   Stride;
-//            GLvoid* Ptr;
-//        };
-//
-//        static void ImGui_ImplOpenGL3_BackupVertexAttribState(GLint index, ImGui_ImplOpenGL3_VtxAttribState* state)
-//        {
-//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &state->Enabled);
-//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_SIZE, &state->Size);
-//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_TYPE, &state->Type);
-//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &state->Normalized);
-//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &state->Stride);
-//            glGetVertexAttribPointerv(index, GL_VERTEX_ATTRIB_ARRAY_POINTER, &state->Ptr);
-//        }
-//
-//        static void ImGui_ImplOpenGL3_RestoreVertexAttribState(GLint index, ImGui_ImplOpenGL3_VtxAttribState* state)
-//        {
-//            glVertexAttribPointer(index, state->Size, state->Type, state->Normalized, state->Stride, state->Ptr);
-//            if (state->Enabled) glEnableVertexAttribArray(index); else glDisableVertexAttribArray(index);
-//        }
-//        #endif
+        //        // OpenGL vertex attribute state
+        //        #ifndef IMGUI_IMPL_OPENGL_USE_VERTEX_ARRAY
+        //        struct ImGui_ImplOpenGL3_VtxAttribState
+        //        {
+        //            GLint   Enabled;
+        //            GLint   Size;
+        //            GLint   Type;
+        //            GLint   Normalized;
+        //            GLint   Stride;
+        //            GLvoid* Ptr;
+        //        };
+        //
+        //        static void ImGui_ImplOpenGL3_BackupVertexAttribState(GLint index, ImGui_ImplOpenGL3_VtxAttribState* state)
+        //        {
+        //            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &state->Enabled);
+        //            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_SIZE, &state->Size);
+        //            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_TYPE, &state->Type);
+        //            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &state->Normalized);
+        //            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &state->Stride);
+        //            glGetVertexAttribPointerv(index, GL_VERTEX_ATTRIB_ARRAY_POINTER, &state->Ptr);
+        //        }
+        //
+        //        static void ImGui_ImplOpenGL3_RestoreVertexAttribState(GLint index, ImGui_ImplOpenGL3_VtxAttribState* state)
+        //        {
+        //            glVertexAttribPointer(index, state->Size, state->Type, state->Normalized, state->Stride, state->Ptr);
+        //            if (state->Enabled) glEnableVertexAttribArray(index); else glDisableVertexAttribArray(index);
+        //        }
+        //        #endif
     }
 
     /*private fun debugSave(fbWidth: Int, fbHeight: Int) {
