@@ -1226,7 +1226,7 @@ enum class Key {
     GamepadRStickLeft,     // [Analog]
     GamepadRStickRight,    // [Analog]
 
-    // Keyboard Modifiers
+    // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
     // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
     //   them to be accessed via standard key API, allowing calls such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
     // - Code polling every keys (e.g. an interface to detect a key press for input mapping) might want to ignore those
@@ -1234,11 +1234,9 @@ enum class Key {
     // - In theory the value of keyboard modifiers should be roughly equivalent to a logical or of the equivalent left/right keys.
     //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky keys and
     //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
-    ModCtrl,
-    ModShift,
-    ModAlt,
-    ModSuper,
+    ModCtrl, ModShift, ModAlt, ModSuper,
 
+    // End of list
     Count;
 
     val index: Int

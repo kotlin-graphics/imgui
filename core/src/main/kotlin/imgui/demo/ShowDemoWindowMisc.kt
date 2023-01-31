@@ -26,6 +26,7 @@ import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setKeyboardFocusHere
+import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.sliderFloat3
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
@@ -44,12 +45,15 @@ object ShowDemoWindowMisc {
         collapsingHeader("Inputs, Navigation & Focus") {
 
             // Display ImGuiIO output flags
-            text("WantCaptureMouse: ${io.wantCaptureMouse}")
-            text("WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose}")
-            text("WantCaptureKeyboard: ${io.wantCaptureKeyboard}")
-            text("WantTextInput: ${io.wantTextInput}")
-            text("WantMoveMouse: ${io.wantSetMousePos}")
-            text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
+            setNextItemOpen(true, Cond.Once)
+            treeNode("Output") {
+                text("io.WantCaptureMouse: ${io.wantCaptureMouse}")
+                text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose}")
+                text("io.WantCaptureKeyboard: ${io.wantCaptureKeyboard}")
+                text("io.WantTextInput: ${io.wantTextInput}")
+                text("io.WantMoveMouse: ${io.wantSetMousePos}")
+                text("io.NavActive: ${io.navActive}, io.NavVisible: ${io.navVisible}")
+            }
 
             // Display Mouse state
             treeNode("Mouse State") {
