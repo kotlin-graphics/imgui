@@ -72,7 +72,7 @@ internal interface basicHelpersForWidgetCode {
         }
     }
 
-    fun itemSize(bb: Rect, textBaselineY: Float = -1f) = itemSize(bb.size, textBaselineY)
+    fun itemSize(bb: Rect, textBaselineY: Float = -1f) = itemSize(bb.size, textBaselineY) // FIXME: This is a misleading API since we expect CursorPos to be bb.Min.
 
     /** Declare item bounding box for clipping and interaction.
      *  Note that the size can be different than the one provided to ItemSize(). Typically, widgets that spread over available surface
