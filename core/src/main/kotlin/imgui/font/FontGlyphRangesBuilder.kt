@@ -1,6 +1,8 @@
 package imgui.font
 
 import imgui.UNICODE_CODEPOINT_MAX
+import imgui.internal.textCharFromUtf8
+import uno.kotlin.NUL
 
 class FontGlyphRangesBuilder {
 
@@ -35,7 +37,40 @@ class FontGlyphRangesBuilder {
     /** Add character */
     fun addChar(c: Char) = setBit(c.code)
 
-//    IMGUI_API void  AddText(const char* text, const char* text_end = NULL);     // Add string (each character of the UTF-8 string are added)
-//    IMGUI_API void  AddRanges(const ImWchar* ranges);                           // Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext
-//    IMGUI_API void  BuildRanges(ImVector<ImWchar>* out_ranges);                 // Output new ranges
+    /** Add string (each character of the UTF-8 string are added) */
+    fun addText(text: ByteArray, textEnd: Int? = null) {
+        var p = 0
+        while (p < (textEnd ?: text.size)) {
+            val (c, cLen) = textCharFromUtf8(text, p, textEnd ?: 0)
+            p += cLen
+            if (cLen == 0)
+                break
+            addChar(Char(c))
+        }
+    }
+
+    /** Add ranges, e.g. builder.AddRanges(ImFontAtlas::GetGlyphRangesDefault()) to force add all of ASCII/Latin+Ext */
+    fun addRanges(ranges: ArrayList<Char>) {
+        for (i in ranges.indices step 2) {
+            var c = ranges[i]
+            while (c <= ranges[i + 1] && c.code <= UNICODE_CODEPOINT_MAX) //-V560
+                addChar(c++)
+        }
+    }
+
+    /** Output new ranges */
+    fun buildRanges(outRanges: ArrayList<Char>) {
+        val maxCodepoint = UNICODE_CODEPOINT_MAX
+        var n = 0
+        while (n <= maxCodepoint) {
+            if (getBit(n)) {
+                outRanges += Char(n)
+                while (n < maxCodepoint && getBit(n + 1))
+                    n++
+                outRanges += Char(n)
+            }
+            n++
+        }
+        outRanges += NUL
+    }
 }
