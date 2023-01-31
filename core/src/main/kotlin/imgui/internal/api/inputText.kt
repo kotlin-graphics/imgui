@@ -992,11 +992,10 @@ internal interface inputText {
         val format = parseFormatTrimDecorations(format_)
         val dataBuf = pData.format(dataType, format)
                 .trim()
-        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
-        val isHexadecimal = !isFloatingPoint && format[0] != NUL && format.last().uppercaseChar() == 'X'
 
         var flags = Itf.AutoSelectAll or Itf._NoMarkEdited
-        flags /= if (isFloatingPoint) Itf.CharsScientific else if (isHexadecimal) Itf.CharsHexadecimal else Itf.CharsDecimal
+        flags /= inputScalarDefaultCharsFilter(dataType, format)
+
         val buf = dataBuf.toByteArray(32)
         var valueChanged = false
         if (tempInputText(bb, id, label, buf, flags)) {
@@ -1174,6 +1173,15 @@ internal interface inputText {
             remaining?.set(s)
 
             return textSize
+        }
+
+        fun inputScalarDefaultCharsFilter(dataType: DataType, format: String): Itf {
+            if (dataType == DataType.Float || dataType == DataType.Double)
+                return Itf.CharsScientific
+            return when (val formatLastChar = if(format.isNotEmpty()) format.lastIndex else NUL) {
+                'x', 'X' -> Itf.CharsHexadecimal
+                else -> Itf.CharsDecimal
+            }
         }
     }
 }

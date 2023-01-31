@@ -32,6 +32,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
 import imgui.ImGui.textEx
+import imgui.internal.api.inputText.Companion.inputScalarDefaultCharsFilter
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -171,13 +172,13 @@ interface widgetsInputWithKeyboard {
 
         val buf = pData.format(dataType, format/*, 64*/).toByteArray(64)
 
-        var valueChanged = false
         var flags = flags_
-        if (flags hasnt (Itf.CharsHexadecimal or Itf.CharsScientific))
-            flags = flags or Itf.CharsDecimal
-        flags = flags or Itf.AutoSelectAll
-        flags = flags or Itf._NoMarkEdited  // We call MarkItemEdited() ourselves by comparing the actual data rather than the string.
+        // Testing ActiveId as a minor optimization as filtering is not needed until active
+        if (g.activeId == 0 && flags hasnt (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsScientific))
+            flags /= inputScalarDefaultCharsFilter(dataType, format)
+        flags = flags or Itf.AutoSelectAll or Itf._NoMarkEdited // We call MarkItemEdited() ourselves by comparing the actual data rather than the string.
 
+        var valueChanged = false
         if (step != null) {
             val buttonSize = frameHeight
 

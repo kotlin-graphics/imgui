@@ -1398,13 +1398,11 @@ object ShowDemoWindowWidgets {
                 dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%.3f", flags)
                 dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%.3f", flags)
                 dragInt("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", flags)
-                dragInt("DragInt (gex)", ::dragI, 0.5f, 0, 100, "0x%04X", flags)
 
                 // Sliders
                 text("Underlying float value: %f", sliderF)
                 sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", flags)
                 sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%d", flags)
-                sliderInt("SliderInt (hex)", ::sliderI, 0, 100, "0x%04X", flags)
             }
         }
     }
@@ -1526,6 +1524,7 @@ object ShowDemoWindowWidgets {
                 dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
                 dragScalar("drag u16", DataType.Ushort, ::u16_v, dragSpeed, u16_zero.takeIf { dragClamp }, u16_fifty.takeIf { dragClamp }, "%d ms")
                 dragScalar("drag s32", DataType.Int, ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
+                dragScalar("drag s32 hex", DataType.Int, ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp }, "0x%08X")
                 dragScalar("drag u32", DataType.Uint, ::u32_v, dragSpeed, u32_zero.takeIf { dragClamp }, u32_fifty.takeIf { dragClamp }, "%d ms")
                 dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
                 dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
@@ -1542,6 +1541,7 @@ object ShowDemoWindowWidgets {
                 sliderScalar("slider s32 low", DataType.Int, ::s32_v, s32_zero, s32_fifty, "%d")
                 sliderScalar("slider s32 high", DataType.Int, ::s32_v, s32_hi_a, s32_hi_b, "%d")
                 sliderScalar("slider s32 full", DataType.Int, ::s32_v, s32_min, s32_max, "%d")
+                sliderScalar("slider s32 hex", DataType.Int, ::s32_v, s32_zero, s32_fifty, "0x%04X")
                 sliderScalar("slider u32 low", DataType.Uint, ::u32_v, u32_zero, u32_fifty, "%d")
                 sliderScalar("slider u32 high", DataType.Uint, ::u32_v, u32_hi_a, u32_hi_b, "%d")
                 sliderScalar("slider u32 full", DataType.Uint, ::u32_v, u32_min, u32_max, "%d")
@@ -1573,9 +1573,9 @@ object ShowDemoWindowWidgets {
                 inputScalar("input s16", DataType.Short, ::s16_v, s16_one.takeIf { inputsStep }, null, "%d")
                 inputScalar("input u16", DataType.Ushort, ::u16_v, u16_one.takeIf { inputsStep }, null, "%d")
                 inputScalar("input s32", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input s32 hex", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
+                inputScalar("input s32 hex", DataType.Int, ::s32_v, s32_one.takeIf { inputsStep }, null, "%04X")
                 inputScalar("input u32", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%d")
-                inputScalar("input u32 hex", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%08X", Itf.CharsHexadecimal.i)
+                inputScalar("input u32 hex", DataType.Uint, ::u32_v, u32_one.takeIf { inputsStep }, null, "%04X")
                 inputScalar("input s64", DataType.Long, ::s64_v, s64_one.takeIf { inputsStep })
                 inputScalar("input u64", DataType.Ulong, ::u64_v, u64_one.takeIf { inputsStep })
                 inputScalar("input float", DataType.Float, ::f32_v, f32_one.takeIf { inputsStep })
