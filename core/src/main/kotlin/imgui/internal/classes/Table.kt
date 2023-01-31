@@ -146,6 +146,9 @@ class Table {
     /** Sum of ideal column width in order nothing to be clipped, used for auto-fitting and content width submission in outer window */
     var columnsAutoFitWidth = 0f
 
+    /** Sum of weight of all enabled stretching columns */
+    var columnsStretchSumWeights = 0f
+
     var resizedColumnNextWidth = 0f
 
     /** Lock minimum contents width while resizing down in order to not create feedback loops. But we allow growing the table. */
@@ -636,6 +639,7 @@ class Table {
             sumWidthRequests += cellPaddingX * 2f
         }
         columnsEnabledFixedCount = countFixed
+        columnsStretchSumWeights = stretchSumWeights
 
         // [Part 4] Apply final widths based on requested widths
         //        val work_rect = table->WorkRect; [JVM] we use the same instance!

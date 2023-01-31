@@ -164,16 +164,22 @@ interface tables {
         splitter.merge(innerWindow.drawList)
 
         // Update ColumnsAutoFitWidth to get us ahead for host using our size to auto-resize without waiting for next BeginTable()
-        val widthSpacings = table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
-        table.columnsAutoFitWidth = widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount
+        var autoFitWidthForFixed = 0f
+        var autoFitWidthForStretched = 0f
+        var autoFitWidthForStretchedMin = 0f
         for (columnN in 0 until table.columnsCount)
             if (table.enabledMaskByIndex has (1L shl columnN)) {
                 val column = table.columns[columnN]
-                table.columnsAutoFitWidth += when {
-                    column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize -> column.widthRequest
-                    else -> table getColumnWidthAuto column
-                }
+                val columnWidthRequest = if (column.flags has Tcf.WidthFixed && column.flags hasnt Tcf.NoResize) column.widthRequest else table getColumnWidthAuto column
+                if (column.flags has Tcf.WidthFixed)
+                    autoFitWidthForFixed += columnWidthRequest
+                else
+                    autoFitWidthForStretched += columnWidthRequest
+                if (column.flags has Tcf.WidthStretch && column.flags hasnt Tcf.NoResize)
+                    autoFitWidthForStretchedMin = autoFitWidthForStretchedMin max (columnWidthRequest / (column.stretchWeight / table.columnsStretchSumWeights))
             }
+        val widthSpacings = table.outerPaddingX * 2f + (table.cellSpacingX1 + table.cellSpacingX2) * (table.columnsEnabledCount - 1)
+        table.columnsAutoFitWidth = widthSpacings + (table.cellPaddingX * 2f) * table.columnsEnabledCount + autoFitWidthForFixed + autoFitWidthForStretched max autoFitWidthForStretchedMin
 
         // Update scroll
         if (table.flags hasnt Tf.ScrollX && innerWindow !== outerWindow)
