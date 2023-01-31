@@ -3,7 +3,7 @@ package imgui.static
 import imgui.*
 import imgui.ImGui.end
 import imgui.ImGui.io
-import imgui.ImGui.mergedKeyModFlags
+import imgui.ImGui.mergedModFlags
 import imgui.ImGui.style
 import imgui.api.g
 
@@ -50,8 +50,8 @@ fun errorCheckEndFrameSanityChecks() {
     // send key release events mid-frame. This would normally trigger this assertion and lead to sheared inputs.
     // We silently accommodate for this case by ignoring/ the case where all io.KeyXXX modifiers were released (aka key_mod_flags == 0),
     // while still correctly asserting on mid-frame key press events.
-    val keyModFlags = mergedKeyModFlags
-    assert(keyModFlags == 0 || g.io.keyMods == keyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
+    val keyMods = mergedModFlags
+    assert(keyMods == 0 || g.io.keyMods == keyMods) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
     // [EXPERIMENTAL] Recover from errors: You may call this yourself before EndFrame().
     //ErrorCheckEndFrameRecover();

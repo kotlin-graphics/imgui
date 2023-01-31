@@ -7,7 +7,6 @@ import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.KeyData
 import imgui.internal.sections.InputReadMode
-import imgui.internal.sections.or
 
 
 //-----------------------------------------------------------------------------
@@ -1320,32 +1319,37 @@ operator fun IntArray.set(index: Key, value: Int) {
 operator fun IntArray.get(index: Key): Int = get(index.i)
 
 
-typealias KeyModFlags = Int
+typealias ModFlags = Int
 
 // Helper "flags" version of key-mods to store and compare multiple key-mods easily. Sometimes used for storage (e.g. io.KeyMods) but otherwise not much used in public API.
-enum class KeyModFlag {
-    None, Ctrl, Shift, Alt,
+enum class ModFlag {
+    None, Ctrl, Shift,
+
+    /** Menu */
+    Alt,
 
     /** Cmd/Super/Windows key */
     Super;
 
     val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
-    infix fun and(b: KeyModFlag): KeyModFlags = i and b.i
-    infix fun and(b: KeyModFlags): KeyModFlags = i and b
-    infix fun or(b: KeyModFlag): KeyModFlags = i or b.i
-    infix fun or(b: KeyModFlags): KeyModFlags = i or b
-    infix fun xor(b: KeyModFlag): KeyModFlags = i xor b.i
-    infix fun xor(b: KeyModFlags): KeyModFlags = i xor b
-    infix fun wo(b: KeyModFlags): KeyModFlags = and(b.inv())
+    infix fun and(b: ModFlag): ModFlags = i and b.i
+    infix fun and(b: ModFlags): ModFlags = i and b
+    infix fun or(b: ModFlag): ModFlags = i or b.i
+    infix fun or(b: ModFlags): ModFlags = i or b
+    infix fun xor(b: ModFlag): ModFlags = i xor b.i
+    infix fun xor(b: ModFlags): ModFlags = i xor b
+    infix fun wo(b: ModFlags): ModFlags = and(b.inv())
 }
 
-infix fun KeyModFlags.and(b: KeyModFlag): KeyModFlags = and(b.i)
-infix fun KeyModFlags.or(b: KeyModFlag): KeyModFlags = or(b.i)
-infix fun KeyModFlags.xor(b: KeyModFlag): KeyModFlags = xor(b.i)
-infix fun KeyModFlags.has(b: KeyModFlag): Boolean = and(b.i) != 0
-infix fun KeyModFlags.hasnt(b: KeyModFlag): Boolean = and(b.i) == 0
-infix fun KeyModFlags.wo(b: KeyModFlag): KeyModFlags = and(b.i.inv())
+infix fun ModFlags.and(b: ModFlag): ModFlags = and(b.i)
+infix fun ModFlags.or(b: ModFlag): ModFlags = or(b.i)
+infix fun ModFlags.xor(b: ModFlag): ModFlags = xor(b.i)
+infix fun ModFlags.has(b: ModFlag): Boolean = and(b.i) != 0
+infix fun ModFlags.hasnt(b: ModFlag): Boolean = and(b.i) == 0
+infix fun ModFlags.wo(b: ModFlag): ModFlags = and(b.i.inv())
+operator fun ModFlags.minus(flag: ModFlag): ModFlags = wo(flag)
+operator fun ModFlags.div(flag: ModFlag): ModFlags = or(flag)
 
 
 /** Gamepad/Keyboard navigation

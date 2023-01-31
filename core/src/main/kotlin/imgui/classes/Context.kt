@@ -290,7 +290,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Just navigated to this focus scope id (result of a successfully MoveRequest). */
     var navJustMovedToFocusScopeId: ID = 0
 
-    var navJustMovedToKeyMods: KeyModFlags = KeyModFlag.None.i
+    var navJustMovedToKeyMods: ModFlags = ModFlag.None.i
 
     /** Set by ActivateItem(), queued until next frame  */
     var navNextActivateId: ID = 0
@@ -347,7 +347,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navMoveScrollFlags = ScrollFlag.None.i
 
-    var navMoveKeyMods: KeyModFlags = KeyModFlag.None.i
+    var navMoveKeyMods: ModFlags = ModFlag.None.i
 
     /** Direction of the move request (left/right/up/down), direction of the previous move request  */
     var navMoveDir = Dir.None

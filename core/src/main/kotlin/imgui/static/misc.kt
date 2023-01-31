@@ -11,7 +11,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mainViewport
-import imgui.ImGui.mergedKeyModFlags
+import imgui.ImGui.mergedModFlags
 import imgui.ImGui.parseFormatFindEnd
 import imgui.ImGui.parseFormatFindStart
 import imgui.ImGui.saveIniSettingsToDisk
@@ -53,7 +53,7 @@ fun updateKeyboardInputs() {
     // Import legacy keys or verify they are not used
 
     // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
-    io.keyMods = mergedKeyModFlags
+    io.keyMods = mergedModFlags
 
     // Clear gamepad data if disabled
     if (io.backendFlags hasnt BackendFlag.HasGamepad)

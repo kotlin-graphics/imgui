@@ -48,14 +48,16 @@ internal interface inputs {
 
     // the rest of inputs functions are in the NavInput enum
 
-    /** ~GetMergedKeyModFlags */
-    val mergedKeyModFlags: KeyModFlags
+    /** ~GetMergedKeyModFlags
+     *
+     *  [Internal] Do not use directly (can read io.KeyMods instead) */
+    val mergedModFlags: ModFlags
         get() {
-            var keyModFlags: KeyModFlags = KeyModFlag.None.i
-            if (ImGui.io.keyCtrl) keyModFlags = keyModFlags or KeyModFlag.Ctrl.i
-            if (ImGui.io.keyShift) keyModFlags = keyModFlags or KeyModFlag.Shift.i
-            if (ImGui.io.keyAlt) keyModFlags = keyModFlags or KeyModFlag.Alt.i
-            if (ImGui.io.keySuper) keyModFlags = keyModFlags or KeyModFlag.Super.i
-            return keyModFlags
+            var keyMods = ModFlag.None.i
+            if (ImGui.io.keyCtrl) keyMods /= ModFlag.Ctrl
+            if (ImGui.io.keyShift) keyMods /= ModFlag.Shift
+            if (ImGui.io.keyAlt) keyMods /= ModFlag.Alt
+            if (ImGui.io.keySuper) keyMods /= ModFlag.Super
+            return keyMods
         }
 }

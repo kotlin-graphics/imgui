@@ -34,7 +34,7 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.mergedKeyModFlags
+import imgui.ImGui.mergedModFlags
 import imgui.ImGui.parseFormatTrimDecorations
 import imgui.ImGui.popFont
 import imgui.ImGui.popStyleColor
@@ -405,7 +405,6 @@ internal interface inputText {
         var cancelEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
             state!! // ~IM_ASSERT(state != NULL);
-            assert(io.keyMods == mergedKeyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" } // We rarely do this check, but if anything let's do it here.
 
             val rowCountPerPage = ((innerSize.y - style.framePadding.y) / g.fontSize).i max 1
             state.stb.rowCountPerPage = rowCountPerPage
@@ -413,13 +412,13 @@ internal interface inputText {
             val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
             // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-            val isOsxShiftShortcut = isOsx && io.keyMods == KeyModFlag.Super or KeyModFlag.Shift
+            val isOsxShiftShortcut = isOsx && io.keyMods == ModFlag.Super or ModFlag.Shift
             val isWordmoveKeyDown = if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
-            val isCtrlKeyOnly = io.keyMods == KeyModFlag.Ctrl.i
-            val isShiftKeyOnly = io.keyMods == KeyModFlag.Shift.i
-            val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) KeyModFlag.Super.i else KeyModFlag.Ctrl.i
+            val isCtrlKeyOnly = io.keyMods == ModFlag.Ctrl.i
+            val isShiftKeyOnly = io.keyMods == ModFlag.Shift.i
+            val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) ModFlag.Super.i else ModFlag.Ctrl.i
 
             val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
             val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
