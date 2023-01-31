@@ -70,7 +70,7 @@ internal interface newFrame {
                 is InputEvent.MouseWheel ->
                     if (e.wheelX != 0f || e.wheelY != 0f) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the event
-                        if (trickleFastInputs && (mouseWheeled || mouseButtonChanged != 0))
+                        if (trickleFastInputs && (mouseMoved || mouseButtonChanged != 0))
                             break
                         io.mouseWheelH += e.wheelX
                         io.mouseWheel += e.wheelY
