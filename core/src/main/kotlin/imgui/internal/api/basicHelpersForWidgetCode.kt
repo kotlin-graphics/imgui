@@ -31,7 +31,7 @@ import java.util.*
 // - Unindent()
 // - BeginGroup()
 // - EndGroup()
-// Also see in imgui_widgets: tab bars, columns.
+// Also see in imgui_widgets: tab bars, and in imgui_tables: tables, columns.
 //-----------------------------------------------------------------------------
 
 /** Basic Helpers for widget code */

@@ -177,7 +177,7 @@ val Int.upperPowerOfTwo: Int
 
 
 // -----------------------------------------------------------------------------------------------------------------
-// Helpers: String, Formatting
+// Helpers: String
 // [SECTION] MISC HELPERS/UTILITIES (String, Format, Hash functions)
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -222,6 +222,19 @@ fun trimBlanks(buf: CharArray): CharArray {
 }
 
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
+fun charIsBlankA(c: Int): Boolean = c == ' '.i || c == '\t'.i
+
+val Char.isBlankA: Boolean
+    get() = this == ' ' || this == '\t'
+
+fun charIsBlankW(c: Int): Boolean = c == ' '.i || c == '\t'.i || c == 0x3000
+
+val Char.isBlankW: Boolean
+    get() = this == ' ' || this == '\t' || i == 0x3000
+
+
+// Helpers: Formatting
+
 //IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
 
 fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
@@ -234,15 +247,6 @@ fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
 //IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
 //IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
 //IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
-fun charIsBlankA(c: Int): Boolean = c == ' '.i || c == '\t'.i
-
-val Char.isBlankA: Boolean
-    get() = this == ' ' || this == '\t'
-
-fun charIsBlankW(c: Int): Boolean = c == ' '.i || c == '\t'.i || c == 0x3000
-
-val Char.isBlankW: Boolean
-    get() = this == ' ' || this == '\t' || i == 0x3000
 
 
 // -----------------------------------------------------------------------------------------------------------------

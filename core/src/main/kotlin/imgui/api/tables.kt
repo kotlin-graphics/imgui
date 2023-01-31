@@ -43,11 +43,10 @@ import imgui.TableRowFlag as Trf
 
 // Tables
 // - Full-featured replacement for old Columns API.
-// - See Demo->Tables for demo code.
-// - See top of imgui_tables.cpp for general commentary.
+// - See Demo->Tables for demo code. See top of imgui_tables.cpp for general commentary.
 // - See ImGuiTableFlags_ and ImGuiTableColumnFlags_ enums for a description of available flags.
 // The typical call flow is:
-// - 1. Call BeginTable().
+// - 1. Call BeginTable(), early out if returning false.
 // - 2. Optionally call TableSetupColumn() to submit column name/flags/defaults.
 // - 3. Optionally call TableSetupScrollFreeze() to request scroll freezing of columns/rows.
 // - 4. Optionally call TableHeadersRow() to submit a header row. Names are pulled from TableSetupColumn() data.
@@ -626,12 +625,12 @@ interface tables {
             tableOpenContextMenu(columnN)
     }
 
-    // Tables: Sorting
-    // - Call TableGetSortSpecs() to retrieve latest sort specs for the table. NULL when not sorting.
-    // - When 'SpecsDirty == true' you should sort your data. It will be true when sorting specs have changed
-    //   since last call, or the first time. Make sure to set 'SpecsDirty = false' after sorting, else you may
-    //   wastefully sort your data every frame!
-    // - Lifetime: don't hold on this pointer over multiple frames or past any subsequent call to BeginTable().
+    // Tables: Sorting & Miscellaneous functions
+    // - Sorting: call TableGetSortSpecs() to retrieve latest sort specs for the table. NULL when not sorting.
+    //   When 'sort_specs->SpecsDirty == true' you should sort your data. It will be true when sorting specs have
+    //   changed since last call, or the first time. Make sure to set 'SpecsDirty = false' after sorting,
+    //   else you may wastefully sort your data every frame!
+    // - Functions args 'int column_n' treat the default value of -1 as the same as passing the current column index.
 
 
     /** Return NULL if no sort specs (most often when ImGuiTableFlags_Sortable is not set)
@@ -639,7 +638,7 @@ interface tables {
      *  last call, or the first time.
      *  Lifetime: don't hold on this pointer over multiple frames or past any subsequent call to BeginTable()!
      *
-     *  get latest sort specs for the table (NULL if not sorting). */
+     *  get latest sort specs for the table (NULL if not sorting).  Lifetime: don't hold on this pointer over multiple frames or past any subsequent call to BeginTable(). */
     fun tableGetSortSpecs(): TableSortSpecs? {
 
         val table = g.currentTable!!

@@ -13,6 +13,14 @@ import imgui.api.g
 // Error Checking and Debug Tools
 //-----------------------------------------------------------------------------
 
+// Helper function to verify ABI compatibility between caller code and compiled version of Dear ImGui.
+// Verify that the type sizes are matching between the calling file's compilation unit and imgui.cpp's compilation unit
+// If this triggers you have an issue:
+// - Most commonly: mismatched headers and compiled code version.
+// - Or: mismatched configuration #define, compilation settings, packing pragma etc.
+//   The configuration settings mentioned in imconfig.h must be set for all compilation units involved with Dear ImGui,
+//   which is way it is required you put them in your imconfig file (and not just before including imgui.h).
+//   Otherwise it is possible that different compilation units would see different structure layout
 fun errorCheckNewFrameSanityChecks() {
 
     // Check user data
@@ -27,6 +35,7 @@ fun errorCheckNewFrameSanityChecks() {
     assert(style.alpha in 0f..1f) { "Invalid style setting!" } // Allows us to avoid a few clamps in color computations
     assert(style.windowMinSize.x >= 1f && style.windowMinSize.y >= 1f) { "Invalid style setting." } // TODO glm
     assert(style.windowMenuButtonPosition == Dir.None || style.windowMenuButtonPosition == Dir.Left || style.windowMenuButtonPosition == Dir.Right)
+    assert(g.style.colorButtonPosition == Dir.Left || g.style.colorButtonPosition == Dir.Right)
 
     // Check: the beta io.ConfigWindowsResizeFromEdges option requires backend to honor mouse cursor changes and set the ImGuiBackendFlags_HasMouseCursors flag accordingly.
     if (io.configWindowsResizeFromEdges && io.backendFlags hasnt BackendFlag.HasMouseCursors)
@@ -44,7 +53,7 @@ fun errorCheckEndFrameSanityChecks() {
     val keyModFlags = mergedKeyModFlags
     assert(keyModFlags == 0 || g.io.keyMods == keyModFlags) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
-    // Recover from errors
+    // [EXPERIMENTAL] Recover from errors: You may call this yourself before EndFrame().
     //ErrorCheckEndFrameRecover();
 
     // Report when there is a mismatch of Begin/BeginChild vs End/EndChild calls. Important: Remember that the Begin/BeginChild API requires you

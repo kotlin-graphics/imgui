@@ -261,7 +261,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Gamepad/keyboard Navigation
     //------------------------------------------------------------------
 
-    /** Focused window for navigation. Could be called 'FocusWindow'    */
+    /** Focused window for navigation. Could be called 'FocusedWindow'    */
     var navWindow: Window? = null
 
     /** Focused item for navigation */
@@ -469,7 +469,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     val clipperTempData = ArrayList<ListClipperData>()
 
-    // Table
+    // Tables
 
     var currentTable: Table? = null
     var tablesTempDataStacked = 0 // Temporary table data size (because we leave previous instances undestructed, we generally don't use TablesTempData.Size)

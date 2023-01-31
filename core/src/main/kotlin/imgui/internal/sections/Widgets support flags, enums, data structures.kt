@@ -98,8 +98,12 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
 
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
     //  [imgui-test only]
+
+    /** Item is an openable (e.g. TreeNode) */
     Openable(1 shl 20),
     Opened(1 shl 21),
+
+    /** Item is a checkable (e.g. CheckBox, MenuItem) */
     Checkable(1 shl 22),
     Checked(1 shl 23);
 

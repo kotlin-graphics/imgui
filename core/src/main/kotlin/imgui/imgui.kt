@@ -149,6 +149,7 @@ object ImGui :
     clipping,
     focusActivation,
     itemWidgetsUtilities,
+    backgroundForegroundDrawLists,
     miscellaneousUtilities,
     textUtilities,
     colorUtilities,

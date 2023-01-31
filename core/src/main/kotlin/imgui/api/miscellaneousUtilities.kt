@@ -1,7 +1,5 @@
 package imgui.api
 
-import glm_.glm
-import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.beginChild
@@ -12,8 +10,6 @@ import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.style
-import imgui.classes.DrawList
-import imgui.classes.skipItemForListClipping
 import imgui.internal.classes.Rect
 import imgui.internal.sections.DrawListSharedData
 import imgui.WindowFlag as Wf
@@ -37,15 +33,6 @@ interface miscellaneousUtilities {
     /** ~GetFrameCount */
     val frameCount: Int
         get() = g.frameCount
-
-    /** this draw list will be the first rendering one. Useful to quickly draw shapes/text behind dear imgui contents. */
-    val backgroundDrawList: DrawList
-        get() = g.viewports[0].backgroundDrawList
-
-    /** this draw list will be the last rendered one. Useful to quickly draw shapes/text over dear imgui contents.
-     *  ~GetForegroundDrawList  */
-    val foregroundDrawList: DrawList
-        get() = g.viewports[0].foregroundDrawList
 
     /** you may use this when creating your own ImDrawList instances.
      *  ~GetDrawListSharedData  */
