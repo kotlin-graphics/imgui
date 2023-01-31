@@ -914,9 +914,9 @@ fun navProcessItem() {
     val itemFlags = g.lastItemData.inFlags
 
     // Process Init Request
-    if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent) {
+    if (g.navInitRequest && g.navLayer == window.dc.navLayerCurrent && itemFlags hasnt If.Disabled) {
         // Even if 'ImGuiItemFlags_NoNavDefaultFocus' is on (typically collapse/close button) we record the first ResultId so they can be used as a fallback
-        val candidateForNavDefaultFocus = itemFlags hasnt (If.NoNavDefaultFocus or If.Disabled)
+        val candidateForNavDefaultFocus = itemFlags hasnt If.NoNavDefaultFocus
         if (candidateForNavDefaultFocus || g.navInitResultId == 0) {
             g.navInitResultId = id
             g.navInitResultRectRel = window rectAbsToRel navBb
