@@ -77,14 +77,14 @@ class ListClipper {
     /** Automatically called on the last call of Step() that returns false. */
     fun end() {
 
-        // In theory here we should assert that we are already at the right position, but it seems saner to just seek at the end and not assert/crash the user.
-        if (itemsCount >= 0 && itemsCount < Int.MAX_VALUE && displayStart >= 0)
-            seekCursorForItem(this, itemsCount)
-        itemsCount = -1
-
-        // Restore temporary buffer and fix back pointers which may be invalidated when nesting
-        assert(g.clipperTempDataStacked > 0)
         (tempData as? ListClipperData)?.let { data ->
+            // In theory here we should assert that we are already at the right position, but it seems saner to just seek at the end and not assert/crash the user.
+            if (itemsCount >= 0 && itemsCount < Int.MAX_VALUE && displayStart >= 0)
+                seekCursorForItem(this, itemsCount)
+
+            // Restore temporary buffer and fix back pointers which may be invalidated when nesting
+            assert(g.clipperTempDataStacked > 0)
+
             assert(data.listClipper == this)
             data.stepNo = data.ranges.size
             if (--g.clipperTempDataStacked > 0) {
@@ -94,6 +94,7 @@ class ListClipper {
             }
             tempData = null
         }
+        itemsCount = 1
     }
 
     fun forceDisplayRangeByIndices(itemMin: Int, itemMax: Int) {
@@ -215,8 +216,8 @@ class ListClipper {
         // Advance the cursor to the end of the list and then returns 'false' to end the loop.
         if (itemsCount < Int.MAX_VALUE)
             seekCursorForItem(this, itemsCount)
-        itemsCount = -1
 
+        end()
         return false
     }
 
