@@ -24,7 +24,7 @@ import imgui.WindowFlag as Wf
 object Fullscreen {
 
     var useWorkArea = true
-    var flags = Wf.NoDecoration or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings
+    var flags = Wf.NoDecoration or Wf.NoMove or Wf.NoSavedSettings
     operator fun invoke(pOpen: KMutableProperty0<Boolean>?) {
 
         // We demonstrate using the full viewport area or the work area (without menu-bars, task-bars etc.)
