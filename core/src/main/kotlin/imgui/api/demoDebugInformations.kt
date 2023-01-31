@@ -28,6 +28,7 @@ import imgui.ImGui.debugNodeWindowSettings
 import imgui.ImGui.debugNodeWindowsList
 import imgui.ImGui.debugNodeWindowsListByBeginStackParent
 import imgui.ImGui.debugStartItemPicker
+import imgui.ImGui.debugTextEncoding
 import imgui.ImGui.end
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
@@ -82,9 +83,7 @@ import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
-import imgui.dsl.table
 import imgui.dsl.treeNode
-import imgui.font.FontGlyphRangesBuilder
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.internal.api.debugTools.Companion.metricsHelpMarker
@@ -96,9 +95,7 @@ import imgui.internal.formatString
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.hasnt
 import imgui.internal.sections.testEngine_FindItemDebugLabel
-import imgui.internal.textStrToUtf8
 import kool.BYTES
-import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -186,6 +183,18 @@ interface demoDebugInformations {
         // Tools
         treeNode("Tools") {
 
+            val showEncodingViewer = treeNode("UTF-8 Encoding viewer")
+            sameLine()
+            metricsHelpMarker("You can also call ImGui::DebugTextEncoding() from your code with a given string to test that your UTF-8 encoding settings are correct.")
+            if (showEncodingViewer) {
+                setNextItemWidth(-Float.MIN_VALUE)
+                inputText("##Text", buf)
+                if (buf.isNotEmpty())
+                    debugTextEncoding(buf)
+                treePop()
+            }
+
+
             // Stack Tool is your best friend!
             checkbox("Show stack tool", cfg::showStackTool)
             sameLine()
@@ -247,10 +256,6 @@ interface demoDebugInformations {
                     }
                     unindent()
                 }
-
-            treeNode("UTF-8 Encoding viewer") {
-                showUTF8EncodingViewer()
-            }
 
             // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
             if (button("Item Picker.."))
@@ -819,77 +824,6 @@ interface demoDebugInformations {
             return formatString(buf, "???")
         }
 
-//        static void ShowEncodingViewerChar(ImFont* font, ImWchar c, const char* c_utf8)
-//        {
-//            ImGui::TableNextColumn()
-//            if (font->FindGlyphNoFallback(c))
-//            ImGui::TextUnformatted(c_utf8)
-//            else
-//            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "(not in font)")
-//
-//            ImGui::TableNextColumn()
-//            char utf8_code[] = "0x.. 0x.. 0x.. 0x.."
-//            for (int byte_index = 0; c_utf8[byte_index]; byte_index++)
-//            {
-//                if (byte_index > 0)
-//                    utf8_code[byte_index * 5 - 1] = ' '
-//                ImFormatString(utf8_code + (byte_index * 5) + 2, 3, "%02X", (int)(unsigned char)c_utf8[byte_index])
-//            }
-//            ImGui::TextUnformatted(utf8_code)
-//            ImGui::TableNextColumn()
-//            ImGui::Text("U+%04X", (int)c)
-//        }
-
-        val buf = ByteArray(256)
-        val rangeBuilder = FontGlyphRangesBuilder()
-        val ranges = ArrayList<Char>()
-        var uniqueGlyphs = false
-
-        fun showUTF8EncodingViewer() {
-
-            setNextItemWidth(-Float.MIN_VALUE)
-
-            var rebuild = false
-            rebuild = rebuild || inputText("##Sample Text", buf)
-            rebuild = rebuild || checkbox("Sorted unique glyphs", ::uniqueGlyphs)
-            if (rebuild && uniqueGlyphs) {
-                rangeBuilder.clear()
-                rangeBuilder.addText(buf)
-                ranges.clear()
-                rangeBuilder.buildRanges(ranges)
-            }
-            table("list", 3, TableFlag.Borders or TableFlag.ScrollY, Vec2(0f, ImGui.fontSize * 15)) {
-                tableSetupColumn("Glyph")
-                tableSetupColumn("UTF-8")
-                tableSetupColumn("Codepoint")
-                tableHeadersRow()
-
-                val font = ImGui.font
-                if (uniqueGlyphs) {
-                    var rangeIndex = 0
-                    while (rangeIndex < ranges.size && ranges[rangeIndex] != NUL) {
-                        for (c in ranges[rangeIndex] .. ranges[rangeIndex + 1]) {
-                            val cUtf8 = ByteArray(4 + 1)
-                            TODO()
-//                            textStrToUtf8(cUtf8, c, &c+1)
-//                            showEncodingViewerChar(font, c, cUtf8)
-                        }
-                        rangeIndex += 2
-                    }
-                }
-                else {
-                    //                    for (const char* p = buf; p[0] != 0;)
-                    //                    {
-                    //                        unsigned int c
-                    //                        int c_utf8_len = ImTextCharFromUtf8(&c, p, NULL)
-                    //                        char c_utf8[4 + 1]
-                    //                        memcpy(c_utf8, p, c_utf8_len)
-                    //                        c_utf8[c_utf8_len] = 0
-                    //                        ShowEncodingViewerChar(font, (ImWchar)c, c_utf8)
-                    //                        p += c_utf8_len
-                    //                    }
-                }
-            }
-        }
+        val buf = ""
     }
 }

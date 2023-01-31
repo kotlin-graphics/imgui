@@ -1,15 +1,14 @@
 package imgui.internal.api
 
-import glm_.L
-import glm_.d
-import glm_.i
-import glm_.min
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
+import imgui.ImGui.dragFloat
+import imgui.ImGui.dummy
 import imgui.ImGui.end
 import imgui.ImGui.endChild
 import imgui.ImGui.endDisabled
@@ -22,22 +21,28 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getStyleColorVec4
+import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemVisible
+import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.itemRectMax
 import imgui.ImGui.itemRectMin
 import imgui.ImGui.popFocusScope
+import imgui.ImGui.popFont
 import imgui.ImGui.popID
 import imgui.ImGui.popItemFlag
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.popTextWrapPos
+import imgui.ImGui.pushFont
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
+import imgui.ImGui.separator
 import imgui.ImGui.setNextItemOpen
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.smallButton
 import imgui.ImGui.text
 import imgui.ImGui.textColored
@@ -53,15 +58,19 @@ import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.dsl.withID
+import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.font.FontGlyph
 import imgui.internal.DrawCmd
 import imgui.internal.classes.*
 import imgui.internal.floor
 import imgui.internal.sections.*
+import imgui.internal.textCharToUtf8
 import imgui.internal.triangleArea
 import kool.lib.isNotEmpty
 import kool.rem
 import uno.kotlin.plusAssign
+import kotlin.math.sqrt
 
 typealias ErrorLogCallback = (userData: Any?, fmt: String) -> Unit
 
@@ -183,10 +192,10 @@ internal interface debugTools {
         val info = tool.results[tool.stackLevel]
         assert(info.id == id && info.queryFrameCount > 0)
 
-        info.desc = when(dataType) {
+        info.desc = when (dataType) {
             DataType.Int -> (dataId as Int).toString()
             DataType._String -> dataId as String
-            DataType._Pointer ->  "(void*)0x%p".format(dataId)
+            DataType._Pointer -> "(void*)0x%p".format(dataId)
             DataType._ID ->
                 if (info.desc.isEmpty()) // PushOverrideID() is often used to avoid hashing twice, which would lead to 2 calls to DebugHookIdInfo(). We prioritize the first one.
                     "0x%08X [override]".format(id)
@@ -331,6 +340,101 @@ internal interface debugTools {
             outDrawList.addRect(floor(vtxsRect.min), floor(vtxsRect.max), COL32(0, 255, 255, 255)) // In cyan: bounding box of triangles
         }
         outDrawList.flags = backupFlags
+    }
+
+    /** [DEBUG] Display details for a single font, called by ShowStyleEditor(). */
+    fun debugNodeFont(font: Font) {
+        val opened = treeNode(font, "Font: \"${font.configData.getOrElse(0) { "" }}\"\n%.2f px, ${font.glyphs.size} glyphs, ${font.configDataCount} file(s)", font.fontSize)
+        sameLine()
+        if (smallButton("Set as default"))
+            io.fontDefault = font
+        if (!opened)
+            return
+
+        // Display preview text
+        pushFont(font)
+        text("The quick brown fox jumps over the lazy dog")
+        popFont()
+
+        // Display details
+        setNextItemWidth(ImGui.fontSize * 8)
+        dragFloat("Font scale", font::scale, 0.005f, 0.3f, 2f, "%.1f")
+        sameLine(); metricsHelpMarker(
+            "Note than the default embedded font is NOT meant to be scaled.\n\n" +
+                    "Font are currently rendered into bitmaps at a given size at the time of building the atlas. " +
+                    "You may oversample them to get some flexibility with scaling. " +
+                    "You can also render at multiple sizes and select which one to use at runtime.\n\n" +
+                    "(Glimmer of hope: the atlas system will be rewritten in the future to make scaling more flexible.)")
+        text("Ascent: ${font.ascent}, Descent: ${font.descent}, Height: ${font.ascent - font.descent}")
+        val cStr = ByteArray(5)
+        text("Fallback character: '${textCharToUtf8(cStr, font.fallbackChar.code).cStr}' (U+%04X)", font.fallbackChar)
+        text("Ellipsis character: '${textCharToUtf8(cStr, font.ellipsisChar.code)}' (U+%04X)", font.ellipsisChar)
+        val surfaceSqrt = sqrt(font.metricsTotalSurface.f).i
+        text("Texture Area: about ${font.metricsTotalSurface} px ~${surfaceSqrt}x$surfaceSqrt px")
+        for (configI in 0 until font.configDataCount)
+            font.configData.getOrNull(configI)?.let { cfg ->
+                bulletText("Input $configI: \'${cfg.name}\', Oversample: (${cfg.oversample.x},${cfg.oversample.y}), PixelSnapH: ${cfg.pixelSnapH}, Offset: (%.1f,%.1f)",
+                           cfg.glyphOffset.x, cfg.glyphOffset.y)
+            }
+        // Display all glyphs of the fonts in separate pages of 256 characters
+        treeNode("Glyphs", "Glyphs (${font.glyphs.size})") {
+            val drawList = ImGui.windowDrawList
+            val glyphCol = Col.Text.u32
+            val cellSize = font.fontSize * 1
+            val cellSpacing = ImGui.style.itemSpacing.y
+            var base = 0
+            while (base <= UNICODE_CODEPOINT_MAX) {
+                // Skip ahead if a large bunch of glyphs are not present in the font (test in chunks of 4k)
+                // This is only a small optimization to reduce the number of iterations when IM_UNICODE_MAX_CODEPOINT
+                // is large // (if ImWchar==ImWchar32 we will do at least about 272 queries here)
+                if (base hasnt 4095 && font.isGlyphRangeUnused(base, base + 4095)) {
+                    base += 4096 //- 256
+                    continue
+                }
+
+                val count = (0..255).count { font.findGlyphNoFallback(Char(base + it)) != null }
+                if (count <= 0) {
+                    base += 256
+                    continue
+                }
+                if (!treeNode(base.L, "U+%04X..U+%04X ($count ${if (count > 1) "glyphs" else "glyph"})", base, base + 255)) {
+                    base += 256
+                    continue
+                }
+
+                // Draw a 16x16 grid of glyphs
+                val basePos = ImGui.cursorScreenPos
+                for (n in 0..255) {
+                    // We use ImFont::RenderChar as a shortcut because we don't have UTF-8 conversion functions
+                    // available here and thus cannot easily generate a zero-terminated UTF-8 encoded string.
+                    val cellP1 = Vec2(basePos.x + (n % 16) * (cellSize + cellSpacing), basePos.y + (n / 16) * (cellSize + cellSpacing))
+                    val cellP2 = Vec2(cellP1.x + cellSize, cellP1.y + cellSize)
+                    val glyph = font.findGlyphNoFallback(Char(base + n))
+                    drawList.addRect(cellP1, cellP2, if (glyph != null) COL32(255, 255, 255, 100) else COL32(255, 255, 255, 50))
+                    if (glyph == null)
+                        continue
+                    font.renderChar(drawList, cellSize, cellP1, glyphCol, Char(base+n))
+                    if (isMouseHoveringRect(cellP1, cellP2)) {
+                        beginTooltip()
+                        debugNodeFontGlyph(font, glyph)
+                        endTooltip()
+                    }
+                }
+                dummy(Vec2((cellSize + cellSpacing) * 16, (cellSize + cellSpacing) * 16))
+                treePop()
+                base += 256
+            }
+        }
+        treePop()
+    }
+
+    fun debugNodeFontGlyph(font: Font, glyph: FontGlyph) {
+        text("Codepoint: U+%04X", glyph.codepoint)
+        separator()
+        text("Visible: ${glyph.visible.i}")
+        text("AdvanceX: %.1f", glyph.advanceX)
+        text("Pos: (%.2f,%.2f)->(%.2f,%.2f)", glyph.x0, glyph.y0, glyph.x1, glyph.y1)
+        text("UV: (%.3f,%.3f)->(%.3f,%.3f)", glyph.u0, glyph.v0, glyph.u1, glyph.v1)
     }
 
     /** [DEBUG] Display contents of ImGuiStorage */
@@ -576,7 +680,7 @@ internal interface debugTools {
         for (i in windows.indices) {
             val window = windows[i]
             if (window.parentWindowInBeginStack !== parentInBeginStack)
-            continue
+                continue
             val buf = "[%04d] Window".format(window.beginOrderWithinContext)
             //BulletText("[%04d] Window '%s'", window->BeginOrderWithinContext, window->Name);
             debugNodeWindow(window, buf)

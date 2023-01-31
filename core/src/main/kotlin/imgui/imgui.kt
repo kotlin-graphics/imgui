@@ -157,6 +157,7 @@ object ImGui :
     inputUtilitiesMouse,
     clipboardUtilities,
     settingsIniUtilities,
+    debugUtilities,
 
     //-----------------------------------------------------------------------------
     // Internal API
