@@ -50,14 +50,17 @@ internal interface basicHelpersForWidgetCode {
         // In theory we should be offsetting the starting position (window->DC.CursorPos), that will be the topic of a larger refactor,
         // but since ItemSize() is not yet an API that moves the cursor (to handle e.g. wrapping) enlarging the height has the same effect.
         val offsetToMatchBaselineY = if (textBaselineY >= 0f) 0f max (window.dc.currLineTextBaseOffset - textBaselineY) else 0f
-        val lineHeight = window.dc.currLineSize.y max (size.y + offsetToMatchBaselineY)
+
+        val lineY1 = if (window.dc.isSameLine) window.dc.cursorPosPrevLine.y else window.dc.cursorPos.y
+        val lineHeight = window.dc.currLineSize.y max ( /*ImMax(*/window.dc.cursorPos.y - lineY1/*, 0.0f)*/ + size.y + offsetToMatchBaselineY)
 
         // Always align ourselves on pixel boundaries
         window.dc.apply {
             //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
-            cursorPosPrevLine.put(cursorPos.x + size.x, cursorPos.y)
-            cursorPos.x = floor(window.pos.x + indent + columnsOffset)           // Next line
-            cursorPos.y = floor(cursorPos.y + lineHeight + style.itemSpacing.y)  // Next line
+            cursorPosPrevLine.put(cursorPos.x + size.x,
+                                  lineY1)
+            cursorPos.put(floor(window.pos.x + indent + columnsOffset), // Next line
+                          floor(lineY1 + lineHeight + style.itemSpacing.y)) // Next line
             cursorMaxPos.x = cursorMaxPos.x max cursorPosPrevLine.x
             cursorMaxPos.y = cursorMaxPos.y max (cursorPos.y - style.itemSpacing.y)
             //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]
@@ -66,6 +69,7 @@ internal interface basicHelpersForWidgetCode {
             currLineSize.y = 0f
             prevLineTextBaseOffset = currLineTextBaseOffset max textBaselineY
             currLineTextBaseOffset = 0f
+            isSameLine = false
 
             // Horizontal layout mode
             if (layoutType == LayoutType.Horizontal) sameLine()

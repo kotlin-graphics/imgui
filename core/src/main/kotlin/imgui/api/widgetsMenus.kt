@@ -72,6 +72,7 @@ interface widgetsMenus {
             cursorMaxPos.put(barRect.min.x + window.dc.menuBarOffset.x, barRect.min.y + window.dc.menuBarOffset.y)
             cursorPos put cursorMaxPos
             layoutType = Lt.Horizontal
+            window.dc.isSameLine = false
             navLayerCurrent = NavLayer.Menu
             menuBarAppending = true
         }
@@ -119,6 +120,7 @@ interface widgetsMenus {
             g.groupStack.last().emitItem = false
             endGroup() // Restore position on layer 0
             layoutType = Lt.Vertical
+            window.dc.isSameLine = false
             navLayerCurrent = NavLayer.Main
             menuBarAppending = false
         }

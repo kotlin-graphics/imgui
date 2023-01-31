@@ -1333,10 +1333,9 @@ object ShowDemoWindowWidgets {
                 combo("Display Mode", ::displayMode, "Auto/Current\u0000None\u0000RGB Only\u0000HSV Only\u0000Hex Only\u0000")
                 sameLine(); helpMarker(
                 "ColorEdit defaults to displaying RGB inputs if you don't specify a display mode, " +
-                        "but the user can change it with a right-click.\n\nColorPicker defaults to displaying RGB+HSV+Hex " +
+                        "but the user can change it with a right-click on those inputs.\n\nColorPicker defaults to displaying RGB+HSV+Hex " +
                         "if you don't specify a display mode.\n\nYou can change the defaults using SetColorEditOptions().")
-                combo("Picker Mode", ::pickerMode, "Auto/Current\u0000Hue bar + SV rect\u0000Hue wheel + SV triangle\u0000")
-                sameLine(); helpMarker("User can right-click the picker to change mode.")
+                sameLine(); helpMarker("When not specified explicitly (Auto/Current mode), user can right-click the picker to change mode.")
                 var flags = miscFlags
                 if (!alpha) flags = flags or Cef.NoAlpha // This is by default if you call ColorPicker3() instead of ColorPicker4()
                 if (alphaBar) flags = flags or Cef.AlphaBar

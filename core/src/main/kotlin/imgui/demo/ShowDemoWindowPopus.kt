@@ -27,6 +27,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setItemDefaultFocus
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setTooltip
 import imgui.ImGui.text
@@ -193,13 +194,12 @@ object ShowDemoWindowPopups {
                 // Using an explicit identifier is also convenient if you want to activate the popups from different locations.
                 run {
                     helpMarker("Text() elements don't have stable identifiers so we need to provide one.")
-                    text("Value = %.3f (<-- right-click here)", value)
-                    popupContextItem("item context menu") {
+                    text("Value = %.3f (<-- right-click this text)", value)
+                    popupContextItem("my popup") {
                         if (selectable("Set to zero")) value = 0f
                         if (selectable("Set to PI")) value = glm.πf
-                        withItemWidth(-Float.MIN_VALUE) {
-                            dragFloat("##Value", ::value, 0.1f, 0f, 0f)
-                        }
+                        setNextItemWidth(-Float.MIN_VALUE)
+                        dragFloat("##Value", ::value, 0.1f, 0f, 0f)
                     }
 
                     // We can also use OpenPopupOnItemClick() to toggle the visibility of a given popup.

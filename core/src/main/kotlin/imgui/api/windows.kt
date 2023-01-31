@@ -615,6 +615,7 @@ interface windows {
                 dc.currLineSize put 0f; dc.prevLineSize put 0f
                 dc.idealMaxPos put dc.cursorStartPos
                 dc.currLineTextBaseOffset = 0f; dc.prevLineTextBaseOffset = 0f
+                dc.isSameLine = false
 
                 dc.navLayerCurrent = NavLayer.Main
                 dc.navLayersActiveMask = dc.navLayersActiveMaskNext

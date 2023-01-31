@@ -67,6 +67,7 @@ interface cursorLayout {
             }
             dc.currLineSize.y = dc.prevLineSize.y
             dc.currLineTextBaseOffset = dc.prevLineTextBaseOffset
+            dc.isSameLine = true
         }
     }
 
@@ -77,6 +78,7 @@ interface cursorLayout {
 
         val backupLayoutType = window.dc.layoutType
         window.dc.layoutType = Lt.Vertical
+        window.dc.isSameLine = false
         // In the event that we are on a line with items that is smaller that FontSize high, we will preserve its height.
         itemSize(Vec2(0f, if (window.dc.currLineSize.y > 0f) 0f else g.fontSize))
         window.dc.layoutType = backupLayoutType

@@ -96,6 +96,7 @@ internal interface combos {
         window.dc.cursorPos = previewData.previewRect.min + g.style.framePadding
         window.dc.cursorMaxPos put window.dc.cursorPos
         window.dc.layoutType = LayoutType.Horizontal
+        window.dc.isSameLine = false
         pushClipRect(previewData.previewRect.min, previewData.previewRect.max, true)
 
         return true
@@ -120,6 +121,7 @@ internal interface combos {
         window.dc.cursorPosPrevLine = previewData.backupCursorPosPrevLine
         window.dc.prevLineTextBaseOffset = previewData.backupPrevLineTextBaseOffset
         window.dc.layoutType = previewData.backupLayout
+        window.dc.isSameLine = false
         previewData.previewRect put Rect()
     }
 

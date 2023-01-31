@@ -39,6 +39,8 @@ class WindowTempData {
 
     var prevLineTextBaseOffset = 0f
 
+    var isSameLine = false
+
     /** Indentation / start position from left of window (increased by TreePush/TreePop, etc.)  */
     var indent = 0f
 
