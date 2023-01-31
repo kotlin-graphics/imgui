@@ -525,6 +525,36 @@ class ImplGL3 : GLInterface {
 
             var hasClipOrigin = false
         }
+
+        // b7686a88e950f95250c1e88e301bef1ebca22523
+//        // OpenGL vertex attribute state
+//        #ifndef IMGUI_IMPL_OPENGL_USE_VERTEX_ARRAY
+//        struct ImGui_ImplOpenGL3_VtxAttribState
+//        {
+//            GLint   Enabled;
+//            GLint   Size;
+//            GLint   Type;
+//            GLint   Normalized;
+//            GLint   Stride;
+//            GLvoid* Ptr;
+//        };
+//
+//        static void ImGui_ImplOpenGL3_BackupVertexAttribState(GLint index, ImGui_ImplOpenGL3_VtxAttribState* state)
+//        {
+//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &state->Enabled);
+//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_SIZE, &state->Size);
+//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_TYPE, &state->Type);
+//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &state->Normalized);
+//            glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &state->Stride);
+//            glGetVertexAttribPointerv(index, GL_VERTEX_ATTRIB_ARRAY_POINTER, &state->Ptr);
+//        }
+//
+//        static void ImGui_ImplOpenGL3_RestoreVertexAttribState(GLint index, ImGui_ImplOpenGL3_VtxAttribState* state)
+//        {
+//            glVertexAttribPointer(index, state->Size, state->Type, state->Normalized, state->Stride, state->Ptr);
+//            if (state->Enabled) glEnableVertexAttribArray(index); else glDisableVertexAttribArray(index);
+//        }
+//        #endif
     }
 
     /*private fun debugSave(fbWidth: Int, fbHeight: Int) {
