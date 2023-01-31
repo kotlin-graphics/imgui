@@ -1353,6 +1353,7 @@ operator fun ModFlags.div(flag: ModFlag): ModFlags = or(flag)
 
 
 /** Gamepad/Keyboard navigation
+ *  Since >= 1.87 backends you generally don't need to care about this enum since io.NavInputs[] is setup automatically. This might become private/internal some day.
  *  Keyboard: Set io.configFlags |= NavFlags.EnableKeyboard to enable. ::newFrame() will automatically fill io.navInputs[] based on your io.AddKeyEvent() calls.
  *  Gamepad:  Set io.configFlags |= NavFlags.EnableGamepad to enable. Fill the io.navInputs[] fields before calling NewFrame(). Note that io.navInputs[] is cleared by EndFrame().
  *  Read instructions in imgui.cpp for more details. Download PNG/PSD at http://dearimgui.org/controls_sheets.
@@ -1486,8 +1487,7 @@ enum class ConfigFlag(@JvmField val i: ConfigFlags) {
     /** JVM custom */
     NoKeyboardUpdate(1 shl 13),
 
-    /*  User storage (to allow your backend/engine to communicate to code that may be shared between multiple projects.
-        Those flags are not used by core Dear ImGui)     */
+    // User storage (to allow your backend/engine to communicate to code that may be shared between multiple projects. Those flags are NOT used by core Dear ImGui)
 
     /** Application is SRGB-aware. */
     IsSRGB(1 shl 20),
@@ -1594,9 +1594,13 @@ enum class Col {
     Separator,
     SeparatorHovered,
     SeparatorActive,
+
+    /** Resize grip in lower-right and lower-left corners of windows. */
     ResizeGrip,
     ResizeGripHovered,
     ResizeGripActive,
+
+    /** TabItem in a TabBar */
     Tab,
     TabHovered,
     TabActive,
@@ -1622,6 +1626,8 @@ enum class Col {
     /** Table row background (odd rows) */
     TableRowBgAlt,
     TextSelectedBg,
+
+    /** Rectangle highlighting a drop target */
     DragDropTarget,
 
     /** Gamepad/keyboard: current highlighted item  */

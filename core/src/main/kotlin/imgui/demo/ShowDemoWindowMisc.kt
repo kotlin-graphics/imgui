@@ -158,24 +158,28 @@ object ShowDemoWindowMisc {
                     KeyLayoutData(1, 0, "", Key.CapsLock), KeyLayoutData(1, 1, "A", Key.A), KeyLayoutData(1, 2, "S", Key.S), KeyLayoutData(1, 3, "D", Key.D), KeyLayoutData(1, 4, "F", Key.F),
                     KeyLayoutData(2, 0, "", Key.LeftShift), KeyLayoutData(2, 1, "Z", Key.Z), KeyLayoutData(2, 2, "X", Key.X), KeyLayoutData(2, 3, "C", Key.C), KeyLayoutData(2, 4, "V", Key.V))
 
-                val drawList = ImGui.windowDrawList
-                drawList.pushClipRect(boardMin, boardMax, true)
-                for (keyData in keysToDisplay) {
-                    val keyMin = Vec2(startPos.x + keyData.col * keyStep.x + keyData.row * keyrowOffset, startPos.y + keyData.row * keyStep.y)
-                    val keyMax = Vec2(keyMin.x + keySize.x, keyMin.y + keySize.y)
-                    drawList.addRectFilled(keyMin, keyMax, COL32(204, 204, 204, 255), keyRounding)
-                    drawList.addRect(keyMin, keyMax, COL32(24, 24, 24, 255), keyRounding)
-                    val faceMin = Vec2(keyMin.x + keyfacePos.x, keyMin.y + keyfacePos.y)
-                    val faceMax = Vec2(faceMin.x + keyfaceSize.x, faceMin.y + keyfaceSize.y)
-                    drawList.addRect(faceMin, faceMax, COL32(193, 193, 193, 255), keyfaceRounding, DrawFlag.None.i, 2f)
-                    drawList.addRectFilled(faceMin, faceMax, COL32(252, 252, 252, 255), keyfaceRounding)
-                    val labelMin = Vec2(keyMin.x + keylabelPos.x, keyMin.y + keylabelPos.y)
-                    drawList.addText(labelMin, COL32(64, 64, 64, 255), keyData.label)
-                    if (keyData.key.isDown)
-                        drawList.addRectFilled(keyMin, keyMax, COL32(255, 0, 0, 128), keyRounding)
-                }
-                drawList.popClipRect()
+                // Elements rendered manually via ImDrawList API are not clipped automatically.
+                // While not strictly necessary, here IsItemVisible() is used to avoid rendering these shapes when they are out of view.
                 dummy(Vec2(boardMax.x - boardMin.x, boardMax.y - boardMin.y))
+                if (ImGui.isItemVisible) {
+                    val drawList = ImGui.windowDrawList
+                    drawList.pushClipRect(boardMin, boardMax, true)
+                    for (keyData in keysToDisplay) {
+                        val keyMin = Vec2(startPos.x + keyData.col * keyStep.x + keyData.row * keyrowOffset, startPos.y + keyData.row * keyStep.y)
+                        val keyMax = Vec2(keyMin.x + keySize.x, keyMin.y + keySize.y)
+                        drawList.addRectFilled(keyMin, keyMax, COL32(204, 204, 204, 255), keyRounding)
+                        drawList.addRect(keyMin, keyMax, COL32(24, 24, 24, 255), keyRounding)
+                        val faceMin = Vec2(keyMin.x + keyfacePos.x, keyMin.y + keyfacePos.y)
+                        val faceMax = Vec2(faceMin.x + keyfaceSize.x, faceMin.y + keyfaceSize.y)
+                        drawList.addRect(faceMin, faceMax, COL32(193, 193, 193, 255), keyfaceRounding, DrawFlag.None.i, 2f)
+                        drawList.addRectFilled(faceMin, faceMax, COL32(252, 252, 252, 255), keyfaceRounding)
+                        val labelMin = Vec2(keyMin.x + keylabelPos.x, keyMin.y + keylabelPos.y)
+                        drawList.addText(labelMin, COL32(64, 64, 64, 255), keyData.label)
+                        if (keyData.key.isDown)
+                            drawList.addRectFilled(keyMin, keyMax, COL32(255, 0, 0, 128), keyRounding)
+                    }
+                    drawList.popClipRect()
+                }
             }
 
             treeNode("Capture override") {

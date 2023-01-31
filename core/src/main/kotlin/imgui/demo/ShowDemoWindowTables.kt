@@ -1302,7 +1302,7 @@ object ShowDemoWindowTables {
                             tableSetColumnIndex(1)
                             sliderFloat("float1", ::dummyF, 0f, 1f)
                             tableSetColumnIndex(2)
-                            sliderFloat("float2", ::dummyF, 0f, 1f)
+                            sliderFloat("##float2", ::dummyF, 0f, 1f) // No visible label since right-aligned
                         }
                     }
                 }

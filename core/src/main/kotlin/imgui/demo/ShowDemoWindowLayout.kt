@@ -780,54 +780,50 @@ object ShowDemoWindowLayout {
                 dragVec2("size", size, 0.5f, 1f, 200f, "%.0f")
                 textWrapped("(Click and drag to scroll)")
 
+                helpMarker(
+                    "(Left) Using ImGui::PushClipRect():\n" +
+                            "Will alter ImGui hit-testing logic + ImDrawList rendering.\n" +
+                            "(use this if you want your clipping rectangle to affect interactions)\n\n" +
+                            "(Center) Using ImDrawList::PushClipRect():\n" +
+                            "Will alter ImDrawList rendering only.\n" +
+                            "(use this as a shortcut if you are only using ImDrawList calls)\n\n" +
+                            "(Right) Using ImDrawList::AddText() with a fine ClipRect:\n" +
+                            "Will alter only this specific ImDrawList::AddText() rendering.\n" +
+                            "This is often used internally to avoid altering the clipping rectangle and minimize draw calls.")
+
                 for (n in 0..2) {
                     if (n > 0)
                         sameLine()
+
                     pushID(n)
-                    group { // Lock X position
 
-                        invisibleButton("##empty", size)
-                        if (ImGui.isItemActive && ImGui.isMouseDragging(MouseButton.Left))
-                            offset += io.mouseDelta
-                        val p0 = Vec2(ImGui.itemRectMin)
-                        val p1 = Vec2(ImGui.itemRectMax)
-                        val textStr = "Line 1 hello\nLine 2 clip me!"
-                        val textPos = p0 + offset
-                        val drawList = ImGui.windowDrawList
+                    invisibleButton("##canvas", size)
+                    if (ImGui.isItemActive && ImGui.isMouseDragging(MouseButton.Left))
+                        offset += io.mouseDelta
+                    popID()
+                    if (!ImGui.isItemVisible) // Skip rendering as ImDrawList elements are not clipped.
+                        continue
 
-                        when (n) {
-                            0 -> {
-                                helpMarker("""
-                                Using ImGui::PushClipRect():
-                                Will alter ImGui hit-testing logic + ImDrawList rendering.
-                                (use this if you want your clipping rectangle to affect interactions)""".trimIndent())
-                                withClipRect(p0, p1, true) {
-                                    drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
-                                    drawList.addText(textPos, COL32_WHITE, textStr)
-                                }
-                            }
-                            1 -> {
-                                helpMarker("""
-                                Using ImDrawList::PushClipRect():
-                                Will alter ImDrawList rendering only.
-                                (use this as a shortcut if you are only using ImDrawList calls)""".trimIndent())
-                                drawList.withClipRect(p0, p1, true) {
-                                    addRectFilled(p0, p1, COL32(90, 90, 120, 255))
-                                    addText(textPos, COL32_WHITE, textStr)
-                                }
-                            }
-                            2 -> {
-                                helpMarker("""
-                                Using ImDrawList::AddText() with a fine ClipRect:
-                                Will alter only this specific ImDrawList::AddText() rendering.
-                                (this is often used internally to avoid altering the clipping rectangle and minimize draw calls)""".trimIndent())
-                                val clipRect = Vec4(p0, p1) // AddText() takes a ImVec4* here so let's convert.
-                                drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
-                                drawList.addText(ImGui.font, ImGui.fontSize, textPos, COL32_WHITE, textStr, 0f, clipRect)
-                            }
+                    val p0 = Vec2(ImGui.itemRectMin)
+                    val p1 = Vec2(ImGui.itemRectMax)
+                    val textStr = "Line 1 hello\nLine 2 clip me!"
+                    val textPos = p0 + offset
+                    val drawList = ImGui.windowDrawList
+                    when (n) {
+                        0 -> withClipRect(p0, p1, true) {
+                            drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                            drawList.addText(textPos, COL32_WHITE, textStr)
+                        }
+                        1 -> drawList.withClipRect(p0, p1, true) {
+                            addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                            addText(textPos, COL32_WHITE, textStr)
+                        }
+                        2 -> {
+                            val clipRect = Vec4(p0, p1) // AddText() takes a ImVec4* here so let's convert.
+                            drawList.addRectFilled(p0, p1, COL32(90, 90, 120, 255))
+                            drawList.addText(ImGui.font, ImGui.fontSize, textPos, COL32_WHITE, textStr, 0f, clipRect)
                         }
                     }
-                    popID()
                 }
             }
         }

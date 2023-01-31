@@ -75,7 +75,7 @@ internal interface menus {
         var menuIsOpen = ImGui.isPopupOpen(id)
 
         // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal focus and not allow hovering on parent menu)
-        // The first menu in a hierarchy isn't so hovering doesn't get accross (otherwise e.g. resizing borders with ImGuiButtonFlags_FlattenChildren would react), but top-most BeginMenu() will bypass that limitation.
+        // The first menu in a hierarchy isn't so hovering doesn't get across (otherwise e.g. resizing borders with ImGuiButtonFlags_FlattenChildren would react), but top-most BeginMenu() will bypass that limitation.
         var flags = WindowFlag._ChildMenu or WindowFlag.AlwaysAutoResize or WindowFlag.NoMove or WindowFlag.NoTitleBar or WindowFlag.NoSavedSettings or WindowFlag.NoNavFocus
         if (window.flags has WindowFlag._ChildMenu)
             flags = flags or WindowFlag._ChildWindow
