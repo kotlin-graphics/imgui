@@ -104,6 +104,9 @@ internal interface basicAccessors {
             }
         }
 
+
+    /** This is called by ItemAdd().
+     *  Code not using ItemAdd() may need to call this manually otherwise ActiveId will be cleared. In IMGUI_VERSION_NUM < 18717 this was called by GetID(). */
     fun keepAliveID(id: ID) {
         if (g.activeId == id)
             g.activeIdIsAlive = id

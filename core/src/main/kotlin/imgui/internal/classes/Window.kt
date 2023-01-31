@@ -23,7 +23,6 @@ import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setActiveIdUsingNavAndKeys
 import imgui.ImGui.style
-import imgui.WindowFlag
 import imgui.api.g
 import imgui.classes.Context
 import imgui.classes.DrawList
@@ -32,8 +31,6 @@ import imgui.internal.*
 import imgui.internal.sections.*
 import kool.cap
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -308,7 +305,6 @@ class Window(var context: Context,
     fun getID(strID: String, end: Int = 0): ID {
         val seed: ID = idStack.last()
         val id: ID = hashStr(strID, end, seed)
-        keepAliveID(id)
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType._String, strID, end)
         return id
@@ -318,7 +314,6 @@ class Window(var context: Context,
     fun getID(ptrID: Any): ID {
         val seed: ID = idStack.last()
         val id: ID = hashData(System.identityHashCode(ptrID), seed)
-        keepAliveID(id)
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType._Pointer, ptrID)
         return id
@@ -329,7 +324,6 @@ class Window(var context: Context,
         if (intPtr >= ptrId.size) increase()
         val seed: ID = idStack.last()
         val id = hashData(System.identityHashCode(ptrId[intPtr.i]), seed)
-        keepAliveID(id)
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType.Long, intPtr) // TODO check me
         return id
@@ -338,7 +332,6 @@ class Window(var context: Context,
     fun getID(n: Int): ID {
         val seed = idStack.last()
         val id = hashData(n, seed)
-        keepAliveID(id)
         if (g.debugHookIdInfo == id)
             debugHookIdInfo(id, DataType.Int, n)
         return id
@@ -381,7 +374,8 @@ class Window(var context: Context,
     fun getIdFromRectangle(rAbs: Rect): ID {
         val seed: ID = idStack.last()
         val rRel = rectAbsToRel(rAbs)
-        return hashData(intArrayOf(rRel.min.x.i, rRel.min.y.i, rRel.max.x.i, rRel.max.y.i), seed).also { keepAliveID(it) } // id
+        val id = hashData(intArrayOf(rRel.min.x.i, rRel.min.y.i, rRel.max.x.i, rRel.max.y.i), seed)
+        return id
     }
 
     /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
@@ -875,7 +869,7 @@ class Window(var context: Context,
 
         val flags = flags
 
-        if (flags has WindowFlag.NoResize || flags has WindowFlag.AlwaysAutoResize || autoFitFrames anyGreaterThan 0)
+        if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || autoFitFrames anyGreaterThan 0)
             return borderHeld to false
         if (!wasActive) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
             return borderHeld to false
@@ -903,8 +897,8 @@ class Window(var context: Context,
             val resizeRect = Rect(corner - def.innerDir * gripHoverOuterSize, corner + def.innerDir * gripHoverInnerSize)
             if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
             if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
-
             val resizeGripId = getID(resizeGripN) // == GetWindowResizeCornerID()
+            keepAliveID(resizeGripId)
             val (_, hovered, held) = ImGui.buttonBehavior(resizeRect, resizeGripId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
             //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
             if (hovered || held)
@@ -935,6 +929,7 @@ class Window(var context: Context,
             val axis = if (borderN == Dir.Left.i || borderN == Dir.Right.i) Axis.X else Axis.Y
             val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_HOVER_PADDING)
             val borderId = getID(borderN + 4) // == GetWindowResizeBorderID()
+            keepAliveID(borderId)
             val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
             //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
             if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {

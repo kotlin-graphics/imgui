@@ -9,6 +9,7 @@ import imgui.ImGui.io
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemHoverable
+import imgui.ImGui.keepAliveID
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setActiveIdUsingNavAndKeys
 import imgui.classes.Payload
@@ -84,8 +85,8 @@ interface dragAndDrop {
                 // THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING/RESIZING OF THE WIDGET, so if your widget moves your dragging operation will be canceled.
                 // We don't need to maintain/call ClearActiveID() as releasing the button will early out this function and trigger !ActiveIdIsAlive.
                 // Rely on keeping other window->LastItemXXX fields intact.
-                g.lastItemData.id = window!!.getIdFromRectangle(g.lastItemData.rect)
-                sourceId = g.lastItemData.id
+                sourceId = window.getIdFromRectangle(g.lastItemData.rect); g.lastItemData.id = sourceId
+                keepAliveID(sourceId)
                 val isHovered = itemHoverable(g.lastItemData.rect, sourceId)
                 if (isHovered && io.mouseClicked[mouseButton.i]) {
                     setActiveID(sourceId, window)
@@ -211,8 +212,10 @@ interface dragAndDrop {
             else -> g.lastItemData.rect
         }
         var id = g.lastItemData.id
-        if (id == 0)
-            id = window.getIdFromRectangle(displayRect) // [JVM] save to pass the reference
+        if (id == 0) {
+            id = window.getIdFromRectangle(displayRect) // [JVM] safe to pass the reference
+            keepAliveID(id)
+        }
         if (g.dragDropPayload.sourceId == id) return false
 
         assert(!g.dragDropWithinTarget)

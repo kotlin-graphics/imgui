@@ -10,6 +10,7 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.hoveredId
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.keepAliveID
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.api.g
@@ -90,6 +91,8 @@ internal interface basicHelpersForWidgetCode {
 
         // Directional navigation processing
         if (id != 0) {
+            keepAliveID(id)
+
             // Navigation processing runs prior to clipping early-out
             //  (a) So that NavInitRequest can be honored, for newly opened windows to select a default widget
             //  (b) So that we can scroll up/down past clipped items. This adds a small O(N) cost to regular navigation requests
