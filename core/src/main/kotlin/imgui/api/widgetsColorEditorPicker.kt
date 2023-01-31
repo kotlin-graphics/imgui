@@ -690,17 +690,14 @@ interface widgetsColorEditorPicker {
      *  FIXME: May want to display/ignore the alpha component in the color display? Yet show it in the tooltip.
      *  'desc_id' is not called 'label' because we don't display it next to the button, but only in the tooltip.
      *  Note that 'col' may be encoded in HSV if ImGuiColorEditFlags_InputHSV is set.   */
-    fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = 0, size: Vec2 = Vec2()): Boolean {
+    fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
         if (window.skipItems) return false
 
         val id = window.getID(descId)
         val defaultSize = frameHeight
-        if (size.x == 0f)
-            size.x = defaultSize
-        if (size.y == 0f)
-            size.y = defaultSize
+        val size = Vec2(if (sizeArg.x == 0f) defaultSize else sizeArg.x, if (sizeArg.y == 0f) defaultSize else sizeArg.y)
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
         itemSize(bb, if (size.y >= defaultSize) style.framePadding.y else 0f)
         if (!itemAdd(bb, id))

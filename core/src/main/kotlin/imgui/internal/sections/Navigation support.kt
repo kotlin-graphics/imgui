@@ -118,7 +118,7 @@ typealias NavDirSourceFlags = Int
 
 enum class NavDirSourceFlag {
     None,
-    /** Raw keyboard (not pulled from nav), faciliate use of some functions before we can unify nav and keys */
+    /** Raw keyboard (not pulled from nav), facilitate use of some functions before we can unify nav and keys */
     RawKeyboard,
     Keyboard, PadDPad, PadLStick;
 

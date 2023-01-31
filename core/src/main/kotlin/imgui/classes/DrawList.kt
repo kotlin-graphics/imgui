@@ -153,6 +153,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     // -----------------------------------------------------------------------------------------------------------------
     // Primitives
+    // - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise shapes will have "inward" anti-aliasing.
     // - For rectangular primitives, "p_min" and "p_max" represent the upper-left and lower-right corners.
     // - For circle primitives, use "num_segments == 0" to automatically calculate tessellation (preferred).
     //   In older versions (until Dear ImGui 1.77) the AddCircle functions defaulted to num_segments == 12.
@@ -648,9 +649,8 @@ class DrawList(sharedData: DrawListSharedData?) {
         idxBuffer.pos = 0
     }
 
-    /** We intentionally avoid using ImVec2 and its math operators here to reduce cost to a minimum for debug/non-inlined builds.
-     *
-     *  Note: Anti-aliased filling requires points to be in clockwise order. */
+    /** - We intentionally avoid using ImVec2 and its math operators here to reduce cost to a minimum for debug/non-inlined builds.
+     *  - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise shapes will have "inward" anti-aliasing. */
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
         if (points.size < 3)
@@ -843,6 +843,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     // -----------------------------------------------------------------------------------------------------------------
     // Stateful path API, add points then finish with PathFillConvex() or PathStroke()
+    // - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise shapes will have "inward" anti-aliasing.
     // -----------------------------------------------------------------------------------------------------------------
 
     fun pathClear() = _path.clear()
@@ -853,7 +854,6 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (_path.isEmpty() || _path.last() != pos) _path += pos
     }
 
-    /** Note: Anti-aliased filling requires points to be in clockwise order. */
     fun pathFillConvex(col: Int) = addConvexPolyFilled(_path, col).also { pathClear() }
 
     /** rounding_corners_flags: 4 bits corresponding to which corner to round   */

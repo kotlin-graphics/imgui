@@ -307,6 +307,7 @@ class Font {
         var (x, y) = pos(floor(pos.x), floor(pos.y))
         if (y > clipRect.w) return
 
+        val startX = x
         val scale = size / fontSize
         val lineHeight = fontSize * scale
         val wordWrapEnabled = wrapWidth > 0f
@@ -360,7 +361,7 @@ class Font {
                 /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
                     and not intrusive for what's essentially an uncommon feature.                 */
                 if (wordWrapEol == 0) {
-                    wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - (x - pos.x))
+                    wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - (x - startX))
                     /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
                         discontinuity.                     */
                     if (wordWrapEol == s)
@@ -369,7 +370,7 @@ class Font {
                 }
 
                 if (s >= wordWrapEol) {
-                    x = pos.x
+                    x = startX
                     y += lineHeight
                     wordWrapEol = 0
 
@@ -396,7 +397,7 @@ class Font {
 
             if (c < 32) {
                 if (c == '\n'.i) {
-                    x = pos.x
+                    x = startX
                     y += lineHeight
                     if (y > clipRect.w)
                         break // break out of main loop
