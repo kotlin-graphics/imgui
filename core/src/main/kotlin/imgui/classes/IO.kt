@@ -43,7 +43,7 @@ class KeyData {
 class IO(sharedFontAtlas: FontAtlas? = null) {
 
     //------------------------------------------------------------------
-    // Configuration (fill once)
+    // Configuration
     //------------------------------------------------------------------
 
     /** See ConfigFlags enum. Set by user/application. Gamepad/keyboard navigation options, etc. */
@@ -52,10 +52,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Set ImGuiBackendFlags_ enum. Set by imgui_impl_xxx files or custom backend to communicate features supported by the backend. */
     var backendFlags: BackendFlags = BackendFlag.None.i
 
-    /** Main display size, in pixels (generally == GetMainViewport()->Size)   */
+    /** Main display size, in pixels (generally == GetMainViewport()->Size). May change every frame.   */
     var displaySize = Vec2i(-1)
 
-    /** Time elapsed since last frame, in seconds.  */
+    /** Time elapsed since last frame, in seconds. May change every frame.  */
     var deltaTime = 1f / 60f
 
     /** Minimum time between saving positions/sizes to .ini file, in seconds.   */
