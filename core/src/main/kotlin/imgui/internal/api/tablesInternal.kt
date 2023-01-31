@@ -83,6 +83,8 @@ interface tablesInternal {
         table.isLayoutLocked = false
         table.innerWidth = innerWidth
         tempData.userOuterSize put outerSize
+        if (instanceNo > 0 && table.instanceDataExtra.size < instanceNo)
+            table.instanceDataExtra += TableInstanceData()
 
         // When not using a child window, WorkRect.Max will grow as we append contents.
         if (useChildWindow) {

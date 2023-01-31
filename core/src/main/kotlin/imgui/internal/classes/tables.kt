@@ -147,6 +147,17 @@ class TableColumn {
     var sortDirectionsAvailList = 0
 }
 
+/** Storage for one instance of a same table
+ *
+ *  Per-instance data that needs preserving across frames (seemingly most others do not need to be preserved aside from debug needs, does that needs they could be moved to ImGuiTableTempData ?) */
+class TableInstanceData {
+    /** Outer height from last frame // FIXME: multi-instance issue (#3955) */
+    var lastOuterHeight = 0f
+
+    /** Height of first row from last frame // FIXME: possible multi-instance issue? */
+    var lastFirstRowHeight = 0f
+}
+
 /** Temporary storage for one table (one per table in the stack), shared between tables.
  *
  *  Transient data that are only needed between BeginTable() and EndTable(), those buffers are shared (1 per level of stacked table).
@@ -167,18 +178,25 @@ class TableTempData {
 
     /** Backup of InnerWindow->WorkRect at the end of BeginTable() */
     val hostBackupWorkRect = Rect()
+
     /** Backup of InnerWindow->ParentWorkRect at the end of BeginTable() */
     val hostBackupParentWorkRect = Rect()
+
     /** Backup of InnerWindow->DC.PrevLineSize at the end of BeginTable() */
     val hostBackupPrevLineSize = Vec2()
+
     /** Backup of InnerWindow->DC.CurrLineSize at the end of BeginTable() */
     val hostBackupCurrLineSize = Vec2()
+
     /** Backup of InnerWindow->DC.CursorMaxPos at the end of BeginTable() */
     val hostBackupCursorMaxPos = Vec2()
+
     /** Backup of OuterWindow->DC.ColumnsOffset at the end of BeginTable() */
     var hostBackupColumnsOffset = 0f
+
     /** Backup of OuterWindow->DC.ItemWidth at the end of BeginTable() */
     var hostBackupItemWidth = 0f
+
     /** Backup of OuterWindow->DC.ItemWidthStack.Size at the end of BeginTable() */
     var hostBackupItemWidthStackSize = 0
 }
@@ -212,10 +230,10 @@ class TableSettings
 
 /** ~TableSettingsCreate */
 constructor(
-        /** Set to 0 to invalidate/delete the setting */
-        var id: ID = 0,
+    /** Set to 0 to invalidate/delete the setting */
+    var id: ID = 0,
 
-        var columnsCount: TableColumnIdx = 0) {
+    var columnsCount: TableColumnIdx = 0) {
 
     /** Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags (could be using its own flags..) */
     var saveFlags = Tf.None.i

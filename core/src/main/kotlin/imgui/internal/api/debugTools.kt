@@ -420,6 +420,8 @@ internal interface debugTools {
             foregroundDrawList.addRect(itemRectMin, itemRectMax, COL32(255, 255, 0, 255))
         if (!open)
             return
+        if (table.instanceCurrent > 0)
+            text("** ${table.instanceCurrent + 1} instances of same table! Some data below will refer to last instance.")
         val clearSettings = smallButton("Clear settings")
         bulletText("OuterRect: Pos: (%.1f,%.1f) Size: (%.1f,%.1f) Sizing: '${debugNodeTableGetSizingPolicyDesc(table.flags)}'", table.outerRect.min.x, table.outerRect.min.y, table.outerRect.width, table.outerRect.height)
         bulletText("ColumnsGivenWidth: %.1f, ColumnsAutoFitWidth: %.1f, InnerWidth: %.1f${if (table.innerWidth == 0f) " (auto)" else ""}", table.columnsGivenWidth, table.columnsAutoFitWidth, table.innerWidth)

@@ -137,12 +137,6 @@ class Table {
     /** Spacing between non-bordered cells */
     var cellSpacingX2 = 0f
 
-    /** Outer height from last frame */
-    var lastOuterHeight = 0f
-
-    /** Height of first row from last frame */
-    var lastFirstRowHeight = 0f
-
     /** User value passed to BeginTable(), see comments at the top of BeginTable() for details. */
     var innerWidth = 0f
 
@@ -196,6 +190,9 @@ class Table {
 
     /** Shortcut to TempData->DrawSplitter while in table. Isolate draw commands per columns to avoid switching clip rect constantly */
     var drawSplitter = DrawListSplitter()
+
+    var instanceDataFirst = TableInstanceData()
+    val instanceDataExtra = ArrayList<TableInstanceData>()  // FIXME-OPT: Using a small-vector pattern would be good.
 
     lateinit var sortSpecsSingle: TableColumnSortSpecs
 
@@ -690,9 +687,10 @@ class Table {
             }
         }
 
+        val tableInstance = getInstanceData(instanceCurrent)
         hoveredColumnBody = -1
         hoveredColumnBorder = -1
-        val mouseHitRect = Rect(outerRect.min.x, outerRect.min.y, outerRect.max.x, outerRect.max.y max (outerRect.min.y + lastOuterHeight))
+        val mouseHitRect = Rect(outerRect.min.x, outerRect.min.y, outerRect.max.x, outerRect.max.y max (outerRect.min.y + tableInstance.lastOuterHeight))
         val isHoveringTable = itemHoverable(mouseHitRect, 0)
 
         // [Part 6] Setup final position, offset, skip/clip states and clipping rectangles, detect hovered column
@@ -856,7 +854,7 @@ class Table {
         // [Part 10] Hit testing on borders
         if (flags has Tf.Resizable)
             updateBorders()
-        lastFirstRowHeight = 0f
+        tableInstance.lastFirstRowHeight = 0f
         isLayoutLocked = true
         isUsingHeaders = false
 
@@ -971,10 +969,11 @@ class Table {
         // use the final height from last frame. Because this is only affecting _interaction_ with columns, it is not
         // really problematic (whereas the actual visual will be displayed in EndTable() and using the current frame height).
         // Actual columns highlight/render will be performed in EndTable() and not be affected.
+        val tableInstance = getInstanceData(instanceCurrent)
         val hitHalfWidth = TABLE_RESIZE_SEPARATOR_HALF_THICKNESS
         val hitY1 = outerRect.min.y
-        val hitY2Body = outerRect.max.y max (hitY1 + lastOuterHeight)
-        val hitY2Head = hitY1 + lastFirstRowHeight
+        val hitY2Body = outerRect.max.y max (hitY1 + tableInstance.lastOuterHeight)
+        val hitY2Head = hitY1 + tableInstance.lastFirstRowHeight
 
         for (orderN in 0 until columnsCount) {
 
@@ -1031,11 +1030,12 @@ class Table {
         innerDrawlist.pushClipRect(bg0ClipRectForDrawCmd.min, bg0ClipRectForDrawCmd.max, false)
 
         // Draw inner border and resizing feedback
+        val tableInstance = getInstanceData(instanceCurrent)
         val borderSize = TABLE_BORDER_SIZE
         val drawY1 = innerRect.min.y
         val drawY2Body = innerRect.max.y
         val drawY2Head = when {
-            isUsingHeaders -> innerRect.max.y min ((if (freezeRowsCount >= 1) innerRect.min.y else workRect.min.y) + lastFirstRowHeight)
+            isUsingHeaders -> innerRect.max.y min ((if (freezeRowsCount >= 1) innerRect.min.y else workRect.min.y) + tableInstance.lastFirstRowHeight)
             else -> drawY1
         }
         if (flags has Tf.BordersInnerV)
@@ -1403,6 +1403,9 @@ class Table {
         }
     }
 
+    /** ~TableGetInstanceData */
+    infix fun getInstanceData(instanceNo: Int): TableInstanceData = if (instanceNo == 0) instanceDataFirst else instanceDataExtra[instanceNo - 1]
+
     /** ~TableSortSpecsSanitize */
     fun sortSpecsSanitize() {
 
@@ -1590,7 +1593,7 @@ class Table {
         val unfreezeRowsActual = currentRow + 1 == freezeRowsCount
         val unfreezeRowsRequest = currentRow + 1 == freezeRowsRequest
         if (currentRow == 0)
-            lastFirstRowHeight = bgY2 - bgY1
+            getInstanceData(instanceCurrent).lastFirstRowHeight = bgY2 - bgY1
 
         val isVisible = bgY2 >= innerClipRect.min.y && bgY1 <= innerClipRect.max.y
         if (isVisible) {
@@ -1780,10 +1783,10 @@ class Table {
         val column = columns[columnN]
         var x1 = column.minX
         var x2 = column.maxX
-//        if (column.prevEnabledColumn == -1)
-//            x1 -= OuterPaddingX
-//        if (column.nextEnabledColumn == -1)
-//            x2 += OuterPaddingX
+        //        if (column.prevEnabledColumn == -1)
+        //            x1 -= OuterPaddingX
+        //        if (column.nextEnabledColumn == -1)
+        //            x2 += OuterPaddingX
         x1 = x1 max workRect.min.x
         x2 = x2 min workRect.max.x
         return Rect(x1, rowPosY1, x2, rowPosY2)

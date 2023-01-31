@@ -91,11 +91,9 @@ import imgui.internal.classes.Table
 import imgui.internal.classes.Window
 import imgui.internal.formatString
 import imgui.internal.sections.NextWindowDataFlag
-import imgui.internal.sections.TestEngine_FindItemDebugLabel
 import imgui.internal.sections.hasnt
 import imgui.internal.sections.testEngine_FindItemDebugLabel
 import kool.BYTES
-import uno.kotlin.NUL
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
@@ -725,20 +723,23 @@ interface demoDebugInformations {
         // - NodeStorage()
         object Funcs {
 
-            fun getTableRect(table: Table, rectType: TRT, n: Int): Rect = when (rectType) {
-                TRT.OuterRect -> table.outerRect
-                TRT.InnerRect -> table.innerRect
-                TRT.WorkRect -> table.workRect
-                TRT.HostClipRect -> table.hostClipRect
-                TRT.InnerClipRect -> table.innerClipRect
-                TRT.BackgroundClipRect -> table.bgClipRect
-                TRT.ColumnsRect -> table.columns[n].let { c -> Rect(c.minX, table.innerClipRect.min.y, c.maxX, table.innerClipRect.min.y + table.lastOuterHeight) }
-                TRT.ColumnsWorkRect -> table.columns[n].let { c -> Rect(c.workMinX, table.workRect.min.y, c.workMaxX, table.workRect.max.y) }
-                TRT.ColumnsClipRect -> table.columns[n].clipRect
-                TRT.ColumnsContentHeadersUsed -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersUsed, table.innerClipRect.min.y + table.lastFirstRowHeight) } // Note: y1/y2 not always accurate
-                TRT.ColumnsContentHeadersIdeal -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersIdeal, table.innerClipRect.min.y + table.lastFirstRowHeight) }
-                TRT.ColumnsContentFrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXFrozen, table.innerClipRect.min.y + table.lastFirstRowHeight) }
-                TRT.ColumnsContentUnfrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y + table.lastFirstRowHeight, c.contentMaxXUnfrozen, table.innerClipRect.max.y) }
+            fun getTableRect(table: Table, rectType: TRT, n: Int): Rect {
+                val tableInstance = table getInstanceData table.instanceCurrent // Always using last submitted instance
+                return when (rectType) {
+                    TRT.OuterRect -> table.outerRect
+                    TRT.InnerRect -> table.innerRect
+                    TRT.WorkRect -> table.workRect
+                    TRT.HostClipRect -> table.hostClipRect
+                    TRT.InnerClipRect -> table.innerClipRect
+                    TRT.BackgroundClipRect -> table.bgClipRect
+                    TRT.ColumnsRect -> table.columns[n].let { c -> Rect(c.minX, table.innerClipRect.min.y, c.maxX, table.innerClipRect.min.y + tableInstance.lastOuterHeight) }
+                    TRT.ColumnsWorkRect -> table.columns[n].let { c -> Rect(c.workMinX, table.workRect.min.y, c.workMaxX, table.workRect.max.y) }
+                    TRT.ColumnsClipRect -> table.columns[n].clipRect
+                    TRT.ColumnsContentHeadersUsed -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersUsed, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) } // Note: y1/y2 not always accurate
+                    TRT.ColumnsContentHeadersIdeal -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersIdeal, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) }
+                    TRT.ColumnsContentFrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXFrozen, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) }
+                    TRT.ColumnsContentUnfrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight, c.contentMaxXUnfrozen, table.innerClipRect.max.y) }
+                }
             }
 
             fun getWindowRect(window: Window, rectType: WRT): Rect = when (rectType) {

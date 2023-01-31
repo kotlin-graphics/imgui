@@ -105,6 +105,7 @@ interface tables {
                 tableOpenContextMenu(table.hoveredColumnBody)
 
         // Finalize table height
+        val tableInstance = table getInstanceData table.instanceCurrent
         innerWindow.dc.prevLineSize put tempData!!.hostBackupPrevLineSize
         innerWindow.dc.currLineSize put tempData.hostBackupCurrLineSize
         innerWindow.dc.cursorMaxPos put tempData.hostBackupCursorMaxPos
@@ -118,7 +119,7 @@ interface tables {
             table.innerRect.max.y = table.outerRect.max.y
         }
         table.workRect.max.y = table.workRect.max.y max table.outerRect.max.y
-        table.lastOuterHeight = table.outerRect.height
+        tableInstance.lastOuterHeight = table.outerRect.height
 
         // Setup inner scrolling range
         // FIXME: This ideally should be done earlier, in BeginTable() SetNextWindowContentSize call, just like writing to inner_window->DC.CursorMaxPos.y,
