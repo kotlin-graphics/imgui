@@ -563,6 +563,16 @@ internal interface inputText {
                     state.replace(wText, if (applyNewTextLength > 0) wText.size else 0)
                 }
 
+            // Apply ASCII value
+            if (!isReadOnly) {
+                state.textAIsValid = true
+                if (state.textA.size < state.textW.size * 4)
+                    state.textA = ByteArray(state.textW.size * 4)
+                else if (state.textA.size > state.textW.size * 4)
+                    state.textA[state.textW.size * 4] = 0
+                textStrToUtf8(state.textA, state.textW)
+            }
+
             // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
             // If we didn't do that, code like InputInt() with ImGuiInputTextFlags_EnterReturnsTrue would fail.
             // This also allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage (please note that if you use this property along ImGuiInputTextFlags_CallbackResize you can end up with your temporary string object unnecessarily allocating once a frame, either store your string data, either if you don't then don't use ImGuiInputTextFlags_CallbackResize).
@@ -572,14 +582,7 @@ internal interface inputText {
                 // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
                 // FIXME: We actually always render 'buf' when calling DrawList->AddText, making the comment above incorrect.
                 // FIXME-OPT: CPU waste to do this every time the widget is active, should mark dirty state from the stb_textedit callbacks.
-                if (!isReadOnly) {
-                    state.textAIsValid = true
-                    if (state.textA.size < state.textW.size * 4)
-                        state.textA = ByteArray(state.textW.size * 4)
-                    else if (state.textA.size > state.textW.size * 4)
-                        state.textA[state.textW.size * 4] = 0
-                    textStrToUtf8(state.textA, state.textW)
-                }
+
 
                 // User callback
                 if (flags has (Itf.CallbackCompletion or Itf.CallbackHistory or Itf.CallbackAlways)) {
