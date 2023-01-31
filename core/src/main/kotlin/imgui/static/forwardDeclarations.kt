@@ -134,8 +134,7 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
             applySettings(settings)
         }
     }
-    dc.cursorMaxPos put pos // So first call to CalcContentSize() doesn't return crazy values
-    dc.cursorStartPos put pos
+    dc.cursorStartPos put pos; dc.cursorMaxPos put pos; dc.idealMaxPos put pos // So first call to CalcWindowContentSizes() doesn't return crazy values
 
     if (flags has Wf.AlwaysAutoResize) {
         autoFitFrames put 2
