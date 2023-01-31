@@ -24,9 +24,7 @@ import kotlin.collections.ArrayList
 
 /** Main Dear ImGui context
  *
- *  Dear ImGui context (opaque structure, unless including imgui_internal.h)
- *
- *  ~CreateContext */
+ *  Dear ImGui context (opaque structure, unless including imgui_internal.h) */
 class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var initialized = false
@@ -662,10 +660,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         None of those functions is reliant on the current context.
         ~CreateContext */
     init {
-        if (gImGui == null)
-            setCurrent()
-
+        val prevCtx = ImGui.currentContext
+        setCurrent()
         initialize()
+        prevCtx?.setCurrent() // Restore previous context if any, else keep new one.
     }
 
     fun initialize() {
@@ -696,6 +694,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         initialized = true
     }
 
+    /** ~SetCurrentContext */
     fun setCurrent() {
         gImGui = this
     }
@@ -703,9 +702,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Destroy current context
      *  ~DestroyContext */
     fun destroy() {
+        val prevCtx = ImGui.currentContext
+//        if (ctx/this == NULL)
+//            ctx = GImGui;
+        setCurrent()
         shutdown()
-        if (gImGui === this)
-            gImGui = null // SetCurrentContext(NULL);
+        if(prevCtx !== this)
+            prevCtx?.setCurrent()
     }
 
     /** This function is merely here to free heap allocations.
