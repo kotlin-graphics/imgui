@@ -34,7 +34,6 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.mergedModFlags
 import imgui.ImGui.parseFormatTrimDecorations
 import imgui.ImGui.popFont
 import imgui.ImGui.popStyleColor
@@ -428,8 +427,8 @@ internal interface inputText {
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
             val isValidateEnter = Key.Enter.isPressed || Key.KeypadEnter.isPressed
-            val isValidateNav = (NavInput.Activate isTest InputReadMode.Pressed && !Key.Space.isPressed) || NavInput.Input isTest InputReadMode.Pressed
-            val isCancel = Key.Escape.isPressed || NavInput.Cancel isTest InputReadMode.Pressed
+            val isValidateNav = (NavInput.Activate isTest NavReadMode.Pressed && !Key.Space.isPressed) || NavInput.Input isTest NavReadMode.Pressed
+            val isCancel = Key.Escape.isPressed || NavInput.Cancel isTest NavReadMode.Pressed
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(

@@ -196,27 +196,27 @@ internal interface navigation {
             g.navMoveFlags = g.navMoveFlags or wrapFlags
     }
 
-    fun getNavInputAmount(n: NavInput, mode: InputReadMode): Float {    // TODO -> NavInput?
+    fun getNavInputAmount(n: NavInput, mode: NavReadMode): Float {    // TODO -> NavInput?
 
         val i = n.i
-        if (mode == InputReadMode.Down) return io.navInputs[i] // Instant, read analog input (0.0f..1.0f, as provided by user)
+        if (mode == NavReadMode.Down) return io.navInputs[i] // Instant, read analog input (0.0f..1.0f, as provided by user)
 
         val t = io.navInputsDownDuration[i]
         return when { // Return 1.0f when just released, no repeat, ignore analog input.
-            t < 0f && mode == InputReadMode.Released -> if (io.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
+            t < 0f && mode == NavReadMode.Released -> if (io.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
             t < 0f -> 0f
             else -> when (mode) { // Return 1.0f when just pressed, no repeat, ignore analog input.
-                InputReadMode.Pressed -> if (t == 0f) 1 else 0
-                InputReadMode.Repeat -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.8f)
-                InputReadMode.RepeatSlow -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 1.25f, io.keyRepeatRate * 2f)
-                InputReadMode.RepeatFast -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.3f)
+                NavReadMode.Pressed -> if (t == 0f) 1 else 0
+                NavReadMode.Repeat -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.8f)
+                NavReadMode.RepeatSlow -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 1.25f, io.keyRepeatRate * 2f)
+                NavReadMode.RepeatFast -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.3f)
                 else -> 0
             }.f
         }
     }
 
     /** @param dirSources: NavDirSourceFlag    */
-    fun getNavInputAmount2d(dirSources: NavDirSourceFlags, mode: InputReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
+    fun getNavInputAmount2d(dirSources: NavDirSourceFlags, mode: NavReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
         val delta = Vec2()
         if (dirSources has NavDirSourceFlag.RawKeyboard)
             delta += Vec2(Key.RightArrow.isDown.f - Key.LeftArrow.isDown.f, Key.DownArrow.isDown.f - Key.UpArrow.isDown.f)

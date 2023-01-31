@@ -165,8 +165,8 @@ fun navUpdate() {
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
         val activateDown = NavInput.Activate.isDown()
         val inputDown = NavInput.Input.isDown()
-        val activatePressed = activateDown && NavInput.Activate isTest InputReadMode.Pressed
-        val inputPressed = inputDown && NavInput.Input isTest InputReadMode.Pressed
+        val activatePressed = activateDown && NavInput.Activate isTest NavReadMode.Pressed
+        val inputPressed = inputDown && NavInput.Input isTest NavReadMode.Pressed
         if (g.activeId == 0 && activatePressed) {
             g.navActivateId = g.navId
             g.navActivateFlags = ActivateFlag.PreferTweak.i
@@ -218,7 +218,7 @@ fun navUpdate() {
 
         // *Normal* Manual scroll with NavScrollXXX keys
         // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
-        val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down, 1f / 10f, 10f)
+        val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, NavReadMode.Down, 1f / 10f, 10f)
         if (scrollDir.x != 0f && window.scrollbar.x)
             window.setScrollX(floor(window.scroll.x + scrollDir.x * scrollSpeed))
         if (scrollDir.y != 0f)
@@ -270,7 +270,7 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL+TAB or Square+L/R window selection
-    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu isTest InputReadMode.Pressed
+    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu isTest NavReadMode.Pressed
     val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
@@ -295,7 +295,7 @@ fun navUpdateWindowing() {
 
             // Select window to focus
             val focusChangeDir =
-                NavInput.FocusPrev.isTest(InputReadMode.RepeatSlow).i - NavInput.FocusNext.isTest(InputReadMode.RepeatSlow).i
+                NavInput.FocusPrev.isTest(NavReadMode.RepeatSlow).i - NavInput.FocusNext.isTest(NavReadMode.RepeatSlow).i
             if (focusChangeDir != 0) {
                 navUpdateWindowingHighlightWindow(focusChangeDir)
                 g.navWindowingHighlightAlpha = 1f
@@ -354,9 +354,9 @@ fun navUpdateWindowing() {
         if (it.flags hasnt Wf.NoMove) {
             var moveDelta = Vec2()
             if (g.navInputSource == InputSource.Keyboard && !io.keyShift)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlag.RawKeyboard.i, InputReadMode.Down)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlag.RawKeyboard.i, NavReadMode.Down)
             if (g.navInputSource == InputSource.Gamepad)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, InputReadMode.Down)
+                moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, NavReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
                 val moveSpeed = floor(
@@ -471,7 +471,7 @@ fun navUpdateWindowingOverlay() {
  *  - either to move most/all of those tests to the epilogue/end functions of the scope they are dealing with (e.g. exit child window in EndChild()) or in EndFrame(), to allow an earlier intercept */
 fun navUpdateCancelRequest() {
 
-    if (!NavInput.Cancel.isTest(InputReadMode.Pressed))
+    if (!NavInput.Cancel.isTest(NavReadMode.Pressed))
         return
 
     IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel\n")
@@ -520,7 +520,7 @@ fun navUpdateCreateMoveRequest() {
         g.navMoveFlags = NavMoveFlag.None.i
         g.navMoveScrollFlags = ScrollFlag.None.i
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
-            val readMode = InputReadMode.Repeat
+            val readMode = NavReadMode.Repeat
             if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft isTest readMode || NavInput._KeyLeft isTest readMode))
                 g.navMoveDir = Dir.Left
             if (!isActiveIdUsingNavDir(Dir.Right) && (NavInput.DpadRight isTest readMode || NavInput._KeyRight isTest readMode))

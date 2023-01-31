@@ -882,7 +882,7 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -988,7 +988,7 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1094,7 +1094,7 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1200,7 +1200,7 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1306,7 +1306,7 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1412,7 +1412,7 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1545,7 +1545,7 @@ internal interface templateFunctions {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
@@ -1676,7 +1676,7 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
@@ -1808,7 +1808,7 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
@@ -1942,7 +1942,7 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
@@ -2075,7 +2075,7 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
@@ -2208,7 +2208,7 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, InputReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0

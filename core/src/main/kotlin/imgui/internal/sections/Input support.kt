@@ -51,4 +51,4 @@ sealed class InputEvent(val type: Type) {
 }
 
 // FIXME-NAV: Clarify/expose various repeat delay/rate
-enum class InputReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast }
+enum class NavReadMode { Down, Pressed, Released, Repeat, RepeatSlow, RepeatFast }

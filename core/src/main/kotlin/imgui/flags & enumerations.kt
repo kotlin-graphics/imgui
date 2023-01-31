@@ -6,7 +6,7 @@ import imgui.ImGui.getNavInputAmount
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.KeyData
-import imgui.internal.sections.InputReadMode
+import imgui.internal.sections.NavReadMode
 
 
 //-----------------------------------------------------------------------------
@@ -1432,10 +1432,10 @@ enum class NavInput {
 
     /** Equivalent of isKeyPressed() for NavInputs[]
      *  ~IsNavInputTest  */
-    infix fun isTest(mode: InputReadMode): Boolean = getNavInputAmount(this, mode) > 0f
+    infix fun isTest(mode: NavReadMode): Boolean = getNavInputAmount(this, mode) > 0f
 
     /** ~IsNavInputPressedAnyOfTwo  */
-    fun isPressedAnyOfTwo(n2: NavInput, mode: InputReadMode): Boolean = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
+    fun isPressedAnyOfTwo(n2: NavInput, mode: NavReadMode): Boolean = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
 infix fun Int.shl(f: NavInput) = shl(f.i)

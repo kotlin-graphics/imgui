@@ -926,9 +926,9 @@ class Window(var context: Context,
         if (g.navWindowingTarget?.rootWindow === this) {
             val navResizeDelta = Vec2()
             if (g.navInputSource == InputSource.Keyboard && g.io.keyShift)
-                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.RawKeyboard.i, InputReadMode.Down)
+                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.RawKeyboard.i, NavReadMode.Down)
             if (g.navInputSource == InputSource.Gamepad)
-                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, InputReadMode.Down)
+                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, NavReadMode.Down)
             if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
                 val NAV_RESIZE_SPEED = 600f
                 navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * kotlin.math.min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
