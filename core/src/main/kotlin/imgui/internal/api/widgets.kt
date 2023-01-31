@@ -244,9 +244,8 @@ internal interface widgets {
         // Render
         val bgCol = if (held && hovered) Col.ButtonActive else if (hovered) Col.ButtonHovered else Col.Button
         val textCol = Col.Text
-        val center = bb.center
         if (hovered || held)
-            window.drawList.addCircleFilled(center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, bgCol.u32, 12)
+            window.drawList.addCircleFilled(bb.center/* + Vec2(0.0f, -0.5f)*/, g.fontSize * 0.5f + 1f, bgCol.u32, 12)
         window.drawList.renderArrow(bb.min + style.framePadding, textCol.u32, if (window.collapsed) Dir.Right else Dir.Down, 1f)
 
         // Switch to moving the window after mouse is moved beyond the initial drag threshold

@@ -82,7 +82,6 @@ internal interface debugTools {
                 assert(window.isFallbackWindow)
                 break
             }
-            assert(window === g.currentWindow)
             if (window.flags has WindowFlag._ChildWindow) {
                 logCallback?.invoke(userData, "Recovered from missing EndChild() for '${window.name}'")
                 endChild()

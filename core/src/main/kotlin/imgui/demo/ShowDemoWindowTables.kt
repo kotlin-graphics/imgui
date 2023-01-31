@@ -531,7 +531,7 @@ object ShowDemoWindowTables {
                             val buf = "Hello $column,$row"
                             if (contentsType == ContentsType.Text.ordinal)
                                 textUnformatted(buf)
-                            else if (contentsType != 0)
+                            else if (contentsType == ContentsType.FillButton.ordinal)
                                 button(buf, Vec2(-Float.MIN_VALUE, 0f))
                         }
                     }
