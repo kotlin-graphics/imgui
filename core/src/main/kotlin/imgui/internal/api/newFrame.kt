@@ -23,13 +23,19 @@ import imgui.static.findHoveredWindow
 internal interface newFrame {
 
     // Process input queue
+    // We always call this with the value of 'bool g.IO.ConfigInputTrickleEventQueue'.
     // - trickle_fast_inputs = false : process all events, turn into flattened input state (e.g. successive down/up/down/up will be lost)
     // - trickle_fast_inputs = true  : process as many events as possible (successive down/up/down/up will be trickled over several frames so nothing is lost) (new feature in 1.87)
     fun updateInputEvents(trickleFastInputs: Boolean) {
 
-        var mouseMoved = false;
-        var mouseWheeled = false;
-        var keyChanged = false;
+        // Only trickle chars<>key when working with InputText()
+        // FIXME: InputText() could parse event trail?
+        // FIXME: Could specialize chars<>keys trickling rules for control keys (those not typically associated to characters)
+        val trickleInterleavedKeysAndText = trickleFastInputs && g.wantTextInputNextFrame == 1
+
+        var mouseMoved = false
+        var mouseWheeled = false
+        var keyChanged = false
         var textInputed = false
         var mouseButtonChanged = 0x00
         val keyChangedMask = BitArray(Key.COUNT)
@@ -95,11 +101,12 @@ internal interface newFrame {
                 }
                 is InputEvent.Text -> {
                     // Trickling Rule: Stop processing queued events if keys/mouse have been interacted with
-                    if (trickleFastInputs && (keyChanged || mouseButtonChanged != 0 || mouseMoved || mouseWheeled))
+                    if (trickleFastInputs && ((keyChanged && trickleInterleavedKeysAndText) || mouseButtonChanged != 0 || mouseMoved || mouseWheeled))
                         break
                     val c = e.char
                     io.inputQueueCharacters += if (c.code <= UNICODE_CODEPOINT_MAX) c else Char(UNICODE_CODEPOINT_INVALID)
-                    textInputed = true
+                    if (trickleInterleavedKeysAndText)
+                        textInputed = true
                 }
                 is InputEvent.AppFocused ->
                     // We intentionally overwrite this and process lower, in order to give a chance
@@ -113,6 +120,11 @@ internal interface newFrame {
         //if (event_n != 0) IMGUI_DEBUG_LOG("Processed: %d / Remaining: %d\n", event_n, g.InputEventsQueue.Size - event_n);
         for (n in 0 until eventN)
             g.inputEventsTrail += g.inputEventsQueue[n]
+
+        // [DEBUG]
+        /*if (event_n != 0)
+            for (int n = 0; n < g.InputEventsQueue.Size; n++)
+                DebugLogInputEvent(n < event_n ? "Processed" : "Remaining", &g.InputEventsQueue[n]);*/
 
         // Remaining events will be processed on the next frame
         if (eventN == g.inputEventsQueue.size)
