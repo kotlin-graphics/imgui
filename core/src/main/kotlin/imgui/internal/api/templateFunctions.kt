@@ -929,8 +929,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.i
 
         // Round to user desired precision based on format string
-        if (flags hasnt SliderFlag.NoRoundToFormat)
-            vCur = roundScalarWithFormatT(format, dataType, vCur)
+//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1035,8 +1035,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.i
 
         // Round to user desired precision based on format string
-        if (flags hasnt SliderFlag.NoRoundToFormat)
-            vCur = roundScalarWithFormatT(format, dataType, vCur)
+//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1141,8 +1141,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.L
 
         // Round to user desired precision based on format string
-        if (flags hasnt SliderFlag.NoRoundToFormat)
-            vCur = roundScalarWithFormatT(format, dataType, vCur)
+//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1247,8 +1247,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.ul
 
         // Round to user desired precision based on format string
-        if (flags hasnt SliderFlag.NoRoundToFormat)
-            vCur = roundScalarWithFormatT(format, dataType, vCur)
+//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1581,8 +1581,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
-                        if (flags hasnt SliderFlag.NoRoundToFormat)
-                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                         g.sliderCurrentAccum -= when {
@@ -1597,8 +1597,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                 // Round to user desired precision based on format string
-                if (flags hasnt SliderFlag.NoRoundToFormat)
-                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1711,8 +1711,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
-                        if (flags hasnt SliderFlag.NoRoundToFormat)
-                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
 
                         g.sliderCurrentAccum -= when {
@@ -1729,8 +1729,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
 
                 // Round to user desired precision based on format string
-                if (flags hasnt SliderFlag.NoRoundToFormat)
-                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1844,8 +1844,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
-                        if (flags hasnt SliderFlag.NoRoundToFormat)
-                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                         g.sliderCurrentAccum -= when {
@@ -1862,8 +1862,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                 // Round to user desired precision based on format string
-                if (flags hasnt SliderFlag.NoRoundToFormat)
-                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1978,8 +1978,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
-                        if (flags hasnt SliderFlag.NoRoundToFormat)
-                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                         g.sliderCurrentAccum -= when {
@@ -1996,8 +1996,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                 // Round to user desired precision based on format string
-                if (flags hasnt SliderFlag.NoRoundToFormat)
-                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -2291,90 +2291,26 @@ internal interface templateFunctions {
         return valueChanged
     }
 
-    /** template<TYPE = Int, SIGNEDTYPE = Int> */
-    fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Int): Int {
-        val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
-            return v
-
-        //TODO, also other `T`
-        // Sanitize format
-//        char fmt_sanitized[32];
-//        SanitizeFormatString(fmt_start, fmt_sanitized, IM_ARRAYSIZE(fmt_sanitized));
-//        fmt_start = fmt_sanitized;
-
-        // Format value with our rounding, and read back
-        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
-        return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.i
-            else -> vStr.i
-        }
-    }
-
-    /** template<TYPE = Uint, SIGNEDTYPE = Int> */
-    fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Uint): Uint {
-        val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
-            return v
-        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v).trimStart()
-        return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.ui
-            else -> Uint(vStr.i) // additional wrapping to overcome numbers with leading minus
-        }
-    }
-
-    /** template<TYPE = Long, SIGNEDTYPE = Long> */
-    fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Long): Long {
-        val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
-            return v
-        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
-        return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.L
-            else -> vStr.L
-        }
-    }
-
-    /** template<TYPE = Ulong, SIGNEDTYPE = Long> */
-    fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Ulong): Ulong {
-        val fmtStart = parseFormatFindStart2(fmt)
-        if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
-            return v
-        val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-        val vStr = fmt.substring(fmtStart, fmtEnd).format(v.v).trimStart()
-        return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.ul
-            else -> Ulong(vStr.L) // additional wrapping to overcome numbers with leading minus
-        }
-    }
-
-    /** template<TYPE = Float, SIGNEDTYPE = Float> */
+    /** template<TYPE = Float */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Float): Float {
+        assert(dataType == DataType.Float || dataType == DataType.Double)
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
         val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
-        return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.replace(',', '.').d.f
-            else -> vStr.replace(',', '.').f
-        }
+        return vStr.replace(',', '.').d.f
     }
 
-    /** template<TYPE = Double, SIGNEDTYPE = Double> */
+    /** template<TYPE = Double */
     fun roundScalarWithFormatT(fmt: String, dataType: DataType, v: Double): Double {
+        assert(dataType == DataType.Float || dataType == DataType.Double)
         val fmtStart = parseFormatFindStart2(fmt)
         if (fmt.getOrNul(fmtStart + 0) != '%' || fmt.getOrNul(fmtStart + 1) == '%') // Don't apply if the value is not visible in the format string
             return v
         val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
         val vStr = fmt.substring(fmtStart, fmtEnd).format(v).trimStart()
-        return when (dataType) {
-            DataType.Float, DataType.Double -> vStr.replace(',', '.').d
-            else -> vStr.replace(',', '.').d
-        }
+        return vStr.replace(',', '.').d
     }
 
     fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Int>, flagsValue: Int): Boolean {

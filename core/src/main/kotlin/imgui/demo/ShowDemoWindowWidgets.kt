@@ -1398,11 +1398,13 @@ object ShowDemoWindowWidgets {
                 dragFloat("DragFloat (-inf -> 1)", ::dragF, 0.005f, -Float.MAX_VALUE, 1f, "%.3f", flags)
                 dragFloat("DragFloat (-inf -> +inf)", ::dragF, 0.005f, -Float.MAX_VALUE, +Float.MAX_VALUE, "%.3f", flags)
                 dragInt("DragInt (0 -> 100)", ::dragI, 0.5f, 0, 100, "%d", flags)
+                dragInt("DragInt (gex)", ::dragI, 0.5f, 0, 100, "0x%04X", flags)
 
                 // Sliders
                 text("Underlying float value: %f", sliderF)
                 sliderFloat("SliderFloat (0 -> 1)", ::sliderF, 0f, 1f, "%.3f", flags)
                 sliderInt("SliderInt (0 -> 100)", ::sliderI, 0, 100, "%d", flags)
+                sliderInt("SliderInt (hex)", ::sliderI, 0, 100, "0x%04X", flags)
             }
         }
     }
