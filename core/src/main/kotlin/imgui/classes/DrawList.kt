@@ -187,7 +187,7 @@ class DrawList(sharedData: DrawListSharedData?) {
      *  (== upper-left + size) */
     fun addRectFilled(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = 0) {
         if (col hasnt COL32_A_MASK) return
-        if (rounding <= 0f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             primReserve(6, 4)
             primRect(pMin, pMax, col)
         } else {
@@ -824,7 +824,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             return
 
         val flags = fixRectCornerFlags(flags_)
-        if (rounding <= 0f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             addImage(userTextureId, pMin, pMax, uvMin, uvMax, col)
             return
         }
@@ -861,7 +861,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** @param center must be a new instance */
     fun pathArcTo(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int = 0) {
-        if (radius <= 0f) {
+        if (radius < 0.5f) {
             _path += center
             return
         }
@@ -910,7 +910,7 @@ class DrawList(sharedData: DrawListSharedData?) {
      *
      *  @param center must be a new instance */
     fun pathArcToFast(center: Vec2, radius: Float, aMinOf12: Int, aMaxOf12: Int) {
-        if (radius <= 0f) {
+        if (radius < 0.5f) {
             _path += center
             return
         }
@@ -1014,7 +1014,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         cond = ((flags and DrawFlag.RoundCornersLeft) == DrawFlag.RoundCornersLeft.i) or ((flags and DrawFlag.RoundCornersRight) == DrawFlag.RoundCornersRight.i)
         rounding = rounding min ((b.y - a.y).abs * (if (cond) 0.5f else 1f) - 1f)
 
-        if (rounding <= 0f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
+        if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             pathLineTo(a)
             pathLineTo(Vec2(b.x, a.y))
             pathLineTo(b)
@@ -1348,7 +1348,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** @center must be a new instance */
     fun _pathArcToFastEx(center: Vec2, radius: Float, aMinSample_: Int, aMaxSample_: Int, aStep_: Int) {
-        if (radius <= 0f) {
+        if (radius < 0.5f) {
             _path += center
             return
         }
@@ -1434,7 +1434,7 @@ class DrawList(sharedData: DrawListSharedData?) {
 
     /** @param center must be new instance */
     fun _pathArcToN(center: Vec2, radius: Float, aMin: Float, aMax: Float, numSegments: Int) {
-        if (radius <= 0f) {
+        if (radius < 0.5f) {
             _path += center
             return
         }

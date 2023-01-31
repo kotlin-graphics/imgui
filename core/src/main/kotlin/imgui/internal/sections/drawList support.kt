@@ -97,7 +97,7 @@ class DrawListSharedData {
             val radius = i.f
             circleSegmentCounts[i] = when {
                 i > 0 -> DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC(radius, circleSegmentMaxError)
-                else -> 0
+                else -> DRAWLIST_ARCFAST_SAMPLE_MAX
             }
         }
         arcFastRadiusCutoff = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC_R(DRAWLIST_ARCFAST_SAMPLE_MAX, circleSegmentMaxError)
