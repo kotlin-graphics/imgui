@@ -183,12 +183,6 @@ internal interface widgetsLowLevelBehaviors {
                     flags has Bf.MouseButtonMiddle && io.mouseClicked[2] -> 2
                     else -> -1
                 }
-                val mouseButtonReleased = when {
-                    flags has Bf.MouseButtonLeft && io.mouseReleased[0] -> 0
-                    flags has Bf.MouseButtonRight && io.mouseReleased[1] -> 1
-                    flags has Bf.MouseButtonMiddle && io.mouseReleased[2] -> 2
-                    else -> -1
-                }
 
                 if (mouseButtonClicked != -1 && g.activeId != id) {
                     if (flags has (Bf.PressedOnClickRelease or Bf.PressedOnClickReleaseAnywhere)) {
@@ -210,14 +204,21 @@ internal interface widgetsLowLevelBehaviors {
                         focusWindow(window)
                     }
                 }
-                if (flags has Bf.PressedOnRelease && mouseButtonReleased != -1) {
-                    // Repeat mode trumps on release behavior
-                    val hasRepeatedAtLeastOnce = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay
-                    if (!hasRepeatedAtLeastOnce)
-                        pressed = true
-                    if (flags hasnt Bf.NoNavFocus)
-                        setFocusID(id, window)
-                    clearActiveID()
+                if (flags has Bf.PressedOnRelease) {
+                    val mouseButtonReleased = when {
+                        flags has Bf.MouseButtonLeft && io.mouseReleased[0] -> 0
+                        flags has Bf.MouseButtonRight && io.mouseReleased[1] -> 1
+                        flags has Bf.MouseButtonMiddle && io.mouseReleased[2] -> 2
+                        else -> -1
+                    }
+                    if (mouseButtonReleased != -1) {
+                        val hasRepeatedAtLeastOnce = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButtonReleased] >= io.keyRepeatDelay // Repeat mode trumps on release behavior
+                        if (!hasRepeatedAtLeastOnce)
+                            pressed = true
+                        if (flags hasnt Bf.NoNavFocus)
+                            setFocusID(id, window)
+                        clearActiveID()
+                    }
                 }
 
                 /*  'Repeat' mode acts when held regardless of _PressedOn flags (see table above).

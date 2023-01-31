@@ -172,18 +172,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var activeIdHasBeenEditedThisFrame = false
 
-    /** Active widget will want to read mouse wheel. Blocks scrolling the underlying window. */
-    var activeIdUsingMouseWheel = false
-
-    /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
-    var activeIdUsingNavDirMask = 0
-
-    /** Active widget will want to read those nav inputs. */
-    var activeIdUsingNavInputMask = 0
-
-    /** Active widget will want to read those key inputs. When we grow the ImGuiKey enum we'll need to either to order the enum to make useful keys come first, either redesign this into e.g. a small array. */
-    val activeIdUsingKeyInputMask = BitArray(Key.COUNT)
-
     /** Clicked offset from upper-left corner, if applicable (currently only set by ButtonBehavior) */
     var activeIdClickOffset = Vec2(-1)
 
@@ -207,6 +195,22 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** Store the last non-zero ActiveId timer since the beginning of activation, useful for animation. */
     var lastActiveIdTimer = 0f
+
+
+    // Input Ownership
+
+    /** Active widget will want to read mouse wheel. Blocks scrolling the underlying window. */
+    var activeIdUsingMouseWheel = false
+
+    /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
+    var activeIdUsingNavDirMask = 0
+
+    /** Active widget will want to read those nav inputs. */
+    var activeIdUsingNavInputMask = 0
+
+    /** Active widget will want to read those key inputs. When we grow the ImGuiKey enum we'll need to either to order the enum to make useful keys come first, either redesign this into e.g. a small array. */
+    val activeIdUsingKeyInputMask = BitArray(Key.COUNT)
+
 
 
     // Next window/item data
