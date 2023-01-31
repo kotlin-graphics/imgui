@@ -69,6 +69,7 @@ private class ImGuiOpenGL2 {
 //        ImGui.styleColorsClassic()
 
         // Setup Platform/Renderer backends
+        // FIXME: Consider reworking this example to install our own GLUT funcs + forward calls ImGui_ImplGLUT_XXX ones, instead of using ImGui_ImplGLUT_InstallFuncs().
         implGlfw = ImplGlfw(window, true)
         implGl2 = ImplGL2()
 
@@ -94,14 +95,16 @@ private class ImGuiOpenGL2 {
 //        val a = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 18f)!!
 //        val b = IO.fonts.addFontFromFileTTF("misc/fonts/ArialUni.ttf", 30f)!!
 
-        /*  Main loop
-            This automatically also polls events, swaps buffers and resets the appBuffer
+        /*  [JVM] Main loop
+            This automatically also polls events, swaps buffers and resets the appBuffer */
 
-            Poll and handle events (inputs, window resize, etc.)
-            You can read the io.wantCaptureMouse, io.wantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-            - When io.wantCaptureMouse is true, do not dispatch mouse input data to your main application.
-            - When io.wantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-            Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.          */
+        // Poll and handle events (inputs, window resize, etc.)
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
+        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         window.loop(::mainLoop)
 
         implGl2.shutdown()
