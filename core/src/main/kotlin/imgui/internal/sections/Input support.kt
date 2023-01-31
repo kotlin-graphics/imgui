@@ -33,7 +33,7 @@ sealed class InputEvent(val type: Type) {
     class Key(val key: imgui.Key, val down: Boolean, val analogValue: Float,
               override val source: InputSource = InputSource.Keyboard) : InputEvent(Type.Key)
 
-    class Text(val char: Char) : InputEvent(Type.Char) {
+    class Text(val char: Char) : InputEvent(Type.Text) {
         override val source: InputSource = InputSource.Keyboard
     }
 
@@ -42,7 +42,7 @@ sealed class InputEvent(val type: Type) {
     }
 
     enum class Type {
-        None, MousePos, MouseWheel, MouseButton, Key, Char, Focus;
+        None, MousePos, MouseWheel, MouseButton, Key, Text, Focus;
 
         companion object {
             val COUNT = values().size
