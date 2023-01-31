@@ -24,7 +24,8 @@ interface itemWidgetsUtilities {
     fun isItemHovered(flags: Int = Hf.None.i): Boolean {
 
         val window = g.currentWindow!!
-        if (g.navDisableMouseHover && !g.navDisableHighlight) {
+        if (g.navDisableMouseHover && !g.navDisableHighlight && flags hasnt Hf.NoNavOverride) {
+
             if (g.lastItemData.inFlags has ItemFlag.Disabled && flags hasnt Hf.AllowWhenDisabled)
                 return false
             if (!isItemFocused)

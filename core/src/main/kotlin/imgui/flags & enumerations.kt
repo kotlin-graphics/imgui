@@ -1007,6 +1007,9 @@ enum class HoveredFlag(@JvmField val i: HoveredFlags) {
 
     /** IsItemHovered() only: Return true even if the item is disabled */
     AllowWhenDisabled(1 shl 9),
+
+    /** Disable using gamepad/keyboard navigation state when active, always query mouse. */
+    NoNavOverride(1 shl 10),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
     RootAndChildWindows(RootWindow or ChildWindows);
 
@@ -1337,7 +1340,6 @@ infix fun Int.has(k: KeyMod): Boolean = has(k.i)
 infix fun Int.hasnt(k: KeyMod): Boolean = hasnt(k.i)
 
 typealias KeyModFlags = Int
-
 
 
 /** Gamepad/Keyboard navigation

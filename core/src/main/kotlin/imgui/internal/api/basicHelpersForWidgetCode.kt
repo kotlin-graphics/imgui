@@ -122,7 +122,7 @@ internal interface basicHelpersForWidgetCode {
             IMGUI_TEST_ENGINE_ITEM_ADD(navBbArg ?: bb, id)
 
         // Clipping test
-        val isClipped= isClippedEx(bb, id)
+        val isClipped = isClippedEx(bb, id)
         if (isClipped)
             return false
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
@@ -141,7 +141,6 @@ internal interface basicHelpersForWidgetCode {
             g.hoveredWindow !== window -> false
             g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
             !isMouseHoveringRect(bb) -> false
-            g.navDisableMouseHover -> false
             !window.isContentHoverable(HoveredFlag.None) -> {
                 g.hoveredIdDisabled = true
                 false
@@ -153,15 +152,14 @@ internal interface basicHelpersForWidgetCode {
                     hoveredId = id
 
                 // When disabled we'll return false but still set HoveredId
-                val itemFlags = if(g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
+                val itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
                 if (itemFlags has ItemFlag.Disabled) {
                     // Release active id if turning disabled
                     if (g.activeId == id)
                         clearActiveID()
                     g.hoveredIdDisabled = true
                     false
-                }
-                else {
+                } else {
                     if (id != 0) {
                         // [DEBUG] Item Picker tool!
                         // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
@@ -173,7 +171,7 @@ internal interface basicHelpersForWidgetCode {
                         if (g.debugItemPickerBreakId == id)
                             IM_DEBUG_BREAK()
                     }
-                    true
+                    !g.navDisableMouseHover
                 }
             }
         }

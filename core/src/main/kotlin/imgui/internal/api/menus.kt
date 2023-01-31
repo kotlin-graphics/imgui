@@ -147,7 +147,7 @@ internal interface menus {
         if (!enabled)
             ImGui.endDisabled()
 
-        val hovered = g.hoveredId == id && enabled
+        val hovered = g.hoveredId == id && enabled && !g.navDisableMouseHover
 
         if (menusetIsOpen)
             g.navWindow = backedNavWindow
