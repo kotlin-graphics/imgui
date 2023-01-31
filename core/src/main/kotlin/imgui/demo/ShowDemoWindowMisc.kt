@@ -2,11 +2,12 @@ package imgui.demo
 
 import glm_.i
 import glm_.vec2.Vec2
+import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
-import imgui.ImGui.captureKeyboardFromApp
+import imgui.ImGui.colorButton
 import imgui.ImGui.dummy
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getMouseClickedCount
@@ -26,8 +27,12 @@ import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.setKeyboardFocusHere
+import imgui.ImGui.setNextFrameWantCaptureKeyboard
+import imgui.ImGui.setNextFrameWantCaptureMouse
 import imgui.ImGui.setNextItemOpen
+import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.sliderFloat3
+import imgui.ImGui.sliderInt
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.api.demoDebugInformations.Companion.helpMarker
@@ -37,6 +42,9 @@ import imgui.dsl.treeNode
 import imgui.internal.sections.DrawFlag
 
 object ShowDemoWindowMisc {
+
+    var captureOverrideMouse = -1
+    var captureOverrideKeyboard = -1
 
     operator fun invoke() {
 
@@ -171,13 +179,33 @@ object ShowDemoWindowMisc {
             }
 
             treeNode("Capture override") {
-                button("Hovering me sets the\nkeyboard capture flag")
-                if (isItemHovered())
-                    captureKeyboardFromApp(true)
-                sameLine()
-                button("Holding me clears the\nthe keyboard capture flag")
-                if (isItemActive)
-                    captureKeyboardFromApp(false)
+                helpMarker(
+                    "The value of io.WantCaptureMouse and io.WantCaptureKeyboard are normally set by Dear ImGui " +
+                    "to instruct your application of how to route inputs. Typically, when a value is true, it means " +
+                    "Dear ImGui wants the corresponding inputs and we expect the underlying application to ignore them.\n\n" +
+                    "The most typical case is: when hovering a window, Dear ImGui set io.WantCaptureMouse to true, " +
+                    "and underlying application should ignore mouse inputs (in practice there are many and more subtle " +
+                    "rules leading to how those flags are set).")
+
+                text("io.WantCaptureMouse: ${io.wantCaptureMouse.i}")
+                text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose.i}")
+                text("io.WantCaptureKeyboard: ${io.wantCaptureKeyboard.i}")
+
+                helpMarker(
+                    "Hovering the colored canvas will override io.WantCaptureXXX fields.\n" +
+                    "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
+                val captureOverrideDesc = listOf("None", "Set to false", "Set to true")
+                setNextItemWidth(ImGui.fontSize * 15)
+                sliderInt("SetNextFrameWantCaptureMouse()", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp.i)
+                setNextItemWidth(ImGui.fontSize * 15)
+                sliderInt("SetNextFrameWantCaptureKeyboard()", ::captureOverrideKeyboard, -1, +1, captureOverrideDesc[captureOverrideKeyboard + 1], SliderFlag.AlwaysClamp.i)
+
+                colorButton("##panel", Vec4(0.7f, 0.1f, 0.7f, 1f), ColorEditFlag.NoTooltip or ColorEditFlag.NoDragDrop, Vec2(256f, 192f)) // Dummy item
+                if (ImGui.isItemHovered() && captureOverrideMouse != -1)
+                    setNextFrameWantCaptureMouse(captureOverrideMouse == 1)
+                if (ImGui.isItemHovered() && captureOverrideKeyboard != -1)
+                    setNextFrameWantCaptureKeyboard(captureOverrideKeyboard == 1)
+
             }
 
             Tabbing()

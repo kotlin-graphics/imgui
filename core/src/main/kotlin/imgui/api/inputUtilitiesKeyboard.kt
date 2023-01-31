@@ -11,9 +11,8 @@ import glm_.i
 //   - GetKeyIndex() is pass-through and therefore deprecated (gone if IMGUI_DISABLE_OBSOLETE_KEYIO is defined)
 interface inputUtilitiesKeyboard {
 
-    /** Manually override io.wantCaptureKeyboard flag next frame (said flag is entirely left for your application to handle).
-     *  e.g. force capture keyboard when your widget is being hovered.  */
-    fun captureKeyboardFromApp(capture: Boolean = true) {
-        g.wantCaptureKeyboardNextFrame = capture.i
+    /** Override io.WantCaptureKeyboard flag next frame (said flag is left for your application to handle, typically when true it instructs your app to ignore inputs). e.g. force capture keyboard when your widget is being hovered. This is equivalent to setting "io.WantCaptureKeyboard = want_capture_keyboard"; after the next NewFrame() call.  */
+    fun setNextFrameWantCaptureKeyboard(wantCaptureKeyboard: Boolean = true) {
+        g.wantCaptureKeyboardNextFrame = wantCaptureKeyboard.i
     }
 }

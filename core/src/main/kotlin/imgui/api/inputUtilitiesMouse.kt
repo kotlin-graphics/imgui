@@ -143,8 +143,8 @@ interface inputUtilitiesMouse {
             g.mouseCursor = value
         }
 
-    /** Manually override io.WantCaptureMouse flag next frame (said flag is entirely left for your application to handle). */
-    fun captureMouseFromApp(capture: Boolean = true) {
-        g.wantCaptureMouseNextFrame = capture.i
+    /** Override io.WantCaptureMouse flag next frame (said flag is left for your application to handle, typical when true it instucts your app to ignore inputs). This is equivalent to setting "io.WantCaptureMouse = want_capture_mouse;" after the next NewFrame() call. */
+    fun setNextFrameWantCaptureMouse(wantCaptureMouse: Boolean = true) {
+        g.wantCaptureMouseNextFrame = wantCaptureMouse.i
     }
 }

@@ -648,9 +648,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var framerateSecPerFrameAccum = 0f
 
-    /** Explicit capture via CaptureKeyboardFromApp()/CaptureMouseFromApp() sets those flags   */
+    /** Explicit capture override via SetNextFrameWantCaptureMouse()/SetNextFrameWantCaptureKeyboard(). Default to -1. */
     var wantCaptureMouseNextFrame = -1
 
+    /** Explicit capture override via SetNextFrameWantCaptureMouse()/SetNextFrameWantCaptureKeyboard(). Default to -1. */
     var wantCaptureKeyboardNextFrame = -1
 
     var wantTextInputNextFrame = -1
