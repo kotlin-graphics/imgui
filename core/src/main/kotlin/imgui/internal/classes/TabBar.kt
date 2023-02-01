@@ -373,10 +373,6 @@ class TabBar {
                     nextSelectedTabId = id  // New tabs gets activated
             if (flags has TabItemFlag.SetSelected && selectedTabId != id) // _SetSelected can only be passed on explicit tab bar
                 nextSelectedTabId = id
-            if (g.nextItemData.flags has NextItemDataFlag.HasOpen) {
-                assert(g.nextItemData.openVal && g.nextItemData.openCond == Cond.Always) // SetNextItemOpen(true, ImGuiCond_Always) is supported but other combinations are not.
-                nextSelectedTabId = id
-            }
         }
 
         // Lock visibility
