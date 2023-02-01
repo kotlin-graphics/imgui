@@ -236,6 +236,8 @@ object ExampleApp {
                 sameLine(); helpMarker("Enable input queue trickling: some types of events submitted during the same frame (e.g. button down + up) will be spread over multiple frames, improving interactions with low framerates.")
                 checkbox("io.ConfigCursorBlink", io::configInputTextCursorBlink)
                 sameLine(); helpMarker("Enable blinking cursor (optional as some users consider it to be distracting).")
+                checkbox("io.ConfigInputTextEnterKeepActive", io::configInputTextEnterKeepActive)
+                sameLine(); helpMarker("Pressing Enter will keep item active and select contents (single-line only).")
                 checkbox("io.ConfigDragClickToInputText", io::configDragClickToInputText)
                 sameLine(); helpMarker("Enable turning DragXXX widgets into text input with a simple mouse click-release (without moving).")
                 checkbox("io.ConfigWindowsResizeFromEdges", io::configWindowsResizeFromEdges)

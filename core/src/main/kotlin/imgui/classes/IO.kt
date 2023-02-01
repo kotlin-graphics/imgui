@@ -118,6 +118,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Enable blinking cursor (optional as some users consider it to be distracting).. */
     var configInputTextCursorBlink = true
 
+    /** [BETA] Pressing Enter will keep item active and select contents (single-line only). */
+    var configInputTextEnterKeepActive = false
+
     /** [BETA] Enable turning DragXXX widgets into text input with a simple mouse click-release (without moving). Not desirable on devices without a keyboard. */
     var configDragClickToInputText = false
 

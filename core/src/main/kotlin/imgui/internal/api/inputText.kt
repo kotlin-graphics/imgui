@@ -476,8 +476,12 @@ internal interface inputText {
                     // Determine if we turn Enter into a \n character
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
                     if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
-                        clearActiveId = true
                         validated = true
+                        if (io.configInputTextEnterKeepActive && !isMultiline)
+                            state.selectAll() // No need to scroll
+                        else
+                            clearActiveId = true
+
                     } else if (!isReadOnly)
                         withChar('\n') { c ->
                             // Insert new line
@@ -1199,16 +1203,16 @@ internal interface inputText {
             TODO()
             //ImWchar* new_buf = (ImWchar*)(void*)g.TempBuffer.Data;
             val newBuf = g.tempBuffer
-//            textStrFromUtf8(newBuf, new_length + 1, new_buf_a, new_buf_a + new_length_a)
+            //            textStrFromUtf8(newBuf, new_length + 1, new_buf_a, new_buf_a + new_length_a)
 
             var where = 0
-//            while (where < shorterLength) {
-//                val (b, _) = textCharFromUtf8(newBuf, where)
-//                if (oldBuf[where].code != b)
-//                    break
-//
-//                where += 1
-//            }
+            //            while (where < shorterLength) {
+            //                val (b, _) = textCharFromUtf8(newBuf, where)
+            //                if (oldBuf[where].code != b)
+            //                    break
+            //
+            //                where += 1
+            //            }
 
             var oldLastDiff = oldLength - 1
             var newLastDiff = newLength - 1
