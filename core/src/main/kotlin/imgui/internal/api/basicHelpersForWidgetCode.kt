@@ -297,17 +297,19 @@ internal interface basicHelpersForWidgetCode {
             widthExcess -= widthToRemovePerItem * countSameWidth
         }
 
-        // Round width and redistribute remainder left-to-right (could make it an option of the function?)
+        // Round width and redistribute remainder
         // Ensure that e.g. the right-most tab of a shrunk tab-bar always reaches exactly at the same distance from the right-most edge of the tab bar separator.
         widthExcess = 0f
-        repeat(count) {
-            val widthRounded = floor(items[it].width)
-            widthExcess += items[it].width - widthRounded
-            items[it].width = widthRounded
+        for (n in 0 until count) {
+            val widthRounded = floor(items[n].width)
+            widthExcess += items[n].width - widthRounded
+            items[n].width = widthRounded
         }
-        if (widthExcess > 0f)
+        while (widthExcess > 0f)
             for (n in 0 until count)
-                if (items[n].index < (widthExcess + 0.01f).i)
+                if (items[n].width + 1f <= items[n].initialWidth) {
                     items[n].width += 1f
+                    widthExcess -= 1f
+                }
     }
 }

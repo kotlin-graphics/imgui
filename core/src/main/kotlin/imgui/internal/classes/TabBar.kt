@@ -617,7 +617,7 @@ class TabBar {
             // Store data so we can build an array sorted by width if we need to shrink tabs down
             g.shrinkWidthBuffer[shrinkBufferIndexes[sectionN]++].apply {
                 index = tabN
-                width = tab.contentWidth
+                width = tab.contentWidth; initialWidth = tab.contentWidth
             }
 
             assert(tab.contentWidth > 0f)

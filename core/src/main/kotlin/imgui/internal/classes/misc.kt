@@ -281,7 +281,9 @@ class WindowStackData {
     }
 };
 
-class ShrinkWidthItem(var index: Int = 0, var width: Float = 0f) {
+class ShrinkWidthItem(var index: Int = 0,
+                      var width: Float = 0f,
+                      var initialWidth: Float = 0f) {
     infix fun put(other: ShrinkWidthItem) {
         index = other.index
         width = other.width

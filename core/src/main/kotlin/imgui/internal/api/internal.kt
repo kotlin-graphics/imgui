@@ -1,7 +1,6 @@
 package imgui.internal.api
 
 import glm_.func.common.max
-import glm_.parseInt
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
@@ -14,14 +13,9 @@ import imgui.font.Font
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
-import imgui.internal.sections.IMGUI_DEBUG_LOG_FOCUS
 import imgui.internal.sections.NavLayer
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
-import imgui.static.navUpdateAnyRequestFlag
-import uno.kotlin.NUL
-import java.util.*
-import java.util.regex.Pattern
 import imgui.WindowFlag as Wf
 
 
