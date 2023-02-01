@@ -487,11 +487,10 @@ fun navUpdateCancelRequest() {
         focusWindow(parentWindow)
         setNavID(childWindow.childId, NavLayer.Main, 0, parentWindow rectAbsToRel childRect)
         navRestoreHighlightAfterMove()
-    } else if (g.openPopupStack.isNotEmpty()) {
-        // Close open popup/menu
-        if (g.openPopupStack.last().window!!.flags hasnt Wf._Modal)
-            closePopupToLevel(g.openPopupStack.lastIndex, true)
-    } else {
+    } else if (g.openPopupStack.isNotEmpty() && g.openPopupStack.last().window!!.flags has Wf._Modal)
+    // Close open popup/menu
+        closePopupToLevel(g.openPopupStack.lastIndex, true)
+    else {
         // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
         if (navWindow != null && (navWindow.flags has Wf._Popup || navWindow.flags hasnt Wf._ChildWindow))
             navWindow.navLastIds[0] = 0
