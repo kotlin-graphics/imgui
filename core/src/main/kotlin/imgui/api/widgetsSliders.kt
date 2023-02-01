@@ -163,19 +163,23 @@ interface widgetsSliders {
             else -> format_
         }
 
-        // Tabbing or CTRL-clicking on Slider turns it into an input box
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
+
+            // Tabbing or CTRL-clicking on Slider turns it into an input box
             val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && ImGui.io.mouseClicked[0]
-            if (inputRequestedByTabbing || clicked || g.navActivateId == id || g.navActivateInputId == id) {
+            val makeActive = inputRequestedByTabbing || clicked || g.navActivateId == id || g.navActivateInputId == id
+            if (makeActive && tempInputAllowed)
+                if (inputRequestedByTabbing || (clicked && g.io.keyCtrl) || g.navActivateInputId == id)
+                    tempInputIsActive = true
+
+            if (makeActive && !tempInputIsActive) {
                 ImGui.setActiveID(id, window)
                 ImGui.setFocusID(id, window)
                 ImGui.focusWindow(window)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
-                if (tempInputAllowed && (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || g.navActivateInputId == id))
-                    tempInputIsActive = true
             }
         }
 

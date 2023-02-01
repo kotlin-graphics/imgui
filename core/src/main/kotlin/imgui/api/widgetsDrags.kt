@@ -14,6 +14,7 @@ import imgui.ImGui.calcItemWidth
 import imgui.ImGui.currentWindow
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
+import imgui.ImGui.focusWindow
 import imgui.ImGui.format
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDragPastThreshold
@@ -23,6 +24,8 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
+import imgui.ImGui.setActiveID
+import imgui.ImGui.setFocusID
 import imgui.ImGui.style
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
@@ -244,29 +247,32 @@ interface widgetsDrags {
             else -> format_
         }
 
-        // Tabbing or CTRL-clicking on Drag turns it into an InputText
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
         if (!tempInputIsActive) {
+
+            // Tabbing or CTRL-clicking on Drag turns it into an InputText
             val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
             val clicked = hovered && ImGui.io.mouseClicked[0]
             val doubleClicked = hovered && g.io.mouseClickedCount[0] == 2
-            if (inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id) {
-                ImGui.setActiveID(id, window)
-                ImGui.setFocusID(id, window)
-                ImGui.focusWindow(window)
-                g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
-                if (tempInputAllowed)
+            val makeActive = inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id
+            if (makeActive && tempInputAllowed)
                     if (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id)
                         tempInputIsActive = true
-            }
 
-            // Experimental: simple click (without moving) turns Drag into an InputText
+            // (Optional) simple click (without moving) turns Drag into an InputText
             if (io.configDragClickToInputText && tempInputAllowed && !tempInputIsActive)
                 if (g.activeId == id && hovered && io.mouseReleased[0] && !isMouseDragPastThreshold(MouseButton.Left, io.mouseDragThreshold * DRAG_MOUSE_THRESHOLD_FACTOR)) {
                     g.navActivateId = id; g.navActivateInputId = id
                     tempInputIsActive = true
                 }
+
+            if (makeActive && !tempInputIsActive) {
+                setActiveID(id, window)
+                setFocusID(id, window)
+                focusWindow(window)
+                g.activeIdUsingNavDirMask = (1 shl Dir.Left) or (1 shl Dir.Right)
+            }
         }
 
         if (tempInputIsActive) {
