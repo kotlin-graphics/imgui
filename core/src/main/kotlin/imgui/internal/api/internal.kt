@@ -7,6 +7,7 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.io
+import imgui.ImGui.setNavWindow
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.font.Font
@@ -60,16 +61,13 @@ internal interface internal {
     fun focusWindow(window: Window? = null) {
 
         if (g.navWindow !== window) {
-            IMGUI_DEBUG_LOG_FOCUS("[focus] FocusWindow(\"${window?.name ?: "<NULL>"}\")\n")
-            g.navWindow = window
+            setNavWindow(window)
             if (window != null && g.navDisableMouseHover)
                 g.navMousePosDirty = true
             g.navId = window?.navLastIds?.get(0) ?: 0 // Restore NavId
+            g.navLayer = NavLayer.Main
             g.navFocusScopeId = 0
             g.navIdIsAlive = false
-            g.navLayer = NavLayer.Main
-            g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
-            navUpdateAnyRequestFlag()
         }
 
         // Close popups if any

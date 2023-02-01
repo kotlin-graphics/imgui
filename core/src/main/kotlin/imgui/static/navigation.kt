@@ -37,6 +37,7 @@ import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.selectable
 import imgui.ImGui.setNavID
+import imgui.ImGui.setNavWindow
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.style
@@ -954,11 +955,8 @@ fun navProcessItem() {
 
     // Update window-relative bounding box of navigated item
     if (g.navId == id) {
-        if (g.navWindow !== window) {
-            g.navWindow = window    // Always refresh g.NavWindow, because some operations such as FocusItem() don't have a window.
-            g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
-            navUpdateAnyRequestFlag()
-        }
+        if (g.navWindow !== window)
+            setNavWindow(window) // Always refresh g.NavWindow, because some operations such as FocusItem() may not have a window.
         g.navLayer = window.dc.navLayerCurrent
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         g.navIdIsAlive = true
@@ -1033,8 +1031,12 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
 }
 
 fun navRestoreLayer(layer: NavLayer) {
-    if (layer == NavLayer.Main)
-        g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)    // FIXME-NAV: Should clear ongoing nav requests?
+    if (layer == NavLayer.Main) {
+        val prevNavWindow = g.navWindow
+        g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!) // FIXME-NAV: Should clear ongoing nav requests?
+        if (prevNavWindow != null)
+            IMGUI_DEBUG_LOG_FOCUS("[focus] NavRestoreLayer: from \"${prevNavWindow.name}\" to SetNavWindow(\"${g.navWindow!!.name}\")\n")
+    }
     val window = g.navWindow!!
     if (window.navLastIds[layer] != 0)
         setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])

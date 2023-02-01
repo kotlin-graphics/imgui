@@ -3,6 +3,7 @@ package imgui.internal.api
 import imgui.DataType
 import imgui.ID
 import imgui.ImGui.debugHookIdInfo
+import imgui.ImGui.setNavWindow
 import imgui.api.g
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
@@ -70,14 +71,12 @@ internal interface basicAccessors {
 
         assert(id != 0)
 
+        if (g.navWindow !== window)
+            setNavWindow(window)
+
         // Assume that SetFocusID() is called in the context where its window->DC.NavLayerCurrent and window->DC.NavFocusScopeIdCurrent are valid.
         // Note that window may be != g.CurrentWindow (e.g. SetFocusID call in InputTextEx for multi-line text)
         val navLayer = window.dc.navLayerCurrent
-        if (g.navWindow !== window) {
-            g.navWindow = window
-            g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
-            navUpdateAnyRequestFlag()
-        }
         g.navId = id
         g.navLayer = navLayer
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent

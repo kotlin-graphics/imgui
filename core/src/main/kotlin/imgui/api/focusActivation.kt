@@ -6,6 +6,7 @@ import imgui.ImGui.isItemVisible
 import imgui.ImGui.navMoveRequestResolveWithLastItem
 import imgui.ImGui.navMoveRequestSubmit
 import imgui.ImGui.scrollToRectEx
+import imgui.ImGui.setNavWindow
 import imgui.ImGui.setScrollHereY
 import imgui.internal.classes.Rect
 import imgui.internal.sections.NavMoveFlag
@@ -44,8 +45,7 @@ interface focusActivation {
         val window = g.currentWindow!!
         assert(offset >= -1) { "-1 is allowed but not below" }
 
-        g.navWindow = window
-        g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
+        setNavWindow(window)
 
         val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
         navMoveRequestSubmit(Dir.None, if (offset < 0) Dir.Up else Dir.Down, NavMoveFlag.Tabbing or NavMoveFlag.FocusApi, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.

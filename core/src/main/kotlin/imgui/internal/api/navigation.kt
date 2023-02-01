@@ -154,7 +154,10 @@ internal interface navigation {
             }
         }
 
-        g.navWindow = window
+        if (g.navWindow !== result.window) {
+            IMGUI_DEBUG_LOG_FOCUS("[focus] NavMoveRequest: SetNavWindow(\"${result.window!!.name}\")\n")
+            g.navWindow = result.window
+        }
         if (g.activeId != result.id)
             clearActiveID()
         if (g.navId != result.id) {
@@ -261,8 +264,19 @@ internal interface navigation {
         g.navNextActivateFlags = ActivateFlag.None.i
     }
 
-    /** FIXME-NAV: The existence of SetNavID vs SetFocusID properly needs to be clarified/reworked.
-     *  In our terminology those should be interchangeable. Those two functions are merely a legacy artifact, so at minimum naming should be clarified. */
+    // FIXME-NAV: The existence of SetNavID vs SetFocusID vs FocusWindow() needs to be clarified/reworked.
+    // In our terminology those should be interchangeable, yet right now this is super confusing.
+    // Those two functions are merely a legacy artifact, so at minimum naming should be clarified.
+
+    fun setNavWindow(window: Window?) {
+        if (g.navWindow !== window) {
+            IMGUI_DEBUG_LOG_FOCUS("[focus] SetNavWindow(\"${window?.name ?: "<NULL>"}\")\n")
+            g.navWindow = window
+        }
+        g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
+        navUpdateAnyRequestFlag()
+    }
+
     fun setNavID(id: ID, navLayer: NavLayer, focusScopeId: ID, rectRel: Rect) { // assert(navLayer == 0 || navLayer == 1) useless on jvm
         val navWindow = g.navWindow!!
         assert(navLayer == NavLayer.Main || navLayer == NavLayer.Menu)
