@@ -267,7 +267,7 @@ internal interface inputText {
         val renderCursor = g.activeId == id || (state != null && userScrollActive)
         var renderSelection = state != null && (state.hasSelection || selectAll) && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
         var valueChanged = false
-        var enterPressed = false
+        var validated = false
 
         // When read-only we always use the live data passed to the function
         // FIXME-OPT: Because our selection/cursor code currently needs the wide text we need to convert it when active, which is not ideal :(
@@ -426,7 +426,7 @@ internal interface inputText {
             val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
-            val isValidateEnter = Key.Enter.isPressed || Key.KeypadEnter.isPressed
+            val isEnterPressed = Key.Enter.isPressed || Key.KeypadEnter.isPressed
             val isValidateNav = (NavInput.Activate isTest NavReadMode.Pressed && !Key.Space.isPressed) || NavInput.Input isTest NavReadMode.Pressed
             val isCancel = Key.Escape.isPressed || NavInput.Cancel isTest NavReadMode.Pressed
 
@@ -472,11 +472,12 @@ internal interface inputText {
                             state.onKeyPressed(K.LINESTART or K.SHIFT)
                     state.onKeyPressed(K.BACKSPACE or kMask)
                 }
-                isValidateEnter -> {
+                isEnterPressed -> {
+                    // Determine if we turn Enter into a \n character
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
                     if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         clearActiveId = true
-                        enterPressed = true
+                        validated = true
                     } else if (!isReadOnly)
                         withChar('\n') { c ->
                             // Insert new line
@@ -485,8 +486,8 @@ internal interface inputText {
                         }
                 }
                 isValidateNav -> {
-                    assert(!isValidateEnter)
-                    enterPressed = true; clearActiveId = true
+                    assert(!isEnterPressed)
+                    validated = true; clearActiveId = true
                 }
                 isCancel -> {
                     cancelEdit = true
@@ -576,7 +577,7 @@ internal interface inputText {
             // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
             // If we didn't do that, code like InputInt() with ImGuiInputTextFlags_EnterReturnsTrue would fail.
             // This also allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage (please note that if you use this property along ImGuiInputTextFlags_CallbackResize you can end up with your temporary string object unnecessarily allocating once a frame, either store your string data, either if you don't then don't use ImGuiInputTextFlags_CallbackResize).
-            val applyEditBackToUserBuffer = !cancelEdit || (enterPressed && flags hasnt Itf.EnterReturnsTrue)
+            val applyEditBackToUserBuffer = !cancelEdit || (validated && flags hasnt Itf.EnterReturnsTrue)
             if (applyEditBackToUserBuffer) {
                 // Apply new value immediately - copy modified buffer back
                 // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer
@@ -949,7 +950,7 @@ internal interface inputText {
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         return when {
-            flags has Itf.EnterReturnsTrue -> enterPressed
+            flags has Itf.EnterReturnsTrue -> validated
             else -> valueChanged
         }
     }

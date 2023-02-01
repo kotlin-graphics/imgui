@@ -73,7 +73,7 @@ interface widgetsInputWithKeyboard {
 
     fun inputTextWithHint(label: String, hint: String, buf: ByteArray, flags: InputTextFlags = 0,
                           callback: InputTextCallback? = null, userData: Any? = null): Boolean {
-        assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }
+        assert(flags hasnt Itf._Multiline) { "call InputTextMultiline() or InputTextEx() manually if you need multi-line + hint." }
         return inputTextEx(label, hint, buf, Vec2(), flags, callback, userData)
     }
 

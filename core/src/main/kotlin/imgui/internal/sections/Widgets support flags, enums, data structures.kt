@@ -15,6 +15,10 @@ typealias ItemFlags = Int
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
  *  This is going to be exposed in imgui.h when stabilized enough. */
 enum class ItemFlag(@JvmField val i: ItemFlags) {
+
+
+    // Controlled by user
+
     None(0),
 
     /** Disable keyboard tabbing (FIXME: should merge with _NoNav) */
@@ -40,6 +44,9 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
 
     /** [ALPHA] Allow hovering interactions but underlying value is not changed. */
     ReadOnly(1 shl 7),  // false
+
+
+    // Controlled by widget code
 
     /** [WIP] Auto-activate input mode when tab focused. Currently only used and supported by a few items before it becomes a generic feature. */
     Inputable(1 shl 8);   // false
