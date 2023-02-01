@@ -202,10 +202,7 @@ class InputTextState {
     }
 
     /** ~STB_TEXTEDIT_MOVEWORDRIGHT */
-    infix fun moveWordRight(idx: Int): Int = when (Platform.get()) {
-        Platform.MACOSX -> moveWordRight_MAC(idx)
-        else -> moveWordRight_WIN(idx)
-    }
+    infix fun moveWordRight(idx: Int): Int = if (ImGui.io.configMacOSXBehaviors) moveWordRight_MAC(idx) else moveWordRight_WIN(idx)
 
     fun deleteChars(pos: Int, n: Int) {
 

@@ -372,7 +372,7 @@ internal interface inputText {
             if (state.selectedAllMouseLock && !io.mouseDown[0])
                 state.selectedAllMouseLock = false
 
-            // We except backends to emit a Tab key but some also emit a Tab character which we ignore (#2467, #1336)
+            // We expect backends to emit a Tab key but some also emit a Tab character which we ignore (#2467, #1336)
             // (For Tab and Enter: Win32/SFML/Allegro are sending both keys and chars, GLFW and SDL are only sending keys. For Space they all send all threes)
             val ignoreCharInputs = (io.keyCtrl && !io.keyAlt) || (isOsx && io.keySuper)
             if (flags has Itf.AllowTabInput && Key.Tab.isPressed && !ignoreCharInputs && !io.keyShift && !isReadOnly)
@@ -424,6 +424,7 @@ internal interface inputText {
             val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
             val isUndo = ((isShortcutKey && Key.Z.isPressed) && !isReadOnly && isUndoable)
             val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
+            val isSelectAll = isShortcutKey && Key.A.isPressed
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
             val isEnterPressed = Key.Enter.isPressed || Key.KeypadEnter.isPressed
@@ -501,7 +502,7 @@ internal interface inputText {
                     state.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
                     state.clearSelection()
                 }
-                isShortcutKey && Key.A.isPressed -> {
+                isSelectAll -> {
                     state.selectAll()
                     state.cursorFollow = true
                 }
@@ -1032,7 +1033,7 @@ internal interface inputText {
     fun tempInputIsActive(id: ID): Boolean = g.activeId == id && g.tempInputId == id
 
     fun getInputTextState(id: ID): InputTextState? =
-        g.inputTextState.takeIf { it.id == id } // Get input text state if active
+        g.inputTextState.takeIf { id != 0 && it.id == id } // Get input text state if active
 
     companion object {
         /** Return false to discard a character.    */

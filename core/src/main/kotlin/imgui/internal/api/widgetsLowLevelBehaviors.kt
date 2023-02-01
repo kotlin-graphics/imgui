@@ -301,6 +301,7 @@ internal interface widgetsLowLevelBehaviors {
         }
 
         if (g.activeId == id)
+        // Those are the things we can do easily outside the DragBehaviorT<> template, saves code generation.
             if (g.activeIdSource == InputSource.Mouse && !io.mouseDown[0])
                 clearActiveID()
             else if (g.activeIdSource == InputSource.Nav && g.navActivatePressedId == id && !g.activeIdIsJustActivated)
@@ -414,6 +415,7 @@ internal interface widgetsLowLevelBehaviors {
             Invalid ImGuiSliderFlags flag!  Has the 'float power' argument been mistakenly cast to flags? Call function with ImGuiSliderFlags_Logarithmic flags instead.""".trimIndent()
         }
 
+        // Those are the things we can do easily outside the SliderBehaviorT<> template, saves code generation.
         if (g.lastItemData.inFlags has ItemFlag.ReadOnly || flags has SliderFlag._ReadOnly)
             return false
 
