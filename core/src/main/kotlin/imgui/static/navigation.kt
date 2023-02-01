@@ -625,7 +625,6 @@ fun navUpdateCreateTabbingRequest() {
     val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
     val clipDir = if (g.navTabbingDir < 0) Dir.Up else Dir.Down
     navMoveRequestSubmit(Dir.None, clipDir, NavMoveFlag.Tabbing.i, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
-    g.navTabbingResultFirst.clear()
     g.navTabbingCounter = -1
 }
 
@@ -955,8 +954,11 @@ fun navProcessItem() {
 
     // Update window-relative bounding box of navigated item
     if (g.navId == id) {
-        g.navWindow =
-            window    // Always refresh g.NavWindow, because some operations such as FocusItem() don't have a window.
+        if (g.navWindow !== window) {
+            g.navWindow = window    // Always refresh g.NavWindow, because some operations such as FocusItem() don't have a window.
+            g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
+            navUpdateAnyRequestFlag()
+        }
         g.navLayer = window.dc.navLayerCurrent
         g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
         g.navIdIsAlive = true
@@ -1032,7 +1034,7 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
 
 fun navRestoreLayer(layer: NavLayer) {
     if (layer == NavLayer.Main)
-        g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)
+        g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!)    // FIXME-NAV: Should clear ongoing nav requests?
     val window = g.navWindow!!
     if (window.navLastIds[layer] != 0)
         setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])

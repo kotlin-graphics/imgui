@@ -41,10 +41,12 @@ interface focusActivation {
     /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.
      *  Use -1 to access previous widget.   */
     fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
-        assert(offset >= -1) { "-1 is allowed but not below" }
         val window = g.currentWindow!!
         assert(offset >= -1) { "-1 is allowed but not below" }
+
         g.navWindow = window
+        g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
+
         val scrollFlags = if (window.appearing) ScrollFlag.KeepVisibleEdgeX or ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeX or ScrollFlag.KeepVisibleEdgeY
         navMoveRequestSubmit(Dir.None, if (offset < 0) Dir.Up else Dir.Down, NavMoveFlag.Tabbing or NavMoveFlag.FocusApi, scrollFlags) // FIXME-NAV: Once we refactor tabbing, add LegacyApi flag to not activate non-inputable.
         if (offset == -1)

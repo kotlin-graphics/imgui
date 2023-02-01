@@ -76,10 +76,11 @@ internal interface navigation {
         g.navMoveScrollFlags = scrollFlags
         g.navMoveForwardToNextFrame = false
         g.navMoveKeyMods = g.io.keyMods
-        g.navTabbingCounter = 0
         g.navMoveResultLocal.clear()
         g.navMoveResultLocalVisible.clear()
         g.navMoveResultOther.clear()
+        g.navTabbingCounter = 0
+        g.navTabbingResultFirst.clear()
         navUpdateAnyRequestFlag()
     }
 
