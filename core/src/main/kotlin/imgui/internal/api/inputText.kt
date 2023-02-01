@@ -34,7 +34,6 @@ import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.parseFormatTrimDecorations
 import imgui.ImGui.popFont
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
@@ -49,7 +48,6 @@ import imgui.ImGui.setActiveID
 import imgui.ImGui.setActiveIdUsingKey
 import imgui.ImGui.setFocusID
 import imgui.ImGui.style
-import imgui.InputTextFlag
 import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.internal.*
@@ -159,7 +157,7 @@ internal interface inputText {
         } else {
             // Support for internal ImGuiInputTextFlags_MergedItem flag, which could be redesigned as an ItemFlags if needed (with test performed in ItemAdd)
             itemSize(totalBb, style.framePadding.y)
-            if (flags hasnt InputTextFlag._MergedItem)
+            if (flags hasnt Itf._MergedItem)
                 if (!itemAdd(totalBb, id, frameBb, ItemFlag.Inputable.i))
                     return false
             itemStatusFlags = g.lastItemData.statusFlags
@@ -224,7 +222,7 @@ internal interface inputText {
                 state.stb initialize !isMultiline
             }
             if (!isMultiline) {
-                if (flags has InputTextFlag.AutoSelectAll)
+                if (flags has Itf.AutoSelectAll)
                     selectAll = true
                 if (inputRequestedByNav && (!recycleState || g.navActivateFlags hasnt ActivateFlag.TryToPreserveState))
                     selectAll = true
@@ -615,9 +613,9 @@ internal interface inputText {
                         cbData.flags = flags
                         cbData.userData = callbackUserData
 
-                        var callbackBuf = if (isReadOnly) buf else state.textA
+                        var callbackData = if (isReadOnly) buf else state.textA
                         cbData.eventKey = eventKey
-                        cbData.buf = callbackBuf
+                        cbData.buf = callbackData
                         cbData.bufTextLen = state.curLenA
                         cbData.bufSize = state.bufCapacityA
                         cbData.bufDirty = false
@@ -635,8 +633,8 @@ internal interface inputText {
                         callback(cbData)
 
                         // Read back what user may have modified
-                        callbackBuf = if (isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
-                        assert(cbData.buf === callbackBuf) { "Invalid to modify those fields" }
+                        callbackData = if (isReadOnly) buf else state.textA // Pointer may have been invalidated by a resize callback
+                        assert(cbData.buf === callbackData) { "Invalid to modify those fields" }
                         assert(cbData.bufSize == state.bufCapacityA)
                         assert(cbData.flags == flags)
                         val bufDirty = cbData.bufDirty
@@ -656,6 +654,7 @@ internal interface inputText {
                             }
                         if (bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
+                            inputTextUpdateUndoStateAfterUserCallback(state, callbackData)
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
                                 val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)
                                 if (state.textW.size < newSize)
@@ -677,7 +676,7 @@ internal interface inputText {
                 }
             }
             // Clear temporary user storage
-            state.flags = InputTextFlag.None.i
+            state.flags = Itf.None.i
         }
 
         // Copy result to user buffer
@@ -966,7 +965,7 @@ internal interface inputText {
             clearActiveID()
 
         g.currentWindow!!.dc.cursorPos put bb.min
-        val valueChanged = inputTextEx(label, null, buf, bb.size, flags or InputTextFlag._MergedItem)
+        val valueChanged = inputTextEx(label, null, buf, bb.size, flags or Itf._MergedItem)
         if (init) {
             // First frame we started displaying the InputText widget, we expect it to take the active id.
             assert(g.activeId == id)
@@ -1184,6 +1183,45 @@ internal interface inputText {
             return when (val formatLastChar = if (format.isNotEmpty()) format.lastIndex else NUL) {
                 'x', 'X' -> Itf.CharsHexadecimal
                 else -> Itf.CharsDecimal
+            }
+        }
+
+        fun inputTextUpdateUndoStateAfterUserCallback(state: InputTextState, newBuf: ByteArray) {
+            // Find the shortest single replacement we can make to get the new text
+            // from the old text.
+            val oldBuf = state.textW
+            val oldLength = state.curLenW
+            val newLength = textCountCharsFromUtf8(newBuf)
+            val shorterLength = oldLength min newLength
+
+            var where = 0
+            while (where < shorterLength) {
+                val (b, _) = textCharFromUtf8(newBuf, where)
+                if (oldBuf[where].code != b)
+                    break
+
+                where += 1
+            }
+
+            var oldLastDiff = oldLength - 1
+            var newLastDiff = newLength - 1
+            while (oldLastDiff >= where && newLastDiff >= 0) {
+                val (b, _) = textCharFromUtf8(newBuf, newLastDiff)
+                if (oldBuf[oldLastDiff].code != b)
+                    break
+
+                oldLastDiff -= 1
+                newLastDiff -= 1
+            }
+
+            val insertLen = newLastDiff - where + 1
+            val deleteLen = oldLastDiff - where + 1
+
+            if (insertLen > 0 || deleteLen > 0) {
+                val p = state.stb.undoState.createUndo(where, deleteLen, insertLen)
+                if (p != null)
+                    for (i in 0 until deleteLen)
+                        state.stb.undoState.undoChar[p + i] = state.getChar(where + i)
             }
         }
     }
