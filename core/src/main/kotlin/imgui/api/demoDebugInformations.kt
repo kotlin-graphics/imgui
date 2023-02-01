@@ -152,6 +152,8 @@ interface demoDebugInformations {
     fun showMetricsWindow(open: KMutableProperty0<Boolean>) {
 
         val cfg = g.debugMetricsConfig
+        if (cfg.showDebugLog)
+            showDebugLogWindow(cfg::showDebugLog)
         if (cfg.showStackTool)
             showStackToolWindow(cfg::showStackTool)
 
