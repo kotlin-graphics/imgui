@@ -6,7 +6,6 @@ import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
-import imgui.ImGui.parseFormatFindEnd
 import imgui.api.g
 import kool.BYTES
 import kool.rem
@@ -17,6 +16,7 @@ import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
+import java.util.regex.Pattern
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
@@ -234,19 +234,74 @@ val Char.isBlankW: Boolean
     get() = this == ' ' || this == '\t' || i == 0x3000
 
 
+// -----------------------------------------------------------------------------------------------------------------
 // Helpers: Formatting
-
-//IMGUI_API int           ImFormatString(char* buf, size_t buf_size, const char* fmt, ...) IM_FMTARGS(3);
+// -----------------------------------------------------------------------------------------------------------------
 
 fun formatString(buf: ByteArray, fmt: String, vararg args: Any): Int {
-    val bytes = fmt.format(g.style.locale, *args).toByteArray()
+    val bytes = fmt.format(*args).toByteArray()
     bytes.copyInto(buf) // TODO IndexOutOfBoundsException?
     return bytes.size.also { w -> buf[w] = 0 }
 }
 
-//IMGUI_API const char*   ImParseFormatFindStart(const char* format);
-//IMGUI_API const char*   ImParseFormatFindEnd(const char* format);
-//IMGUI_API const char*   ImParseFormatTrimDecorations(const char* format, char* buf, size_t buf_size);
+/** out buffer is `g.tempBuffer`
+ *  @return  buffer length */
+fun formatStringToTempBuffer(fmt: String, vararg args: Any): Int = formatString(g.tempBuffer, fmt, *args)
+
+//fun formatStringToTempBufferV(buf: ByteArray, fmt: String, vararg args: Any = emptyArray()) IM_FMTLIST(3);
+
+val formatArgPattern: Pattern
+    get() = Pattern.compile("%(\\d+\\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])")
+
+fun parseFormatFindStart(fmt: String): Int {
+    val matcher = formatArgPattern.matcher(fmt)
+    var i = 0
+    while (matcher.find(i)) {
+        if (fmt[matcher.end() - 1] != '%')
+            return matcher.start()
+        i = matcher.end()
+    }
+    return 0
+}
+
+/** We don't use strchr() because our strings are usually very short and often start with '%' */
+fun parseFormatFindStart2(fmt_: String): Int {
+    var fmt = StringPointer(fmt_)
+    var c = fmt[0]
+    while (c != NUL) {
+        if (c == '%' && fmt[1] != '%')
+            return fmt()
+        else if (c == '%')
+            fmt++
+        fmt++
+        c = fmt[0]
+    }
+    return fmt()
+}
+
+fun parseFormatFindEnd(fmt: String, i_: Int = 0): Int {
+    val matcher = formatArgPattern.matcher(fmt)
+    var i = 0
+    while (matcher.find(i)) {
+        if (fmt[matcher.end() - 1] != '%')
+            return matcher.end()
+        i = matcher.end()
+    }
+    return 0
+}
+
+/** Extract the format out of a format string with leading or trailing decorations
+ *  fmt = "blah blah"  -> return fmt
+ *  fmt = "%.3f"       -> return fmt
+ *  fmt = "hello %.3f" -> return fmt + 6
+ *  fmt = "%.3f hello" -> return buf written with "%.3f" */
+fun parseFormatTrimDecorations(fmt: String): String {
+    val fmtStart = parseFormatFindStart(fmt)
+    if (fmt[fmtStart] != '%')
+        return fmt
+    val fmtEnd = fmtStart + parseFormatFindEnd(fmt.substring(fmtStart))
+    return fmt.substring(fmtStart, fmtEnd)
+}
 
 // Sanitize format
 // - Zero terminate so extra characters after format (e.g. "%f123") don't confuse atof/atoi
@@ -268,7 +323,35 @@ fun parseFormatSanitizeForScanning(fmt: String): String {
     }
     return out.toString()
 }
-//IMGUI_API int           ImParseFormatPrecision(const char* format, int default_value);
+
+/** Parse display precision back from the display format string
+ *  FIXME: This is still used by some navigation code path to infer a minimum tweak step, but we should aim to rework widgets so it isn't needed. */
+fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
+    var i = parseFormatFindStart(fmt)
+    if (fmt[i] != '%')
+        return defaultPrecision
+    i++
+    while (fmt[i] in '0'..'9')
+        i++
+    var precision = Int.MAX_VALUE
+    if (fmt[i] == '.') {
+        val s = fmt.substring(i).filter { it.isDigit() }
+        if (s.isNotEmpty()) {
+            precision = s.parseInt()
+            if (precision < 0 || precision > 99)
+                precision = defaultPrecision
+        }
+    }
+    if (fmt[i].lowercaseChar() == 'e')    // Maximum precision with scientific notation
+        precision = -1
+    if (fmt[i].lowercaseChar() == 'g' && precision == Int.MAX_VALUE)
+        precision = -1
+    return when (precision) {
+        Int.MAX_VALUE -> defaultPrecision
+        else -> precision
+    }
+}
+
 
 
 // -----------------------------------------------------------------------------------------------------------------

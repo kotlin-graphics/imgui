@@ -20,6 +20,7 @@ import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
 import imgui.internal.sections.TextFlag
 import imgui.internal.formatString
+import imgui.internal.formatStringToTempBuffer
 
 
 /** Widgets: Text */
@@ -37,7 +38,7 @@ interface widgetsText {
         val window = currentWindow
         if (window.skipItems) return
 
-        val textEnd = formatString(g.tempBuffer, fmt, *args)
+        val textEnd = formatStringToTempBuffer(fmt, *args)
         textEx(g.tempBuffer, textEnd, TextFlag.NoWidthForLargeClippedText.i)
     }
 
@@ -90,17 +91,14 @@ interface widgetsText {
     //    IMGUI_API void          TextWrappedV(const char* fmt, va_list args)                     IM_FMTLIST(1);
 
     /** Display text+label aligned the same way as value+label widgets  */
-    fun labelText(label: String, fmt: String, vararg args: Any) = labelTextV(label, fmt, args)
-
-    /** Add a label+text combo aligned to other label+value widgets */
-    fun labelTextV(label: String, fmt: String, args: Array<out Any>) {
+    fun labelText(label: String, fmt: String, vararg args: Any) {
 
         val window = currentWindow
         if (window.skipItems) return
         val w = calcItemWidth()
 
         val valueTextBegin = g.tempBuffer
-        val valueTextEnd = formatString(g.tempBuffer, fmt, args)
+        val valueTextEnd = formatStringToTempBuffer(fmt, args)
         val valueSize = calcTextSize(valueTextBegin, valueTextEnd, hideTextAfterDoubleHash = false)
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
@@ -116,14 +114,14 @@ interface widgetsText {
             renderText(Vec2(valueBb.max.x + style.itemInnerSpacing.x, valueBb.min.y + style.framePadding.y), label)
     }
 
-    /** shortcut for Bullet()+Text()    */
-    fun bulletText(fmt: String, vararg args: Any) = bulletTextV(fmt, args)
-
-    /** Text with a little bullet aligned to the typical tree node. */
-    fun bulletTextV(fmt: String, args: Array<out Any>) {
+    /** shortcut for Bullet()+Text()
+     *
+     *  Text with a little bullet aligned to the typical tree node. */
+    fun bulletText(fmt: String, vararg args: Any) {
 
         val window = currentWindow
-        if (window.skipItems) return
+        if (window.skipItems)
+            return
 
         val text = fmt.format(style.locale, *args)
         val labelSize = calcTextSize(text, hideTextAfterDoubleHash = false)

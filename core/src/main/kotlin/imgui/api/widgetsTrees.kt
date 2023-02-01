@@ -19,6 +19,7 @@ import imgui.ImGui.unindent
 import imgui.internal.classes.Rect
 import imgui.internal.sections.NextItemDataFlag
 import imgui.internal.formatString
+import imgui.internal.formatStringToTempBuffer
 import imgui.internal.sections.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
@@ -59,7 +60,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatString(g.tempBuffer, fmt, args)
+        val labelEnd = formatStringToTempBuffer(fmt, args)
         return treeNodeBehavior(window.getID(strID), flags, g.tempBuffer, labelEnd)
     }
 
@@ -68,7 +69,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatString(g.tempBuffer, fmt, *args)
+        val labelEnd = formatStringToTempBuffer(fmt, *args)
         return treeNodeBehavior(window.getID(ptrID), flags, g.tempBuffer, labelEnd)
     }
 
@@ -77,7 +78,7 @@ interface widgetsTrees {
         val window = currentWindow
         if (window.skipItems) return false
 
-        val labelEnd = formatString(g.tempBuffer, fmt, *args)
+        val labelEnd = formatStringToTempBuffer(fmt, *args)
         return treeNodeBehavior(window.getID(intPtr), flags, g.tempBuffer, labelEnd)
     }
 

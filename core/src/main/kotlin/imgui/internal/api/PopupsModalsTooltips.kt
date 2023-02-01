@@ -52,11 +52,13 @@ internal interface PopupsModalsTooltips {
         setNextWindowSize(size)
 
         // Build up name. If you need to append to a same child from multiple location in the ID stack, use BeginChild(ImGuiID id) with a stable value.
-        val postfix = if (name.isEmpty()) "" else "_"
-        val title = "${parentWindow.name}/$name$postfix%08X".format(style.locale, id)
+        val maybePostfix = if (name.isEmpty()) "" else "_"
+        val tempWindowName = "${parentWindow.name}/$name$maybePostfix%08X".format(style.locale, id)
+
         val backupBorderSize = style.childBorderSize
-        if (!border) style.childBorderSize = 0f
-        val ret = begin(title, null, flags)
+        if (!border)
+            style.childBorderSize = 0f
+        val ret = begin(tempWindowName, null, flags)
         style.childBorderSize = backupBorderSize
 
         val childWindow = g.currentWindow!!.apply {

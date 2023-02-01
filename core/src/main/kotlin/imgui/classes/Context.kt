@@ -692,6 +692,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         // Create default viewport
         val viewport = ViewportP()
         g.viewports += viewport
+        // [JVM] useless
+        // g.TempBuffer.resize(1024 * 3 + 1, 0);
 
         //        #ifdef IMGUI_HAS_DOCK
         //        #endif // #ifdef IMGUI_HAS_DOCK
