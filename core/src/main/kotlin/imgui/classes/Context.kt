@@ -643,8 +643,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Misc
     //------------------------------------------------------------------
 
-    /** Calculate estimate of framerate for user over the last 2 seconds.    */
-    val framerateSecPerFrame = FloatArray(120)
+    /** Calculate estimate of framerate for user over the last 60 frames..    */
+    val framerateSecPerFrame = FloatArray(60)
 
     var framerateSecPerFrameIdx = 0
 
