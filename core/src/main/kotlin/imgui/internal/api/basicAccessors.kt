@@ -36,6 +36,8 @@ internal interface basicAccessors {
     fun setActiveID(id: ID, window: Window?) {
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
+            IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() old:0x%08X (window \"${g.activeIdWindow?.name ?: ""}\") -> new:0x%08X (window \"${window?.name ?: ""}\")",
+                                     g.activeId, id)
             g.activeIdTimer = 0f
             g.activeIdHasBeenPressedBefore = false
             g.activeIdHasBeenEditedBefore = false

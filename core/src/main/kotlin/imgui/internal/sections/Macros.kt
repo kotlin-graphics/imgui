@@ -7,7 +7,7 @@ import imgui.internal.classes.has
 
 
 // Debug Printing Into TTY
-fun IMGUI_DEBUG_PRINT(fmt: String, vararg args: Any) = println("[%05d] ".format(g.frameCount) + fmt.format(*args))
+fun IMGUI_DEBUG_PRINTF(fmt: String, vararg args: Any) = println(fmt.format(*args))
 
 // Debug Logging for ShowDebugLogWindow(). This is designed for relatively rare events so please don't spam.
 fun IMGUI_DEBUG_LOG(fmt: String, vararg args: Any) = ImGui.debugLog(fmt, *args)
@@ -25,10 +25,13 @@ fun IMGUI_DEBUG_LOG_POPUP(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventPopup)
         IMGUI_DEBUG_LOG(fmt, *args)
 }
-//fun IMGUI_DEBUG_LOG_POPUP(fmt: String, vararg args: String) = Unit       // Disable log
-//fun IMGUI_DEBUG_LOG_NAV(fmt: String, vararg args: Any) = IMGUI_DEBUG_LOG(fmt, *args) // Enable log
 fun IMGUI_DEBUG_LOG_NAV(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventNav)
+        IMGUI_DEBUG_LOG(fmt, *args)
+}
+
+fun IMGUI_DEBUG_LOG_IO(fmt: String, vararg args: Any) {
+    if (g.debugLogFlags has DebugLogFlag.EventIO)
         IMGUI_DEBUG_LOG(fmt, *args)
 }
 

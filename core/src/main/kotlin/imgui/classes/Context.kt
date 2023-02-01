@@ -624,7 +624,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Debug Tools
 
-    var debugLogFlags = DebugLogFlag.None.i
+    var debugLogFlags = DebugLogFlag.OutputToTTY.i
     val debugLogBuf = StringBuilder()
 
     /** Item picker is active (started with DebugStartItemPicker()) */

@@ -10,6 +10,8 @@ import java.nio.ByteBuffer
 
 internal interface dragAndDrop {
 
+    val isDragDropActive: Boolean
+        get() = g.dragDropActive
     fun beginDragDropTargetCustom(bb: Rect, id: ID): Boolean {
         if (!g.dragDropActive) return false
 

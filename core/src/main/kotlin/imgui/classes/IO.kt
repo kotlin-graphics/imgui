@@ -179,7 +179,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     /** Queue a new key down/up event for analog values (e.g. ImGuiKey_Gamepad_ values). Dead-zones should be handled by the backend. */
     fun addKeyAnalogEvent(key: Key, down: Boolean, analogValue: Float) {
-        //if (e->Down) { IMGUI_DEBUG_PRINT("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
+        //if (e->Down) { IMGUI_DEBUG_LOG_IO("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
         if (key == Key.None || !appAcceptingEvents)
             return
         assert(g.io === this) { "Can only add events to current context." }

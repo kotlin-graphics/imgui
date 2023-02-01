@@ -33,6 +33,7 @@ import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or
 import imgui.static.*
@@ -139,9 +140,15 @@ interface main {
         g.hoveredIdUsingMouseWheel = false
         g.hoveredIdDisabled = false
 
-        // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
-        if (g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId && g.activeId != 0)
+        // Clear ActiveID if the item is not alive anymore.
+        // In 1.87, the common most call to KeepAliveID() was moved from GetID() to ItemAdd().
+        // As a result, custom widget using ButtonBehavior() _without_ ItemAdd() need to call KeepAliveID() themselves.
+        if (g.activeId != 0 && g.activeIdIsAlive != g.activeId && g.activeIdPreviousFrame == g.activeId) {
+            IMGUI_DEBUG_LOG_ACTIVEID("NewFrame(): ClearActiveID() because it isn't marked alive anymore!")
             clearActiveID()
+        }
+
+        // Update ActiveId data (clear reference to active widget if the widget isn't alive anymore)
         if (g.activeId != 0)
             g.activeIdTimer += io.deltaTime
         g.lastActiveIdTimer += io.deltaTime

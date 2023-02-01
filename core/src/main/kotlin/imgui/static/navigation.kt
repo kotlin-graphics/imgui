@@ -237,7 +237,7 @@ fun navUpdate() {
     if (setMousePos && io.configFlags has ConfigFlag.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos) {
         io.mousePos = navCalcPreferredRefPos(); io.mousePosPrev put io.mousePos
         io.wantSetMousePos = true
-        //IMGUI_DEBUG_PRINT("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
+        //IMGUI_DEBUG_LOG_IO("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
     }
 
     // [DEBUG]
@@ -475,7 +475,7 @@ fun navUpdateCancelRequest() {
     if (!NavInput.Cancel.isTest(NavReadMode.Pressed))
         return
 
-    IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel\n")
+    IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel")
     val navWindow = g.navWindow
     if (g.activeId != 0) {
         if (!isActiveIdUsingNavInput(NavInput.Cancel))
@@ -514,7 +514,7 @@ fun navUpdateCreateMoveRequest() {
         // (preserve most state, which were already set by the NavMoveRequestForward() function)
         assert(g.navMoveDir != Dir.None && g.navMoveClipDir != Dir.None)
         assert(g.navMoveFlags has NavMoveFlag.Forwarded)
-        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}\n")
+        IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequestForward ${g.navMoveDir.i}")
     } else {
         // Initiate directional inputs request
         g.navMoveDir = Dir.None
@@ -1035,7 +1035,7 @@ fun navRestoreLayer(layer: NavLayer) {
         val prevNavWindow = g.navWindow
         g.navWindow = navRestoreLastChildNavWindow(g.navWindow!!) // FIXME-NAV: Should clear ongoing nav requests?
         if (prevNavWindow != null)
-            IMGUI_DEBUG_LOG_FOCUS("[focus] NavRestoreLayer: from \"${prevNavWindow.name}\" to SetNavWindow(\"${g.navWindow!!.name}\")\n")
+            IMGUI_DEBUG_LOG_FOCUS("[focus] NavRestoreLayer: from \"${prevNavWindow.name}\" to SetNavWindow(\"${g.navWindow!!.name}\")")
     }
     val window = g.navWindow!!
     if (window.navLastIds[layer] != 0)

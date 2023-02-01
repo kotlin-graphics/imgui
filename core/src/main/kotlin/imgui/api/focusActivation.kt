@@ -9,6 +9,7 @@ import imgui.ImGui.scrollToRectEx
 import imgui.ImGui.setNavWindow
 import imgui.ImGui.setScrollHereY
 import imgui.internal.classes.Rect
+import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.ScrollFlag
 import imgui.internal.sections.or
@@ -40,10 +41,13 @@ interface focusActivation {
     }
 
     /** focus keyboard on the next widget. Use positive 'offset' to access sub components of a multiple component widget.
-     *  Use -1 to access previous widget.   */
+     *  Use -1 to access previous widget.
+     *
+     *  Note: this will likely be called ActivateItem() once we rework our Focus/Activation system! */
     fun setKeyboardFocusHere(offset: Int = 0) = with(currentWindow) {
         val window = g.currentWindow!!
         assert(offset >= -1) { "-1 is allowed but not below" }
+        IMGUI_DEBUG_LOG_ACTIVEID("SetKeyboardFocusHere($offset) in window \"${window.name}\"")
 
         setNavWindow(window)
 

@@ -110,7 +110,10 @@ enum class DebugLogFlag(i: DebugLogFlags? = null) {
     EventFocus,
     EventPopup,
     EventNav,
-    EventMask_(EventActiveId or EventFocus or EventPopup or EventNav);
+    EventIO,
+    EventMask_(EventActiveId or EventFocus or EventPopup or EventNav or EventIO),
+    /** Also send output to TTY */
+    OutputToTTY(1 shl 10);
 
     val i: DebugLogFlags = i ?: if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
