@@ -231,10 +231,7 @@ internal interface newFrame {
             val movingWindow = mov.rootWindow!!
             if (io.mouseDown[0] && isMousePosValid(io.mousePos)) {
                 val pos = io.mousePos - g.activeIdClickOffset
-                if (movingWindow.pos.x.f != pos.x || movingWindow.pos.y.f != pos.y) {
-                    movingWindow.markIniSettingsDirty()
-                    movingWindow.setPos(pos, Cond.Always)
-                }
+                movingWindow.setPos(pos, Cond.Always)
                 focusWindow(mov)
             } else {
                 g.movingWindow = null

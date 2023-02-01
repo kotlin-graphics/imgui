@@ -566,6 +566,9 @@ class Window(var context: Context,
         val oldPos = Vec2(this.pos)
         this.pos put floor(pos)
         val offset = this.pos - oldPos
+        if (offset.x == 0f && offset.y == 0f)
+            return
+        markIniSettingsDirty()
         dc.cursorPos plusAssign offset         // As we happen to move the window while it is being appended to (which is a bad idea - will smear) let's at least offset the cursor
         dc.cursorMaxPos plusAssign offset      // And more importantly we need to offset CursorMaxPos/CursorStartPos this so ContentSize calculation doesn't get affected.
         dc.idealMaxPos += offset
@@ -575,25 +578,26 @@ class Window(var context: Context,
     /** ~SetWindowSize */
     fun setSize(size: Vec2, cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.None && setWindowSizeAllowFlags hasnt cond)
-            return //        JVM, useless
+            return
+
+        //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         setWindowSizeAllowFlags = setWindowSizeAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
 
         // Set
-        if (size.x > 0f) {
-            autoFitFrames.x = 0
+        val oldSize = Vec2(sizeFull)
+        autoFitFrames.x = if(size.x <= 0f) 2 else 0
+        autoFitFrames.y = if(size.y <= 0f) 2 else 0
+        if (size.x <= 0f)
+            autoFitOnlyGrows = false
+        else
             sizeFull.x = floor(size.x)
-        } else {
-            autoFitFrames.x = 2
+        if (size.y <= 0f)
             autoFitOnlyGrows = false
-        }
-        if (size.y > 0f) {
-            autoFitFrames.y = 0
+        else
             sizeFull.y = floor(size.y)
-        } else {
-            autoFitFrames.y = 2
-            autoFitOnlyGrows = false
-        }
+        if (oldSize.x != sizeFull.x || oldSize.y != sizeFull.y)
+            markIniSettingsDirty()
     }
 
     /** ~SetWindowCollapsed */

@@ -360,15 +360,9 @@ fun navUpdateWindowing() {
                 moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, NavReadMode.Down)
             if (moveDelta.x != 0f || moveDelta.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
-                val moveSpeed = floor(
-                    NAV_MOVE_SPEED * io.deltaTime * min(
-                        io.displayFramebufferScale.x,
-                        io.displayFramebufferScale.y
-                                                       )
-                                     ) // FIXME: Doesn't handle variable framerate very well
+                val moveSpeed = floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y)) // FIXME: Doesn't handle variable framerate very well
                 it.rootWindow!!.apply { // movingWindow
                     setPos(pos + moveDelta * moveSpeed, Cond.Always)
-                    markIniSettingsDirty()
                 }
                 g.navDisableMouseHover = true
             }
