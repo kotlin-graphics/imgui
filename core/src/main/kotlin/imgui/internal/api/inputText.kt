@@ -654,9 +654,9 @@ internal interface inputText {
                             }
                         if (bufDirty) {
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
-                            inputTextUpdateUndoStateAfterUserCallback(state, callbackData)
+                            inputTextReconcileUndoStateAfterUserCallback(state, callbackData, callbackData.size) // FIXME: Move the rest of this block inside function and rename to InputTextReconcileStateAfterUserCallback() ?
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
-                                val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength)
+                                val newSize = state.textW.size + (cbData.bufTextLen - backupCurrentTextLength) // Worse case scenario resize
                                 if (state.textW.size < newSize)
                                     state.textW = CharArray(newSize)
                                 else if (state.textW.size > newSize)
@@ -1186,22 +1186,28 @@ internal interface inputText {
             }
         }
 
-        fun inputTextUpdateUndoStateAfterUserCallback(state: InputTextState, newBuf: ByteArray) {
+        // Find the shortest single replacement we can make to get the new text from the old text.
+        // Important: needs to be run before TextW is rewritten with the new characters because calling STB_TEXTEDIT_GETCHAR() at the end.
+        // FIXME: Ideally we should transition toward (1) making InsertChars()/DeleteChars() update undo-stack (2) discourage (and keep reconcile) or obsolete (and remove reconcile) accessing buffer directly.
+        fun inputTextReconcileUndoStateAfterUserCallback(state: InputTextState, newBufA: ByteArray, newLengthA: Int) {
             // Find the shortest single replacement we can make to get the new text
             // from the old text.
             val oldBuf = state.textW
             val oldLength = state.curLenW
-            val newLength = textCountCharsFromUtf8(newBuf)
-            val shorterLength = oldLength min newLength
+            val newLength = textCountCharsFromUtf8(newBufA, newLengthA)
+            TODO()
+            //ImWchar* new_buf = (ImWchar*)(void*)g.TempBuffer.Data;
+            val newBuf = g.tempBuffer
+//            textStrFromUtf8(newBuf, new_length + 1, new_buf_a, new_buf_a + new_length_a)
 
             var where = 0
-            while (where < shorterLength) {
-                val (b, _) = textCharFromUtf8(newBuf, where)
-                if (oldBuf[where].code != b)
-                    break
-
-                where += 1
-            }
+//            while (where < shorterLength) {
+//                val (b, _) = textCharFromUtf8(newBuf, where)
+//                if (oldBuf[where].code != b)
+//                    break
+//
+//                where += 1
+//            }
 
             var oldLastDiff = oldLength - 1
             var newLastDiff = newLength - 1
