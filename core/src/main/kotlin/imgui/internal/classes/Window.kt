@@ -586,8 +586,8 @@ class Window(var context: Context,
 
         // Set
         val oldSize = Vec2(sizeFull)
-        autoFitFrames.x = if(size.x <= 0f) 2 else 0
-        autoFitFrames.y = if(size.y <= 0f) 2 else 0
+        autoFitFrames.x = if (size.x <= 0f) 2 else 0
+        autoFitFrames.y = if (size.y <= 0f) 2 else 0
         if (size.x <= 0f)
             autoFitOnlyGrows = false
         else
@@ -927,21 +927,28 @@ class Window(var context: Context,
         dc.navLayerCurrent = NavLayer.Main
 
         // Navigation resize (keyboard/gamepad)
+        // FIXME: This cannot be moved to NavUpdateWindowing() because CalcWindowSizeAfterConstraint() need to callback into user.
+        // Not even sure the callback works here.
         if (g.navWindowingTarget?.rootWindow === this) {
-            val navResizeDelta = Vec2()
+            val navResizeDir = Vec2()
             if (g.navInputSource == InputSource.Keyboard && g.io.keyShift)
-                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.RawKeyboard.i, NavReadMode.Down)
+                navResizeDir.put(Key.RightArrow.isDown.f - Key.LeftArrow.isDown.f, Key.DownArrow.isDown.f - Key.UpArrow.isDown.f)
             if (g.navInputSource == InputSource.Gamepad)
-                navResizeDelta put ImGui.getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, NavReadMode.Down)
-            if (navResizeDelta.x != 0f || navResizeDelta.y != 0f) {
+                navResizeDir put ImGui.getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, NavReadMode.Down)
+            if (navResizeDir.x != 0f || navResizeDir.y != 0f) {
                 val NAV_RESIZE_SPEED = 600f
-                navResizeDelta *= floor(NAV_RESIZE_SPEED * g.io.deltaTime * kotlin.math.min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
-                navResizeDelta put glm.max(navResizeDelta, visibilityRect.min - pos - size)
+                val resizeStep = floor(NAV_RESIZE_SPEED * g.io.deltaTime * kotlin.math.min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
+                g.navWindowingAccumDeltaSize += navResizeDir * resizeStep
+                g.navWindowingAccumDeltaSize put (g.navWindowingAccumDeltaSize max (visibilityRect.min - pos - size)) // We need Pos+Size >= visibility_rect.Min, so Size >= visibility_rect.Min - Pos, so size_delta >= visibility_rect.Min - window->Pos - window->Size
                 g.navWindowingToggleLayer = false
                 g.navDisableMouseHover = true
                 resizeGripCol[0] = Col.ResizeGripActive.u32
-                // FIXME-NAV: Should store and accumulate into a separate size buffer to handle sizing constraints properly, right now a constraint will make us stuck.
-                sizeTarget put calcSizeAfterConstraint(sizeFull + navResizeDelta)
+                val accumFloored = floor(g.navWindowingAccumDeltaSize)
+                if (accumFloored.x != 0f || accumFloored.y != 0f) {
+                    // FIXME-NAV: Should store and accumulate into a separate size buffer to handle sizing constraints properly, right now a constraint will make us stuck.
+                    sizeTarget put calcSizeAfterConstraint(sizeFull + navResizeDir)
+                    g.navWindowingAccumDeltaSize -= accumFloored
+                }
             }
         }
 

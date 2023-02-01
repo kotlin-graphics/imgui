@@ -337,6 +337,7 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     windowTarget?.let {
         g.navWindowingTarget = it
         g.navWindowingTargetAnim = it
+        g.navWindowingAccumDeltaPos put 0f; g.navWindowingAccumDeltaSize put 0f
     }
     g.navWindowingToggleLayer = false
 }

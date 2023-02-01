@@ -407,6 +407,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var navWindowingToggleLayer = false
 
+    val navWindowingAccumDeltaPos = Vec2()
+    val navWindowingAccumDeltaSize = Vec2()
 
     // ------------------------------------------------------------------
     // Render

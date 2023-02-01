@@ -1427,6 +1427,8 @@ enum class NavInput {
         val InternalStart = _KeyLeft.i
     }
 
+    // Inputs: Navigation
+
     /** Equivalent of isKeyDown() for NavInputs[]
      *  ~IsNavInputDown */ // JVM TODO check for semantic Key.isPressed/Down
     fun isDown(): Boolean = io.navInputs[i] > 0f

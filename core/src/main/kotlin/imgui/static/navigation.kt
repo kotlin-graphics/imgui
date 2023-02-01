@@ -2,10 +2,7 @@ package imgui.static
 
 import gli_.has
 import gli_.hasnt
-import glm_.glm
-import glm_.i
-import glm_.max
-import glm_.min
+import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.begin
@@ -275,10 +272,9 @@ fun navUpdateWindowing() {
     val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
-            g.navWindowingTarget = it.rootWindow
-            g.navWindowingTargetAnim = it.rootWindow
-            g.navWindowingHighlightAlpha = 0f
-            g.navWindowingTimer = 0f
+            g.navWindowingTarget = it; g.navWindowingTargetAnim = it
+            g.navWindowingTimer = 0f; g.navWindowingHighlightAlpha = 0f
+            g.navWindowingAccumDeltaPos put 0f; g.navWindowingAccumDeltaSize put 0f
             g.navWindowingToggleLayer = startWindowingWithGamepad // Gamepad starts toggling layer
             g.navInputSource = if (startWindowingWithKeyboard) InputSource.Keyboard else InputSource.Gamepad
         }
@@ -353,18 +349,22 @@ fun navUpdateWindowing() {
     // Move window
     g.navWindowingTarget?.let {
         if (it.flags hasnt Wf.NoMove) {
-            var moveDelta = Vec2()
+            var navMoveDir = Vec2()
             if (g.navInputSource == InputSource.Keyboard && !io.keyShift)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlag.RawKeyboard.i, NavReadMode.Down)
+                navMoveDir.put(Key.RightArrow.isDown.f - Key.LeftArrow.isDown.f, Key.DownArrow.isDown.f - Key.UpArrow.isDown.f)
             if (g.navInputSource == InputSource.Gamepad)
-                moveDelta = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, NavReadMode.Down)
-            if (moveDelta.x != 0f || moveDelta.y != 0f) {
+                navMoveDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, NavReadMode.Down)
+            if (navMoveDir.x != 0f || navMoveDir.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
-                val moveSpeed = floor(NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y)) // FIXME: Doesn't handle variable framerate very well
-                it.rootWindow!!.apply { // movingWindow
-                    setPos(pos + moveDelta * moveSpeed, Cond.Always)
-                }
-                g.navDisableMouseHover = true
+                val moveStep = NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y) // FIXME: Doesn't handle variable framerate very well
+                g.navWindowingAccumDeltaPos += navMoveDir * moveStep;
+                g.navDisableMouseHover = true;
+                val accumFloored = floor(g.navWindowingAccumDeltaPos);
+                if (accumFloored.x != 0f || accumFloored.y != 0f)
+                    it.rootWindow!!.apply { // movingWindow
+                        setPos(pos + accumFloored, Cond.Always)
+                        g.navWindowingAccumDeltaPos -= accumFloored
+                    }
             }
         }
     }

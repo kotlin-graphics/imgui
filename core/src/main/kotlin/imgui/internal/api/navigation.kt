@@ -200,14 +200,15 @@ internal interface navigation {
             g.navMoveFlags = g.navMoveFlags or wrapFlags
     }
 
-    fun getNavInputAmount(n: NavInput, mode: NavReadMode): Float {    // TODO -> NavInput?
+    fun getNavInputAmount(input: NavInput, mode: NavReadMode): Float {    // TODO -> NavInput?
 
-        val i = n.i
-        if (mode == NavReadMode.Down) return io.navInputs[i] // Instant, read analog input (0.0f..1.0f, as provided by user)
+        val n = input.i
+        if (mode == NavReadMode.Down)
+            return io.navInputs[n] // Instant, read analog input (0.0f..1.0f, as provided by user)
 
-        val t = io.navInputsDownDuration[i]
+        val t = io.navInputsDownDuration[n]
         return when { // Return 1.0f when just released, no repeat, ignore analog input.
-            t < 0f && mode == NavReadMode.Released -> if (io.navInputsDownDurationPrev[i] >= 0f) 1f else 0f
+            t < 0f && mode == NavReadMode.Released -> if (io.navInputsDownDurationPrev[n] >= 0f) 1f else 0f
             t < 0f -> 0f
             else -> when (mode) { // Return 1.0f when just pressed, no repeat, ignore analog input.
                 NavReadMode.Pressed -> if (t == 0f) 1 else 0
@@ -222,9 +223,7 @@ internal interface navigation {
     /** @param dirSources: NavDirSourceFlag    */
     fun getNavInputAmount2d(dirSources: NavDirSourceFlags, mode: NavReadMode, slowFactor: Float = 0f, fastFactor: Float = 0f): Vec2 {
         val delta = Vec2()
-        if (dirSources has NavDirSourceFlag.RawKeyboard)
-            delta += Vec2(Key.RightArrow.isDown.f - Key.LeftArrow.isDown.f, Key.DownArrow.isDown.f - Key.UpArrow.isDown.f)
-        if (dirSources has NavDirSourceFlag.Keyboard)
+        if (dirSources has NavDirSourceFlag.Keyboard) // Number of presses during the frame, according to repeat rate
             delta += Vec2(getNavInputAmount(NavInput._KeyRight, mode) - getNavInputAmount(NavInput._KeyLeft, mode),
                           getNavInputAmount(NavInput._KeyDown, mode) - getNavInputAmount(NavInput._KeyUp, mode))
         if (dirSources has NavDirSourceFlag.PadDPad)
