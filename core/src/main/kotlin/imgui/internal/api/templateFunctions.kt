@@ -11,14 +11,10 @@ import imgui.ImGui.getNavInputAmount2d
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.parseFormatFindEnd
-import imgui.ImGui.parseFormatFindStart2
-import imgui.ImGui.parseFormatPrecision
 import imgui.ImGui.style
 import imgui.api.g
+import imgui.internal.*
 import imgui.internal.classes.Rect
-import imgui.internal.lerp
-import imgui.internal.saturate
 import imgui.internal.sections.*
 import unsigned.Uint
 import unsigned.Ulong
@@ -136,24 +132,24 @@ internal interface templateFunctions {
                 }
 
                 // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-//                if (vMin.v == 0 && vMax < 0f)
-//                    vMinFudged = -logarithmicZeroEpsilon
-//                else if (vMax.v == 0 && vMin < 0f)
-//                    vMaxFudged = -logarithmicZeroEpsilon
+                //                if (vMin.v == 0 && vMax < 0f)
+                //                    vMinFudged = -logarithmicZeroEpsilon
+                //                else if (vMax.v == 0 && vMin < 0f)
+                //                    vMaxFudged = -logarithmicZeroEpsilon
 
                 val result = when {
                     vClamped <= vMinFudged -> 0f // Workaround for values that are in-range but below our fudge
                     vClamped >= vMaxFudged -> 1f // Workaround for values that are in-range but above our fudge
-//                    (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
-//                        val zeroPoint = - vMin.f / ( vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
-//                        when {
-//                            v.v == 0 -> zeroPoint // Special case for exactly zero
-//                            v < 0f -> (1f - ln(- vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * zeroPoint
-//                            else -> zeroPoint + ln( vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPoint)
-//                        }
-//                    }
+                    //                    (vMin * vMax) < 0f -> { // Range crosses zero, so split into two portions
+                    //                        val zeroPoint = - vMin.f / ( vMax.f - vMin.f) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                    //                        when {
+                    //                            v.v == 0 -> zeroPoint // Special case for exactly zero
+                    //                            v < 0f -> (1f - ln(- vClamped.f / logarithmicZeroEpsilon) / ln(-vMinFudged / logarithmicZeroEpsilon)) * zeroPoint
+                    //                            else -> zeroPoint + ln( vClamped.f / logarithmicZeroEpsilon) / ln(vMaxFudged / logarithmicZeroEpsilon) * (1f - zeroPoint)
+                    //                        }
+                    //                    }
                     // Entirely negative slider
-//                    vMin < Uint(0) || vMax < Uint(0) -> 1f - (float)(ImLog(-(FLOATTYPE) v_clamped / - v_max_fudged) / ImLog(-vMinFudged / -vMaxFudged))
+                    //                    vMin < Uint(0) || vMax < Uint(0) -> 1f - (float)(ImLog(-(FLOATTYPE) v_clamped / - v_max_fudged) / ImLog(-vMinFudged / -vMaxFudged))
                     else -> ln(vClamped.f / vMinFudged) / ln(vMaxFudged / vMinFudged)
                 }
                 if (flipped) 1f - result else result
@@ -259,26 +255,26 @@ internal interface templateFunctions {
                 }.d
 
                 // Awkward special cases - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-//                if (vMin.v == 0L && (v_max < 0.0f))
-//                    vMinFudged = -logarithmic_zero_epsilon;
-//                else if ((v_max == 0.0f) && (v_min < 0.0f))
-//                    vMaxFudged = -logarithmic_zero_epsilon;
+                //                if (vMin.v == 0L && (v_max < 0.0f))
+                //                    vMinFudged = -logarithmic_zero_epsilon;
+                //                else if ((v_max == 0.0f) && (v_min < 0.0f))
+                //                    vMaxFudged = -logarithmic_zero_epsilon;
 
                 val result = when {
                     vClamped <= vMinFudged.ul -> 0f // Workaround for values that are in-range but below our fudge
                     vClamped >= vMaxFudged.ul -> 1f // Workaround for values that are in-range but above our fudge
-//                    else if ((v_min * v_max) < 0.0f) // Range crosses zero, so split into two portions
-//                    {
-//                        float zero_point =(-(float) v_min) / ((float) v_max -(float) v_min) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
-//                        if (v == 0.0f)
-//                            result = zero_point // Special case for exactly zero
-//                        else if (v < 0.0f)
-//                            result = (1.0f - (float)(ImLog(-(FLOATTYPE) v_clamped / logarithmic_zero_epsilon) / ImLog(-vMinFudged / logarithmic_zero_epsilon))) * zero_point
-//                        else
-//                            result = zero_point + ((float)(ImLog((FLOATTYPE) v_clamped / logarithmic_zero_epsilon) / ImLog(vMaxFudged / logarithmic_zero_epsilon)) * (1.0f - zero_point))
-//                    }
-//                    else if ((v_min < 0.0f) || (v_max < 0.0f)) // Entirely negative slider
-//                        result = 1.0f - (float)(ImLog(-(FLOATTYPE) v_clamped / - v_max_fudged) / ImLog(-vMinFudged / -vMaxFudged))
+                    //                    else if ((v_min * v_max) < 0.0f) // Range crosses zero, so split into two portions
+                    //                    {
+                    //                        float zero_point =(-(float) v_min) / ((float) v_max -(float) v_min) // The zero point in parametric space.  There's an argument we should take the logarithmic nature into account when calculating this, but for now this should do (and the most common case of a symmetrical range works fine)
+                    //                        if (v == 0.0f)
+                    //                            result = zero_point // Special case for exactly zero
+                    //                        else if (v < 0.0f)
+                    //                            result = (1.0f - (float)(ImLog(-(FLOATTYPE) v_clamped / logarithmic_zero_epsilon) / ImLog(-vMinFudged / logarithmic_zero_epsilon))) * zero_point
+                    //                        else
+                    //                            result = zero_point + ((float)(ImLog((FLOATTYPE) v_clamped / logarithmic_zero_epsilon) / ImLog(vMaxFudged / logarithmic_zero_epsilon)) * (1.0f - zero_point))
+                    //                    }
+                    //                    else if ((v_min < 0.0f) || (v_max < 0.0f)) // Entirely negative slider
+                    //                        result = 1.0f - (float)(ImLog(-(FLOATTYPE) v_clamped / - v_max_fudged) / ImLog(-vMinFudged / -vMaxFudged))
                     else -> (ln(vClamped.d / vMinFudged) / ln(vMaxFudged / vMinFudged)).f
                 }
                 if (flipped) 1f - result else result
@@ -416,443 +412,368 @@ internal interface templateFunctions {
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of scaleRatioFromValueT)
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
     fun scaleValueFromRatioT(dataType: DataType, t: Float, vMin: Int, vMax: Int, isLogarithmic: Boolean,
-                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Int {
+                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Int = when {
 
-        if (vMin == vMax)
-            return vMin
-        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        // We special-case the extents because otherwise our logarithmic fudging can lead to "mathematically correct"
+        // but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value. Also generally simpler.
+        t <= 0f || vMin == vMax -> vMin
+        t >= 1f -> vMax
+        isLogarithmic -> {
+            // Fudge min/max to avoid getting silly results close to zero
+            var vMinFudged = when {
+                abs(vMin.f) < logarithmicZeroEpsilon -> if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                else -> vMin.f
+            }
+            var vMaxFudged = when {
+                abs(vMax.f) < logarithmicZeroEpsilon -> if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                else -> vMax.f
+            }
 
-        fun calcLogarithmic(): Int = when {
-            // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
-            t <= 0f -> vMin
-            t >= 1f -> vMax
-            else -> {
-                val flipped = vMax < vMin // Check if range is "backwards"
+            val flipped = vMax < vMin // Check if range is "backwards"
+            if (flipped) {
+                val swap = vMinFudged
+                vMinFudged = vMaxFudged
+                vMaxFudged = swap
+            }
 
-                // Fudge min/max to avoid getting silly results close to zero
-                var vMinFudged = when {
-                    abs(vMin.f) < logarithmicZeroEpsilon -> if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                    else -> vMin.f
-                }
-                var vMaxFudged = when {
-                    abs(vMax.f) < logarithmicZeroEpsilon -> if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                    else -> vMax.f
-                }
+            // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+            if (vMax == 0 && vMin < 0f)
+                vMaxFudged = -logarithmicZeroEpsilon
 
-                if (flipped) {
-                    val v = vMinFudged
-                    vMinFudged = vMaxFudged
-                    vMaxFudged = v
-                }
+            val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
 
-                // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-                if (vMax == 0 && vMin < 0f)
-                    vMaxFudged = -logarithmicZeroEpsilon
-
-                val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
-
-                when {
-                    vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
-                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
-                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
-                        when {
-                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroPointSnapL)).i
-                            else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR))).i
-                        }
+            when {
+                vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
+                    val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
+                    val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                    val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                    when {
+                        tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                        tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroPointSnapL)).i
+                        else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR))).i
                     }
-                    // Entirely negative slider
-                    vMin < 0 || vMax < 0 -> (-(-vMaxFudged * (-vMinFudged / -vMaxFudged).pow(1f - tWithFlip))).i
-                    else -> (vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip)).i
                 }
+                // Entirely negative slider
+                vMin < 0 || vMax < 0 -> (-(-vMaxFudged * (-vMinFudged / -vMaxFudged).pow(1f - tWithFlip))).i
+                else -> (vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip)).i
             }
         }
-
-        return when {
-            isLogarithmic -> calcLogarithmic()
-            else -> when {
-                // Linear slider
-                isFloatingPoint -> lerp(vMin, vMax, t)
-                // - For integer values we want the clicking position to match the grab box so we round above
-                //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
-                //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
-                t < 1f -> {
-                    val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF + if (vMin > vMax) -0.5f else 0.5f
-                    vMin + tmp.i
-                }
-                else -> vMax
-            }
+        // Linear slider
+        // ~isFloatingPoint
+        dataType == DataType.Float || dataType == DataType.Double -> lerp(vMin, vMax, t)
+        // - For integer values we want the clicking position to match the grab box so we round above
+        //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+        // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
+        //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
+        t < 1f -> {
+            val vNewOffF = (vMax - vMin) * t
+            vMin + (vNewOffF + if (vMin > vMax) -0.5f else 0.5f).i
         }
+        else -> 0
     }
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of scaleRatioFromValueT)
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
     fun scaleValueFromRatioT(dataType: DataType, t: Float, vMin: Uint, vMax: Uint, isLogarithmic: Boolean,
-                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Uint {
+                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Uint = when {
 
-        if (vMin == vMax)
-            return vMin
-        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
-
-        fun calcLogarithmic(): Uint = when {
-            // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
-            t <= 0f -> vMin
-            t >= 1f -> vMax
-            else -> {
-                val flipped = vMax < vMin // Check if range is "backwards"
-
-                // Fudge min/max to avoid getting silly results close to zero
-                var vMinFudged = when {
-                    abs(vMin.f) < logarithmicZeroEpsilon -> /*(v_min < 0.0f)? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
-                    else -> vMin.f
-                }
-                var vMaxFudged = when {
-                    abs(vMax.f) < logarithmicZeroEpsilon -> /*((v_max < 0.0f) ? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
-                    else -> vMax.f
-                }
-
-                if (flipped) {
-                    val v = vMinFudged
-                    vMinFudged = vMaxFudged
-                    vMaxFudged = v
-                }
-
-                // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-//                if ((vMax == 0.0f) && (vMin < 0.0f))
-//                    vMaxFudged = -logarithmicZeroEpsilon
-
-                val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
-
-//                if ((vMin * vMax) < 0.0f) // Range crosses zero, so we have to do this in two parts
-//                {
-//                    float zero_point =(-(float) ImMin (vMin, vMax)) / ImAbs((float)v_max-(float)v_min) // The zero point in parametric space
-//                    if (tWithFlip == zero_point)
-//                        result = (TYPE)0.0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-//                    else if (tWithFlip < zero_point)
-//                    result = (TYPE) - (logarithmicZeroEpsilon * ImPow(-vMinFudged / logarithmicZeroEpsilon, (FLOATTYPE)(1.0f - (tWithFlip / zero_point))))
-//                else
-//                    result = (TYPE)(logarithmicZeroEpsilon * ImPow(vMaxFudged / logarithmicZeroEpsilon, (FLOATTYPE)((tWithFlip - zero_point) / (1.0f - zero_point))))
-//                } else if ((vMin < 0.0f) || (vMax < 0.0f)) // Entirely negative slider
-//                    result = (TYPE) - (-vMaxFudged * ImPow(-vMinFudged / -vMaxFudged, (FLOATTYPE)(1.0f - tWithFlip)))
-//                else
-                Uint(vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip))
+        t <= 0f || vMin == vMax -> vMin
+        t >= 1f -> vMax
+        isLogarithmic -> {
+            // Fudge min/max to avoid getting silly results close to zero
+            var vMinFudged = when {
+                abs(vMin.f) < logarithmicZeroEpsilon -> /*(v_min < 0.0f)? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
+                else -> vMin.f
             }
-        }
-
-        return when {
-            isLogarithmic -> calcLogarithmic()
-            else -> when { // Linear slider
-                isFloatingPoint -> lerp(vMin, vMax, t)
-                // - For integer values we want the clicking position to match the grab box so we round above
-                //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
-                //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
-                t < 1f -> {
-                    val vNewOffF = (vMax - vMin).v * t
-                    val tmp = vNewOffF + if (vMin > vMax) -0.5f else 0.5f
-                    vMin + tmp.i
-                }
-                else -> vMax
+            var vMaxFudged = when {
+                abs(vMax.f) < logarithmicZeroEpsilon -> /*((v_max < 0.0f) ? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
+                else -> vMax.f
             }
+
+            val flipped = vMax < vMin // Check if range is "backwards"
+            if (flipped) {
+                val swap = vMinFudged
+                vMinFudged = vMaxFudged
+                vMaxFudged = swap
+            }
+
+            // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+            //                if ((vMax == 0.0f) && (vMin < 0.0f))
+            //                    vMaxFudged = -logarithmicZeroEpsilon
+
+            val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
+
+            //                if ((vMin * vMax) < 0.0f) // Range crosses zero, so we have to do this in two parts
+            //                {
+            //                    float zero_point =(-(float) ImMin (vMin, vMax)) / ImAbs((float)v_max-(float)v_min) // The zero point in parametric space
+            //                    if (tWithFlip == zero_point)
+            //                        result = (TYPE)0.0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+            //                    else if (tWithFlip < zero_point)
+            //                    result = (TYPE) - (logarithmicZeroEpsilon * ImPow(-vMinFudged / logarithmicZeroEpsilon, (FLOATTYPE)(1.0f - (tWithFlip / zero_point))))
+            //                else
+            //                    result = (TYPE)(logarithmicZeroEpsilon * ImPow(vMaxFudged / logarithmicZeroEpsilon, (FLOATTYPE)((tWithFlip - zero_point) / (1.0f - zero_point))))
+            //                } else if ((vMin < 0.0f) || (vMax < 0.0f)) // Entirely negative slider
+            //                    result = (TYPE) - (-vMaxFudged * ImPow(-vMinFudged / -vMaxFudged, (FLOATTYPE)(1.0f - tWithFlip)))
+            //                else
+            Uint(vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip))
         }
+        //  Linear slider
+        //  ~isFloatingPoint
+        dataType == DataType.Float || dataType == DataType.Double -> lerp(vMin, vMax, t)
+        // - For integer values we want the clicking position to match the grab box so we round above
+        //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+        // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
+        //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
+        t < 1f -> {
+            val vNewOffF = (vMax - vMin).v * t
+            vMin + (vNewOffF + if (vMin > vMax) -0.5f else 0.5f).i
+        }
+        else -> Uint(0)
     }
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of scaleRatioFromValueT)
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
     fun scaleValueFromRatioT(dataType: DataType, t: Float, vMin: Long, vMax: Long, isLogarithmic: Boolean,
-                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Long {
+                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Long = when {
 
-        if (vMin == vMax)
-            return vMin
-        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
-
-        fun calcLogarithmic(): Long = when {
-            // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
-            t <= 0f -> vMin
-            t >= 1f -> vMax
-            else -> {
-                val flipped = vMax < vMin // Check if range is "backwards"
-
-                // Fudge min/max to avoid getting silly results close to zero
-                var vMinFudged = when {
-                    abs(vMin.d) < logarithmicZeroEpsilon -> if (vMin < 0L) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                    else -> vMin
-                }.d
-                var vMaxFudged = when {
-                    abs(vMax.d) < logarithmicZeroEpsilon -> if (vMax < 0L) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                    else -> vMax
-                }.d
-
-                if (flipped) {
-                    val v = vMinFudged
-                    vMinFudged = vMaxFudged
-                    vMaxFudged = v
-                }
-
-                // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-                if (vMax == 0L && vMin < 0L)
-                    vMaxFudged = -logarithmicZeroEpsilon.d
-
-                val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
-
-                when {
-                    vMin * vMax < 0L -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
-                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
-                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
-                        when {
-                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0L // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow((1f - tWithFlip / zeroPointSnapL).d)).L
-                            else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR)).d)).L
-                        }
-                    }
-                    // Entirely negative slider
-                    vMin < 0L || vMax < 0L -> (-(-vMaxFudged * (-vMinFudged / -vMaxFudged.pow((1.0 - tWithFlip))))).L
-                    else -> (vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip.d)).L
-                }
-            }
-        }
-
-        return when {
-            isLogarithmic -> calcLogarithmic()
-            else -> when {
-                // Linear slider
-                isFloatingPoint -> lerp(vMin, vMax, t)
-                // - For integer values we want the clicking position to match the grab box so we round above
-                //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
-                //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
-                t < 1f -> {
-                    val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF.d + if (vMin > vMax) -0.5 else 0.5
-                    vMin + tmp.L
-                }
+        // We special-case the extents because otherwise our logarithmic fudging can lead to "mathematically correct"
+        // but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value. Also generally simpler.
+        t <= 0.0 || vMin == vMax -> vMin
+        t >= 1.0 -> vMax
+        isLogarithmic -> {
+            // Fudge min/max to avoid getting silly results close to zero
+            var vMinFudged = when {
+                abs(vMin.d) < logarithmicZeroEpsilon -> if (vMin < 0L) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                else -> vMin
+            }.d
+            var vMaxFudged = when {
+                abs(vMax.d) < logarithmicZeroEpsilon -> if (vMax < 0L) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
                 else -> vMax
+            }.d
+
+            val flipped = vMax < vMin // Check if range is "backwards"
+            if (flipped) {
+                val swap = vMinFudged
+                vMinFudged = vMaxFudged
+                vMaxFudged = swap
+            }
+
+            // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+            if (vMax == 0L && vMin < 0L)
+                vMaxFudged = -logarithmicZeroEpsilon.d
+
+            val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
+
+            when {
+                vMin * vMax < 0L -> { // Range crosses zero, so we have to do this in two parts
+                    val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
+                    val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                    val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                    when {
+                        tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0L // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                        tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow((1f - tWithFlip / zeroPointSnapL).d)).L
+                        else -> (logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR)).d)).L
+                    }
+                }
+                // Entirely negative slider
+                vMin < 0L || vMax < 0L -> (-(-vMaxFudged * (-vMinFudged / -vMaxFudged.pow((1.0 - tWithFlip))))).L
+                else -> (vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip.d)).L
             }
         }
+        // Linear slider
+        // ~isFloatingPoint
+        dataType == DataType.Float || dataType == DataType.Double -> lerp(vMin, vMax, t)
+        // - For integer values we want the clicking position to match the grab box so we round above
+        //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+        // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
+        //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
+        t < 1f -> {
+            val vNewOffF = (vMax - vMin) * t
+            vMin + (vNewOffF.d + if (vMin > vMax) -0.5 else 0.5).L
+        }
+        else -> 0L
     }
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of scaleRatioFromValueT)
      *  template<TYPE = Ulong, SIGNEDTYPE = Long, FLOATTYPE = Double> */
     fun scaleValueFromRatioT(dataType: DataType, t: Float, vMin: Ulong, vMax: Ulong, isLogarithmic: Boolean,
-                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Ulong {
+                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Ulong = when {
 
-        if (vMin == vMax)
-            return vMin
-        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
-
-        fun calcLogarithmic(): Ulong = when {
-            // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
-            t <= 0f -> vMin
-            t >= 1f -> vMax
-            else -> {
-                val flipped = vMax < vMin // Check if range is "backwards"
-
-                // Fudge min/max to avoid getting silly results close to zero
-                var vMinFudged = when {
-                    abs(vMin.d) < logarithmicZeroEpsilon -> /*((v_min < 0.0f) ? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
-                    else -> vMin
-                }.d
-                var vMaxFudged = when {
-                    abs(vMax.d) < logarithmicZeroEpsilon -> /*((v_max < 0.0f) ? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
-                    else -> vMax
-                }.d
-
-                if (flipped) {
-                    val v = vMinFudged
-                    vMinFudged = vMaxFudged
-                    vMaxFudged = v
-                }
-
-                // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-//                if ((vMax == 0.0f) && (vMin < 0.0f))
-//                    vMaxFudged = -logarithmicZeroEpsilon
-
-                val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
-
-//                if ((vMin * vMax) < 0.0f) // Range crosses zero, so we have to do this in two parts
-//                {
-//                    float zero_point = (-(float)ImMin(vMin, vMax)) / ImAbs((float)v_max - (float)v_min) // The zero point in parametric space
-//                    if (tWithFlip == zero_point)
-//                        result = (TYPE)0.0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-//                    else if (tWithFlip < zero_point)
-//                    result = (TYPE)-(logarithmicZeroEpsilon * ImPow(-vMinFudged / logarithmicZeroEpsilon, (FLOATTYPE)(1.0f - (tWithFlip / zero_point))))
-//                else
-//                    result = (TYPE)(logarithmicZeroEpsilon * ImPow(vMaxFudged / logarithmicZeroEpsilon, (FLOATTYPE)((tWithFlip - zero_point) / (1.0f - zero_point))))
-//                }
-//                else if ((vMin < 0.0f) || (vMax < 0.0f)) // Entirely negative slider
-//                    result = (TYPE)-(-vMaxFudged * ImPow(-vMinFudged / -vMaxFudged, (FLOATTYPE)(1.0f - tWithFlip)))
-//                else
-                Ulong(vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip.d))
-            }
-        }
-        return when {
-            isLogarithmic -> calcLogarithmic()
-            else -> when { // Linear slider
-                isFloatingPoint -> lerp(vMin, vMax, t)
-                // - For integer values we want the clicking position to match the grab box so we round above
-                //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
-                //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
-                t < 1f -> {
-                    val vNewOffF = (vMax - vMin).v * t
-                    val tmp = vNewOffF.d + if (vMin > vMax) -0.5f else 0.5f
-                    vMin + tmp.L
-                }
+        // We special-case the extents because otherwise our logarithmic fudging can lead to "mathematically correct"
+        // but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value. Also generally simpler.
+        t <= 0.0 || vMin == vMax -> vMin
+        t >= 1.0 -> vMax
+        isLogarithmic -> {
+            // Fudge min/max to avoid getting silly results close to zero
+            var vMinFudged = when {
+                abs(vMin.d) < logarithmicZeroEpsilon -> /*((v_min < 0.0f) ? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
+                else -> vMin
+            }.d
+            var vMaxFudged = when {
+                abs(vMax.d) < logarithmicZeroEpsilon -> /*((v_max < 0.0f) ? -logarithmic_zero_epsilon :*/ logarithmicZeroEpsilon
                 else -> vMax
+            }.d
+
+            val flipped = vMax < vMin // Check if range is "backwards"
+            if (flipped) {
+                val swap = vMinFudged
+                vMinFudged = vMaxFudged
+                vMaxFudged = swap
             }
+
+            // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
+            //                if ((vMax == 0.0f) && (vMin < 0.0f))
+            //                    vMaxFudged = -logarithmicZeroEpsilon
+
+            val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
+
+            //                if ((vMin * vMax) < 0.0f) // Range crosses zero, so we have to do this in two parts
+            //                {
+            //                    float zero_point = (-(float)ImMin(vMin, vMax)) / ImAbs((float)v_max - (float)v_min) // The zero point in parametric space
+            //                    if (tWithFlip == zero_point)
+            //                        result = (TYPE)0.0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+            //                    else if (tWithFlip < zero_point)
+            //                    result = (TYPE)-(logarithmicZeroEpsilon * ImPow(-vMinFudged / logarithmicZeroEpsilon, (FLOATTYPE)(1.0f - (tWithFlip / zero_point))))
+            //                else
+            //                    result = (TYPE)(logarithmicZeroEpsilon * ImPow(vMaxFudged / logarithmicZeroEpsilon, (FLOATTYPE)((tWithFlip - zero_point) / (1.0f - zero_point))))
+            //                }
+            //                else if ((vMin < 0.0f) || (vMax < 0.0f)) // Entirely negative slider
+            //                    result = (TYPE)-(-vMaxFudged * ImPow(-vMinFudged / -vMaxFudged, (FLOATTYPE)(1.0f - tWithFlip)))
+            //                else
+            Ulong(vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip.d))
         }
+        // Linear slider
+        // isFloatingPoint
+        dataType == DataType.Float || dataType == DataType.Double -> lerp(vMin, vMax, t)
+        // - For integer values we want the clicking position to match the grab box so we round above
+        //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+        // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
+        //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
+        t < 1f -> {
+            val vNewOffF = (vMax - vMin).v * t
+            vMin + (vNewOffF.d + if (vMin > vMax) -0.5f else 0.5f).L
+        }
+        else -> Ulong(0)
     }
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of scaleRatioFromValueT)
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
     fun scaleValueFromRatioT(dataType: DataType, t: Float, vMin: Float, vMax: Float, isLogarithmic: Boolean,
-                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Float {
+                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Float = when {
 
-        if (vMin == vMax)
-            return vMin
-        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        // We special-case the extents because otherwise our logarithmic fudging can lead to "mathematically correct"
+        // but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value. Also generally simpler.
+        t <= 0f || vMin == vMax -> vMin
+        t >= 1f -> vMax
+        isLogarithmic -> {
 
-        fun calcLogarithmic(): Float = when {
-            // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
-            t <= 0f -> vMin
-            t >= 1f -> vMax
-            else -> {
-                val flipped = vMax < vMin // Check if range is "backwards"
-
-                // Fudge min/max to avoid getting silly results close to zero
-                var vMinFudged = when {
-                    abs(vMin) < logarithmicZeroEpsilon -> if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                    else -> vMin
-                }
-                var vMaxFudged = when {
-                    abs(vMax) < logarithmicZeroEpsilon -> if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
-                    else -> vMax
-                }
-
-                if (flipped) {
-                    val v = vMinFudged
-                    vMinFudged = vMaxFudged
-                    vMaxFudged = v
-                }
-
-                // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-                if (vMax == 0f && vMin < 0f)
-                    vMaxFudged = -logarithmicZeroEpsilon
-
-                val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
-
-                when {
-                    vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax - vMin) // The zero point in parametric space
-                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
-                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
-                        when {
-                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroPointSnapL))
-                            else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR))
-                        }
-                    }
-                    // Entirely negative slider
-                    vMin < 0f || vMax < 0f -> -(-vMaxFudged * (-vMinFudged / -vMaxFudged).pow(1f - tWithFlip))
-                    else -> vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip)
-                }
+            // Fudge min/max to avoid getting silly results close to zero
+            var vMinFudged = when {
+                abs(vMin) < logarithmicZeroEpsilon -> if (vMin < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
+                else -> vMin
             }
-        }
-
-        return when {
-            isLogarithmic -> calcLogarithmic()
-            else -> when { // Linear slider
-                isFloatingPoint -> lerp(vMin, vMax, t)
-                // - For integer values we want the clicking position to match the grab box so we round above
-                //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
-                //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
-                t < 1f -> {
-                    val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF + if (vMin > vMax) -0.5f else 0.5f
-                    vMin + tmp
-                }
+            var vMaxFudged = when {
+                abs(vMax) < logarithmicZeroEpsilon -> if (vMax < 0f) -logarithmicZeroEpsilon else logarithmicZeroEpsilon
                 else -> vMax
             }
+
+            val flipped = vMax < vMin // Check if range is "backwards"
+            if (flipped) {
+                val swap = vMinFudged
+                vMinFudged = vMaxFudged
+                vMaxFudged = swap
+            }
+
+            val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
+
+            when {
+                vMin * vMax < 0f -> { // Range crosses zero, so we have to do this in two parts
+                    val zeroPointCenter = -(vMin min vMax).f / abs(vMax - vMin) // The zero point in parametric space
+                    val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                    val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                    when {
+                        tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0f // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                        tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow(1f - tWithFlip / zeroPointSnapL))
+                        else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR))
+                    }
+                }
+                // Entirely negative slider
+                vMin < 0f || vMax < 0f -> -(-vMaxFudged * (-vMinFudged / -vMaxFudged).pow(1f - tWithFlip))
+                else -> vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip)
+            }
         }
+        // Linear slider
+        // ~isFloatingPoint
+        dataType == DataType.Float || dataType == DataType.Double -> lerp(vMin, vMax, t)
+        // - For integer values we want the clicking position to match the grab box so we round above
+        //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+        // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
+        //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
+        t < 1f -> {
+            val vNewOffF = (vMax - vMin) * t
+            vMin + (vNewOffF + if (vMin > vMax) -0.5f else 0.5f)
+        }
+        else -> 0f
     }
 
     /** Convert a parametric position on a slider into a value v in the output space (the logical opposite of scaleRatioFromValueT)
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
     fun scaleValueFromRatioT(dataType: DataType, t: Float, vMin: Double, vMax: Double, isLogarithmic: Boolean,
-                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Double {
+                             logarithmicZeroEpsilon: Float, zeroDeadzoneHalfsize: Float): Double = when {
 
-        if (vMin == vMax)
-            return vMin
-        val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        // We special-case the extents because otherwise our logarithmic fudging can lead to "mathematically correct"
+        // but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value. Also generally simpler.
+        t <= 0f || vMin == vMax -> vMin
+        t >= 1f -> vMax
+        isLogarithmic -> {
 
-        fun calcIsLogarithmic(): Double = when {
-            // We special-case the extents because otherwise our fudging can lead to "mathematically correct" but non-intuitive behaviors like a fully-left slider not actually reaching the minimum value
-            t <= 0f -> vMin
-            t >= 1f -> vMax
-            else -> {
-                val flipped = vMax < vMin // Check if range is "backwards"
-
-                // Fudge min/max to avoid getting silly results close to zero
-                var vMinFudged = when {
-                    abs(vMin) < logarithmicZeroEpsilon -> (if (vMin < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
-                    else -> vMin
-                }
-                var vMaxFudged = when {
-                    abs(vMax) < logarithmicZeroEpsilon -> (if (vMax < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
-                    else -> vMax
-                }
-
-                if (flipped) {
-                    val v = vMinFudged
-                    vMinFudged = vMaxFudged
-                    vMaxFudged = v
-                }
-
-                // Awkward special case - we need ranges of the form (-100 .. 0) to convert to (-100 .. -epsilon), not (-100 .. epsilon)
-                if (vMax == 0.0 && vMin < 0.0)
-                    vMaxFudged = -logarithmicZeroEpsilon.d
-
-                val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
-
-                when {
-                    vMin * vMax < 0.0 -> { // Range crosses zero, so we have to do this in two parts
-                        val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
-                        val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
-                        val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
-                        when {
-                            tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0.0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
-                            tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow((1f - tWithFlip / zeroPointSnapL).d))
-                            else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR)).d)
-                        }
-                    }
-                    // Entirely negative slider
-                    vMin < 0.0 || vMax < 0.0 -> -(-vMaxFudged * (-vMinFudged / -vMaxFudged).pow((1f - tWithFlip).d))
-                    else -> vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip.d)
-                }
+            // Fudge min/max to avoid getting silly results close to zero
+            var vMinFudged = when {
+                abs(vMin) < logarithmicZeroEpsilon -> (if (vMin < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
+                else -> vMin
             }
-        }
-
-        return when {
-            isLogarithmic -> calcIsLogarithmic()
-            else -> when {
-                isFloatingPoint -> lerp(vMin, vMax, t)
-                // - For integer values we want the clicking position to match the grab box so we round above
-                //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
-                // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
-                //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
-                t < 1f -> {
-                    val vNewOffF = (vMax - vMin) * t
-                    val tmp = vNewOffF + if (vMin > vMax) -0.5 else 0.5
-                    vMin + tmp
-                }
+            var vMaxFudged = when {
+                abs(vMax) < logarithmicZeroEpsilon -> (if (vMax < 0.0) -logarithmicZeroEpsilon else logarithmicZeroEpsilon).d
                 else -> vMax
             }
+
+            val flipped = vMax < vMin // Check if range is "backwards"
+            if (flipped) {
+                val swap = vMinFudged
+                vMinFudged = vMaxFudged
+                vMaxFudged = swap
+            }
+
+            val tWithFlip = if (flipped) 1f - t else t // t, but flipped if necessary to account for us flipping the range
+
+            when {
+                vMin * vMax < 0.0 -> { // Range crosses zero, so we have to do this in two parts
+                    val zeroPointCenter = -(vMin min vMax).f / abs(vMax.f - vMin.f) // The zero point in parametric space
+                    val zeroPointSnapL = zeroPointCenter - zeroDeadzoneHalfsize
+                    val zeroPointSnapR = zeroPointCenter + zeroDeadzoneHalfsize
+                    when {
+                        tWithFlip in zeroPointSnapL..zeroPointSnapR -> 0.0 // Special case to make getting exactly zero possible (the epsilon prevents it otherwise)
+                        tWithFlip < zeroPointCenter -> -(logarithmicZeroEpsilon * (-vMinFudged / logarithmicZeroEpsilon).pow((1f - tWithFlip / zeroPointSnapL).d))
+                        else -> logarithmicZeroEpsilon * (vMaxFudged / logarithmicZeroEpsilon).pow(((tWithFlip - zeroPointSnapR) / (1f - zeroPointSnapR)).d)
+                    }
+                }
+                // Entirely negative slider
+                vMin < 0.0 || vMax < 0.0 -> -(-vMaxFudged * (-vMinFudged / -vMaxFudged).pow((1f - tWithFlip).d))
+                else -> vMinFudged * (vMaxFudged / vMinFudged).pow(tWithFlip.d)
+            }
         }
+        // Linear slider
+        // ~isFloatingPoint
+        dataType == DataType.Float || dataType == DataType.Double -> lerp(vMin, vMax, t)
+        // - For integer values we want the clicking position to match the grab box so we round above
+        //   This code is carefully tuned to work with large values (e.g. high ranges of U64) while preserving this property..
+        // - Not doing a *1.0 multiply at the end of a range as it tends to be lossy. While absolute aiming at a large s64/u64
+        //   range is going to be imprecise anyway, with this check we at least make the edge values matches expected limits.
+        t < 1f -> {
+            val vNewOffF = (vMax - vMin) * t
+            vMin + (vNewOffF + if (vMin > vMax) -0.5 else 0.5)
+        }
+        else -> 0.0
     }
 
 
@@ -929,8 +850,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.i
 
         // Round to user desired precision based on format string
-//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//            vCur = roundScalarWithFormatT(format, dataType, vCur)
+        //        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+        //            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1035,8 +956,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.i
 
         // Round to user desired precision based on format string
-//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//            vCur = roundScalarWithFormatT(format, dataType, vCur)
+        //        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+        //            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1141,8 +1062,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.L
 
         // Round to user desired precision based on format string
-//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//            vCur = roundScalarWithFormatT(format, dataType, vCur)
+        //        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+        //            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1247,8 +1168,8 @@ internal interface templateFunctions {
             vCur += g.dragCurrentAccum.ul
 
         // Round to user desired precision based on format string
-//        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//            vCur = roundScalarWithFormatT(format, dataType, vCur)
+        //        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+        //            vCur = roundScalarWithFormatT(format, dataType, vCur)
 
         // Preserve remainder after rounding has been applied. This also allow slow tweaking of values.
         g.dragCurrentAccumDirty = false
@@ -1492,19 +1413,20 @@ internal interface templateFunctions {
         return true
     }
 
-    /** FIXME: Move more of the code into SliderBehavior().
+    /** Try to move more of the code into shared SliderBehavior()
      *  template<TYPE = Int, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Int>,
-                        vMin: Int, vMax: Int, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Int>, vMin: Int, vMax: Int,
+                        format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isLogarithmic = flags has SliderFlag.Logarithmic
         val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
 
-        val grabPadding = 2f
+        // Calculate bounds
+        val grabPadding = 2f // FIXME: Should be part of style.
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
         if (!isFloatingPoint && vRange >= 0)                                  // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
@@ -1531,10 +1453,8 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
-                    clickedT = when {
-                        sliderUsableSz > 0f -> clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f)
-                        else -> 0f
-                    }
+                    if (sliderUsableSz > 0f)
+                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1581,8 +1501,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
-//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+                        //                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                        //                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                         g.sliderCurrentAccum -= when {
@@ -1597,8 +1517,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                 // Round to user desired precision based on format string
-//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+                //                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                //                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1627,17 +1547,18 @@ internal interface templateFunctions {
 
     /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Uint, SIGNEDTYPE = Int, FLOATTYPE = Float> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Uint>,
-                        vMin: Uint, vMax: Uint, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Uint>, vMin: Uint, vMax: Uint,
+                        format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isLogarithmic = flags has SliderFlag.Logarithmic
         val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        val vRange = (if (vMin < vMax) vMax - vMin else vMin - vMax).v
 
-        val grabPadding = 2f
+        // Calculate bounds
+        val grabPadding = 2f // FIXME: Should be part of style.
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
-        val vRange = (if (vMin < vMax) vMax - vMin else vMin - vMax).v
         if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
@@ -1664,7 +1585,8 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
-                    clickedT = if (sliderUsableSz > 0f) clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (sliderUsableSz > 0f)
+                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1711,8 +1633,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
-//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+                        //                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                        //                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
 
                         g.sliderCurrentAccum -= when {
@@ -1729,8 +1651,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
 
                 // Round to user desired precision based on format string
-//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+                //                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                //                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1759,17 +1681,18 @@ internal interface templateFunctions {
 
     /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Long, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Long>,
-                        vMin: Long, vMax: Long, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Long>, vMin: Long, vMax: Long,
+                        format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isLogarithmic = flags has SliderFlag.Logarithmic
         val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
 
-        val grabPadding = 2f
+        // Calculate bounds
+        val grabPadding = 2f // FIXME: Should be part of style.
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
         if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
@@ -1796,7 +1719,8 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
-                    clickedT = if (sliderUsableSz > 0f) clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (sliderUsableSz > 0f)
+                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1844,8 +1768,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
-//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+                        //                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                        //                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                         g.sliderCurrentAccum -= when {
@@ -1862,8 +1786,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                 // Round to user desired precision based on format string
-//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+                //                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                //                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -1892,17 +1816,18 @@ internal interface templateFunctions {
 
     /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Ulong, SIGNEDTYPE = Long, FLOATTYPE = Double> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Ulong>,
-                        vMin: Ulong, vMax: Ulong, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Ulong>, vMin: Ulong, vMax: Ulong,
+                        format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isLogarithmic = flags has SliderFlag.Logarithmic
         val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        val vRange = (if (vMin < vMax) vMax - vMin else vMin - vMax).v
 
-        val grabPadding = 2f
+        // Calculate bounds
+        val grabPadding = 2f // FIXME: Should be part of style.
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
-        val vRange = (if (vMin < vMax) vMax - vMin else vMin - vMax).v
         if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
@@ -1930,7 +1855,8 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
-                    clickedT = if (sliderUsableSz > 0f) clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (sliderUsableSz > 0f)
+                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1978,8 +1904,8 @@ internal interface templateFunctions {
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
                         var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
-//                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                            vNew = roundScalarWithFormatT(format, dataType, vNew)
+                        //                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                        //                            vNew = roundScalarWithFormatT(format, dataType, vNew)
                         val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                         g.sliderCurrentAccum -= when {
@@ -1996,8 +1922,8 @@ internal interface templateFunctions {
                 var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                 // Round to user desired precision based on format string
-//                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
-//                    vNew = roundScalarWithFormatT(format, dataType, vNew)
+                //                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
+                //                    vNew = roundScalarWithFormatT(format, dataType, vNew)
 
                 // Apply result
                 if (v() != vNew) {
@@ -2026,17 +1952,18 @@ internal interface templateFunctions {
 
     /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Float, SIGNEDTYPE = Float, FLOATTYPE = Float> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Float>,
-                        vMin: Float, vMax: Float, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Float>, vMin: Float, vMax: Float,
+                        format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isLogarithmic = flags has SliderFlag.Logarithmic
         val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
 
-        val grabPadding = 2f
+        // Calculate bounds
+        val grabPadding = 2f // FIXME: Should be part of style.
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
         if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
@@ -2063,7 +1990,8 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
-                    clickedT = if (sliderUsableSz > 0f) clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (sliderUsableSz > 0f)
+                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -2159,17 +2087,18 @@ internal interface templateFunctions {
 
     /** FIXME: Move more of the code into SliderBehavior()
      *  template<TYPE = Double, SIGNEDTYPE = Double, FLOATTYPE = Double> */
-    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Double>,
-                        vMin: Double, vMax: Double, format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
+    fun sliderBehaviorT(bb: Rect, id: ID, dataType: DataType, v: KMutableProperty0<Double>, vMin: Double, vMax: Double,
+                        format: String, flags: SliderFlags, outGrabBb: Rect): Boolean {
 
         val axis = if (flags has SliderFlag._Vertical) Axis.Y else Axis.X
         val isLogarithmic = flags has SliderFlag.Logarithmic
         val isFloatingPoint = dataType == DataType.Float || dataType == DataType.Double
+        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
 
-        val grabPadding = 2f
+        // Calculate bounds
+        val grabPadding = 2f // FIXME: Should be part of style.
         val sliderSz = (bb.max[axis] - bb.min[axis]) - grabPadding * 2f
         var grabSz = style.grabMinSize
-        val vRange = if (vMin < vMax) vMax - vMin else vMin - vMax
         if (!isFloatingPoint && vRange >= 0)                                             // v_range < 0 may happen on integer overflows
             grabSz = (sliderSz / (vRange + 1)).f max style.grabMinSize  // For integer sliders: if possible have the grab size represent 1 unit
         grabSz = grabSz min sliderSz
@@ -2196,7 +2125,8 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
-                    clickedT = if (sliderUsableSz > 0f) clamp((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz, 0f, 1f) else 0f
+                    if (sliderUsableSz > 0f)
+                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
