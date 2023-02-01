@@ -89,7 +89,7 @@ class Style {
     var scrollbarRounding = 9f
 
     /** Minimum width/height of a grab box for slider/scrollbar */
-    var grabMinSize = 10f
+    var grabMinSize = 12f
 
     /** Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs. */
     var grabRounding = 0f

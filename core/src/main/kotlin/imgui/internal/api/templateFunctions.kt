@@ -1453,8 +1453,16 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
+                    if (g.activeIdIsJustActivated) {
+                        var grabT: Float = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
+                        if (axis == Axis.Y)
+                            grabT = 1f - grabT
+                        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+                        val clickedAroundGrab = mouseAbsPos >= grabPos - grabSz * 0.5f - 1f && mouseAbsPos <= grabPos + grabSz * 0.5f + 1f // No harm being extra generous here.
+                        g.sliderGrabClickOffset = if (clickedAroundGrab && isFloatingPoint) mouseAbsPos - grabPos else 0f
+                    }
                     if (sliderUsableSz > 0f)
-                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
+                        clickedT = saturate((mouseAbsPos - g.sliderGrabClickOffset - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1567,12 +1575,12 @@ internal interface templateFunctions {
         val sliderUsablePosMax = bb.max[axis] - grabPadding - grabSz * 0.5f
 
         var logarithmicZeroEpsilon = 0f // Only valid when is_logarithmic is true
-        var zeroDeadzoneSize = 0f // Only valid when is_logarithmic is true
+        var zeroDeadzoneHalfsize = 0f // Only valid when is_logarithmic is true
         if (isLogarithmic) {
             // When using logarithmic sliders, we need to clamp to avoid hitting zero, but our choice of clamp value greatly affects slider precision. We attempt to use the specified precision to estimate a good lower bound.
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 1
             logarithmicZeroEpsilon = 0.1f.pow(decimalPrecision.f)
-            zeroDeadzoneSize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
+            zeroDeadzoneHalfsize = style.logSliderDeadzone * 0.5f / max(sliderUsableSz, 1f)
         }
 
         // Process interacting with the slider
@@ -1585,8 +1593,16 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
+                    if (g.activeIdIsJustActivated) {
+                        var grabT: Float = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
+                        if (axis == Axis.Y)
+                            grabT = 1f - grabT
+                        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+                        val clickedAroundGrab = mouseAbsPos >= grabPos - grabSz * 0.5f - 1f && mouseAbsPos <= grabPos + grabSz * 0.5f + 1f // No harm being extra generous here.
+                        g.sliderGrabClickOffset = if (clickedAroundGrab && isFloatingPoint) mouseAbsPos - grabPos else 0f
+                    }
                     if (sliderUsableSz > 0f)
-                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
+                        clickedT = saturate((mouseAbsPos - g.sliderGrabClickOffset - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1621,7 +1637,7 @@ internal interface templateFunctions {
                 if (g.navActivatePressedId == id && !g.activeIdIsJustActivated)
                     clearActiveID()
                 else if (g.sliderCurrentAccumDirty) {
-                    clickedT = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
+                    clickedT = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                     if ((clickedT >= 1f && delta > 0f) || (clickedT <= 0f && delta < 0f)) { // This is to avoid applying the saturation when already past the limits
                         setNewValue = false
@@ -1632,10 +1648,10 @@ internal interface templateFunctions {
                         clickedT = saturate(clickedT + delta)
 
                         // Calculate what our "new" clicked_t will be, and thus how far we actually moved the slider, and subtract this from the accumulator
-                        var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
+                        var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
                         //                        if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
                         //                            vNew = roundScalarWithFormatT(format, dataType, vNew)
-                        val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
+                        val newClickedT = scaleRatioFromValueT(dataType, vNew, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                         g.sliderCurrentAccum -= when {
                             delta > 0 -> min(newClickedT - oldClickedT, delta)
@@ -1648,7 +1664,7 @@ internal interface templateFunctions {
             }
 
             if (setNewValue) {
-                var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
+                var vNew = scaleValueFromRatioT(dataType, clickedT, vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
 
                 // Round to user desired precision based on format string
                 //                if (isFloatingPoint && flags hasnt SliderFlag.NoRoundToFormat)
@@ -1666,7 +1682,7 @@ internal interface templateFunctions {
             outGrabBb.put(bb.min, bb.min)
         } else {
             // Output grab position so it can be displayed by the caller
-            var grabT = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneSize)
+            var grabT = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
             if (axis == Axis.Y)
                 grabT = 1f - grabT
             val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
@@ -1719,8 +1735,16 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
+                    if (g.activeIdIsJustActivated) {
+                        var grabT: Float = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
+                        if (axis == Axis.Y)
+                            grabT = 1f - grabT
+                        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+                        val clickedAroundGrab = mouseAbsPos >= grabPos - grabSz * 0.5f - 1f && mouseAbsPos <= grabPos + grabSz * 0.5f + 1f // No harm being extra generous here.
+                        g.sliderGrabClickOffset = if (clickedAroundGrab && isFloatingPoint) mouseAbsPos - grabPos else 0f
+                    }
                     if (sliderUsableSz > 0f)
-                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
+                        clickedT = saturate((mouseAbsPos - g.sliderGrabClickOffset - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1855,8 +1879,16 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
+                    if (g.activeIdIsJustActivated) {
+                        var grabT: Float = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
+                        if (axis == Axis.Y)
+                            grabT = 1f - grabT
+                        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+                        val clickedAroundGrab = mouseAbsPos >= grabPos - grabSz * 0.5f - 1f && mouseAbsPos <= grabPos + grabSz * 0.5f + 1f // No harm being extra generous here.
+                        g.sliderGrabClickOffset = if (clickedAroundGrab && isFloatingPoint) mouseAbsPos - grabPos else 0f
+                    }
                     if (sliderUsableSz > 0f)
-                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
+                        clickedT = saturate((mouseAbsPos - g.sliderGrabClickOffset - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -1990,8 +2022,16 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
+                    if (g.activeIdIsJustActivated) {
+                        var grabT: Float = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
+                        if (axis == Axis.Y)
+                            grabT = 1f - grabT
+                        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+                        val clickedAroundGrab = mouseAbsPos >= grabPos - grabSz * 0.5f - 1f && mouseAbsPos <= grabPos + grabSz * 0.5f + 1f // No harm being extra generous here.
+                        g.sliderGrabClickOffset = if (clickedAroundGrab && isFloatingPoint) mouseAbsPos - grabPos else 0f
+                    }
                     if (sliderUsableSz > 0f)
-                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
+                        clickedT = saturate((mouseAbsPos - g.sliderGrabClickOffset - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true
@@ -2125,8 +2165,16 @@ internal interface templateFunctions {
                     clearActiveID()
                 else {
                     val mouseAbsPos = io.mousePos[axis]
+                    if (g.activeIdIsJustActivated) {
+                        var grabT: Float = scaleRatioFromValueT(dataType, v(), vMin, vMax, isLogarithmic, logarithmicZeroEpsilon, zeroDeadzoneHalfsize)
+                        if (axis == Axis.Y)
+                            grabT = 1f - grabT
+                        val grabPos = lerp(sliderUsablePosMin, sliderUsablePosMax, grabT)
+                        val clickedAroundGrab = mouseAbsPos >= grabPos - grabSz * 0.5f - 1f && mouseAbsPos <= grabPos + grabSz * 0.5f + 1f // No harm being extra generous here.
+                        g.sliderGrabClickOffset = if (clickedAroundGrab && isFloatingPoint) mouseAbsPos - grabPos else 0f
+                    }
                     if (sliderUsableSz > 0f)
-                        clickedT = saturate((mouseAbsPos - sliderUsablePosMin) / sliderUsableSz)
+                        clickedT = saturate((mouseAbsPos - g.sliderGrabClickOffset - sliderUsablePosMin) / sliderUsableSz)
                     if (axis == Axis.Y)
                         clickedT = 1f - clickedT
                     setNewValue = true

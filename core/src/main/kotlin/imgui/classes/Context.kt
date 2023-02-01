@@ -519,6 +519,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     val comboPreviewData = ComboPreviewData()
 
+    var sliderGrabClickOffset = 0f
+
     /** Accumulated slider delta when using navigation controls. */
     var sliderCurrentAccum = 0f
 
