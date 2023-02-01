@@ -212,6 +212,16 @@ infix fun ByteArray.strcmp(other: ByteArray): Int {
     return getOrElse(i) { 0 }.compareTo(other.getOrElse(i) { 0 })
 }
 
+fun ByteArray.strncmp(other: ByteArray, len: Int): Int {
+    check(size >= len && other.size >= len)
+    for (i in 0 until len) {
+        val cmp = this[i].compareTo(other[i])
+        if (cmp != 0)
+            return cmp
+    }
+    return 0
+}
+
 /** TODO -> uno or kool */
 operator fun <T> KMutableProperty0<T>.invoke(t: T): KMutableProperty0<T> {
     set(t)

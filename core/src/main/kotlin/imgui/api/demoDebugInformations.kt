@@ -20,6 +20,7 @@ import imgui.ImGui.clearIniSettings
 import imgui.ImGui.clipboardText
 import imgui.ImGui.combo
 import imgui.ImGui.debugNodeDrawList
+import imgui.ImGui.debugNodeInputTextState
 import imgui.ImGui.debugNodeTabBar
 import imgui.ImGui.debugNodeTable
 import imgui.ImGui.debugNodeTableSettings
@@ -329,6 +330,12 @@ interface demoDebugInformations {
         treeNode("Fonts", "Fonts (${atlas.fonts.size})") {
             showFontAtlas(atlas)
         }
+
+        // Details for InputText
+        treeNode("InputText") {
+            debugNodeInputTextState(g.inputTextState)
+        }
+
 
         // Details for Docking
         //        #ifdef IMGUI_HAS_DOCK

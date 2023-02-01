@@ -582,6 +582,10 @@ internal interface debugTools {
         treePop()
     }
 
+    fun debugNodeInputTextState(state: InputTextState) {
+
+    }
+
     fun debugNodeWindow(window: Window?, label: String) {
         if (window == null) {
             bulletText("$label: NULL")

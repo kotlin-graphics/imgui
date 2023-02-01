@@ -199,6 +199,12 @@ internal interface inputText {
                 state.initialTextA[bufLen] = 0
             System.arraycopy(buf, 0, state.initialTextA, 0, bufLen)
 
+            // Preserve cursor position and undo/redo stack if we come back to same widget
+            // FIXME: Since we reworked this on 2022/06, may want to differenciate recycle_cursor vs recycle_undostate?
+            var recycleState = state.id == id && !initChangedSpecs
+            if (recycleState && (state.curLenA != bufLen || (state.textAIsValid && state.textA.strncmp(buf, bufLen) != 0)))
+                recycleState = false
+
             // Start edition
             if (state.textW.size < buf.size)
             // [JVM] we don't need the +1 for the termination char
@@ -209,15 +215,11 @@ internal interface inputText {
             state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
             state.curLenA = bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
 
-            /*  Preserve cursor position and undo/redo stack if we come back to same widget
-                For non-readonly widgets we might be able to require that TextAIsValid && TextA == buf ? (untested) and discard undo stack if user buffer has changed. */
-            val recycleState = state.id == id && !initChangedSpecs
             if (recycleState)
             // Recycle existing cursor/selection/undo stack but clamp position
             // Note a single mouse click will override the cursor/position immediately by calling stb_textedit_click handler.
                 state.cursorClamp()
             else {
-                state.id = id
                 state.scrollX = 0f
                 state.stb initialize !isMultiline
             }
@@ -550,7 +552,7 @@ internal interface inputText {
 
             if (cancelEdit)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
-                if (!isReadOnly && buf strcmp state.initialTextA != 0) {
+                if (!isReadOnly && buf.strcmp(state.initialTextA) != 0) {
                     // Push records into the undo stack so we can CTRL+Z the revert operation itself
                     applyNewText = state.initialTextA
                     applyNewTextLength = state.initialTextA.size
@@ -1179,7 +1181,7 @@ internal interface inputText {
         fun inputScalarDefaultCharsFilter(dataType: DataType, format: String): Itf {
             if (dataType == DataType.Float || dataType == DataType.Double)
                 return Itf.CharsScientific
-            return when (val formatLastChar = if(format.isNotEmpty()) format.lastIndex else NUL) {
+            return when (val formatLastChar = if (format.isNotEmpty()) format.lastIndex else NUL) {
                 'x', 'X' -> Itf.CharsHexadecimal
                 else -> Itf.CharsDecimal
             }
