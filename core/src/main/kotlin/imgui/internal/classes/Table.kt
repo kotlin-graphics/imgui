@@ -31,7 +31,6 @@ import kool.BYTES
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
-import imgui.WindowFlag as Wf
 import imgui.internal.sections.ButtonFlag as Bf
 
 
@@ -863,12 +862,9 @@ class Table {
         isUsingHeaders = false
 
         // [Part 11] Context menu
-        if (isContextPopupOpen && instanceCurrent == instanceInteracted) {
-            val contextMenuId = hashStr("##ContextMenu", 0, id)
-            if (beginPopupEx(contextMenuId, Wf.AlwaysAutoResize or Wf.NoTitleBar or Wf.NoSavedSettings)) {
-                drawContextMenu()
-                endPopup()
-            } else isContextPopupOpen = false
+        if (beginContextMenuPopup()) {
+            drawContextMenu()
+            endPopup()
         }
 
         // [Part 12] Sanitize and build sort specs before we have a change to use them for display.
@@ -1193,6 +1189,17 @@ class Table {
             }
             popItemFlag()
         }
+    }
+
+    /** ~TableBeginContextMenuPopup */
+    fun beginContextMenuPopup(): Boolean {
+        if (!isContextPopupOpen || instanceCurrent != instanceInteracted)
+            return false
+        val contextMenuId = hashStr("##ContextMenu", 0, id)
+        if (beginPopupEx(contextMenuId, WindowFlag.AlwaysAutoResize or WindowFlag.NoTitleBar or WindowFlag.NoSavedSettings))
+            return true
+        isContextPopupOpen = false
+        return false
     }
 
     /**
