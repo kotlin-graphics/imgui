@@ -51,9 +51,8 @@ interface focusActivation {
 
         // It makes sense in the vast majority of cases to never interrupt a drag and drop.
         // When we refactor this function into ActivateItem() we may want to make this an option.
-        // Note that g.ActiveId being stolen while g.MovingWindow != NULL is currently ill-defined (subtle side-effects on master, assert in docking),
-        // so there's another layer we need to fix. Would make sense to automatically drop g.MovingWindow when g.ActiveId is changed.
-        // MovingWindow is protected from most user inputs using SetActiveIdUsingNavAndKeys() but we may need to enforce a better more encompassing scheme.
+        // MovingWindow is protected from most user inputs using SetActiveIdUsingNavAndKeys(), but
+        // is also automatically dropped in the event g.ActiveId is stolen.
         if (g.dragDropActive || g.movingWindow != null) {
             IMGUI_DEBUG_LOG_ACTIVEID("SetKeyboardFocusHere() ignored while DragDropActive!")
             return

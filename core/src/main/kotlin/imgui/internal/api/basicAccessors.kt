@@ -34,6 +34,16 @@ internal interface basicAccessors {
         get() = g.navId
 
     fun setActiveID(id: ID, window: Window?) {
+
+        // While most behaved code would make an effort to not steal active id during window move/drag operations,
+        // we at least need to be resilient to it. Cancelling the move is rather aggressive and users of 'master' branch
+        // may prefer the weird ill-defined half working situation ('docking' did assert), so may need to rework that.
+        if (g.movingWindow != null && g.activeId == g.movingWindow!!.moveId) {
+            IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() cancel MovingWindow")
+            g.movingWindow = null
+        }
+
+        // Set active id
         g.activeIdIsJustActivated = g.activeId != id
         if (g.activeIdIsJustActivated) {
             IMGUI_DEBUG_LOG_ACTIVEID("SetActiveID() old:0x%08X (window \"${g.activeIdWindow?.name ?: ""}\") -> new:0x%08X (window \"${window?.name ?: ""}\")",
