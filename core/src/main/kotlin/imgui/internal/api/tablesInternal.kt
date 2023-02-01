@@ -275,7 +275,7 @@ interface tablesInternal {
         val newRefScaleUnit = g.fontSize // g.Font->GetCharAdvance('A') ?
         if (table.refScale != 0f && table.refScale != newRefScaleUnit) {
             val scaleFactor = newRefScaleUnit / table.refScale
-            //IMGUI_DEBUG_LOG("[table] %08X RefScaleUnit %.3f -> %.3f, scaling width by %.3f\n", table->ID, table->RefScaleUnit, new_ref_scale_unit, scale_factor);
+            //IMGUI_DEBUG_PRINT("[table] %08X RefScaleUnit %.3f -> %.3f, scaling width by %.3f\n", table->ID, table->RefScaleUnit, new_ref_scale_unit, scale_factor);
             for (n in 0 until columnsCount)
                 table.columns[n].widthRequest = table.columns[n].widthRequest * scaleFactor
         }

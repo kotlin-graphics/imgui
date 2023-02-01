@@ -13,6 +13,7 @@ import imgui.font.Font
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
+import imgui.internal.sections.IMGUI_DEBUG_LOG_FOCUS
 import imgui.internal.sections.NavLayer
 import imgui.static.findWindowFocusIndex
 import imgui.static.navRestoreLastChildNavWindow
@@ -59,6 +60,7 @@ internal interface internal {
     fun focusWindow(window: Window? = null) {
 
         if (g.navWindow !== window) {
+            IMGUI_DEBUG_LOG_FOCUS("[focus] FocusWindow(\"${window?.name ?: "<NULL>"}\")\n")
             g.navWindow = window
             if (window != null && g.navDisableMouseHover)
                 g.navMousePosDirty = true
@@ -68,7 +70,6 @@ internal interface internal {
             g.navLayer = NavLayer.Main
             g.navInitRequest = false; g.navMoveSubmitted = false; g.navMoveScoringItems = false
             navUpdateAnyRequestFlag()
-            //IMGUI_DEBUG_LOG("FocusWindow(\"%s\")\n", window ? window->Name : NULL);
         }
 
         // Close popups if any

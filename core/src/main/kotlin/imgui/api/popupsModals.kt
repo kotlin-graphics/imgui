@@ -119,7 +119,11 @@ interface popupsModals {
     //  - IMPORTANT: Notice that for OpenPopupOnItemClick() we exceptionally default flags to 1 (== ImGuiPopupFlags_MouseButtonRight) for backward compatibility with older API taking 'int mouse_button = 1' parameter
 
     /** call to mark popup as open (don't call every frame!). */
-    fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) = openPopupEx(g.currentWindow!!.getID(strId), popupFlags)
+    fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) {
+        val id = g.currentWindow!!.getID(strId)
+        IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopup(\"$strId\" -> 0x%08X\n", id)
+        openPopupEx(id, popupFlags)
+    }
 
     /** id overload to facilitate calling from nested stacks */
     fun openPopup(id: ID, popupFlags: PopupFlags = 0) = openPopupEx(id, popupFlags)
@@ -157,12 +161,12 @@ interface popupsModals {
                 break
             popupIdx--
         }
-        IMGUI_DEBUG_LOG_POPUP("CloseCurrentPopup ${g.beginPopupStack.lastIndex} -> $popupIdx")
+        IMGUI_DEBUG_LOG_POPUP("[popup] CloseCurrentPopup ${g.beginPopupStack.lastIndex} -> $popupIdx")
         closePopupToLevel(popupIdx, true)
 
-        /*  A common pattern is to close a popup when selecting a menu item/selectable that will open another window.
-            To improve this usage pattern, we avoid nav highlight for a single frame in the parent window.
-            Similarly, we could avoid mouse hover highlight in this window but it is less visually problematic. */
+        // A common pattern is to close a popup when selecting a menu item/selectable that will open another window.
+        // To improve this usage pattern, we avoid nav highlight for a single frame in the parent window.
+        // Similarly, we could avoid mouse hover highlight in this window but it is less visually problematic.
         g.navWindow?.dc?.navHideHighlightOneFrame = true
     }
 

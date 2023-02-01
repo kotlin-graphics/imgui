@@ -116,7 +116,7 @@ fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags:
 
 fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
-    //IMGUI_DEBUG_LOG("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
+    //IMGUI_DEBUG_PRINT("CreateNewWindow '%s', flags = 0x%08X\n", name, flags);
 
     // Create window the first time
     this.flags = flags

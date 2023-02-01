@@ -101,8 +101,38 @@ class MenuColumns {
 // [SECTION] Metrics, Debug tools
 //-----------------------------------------------------------------------------
 
+typealias DebugLogFlags = Int
+
+enum class DebugLogFlag(i: DebugLogFlags? = null) {
+    // Event types
+    None,
+    EventActiveId,
+    EventFocus,
+    EventPopup,
+    EventNav,
+    EventMask_(EventActiveId or EventFocus or EventPopup or EventNav);
+
+    val i: DebugLogFlags = i ?: if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+
+    infix fun and(b: DebugLogFlag): DebugLogFlags = i and b.i
+    infix fun and(b: DebugLogFlags): DebugLogFlags = i and b
+    infix fun or(b: DebugLogFlag): DebugLogFlags = i or b.i
+    infix fun or(b: DebugLogFlags): DebugLogFlags = i or b
+    infix fun xor(b: DebugLogFlag): DebugLogFlags = i xor b.i
+    infix fun xor(b: DebugLogFlags): DebugLogFlags = i xor b
+    infix fun wo(b: DebugLogFlags): DebugLogFlags = and(b.inv())
+}
+
+infix fun DebugLogFlags.and(b: DebugLogFlag): DebugLogFlags = and(b.i)
+infix fun DebugLogFlags.or(b: DebugLogFlag): DebugLogFlags = or(b.i)
+infix fun DebugLogFlags.xor(b: DebugLogFlag): DebugLogFlags = xor(b.i)
+infix fun DebugLogFlags.has(b: DebugLogFlag): Boolean = and(b.i) != 0
+infix fun DebugLogFlags.hasnt(b: DebugLogFlag): Boolean = and(b.i) == 0
+infix fun DebugLogFlags.wo(b: DebugLogFlag): DebugLogFlags = and(b.i.inv())
+
 /** Storage for ShowMetricsWindow() and DebugNodeXXX() functions */
 class MetricsConfig {
+    var showDebugLog = false
     var showStackTool = false
     var showWindowsRects = false
     var showWindowsBeginOrder = false

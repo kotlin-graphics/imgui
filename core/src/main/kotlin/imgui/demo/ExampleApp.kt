@@ -25,6 +25,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.showDebugLogWindow
 import imgui.ImGui.showMetricsWindow
 import imgui.ImGui.showUserGuide
 import imgui.ImGui.spacing
@@ -65,9 +66,10 @@ object ExampleApp {
 
         // Dear ImGui Apps (accessible from the "Tools" menu)
         var metrics = false
+        var debugLog = false
         var stackTool = false
-        var styleEditor = false
         var about = false
+        var styleEditor = false
     }
 
     // Demonstrate the various window flags. Typically you would just use the default!
@@ -104,9 +106,14 @@ object ExampleApp {
         if (show.windowTitles) WindowTitles()
         if (show.customRendering) CustomRendering(show::customRendering)
 
-        if (show.metrics) showMetricsWindow(show::metrics)
-        if (show.stackTool) showMetricsWindow(show::stackTool)
-        if (show.about) ShowAboutWindow(show::about)
+        if (show.metrics)
+            showMetricsWindow(show::metrics)
+        if (show.debugLog)
+            showDebugLogWindow(show::debugLog)
+        if (show.stackTool)
+            showMetricsWindow(show::stackTool)
+        if (show.about)
+            ShowAboutWindow(show::about)
         if (show.styleEditor)
             window("Dear ImGui Style Editor", show::styleEditor) {
                 StyleEditor()
@@ -169,6 +176,7 @@ object ExampleApp {
             menu("Tools") {
                 if(IMGUI_DISABLE_METRICS_WINDOW) {
                     menuItem("Metrics/Debugger", "", show::metrics)
+                    menuItem("Debug Log", "", show::debugLog)
                     menuItem("Stack Tool", "", show::stackTool)
                 }
                 menuItem("Style Editor", "", show::styleEditor)

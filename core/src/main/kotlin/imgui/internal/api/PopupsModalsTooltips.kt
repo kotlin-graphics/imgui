@@ -101,7 +101,7 @@ internal interface PopupsModalsTooltips {
                                  openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
                                  openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 
-        IMGUI_DEBUG_LOG_POPUP("OpenPopupEx(0x%08X)", id)
+        IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopupEx(0x%08X)", id)
         if (g.openPopupStack.size < currentStackSize + 1) g.openPopupStack += popupRef
         else {/*  Gently handle the user mistakenly calling OpenPopup() every frame. It is a programming mistake!
                 However, if we were to run the regular code path, the ui would become completely unusable because
@@ -120,7 +120,7 @@ internal interface PopupsModalsTooltips {
 
     fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
-        IMGUI_DEBUG_LOG_POPUP("ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=${restoreFocusToWindowUnderPopup.i}")
+        IMGUI_DEBUG_LOG_POPUP("[popup] ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=${restoreFocusToWindowUnderPopup.i}")
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
 
         // Trim open popup stack
@@ -178,7 +178,7 @@ internal interface PopupsModalsTooltips {
             }
 
         if (popupCountToKeep < g.openPopupStack.size) { // This test is not required but it allows to set a convenient breakpoint on the statement below
-            IMGUI_DEBUG_LOG_POPUP("ClosePopupsOverWindow(\"${refWindow?.name}\") -> ClosePopupToLevel($popupCountToKeep)")
+            IMGUI_DEBUG_LOG_POPUP("[popup] ClosePopupsOverWindow(\"${refWindow?.name ?: "<NULL>"}\")")
             closePopupToLevel(popupCountToKeep, restoreFocusToWindowUnderPopup)
         }
     }

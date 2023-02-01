@@ -117,14 +117,14 @@ internal interface newFrame {
         }
 
         // Record trail (for domain-specific applications wanting to access a precise trail)
-        //if (event_n != 0) IMGUI_DEBUG_LOG("Processed: %d / Remaining: %d\n", event_n, g.InputEventsQueue.Size - event_n);
+        //if (event_n != 0) IMGUI_DEBUG_PRINT("Processed: %d / Remaining: %d\n", event_n, g.InputEventsQueue.Size - event_n);
         for (n in 0 until eventN)
             g.inputEventsTrail += g.inputEventsQueue[n]
 
         // [DEBUG]
         /*if (event_n != 0)
             for (int n = 0; n < g.InputEventsQueue.Size; n++)
-                DebugLogInputEvent(n < event_n ? "Processed" : "Remaining", &g.InputEventsQueue[n]);*/
+                DebugPrintInputEvent(n < event_n ? "Processed" : "Remaining", &g.InputEventsQueue[n]);*/
 
         // Remaining events will be processed on the next frame
         if (eventN == g.inputEventsQueue.size)

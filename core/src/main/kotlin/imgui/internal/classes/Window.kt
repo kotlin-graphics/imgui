@@ -1394,7 +1394,6 @@ class Window(var context: Context,
         g.wheelingWindowTimer = WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER
     }
 
-    /** ~CreateNewWindow */
     infix fun applySettings(settings: WindowSettings) {
         pos put floor(Vec2(settings.pos))
         if (settings.size allGreaterThan 0f) sizeFull put floor(Vec2(settings.size))

@@ -61,7 +61,7 @@ interface tablesCandidatesForPublicAPI {
         if (column0.widthGiven == column0Width || column0.widthRequest == column0Width)
             return
 
-        //IMGUI_DEBUG_LOG("TableSetColumnWidth(%d, %.1f->%.1f)\n", column_0_idx, column_0->WidthGiven, column_0_width);
+        //IMGUI_DEBUG_PRINT("TableSetColumnWidth(%d, %.1f->%.1f)\n", column_0_idx, column_0->WidthGiven, column_0_width);
         var column1 = table.columns.getOrNull(column0.nextEnabledColumn)
 
         // In this surprisingly not simple because of how we support mixing Fixed and multiple Stretch columns.

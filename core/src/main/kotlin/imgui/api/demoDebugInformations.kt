@@ -7,7 +7,9 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.alignTextToFramePadding
 import imgui.ImGui.begin
+import imgui.ImGui.beginChild
 import imgui.ImGui.beginChildFrame
 import imgui.ImGui.beginCombo
 import imgui.ImGui.beginTable
@@ -16,6 +18,7 @@ import imgui.ImGui.bulletText
 import imgui.ImGui.button
 import imgui.ImGui.calcTextSize
 import imgui.ImGui.checkbox
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.clearIniSettings
 import imgui.ImGui.clipboardText
 import imgui.ImGui.combo
@@ -31,6 +34,7 @@ import imgui.ImGui.debugNodeWindowsListByBeginStackParent
 import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.debugTextEncoding
 import imgui.ImGui.end
+import imgui.ImGui.endChild
 import imgui.ImGui.endChildFrame
 import imgui.ImGui.endCombo
 import imgui.ImGui.endTable
@@ -60,6 +64,7 @@ import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.setScrollHereY
 import imgui.ImGui.showFontAtlas
 import imgui.ImGui.smallButton
 import imgui.ImGui.style
@@ -80,6 +85,7 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
+import imgui.WindowFlag
 import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
@@ -88,10 +94,7 @@ import imgui.dsl.treeNode
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.internal.api.debugTools.Companion.metricsHelpMarker
-import imgui.internal.classes.Rect
-import imgui.internal.classes.StackTool
-import imgui.internal.classes.Table
-import imgui.internal.classes.Window
+import imgui.internal.classes.*
 import imgui.internal.formatString
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.hasnt
@@ -195,9 +198,19 @@ interface demoDebugInformations {
                 treePop()
             }
 
+            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
+            if (checkbox("Show Item Picker", g::debugItemPickerActive) && g.debugItemPickerActive)
+                debugStartItemPicker()
+            sameLine()
+            metricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
 
             // Stack Tool is your best friend!
-            checkbox("Show stack tool", cfg::showStackTool)
+            checkbox("Show Debug Log", cfg::showDebugLog)
+            sameLine()
+            metricsHelpMarker("You can also call ImGui::ShowDebugLogWindow() from your code.")
+
+            // Stack Tool is your best friend!
+            checkbox("Show Stack Tool", cfg::showStackTool)
             sameLine()
             helpMarker("You can also call ImGui::ShowStackToolWindow() from your code.")
 
@@ -257,12 +270,6 @@ interface demoDebugInformations {
                     }
                     unindent()
                 }
-
-            // The Item Picker tool is super useful to visually select an item and break into the call-stack of where it was submitted.
-            if (button("Item Picker.."))
-                debugStartItemPicker()
-            sameLine()
-            metricsHelpMarker("Will call the IM_DEBUG_BREAK() macro to break in debugger.\nWarning: If you don't have a debugger attached, this will probably crash.")
         }
 
         // Windows
@@ -462,6 +469,37 @@ interface demoDebugInformations {
         //        {
         //        }
         //        #endif // #define IMGUI_HAS_DOCK
+
+        end()
+    }
+
+    /** create Debug Log window. display a simplified log of important dear imgui events. */
+    fun showDebugLogWindow(pOpen: KMutableProperty0<Boolean>? = null) {
+        if (g.nextWindowData.flags hasnt NextWindowDataFlag.HasSize)
+            setNextWindowSize(Vec2(0f, ImGui.fontSize * 12f), Cond.FirstUseEver)
+        if (!begin("Dear ImGui Debug Log", pOpen) || ImGui.currentWindow.beginCount > 1) {
+            end()
+            return
+        }
+
+        alignTextToFramePadding()
+        text("Log events:")
+        sameLine(); checkboxFlags("All", g::debugLogFlags, DebugLogFlag.EventMask_.i)
+        sameLine(); checkboxFlags("ActiveId", g::debugLogFlags, DebugLogFlag.EventActiveId.i)
+        sameLine(); checkboxFlags("Focus", g::debugLogFlags, DebugLogFlag.EventFocus.i)
+        sameLine(); checkboxFlags("Popup", g::debugLogFlags, DebugLogFlag.EventPopup.i)
+        sameLine(); checkboxFlags("Nav", g::debugLogFlags, DebugLogFlag.EventNav.i)
+
+        if (smallButton("Clear"))
+            g.debugLogBuf.clear()
+        sameLine()
+        if (smallButton("Copy"))
+            clipboardText = g.debugLogBuf.toString()
+        beginChild("##log", Vec2(), true, WindowFlag.AlwaysVerticalScrollbar or WindowFlag.AlwaysHorizontalScrollbar)
+        textUnformatted(g.debugLogBuf.toString()) // FIXME-OPT: Could use a line index, but TextUnformatted() has a semi-decent fast path for large text.
+        if (ImGui.scrollY >= ImGui.scrollMaxY)
+            setScrollHereY(1f)
+        endChild()
 
         end()
     }

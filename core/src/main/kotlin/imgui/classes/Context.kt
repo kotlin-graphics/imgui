@@ -212,7 +212,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val activeIdUsingKeyInputMask = BitArray(Key.COUNT)
 
 
-
     // Next window/item data
 
     /** == g.ItemFlagsStack.back() */
@@ -625,6 +624,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Debug Tools
 
+    var debugLogFlags = DebugLogFlag.None.i
+    val debugLogBuf = StringBuilder()
+
     /** Item picker is active (started with DebugStartItemPicker()) */
     var debugItemPickerActive = false
 
@@ -710,11 +712,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
      *  ~DestroyContext */
     fun destroy() {
         val prevCtx = ImGui.currentContext
-//        if (ctx/this == NULL) //-V1051
-//            ctx = GImGui;
+        //        if (ctx/this == NULL) //-V1051
+        //            ctx = GImGui;
         setCurrent()
         shutdown()
-        if(prevCtx !== this)
+        if (prevCtx !== this)
             prevCtx?.setCurrent()
     }
 
@@ -782,6 +784,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             logFile = null
         }
         logBuffer.setLength(0)
+        debugLogBuf.clear()
 
         initialized = false
     }

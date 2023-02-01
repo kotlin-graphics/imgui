@@ -700,7 +700,7 @@ internal interface inputText {
                 applyNewTextLength = callbackData.bufTextLen min buf.size
                 assert(applyNewTextLength <= buf.size)
             }
-            //IMGUI_DEBUG_LOG("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);
+            //IMGUI_DEBUG_PRINT("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);
 
             // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
             System.arraycopy(applyNewText, 0, buf, 0, applyNewTextLength min buf.size)

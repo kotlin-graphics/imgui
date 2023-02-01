@@ -56,7 +56,7 @@ fun navUpdate() {
 
     io.wantSetMousePos = false
 
-    //if (g.navScoringDebugCount > 0) IMGUI_DEBUG_LOG("NavScoringDebugCount ${g.navScoringDebugCount} for '${g.navWindow?.name ?: "NULL"}' layer ${g.navLayer} (Init:${(g.navInitRequest || g.navInitResultId != 0).i}, Move:${g.navMoveRequest})\n")
+    //if (g.NavScoringDebugCount > 0) IMGUI_DEBUG_LOG_NAV("[nav] NavScoringDebugCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringDebugCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
 
     // Update Gamepad->Nav inputs mapping
     // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
@@ -236,7 +236,7 @@ fun navUpdate() {
     if (setMousePos && io.configFlags has ConfigFlag.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos) {
         io.mousePos = navCalcPreferredRefPos(); io.mousePosPrev put io.mousePos
         io.wantSetMousePos = true
-        //IMGUI_DEBUG_LOG("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
+        //IMGUI_DEBUG_PRINT("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
     }
 
     // [DEBUG]
@@ -562,7 +562,7 @@ fun navUpdateCreateMoveRequest() {
 
     // Moving with no reference triggers a init request (will be used as a fallback if the direction fails to find a match)
     if (g.navMoveSubmitted && g.navId == 0) {
-        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${g.navWindow!!.name}\", layer=${g.navLayer}")
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${window?.name ?: "<NULL>"}\", layer=${g.navLayer}")
         g.navInitRequest = true
         g.navInitRequestFromMove = true
         g.navInitResultId = 0
@@ -577,7 +577,7 @@ fun navUpdateCreateMoveRequest() {
         val clampY = g.navMoveFlags hasnt (NavMoveFlag.LoopY or NavMoveFlag.WrapY)
         val innerRectRel = window rectAbsToRel Rect(window.innerRect.min - 1, window.innerRect.max + 1)
         if ((clampX || clampY) && window.navRectRel[g.navLayer] !in innerRectRel) {
-            IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel for gamepad move")
+            //IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel for gamepad move")
             val padX = innerRectRel.width min (window.calcFontSize() * 0.5f)
             val padY = innerRectRel.height min (window.calcFontSize() * 0.5f) // Terrible approximation for the intent of starting navigation from first fully visible ite
             innerRectRel.min.x = if (clampX) (innerRectRel.min.x + padX) else -Float.MAX_VALUE

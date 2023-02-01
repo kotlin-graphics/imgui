@@ -17,7 +17,7 @@ const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 18728
+const val IMGUI_VERSION_NUM = 18729
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -197,6 +197,7 @@ object ImGui :
     plot,
     // shade functions in DrawList class
     garbageCollection,
+    debugLog,
     debugTools
 
 

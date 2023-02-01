@@ -50,7 +50,7 @@ internal interface navigation {
 
         // Apply result from previous navigation init request (will typically select the first item, unless SetItemDefaultFocus() has been called)
         // FIXME-NAV: On _NavFlattened windows, g.NavWindow will only be updated during subsequent frame. Not a problem currently.
-        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: result NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"\n", g.navInitResultId)
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: ApplyResult: NavID 0x%08X in Layer ${g.navLayer.ordinal} Window \"${navWindow.name}\"\n", g.navInitResultId)
         setNavID(g.navInitResultId, g.navLayer, 0, g.navInitResultRectRel)
         g.navIdIsAlive = true // Mark as alive from previous frame as we got a result
         if (g.navInitRequestFromMove)

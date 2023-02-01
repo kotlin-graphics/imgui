@@ -1863,7 +1863,7 @@ class Table {
     /** Remove Table (currently only used by TestEngine)
      *  ~TableRemove */
     fun remove() {
-        //IMGUI_DEBUG_LOG("TableRemove() id=0x%08X\n", table->ID);
+        //IMGUI_DEBUG_PRINT("TableRemove() id=0x%08X\n", table->ID);
         val tableIdx = g.tables.getIndex(this)
         //memset(table->RawData.Data, 0, table->RawData.size_in_bytes());
         //memset(table, 0, sizeof(ImGuiTable));
@@ -1874,7 +1874,7 @@ class Table {
     /** Free up/compact internal Table buffers for when it gets unused
      *  ~TableGcCompactTransientBuffers */
     fun gcCompactTransientBuffers() {
-        //IMGUI_DEBUG_LOG("TableGcCompactTransientBuffers() id=0x%08X\n", table->ID);
+        //IMGUI_DEBUG_PRINT("TableGcCompactTransientBuffers() id=0x%08X\n", table->ID);
         assert(!memoryCompacted)
         sortSpecs.specs = null
         sortSpecsMulti.clear()
