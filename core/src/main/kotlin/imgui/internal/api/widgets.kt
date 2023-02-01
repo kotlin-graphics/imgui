@@ -298,9 +298,7 @@ internal interface widgets {
     infix fun scrollbar(axis: Axis) {
 
         val window = g.currentWindow!!
-
         val id = window getScrollbarID axis
-        keepAliveID(id)
 
         // Calculate scrollbar bounding box
         val bb = window getScrollbarRect axis
@@ -335,6 +333,8 @@ internal interface widgets {
         val window = g.currentWindow!!
         if (window.skipItems)
             return false
+
+        keepAliveID(id)
 
         val bbFrameWidth = bbFrame.width
         val bbFrameHeight = bbFrame.height
