@@ -140,6 +140,7 @@ interface windows {
         if (flags has Wf._Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
+            popupRef.parentNavLayer = parentWindowInStack.dc.navLayerCurrent
             g.beginPopupStack += popupRef
             window.popupId = popupRef.popupId
         }

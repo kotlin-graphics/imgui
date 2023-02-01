@@ -275,6 +275,8 @@ class PopupData(
     var window: Window? = null,
     /** Set on OpenPopup() copy of NavWindow at the time of opening the popup  */
     var sourceWindow: Window? = null,
+    /** Resolved on BeginPopup(). Actually a ImGuiNavLayer type (declared down below), initialized to -1 which is not part of an enum, but serves well-enough as "not any of layers" value */
+    var parentNavLayer: Int = -1,
     /** Set on OpenPopup()  */
     var openFrameCount: Int = -1,
     /** Set on OpenPopup(), we need this to differentiate multiple menu sets from each others

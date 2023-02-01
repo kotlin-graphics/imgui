@@ -64,14 +64,9 @@ object ShowDemoWindowPopups {
             textWrapped("Below we are testing adding menu items to a regular window. It's rather unusual but should work!")
             separator()
 
-            // Note: As a quirk in this very specific example, we want to differentiate the parent of this menu from the
-            // parent of the various popup menus above. To do so we are encloding the items in a PushID()/PopID() block
-            // to make them two different menusets. If we don't, opening any popup above and hovering our menu here would
-            // open it. This is because once a menu is active, we allow to switch to a sibling menu by just hovering on it,
-            // which is the desired behavior for regular menus.
-            withID("foo") {
-                menuItem("Menu item", "CTRL+M")
-                menu("Menu inside a regular window") { MenuFile() }
+            menuItem("Menu item", "CTRL+M")
+            menu("Menu inside a regular window") {
+                MenuFile()
             }
             separator()
         }
