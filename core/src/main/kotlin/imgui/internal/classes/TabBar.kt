@@ -37,10 +37,7 @@ import imgui.api.g
 import imgui.internal.floor
 import imgui.internal.hashStr
 import imgui.internal.linearSweep
-import imgui.internal.sections.ButtonFlag
-import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
-import imgui.internal.sections.ItemFlag
-import imgui.internal.sections.or
+import imgui.internal.sections.*
 import kotlin.math.abs
 import kotlin.reflect.KMutableProperty0
 
@@ -313,7 +310,11 @@ class TabBar {
 
         var pOpen = pOpen_
         var flags = flags_ // Layout whole tab bar if not already done
-        if (wantLayout) layout()
+        if (wantLayout) {
+            val backupNextItemData = g.nextItemData.copy()
+            layout()
+            g.nextItemData = backupNextItemData
+        }
 
         val window = g.currentWindow!!
         if (window.skipItems) return false
@@ -335,19 +336,22 @@ class TabBar {
         if (flags has TabItemFlag._NoCloseButton) pOpen = null
         else if (pOpen == null) flags = flags or TabItemFlag._NoCloseButton
 
-        // Calculate tab contents size
-        val size = tabItemCalcSize(label, pOpen != null)
-
         // Acquire tab data
         var tabIsNew = false
         val tab = findTabByID(id) ?: TabItem().also {
             it.id = id
-            it.width = size.x
-            tabs += it
-            tabIsNew = true
-            tabsAddedNew = true
+            tabsAddedNew = true; tabIsNew = true
         }
         lastTabItemIdx = tabs.indexOf(tab)
+
+        // Calculate tab contents size
+        val size = tabItemCalcSize(label, pOpen != null)
+        tab.requestedWidth = -1f
+        if (g.nextItemData.flags has NextItemDataFlag.HasWidth) {
+            size.x = g.nextItemData.width; tab.requestedWidth = g.nextItemData.width
+        }
+        if (tabIsNew)
+            tab.width = size.x
         tab.contentWidth = size.x
         tab.beginOrder = tabsActiveCount++
 
@@ -363,10 +367,17 @@ class TabBar {
         tabsNames += label
 
         // Update selected tab
-        if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0) if (!tabBarAppearing || selectedTabId == 0) if (!isTabButton) nextSelectedTabId =
-            id  // New tabs gets activated
-        if (flags has TabItemFlag.SetSelected && selectedTabId != id) // SetSelected can only be passed on explicit tab bar
-            if (!isTabButton) nextSelectedTabId = id
+        if (!isTabButton) {
+            if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
+                if (!tabBarAppearing || selectedTabId == 0)
+                    nextSelectedTabId = id  // New tabs gets activated
+            if (flags has TabItemFlag.SetSelected && selectedTabId != id) // _SetSelected can only be passed on explicit tab bar
+                nextSelectedTabId = id
+            if (g.nextItemData.flags has NextItemDataFlag.HasOpen) {
+                assert(g.nextItemData.openVal && g.nextItemData.openCond == Cond.Always) // SetNextItemOpen(true, ImGuiCond_Always) is supported but other combinations are not.
+                nextSelectedTabId = id
+            }
+        }
 
         // Lock visibility
         // (Note: tab_contents_visible != tab_selected... because CTRL+TAB operations may preview some tabs without selecting them!)
@@ -596,7 +607,7 @@ class TabBar {
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
-            tab.contentWidth = tabItemCalcSize(tab.name, hasCloseButton).x
+            tab.contentWidth = if (tab.requestedWidth > 0f) tab.requestedWidth else tabItemCalcSize(tab.name, hasCloseButton).x
 
             val sectionN = tabItemGetSectionIdx(tab)
             val section = sections[sectionN]

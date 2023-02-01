@@ -193,19 +193,19 @@ class NextWindowData {
     }
 }
 
-class NextItemData {
-    var flags: NextItemDataFlags = 0
+data class NextItemData(
+    var flags: NextItemDataFlags = 0,
 
     /** Set by SetNextItemWidth() */
-    var width = 0f
+    var width: Float = 0f,
 
     /** Set by SetNextItemMultiSelectData() (!= 0 signify value has been set, so it's an alternate version of HasSelectionData, we don't use Flags for this because they are cleared too early. This is mostly used for debugging) */
-    var focusScopeId: ID = 0
+    var focusScopeId: ID = 0,
 
-    var openCond = Cond.None
+    var openCond: Cond = Cond.None,
 
     /** Set by SetNextItemOpen() function. */
-    var openVal = false
+    var openVal: Boolean = false) {
 
     /** Also cleared manually by ItemAdd()! */
     fun clearFlags() {
@@ -373,6 +373,9 @@ class TabItem {
 
     /** Width of label, stored during BeginTabItem() call */
     var contentWidth = 0f
+
+    /** Width optionally requested by caller, -1.0f is unused */
+    var requestedWidth = 0f
 
     /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
     var nameOffset = -1
