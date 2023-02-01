@@ -241,8 +241,7 @@ internal interface widgetsLowLevelBehaviors {
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
             val navActivatedByInputs = NavInput.Activate isTest if (flags has Bf.Repeat) NavReadMode.Repeat else NavReadMode.Pressed
-            if (navActivatedByCode || navActivatedByInputs)
-            {
+            if (navActivatedByCode || navActivatedByInputs) {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 pressed = true
                 setActiveID(id, window)
@@ -592,7 +591,7 @@ internal interface widgetsLowLevelBehaviors {
         // For this purpose we essentially compare if g.NavIdIsAlive went from 0 to 1 between TreeNode() and TreePop().
         // This is currently only support 32 level deep and we are fine with (1 << Depth) overflowing into a zero.
         val isLeaf = flags has Tnf.Leaf
-        var isOpen = treeNodeBehaviorIsOpen(id, flags)
+        var isOpen = treeNodeUpdateNextOpen(id, flags)
         if (isOpen && !g.navIdIsAlive && flags has Tnf.NavLeftJumpsBackHere && flags hasnt Tnf.NoTreePushOnOpen)
             window.dc.treeJumpToParentOnPopMask = window.dc.treeJumpToParentOnPopMask or (1 shl window.dc.treeDepth)
 
@@ -729,8 +728,20 @@ internal interface widgetsLowLevelBehaviors {
         return isOpen
     }
 
-    /** Consume previous SetNextItemOpen() data, if any. May return true when logging */
-    fun treeNodeBehaviorIsOpen(id: ID, flags: TreeNodeFlags = Tnf.None.i): Boolean {
+    fun treePushOverrideID(id: ID) {
+        val window = g.currentWindow!!
+        indent()
+        window.dc.treeDepth++
+        pushOverrideID(id)
+    }
+
+    fun treeNodeSetOpen(id: ID, open: Boolean) {
+        val storage = g.currentWindow!!.dc.stateStorage
+        storage[id] = open
+    }
+
+    /** Return open state. Consume previous SetNextItemOpen() data, if any. May return true when logging. */
+    fun treeNodeUpdateNextOpen(id: ID, flags: TreeNodeFlags): Boolean {
 
         if (flags has Tnf.Leaf) return true
 
@@ -742,13 +753,20 @@ internal interface widgetsLowLevelBehaviors {
         if (g.nextItemData.flags has NextItemDataFlag.HasOpen) {
             if (g.nextItemData.openCond == Cond.Always) {
                 isOpen = g.nextItemData.openVal
-                storage[id] = isOpen
-            } else
-            /*  We treat ImGuiSetCondition_Once and ImGuiSetCondition_FirstUseEver the same because tree node state
-                are not saved persistently.                 */
-                isOpen = storage.getOrPut(id) { g.nextItemData.openVal }
+                treeNodeSetOpen(id, isOpen)
+            } else {
+                // We treat ImGuiCond_Once and ImGuiCond_FirstUseEver the same because tree node state are not saved persistently.
+                val storedValue = storage.getOrElse(id) { -1 }
+                if (storedValue == -1) {
+                    isOpen = g.nextItemData.openVal
+                    storage[id] = isOpen
+                    treeNodeSetOpen(id, isOpen)
+                }
+                else
+                    isOpen = storedValue != 0
+            }
         } else
-            isOpen = storage[id] ?: flags has Tnf.DefaultOpen
+            isOpen = storage[id] ?: (flags has Tnf.DefaultOpen)
 
         /*  When logging is enabled, we automatically expand tree nodes (but *NOT* collapsing headers.. seems like
             sensible behavior).
@@ -757,12 +775,5 @@ internal interface widgetsLowLevelBehaviors {
             isOpen = true
 
         return isOpen
-    }
-
-    fun treePushOverrideID(id: ID) {
-        val window = g.currentWindow!!
-        indent()
-        window.dc.treeDepth++
-        pushOverrideID(id)
     }
 }
