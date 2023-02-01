@@ -154,9 +154,9 @@ object ExampleApp {
         // Menu Bar
         menuBar {
             menu("Menu") { MenuFile() }
-//            stop = true
-//            println("nav window name " + g.navWindow?.rootWindow?.name)
-//            println("Examples")
+            //            stop = true
+            //            println("nav window name " + g.navWindow?.rootWindow?.name)
+            //            println("Examples")
             menu("Examples") {
                 menuItem("Main menu bar", "", show::mainMenuBar)
                 menuItem("Console", "", show::console)
@@ -174,11 +174,12 @@ object ExampleApp {
             }
             //if (ImGui::MenuItem("MenuItem")) {} // You can also use MenuItem() inside a menu bar!
             menu("Tools") {
-                if(IMGUI_DISABLE_METRICS_WINDOW) {
-                    menuItem("Metrics/Debugger", "", show::metrics)
-                    menuItem("Debug Log", "", show::debugLog)
-                    menuItem("Stack Tool", "", show::stackTool)
-                }
+
+                val hasDebugTools = IMGUI_DISABLE_DEBUG_TOOLS
+
+                menuItem("Metrics/Debugger", "", show::metrics, hasDebugTools)
+                menuItem("Debug Log", "", show::debugLog, hasDebugTools)
+                menuItem("Stack Tool", "", show::stackTool, hasDebugTools)
                 menuItem("Style Editor", "", show::styleEditor)
                 menuItem("About Dear ImGui", "", show::about)
             }
@@ -193,7 +194,7 @@ object ExampleApp {
             bulletText("Sections below are demonstrating many aspects of the library.")
             bulletText("The \"Examples\" menu above leads to more demo contents.")
             bulletText("The \"Tools\" menu above gives access to: About Box, Style Editor,\n" +
-                    "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
+                               "and Metrics/Debugger (general purpose Dear ImGui debugging tool).")
             separator()
 
             text("PROGRAMMER GUIDE:")
