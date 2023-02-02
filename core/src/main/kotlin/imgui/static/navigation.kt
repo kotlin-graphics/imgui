@@ -91,10 +91,6 @@ fun navUpdate() {
             true -> if (io.navInputsDownDuration[i] < 0f) 0f else io.navInputsDownDuration[i] + io.deltaTime
             else -> -1f
         }
-    if (!navGamepadActive && g.navInputSource == InputSource.Gamepad)
-        g.navInputSource = InputSource.None
-    if (!navKeyboardActive && g.navInputSource == InputSource.Keyboard)
-        g.navInputSource = InputSource.None
 
     // Process navigation init request (select first/default focus)
     if (g.navInitResultId != 0)
@@ -253,7 +249,7 @@ fun navUpdateWindowing() {
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
     val startWindowingWithGamepad = allowWindowing && navGamepadActive && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(false)
-    val startWindowingWithKeyboard = allowWindowing && navKeyboardActive && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed(false)
+    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed(false) // Note: enabled even without NavEnableKeyboard!
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootWindow; g.navWindowingTargetAnim = it.rootWindow
