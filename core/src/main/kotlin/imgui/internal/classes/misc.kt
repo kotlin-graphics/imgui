@@ -378,7 +378,7 @@ class TabItem {
     var contentWidth = 0f
 
     /** Width optionally requested by caller, -1.0f is unused */
-    var requestedWidth = 0f
+    var requestedWidth = -1f
 
     /** When Window==NULL, offset to name within parent ImGuiTabBar::TabsNames */
     var nameOffset = -1
