@@ -484,7 +484,8 @@ class Font {
 
     // [Internal] Don't use!
 
-    val TABSIZE = 4
+    /** Until we move this to runtime and/or add proper tab support, at least allow users to compile-time override */
+    var TABSIZE = 4
 
     fun buildLookupTable() {
 

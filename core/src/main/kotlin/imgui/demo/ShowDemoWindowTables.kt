@@ -300,7 +300,7 @@ object ShowDemoWindowTables {
             }
 
             // [Method 3] We call TableNextColumn() _before_ each cell. We never call TableNextRow(),
-            // as TableNextColumn() will automatically wrap around and create new roes as needed.
+            // as TableNextColumn() will automatically wrap around and create new rows as needed.
             // This is generally more convenient when your cells all contains the same type of data.
             helpMarker("""
                 Only using TableNextColumn(), which tends to be convenient for tables where every cells contains the same type of contents.
