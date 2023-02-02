@@ -82,8 +82,6 @@ interface widgetsTrees {
         return treeNodeBehavior(window.getID(intPtr), flags, g.tempBuffer, labelEnd)
     }
 
-    //    IMGUI_API void          TreePush(const char* str_id = NULL);                                    // ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call Push/Pop yourself for layout purpose
-
     /** ~ Indent()+PushId(). Already called by TreeNode() when returning true, but you can call TreePush/TreePop yourself if desired.  */
     fun treePush(strId: String) {
         val window = currentWindow
@@ -91,6 +89,8 @@ interface widgetsTrees {
         window.dc.treeDepth++
         pushID(strId)
     }
+
+//    IMGUI_API void          TreePush(const void* ptr_id);                                       // "
 
     /** ~ Unindent()+PopId()    */
     fun treePop() {
