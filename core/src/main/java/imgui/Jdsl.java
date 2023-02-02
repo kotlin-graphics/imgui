@@ -239,20 +239,16 @@ public class Jdsl {
             block.run();
     }
 
-    public static void imageButton(int userTextureId, Vec2 size, Vec4 bgCol, Runnable block) {
-        imageButton(userTextureId, size, new Vec2(), new Vec2(), -1, bgCol, new Vec4(1), block);
+    public static void imageButton(String srtId, int userTextureId, Vec2 size, Vec4 bgCol, Runnable block) {
+        imageButton(srtId, userTextureId, size, new Vec2(), new Vec2(), bgCol, new Vec4(1), block);
     }
 
-    public static void imageButton(int userTextureId, Vec2 size, Vec2 uv0, Vec2 uv1, Vec4 bgCol, Runnable block) {
-        imageButton(userTextureId, size, uv0, uv1, -1, bgCol, new Vec4(1), block);
+    public static void imageButton(String srtId, int userTextureId, Vec2 size, Vec2 uv0, Vec2 uv1, Vec4 bgCol, Runnable block) {
+        imageButton(srtId, userTextureId, size, uv0, uv1, bgCol, new Vec4(1), block);
     }
 
-    public static void imageButton(int userTextureId, Vec2 size, Vec2 uv0, Vec2 uv1, int framePadding, Vec4 bgCol, Runnable block) {
-        imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, new Vec4(1), block);
-    }
-
-    public static void imageButton(int userTextureId, Vec2 size, Vec2 uv0, Vec2 uv1, int framePadding, Vec4 bgCol, Vec4 tintCol, Runnable block) {
-        if (imgui.imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, tintCol))
+    public static void imageButton(String srtId, int userTextureId, Vec2 size, Vec2 uv0, Vec2 uv1, Vec4 bgCol, Vec4 tintCol, Runnable block) {
+        if (imgui.imageButton(srtId, userTextureId, size, uv0, uv1, bgCol, tintCol))
             block.run();
     }
 
