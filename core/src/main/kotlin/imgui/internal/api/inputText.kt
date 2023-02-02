@@ -1076,6 +1076,13 @@ internal interface inputText {
                 // Users of non-default decimal point (in particular ',') may be affected by word-selection logic (is_word_boundary_from_right/is_word_boundary_from_left) functions.
                 val cDecimalPoint = g.platformLocaleDecimalPoint
 
+                // Full-width -> half-width conversion for numeric fields (https://en.wikipedia.org/wiki/Halfwidth_and_Fullwidth_Forms_(Unicode_block)
+                // While this is mostly convenient, this has the side-effect for uninformed users accidentally inputting full-width characters that they may
+                // scratch their head as to why it works in numerical fields vs in generic text fields it would require support in the font.
+                if (flags has (Itf.CharsDecimal or Itf.CharsScientific or Itf.CharsHexadecimal)
+                    if (c >= 0xFF01 && c <= 0xFF5E)
+                        c = c - 0xFF01 + 0x21
+
                 // Allow 0-9 . - + * /
                 if (flags has Itf.CharsDecimal)
                     if (c !in '0'..'9' && c != cDecimalPoint && c != '-' && c != '+' && c != '*' && c != '/')
@@ -1097,6 +1104,8 @@ internal interface inputText {
 
                 if (flags has Itf.CharsNoBlank && c.isBlankW)
                     return false
+
+                char.set(c)
             }
 
             // Custom callback filter
