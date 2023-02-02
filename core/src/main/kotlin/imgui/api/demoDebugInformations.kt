@@ -491,6 +491,7 @@ interface demoDebugInformations {
         sameLine(); checkboxFlags("Focus", g::debugLogFlags, DebugLogFlag.EventFocus.i)
         sameLine(); checkboxFlags("Popup", g::debugLogFlags, DebugLogFlag.EventPopup.i)
         sameLine(); checkboxFlags("Nav", g::debugLogFlags, DebugLogFlag.EventNav.i)
+        sameLine(); checkboxFlags("IO", g::debugLogFlags, DebugLogFlag.EventIO.i)
 
         if (smallButton("Clear"))
             g.debugLogBuf.clear()

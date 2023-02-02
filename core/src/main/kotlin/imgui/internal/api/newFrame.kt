@@ -1,7 +1,7 @@
 package imgui.internal.api
 
-import glm_.f
 import glm_.has
+import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.clearActiveID
@@ -15,7 +15,10 @@ import imgui.ImGui.mergedModFlags
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.BitArray
+import imgui.internal.classes.DebugLogFlag
+import imgui.internal.classes.has
 import imgui.internal.floorSigned
+import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.InputEvent
 import imgui.static.findHoveredWindow
 
@@ -48,7 +51,8 @@ internal interface newFrame {
                     val eventPos = Vec2(e.posX, e.posY)
                     if (isMousePosValid(eventPos))
                         eventPos.put(floorSigned(eventPos.x), floorSigned(eventPos.y)) // Apply same flooring as UpdateMouseInputs()
-                    if (io.mousePos.x != eventPos.x || io.mousePos.y != eventPos.y) {
+                    e.ignoredAsSame = io.mousePos.x == eventPos.x && io.mousePos.y == eventPos.y
+                    if (!e.ignoredAsSame) {
                         // Trickling Rule: Stop processing queued events if we already handled a mouse button change
                         if (trickleFastInputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || textInputed))
                             break
@@ -59,7 +63,8 @@ internal interface newFrame {
                 is InputEvent.MouseButton -> {
                     val button = MouseButton of e.button
                     //                    assert(button >= 0 && button < ImGuiMouseButton_COUNT)
-                    if (io.mouseDown[button.i] != e.down) {
+                    e.ignoredAsSame = io.mouseDown[button.i] == e.down
+                    if (!e.ignoredAsSame) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the same button
                         if (trickleFastInputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
                             break
@@ -67,8 +72,9 @@ internal interface newFrame {
                         mouseButtonChanged = mouseButtonChanged or (1 shl button.i)
                     }
                 }
-                is InputEvent.MouseWheel ->
-                    if (e.wheelX != 0f || e.wheelY != 0f) {
+                is InputEvent.MouseWheel -> {
+                    e.ignoredAsSame = e.wheelX == 0f && e.wheelY == 0f
+                    if (!e.ignoredAsSame) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the event
                         if (trickleFastInputs && (mouseMoved || mouseButtonChanged != 0))
                             break
@@ -76,12 +82,14 @@ internal interface newFrame {
                         io.mouseWheel += e.wheelY
                         mouseWheeled = true
                     }
+                }
                 is InputEvent.Key -> {
                     val key = e.key
                     assert(key != Key.None)
                     val keydataIndex = key.i
                     val keyData = io.keysData[keydataIndex]
-                    if (keyData.down != e.down || keyData.analogValue != e.analogValue) {
+                    e.ignoredAsSame = keyData.down == e.down && keyData.analogValue == e.analogValue
+                    if (!e.ignoredAsSame) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the same button
                         if (trickleFastInputs && keyData.down != e.down && (keyChangedMask testBit keydataIndex || textInputed || mouseButtonChanged != 0))
                             break
@@ -108,10 +116,14 @@ internal interface newFrame {
                     if (trickleInterleavedKeysAndText)
                         textInputed = true
                 }
-                is InputEvent.AppFocused ->
+                is InputEvent.AppFocused -> {
                     // We intentionally overwrite this and process lower, in order to give a chance
                     // to multi-viewports backends to queue AddFocusEvent(false) + AddFocusEvent(true) in same frame.
-                    io.appFocusLost = !e.focused
+                    val focusLost = !e.focused
+                    e.ignoredAsSame = io.appFocusLost == focusLost
+                    if (!e.ignoredAsSame)
+                        io.appFocusLost = focusLost
+                }
             }
             eventN++
         }
@@ -122,9 +134,10 @@ internal interface newFrame {
             g.inputEventsTrail += g.inputEventsQueue[n]
 
         // [DEBUG]
-        /*if (event_n != 0)
-            for (int n = 0; n < g.InputEventsQueue.Size; n++)
-                DebugPrintInputEvent(n < event_n ? "Processed" : "Remaining", &g.InputEventsQueue[n]);*/
+        if (!IMGUI_DISABLE_DEBUG_TOOLS)
+            if (eventN != 0 && g.debugLogFlags has DebugLogFlag.EventIO)
+                for (n in g.inputEventsQueue.indices)
+                    debugPrintInputEvent(if (n < eventN) (if (g.inputEventsQueue[n].ignoredAsSame) "Processed (Same)" else "Processed") else "Remaining", g.inputEventsQueue[n])
 
         // Remaining events will be processed on the next frame
         if (eventN == g.inputEventsQueue.size)
@@ -288,6 +301,17 @@ internal interface newFrame {
             val hoveredWindow = g.hoveredWindow
             val hoveredWindowAboveModal = hoveredWindow != null && (modal == null || hoveredWindow isAbove modal)
             closePopupsOverWindow(if (hoveredWindowAboveModal) g.hoveredWindow else modal, true)
+        }
+    }
+
+    companion object {
+        fun debugPrintInputEvent(prefix: String, e: InputEvent) = when (e) {
+            is InputEvent.MousePos -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f)", e.posX, e.posY)
+            is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button} ${if (e.down) "Down" else "Up"}")
+            is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.1f, %.1f)", e.wheelX, e.wheelY)
+            is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("$prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
+            is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("$prefix: Text: ${e.char} (U+%08X)", e.char)
+            is InputEvent.AppFocused -> IMGUI_DEBUG_LOG_IO("$prefix: AppFocused ${e.focused.i}")
         }
     }
 }
