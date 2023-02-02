@@ -180,7 +180,7 @@ internal interface menus {
             // The 'HovereWindow == window' check creates an inconsistency (e.g. moving away from menu slowly tends to hit same window, whereas moving away fast does not)
             // But we also need to not close the top-menu menu when moving over void. Perhaps we should extend the triangle check to a larger polygon.
             // (Remember to test this on BeginPopup("A")->BeginMenu("B") sequence which behaves slightly differently as B isn't a Child of A and hovering isn't shared.)
-            if (menuIsOpen && !hovered && g.hoveredWindow === window && !movingTowardChildMenu)
+            if (menuIsOpen && !hovered && g.hoveredWindow === window && !movingTowardChildMenu && !g.navDisableMouseHover)
                 wantClose = true
 
             // Open
