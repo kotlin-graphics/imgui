@@ -1410,7 +1410,9 @@ class Window(var context: Context,
 
     /** ~StartLockWheelingWindow */
     fun startLockWheeling() {
-        if (g.wheelingWindow === this) return
+        if (g.wheelingWindow === this)
+            return
+        IMGUI_DEBUG_LOG_IO("StartLockWheelingWindow() \"$name\"")
         g.wheelingWindow = this
         g.wheelingWindowRefMousePos put io.mousePos
         g.wheelingWindowTimer = WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER

@@ -17,6 +17,8 @@ import org.lwjgl.system.Platform
 //-----------------------------------------------------------------------------
 
 
+/** Flags for ImGui::Begin()
+ *  (Those are per-window flags. There are shared flags in ImGuiIO: io.ConfigWindowsResizeFromEdges and io.ConfigWindowsMoveFromTitleBarOnly) */
 typealias WindowFlags = Int
 
 /** Flags: for Begin(), BeginChild()    */
@@ -132,10 +134,10 @@ infix fun WindowFlags.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
 operator fun WindowFlags.minus(flag: WindowFlag): WindowFlags = wo(flag)
 operator fun WindowFlags.div(flag: WindowFlag): WindowFlags = or(flag)
 
-
+/** Flags for ImGui::InputText(), InputTextMultiline()
+ *  (Those are per-item flags. There are shared flags in ImGuiIO: io.ConfigInputTextCursorBlink and io.ConfigInputTextEnterKeepActive) */
 typealias InputTextFlags = Int
 
-/** Flags for ImGui::InputText(), InputTextMultiline()    */
 enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flags the others enum
 
     None(0),
@@ -1930,10 +1932,11 @@ infix fun ColorEditFlags.hasnt(b: ColorEditFlag): Boolean = and(b.i) == 0
 infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
 
 
+/** Flags for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
+ *  We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it easier to swap them.
+ *  (Those are per-item flags. There are shared flags in ImGuiIO: io.ConfigDragClickToInputText) */
 typealias SliderFlags = Int
 
-/** Flags for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
- *  We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it easier to swap them. */
 enum class SliderFlag(val i: SliderFlags) {
     None(0),
 

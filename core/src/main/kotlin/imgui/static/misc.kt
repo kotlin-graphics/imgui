@@ -18,6 +18,7 @@ import imgui.api.g
 import imgui.internal.*
 import imgui.internal.api.inputs
 import imgui.internal.classes.Window
+import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.ViewportP
 
 
@@ -165,6 +166,7 @@ fun updateMouseWheel() {
         if (isMousePosValid() && (io.mousePos - g.wheelingWindowRefMousePos).lengthSqr > io.mouseDragThreshold * io.mouseDragThreshold)
             g.wheelingWindowTimer = 0f
         if (g.wheelingWindowTimer <= 0f) {
+            IMGUI_DEBUG_LOG_IO("UpdateMouseWheel() release WheelingWindow lock \"${g.wheelingWindow!!.name}\"")
             g.wheelingWindow = null
             g.wheelingWindowTimer = 0f
         }
