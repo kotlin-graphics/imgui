@@ -51,7 +51,6 @@ object ExampleApp {
         // Examples Apps (accessible from the "Examples" menu)
         var mainMenuBar = false
         var documents = false
-
         var console = false
         var log = false
         var layout = false
@@ -64,7 +63,7 @@ object ExampleApp {
         var windowTitles = false
         var customRendering = false
 
-        // Dear ImGui Apps (accessible from the "Tools" menu)
+        // Dear ImGui Tools/Apps (accessible from the "Tools" menu)
         var metrics = false
         var debugLog = false
         var stackTool = false
@@ -144,10 +143,8 @@ object ExampleApp {
         }
 
         // Most "big" widgets share a common width settings by default. See 'Demo->Layout->Widgets Width' for details.
-
         // e.g. Use 2/3 of the space for widgets and 1/3 for labels (right align)
         //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.35f);
-
         // e.g. Leave a fixed amount of width for labels (by passing a negative value), the rest goes to widgets.
         pushItemWidth(fontSize * -12)
 

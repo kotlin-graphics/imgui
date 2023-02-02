@@ -143,7 +143,7 @@ interface demoDebugInformations {
     /** create Demo window. demonstrate most ImGui features. call this to learn about the library! try to make it always available in your application! */
     fun showDemoWindow(open: KMutableProperty0<Boolean>) {
         // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
-        // Most ImGui functions would normally just crash if the context is missing.
+        // Most functions would normally just crash if the context is missing.
         assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" }
         ExampleApp(open)
     }
