@@ -359,9 +359,11 @@ internal interface inputText {
                 }
                 state.cursorAnimReset()
             } else if (io.mouseClicked[0] && !state.selectedAllMouseLock) {
-                // FIXME: unselect on late click could be done release?
                 if (hovered) {
-                    state.click(mouseX, mouseY)
+                    if (io.keyShift)
+                        state.drag(mouseX, mouseY)
+                    else
+                        state.click(mouseX, mouseY)
                     state.cursorAnimReset()
                 }
             } else if (io.mouseDown[0] && !state.selectedAllMouseLock && (io.mouseDelta.x != 0f || io.mouseDelta.y != 0f)) { // TODO -> glm once anyNotEqual gets fixed
