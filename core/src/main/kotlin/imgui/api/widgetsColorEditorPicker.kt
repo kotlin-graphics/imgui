@@ -261,13 +261,12 @@ interface widgetsColorEditorPicker {
         endGroup()
 
         // Drag and Drop Target
-
         // NB: The flag test is merely an optional micro-optimization, BeginDragDropTarget() does the same test.
         if (g.lastItemData.statusFlags has ItemStatusFlag.HoveredRect && beginDragDropTarget()) {
             var acceptedDragDrop = false
             acceptDragDropPayload(PAYLOAD_TYPE_COLOR_3F)?.let {
                 val data = it.data!! as Vec4
-                for (j in 0..2)  // Preserve alpha if any
+                for (j in 0..2) // Preserve alpha if any //-V512 //-V1086
                     col[j] = data.array[j]
                 acceptedDragDrop = true
                 valueChanged = true
