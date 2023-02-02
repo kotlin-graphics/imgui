@@ -14,6 +14,14 @@ import imgui.internal.sections.*
  *  FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions. */
 internal interface inputs {
 
+    fun getKeyChordName(keyChord: KeyChord): String {
+        var out = if (keyChord has Key.Mod_Ctrl) "Ctrl+" else ""
+        out += if (keyChord has Key.Mod_Shift) "Shift+" else ""
+        out += if (keyChord has Key.Mod_Alt) "Alt+" else ""
+        out += if (keyChord has Key.Mod_Super) (if (g.io.configMacOSXBehaviors) "Cmd+" else "Super+") else ""
+        return out + (Key of (keyChord wo Key.Mod_Mask_)).name
+    }
+
     fun setItemUsingMouseWheel() {
         val id = g.lastItemData.id
         if (g.hoveredId == id)
@@ -25,14 +33,14 @@ internal interface inputs {
     }
 
     // FIXME: Technically this also prevents use of Gamepad D-Pad, may not be an issue.
-    fun setActiveIdUsingNavAndKeys() {
+    fun setActiveIdUsingAllKeyboardKeys() {
         assert(g.activeId != 0)
-        g.activeIdUsingNavDirMask = 0.inv()
+        g.activeIdUsingNavDirMask = (1 shl Dir.COUNT) - 1
         g.activeIdUsingKeyInputMask.setBitRange(Key.Keyboard_BEGIN, Key.Keyboard_END)
-        g.activeIdUsingKeyInputMask setBit Key.ModCtrl.i
-        g.activeIdUsingKeyInputMask setBit Key.ModShift.i
-        g.activeIdUsingKeyInputMask setBit Key.ModAlt.i
-        g.activeIdUsingKeyInputMask setBit Key.ModSuper.i
+        //        g.activeIdUsingKeyInputMask setBit Key.ModCtrl.i
+        //        g.activeIdUsingKeyInputMask setBit Key.ModShift.i
+        //        g.activeIdUsingKeyInputMask setBit Key.ModAlt.i
+        //        g.activeIdUsingKeyInputMask setBit Key.ModSuper.i
         navMoveRequestCancel()
     }
 
@@ -107,19 +115,4 @@ internal interface inputs {
     }
 
     // IsKeyPressedEx -> Key
-
-    companion object {
-        /** ~GetMergedModFlags
-         *
-         *  [Internal] Do not use directly (can read io.KeyMods instead) */
-        val mergedModFlags: ModFlags
-            get() {
-                var keyMods = ModFlag.None.i
-                if (ImGui.io.keyCtrl) keyMods /= ModFlag.Ctrl
-                if (ImGui.io.keyShift) keyMods /= ModFlag.Shift
-                if (ImGui.io.keyAlt) keyMods /= ModFlag.Alt
-                if (ImGui.io.keySuper) keyMods /= ModFlag.Super
-                return keyMods
-            }
-    }
 }

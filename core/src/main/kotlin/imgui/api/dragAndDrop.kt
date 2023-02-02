@@ -12,7 +12,7 @@ import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.setActiveID
-import imgui.ImGui.setActiveIdUsingNavAndKeys
+import imgui.ImGui.setActiveIdUsingAllKeyboardKeys
 import imgui.classes.Payload
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
@@ -102,7 +102,7 @@ interface dragAndDrop {
             sourceDragActive = isMouseDragging(mouseButton)
 
             // Disable navigation and key inputs while dragging + cancel existing request if any
-            setActiveIdUsingNavAndKeys()
+            setActiveIdUsingAllKeyboardKeys()
         } else {
             window = null
             sourceId = hashStr("#SourceExtern")

@@ -22,7 +22,7 @@ import imgui.ImGui.renderFrame
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.scrollbar
 import imgui.ImGui.setActiveID
-import imgui.ImGui.setActiveIdUsingNavAndKeys
+import imgui.ImGui.setActiveIdUsingAllKeyboardKeys
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
@@ -677,7 +677,7 @@ class Window(var context: Context,
         g.navDisableHighlight = true
         g.activeIdClickOffset = g.io.mouseClickedPos[0] - rootWindow!!.pos
         g.activeIdNoClearOnFocusLoss = true
-        setActiveIdUsingNavAndKeys()
+        setActiveIdUsingAllKeyboardKeys()
 
         val canMoveWindow = flags hasnt Wf.NoMove && rootWindow!!.flags hasnt Wf.NoMove
         if (canMoveWindow) g.movingWindow = this

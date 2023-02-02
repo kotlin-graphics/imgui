@@ -1162,8 +1162,11 @@ enum class SortDirection {
 }
 
 
+typealias KeyChord = Int
+
+
 /** A key identifier (ImGui-side enum) */
-enum class Key {
+enum class Key(i: KeyChord? = null) {
     // Keyboard
     None, Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace, Space, Enter, Escape,
     LeftCtrl, LeftShift, LeftAlt, LeftSuper,
@@ -1243,21 +1246,30 @@ enum class Key {
     // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
     MouseLeft, MouseRight, MouseMiddle, MouseX1, MouseX2, MouseWheelX, MouseWheelY,
 
+    // [Internal] Reserved for mod storage
+    ReservedForModCtrl, ReservedForModShift, ReservedForModAlt, ReservedForModSuper,
+
     // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
     // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
     //   them to be accessed via standard key API, allowing calls such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
     // - Code polling every key (e.g. an interface to detect a key press for input mapping) might want to ignore those
-    //   and prefer using the real keys (e.g. ImGuiKey_LeftCtrl, ImGuiKey_RightCtrl instead of ImGuiKey_ModCtrl).
+    //   and prefer using the real keys (e.g. ImGuiKey_LeftCtrl, ImGuiKey_RightCtrl instead of ImGuiMod_Ctrl).
     // - In theory the value of keyboard modifiers should be roughly equivalent to a logical or of the equivalent left/right keys.
     //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky keys and
     //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
-    ModCtrl, ModShift, ModAlt, ModSuper,
+    Mod_None(0),
+    Mod_Ctrl(1 shl 12),
+    Mod_Shift(1 shl 13),
 
-    // End of list
-    Count;
+    /** Option/Menu */
+    Mod_Alt(1 shl 14),
+
+    /** Cmd/Super/Windows */
+    Mod_Super(1 shl 15),
+    Mod_Mask_(0xF000);
 
     @JvmField
-    val i = if (ordinal == 0) 0 else 512 + ordinal
+    val i: KeyChord = i ?: if (ordinal == 0) 0 else 512 + ordinal
 
     val index: Int
         get() {
@@ -1274,13 +1286,13 @@ enum class Key {
         val Gamepad_BEGIN = GamepadStart.i
         val Gamepad_END = MouseLeft.i
         val Aliases_BEGIN = MouseLeft.i
-        val Aliases_END = ModCtrl.i
+        val Aliases_END = ReservedForModCtrl.i
         infix fun of(i: Int) = values().first { it.i == i }
 
 
         // [Internal] Named shortcuts for Navigation
-        internal val _NavKeyboardTweakSlow = ModCtrl
-        internal val _NavKeyboardTweakFast = ModShift
+        internal val _NavKeyboardTweakSlow = Mod_Ctrl
+        internal val _NavKeyboardTweakFast = Mod_Shift
         internal val _NavGamepadTweakSlow = GamepadL1
         internal val _NavGamepadTweakFast = GamepadR1
         internal val _NavGamepadActivate = GamepadFaceDown
@@ -1288,6 +1300,9 @@ enum class Key {
         internal val _NavGamepadMenu = GamepadFaceLeft
         internal val _NavGamepadInput = GamepadFaceUp
     }
+
+    val isNamedOrMod: Boolean
+        get() = (i in BEGIN until END) || this == Mod_Ctrl || this == Mod_Shift || this == Mod_Alt || this == Mod_Super
 
     /** ~IsGamepadKey */
     val isGamepad: Boolean
@@ -1297,18 +1312,24 @@ enum class Key {
     val isAlias: Boolean
         get() = i in Aliases_BEGIN until Aliases_END
 
+    fun convertSingleModFlagToKey(key: Key): Key = when (key) {
+        Mod_Ctrl -> ReservedForModCtrl
+        Mod_Shift -> ReservedForModShift
+        Mod_Alt -> ReservedForModAlt
+        Mod_Super -> ReservedForModSuper
+        else -> key
+    }
+
     /** ~GetKeyData */
     val data: KeyData
-        get() = g.io.keysData[index]
+        get() {
+            var key = this
+            // Special storage location for mods
+            if (i has Mod_Mask_)
+                key = convertSingleModFlagToKey(key)
 
-    infix fun getChordName(mods: ModFlags): String {
-        assert(mods hasnt ModFlag.All) { "Passing invalid ImGuiModFlags value!" } // A frequent mistake is to pass ImGuiKey_ModXXX instead of ImGuiModFlags_XXX
-        return (if (mods has ModFlag.Ctrl) "Ctrl+" else "") +
-                (if (mods has ModFlag.Shift) "Shift+" else "") +
-                (if (mods has ModFlag.Alt) "Alt+" else "") +
-                (if (mods has ModFlag.Super) if (g.io.configMacOSXBehaviors) "Cmd+" else "Super+" else "") +
-                name
-    }
+            return g.io.keysData[index]
+        }
 
     /** ~IsKeyDown
      *
@@ -1382,7 +1403,24 @@ enum class Key {
         val t = io.keysData[i].downDuration
         return ImGui.calcTypematicRepeatAmount(t - io.deltaTime, t, repeatDelay, repeatRate)
     }
+
+    infix fun and(b: Key): KeyChord = i and b.i
+    infix fun and(b: KeyChord): KeyChord = i and b
+    infix fun or(b: Key): KeyChord = i or b.i
+    infix fun or(b: KeyChord): KeyChord = i or b
+    infix fun xor(b: Key): KeyChord = i xor b.i
+    infix fun xor(b: KeyChord): KeyChord = i xor b
+    infix fun wo(b: KeyChord): KeyChord = and(b.inv())
 }
+
+infix fun KeyChord.and(b: Key): KeyChord = and(b.i)
+infix fun KeyChord.or(b: Key): KeyChord = or(b.i)
+infix fun KeyChord.xor(b: Key): KeyChord = xor(b.i)
+infix fun KeyChord.has(b: Key): Boolean = and(b.i) != 0
+infix fun KeyChord.hasnt(b: Key): Boolean = and(b.i) == 0
+infix fun KeyChord.wo(b: Key): KeyChord = and(b.i.inv())
+operator fun KeyChord.minus(flag: Key): KeyChord = wo(flag)
+operator fun KeyChord.div(flag: Key): KeyChord = or(flag)
 
 infix fun Long.shl(key: Key) = shl(key.i)
 
@@ -1393,40 +1431,6 @@ operator fun IntArray.set(index: Key, value: Int) {
 }
 
 operator fun IntArray.get(index: Key): Int = get(index.i)
-
-
-typealias ModFlags = Int
-
-// Helper "flags" version of key-mods to store and compare multiple key-mods easily. Sometimes used for storage (e.g. io.KeyMods) but otherwise not much used in public API.
-enum class ModFlag(i: ModFlags = -1) {
-    None, Ctrl, Shift,
-
-    /** Option/Menu key */
-    Alt,
-
-    /** Cmd/Super/Windows key */
-    Super,
-    All(0x0F);
-
-    val i = if (i != -1) i else if (ordinal == 0) 0 else 1 shl (ordinal - 1)
-
-    infix fun and(b: ModFlag): ModFlags = i and b.i
-    infix fun and(b: ModFlags): ModFlags = i and b
-    infix fun or(b: ModFlag): ModFlags = i or b.i
-    infix fun or(b: ModFlags): ModFlags = i or b
-    infix fun xor(b: ModFlag): ModFlags = i xor b.i
-    infix fun xor(b: ModFlags): ModFlags = i xor b
-    infix fun wo(b: ModFlags): ModFlags = and(b.inv())
-}
-
-infix fun ModFlags.and(b: ModFlag): ModFlags = and(b.i)
-infix fun ModFlags.or(b: ModFlag): ModFlags = or(b.i)
-infix fun ModFlags.xor(b: ModFlag): ModFlags = xor(b.i)
-infix fun ModFlags.has(b: ModFlag): Boolean = and(b.i) != 0
-infix fun ModFlags.hasnt(b: ModFlag): Boolean = and(b.i) == 0
-infix fun ModFlags.wo(b: ModFlag): ModFlags = and(b.i.inv())
-operator fun ModFlags.minus(flag: ModFlag): ModFlags = wo(flag)
-operator fun ModFlags.div(flag: ModFlag): ModFlags = or(flag)
 
 
 /** Gamepad/Keyboard navigation

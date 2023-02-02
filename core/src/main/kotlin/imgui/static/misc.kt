@@ -52,7 +52,7 @@ fun updateKeyboardInputs() {
     // Import legacy keys or verify they are not used
 
     // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools, update aliases
-    io.keyMods = inputs.mergedModFlags
+    io.keyMods = mergedModsFromBools
     for (n in 0 until MouseButton.COUNT)
         updateAliasKey(mouseButtonToKey(MouseButton of n), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
     updateAliasKey(Key.MouseWheelX, io.mouseWheelH != 0f, io.mouseWheelH)
@@ -78,6 +78,17 @@ fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
     keyData.down = v
     keyData.analogValue = analogValue
 }
+
+// [Internal] Do not use directly (should read io.KeyMods instead)
+val mergedModsFromBools: KeyChord
+    get() {
+        var keyChord: KeyChord = 0
+        if (g.io.keyCtrl) keyChord /= Key.Mod_Ctrl
+        if (g.io.keyShift) keyChord /= Key.Mod_Shift
+        if (g.io.keyAlt) keyChord /= Key.Mod_Alt
+        if (g.io.keySuper) keyChord /= Key.Mod_Super
+        return keyChord
+    }
 
 fun updateMouseInputs() {
 

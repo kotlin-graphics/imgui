@@ -301,7 +301,7 @@ fun navUpdateWindowing() {
     // Keyboard: Press and Release ALT to toggle menu layer
     // - Testing that only Alt is tested prevents Alt+Shift or AltGR from toggling menu layer.
     // - AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl). But even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
-    if (navKeyboardActive && Key.ModAlt.isPressed) {
+    if (navKeyboardActive && Key.Mod_Alt.isPressed) {
         g.navWindowingToggleLayer = true
         g.navInputSource = InputSource.Keyboard
     }
@@ -313,11 +313,11 @@ fun navUpdateWindowing() {
 
         // Apply layer toggle on release
         // Important: as before version <18314 we lacked an explicit IO event for focus gain/loss, we also compare mouse validity to detect old backends clearing mouse pos on focus loss.
-        if (Key.ModAlt.isReleased && g.navWindowingToggleLayer)
+        if (Key.Mod_Alt.isReleased && g.navWindowingToggleLayer)
             if (g.activeId == 0 || g.activeIdAllowOverlap)
                 if (isMousePosValid(io.mousePos) == isMousePosValid(io.mousePosPrev))
                     applyToggleLayer = true
-        if (!Key.ModAlt.isDown)
+        if (!Key.Mod_Alt.isDown)
             g.navWindowingToggleLayer = false
     }
 

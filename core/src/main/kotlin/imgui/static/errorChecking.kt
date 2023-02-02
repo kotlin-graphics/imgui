@@ -56,7 +56,7 @@ fun errorCheckEndFrameSanityChecks() {
     // send key release events mid-frame. This would normally trigger this assertion and lead to sheared inputs.
     // We silently accommodate for this case by ignoring/ the case where all io.KeyXXX modifiers were released (aka key_mod_flags == 0),
     // while still correctly asserting on mid-frame key press events.
-    val keyMods = inputs.mergedModFlags
+    val keyMods = mergedModsFromBools
     assert(keyMods == 0 || g.io.keyMods == keyMods) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
     // [EXPERIMENTAL] Recover from errors: You may call this yourself before EndFrame().
@@ -85,7 +85,7 @@ fun updateDebugToolItemPicker() {
         ImGui.mouseCursor = MouseCursor.Hand
         if (Key.Escape.isPressed)
             g.debugItemPickerActive = false
-        val changeMapping = g.io.keyMods == ModFlag.Ctrl or ModFlag.Shift
+        val changeMapping = g.io.keyMods == Key.Mod_Ctrl or Key.Mod_Shift
         if (!changeMapping && isMouseClicked(g.debugItemPickerMouseButton) && hoveredId != 0) {
             g.debugItemPickerBreakId = hoveredId
             g.debugItemPickerActive = false

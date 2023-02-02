@@ -193,8 +193,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             return
 
         assert(g.io === this) { "Can only add events to current context." }
-        // [JVM] useless
-        //IM_ASSERT(ImGui::IsNamedKey(key)); // Backend needs to pass a valid ImGuiKey_ constant. 0..511 values are legacy native key codes which are not accepted by this API.
+        assert(key.isNamedOrMod) { "Backend needs to pass a valid ImGuiKey_ constant . 0..511 values are legacy native key codes which are not accepted by this API." }
         assert(!key.isAlias) { "Backend cannot submit ImGuiKey_MouseXXX values they are automatically inferred from AddMouseXXX() events ." }
 
         // Verify that backend isn't mixing up using new io.AddKeyEvent() api and old io.KeysDown[] + io.KeyMap[] data.
@@ -331,7 +330,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             keyData.downDurationPrev = -1f
         }
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
-        keyMods = ModFlag.None.i
+        keyMods = Key.Mod_None.i
     }
 
 
@@ -425,8 +424,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // Other state maintained from data above + IO function calls
 
 
-    /** Key mods flags (same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags), updated by NewFrame() */
-    var keyMods: ModFlags = ModFlag.None.i
+    /** Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags, same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags). Read-only, updated by NewFrame() */
+    var keyMods: KeyChord = 0
 
     /** Key state for all known keys. Use IsKeyXXX() functions to access this. */
     val keysData = Array(Key.COUNT) { KeyData().apply { downDuration = -1f; downDurationPrev = -1f } }

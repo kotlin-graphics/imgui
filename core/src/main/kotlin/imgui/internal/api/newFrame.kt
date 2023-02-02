@@ -20,6 +20,7 @@ import imgui.internal.floorSigned
 import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.InputEvent
 import imgui.static.findHoveredWindow
+import imgui.static.mergedModsFromBools
 
 /** NewFrame */
 internal interface newFrame {
@@ -85,24 +86,24 @@ internal interface newFrame {
                 is InputEvent.Key -> {
                     val key = e.key
                     assert(key != Key.None)
-                    val keydataIndex = key.i
-                    val keyData = io.keysData[keydataIndex]
+                    val keyData = key.data
+                    val keyDataIndex = g.io.keysData.indexOf(keyData)
                     e.ignoredAsSame = keyData.down == e.down && keyData.analogValue == e.analogValue
                     if (!e.ignoredAsSame) {
                         // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                        if (trickleFastInputs && keyData.down != e.down && (keyChangedMask testBit keydataIndex || textInputed || mouseButtonChanged != 0))
+                        if (trickleFastInputs && keyData.down != e.down && (keyChangedMask testBit keyDataIndex || textInputed || mouseButtonChanged != 0))
                             break
                         keyData.down = e.down
                         keyData.analogValue = e.analogValue
                         keyChanged = true
-                        keyChangedMask setBit keydataIndex
+                        keyChangedMask setBit keyDataIndex
 
-                        if (key == Key.ModCtrl || key == Key.ModShift || key == Key.ModAlt || key == Key.ModSuper) {
-                            if (key == Key.ModCtrl) io.keyCtrl = keyData.down
-                            if (key == Key.ModShift) io.keyShift = keyData.down
-                            if (key == Key.ModAlt) io.keyAlt = keyData.down
-                            if (key == Key.ModSuper) io.keySuper = keyData.down
-                            io.keyMods = inputs.mergedModFlags
+                        if (key == Key.Mod_Ctrl || key == Key.Mod_Shift || key == Key.Mod_Alt || key == Key.Mod_Super) {
+                            if (key == Key.Mod_Ctrl) io.keyCtrl = keyData.down
+                            if (key == Key.Mod_Shift) io.keyShift = keyData.down
+                            if (key == Key.Mod_Alt) io.keyAlt = keyData.down
+                            if (key == Key.Mod_Super) io.keySuper = keyData.down
+                            io.keyMods = mergedModsFromBools
                         }
                     }
                 }

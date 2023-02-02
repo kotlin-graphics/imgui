@@ -541,7 +541,7 @@ interface demoDebugInformations {
         checkbox("Ctrl+C: copy path to clipboard", tool::copyToClipboardOnCtrlC)
         sameLine()
         textColored(if (timeSinceCopy >= 0f && timeSinceCopy < 0.75f && glm.mod(timeSinceCopy, 0.25f) < 0.25f * 0.5f) Vec4(1f, 1f, 0.3f, 1f) else Vec4(), "*COPIED*")
-        if (tool.copyToClipboardOnCtrlC && Key.ModCtrl.isDown && Key.C.isPressed) {
+        if (tool.copyToClipboardOnCtrlC && Key.Mod_Ctrl.isDown && Key.C.isPressed) {
             tool.copyToClipboardLastTime = g.time.f
             var p = 0 //g.tempBuffer
             val pEnd = g.tempBuffer.size
