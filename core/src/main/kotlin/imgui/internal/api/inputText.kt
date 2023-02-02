@@ -427,9 +427,10 @@ internal interface inputText {
             val isSelectAll = isShortcutKey && Key.A.isPressed
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
+            val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
             val isEnterPressed = Key.Enter.isPressed(true) || Key.KeypadEnter.isPressed(true)
-            val isGamepadValidate = Key._NavGamepadActivate.isPressed(false) || Key._NavGamepadInput.isPressed(false)
-            val isCancel = Key.Escape.isPressed(false) || Key._NavGamepadCancel.isPressed(false)
+            val isGamepadValidate = navGamepadActive && (Key._NavGamepadActivate.isPressed(false) || Key._NavGamepadInput.isPressed(false))
+            val isCancel = Key.Escape.isPressed(false) || (navGamepadActive && Key._NavGamepadCancel.isPressed(false))
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(

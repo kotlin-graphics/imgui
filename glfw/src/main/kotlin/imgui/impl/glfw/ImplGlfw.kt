@@ -156,7 +156,7 @@ class ImplGlfw @JvmOverloads constructor(
 
     fun updateGamepads() {
 
-        if (io.configFlags hasnt ConfigFlag.NavEnableGamepad)
+        if (io.configFlags hasnt ConfigFlag.NavEnableGamepad) // FIXME: Technically feeding gamepad shouldn't depend on this now that they are regular inputs.
             return
 
         io.backendFlags -= BackendFlag.HasGamepad
