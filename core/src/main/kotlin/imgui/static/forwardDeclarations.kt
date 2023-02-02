@@ -147,8 +147,8 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
 
     if (flags has Wf.NoBringToFrontOnFocus)
         g.windows.add(0, this) // Quite slow but rare and only once
-    else g.windows += this
-    updateWindowInFocusOrderList(this, true, this.flags)
+    else
+        g.windows += this
 }
 
 // CheckStacksSize, CalcNextScrollFromScrollTargetAndClamp and AddWindowToSortBuffer are Window class methods

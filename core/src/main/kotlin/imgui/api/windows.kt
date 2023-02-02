@@ -81,8 +81,7 @@ interface windows {
 
         // Find or create
         var windowJustCreated = false
-        val window = findWindowByName(name)?.also { updateWindowInFocusOrderList(it, windowJustCreated, flags) }
-            ?: createNewWindow(name, flags).also { windowJustCreated = true }
+        val window = findWindowByName(name) ?: createNewWindow(name, flags).also { windowJustCreated = true }
 
         // Automatically disable manual moving/resizing when NoInputs is set
         if ((flags and Wf.NoInputs) == Wf.NoInputs.i) flags = flags or Wf.NoMove or Wf.NoResize
@@ -106,6 +105,7 @@ interface windows {
 
         // Update Flags, LastFrameActive, BeginOrderXXX fields
         if (firstBeginOfTheFrame) {
+            updateWindowInFocusOrderList(window, windowJustCreated, flags)
             window.flags = flags
             window.lastFrameActive = currentFrame
             window.lastTimeActive = g.time.f
