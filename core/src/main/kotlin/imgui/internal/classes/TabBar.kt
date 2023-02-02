@@ -354,7 +354,7 @@ class TabBar {
             size.x = g.nextItemData.width; tab.requestedWidth = g.nextItemData.width
         }
         if (tabIsNew)
-            tab.width = size.x
+            tab.width = 1f max size.x
         tab.contentWidth = size.x
         tab.beginOrder = tabsActiveCount++
 
@@ -607,7 +607,7 @@ class TabBar {
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
             val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
-            tab.contentWidth = if (tab.requestedWidth > 0f) tab.requestedWidth else tabItemCalcSize(tab.name, hasCloseButton).x
+            tab.contentWidth = if (tab.requestedWidth >= 0f) tab.requestedWidth else tabItemCalcSize(tab.name, hasCloseButton).x
 
             val sectionN = tabItemGetSectionIdx(tab)
             val section = sections[sectionN]
@@ -620,8 +620,7 @@ class TabBar {
                 width = tab.contentWidth; initialWidth = tab.contentWidth
             }
 
-            assert(tab.contentWidth > 0f)
-            tab.width = tab.contentWidth
+            tab.width = tab.contentWidth max 1f
         }
 
         // Compute total ideal width (used for e.g. auto-resizing a window)
@@ -657,10 +656,11 @@ class TabBar {
             // Apply shrunk values into tabs and sections
             for (tabN in shrinkDataOffset until shrinkDataOffset + shrinkDataCount) {
                 val tab = tabs[g.shrinkWidthBuffer[tabN].index]
-                val shrinkedWidth = floor(g.shrinkWidthBuffer[tabN].width)
+                var shrinkedWidth = floor(g.shrinkWidthBuffer[tabN].width)
                 if (shrinkedWidth < 0f)
                     continue
 
+                shrinkedWidth = 1f max shrinkedWidth
                 val sectionN = tabItemGetSectionIdx(tab)
                 sections[sectionN].width -= tab.width - shrinkedWidth
                 tab.width = shrinkedWidth
