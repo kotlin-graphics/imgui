@@ -247,9 +247,9 @@ val setPlatformImeDataFn_DefaultImpl = { viewport: Viewport, data: PlatformImeDa
 
     val hwnd: HWND = viewport.platformHandleRaw as HWND
 
-//    ::ImmAssociateContextEx(hwnd, NULL, data->WantVisible ? IACE_DEFAULT : 0);
-
     if (hwnd.L == MemoryUtil.NULL) {
+
+        //    ::ImmAssociateContextEx(hwnd, NULL, data->WantVisible ? IACE_DEFAULT : 0);
         val himc: HIMC = HIMC(imm.getContext(hwnd))
         if (himc.L != MemoryUtil.NULL) {
             val compositionForm = COMPOSITIONFORM().apply {
