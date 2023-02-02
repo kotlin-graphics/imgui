@@ -410,8 +410,10 @@ interface windows {
             // [Test Engine] Register whole window in the item system
             if (IMGUI_ENABLE_TEST_ENGINE && g.testEngineHookItems) {
                 assert(window.idStack.size == 1)
+                val id = window.idStack.pop() // As window->IDStack[0] == window->ID here, make sure TestEngine doesn't erroneously see window as parent of itself.
                 IMGUI_TEST_ENGINE_ITEM_ADD(window.rect(), window.id)
                 IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if(g.hoveredWindow === window) ItemStatusFlag.HoveredRect.i else ItemStatusFlag.None.i)
+                window.idStack += id
             }
 
             // Handle manual resize: Resize Grips, Borders, Gamepad

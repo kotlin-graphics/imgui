@@ -350,7 +350,7 @@ class Window(var context: Context,
         return id
     }
 
-    /** We don't use g.FontSize because the window may be != g.CurrentWidow. */
+    /** We don't use g.FontSize because the window may be != g.CurrentWindow. */
     fun rect(): Rect = Rect(pos.x.f, pos.y.f, pos.x + size.x, pos.y + size.y)
 
     fun calcFontSize(): Float {
