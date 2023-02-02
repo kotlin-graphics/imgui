@@ -174,10 +174,10 @@ class ImplGlfw @JvmOverloads constructor(
             io.backendFlags /= BackendFlag.HasGamepad
             MAP_BUTTON(Key.GamepadStart, GLFW_GAMEPAD_BUTTON_START, 7)
             MAP_BUTTON(Key.GamepadBack, GLFW_GAMEPAD_BUTTON_BACK, 6)
-            MAP_BUTTON(Key.GamepadFaceDown, GLFW_GAMEPAD_BUTTON_A, 0)     // Xbox A, PS Cross
-            MAP_BUTTON(Key.GamepadFaceRight, GLFW_GAMEPAD_BUTTON_B, 1)     // Xbox B, PS Circle
             MAP_BUTTON(Key.GamepadFaceLeft, GLFW_GAMEPAD_BUTTON_X, 2)     // Xbox X, PS Square
+            MAP_BUTTON(Key.GamepadFaceRight, GLFW_GAMEPAD_BUTTON_B, 1)     // Xbox B, PS Circle
             MAP_BUTTON(Key.GamepadFaceUp, GLFW_GAMEPAD_BUTTON_Y, 3)     // Xbox Y, PS Triangle
+            MAP_BUTTON(Key.GamepadFaceDown, GLFW_GAMEPAD_BUTTON_A, 0)     // Xbox A, PS Cross
             MAP_BUTTON(Key.GamepadDpadLeft, GLFW_GAMEPAD_BUTTON_DPAD_LEFT, 13)
             MAP_BUTTON(Key.GamepadDpadRight, GLFW_GAMEPAD_BUTTON_DPAD_RIGHT, 11)
             MAP_BUTTON(Key.GamepadDpadUp, GLFW_GAMEPAD_BUTTON_DPAD_UP, 10)

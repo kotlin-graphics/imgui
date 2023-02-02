@@ -205,7 +205,6 @@ internal interface navigation {
         val n = input.i
         if (mode == NavReadMode.Down)
             return io.navInputs[n] // Instant, read analog input (0.0f..1.0f, as provided by user)
-
         val t = io.navInputsDownDuration[n]
         return when { // Return 1.0f when just released, no repeat, ignore analog input.
             t < 0f -> 0f

@@ -1199,28 +1199,28 @@ enum class Key {
     // Gamepad (some of those are analog values, 0.0f to 1.0f)                         // NAVIGATION action
     GamepadStart,          // Menu (Xbox)          + (Switch)      Start/Options (PS)  // --
     GamepadBack,           // View (Xbox)          - (Switch)      Share (PS)          // --
-    GamepadFaceUp,         // Y (Xbox)             X (Switch)      Triangle (PS)       // -> ImGuiNavInput_Input
-    GamepadFaceDown,       // A (Xbox)             B (Switch)      Cross (PS)          // -> ImGuiNavInput_Activate
     GamepadFaceLeft,       // X (Xbox)             Y (Switch)      Square (PS)         // -> ImGuiNavInput_Menu
     GamepadFaceRight,      // B (Xbox)             A (Switch)      Circle (PS)         // -> ImGuiNavInput_Cancel
-    GamepadDpadUp,         // D-pad Up                                                 // -> ImGuiNavInput_DpadUp
-    GamepadDpadDown,       // D-pad Down                                               // -> ImGuiNavInput_DpadDown
+    GamepadFaceUp,         // Y (Xbox)             X (Switch)      Triangle (PS)       // -> ImGuiNavInput_Input
+    GamepadFaceDown,       // A (Xbox)             B (Switch)      Cross (PS)          // -> ImGuiNavInput_Activate
     GamepadDpadLeft,       // D-pad Left                                               // -> ImGuiNavInput_DpadLeft
     GamepadDpadRight,      // D-pad Right                                              // -> ImGuiNavInput_DpadRight
+    GamepadDpadUp,         // D-pad Up                                                 // -> ImGuiNavInput_DpadUp
+    GamepadDpadDown,       // D-pad Down                                               // -> ImGuiNavInput_DpadDown
     GamepadL1,             // L Bumper (Xbox)      L (Switch)      L1 (PS)             // -> ImGuiNavInput_FocusPrev + ImGuiNavInput_TweakSlow
     GamepadR1,             // R Bumper (Xbox)      R (Switch)      R1 (PS)             // -> ImGuiNavInput_FocusNext + ImGuiNavInput_TweakFast
     GamepadL2,             // L Trigger (Xbox)     ZL (Switch)     L2 (PS) [Analog]
     GamepadR2,             // R Trigger (Xbox)     ZR (Switch)     R2 (PS) [Analog]
     GamepadL3,             // L Thumbstick (Xbox)  L3 (Switch)     L3 (PS)
     GamepadR3,             // R Thumbstick (Xbox)  R3 (Switch)     R3 (PS)
-    GamepadLStickUp,       // [Analog]                                                 // -> ImGuiNavInput_LStickUp
-    GamepadLStickDown,     // [Analog]                                                 // -> ImGuiNavInput_LStickDown
     GamepadLStickLeft,     // [Analog]                                                 // -> ImGuiNavInput_LStickLeft
     GamepadLStickRight,    // [Analog]                                                 // -> ImGuiNavInput_LStickRight
-    GamepadRStickUp,       // [Analog]
-    GamepadRStickDown,     // [Analog]
+    GamepadLStickUp,       // [Analog]                                                 // -> ImGuiNavInput_LStickUp
+    GamepadLStickDown,     // [Analog]                                                 // -> ImGuiNavInput_LStickDown
     GamepadRStickLeft,     // [Analog]
     GamepadRStickRight,    // [Analog]
+    GamepadRStickUp,       // [Analog]
+    GamepadRStickDown,     // [Analog]
 
     // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
     // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
@@ -1246,7 +1246,7 @@ enum class Key {
         val BEGIN = None.i
         val END = F12.i
         val Gamepad_BEGIN = GamepadStart
-        val Gamepad_END = Count
+        val Gamepad_END = ModCtrl
         infix fun of(i: Int) = values().first { it.i == i }
     }
 
