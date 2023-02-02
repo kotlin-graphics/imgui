@@ -264,7 +264,7 @@ internal interface inputText {
             clearActiveId = true
 
         // Lock the decision of whether we are going to take the path displaying the cursor or selection
-        val renderCursor = g.activeId == id || (state != null && userScrollActive)
+        var renderCursor = g.activeId == id || (state != null && userScrollActive)
         var renderSelection = state != null && (state.hasSelection || selectAll) && (RENDER_SELECTION_WHEN_INACTIVE || renderCursor)
         var valueChanged = false
         var validated = false
@@ -494,8 +494,8 @@ internal interface inputText {
                         }
                 }
                 isCancel -> {
-                    cancelEdit = true
-                    clearActiveId = true
+                    clearActiveId = true; cancelEdit = true
+                    renderCursor = false; renderSelection = false
                 }
                 isUndo || isRedo -> {
                     state.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
@@ -553,9 +553,9 @@ internal interface inputText {
         if (g.activeId == id) {
             state!!
 
-            if (cancelEdit)
+            if (cancelEdit && !isReadOnly)
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
-                if (!isReadOnly && buf.strcmp(state.initialTextA) != 0) {
+                if (buf.strcmp(state.initialTextA) != 0) {
                     // Push records into the undo stack so we can CTRL+Z the revert operation itself
                     applyNewText = state.initialTextA
                     applyNewTextLength = state.initialTextA.size

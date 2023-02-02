@@ -319,10 +319,11 @@ class InputTextState {
     fun replace(text: CharArray, textLen: Int = text.size) {
         makeUndoReplace(0, curLenW, textLen)
         deleteChars(0, curLenW)
+        stb.cursor = 0; stb.selectStart = 0; stb.selectEnd = 0
         if (textLen <= 0)
             return
         if (insertChars(0, text, 0, textLen)) {
-            stb.cursor = textLen
+            stb.cursor = textLen; stb.selectStart = textLen; stb.selectEnd = textLen
             stb.hasPreferredX = false
             return
         }
