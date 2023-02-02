@@ -267,7 +267,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         g.inputEventsQueue += InputEvent.Text(c)
     }
 
-    /** Queue a new character input from an UTF-16 character, it can be a surrogate
+    /** Queue a new character input from a UTF-16 character, it can be a surrogate
      *
      *  UTF16 strings use surrogate pairs to encode codepoints >= 0x10000, so we should save the high surrogate. */
     fun addInputCharacterUTF16(c: Char) {
@@ -297,7 +297,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         addInputCharacter(cp)
     }
 
-    /** Queue a new characters input from an UTF-8 string */
+    /** Queue a new characters input from a UTF-8 string */
     fun addInputCharactersUTF8(utf8Chars: ByteArray) {
         if (!appAcceptingEvents)
             return
@@ -396,14 +396,14 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     var mousePos = Vec2(-Float.MAX_VALUE)
 
     /** Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear ImGui mostly uses left
-     *  and right buttons. Others buttons allows us to track if the mouse is being used by your application + available
+     *  and right buttons. Other buttons allow us to track if the mouse is being used by your application + available
      *  to user as a convenience via IsMouse** API.   */
     val mouseDown = BooleanArray(5)
 
     /** Mouse wheel Vertical: 1 unit scrolls about 5 lines text. */
     var mouseWheel = 0f
 
-    /** Mouse wheel Horizontal. Most users don't have a mouse with an horizontal wheel, may not be filled by all backends.   */
+    /** Mouse wheel Horizontal. Most users don't have a mouse with a horizontal wheel, may not be filled by all backends.   */
     var mouseWheelH = 0f
 
     /** Keyboard modifier down: Control  */

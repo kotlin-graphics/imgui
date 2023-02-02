@@ -285,7 +285,7 @@ object ShowDemoWindowTables {
             }
 
             // [Method 2] Using TableNextColumn() called multiple times, instead of using a for loop + TableSetColumnIndex().
-            // This is generally more convenient when you have code manually submitting the contents of each columns.
+            // This is generally more convenient when you have code manually submitting the contents of each column.
             helpMarker("Using TableNextRow() + calling TableNextColumn() _before_ each cell, manually.")
             table("table2", 3) {
                 for (row in 0..3) {
@@ -547,7 +547,7 @@ object ShowDemoWindowTables {
         operator fun invoke() {
             treeNode("Resizable, stretch") {
                 // By default, if we don't enable ScrollX the sizing policy for each columns is "Stretch"
-                // Each columns maintain a sizing weight, and they will occupy all available width.
+                // All columns maintain a sizing weight, and they will occupy all available width.
                 pushingStyleCompact {
                     checkboxFlags("ImGuiTableFlags_Resizable", ::flags, Tf.Resizable.i)
                     checkboxFlags("ImGuiTableFlags_BordersV", ::flags, Tf.BordersV.i)

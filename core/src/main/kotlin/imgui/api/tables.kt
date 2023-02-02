@@ -52,7 +52,7 @@ import imgui.TableRowFlag as Trf
 // - 4. Optionally call TableHeadersRow() to submit a header row. Names are pulled from TableSetupColumn() data.
 // - 5. Populate contents:
 //    - In most situations you can use TableNextRow() + TableSetColumnIndex(N) to start appending into a column.
-//    - If you are using tables as a sort of grid, where every columns is holding the same type of contents,
+//    - If you are using tables as a sort of grid, where every column is holding the same type of contents,
 //      you may prefer using TableNextColumn() instead of TableNextRow() + TableSetColumnIndex().
 //      TableNextColumn() will automatically wrap-around into the next row if needed.
 //    - IMPORTANT: Comparatively to the old Columns() API, we need to call TableNextColumn() for the first column!

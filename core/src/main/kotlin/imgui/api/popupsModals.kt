@@ -36,7 +36,7 @@ import imgui.WindowFlag as Wf
 
 // Popups: begin/end functions
 //  - BeginPopup(): query popup state, if open start appending into the window. Call EndPopup() afterwards. ImGuiWindowFlags are forwarded to the window.
-//  - BeginPopupModal(): block every interactions behind the window, cannot be closed by user, add a dimming background, has a title bar.
+//  - BeginPopupModal(): block every interaction behind the window, cannot be closed by user, add a dimming background, has a title bar.
 interface popupsModals {
 
     /** return true if the popup is open, and you can start outputting to it. */

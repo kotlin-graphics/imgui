@@ -713,7 +713,9 @@ interface demoDebugInformations {
             - If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().""")
     }
 
-    /** Helper to display basic user controls. */
+    /** Helper to display basic user controls.
+     *
+     *  add basic help/info block (not a window): how to manipulate ImGui as an end-user (mouse/keyboard controls). */
     fun showUserGuide() {
         bulletText("Double-click on title bar to collapse window.")
         bulletText("""

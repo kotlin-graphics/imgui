@@ -33,7 +33,7 @@ interface contentRegion {
     val windowContentRegionMin: Vec2
         get() = g.currentWindow!!.run { contentRegionRect.min - pos }
 
-    /** content boundaries max for the full window (roughly (0,0)+Size-Scroll) where Size can be override with SetNextWindowContentSize(),
+    /** content boundaries max for the full window (roughly (0,0)+Size-Scroll) where Size can be overridden with SetNextWindowContentSize(),
      * in window coordinates
      * ~GetWindowContentRegionMax   */
     val windowContentRegionMax: Vec2

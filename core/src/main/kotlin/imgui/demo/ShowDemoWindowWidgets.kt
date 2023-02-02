@@ -346,7 +346,7 @@ object ShowDemoWindowWidgets {
                     USER:
                     Hold SHIFT or use mouse to select text.
                     CTRL+Left/Right to word jump.
-                    CTRL+A or double-click to select all.
+                    CTRL+A or Double-Click to select all.
                     CTRL+X,CTRL+C,CTRL+V clipboard.
                     CTRL+Z,CTRL+Y undo/redo.
                     ESCAPE to revert.
@@ -1483,7 +1483,7 @@ object ShowDemoWindowWidgets {
                 // - integer/float/double
                 // To avoid polluting the public API with all possible combinations, we use the ImGuiDataType enum
                 // to pass the type, and passing all arguments by pointer.
-                // This is the reason the test code below creates local variables to hold "zero" "one" etc. for each types.
+                // This is the reason the test code below creates local variables to hold "zero" "one" etc. for each type.
                 // In practice, if you frequently use a given type that is not covered by the normal API entry points,
                 // you can wrap it yourself inside a 1 line function which can take typed argument as value instead of void*,
                 // and then pass their address to the generic function. For example:
@@ -1838,7 +1838,7 @@ object ShowDemoWindowWidgets {
                 helpMarker("Testing how various types of items are interacting with the IsItemXXX functions. Note that the bool return value of most ImGui function is generally equivalent to calling ImGui::IsItemHovered().")
                 checkbox("Item Disabled", ::itemDisabled)
 
-                // Submit selected item item so we can query their status in the code following it.
+                // Submit selected item so we can query their status in the code following it.
                 if (itemDisabled)
                     beginDisabled(true)
                 val ret = when (itemType) {

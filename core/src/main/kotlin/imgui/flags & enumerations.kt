@@ -317,6 +317,8 @@ typealias PopupFlags = Int
  *    small flags values as a mouse button index, so we encode the mouse button in the first few bits of the flags.
  *    It is therefore guaranteed to be legal to pass a mouse button index in ImGuiPopupFlags.
  *  - For the same reason, we exceptionally default the ImGuiPopupFlags argument of BeginPopupContextXXX functions to 1 instead of 0.
+ *    IMPORTANT: because the default parameter is 1 (==ImGuiPopupFlags_MouseButtonRight), if you rely on the default parameter
+ *    and want to use another flag, you need to pass in the ImGuiPopupFlags_MouseButtonRight flag explicitly.
  *  - Multiple buttons currently cannot be combined/or-ed in those functions (we could allow it later). */
 enum class PopupFlag(@JvmField val i: PopupFlags) {
 
@@ -370,7 +372,7 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
 
     None(0),
 
-    /** Clicking this don't close parent popup window   */
+    /** Clicking this doesn't close parent popup window   */
     DontClosePopups(1 shl 0),
 
     /** Selectable frame can span all columns (text will still fit in current column)   */
@@ -613,7 +615,7 @@ typealias TableFlags = Int
 // - When ScrollX is on:
 //    - Table defaults to ImGuiTableFlags_SizingFixedFit -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed
 //    - Columns sizing policy allowed: Fixed/Auto mostly.
-//    - Fixed Columns can be enlarged as needed. Table will show an horizontal scrollbar if needed.
+//    - Fixed Columns can be enlarged as needed. Table will show a horizontal scrollbar if needed.
 //    - When using auto-resizing (non-resizable) fixed columns, querying the content width to use item right-alignment e.g. SetNextItemWidth(-FLT_MIN) doesn't make sense, would create a feedback loop.
 //    - Using Stretch columns OFTEN DOES NOT MAKE SENSE if ScrollX is on, UNLESS you have specified a value for 'inner_width' in BeginTable().
 //      If you specify a value for 'inner_width' then effectively the scrolling space is known and Stretch or mixed Fixed/Stretch columns become meaningful again.
@@ -674,10 +676,10 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Draw all borders. */
     Borders(BordersInner or BordersOuter),
 
-    /** [ALPHA] Disable vertical borders in columns Body (borders will always appears in Headers). -> May move to style */
+    /** [ALPHA] Disable vertical borders in columns Body (borders will always appear in Headers). -> May move to style */
     NoBordersInBody(1 shl 11),
 
-    /** [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). -> May move to style */
+    /** [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers). -> May move to style */
     NoBordersInBodyUntilResize(1 shl 12),
 
     // Sizing Policy (read above for defaults)
@@ -713,10 +715,10 @@ enum class TableFlag(@JvmField val i: TableFlags) {
 
     // Padding
 
-    /** Default if BordersOuterV is on. Enable outer-most padding. Generally desirable if you have headers. */
+    /** Default if BordersOuterV is on. Enable outermost padding. Generally desirable if you have headers. */
     PadOuterX(1 shl 21),
 
-    /** Default if BordersOuterV is off. Disable outer-most padding. */
+    /** Default if BordersOuterV is off. Disable outermost padding. */
     NoPadOuterX(1 shl 22),
 
     /** Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off). */
@@ -724,7 +726,7 @@ enum class TableFlag(@JvmField val i: TableFlags) {
 
     // Scrolling
 
-    /** Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this create a child window, ScrollY is currently generally recommended when using ScrollX. */
+    /** Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this creates a child window, ScrollY is currently generally recommended when using ScrollX. */
     ScrollX(1 shl 24),
 
     /** Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. */
@@ -894,7 +896,7 @@ typealias TableBgTargets = Int
 //  - Layer 0: draw with RowBg0 color if set, otherwise draw with ColumnBg0 if set.
 //  - Layer 1: draw with RowBg1 color if set, otherwise draw with ColumnBg1 if set.
 //  - Layer 2: draw with CellBg color if set.
-// The purpose of the two row/columns layers is to let you decide if a background color changes should override or blend with the existing color.
+// The purpose of the two row/columns layers is to let you decide if a background color change should override or blend with the existing color.
 // When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color automatically set for odd/even rows.
 // If you set the color of RowBg0 target, your color will override the existing RowBg0 color.
 // If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
@@ -1046,12 +1048,12 @@ enum class DragDropFlag(@JvmField val i: DragDropFlags) {
     None(0),
 
     /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
-     *  description of the source contents. This flag disable this behavior. */
+     *  description of the source contents. This flag disables this behavior. */
     SourceNoPreviewTooltip(1 shl 0),
 
     /** By default, when dragging we clear data so that IsItemHovered() will return false,
      *  to avoid subsequent user code submitting tooltips.
-     *  This flag disable this behavior so you can still call IsItemHovered() on the source item. */
+     *  This flag disables this behavior so you can still call IsItemHovered() on the source item. */
     SourceNoDisableHover(1 shl 1),
 
     /** Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging
@@ -1237,7 +1239,7 @@ enum class Key {
     // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
     // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
     //   them to be accessed via standard key API, allowing calls such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
-    // - Code polling every keys (e.g. an interface to detect a key press for input mapping) might want to ignore those
+    // - Code polling every key (e.g. an interface to detect a key press for input mapping) might want to ignore those
     //   and prefer using the real keys (e.g. ImGuiKey_LeftCtrl, ImGuiKey_RightCtrl instead of ImGuiKey_ModCtrl).
     // - In theory the value of keyboard modifiers should be roughly equivalent to a logical or of the equivalent left/right keys.
     //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky keys and
@@ -1994,7 +1996,7 @@ enum class MouseCursor {
     /** (Unused by Dear ImGui functions) */
     ResizeAll,
 
-    /** When hovering over an horizontal border  */
+    /** When hovering over a horizontal border  */
     ResizeNS,
 
     /** When hovering over a vertical border or a column */

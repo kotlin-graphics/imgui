@@ -164,7 +164,7 @@ object ShowDemoWindowPopups {
                 //     if (IsItemHovered() && IsMouseReleased(ImGuiMouseButton_Right))
                 //         OpenPopup(id);
                 //     return BeginPopup(id);
-                // For advanced advanced uses you may want to replicate and customize this code.
+                // For advanced uses you may want to replicate and customize this code.
                 // See more details in BeginPopupContextItem().
 
                 // Example 1

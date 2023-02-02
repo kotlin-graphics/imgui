@@ -40,7 +40,7 @@ import kotlin.math.sqrt
  *          we will free the pointer on destruction.
  *  You can set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed,
  *      - Even though many functions are suffixed with "TTF", OTF data is supported just as well.
- *      - This is an old API and it is currently awkward for those and and various other reasons! We will address them in the future! */
+ *      - This is an old API and it is currently awkward for those and various other reasons! We will address them in the future! */
 class FontAtlas {
 
     fun addFont(fontCfg: FontConfig): Font {
@@ -256,7 +256,7 @@ class FontAtlas {
     }
 
     val isBuilt: Boolean
-        get() = fonts.size > 0 && texReady // Bit ambiguous: used to detect when user didn't built texture but effectively we should check TexID != 0 except that would be backend dependent...
+        get() = fonts.size > 0 && texReady // Bit ambiguous: used to detect when user didn't build texture but effectively we should check TexID != 0 except that would be backend dependent...
 
     //-------------------------------------------
     // [BETA] Custom Rectangles/Glyphs API

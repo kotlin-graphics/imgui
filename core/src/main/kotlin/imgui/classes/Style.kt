@@ -32,7 +32,7 @@ class Style {
     /** Thickness of border around windows. Generally set to 0f or 1f. (Other values are not well tested and more CPU/GPU costly).  */
     var windowBorderSize = 1f
 
-    /** Minimum window size. This is a global setting. If you want to constraint individual windows, use SetNextWindowSizeConstraints(). */
+    /** Minimum window size. This is a global setting. If you want to constrain individual windows, use SetNextWindowSizeConstraints(). */
     var windowMinSize = Vec2i(32)
 
     /** Alignment for title bar text    */
@@ -103,7 +103,7 @@ class Style {
     /** Thickness of border around tabs. */
     var tabBorderSize = 0f
 
-    /** Minimum width for close button to appears on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected. */
+    /** Minimum width for close button to appear on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected. */
     var tabMinWidthForCloseButton = 0f
 
     /** Side of the color button in the ColorEdit4 widget (left/right). Defaults to ImGuiDir_Right. */

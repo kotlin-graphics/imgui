@@ -95,7 +95,7 @@ interface itemWidgetsUtilities {
     val isItemFocused: Boolean
         get() = g.navId == g.lastItemData.id && g.navId != 0
 
-    /** is the last item hovered and mouse clicked on? (**)  == IsMouseClicked(mouse_button) && IsItemHovered()Important. (**) this it NOT equivalent to the behavior of e.g. Button(). Read comments in function definition.
+    /** is the last item hovered and mouse clicked on? (**)  == IsMouseClicked(mouse_button) && IsItemHovered()Important. (**) this is NOT equivalent to the behavior of e.g. Button(). Read comments in function definition.
      *
      *  Important: this can be useful but it is NOT equivalent to the behavior of e.g.Button()!
      *  Most widgets have specific reactions based on mouse-up/down state, mouse position etc. */
@@ -113,17 +113,14 @@ interface itemWidgetsUtilities {
     val isItemActivated: Boolean
         get() = g.activeId != 0 && g.activeId == g.lastItemData.id && g.activeIdPreviousFrame != g.lastItemData.id
 
-    /** Was the last item just made inactive (item was previously active).
-     *  Useful for Undo/Redo patterns with widgets that requires continuous editing. */
+    /** was the last item just made inactive (item was previously active). Useful for Undo/Redo patterns with widgets that require continuous editing. */
     val isItemDeactivated: Boolean
         get() = when {
             g.lastItemData.statusFlags has ItemStatusFlag.HasDeactivated -> g.lastItemData.statusFlags has ItemStatusFlag.Deactivated
             else -> g.activeIdPreviousFrame == g.lastItemData.id && g.activeIdPreviousFrame != 0 && g.activeId != g.lastItemData.id
         }
 
-    /** Was the last item just made inactive and made a value change when it was active? (e.g. Slider/Drag moved).
-     *  Useful for Undo/Redo patterns with widgets that requires continuous editing.
-     *  Note that you may get false positives (some widgets such as Combo()/ListBox()/Selectable() will return true even when clicking an already selected item). */
+    /** was the last item just made inactive and made a value change when it was active? (e.g. Slider/Drag moved). Useful for Undo/Redo patterns with widgets that require continuous editing. Note that you may get false positives (some widgets such as Combo()/ListBox()/Selectable() will return true even when clicking an already selected item). */
     val isItemDeactivatedAfterEdit: Boolean
         get() = isItemDeactivated && (g.activeIdPreviousFrameHasBeenEdited || (g.activeId == 0 && g.activeIdHasBeenEditedBefore))
 

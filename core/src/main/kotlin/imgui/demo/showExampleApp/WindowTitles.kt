@@ -10,11 +10,15 @@ import imgui.ImGui.text
 import imgui.ImGui.time
 import imgui.dsl.window
 
+
+//-----------------------------------------------------------------------------
+// [SECTION] Example App: Manipulating Window Titles / ShowExampleAppWindowTitles()
+//-----------------------------------------------------------------------------
+// Demonstrate using of "##" and "###" in identifiers to manipulate ID generation.
+// This applies to all regular items as well.
+// Read FAQ section "How can I have multiple widgets with the same label?" for details.
 object WindowTitles {
 
-    // Demonstrate using "##" and "###" in identifiers to manipulate ID generation.
-    // This apply to all regular items as well.
-    // Read FAQ section "How can I have multiple widgets with the same label?" for details.
     operator fun invoke() {
 
         val viewport = mainViewport

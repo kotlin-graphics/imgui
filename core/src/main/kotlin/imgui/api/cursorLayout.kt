@@ -72,7 +72,7 @@ interface cursorLayout {
         }
     }
 
-    /** undo a sameLine() or force a new line when in an horizontal-layout context.   */
+    /** undo a sameLine() or force a new line when in a horizontal-layout context.   */
     fun newLine() {
         val window = currentWindow
         if (window.skipItems) return
