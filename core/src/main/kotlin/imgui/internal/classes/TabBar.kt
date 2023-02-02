@@ -211,7 +211,10 @@ class TabBar {
     /** Called on manual closure attempt
      *  ~ tabBarCloseTab     */
     fun closeTab(tab: TabItem) {
-        assert(tab.flags hasnt TabItemFlag._Button)
+
+        if (tab.flags has TabItemFlag._Button)
+            return // A button appended with TabItemButton().
+
         if (tab.flags hasnt TabItemFlag.UnsavedDocument) { // This will remove a frame of lag for selecting another tab on closure.
             // However we don't run it in the case where the 'Unsaved' flag is set, so user gets a chance to fully undo the closure
             tab.wantClose = true
