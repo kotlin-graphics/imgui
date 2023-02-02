@@ -205,6 +205,9 @@ enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flag
      *  manipulate the underlying buffer while focus is active) */
     CallbackEdit(1 shl 19),
 
+    /** Escape key clears content if not empty, and deactivate otherwise (constrast to default behavior of Escape to revert) */
+    EscapeClearsAll(1 shl 20),
+
     // [Internal]
 
     /** For internal use by InputTextMultiline() */

@@ -403,7 +403,7 @@ internal interface inputText {
         }
 
         // Process other shortcuts/key-presses
-        var cancelEdit = false
+        var revertEdit = false
         if (g.activeId == id && !g.activeIdIsJustActivated && !clearActiveId) {
             state!! // ~IM_ASSERT(state != NULL);
 
@@ -493,10 +493,18 @@ internal interface inputText {
                                 state.onKeyPressed(c().i)
                         }
                 }
-                isCancel -> {
-                    clearActiveId = true; cancelEdit = true
-                    renderCursor = false; renderSelection = false
-                }
+                isCancel ->
+                    if (flags has Itf.EscapeClearsAll) {
+                        if (state.curLenA > 0)
+                            revertEdit = true
+                        else {
+                            renderCursor = false; renderSelection = false
+                            clearActiveId = true
+                        }
+                    } else {
+                        clearActiveId = true; revertEdit = true
+                        renderCursor = false; renderSelection = false
+                    }
                 isUndo || isRedo -> {
                     state.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
                     state.clearSelection()
@@ -551,11 +559,18 @@ internal interface inputText {
         var applyNewText: ByteArray? = null
         var applyNewTextLength = 0
         if (g.activeId == id) {
-            state!!
 
-            if (cancelEdit && !isReadOnly)
-            // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
-                if (buf.strcmp(state.initialTextA) != 0) {
+            state!!
+            if (revertEdit && !isReadOnly) {
+                if (flags has Itf.EscapeClearsAll) {
+                    // Clear input
+                    applyNewText = ByteArray(0)
+                    applyNewTextLength = 0
+                    val emptyString = CharArray(0)
+                    state.replace(emptyString, 0)
+                }
+                else if (buf.strcmp(state.initialTextA) != 0) {
+                    // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
                     // Push records into the undo stack so we can CTRL+Z the revert operation itself
                     applyNewText = state.initialTextA
                     applyNewTextLength = state.initialTextA.size
@@ -567,6 +582,7 @@ internal interface inputText {
                     }
                     state.replace(wText, if (applyNewTextLength > 0) wText.size else 0)
                 }
+            }
 
             // Apply ASCII value
             if (!isReadOnly) {
@@ -581,7 +597,7 @@ internal interface inputText {
             // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
             // If we didn't do that, code like InputInt() with ImGuiInputTextFlags_EnterReturnsTrue would fail.
             // This also allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage (please note that if you use this property along ImGuiInputTextFlags_CallbackResize you can end up with your temporary string object unnecessarily allocating once a frame, either store your string data, either if you don't then don't use ImGuiInputTextFlags_CallbackResize).
-            val applyEditBackToUserBuffer = !cancelEdit || (validated && flags hasnt Itf.EnterReturnsTrue)
+            val applyEditBackToUserBuffer = !revertEdit || (validated && flags hasnt Itf.EnterReturnsTrue)
             if (applyEditBackToUserBuffer) {
                 // Apply new value immediately - copy modified buffer back
                 // Note that as soon as the input box is active, the in-widget value gets priority over any underlying modification of the input buffer

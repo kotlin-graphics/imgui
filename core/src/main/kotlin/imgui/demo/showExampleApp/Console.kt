@@ -182,7 +182,7 @@ object Console {
 
             // Command-line
             var reclaimFocus = false
-            val inputTextFlags = Itf.EnterReturnsTrue or Itf.CallbackCompletion or Itf.CallbackHistory
+            val inputTextFlags = Itf.EnterReturnsTrue or Itf.EscapeClearsAll or Itf.CallbackCompletion or Itf.CallbackHistory
             if (inputText("Input", inputBuf, inputTextFlags, textEditCallbackStub, this)) {
                 val s = inputBuf.cStr.trimEnd()
                 if (s.isNotEmpty()) execCommand(s)
