@@ -76,7 +76,7 @@ internal interface inputs {
 
     fun getNavTweakPressedAmount(axis: Axis): Float {
 
-        val (repeatDelay, repeatRate) = getTypematicRepeatRate(InputReadFlag.RepeatRateNavTweak.i)
+        val (repeatDelay, repeatRate) = getTypematicRepeatRate(InputFlag.RepeatRateNavTweak.i)
 
         val keyLess: Key
         val keyMore: Key
@@ -106,9 +106,9 @@ internal interface inputs {
     }
 
     /** @return repeatDelay, repeatRate */
-    fun getTypematicRepeatRate(flags: InputReadFlags): Pair<Float, Float> = when (flags and InputReadFlag.RepeatRateMask_) {
-        InputReadFlag.RepeatRateNavMove.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.80f
-        InputReadFlag.RepeatRateNavTweak.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.30f
+    fun getTypematicRepeatRate(flags: InputFlags): Pair<Float, Float> = when (flags and InputFlag.RepeatRateMask_) {
+        InputFlag.RepeatRateNavMove.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.80f
+        InputFlag.RepeatRateNavTweak.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.30f
         else -> g.io.keyRepeatDelay * 1.00f to g.io.keyRepeatRate * 1.00f
     }
 

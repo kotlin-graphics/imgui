@@ -1,7 +1,5 @@
 package imgui.internal.sections
 
-import imgui.shl
-
 
 enum class InputSource {
     None, Mouse, Keyboard, Gamepad,
@@ -52,11 +50,11 @@ sealed class InputEvent(val type: Type) {
     }
 }
 
-typealias InputReadFlags = Int
+typealias InputFlags = Int
 
 // Flags for IsKeyPressedEx(). In upcoming feature this will be used more (and IsKeyPressedEx() renamed)
 // Don't mistake with ImGuiInputTextFlags! (for ImGui::InputText() function)
-enum class InputReadFlag(val i: InputReadFlags) {
+enum class InputFlag(val i: InputFlags) {
     // Flags for IsKeyPressedEx()
     None                (0),
     Repeat              (1 shl 0),   // Return true on successive repeats. Default for legacy IsKeyPressed(). NOT Default for legacy IsMouseClicked(). MUST BE == 1.
@@ -67,18 +65,18 @@ enum class InputReadFlag(val i: InputReadFlags) {
     RepeatRateNavTweak  (1 shl 3),   // Repeat rate: Faster
     RepeatRateMask_     (RepeatRateDefault or RepeatRateNavMove or RepeatRateNavTweak);
 
-    infix fun and(b: InputReadFlag): InputReadFlags = i and b.i
-    infix fun and(b: InputReadFlags): InputReadFlags = i and b
-    infix fun or(b: InputReadFlag): InputReadFlags = i or b.i
-    infix fun or(b: InputReadFlags): InputReadFlags = i or b
-    infix fun xor(b: InputReadFlag): InputReadFlags = i xor b.i
-    infix fun xor(b: InputReadFlags): InputReadFlags = i xor b
-    infix fun wo(b: InputReadFlags): InputReadFlags = and(b.inv())
+    infix fun and(b: InputFlag): InputFlags = i and b.i
+    infix fun and(b: InputFlags): InputFlags = i and b
+    infix fun or(b: InputFlag): InputFlags = i or b.i
+    infix fun or(b: InputFlags): InputFlags = i or b
+    infix fun xor(b: InputFlag): InputFlags = i xor b.i
+    infix fun xor(b: InputFlags): InputFlags = i xor b
+    infix fun wo(b: InputFlags): InputFlags = and(b.inv())
 }
 
-infix fun InputReadFlags.and(b: InputReadFlag): InputReadFlags = and(b.i)
-infix fun InputReadFlags.or(b: InputReadFlag): InputReadFlags = or(b.i)
-infix fun InputReadFlags.xor(b: InputReadFlag): InputReadFlags = xor(b.i)
-infix fun InputReadFlags.has(b: InputReadFlag): Boolean = and(b.i) != 0
-infix fun InputReadFlags.hasnt(b: InputReadFlag): Boolean = and(b.i) == 0
-infix fun InputReadFlags.wo(b: InputReadFlag): InputReadFlags = and(b.i.inv())
+infix fun InputFlags.and(b: InputFlag): InputFlags = and(b.i)
+infix fun InputFlags.or(b: InputFlag): InputFlags = or(b.i)
+infix fun InputFlags.xor(b: InputFlag): InputFlags = xor(b.i)
+infix fun InputFlags.has(b: InputFlag): Boolean = and(b.i) != 0
+infix fun InputFlags.hasnt(b: InputFlag): Boolean = and(b.i) == 0
+infix fun InputFlags.wo(b: InputFlag): InputFlags = and(b.i.inv())

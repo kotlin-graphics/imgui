@@ -6,8 +6,8 @@ import imgui.ImGui.getTypematicRepeatRate
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.KeyData
-import imgui.internal.sections.InputReadFlag
-import imgui.internal.sections.InputReadFlags
+import imgui.internal.sections.InputFlag
+import imgui.internal.sections.InputFlags
 import imgui.internal.sections.has
 
 
@@ -1322,14 +1322,14 @@ enum class Key {
      *
      *  Important: unlike legacy IsKeyPressed(ImGuiKey, bool repeat=true) which DEFAULT to repeat, this requires EXPLICIT repeat.
      *  [Internal] 2022/07: Do not call this directly! It is a temporary entry point which we will soon replace with an overload for IsKeyPressed() when we introduce key ownership. */
-    fun isPressedEx(flags: InputReadFlags = InputReadFlag.None.i): Boolean {
+    fun isPressedEx(flags: InputFlags = InputFlag.None.i): Boolean {
 
         val t = data.downDuration
         if (t < 0f)
             return false
 
         var pressed = t == 0f
-        if (!pressed && flags has InputReadFlag.Repeat) {
+        if (!pressed && flags has InputFlag.Repeat) {
             val (repeatDelay, repeatRate) = getTypematicRepeatRate(flags)
             pressed = (t > repeatDelay) && getPressedAmount(repeatDelay, repeatRate) > 0
         }

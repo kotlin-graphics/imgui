@@ -486,7 +486,7 @@ fun navUpdateCreateMoveRequest() {
         g.navMoveFlags = NavMoveFlag.None.i
         g.navMoveScrollFlags = ScrollFlag.None.i
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
-            val repeatMode = InputReadFlag.Repeat or InputReadFlag.RepeatRateNavMove
+            val repeatMode = InputFlag.Repeat or InputFlag.RepeatRateNavMove
             if (!isActiveIdUsingNavDir(Dir.Left) && (Key.GamepadDpadLeft.isPressedEx(repeatMode) || Key.LeftArrow.isPressedEx(repeatMode)))
                 g.navMoveDir = Dir.Left
             if (!isActiveIdUsingNavDir(Dir.Right) && (Key.GamepadDpadRight.isPressedEx(repeatMode) || Key.RightArrow.isPressedEx(repeatMode)))
