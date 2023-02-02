@@ -129,7 +129,7 @@ internal interface basicAccessors {
     /** Mark data associated to given item as "edited", used by IsItemDeactivatedAfterEdit() function. */
     fun markItemEdited(id: ID) {
         // This marking is solely to be able to provide info for IsItemDeactivatedAfterEdit().
-        // ActiveId might have been released by the time we call this (as in the typical press/release button behavior) but still need need to fill the data.
+        // ActiveId might have been released by the time we call this (as in the typical press/release button behavior) but still need to fill the data.
         assert(g.activeId == id || g.activeId == 0 || g.dragDropActive)
         //IM_ASSERT(g.CurrentWindow->DC.LastItemId == id)
         g.activeIdHasBeenEditedThisFrame = true

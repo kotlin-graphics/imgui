@@ -303,7 +303,7 @@ object ShowDemoWindowTables {
             // as TableNextColumn() will automatically wrap around and create new rows as needed.
             // This is generally more convenient when your cells all contains the same type of data.
             helpMarker("""
-                Only using TableNextColumn(), which tends to be convenient for tables where every cells contains the same type of contents.
+                Only using TableNextColumn(), which tends to be convenient for tables where every cell contains the same type of contents.
                 This is also more similar to the old NextColumn() function of the Columns API, and provided to facilitate the Columns->Tables API transition.""".trimIndent())
             table("table3", 3) {
                 for (item in 0..13) {
@@ -358,7 +358,7 @@ object ShowDemoWindowTables {
         `Columns widths`()
 
         treeNode("Nested tables") {
-            helpMarker("This demonstrate embedding a table into another table cell.")
+            helpMarker("This demonstrates embedding a table into another table cell.")
 
             table("table_nested1", 2, Tf.Borders or Tf.Resizable or Tf.Reorderable or Tf.Hideable) {
                 tableSetupColumn("A0")
@@ -395,7 +395,7 @@ object ShowDemoWindowTables {
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
         treeNode("Row height") {
-            helpMarker("You can pass a 'min_row_height' to TableNextRow().\n\nRows are padded with 'style.CellPadding.y' on top and bottom, so effectively the minimum row height will always be >= 'style.CellPadding.y * 2.0f'.\n\nWe cannot honor a _maximum_ row height as that would requires a unique clipping rectangle per row.")
+            helpMarker("You can pass a 'min_row_height' to TableNextRow().\n\nRows are padded with 'style.CellPadding.y' on top and bottom, so effectively the minimum row height will always be >= 'style.CellPadding.y * 2.0f'.\n\nWe cannot honor a _maximum_ row height as that would require a unique clipping rectangle per row.")
             table("table_row_height", 1, Tf.BordersOuter or Tf.BordersInnerV) {
                 for (row in 0..9) {
                     val minRowHeight = (TEXT_BASE_HEIGHT * 0.3f * row).i.f
@@ -513,7 +513,7 @@ object ShowDemoWindowTables {
                     sameLine(); radioButton("Text", ::contentsType, ContentsType.Text.ordinal)
                     sameLine(); radioButton("FillButton", ::contentsType, ContentsType.FillButton.ordinal)
                     checkbox("Display headers", ::displayHeaders)
-                    checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appears in Headers")
+                    checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appear in Headers")
                 }
 
                 table("table1", 3, flags) {
@@ -648,7 +648,7 @@ object ShowDemoWindowTables {
                     checkboxFlags("ImGuiTableFlags_Reorderable", ::flags, Tf.Reorderable.i)
                     checkboxFlags("ImGuiTableFlags_Hideable", ::flags, Tf.Hideable.i)
                     checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i)
-                    checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize.i); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers)")
+                    checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize.i); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers)")
                 }
 
                 table("##table1", 3, flags) {
@@ -703,7 +703,7 @@ object ShowDemoWindowTables {
                                    "- any form of row selection\n" +
                                    "Because of this, activating BorderOuterV sets the default to PadOuterX. Using PadOuterX or NoPadOuterX you can override the default.\n\n" +
                                    "Actual padding values are using style.CellPadding.\n\n" +
-                                   "In this demo we don't show horizontal borders to emphasis how they don't affect default horizontal padding.")
+                                   "In this demo we don't show horizontal borders to emphasize how they don't affect default horizontal padding.")
 
                 pushingStyleCompact {
                     checkboxFlags("ImGuiTableFlags_PadOuterX", this::flags1, Tf.PadOuterX.i)
@@ -1538,7 +1538,7 @@ object ShowDemoWindowTables {
 
         operator fun invoke() {
             treeNode("Advanced") {
-                //ImGui::SetNextItemOpen(true, ImGuiCond_Once); // FIXME-TABLE: Enabling this results in initial clipped first pass on table which tend to affects column sizing
+                //ImGui::SetNextItemOpen(true, ImGuiCond_Once); // FIXME-TABLE: Enabling this results in initial clipped first pass on table which tend to affect column sizing
                 treeNode("Options") {
                     // Make the UI compact because there are so many fields
                     pushingStyleCompact {
@@ -1561,8 +1561,8 @@ object ShowDemoWindowTables {
                             checkboxFlags("ImGuiTableFlags_BordersH", ::flags, Tf.BordersH.i)
                             checkboxFlags("ImGuiTableFlags_BordersOuterH", ::flags, Tf.BordersOuterH.i)
                             checkboxFlags("ImGuiTableFlags_BordersInnerH", ::flags, Tf.BordersInnerH.i)
-                            checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appears in Headers")
-                            checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize.i); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers)")
+                            checkboxFlags("ImGuiTableFlags_NoBordersInBody", ::flags, Tf.NoBordersInBody.i); sameLine(); helpMarker("Disable vertical borders in columns Body (borders will always appear in Headers")
+                            checkboxFlags("ImGuiTableFlags_NoBordersInBodyUntilResize", ::flags, Tf.NoBordersInBodyUntilResize.i); sameLine(); helpMarker("Disable vertical borders in columns Body until hovered for resize (borders will always appear in Headers)")
                         }
 
                         treeNodeEx("Sizing:", Tnf.DefaultOpen.i) {
@@ -1618,7 +1618,7 @@ object ShowDemoWindowTables {
                             If scrolling is disabled (ScrollX and ScrollY not set):
                             - The table is output directly in the parent window.
                             - OuterSize.x < 0.0f will right-align the table.
-                            - OuterSize.x = 0.0f will narrow fit the table unless there are any Stretch column.
+                            - OuterSize.x = 0.0f will narrow fit the table unless there are any Stretch columns.
                             - OuterSize.y then becomes the minimum size for the table, which will extend vertically if there are more rows (unless NoHostExtendY is set).""".trimIndent())
 
                             // From a user point of view we will tend to use 'inner_width' differently depending on whether our table is embedding scrolling.

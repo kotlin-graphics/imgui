@@ -35,7 +35,7 @@ interface focusActivation {
         g.navInitResultRectRel = window rectAbsToRel g.lastItemData.rect
         navUpdateAnyRequestFlag()
 
-        // Scroll could be done in NavInitRequestApplyResult() via a opt-in flag (we however don't want regular init requests to scroll)
+        // Scroll could be done in NavInitRequestApplyResult() via an opt-in flag (we however don't want regular init requests to scroll)
         if (!isItemVisible)
             scrollToRectEx(window, g.lastItemData.rect, ScrollFlag.None.i)
     }

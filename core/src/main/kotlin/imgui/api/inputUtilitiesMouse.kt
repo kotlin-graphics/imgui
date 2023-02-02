@@ -26,7 +26,7 @@ interface inputUtilitiesMouse {
     /** did mouse button clicked? (went from !Down to Down). Same as GetMouseClickedCount() == 1. */
     fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean {
         assert(button != MouseButton.None)
-        if (!g.io.mouseDown[button.i]) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitate eating mechanism (until we finish work on input ownership)
+        if (!g.io.mouseDown[button.i]) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on input ownership)
             return false
         val t = io.mouseDownDuration[button.i]
         if (t == 0f)

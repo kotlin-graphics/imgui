@@ -161,7 +161,7 @@ private class ImGuiOpenGL3 {
             if (showDemoWindow)
                 showDemoWindow(::showDemoWindow)
 
-            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
             run {
 
                 begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.

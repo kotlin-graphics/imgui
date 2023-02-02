@@ -46,7 +46,7 @@ internal interface PopupsModalsTooltips {
         val contentAvail = contentRegionAvail
         val size = floor(sizeArg)
         val autoFitAxes = (if (size.x == 0f) 1 shl Axis.X else 0x00) or (if (size.y == 0f) 1 shl Axis.Y else 0x00)
-        if (size.x <= 0f)   // Arbitrary minimum child size (0.0f causing too much issues)
+        if (size.x <= 0f)   // Arbitrary minimum child size (0.0f causing too many issues)
             size.x = glm.max(contentAvail.x + size.x, 4f)
         if (size.y <= 0f) size.y = glm.max(contentAvail.y + size.y, 4f)
         setNextWindowSize(size)
@@ -364,7 +364,7 @@ internal interface PopupsModalsTooltips {
                 val availH =
                     (if (dir == Dir.Up) rAvoid.min.y else rOuter.max.y) - if (dir == Dir.Down) rAvoid.max.y else rOuter.min.y
 
-                // If there not enough room on one axis, there's no point in positioning on a side on this axis (e.g. when not enough width, use a top/bottom position to maximize available width)
+                // If there's not enough room on one axis, there's no point in positioning on a side on this axis (e.g. when not enough width, use a top/bottom position to maximize available width)
                 if (availW < size.x && (dir == Dir.Left || dir == Dir.Right)) continue
                 if (availH < size.y && (dir == Dir.Up || dir == Dir.Down)) continue
 

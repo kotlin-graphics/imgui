@@ -716,7 +716,7 @@ class Window(var context: Context,
      *   - local_pos = (absolution_pos - window->Pos)
      *   - So local_x/local_y are 0.0f for a position at the upper-left corner of a window,
      *     and generally local_x/local_y are >(padding+decoration) && <(size-padding-decoration) when in the visible area.
-     *   - They mostly exists because of legacy API.
+     *   - They mostly exist because of legacy API.
      *  Following the rules above, when trying to work with scrolling code, consider that:
      *   - SetScrollFromPosY(0.0f) == SetScrollY(0.0f + scroll.y) == has no effect!
      *   - SetScrollFromPosY(-scroll.y) == SetScrollY(-scroll.y + scroll.y) == SetScrollY(0.0f) == reset scroll. Of course writing SetScrollY(0.0f) directly then makes more sense
@@ -835,6 +835,7 @@ class Window(var context: Context,
 
     /** ~updateWindowManualResize
      *  Handle resize for: Resize Grips, Borders, Gamepad
+     *  Return true when using auto-fit (double-click on resize grip)
      *  @return [JVM] borderHelf to Boolean   */
     fun updateManualResize(
         sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
@@ -847,7 +848,7 @@ class Window(var context: Context,
 
         if (flags has Wf.NoResize || flags has Wf.AlwaysAutoResize || autoFitFrames anyGreaterThan 0)
             return borderHeld to false
-        if (!wasActive) // Early out to avoid running this code for e.g. an hidden implicit/fallback Debug window.
+        if (!wasActive) // Early out to avoid running this code for e.g. a hidden implicit/fallback Debug window.
             return borderHeld to false
 
         var retAutoFit = false
@@ -1014,7 +1015,7 @@ class Window(var context: Context,
         skipItems = false
 
         // Draw window + handle manual resize
-        // As we highlight the title bar when want_focus is set, multiple reappearing windows will have have their title bar highlighted on their reappearing frame.
+        // As we highlight the title bar when want_focus is set, multiple reappearing windows will have their title bar highlighted on their reappearing frame.
         if (collapsed) { // Title bar only
             val backupBorderSize = style.frameBorderSize
             g.style.frameBorderSize = windowBorderSize

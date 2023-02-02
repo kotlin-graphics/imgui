@@ -463,7 +463,7 @@ interface windows {
             val titleBarRect: Rect
             val hostRect: Rect
             window.apply { // UPDATE RECTANGLES (1- THOSE NOT AFFECTED BY SCROLLING)
-                // Update various regions. Variables they depends on should be set above in this function.
+                // Update various regions. Variables they depend on should be set above in this function.
                 // We set this up after processing the resize grip so that our rectangles doesn't lag by a frame.
 
                 // Outer rectangle

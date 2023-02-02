@@ -200,7 +200,7 @@ internal interface debugTools {
         val tool = g.debugStackTool
 
         // Step 0: stack query
-        // This assume that the ID was computed with the current ID stack, which tends to be the case for our widget.
+        // This assumes that the ID was computed with the current ID stack, which tends to be the case for our widget.
         if (tool.stackLevel == -1) {
             tool.stackLevel++
             //            tool.results.resize(window->IDStack.Size + 1, ImGuiStackLevelInfo())

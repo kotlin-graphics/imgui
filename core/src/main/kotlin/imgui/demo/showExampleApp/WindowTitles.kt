@@ -14,7 +14,7 @@ import imgui.dsl.window
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Manipulating Window Titles / ShowExampleAppWindowTitles()
 //-----------------------------------------------------------------------------
-// Demonstrate using of "##" and "###" in identifiers to manipulate ID generation.
+// Demonstrate the use of "##" and "###" in identifiers to manipulate ID generation.
 // This applies to all regular items as well.
 // Read FAQ section "How can I have multiple widgets with the same label?" for details.
 object WindowTitles {

@@ -1,6 +1,7 @@
 package imgui.api
 
 import imgui.*
+import imgui.DragDropFlag
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.clearDragDrop
 import imgui.ImGui.endTooltip
@@ -192,7 +193,7 @@ interface dragAndDrop {
      *  If this returns true, you can call acceptDragDropPayload() + endDragDropTarget()
      *
      *  We don't use beginDragDropTargetCustom() and duplicate its code because:
-     *  1) we use lastItemRectHoveredRect which handles items that pushes a temporarily clip rectangle in their code.
+     *  1) we use lastItemRectHoveredRect which handles items that push a temporarily clip rectangle in their code.
      *      Calling beginDragDropTargetCustom(LastItemRect) would not handle them.
      *  2) and it's faster. as this code may be very frequently called, we want to early out as fast as we can.
      *  Also note how the HoveredWindow test is positioned differently in both functions (in both functions we optimize
@@ -227,7 +228,8 @@ interface dragAndDrop {
 
     /** Accept contents of a given type. If DragDropFlag.AcceptBeforeDelivery is set you can peek into the payload
      *  before the mouse button is released. */
-    fun acceptDragDropPayload(type: String, flags: DrawListFlags = 0): Payload? {
+    fun acceptDragDropPayload(type: String, flags_: DrawListFlags = 0): Payload? {
+        var flags = flags_
         val window = g.currentWindow!!
         val payload = g.dragDropPayload
         assert(g.dragDropActive) { "Not called between BeginDragDropTarget() and EndDragDropTarget() ?" }
@@ -248,6 +250,7 @@ interface dragAndDrop {
         // Render default drop visuals
         // FIXME-DRAGDROP: Settle on a proper default visuals for drop target.
         payload.preview = wasAcceptedPreviously
+        flags = flags or (g.dragDropSourceFlags and DragDropFlag.AcceptNoDrawDefaultRect) // Source can also inhibit the preview (useful for external sources that live for 1 frame)
         if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview)
             window.drawList.addRect(r.min - 3.5f, r.max + 3.5f, Col.DragDropTarget.u32, 0f, 0, 2f)
 

@@ -275,7 +275,7 @@ interface main {
 
         // Create implicit/fallback window - which we will only render it if the user has added something to it.
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.
-        // This fallback is particularly important as it avoid ImGui:: calls from crashing.
+        // This fallback is particularly important as it prevents ImGui:: calls from crashing.
         g.withinFrameScopeWithImplicitWindow = true
         setNextWindowSize(Vec2(400), Cond.FirstUseEver)
         begin("Debug##Default")

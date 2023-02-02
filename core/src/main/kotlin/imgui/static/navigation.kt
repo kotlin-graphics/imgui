@@ -532,7 +532,7 @@ fun navUpdateCreateMoveRequest() {
     if (g.navMoveDir != Dir.None)
         navMoveRequestSubmit(g.navMoveDir, g.navMoveClipDir, g.navMoveFlags, g.navMoveScrollFlags)
 
-    // Moving with no reference triggers a init request (will be used as a fallback if the direction fails to find a match)
+    // Moving with no reference triggers an init request (will be used as a fallback if the direction fails to find a match)
     if (g.navMoveSubmitted && g.navId == 0) {
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from move, window \"${window?.name ?: "<NULL>"}\", layer=${g.navLayer}")
         g.navInitRequest = true
@@ -542,7 +542,7 @@ fun navUpdateCreateMoveRequest() {
     }
 
     // When using gamepad, we project the reference nav bounding box into window visible area.
-    // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad every movements are relative
+    // This is to allow resuming navigation inside the visible area after doing a large amount of scrolling, since with gamepad all movements are relative
     // (can't focus a visible object like we can with the mouse).
     if (g.navMoveSubmitted && g.navInputSource == InputSource.Gamepad && g.navLayer == NavLayer.Main && window != null) { // && (g.NavMoveFlags & ImGuiNavMoveFlags_Forwarded))
         val clampX = g.navMoveFlags hasnt (NavMoveFlag.LoopX or NavMoveFlag.WrapX)
@@ -569,7 +569,7 @@ fun navUpdateCreateMoveRequest() {
         scoringRect translateY scoringRectOffsetY
         scoringRect.min.x = (scoringRect.min.x + 1f) min scoringRect.max.x
         scoringRect.max.x = scoringRect.min.x
-        assert(!scoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allows us to remove extraneous ImFabs() calls in NavScoreItem()." }
+        assert(!scoringRect.isInverted) { "Ensure if we have a finite, non-inverted bounding box here will allow us to remove extraneous ImFabs() calls in NavScoreItem()." }
         //GetForegroundDrawList()->AddRect(scoring_rect.Min, scoring_rect.Max, IM_COL32(255,200,0,255)); // [DEBUG]
         //if (!g.NavScoringNoClipRect.IsInverted()) { GetForegroundDrawList()->AddRect(g.NavScoringNoClipRect.Min, g.NavScoringNoClipRect.Max, IM_COL32(255, 200, 0, 255)); } // [DEBUG]
     }
@@ -761,7 +761,7 @@ fun navScoreItem(result: NavItemData): Boolean {
 
     /*  We perform scoring on items bounding box clipped by the current clipping rectangle on the other axis
         (clipping on our movement axis would give us equal scores for all clipped items)
-        For example, this ensure that items in one column are not reached when moving vertically from items in another column. */
+        For example, this ensures that items in one column are not reached when moving vertically from items in another column. */
     navClampRectToVisibleAreaForMoveDir(g.navMoveDir, cand, window.clipRect)
 
     // Compute distance between boxes
@@ -825,7 +825,7 @@ fun navScoreItem(result: NavItemData): Boolean {
             }
         }
 
-    // Is it in the quadrant we're interesting in moving to?
+    // Is it in the quadrant we're interested in moving to?
     var newBest = false
     val moveDir = g.navMoveDir
     if (quadrant == moveDir) {

@@ -121,7 +121,7 @@ package examples//package imgui
 //			if (showDemo)
 //				showDemoWindow(::showDemo)
 //
-//			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+//			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 //			run {
 //				begin("Hello, world!")                          // Create a window called "Hello, world!" and append into it.
 //

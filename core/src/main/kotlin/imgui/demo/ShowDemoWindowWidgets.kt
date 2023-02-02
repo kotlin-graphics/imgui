@@ -635,7 +635,7 @@ object ShowDemoWindowWidgets {
                     // Note that characters values are preserved even by InputText() if the font cannot be displayed,
                     // so you can safely copy & paste garbled characters into another application.
                     textWrapped(
-                        "CJK text will only appears if the font was loaded with the appropriate CJK character ranges." +
+                        "CJK text will only appear if the font was loaded with the appropriate CJK character ranges." +
                                 "Call io.Fonts->AddFontFromFileTTF() manually to load extra character ranges." +
                                 "Read docs/FONTS.txt for details.")
                     text("Hiragana: \u304b\u304d\u304f\u3051\u3053 (kakikukeko)") // Normally we would use u8"blah blah" with the proper characters directly in the string.
@@ -1044,7 +1044,7 @@ object ShowDemoWindowWidgets {
                     sameLine(); helpMarker("Here we replace and select text each time Up/Down are pressed. See 'Examples>Console' for a more meaningful demonstration of using this callback.")
 
                     inputText("Edit", buf3, Itf.CallbackEdit.i, Funcs1.myCallback, ::editCount)
-                    sameLine(); helpMarker("Here we toggle the casing of the first character on every edits + count edits.")
+                    sameLine(); helpMarker("Here we toggle the casing of the first character on every edit + count edits.")
                     sameLine(); text("($editCount)")
                 }
 
@@ -1574,7 +1574,7 @@ object ShowDemoWindowWidgets {
                 text("Drags:")
                 checkbox("Clamp integers to 0..50", ::dragClamp)
                 sameLine(); helpMarker(
-                """As with every widgets in dear imgui, we never modify values unless there is a user interaction.
+                """As with every widget in dear imgui, we never modify values unless there is a user interaction.
                 You can override the clamping limits by using CTRL+Click to input a value.""".trimIndent())
                 dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, s8_zero.takeIf { dragClamp }, s8_fifty.takeIf { dragClamp })
                 dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
