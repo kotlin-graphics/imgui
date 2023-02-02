@@ -220,20 +220,21 @@ interface widgetsColorEditorPicker {
             if (flags hasnt Cef.NoOptions)
                 openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
 
-            if (beginPopup("picker")) {
-                pickerActiveWindow = g.currentWindow
-                if (0 != labelDisplayEnd) {
-                    textEx(label, labelDisplayEnd)
-                    spacing()
+            if (beginPopup("picker"))
+                if (g.currentWindow!!.beginCount == 1) {
+                    pickerActiveWindow = g.currentWindow
+                    if (0 != labelDisplayEnd) {
+                        textEx(label, labelDisplayEnd)
+                        spacing()
+                    }
+                    val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
+                    val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._DisplayMask or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
+                    setNextItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
+                    val p = g.colorPickerRef to FloatArray(4)
+                    valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
+                    g.colorPickerRef put p
+                    endPopup()
                 }
-                val pickerFlagsToForward = Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask or Cef.HDR or Cef.NoAlpha or Cef.AlphaBar
-                val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._DisplayMask or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
-                setNextItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
-                val p = g.colorPickerRef to FloatArray(4)
-                valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
-                g.colorPickerRef put p
-                endPopup()
-            }
         }
 
         if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
@@ -289,7 +290,7 @@ interface widgetsColorEditorPicker {
         if (pickerActiveWindow != null && g.activeId != 0 && g.activeIdWindow === pickerActiveWindow)
             g.lastItemData.id = g.activeId
 
-        if (valueChanged)
+        if (valueChanged && g.lastItemData.id != 0) // In case of ID collision, the second EndGroup() won't catch g.ActiveId
             markItemEdited(g.lastItemData.id)
 
         return valueChanged
@@ -681,7 +682,7 @@ interface widgetsColorEditorPicker {
         repeat(components) { if (backupInitialCol[it] != col[it]) compare = false }
         if (valueChanged && compare)
             valueChanged = false
-        if (valueChanged)
+        if (valueChanged && g.lastItemData.id != 0) // In case of ID collision, the second EndGroup() won't catch g.ActiveId
             markItemEdited(g.lastItemData.id)
 
         popID()
