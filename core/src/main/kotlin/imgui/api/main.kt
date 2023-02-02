@@ -162,8 +162,8 @@ interface main {
         if (g.tempInputId != 0 && g.activeId != g.tempInputId)
             g.tempInputId = 0
         if (g.activeId == 0) {
-            g.activeIdUsingNavInputMask = 0
             g.activeIdUsingNavDirMask = 0
+            g.activeIdUsingKeyInputMask.clearAllBits()
         }
 
         // Drag and drop
@@ -340,10 +340,8 @@ interface main {
         io.fonts.locked = false
 
         // Clear Input data for next frame
-        io.mouseWheel = 0f
-        io.mouseWheelH = 0f
+        io.mouseWheel = 0f; io.mouseWheelH = 0f
         io.inputQueueCharacters.clear()
-        io.navInputs.fill(0f)
 
         g callHooks ContextHookType.EndFramePost
     }

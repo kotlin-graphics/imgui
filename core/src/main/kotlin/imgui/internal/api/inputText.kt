@@ -240,11 +240,11 @@ internal interface inputText {
             focusWindow(window)
 
             // Declare our inputs
-            assert(NavInput.values().size < 32)
             g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
             if (isMultiline || flags has Itf.CallbackHistory)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
-            g.activeIdUsingNavInputMask = g.activeIdUsingNavInputMask or (1 shl NavInput.Cancel)
+            setActiveIdUsingKey(Key.Escape)
+            setActiveIdUsingKey(Key._NavGamepadCancel)
             setActiveIdUsingKey(Key.Home)
             setActiveIdUsingKey(Key.End)
             if (isMultiline) {
@@ -427,9 +427,9 @@ internal interface inputText {
             val isSelectAll = isShortcutKey && Key.A.isPressed
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
-            val isEnterPressed = Key.Enter.isPressed || Key.KeypadEnter.isPressed
-            val isValidateNav = (NavInput.Activate.isPressed && !Key.Space.isPressed) || NavInput.Input.isPressed
-            val isCancel = Key.Escape.isPressed || NavInput.Cancel.isPressed
+            val isEnterPressed = Key.Enter.isPressed(true) || Key.KeypadEnter.isPressed(true)
+            val isGamepadValidate = Key._NavGamepadActivate.isPressed(false) || Key._NavGamepadInput.isPressed(false)
+            val isCancel = Key.Escape.isPressed(false) || Key._NavGamepadCancel.isPressed(false)
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(
@@ -473,10 +473,10 @@ internal interface inputText {
                             state.onKeyPressed(K.LINESTART or K.SHIFT)
                     state.onKeyPressed(K.BACKSPACE or kMask)
                 }
-                isEnterPressed -> {
+                isEnterPressed || isGamepadValidate -> {
                     // Determine if we turn Enter into a \n character
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
-                    if (!isMultiline || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
+                    if (!isMultiline || isGamepadValidate || (ctrlEnterForNewLine && !io.keyCtrl) || (!ctrlEnterForNewLine && io.keyCtrl)) {
                         validated = true
                         if (io.configInputTextEnterKeepActive && !isMultiline)
                             state.selectAll() // No need to scroll
@@ -489,10 +489,6 @@ internal interface inputText {
                             if (inputTextFilterCharacter(c, flags, callback, callbackUserData, InputSource.Keyboard))
                                 state.onKeyPressed(c().i)
                         }
-                }
-                isValidateNav -> {
-                    assert(!isEnterPressed)
-                    validated = true; clearActiveId = true
                 }
                 isCancel -> {
                     cancelEdit = true

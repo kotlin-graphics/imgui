@@ -322,9 +322,6 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         }
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
         keyMods = ModFlag.None.i
-        for (n in navInputsDownDuration.indices) {
-            navInputsDownDuration[n] = -1f; navInputsDownDurationPrev[n] = -1f
-        }
     }
 
 

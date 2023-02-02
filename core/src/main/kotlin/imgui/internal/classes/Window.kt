@@ -13,6 +13,7 @@ import imgui.ImGui.closeButton
 import imgui.ImGui.collapseButton
 import imgui.ImGui.debugHookIdInfo
 import imgui.ImGui.focusWindow
+import imgui.ImGui.getKeyVector2d
 import imgui.ImGui.io
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mainViewport
@@ -932,9 +933,9 @@ class Window(var context: Context,
         if (g.navWindowingTarget?.rootWindow === this) {
             val navResizeDir = Vec2()
             if (g.navInputSource == InputSource.Keyboard && g.io.keyShift)
-                navResizeDir.put(Key.RightArrow.isDown.f - Key.LeftArrow.isDown.f, Key.DownArrow.isDown.f - Key.UpArrow.isDown.f)
+                navResizeDir put getKeyVector2d(Key.LeftArrow, Key.RightArrow, Key.UpArrow, Key.DownArrow)
             if (g.navInputSource == InputSource.Gamepad)
-                navResizeDir put ImGui.getNavInputAmount2d(NavDirSourceFlag.PadDPad.i, NavReadMode.Down)
+                navResizeDir put getKeyVector2d(Key.GamepadDpadLeft, Key.GamepadDpadRight, Key.GamepadDpadUp, Key.GamepadDpadDown)
             if (navResizeDir.x != 0f || navResizeDir.y != 0f) {
                 val NAV_RESIZE_SPEED = 600f
                 val resizeStep = floor(NAV_RESIZE_SPEED * g.io.deltaTime * kotlin.math.min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))

@@ -1,10 +1,14 @@
 package imgui.internal.api
 
 import gli_.has
+import glm_.f
+import glm_.i
+import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.io
 import imgui.ImGui.navMoveRequestCancel
 import imgui.api.g
+import imgui.internal.sections.*
 
 /** Inputs
  *  FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions. */
@@ -21,14 +25,12 @@ internal interface inputs {
     fun setActiveIdUsingNavAndKeys() {
         assert(g.activeId != 0)
         g.activeIdUsingNavDirMask = 0.inv()
-        g.activeIdUsingNavInputMask = 0.inv()
         g.activeIdUsingKeyInputMask.setAllBits()
         navMoveRequestCancel()
     }
 
     infix fun isActiveIdUsingNavDir(dir: Dir): Boolean = g.activeIdUsingNavDirMask has (1 shl dir)
 
-    infix fun isActiveIdUsingNavInput(input: NavInput): Boolean = g.activeIdUsingNavInputMask has (1 shl input)
     infix fun isActiveIdUsingKey(key: Key): Boolean = g.activeIdUsingKeyInputMask testBit key.i
 
     infix fun setActiveIdUsingKey(key: Key) = g.activeIdUsingKeyInputMask setBit key.i
@@ -48,7 +50,7 @@ internal interface inputs {
 
     // the rest of inputs functions are in the NavInput enum
 
-    /** ~GetMergedKeyModFlags
+    /** ~GetMergedModFlags
      *
      *  [Internal] Do not use directly (can read io.KeyMods instead) */
     val mergedModFlags: ModFlags
@@ -60,4 +62,48 @@ internal interface inputs {
             if (ImGui.io.keySuper) keyMods /= ModFlag.Super
             return keyMods
         }
+
+    /** Return 2D vector representing the combination of four cardinal direction, with analog value support (for e.g. ImGuiKey_GamepadLStick* values). */
+    fun getKeyVector2d(keyLeft: Key, keyRight: Key, keyUp: Key, keyDown: Key) = Vec2(keyRight.data.analogValue - keyLeft.data.analogValue,
+                                                                                     keyDown.data.analogValue - keyUp.data.analogValue)
+
+    fun getNavTweakPressedAmount(axis: Axis): Float {
+
+        val (repeatDelay, repeatRate) = getTypematicRepeatRate(InputReadFlag.RepeatRateNavTweak.i)
+
+        val keyLess: Key
+        val keyMore: Key
+        if (g.navInputSource == InputSource.Gamepad) {
+            keyLess = if (axis == Axis.X) Key.GamepadDpadLeft else Key.GamepadDpadUp
+            keyMore = if (axis == Axis.X) Key.GamepadDpadRight else Key.GamepadDpadDown
+        } else {
+            keyLess = if (axis == Axis.X) Key.LeftArrow else Key.UpArrow
+            keyMore = if (axis == Axis.X) Key.RightArrow else Key.DownArrow
+        }
+        var amount = keyMore.getPressedAmount(repeatDelay, repeatRate).f - keyLess.getPressedAmount(repeatDelay, repeatRate).f
+        if (amount != 0f && keyLess.isDown && keyMore.isDown) // Cancel when opposite directions are held, regardless of repeat phase
+            amount = 0f
+        return amount
+    }
+
+    fun calcTypematicRepeatAmount(t0: Float, t1: Float, repeatDelay: Float, repeatRate: Float): Int = when {
+        t1 == 0f -> 1
+        t0 >= t1 -> 0
+        repeatRate <= 0f -> (t0 < repeatDelay && t1 >= repeatDelay).i
+        else -> {
+            val countT0 = if (t0 < repeatDelay) -1 else ((t0 - repeatDelay) / repeatRate).i
+            val countT1 = if (t1 < repeatDelay) -1 else ((t1 - repeatDelay) / repeatRate).i
+            val count = countT1 - countT0
+            count
+        }
+    }
+
+    /** @return repeatDelay, repeatRate */
+    fun getTypematicRepeatRate(flags: InputReadFlags): Pair<Float, Float> = when (flags and InputReadFlag.RepeatRateMask_) {
+        InputReadFlag.RepeatRateNavMove.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.80f
+        InputReadFlag.RepeatRateNavTweak.i -> g.io.keyRepeatDelay * 0.72f to g.io.keyRepeatRate * 0.30f
+        else -> g.io.keyRepeatDelay * 1.00f to g.io.keyRepeatRate * 1.00f
+    }
+
+    // IsKeyPressedEx -> Key
 }

@@ -205,9 +205,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
     var activeIdUsingNavDirMask = 0
 
-    /** Active widget will want to read those nav inputs. */
-    var activeIdUsingNavInputMask = 0
-
     /** Active widget will want to read those key inputs. When we grow the ImGuiKey enum we'll need to either to order the enum to make useful keys come first, either redesign this into e.g. a small array. */
     val activeIdUsingKeyInputMask = BitArray(Key.COUNT)
 
@@ -273,16 +270,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Identify a selection scope (selection code often wants to "clear other items" when landing on an item of the selection set) */
     var navFocusScopeId = 0
 
-    /** ~~ (g.activeId == 0) && NavInput.Activate.isPressed() ? navId : 0, also set when calling activateItem() */
+    /** ~~ (g.ActiveId == 0) && (IsKeyPressed(ImGuiKey_Space) || IsKeyPressed(ImGuiKey_NavGamepadActivate)) ? NavId : 0, also set when calling ActivateItem() */
     var navActivateId: ID = 0
 
-    /** ~~ isNavInputDown(NavInput.Activate) ? navId : 0   */
+    /** ~~ IsKeyDown(ImGuiKey_Space) || IsKeyDown(ImGuiKey_NavGamepadActivate) ? NavId : 0  */
     var navActivateDownId: ID = 0
 
-    /** ~~ NavInput.Activate.isPressed() ? navId : 0    */
+    /** ~~ IsKeyPressed(ImGuiKey_Space) || IsKeyPressed(ImGuiKey_NavGamepadActivate) ? NavId : 0 (no repeat)  */
     var navActivatePressedId: ID = 0
 
-    /** ~~ NavInput.Input.isPressed() ? navId : 0; ImGuiActivateFlags_PreferInput will be set and NavActivateId will be 0.   */
+    /** ~~ IsKeyPressed(ImGuiKey_Enter) || IsKeyPressed(ImGuiKey_NavGamepadInput) ? NavId : 0; ImGuiActivateFlags_PreferInput will be set and NavActivateId will be 0.  */
     var navActivateInputId: ID = 0
 
     var navActivateFlags = ActivateFlag.None.i

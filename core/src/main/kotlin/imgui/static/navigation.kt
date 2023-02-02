@@ -15,11 +15,10 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getForegroundDrawList
-import imgui.ImGui.getNavInputAmount2d
+import imgui.ImGui.getKeyVector2d
 import imgui.ImGui.io
 import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isActiveIdUsingNavDir
-import imgui.ImGui.isActiveIdUsingNavInput
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.mainViewport
@@ -56,38 +55,14 @@ fun navUpdate() {
 
     //if (g.NavScoringDebugCount > 0) IMGUI_DEBUG_LOG_NAV("[nav] NavScoringDebugCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringDebugCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
 
-    // Update Gamepad->Nav inputs mapping
-    // Set input source as Gamepad when buttons are pressed (as some features differs when used with Gamepad vs Keyboard)
-    // (do it before we map Keyboard input!)
-
+    // Set input source based on which keys are last pressed (as some features differs when used with Gamepad vs Keyboard)
+    // FIXME-NAV: Now that keys are separated maybe we can get rid of NavInputSource?
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
-
-    if (navGamepadActive && !g.io.backendUsingLegacyNavInputArray) {
-        assert(io.navInputs.all { it == 0f }) { "Backend needs to either only use io.AddKeyEvent()/io.AddKeyAnalogEvent(), either only fill legacy io.NavInputs[]. Not both!" }
-        fun NAV_MAP_KEY(key: Key, navInput: NavInput, activateNav: Boolean) {
-            io.navInputs[navInput] = io.keysData[key.i].analogValue
-            if (activateNav && io.navInputs[navInput] > 0f)
+    val navGamepadKeysToChangeSource = listOf(Key.GamepadFaceRight, Key.GamepadFaceLeft, Key.GamepadFaceUp, Key.GamepadFaceDown, Key.GamepadDpadRight, Key.GamepadDpadLeft, Key.GamepadDpadUp, Key.GamepadDpadDown)
+    if (navGamepadActive)
+        for (key in navGamepadKeysToChangeSource)
+            if (key.isDown)
                 g.navInputSource = InputSource.Gamepad
-        }
-        NAV_MAP_KEY(Key.GamepadFaceDown, NavInput.Activate, true)
-        NAV_MAP_KEY(Key.GamepadFaceRight, NavInput.Cancel, true)
-        NAV_MAP_KEY(Key.GamepadFaceLeft, NavInput.Menu, true)
-        NAV_MAP_KEY(Key.GamepadFaceUp, NavInput.Input, true)
-        NAV_MAP_KEY(Key.GamepadDpadLeft, NavInput.DpadLeft, true)
-        NAV_MAP_KEY(Key.GamepadDpadRight, NavInput.DpadRight, true)
-        NAV_MAP_KEY(Key.GamepadDpadUp, NavInput.DpadUp, true)
-        NAV_MAP_KEY(Key.GamepadDpadDown, NavInput.DpadDown, true)
-        NAV_MAP_KEY(Key.GamepadL1, NavInput.FocusPrev, false)
-        NAV_MAP_KEY(Key.GamepadR1, NavInput.FocusNext, false)
-        NAV_MAP_KEY(Key.GamepadL1, NavInput.TweakSlow, false)
-        NAV_MAP_KEY(Key.GamepadR1, NavInput.TweakFast, false)
-        NAV_MAP_KEY(Key.GamepadLStickLeft, NavInput.LStickLeft, false)
-        NAV_MAP_KEY(Key.GamepadLStickRight, NavInput.LStickRight, false)
-        NAV_MAP_KEY(Key.GamepadLStickUp, NavInput.LStickUp, false)
-        NAV_MAP_KEY(Key.GamepadLStickDown, NavInput.LStickDown, false)
-    }
-
-    // Update Keyboard->Nav inputs mapping
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
     if (navKeyboardActive) {
         fun navMapKey(key: Key, navInput: NavInput) {
@@ -161,10 +136,10 @@ fun navUpdate() {
     g.navActivateId = 0; g.navActivateDownId = 0; g.navActivatePressedId = 0; g.navActivateInputId = 0
     g.navActivateFlags = ActivateFlag.None.i
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
-        val activateDown = NavInput.Activate.isDown
-        val inputDown = NavInput.Input.isDown
-        val activatePressed = activateDown && NavInput.Activate.isPressed
-        val inputPressed = inputDown && NavInput.Input.isPressed
+        val activateDown = Key.Space.isDown || Key._NavGamepadActivate.isDown
+        val activatePressed = activateDown && (Key.Space isPressed false || Key._NavGamepadActivate isPressed false)
+        val inputDown = Key.Enter.isDown || Key._NavGamepadInput.isDown
+        val inputPressed = inputDown && (Key.Enter isPressed false || Key._NavGamepadInput isPressed false)
         if (g.activeId == 0 && activatePressed) {
             g.navActivateId = g.navId
             g.navActivateFlags = ActivateFlag.PreferTweak.i
@@ -216,11 +191,12 @@ fun navUpdate() {
 
         // *Normal* Manual scroll with NavScrollXXX keys
         // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
-        val scrollDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, NavReadMode.Down, 1f / 10f, 10f)
+        val scrollDir = getKeyVector2d(Key.GamepadLStickLeft, Key.GamepadLStickRight, Key.GamepadLStickUp, Key.GamepadLStickDown)
+        val tweakFactor = if (Key._NavGamepadTweakSlow.isDown) 1f / 10f else if (Key._NavGamepadTweakFast.isDown) 10f else 1f
         if (scrollDir.x != 0f && window.scrollbar.x)
-            window.setScrollX(floor(window.scroll.x + scrollDir.x * scrollSpeed))
+            window.setScrollX(floor(window.scroll.x + scrollDir.x * scrollSpeed * tweakFactor))
         if (scrollDir.y != 0f)
-            window.setScrollY(floor(window.scroll.y + scrollDir.y * scrollSpeed))
+            window.setScrollY(floor(window.scroll.y + scrollDir.y * scrollSpeed * tweakFactor))
     }
 
     // Always prioritize mouse highlight if navigation is disabled
@@ -268,8 +244,8 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL+TAB or Square+L/R window selection
-    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu.isPressed
-    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
+    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(false)
+    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed(false)
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootWindow; g.navWindowingTargetAnim = it.rootWindow
@@ -285,21 +261,17 @@ fun navUpdateWindowing() {
         if (g.navInputSource == InputSource.Gamepad) {
             /*  Highlight only appears after a brief time holding the button, so that a fast tap on PadMenu
                 (to toggle NavLayer) doesn't add visual noise             */
-            g.navWindowingHighlightAlpha = max(
-                g.navWindowingHighlightAlpha,
-                saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f)
-                                              )
+            g.navWindowingHighlightAlpha = max(g.navWindowingHighlightAlpha, saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f))
 
             // Select window to focus
-            val focusChangeDir =
-                NavInput.FocusPrev.isTest(NavReadMode.RepeatSlow).i - NavInput.FocusNext.isTest(NavReadMode.RepeatSlow).i
+            val focusChangeDir = Key.GamepadL1.isPressed.i - Key.GamepadR1.isPressed.i
             if (focusChangeDir != 0) {
                 navUpdateWindowingHighlightWindow(focusChangeDir)
                 g.navWindowingHighlightAlpha = 1f
             }
 
             // Single press toggles NavLayer, long press with L/R apply actual focus on release (until then the window was merely rendered top-most)
-            if (!NavInput.Menu.isDown) {
+            if (!Key._NavGamepadMenu.isDown) {
                 // Once button was held long enough we don't consider it a tap-to-toggle-layer press anymore.
                 g.navWindowingToggleLayer = g.navWindowingToggleLayer and (g.navWindowingHighlightAlpha < 1f)
                 if (g.navWindowingToggleLayer && g.navWindow != null)
@@ -315,7 +287,7 @@ fun navUpdateWindowing() {
         if (g.navInputSource == InputSource.Keyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
             g.navWindowingHighlightAlpha = g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
-            if (Key.Tab.isPressed(true))
+            if (Key.Tab isPressed true)
                 navUpdateWindowingHighlightWindow(if (io.keyShift) 1 else -1)
             if (!io.keyCtrl)
                 applyFocusWindow = g.navWindowingTarget
@@ -351,9 +323,9 @@ fun navUpdateWindowing() {
         if (it.flags hasnt Wf.NoMove) {
             var navMoveDir = Vec2()
             if (g.navInputSource == InputSource.Keyboard && !io.keyShift)
-                navMoveDir.put(Key.RightArrow.isDown.f - Key.LeftArrow.isDown.f, Key.DownArrow.isDown.f - Key.UpArrow.isDown.f)
+                navMoveDir put getKeyVector2d(Key.LeftArrow, Key.RightArrow, Key.UpArrow, Key.DownArrow)
             if (g.navInputSource == InputSource.Gamepad)
-                navMoveDir = getNavInputAmount2d(NavDirSourceFlag.PadLStick.i, NavReadMode.Down)
+                navMoveDir put getKeyVector2d(Key.GamepadLStickLeft, Key.GamepadLStickRight, Key.GamepadLStickUp, Key.GamepadLStickDown)
             if (navMoveDir.x != 0f || navMoveDir.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
                 val moveStep = NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y) // FIXME: Doesn't handle variable framerate very well
@@ -466,13 +438,13 @@ fun navUpdateWindowingOverlay() {
  *  - either to move most/all of those tests to the epilogue/end functions of the scope they are dealing with (e.g. exit child window in EndChild()) or in EndFrame(), to allow an earlier intercept */
 fun navUpdateCancelRequest() {
 
-    if (!NavInput.Cancel.isPressed)
+    if (!Key.Escape.isPressed(false) && !Key._NavGamepadCancel.isPressed(false))
         return
 
-    IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel")
+    IMGUI_DEBUG_LOG_NAV("[nav] NavUpdateCancelRequest")
     val navWindow = g.navWindow
     if (g.activeId != 0) {
-        if (!isActiveIdUsingNavInput(NavInput.Cancel))
+        if (!isActiveIdUsingKey(Key.Escape) && !isActiveIdUsingKey(Key._NavGamepadCancel))
             clearActiveID()
     } else if (g.navLayer != NavLayer.Main) {
         // Leave the "menu" layer
@@ -514,14 +486,14 @@ fun navUpdateCreateMoveRequest() {
         g.navMoveFlags = NavMoveFlag.None.i
         g.navMoveScrollFlags = ScrollFlag.None.i
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
-            val readMode = NavReadMode.Repeat
-            if (!isActiveIdUsingNavDir(Dir.Left) && (NavInput.DpadLeft isTest readMode || NavInput._KeyLeft isTest readMode))
+            val repeatMode = InputReadFlag.Repeat or InputReadFlag.RepeatRateNavMove
+            if (!isActiveIdUsingNavDir(Dir.Left) && (Key.GamepadDpadLeft.isPressedEx(repeatMode) || Key.LeftArrow.isPressedEx(repeatMode)))
                 g.navMoveDir = Dir.Left
-            if (!isActiveIdUsingNavDir(Dir.Right) && (NavInput.DpadRight isTest readMode || NavInput._KeyRight isTest readMode))
+            if (!isActiveIdUsingNavDir(Dir.Right) && (Key.GamepadDpadRight.isPressedEx(repeatMode) || Key.RightArrow.isPressedEx(repeatMode)))
                 g.navMoveDir = Dir.Right
-            if (!isActiveIdUsingNavDir(Dir.Up) && (NavInput.DpadUp isTest readMode || NavInput._KeyUp isTest readMode))
+            if (!isActiveIdUsingNavDir(Dir.Up) && (Key.GamepadDpadUp.isPressedEx(repeatMode) || Key.UpArrow.isPressedEx(repeatMode)))
                 g.navMoveDir = Dir.Up
-            if (!isActiveIdUsingNavDir(Dir.Down) && (NavInput.DpadDown isTest readMode || NavInput._KeyDown isTest readMode))
+            if (!isActiveIdUsingNavDir(Dir.Down) && (Key.GamepadDpadDown.isPressedEx(repeatMode) || Key.DownArrow.isPressedEx(repeatMode)))
                 g.navMoveDir = Dir.Down
         }
         g.navMoveDir = g.navMoveDir
@@ -606,7 +578,7 @@ fun navUpdateCreateTabbingRequest() {
     if (window == null || g.navWindowingTarget != null || window.flags has Wf.NoNavInputs)
         return
 
-    val tabPressed = Key.Tab.isPressed(true) && !isActiveIdUsingKey(Key.Tab) && !g.io.keyCtrl && !g.io.keyAlt
+    val tabPressed = Key.Tab isPressed true && !isActiveIdUsingKey(Key.Tab) && !g.io.keyCtrl && !g.io.keyAlt
     if (!tabPressed)
         return
 
@@ -645,8 +617,8 @@ fun navUpdatePageUpPageDown(): Float {
     if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
         // Fallback manual-scroll when window has no navigable item
         when {
-            Key.PageUp.isPressed(true) -> window.setScrollY(window.scroll.y - window.innerRect.height)
-            Key.PageDown.isPressed(true) -> window.setScrollY(window.scroll.y + window.innerRect.height)
+            Key.PageUp isPressed true -> window.setScrollY(window.scroll.y - window.innerRect.height)
+            Key.PageDown isPressed true -> window.setScrollY(window.scroll.y + window.innerRect.height)
             homePressed -> window setScrollY 0f
             endPressed -> window setScrollY window.scrollMax.y
         }
@@ -654,13 +626,13 @@ fun navUpdatePageUpPageDown(): Float {
         val navRectRel = window.navRectRel[g.navLayer]
         val pageOffsetY = 0f max (window.innerRect.height - window.calcFontSize() * 1f + navRectRel.height)
         var navScoringRectOffsetY = 0f
-        if (Key.PageUp.isPressed(true)) {
+        if (Key.PageUp isPressed true) {
             navScoringRectOffsetY = -pageOffsetY
             g.navMoveDir =
                 Dir.Down // Because our scoring rect is offset up, we request the down direction (so we can always land on the last item)
             g.navMoveClipDir = Dir.Up
             g.navMoveFlags = NavMoveFlag.AllowCurrentNavId or NavMoveFlag.AlsoScoreVisibleSet
-        } else if (Key.PageDown.isPressed(true)) {
+        } else if (Key.PageDown isPressed true) {
             navScoringRectOffsetY = +pageOffsetY
             g.navMoveDir =
                 Dir.Up // Because our scoring rect is offset down, we request the up direction (so we can always land on the last item)

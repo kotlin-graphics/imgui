@@ -7,7 +7,7 @@ import imgui.*
 import imgui.ImGui.checkbox
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
-import imgui.ImGui.getNavInputAmount2d
+import imgui.ImGui.getNavTweakPressedAmount
 import imgui.ImGui.io
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.isMousePosValid
@@ -803,7 +803,10 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+            val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
+            val tweakFactor = if (tweakSlow) 1f / 1f else if (tweakFast) 10f else 1f
+            adjustDelta = getNavTweakPressedAmount(axis) * tweakFactor
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -909,7 +912,10 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+            val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
+            val tweakFactor = if (tweakSlow) 1f / 1f else if (tweakFast) 10f else 1f
+            adjustDelta = getNavTweakPressedAmount(axis) * tweakFactor
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1015,7 +1021,10 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+            val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
+            val tweakFactor = if (tweakSlow) 1f / 1f else if (tweakFast) 10f else 1f
+            adjustDelta = getNavTweakPressedAmount(axis) * tweakFactor
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1121,7 +1130,10 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+            val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
+            val tweakFactor = if (tweakSlow) 1f / 1f else if (tweakFast) 10f else 1f
+            adjustDelta = getNavTweakPressedAmount(axis) * tweakFactor
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1227,7 +1239,10 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+            val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
+            val tweakFactor = if (tweakSlow) 1f / 1f else if (tweakFast) 10f else 1f
+            adjustDelta = getNavTweakPressedAmount(axis) * tweakFactor
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1333,7 +1348,10 @@ internal interface templateFunctions {
                 adjustDelta *= 10f
         } else if (g.activeIdSource == InputSource.Nav) {
             val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
-            adjustDelta = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 1f / 10f, 10f)[axis]
+            val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+            val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
+            val tweakFactor = if (tweakSlow) 1f / 1f else if (tweakFast) 10f else 1f
+            adjustDelta = getNavTweakPressedAmount(axis) * tweakFactor
             vSpeed = vSpeed max getMinimumStepAtDecimalPrecision(decimalPrecision)
         }
         adjustDelta *= vSpeed
@@ -1474,11 +1492,10 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
-                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                var inputDelta = if (axis == Axis.X) getNavTweakPressedAmount(axis) else -getNavTweakPressedAmount(axis)
                 if (inputDelta != 0f) {
-                    val tweakSlow = NavInput.TweakSlow.isDown
-                    val tweakFast = NavInput.TweakFast.isDown
+                    val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+                    val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -1617,11 +1634,10 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
-                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                var inputDelta = if (axis == Axis.X) getNavTweakPressedAmount(axis) else -getNavTweakPressedAmount(axis)
                 if (inputDelta != 0f) {
-                    val tweakSlow = NavInput.TweakSlow.isDown
-                    val tweakFast = NavInput.TweakFast.isDown
+                    val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+                    val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -1761,11 +1777,10 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
-                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                var inputDelta = if (axis == Axis.X) getNavTweakPressedAmount(axis) else -getNavTweakPressedAmount(axis)
                 if (inputDelta != 0f) {
-                    val tweakSlow = NavInput.TweakSlow.isDown
-                    val tweakFast = NavInput.TweakFast.isDown
+                    val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+                    val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -1907,11 +1922,10 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
-                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                var inputDelta = if (axis == Axis.X) getNavTweakPressedAmount(axis) else -getNavTweakPressedAmount(axis)
                 if (inputDelta != 0f) {
-                    val tweakSlow = NavInput.TweakSlow.isDown
-                    val tweakFast = NavInput.TweakFast.isDown
+                    val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+                    val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -2052,11 +2066,10 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
-                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                var inputDelta = if (axis == Axis.X) getNavTweakPressedAmount(axis) else -getNavTweakPressedAmount(axis)
                 if (inputDelta != 0f) {
-                    val tweakSlow = NavInput.TweakSlow.isDown
-                    val tweakFast = NavInput.TweakFast.isDown
+                    val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+                    val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
@@ -2197,11 +2210,10 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
-                var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
+                var inputDelta = if (axis == Axis.X) getNavTweakPressedAmount(axis) else -getNavTweakPressedAmount(axis)
                 if (inputDelta != 0f) {
-                    val tweakSlow = NavInput.TweakSlow.isDown
-                    val tweakFast = NavInput.TweakFast.isDown
+                    val tweakSlow = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakSlow else Key._NavKeyboardTweakSlow).isDown
+                    val tweakFast = (if (g.navInputSource == InputSource.Gamepad) Key._NavGamepadTweakFast else Key._NavKeyboardTweakFast).isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds

@@ -114,30 +114,6 @@ infix fun NavHighlightFlags.hasnt(b: NavHighlightFlag): Boolean = and(b.i) == 0
 infix fun NavHighlightFlags.wo(b: NavHighlightFlag): NavHighlightFlags = and(b.i.inv())
 
 
-typealias NavDirSourceFlags = Int
-
-enum class NavDirSourceFlag {
-    None, Keyboard, PadDPad, PadLStick;
-
-    val i: NavDirSourceFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
-
-    infix fun and(b: NavDirSourceFlag): NavDirSourceFlags = i and b.i
-    infix fun and(b: NavDirSourceFlags): NavDirSourceFlags = i and b
-    infix fun or(b: NavDirSourceFlag): NavDirSourceFlags = i or b.i
-    infix fun or(b: NavDirSourceFlags): NavDirSourceFlags = i or b
-    infix fun xor(b: NavDirSourceFlag): NavDirSourceFlags = i xor b.i
-    infix fun xor(b: NavDirSourceFlags): NavDirSourceFlags = i xor b
-    infix fun wo(b: NavDirSourceFlags): NavDirSourceFlags = and(b.inv())
-}
-
-infix fun NavDirSourceFlags.and(b: NavDirSourceFlag): NavDirSourceFlags = and(b.i)
-infix fun NavDirSourceFlags.or(b: NavDirSourceFlag): NavDirSourceFlags = or(b.i)
-infix fun NavDirSourceFlags.xor(b: NavDirSourceFlag): NavDirSourceFlags = xor(b.i)
-infix fun NavDirSourceFlags.has(b: NavDirSourceFlag): Boolean = and(b.i) != 0
-infix fun NavDirSourceFlags.hasnt(b: NavDirSourceFlag): Boolean = and(b.i) == 0
-infix fun NavDirSourceFlags.wo(b: NavDirSourceFlag): NavDirSourceFlags = and(b.i.inv())
-
-
 typealias NavMoveFlags = Int
 
 enum class NavMoveFlag {
@@ -204,7 +180,7 @@ enum class NavLayer {
     /** Main scrolling layer */
     Main,
 
-    /** Menu layer (access with Alt/ImGuiNavInput_Menu) */
+    /** Menu layer (access with Alt) */
     Menu;
 
     infix fun xor(int: Int): Int = ordinal xor int

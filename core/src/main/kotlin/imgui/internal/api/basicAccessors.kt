@@ -74,7 +74,6 @@ internal interface basicAccessors {
         // (Please note that this is WIP and not all keys/inputs are thoroughly declared by all widgets yet)
         g.activeIdUsingMouseWheel = false
         g.activeIdUsingNavDirMask = 0x00
-        g.activeIdUsingNavInputMask = 0x00
         g.activeIdUsingKeyInputMask.clearAllBits()
     }
 

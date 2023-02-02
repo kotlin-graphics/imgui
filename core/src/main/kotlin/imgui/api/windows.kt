@@ -664,7 +664,7 @@ interface windows {
             /*
         //if (g.NavWindow == window && g.ActiveId == 0)
         if (g.ActiveId == window->MoveId)
-            if (g.io.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
+            if (g.io.KeyCtrl && IsKeyPressed(ImGuiKey_C))
                 ImGui::LogToClipboard();
         */
 

@@ -129,11 +129,6 @@ object ShowDemoWindowMisc {
                     val bytes = c.toString().toByteArray().joinToString { "0x%X".format(it) }
                     sameLine(); text("\'%c\' (%s)", if (c > ' ' && c.i <= 255) c else '?', bytes)
                 }
-
-                text("NavInputs down:")
-                io.navInputs.filter { it > 0f }.forEachIndexed { i, it -> sameLine(); text("[$i] %.2f (%.02f secs)", it, io.navInputsDownDuration[i]) }
-                text("NavInputs pressed:")
-                io.navInputsDownDuration.filter { it == 0f }.forEachIndexed { i, _ -> sameLine(); text("[$i]") }
             }
 
             // Draw an arbitrary US keyboard layout to visualize translated keys

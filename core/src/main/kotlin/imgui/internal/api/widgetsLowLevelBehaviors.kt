@@ -7,6 +7,7 @@ import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.dragBehaviorT
@@ -240,7 +241,14 @@ internal interface widgetsLowLevelBehaviors {
                 hovered = true
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
-            val navActivatedByInputs = if (flags has Bf.Repeat) NavInput.Activate isTest NavReadMode.Repeat else NavInput.Activate.isPressed
+            var navActivatedByInputs = g.navActivatePressedId == id
+            if (!navActivatedByInputs && flags has Bf.Repeat) {
+                // Avoid pressing both keys from triggering double amount of repeat events
+                val key1 = Key.Space.data
+                val key2 = Key._NavGamepadActivate.data
+                val t1 = key1.downDuration max key2.downDuration
+                navActivatedByInputs = calcTypematicRepeatAmount(t1 - g.io.deltaTime, t1, g.io.keyRepeatDelay, g.io.keyRepeatRate) > 0
+            }
             if (navActivatedByCode || navActivatedByInputs) {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 pressed = true

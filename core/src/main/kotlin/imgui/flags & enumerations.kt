@@ -2,11 +2,13 @@ package imgui
 
 import glm_.vec4.Vec4
 import imgui.ImGui.getColorU32
-import imgui.ImGui.getNavInputAmount
+import imgui.ImGui.getTypematicRepeatRate
 import imgui.ImGui.io
 import imgui.api.g
 import imgui.classes.KeyData
-import imgui.internal.sections.NavReadMode
+import imgui.internal.sections.InputReadFlag
+import imgui.internal.sections.InputReadFlags
+import imgui.internal.sections.has
 
 
 //-----------------------------------------------------------------------------
@@ -1246,6 +1248,17 @@ enum class Key {
         val Gamepad_BEGIN = GamepadStart
         val Gamepad_END = ModCtrl
         infix fun of(i: Int) = values().first { it.i == i }
+
+
+        // [Internal] Named shortcuts for Navigation
+        internal val _NavKeyboardTweakSlow = ModCtrl
+        internal val _NavKeyboardTweakFast = ModShift
+        internal val _NavGamepadTweakSlow = GamepadL1
+        internal val _NavGamepadTweakFast = GamepadR1
+        internal val _NavGamepadActivate = GamepadFaceDown
+        internal val _NavGamepadCancel = GamepadFaceRight
+        internal val _NavGamepadMenu = GamepadFaceLeft
+        internal val _NavGamepadInput = GamepadFaceUp
     }
 
     @JvmField
@@ -1274,7 +1287,7 @@ enum class Key {
      *  uses io.KeyRepeatDelay / KeyRepeatRate
      *
      *  was key pressed (went from !Down to Down)? if repeat=true, uses io.KeyRepeatDelay / KeyRepeatRate */
-    fun isPressed(repeat: Boolean): Boolean {
+    infix fun isPressed(repeat: Boolean): Boolean {
         assert(i in Key.BEGIN until Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
 
         assert(i in g.io.keysData.indices)
@@ -1284,6 +1297,25 @@ enum class Key {
         if (repeat && t > io.keyRepeatDelay)
             return getPressedAmount(io.keyRepeatDelay, io.keyRepeatRate) > 0
         return false
+    }
+
+    /** ~IsKeyPressedEx
+     *
+     *  Important: unlike legacy IsKeyPressed(ImGuiKey, bool repeat=true) which DEFAULT to repeat, this requires EXPLICIT repeat.
+     *  [Internal] 2022/07: Do not call this directly! It is a temporary entry point which we will soon replace with an overload for IsKeyPressed() when we introduce key ownership. */
+    fun isPressedEx(flags: InputReadFlags = InputReadFlag.None.i): Boolean {
+
+        val t = data.downDuration
+        if (t < 0f)
+            return false
+
+        var pressed = t == 0f
+        if (!pressed && flags has InputReadFlag.Repeat){
+            val (repeatDelay, repeatRate) = getTypematicRepeatRate(flags)
+            pressed = (t > repeatDelay) && getPressedAmount(repeatDelay, repeatRate) > 0
+        }
+
+        return pressed
     }
 
     /** ~IsKeyPressed() */
@@ -1299,7 +1331,10 @@ enum class Key {
     /** ~getKeyPressedAmount
      *
      *  Uses provided repeat rate/delay. return a count, most often 0 or 1 but might be >1 if RepeatRate is small enough
-     *  that DeltaTime > RepeatRate */
+     *  that DeltaTime > RepeatRate
+     *
+     *  Return value representing the number of presses in the last time period, for the given repeat rate
+     *  (most often returns 0 or 1. The result is generally only >1 when RepeatRate is smaller than DeltaTime, aka large DeltaTime or fast RepeatRate) */
     fun getPressedAmount(repeatDelay: Float, repeatRate: Float): Int {
         val t = io.keysData[i].downDuration
         return ImGui.calcTypematicRepeatAmount(t - io.deltaTime, t, repeatDelay, repeatRate)
@@ -1424,24 +1459,6 @@ enum class NavInput {
         val COUNT = values().size
         val InternalStart = _KeyLeft.i
     }
-
-    // Inputs: Navigation
-
-    /** Equivalent of isKeyDown() for NavInputs[]
-     *  ~IsNavInputDown */ // JVM TODO check for semantic Key.isPressed/Down
-    val isDown: Boolean
-        get() = io.navInputs[i] > 0f
-
-    /** ~IsNavInputPressed */
-    val isPressed: Boolean
-        get() = io.navInputsDownDuration[i] == 0f
-
-    /** Equivalent of isKeyPressed() for NavInputs[]
-     *  ~IsNavInputTest  */
-    infix fun isTest(mode: NavReadMode): Boolean = getNavInputAmount(this, mode) > 0f
-
-    /** ~IsNavInputPressedAnyOfTwo  */
-    fun isPressedAnyOfTwo(n2: NavInput, mode: NavReadMode): Boolean = (getNavInputAmount(this, mode) + getNavInputAmount(n2, mode)) > 0f
 }
 
 infix fun Int.shl(f: NavInput) = shl(f.i)
