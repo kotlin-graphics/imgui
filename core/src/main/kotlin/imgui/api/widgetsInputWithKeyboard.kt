@@ -33,6 +33,7 @@ import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
 import imgui.ImGui.textEx
 import imgui.internal.api.inputText.Companion.inputScalarDefaultCharsFilter
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -185,9 +186,9 @@ interface widgetsInputWithKeyboard {
             beginGroup() // The only purpose of the group here is to allow the caller to query item data e.g. IsItemActive()
             pushID(label)
             setNextItemWidth(1f max (calcItemWidth() - (buttonSize + style.itemInnerSpacing.x) * 2))
-
             if (inputText("", buf, flags)) // PushId(label) + "" gives us the expected ID from outside point of view
                 valueChanged = dataTypeApplyFromText(buf.cStr, dataType, pData, format)
+            IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags)
 
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)
