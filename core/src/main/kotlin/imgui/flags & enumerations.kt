@@ -1336,6 +1336,9 @@ enum class Key {
      *  [Internal] 2022/07: Do not call this directly! It is a temporary entry point which we will soon replace with an overload for IsKeyPressed() when we introduce key ownership. */
     fun isPressedEx(flags: InputFlags = InputFlag.None.i): Boolean {
 
+        if (!data.down) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitate eating mechanism (until we finish work on input ownership)
+            return false
+
         val t = data.downDuration
         if (t < 0f)
             return false
@@ -1367,6 +1370,8 @@ enum class Key {
      *  Return value representing the number of presses in the last time period, for the given repeat rate
      *  (most often returns 0 or 1. The result is generally only >1 when RepeatRate is smaller than DeltaTime, aka large DeltaTime or fast RepeatRate) */
     fun getPressedAmount(repeatDelay: Float, repeatRate: Float): Int {
+        if (!data.down) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitate eating mechanism (until we finish work on input ownership)
+            return 0
         val t = io.keysData[i].downDuration
         return ImGui.calcTypematicRepeatAmount(t - io.deltaTime, t, repeatDelay, repeatRate)
     }
