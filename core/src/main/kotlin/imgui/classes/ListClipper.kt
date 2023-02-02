@@ -6,10 +6,7 @@ import imgui.api.g
 import imgui.clamp
 import imgui.internal.floor
 import imgui.internal.isAboveGuaranteedIntegerPrecision
-import imgui.internal.sections.ListClipperData
-import imgui.internal.sections.ListClipperRange
-import imgui.internal.sections.NavMoveFlag
-import imgui.internal.sections.has
+import imgui.internal.sections.*
 import kotlin.math.ceil
 
 /** Helper: Manually clip large list of items.
@@ -52,6 +49,7 @@ class ListClipper {
     fun begin(itemsCount: Int, itemsHeight: Float = -1f) {
 
         val window = g.currentWindow!!
+        IMGUI_DEBUG_LOG_CLIPPER("Clipper: Begin($itemsCount,%.2f) in '${window.name}'", itemsHeight)
 
         g.currentTable?.let { table ->
             if (table.isInsideRow)
@@ -79,6 +77,7 @@ class ListClipper {
 
         (tempData as? ListClipperData)?.let { data ->
             // In theory here we should assert that we are already at the right position, but it seems saner to just seek at the end and not assert/crash the user.
+            IMGUI_DEBUG_LOG_CLIPPER("Clipper: End() in '${g.currentWindow!!.name}'")
             if (itemsCount >= 0 && itemsCount < Int.MAX_VALUE && displayStart >= 0)
                 seekCursorForItem(this, itemsCount)
 
@@ -107,7 +106,17 @@ class ListClipper {
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those items.  */
     fun step(): Boolean {
+        val window = g.currentWindow!!
+        val needItemsHeight = itemsHeight <= 0f
         val ret = stepInternal()
+        if (g.currentTable?.isUnfrozenRows == false)
+            IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): inside frozen table row.")
+        if (needItemsHeight && itemsHeight > 0f)
+            IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): computed ItemsHeight: %.2f.", itemsHeight)
+        if (ret)
+            IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): display $displayStart to $displayEnd.")
+        else
+            IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): End.")
         if (!ret)
             end()
         return ret

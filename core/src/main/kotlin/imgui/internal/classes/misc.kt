@@ -110,8 +110,9 @@ enum class DebugLogFlag(i: DebugLogFlags? = null) {
     EventFocus,
     EventPopup,
     EventNav,
+    EventClipper,
     EventIO,
-    EventMask_(EventActiveId or EventFocus or EventPopup or EventNav or EventIO),
+    EventMask_(EventActiveId or EventFocus or EventPopup or EventNav or EventClipper or EventIO),
     /** Also send output to TTY */
     OutputToTTY(1 shl 10);
 

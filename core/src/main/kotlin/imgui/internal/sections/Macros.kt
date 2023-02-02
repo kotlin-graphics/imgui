@@ -29,6 +29,10 @@ fun IMGUI_DEBUG_LOG_NAV(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventNav)
         IMGUI_DEBUG_LOG(fmt, *args)
 }
+fun IMGUI_DEBUG_LOG_CLIPPER(fmt: String, vararg args: Any) {
+    if (g.debugLogFlags has DebugLogFlag.EventClipper)
+        IMGUI_DEBUG_LOG(fmt, *args)
+}
 
 fun IMGUI_DEBUG_LOG_IO(fmt: String, vararg args: Any) {
     if (g.debugLogFlags has DebugLogFlag.EventIO)
