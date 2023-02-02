@@ -305,11 +305,15 @@ internal interface basicHelpersForWidgetCode {
             widthExcess += items[n].width - widthRounded
             items[n].width = widthRounded
         }
-        while (widthExcess > 0f)
-            for (n in 0 until count)
+        while (widthExcess >= 1f) {
+            var n = 0
+            while (n < count && widthExcess >= 1f) {
                 if (items[n].width + 1f <= items[n].initialWidth) {
                     items[n].width += 1f
                     widthExcess -= 1f
                 }
+                n++
+            }
+        }
     }
 }

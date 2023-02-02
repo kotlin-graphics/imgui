@@ -649,9 +649,8 @@ class TabBar {
         }
 
         // With ImGuiTabBarFlags_FittingPolicyScroll policy, we will only shrink leading/trailing if the central section is not visible anymore
-        if (widthExcess > 0f && (flags has TabBarFlag.FittingPolicyResizeDown || !centralSectionIsVisible)) {
-            val shrinkDataCount =
-                if (centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
+        if (widthExcess >= 1f && (flags has TabBarFlag.FittingPolicyResizeDown || !centralSectionIsVisible)) {
+            val shrinkDataCount = if (centralSectionIsVisible) sections[1].tabCount else sections[0].tabCount + sections[2].tabCount
             val shrinkDataOffset = if (centralSectionIsVisible) sections[0].tabCount + sections[2].tabCount else 0
             shrinkWidths(g.shrinkWidthBuffer, shrinkDataOffset, shrinkDataCount, widthExcess)
 
