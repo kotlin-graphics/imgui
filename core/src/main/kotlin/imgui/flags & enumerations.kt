@@ -9,6 +9,7 @@ import imgui.classes.KeyData
 import imgui.internal.sections.InputFlag
 import imgui.internal.sections.InputFlags
 import imgui.internal.sections.has
+import org.lwjgl.system.Platform
 
 
 //-----------------------------------------------------------------------------
@@ -1287,6 +1288,7 @@ enum class Key(i: KeyChord? = null) {
         val Gamepad_END = MouseLeft.i
         val Aliases_BEGIN = MouseLeft.i
         val Aliases_END = ReservedForModCtrl.i
+        val Mod_Shortcut = if (Platform.get() == Platform.MACOSX) Mod_Super else Mod_Ctrl
         infix fun of(i: Int) = values().first { it.i == i }
 
 
