@@ -1245,10 +1245,19 @@ class Window(var context: Context,
     infix fun isContentHoverable(flags: HoveredFlags): Boolean { // An active popup disable hovering on other windows (apart from its own children)
         // FIXME-OPT: This could be cached/stored within the window.
         val focusedRootWindow = g.navWindow?.rootWindow ?: return true
-        if (focusedRootWindow.wasActive && focusedRootWindow !== rootWindow) {/*  For the purpose of those flags we differentiate "standard popup" from "modal popup"
-                NB: The order of those two tests is important because Modal windows are also Popups.             */
-            if (focusedRootWindow.flags has Wf._Modal) return false
-            if (focusedRootWindow.flags has Wf._Popup && flags hasnt HoveredFlag.AllowWhenBlockedByPopup) return false
+        if (focusedRootWindow.wasActive && focusedRootWindow !== rootWindow) {
+            // For the purpose of those flags we differentiate "standard popup" from "modal popup"
+            // NB: The 'else' is important because Modal windows are also Popups.
+            var wantInhibit = false
+            if (focusedRootWindow.flags has Wf._Modal)
+                wantInhibit = true
+            else if (focusedRootWindow.flags has Wf._Popup && flags hasnt HoveredFlag.AllowWhenBlockedByPopup)
+                wantInhibit = true
+
+            // Inhibit hover unless the window is within the stack of our modal/popup
+            if (wantInhibit)
+                if (!rootWindow!!.isWithinBeginStackOf(focusedRootWindow))
+                    return false
         }
         return true
     }
