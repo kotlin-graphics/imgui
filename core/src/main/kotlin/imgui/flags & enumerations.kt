@@ -74,9 +74,7 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
     /** Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows),
      *  because more convenient)  */
     AlwaysUseWindowPadding(1 shl 16),
-    /** [BETA] Enable resize from any corners and borders. Your backend needs to honor the different values of io.mouseCursor set by imgui.
-     *  Set io.OptResizeWindowsFromEdges and make sure mouse cursors are supported by backend (io.BackendFlags & ImGuiBackendFlags_HasMouseCursors) */
-    // ResizeFromAnySide(1 shl 17),
+
     /** No gamepad/keyboard navigation within the window    */
     NoNavInputs(1 shl 18),
 
