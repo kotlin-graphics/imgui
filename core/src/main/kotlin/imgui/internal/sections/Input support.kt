@@ -62,9 +62,9 @@ enum class InputReadFlag(val i: InputReadFlags) {
     Repeat              (1 shl 0),   // Return true on successive repeats. Default for legacy IsKeyPressed(). NOT Default for legacy IsMouseClicked(). MUST BE == 1.
 
     // Repeat rate
-    RepeatRateDefault   (1 shl 1),   // Regular
-    RepeatRateNavMove   (1 shl 2),   // Fast
-    RepeatRateNavTweak  (1 shl 3),   // Faster
+    RepeatRateDefault   (1 shl 1),   // Repeat rate: Regular (default)
+    RepeatRateNavMove   (1 shl 2),   // Repeat rate: Fast
+    RepeatRateNavTweak  (1 shl 3),   // Repeat rate: Faster
     RepeatRateMask_     (RepeatRateDefault or RepeatRateNavMove or RepeatRateNavTweak);
 
     infix fun and(b: InputReadFlag): InputReadFlags = i and b.i

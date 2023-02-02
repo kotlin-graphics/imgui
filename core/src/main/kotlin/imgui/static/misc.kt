@@ -12,6 +12,7 @@ import imgui.ImGui.isMousePosValid
 import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mainViewport
 import imgui.ImGui.mergedModFlags
+import imgui.ImGui.mouseButtonToKey
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.topMostAndVisiblePopupModal
 import imgui.api.g
@@ -50,8 +51,12 @@ fun updateKeyboardInputs() {
 
     // Import legacy keys or verify they are not used
 
-    // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools
+    // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools, update aliases
     io.keyMods = mergedModFlags
+    for (n in 0 until MouseButton.COUNT)
+        updateAliasKey(mouseButtonToKey(MouseButton of n), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
+    updateAliasKey(Key.MouseWheelX, io.mouseWheelH != 0f, io.mouseWheelH)
+    updateAliasKey(Key.MouseWheelY, io.mouseWheel != 0f, io.mouseWheel)
 
     // Clear gamepad data if disabled
     if (io.backendFlags hasnt BackendFlag.HasGamepad)
@@ -65,6 +70,13 @@ fun updateKeyboardInputs() {
         keyData.downDurationPrev = keyData.downDuration
         keyData.downDuration = if (keyData.down) (if (keyData.downDuration < 0f) 0f else keyData.downDuration + io.deltaTime) else -1f
     }
+}
+
+fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
+    assert(key.isAlias)
+    val keyData = key.data
+    keyData.down = v
+    keyData.analogValue = analogValue
 }
 
 fun updateMouseInputs() {
@@ -147,11 +159,15 @@ fun updateMouseWheel() {
         }
     }
 
-    if (io.mouseWheel == 0f && io.mouseWheelH == 0f)
+    val hoveredIdUsingMouseWheel = g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrameUsingMouseWheel
+    val activeIdUsingMouseWheelX = g.activeIdUsingKeyInputMask testBit Key.MouseWheelX.i
+    val activeIdUsingMouseWheelY = g.activeIdUsingKeyInputMask testBit Key.MouseWheelY.i
+
+    var wheelX = if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelX) g.io.mouseWheelH else 0f
+    var wheelY = if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelY) g.io.mouseWheel else 0f
+    if (wheelX == 0f && wheelY == 0f)
         return
 
-    if ((g.activeId != 0 && g.activeIdUsingMouseWheel) || (g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrameUsingMouseWheel))
-        return
     var window = g.wheelingWindow ?: g.hoveredWindow
     if (window == null || window.collapsed)
         return
@@ -180,8 +196,8 @@ fun updateMouseWheel() {
     // As a standard behavior holding SHIFT while using Vertical Mouse Wheel triggers Horizontal scroll instead
     // (we avoid doing it on OSX as it the OS input layer handles this already)
     val swapAxis = g.io.keyShift && !g.io.configMacOSXBehaviors
-    val wheelY = if (swapAxis) 0f else g.io.mouseWheel
-    val wheelX = if (swapAxis) g.io.mouseWheel else g.io.mouseWheelH
+    wheelY = if (swapAxis) 0f else g.io.mouseWheel
+    wheelX = if (swapAxis) g.io.mouseWheel else g.io.mouseWheelH
 
     // Vertical Mouse Wheel scrolling
     if (wheelY != 0f) {

@@ -199,8 +199,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Input Ownership
 
-    /** Active widget will want to read mouse wheel. Blocks scrolling the underlying window. */
-    var activeIdUsingMouseWheel = false
 
     /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
     var activeIdUsingNavDirMask = 0

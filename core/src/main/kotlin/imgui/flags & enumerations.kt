@@ -1232,8 +1232,15 @@ enum class Key {
     //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
     ModCtrl, ModShift, ModAlt, ModSuper,
 
+    // Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
+    // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
+    MouseLeft, MouseRight, MouseMiddle, MouseX1, MouseX2, MouseWheelX, MouseWheelY,
+
     // End of list
     Count;
+
+    @JvmField
+    val i = if (ordinal == 0) 0 else 512 + ordinal
 
     val index: Int
         get() {
@@ -1247,6 +1254,8 @@ enum class Key {
         val END = F12.i
         val Gamepad_BEGIN = GamepadStart
         val Gamepad_END = ModCtrl
+        val Aliases_BEGIN = MouseLeft
+        val Aliases_END = Count
         infix fun of(i: Int) = values().first { it.i == i }
 
 
@@ -1261,16 +1270,26 @@ enum class Key {
         internal val _NavGamepadInput = GamepadFaceUp
     }
 
-    @JvmField
-    val i = if (ordinal == 0) 0 else 512 + ordinal
-
     /** ~IsGamepadKey */
     val isGamepad: Boolean
         get() = i in Gamepad_BEGIN.i until Gamepad_END.i
 
-    /** ~GetKeyData */
+    /** ~IsAliasKey */
+    val isAlias: Boolean
+        get() = i in Aliases_BEGIN.i until Aliases_END.i
+
+        /** ~GetKeyData */
     val data: KeyData
         get() = g.io.keysData[index]
+
+    infix fun getChordName(mods: ModFlags): String {
+        assert(mods hasnt ModFlag.All) { "Passing invalid ImGuiModFlags value!" } // A frequent mistake is to pass ImGuiKey_ModXXX instead of ImGuiModFlags_XXX
+        return (if (mods has ModFlag.Ctrl) "Ctrl+" else "") +
+                (if (mods has ModFlag.Shift) "Shift+" else "") +
+                (if (mods has ModFlag.Alt) "Alt+" else "") +
+                (if (mods has ModFlag.Super) if (g.io.configMacOSXBehaviors) "Cmd+" else "Super+" else "") +
+                name
+    }
 
     /** ~IsKeyDown
      *
@@ -1310,7 +1329,7 @@ enum class Key {
             return false
 
         var pressed = t == 0f
-        if (!pressed && flags has InputReadFlag.Repeat){
+        if (!pressed && flags has InputReadFlag.Repeat) {
             val (repeatDelay, repeatRate) = getTypematicRepeatRate(flags)
             pressed = (t > repeatDelay) && getPressedAmount(repeatDelay, repeatRate) > 0
         }
@@ -1355,16 +1374,17 @@ operator fun IntArray.get(index: Key): Int = get(index.i)
 typealias ModFlags = Int
 
 // Helper "flags" version of key-mods to store and compare multiple key-mods easily. Sometimes used for storage (e.g. io.KeyMods) but otherwise not much used in public API.
-enum class ModFlag {
+enum class ModFlag(i: ModFlags = -1) {
     None, Ctrl, Shift,
 
-    /** Menu */
+    /** Option/Menu key */
     Alt,
 
     /** Cmd/Super/Windows key */
-    Super;
+    Super,
+    All(0x0F);
 
-    val i = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
+    val i = if (i != -1) i else if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 
     infix fun and(b: ModFlag): ModFlags = i and b.i
     infix fun and(b: ModFlags): ModFlags = i and b

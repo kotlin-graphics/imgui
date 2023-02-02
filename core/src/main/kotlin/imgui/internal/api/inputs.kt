@@ -18,8 +18,10 @@ internal interface inputs {
         val id = g.lastItemData.id
         if (g.hoveredId == id)
             g.hoveredIdUsingMouseWheel = true
-        if (g.activeId == id)
-            g.activeIdUsingMouseWheel = true
+        if (g.activeId == id) {
+            g.activeIdUsingKeyInputMask setBit Key.MouseWheelX.i
+            g.activeIdUsingKeyInputMask setBit Key.MouseWheelY.i
+        }
     }
 
     fun setActiveIdUsingNavAndKeys() {
@@ -34,6 +36,11 @@ internal interface inputs {
     infix fun isActiveIdUsingKey(key: Key): Boolean = g.activeIdUsingKeyInputMask testBit key.i
 
     infix fun setActiveIdUsingKey(key: Key) = g.activeIdUsingKeyInputMask setBit key.i
+
+    fun mouseButtonToKey(button: MouseButton): Key {
+        val mouseLeftIndex = Key.values().indexOf(Key.MouseLeft)
+        return Key.values()[mouseLeftIndex + button.i]
+    }
 
     /** Return if a mouse click/drag went past the given threshold. Valid to call during the MouseReleased frame.
      *  [Internal] This doesn't test if the button is pressed */

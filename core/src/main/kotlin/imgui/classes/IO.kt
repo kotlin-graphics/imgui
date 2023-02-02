@@ -185,7 +185,11 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         //if (e->Down) { IMGUI_DEBUG_LOG_IO("AddKeyEvent() Key='%s' %d, NativeKeycode = %d, NativeScancode = %d\n", ImGui::GetKeyName(e->Key), e->Down, e->NativeKeycode, e->NativeScancode); }
         if (key == Key.None || !appAcceptingEvents)
             return
+
         assert(g.io === this) { "Can only add events to current context." }
+        // [JVM] useless
+        //IM_ASSERT(ImGui::IsNamedKey(key)); // Backend needs to pass a valid ImGuiKey_ constant. 0..511 values are legacy native key codes which are not accepted by this API.
+        assert(!key.isAlias) { "Backend cannot submit ImGuiKey_MouseXXX values they are automatically inferred from AddMouseXXX() events ." }
 
         // Verify that backend isn't mixing up using new io.AddKeyEvent() api and old io.KeysDown[] + io.KeyMap[] data.
         if (key.isGamepad)
