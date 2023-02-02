@@ -97,8 +97,8 @@ internal interface PopupsModalsTooltips {
 
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()
-        val popupRef = PopupData(popupId = id, window = null, sourceWindow = g.navWindow, openFrameCount = g.frameCount,
-                                 openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
+        val popupRef = PopupData(popupId = id, window = null, backupNavWindow = g.navWindow, // When popup closes focus may be restored to NavWindow (depend on window type).
+                                 openFrameCount = g.frameCount, openParentId = parentWindow.idStack.last(), openPopupPos = openPopupPos,
                                  openMousePos = if (isMousePosValid(io.mousePos)) Vec2(io.mousePos) else Vec2(openPopupPos))
 
         IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopupEx(0x%08X)", id)
@@ -124,17 +124,20 @@ internal interface PopupsModalsTooltips {
         assert(remaining >= 0 && remaining < g.openPopupStack.size)
 
         // Trim open popup stack
-        var focusWindow = g.openPopupStack[remaining].sourceWindow
         val popupWindow = g.openPopupStack[remaining].window
+        val popupBackupNavWindow = g.openPopupStack[remaining].backupNavWindow
         for (i in remaining until g.openPopupStack.size) // resize(remaining)
             g.openPopupStack.pop()
 
-        if (restoreFocusToWindowUnderPopup) if (focusWindow?.wasActive == false && popupWindow != null) focusTopMostWindowUnderOne(
-            popupWindow)   // Fallback
-        else {
-            if (g.navLayer == NavLayer.Main && focusWindow != null) focusWindow =
-                navRestoreLastChildNavWindow(focusWindow)
-            focusWindow(focusWindow)
+        if (restoreFocusToWindowUnderPopup) {
+            var focusWindow = if (popupWindow != null && popupWindow.flags has Wf._ChildMenu) popupWindow.parentWindow else popupBackupNavWindow
+            if (focusWindow?.wasActive == false && popupWindow != null)
+                focusTopMostWindowUnderOne(popupWindow)   // Fallback
+            else {
+                if (g.navLayer == NavLayer.Main && focusWindow != null)
+                    focusWindow = navRestoreLastChildNavWindow(focusWindow)
+                focusWindow(focusWindow)
+            }
         }
     }
 

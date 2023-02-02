@@ -313,11 +313,15 @@ interface demoDebugInformations {
 
         // Details for Popups
         if (treeNode("Popups", "Popups (${g.openPopupStack.size})")) {
-            for (popup in g.openPopupStack) {
-                val window = popup.window
-                val childWindow = if (window != null && window.flags has Wf._ChildWindow) " ChildWindow" else ""
-                val childMenu = if (window != null && window.flags has Wf._ChildMenu) " ChildMenu" else ""
-                bulletText("PopupID: %08x, Window: '${window?.name}'$childWindow$childMenu", popup.popupId)
+            for (popupData in g.openPopupStack) {
+                // As it's difficult to interact with tree nodes while popups are open, we display everything inline.
+                val window = popupData.window
+                val windowName = window?.name ?: "NULL"
+                val childWindow = if (window != null && window.flags has Wf._ChildWindow) "Child;" else ""
+                val childMenu = if (window != null && window.flags has Wf._ChildMenu) "Menu;" else ""
+                val backupName = popupData.backupNavWindow?.name ?: "NULL"
+                val parentName = window?.parentWindow?.name ?: "NULL"
+                bulletText("PopupID: %08x, Window: '$windowName' ($childWindow$childMenu), BackupNavWindow '$backupName', ParentWindow '$parentName'", popupData.popupId)
             }
             treePop()
         }

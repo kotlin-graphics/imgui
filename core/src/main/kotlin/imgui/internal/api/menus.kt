@@ -133,7 +133,7 @@ internal interface menus {
             // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.
             //  Only when they are other items sticking out we're going to add spacing, yet only register minimum width into the layout system.
             popupPos.put(pos.x, pos.y - style.windowPadding.y)
-            val iconW = if(icon.isNotEmpty()) calcTextSize(icon).x else 0f
+            val iconW = if (icon.isNotEmpty()) calcTextSize(icon).x else 0f
             val checkmarkW = floor(g.fontSize * 1.2f)
             val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, 0f, checkmarkW) // Feedback to next frame
             val extraW = 0f max (contentRegionAvail.x - minW)
@@ -158,10 +158,8 @@ internal interface menus {
             // Close menu when not hovering it anymore unless we are moving roughly in the direction of the menu
             // Implement http://bjk5.com/post/44698559168/breaking-down-amazons-mega-dropdown to avoid using timers, so menus feels more reactive.
             var movingTowardChildMenu = false
-            val childMenuWindow = when {
-                g.beginPopupStack.size < g.openPopupStack.size && g.openPopupStack[g.beginPopupStack.size].sourceWindow == window -> g.openPopupStack[g.beginPopupStack.size].window
-                else -> null
-            }
+            val childPopup = if (g.beginPopupStack.size < g.openPopupStack.size) g.openPopupStack[g.beginPopupStack.size] else null // Popup candidate (testing below)
+            val childMenuWindow = if (childPopup?.window?.parentWindow === window) childPopup.window else null
             if (g.hoveredWindow === window && childMenuWindow != null && window.flags hasnt WindowFlag.MenuBar) {
                 val refUnit = g.fontSize // FIXME-DPI
                 val nextWindowRect = childMenuWindow.rect()
@@ -271,8 +269,8 @@ internal interface menus {
             // Menu item inside a vertical menu
             // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.
             //  Only when they are other items sticking out we're going to add spacing, yet only register minimum width into the layout system.
-            val iconW = if(icon.isNotEmpty()) calcTextSize(icon).x else 0f
-            val shortcutW = if(shortcut.isNotEmpty()) calcTextSize(shortcut).x else 0f
+            val iconW = if (icon.isNotEmpty()) calcTextSize(icon).x else 0f
+            val shortcutW = if (shortcut.isNotEmpty()) calcTextSize(shortcut).x else 0f
             val checkmarkW = floor(g.fontSize * 1.2f)
             val minW = window.dc.menuColumns.declColumns(iconW, labelSize.x, shortcutW, checkmarkW) // Feedback for next frame
             val stretchW = 0f max (contentRegionAvail.x - minW)
