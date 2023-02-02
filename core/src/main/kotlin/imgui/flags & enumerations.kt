@@ -1431,7 +1431,12 @@ enum class NavInput {
 
     /** Equivalent of isKeyDown() for NavInputs[]
      *  ~IsNavInputDown */ // JVM TODO check for semantic Key.isPressed/Down
-    fun isDown(): Boolean = io.navInputs[i] > 0f
+    val isDown: Boolean
+        get() = io.navInputs[i] > 0f
+
+    /** ~IsNavInputPressed */
+    val isPressed: Boolean
+        get() = io.navInputsDownDuration[i] == 0f
 
     /** Equivalent of isKeyPressed() for NavInputs[]
      *  ~IsNavInputTest  */

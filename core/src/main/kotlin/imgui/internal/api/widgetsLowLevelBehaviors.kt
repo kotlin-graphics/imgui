@@ -240,7 +240,7 @@ internal interface widgetsLowLevelBehaviors {
                 hovered = true
         if (g.navActivateDownId == id) {
             val navActivatedByCode = g.navActivateId == id
-            val navActivatedByInputs = NavInput.Activate isTest if (flags has Bf.Repeat) NavReadMode.Repeat else NavReadMode.Pressed
+            val navActivatedByInputs = if (flags has Bf.Repeat) NavInput.Activate isTest NavReadMode.Repeat else NavInput.Activate.isPressed
             if (navActivatedByCode || navActivatedByInputs) {
                 // Set active id so it can be queried by user via IsItemActive(), equivalent of holding the mouse button.
                 pressed = true

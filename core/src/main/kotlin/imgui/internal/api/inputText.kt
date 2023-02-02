@@ -428,8 +428,8 @@ internal interface inputText {
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
             val isEnterPressed = Key.Enter.isPressed || Key.KeypadEnter.isPressed
-            val isValidateNav = (NavInput.Activate isTest NavReadMode.Pressed && !Key.Space.isPressed) || NavInput.Input isTest NavReadMode.Pressed
-            val isCancel = Key.Escape.isPressed || NavInput.Cancel isTest NavReadMode.Pressed
+            val isValidateNav = (NavInput.Activate.isPressed && !Key.Space.isPressed) || NavInput.Input.isPressed
+            val isCancel = Key.Escape.isPressed || NavInput.Cancel.isPressed
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(

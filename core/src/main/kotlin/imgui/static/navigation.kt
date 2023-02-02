@@ -161,10 +161,10 @@ fun navUpdate() {
     g.navActivateId = 0; g.navActivateDownId = 0; g.navActivatePressedId = 0; g.navActivateInputId = 0
     g.navActivateFlags = ActivateFlag.None.i
     if (g.navId != 0 && !g.navDisableHighlight && g.navWindowingTarget == null && g.navWindow != null && g.navWindow!!.flags hasnt Wf.NoNavInputs) {
-        val activateDown = NavInput.Activate.isDown()
-        val inputDown = NavInput.Input.isDown()
-        val activatePressed = activateDown && NavInput.Activate isTest NavReadMode.Pressed
-        val inputPressed = inputDown && NavInput.Input isTest NavReadMode.Pressed
+        val activateDown = NavInput.Activate.isDown
+        val inputDown = NavInput.Input.isDown
+        val activatePressed = activateDown && NavInput.Activate.isPressed
+        val inputPressed = inputDown && NavInput.Input.isPressed
         if (g.activeId == 0 && activatePressed) {
             g.navActivateId = g.navId
             g.navActivateFlags = ActivateFlag.PreferTweak.i
@@ -268,11 +268,11 @@ fun navUpdateWindowing() {
             g.navWindowingTargetAnim = null
     }
     // Start CTRL+TAB or Square+L/R window selection
-    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu isTest NavReadMode.Pressed
+    val startWindowingWithGamepad = allowWindowing && g.navWindowingTarget == null && NavInput.Menu.isPressed
     val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed && io.configFlags has ConfigFlag.NavEnableKeyboard
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
-            g.navWindowingTarget = it; g.navWindowingTargetAnim = it
+            g.navWindowingTarget = it.rootWindow; g.navWindowingTargetAnim = it.rootWindow
             g.navWindowingTimer = 0f; g.navWindowingHighlightAlpha = 0f
             g.navWindowingAccumDeltaPos put 0f; g.navWindowingAccumDeltaSize put 0f
             g.navWindowingToggleLayer = startWindowingWithGamepad // Gamepad starts toggling layer
@@ -299,7 +299,7 @@ fun navUpdateWindowing() {
             }
 
             // Single press toggles NavLayer, long press with L/R apply actual focus on release (until then the window was merely rendered top-most)
-            if (!NavInput.Menu.isDown()) {
+            if (!NavInput.Menu.isDown) {
                 // Once button was held long enough we don't consider it a tap-to-toggle-layer press anymore.
                 g.navWindowingToggleLayer = g.navWindowingToggleLayer and (g.navWindowingHighlightAlpha < 1f)
                 if (g.navWindowingToggleLayer && g.navWindow != null)
@@ -466,7 +466,7 @@ fun navUpdateWindowingOverlay() {
  *  - either to move most/all of those tests to the epilogue/end functions of the scope they are dealing with (e.g. exit child window in EndChild()) or in EndFrame(), to allow an earlier intercept */
 fun navUpdateCancelRequest() {
 
-    if (!NavInput.Cancel.isTest(NavReadMode.Pressed))
+    if (!NavInput.Cancel.isPressed)
         return
 
     IMGUI_DEBUG_LOG_NAV("[nav] ImGuiNavInput_Cancel")

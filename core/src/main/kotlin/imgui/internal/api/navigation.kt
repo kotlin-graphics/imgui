@@ -208,10 +208,8 @@ internal interface navigation {
 
         val t = io.navInputsDownDuration[n]
         return when { // Return 1.0f when just released, no repeat, ignore analog input.
-            t < 0f && mode == NavReadMode.Released -> if (io.navInputsDownDurationPrev[n] >= 0f) 1f else 0f
             t < 0f -> 0f
             else -> when (mode) { // Return 1.0f when just pressed, no repeat, ignore analog input.
-                NavReadMode.Pressed -> if (t == 0f) 1 else 0
                 NavReadMode.Repeat -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.8f)
                 NavReadMode.RepeatSlow -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 1.25f, io.keyRepeatRate * 2f)
                 NavReadMode.RepeatFast -> calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay * 0.72f, io.keyRepeatRate * 0.3f)
@@ -232,9 +230,9 @@ internal interface navigation {
         if (dirSources has NavDirSourceFlag.PadLStick)
             delta += Vec2(getNavInputAmount(NavInput.LStickRight, mode) - getNavInputAmount(NavInput.LStickLeft, mode),
                           getNavInputAmount(NavInput.LStickDown, mode) - getNavInputAmount(NavInput.LStickUp, mode))
-        if (slowFactor != 0f && NavInput.TweakSlow.isDown())
+        if (slowFactor != 0f && NavInput.TweakSlow.isDown)
             delta *= slowFactor
-        if (fastFactor != 0f && NavInput.TweakFast.isDown())
+        if (fastFactor != 0f && NavInput.TweakFast.isDown)
             delta *= fastFactor
         return delta
     }

@@ -1473,19 +1473,22 @@ internal interface templateFunctions {
                     g.sliderCurrentAccum = 0f // Reset any stored nav delta upon activation
                     g.sliderCurrentAccumDirty = false
                 }
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
+
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
+                    val tweakSlow = NavInput.TweakSlow.isDown
+                    val tweakFast = NavInput.TweakFast.isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
-                        if (NavInput.TweakSlow.isDown())
+                        if (tweakSlow)
                             inputDelta /= 10f
-                    } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
+                    } else if ((vRange >= -100f && vRange <= 100f) || tweakSlow)
                         inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
                         inputDelta /= 100f
-                    if (NavInput.TweakFast.isDown())
+                    if (tweakFast)
                         inputDelta *= 10f
 
                     g.sliderCurrentAccum += inputDelta
@@ -1614,19 +1617,21 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
+                    val tweakSlow = NavInput.TweakSlow.isDown
+                    val tweakFast = NavInput.TweakFast.isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
-                        if (NavInput.TweakSlow.isDown())
+                        if (tweakSlow)
                             inputDelta /= 10f
-                    } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
+                    } else if ((vRange >= -100f && vRange <= 100f) || tweakSlow)
                         inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
                         inputDelta /= 100f
-                    if (NavInput.TweakFast.isDown())
+                    if (tweakFast)
                         inputDelta *= 10f
 
                     g.sliderCurrentAccum += inputDelta
@@ -1756,19 +1761,21 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
+                    val tweakSlow = NavInput.TweakSlow.isDown
+                    val tweakFast = NavInput.TweakFast.isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
-                        if (NavInput.TweakSlow.isDown())
+                        if (tweakSlow)
                             inputDelta /= 10f
-                    } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
+                    } else if ((vRange >= -100f && vRange <= 100f) || tweakSlow)
                         inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
                         inputDelta /= 100f
-                    if (NavInput.TweakFast.isDown())
+                    if (tweakFast)
                         inputDelta *= 10f
 
                     g.sliderCurrentAccum += inputDelta
@@ -1900,19 +1907,21 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
+                    val tweakSlow = NavInput.TweakSlow.isDown
+                    val tweakFast = NavInput.TweakFast.isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
-                        if (NavInput.TweakSlow.isDown())
+                        if (tweakSlow)
                             inputDelta /= 10f
-                    } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
+                    } else if ((vRange >= -100f && vRange <= 100f) || tweakSlow)
                         inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
                         inputDelta /= 100f
-                    if (NavInput.TweakFast.isDown())
+                    if (tweakFast)
                         inputDelta *= 10f
 
                     g.sliderCurrentAccum += inputDelta
@@ -2043,19 +2052,21 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
+                    val tweakSlow = NavInput.TweakSlow.isDown
+                    val tweakFast = NavInput.TweakFast.isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
-                        if (NavInput.TweakSlow.isDown())
+                        if (tweakSlow)
                             inputDelta /= 10f
-                    } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
+                    } else if ((vRange >= -100f && vRange <= 100f) || tweakSlow)
                         inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
                         inputDelta /= 100f
-                    if (NavInput.TweakFast.isDown())
+                    if (tweakFast)
                         inputDelta *= 10f
 
                     g.sliderCurrentAccum += inputDelta
@@ -2186,19 +2197,21 @@ internal interface templateFunctions {
                     g.sliderCurrentAccumDirty = false
                 }
 
-                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast, 0f, 0f)
+                val inputDelta2 = getNavInputAmount2d(NavDirSourceFlag.Keyboard or NavDirSourceFlag.PadDPad, NavReadMode.RepeatFast)
                 var inputDelta = if (axis == Axis.X) inputDelta2.x else -inputDelta2.y
                 if (inputDelta != 0f) {
+                    val tweakSlow = NavInput.TweakSlow.isDown
+                    val tweakFast = NavInput.TweakFast.isDown
                     val decimalPrecision = if (isFloatingPoint) parseFormatPrecision(format, 3) else 0
                     if (decimalPrecision > 0) {
                         inputDelta /= 100f    // Gamepad/keyboard tweak speeds in % of slider bounds
-                        if (NavInput.TweakSlow.isDown())
+                        if (tweakSlow)
                             inputDelta /= 10f
-                    } else if ((vRange >= -100f && vRange <= 100f) || NavInput.TweakSlow.isDown())
+                    } else if ((vRange >= -100f && vRange <= 100f) || tweakSlow)
                         inputDelta = (if (inputDelta < 0f) -1f else +1f) / vRange.f // Gamepad/keyboard tweak speeds in integer steps
                     else
                         inputDelta /= 100f
-                    if (NavInput.TweakFast.isDown())
+                    if (tweakFast)
                         inputDelta *= 10f
 
                     g.sliderCurrentAccum += inputDelta
