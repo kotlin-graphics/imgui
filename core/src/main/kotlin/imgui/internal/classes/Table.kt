@@ -1574,6 +1574,8 @@ class Table {
         rowTextBaseline = 0f
         rowIndentOffsetX = window.dc.indent - hostIndentX // Lock indent
         window.dc.prevLineTextBaseOffset = 0f
+        window.dc.currLineSize put 0f
+        window.dc.isSameLine = false
         window.dc.cursorMaxPos.y = nextY1
 
         // Making the header BG color non-transparent will allow us to overlay it multiple times when handling smooth dragging.

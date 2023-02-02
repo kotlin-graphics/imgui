@@ -80,6 +80,7 @@ interface columns {
             } else {
                 // New row/line: column 0 honor IndentX.
                 dc.columnsOffset = (columnPadding - window.windowPadding.x) max 0f
+                dc.isSameLine = false
                 columns.lineMinY = columns.lineMaxY
             }
             dc.cursorPos.x = floor(pos.x + dc.indent + dc.columnsOffset)
