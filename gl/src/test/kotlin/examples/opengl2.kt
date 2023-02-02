@@ -66,7 +66,7 @@ private class ImGuiOpenGL2 {
 
         // Setup Dear ImGui style
         ImGui.styleColorsDark()
-//        ImGui.styleColorsClassic()
+//        ImGui.styleColorsLight()
 
         // Setup Platform/Renderer backends
         // FIXME: Consider reworking this example to install our own GLUT funcs + forward calls ImGui_ImplGLUT_XXX ones, instead of using ImGui_ImplGLUT_InstallFuncs().
