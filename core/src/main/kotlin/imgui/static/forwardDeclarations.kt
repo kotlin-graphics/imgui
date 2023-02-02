@@ -98,7 +98,7 @@ fun findHoveredWindow() {
 
 fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags: WindowFlags) {
 
-    val newIsExplicitChild = newFlags has Wf._ChildWindow
+    val newIsExplicitChild = newFlags has Wf._ChildWindow && (newFlags hasnt Wf._Popup || newFlags has Wf._ChildMenu)
     val childFlagChanged = newIsExplicitChild != window.isExplicitChild
     if ((justCreated || childFlagChanged) && !newIsExplicitChild) {
         assert(window in g.windowsFocusOrder)
