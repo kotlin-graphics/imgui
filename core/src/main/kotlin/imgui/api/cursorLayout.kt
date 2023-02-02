@@ -6,6 +6,7 @@ import glm_.max
 import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
+import imgui.ImGui.errorCheckUsingSetCursorPosToExtendParentBoundaries
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.separatorEx
@@ -151,6 +152,9 @@ interface cursorLayout {
         val groupData = g.groupStack.last()
         assert(groupData.windowID == window.id) { "EndGroup() in wrong window?" }
 
+        if (window.dc.isSetPos)
+            errorCheckUsingSetCursorPosToExtendParentBoundaries()
+
         val groupBb = Rect(groupData.backupCursorPos, window.dc.cursorMaxPos max groupData.backupCursorPos)
 
         with(window.dc) {
@@ -219,7 +223,8 @@ interface cursorLayout {
          *  ~SetCursorPos   */
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos put (pos - scroll + value)
-            dc.cursorMaxPos = glm.max(dc.cursorMaxPos, dc.cursorPos)
+//            dc.cursorMaxPos = glm.max(dc.cursorMaxPos, dc.cursorPos)
+            dc.isSetPos = true
         }
 
     var cursorPosX: Float
@@ -231,7 +236,8 @@ interface cursorLayout {
          *  ~SetCursorPosX  */
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos.x = pos.x - scroll.x + value
-            dc.cursorMaxPos.x = glm.max(dc.cursorMaxPos.x, dc.cursorPos.x)
+//            dc.cursorMaxPos.x = glm.max(dc.cursorMaxPos.x, dc.cursorPos.x)
+            dc.isSetPos = true
         }
 
     var cursorPosY: Float
@@ -242,7 +248,8 @@ interface cursorLayout {
         /** ~SetCursorPosY */
         set(value) = with(currentWindowRead!!) {
             dc.cursorPos.y = pos.y - scroll.y + value
-            dc.cursorMaxPos.y = glm.max(dc.cursorMaxPos.y, dc.cursorPos.y)
+//            dc.cursorMaxPos.y = glm.max(dc.cursorMaxPos.y, dc.cursorPos.y)
+            dc.isSetPos = true
         }
 
     /** initial cursor position in window coordinates
@@ -262,7 +269,8 @@ interface cursorLayout {
          *  It would be sane if we requested user to use SetCursorPos() + Dummy(ImVec2(0,0)) to extend CursorMaxPos... */
         set(value) = with(currentWindow.dc) {
             cursorPos put value
-            cursorMaxPos maxAssign cursorPos
+//            cursorMaxPos maxAssign cursorPos
+            isSetPos = true
         }
 
     /** Vertically align/lower upcoming text to framePadding.y so that it will aligns to upcoming widgets

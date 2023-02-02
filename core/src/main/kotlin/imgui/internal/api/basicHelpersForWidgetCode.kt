@@ -69,7 +69,7 @@ internal interface basicHelpersForWidgetCode {
             currLineSize.y = 0f
             prevLineTextBaseOffset = currLineTextBaseOffset max textBaselineY
             currLineTextBaseOffset = 0f
-            isSameLine = false
+            isSameLine = false; isSetPos = false
 
             // Horizontal layout mode
             if (layoutType == LayoutType.Horizontal) sameLine()

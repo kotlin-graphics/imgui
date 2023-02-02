@@ -149,6 +149,30 @@ internal interface debugTools {
         }
     }
 
+    // Until 1.89 (IMGUI_VERSION_NUM < 18814) it was legal to use SetCursorPos() to extend the boundary of a parent (e.g. window or table cell)
+    // This is causing issues and ambiguity and we need to retire that.
+    // See https://github.com/ocornut/imgui/issues/5548 for more details.
+    // [Scenario 1]
+    //  Previously this would make the window content size ~200x200:
+    //    Begin(...) + SetCursorScreenPos(GetCursorScreenPos() + ImVec2(200,200)) + End();  // NOT OK
+    //  Instead, please submit an item:
+    //    Begin(...) + SetCursorScreenPos(GetCursorScreenPos() + ImVec2(200,200)) + Dummy(ImVec2(0,0)) + End(); // OK
+    //  Alternative:
+    //    Begin(...) + Dummy(ImVec2(200,200)) + End(); // OK
+    // [Scenario 2]
+    //  For reference this is one of the issue what we aim to fix with this change:
+    //    BeginGroup() + SomeItem("foobar") + SetCursorScreenPos(GetCursorScreenPos()) + EndGroup()
+    //  The previous logic made SetCursorScreenPos(GetCursorScreenPos()) have a side-effect! It would erroneously incorporate ItemSpacing.y after the item into content size, making the group taller!
+    //  While this code is a little twisted, no-one would expect SetXXX(GetXXX()) to have a side-effect. Using vertical alignment patterns could trigger this issue.
+    fun errorCheckUsingSetCursorPosToExtendParentBoundaries() {
+        val window = g.currentWindow!!
+        assert(window.dc.isSetPos)
+        window.dc.isSetPos = false
+        if (window.dc.cursorPos.x <= window.dc.cursorMaxPos.x && window.dc.cursorPos.y <= window.dc.cursorMaxPos.y)
+            return
+        error("Code uses SetCursorPos()/SetCursorScreenPos() to extend window/parent boundaries. Please submit an item e.g. Dummy() to validate extent.")
+    }
+
     fun debugDrawItemRect(col: Int = COL32(255, 0, 0, 255)) {
         val window = g.currentWindow!!
         getForegroundDrawList(window).addRect(g.lastItemData.rect.min, g.lastItemData.rect.max, col)

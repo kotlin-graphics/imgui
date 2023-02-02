@@ -8,6 +8,7 @@ import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.endColumns
+import imgui.ImGui.errorCheckUsingSetCursorPosToExtendParentBoundaries
 import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
@@ -412,7 +413,7 @@ interface windows {
                 assert(window.idStack.size == 1)
                 val id = window.idStack.pop() // As window->IDStack[0] == window->ID here, make sure TestEngine doesn't erroneously see window as parent of itself.
                 IMGUI_TEST_ENGINE_ITEM_ADD(window.rect(), window.id)
-                IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if(g.hoveredWindow === window) ItemStatusFlag.HoveredRect.i else ItemStatusFlag.None.i)
+                IMGUI_TEST_ENGINE_ITEM_INFO(window.id, window.name, if (g.hoveredWindow === window) ItemStatusFlag.HoveredRect.i else ItemStatusFlag.None.i)
                 window.idStack += id
             }
 
@@ -615,7 +616,7 @@ interface windows {
                 dc.currLineSize put 0f; dc.prevLineSize put 0f
                 dc.idealMaxPos put dc.cursorStartPos
                 dc.currLineTextBaseOffset = 0f; dc.prevLineTextBaseOffset = 0f
-                dc.isSameLine = false
+                dc.isSameLine = false; dc.isSetPos = false
 
                 dc.navLayerCurrent = NavLayer.Main
                 dc.navLayersActiveMask = dc.navLayersActiveMaskNext
@@ -754,6 +755,9 @@ interface windows {
         // Stop logging
         if (window.flags hasnt Wf._ChildWindow)    // FIXME: add more options for scope of logging
             logFinish()
+
+        if (window.dc.isSetPos)
+            errorCheckUsingSetCursorPosToExtendParentBoundaries()
 
         // Pop from window stack
         g.lastItemData = g.currentWindowStack.last().parentLastItemDataBackup
