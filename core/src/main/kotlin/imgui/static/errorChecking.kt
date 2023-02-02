@@ -2,10 +2,16 @@ package imgui.static
 
 import imgui.*
 import imgui.ImGui.end
+import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
+import imgui.ImGui.isMouseClicked
 import imgui.ImGui.mergedModFlags
+import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.style
+import imgui.ImGui.text
+import imgui.ImGui.textColored
 import imgui.api.g
+import imgui.dsl.tooltip
 
 
 //-----------------------------------------------------------------------------
@@ -79,15 +85,22 @@ fun updateDebugToolItemPicker() {
         ImGui.mouseCursor = MouseCursor.Hand
         if (Key.Escape.isPressed)
             g.debugItemPickerActive = false
-        if (ImGui.isMouseClicked(MouseButton.Left) && hoveredId != 0) {
+        val changeMapping = g.io.keyMods == ModFlag.Ctrl or ModFlag.Shift
+        if (!changeMapping && isMouseClicked(g.debugItemPickerMouseButton) && hoveredId != 0) {
             g.debugItemPickerBreakId = hoveredId
             g.debugItemPickerActive = false
         }
-        ImGui.setNextWindowBgAlpha(0.6f)
-        dsl.tooltip {
-            ImGui.text("HoveredId: 0x%08X", hoveredId)
-            ImGui.text("Press ESC to abort picking.")
-            ImGui.textColored(ImGui.getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click to break in debugger!")
+        for (mouseButton in MouseButton.values().drop(1)) // drop None
+            if (changeMapping && isMouseClicked(mouseButton))
+                g.debugItemPickerMouseButton = mouseButton
+        setNextWindowBgAlpha(0.7f)
+        tooltip {
+            text("HoveredId: 0x%08X", hoveredId)
+            text("Press ESC to abort picking.")
+            if (changeMapping)
+                text("Remap w/ Ctrl+Shift: click anywhere to select new mouse button.")
+            else
+                textColored(getStyleColorVec4(if (hoveredId != 0) Col.Text else Col.TextDisabled), "Click ${g.debugItemPickerMouseButton} Button to break in debugger! (remap w/ Ctrl+Shift)")
         }
     }
 }

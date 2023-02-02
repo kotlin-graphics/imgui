@@ -139,7 +139,7 @@ object Documents {
 
     val closeQueue = ArrayList<MyDocument>()
 
-    operator fun invoke(pOpen: KMutableProperty0<Boolean>) {
+    operator fun invoke(pOpen: KMutableProperty0<Boolean>?) {
 
         val windowContentsVisible = begin("Example: Documents", pOpen, WindowFlag.MenuBar.i)
         if (!windowContentsVisible) {
@@ -165,8 +165,8 @@ object Documents {
                 if (menuItem("Close All Documents", "", false, openCount > 0))
                     for (doc in documents)
                         doc.doQueueClose()
-                if (menuItem("Exit", "Alt+F4")) {
-                }
+                if (menuItem("Exit", "Ctrl+F4") && pOpen != null)
+                    pOpen.set(false)
                 endMenu()
             }
             endMenuBar()

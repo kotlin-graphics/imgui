@@ -634,6 +634,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Item picker is active (started with DebugStartItemPicker()) */
     var debugItemPickerActive = false
 
+    var debugItemPickerMouseButton = MouseButton.Left
+
     /** Will call IM_DEBUG_BREAK() when encountering this ID */
     var debugItemPickerBreakId: ID = 0
 
