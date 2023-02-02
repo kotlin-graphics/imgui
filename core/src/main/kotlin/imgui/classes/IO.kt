@@ -82,6 +82,12 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** When holding a key/button, rate at which it repeats, in seconds.    */
     var keyRepeatRate = 0.05f
 
+    /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayNormal) returns true. */
+    var hoverDelayNormal = 0.3f
+
+    /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayShort) returns true. */
+    var hoverDelayShort = 0.1f
+
     //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
 
     /** Font atlas: load, rasterize and pack one or more fonts into a single texture.    */

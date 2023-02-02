@@ -409,8 +409,8 @@ interface demoDebugInformations {
                     activeIdUsingKeyInputCount += if (g.activeIdUsingKeyInputMask[n]) 1 else 0
                 text("ActiveIdUsing: NavDirMask: %X, KeyInputMask: $activeIdUsingKeyInputCount key(s)", g.activeIdUsingNavDirMask, g.activeIdUsingKeyInputMask)
                 text("HoveredId: 0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Not displaying g.HoveredId as it is update mid-frame
-                text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)",
-                     g.dragDropPayload.sourceId)
+                text("HoverDelayId: 0x%08X, Timer: %.2f, ClearTimer: %.2f", g.hoverDelayId, g.hoverDelayTimer, g.hoverDelayClearTimer)
+                text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
             }
 
             text("NAV,FOCUS")
@@ -830,7 +830,7 @@ interface demoDebugInformations {
          *  In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.txt)    */
         fun helpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemHovered()) {
+            if (isItemHovered(HoveredFlag.DelayShort)) {
                 beginTooltip()
                 pushTextWrapPos(fontSize * 35f)
                 textEx(desc)

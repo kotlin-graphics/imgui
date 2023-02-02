@@ -2,6 +2,7 @@ package imgui.demo
 
 import gli_.has
 import glm_.*
+import glm_.func.sin
 import glm_.vec2.Vec2
 import glm_.vec3.Vec3
 import glm_.vec4.Vec4
@@ -18,6 +19,7 @@ import imgui.ImGui.beginDragDropTarget
 import imgui.ImGui.beginListBox
 import imgui.ImGui.beginPopupContextItem
 import imgui.ImGui.beginTable
+import imgui.ImGui.beginTooltip
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.button
@@ -54,6 +56,7 @@ import imgui.ImGui.endDragDropTarget
 import imgui.ImGui.endListBox
 import imgui.ImGui.endPopup
 import imgui.ImGui.endTable
+import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.image
@@ -324,15 +327,6 @@ object ShowDemoWindowWidgets {
                 sameLine()
                 text("$counter")
 
-                text("Hover over me")
-                if (isItemHovered()) setTooltip("I am a tooltip")
-                sameLine()
-                text("- or me")
-                if (isItemHovered())
-                    tooltip {
-                        text("I am a fancy tooltip")
-                        plotLines("Curve", arr)
-                    }
                 separator()
                 labelText("label", "Value")
 
@@ -426,6 +420,36 @@ object ShowDemoWindowWidgets {
 
                     sameLine(); helpMarker("Using the simplified one-liner ListBox API here.\nRefer to the \"List boxes\" section below for an explanation of how to use the more flexible and general BeginListBox/EndListBox API.")
                 }
+
+                run {
+                    alignTextToFramePadding()
+                    text("Tooltips:")
+
+                    sameLine()
+                    button("Button")
+                    if (isItemHovered())
+                        setTooltip("I am a tooltip")
+
+                    sameLine()
+                    button("Fancy")
+                    if (isItemHovered()) {
+                        beginTooltip()
+                        text("I am a fancy tooltip")
+                        plotLines("Curve", arr)
+                        text("Sin(time) = ${ImGui.time.f.sin}")
+                        endTooltip()
+                    }
+
+                    sameLine()
+                    button("Delayed")
+                    if (isItemHovered(HoveredFlag.DelayNormal)) // Delay best used on items that highlight on hover, so this not a great example!
+                        setTooltip("I am a tooltip with a delay.")
+
+                    sameLine()
+                    helpMarker("Tooltip are created by using the IsItemHovered() function over any kind of item.")
+
+                }
+
             }
         }
     }
@@ -1837,12 +1861,15 @@ object ShowDemoWindowWidgets {
                     else -> false
                 }
 
+                val hoveredDelayNone = ImGui.isItemHovered()
+                val hoveredDelayShort = ImGui.isItemHovered(HoveredFlag.DelayShort)
+                val hoveredDelayNormal = ImGui.isItemHovered(HoveredFlag.DelayNormal)
+
                 // Display the values of IsItemHovered() and other common item state functions.
                 // Note that the ImGuiHoveredFlags_XXX flags can be combined.
                 // Because BulletText is an item itself and that would affect the output of IsItemXXX functions,
                 // we query every state in a single call to avoid storing them and to simplify the code.
-                if (DEBUG)
-                    bulletText("""
+                bulletText("""
                     Return value = $ret
                     isItemFocused = ${isItemFocused.i}
                     isItemHovered() = ${isItemHovered().i}
@@ -1861,26 +1888,7 @@ object ShowDemoWindowWidgets {
                     GetItemRectMin() = (%.1f, %.1f)
                     GetItemRectMax() = (%.1f, %.1f)
                     GetItemRectSize() = (%.1f, %.1f)""".trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
-                else
-                    bulletText("""
-                    Return value = $ret
-                    isItemFocused = $isItemFocused
-                    isItemHovered() = ${isItemHovered().i}
-                    isItemHovered(AllowWhenBlockedByPopup) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)}
-                    isItemHovered(AllowWhenBlockedByActiveItem) = ${isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem)}
-                    isItemHovered(AllowWhenOverlapped) = ${isItemHovered(HoveredFlag.AllowWhenOverlapped)}
-                    isItemHovered(RectOnly) = ${isItemHovered(HoveredFlag.RectOnly)}
-                    isItemActive = $isItemActive
-                    isItemEdited = $isItemEdited
-                    isItemActivated = $isItemActivated
-                    isItemDeactivated = $isItemDeactivated
-                    isItemDeactivatedAfterEdit = $isItemDeactivatedAfterEdit
-                    isItemVisible = $isItemVisible
-                    isItemClicked = ${isItemClicked()}
-                    IsItemToggledOpen = $isItemToggledOpen
-                    GetItemRectMin() = (%.1f, %.1f)
-                    GetItemRectMax() = (%.1f, %.1f)
-                    GetItemRectSize() = (%.1f, %.1f)""".trimIndent(), itemRectMin.x, itemRectMin.y, itemRectMax.x, itemRectMax.y, itemRectSize.x, itemRectSize.y)
+                bulletText("w/ Hovering Delay: None = ${hoveredDelayNone.i}, Fast ${hoveredDelayShort.i}, Normal = ${hoveredDelayNormal.i}")
 
                 if (itemDisabled)
                     endDisabled()

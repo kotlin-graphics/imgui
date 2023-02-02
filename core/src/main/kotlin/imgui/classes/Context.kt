@@ -464,10 +464,12 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Local buffer for small payloads */
     var dragDropPayloadBufLocal = ByteBuffer.allocate(16)
 
+
     // Clipper
     var clipperTempDataStacked = 0
 
     val clipperTempData = ArrayList<ListClipperData>()
+
 
     // Tables
 
@@ -480,12 +482,22 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val tablesLastTimeActive = ArrayList<Float>()
     val drawChannelsTempMergeBuffer = ArrayList<DrawChannel>()
 
+
     // Tab bars
 
     var currentTabBar: TabBar? = null
     val tabBars = TabBarPool()
     val currentTabBarStack = Stack<PtrOrIndex>()
     val shrinkWidthBuffer = ArrayList<ShrinkWidthItem>()
+
+
+    // Hover Delay system
+    var hoverDelayId: ID = 0
+    var hoverDelayIdPreviousFrame: ID = 0
+    /** Currently used IsItemHovered(), generally inferred from g.HoveredIdTimer but kept uncleared until clear timer elapse. */
+    var hoverDelayTimer = 0f
+    /** Currently used IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared. */
+    var hoverDelayClearTimer = 0f
 
     //------------------------------------------------------------------
     // Widget state
@@ -541,9 +553,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var disabledStackSize = 0
 
     var tooltipOverrideCount = 0
-
-    /** Time before slow tooltips appears (FIXME: This is temporary until we merge in tooltip timer+priority work) */
-    var tooltipSlowDelay = 0.5f
 
     /** If no custom clipboard handler is defined   */
     var clipboardHandlerData = ""

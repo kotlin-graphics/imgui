@@ -85,7 +85,7 @@ interface dragAndDrop {
                 // THE IDENTIFIER WON'T SURVIVE ANY REPOSITIONING/RESIZING OF THE WIDGET, so if your widget moves your dragging operation will be canceled.
                 // We don't need to maintain/call ClearActiveID() as releasing the button will early out this function and trigger !ActiveIdIsAlive.
                 // Rely on keeping other window->LastItemXXX fields intact.
-                sourceId = window.getIdFromRectangle(g.lastItemData.rect); g.lastItemData.id = sourceId
+                sourceId = window.getIDFromRectangle(g.lastItemData.rect); g.lastItemData.id = sourceId
                 keepAliveID(sourceId)
                 val isHovered = itemHoverable(g.lastItemData.rect, sourceId)
                 if (isHovered && io.mouseClicked[mouseButton.i]) {
@@ -213,7 +213,7 @@ interface dragAndDrop {
         }
         var id = g.lastItemData.id
         if (id == 0) {
-            id = window.getIdFromRectangle(displayRect) // [JVM] safe to pass the reference
+            id = window.getIDFromRectangle(displayRect) // [JVM] safe to pass the reference
             keepAliveID(id)
         }
         if (g.dragDropPayload.sourceId == id) return false

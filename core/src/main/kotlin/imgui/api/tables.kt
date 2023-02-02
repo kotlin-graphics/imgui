@@ -623,7 +623,7 @@ interface tables {
         renderTextEllipsis(window.drawList, labelPos, posMax, ellipsisMax, ellipsisMax, label.toByteArray(), labelEnd, labelSize)
 
         val textClipped = labelSize.x > (ellipsisMax - labelPos.x)
-        if (textClipped && hovered && g.hoveredIdNotActiveTimer > g.tooltipSlowDelay)
+        if (textClipped && hovered && g.activeId == 0 && isItemHovered(HoveredFlag.DelayNormal))
             setTooltip(label.substring(0, labelEnd))
 
         // We don't use BeginPopupContextItem() because we want the popup to stay up even after the column is hidden

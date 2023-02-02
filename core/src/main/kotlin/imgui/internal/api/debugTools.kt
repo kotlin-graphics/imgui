@@ -501,7 +501,7 @@ internal interface debugTools {
         /** Avoid naming collision with imgui_demo.cpp's HelpMarker() for unity builds. */
         fun metricsHelpMarker(desc: String) {
             textDisabled("(?)")
-            if (isItemHovered()) {
+            if (isItemHovered(HoveredFlag.DelayShort)) {
                 beginTooltip()
                 pushTextWrapPos(fontSize * 35f)
                 textUnformatted(desc)

@@ -1007,7 +1007,17 @@ enum class HoveredFlag(@JvmField val i: HoveredFlags) {
     /** Disable using gamepad/keyboard navigation state when active, always query mouse. */
     NoNavOverride(1 shl 10),
     RectOnly(AllowWhenBlockedByPopup.i or AllowWhenBlockedByActiveItem.i or AllowWhenOverlapped.i),
-    RootAndChildWindows(RootWindow or ChildWindows);
+    RootAndChildWindows(RootWindow or ChildWindows),
+
+    // Hovering delays (for tooltips)
+    /** Return true after io.HoverDelayNormal elapsed (~0.30 sec) */
+    DelayNormal(1 shl 11),
+
+    /** Return true after io.HoverDelayShort elapsed (~0.10 sec) */
+    DelayShort(1 shl 12),
+
+    /** Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
+    NoSharedDelay(1 shl 13);
 
     infix fun and(b: HoveredFlag): HoveredFlags = i and b.i
     infix fun and(b: HoveredFlags): HoveredFlags = i and b

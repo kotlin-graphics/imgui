@@ -343,7 +343,7 @@ class Window(var context: Context,
     }
 
     /** This is only used in rare/specific situations to manufacture an ID out of nowhere. */
-    fun getIdFromRectangle(rAbs: Rect): ID {
+    fun getIDFromRectangle(rAbs: Rect): ID {
         val seed: ID = idStack.last()
         val rRel = rectAbsToRel(rAbs)
         val id = hashData(intArrayOf(rRel.min.x.i, rRel.min.y.i, rRel.max.x.i, rRel.max.y.i), seed)

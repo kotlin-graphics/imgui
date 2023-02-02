@@ -166,6 +166,21 @@ interface main {
             g.activeIdUsingKeyInputMask.clearAllBits()
         }
 
+        // Update hover delay for IsItemHovered() with delays and tooltips
+        g.hoverDelayIdPreviousFrame = g.hoverDelayId
+        if (g.hoverDelayId != 0) {
+            //if (g.IO.MouseDelta.x == 0.0f && g.IO.MouseDelta.y == 0.0f) // Need design/flags
+            g.hoverDelayTimer += g.io.deltaTime
+            g.hoverDelayClearTimer = 0f
+            g.hoverDelayId = 0
+        } else if (g.hoverDelayTimer > 0f) {
+            // This gives a little bit of leeway before clearing the hover timer, allowing mouse to cross gaps
+            g.hoverDelayClearTimer += g.io.deltaTime
+            if (g.hoverDelayClearTimer >= 0.2f max (g.io.deltaTime * 2f)) { // ~6 frames at 30 Hz + allow for low framerate
+                g.hoverDelayTimer = 0f; g.hoverDelayClearTimer = 0f // May want a decaying timer, in which case need to clamp at max first, based on max of caller last requested timer.
+            }
+        }
+
         // Drag and drop
         g.dragDropAcceptIdPrev = g.dragDropAcceptIdCurr
         g.dragDropAcceptIdCurr = 0

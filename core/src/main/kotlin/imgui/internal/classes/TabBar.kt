@@ -498,9 +498,10 @@ class TabBar {
         // (We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar, which g.HoveredId ignores)
         // FIXME: This is a mess.
         // FIXME: We may want disabled tab to still display the tooltip?
-        if (textClipped && g.hoveredId == id && !held && g.hoveredIdNotActiveTimer > g.tooltipSlowDelay && isItemHovered())
+        if (textClipped && g.hoveredId == id && !held)
             if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
-                setTooltip(label.substring(0, findRenderedTextEnd(label)))
+                if (isItemHovered(HoveredFlag.DelayNormal))
+                    setTooltip(label.substring(0, findRenderedTextEnd(label)))
 
         assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)) { "TabItemButton should not be selected" }
         return if (isTabButton) pressed else tabContentsVisible
