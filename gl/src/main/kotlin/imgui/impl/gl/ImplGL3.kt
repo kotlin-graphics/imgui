@@ -57,6 +57,9 @@ class ImplGL3 : GLInterface {
             else -> 200 // GLES 2
         }
 
+        if (IMGUI_IMPL_OPENGL_DEBUG)
+            print("GL_MAJOR_VERSION = $major\nGL_MINOR_VERSION = $minor\nGL_VENDOR = '${glGetString(GL_VENDOR)}'\nGL_RENDERER = '${glGetString(GL_RENDERER)}'") // [DEBUG]
+
         // Detect extensions we support
         data.hasClipOrigin = data.glVersion >= 450
         if (OPENGL_MAY_HAVE_EXTENSIONS) {
@@ -111,7 +114,7 @@ class ImplGL3 : GLInterface {
         // Setup viewport, orthographic projection matrix
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
         // DisplayPos is (0,0) for single viewport apps.
-        glViewport(0, 0, fbWidth, fbHeight)
+        glViewport(0, 0, fbWidth, fbHeight); glCall("glViewport")
         val L = drawData.displayPos.x
         val R = drawData.displayPos.x + drawData.displaySize.x
         var T = drawData.displayPos.y
@@ -128,14 +131,14 @@ class ImplGL3 : GLInterface {
         data.vao.bind()
 
         // Bind vertex/index buffers and setup attributes for ImDrawVert
-        glBindBuffer(GL_ARRAY_BUFFER, data.buffers[Buffer.Vertex].name)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data.buffers[Buffer.Element].name)
-        glEnableVertexAttribArray(semantic.attr.POSITION)
-        glEnableVertexAttribArray(semantic.attr.TEX_COORD)
-        glEnableVertexAttribArray(semantic.attr.COLOR)
-        glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, 0)
-        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, Vec2.size)
-        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.SIZE, Vec2.size * 2)
+        glBindBuffer(GL_ARRAY_BUFFER, data.buffers[Buffer.Vertex].name); glCall("glBindBuffer")
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data.buffers[Buffer.Element].name); glCall("glBindBuffer")
+        glEnableVertexAttribArray(semantic.attr.POSITION); glCall("glEnableVertexAttribArray")
+        glEnableVertexAttribArray(semantic.attr.TEX_COORD); glCall("glEnableVertexAttribArray")
+        glEnableVertexAttribArray(semantic.attr.COLOR); glCall("glEnableVertexAttribArray")
+        glVertexAttribPointer(semantic.attr.POSITION, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, 0); glCall("glVertexAttribPointer")
+        glVertexAttribPointer(semantic.attr.TEX_COORD, Vec2.length, GL_FLOAT, false, DrawVert.SIZE, Vec2.size); glCall("glVertexAttribPointer")
+        glVertexAttribPointer(semantic.attr.COLOR, Vec4ub.length, GL_UNSIGNED_BYTE, true, DrawVert.SIZE, Vec2.size * 2); glCall("glVertexAttribPointer")
     }
 
     /** OpenGL3 Render function.
@@ -195,17 +198,17 @@ class ImplGL3 : GLInterface {
             if (data.useBufferSubData) {
                 if (data.vertexBufferSize < vtxBufferSize) {
                     data.vertexBufferSize = vtxBufferSize
-                    nglBufferData(GL_ARRAY_BUFFER, data.vertexBufferSize, NULL, GL_STREAM_DRAW)
+                    nglBufferData(GL_ARRAY_BUFFER, data.vertexBufferSize, NULL, GL_STREAM_DRAW); glCall("glBufferData")
                 }
                 if (data.indexBufferSize < idxBufferSize) {
                     data.indexBufferSize = idxBufferSize
-                    nglBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexBufferSize, NULL, GL_STREAM_DRAW)
+                    nglBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indexBufferSize, NULL, GL_STREAM_DRAW); glCall("glBufferData")
                 }
-                nglBufferSubData(GL_ARRAY_BUFFER, 0, vtxBufferSize, cmdList.vtxBuffer.adr)
-                nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBufferSize, cmdList.idxBuffer.adr)
+                nglBufferSubData(GL_ARRAY_BUFFER, 0, vtxBufferSize, cmdList.vtxBuffer.adr); glCall("glBufferSubData")
+                nglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, idxBufferSize, cmdList.idxBuffer.adr); glCall("glBufferSubData")
             } else {
-                nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW)
-                nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW)
+                nglBufferData(GL_ARRAY_BUFFER, cmdList.vtxBuffer.data.lim.L, cmdList.vtxBuffer.data.adr, GL_STREAM_DRAW); glCall("glBufferData")
+                nglBufferData(GL_ELEMENT_ARRAY_BUFFER, cmdList.idxBuffer.lim * DrawIdx.BYTES.L, cmdList.idxBuffer.adr, GL_STREAM_DRAW); glCall("glBufferData")
             }
 
             for (cmd in cmdList.cmdBuffer) {
@@ -226,14 +229,15 @@ class ImplGL3 : GLInterface {
                         continue
 
                     // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
-                    glScissor(clipMin.x.i, (fbHeight - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i)
+                    glScissor(clipMin.x.i, (fbHeight - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i); glCall("glScissor")
 
                     // Bind texture, Draw
                     glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
-                    if (OPENGL_MAY_HAVE_VTX_OFFSET && data.glVersion >= 320)
-                        glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset)
-                    else
-                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES)
+                    if (OPENGL_MAY_HAVE_VTX_OFFSET && data.glVersion >= 320) {
+                        glDrawElementsBaseVertex(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES, cmd.vtxOffset); glCall("glDrawElementsBaseVertex")
+                    } else {
+                        glDrawElements(GL_TRIANGLES, cmd.elemCount, GL_UNSIGNED_INT, cmd.idxOffset.L * DrawIdx.BYTES); glCall("glDrawElements")
+                    }
                 }
             }
         }
@@ -275,21 +279,20 @@ class ImplGL3 : GLInterface {
 
         // Upload texture to graphics system
         // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
-        val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D)
-
-        glGenTextures(data.fontTexture)
-        glBindTexture(GL_TEXTURE_2D, data.fontTexture[0])
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        val lastTexture = glGetInteger(GL_TEXTURE_BINDING_2D); glCall("glGetInteger")
+        glGenTextures(data.fontTexture); glCall("glGenTextures")
+        glBindTexture(GL_TEXTURE_2D, data.fontTexture[0]); glCall("glBindTexture")
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); glCall("glTexParameteri")
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); glCall("glTexParameteri")
         if (UNPACK_ROW_LENGTH) // Not on WebGL/ES
-            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels)
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0); glCall("glPixelStorei")
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels); glCall("glTexImage2D")
 
         // Store our identifier
         io.fonts.texID = data.fontTexture[0]
 
         // Restore state
-        glBindTexture(GL_TEXTURE_2D, lastTexture)
+        glBindTexture(GL_TEXTURE_2D, lastTexture); glCall("glBindTexture")
 
         return when {
             DEBUG -> checkError("mainLoop")
@@ -324,7 +327,7 @@ class ImplGL3 : GLInterface {
 
         createFontsTexture()
 
-        data.vao = GlVertexArray.gen()
+        data.vao = GlVertexArray.gen(); glCall("glGenVertexArrays")
 
         // Restore modified GL state
         glUseProgram(lastProgram)
@@ -340,7 +343,7 @@ class ImplGL3 : GLInterface {
 
     override fun destroyDeviceObjects() {
 
-        data.vao.delete()
+        data.vao.delete(); glCall("glDeleteVertexArrays")
         data.buffers.delete()
 
         if (data.shaderHandle.isValid)
@@ -380,6 +383,17 @@ class ImplGL3 : GLInterface {
         var IMPL_HAS_POLYGON_MODE = true
         var UNPACK_ROW_LENGTH = true
         var SINGLE_GL_CONTEXT = true
+
+        // [Debugging]
+        var IMGUI_IMPL_OPENGL_DEBUG = false
+
+        fun glCall(call: String) {
+            if (!IMGUI_IMPL_OPENGL_DEBUG)
+                return
+            val glErr = glGetError()
+            if (glErr != 0)
+                System.err.println("GL error 0x%x returned from '$call'.".format(glErr))
+        }
 
         val mat = Mat4()
 
