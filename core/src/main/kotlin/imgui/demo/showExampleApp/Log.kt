@@ -116,52 +116,51 @@ object Log {
             filter.draw("Filter", -100f)
 
             separator()
-            beginChild("scrolling", Vec2(0, 0), false, Wf.HorizontalScrollbar.i)
+            if(beginChild("scrolling", Vec2(0, 0), false, Wf.HorizontalScrollbar.i)) {
+                if (clear) clear()
+                if (copy) logToClipboard()
 
-            if (clear) clear()
-            if (copy) logToClipboard()
+                pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
 
-            pushStyleVar(StyleVar.ItemSpacing, Vec2(0))
-
-            if (filter.isActive())
-            // In this example we don't use the clipper when Filter is enabled.
-            // This is because we don't have random access to the result of our filter.
-            // A real application processing logs with ten of thousands of entries may want to store the result of
-            // search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
-                for (line_no in 0 until lineOffsets.size) {
-                    val line = buf.subSequence(lineOffsets[line_no], if (line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
-                    if (filter.passFilter(line))
-                        textEx(line)
-                }
-            else {
-                // The simplest and easy way to display the entire buffer:
-                //   ImGui::TextUnformatted(buf_begin, buf_end);
-                // And it'll just work. TextUnformatted() has specialization for large blob of text and will fast-forward
-                // to skip non-visible lines. Here we instead demonstrate using the clipper to only process lines that are
-                // within the visible area.
-                // If you have tens of thousands of items and their processing cost is non-negligible, coarse clipping them
-                // on your side is recommended. Using ImGuiListClipper requires
-                // - A) random access into your data
-                // - B) items all being the  same height,
-                // both of which we can handle since we have an array pointing to the beginning of each line of text.
-                // When using the filter (in the block of code above) we don't have random access into the data to display
-                // anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
-                // it possible (and would be recommended if you want to search through tens of thousands of entries).
-                val clipper = ListClipper()
-                while (clipper.step())
-                    for (lineNo in clipper.display) {
-                        val lineStart = lineOffsets[lineNo]
-                        val lineEnd = if (lineNo + 1 < lineOffsets.size) lineOffsets[lineNo + 1] - 1 else buf.length
-                        textEx(buf.subSequence(lineStart, lineEnd).toString())
+                if (filter.isActive())
+                // In this example we don't use the clipper when Filter is enabled.
+                // This is because we don't have random access to the result of our filter.
+                // A real application processing logs with ten of thousands of entries may want to store the result of
+                // search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
+                    for (line_no in 0 until lineOffsets.size) {
+                        val line = buf.subSequence(lineOffsets[line_no], if (line_no + 1 < lineOffsets.size) lineOffsets[line_no + 1] - 1 else buf.length).toString()
+                        if (filter.passFilter(line))
+                            textEx(line)
                     }
-                clipper.end()
+                else {
+                    // The simplest and easy way to display the entire buffer:
+                    //   ImGui::TextUnformatted(buf_begin, buf_end);
+                    // And it'll just work. TextUnformatted() has specialization for large blob of text and will fast-forward
+                    // to skip non-visible lines. Here we instead demonstrate using the clipper to only process lines that are
+                    // within the visible area.
+                    // If you have tens of thousands of items and their processing cost is non-negligible, coarse clipping them
+                    // on your side is recommended. Using ImGuiListClipper requires
+                    // - A) random access into your data
+                    // - B) items all being the  same height,
+                    // both of which we can handle since we have an array pointing to the beginning of each line of text.
+                    // When using the filter (in the block of code above) we don't have random access into the data to display
+                    // anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
+                    // it possible (and would be recommended if you want to search through tens of thousands of entries).
+                    val clipper = ListClipper()
+                    while (clipper.step())
+                        for (lineNo in clipper.display) {
+                            val lineStart = lineOffsets[lineNo]
+                            val lineEnd = if (lineNo + 1 < lineOffsets.size) lineOffsets[lineNo + 1] - 1 else buf.length
+                            textEx(buf.subSequence(lineStart, lineEnd).toString())
+                        }
+                    clipper.end()
+                }
+
+                popStyleVar()
+
+                if (autoScroll && scrollY >= scrollMaxY)
+                    setScrollHereY(1f)
             }
-
-            popStyleVar()
-
-            if (autoScroll && scrollY >= scrollMaxY)
-                setScrollHereY(1f)
-
             endChild()
             end()
         }
