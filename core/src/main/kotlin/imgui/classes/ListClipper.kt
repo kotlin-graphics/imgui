@@ -107,6 +107,13 @@ class ListClipper {
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those items.  */
     fun step(): Boolean {
+        val ret = stepInternal()
+        if (!ret)
+            end()
+        return ret
+    }
+
+    private fun stepInternal(): Boolean {
 
         val window = g.currentWindow!!
         val data = tempData as ListClipperData
