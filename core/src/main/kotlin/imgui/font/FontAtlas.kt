@@ -14,7 +14,6 @@ import imgui.stb.*
 import kool.*
 import kool.lib.isNotEmpty
 import org.lwjgl.stb.*
-import org.lwjgl.system.libc.LibCString.nmemset
 import uno.convert.decode85
 import uno.kotlin.plusAssign
 import uno.stb.stb
@@ -565,7 +564,7 @@ class FontAtlas {
         /** Glyph bit map (random access, 1-bit per codepoint. This will be a maximum of 8KB) */
         lateinit var glyphsSet: BitVector
 
-        /** Glyph codepoints list (flattened version of GlyphsMap) */
+        /** Glyph codepoints list (flattened version of GlyphsSet) */
         lateinit var glyphsList: ArrayList<Int>
 
         fun free() {
@@ -1014,13 +1013,16 @@ class FontAtlas {
     }
 
     fun buildMultiplyRectAlpha8(table: CharArray, pixels: ByteBuffer, rect: STBRPRect, stride: Int) {
-        var ptr = rect.x + rect.y * stride
+        check(rect.w <= stride)
+        var data = rect.x + rect.y * stride
         var j = rect.h
         while (j > 0) {
-            for (i in 0 until rect.w)
-                pixels[ptr + i] = table[pixels[ptr + i].i].b
-            j--
-            ptr += stride
+            var i = rect.w
+            while (i > 0) {
+                pixels[data] = table[pixels[data].i].b
+                i--; data++
+            }
+            j--; data += stride - rect.w
         }
     }
 
@@ -1079,6 +1081,7 @@ class FontAtlas {
     object DefaultTexData {
         /** ~FONT_ATLAS_DEFAULT_TEX_DATA_W */
         val w = 122 // Actual texture will be 2 times that + 1 spacing.
+
         /** ~FONT_ATLAS_DEFAULT_TEX_DATA_H */
         val h = 27
         val pixels = run {
