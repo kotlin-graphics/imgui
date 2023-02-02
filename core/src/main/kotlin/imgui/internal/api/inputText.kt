@@ -658,6 +658,7 @@ internal interface inputText {
                                 else -> textCountCharsFromUtf8(cbData.buf, cbData.selectionEnd)
                             }
                         if (bufDirty) {
+                            assert(flags hasnt Itf.ReadOnly)
                             assert(cbData.bufTextLen == cbData.buf.strlen()) { "You need to maintain BufTextLen if you change the text!" }
                             inputTextReconcileUndoStateAfterUserCallback(state, callbackData, callbackData.size) // FIXME: Move the rest of this block inside function and rename to InputTextReconcileStateAfterUserCallback() ?
                             if ((cbData.bufTextLen > backupCurrentTextLength) and isResizable) {
