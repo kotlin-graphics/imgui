@@ -306,7 +306,7 @@ object ExampleApp {
         ShowDemoWindowLayout()
         ShowDemoWindowPopups()
         ShowDemoWindowTables()
-        ShowDemoWindowMisc()
+        ShowDemoWindowInputs()
 
         // End of ShowDemoWindow()
         popItemWidth()

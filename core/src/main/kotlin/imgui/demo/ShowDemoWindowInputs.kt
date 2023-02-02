@@ -4,11 +4,13 @@ import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.bullet
-import imgui.ImGui.bulletText
 import imgui.ImGui.button
+import imgui.ImGui.checkboxFlags
 import imgui.ImGui.colorButton
 import imgui.ImGui.dummy
+import imgui.ImGui.endDisabled
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getMouseClickedCount
 import imgui.ImGui.getMouseDragDelta
@@ -36,19 +38,16 @@ import imgui.ImGui.sliderInt
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.api.demoDebugInformations.Companion.helpMarker
-import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.treeNode
 import imgui.internal.sections.DrawFlag
 
-object ShowDemoWindowMisc {
+object ShowDemoWindowInputs {
 
     var captureOverrideMouse = -1
     var captureOverrideKeyboard = -1
 
     operator fun invoke() {
-
-        Filtering()
 
         collapsingHeader("Inputs, Navigation & Focus") {
 
@@ -87,6 +86,29 @@ object ShowDemoWindowMisc {
                     }
                 text("Mouse wheel: %.1f", io.mouseWheel)
                 text("Pen Pressure: %.1f", io.penPressure) // Note: currently unused
+            }
+
+            // Display mouse cursors
+            //            IMGUI_DEMO_MARKER("Inputs, Navigation & Focus/Mouse Cursors");
+            treeNode("Mouse Cursors") {
+
+                val current = ImGui.mouseCursor
+                text("Current mouse cursor = ${current.i}: $current")
+                beginDisabled(true)
+                checkboxFlags("io.BackendFlags: HasMouseCursors", io::backendFlags, BackendFlag.HasMouseCursors.i)
+                endDisabled()
+
+                text("Hover to see mouse cursors:")
+                sameLine(); helpMarker(
+                "Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
+                        "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
+                        "otherwise your backend needs to handle it.")
+                for (i in 0 until MouseCursor.COUNT) {
+                    val label = "Mouse cursor $i: ${MouseCursor of i}"
+                    bullet(); selectable(label, false)
+                    if (ImGui.isItemHovered())
+                        ImGui.mouseCursor = MouseCursor of i
+                }
             }
 
             // Display Keyboard/Mouse state
@@ -180,11 +202,11 @@ object ShowDemoWindowMisc {
             treeNode("Capture override") {
                 helpMarker(
                     "The value of io.WantCaptureMouse and io.WantCaptureKeyboard are normally set by Dear ImGui " +
-                    "to instruct your application of how to route inputs. Typically, when a value is true, it means " +
-                    "Dear ImGui wants the corresponding inputs and we expect the underlying application to ignore them.\n\n" +
-                    "The most typical case is: when hovering a window, Dear ImGui set io.WantCaptureMouse to true, " +
-                    "and underlying application should ignore mouse inputs (in practice there are many and more subtle " +
-                    "rules leading to how those flags are set).")
+                            "to instruct your application of how to route inputs. Typically, when a value is true, it means " +
+                            "Dear ImGui wants the corresponding inputs and we expect the underlying application to ignore them.\n\n" +
+                            "The most typical case is: when hovering a window, Dear ImGui set io.WantCaptureMouse to true, " +
+                            "and underlying application should ignore mouse inputs (in practice there are many and more subtle " +
+                            "rules leading to how those flags are set).")
 
                 text("io.WantCaptureMouse: ${io.wantCaptureMouse.i}")
                 text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose.i}")
@@ -192,7 +214,7 @@ object ShowDemoWindowMisc {
 
                 helpMarker(
                     "Hovering the colored canvas will override io.WantCaptureXXX fields.\n" +
-                    "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
+                            "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
                 val captureOverrideDesc = listOf("None", "Set to false", "Set to true")
                 setNextItemWidth(ImGui.fontSize * 15)
                 sliderInt("SetNextFrameWantCaptureMouse()", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp.i)
@@ -234,39 +256,6 @@ object ShowDemoWindowMisc {
                 text("  w/ default threshold: (%.1f, %.1f)", valueWithLockThreshold.x, valueWithLockThreshold.y)
                 text("  w/ zero threshold: (%.1f, %.1f)", valueRaw.x, valueRaw.y)
                 text("io.MouseDelta: (%.1f, %.1f)", mouseDelta.x, mouseDelta.y)
-            }
-
-            treeNode("Mouse cursors") {
-                val current = mouseCursor
-                text("Current mouse cursor = ${current.i}: $current")
-                text("Hover to see mouse cursors:")
-                sameLine(); helpMarker(
-                "Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
-                        "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
-                        "otherwise your backend needs to handle it.")
-                for (i in 0 until MouseCursor.COUNT) {
-                    bullet(); selectable("Mouse cursor $i: ${MouseCursor.of(i)}", false)
-                    if (isItemHovered())
-                        mouseCursor = MouseCursor.of(i)
-                }
-            }
-        }
-    }
-
-    object Filtering {
-        val filter = TextFilter()
-        operator fun invoke() {
-            collapsingHeader("Filtering") {
-                // Helper class to easy setup a text filter.
-                // You may want to implement a more feature-full filtering scheme in your own application.
-                text("Filter usage:\n" +
-                             "  \"\"         display all lines\n" +
-                             "  \"xxx\"      display lines containing \"xxx\"\n" +
-                             "  \"xxx,yyy\"  display lines containing \"xxx\" or \"yyy\"\n" +
-                             "  \"-xxx\"     hide lines containing \"xxx\"")
-                filter.draw()
-                val lines = arrayListOf("aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world")
-                lines.stream().filter { filter.passFilter(it) }.forEach { bulletText(it) }
             }
         }
     }

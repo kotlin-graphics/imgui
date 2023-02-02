@@ -2018,7 +2018,7 @@ enum class MouseCursor {
     val i = ordinal - 1
 
     companion object {
-        fun of(i: Int) = values().first { it.i == i }
+        infix fun of(i: Int) = values().first { it.i == i }
         val COUNT = values().size - 1
     }
 }

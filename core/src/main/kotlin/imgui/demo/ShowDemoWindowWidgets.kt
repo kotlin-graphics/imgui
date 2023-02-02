@@ -151,6 +151,7 @@ import imgui.ImGui.windowDrawList
 import imgui.api.demoDebugInformations.Companion.helpMarker
 import imgui.classes.Color
 import imgui.classes.InputTextCallbackData
+import imgui.classes.TextFilter
 import imgui.dsl.collapsingHeader
 import imgui.dsl.group
 import imgui.dsl.popup
@@ -182,6 +183,8 @@ import imgui.SelectableFlag as Sf
 import imgui.TreeNodeFlag as Tnf
 
 object ShowDemoWindowWidgets {
+
+    var disableAll = false // The Checkbox for that is inside the "Disabled" section at the bottom
 
     // Generate a default palette. The palette will persist and can be edited.
     var savedPaletteInit = true
@@ -224,6 +227,9 @@ object ShowDemoWindowWidgets {
         if (!collapsingHeader("Widgets"))
             return
 
+        if (disableAll)
+            beginDisabled()
+
         Basic()
         Trees()
         `Collapsing Headers`()
@@ -252,6 +258,17 @@ object ShowDemoWindowWidgets {
         `Drag and Drop`()
         `Querying Item Status (Edited,Active,Focused,Hovered etc)`()
         `Querying Window Status (Focused-Hovered etc,)`()
+        `Text Filter`()
+
+        // Demonstrate BeginDisabled/EndDisabled using a checkbox located at the bottom of the section (which is a bit odd:
+        // logically we'd have this checkbox at the top of the section, but we don't want this feature to steal that space)
+        if (disableAll)
+            endDisabled()
+
+        treeNode("Disable block") {
+            checkbox("Disable entire section above", ::disableAll)
+            sameLine(); helpMarker("Demonstrate using BeginDisabled()/EndDisabled() across this section.")
+        }
     }
 
     object Basic {
@@ -1954,6 +1971,29 @@ object ShowDemoWindowWidgets {
                                 "IsItemActive() after begin = $isItemActive (== is window being clicked/moved)")
                     end()
                 }
+            }
+        }
+    }
+
+    object `Text Filter` {
+
+        val filter = TextFilter()
+        operator fun invoke() {
+            treeNode("Text Filter") {
+                // Helper class to easy setup a text filter.
+                // You may want to implement a more feature-full filtering scheme in your own application.
+                helpMarker("Not a widget per-se, but ImGuiTextFilter is a helper to perform simple filtering on text strings.")
+                text("""
+                    |Filter usage:
+                    |  ""         display all lines
+                    |  "xxx"      display lines containing "xxx"
+                    |  "xxx,yyy"  display lines containing "xxx" or "yyy"
+                    |  "-xxx"     hide lines containing "xxx"""")
+                filter.draw()
+                val lines = listOf("aaa1.c", "bbb1.c", "ccc1.c", "aaa2.cpp", "bbb2.cpp", "ccc2.cpp", "abc.h", "hello, world")
+                for (line in lines)
+                    if (filter.passFilter(line))
+                        bulletText(line)
             }
         }
     }
