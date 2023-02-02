@@ -420,12 +420,13 @@ internal interface widgets {
 
     /** ImageButton() is flawed as 'id' is always derived from 'texture_id' (see #2464 #1390)
      *  We provide this internal helper to write your own variant while we figure out how to redesign the public ImageButton() API. */
-    fun imageButtonEx(id: ID, textureId: TextureID, size: Vec2, uv0: Vec2, uv1: Vec2, padding: Vec2, bgCol: Vec4, tintCol: Vec4): Boolean {
+    fun imageButtonEx(id: ID, textureId: TextureID, size: Vec2, uv0: Vec2, uv1: Vec2, bgCol: Vec4, tintCol: Vec4): Boolean {
 
         val window = currentWindow
         if (window.skipItems)
             return false
 
+        val padding = g.style.framePadding
         val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size + padding * 2)
 
         itemSize(bb)

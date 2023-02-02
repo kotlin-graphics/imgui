@@ -662,15 +662,22 @@ object ShowDemoWindowWidgets {
                 }
                 textWrapped("And now some textured buttons..")
                 for (i in 0..7) {
+                    // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
+                    // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
+                    // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
                     withID(i) {
+                        if (i > 0)
+                            pushStyleVar(StyleVar.FramePadding, Vec2(i - 1f))
                         val framePadding = -1 + i                             // -1 == uses default padding (style.FramePadding)
                         val size = Vec2(32)                     // Size of the image we want to make visible
                         val uv0 = Vec2()                        // UV coordinates for lower-left
                         val uv1 = Vec2(32f / myTexSize.x, 32 / myTexSize.y)   // UV coordinates for (32,32) in our texture
                         val bgCol = Vec4(0f, 0f, 0f, 1f)         // Black background
                         val tintCol = Vec4(1f, 1f, 1f, 1f)       // No tint
-                        if (imageButton(myTexId, size, uv0, uv1, framePadding, bgCol, tintCol))
+                        if (imageButton("", myTexId, size, uv0, uv1, bgCol, tintCol))
                             pressedCount++
+                        if (i > 0)
+                            popStyleVar()
                     }
                     sameLine()
                 }

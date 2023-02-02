@@ -52,9 +52,9 @@ val S32_MAX: Int = Integer.MAX_VALUE
 // @formatter:on
 
 
-/** Widgets: Main
- *  - Most widgets return true when the value has been changed or when pressed/selected
- *  - You may also use one of the many IsItemXXX functions (e.g. IsItemActive, IsItemHovered, etc.) to query widget state.  */
+// Widgets: Main
+// - Most widgets return true when the value has been changed or when pressed/selected
+// - You may also use one of the many IsItemXXX functions (e.g. IsItemActive, IsItemHovered, etc.) to query widget state.
 interface widgetsMain {
 
     /** button  */
@@ -94,43 +94,6 @@ interface widgetsMain {
     }
 
     fun arrowButton(id: String, dir: Dir): Boolean = arrowButtonEx(id, dir, Vec2(frameHeight), Bf.None.i)
-
-    fun image(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(1), tintCol: Vec4 = Vec4(1),
-              borderCol: Vec4 = Vec4()) {
-
-        val window = currentWindow
-        if (window.skipItems) return
-
-        val bb = Rect(window.dc.cursorPos, window.dc.cursorPos + size)
-        if (borderCol.w > 0f) bb.max plusAssign 2
-        itemSize(bb)
-        if (!itemAdd(bb, 0)) return
-
-        if (borderCol.w > 0f) {
-            window.drawList.addRect(bb.min, bb.max, getColorU32(borderCol), 0f)
-            window.drawList.addImage(userTextureId, bb.min + 1, bb.max - 1, uv0, uv1, getColorU32(tintCol))
-        } else
-            window.drawList.addImage(userTextureId, bb.min, bb.max, uv0, uv1, getColorU32(tintCol))
-    }
-
-    /** frame_padding < 0: uses FramePadding from style (default)
-     *  frame_padding = 0: no framing/padding
-     *  frame_padding > 0: set framing size
-     *  The color used are the button colors.   */
-    fun imageButton(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(), framePadding: Int = -1,
-                    bgCol: Vec4 = Vec4(), tintCol: Vec4 = Vec4(1)): Boolean {
-
-        val window = currentWindow
-        if (window.skipItems) return false
-
-        // Default to using texture ID as ID. User can still push string/integer prefixes.
-        pushID(userTextureId.L)
-        val id = window.getID("#image")
-        popID()
-
-        val padding = if (framePadding >= 0) Vec2(framePadding) else Vec2(style.framePadding)
-        return imageButtonEx(id, userTextureId, size, uv0, uv1, padding, bgCol, tintCol)
-    }
 
     fun checkbox(label: String, v: BooleanArray) = checkbox(label, v, 0)
     fun checkbox(label: String, v: BooleanArray, i: Int): Boolean {
