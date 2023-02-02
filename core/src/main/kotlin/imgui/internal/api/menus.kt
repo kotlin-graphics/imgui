@@ -160,18 +160,21 @@ internal interface menus {
             var movingTowardChildMenu = false
             val childPopup = if (g.beginPopupStack.size < g.openPopupStack.size) g.openPopupStack[g.beginPopupStack.size] else null // Popup candidate (testing below)
             val childMenuWindow = if (childPopup?.window?.parentWindow === window) childPopup.window else null
-            if (g.hoveredWindow === window && childMenuWindow != null && window.flags hasnt WindowFlag.MenuBar) {
+            if (g.hoveredWindow === window && childMenuWindow != null) {
                 val refUnit = g.fontSize // FIXME-DPI
+                val childDir = if (window.pos.x < childMenuWindow.pos.x) 1f else -1f
                 val nextWindowRect = childMenuWindow.rect()
                 val ta = ImGui.io.mousePos - ImGui.io.mouseDelta
-                val tb = if (window.pos.x < childMenuWindow.pos.x) nextWindowRect.tl else nextWindowRect.tr
-                val tc = if (window.pos.x < childMenuWindow.pos.x) nextWindowRect.bl else nextWindowRect.br
+                val tb = if (childDir > 0f) nextWindowRect.tl else nextWindowRect.tr
+                val tc = if (childDir > 0f) nextWindowRect.bl else nextWindowRect.br
                 val extra = glm.clamp(abs(ta.x - tb.x) * 0.3f, refUnit * 0.5f, refUnit * 2.5f)    // add a bit of extra slack.
-                ta.x += if (window.pos.x < childMenuWindow.pos.x) -0.5f else +0.5f // to avoid numerical issues (FIXME: ??)
+                ta.x += childDir * -0.5f
+                tb.x += childDir * refUnit
+                tc.x += childDir * refUnit
                 tb.y = ta.y + kotlin.math.max((tb.y - extra) - ta.y, -refUnit * 8f)                // triangle has maximum height to limit the slope and the bias toward large sub-menus
                 tc.y = ta.y + min((tc.y + extra) - ta.y, +refUnit * 8f)
                 movingTowardChildMenu = triangleContainsPoint(ta, tb, tc, ImGui.io.mousePos)
-                //GetForegroundDrawList()->AddTriangleFilled(ta, tb, tc, moving_toward_other_child_menu ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); // [DEBUG]
+                //GetForegroundDrawList()->AddTriangleFilled(ta, tb, tc, moving_toward_child_menu ? IM_COL32(0,128,0,128) : IM_COL32(128,0,0,128)); // [DEBUG]
             }
 
             // The 'HovereWindow == window' check creates an inconsistency (e.g. moving away from menu slowly tends to hit same window, whereas moving away fast does not)
