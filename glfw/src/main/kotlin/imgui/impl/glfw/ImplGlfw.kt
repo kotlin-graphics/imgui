@@ -117,6 +117,11 @@ class ImplGlfw @JvmOverloads constructor(
         //        else
         //            vrCursorPos?.let(io.mousePos::put) // window is usually unfocused in vr
 
+        if (glfwGetInputMode(data.window.handle.value, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+            io.addMousePosEvent(-Float.MAX_VALUE, -Float.MAX_VALUE)
+            return
+        }
+
         val isAppFocused = data.window.isFocused
         if (isAppFocused) {
             // (Optional) Set OS mouse position from Dear ImGui if requested (rarely used, only when ImGuiConfigFlags_NavEnableSetMousePos is enabled by user)
@@ -334,14 +339,16 @@ class ImplGlfw @JvmOverloads constructor(
         val cursorEnterCallback: CursorEnterCB = { entered ->
             //            if (bd->PrevUserCallbackCursorEnter != NULL && window == bd->Window)
             //            bd->PrevUserCallbackCursorEnter(window, entered);
-            if (entered) {
-                data.mouseWindow = data.window
-                io.addMousePosEvent(data.lastValidMousePos.x, data.lastValidMousePos.y)
-            } else if (!entered && data.mouseWindow === data.window) {
-                data.lastValidMousePos put io.mousePos
-                data.mouseWindow = null
-                io.addMousePosEvent(-Float.MAX_VALUE, -Float.MAX_VALUE)
-            }
+
+            if (glfwGetInputMode(data.window.handle.value, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
+                if (entered) {
+                    data.mouseWindow = data.window
+                    io.addMousePosEvent(data.lastValidMousePos.x, data.lastValidMousePos.y)
+                } else if (!entered && data.mouseWindow === data.window) {
+                    data.lastValidMousePos put io.mousePos
+                    data.mouseWindow = null
+                    io.addMousePosEvent(-Float.MAX_VALUE, -Float.MAX_VALUE)
+                }
         }
 
         val windowFocusCallback: WindowFocusCB = { focused ->
@@ -356,8 +363,11 @@ class ImplGlfw @JvmOverloads constructor(
             //            if (bd->PrevUserCallbackCursorPos != NULL && window == bd->Window)
             //            bd->PrevUserCallbackCursorPos(window, x, y);
 
-            io.addMousePosEvent(pos.x, pos.y)
-            data.lastValidMousePos put pos
+            if (glfwGetInputMode(data.window.handle.value, GLFW_CURSOR) != GLFW_CURSOR_DISABLED) {
+
+                io.addMousePosEvent(pos.x, pos.y)
+                data.lastValidMousePos put pos
+            }
         }
 
         fun initForOpengl(window: GlfwWindow, installCallbacks: Boolean = true, vrTexSize: Vec2i? = null): ImplGlfw =
