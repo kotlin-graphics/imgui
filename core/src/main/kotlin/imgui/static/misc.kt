@@ -60,7 +60,7 @@ fun updateKeyboardInputs() {
 
     // Clear gamepad data if disabled
     if (io.backendFlags hasnt BackendFlag.HasGamepad)
-        for (i in Key.Gamepad_BEGIN.i until Key.Gamepad_END.i) {
+        for (i in Key.Gamepad_BEGIN until Key.Gamepad_END) {
             io.keysData[i].down = false
             io.keysData[i].analogValue = 0f
         }

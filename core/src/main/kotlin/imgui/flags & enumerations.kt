@@ -1252,10 +1252,12 @@ enum class Key {
         val COUNT = values().size
         val BEGIN = None.i
         val END = F12.i
-        val Gamepad_BEGIN = GamepadStart
-        val Gamepad_END = ModCtrl
-        val Aliases_BEGIN = MouseLeft
-        val Aliases_END = Count
+        val Keyboard_BEGIN = BEGIN
+        val Keyboard_END = GamepadStart.i
+        val Gamepad_BEGIN = GamepadStart.i
+        val Gamepad_END = ModCtrl.i
+        val Aliases_BEGIN = MouseLeft.i
+        val Aliases_END = Count.i
         infix fun of(i: Int) = values().first { it.i == i }
 
 
@@ -1272,13 +1274,13 @@ enum class Key {
 
     /** ~IsGamepadKey */
     val isGamepad: Boolean
-        get() = i in Gamepad_BEGIN.i until Gamepad_END.i
+        get() = i in Gamepad_BEGIN until Gamepad_END
 
     /** ~IsAliasKey */
     val isAlias: Boolean
-        get() = i in Aliases_BEGIN.i until Aliases_END.i
+        get() = i in Aliases_BEGIN until Aliases_END
 
-        /** ~GetKeyData */
+    /** ~GetKeyData */
     val data: KeyData
         get() = g.io.keysData[index]
 

@@ -24,10 +24,15 @@ internal interface inputs {
         }
     }
 
+    // FIXME: Technically this also prevents use of Gamepad D-Pad, may not be an issue.
     fun setActiveIdUsingNavAndKeys() {
         assert(g.activeId != 0)
         g.activeIdUsingNavDirMask = 0.inv()
-        g.activeIdUsingKeyInputMask.setAllBits()
+        g.activeIdUsingKeyInputMask.setBitRange(Key.Keyboard_BEGIN, Key.Keyboard_END)
+        g.activeIdUsingKeyInputMask setBit Key.ModCtrl.i
+        g.activeIdUsingKeyInputMask setBit Key.ModShift.i
+        g.activeIdUsingKeyInputMask setBit Key.ModAlt.i
+        g.activeIdUsingKeyInputMask setBit Key.ModSuper.i
         navMoveRequestCancel()
     }
 
