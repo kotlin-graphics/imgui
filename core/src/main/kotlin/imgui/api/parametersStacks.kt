@@ -54,9 +54,16 @@ interface parametersStacks {
         style.colors[idx] = col
     }
 
-    fun popStyleColor(count: Int = 1) = repeat(count) {
-        val backup = g.colorStack.pop()
-        style.colors[backup.col] put backup.backupValue
+    fun popStyleColor(count_: Int = 1) {
+        var count = count_
+        if (g.colorStack.size < count) {
+            System.err.println("Calling PopStyleColor() too many times: stack underflow.")
+            count = g.colorStack.size
+        }
+        repeat(count) {
+            val backup = g.colorStack.pop()
+            style.colors[backup.col] put backup.backupValue
+        }
     }
 
     /** It'll throw error if wrong correspondence between idx and value type
@@ -171,34 +178,41 @@ interface parametersStacks {
         })
     }
 
-    fun popStyleVar(count: Int = 1) = repeat(count) {
-        val backup = g.styleVarStack.pop()
-        when (backup.idx) {
-            StyleVar.Alpha -> style.alpha = backup.floats[0]
-            StyleVar.DisabledAlpha -> style.disabledAlpha = backup.floats[0]
-            StyleVar.WindowPadding -> style.windowPadding put backup.floats
-            StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
-            StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
-            StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
-            StyleVar.WindowTitleAlign -> style.windowTitleAlign put backup.floats
-            StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
-            StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]
-            StyleVar.PopupRounding -> style.popupRounding = backup.floats[0]
-            StyleVar.PopupBorderSize -> style.popupBorderSize = backup.floats[0]
-            StyleVar.FrameBorderSize -> style.frameBorderSize = backup.floats[0]
-            StyleVar.FramePadding -> style.framePadding put backup.floats
-            StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
-            StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
-            StyleVar.ItemInnerSpacing -> style.itemInnerSpacing put backup.floats
-            StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
-            StyleVar.CellPadding -> style.cellPadding put backup.floats
-            StyleVar.ScrollbarSize -> style.scrollbarSize = backup.floats[0]
-            StyleVar.ScrollbarRounding -> style.scrollbarRounding = backup.floats[0]
-            StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
-            StyleVar.GrabRounding -> style.grabRounding = backup.floats[0]
-            StyleVar.TabRounding -> style.tabRounding = backup.floats[0]
-            StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
-            StyleVar.SelectableTextAlign -> style.selectableTextAlign put backup.floats
+    fun popStyleVar(count_: Int = 1) {
+        var count = count_
+        if (g.styleVarStack.size < count) {
+            System.err.println( "Calling PopStyleVar() too many times: stack underflow.")
+            count = g.styleVarStack.size
+        }
+        repeat(count) {
+            val backup = g.styleVarStack.pop()
+            when (backup.idx) {
+                StyleVar.Alpha -> style.alpha = backup.floats[0]
+                StyleVar.DisabledAlpha -> style.disabledAlpha = backup.floats[0]
+                StyleVar.WindowPadding -> style.windowPadding put backup.floats
+                StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
+                StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
+                StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
+                StyleVar.WindowTitleAlign -> style.windowTitleAlign put backup.floats
+                StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
+                StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]
+                StyleVar.PopupRounding -> style.popupRounding = backup.floats[0]
+                StyleVar.PopupBorderSize -> style.popupBorderSize = backup.floats[0]
+                StyleVar.FrameBorderSize -> style.frameBorderSize = backup.floats[0]
+                StyleVar.FramePadding -> style.framePadding put backup.floats
+                StyleVar.FrameRounding -> style.frameRounding = backup.floats[0]
+                StyleVar.ItemSpacing -> style.itemSpacing put backup.floats
+                StyleVar.ItemInnerSpacing -> style.itemInnerSpacing put backup.floats
+                StyleVar.IndentSpacing -> style.indentSpacing = backup.floats[0]
+                StyleVar.CellPadding -> style.cellPadding put backup.floats
+                StyleVar.ScrollbarSize -> style.scrollbarSize = backup.floats[0]
+                StyleVar.ScrollbarRounding -> style.scrollbarRounding = backup.floats[0]
+                StyleVar.GrabMinSize -> style.grabMinSize = backup.floats[0]
+                StyleVar.GrabRounding -> style.grabRounding = backup.floats[0]
+                StyleVar.TabRounding -> style.tabRounding = backup.floats[0]
+                StyleVar.ButtonTextAlign -> style.buttonTextAlign put backup.floats
+                StyleVar.SelectableTextAlign -> style.selectableTextAlign put backup.floats
+            }
         }
     }
 

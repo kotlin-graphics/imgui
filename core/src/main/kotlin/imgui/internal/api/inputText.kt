@@ -1079,7 +1079,7 @@ internal interface inputText {
                 // Full-width -> half-width conversion for numeric fields (https://en.wikipedia.org/wiki/Halfwidth_and_Fullwidth_Forms_(Unicode_block)
                 // While this is mostly convenient, this has the side-effect for uninformed users accidentally inputting full-width characters that they may
                 // scratch their head as to why it works in numerical fields vs in generic text fields it would require support in the font.
-                if (flags has (Itf.CharsDecimal or Itf.CharsScientific or Itf.CharsHexadecimal)
+                if (flags has (Itf.CharsDecimal or Itf.CharsScientific or Itf.CharsHexadecimal))
                     if (c >= 0xFF01 && c <= 0xFF5E)
                         c = c - 0xFF01 + 0x21
 
