@@ -106,9 +106,10 @@ class ListClipper {
 
     /** Call until it returns false. The DisplayStart/DisplayEnd fields will be set and you can process/draw those items.  */
     fun step(): Boolean {
-        val window = g.currentWindow!!
         val needItemsHeight = itemsHeight <= 0f
-        val ret = stepInternal()
+        var ret = stepInternal()
+        if (ret && displayStart == displayEnd)
+            ret = false
         if (g.currentTable?.isUnfrozenRows == false)
             IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): inside frozen table row.")
         if (needItemsHeight && itemsHeight > 0f)
@@ -139,10 +140,9 @@ class ListClipper {
         // FIXME: Could be stored as a table-agnostic state.
         if (data.stepNo == 0 && table != null && !table.isUnfrozenRows) {
             displayStart = data.itemsFrozen
-            displayEnd = data.itemsFrozen + 1
-            if (displayStart >= itemsCount)
-                return /*(void)End(),*/ false
-            data.itemsFrozen++
+            displayEnd = (data.itemsFrozen + 1) min itemsCount
+            if (displayStart < itemsCount)
+                data.itemsFrozen++
             return true
         }
 
@@ -155,8 +155,6 @@ class ListClipper {
                 data.ranges += ListClipperRange.fromIndices(data.itemsFrozen, data.itemsFrozen + 1)
                 displayStart = data.ranges[0].min max data.itemsFrozen
                 displayEnd = data.ranges[0].max min itemsCount
-                if (displayStart == displayEnd)
-                    return /*(void)End(), */false
                 data.stepNo = 1
                 return true
             }
