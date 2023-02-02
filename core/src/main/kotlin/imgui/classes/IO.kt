@@ -25,7 +25,7 @@ import uno.kotlin.NUL
 
 
 // [Internal] Storage used by IsKeyDown(), IsKeyPressed() etc functions.
-// If prior to 1.87 you used io.KeysDownDuration[] (which was marked as internal), you should use GetKeyData(key)->DownDuration and not io.KeysData[key]->DownDuration.
+// If prior to 1.87 you used io.KeysDownDuration[] (which was marked as internal), you should use GetKeyData(key)->DownDuration and *NOT* io.KeysData[key]->DownDuration.
 class KeyData {
     /** True for if key is down */
     var down = false

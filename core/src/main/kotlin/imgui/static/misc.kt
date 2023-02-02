@@ -11,12 +11,12 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mainViewport
-import imgui.ImGui.mergedModFlags
 import imgui.ImGui.mouseButtonToKey
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.topMostAndVisiblePopupModal
 import imgui.api.g
 import imgui.internal.*
+import imgui.internal.api.inputs
 import imgui.internal.classes.Window
 import imgui.internal.sections.ViewportP
 
@@ -52,7 +52,7 @@ fun updateKeyboardInputs() {
     // Import legacy keys or verify they are not used
 
     // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools, update aliases
-    io.keyMods = mergedModFlags
+    io.keyMods = inputs.mergedModFlags
     for (n in 0 until MouseButton.COUNT)
         updateAliasKey(mouseButtonToKey(MouseButton of n), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
     updateAliasKey(Key.MouseWheelX, io.mouseWheelH != 0f, io.mouseWheelH)

@@ -11,7 +11,6 @@ import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.keepAliveID
-import imgui.ImGui.mergedModFlags
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.BitArray
@@ -103,7 +102,7 @@ internal interface newFrame {
                             if (key == Key.ModShift) io.keyShift = keyData.down
                             if (key == Key.ModAlt) io.keyAlt = keyData.down
                             if (key == Key.ModSuper) io.keySuper = keyData.down
-                            io.keyMods = mergedModFlags
+                            io.keyMods = inputs.mergedModFlags
                         }
                     }
                 }

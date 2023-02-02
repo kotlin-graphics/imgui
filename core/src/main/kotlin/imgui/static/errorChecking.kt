@@ -5,13 +5,13 @@ import imgui.ImGui.end
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isMouseClicked
-import imgui.ImGui.mergedModFlags
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g
 import imgui.dsl.tooltip
+import imgui.internal.api.inputs
 
 
 //-----------------------------------------------------------------------------
@@ -56,7 +56,7 @@ fun errorCheckEndFrameSanityChecks() {
     // send key release events mid-frame. This would normally trigger this assertion and lead to sheared inputs.
     // We silently accommodate for this case by ignoring/ the case where all io.KeyXXX modifiers were released (aka key_mod_flags == 0),
     // while still correctly asserting on mid-frame key press events.
-    val keyMods = mergedModFlags
+    val keyMods = inputs.mergedModFlags
     assert(keyMods == 0 || g.io.keyMods == keyMods) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
     // [EXPERIMENTAL] Recover from errors: You may call this yourself before EndFrame().

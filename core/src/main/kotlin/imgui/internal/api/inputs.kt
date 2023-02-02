@@ -60,20 +60,9 @@ internal interface inputs {
         return io.mouseDragMaxDistanceSqr[button.i] >= lockThreshold * lockThreshold
     }
 
+
     // the rest of inputs functions are in the NavInput enum
 
-    /** ~GetMergedModFlags
-     *
-     *  [Internal] Do not use directly (can read io.KeyMods instead) */
-    val mergedModFlags: ModFlags
-        get() {
-            var keyMods = ModFlag.None.i
-            if (ImGui.io.keyCtrl) keyMods /= ModFlag.Ctrl
-            if (ImGui.io.keyShift) keyMods /= ModFlag.Shift
-            if (ImGui.io.keyAlt) keyMods /= ModFlag.Alt
-            if (ImGui.io.keySuper) keyMods /= ModFlag.Super
-            return keyMods
-        }
 
     /** Return 2D vector representing the combination of four cardinal direction, with analog value support (for e.g. ImGuiKey_GamepadLStick* values). */
     fun getKeyVector2d(keyLeft: Key, keyRight: Key, keyUp: Key, keyDown: Key) = Vec2(keyRight.data.analogValue - keyLeft.data.analogValue,
@@ -118,4 +107,19 @@ internal interface inputs {
     }
 
     // IsKeyPressedEx -> Key
+
+    companion object {
+        /** ~GetMergedModFlags
+         *
+         *  [Internal] Do not use directly (can read io.KeyMods instead) */
+        val mergedModFlags: ModFlags
+            get() {
+                var keyMods = ModFlag.None.i
+                if (ImGui.io.keyCtrl) keyMods /= ModFlag.Ctrl
+                if (ImGui.io.keyShift) keyMods /= ModFlag.Shift
+                if (ImGui.io.keyAlt) keyMods /= ModFlag.Alt
+                if (ImGui.io.keySuper) keyMods /= ModFlag.Super
+                return keyMods
+            }
+    }
 }

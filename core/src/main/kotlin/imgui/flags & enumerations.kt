@@ -1239,6 +1239,10 @@ enum class Key {
     GamepadRStickUp,       // [Analog]
     GamepadRStickDown,     // [Analog]
 
+    // Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
+    // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
+    MouseLeft, MouseRight, MouseMiddle, MouseX1, MouseX2, MouseWheelX, MouseWheelY,
+
     // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
     // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
     //   them to be accessed via standard key API, allowing calls such as IsKeyPressed(), IsKeyReleased(), querying duration etc.
@@ -1248,10 +1252,6 @@ enum class Key {
     //   In practice: it's complicated; mods are often provided from different sources. Keyboard layout, IME, sticky keys and
     //   backends tend to interfere and break that equivalence. The safer decision is to relay that ambiguity down to the end-user...
     ModCtrl, ModShift, ModAlt, ModSuper,
-
-    // Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
-    // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
-    MouseLeft, MouseRight, MouseMiddle, MouseX1, MouseX2, MouseWheelX, MouseWheelY,
 
     // End of list
     Count;
@@ -1272,9 +1272,9 @@ enum class Key {
         val Keyboard_BEGIN = BEGIN
         val Keyboard_END = GamepadStart.i
         val Gamepad_BEGIN = GamepadStart.i
-        val Gamepad_END = ModCtrl.i
+        val Gamepad_END = MouseLeft.i
         val Aliases_BEGIN = MouseLeft.i
-        val Aliases_END = Count.i
+        val Aliases_END = ModCtrl.i
         infix fun of(i: Int) = values().first { it.i == i }
 
 
