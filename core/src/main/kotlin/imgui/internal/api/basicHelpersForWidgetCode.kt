@@ -305,12 +305,13 @@ internal interface basicHelpersForWidgetCode {
             widthExcess += items[n].width - widthRounded
             items[n].width = widthRounded
         }
-        while (widthExcess >= 1f) {
+        while (widthExcess > 0f) {
             var n = 0
-            while (n < count && widthExcess >= 1f) {
+            while (n < count && widthExcess > 0f) {
                 if (items[n].width + 1f <= items[n].initialWidth) {
-                    items[n].width += 1f
-                    widthExcess -= 1f
+                    val widthToAdd = (items[n].initialWidth - items[n].width) min 1f
+                    items[n].width += widthExcess
+                    widthExcess -= widthExcess
                 }
                 n++
             }

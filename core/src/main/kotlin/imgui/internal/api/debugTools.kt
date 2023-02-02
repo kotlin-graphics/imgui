@@ -505,7 +505,7 @@ internal interface debugTools {
                 sameLine()
                 val c = if (tab.id == tabBar.selectedTabId) '*' else ' '
                 val name = if (tab.nameOffset != -1) tabBar.getTabName(tab) else "???"
-                text("%02d$c Tab 0x%08X '$name' Offset: %.1f, Width: %.1f/%.1f", tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
+                text("%02d$c Tab 0x%08X '$name' Offset: %.2f, Width: %.2f/%.2f", tabN, tab.id, tab.offset, tab.width, tab.contentWidth)
                 popID()
             }
             treePop()
