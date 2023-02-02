@@ -128,6 +128,8 @@ infix fun WindowFlags.xor(b: WindowFlag): WindowFlags = xor(b.i)
 infix fun WindowFlags.has(b: WindowFlag): Boolean = and(b.i) != 0
 infix fun WindowFlags.hasnt(b: WindowFlag): Boolean = and(b.i) == 0
 infix fun WindowFlags.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
+operator fun WindowFlags.minus(flag: WindowFlag): WindowFlags = wo(flag)
+operator fun WindowFlags.div(flag: WindowFlag): WindowFlags = or(flag)
 
 
 typealias InputTextFlags = Int
@@ -2029,9 +2031,10 @@ typealias CondFlags = Int
  *  Enum: A condition for many Set*() functions */
 enum class Cond(@JvmField val i: CondFlags) {
 
+    /** No condition (always set the variable), same as _Always */
     None(0),
 
-    /** Set the variable    */
+    /** No condition (always set the variable), same as _None */
     Always(1 shl 0),
 
     /** Set the variable once per runtime session (only the first call will succeed)    */

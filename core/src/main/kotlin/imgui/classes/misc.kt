@@ -147,7 +147,7 @@ class TableSortSpecs {
 }
 
 class SizeCallbackData(
-        /** Read-only.   What user passed to SetNextWindowSizeConstraints() */
+        /** Read-only.   What user passed to SetNextWindowSizeConstraints(). Generally store an integer or float in here (need reinterpret_cast<>). */
         var userData: Any? = null,
         /** Read-only.   Window position, for reference.    */
         val pos: Vec2 = Vec2(),
