@@ -16,7 +16,6 @@ enum class InputSource {
 
 sealed class InputEvent(val type: Type) {
     abstract val source: InputSource
-    var ignoredAsSame = false
     var addedByTestEngine = false
 
     class MousePos(val posX: Float, val posY: Float) : InputEvent(Type.MousePos) {

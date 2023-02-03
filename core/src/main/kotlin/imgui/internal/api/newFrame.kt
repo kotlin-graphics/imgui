@@ -48,63 +48,51 @@ internal interface newFrame {
             val e = g.inputEventsQueue[eventN]
             when (e) {
                 is InputEvent.MousePos -> {
+                    // Trickling Rule: Stop processing queued events if we already handled a mouse button change
                     val eventPos = Vec2(e.posX, e.posY)
                     if (isMousePosValid(eventPos))
                         eventPos.put(floorSigned(eventPos.x), floorSigned(eventPos.y)) // Apply same flooring as UpdateMouseInputs()
-                    e.ignoredAsSame = io.mousePos.x == eventPos.x && io.mousePos.y == eventPos.y
-                    if (!e.ignoredAsSame) {
-                        // Trickling Rule: Stop processing queued events if we already handled a mouse button change
-                        if (trickleFastInputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || textInputed))
-                            break
-                        io.mousePos put eventPos
-                        mouseMoved = true
-                    }
+                    if (trickleFastInputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || textInputed))
+                        break
+                    io.mousePos put eventPos
+                    mouseMoved = true
                 }
                 is InputEvent.MouseButton -> {
+                    // Trickling Rule: Stop processing queued events if we got multiple action on the same button
                     val button = MouseButton of e.button
                     //                    assert(button >= 0 && button < ImGuiMouseButton_COUNT)
-                    e.ignoredAsSame = io.mouseDown[button.i] == e.down
-                    if (!e.ignoredAsSame) {
-                        // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                        if (trickleFastInputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
-                            break
-                        io.mouseDown[button.i] = e.down
-                        mouseButtonChanged = mouseButtonChanged or (1 shl button.i)
-                    }
+                    if (trickleFastInputs && ((mouseButtonChanged has (1 shl button.i)) || mouseWheeled))
+                        break
+                    io.mouseDown[button.i] = e.down
+                    mouseButtonChanged = mouseButtonChanged or (1 shl button.i)
                 }
                 is InputEvent.MouseWheel -> {
-                    e.ignoredAsSame = e.wheelX == 0f && e.wheelY == 0f
-                    if (!e.ignoredAsSame) {
-                        // Trickling Rule: Stop processing queued events if we got multiple action on the event
-                        if (trickleFastInputs && (mouseMoved || mouseButtonChanged != 0))
-                            break
-                        io.mouseWheelH += e.wheelX
-                        io.mouseWheel += e.wheelY
-                        mouseWheeled = true
-                    }
+                    // Trickling Rule: Stop processing queued events if we got multiple action on the event
+                    if (trickleFastInputs && (mouseMoved || mouseButtonChanged != 0))
+                        break
+                    io.mouseWheelH += e.wheelX
+                    io.mouseWheel += e.wheelY
+                    mouseWheeled = true
                 }
                 is InputEvent.Key -> {
+                    // Trickling Rule: Stop processing queued events if we got multiple action on the same button
                     val key = e.key
                     assert(key != Key.None)
                     val keyData = key.data
                     val keyDataIndex = g.io.keysData.indexOf(keyData)
-                    e.ignoredAsSame = keyData.down == e.down && keyData.analogValue == e.analogValue
-                    if (!e.ignoredAsSame) {
-                        // Trickling Rule: Stop processing queued events if we got multiple action on the same button
-                        if (trickleFastInputs && keyData.down != e.down && (keyChangedMask testBit keyDataIndex || textInputed || mouseButtonChanged != 0))
-                            break
-                        keyData.down = e.down
-                        keyData.analogValue = e.analogValue
-                        keyChanged = true
-                        keyChangedMask setBit keyDataIndex
+                    if (trickleFastInputs && keyData.down != e.down && (keyChangedMask testBit keyDataIndex || textInputed || mouseButtonChanged != 0))
+                        break
+                    keyData.down = e.down
+                    keyData.analogValue = e.analogValue
+                    keyChanged = true
+                    keyChangedMask setBit keyDataIndex
 
-                        if (key == Key.Mod_Ctrl || key == Key.Mod_Shift || key == Key.Mod_Alt || key == Key.Mod_Super) {
-                            if (key == Key.Mod_Ctrl) io.keyCtrl = keyData.down
-                            if (key == Key.Mod_Shift) io.keyShift = keyData.down
-                            if (key == Key.Mod_Alt) io.keyAlt = keyData.down
-                            if (key == Key.Mod_Super) io.keySuper = keyData.down
-                            io.keyMods = mergedModsFromBools
-                        }
+                    if (key == Key.Mod_Ctrl || key == Key.Mod_Shift || key == Key.Mod_Alt || key == Key.Mod_Super) {
+                        if (key == Key.Mod_Ctrl) io.keyCtrl = keyData.down
+                        if (key == Key.Mod_Shift) io.keyShift = keyData.down
+                        if (key == Key.Mod_Alt) io.keyAlt = keyData.down
+                        if (key == Key.Mod_Super) io.keySuper = keyData.down
+                        io.keyMods = mergedModsFromBools
                     }
                 }
                 is InputEvent.Text -> {
@@ -120,9 +108,7 @@ internal interface newFrame {
                     // We intentionally overwrite this and process in NewFrame(), in order to give a chance
                     // to multi-viewports backends to queue AddFocusEvent(false) + AddFocusEvent(true) in same frame.
                     val focusLost = !e.focused
-                    e.ignoredAsSame = io.appFocusLost == focusLost
-                    if (!e.ignoredAsSame)
-                        io.appFocusLost = focusLost
+                    io.appFocusLost = focusLost
                 }
             }
             eventN++
@@ -137,7 +123,7 @@ internal interface newFrame {
         if (!IMGUI_DISABLE_DEBUG_TOOLS)
             if (eventN != 0 && g.debugLogFlags has DebugLogFlag.EventIO)
                 for (n in g.inputEventsQueue.indices)
-                    debugPrintInputEvent(if (n < eventN) (if (g.inputEventsQueue[n].ignoredAsSame) "Processed (Same)" else "Processed") else "Remaining", g.inputEventsQueue[n])
+                    debugPrintInputEvent(if (n < eventN) "Processed" else "Remaining", g.inputEventsQueue[n])
 
         // Remaining events will be processed on the next frame
         if (eventN == g.inputEventsQueue.size)
