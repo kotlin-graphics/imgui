@@ -27,7 +27,6 @@ import imgui.ImGui.pushID
 import imgui.ImGui.setNavID
 import imgui.ImGui.style
 import imgui.internal.classes.Rect
-import imgui.internal.classes.Window
 import imgui.internal.round
 import imgui.internal.sections.*
 import kotlin.math.max
@@ -88,17 +87,11 @@ interface widgetsMenus {
 
         // Nav: When a move request within one of our child menu failed, capture the request to navigate among our siblings.
         if (navMoveRequestButNoResultYet() && (g.navMoveDir == Dir.Left || g.navMoveDir == Dir.Right) && g.navWindow!!.flags has Wf._ChildMenu) {
-            var navEarliestChild = g.navWindow!!
 
-            tailrec fun Window.getParent(): Window {
-                val parent = parentWindow
-                return when {
-                    parent != null && parent.flags has Wf._ChildMenu -> parent.getParent()
-                    else -> this
-                }
-            }
-
-            navEarliestChild = navEarliestChild.getParent()
+            // Try to find out if the request is for one of our child menu
+            var navEarliestChild = g.navWindow
+            while (navEarliestChild!!.parentWindow != null && navEarliestChild.parentWindow!!.flags has Wf._ChildMenu)
+                navEarliestChild = navEarliestChild.parentWindow
             if (navEarliestChild.parentWindow == window && navEarliestChild.dc.parentLayoutType == Lt.Horizontal && g.navMoveFlags hasnt NavMoveFlag.Forwarded) {
                 // To do so we claim focus back, restore NavId and then process the movement request for yet another frame.
                 // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth bothering)

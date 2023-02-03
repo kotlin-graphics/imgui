@@ -367,38 +367,33 @@ fun navUpdateWindowing() {
     applyFocusWindow?.let { g.navWindowingTarget = null }
 
     // Apply menu/layer toggle
-    if (applyToggleLayer)
+    val navWindow = g.navWindow
+    if (applyToggleLayer && navWindow != null) {
+
         clearActiveID()
 
-    g.navWindow?.let {
         // Move to parent menu if necessary
-        var newNavWindow = it
-
-        tailrec fun Window.getParent(): Window { // TODO, now we can use construct `parent?.`..
-            val parent = parentWindow
-            return when {
-                parent != null && dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu) && flags has Wf._ChildWindow && flags hasnt (Wf._Popup or Wf._ChildMenu) -> parent.getParent()
-                else -> this
-            }
-        }
-
-        newNavWindow = newNavWindow.getParent()
-
-        if (newNavWindow !== it) {
-            val oldNavWindow = it
+        var newNavWindow = navWindow
+        while (newNavWindow!!.parentWindow != null
+            && newNavWindow.dc.navLayersActiveMask hasnt (1 shl NavLayer.Menu)
+            && newNavWindow.flags has Wf._ChildWindow
+            && newNavWindow.flags hasnt (Wf._Popup or Wf._ChildMenu))
+            newNavWindow = newNavWindow.parentWindow
+        if (newNavWindow !== navWindow) {
+            val oldNavWindow = navWindow
             focusWindow(newNavWindow)
             newNavWindow.navLastChildNavWindow = oldNavWindow
         }
 
         // Toggle layer
         val newNavLayer = when {
-            it.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
+            navWindow.dc.navLayersActiveMask has (1 shl NavLayer.Menu) -> NavLayer of (g.navLayer xor 1)
             else -> NavLayer.Main
         }
         if (newNavLayer != g.navLayer) {
             // Reinitialize navigation when entering menu bar with the Alt key (FIXME: could be a properly of the layer?)
             if (newNavLayer == NavLayer.Menu)
-                g.navWindow!!.navLastIds[newNavLayer] = 0
+                navWindow.navLastIds[newNavLayer] = 0
             navRestoreLayer(newNavLayer)
             navRestoreHighlightAfterMove()
         }
