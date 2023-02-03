@@ -328,7 +328,7 @@ class TabBar {
         // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
         if (pOpen?.get() == false) {
-            itemAdd(Rect(), id, null, ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus)
+            itemAdd(Rect(), id, null, ItemFlag.NoNav.i)
             return false
         }
 
@@ -391,7 +391,7 @@ class TabBar {
         // Note that tab_is_new is not necessarily the same as tab_appearing! When a tab bar stops being submitted
         // and then gets submitted again, the tabs will have 'tab_appearing=true' but 'tab_is_new=false'.
         if (tabAppearing && (!tabBarAppearing || tabIsNew)) {
-            itemAdd(Rect(), id, null, ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus)
+            itemAdd(Rect(), id, null, ItemFlag.NoNav.i)
             if (isTabButton)
                 return false
             return tabContentsVisible

@@ -15,6 +15,7 @@ import imgui.ImGui.debugHookIdInfo
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getKeyVector2d
 import imgui.ImGui.io
+import imgui.ImGui.itemAdd
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.mainViewport
 import imgui.ImGui.popID
@@ -878,7 +879,7 @@ class Window(var context: Context,
             if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
             if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
             val resizeGripId = getID(resizeGripN) // == GetWindowResizeCornerID()
-            keepAliveID(resizeGripId)
+            itemAdd(resizeRect, resizeGripId, null, ItemFlag.NoNav.i)
             val (_, hovered, held) = ImGui.buttonBehavior(resizeRect, resizeGripId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
             //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
             if (hovered || held)
@@ -909,7 +910,7 @@ class Window(var context: Context,
             val axis = if (borderN == Dir.Left.i || borderN == Dir.Right.i) Axis.X else Axis.Y
             val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_HOVER_PADDING)
             val borderId = getID(borderN + 4) // == GetWindowResizeBorderID()
-            keepAliveID(borderId)
+            itemAdd(borderRect, borderId, null, ItemFlag.NoNav.i)
             val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
             //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
             if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {

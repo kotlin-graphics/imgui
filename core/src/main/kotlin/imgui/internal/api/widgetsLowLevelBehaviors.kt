@@ -487,22 +487,15 @@ internal interface widgetsLowLevelBehaviors {
     }
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
-    fun splitterBehavior(bb: Rect, id: ID, axis: Axis,
-                         size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float,
-                         hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f): Boolean {
+    fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
+                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f): Boolean {
 
         var size1 by size1ptr
         var size2 by size2ptr
         val window = g.currentWindow!!
 
-        val itemFlagsBackup = g.currentItemFlags
-
-        g.currentItemFlags = g.currentItemFlags or (ItemFlag.NoNav or ItemFlag.NoNavDefaultFocus)
-
-        val itemAdd = itemAdd(bb, id)
-        g.currentItemFlags = itemFlagsBackup
-        if (!itemAdd) return false
+        if (!itemAdd(bb, id, null, ItemFlag.NoNav.i))
+            return false
 
         val bbInteract = Rect(bb)
         bbInteract expand if (axis == Axis.Y) Vec2(0f, hoverExtend) else Vec2(hoverExtend, 0f)

@@ -10,6 +10,7 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.endPopup
 import imgui.ImGui.errorCheckUsingSetCursorPosToExtendParentBoundaries
 import imgui.ImGui.isMouseDoubleClicked
+import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.keepAliveID
 import imgui.ImGui.markIniSettingsDirty
@@ -1004,8 +1005,8 @@ class Table {
 
             val columnId = getColumnResizeID(columnN, instanceCurrent)
             val hitRect = Rect(column.maxX - hitHalfWidth, hitY1, column.maxX + hitHalfWidth, borderY2Hit)
+            itemAdd(hitRect, columnId, null, ItemFlag.NoNav.i)
             //GetForegroundDrawList()->AddRect(hit_rect.Min, hit_rect.Max, IM_COL32(255, 0, 0, 100));
-            keepAliveID(columnId)
 
             var (pressed, hovered, held) = buttonBehavior(hitRect, columnId, Bf.FlattenChildren or Bf.AllowItemOverlap or Bf.PressedOnClick or Bf.PressedOnDoubleClick or Bf.NoNavFocus)
             if (pressed && isMouseDoubleClicked(MouseButton.Left)) {

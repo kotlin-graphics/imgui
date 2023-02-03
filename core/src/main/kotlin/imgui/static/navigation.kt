@@ -894,7 +894,7 @@ fun navProcessItem() {
     }
 
     // Process Move Request (scoring for navigation)
-    // FIXME-NAV: Consider policy for double scoring (scoring from NavScoringRect + scoring from a rect wrapped according to current wrapping policy)     */
+    // FIXME-NAV: Consider policy for double scoring (scoring from NavScoringRect + scoring from a rect wrapped according to current wrapping policy)
     if (g.navMoveScoringItems) {
 
         val isTabStop = itemFlags has If.Inputable && itemFlags hasnt (If.NoTabStop or If.Disabled)
@@ -902,7 +902,7 @@ fun navProcessItem() {
         if (isTabbing) {
             if (isTabStop || g.navMoveFlags has NavMoveFlag.FocusApi)
                 navProcessItemForTabbingRequest(id)
-        } else if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt (If.Disabled or If.NoNav)) {
+        } else if ((g.navId != id || g.navMoveFlags has NavMoveFlag.AllowCurrentNavId) && itemFlags hasnt If.Disabled) {
             val result = if (window === g.navWindow) g.navMoveResultLocal else g.navMoveResultOther
 
             if (!isTabbing) {

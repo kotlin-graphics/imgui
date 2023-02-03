@@ -96,7 +96,7 @@ interface widgetsMenus {
                 // To do so we claim focus back, restore NavId and then process the movement request for yet another frame.
                 // This involve a one-frame delay which isn't very problematic in this situation. We could remove it by scoring in advance for multiple window (probably not worth bothering)
                 val layer = NavLayer.Menu
-                assert(window.dc.navLayersActiveMaskNext has (1 shl layer)) { "Sanity check" }
+                assert(window.dc.navLayersActiveMaskNext has (1 shl layer)) { "Sanity check (FIXME: Seems unnecessary)" }
                 focusWindow(window)
                 setNavID(window.navLastIds[layer], layer, 0, window.navRectRel[layer])
                 g.navDisableHighlight = true // Hide highlight for the current frame so we don't see the intermediary selection.

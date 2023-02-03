@@ -334,8 +334,6 @@ internal interface widgets {
         if (window.skipItems)
             return false
 
-        keepAliveID(id)
-
         val bbFrameWidth = bbFrame.width
         val bbFrameHeight = bbFrame.height
         if (bbFrameWidth <= 0f || bbFrameHeight <= 0f)
@@ -364,6 +362,7 @@ internal interface widgets {
         val grabHNorm = grabHPixels / scrollbarSizeV
 
         // Handle input right away. None of the code of Begin() is relying on scrolling position before calling Scrollbar().
+        itemAdd(bbFrame, id, null, ItemFlag.NoNav.i)
         val (_, hovered, held) = buttonBehavior(bb, id, ButtonFlag.NoNavFocus)
 
         val scrollMax = max(1L, sizeContentsV - sizeAvailV)

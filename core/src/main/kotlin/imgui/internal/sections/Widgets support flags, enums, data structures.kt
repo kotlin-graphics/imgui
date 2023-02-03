@@ -201,7 +201,7 @@ enum class ButtonFlag(val i: ButtonFlags) {
     /** don't set ActiveId while holding the mouse (ImGuiButtonFlags_PressedOnClick only) */
     NoHoldingActiveId(1 shl 17),
 
-    /** don't override navigation focus when activated */
+    /** don't override navigation focus when activated (FIXME: this is essentially used everytime an item uses ImGuiItemFlags_NoNav, but because legacy specs don't requires LastItemData to be set ButtonBehavior(), we can't poll g.LastItemData.InFlags) */
     NoNavFocus(1 shl 18),
 
     /** don't report as hovered when nav focus is on this item */
