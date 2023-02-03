@@ -23,12 +23,12 @@ internal interface tabBars {
 
     // the rest of the function is inside the TabBar class
 
-    fun tabItemCalcSize(label: String, hasCloseButton: Boolean): Vec2 {
+    fun tabItemCalcSize(label: String, hasCloseButtonOrUnsavedMarker: Boolean): Vec2 {
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
         val size = Vec2(labelSize.x + style.framePadding.x, labelSize.y + style.framePadding.y * 2f)
         size.x += style.framePadding.x + when {
-            hasCloseButton -> style.itemInnerSpacing.x + g.fontSize // We use Y intentionally to fit the close button circle.
+            hasCloseButtonOrUnsavedMarker -> style.itemInnerSpacing.x + g.fontSize // We use Y intentionally to fit the close button circle.
             else -> 1f
         }
         return Vec2(size.x min TabBar.calcMaxTabWidth(), size.y)

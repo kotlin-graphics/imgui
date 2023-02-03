@@ -348,7 +348,7 @@ class TabBar {
         lastTabItemIdx = tabs.indexOf(tab)
 
         // Calculate tab contents size
-        val size = tabItemCalcSize(label, pOpen != null)
+        val size = tabItemCalcSize(label, pOpen != null || flags has TabItemFlag.UnsavedDocument)
         tab.requestedWidth = -1f
         if (g.nextItemData.flags has NextItemDataFlag.HasWidth) {
             size.x = g.nextItemData.width; tab.requestedWidth = g.nextItemData.width
@@ -361,6 +361,7 @@ class TabBar {
         val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
         val tabBarFocused = this.flags has TabBarFlag._IsFocused
         val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
+        val tabJustUnsaved = flags has TabItemFlag.UnsavedDocument && tab.flags hasnt TabItemFlag.UnsavedDocument
         val isTabButton = flags has TabItemFlag._Button
         tab.lastFrameVisible = g.frameCount
         tab.flags = flags
@@ -482,8 +483,7 @@ class TabBar {
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) getIDWithSeed("#CLOSE", -1, id) else 0
-        val (justClosed, textClipped) = tabItemLabelAndCloseButton(displayDrawList, bb, flags, framePadding,
-                                                                   label.toByteArray(), id, closeButtonId, tabContentsVisible)
+        val (justClosed, textClipped) = tabItemLabelAndCloseButton(displayDrawList, bb, if (tabJustUnsaved) flags wo TabItemFlag.UnsavedDocument else flags, framePadding, label.toByteArray(), id, closeButtonId, tabContentsVisible)
         if (justClosed && pOpen != null) {
             pOpen.set(false)
             closeTab(tab)
@@ -606,8 +606,8 @@ class TabBar {
             // Refresh tab width immediately, otherwise changes of style e.g. style.FramePadding.x would noticeably lag in the tab bar.
             // Additionally, when using TabBarAddTab() to manipulate tab bar order we occasionally insert new tabs that don't have a width yet,
             // and we cannot wait for the next BeginTabItem() call. We cannot compute this width within TabBarAddTab() because font size depends on the active window.
-            val hasCloseButton = tab.flags hasnt TabItemFlag._NoCloseButton
-            tab.contentWidth = if (tab.requestedWidth >= 0f) tab.requestedWidth else tabItemCalcSize(tab.name, hasCloseButton).x
+            val hasCloseButtonOrUnsavedMarker = tab.flags hasnt TabItemFlag._NoCloseButton || tab.flags has TabItemFlag.UnsavedDocument
+            tab.contentWidth = if (tab.requestedWidth >= 0f) tab.requestedWidth else tabItemCalcSize(tab.name, hasCloseButtonOrUnsavedMarker).x
 
             val sectionN = tabItemGetSectionIdx(tab)
             val section = sections[sectionN]
