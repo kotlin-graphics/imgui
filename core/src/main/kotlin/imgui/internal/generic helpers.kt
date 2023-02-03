@@ -223,6 +223,7 @@ fun trimBlanks(buf: CharArray): CharArray {
 }
 
 //IMGUI_API const char*   ImStrSkipBlank(const char* str);
+//char      ImToUpper(char c)               { return (c >= 'a' && c <= 'z') ? c &= ~32 : c; }
 fun charIsBlankA(c: Int): Boolean = c == ' '.i || c == '\t'.i
 
 val Char.isBlankA: Boolean
