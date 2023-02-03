@@ -215,6 +215,7 @@ data class NextItemData(
 }
 
 /** Status storage for last submitted item */
+// TODO -> data class?
 class LastItemData {
     var id: ID = 0
     var inFlags: ItemFlags = 0 // See ImGuiItemFlags_

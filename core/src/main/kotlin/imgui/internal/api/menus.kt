@@ -231,11 +231,18 @@ internal interface menus {
             openPopup(label)
 
         if (menuIsOpen) {
-            // FIXME: This technically breaks functions relying on LastItemData, somehow nobody complained yet. Should backup/restore LastItemData.
+            val lastItemInParent = g.lastItemData
             setNextWindowPos(popupPos, Cond.Always) // Note: misleading: the value will serve as reference for FindBestWindowPosForPopup(), not actual pos.
             pushStyleVar(StyleVar.ChildRounding, style.popupRounding) // First level will use _PopupRounding, subsequent will use _ChildRounding
             menuIsOpen = beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
             popStyleVar()
+            if (menuIsOpen) {
+                // Restore LastItemData so IsItemXXXX functions can work after BeginMenu()/EndMenu()
+                // (This fixes using IsItemClicked() and IsItemHovered(), but IsItemHovered() also relies on its support for ImGuiItemFlags_NoWindowHoverableCheck)
+                g.lastItemData = lastItemInParent
+                if (g.hoveredWindow === window)
+                    g.lastItemData.statusFlags /= ItemStatusFlag.HoveredWindow
+            }
         } else
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
 

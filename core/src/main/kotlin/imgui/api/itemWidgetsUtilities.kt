@@ -54,7 +54,7 @@ interface itemWidgetsUtilities {
 
             // Test if interactions on this window are blocked by an active popup or modal.
             // The ImGuiHoveredFlags_AllowWhenBlockedByPopup flag will be tested here.
-            if (!window.isContentHoverable(flags))
+            if (!window.isContentHoverable(flags) && g.lastItemData.inFlags hasnt ItemFlag.NoWindowHoverableCheck)
                 return false
 
             // Test if the item is disabled
