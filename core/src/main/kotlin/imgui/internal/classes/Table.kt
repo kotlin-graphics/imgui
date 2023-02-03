@@ -691,11 +691,19 @@ class Table {
             }
         }
 
+        // Determine if table is hovered which will be used to flag columns as hovered.
+        // - In principle we'd like to use the equivalent of IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem),
+        //   but because our item is partially submitted at this point we use ItemHoverable() and a workaround (temporarily
+        //   clear ActiveId, which is equivalent to the change provided by _AllowWhenBLockedByActiveItem).
+        // - This allows columns to be marked as hovered when e.g. clicking a button inside the column, or using drag and drop.
         val tableInstance = getInstanceData(instanceCurrent)
         hoveredColumnBody = -1
         hoveredColumnBorder = -1
         val mouseHitRect = Rect(outerRect.min.x, outerRect.min.y, outerRect.max.x, outerRect.max.y max (outerRect.min.y + tableInstance.lastOuterHeight))
+        val backupActiveId = g.activeId
+        g.activeId = 0
         val isHoveringTable = itemHoverable(mouseHitRect, 0)
+        g.activeId = backupActiveId
 
         // [Part 6] Setup final position, offset, skip/clip states and clipping rectangles, detect hovered column
         // Process columns in their visible orders as we are comparing the visible order and adjusting host_clip_rect while looping.
