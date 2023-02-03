@@ -248,7 +248,6 @@ interface dragAndDrop {
         }
 
         // Render default drop visuals
-        // FIXME-DRAGDROP: Settle on a proper default visuals for drop target.
         payload.preview = wasAcceptedPreviously
         flags = flags or (g.dragDropSourceFlags and DragDropFlag.AcceptNoDrawDefaultRect) // Source can also inhibit the preview (useful for external sources that live for 1 frame)
         if (flags hasnt Ddf.AcceptNoDrawDefaultRect && payload.preview)
