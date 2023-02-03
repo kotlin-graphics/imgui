@@ -13,8 +13,10 @@ import imgui.ImGui.format
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
-import imgui.internal.sections.*
-import imgui.static.patchFormatStringFloatToInt
+import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.ItemStatusFlag
+import imgui.internal.sections.has
 import kool.getValue
 import kool.setValue
 import unsigned.Ubyte
@@ -154,14 +156,7 @@ interface widgetsSliders {
             return false
 
         // Default format string when passing NULL
-        val format = when {
-            format_ == null -> when (dataType) {
-                DataType.Float, DataType.Double -> "%f"
-                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
-            }
-            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
-            else -> format_
-        }
+        val format = format_ ?: if (dataType == DataType.Float || dataType == DataType.Double) "%f" else "%d"
 
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
@@ -298,14 +293,8 @@ interface widgetsSliders {
         if (!ImGui.itemAdd(frameBb, id)) return false
 
         // Default format string when passing NULL
-        val format = when {
-            format_ == null -> when (dataType) {
-                DataType.Float, DataType.Double -> "%f"
-                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
-            }
-            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
-            else -> format_
-        }
+        val format = format_ ?: if (dataType == DataType.Float || dataType == DataType.Double) "%f" else "%d"
+
         val hovered = ImGui.itemHoverable(frameBb, id)
         if ((hovered && ImGui.io.mouseClicked[0]) || g.navActivateId == id || g.navActivateInputId == id) {
             ImGui.setActiveID(id, window)

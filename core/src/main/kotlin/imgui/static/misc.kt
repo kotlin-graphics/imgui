@@ -378,26 +378,6 @@ fun navUpdateWindowingHighlightWindow(focusChangeDir: Int) {
     g.navWindowingToggleLayer = false
 }
 
-/** FIXME-LEGACY: Prior to 1.61 our DragInt() function internally used floats and because of this the compile-time default value
- *  for format was "%.0f".
- *  Even though we changed the compile-time default, we expect users to have carried %f around, which would break
- *  the display of DragInt() calls.
- *  To honor backward compatibility we are rewriting the format string, unless IMGUI_DISABLE_OBSOLETE_FUNCTIONS is enabled.
- *  What could possibly go wrong?! */
-fun patchFormatStringFloatToInt(fmt: String): String {
-    if (fmt == "%.0f") // Fast legacy path for "%.0f" which is expected to be the most common case.
-        return "%d"
-    val fmtStart = parseFormatFindStart(fmt)    // Find % (if any, and ignore %%)
-    // Find end of format specifier, which itself is an exercise of confidence/recklessness (because snprintf is dependent on libc or user).
-    val fmtEnd = parseFormatFindEnd(fmt, fmtStart)
-    if (fmtEnd > fmtStart && fmt[fmtEnd - 1] == 'f') {
-        if (fmtStart == 0 && fmtEnd == fmt.length)
-            return "%d"
-        return fmt.substring(0, fmtStart) + "%d" + fmt.substring(fmtEnd, fmt.length)
-    }
-    return fmt
-}
-
 inline fun <reified T : InputEvent> findLatestInputEvent(arg: Int = -1): T? {
     for (n in g.inputEventsQueue.lastIndex downTo 0) {
         val e = g.inputEventsQueue[n]

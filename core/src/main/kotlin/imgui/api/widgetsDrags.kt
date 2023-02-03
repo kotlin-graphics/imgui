@@ -32,7 +32,6 @@ import imgui.ImGui.textEx
 import imgui.internal.api.DRAG_MOUSE_THRESHOLD_FACTOR
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
-import imgui.static.patchFormatStringFloatToInt
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 
@@ -238,14 +237,7 @@ interface widgetsDrags {
             return false
 
         // Default format string when passing NULL
-        val format = when {
-            format_ == null -> when (dataType) {
-                DataType.Float, DataType.Double -> "%f"
-                else -> "%d" // (FIXME-LEGACY: Patch old "%.0f" format string to use "%d", read function more details.)
-            }
-            dataType == DataType.Int && format_ != "%d" -> patchFormatStringFloatToInt(format_)
-            else -> format_
-        }
+        val format = format_ ?: if (dataType == DataType.Float || dataType == DataType.Double) "%f" else "%d"
 
         val hovered = ImGui.itemHoverable(frameBb, id)
         var tempInputIsActive = tempInputAllowed && ImGui.tempInputIsActive(id)
