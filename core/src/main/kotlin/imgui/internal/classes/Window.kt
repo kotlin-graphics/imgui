@@ -142,6 +142,9 @@ class Window(var context: Context,
     /** Number of Begin() during the current frame (generally 0 or 1, 1+ if appending via multiple Begin/End pairs) */
     var beginCount = 0
 
+    /** Number of Begin() during the previous frame */
+    var beginCountPreviousFrame = 0
+
     /** Begin() order within immediate parent window, if we are a child window. Otherwise 0. */
     var beginOrderWithinParent = 0
 

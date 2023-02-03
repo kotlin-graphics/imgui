@@ -169,13 +169,16 @@ interface widgetsMenus {
         // However, it means that with the current code, a BeginMenu() from outside another menu or a menu-bar won't be closable with the Left direction.
         // FIXME: This doesn't work if the parent BeginMenu() is not on a menu.
         val window = g.currentWindow!!
-        if (g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical)
-            g.navWindow?.rootWindowForNav?.let {
-                if (it.flags has Wf._Popup && it.parentWindow === window) {
-                    closePopupToLevel(g.beginPopupStack.size, true)
-                    navMoveRequestCancel()
+        assert(window.flags has Wf._Popup) { "Mismatched BeginMenu () / EndMenu() calls" }
+
+        if (window.beginCount == window.beginCountPreviousFrame)
+            if (g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical)
+                g.navWindow?.rootWindowForNav?.let {
+                    if (it.flags has Wf._Popup && it.parentWindow === window) {
+                        closePopupToLevel(g.beginPopupStack.size, true)
+                        navMoveRequestCancel()
+                    }
                 }
-            }
         endPopup()
     }
 

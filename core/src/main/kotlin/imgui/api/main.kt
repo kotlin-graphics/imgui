@@ -240,9 +240,10 @@ interface main {
         val memoryCompactStartTime = if (g.gcCompactAll || io.configMemoryCompactTimer < 0f) Float.MAX_VALUE else g.time.f - io.configMemoryCompactTimer
         g.windows.forEach {
             it.wasActive = it.active
-            it.beginCount = 0
             it.active = false
             it.writeAccessed = false
+            it.beginCountPreviousFrame = it.beginCount
+            it.beginCount = 0
 
             // Garbage collect transient buffers of recently unused windows
             if (!it.wasActive && !it.memoryCompacted && it.lastTimeActive < memoryCompactStartTime)
