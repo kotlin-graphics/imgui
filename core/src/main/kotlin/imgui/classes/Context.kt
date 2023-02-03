@@ -117,7 +117,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var wheelingWindowRefMousePos: Vec2 = Vec2()
 
-    var wheelingWindowTimer = 0f
+    var wheelingWindowReleaseTimer = 0f
 
 
     // Item/widgets state and tracking information

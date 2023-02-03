@@ -159,7 +159,7 @@ fun updateMouseInputs() {
 }
 
 fun lockWheelingWindow(window: Window?) {
-    g.wheelingWindowTimer = if (window != null) WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER else 0f
+    g.wheelingWindowReleaseTimer = if (window != null) WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER else 0f
     if (g.wheelingWindow === window)
         return
     IMGUI_DEBUG_LOG_IO("LockWheelingWindow() \"${window?.name ?: "NULL"}\"")
@@ -171,9 +171,9 @@ fun updateMouseWheel() {
 
     // Reset the locked window if we move the mouse or after the timer elapses
     if (g.wheelingWindow != null) {
-        g.wheelingWindowTimer -= io.deltaTime
+        g.wheelingWindowReleaseTimer -= io.deltaTime
         if (isMousePosValid() && (io.mousePos - g.wheelingWindowRefMousePos).lengthSqr > io.mouseDragThreshold * io.mouseDragThreshold)
-            g.wheelingWindowTimer = 0f
+            g.wheelingWindowReleaseTimer = 0f
         lockWheelingWindow(null)
     }
 
@@ -181,19 +181,19 @@ fun updateMouseWheel() {
     val activeIdUsingMouseWheelX = g.activeIdUsingKeyInputMask testBit Key.MouseWheelX.i
     val activeIdUsingMouseWheelY = g.activeIdUsingKeyInputMask testBit Key.MouseWheelY.i
 
-    var wheelX = if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelX) g.io.mouseWheelH else 0f
-    var wheelY = if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelY) g.io.mouseWheel else 0f
-    if (wheelX == 0f && wheelY == 0f)
+    val wheel = Vec2(if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelX) g.io.mouseWheelH else 0f,
+                     if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelY) g.io.mouseWheel else 0f)
+    if (wheel.x == 0f && wheel.y == 0f)
         return
 
     //IMGUI_DEBUG_LOG("MouseWheel X:%.3f Y:%.3f\n", wheel_x, wheel_y);
-    var mouseWindow = g.wheelingWindow ?: g.hoveredWindow
+    val mouseWindow = g.wheelingWindow ?: g.hoveredWindow
     if (mouseWindow == null || mouseWindow.collapsed)
         return
 
     // Zoom / Scale window
     // FIXME-OBSOLETE: This is an old feature, it still works but pretty much nobody is using it and may be best redesigned.
-    if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling) {
+    if (wheel.y != 0f && io.keyCtrl && io.fontAllowUserScaling) {
         lockWheelingWindow(mouseWindow)
         val window = mouseWindow
         val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
@@ -207,20 +207,24 @@ fun updateMouseWheel() {
         }
         return
     }
-
-    // Mouse wheel scrolling
-    // If a child window has the ImGuiWindowFlags_NoScrollWithMouse flag, we give a chance to scroll its parent
     if (g.io.keyCtrl)
         return
 
+    // Mouse wheel scrolling
     // As a standard behavior holding SHIFT while using Vertical Mouse Wheel triggers Horizontal scroll instead
     // (we avoid doing it on OSX as it the OS input layer handles this already)
     val swapAxis = g.io.keyShift && !g.io.configMacOSXBehaviors
-    wheelY = if (swapAxis) 0f else g.io.mouseWheel
-    wheelX = if (swapAxis) g.io.mouseWheel else g.io.mouseWheelH
+    if (swapAxis) {
+        wheel.x = wheel.y
+        wheel.y = 0f
+    }
 
     // Vertical Mouse Wheel scrolling
-    if (wheelY != 0f) {
+    // Bubble up into parent window if:
+    // - a child window doesn't allow any scrolling.
+    // - a child window doesn't need scrolling because it is already at the edge for the direction we are going in.
+    // - a child window has the ImGuiWindowFlags_NoScrollWithMouse flag.
+    if (wheel.y != 0f) {
         var window = mouseWindow
         while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.y == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
             window = window.parentWindow
@@ -228,12 +232,12 @@ fun updateMouseWheel() {
             lockWheelingWindow(mouseWindow)
             val maxStep = window.innerRect.height * 0.67f
             val scrollStep = floor((5 * window.calcFontSize()) min maxStep)
-            window.setScrollY(window.scroll.y - wheelY * scrollStep)
+            window.setScrollY(window.scroll.y - wheel.y * scrollStep)
         }
     }
 
     // Horizontal Mouse Wheel scrolling, or Vertical Mouse Wheel w/ Shift held
-    if (wheelX != 0f) {
+    if (wheel.x != 0f) {
         var window = mouseWindow
         while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.x == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
             window = window.parentWindow
@@ -241,7 +245,7 @@ fun updateMouseWheel() {
             lockWheelingWindow(mouseWindow)
             val maxStep = window.innerRect.width * 0.67f
             val scrollStep = floor((2 * window.calcFontSize()) min maxStep)
-            window.setScrollX(window.scroll.x - wheelX * scrollStep)
+            window.setScrollX(window.scroll.x - wheel.x * scrollStep)
         }
     }
 }
