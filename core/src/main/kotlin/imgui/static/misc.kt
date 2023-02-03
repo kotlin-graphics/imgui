@@ -166,6 +166,7 @@ fun lockWheelingWindow(window: Window?) {
     g.wheelingWindow = window
     g.wheelingWindowRefMousePos put io.mousePos
 }
+
 fun updateMouseWheel() {
 
     // Reset the locked window if we move the mouse or after the timer elapses
@@ -185,14 +186,16 @@ fun updateMouseWheel() {
     if (wheelX == 0f && wheelY == 0f)
         return
 
-    var window = g.wheelingWindow ?: g.hoveredWindow
-    if (window == null || window.collapsed)
+    //IMGUI_DEBUG_LOG("MouseWheel X:%.3f Y:%.3f\n", wheel_x, wheel_y);
+    var mouseWindow = g.wheelingWindow ?: g.hoveredWindow
+    if (mouseWindow == null || mouseWindow.collapsed)
         return
 
     // Zoom / Scale window
     // FIXME-OBSOLETE: This is an old feature, it still works but pretty much nobody is using it and may be best redesigned.
     if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling) {
-        lockWheelingWindow(window)
+        lockWheelingWindow(mouseWindow)
+        val window = mouseWindow
         val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
         val scale = newFontScale / window.fontWindowScale
         window.fontWindowScale = newFontScale
@@ -218,13 +221,11 @@ fun updateMouseWheel() {
 
     // Vertical Mouse Wheel scrolling
     if (wheelY != 0f) {
-        lockWheelingWindow(window)
-        tailrec fun Window.getParent(): Window = when {
-            flags has WindowFlag._ChildWindow && (scrollMax.y == 0f || (flags has WindowFlag.NoScrollWithMouse && flags hasnt WindowFlag.NoMouseInputs)) -> parentWindow!!.getParent()
-            else -> this
-        }
-        window = g.hoveredWindow!!.getParent()
+        var window = mouseWindow
+        while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.y == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
+            window = window.parentWindow
         if (window.flags hasnt WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs) {
+            lockWheelingWindow(mouseWindow)
             val maxStep = window.innerRect.height * 0.67f
             val scrollStep = floor((5 * window.calcFontSize()) min maxStep)
             window.setScrollY(window.scroll.y - wheelY * scrollStep)
@@ -233,13 +234,11 @@ fun updateMouseWheel() {
 
     // Horizontal Mouse Wheel scrolling, or Vertical Mouse Wheel w/ Shift held
     if (wheelX != 0f) {
-        lockWheelingWindow(window)
-        tailrec fun Window.getParent(): Window = when {
-            flags has WindowFlag._ChildWindow && (scrollMax.x == 0f || (flags has WindowFlag.NoScrollWithMouse && flags hasnt WindowFlag.NoMouseInputs)) -> parentWindow!!.getParent()
-            else -> this
-        }
-        window = g.hoveredWindow!!.getParent()
+        var window = mouseWindow
+        while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.x == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
+            window = window.parentWindow
         if (window.flags hasnt WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs) {
+            lockWheelingWindow(mouseWindow)
             val maxStep = window.innerRect.width * 0.67f
             val scrollStep = floor((2 * window.calcFontSize()) min maxStep)
             window.setScrollX(window.scroll.x - wheelX * scrollStep)
@@ -395,7 +394,7 @@ fun patchFormatStringFloatToInt(fmt: String): String {
     return fmt
 }
 
-inline fun <reified T : InputEvent>findLatestInputEvent(arg: Int = -1): T? {
+inline fun <reified T : InputEvent> findLatestInputEvent(arg: Int = -1): T? {
     for (n in g.inputEventsQueue.lastIndex downTo 0) {
         val e = g.inputEventsQueue[n]
         if (e !is T)
