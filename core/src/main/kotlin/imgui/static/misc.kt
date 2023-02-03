@@ -16,7 +16,6 @@ import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.topMostAndVisiblePopupModal
 import imgui.api.g
 import imgui.internal.*
-import imgui.internal.api.inputs
 import imgui.internal.classes.Window
 import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.InputEvent
@@ -159,6 +158,14 @@ fun updateMouseInputs() {
     }
 }
 
+fun lockWheelingWindow(window: Window?) {
+    g.wheelingWindowTimer = if (window != null) WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER else 0f
+    if (g.wheelingWindow === window)
+        return
+    IMGUI_DEBUG_LOG_IO("LockWheelingWindow() \"${window?.name ?: "NULL"}\"")
+    g.wheelingWindow = window
+    g.wheelingWindowRefMousePos put io.mousePos
+}
 fun updateMouseWheel() {
 
     // Reset the locked window if we move the mouse or after the timer elapses
@@ -166,11 +173,7 @@ fun updateMouseWheel() {
         g.wheelingWindowTimer -= io.deltaTime
         if (isMousePosValid() && (io.mousePos - g.wheelingWindowRefMousePos).lengthSqr > io.mouseDragThreshold * io.mouseDragThreshold)
             g.wheelingWindowTimer = 0f
-        if (g.wheelingWindowTimer <= 0f) {
-            IMGUI_DEBUG_LOG_IO("UpdateMouseWheel() release WheelingWindow lock \"${g.wheelingWindow!!.name}\"")
-            g.wheelingWindow = null
-            g.wheelingWindowTimer = 0f
-        }
+        lockWheelingWindow(null)
     }
 
     val hoveredIdUsingMouseWheel = g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrameUsingMouseWheel
@@ -189,7 +192,7 @@ fun updateMouseWheel() {
     // Zoom / Scale window
     // FIXME-OBSOLETE: This is an old feature, it still works but pretty much nobody is using it and may be best redesigned.
     if (io.mouseWheel != 0f && io.keyCtrl && io.fontAllowUserScaling) {
-        window.startLockWheeling()
+        lockWheelingWindow(window)
         val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
         val scale = newFontScale / window.fontWindowScale
         window.fontWindowScale = newFontScale
@@ -215,7 +218,7 @@ fun updateMouseWheel() {
 
     // Vertical Mouse Wheel scrolling
     if (wheelY != 0f) {
-        window.startLockWheeling()
+        lockWheelingWindow(window)
         tailrec fun Window.getParent(): Window = when {
             flags has WindowFlag._ChildWindow && (scrollMax.y == 0f || (flags has WindowFlag.NoScrollWithMouse && flags hasnt WindowFlag.NoMouseInputs)) -> parentWindow!!.getParent()
             else -> this
@@ -230,7 +233,7 @@ fun updateMouseWheel() {
 
     // Horizontal Mouse Wheel scrolling, or Vertical Mouse Wheel w/ Shift held
     if (wheelX != 0f) {
-        window.startLockWheeling()
+        lockWheelingWindow(window)
         tailrec fun Window.getParent(): Window = when {
             flags has WindowFlag._ChildWindow && (scrollMax.x == 0f || (flags has WindowFlag.NoScrollWithMouse && flags hasnt WindowFlag.NoMouseInputs)) -> parentWindow!!.getParent()
             else -> this

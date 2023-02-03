@@ -1410,17 +1410,6 @@ class Window(var context: Context,
     /** ~ IsWindowActiveAndVisible */
     val isActiveAndVisible: Boolean get() = active && !hidden
 
-
-    /** ~StartLockWheelingWindow */
-    fun startLockWheeling() {
-        if (g.wheelingWindow === this)
-            return
-        IMGUI_DEBUG_LOG_IO("StartLockWheelingWindow() \"$name\"")
-        g.wheelingWindow = this
-        g.wheelingWindowRefMousePos put io.mousePos
-        g.wheelingWindowTimer = WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER
-    }
-
     infix fun applySettings(settings: WindowSettings) {
         pos put floor(Vec2(settings.pos))
         if (settings.size allGreaterThan 0f) sizeFull put floor(Vec2(settings.size))
