@@ -21,6 +21,7 @@ import uno.glfw.GlfwWindow.CursorMode
 enum class GlfwClientApi { Unknown, OpenGL, Vulkan }
 
 // TODO chain previously installed callbacks
+// TODO GLFW_HAS_NEW_CURSORS and similar
 
 // GLFW callbacks (installer)
 // - When calling Init with 'install_callbacks=true': ImGui_ImplGlfw_InstallCallbacks() is called. GLFW callbacks will be installed for you. They will chain-call user's previously installed callbacks, if any.
@@ -35,10 +36,12 @@ class ImplGlfw @JvmOverloads constructor(
     /** for passing inputs in vr */
     var vrCursorPos: Vec2? = null
 
+    /** ~ImGui_ImplGlfw_Init */
     init {
 
         with(io) {
             assert(io.backendPlatformUserData == NULL) { "Already initialized a platform backend!" }
+            //printf("GLFW_VERSION: %d.%d.%d (%d)", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION, GLFW_VERSION_COMBINED);
 
             // Setup backend capabilities flags
             backendPlatformUserData = data
