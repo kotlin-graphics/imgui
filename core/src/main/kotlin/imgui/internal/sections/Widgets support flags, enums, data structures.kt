@@ -113,6 +113,9 @@ enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     /** Set when the Focusable item just got focused by Tabbing (FIXME: to be removed soon) */
     FocusedByTabbing(1 shl 8),
 
+    /** [WIP] Set when item is overlapping the current clipping rectangle (Used internally. Please don't use yet: API/system will change as we refactor Itemadd()). */
+    Visible(1 shl 9),
+
     //  #ifdef IMGUI_ENABLE_TEST_ENGINE
     //  [imgui-test only]
 

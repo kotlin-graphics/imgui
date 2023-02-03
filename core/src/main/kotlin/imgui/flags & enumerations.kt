@@ -1167,6 +1167,9 @@ enum class SortDirection {
 
 typealias KeyChord = Int
 
+// A key identifier (ImGuiKey_XXX or ImGuiMod_XXX value)
+// All our named keys are >= 512. Keys value 0 to 511 are left unused as legacy native/opaque key values (< 1.87)
+// Since >= 1.89 we increased typing (went from int to enum), some legacy code may need a cast to ImGuiKey.
 
 /** A key identifier (ImGui-side enum) */
 enum class Key(i: KeyChord? = null) {

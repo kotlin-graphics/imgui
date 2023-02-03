@@ -105,7 +105,7 @@ interface itemWidgetsUtilities {
 
     /** Is the last item visible? (items may be out of sight because of clipping/scrolling)    */
     val isItemVisible: Boolean
-        get() = g.currentWindow!!.clipRect overlaps g.lastItemData.rect
+        get() = g.lastItemData.statusFlags has ItemStatusFlag.Visible
 
     val isItemEdited: Boolean
         get() = g.lastItemData.statusFlags has ItemStatusFlag.Edited

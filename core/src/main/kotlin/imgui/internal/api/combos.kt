@@ -7,12 +7,10 @@ import imgui.ImGui.popClipRect
 import imgui.ImGui.pushClipRect
 import imgui.api.g
 import imgui.api.widgetsComboBox
+import imgui.hasnt
 import imgui.internal.classes.Rect
 import imgui.internal.isPowerOfTwo
-import imgui.internal.sections.LayoutType
-import imgui.internal.sections.NextWindowDataFlag
-import imgui.internal.sections.PopupPositionPolicy
-import imgui.internal.sections.has
+import imgui.internal.sections.*
 
 
 // Combos
@@ -81,7 +79,7 @@ internal interface combos {
         val window = g.currentWindow!!
         val previewData = g.comboPreviewData
 
-        if (window.skipItems || !window.clipRect.overlaps(g.lastItemData.rect)) // FIXME: Because we don't have a ImGuiItemStatusFlags_Visible flag to test last ItemAdd() result
+        if (window.skipItems || g.lastItemData.statusFlags hasnt ItemStatusFlag.Visible)
             return false
         assert(g.lastItemData.rect.min.x == previewData.previewRect.min.x && g.lastItemData.rect.min.y == previewData.previewRect.min.y) { "Didn't call after BeginCombo/EndCombo block or forgot to pass ImGuiComboFlags_CustomPreview flag?" }
         if (!window.clipRect.contains(previewData.previewRect)) // Narrower test (optional)

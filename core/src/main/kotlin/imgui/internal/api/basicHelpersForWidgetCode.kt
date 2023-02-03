@@ -129,12 +129,21 @@ internal interface basicHelpersForWidgetCode {
             IMGUI_TEST_ENGINE_ITEM_ADD(navBbArg ?: bb, id)
 
         // Clipping test
-        val isClipped = isClippedEx(bb, id)
-        if (isClipped)
-            return false
+        // (FIXME: This is a modified copy of IsClippedEx() so we can reuse the is_rect_visible value)
+        //const bool is_clipped = IsClippedEx(bb, id);
+        //if (is_clipped)
+        //    return false;
+        val isRectVisible = bb overlaps window.clipRect
+        if (!isRectVisible)
+            if (id == 0 || (id != g.activeId && id != g.navId))
+                if (!g.logEnabled)
+                    return false
+
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
         // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
+        if (isRectVisible)
+            g.lastItemData.statusFlags /= ItemStatusFlag.Visible
         if (isMouseHoveringRect(bb))
             g.lastItemData.statusFlags /= ItemStatusFlag.HoveredRect
         return true
@@ -190,6 +199,7 @@ internal interface basicHelpersForWidgetCode {
         return g.navDisableMouseHover
     }
 
+    // FIXME: This is inlined/duplicated in ItemAdd()
     fun isClippedEx(bb: Rect, id: ID): Boolean {
         val window = g.currentWindow!!
         if (!(bb overlaps window.clipRect))
