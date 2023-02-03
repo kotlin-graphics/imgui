@@ -684,12 +684,14 @@ interface windows {
             setLastItemData(window.moveId, g.currentItemFlags, itemFlag.i, titleBarRect)
 
             // [DEBUG]
-            if (g.debugLocateId != 0 && (window.id == g.debugLocateId || window.moveId == g.debugLocateId))
-                debugLocateItemResolveWithLastItem()
+            if (!IMGUI_DISABLE_DEBUG_TOOLS)
+                if (g.debugLocateId != 0 && (window.id == g.debugLocateId || window.moveId == g.debugLocateId))
+                    debugLocateItemResolveWithLastItem()
 
             // [Test Engine] Register title bar / tab
-            if (window.flags hasnt Wf.NoTitleBar)
-                IMGUI_TEST_ENGINE_ITEM_ADD(g.lastItemData.rect, g.lastItemData.id)
+            if (IMGUI_ENABLE_TEST_ENGINE)
+                if (window.flags hasnt Wf.NoTitleBar)
+                    IMGUI_TEST_ENGINE_ITEM_ADD(g.lastItemData.rect, g.lastItemData.id)
 
         } else   // Append
             setCurrentWindow(window)

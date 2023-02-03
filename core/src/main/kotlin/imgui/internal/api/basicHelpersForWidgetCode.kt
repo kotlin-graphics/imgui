@@ -137,8 +137,9 @@ internal interface basicHelpersForWidgetCode {
                     return false
 
         // [DEBUG]
-        if (id != 0 && id == g.debugLocateId)
-            debugLocateItemResolveWithLastItem()
+        if (!IMGUI_DISABLE_DEBUG_TOOLS)
+            if (id != 0 && id == g.debugLocateId)
+                debugLocateItemResolveWithLastItem()
         //if (g.io.KeyAlt) window->DrawList->AddRect(bb.Min, bb.Max, IM_COL32(255,255,0,120)); // [DEBUG]
 
         // We need to calculate this now to take account of the current clipping rectangle (as items like Selectable may change them)
