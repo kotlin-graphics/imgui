@@ -356,6 +356,9 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         }
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
         keyMods = Key.Mod_None.i
+        mousePos put -Float.MAX_VALUE
+        mouseDown.fill(false)
+        mouseWheel = 0f; mouseWheelH = 0f
     }
 
 
