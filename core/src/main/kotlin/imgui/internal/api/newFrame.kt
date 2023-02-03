@@ -117,7 +117,7 @@ internal interface newFrame {
                         textInputed = true
                 }
                 is InputEvent.AppFocused -> {
-                    // We intentionally overwrite this and process lower, in order to give a chance
+                    // We intentionally overwrite this and process in NewFrame(), in order to give a chance
                     // to multi-viewports backends to queue AddFocusEvent(false) + AddFocusEvent(true) in same frame.
                     val focusLost = !e.focused
                     e.ignoredAsSame = io.appFocusLost == focusLost
@@ -306,7 +306,10 @@ internal interface newFrame {
 
     companion object {
         fun debugPrintInputEvent(prefix: String, e: InputEvent) = when (e) {
-            is InputEvent.MousePos -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f)", e.posX, e.posY)
+            is InputEvent.MousePos -> when {
+                e.posX == -Float.MAX_VALUE && e.posY == -Float.MAX_VALUE -> IMGUI_DEBUG_LOG_IO("%s: MousePos (-FLT_MAX, -FLT_MAX)\n", prefix)
+                else -> IMGUI_DEBUG_LOG_IO("$prefix: MousePos (%.1f, %.1f)", e.posX, e.posY)
+            }
             is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button} ${if (e.down) "Down" else "Up"}")
             is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.1f, %.1f)", e.wheelX, e.wheelY)
             is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("$prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
