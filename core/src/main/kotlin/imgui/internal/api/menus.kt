@@ -83,16 +83,16 @@ internal interface menus {
 
         // Sub-menus are ChildWindow so that mouse can be hovering across them (otherwise top-most popup menu would steal focus and not allow hovering on parent menu)
         // The first menu in a hierarchy isn't so hovering doesn't get across (otherwise e.g. resizing borders with ImGuiButtonFlags_FlattenChildren would react), but top-most BeginMenu() will bypass that limitation.
-        var flags = WindowFlag._ChildMenu or WindowFlag.AlwaysAutoResize or WindowFlag.NoMove or WindowFlag.NoTitleBar or WindowFlag.NoSavedSettings or WindowFlag.NoNavFocus
+        var windowFlags = WindowFlag._ChildMenu or WindowFlag.AlwaysAutoResize or WindowFlag.NoMove or WindowFlag.NoTitleBar or WindowFlag.NoSavedSettings or WindowFlag.NoNavFocus
         if (window.flags has WindowFlag._ChildMenu)
-            flags = flags or WindowFlag._ChildWindow
+            windowFlags /= WindowFlag._ChildWindow
 
         // If a menu with same the ID was already submitted, we will append to it, matching the behavior of Begin().
         // We are relying on a O(N) search - so O(N log N) over the frame - which seems like the most efficient for the expected small amount of BeginMenu() calls per frame.
         // If somehow this is ever becoming a problem we can switch to use e.g. ImGuiStorage mapping key to last frame used.
         if (id in g.menusIdSubmittedThisFrame) {
             if (menuIsOpen)
-                menuIsOpen = ImGui.beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
+                menuIsOpen = ImGui.beginPopupEx(id, windowFlags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
             else
                 g.nextWindowData.clearFlags()          // we behave like Begin() and need to consume those values
             return menuIsOpen
@@ -220,21 +220,19 @@ internal interface menus {
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         popID()
 
-        if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
-            // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
+        if (wantOpen && !menuIsOpen && g.openPopupStack.size > g.beginPopupStack.size)
+        // Don't reopen/recycle same menu level in the same frame, first close the other menu and yield for a frame.
             openPopup(label)
-            return false
+        else if (wantOpen) {
+            menuIsOpen = true
+            openPopup(label)
         }
-
-        menuIsOpen = menuIsOpen || wantOpen
-        if (wantOpen)
-            openPopup(label)
 
         if (menuIsOpen) {
             val lastItemInParent = g.lastItemData
             setNextWindowPos(popupPos, Cond.Always) // Note: misleading: the value will serve as reference for FindBestWindowPosForPopup(), not actual pos.
             pushStyleVar(StyleVar.ChildRounding, style.popupRounding) // First level will use _PopupRounding, subsequent will use _ChildRounding
-            menuIsOpen = beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
+            menuIsOpen = beginPopupEx(id, windowFlags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
             popStyleVar()
             if (menuIsOpen) {
                 // Restore LastItemData so IsItemXXXX functions can work after BeginMenu()/EndMenu()

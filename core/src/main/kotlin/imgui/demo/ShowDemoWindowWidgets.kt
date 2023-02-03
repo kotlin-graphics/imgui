@@ -744,6 +744,7 @@ object ShowDemoWindowWidgets {
 
         operator fun invoke() {
             treeNode("Combo") {
+                // Combo Boxes are also called "Dropdown" in other systems
                 // Expose flags as checkbox for the demo
                 checkboxFlags("ComboFlag.PopupAlignLeft", ::flags, ComboFlag.PopupAlignLeft.i)
                 sameLine(); helpMarker("Only makes a difference if the popup is larger than the combo")
