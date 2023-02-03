@@ -315,10 +315,18 @@ class Font {
 
         // Fast-forward to first visible line
         var s = textBegin
-        if (y + lineHeight < clipRect.y && !wordWrapEnabled)
+        if (y + lineHeight < clipRect.y)
             while (y + lineHeight < clipRect.y && s < textEnd) {
-                s = text.memchr(s, '\n')
-                s = if (s == -1) s + 1 else textEnd
+                val lineEnd = text.memchr(s, '\n')
+                if (wordWrapEnabled) {
+                    // FIXME-OPT: This is not optimal as do first do a search for \n before calling CalcWordWrapPositionA().
+                    // If the specs for CalcWordWrapPositionA() were reworked to optionally return on \n we could combine both.
+                    // However it is still better than nothing performing the fast-forward!
+                    s = calcWordWrapPositionA(scale, text, s, lineEnd, wrapWidth)
+                    s = calcWordWrapNextLineStartA(text, s, textEnd)
+                }
+                else
+                    s = if (lineEnd == -1) lineEnd + 1 else textEnd
                 y += lineHeight
             }
 
