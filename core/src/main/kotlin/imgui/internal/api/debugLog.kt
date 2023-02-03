@@ -6,6 +6,11 @@ import imgui.internal.classes.has
 import imgui.internal.sections.IMGUI_DEBUG_PRINTF
 
 // Debug Log
+
+//-----------------------------------------------------------------------------
+// [SECTION] DEBUG LOG WINDOW
+//-----------------------------------------------------------------------------
+
 internal interface debugLog {
 
     fun debugLog(fmt: String, vararg args: Any) {
