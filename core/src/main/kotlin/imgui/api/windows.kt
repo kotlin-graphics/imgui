@@ -368,9 +368,9 @@ interface windows {
 
             // Clamp position/size so window stays visible within its viewport or monitor
             // Ignore zero-sized display explicitly to avoid losing positions if a window manager reports zero-sized window when initializing or minimizing.
-            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow && window.autoFitFrames allLessThanEqual 0)
+            if (!windowPosSetByApi && flags hasnt Wf._ChildWindow)
                 if (viewportRect.width > 0f && viewportRect.height > 0f)
-                    window clampRect visibilityRect
+                    window clampPos visibilityRect
             window.pos put floor(window.pos)
 
             // Lock window rounding for the frame (so that altering them doesn't cause inconsistencies)

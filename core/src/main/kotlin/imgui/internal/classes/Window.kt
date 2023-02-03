@@ -16,7 +16,6 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.getKeyVector2d
 import imgui.ImGui.io
 import imgui.ImGui.itemAdd
-import imgui.ImGui.keepAliveID
 import imgui.ImGui.mainViewport
 import imgui.ImGui.popID
 import imgui.ImGui.renderFrame
@@ -1169,8 +1168,8 @@ class Window(var context: Context,
         renderTextClipped(layoutR.min, layoutR.max, name, textSize, style.windowTitleAlign, clipR)
     }
 
-    /** ~ClampWindowRect */
-    infix fun clampRect(visibilityRect: Rect) {
+    /** ~ClampWindowPos */
+    infix fun clampPos(visibilityRect: Rect) {
         val sizeForClamping = Vec2(size)
         if (io.configWindowsMoveFromTitleBarOnly && flags hasnt Wf.NoTitleBar)
             sizeForClamping.y = titleBarHeight
