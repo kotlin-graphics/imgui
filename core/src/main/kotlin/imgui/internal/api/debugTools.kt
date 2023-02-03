@@ -4,6 +4,7 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginTooltip
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
@@ -37,6 +38,7 @@ import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushFont
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
+import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
@@ -55,18 +57,17 @@ import imgui.api.g
 import imgui.classes.DrawList
 import imgui.classes.ListClipper
 import imgui.demo.showExampleApp.StyleEditor
+import imgui.dsl.child
 import imgui.dsl.indent
 import imgui.dsl.treeNode
 import imgui.dsl.withID
 import imgui.font.Font
 import imgui.font.FontAtlas
 import imgui.font.FontGlyph
-import imgui.internal.DrawCmd
+import imgui.internal.*
 import imgui.internal.classes.*
-import imgui.internal.floor
 import imgui.internal.sections.*
-import imgui.internal.textCharToUtf8
-import imgui.internal.triangleArea
+import imgui.stb.te
 import kool.lib.isNotEmpty
 import kool.rem
 import uno.kotlin.plusAssign
@@ -171,6 +172,36 @@ internal interface debugTools {
         if (window.dc.cursorPos.x <= window.dc.cursorMaxPos.x && window.dc.cursorPos.y <= window.dc.cursorMaxPos.y)
             return
         error("Code uses SetCursorPos()/SetCursorScreenPos() to extend window/parent boundaries. Please submit an item e.g. Dummy() to validate extent.")
+    }
+
+    //-----------------------------------------------------------------------------
+    // [SECTION] OTHER DEBUG TOOLS (ITEM PICKER, STACK TOOL)
+    //-----------------------------------------------------------------------------
+
+    /** Call sparingly: only 1 at the same time! */
+    fun debugLocateItem(targetId: ID) {
+        g.debugLocateId = targetId
+        g.debugLocateFrames = 2
+    }
+
+    /** Only call on reaction to a mouse Hover: because only 1 at the same time! */
+    fun debugLocateItemOnHover(targetId: ID) {
+        if (targetId == 0 || !isItemHovered(HoveredFlag.AllowWhenBlockedByActiveItem or HoveredFlag.AllowWhenBlockedByPopup))
+            return
+        debugLocateItem(targetId)
+        getForegroundDrawList(g.currentWindow).addRect(g.lastItemData.rect.min - Vec2(3f), g.lastItemData.rect.max + Vec2(3f), DEBUG_LOCATE_ITEM_COLOR)
+    }
+
+    fun debugLocateItemResolveWithLastItem() {
+        val itemData = g.lastItemData
+        g.debugLocateId = 0
+        val drawList = getForegroundDrawList(g.currentWindow)
+        val r = itemData.rect
+        r expand 3f
+        val p1 = g.io.mousePos
+        val p2 = Vec2(if (p1.x < r.min.x) r.min.x else if (p1.x > r.max.x) r.max.x else p1.x, if (p1.y < r.min.y) r.min.y else if (p1.y > r.max.y) r.max.y else p1.y)
+        drawList.addRect(r.min, r.max, DEBUG_LOCATE_ITEM_COLOR)
+        drawList.addLine(p1, p2, DEBUG_LOCATE_ITEM_COLOR)
     }
 
     fun debugDrawItemRect(col: Int = COL32(255, 0, 0, 255)) {
@@ -437,7 +468,7 @@ internal interface debugTools {
                     drawList.addRect(cellP1, cellP2, if (glyph != null) COL32(255, 255, 255, 100) else COL32(255, 255, 255, 50))
                     if (glyph == null)
                         continue
-                    font.renderChar(drawList, cellSize, cellP1, glyphCol, Char(base+n))
+                    font.renderChar(drawList, cellSize, cellP1, glyphCol, Char(base + n))
                     if (isMouseHoveringRect(cellP1, cellP2)) {
                         beginTooltip()
                         debugNodeFontGlyph(font, glyph)
@@ -533,6 +564,8 @@ internal interface debugTools {
                 endTooltip()
             }
         }
+
+        val DEBUG_LOCATE_ITEM_COLOR = COL32(0, 255, 0, 255)  // Green
     }
 
     fun debugNodeTable(table: Table) {
@@ -607,7 +640,31 @@ internal interface debugTools {
     }
 
     fun debugNodeInputTextState(state: InputTextState) {
-
+        if (IMGUI_DISABLE_DEBUG_TOOLS)
+            return
+        val stbState = state.stb
+        val undoState = stbState.undoState
+        text("ID: 0x%08X, ActiveID: 0x%08X", state.id, g.activeId)
+        debugLocateItemOnHover(state.id)
+        text("CurLenW: ${state.curLenW}, CurLenA: ${state.curLenA}, Cursor: ${stbState.cursor}, Selection: ${stbState.selectStart}..${stbState.selectEnd}")
+        text("undo_point: ${undoState.undoPoint}, redo_point: ${undoState.redoPoint}, undo_char_point: ${undoState.undoCharPoint}, redo_char_point: ${undoState.redoCharPoint}")
+        child("undopoints", Vec2(0f, ImGui.textLineHeight * 15), true) { // Visualize undo state
+            pushStyleVar(StyleVar.ItemSpacing, Vec2())
+            for (n in 0 until te.UNDOSTATECOUNT) {
+                val undoRec = undoState.undoRec[n]
+                val undoRecType = if (n < undoState.undoPoint) 'u' else if (n >= undoState.redoPoint) 'r' else ' '
+                if (undoRecType == ' ')
+                    beginDisabled()
+                val buf = ByteArray(64)
+                if (undoRecType != ' ' && undoRec.charStorage != -1)
+                    textStrToUtf8(buf, undoState.undoChar.sliceArray(undoRec.charStorage until undoRec.insertLength))
+                text("$undoRecType [%02d] where %03d, insert %03d, delete %03d, char_storage %03d \"$buf\"",
+                     n, undoRec.where, undoRec.insertLength, undoRec.deleteLength, undoRec.charStorage)
+                if (undoRecType == ' ')
+                    endDisabled()
+            }
+            popStyleVar()
+        }
     }
 
     fun debugNodeWindow(window: Window?, label: String) {
@@ -663,13 +720,13 @@ internal interface debugTools {
         bulletText("Appearing: $appearing, Hidden: $hidden (CanSkip $canSkip Cannot $cannot), SkipItems: $skipItems")
         for (layer in 0 until NavLayer.COUNT) {
             val r = window.navRectRel[layer]
-            if (r.min.x >= r.max.y && r.min.y >= r.max.y) {
+            if (r.min.x >= r.max.y && r.min.y >= r.max.y)
                 bulletText("NavLastIds[$layer]: 0x%08X", window.navLastIds[layer])
-                continue
-            }
-            bulletText("NavLastIds[$layer]: 0x%08X at +(%.1f,%.1f)(%.1f,%.1f)", window.navLastIds[layer], r.min.x, r.min.y, r.max.x, r.max.y)
+            else
+                bulletText("NavLastIds[$layer]: 0x%08X at +(%.1f,%.1f)(%.1f,%.1f)", window.navLastIds[layer], r.min.x, r.min.y, r.max.x, r.max.y)
             if (isItemHovered())
                 getForegroundDrawList(window).addRect(r.min + window.pos, r.max + window.pos, COL32(255, 255, 0, 255))
+            debugLocateItemOnHover(window.navLastIds[layer])
         }
         bulletText("NavLayersActiveMask: %X, NavLastChildNavWindow: %s", window.dc.navLayersActiveMask, window.navLastChildNavWindow?.name ?: "NULL")
         if (window.rootWindow !== window) debugNodeWindow(window.rootWindow, "RootWindow")

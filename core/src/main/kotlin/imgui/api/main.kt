@@ -270,9 +270,11 @@ interface main {
         g.itemFlagsStack += ItemFlag.None.i
         g.groupStack.clear()
 
-        // [DEBUG] Item picker tool - start with DebugStartItemPicker() - useful to visually select an item and break into its call-stack.
+        // // [DEBUG] Update debug features
         updateDebugToolItemPicker()
         updateDebugToolStackQueries()
+        if (g.debugLocateFrames > 0 && --g.debugLocateFrames == 0)
+            g.debugLocateId = 0
 
         // Create implicit/fallback window - which we will only render it if the user has added something to it.
         // We don't use "Debug" to avoid colliding with user trying to create a "Debug" window with custom flags.

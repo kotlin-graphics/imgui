@@ -216,6 +216,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** == g.ItemFlagsStack.back() */
     var currentItemFlags = ItemFlag.None.i
 
+    /** Storage for DebugLocateItemOnHover() feature: this is read by ItemAdd() so we keep it in a hot/cached location */
+    var debugLocateId: ID = 0
+
     /** Storage for SetNextItem** functions */
     lateinit var nextItemData: NextItemData
 
@@ -642,6 +645,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val debugLogBuf = StringBuilder()
 
     val debugLogIndex = TextIndex()
+
+    /** For DebugLocateItemOnHover(). This is used together with DebugLocateId which is in a hot/cached spot above. */
+    var debugLocateFrames = 0
 
     /** Item picker is active (started with DebugStartItemPicker()) */
     var debugItemPickerActive = false

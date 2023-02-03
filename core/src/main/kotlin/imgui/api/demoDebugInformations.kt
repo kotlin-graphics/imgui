@@ -1,9 +1,6 @@
 package imgui.api
 
-import glm_.b
-import glm_.f
-import glm_.glm
-import glm_.i
+import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
@@ -22,6 +19,7 @@ import imgui.ImGui.checkboxFlags
 import imgui.ImGui.clearIniSettings
 import imgui.ImGui.clipboardText
 import imgui.ImGui.combo
+import imgui.ImGui.debugLocateItemOnHover
 import imgui.ImGui.debugNodeDrawList
 import imgui.ImGui.debugNodeInputTextState
 import imgui.ImGui.debugNodeTabBar
@@ -50,6 +48,7 @@ import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
+import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
@@ -86,6 +85,7 @@ import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
 import imgui.WindowFlag
+import imgui.classes.ListClipper
 import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
@@ -405,6 +405,7 @@ interface demoDebugInformations {
             text("ITEMS")
             indent {
                 text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: ${g.activeIdAllowOverlap}, Source: ${g.activeIdSource}", g.activeId, g.activeIdPreviousFrame, g.activeIdTimer)
+                debugLocateItemOnHover(g.activeId)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
 
 
@@ -415,12 +416,14 @@ interface demoDebugInformations {
                 text("HoveredId: 0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Not displaying g.HoveredId as it is update mid-frame
                 text("HoverDelayId: 0x%08X, Timer: %.2f, ClearTimer: %.2f", g.hoverDelayId, g.hoverDelayTimer, g.hoverDelayClearTimer)
                 text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)
+                debugLocateItemOnHover(g.dragDropPayload.sourceId)
             }
 
             text("NAV,FOCUS")
             indent {
                 text("NavWindow: '${g.navWindow?.name}'")
                 text("NavId: 0x%08X, NavLayer: ${g.navLayer}", g.navId)
+                debugLocateItemOnHover(g.navId)
                 text("NavInputSource: ${g.navInputSource}")
                 text("NavActive: ${io.navActive}, NavVisible: ${io.navVisible}")
                 text("NavActivateId/DownId/PressedId/InputId: %08X/%08X/%08X/%08X", g.navActivateId, g.navActivateDownId, g.navActivatePressedId, g.navActivateInputId)
@@ -498,13 +501,39 @@ interface demoDebugInformations {
         sameLine(); checkboxFlags("Clipper", g::debugLogFlags, DebugLogFlag.EventClipper.i)
         sameLine(); checkboxFlags("IO", g::debugLogFlags, DebugLogFlag.EventIO.i)
 
-        if (smallButton("Clear"))
+        if (smallButton("Clear")) {
             g.debugLogBuf.clear()
+            g.debugLogIndex.clear()
+        }
         sameLine()
         if (smallButton("Copy"))
             clipboardText = g.debugLogBuf.toString()
         beginChild("##log", Vec2(), true, WindowFlag.AlwaysVerticalScrollbar or WindowFlag.AlwaysHorizontalScrollbar)
-        textUnformatted(g.debugLogBuf.toString()) // FIXME-OPT: Could use a line index, but TextUnformatted() has a semi-decent fast path for large text.
+
+        val clipper = ListClipper()
+        clipper.begin(g.debugLogIndex.size)
+        while (clipper.step())
+            for (lineNo in clipper.displayStart until clipper.displayEnd) {
+                val lineBegin = g.debugLogIndex getLineBegin lineNo
+                val lineEnd = g.debugLogIndex getLineEnd lineNo
+                textUnformatted(g.debugLogBuf.toString(), lineEnd)
+                val textRect = g.lastItemData.rect
+                if (isItemHovered()) {
+                    var p = lineBegin
+                    while (p < lineEnd - 10) {
+                        val buf = g.debugLogBuf.toString()
+                        val id: ID = buf.drop(2).parseInt()
+                        if (buf[p] != '0' || (buf[p + 1] != 'x' && buf[p + 1] != 'X')/* || sscanf(p + 2, "%X", & id) != 1*/)
+                            continue
+                        val p0 = calcTextSize(buf.drop(lineBegin).take(p - lineBegin))
+                        val p1 = calcTextSize(buf.drop(p).take(10))
+                        g.lastItemData.rect.put(textRect.min + Vec2(p0.x, 0f), textRect.min + Vec2(p0.x + p1.x, p1.y))
+                        if (isMouseHoveringRect(g.lastItemData.rect.min, g.lastItemData.rect.max, true))
+                            debugLocateItemOnHover(id)
+                        p += 10
+                    }
+                }
+            }
         if (ImGui.scrollY >= ImGui.scrollMaxY)
             setScrollHereY(1f)
         endChild()

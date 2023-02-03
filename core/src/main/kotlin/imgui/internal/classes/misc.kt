@@ -314,13 +314,14 @@ class TextIndex {
         lineOffsets.clear()
         endOffset = 0
     }
+
     val size
         get() = lineOffsets.size
-//    const char*     get_line_begin(const char* base, int n)
-//    { return base + lineOffsets[n]; }
-//    const char*     get_line_end(const char* base, int n)
-//    { return base + (n + 1 < lineOffsets.Size ? (LineOffsets[n+1]-1) : EndOffset); }
-//    void            append(const char* base, int old_size, int new_size);
+
+    infix fun getLineBegin(n: Int) = lineOffsets[n]
+
+    infix fun getLineEnd(n: Int) = if (n + 1 < lineOffsets.size) lineOffsets[n + 1] - 1 else endOffset
+    //    void            append(const char* base, int old_size, int new_size);
 }
 
 

@@ -7,6 +7,7 @@ import glm_.f
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.debugLocateItemResolveWithLastItem
 import imgui.ImGui.endColumns
 import imgui.ImGui.errorCheckUsingSetCursorPosToExtendParentBoundaries
 import imgui.ImGui.findBestWindowPosForPopup
@@ -681,6 +682,10 @@ interface windows {
             // This is useful to allow creating context menus on title bar only, etc.
             val itemFlag = if (isMouseHoveringRect(titleBarRect.min, titleBarRect.max, false)) ItemStatusFlag.HoveredRect else ItemStatusFlag.None
             setLastItemData(window.moveId, g.currentItemFlags, itemFlag.i, titleBarRect)
+
+            // [DEBUG]
+            if (g.debugLocateId != 0 && (window.id == g.debugLocateId || window.moveId == g.debugLocateId))
+                debugLocateItemResolveWithLastItem()
 
             // [Test Engine] Register title bar / tab
             if (window.flags hasnt Wf.NoTitleBar)
