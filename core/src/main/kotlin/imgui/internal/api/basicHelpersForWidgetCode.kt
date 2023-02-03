@@ -142,48 +142,52 @@ internal interface basicHelpersForWidgetCode {
 
     /** Internal facing ItemHoverable() used when submitting widgets. Differs slightly from IsItemHovered().    */
     fun itemHoverable(bb: Rect, id: ID): Boolean {
+
         val window = g.currentWindow!!
-        return when {
-            g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap -> false
-            g.hoveredWindow !== window -> false
-            g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
-            !isMouseHoveringRect(bb) -> false
 
-            // Done with rectangle culling so we can perform heavier checks now.
-            !window.isContentHoverable(HoveredFlag.None) -> {
-                g.hoveredIdDisabled = true
-                false
-            }
-            else -> {
-                // We exceptionally allow this function to be called with id==0 to allow using it for easy high-level
-                // hover test in widgets code. We could also decide to split this function is two.
-                if (id != 0)
-                    hoveredId = id
+        if (g.hoveredId != 0 && g.hoveredId != id && !g.hoveredIdAllowOverlap)
+            return false
 
-                // When disabled we'll return false but still set HoveredId
-                val itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
-                if (itemFlags has ItemFlag.Disabled) {
-                    // Release active id if turning disabled
-                    if (g.activeId == id)
-                        clearActiveID()
-                    g.hoveredIdDisabled = true
-                    false
-                } else {
-                    if (id != 0) {
-                        // [DEBUG] Item Picker tool!
-                        // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
-                        // the cost of this tool near-zero. We can get slightly better call-stack and support picking non-hovered
-                        // items if we perform the test in ItemAdd(), but that would incur a small runtime cost.
-                        // #define IMGUI_DEBUG_TOOL_ITEM_PICKER_EX in imconfig.h if you want this check to also be performed in ItemAdd().
-                        if (g.debugItemPickerActive && g.hoveredIdPreviousFrame == id)
-                            foregroundDrawList.addRect(bb.min, bb.max, COL32(255, 255, 0, 255))
-                        if (g.debugItemPickerBreakId == id)
-                            IM_DEBUG_BREAK()
-                    }
-                    !g.navDisableMouseHover
-                }
-            }
+        if (g.hoveredWindow !== window)
+            return false
+        if (g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap)
+            return false
+        if (!isMouseHoveringRect(bb))
+            return false
+
+        // Done with rectangle culling so we can perform heavier checks now.
+        val itemFlags = if (g.lastItemData.id == id) g.lastItemData.inFlags else g.currentItemFlags
+        if (itemFlags hasnt ItemFlag.NoWindowHoverableCheck && !window.isContentHoverable(HoveredFlag.None)) {
+            g.hoveredIdDisabled = true
+            return false
         }
+        // We exceptionally allow this function to be called with id==0 to allow using it for easy high-level
+        // hover test in widgets code. We could also decide to split this function is two.
+        if (id != 0)
+            hoveredId = id
+
+        // When disabled we'll return false but still set HoveredId
+        if (itemFlags has ItemFlag.Disabled) {
+            // Release active id if turning disabled
+            if (g.activeId == id)
+                clearActiveID()
+            g.hoveredIdDisabled = true
+            return false
+        }
+
+        if (id != 0) {
+            // [DEBUG] Item Picker tool!
+            // We perform the check here because SetHoveredID() is not frequently called (1~ time a frame), making
+            // the cost of this tool near-zero. We can get slightly better call-stack and support picking non-hovered
+            // items if we perform the test in ItemAdd(), but that would incur a small runtime cost.
+            // #define IMGUI_DEBUG_TOOL_ITEM_PICKER_EX in imconfig.h if you want this check to also be performed in ItemAdd().
+            if (g.debugItemPickerActive && g.hoveredIdPreviousFrame == id)
+                foregroundDrawList.addRect(bb.min, bb.max, COL32(255, 255, 0, 255))
+            if (g.debugItemPickerBreakId == id)
+                IM_DEBUG_BREAK()
+        }
+
+        return g.navDisableMouseHover
     }
 
     fun isClippedEx(bb: Rect, id: ID): Boolean {

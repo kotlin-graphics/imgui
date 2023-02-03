@@ -14,7 +14,9 @@ import imgui.ImGui.beginPopupEx
 import imgui.ImGui.closePopupToLevel
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.openPopup
+import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushID
+import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderText
@@ -104,9 +106,8 @@ internal interface menus {
         // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent without always being a Child window)
         // This is only done for items for the menu set and not the full parent window.
         val menusetIsOpen = widgets.isRootOfOpenMenuSet
-        val backedNavWindow = g.navWindow
         if (menusetIsOpen)
-            g.navWindow = window
+            pushItemFlag(ItemFlag.NoWindowHoverableCheck.i, true)
 
         // The reference position stored in popup_pos will be used by Begin() to find a suitable position for the child menu,
         // However the final position is going to be different! It is chosen by FindBestWindowPosForPopup().
@@ -156,7 +157,7 @@ internal interface menus {
         val hovered = g.hoveredId == id && enabled && !g.navDisableMouseHover
 
         if (menusetIsOpen)
-            g.navWindow = backedNavWindow
+            popItemFlag()
 
         var wantOpen = false
         var wantClose = false
@@ -253,9 +254,8 @@ internal interface menus {
 
         // See BeginMenuEx() for comments about this.
         val menusetIsOpen = widgets.isRootOfOpenMenuSet
-        val backedNavWindow = g.navWindow
         if (menusetIsOpen)
-            g.navWindow = window
+            pushItemFlag(ItemFlag.NoWindowHoverableCheck.i, true)
 
         // We've been using the equivalent of ImGuiSelectableFlags_SetNavIdOnHover on all Selectable() since early Nav system days (commit 43ee5d73),
         // but I am unsure whether this should be kept at all. For now moved it to be an opt-in feature used by menus only.
@@ -304,7 +304,7 @@ internal interface menus {
             popStyleColor()
         popID()
         if (menusetIsOpen)
-            g.navWindow = backedNavWindow
+            popItemFlag()
 
         return pressed
     }

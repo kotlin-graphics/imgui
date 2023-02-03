@@ -50,6 +50,9 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     /** [ALPHA] Allow hovering interactions but underlying value is not changed. */
     ReadOnly(1 shl 7),  // false
 
+    /** Disable hoverable check in ItemHoverable() */
+    NoWindowHoverableCheck(1 shl 8),  // false
+
 
     // Controlled by widget code
 
