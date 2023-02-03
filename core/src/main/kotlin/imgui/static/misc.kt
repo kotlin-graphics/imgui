@@ -19,6 +19,7 @@ import imgui.internal.*
 import imgui.internal.api.inputs
 import imgui.internal.classes.Window
 import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
+import imgui.internal.sections.InputEvent
 import imgui.internal.sections.ViewportP
 
 
@@ -389,4 +390,18 @@ fun patchFormatStringFloatToInt(fmt: String): String {
         return fmt.substring(0, fmtStart) + "%d" + fmt.substring(fmtEnd, fmt.length)
     }
     return fmt
+}
+
+inline fun <reified T : InputEvent>findLatestInputEvent(arg: Int = -1): T? {
+    for (n in g.inputEventsQueue.lastIndex downTo 0) {
+        val e = g.inputEventsQueue[n]
+        if (e !is T)
+            continue
+        if (e is InputEvent.Key && e.key.i != arg)
+            continue
+        if (e is InputEvent.MouseButton && e.button != arg)
+            continue
+        return e
+    }
+    return null
 }

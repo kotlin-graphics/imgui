@@ -7,9 +7,11 @@ import imgui.*
 import imgui.api.g
 import imgui.font.Font
 import imgui.font.FontAtlas
+import imgui.internal.floorSigned
 import imgui.internal.sections.InputEvent
 import imgui.internal.sections.InputSource
 import imgui.internal.textCharFromUtf8
+import imgui.static.findLatestInputEvent
 import imgui.static.getClipboardTextFn_DefaultImpl
 import imgui.static.setClipboardTextFn_DefaultImpl
 import imgui.static.setPlatformImeDataFn_DefaultImpl
@@ -200,19 +202,13 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (key.isGamepad)
             backendUsingLegacyNavInputArray = false
 
-        // Partial filter of duplicates (not strictly needed, but makes data neater in particular for key mods and gamepad values which are most commonly spmamed)
+        // Filter duplicate (in particular: key mods and gamepad analog values are commonly spammed)
+        val latestEvent = findLatestInputEvent<InputEvent.Key>(key.i)
         val keyData = key.data
-        if (keyData.down == down && keyData.analogValue == analogValue) {
-            var found = false
-            var n = g.inputEventsQueue.lastIndex
-            while (n >= 0 && !found) {
-                if (g.inputEventsQueue[n].type == InputEvent.Type.Key && (g.inputEventsQueue[n] as InputEvent.Key).key == key)
-                    found = true
-                n--
-            }
-            if (!found)
-                return
-        }
+        val latestKeyDown = latestEvent?.down ?: keyData.down
+        val latestKeyAnalog = latestEvent?.analogValue ?: keyData.analogValue
+        if (latestKeyDown == down && latestKeyAnalog == analogValue)
+            return
 
         // Add event
         g.inputEventsQueue += InputEvent.Key(key, down, analogValue, if (key.isGamepad) InputSource.Gamepad else InputSource.Keyboard)
@@ -224,7 +220,16 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (!appAcceptingEvents)
             return
 
-        g.inputEventsQueue += InputEvent.MousePos(x, y)
+        // Apply same flooring as UpdateMouseInputs()
+        val pos = Vec2(if(x > -Float.MAX_VALUE) floorSigned(x) else x, if(y > -Float.MAX_VALUE) floorSigned(y) else y)
+
+        // Filter duplicate
+        val latestEvent = findLatestInputEvent<InputEvent.MousePos>()
+        val latestPos = latestEvent?.let { Vec2(it.posX, it.posY) } ?: g.io.mousePos
+        if (latestPos.x == pos.x && latestPos.y == pos.y)
+            return
+
+        g.inputEventsQueue += InputEvent.MousePos(pos.x, pos.y)
     }
 
     /** Queue a mouse button change */
@@ -234,14 +239,23 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         if (!appAcceptingEvents)
             return
 
+        // Filter duplicate
+        val latestEvent = findLatestInputEvent<InputEvent.MouseButton>(mouseButton)
+        val latestButtonDown = latestEvent?.down ?: g.io.mouseDown[mouseButton]
+        if (latestButtonDown == down)
+            return
+
         g.inputEventsQueue += InputEvent.MouseButton(mouseButton, down)
     }
 
     /** Queue a mouse wheel update */
     fun addMouseWheelEvent(wheelX: Float, wheelY: Float) {
         assert(g.io === this) { "Can only add events to current context." }
-        if ((wheelX == 0f && wheelY == 0f) || !appAcceptingEvents)
+
+        // Filter duplicate (unlike most events, wheel values are relative and easy to filter)
+        if (!appAcceptingEvents || (wheelX == 0f && wheelY == 0f))
             return
+
         g.inputEventsQueue += InputEvent.MouseWheel(wheelX, wheelY)
     }
 
@@ -250,6 +264,13 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         // We intentionally overwrite this and process in NewFrame(), in order to give a chance
         // to multi-viewports backends to queue AddFocusEvent(false),AddFocusEvent(true) in same frame.
         assert(g.io === this) { "Can only add events to current context." }
+
+        // Filter duplicate
+        val latestEvent = findLatestInputEvent<InputEvent.AppFocused>()
+        val latestFocused = latestEvent?.focused ?: !g.io.appFocusLost
+        if (latestFocused == focused)
+            return
+
         g.inputEventsQueue += InputEvent.AppFocused(focused)
     }
 
@@ -319,10 +340,14 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         appAcceptingEvents = acceptingEvents
     }
 
-    /** [Internal] Clear the text input buffer manually */
+    /** [Internal] Clear the text input buffer manually
+     *
+     *  FIXME: Perhaps we could clear queued events as well? */
     fun clearInputCharacters() = inputQueueCharacters.clear()
 
-    /** [Internal] Release all keys */
+    /** [Internal] Release all keys
+     *
+     *  FIXME: Perhaps we could clear queued events as well? */
     fun clearInputKeys() {
         for (keyData in keysData) {
             keyData.down = false

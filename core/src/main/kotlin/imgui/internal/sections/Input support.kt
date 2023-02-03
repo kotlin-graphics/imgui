@@ -14,39 +14,36 @@ enum class InputSource {
 // FIXME: Structures in the union below need to be declared as anonymous unions appears to be an extension?
 // Using ImVec2() would fail on Clang 'union member 'MousePos' has a non-trivial default constructor'
 
-sealed class InputEvent(val type: Type) {
+sealed class InputEvent {
     abstract val source: InputSource
     var addedByTestEngine = false
 
-    class MousePos(val posX: Float, val posY: Float) : InputEvent(Type.MousePos) {
+    class MousePos(val posX: Float,
+                   val posY: Float) : InputEvent() {
         override val source: InputSource = InputSource.Mouse
     }
 
-    class MouseWheel(val wheelX: Float, val wheelY: Float) : InputEvent(Type.MouseWheel) {
+    class MouseWheel(val wheelX: Float,
+                     val wheelY: Float) : InputEvent() {
         override val source: InputSource = InputSource.Mouse
     }
 
-    class MouseButton(val button: Int, val down: Boolean) : InputEvent(Type.MouseButton) {
+    class MouseButton(val button: Int,
+                      val down: Boolean) : InputEvent() {
         override val source: InputSource = InputSource.Mouse
     }
 
-    class Key(val key: imgui.Key, val down: Boolean, val analogValue: Float,
-              override val source: InputSource = InputSource.Keyboard) : InputEvent(Type.Key)
+    class Key(val key: imgui.Key,
+              val down: Boolean,
+              val analogValue: Float,
+              override val source: InputSource = InputSource.Keyboard) : InputEvent()
 
-    class Text(val char: Char) : InputEvent(Type.Text) {
+    class Text(val char: Char) : InputEvent() {
         override val source: InputSource = InputSource.Keyboard
     }
 
-    class AppFocused(val focused: Boolean) : InputEvent(Type.Focus) {
+    class AppFocused(val focused: Boolean) : InputEvent() {
         override val source: InputSource = InputSource.None
-    }
-
-    enum class Type {
-        None, MousePos, MouseWheel, MouseButton, Key, Text, Focus;
-
-        companion object {
-            val COUNT = values().size
-        }
     }
 }
 

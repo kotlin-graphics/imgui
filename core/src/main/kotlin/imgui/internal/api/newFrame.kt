@@ -50,8 +50,6 @@ internal interface newFrame {
                 is InputEvent.MousePos -> {
                     // Trickling Rule: Stop processing queued events if we already handled a mouse button change
                     val eventPos = Vec2(e.posX, e.posY)
-                    if (isMousePosValid(eventPos))
-                        eventPos.put(floorSigned(eventPos.x), floorSigned(eventPos.y)) // Apply same flooring as UpdateMouseInputs()
                     if (trickleFastInputs && (mouseButtonChanged != 0 || mouseWheeled || keyChanged || textInputed))
                         break
                     io.mousePos put eventPos
