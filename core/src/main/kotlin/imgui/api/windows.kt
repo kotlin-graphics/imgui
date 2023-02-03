@@ -269,9 +269,11 @@ interface windows {
                 if (flags has Wf.MenuBar) style.windowPadding.y else 0f)
 
             // Lock menu offset so size calculation can use it as menu-bar windows need a minimum size.
-            window.dc.menuBarOffset.x =
-                (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
+            window.dc.menuBarOffset.x = (window.windowPadding.x max style.itemSpacing.x) max g.nextWindowData.menuBarOffsetMinVal.x
             window.dc.menuBarOffset.y = g.nextWindowData.menuBarOffsetMinVal.y
+
+            var useCurrentSizeForScrollbarX = windowJustCreated
+            var useCurrentSizeForScrollbarY = windowJustCreated
 
             // Collapse window by double-clicking on title bar
             // At this point we don't have a clipping rectangle setup yet, so we can use the title bar area
@@ -283,6 +285,8 @@ interface windows {
                     window.wantCollapseToggle = true
                 if (window.wantCollapseToggle) {
                     window.collapsed = !window.collapsed
+                    if (!window.collapsed)
+                        useCurrentSizeForScrollbarY = true
                     window.markIniSettingsDirty()
                 }
             } else window.collapsed = false
@@ -292,8 +296,6 @@ interface windows {
 
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcAutoFitSize(window.contentSize)
-            var useCurrentSizeForScrollbarX = windowJustCreated
-            var useCurrentSizeForScrollbarY = windowJustCreated
             if (flags has Wf.AlwaysAutoResize && !window.collapsed) { // Using SetNextWindowSize() overrides ImGuiWindowFlags_AlwaysAutoResize, so it can be used on tooltips/popups, etc.
                 if (!windowSizeXsetByApi) {
                     window.sizeFull.x = sizeAutoFit.x
@@ -303,9 +305,9 @@ interface windows {
                     window.sizeFull.y = sizeAutoFit.y
                     useCurrentSizeForScrollbarY = true
                 }
-            } else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {/*  Auto-fit may only grow window during the first few frames
-                    We still process initial auto-fit on collapsed windows to get a window width,
-                    but otherwise don't honor WindowFlag.AlwaysAutoResize when collapsed.                 */
+            } else if (window.autoFitFrames.x > 0 || window.autoFitFrames.y > 0) {
+                // Auto-fit may only grow window during the first few frames
+                // We still process initial auto-fit on collapsed windows to get a window width, but otherwise don't honor ImGuiWindowFlags_AlwaysAutoResize when collapsed.
                 if (!windowSizeXsetByApi && window.autoFitFrames.x > 0) {
                     window.sizeFull.x =
                         if (window.autoFitOnlyGrows) max(window.sizeFull.x, sizeAutoFit.x) else sizeAutoFit.x
