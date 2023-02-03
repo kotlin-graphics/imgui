@@ -62,10 +62,10 @@ internal interface internal {
             g.navLayer = NavLayer.Main
             g.navFocusScopeId = 0
             g.navIdIsAlive = false
-        }
 
-        // Close popups if any
-        closePopupsOverWindow(window, false)
+            // Close popups if any
+            closePopupsOverWindow(window, false)
+        }
 
         // Move the root window to the top of the pile
         assert(window == null || window.rootWindow != null)
