@@ -1,14 +1,10 @@
 package imgui.internal.api
 
 import glm_.wo
-import imgui.ImGui
-import imgui.StyleVar
 import imgui.api.g
-import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemFlags
-import imgui.internal.sections.has
-import imgui.internal.sections.hasnt
 
+// Parameter stacks (shared)
 internal interface parameterStacks {
 
     /** allow focusing using TAB/Shift-TAB, enabled by default but you can disable it for certain widgets

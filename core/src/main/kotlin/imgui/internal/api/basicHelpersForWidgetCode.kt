@@ -148,6 +148,8 @@ internal interface basicHelpersForWidgetCode {
             g.hoveredWindow !== window -> false
             g.activeId != 0 && g.activeId != id && !g.activeIdAllowOverlap -> false
             !isMouseHoveringRect(bb) -> false
+
+            // Done with rectangle culling so we can perform heavier checks now.
             !window.isContentHoverable(HoveredFlag.None) -> {
                 g.hoveredIdDisabled = true
                 false

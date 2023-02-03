@@ -10,6 +10,11 @@ import imgui.internal.classes.Window
 // [SECTION] Widgets support: flags, enums, data structures
 //-----------------------------------------------------------------------------
 
+// Flags used by upcoming items
+// - input: PushItemFlag() manipulates g.CurrentItemFlags, ItemAdd() calls may add extra flags.
+// - output: stored in g.LastItemData.InFlags
+// Current window shared by all windows.
+/** Flags: for PushItemFlag(), g.LastItemData.InFlags */
 typealias ItemFlags = Int
 
 /** Transient per-window flags, reset at the beginning of the frame. For child window, inherited from parent on first Begin().
@@ -49,7 +54,7 @@ enum class ItemFlag(@JvmField val i: ItemFlags) {
     // Controlled by widget code
 
     /** [WIP] Auto-activate input mode when tab focused. Currently only used and supported by a few items before it becomes a generic feature. */
-    Inputable(1 shl 8);   // false
+    Inputable(1 shl 10);   // false
 
     infix fun and(b: ItemFlag): ItemFlags = i and b.i
     infix fun and(b: ItemFlags): ItemFlags = i and b
@@ -70,9 +75,11 @@ operator fun ItemFlags.minus(flag: ItemFlag): ItemFlags = wo(flag)
 operator fun ItemFlags.div(flag: ItemFlag): ItemFlags = or(flag)
 
 
+/** Flags: for g.LastItemData.StatusFlags */
 typealias ItemStatusFlags = Int
 
-/** Storage for LastItem data   */
+/** Status flags for an already submitted item
+ *  - output: stored in g.LastItemData.StatusFlags   */
 enum class ItemStatusFlag(@JvmField val i: ItemStatusFlags) {
     None(0),
 

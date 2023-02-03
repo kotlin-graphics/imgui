@@ -10,11 +10,16 @@ import imgui.ImGui.popID
 import imgui.ImGui.popStyleColor
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.beginDisabled
+import imgui.ImGui.beginPopupEx
+import imgui.ImGui.closePopupToLevel
+import imgui.ImGui.isPopupOpen
+import imgui.ImGui.openPopup
 import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderText
 import imgui.ImGui.selectable
+import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.floor
@@ -97,6 +102,7 @@ internal interface menus {
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
 
         // Odd hack to allow hovering across menus of a same menu-set (otherwise we wouldn't be able to hover parent without always being a Child window)
+        // This is only done for items for the menu set and not the full parent window.
         val menusetIsOpen = widgets.isRootOfOpenMenuSet
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)
@@ -207,25 +213,27 @@ internal interface menus {
 
         if (!enabled) // explicitly close if an open menu becomes disabled, facilitate users code a lot in pattern such as 'if (BeginMenu("options", has_object)) { ..use object.. }'
             wantClose = true
-        if (wantClose && ImGui.isPopupOpen(id))
-            ImGui.closePopupToLevel(g.beginPopupStack.size, true)
+        if (wantClose && isPopupOpen(id))
+            closePopupToLevel(g.beginPopupStack.size, true)
 
         IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags or ItemStatusFlag.Openable or if (menuIsOpen) ItemStatusFlag.Opened else ItemStatusFlag.None)
         popID()
 
         if (!menuIsOpen && wantOpen && g.openPopupStack.size > g.beginPopupStack.size) {
             // Don't recycle same menu level in the same frame, first close the other menu and yield for a frame.
-            ImGui.openPopup(label)
+            openPopup(label)
             return false
         }
 
         menuIsOpen = menuIsOpen || wantOpen
-        if (wantOpen) ImGui.openPopup(label)
+        if (wantOpen)
+            openPopup(label)
 
         if (menuIsOpen) {
-            ImGui.setNextWindowPos(popupPos, Cond.Always) // Note: this is super misleading! The value will serve as reference for FindBestWindowPosForPopup(), not actual pos.
+            // FIXME: This technically breaks functions relying on LastItemData, somehow nobody complained yet. Should backup/restore LastItemData.
+            setNextWindowPos(popupPos, Cond.Always) // Note: misleading: the value will serve as reference for FindBestWindowPosForPopup(), not actual pos.
             pushStyleVar(StyleVar.ChildRounding, style.popupRounding) // First level will use _PopupRounding, subsequent will use _ChildRounding
-            menuIsOpen = ImGui.beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
+            menuIsOpen = beginPopupEx(id, flags) // menu_is_open can be 'false' when the popup is completely clipped (e.g. zero size display)
             popStyleVar()
         } else
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
@@ -243,6 +251,7 @@ internal interface menus {
         val pos = Vec2(window.dc.cursorPos)
         val labelSize = ImGui.calcTextSize(label, hideTextAfterDoubleHash = true)
 
+        // See BeginMenuEx() for comments about this.
         val menusetIsOpen = widgets.isRootOfOpenMenuSet
         val backedNavWindow = g.navWindow
         if (menusetIsOpen)

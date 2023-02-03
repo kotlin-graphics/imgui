@@ -165,7 +165,7 @@ interface widgetsMenus {
     /** Only call EndMenu() if BeginMenu() returns true! */
     fun endMenu() {
         // Nav: When a left move request _within our child menu_ failed, close ourselves (the _parent_ menu).
-        // A menu doesn't close itself because EndMenuBar() wants the catch the last Left<>Right inputs.
+        // A menu doesn't close itself because EndMenuBar() wants to catch the last Left<>Right inputs.
         // However, it means that with the current code, a BeginMenu() from outside another menu or a menu-bar won't be closable with the Left direction.
         // FIXME: This doesn't work if the parent BeginMenu() is not on a menu.
         val window = g.currentWindow!!
