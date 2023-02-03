@@ -84,12 +84,12 @@ internal interface basicAccessors {
         if (g.navWindow !== window)
             setNavWindow(window)
 
-        // Assume that SetFocusID() is called in the context where its window->DC.NavLayerCurrent and window->DC.NavFocusScopeIdCurrent are valid.
+        // Assume that SetFocusID() is called in the context where its window->DC.NavLayerCurrent and g.CurrentFocusScopeId are valid.
         // Note that window may be != g.CurrentWindow (e.g. SetFocusID call in InputTextEx for multi-line text)
         val navLayer = window.dc.navLayerCurrent
         g.navId = id
         g.navLayer = navLayer
-        g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
+        g.navFocusScopeId = g.currentFocusScopeId
         window.navLastIds[navLayer] = id
         if (g.lastItemData.id == id)
             window.navRectRel[navLayer].put(window rectAbsToRel g.lastItemData.navRect)

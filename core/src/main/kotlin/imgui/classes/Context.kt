@@ -209,6 +209,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     // Next window/item data
 
+
+    /** == g.FocusScopeStack.back().FocusScopeId */
+    var currentFocusScopeId: ID = 0
+
     /** == g.ItemFlagsStack.back() */
     var currentItemFlags = ItemFlag.None.i
 
@@ -231,8 +235,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Stack for PushFont()/PopFont() - inherited by Begin()  */
     val fontStack = Stack<Font>()
 
-    /** Stack for PushFocusScope()/PopFocusScope() - not inherited by Begin(), unless child window */
-    val focusScopeStack = Stack<ID>()
+    /** Stack for PushFocusScope()/PopFocusScope() - inherited by BeginChild(), pushed into by Begin() */
+    val focusScopeStack = Stack<FocusScope>()
 
     /** Stack for PushItemFlag()/PopItemFlag() - inherited by Begin() */
     val itemFlagsStack = Stack<ItemFlags>()
@@ -247,6 +251,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val beginPopupStack = Stack<PopupData>()
 
     var beginMenuCount = 0
+
+    /** Prevent PushFocusScope()/PopFocusScope() */
+    var focusScopeStackLocked = 0
 
     //------------------------------------------------------------------
     // Viewports
@@ -494,8 +501,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Hover Delay system
     var hoverDelayId: ID = 0
     var hoverDelayIdPreviousFrame: ID = 0
+
     /** Currently used IsItemHovered(), generally inferred from g.HoveredIdTimer but kept uncleared until clear timer elapse. */
     var hoverDelayTimer = 0f
+
     /** Currently used IsItemHovered(): grace time before g.TooltipHoverTimer gets cleared. */
     var hoverDelayClearTimer = 0f
 

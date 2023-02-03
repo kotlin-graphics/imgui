@@ -297,6 +297,9 @@ class Window(var context: Context,
     /** Reference rectangle, in window relative space   */
     val navRectRel = Array(NavLayer.COUNT) { Rect() }
 
+    /** Focus Scope ID at the time of Begin() */
+    var navRootFocusScopeId: ID = 0
+
 
     /** Backup of last idx/vtx count, so when waking up the window we can preallocate and avoid iterative alloc/copy */
     var memoryDrawListIdxCapacity = 0

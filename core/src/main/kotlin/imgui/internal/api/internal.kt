@@ -60,7 +60,7 @@ internal interface internal {
                 g.navMousePosDirty = true
             g.navId = window?.navLastIds?.get(0) ?: 0 // Restore NavId
             g.navLayer = NavLayer.Main
-            g.navFocusScopeId = 0
+            g.navFocusScopeId = window?.navRootFocusScopeId ?: 0
             g.navIdIsAlive = false
 
             // Close popups if any

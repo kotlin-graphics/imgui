@@ -140,7 +140,7 @@ interface widgetsSelectables {
         //   - (1) it would require focus scope to be set, need exposing PushFocusScope() or equivalent (e.g. BeginSelection() calling PushFocusScope())
         //   - (2) usage will fail with clipped items
         //   The multi-select API aim to fix those issues, e.g. may be replaced with a BeginSelection() API.
-        if (flags has Sf._SelectOnNav && g.navJustMovedToId != 0 && g.navJustMovedToFocusScopeId == window.dc.navFocusScopeIdCurrent)
+        if (flags has Sf._SelectOnNav && g.navJustMovedToId != 0 && g.navJustMovedToFocusScopeId == g.currentFocusScopeId)
         if (g.navJustMovedToId == id) {
             selected = true; pressed = true
         }
@@ -148,7 +148,7 @@ interface widgetsSelectables {
         // Update NavId when clicking or when Hovering (this doesn't happen on most widgets), so navigation can be resumed with gamepad/keyboard
         if (pressed || (hovered && flags has Sf._SetNavIdOnHover))
             if (!g.navDisableMouseHover && g.navWindow === window && g.navLayer == window.dc.navLayerCurrent) {
-                setNavID(id, window.dc.navLayerCurrent, window.dc.navFocusScopeIdCurrent, Rect(bb.min - window.pos, bb.max - window.pos)) // (bb == NavRect)
+                setNavID(id, window.dc.navLayerCurrent, g.currentFocusScopeId, Rect(bb.min - window.pos, bb.max - window.pos)) // (bb == NavRect)
                 g.navDisableHighlight = true
             }
         if (pressed)

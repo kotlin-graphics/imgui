@@ -23,7 +23,8 @@ internal interface navigation {
         assert(window == g.navWindow)
 
         if (window.flags has WindowFlag.NoNavInputs) {
-            g.navId = 0; g.navFocusScopeId = 0
+            g.navId = 0
+            g.navFocusScopeId = window.navRootFocusScopeId
             return
         }
 
@@ -32,7 +33,7 @@ internal interface navigation {
             initForNav = true
         IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=$initForNav, window=\"${window.name}\", layer=${g.navLayer}")
         if (initForNav) {
-            setNavID(0, g.navLayer, 0, Rect())
+            setNavID(0, g.navLayer, window.navRootFocusScopeId, Rect())
             g.navInitRequest = true
             g.navInitRequestFromMove = false
             g.navInitResultId = 0
@@ -40,7 +41,7 @@ internal interface navigation {
             navUpdateAnyRequestFlag()
         } else {
             g.navId = window.navLastIds[0]
-            g.navFocusScopeId = 0
+            g.navFocusScopeId = window.navRootFocusScopeId
         }
     }
 

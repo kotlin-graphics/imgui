@@ -17,7 +17,9 @@ import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
+import imgui.ImGui.popFocusScope
 import imgui.ImGui.pushClipRect
+import imgui.ImGui.pushFocusScope
 import imgui.ImGui.setLastItemData
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
@@ -133,22 +135,28 @@ interface windows {
         windowStackData.parentLastItemDataBackup = g.lastItemData
         windowStackData.stackSizesOnBegin.setToCurrentState()
         g.currentWindowStack += windowStackData
-        g.currentWindow = null
         if (flags has Wf._ChildMenu)
             g.beginMenuCount++
 
+        // Update ->RootWindow and others pointers (before any possible call to FocusWindow)
+        if (firstBeginOfTheFrame) {
+            window.updateParentAndRootLinks(flags, parentWindow)
+            window.parentWindowInBeginStack = parentWindowInStack
+        }
+
+        // Add to focus scope stack - inherited by default by child windows from parent, reset by regular window
+        //if (window == window->RootWindow && (window->Flags & ImGuiWindowFlags_ChildMenu) == 0)
+        pushFocusScope(window.id)
+        window.navRootFocusScopeId = g.currentFocusScopeId
+        g.currentWindow = null
+
+        // Add to popup stack
         if (flags has Wf._Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size]
             popupRef.window = window
             popupRef.parentNavLayer = parentWindowInStack!!.dc.navLayerCurrent.ordinal
             g.beginPopupStack += popupRef
             window.popupId = popupRef.popupId
-        }
-
-        // Update ->RootWindow and others pointers (before any possible call to FocusWindow)
-        if (firstBeginOfTheFrame) {
-            window.updateParentAndRootLinks(flags, parentWindow)
-            window.parentWindowInBeginStack = parentWindowInStack
         }
 
         // Process SetNextWindow***() calls
@@ -623,7 +631,6 @@ interface windows {
                 dc.navLayerCurrent = NavLayer.Main
                 dc.navLayersActiveMask = dc.navLayersActiveMaskNext
                 dc.navLayersActiveMaskNext = 0x00
-                dc.navFocusScopeIdCurrent = if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else 0
                 dc.navHideHighlightOneFrame = false
                 dc.navHasScroll = scrollMax.y > 0f
 
@@ -682,9 +689,6 @@ interface windows {
 
         } else   // Append
             setCurrentWindow(window)
-
-        // Pull/inherit current state
-        window.dc.navFocusScopeIdCurrent = if (flags has Wf._ChildWindow) parentWindow!!.dc.navFocusScopeIdCurrent else window.getID("#FOCUSSCOPE") // Inherit from parent only // -V595
 
         pushClipRect(window.innerClipRect.min, window.innerClipRect.max, true)
 
@@ -751,8 +755,11 @@ interface windows {
         if (window.flags has Wf._ChildWindow) assert(g.withinEndChild) { "Must call EndChild() and not End()!" }
 
         // Close anything that is open
-        if (window.dc.currentColumns != null) endColumns()
+        if (window.dc.currentColumns != null)
+            endColumns()
         popClipRect()   // Inner window clip rectangle
+        //if (window == window->RootWindow && (window->Flags & ImGuiWindowFlags_ChildMenu) == 0)
+        popFocusScope()
 
         // Stop logging
         if (window.flags hasnt Wf._ChildWindow)    // FIXME: add more options for scope of logging

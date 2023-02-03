@@ -466,7 +466,7 @@ fun navUpdateCancelRequest() {
         // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
         if (navWindow != null && (navWindow.flags has Wf._Popup || navWindow.flags hasnt Wf._ChildWindow))
             navWindow.navLastIds[0] = 0
-        g.navId = 0; g.navFocusScopeId = 0
+        g.navId = 0/*; g.navFocusScopeId = 0*/
     }
 }
 
@@ -544,6 +544,7 @@ fun navUpdateCreateMoveRequest() {
         val clampY = g.navMoveFlags hasnt (NavMoveFlag.LoopY or NavMoveFlag.WrapY)
         val innerRectRel = window rectAbsToRel Rect(window.innerRect.min - 1, window.innerRect.max + 1)
         if ((clampX || clampY) && window.navRectRel[g.navLayer] !in innerRectRel) {
+
             //IMGUI_DEBUG_LOG_NAV("[nav] NavMoveRequest: clamp NavRectRel for gamepad move")
             val padX = innerRectRel.width min (window.calcFontSize() * 0.5f)
             val padY = innerRectRel.height min (window.calcFontSize() * 0.5f) // Terrible approximation for the intent of starting navigation from first fully visible ite
@@ -552,7 +553,7 @@ fun navUpdateCreateMoveRequest() {
             innerRectRel.min.y = if (clampY) (innerRectRel.min.y + padY) else -Float.MAX_VALUE
             innerRectRel.max.y = if (clampY) (innerRectRel.max.y - padY) else +Float.MAX_VALUE
             window.navRectRel[g.navLayer] clipWithFull innerRectRel
-            g.navId = 0
+            g.navId = 0/*;g.NavFocusScopeId = 0*/
         }
     }
 
@@ -865,7 +866,7 @@ fun navApplyItemToResult(result: NavItemData) {
     val window = g.currentWindow!!
     result.window = window
     result.id = g.lastItemData.id
-    result.focusScopeId = window.dc.navFocusScopeIdCurrent
+    result.focusScopeId = g.currentFocusScopeId
     result.inFlags = g.lastItemData.inFlags
     result.rectRel put (window rectAbsToRel g.lastItemData.navRect)
 }
@@ -924,7 +925,7 @@ fun navProcessItem() {
         if (g.navWindow !== window)
             setNavWindow(window) // Always refresh g.NavWindow, because some operations such as FocusItem() may not have a window.
         g.navLayer = window.dc.navLayerCurrent
-        g.navFocusScopeId = window.dc.navFocusScopeIdCurrent
+        g.navFocusScopeId = g.currentFocusScopeId
         g.navIdIsAlive = true
         window.navRectRel[window.dc.navLayerCurrent] = window rectAbsToRel navBb    // Store item bounding box (relative to window position)
     }
