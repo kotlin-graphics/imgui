@@ -113,6 +113,7 @@ enum class DebugLogFlag(i: DebugLogFlags? = null) {
     EventClipper,
     EventIO,
     EventMask_(EventActiveId or EventFocus or EventPopup or EventNav or EventClipper or EventIO),
+
     /** Also send output to TTY */
     OutputToTTY(1 shl 10);
 
@@ -301,6 +302,25 @@ class PtrOrIndex(
     constructor(ptr: TabBar) : this(ptr, PoolIdx(-1))
 
     constructor(index: PoolIdx) : this(null, index)
+}
+
+// Helper: ImGuiTextIndex<>
+// Maintain a line index for a text buffer. This is a strong candidate to be moved into the public API.
+class TextIndex {
+    val lineOffsets = ArrayList<Int>()
+    var endOffset = 0 // Because we don't own text buffer we need to maintain EndOffset (may bake in LineOffsets?)
+
+    fun clear() {
+        lineOffsets.clear()
+        endOffset = 0
+    }
+    val size
+        get() = lineOffsets.size
+//    const char*     get_line_begin(const char* base, int n)
+//    { return base + lineOffsets[n]; }
+//    const char*     get_line_end(const char* base, int n)
+//    { return base + (n + 1 < lineOffsets.Size ? (LineOffsets[n+1]-1) : EndOffset); }
+//    void            append(const char* base, int old_size, int new_size);
 }
 
 
