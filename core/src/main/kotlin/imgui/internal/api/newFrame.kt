@@ -130,11 +130,11 @@ internal interface newFrame {
             g.inputEventsQueue.drop(eventN)
 
         // Clear buttons state when focus is lost
-        // (this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle)
-        if (g.io.appFocusLost) {
+        // - this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle.
+        // - we clear in EndFrame() and not now in order allow application/user code polling this flag
+        //   (e.g. custom backend may want to clear additional data, custom widgets may want to react with a "canceling" event).
+        if (g.io.appFocusLost)
             g.io.clearInputKeys()
-            g.io.appFocusLost = false
-        }
     }
 
     /** The reason this is exposed in imgui_internal.h is: on touch-based system that don't have hovering,

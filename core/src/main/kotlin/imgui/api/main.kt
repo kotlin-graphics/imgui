@@ -356,6 +356,7 @@ interface main {
         io.fonts.locked = false
 
         // Clear Input data for next frame
+        io.appFocusLost = false
         io.mouseWheel = 0f; io.mouseWheelH = 0f
         io.inputQueueCharacters.clear()
 

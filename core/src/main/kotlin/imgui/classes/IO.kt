@@ -221,7 +221,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
             return
 
         // Apply same flooring as UpdateMouseInputs()
-        val pos = Vec2(if(x > -Float.MAX_VALUE) floorSigned(x) else x, if(y > -Float.MAX_VALUE) floorSigned(y) else y)
+        val pos = Vec2(if (x > -Float.MAX_VALUE) floorSigned(x) else x, if (y > -Float.MAX_VALUE) floorSigned(y) else y)
 
         // Filter duplicate
         val latestEvent = findLatestInputEvent<InputEvent.MousePos>()
@@ -357,7 +357,10 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         keyCtrl = false; keyShift = false; keyAlt = false; keySuper = false
         keyMods = Key.Mod_None.i
         mousePos put -Float.MAX_VALUE
-        mouseDown.fill(false)
+        for (n in mouseDown.indices) {
+            mouseDown[n] = false
+            mouseDownDuration[n] = -1f; mouseDownDurationPrev[n] = -1f
+        }
         mouseWheel = 0f; mouseWheelH = 0f
     }
 
