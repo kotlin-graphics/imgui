@@ -360,11 +360,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
         var thickness = thickness_
 
-        if (points.size < 2) return
+        val pointsCount = points.size
+        if (pointsCount < 2)
+            return
 
         val closed = flags has DrawFlag.Closed
         val opaqueUv = Vec2(_data.texUvWhitePixel)
-        val count = if (closed) points.size else points.lastIndex // The number of line segments we need to draw
+        val count = if (closed) pointsCount else points.lastIndex // The number of line segments we need to draw
         val thickLine = thickness > _fringeScale
 
         if (flags has DrawListFlag.AntiAliasedLines) {
@@ -381,15 +383,12 @@ class DrawList(sharedData: DrawListSharedData?) {
             // - For now, only draw integer-width lines using textures to avoid issues with the way scaling occurs,
             //      could be improved.
             // - If AA_SIZE is not 1.0f we cannot use the texture path.
-            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex &&
-                    integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f && AA_SIZE == 1f
+            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex && integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f && AA_SIZE == 1f
 
-            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) {
-                "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off"
-            }
+            ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) { "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off" }
 
             val idxCount = if (useTexture) count * 6 else (count * if (thickLine) 18 else 12)
-            val vtxCount = if (useTexture) points.size * 2 else (points.size * if (thickLine) 4 else 3)
+            val vtxCount = if (useTexture) pointsCount * 2 else (pointsCount * if (thickLine) 4 else 3)
             primReserve(idxCount, vtxCount)
             vtxBuffer.pos = _vtxWritePtr
             idxBuffer.pos = _idxWritePtr
@@ -397,26 +396,21 @@ class DrawList(sharedData: DrawListSharedData?) {
             // Temporary buffer
             // The first <points_count> items are normals at each line point, then after that there are either 2 or 4
             // temp points for each line point
-            val temp = Array(points.size * if (useTexture || !thickLine) 3 else 5) { Vec2() }
-            val tempPointsIdx = points.size
+            _data.tempBuffer.reserveDiscard(pointsCount * if (useTexture || !thickLine) 3 else 5)
+            val temp = _data.tempBuffer
+            val tempPointsIdx = pointsCount
 
             // Calculate normals (tangents) for each line segment
             for (i1 in 0 until count) {
-                val i2 = if (i1 + 1 == points.size) 0 else i1 + 1
+                val i2 = if (i1 + 1 == pointsCount) 0 else i1 + 1
                 var dx = points[i2].x - points[i1].x
                 var dy = points[i2].y - points[i1].y
-                //IM_NORMALIZE2F_OVER_ZERO(dx, dy);
-                val d2 = dx * dx + dy * dy
-                if (d2 > 0f) {
-                    val invLen = 1f / sqrt(d2)
-                    dx *= invLen
-                    dy *= invLen
-                }
+                NORMALIZE2F_OVER_ZERO(dx, dy) { x, y -> dx = x; dy = y }
                 temp[i1].x = dy
                 temp[i1].y = -dx
             }
             if (!closed)
-                temp[points.size - 1] = temp[points.size - 2]
+                temp[pointsCount - 1] = temp[pointsCount - 2]
 
             // If we are drawing a one-pixel-wide line without a texture, or a textured line of any width,
             // we only need 2 or 3 vertices per point
@@ -438,8 +432,8 @@ class DrawList(sharedData: DrawListSharedData?) {
                 if (!closed) {
                     temp[tempPointsIdx + 0] = points[0] + temp[0] * halfDrawSize
                     temp[tempPointsIdx + 1] = points[0] - temp[0] * halfDrawSize
-                    temp[tempPointsIdx + (points.size - 1) * 2 + 0] = points[points.size - 1] + temp[points.size - 1] * halfDrawSize
-                    temp[tempPointsIdx + (points.size - 1) * 2 + 1] = points[points.size - 1] - temp[points.size - 1] * halfDrawSize
+                    temp[tempPointsIdx + (pointsCount - 1) * 2 + 0] = points[pointsCount - 1] + temp[pointsCount - 1] * halfDrawSize
+                    temp[tempPointsIdx + (pointsCount - 1) * 2 + 1] = points[pointsCount - 1] - temp[pointsCount - 1] * halfDrawSize
                 }
 
                 // Generate the indices to form a number of triangles for each line segment, and the vertices for the
@@ -449,31 +443,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
                 var idx1 = _vtxCurrentIdx // Vertex index for start of line segment
                 for (i1 in 0 until count) { // i1 is the first point of the line segment
-                    val i2 = if (i1 + 1 == points.size) 0 else i1 + 1 // i2 is the second point of the line segment
-                    val idx2 = if (i1 + 1 == points.size) _vtxCurrentIdx else (idx1 + if (useTexture) 2 else 3) // Vertex index for end of segment
+                    val i2 = if (i1 + 1 == pointsCount) 0 else i1 + 1 // i2 is the second point of the line segment
+                    val idx2 = if (i1 + 1 == pointsCount) _vtxCurrentIdx else (idx1 + if (useTexture) 2 else 3) // Vertex index for end of segment
 
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-                    //                    IM_FIXNORMAL2F(dm_x, dm_y)
-                    run {
-                        val d2 = dmX * dmX + dmY * dmY
-                        if (d2 > 0.000001f) {
-                            var invLen2 = 1f / d2
-                            if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
-                                invLen2 = FIXNORMAL2F_MAX_INVLEN2
-                            dmX *= invLen2
-                            dmY *= invLen2
-                        }
-                    }
-                    run {
-                        var d2 = dmX * dmX + dmY * dmY
-                        if (d2 > 0.000001f)
-                            d2 = 0.5f
-                        val invLensq = 1f / d2
-                        dmX *= invLensq
-                        dmY *= invLensq
-                    }
+                    FIXNORMAL2F(dmX, dmY) { x, y -> dmX = x; dmY = y }
                     dmX *= halfDrawSize // dm_x, dm_y are offset to the outer edge of the AA area
                     dmY *= halfDrawSize
 
@@ -514,14 +490,14 @@ class DrawList(sharedData: DrawListSharedData?) {
                     val texUV0 = Vec2(texUVs.x, texUVs.y)
                     val texUV1 = Vec2(texUVs.z, texUVs.w)
 
-                    for (i in 0 until points.size) {
+                    for (i in 0 until pointsCount) {
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += texUV0; vtxBuffer += col // Left-side outer edge
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += texUV1; vtxBuffer += col // Right-side outer edge
                         _vtxWritePtr += 2
                     }
                 } else
                 // If we're not using a texture, we need the center vertex as well
-                    for (i in 0 until points.size) {
+                    for (i in 0 until pointsCount) {
                         vtxBuffer += points[i]; vtxBuffer += opaqueUv; vtxBuffer += col // Center of line
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Left-side outer edge
                         vtxBuffer += temp[tempPointsIdx + i * 2 + 1]; vtxBuffer += opaqueUv; vtxBuffer += colTrans // Right-side outer edge
@@ -553,23 +529,13 @@ class DrawList(sharedData: DrawListSharedData?) {
                 // FIXME-OPT: Merge the different loops, possibly remove the temporary buffer.
                 var idx1 = _vtxCurrentIdx // Vertex index for start of line segment
                 for (i1 in 0 until count) { // i1 is the first point of the line segment
-                    val i2 = if ((i1 + 1) == points.size) 0 else (i1 + 1) // i2 is the second point of the line segment
-                    val idx2 = if ((i1 + 1) == points.size) _vtxCurrentIdx else (idx1 + 4) // Vertex index for end of segment
+                    val i2 = if ((i1 + 1) == pointsCount) 0 else (i1 + 1) // i2 is the second point of the line segment
+                    val idx2 = if ((i1 + 1) == pointsCount) _vtxCurrentIdx else (idx1 + 4) // Vertex index for end of segment
 
                     // Average normals
                     var dmX = (temp[i1].x + temp[i2].x) * 0.5f
                     var dmY = (temp[i1].y + temp[i2].y) * 0.5f
-                    //                    IM_FIXNORMAL2F(dm_x, dm_y)
-                    run {
-                        val d2 = dmX * dmX + dmY * dmY
-                        if (d2 > 0.000001f) {
-                            var invLen2 = 1f / d2
-                            if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
-                                invLen2 = FIXNORMAL2F_MAX_INVLEN2
-                            dmX *= invLen2
-                            dmY *= invLen2
-                        }
-                    }
+                    FIXNORMAL2F(dmX, dmY) { x, y -> dmX = x; dmY = y }
                     val dmOutX = dmX * (halfInnerThickness + AA_SIZE)
                     val dmOutY = dmY * (halfInnerThickness + AA_SIZE)
                     val dmInX = dmX * halfInnerThickness
@@ -599,7 +565,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 }
 
                 // Add vertices
-                for (i in 0 until points.size) {
+                for (i in 0 until pointsCount) {
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 0]; vtxBuffer += opaqueUv; vtxBuffer += colTrans
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 1]; vtxBuffer += opaqueUv; vtxBuffer += col
                     vtxBuffer += temp[tempPointsIdx + i * 4 + 2]; vtxBuffer += opaqueUv; vtxBuffer += col
@@ -617,19 +583,13 @@ class DrawList(sharedData: DrawListSharedData?) {
             idxBuffer.pos = _idxWritePtr
 
             for (i1 in 0 until count) {
-                val i2 = if ((i1 + 1) == points.size) 0 else i1 + 1
+                val i2 = if ((i1 + 1) == pointsCount) 0 else i1 + 1
                 val p1 = points[i1]
                 val p2 = points[i2]
 
                 var dX = p2.x - p1.x
                 var dY = p2.y - p1.y
-                //                IM_NORMALIZE2F_OVER_ZERO(dX, dY)
-                val d2 = dX * dX + dY * dY
-                if (d2 > 0f) {
-                    val invLen = 1f / sqrt(d2)
-                    dX *= invLen
-                    dY *= invLen
-                }
+                NORMALIZE2F_OVER_ZERO(dX, dY) { x, y -> dX = x; dY = y }
                 dX *= thickness * 0.5f
                 dY *= thickness * 0.5f
 
@@ -653,7 +613,8 @@ class DrawList(sharedData: DrawListSharedData?) {
      *  - Filled shapes must always use clockwise winding order. The anti-aliasing fringe depends on it. Counter-clockwise shapes will have "inward" anti-aliasing. */
     fun addConvexPolyFilled(points: ArrayList<Vec2>, col: Int) {
 
-        if (points.size < 3)
+        val pointsCount = points.size
+        if (pointsCount < 3)
             return
 
         val uv = Vec2(_data.texUvWhitePixel)
@@ -662,8 +623,8 @@ class DrawList(sharedData: DrawListSharedData?) {
             // Anti-aliased Fill
             val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
-            val idxCount = (points.size - 2) * 3 + points.size * 6
-            val vtxCount = points.size * 2
+            val idxCount = (pointsCount - 2) * 3 + pointsCount * 6
+            val vtxCount = pointsCount * 2
             primReserve(idxCount, vtxCount)
             vtxBuffer.pos = _vtxWritePtr
             idxBuffer.pos = _idxWritePtr
@@ -671,27 +632,22 @@ class DrawList(sharedData: DrawListSharedData?) {
             // Add indexes for fill
             val vtxInnerIdx = _vtxCurrentIdx
             val vtxOuterIdx = _vtxCurrentIdx + 1
-            for (i in 2 until points.size) {
+            for (i in 2 until pointsCount) {
                 idxBuffer += vtxInnerIdx; idxBuffer += vtxInnerIdx + ((i - 1) shl 1); idxBuffer += vtxInnerIdx + (i shl 1)
                 _idxWritePtr += 3
             }
 
             // Compute normals
-            val tempNormals = Array(points.size) { Vec2() }
+            _data.tempBuffer.reserveDiscard(pointsCount)
+            val tempNormals = _data.tempBuffer
             var i0 = points.lastIndex
             var i1 = 0
-            while (i1 < points.size) {
+            while (i1 < pointsCount) {
                 val p0 = points[i0]
                 val p1 = points[i1]
                 var dX = p1.x - p0.x
                 var dY = p1.y - p0.y
-                //                IM_NORMALIZE2F_OVER_ZERO(dx, dy)
-                val d2 = dX * dX + dY * dY
-                if (d2 > 0f) {
-                    val invLen = 1f / sqrt(d2)
-                    dX *= invLen
-                    dY *= invLen
-                }
+                NORMALIZE2F_OVER_ZERO(dX, dY) { x, y -> dX = x; dY = y }
                 tempNormals[i0].x = dY
                 tempNormals[i0].y = -dX
                 i0 = i1++
@@ -699,23 +655,13 @@ class DrawList(sharedData: DrawListSharedData?) {
 
             i0 = points.lastIndex
             i1 = 0
-            while (i1 < points.size) {
+            while (i1 < pointsCount) {
                 // Average normals
                 val n0 = tempNormals[i0]
                 val n1 = tempNormals[i1]
                 var dmX = (n0.x + n1.x) * 0.5f
                 var dmY = (n0.y + n1.y) * 0.5f
-                //                    IM_FIXNORMAL2F(dm_x, dm_y)
-                run {
-                    val d2 = dmX * dmX + dmY * dmY
-                    if (d2 > 0.000001f) {
-                        var invLen2 = 1f / d2
-                        if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
-                            invLen2 = FIXNORMAL2F_MAX_INVLEN2
-                        dmX *= invLen2
-                        dmY *= invLen2
-                    }
-                }
+                FIXNORMAL2F(dmX, dmY) { x, y -> dmX = x; dmY = y }
                 dmX *= AA_SIZE * 0.5f
                 dmY *= AA_SIZE * 0.5f
 
@@ -734,8 +680,8 @@ class DrawList(sharedData: DrawListSharedData?) {
             _vtxCurrentIdx += vtxCount
         } else {
             // Non Anti-aliased Fill
-            val idxCount = (points.size - 2) * 3
-            val vtxCount = points.size
+            val idxCount = (pointsCount - 2) * 3
+            val vtxCount = pointsCount
             primReserve(idxCount, vtxCount)
             vtxBuffer.pos = _vtxWritePtr
             idxBuffer.pos = _idxWritePtr
@@ -743,7 +689,7 @@ class DrawList(sharedData: DrawListSharedData?) {
                 vtxBuffer += points[i]; vtxBuffer += uv; vtxBuffer += col
                 _vtxWritePtr++
             }
-            for (i in 2 until points.size) {
+            for (i in 2 until pointsCount) {
                 idxBuffer += _vtxCurrentIdx; idxBuffer += _vtxCurrentIdx + i - 1; idxBuffer[_idxWritePtr + 2] = _vtxCurrentIdx + i
                 _idxWritePtr += 3
             }
@@ -1686,26 +1632,32 @@ class DrawList(sharedData: DrawListSharedData?) {
         // On AddPolyline() and AddConvexPolyFilled() we intentionally avoid using ImVec2 and superfluous function calls to optimize debug/non-inlined builds.
         // - Those macros expects l-values and need to be used as their own statement.
         // - Those macros are intentionally not surrounded by the 'do {} while (0)' idiom because even that translates to runtime with debug compilers.
-        //    fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float) {
-        //        val d2 = vX * vX + vY * vY
-        //        if (d2 > 0.0f) {
-        //            val invLen = 1f / sqrt(d2)
-        //            vX *= invLen
-        //            vY *= invLen
-        //        }
-        //    }
+        inline fun NORMALIZE2F_OVER_ZERO(vX: Float, vY: Float, res: (x: Float, y: Float) -> Unit) {
+            var x = vX
+            var y = vY
+            val d2 = x * x + y * y
+            if (d2 > 0f) {
+                val invLen = 1 / sqrt(d2)
+                x *= invLen
+                y *= invLen
+            }
+            res(x, y)
+        }
 
         const val FIXNORMAL2F_MAX_INVLEN2 = 100f // 500.0f (see #4053, #3366)
-        //        fun FIXNORMAL2F(VX: Float, VY: Float) {
-        //            val d2 = VX * VX + VY * VY
-        //            if (d2 > 0.000001f) {
-        //                var invLen2 = 1f / d2
-        //                if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
-        //                    invLen2 = FIXNORMAL2F_MAX_INVLEN2
-        //                VX *= invLen2
-        //                VY *= invLen2
-        //            }
-        //        }
+        inline fun FIXNORMAL2F(vX: Float, vY: Float, res: (x: Float, y: Float) -> Unit) {
+            var x = vX
+            var y = vY
+            val d2 = x * x + y * y
+            if (d2 > 0.000001f) {
+                var invLen2 = 1f / d2
+                if (invLen2 > FIXNORMAL2F_MAX_INVLEN2)
+                    invLen2 = FIXNORMAL2F_MAX_INVLEN2
+                x *= invLen2
+                y *= invLen2
+            }
+            res(x, y)
+        }
     }
 }
 

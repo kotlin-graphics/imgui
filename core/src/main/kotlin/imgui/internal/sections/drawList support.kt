@@ -69,6 +69,9 @@ class DrawListSharedData {
     /** Initial flags at the beginning of the frame (it is possible to alter flags on a per-drawlist basis afterwards) */
     var initialFlags = DrawListFlag.None.i
 
+    /** [Internal] Temp write buffer */
+    val tempBuffer = ArrayList<Vec2>()
+
     // [Internal] Lookup tables
 
     /** Sample points on the quarter of the circle. */
@@ -102,6 +105,11 @@ class DrawListSharedData {
         }
         arcFastRadiusCutoff = DRAWLIST_CIRCLE_AUTO_SEGMENT_CALC_R(DRAWLIST_ARCFAST_SAMPLE_MAX, circleSegmentMaxError)
     }
+}
+
+fun ArrayList<Vec2>.reserveDiscard(size: Int) {
+    for (i in this.size until size)
+        this += Vec2()
 }
 
 /** Helper to build a ImDrawData instance */

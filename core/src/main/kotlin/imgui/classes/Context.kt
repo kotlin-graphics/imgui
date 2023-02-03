@@ -734,14 +734,15 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
      *  ~Shutdown(ImGuiContext* context)    */
     fun shutdown() {
 
-        /*  The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE
-            (which would happen if we never called NewFrame)         */
+        // The fonts atlas can be used prior to calling NewFrame(), so we clear it even if g.Initialized is FALSE (which would happen if we never called NewFrame)
         if (fontAtlasOwnedByContext)
             io.fonts.locked = false
         io.fonts.clear()
+        drawListSharedData.tempBuffer.clear()
 
         // Cleanup of other data are conditional on actually having initialized Dear ImGui.
-        if (!initialized) return
+        if (!initialized)
+            return
 
         // Save settings (unless we haven't attempted to load them: CreateContext/DestroyContext without a call to NewFrame shouldn't save an empty file)
         if (settingsLoaded)
