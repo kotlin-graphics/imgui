@@ -164,21 +164,19 @@ interface widgetsMenus {
 
     /** Only call EndMenu() if BeginMenu() returns true! */
     fun endMenu() {
-        // Nav: When a left move request _within our child menu_ failed, close ourselves (the _parent_ menu).
-        // A menu doesn't close itself because EndMenuBar() wants to catch the last Left<>Right inputs.
-        // However, it means that with the current code, a BeginMenu() from outside another menu or a menu-bar won't be closable with the Left direction.
-        // FIXME: This doesn't work if the parent BeginMenu() is not on a menu.
+        // Nav: When a left move request our menu failed, close ourselves.
         val window = g.currentWindow!!
         assert(window.flags has Wf._Popup) { "Mismatched BeginMenu () / EndMenu() calls" }
-
+        val parentWindow = window.parentWindow!!  // Should always be != NULL is we passed assert.
         if (window.beginCount == window.beginCountPreviousFrame)
-            if (g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet() && window.dc.layoutType == Lt.Vertical)
-                g.navWindow?.rootWindowForNav?.let {
-                    if (it.flags has Wf._Popup && it.parentWindow === window) {
-                        closePopupToLevel(g.beginPopupStack.size, true)
-                        navMoveRequestCancel()
-                    }
+            if (g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet()) {
+                val navWindow = g.navWindow
+                if (navWindow != null && navWindow.rootWindowForNav === window && parentWindow.dc.layoutType == Lt.Vertical) {
+                    closePopupToLevel(g.beginPopupStack.size, true)
+                    navMoveRequestCancel()
                 }
+            }
+
         endPopup()
     }
 
