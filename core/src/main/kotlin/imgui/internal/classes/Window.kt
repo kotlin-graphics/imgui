@@ -1280,11 +1280,8 @@ class Window(var context: Context,
                     Vec2(style.windowMinSize) // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
                 if (isPopup || isMenu) sizeMin minAssign 4f
 
-                // FIXME-VIEWPORT-WORKAREA: May want to use GetWorkSize() instead of Size depending on the type of windows?
-                val availSize = ImGui.mainViewport.size
-                val sizeAutoFit = glm.clamp(sizeDesired,
-                                            sizeMin,
-                                            glm.max(sizeMin, availSize - style.displaySafeAreaPadding * 2f))
+                val availSize = ImGui.mainViewport.workSize
+                val sizeAutoFit = glm.clamp(sizeDesired, sizeMin, glm.max(sizeMin, availSize - style.displaySafeAreaPadding * 2f))
 
                 // When the window cannot fit all contents (either because of constraints, either because screen is too small),
                 // we are growing the size on the other axis to compensate for expected scrollbar.
