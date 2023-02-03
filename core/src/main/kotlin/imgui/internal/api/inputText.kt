@@ -697,8 +697,6 @@ internal interface inputText {
                     applyNewTextLength = state.curLenA
                 }
             }
-            // Clear temporary user storage
-            state.flags = Itf.None.i
         }
 
         // Copy result to user buffer
