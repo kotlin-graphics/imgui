@@ -121,16 +121,9 @@ class Font {
 
             if (wordWrapEnabled) {
 
-                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
-                    and not intrusive for what's essentially an uncommon feature.   */
-                if (wordWrapEol == -1) {
+                // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.
+                if (wordWrapEol == -1)
                     wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - lineWidth)
-                    /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
-                        discontinuity.                     */
-                    if (wordWrapEol == s)
-                    // +1 may not be a character start point in UTF-8 but it's ok because we use s >= wordWrapEol below
-                        wordWrapEol++
-                }
 
                 if (s >= wordWrapEol) {
                     if (textSize.x < lineWidth)
@@ -138,13 +131,7 @@ class Font {
                     textSize.y += lineHeight
                     lineWidth = 0f
                     wordWrapEol = -1
-
-                    // Wrapping skips upcoming blanks
-                    while (s < textEnd) {
-                        val c = text[s].toUInt()
-                        if (charIsBlankA(c)) s++ else if (c == '\n'.i) {
-                            s++; break; } else break
-                    }
+                    s = calcWordWrapNextLineStartA(text, s, textEnd) // Wrapping skips upcoming blanks
                     continue
                 }
             }
@@ -190,24 +177,32 @@ class Font {
         return textSize
     }
 
+    /** Wrapping skips upcoming blanks */
+    fun calcWordWrapNextLineStartA(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.size): Int {
+        var p = textBegin
+        while (p < textEnd && charIsBlankA(text[p].i))
+            p++
+        if (Char(text[p].i) == '\n')
+            p++
+        return p
+    }
+
+    // Simple word-wrapping for English, not full-featured. Please submit failing cases!
+    // This will return the next location to wrap from. If no wrapping if necessary, this will fast-forward to e.g. text_end.
+    // FIXME: Much possible improvements (don't cut things like "word !", "word!!!" but cut within "word,,,,", more sensible support for punctuations, support for Unicode punctuations, etc.)
     fun calcWordWrapPositionA(scale: Float, text: ByteArray, textBegin: Int, textEnd: Int, wrapWidth_: Float): Int {
 
-        /*  Simple word-wrapping for English, not full-featured. Please submit failing cases!
-            FIXME: Much possible improvements (don't cut things like "word !", "word!!!" but cut within "word,,,,",
-            more sensible support for punctuations, support for Unicode punctuations, etc.)
+        // For references, possible wrap point marked with ^
+        //  "aaa bbb, ccc,ddd. eee   fff. ggg!"
+        //      ^    ^    ^   ^   ^__    ^    ^
 
-            For references, possible wrap point marked with ^
-            "aaa bbb, ccc,ddd. eee   fff. ggg!"
-                ^    ^    ^   ^   ^__    ^    ^
+        // List of hardcoded separators: .,;!?'"
 
-            List of hardcoded separators: .,;!?'"
+        // Skip extra blanks after a line returns (that includes not counting them in width computation)
+        // e.g. "Hello    world" --> "Hello" "World"
 
-            Skip extra blanks after a line returns (that includes not counting them in width computation)
-            e.g. "Hello    world" --> "Hello" "World"
-
-            Cut words that cannot possibly fit within one line.
-            e.g.: "The tropical fish" with ~5 characters worth of width --> "The tr" "opical" "fish"    */
-
+        // Cut words that cannot possibly fit within one line.
+        // e.g.: "The tropical fish" with ~5 characters worth of width --> "The tr" "opical" "fish"
         var lineWidth = 0f
         var wordWidth = 0f
         var blankWidth = 0f
@@ -274,8 +269,14 @@ class Font {
                     s = if (prevWordEnd != -1) prevWordEnd else wordEnd
                 break
             }
+
             s = nextS
         }
+
+        // Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height discontinuity.
+        // +1 may not be a character start point in UTF-8 but it's ok because caller loops use (text >= word_wrap_eol).
+        if (s == textBegin && textBegin < textEnd)
+            return s + 1
         return s
     }
 
@@ -311,7 +312,6 @@ class Font {
         val scale = size / fontSize
         val lineHeight = fontSize * scale
         val wordWrapEnabled = wrapWidth > 0f
-        var wordWrapEol = 0
 
         // Fast-forward to first visible line
         var s = textBegin
@@ -352,34 +352,22 @@ class Font {
         var idxWrite = drawList._idxWritePtr
         var vtxCurrentIdx = drawList._vtxCurrentIdx
 
-        var colUntinted = col or COL32_A_MASK.inv()
+        val colUntinted = col or COL32_A_MASK.inv()
+        var wordWrapEol = 0
 
         while (s < textEnd) {
 
             if (wordWrapEnabled) {
 
-                /*  Calculate how far we can render. Requires two passes on the string data but keeps the code simple
-                    and not intrusive for what's essentially an uncommon feature.                 */
-                if (wordWrapEol == 0) {
+                // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.
+                if (wordWrapEol == 0)
                     wordWrapEol = calcWordWrapPositionA(scale, text, s, textEnd, wrapWidth - (x - startX))
-                    /*  Wrap_width is too small to fit anything. Force displaying 1 character to minimize the height
-                        discontinuity.                     */
-                    if (wordWrapEol == s)
-                    //  +1 may not be a character start point in UTF-8 but it's ok because we use s >= wordWrapEol below
-                        wordWrapEol++
-                }
 
                 if (s >= wordWrapEol) {
                     x = startX
                     y += lineHeight
                     wordWrapEol = 0
-
-                    // Wrapping skips upcoming blanks
-                    while (s < textEnd) {
-                        val c = text[s].toUInt()
-                        if (charIsBlankA(c)) s++; else if (c == '\n'.i) {
-                            s++; break; } else break
-                    }
+                    s = calcWordWrapNextLineStartA(text, s, textEnd) // Wrapping skips upcoming blanks
                     continue
                 }
             }
@@ -447,7 +435,7 @@ class Font {
                     }
 
                     // Support for untinted glyphs
-                    val glyphCol = if(glyph.colored) colUntinted else col
+                    val glyphCol = if (glyph.colored) colUntinted else col
 
                     // We are NOT calling PrimRectUV() here because non-inlined causes too much overhead in a debug builds. Inlined here:
                     drawList.apply {
@@ -597,7 +585,7 @@ class Font {
             val advanceXOriginal = advanceX
             advanceX = clamp(advanceX, cfg.glyphMinAdvanceX, cfg.glyphMaxAdvanceX)
             if (advanceX != advanceXOriginal) {
-                val charOffX = if(cfg.pixelSnapH) floor((advanceX - advanceXOriginal) * 0.5f) else (advanceX - advanceXOriginal) * 0.5f
+                val charOffX = if (cfg.pixelSnapH) floor((advanceX - advanceXOriginal) * 0.5f) else (advanceX - advanceXOriginal) * 0.5f
                 x0 += charOffX
                 x1 += charOffX
             }
