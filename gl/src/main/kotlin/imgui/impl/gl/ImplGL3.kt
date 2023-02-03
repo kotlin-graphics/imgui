@@ -1,6 +1,7 @@
 package imgui.impl.gl
 
 import glm_.L
+import glm_.f
 import glm_.glm
 import glm_.i
 import glm_.mat4x4.Mat4
@@ -229,7 +230,7 @@ class ImplGL3 : GLInterface {
                         continue
 
                     // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
-                    glScissor(clipMin.x.i, (fbHeight - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i); glCall("glScissor")
+                    glScissor(clipMin.x.i, (fbHeight.f - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i); glCall("glScissor")
 
                     // Bind texture, Draw
                     glBindTexture(GL_TEXTURE_2D, cmd.texID!!)

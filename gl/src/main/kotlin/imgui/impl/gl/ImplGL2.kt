@@ -1,6 +1,7 @@
 package imgui.impl.gl
 
 import glm_.d
+import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4b
@@ -148,7 +149,7 @@ class ImplGL2 : GLInterface {
                         continue
 
                     // Apply scissor/clipping rectangle (Y is inverted in OpenGL)
-                    glScissor(clipMin.x.i, (fbHeight - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i)
+                    glScissor(clipMin.x.i, (fbHeight.f - clipMax.y).i, (clipMax.x - clipMin.x).i, (clipMax.y - clipMin.y).i)
 
                     // Bind texture, Draw
                     glBindTexture(GL_TEXTURE_2D, cmd.texID!!)
