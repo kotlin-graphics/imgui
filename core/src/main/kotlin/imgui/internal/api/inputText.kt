@@ -422,11 +422,11 @@ internal interface inputText {
             val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) Key.Mod_Super.i else Key.Mod_Ctrl.i
 
             val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
-            val isCopy = ((isShortcutKey && Key.C.isPressed) || (isCtrlKeyOnly && Key.Insert.isPressed)) && !isPassword && (!isMultiline || state.hasSelection)
+            val isCopy = ((isShortcutKey && Key.C.isPressed(false)) || (isCtrlKeyOnly && Key.Insert.isPressed(false))) && !isPassword && (!isMultiline || state.hasSelection)
             val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
             val isUndo = ((isShortcutKey && Key.Z.isPressed) && !isReadOnly && isUndoable)
             val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
-            val isSelectAll = isShortcutKey && Key.A.isPressed
+            val isSelectAll = isShortcutKey && Key.A.isPressed(false)
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
             val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad

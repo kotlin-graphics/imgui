@@ -122,7 +122,7 @@ object ShowDemoWindowInputs {
                 for (i in io.keysData.indices) {
                     val key = Key of (i + Key.BEGIN)
                     if (key.isDown) {
-                        sameLine(); text("\"$key\" $i (%.02f secs)", io.keysData[i].downDuration)
+                        sameLine(); text("\"$key\" $i (%.02f)", io.keysData[i].downDuration)
                     }
                 }
                 text("Keys pressed:")
