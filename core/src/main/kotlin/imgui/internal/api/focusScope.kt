@@ -2,7 +2,6 @@ package imgui.internal.api
 
 import imgui.ID
 import imgui.api.g
-import imgui.internal.sections.FocusScope
 
 // [EXPERIMENTAL] Focus Scope
 // This is generally used to identify a unique input location (for e.g. a selection set)
@@ -15,20 +14,14 @@ import imgui.internal.sections.FocusScope
 interface focusScope {
 
     fun pushFocusScope(id: ID) {
-        if (g.focusScopeStackLocked > 0)
-            return
-        val scope = FocusScope(id, g.currentWindow)
-        g.focusScopeStack += scope
-        g.currentFocusScopeId = scope.focusScopeId
+        g.focusScopeStack += id
+        g.currentFocusScopeId = id
     }
 
     fun popFocusScope() {
-        if (g.focusScopeStackLocked > 0)
-            return
         assert(g.focusScopeStack.isNotEmpty()) { "Too many PopFocusScope() ?" }
-        assert(g.focusScopeStack.last().window === g.currentWindow) { "Mismatched pop location?" }
         g.focusScopeStack.pop()
-        g.currentFocusScopeId = g.focusScopeStack.lastOrNull()?.focusScopeId ?: 0
+        g.currentFocusScopeId = g.focusScopeStack.lastOrNull() ?: 0
     }
 
     /** Focus scope we are outputting into, set by PushFocusScope() */

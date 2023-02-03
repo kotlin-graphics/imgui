@@ -144,8 +144,7 @@ interface windows {
             window.parentWindowInBeginStack = parentWindowInStack
         }
 
-        // Add to focus scope stack - inherited by default by child windows from parent, reset by regular window
-        //if (window == window->RootWindow && (window->Flags & ImGuiWindowFlags_ChildMenu) == 0)
+        // Add to focus scope stack
         pushFocusScope(window.id)
         window.navRootFocusScopeId = g.currentFocusScopeId
         g.currentWindow = null
@@ -758,7 +757,6 @@ interface windows {
         if (window.dc.currentColumns != null)
             endColumns()
         popClipRect()   // Inner window clip rectangle
-        //if (window == window->RootWindow && (window->Flags & ImGuiWindowFlags_ChildMenu) == 0)
         popFocusScope()
 
         // Stop logging

@@ -210,7 +210,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Next window/item data
 
 
-    /** == g.FocusScopeStack.back().FocusScopeId */
+    /** == g.FocusScopeStack.back() */
     var currentFocusScopeId: ID = 0
 
     /** == g.ItemFlagsStack.back() */
@@ -236,7 +236,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val fontStack = Stack<Font>()
 
     /** Stack for PushFocusScope()/PopFocusScope() - inherited by BeginChild(), pushed into by Begin() */
-    val focusScopeStack = Stack<FocusScope>()
+    val focusScopeStack = Stack<ID>()
 
     /** Stack for PushItemFlag()/PopItemFlag() - inherited by Begin() */
     val itemFlagsStack = Stack<ItemFlags>()
@@ -251,9 +251,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     val beginPopupStack = Stack<PopupData>()
 
     var beginMenuCount = 0
-
-    /** Prevent PushFocusScope()/PopFocusScope() */
-    var focusScopeStackLocked = 0
 
     //------------------------------------------------------------------
     // Viewports

@@ -466,7 +466,7 @@ fun navUpdateCancelRequest() {
         // Clear NavLastId for popups but keep it for regular child window so we can leave one and come back where we were
         if (navWindow != null && (navWindow.flags has Wf._Popup || navWindow.flags hasnt Wf._ChildWindow))
             navWindow.navLastIds[0] = 0
-        g.navId = 0/*; g.navFocusScopeId = 0*/
+        g.navId = 0
     }
 }
 
@@ -553,7 +553,7 @@ fun navUpdateCreateMoveRequest() {
             innerRectRel.min.y = if (clampY) (innerRectRel.min.y + padY) else -Float.MAX_VALUE
             innerRectRel.max.y = if (clampY) (innerRectRel.max.y - padY) else +Float.MAX_VALUE
             window.navRectRel[g.navLayer] clipWithFull innerRectRel
-            g.navId = 0/*;g.NavFocusScopeId = 0*/
+            g.navId = 0
         }
     }
 

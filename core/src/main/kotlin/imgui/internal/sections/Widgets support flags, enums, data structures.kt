@@ -520,5 +520,3 @@ class NavItemData {
         rectRel = Rect()
     }
 }
-
-data class FocusScope(val focusScopeId: ID, val window: Window?)
