@@ -76,10 +76,10 @@ class KeyOwnerData {
 /** -> enum ImGuiInputFlags_         // Flags: for IsKeyPressed(), IsMouseClicked(), SetKeyOwner(), SetItemKeyOwner() etc. */
 typealias InputFlags = Int
 
-/** Flags for extended versions of IsKeyPressed(), IsMouseClicked(), SetKeyOwner(), SetItemKeyOwner()
+/** Flags for extended versions of IsKeyPressed(), IsMouseClicked(), Shortcut(), SetKeyOwner(), SetItemKeyOwner()
  *  Don't mistake with ImGuiInputTextFlags! (for ImGui::InputText() function) */
 enum class InputFlag(val i: InputFlags) {
-    /** Flags for IsKeyPressed(), IsMouseClicked() */
+    /** Flags for IsKeyPressed(), IsMouseClicked(), Shortcut() */
     None(0),
     Repeat(1 shl 0),   // Return true on successive repeats. Default for legacy IsKeyPressed(). NOT Default for legacy IsMouseClicked(). MUST BE == 1.
 

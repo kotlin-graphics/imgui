@@ -46,9 +46,9 @@ internal interface inputs {
             var key = this
             // Special storage location for mods
             if (i has Key.Mod_Mask_)
-                key = convertSingleModFlagToKey(key)
+                key = key.convertSingleModFlagToKey()
 
-            return g.io.keysData[index]
+            return g.io.keysData[key.index]
         }
 
     fun getKeyChordName(keyChord: KeyChord): String {
@@ -227,7 +227,7 @@ internal interface inputs {
         get() {
             var key = this
             if (key has Key.Mod_Mask_)
-                key = convertSingleModFlagToKey()
+                key = key.convertSingleModFlagToKey()
             return g.keysOwnerData[key.ordinal]
         }
 
@@ -302,5 +302,26 @@ internal interface inputs {
     infix fun MouseButton.isReleased(ownerId: ID): Boolean {
 //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
         return g.io.mouseReleased[i] && toKey() testOwner ownerId // Should be same as IsKeyReleased(MouseButtonToKey(button), owner_id)
+    }
+
+    // [EXPERIMENTAL] Shortcuts
+    // - ImGuiKeyChord = any ImGuiKey optionally ORed with ImGuiMod_XXX values.
+    //     ImGuiKey_C                 (accepted by functions taking ImGuiKey or ImGuiKeyChord)
+    //     ImGuiKey_C | ImGuiMod_Ctrl (accepted by functions taking ImGuiKeyChord)
+    // - ONLY ImGuiMod_XXX values are legal to 'OR' with an ImGuiKey. You CANNOT 'OR' two ImGuiKey values.
+
+    // - Need to decide how to handle shortcut translations for Non-Mac <> Mac
+    // - Ideas: https://github.com/ocornut/imgui/issues/456#issuecomment-264390864
+    fun shortcut(keyChord: KeyChord, ownerId: ID = 0, flags: InputFlags = 0): Boolean {
+        var key = Key of (keyChord wo Key.Mod_Mask_)
+        val mods = Key of (keyChord and Key.Mod_Mask_)
+        if (g.io.keyMods != mods.i)
+            return false
+
+        // Special storage location for mods
+        if (key == Key.None)
+            key = mods.convertSingleModFlagToKey()
+
+        return key.isPressed(ownerId, flags and (InputFlag.Repeat or InputFlag.RepeatRateMask_))
     }
 }

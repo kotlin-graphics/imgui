@@ -1,6 +1,7 @@
 package imgui
 
 import glm_.vec4.Vec4
+import imgui.ImGui.convertSingleModFlagToKey
 import imgui.ImGui.getColorU32
 import imgui.ImGui.getTypematicRepeatRate
 import imgui.ImGui.io
@@ -1322,21 +1323,13 @@ enum class Key(i: KeyChord? = null) {
     val isAlias: Boolean
         get() = i in Aliases_BEGIN until Aliases_END
 
-    fun convertSingleModFlagToKey(key: Key): Key = when (key) {
-        Mod_Ctrl -> ReservedForModCtrl
-        Mod_Shift -> ReservedForModShift
-        Mod_Alt -> ReservedForModAlt
-        Mod_Super -> ReservedForModSuper
-        else -> key
-    }
-
     /** ~GetKeyData */
     val data: KeyData
         get() {
             var key = this
             // Special storage location for mods
             if (i has Mod_Mask_)
-                key = convertSingleModFlagToKey(key)
+                key = key.convertSingleModFlagToKey()
 
             return g.io.keysData[key.index]
         }
