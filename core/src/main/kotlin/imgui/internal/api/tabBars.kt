@@ -10,19 +10,394 @@ import imgui.ImGui.closeButton
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.renderBullet
 import imgui.ImGui.renderTextEllipsis
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
+import imgui.internal.classes.TabItem
+import imgui.internal.floor
+import imgui.internal.sections.*
+import imgui.static.calcTabID
+import imgui.static.layout
+import imgui.static.tabBarCalcMaxTabWidth
+import imgui.static.tabBarRef
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.reflect.KMutableProperty0
 
 internal interface tabBars {
 
-    // the rest of the function is inside the TabBar class
+    /** ~ beginTabBarEx */
+    fun TabBar.beginEx(bb: Rect, flags__: TabBarFlags): Boolean {
 
+        val window = g.currentWindow!!
+        if (window.skipItems) return false
+
+        var flags_ = flags__
+        if (flags_ hasnt TabBarFlag._DockNode) window.idStack += id
+
+        // Add to stack
+        g.currentTabBarStack += tabBarRef
+        g.currentTabBar = this
+
+        // Append with multiple BeginTabBar()/EndTabBar() pairs.
+        backupCursorPos put window.dc.cursorPos
+        if (currFrameVisible == g.frameCount) {
+            window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
+            beginCount++
+            return true
+        }
+
+        // Ensure correct ordering when toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
+        if (flags_ has TabBarFlag.Reorderable != flags has TabBarFlag.Reorderable || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
+            if (tabs.size > 1)
+                tabs.sortBy(TabItem::beginOrder)
+        tabsAddedNew = false
+
+        // Flags
+        if (flags_ hasnt TabBarFlag.FittingPolicyMask_) flags_ = flags_ or TabBarFlag.FittingPolicyDefault_
+
+        flags = flags_
+        barRect = bb
+        wantLayout = true // Layout will be done on the first call to ItemTab()
+        prevFrameVisible = currFrameVisible
+        currFrameVisible = g.frameCount
+        prevTabsContentsHeight = currTabsContentsHeight
+        currTabsContentsHeight = 0f
+        itemSpacingY = g.style.itemSpacing.y
+        framePadding put g.style.framePadding
+        tabsActiveCount = 0
+        beginCount = 1
+
+        // Layout
+        // Set cursor pos in a way which only be used in the off-chance the user erroneously submits item before BeginTabItem(): items will overlap
+        window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
+
+        // Draw separator
+        val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
+        val y = barRect.max.y - 1f
+        run {
+            val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
+            val separatorMaxX = barRect.max.x + floor(window.windowPadding.x * 0.5f)
+            window.drawList.addLine(Vec2(separatorMinX, y), Vec2(separatorMaxX, y), col.u32, 1f)
+        }
+        return true
+    }
+
+    /** ~TabBarFindTabByID */
+    infix fun TabBar.findTabByID(tabId: ID): TabItem? = if (tabId == 0) null else tabs.find { it.id == tabId }
+
+
+    /** The *TabId fields be already set by the docking system _before_ the actual TabItem was created, so we clear them regardless.
+     *  ~ tabBarRemoveTab     */
+    infix fun TabBar.removeTab(tabId: ID) {
+        findTabByID(tabId)?.let(tabs::remove)
+        if (visibleTabId == tabId) visibleTabId = 0
+        if (selectedTabId == tabId) selectedTabId = 0
+        if (nextSelectedTabId == tabId) nextSelectedTabId = 0
+    }
+
+    /** Called on manual closure attempt
+     *  ~ tabBarCloseTab     */
+    infix fun TabBar.closeTab(tab: TabItem) {
+
+        if (tab.flags has TabItemFlag._Button)
+            return // A button appended with TabItemButton().
+
+        if (tab.flags hasnt TabItemFlag.UnsavedDocument) { // This will remove a frame of lag for selecting another tab on closure.
+            // However we don't run it in the case where the 'Unsaved' flag is set, so user gets a chance to fully undo the closure
+            tab.wantClose = true
+            if (visibleTabId == tab.id) {
+                tab.lastFrameVisible = -1
+                nextSelectedTabId = 0
+                selectedTabId = 0
+            }
+        } else // Actually select before expecting closure attempt (on an UnsavedDocument tab user is expect to e.g. show a popup)
+            if (visibleTabId != tab.id) nextSelectedTabId = tab.id
+    }
+
+    /** ~TabBarQueueReorder */
+    fun TabBar.queueReorder(tab: TabItem, offset: Int) {
+        assert(offset != 0)
+        assert(reorderRequestTabId == 0)
+        reorderRequestTabId = tab.id
+        reorderRequestOffset = offset
+    }
+
+    /** ~TabBarQueueReorderFromMousePos */
+    fun TabBar.queueReorderFromMousePos(srcTab: TabItem, mousePos: Vec2) {
+
+        assert(reorderRequestTabId == 0)
+        if (flags hasnt TabBarFlag.Reorderable)
+            return
+
+        val isCentralSection = srcTab.flags hasnt TabItemFlag._SectionMask_
+        val barOffset = barRect.min.x - if (isCentralSection) scrollingTarget else 0f
+
+        // Count number of contiguous tabs we are crossing over
+        val dir = if (barOffset + srcTab.offset > mousePos.x) -1 else +1
+        val srcIdx = tabs.indexOf(srcTab)
+        var dstIdx = srcIdx
+        var i = srcIdx
+        while (i >= 0 && i < tabs.size) {
+            // Reordered tabs must share the same section
+            val dstTab = tabs[i]
+            if (dstTab.flags has TabItemFlag.NoReorder) {
+                i += dir
+                break
+            }
+            if (dstTab.flags and TabItemFlag._SectionMask_ != srcTab.flags and TabItemFlag._SectionMask_) {
+                i += dir
+                break
+            }
+            dstIdx = i
+
+            // Include spacing after tab, so when mouse cursor is between tabs we would not continue checking further tabs that are not hovered.
+            val x1 = barOffset + dstTab.offset - g.style.itemInnerSpacing.x
+            val x2 = barOffset + dstTab.offset + dstTab.width + g.style.itemInnerSpacing.x
+            //GetForegroundDrawList()->AddRect(ImVec2(x1, tab_bar->BarRect.Min.y), ImVec2(x2, tab_bar->BarRect.Max.y), IM_COL32(255, 0, 0, 255));
+            if ((dir < 0 && mousePos.x > x1) || (dir > 0 && mousePos.x < x2)) {
+                i += dir
+                break
+            }
+            i += dir
+        }
+
+        if (dstIdx != srcIdx)
+            queueReorder(srcTab, dstIdx - srcIdx)
+    }
+
+    /** ~TabBarProcessReorder */
+    fun TabBar.processReorder(): Boolean {
+        val tab1 = findTabByID(reorderRequestTabId)
+        if (tab1 == null || tab1.flags has TabItemFlag.NoReorder) return false
+
+        //IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_Reorderable); // <- this may happen when using debug tools
+        val tab2Order = tab1.order + reorderRequestOffset
+        if (tab2Order < 0 || tab2Order >= tabs.size) return false
+
+        // Reordered tabs must share the same section
+        // (Note: TabBarQueueReorderFromMousePos() also has a similar test but since we allow direct calls to TabBarQueueReorder() we do it here too)
+        val tab2 = tabs[tab2Order]
+        if (tab2.flags has TabItemFlag.NoReorder)
+            return false
+        if (tab1.flags and TabItemFlag._SectionMask_ != tab2.flags and TabItemFlag._SectionMask_)
+            return false
+
+        TODO()
+        //        ImGuiTabItem item_tmp = *tab1;
+        //        ImGuiTabItem* src_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1 + 1 : tab2;
+        //        ImGuiTabItem* dst_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1 : tab2 + 1;
+        //        const int move_count = (tab_bar->ReorderRequestOffset > 0) ? tab_bar->ReorderRequestOffset : -tab_bar->ReorderRequestOffset;
+        //        memmove(dst_tab, src_tab, move_count * sizeof(ImGuiTabItem));
+        val itemTmp = tabs[reorderRequestTabId]
+        tabs[reorderRequestTabId] = tabs[tab2Order]
+        tabs[tab2Order] = itemTmp
+
+        if (flags has TabBarFlag._SaveSettings) ImGui.markIniSettingsDirty()
+        return true
+    }
+
+    fun TabBar.tabItemEx(label: String, pOpen_: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
+
+        var pOpen = pOpen_
+        var flags = flags_ // Layout whole tab bar if not already done
+        if (wantLayout) {
+            val backupNextItemData = g.nextItemData.copy()
+            layout()
+            g.nextItemData = backupNextItemData
+        }
+
+        val window = g.currentWindow!!
+        if (window.skipItems) return false
+
+        val id = calcTabID(label)
+
+        // If the user called us with *p_open == false, we early out and don't render.
+        // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.lastItemData.statusFlags)
+        if (pOpen?.get() == false) {
+            ImGui.itemAdd(Rect(), id, null, ItemFlag.NoNav.i)
+            return false
+        }
+
+        assert(pOpen == null || flags hasnt TabItemFlag._Button)
+        assert((flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) != (TabItemFlag.Leading or TabItemFlag.Trailing)) { "Can't use both Leading and Trailing" }
+
+        // Store into ImGuiTabItemFlags_NoCloseButton, also honor ImGuiTabItemFlags_NoCloseButton passed by user (although not documented)
+        if (flags has TabItemFlag._NoCloseButton) pOpen = null
+        else if (pOpen == null) flags = flags or TabItemFlag._NoCloseButton
+
+        // Acquire tab data
+        var tabIsNew = false
+        val tab = findTabByID(id) ?: TabItem().also {
+            it.id = id
+            tabsAddedNew = true; tabIsNew = true
+        }
+        lastTabItemIdx = tabs.indexOf(tab)
+
+        // Calculate tab contents size
+        val size = tabItemCalcSize(label, pOpen != null || flags has TabItemFlag.UnsavedDocument)
+        tab.requestedWidth = -1f
+        if (g.nextItemData.flags has NextItemDataFlag.HasWidth) {
+            size.x = g.nextItemData.width; tab.requestedWidth = g.nextItemData.width
+        }
+        if (tabIsNew)
+            tab.width = 1f max size.x
+        tab.contentWidth = size.x
+        tab.beginOrder = tabsActiveCount++
+
+        val tabBarAppearing = prevFrameVisible + 1 < g.frameCount
+        val tabBarFocused = this.flags has TabBarFlag._IsFocused
+        val tabAppearing = tab.lastFrameVisible + 1 < g.frameCount
+        val tabJustUnsaved = flags has TabItemFlag.UnsavedDocument && tab.flags hasnt TabItemFlag.UnsavedDocument
+        val isTabButton = flags has TabItemFlag._Button
+        tab.lastFrameVisible = g.frameCount
+        tab.flags = flags
+
+        // Append name with zero-terminator
+        tab.nameOffset = tabsNames.size
+        tabsNames += label
+
+        // Update selected tab
+        if (!isTabButton) {
+            if (tabAppearing && this.flags has TabBarFlag.AutoSelectNewTabs && nextSelectedTabId == 0)
+                if (!tabBarAppearing || selectedTabId == 0)
+                    nextSelectedTabId = id  // New tabs gets activated
+            if (flags has TabItemFlag.SetSelected && selectedTabId != id) // _SetSelected can only be passed on explicit tab bar
+                nextSelectedTabId = id
+        }
+
+        // Lock visibility
+        // (Note: tab_contents_visible != tab_selected... because CTRL+TAB operations may preview some tabs without selecting them!)
+        var tabContentsVisible = visibleTabId == id
+        if (tabContentsVisible) visibleTabWasSubmitted = true
+
+        // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
+        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing) if (tabs.size == 1 && this.flags hasnt TabBarFlag.AutoSelectNewTabs) tabContentsVisible =
+            true
+
+        // Note that tab_is_new is not necessarily the same as tab_appearing! When a tab bar stops being submitted
+        // and then gets submitted again, the tabs will have 'tab_appearing=true' but 'tab_is_new=false'.
+        if (tabAppearing && (!tabBarAppearing || tabIsNew)) {
+            ImGui.itemAdd(Rect(), id, null, ItemFlag.NoNav.i)
+            if (isTabButton)
+                return false
+            return tabContentsVisible
+        }
+
+        if (selectedTabId == id) tab.lastFrameSelected = g.frameCount
+
+        // Backup current layout position
+        val backupMainCursorPos = Vec2(window.dc.cursorPos)
+
+        // Layout
+        val isCentralSection = tab.flags hasnt TabItemFlag._SectionMask_
+        size.x = tab.width
+        val x = if (isCentralSection) floor(tab.offset - scrollingAnim) else tab.offset
+        window.dc.cursorPos = barRect.min + Vec2(x, 0f)
+        val pos = Vec2(window.dc.cursorPos)
+        val bb = Rect(pos, pos + size)
+
+        // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an extra draw call (temporary in the case of vertical animation)
+        val wantClipRect = isCentralSection && (bb.min.x < scrollingRectMinX || bb.max.x > scrollingRectMaxX)
+        if (wantClipRect)
+            ImGui.pushClipRect(Vec2(bb.min.x max scrollingRectMinX, bb.min.y - 1), Vec2(scrollingRectMaxX, bb.max.y), true)
+
+        val backupCursorMaxPos = Vec2(window.dc.cursorMaxPos)
+        ImGui.itemSize(bb.size, style.framePadding.y)
+        window.dc.cursorMaxPos = backupCursorMaxPos
+
+        if (!ImGui.itemAdd(bb, id)) {
+            if (wantClipRect) ImGui.popClipRect()
+            window.dc.cursorPos = backupMainCursorPos
+            return tabContentsVisible
+        }
+
+        // Click to Select a tab
+        var buttonFlags =
+            (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
+        if (g.dragDropActive) buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
+        val (pressed, hovered, held) = ImGui.buttonBehavior(bb, id, buttonFlags)
+        if (pressed && !isTabButton) nextSelectedTabId = id
+
+        // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
+        if (g.activeId != id)
+            ImGui.setItemAllowOverlap()
+
+        // Drag and drop: re-order tabs
+        if (held && !tabAppearing && ImGui.isMouseDragging(MouseButton.Left))
+        // While moving a tab it will jump on the other side of the mouse, so we also test for MouseDelta.x
+            if (!g.dragDropActive && this.flags has TabBarFlag.Reorderable)
+                if (ImGui.io.mouseDelta.x < 0f && ImGui.io.mousePos.x < bb.min.x) {
+                    if (this.flags has TabBarFlag.Reorderable)
+                        queueReorderFromMousePos(tab, g.io.mousePos)
+                } else if (ImGui.io.mouseDelta.x > 0f && ImGui.io.mousePos.x > bb.max.x)
+                    if (this.flags has TabBarFlag.Reorderable)
+                        queueReorderFromMousePos(tab, g.io.mousePos)
+
+        //        if (false)
+        //            if (hovered && g.hoveredIdNotActiveTimer > TOOLTIP_DELAY && bb.width < tab.widthContents)        {
+        //                // Enlarge tab display when hovering
+        //                bb.max.x = bb.min.x + lerp (bb.width, tab.widthContents, saturate((g.hoveredIdNotActiveTimer-0.4f) * 6f)).i.f
+        //                displayDrawList = GetOverlayDrawList(window)
+        //                TabItemBackground(display_draw_list, bb, flags, GetColorU32(ImGuiCol_TitleBgActive))
+        //            }
+
+        // Render tab shape
+        val displayDrawList = window.drawList
+        val tabCol = when {
+            held || hovered -> Col.TabHovered
+            else -> when {
+                tabContentsVisible -> when {
+                    tabBarFocused -> Col.TabActive
+                    else -> Col.TabUnfocusedActive
+                }
+                else -> when {
+                    tabBarFocused -> Col.Tab
+                    else -> Col.TabUnfocused
+                }
+            }
+        }
+        tabItemBackground(displayDrawList, bb, flags, tabCol.u32)
+        ImGui.renderNavHighlight(bb, id)
+
+        // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
+        val hoveredUnblocked = ImGui.isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)
+        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || ImGui.isMouseReleased(MouseButton.Right))) if (!isTabButton) nextSelectedTabId =
+            id
+
+        if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton) flags =
+            flags or TabItemFlag.NoCloseWithMiddleMouseButton
+
+        // Render tab label, process close button
+        val closeButtonId = if (pOpen?.get() == true) ImGui.getIDWithSeed("#CLOSE", -1, id) else 0
+        val (justClosed, textClipped) = tabItemLabelAndCloseButton(displayDrawList, bb, if (tabJustUnsaved) flags wo TabItemFlag.UnsavedDocument else flags, framePadding, label.toByteArray(), id, closeButtonId, tabContentsVisible)
+        if (justClosed && pOpen != null) {
+            pOpen.set(false)
+            closeTab(tab)
+        }
+
+        // Restore main window position so user can draw there
+        if (wantClipRect) ImGui.popClipRect()
+        window.dc.cursorPos = backupMainCursorPos
+
+        // Tooltip
+        // (Won't work over the close button because ItemOverlap systems messes up with HoveredIdTimer-> seems ok)
+        // (We test IsItemHovered() to discard e.g. when another item is active or drag and drop over the tab bar, which g.HoveredId ignores)
+        // FIXME: This is a mess.
+        // FIXME: We may want disabled tab to still display the tooltip?
+        if (textClipped && g.hoveredId == id && !held)
+            if (this.flags hasnt TabBarFlag.NoTooltip && tab.flags hasnt TabItemFlag.NoTooltip)
+                if (ImGui.isItemHovered(HoveredFlag.DelayNormal))
+                    ImGui.setTooltip(label.substring(0, ImGui.findRenderedTextEnd(label)))
+
+        assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)) { "TabItemButton should not be selected" }
+        return if (isTabButton) pressed else tabContentsVisible
+    }
     fun tabItemCalcSize(label: String, hasCloseButtonOrUnsavedMarker: Boolean): Vec2 {
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)
@@ -31,7 +406,7 @@ internal interface tabBars {
             hasCloseButtonOrUnsavedMarker -> style.itemInnerSpacing.x + g.fontSize // We use Y intentionally to fit the close button circle.
             else -> 1f
         }
-        return Vec2(size.x min TabBar.calcMaxTabWidth(), size.y)
+        return Vec2(size.x min tabBarCalcMaxTabWidth(), size.y)
     }
 
     fun tabItemBackground(drawList: DrawList, bb: Rect, flags: TabItemFlags, col: Int) {

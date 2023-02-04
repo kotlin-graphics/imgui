@@ -154,5 +154,4 @@ internal interface color {
         }
         endPopup()
     }
-
 }

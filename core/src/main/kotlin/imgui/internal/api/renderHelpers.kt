@@ -3,6 +3,7 @@ package imgui.internal.api
 import glm_.b
 import glm_.f
 import glm_.func.common.max
+import glm_.glm
 import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec4.Vec4
@@ -325,7 +326,138 @@ internal interface renderHelpers {
         }
     }
 
+    /** Render an arrow aimed to be aligned with text (p_min is a position in the same space text would be positioned). To e.g. denote expanded/collapsed state  */
+    fun DrawList.renderArrow(pos: Vec2, col: Int, dir: Dir, scale: Float = 1f) {
 
-    // Render helpers (those functions don't access any ImGui state!)
-    // these are all in the DrawList class
+        val h = _data.fontSize * 1f
+        var r = h * 0.4f * scale
+        val center = pos + Vec2(h * 0.5f, h * 0.5f * scale)
+
+        val a: Vec2
+        val b: Vec2
+        val c: Vec2
+        when (dir) {
+            Dir.Up, Dir.Down -> {
+                if (dir == Dir.Up) r = -r
+                a = Vec2(+0.000f, +0.75f) * r
+                b = Vec2(-0.866f, -0.75f) * r
+                c = Vec2(+0.866f, -0.75f) * r
+            }
+            Dir.Left, Dir.Right -> {
+                if (dir == Dir.Left) r = -r
+                a = Vec2(+0.75f, +0.000f) * r
+                b = Vec2(-0.75f, +0.866f) * r
+                c = Vec2(-0.75f, -0.866f) * r
+            }
+            else -> throw Error()
+        }
+
+        addTriangleFilled(center + a, center + b, center + c, col)
+    }
+
+    fun DrawList.renderBullet(pos: Vec2, col: Int) = addCircleFilled(pos, _data.fontSize * 0.2f, col, 8)
+
+    @Deprecated("placeholder: pos gets modified!")
+    fun DrawList.renderCheckMark(pos: Vec2, col: Int, sz_: Float) {
+
+        val thickness = imgui.max(sz_ / 5f, 1f)
+        val sz = sz_ - thickness * 0.5f
+        pos += thickness * 0.25f
+
+        val third = sz / 3f
+        val bx = pos.x + third
+        val by = pos.y + sz - third * 0.5f
+        pathLineTo(Vec2(bx - third, by - third))
+        pathLineTo(Vec2(bx, by))
+        pathLineTo(Vec2(bx + third * 2f, by - third * 2f))
+        pathStroke(col, 0, thickness)
+    }
+
+    /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
+    fun DrawList.renderArrowPointingAt(pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) =
+        when (direction) {
+            Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
+            Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
+            Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
+            Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
+            else -> Unit
+        }
+
+    /** FIXME: Cleanup and move code to ImDrawList. */
+    fun DrawList.renderRectFilledRangeH(rect: Rect, col: Int, xStartNorm_: Float, xEndNorm_: Float, rounding_: Float) {
+        var xStartNorm = xStartNorm_
+        var xEndNorm = xEndNorm_
+        if (xEndNorm == xStartNorm) return
+        if (xStartNorm > xEndNorm) {
+            val tmp = xStartNorm
+            xStartNorm = xEndNorm
+            xEndNorm = tmp
+        }
+        val p0 = Vec2(lerp(rect.min.x, rect.max.x, xStartNorm), rect.min.y)
+        val p1 = Vec2(lerp(rect.min.x, rect.max.x, xEndNorm), rect.max.y)
+        if (rounding_ == 0f) {
+            addRectFilled(p0, p1, col, 0f)
+            return
+        }
+        val rounding = glm.clamp(glm.min((rect.max.x - rect.min.x) * 0.5f, (rect.max.y - rect.min.y) * 0.5f) - 1f, 0f, rounding_)
+        val invRounding = 1f / rounding
+        val arc0B = acos01(1f - (p0.x - rect.min.x) * invRounding)
+        val arc0E = acos01(1f - (p1.x - rect.min.x) * invRounding)
+        val halfPI = glm.HPIf // We will == compare to this because we know this is the exact value ImAcos01 can return.
+        val x0 = glm.max(p0.x, rect.min.x + rounding)
+        if (arc0B == arc0E) {
+            pathLineTo(Vec2(x0, p1.y))
+            pathLineTo(Vec2(x0, p0.y))
+        } else if (arc0B == 0f && arc0E == halfPI) {
+            pathArcToFast(Vec2(x0, p1.y - rounding), rounding, 3, 6) // BL
+            pathArcToFast(Vec2(x0, p0.y + rounding), rounding, 6, 9) // TR
+        } else {
+            pathArcTo(Vec2(x0, p1.y - rounding), rounding, glm.PIf - arc0E, glm.PIf - arc0B, 3) // BL
+            pathArcTo(Vec2(x0, p0.y + rounding), rounding, glm.PIf + arc0B, glm.PIf + arc0E, 3) // TR
+        }
+        if (p1.x > rect.min.x + rounding) {
+            val arc1B = acos01(1f - (rect.max.x - p1.x) * invRounding)
+            val arc1E = acos01(1f - (rect.max.x - p0.x) * invRounding)
+            val x1 = glm.min(p1.x, rect.max.x - rounding)
+            if (arc1B == arc1E) {
+                pathLineTo(Vec2(x1, p0.y))
+                pathLineTo(Vec2(x1, p1.y))
+            } else if (arc1B == 0f && arc1E == halfPI) {
+                pathArcToFast(Vec2(x1, p0.y + rounding), rounding, 9, 12) // TR
+                pathArcToFast(Vec2(x1, p1.y - rounding), rounding, 0, 3)  // BR
+            } else {
+                pathArcTo(Vec2(x1, p0.y + rounding), rounding, -arc1E, -arc1B, 3) // TR
+                pathArcTo(Vec2(x1, p1.y - rounding), rounding, +arc1B, +arc1E, 3) // BR
+            }
+        }
+        pathFillConvex(col)
+    }
+
+    fun DrawList.renderRectFilledWithHole(drawList: DrawList, outer: Rect, inner: Rect, col: Int, rounding: Float) {
+        val fillL = inner.min.x > outer.min.x
+        val fillR = inner.max.x < outer.max.x
+        val fillU = inner.min.y > outer.min.y
+        val fillD = inner.max.y < outer.max.y
+        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
+                                          DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomLeft)
+        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
+                                          DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopRight) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
+        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
+                                          DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersTopRight)
+        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
+                                          DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersBottomLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
+        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft.i)
+        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight.i)
+        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft.i)
+        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomRight.i)
+    }
+
+    companion object {
+        private fun acos01(x: Float) = when {
+            x <= 0f -> glm.PIf * 0.5f
+            x >= 1f -> 0f
+            else -> glm.acos(x)
+            //return (-0.69813170079773212f * x * x - 0.87266462599716477f) * x + 1.5707963267948966f; // Cheap approximation, may be enough for what we do.
+        }
+    }
 }

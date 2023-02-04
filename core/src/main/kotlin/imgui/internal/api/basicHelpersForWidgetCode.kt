@@ -15,7 +15,7 @@ import imgui.ImGui.keepAliveID
 import imgui.ImGui.sameLine
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.api.internal.Companion.shrinkWidthItemComparer
+import imgui.internal.api.windows.Companion.shrinkWidthItemComparer
 import imgui.internal.classes.Rect
 import imgui.internal.classes.ShrinkWidthItem
 import imgui.internal.floor

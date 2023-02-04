@@ -3,7 +3,10 @@ package imgui.internal.api
 import imgui.ID
 import imgui.IMGUI_DEBUG_INI_SETTINGS
 import imgui.ImGui.io
+import imgui.WindowFlag
 import imgui.api.g
+import imgui.hasnt
+import imgui.internal.classes.Window
 import imgui.internal.hashStr
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
@@ -13,6 +16,11 @@ internal interface settings {
 
     fun markIniSettingsDirty() {
         if (g.settingsDirtyTimer <= 0f)
+            g.settingsDirtyTimer = io.iniSavingRate
+    }
+
+    fun Window.markIniSettingsDirty() {
+        if (flags hasnt WindowFlag.NoSavedSettings && g.settingsDirtyTimer <= 0f)
             g.settingsDirtyTimer = io.iniSavingRate
     }
 

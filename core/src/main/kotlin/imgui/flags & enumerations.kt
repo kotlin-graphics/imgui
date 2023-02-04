@@ -417,7 +417,10 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     _SetNavIdOnHover(1 shl 26),
 
     /** Disable padding each side with ItemSpacing * 0.5f */
-    _NoPadWithHalfSpacing(1 shl 27);
+    _NoPadWithHalfSpacing(1 shl 27),
+
+    /** Don't set key/input owner on the initial click (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
+    _NoSetKeyOwner(1 shl 28);
 
     infix fun and(b: SelectableFlag): SelectableFlags = i and b.i
     infix fun and(b: SelectableFlags): SelectableFlags = i and b
@@ -1275,7 +1278,7 @@ enum class Key(i: KeyChord? = null) {
     Mod_Mask_(0xF000);
 
     @JvmField
-    val i: KeyChord = i ?: if (ordinal == 0) 0 else 512 + ordinal
+    val i: KeyChord = i ?: if (ordinal == 0) 0 else ordinal
 
     val index: Int
         get() {
@@ -1335,81 +1338,8 @@ enum class Key(i: KeyChord? = null) {
             if (i has Mod_Mask_)
                 key = convertSingleModFlagToKey(key)
 
-            return g.io.keysData[index]
+            return g.io.keysData[key.index]
         }
-
-    /** ~IsKeyDown
-     *
-     *  is key being held.
-     *
-     *  Note that Dear ImGui doesn't know the meaning/semantic of ImGuiKey from 0..511: they are legacy native keycodes.
-     *  Consider transitioning from 'IsKeyDown(MY_ENGINE_KEY_A)' (<1.87) to IsKeyDown(A) (>= 1.87) */
-    val isDown: Boolean
-        get() = g.io.keysData[i].down
-
-    /** [JVM] ~IsKeyPressed
-     *
-     *  uses user's key indices as stored in the keys_down[] array. if repeat=true.
-     *  uses io.KeyRepeatDelay / KeyRepeatRate
-     *
-     *  was key pressed (went from !Down to Down)? if repeat=true, uses io.KeyRepeatDelay / KeyRepeatRate */
-    infix fun isPressed(repeat: Boolean): Boolean {
-        assert(i in Key.BEGIN until Key.END) { "Support for user key indices was dropped in favor of ImGuiKey. Please update backend & user code." }
-
-        assert(i in g.io.keysData.indices)
-        val t = g.io.keysData[i].downDuration
-        if (t == 0f)
-            return true
-        if (repeat && t > io.keyRepeatDelay)
-            return getPressedAmount(io.keyRepeatDelay, io.keyRepeatRate) > 0
-        return false
-    }
-
-    /** ~IsKeyPressedEx
-     *
-     *  Important: unlike legacy IsKeyPressed(ImGuiKey, bool repeat=true) which DEFAULT to repeat, this requires EXPLICIT repeat.
-     *  [Internal] 2022/07: Do not call this directly! It is a temporary entry point which we will soon replace with an overload for IsKeyPressed() when we introduce key ownership. */
-    fun isPressedEx(flags: InputFlags = InputFlag.None.i): Boolean {
-
-        if (!data.down) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on input ownership)
-            return false
-
-        val t = data.downDuration
-        if (t < 0f)
-            return false
-
-        var pressed = t == 0f
-        if (!pressed && flags has InputFlag.Repeat) {
-            val (repeatDelay, repeatRate) = getTypematicRepeatRate(flags)
-            pressed = (t > repeatDelay) && getPressedAmount(repeatDelay, repeatRate) > 0
-        }
-
-        return pressed
-    }
-
-    /** ~IsKeyPressed() */
-    val isPressed: Boolean
-        get() = isPressed(true)
-
-    /** ~IsKeyReleased
-     *
-     *  was key released (went from Down to !Down)?    */
-    val isReleased: Boolean
-        get() = g.io.keysData[i].run { downDurationPrev >= 0f && !down }
-
-    /** ~getKeyPressedAmount
-     *
-     *  Uses provided repeat rate/delay. return a count, most often 0 or 1 but might be >1 if RepeatRate is small enough
-     *  that DeltaTime > RepeatRate
-     *
-     *  Return value representing the number of presses in the last time period, for the given repeat rate
-     *  (most often returns 0 or 1. The result is generally only >1 when RepeatRate is smaller than DeltaTime, aka large DeltaTime or fast RepeatRate) */
-    fun getPressedAmount(repeatDelay: Float, repeatRate: Float): Int {
-        if (!data.down) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on input ownership)
-            return 0
-        val t = io.keysData[i].downDuration
-        return ImGui.calcTypematicRepeatAmount(t - io.deltaTime, t, repeatDelay, repeatRate)
-    }
 
     infix fun and(b: Key): KeyChord = i and b.i
     infix fun and(b: KeyChord): KeyChord = i and b
@@ -1417,6 +1347,8 @@ enum class Key(i: KeyChord? = null) {
     infix fun or(b: KeyChord): KeyChord = i or b
     infix fun xor(b: Key): KeyChord = i xor b.i
     infix fun xor(b: KeyChord): KeyChord = i xor b
+    infix fun has(b: Key): Boolean = and(b.i) != 0
+    infix fun hasnt(b: Key): Boolean = and(b.i) == 0
     infix fun wo(b: KeyChord): KeyChord = and(b.inv())
 }
 

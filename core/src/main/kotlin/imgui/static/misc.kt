@@ -1,25 +1,32 @@
 package imgui.static
 
-import glm_.glm
-import glm_.hasnt
-import glm_.max
-import glm_.min
+import gli_.has
+import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.findBottomMostVisibleWindowWithinBeginStack
 import imgui.ImGui.getColorU32
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.isNavFocusable
+import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mainViewport
-import imgui.ImGui.mouseButtonToKey
+import imgui.ImGui.markIniSettingsDirty
+import imgui.ImGui.renderBullet
 import imgui.ImGui.saveIniSettingsToDisk
+import imgui.ImGui.setPos
+import imgui.ImGui.setScrollX
+import imgui.ImGui.setScrollY
+import imgui.ImGui.toKey
 import imgui.ImGui.topMostAndVisiblePopupModal
 import imgui.api.g
 import imgui.internal.*
+import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
-import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
-import imgui.internal.sections.InputEvent
-import imgui.internal.sections.ViewportP
+import imgui.internal.sections.*
+import kotlin.math.abs
+import kotlin.reflect.KMutableProperty0
 
 
 // Misc
@@ -55,7 +62,7 @@ fun updateKeyboardInputs() {
     // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools, update aliases
     io.keyMods = mergedModsFromBools
     for (n in 0 until MouseButton.COUNT)
-        updateAliasKey(mouseButtonToKey(MouseButton of n), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
+        updateAliasKey((MouseButton of n).toKey(), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
     updateAliasKey(Key.MouseWheelX, io.mouseWheelH != 0f, io.mouseWheelH)
     updateAliasKey(Key.MouseWheelY, io.mouseWheel != 0f, io.mouseWheel)
 
@@ -248,6 +255,332 @@ fun updateMouseWheel() {
             window.setScrollX(window.scroll.x - wheel.x * scrollStep)
         }
     }
+}
+
+/** ~updateWindowManualResize
+ *  Handle resize for: Resize Grips, Borders, Gamepad
+ *  Return true when using auto-fit (double-click on resize grip)
+ *  @return [JVM] borderHelf to Boolean   */
+fun Window.updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
+                       resizeGripCol: IntArray, visibilityRect: Rect): Pair<Int, Boolean> {
+
+    var borderHeld = borderHeld_
+
+    val flags = flags
+
+    if (flags has WindowFlag.NoResize || flags has WindowFlag.AlwaysAutoResize || autoFitFrames anyGreaterThan 0)
+        return borderHeld to false
+    if (!wasActive) // Early out to avoid running this code for e.g. a hidden implicit/fallback Debug window.
+        return borderHeld to false
+
+    var retAutoFit = false
+    val resizeBorderCount = if (io.configWindowsResizeFromEdges) 4 else 0
+    val gripDrawSize = floor(kotlin.math.max(g.fontSize * 1.35f, windowRounding + 1f + g.fontSize * 0.2f))
+    val gripHoverInnerSize = floor(gripDrawSize * 0.75f)
+    val gripHoverOuterSize = if (io.configWindowsResizeFromEdges) WINDOWS_HOVER_PADDING else 0f
+
+    val posTarget = Vec2(Float.MAX_VALUE)
+    val sizeTarget = Vec2(Float.MAX_VALUE)
+
+    // Resize grips and borders are on layer 1
+    dc.navLayerCurrent = NavLayer.Menu
+
+    // Manual resize grips
+    ImGui.pushID("#RESIZE")
+    for (resizeGripN in 0 until resizeGripCount) {
+
+        val def = Window.resizeGripDef[resizeGripN]
+        val corner = pos.lerp(pos + size, def.cornerPosN)
+
+        // Using the FlattenChilds button flag we make the resize button accessible even if we are hovering over a child window
+        val resizeRect = Rect(corner - def.innerDir * gripHoverOuterSize, corner + def.innerDir * gripHoverInnerSize)
+        if (resizeRect.min.x > resizeRect.max.x) swap(resizeRect.min::x, resizeRect.max::x)
+        if (resizeRect.min.y > resizeRect.max.y) swap(resizeRect.min::y, resizeRect.max::y)
+        val resizeGripId = getID(resizeGripN) // == GetWindowResizeCornerID()
+        ImGui.itemAdd(resizeRect, resizeGripId, null, ItemFlag.NoNav.i)
+        val (_, hovered, held) = ImGui.buttonBehavior(resizeRect, resizeGripId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
+        //GetOverlayDrawList(window)->AddRect(resize_rect.Min, resize_rect.Max, IM_COL32(255, 255, 0, 255));
+        if (hovered || held)
+            g.mouseCursor = if (resizeGripN has 1) MouseCursor.ResizeNESW else MouseCursor.ResizeNWSE
+
+        if (held && g.io.mouseClickedCount[0] == 2 && resizeGripN == 0) {
+            // Manual auto-fit when double-clicking
+            sizeTarget put calcSizeAfterConstraint(sizeAutoFit)
+            retAutoFit = true
+            ImGui.clearActiveID()
+        } else if (held) {
+            // Resize from any of the four corners
+            // We don't use an incremental MouseDelta but rather compute an absolute target size based on mouse position
+            // Corner of the window corresponding to our corner grip
+            val clampMin = Vec2 { if (def.cornerPosN[it] == 1f) visibilityRect.min[it] else -Float.MAX_VALUE }
+            val clampMax = Vec2 { if (def.cornerPosN[it] == 0f) visibilityRect.max[it] else Float.MAX_VALUE }
+            var cornerTarget = g.io.mousePos - g.activeIdClickOffset + (def.innerDir * gripHoverOuterSize).lerp(def.innerDir * -gripHoverInnerSize, def.cornerPosN)
+            cornerTarget = glm.clamp(cornerTarget, clampMin, clampMax)
+            calcResizePosSizeFromAnyCorner(cornerTarget, def.cornerPosN, posTarget, sizeTarget)
+        }
+
+        // Only lower-left grip is visible before hovering/activating
+        if (resizeGripN == 0 || held || hovered)
+            resizeGripCol[resizeGripN] = (if (held) Col.ResizeGripActive else if (hovered) Col.ResizeGripHovered else Col.ResizeGrip).u32
+    }
+    for (borderN in 0 until resizeBorderCount) {
+        val def = Window.resizeBorderDef[borderN]
+        val axis = if (borderN == Dir.Left.i || borderN == Dir.Right.i) Axis.X else Axis.Y
+        val borderRect = getResizeBorderRect(borderN, gripHoverInnerSize, WINDOWS_HOVER_PADDING)
+        val borderId = getID(borderN + 4) // == GetWindowResizeBorderID()
+        ImGui.itemAdd(borderRect, borderId, null, ItemFlag.NoNav.i)
+        val (_, hovered, held) = ImGui.buttonBehavior(borderRect, borderId, ButtonFlag.FlattenChildren or ButtonFlag.NoNavFocus)
+        //GetOverlayDrawList(window)->AddRect(border_rect.Min, border_rect.Max, IM_COL32(255, 255, 0, 255));
+        if ((hovered && g.hoveredIdTimer > WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER) || held) {
+            g.mouseCursor = if (axis == Axis.X) MouseCursor.ResizeEW else MouseCursor.ResizeNS
+            if (held)
+                borderHeld = borderN
+        }
+        if (held) {
+            val clampMin = Vec2(if (borderN == Dir.Right.i) visibilityRect.min.x else -Float.MAX_VALUE, if (borderN == Dir.Down.i) visibilityRect.min.y else -Float.MAX_VALUE)
+            val clampMax = Vec2(if (borderN == Dir.Left.i) visibilityRect.max.x else +Float.MAX_VALUE, if (borderN == Dir.Up.i) visibilityRect.max.y else +Float.MAX_VALUE)
+            var borderTarget = Vec2(pos)
+            borderTarget[axis] = g.io.mousePos[axis] - g.activeIdClickOffset[axis] + WINDOWS_HOVER_PADDING
+            borderTarget = glm.clamp(borderTarget, clampMin, clampMax)
+            calcResizePosSizeFromAnyCorner(borderTarget, def.segmentN1 min def.segmentN2, posTarget, sizeTarget)
+        }
+    }
+    ImGui.popID()
+
+    // Restore nav layer
+    dc.navLayerCurrent = NavLayer.Main
+
+    // Navigation resize (keyboard/gamepad)
+    // FIXME: This cannot be moved to NavUpdateWindowing() because CalcWindowSizeAfterConstraint() need to callback into user.
+    // Not even sure the callback works here.
+    if (g.navWindowingTarget?.rootWindow === this) {
+        val navResizeDir = Vec2()
+        if (g.navInputSource == InputSource.Keyboard && g.io.keyShift)
+            navResizeDir put ImGui.getKeyVector2d(Key.LeftArrow, Key.RightArrow, Key.UpArrow, Key.DownArrow)
+        if (g.navInputSource == InputSource.Gamepad)
+            navResizeDir put ImGui.getKeyVector2d(Key.GamepadDpadLeft, Key.GamepadDpadRight, Key.GamepadDpadUp, Key.GamepadDpadDown)
+        if (navResizeDir.x != 0f || navResizeDir.y != 0f) {
+            val NAV_RESIZE_SPEED = 600f
+            val resizeStep = floor(NAV_RESIZE_SPEED * g.io.deltaTime * kotlin.math.min(g.io.displayFramebufferScale.x, g.io.displayFramebufferScale.y))
+            g.navWindowingAccumDeltaSize += navResizeDir * resizeStep
+            g.navWindowingAccumDeltaSize put (g.navWindowingAccumDeltaSize max (visibilityRect.min - pos - size)) // We need Pos+Size >= visibility_rect.Min, so Size >= visibility_rect.Min - Pos, so size_delta >= visibility_rect.Min - window->Pos - window->Size
+            g.navWindowingToggleLayer = false
+            g.navDisableMouseHover = true
+            resizeGripCol[0] = Col.ResizeGripActive.u32
+            val accumFloored = floor(g.navWindowingAccumDeltaSize)
+            if (accumFloored.x != 0f || accumFloored.y != 0f) {
+                // FIXME-NAV: Should store and accumulate into a separate size buffer to handle sizing constraints properly, right now a constraint will make us stuck.
+                sizeTarget put calcSizeAfterConstraint(sizeFull + navResizeDir)
+                g.navWindowingAccumDeltaSize -= accumFloored
+            }
+        }
+    }
+
+    // Apply back modified position/size to window
+    if (sizeTarget.x != Float.MAX_VALUE) {
+        sizeFull put sizeTarget
+        markIniSettingsDirty()
+    }
+    if (posTarget.x != Float.MAX_VALUE) {
+        pos = floor(posTarget)
+        markIniSettingsDirty()
+    }
+
+    size put sizeFull
+
+    return borderHeld to retAutoFit
+}
+
+// ~RenderWindowOuterBorders
+fun Window.renderOuterBorders() {
+
+    val rounding = windowRounding
+    val borderSize = windowBorderSize
+    if (borderSize > 0f && flags hasnt WindowFlag.NoBackground) drawList.addRect(pos, pos + size, Col.Border.u32, rounding, 0, borderSize)
+
+    val borderHeld = resizeBorderHeld
+    if (borderHeld != -1) {
+        val def = Window.resizeBorderDef[borderHeld]
+        val borderR = getResizeBorderRect(borderHeld, rounding, 0f)
+        drawList.apply {
+            pathArcTo(borderR.min.lerp(borderR.max, def.segmentN1) + Vec2(0.5f) + def.innerDir * rounding,
+                      rounding,
+                      def.outerAngle - glm.PIf * 0.25f,
+                      def.outerAngle)
+            pathArcTo(borderR.min.lerp(borderR.max, def.segmentN2) + Vec2(0.5f) + def.innerDir * rounding,
+                      rounding,
+                      def.outerAngle,
+                      def.outerAngle + glm.PIf * 0.25f)
+            pathStroke(Col.SeparatorActive.u32, 0, 2f max borderSize) // Thicker than usual
+        }
+    }
+    if (ImGui.style.frameBorderSize > 0f && flags hasnt WindowFlag.NoTitleBar) {
+        val y = pos.y + titleBarHeight - 1
+        drawList.addLine(Vec2(pos.x + borderSize, y),
+                         Vec2(pos.x + size.x - borderSize, y),
+                         Col.Border.u32,
+                         ImGui.style.frameBorderSize)
+    }
+}
+
+/** ~RenderWindowDecorations
+ *  Draw background and borders
+ *  Draw and handle scrollbars */
+fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
+
+    // Ensure that ScrollBar doesn't read last frame's SkipItems
+    assert(beginCount == 0)
+    skipItems = false
+
+    // Draw window + handle manual resize
+    // As we highlight the title bar when want_focus is set, multiple reappearing windows will have their title bar highlighted on their reappearing frame.
+    if (collapsed) { // Title bar only
+        val backupBorderSize = ImGui.style.frameBorderSize
+        g.style.frameBorderSize = windowBorderSize
+        val titleBarCol =
+            if (titleBarIsHighlight && !g.navDisableHighlight) Col.TitleBgActive else Col.TitleBgCollapsed
+        ImGui.renderFrame(titleBarRect.min, titleBarRect.max, titleBarCol.u32, true, windowRounding)
+        ImGui.style.frameBorderSize = backupBorderSize
+    } else { // Window background
+        if (flags hasnt WindowFlag.NoBackground) {
+            var bgCol = bgColorIdx.u32
+            var overrideAlpha = false
+            val alpha = when {
+                g.nextWindowData.flags has NextWindowDataFlag.HasBgAlpha -> {
+                    overrideAlpha = true
+                    g.nextWindowData.bgAlphaVal
+                }
+                else -> 1f
+            }
+            if (overrideAlpha) bgCol = (bgCol and COL32_A_MASK.inv()) or (F32_TO_INT8_SAT(alpha) shl COL32_A_SHIFT)
+            drawList.addRectFilled(pos + Vec2(0f, titleBarHeight), pos + size, bgCol, windowRounding,
+                                   if (flags has WindowFlag.NoTitleBar) 0 else DrawFlag.RoundCornersBottom.i)
+        }
+
+        // Title bar
+        if (flags hasnt WindowFlag.NoTitleBar) {
+            val titleBarCol = if (titleBarIsHighlight) Col.TitleBgActive else Col.TitleBg
+            drawList.addRectFilled(titleBarRect.min, titleBarRect.max, titleBarCol.u32, windowRounding, DrawFlag.RoundCornersTop.i)
+        }
+
+        // Menu bar
+        if (flags has WindowFlag.MenuBar) {
+            val menuBarRect = menuBarRect()
+            menuBarRect clipWith rect() // Soft clipping, in particular child window don't have minimum size covering the menu bar so this is useful for them.
+            val rounding = if (flags has WindowFlag.NoTitleBar) windowRounding else 0f
+            drawList.addRectFilled(menuBarRect.min + Vec2(windowBorderSize, 0f),
+                                   menuBarRect.max - Vec2(windowBorderSize, 0f),
+                                   Col.MenuBarBg.u32, rounding, DrawFlag.RoundCornersTop.i)
+            if (ImGui.style.frameBorderSize > 0f && menuBarRect.max.y < pos.y + size.y)
+                drawList.addLine(menuBarRect.bl, menuBarRect.br, Col.Border.u32, ImGui.style.frameBorderSize)
+        }
+
+        // Scrollbars
+        if (scrollbar.x) ImGui.scrollbar(Axis.X)
+        if (scrollbar.y) ImGui.scrollbar(Axis.Y)
+
+        // Render resize grips (after their input handling so we don't have a frame of latency)
+        if (flags hasnt WindowFlag.NoResize) repeat(resizeGripCount) { resizeGripN ->
+            val grip = Window.resizeGripDef[resizeGripN]
+            val corner = pos.lerp(pos + size, grip.cornerPosN)
+            with(drawList) {
+                pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, resizeGripDrawSize) else Vec2(resizeGripDrawSize, windowBorderSize)))
+                pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(resizeGripDrawSize, windowBorderSize) else Vec2(windowBorderSize, resizeGripDrawSize)))
+                pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize),
+                                   corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)),
+                              windowRounding, grip.angleMin12, grip.angleMax12)
+                pathFillConvex(resizeGripCol[resizeGripN])
+            }
+        }
+
+        // Borders
+        renderOuterBorders()
+    }
+}
+
+val Window.bgColorIdx: Col
+    get() = when {
+        flags has (WindowFlag._Tooltip or WindowFlag._Popup) -> Col.PopupBg
+        flags has WindowFlag._ChildWindow -> Col.ChildBg
+        else -> Col.WindowBg
+    }
+
+/** ~RenderWindowTitleBarContents
+ *  Render title text, collapse button, close button */
+fun Window.renderTitleBarContents(titleBarRect: Rect, name: String, pOpen: KMutableProperty0<Boolean>?) {
+
+    val hasCloseButton = pOpen != null
+    val hasCollapseButton = flags hasnt WindowFlag.NoCollapse && ImGui.style.windowMenuButtonPosition != Dir.None
+
+    // Close & Collapse button are on the Menu NavLayer and don't default focus (unless there's nothing else on that layer)
+    // FIXME-NAV: Might want (or not?) to set the equivalent of ImGuiButtonFlags_NoNavFocus so that mouse clicks on standard title bar items don't necessarily set nav/keyboard ref?
+    val itemFlagsBackup = g.currentItemFlags
+    g.currentItemFlags = g.currentItemFlags or ItemFlag.NoNavDefaultFocus
+    dc.navLayerCurrent = NavLayer.Menu
+
+    // Layout buttons
+    // FIXME: Would be nice to generalize the subtleties expressed here into reusable code.
+    var padL = ImGui.style.framePadding.x
+    var padR = ImGui.style.framePadding.x
+    val buttonSz = g.fontSize
+    val closeButtonPos = Vec2()
+    val collapseButtonPos = Vec2()
+    if (hasCloseButton) {
+        padR += buttonSz
+        closeButtonPos.put(titleBarRect.max.x - padR - ImGui.style.framePadding.x, titleBarRect.min.y)
+    }
+    if (hasCollapseButton && ImGui.style.windowMenuButtonPosition == Dir.Right) {
+        padR += buttonSz
+        collapseButtonPos.put(titleBarRect.max.x - padR - ImGui.style.framePadding.x, titleBarRect.min.y)
+    }
+    if (hasCollapseButton && ImGui.style.windowMenuButtonPosition == Dir.Left) {
+        collapseButtonPos.put(titleBarRect.min.x + padL - ImGui.style.framePadding.x, titleBarRect.min.y)
+        padL += buttonSz
+    }
+
+    // Collapse button (submitting first so it gets priority when choosing a navigation init fallback)
+    if (hasCollapseButton)
+        if (ImGui.collapseButton(getID("#COLLAPSE"), collapseButtonPos))
+            wantCollapseToggle = true // Defer actual collapsing to next frame as we are too far in the Begin() function
+
+    // Close button
+    if (hasCloseButton)
+        if (ImGui.closeButton(getID("#CLOSE"), closeButtonPos))
+            pOpen!!.set(false)
+
+    dc.navLayerCurrent = NavLayer.Main
+    g.currentItemFlags = itemFlagsBackup
+
+    // Title bar text (with: horizontal alignment, avoiding collapse/close button, optional "unsaved document" marker)
+    // FIXME: Refactor text alignment facilities along with RenderText helpers, this is too much code..
+    val UNSAVED_DOCUMENT_MARKER = "*"
+    val markerSizeX = if (flags has WindowFlag.UnsavedDocument) buttonSz * 0.8f else 0f
+    val textSize = ImGui.calcTextSize(name, hideTextAfterDoubleHash = true) + Vec2(markerSizeX, 0f)
+
+    // As a nice touch we try to ensure that centered title text doesn't get affected by visibility of Close/Collapse button,
+    // while uncentered title text will still reach edges correctly.
+    if (padL > ImGui.style.framePadding.x) padL += ImGui.style.itemInnerSpacing.x
+    if (padR > ImGui.style.framePadding.x) padR += ImGui.style.itemInnerSpacing.x
+    if (ImGui.style.windowTitleAlign.x > 0f && ImGui.style.windowTitleAlign.x < 1f) {
+        val centerness = saturate(1f - abs(ImGui.style.windowTitleAlign.x - 0.5f) * 2f) // 0.0f on either edges, 1.0f on center
+        val padExtend = min(max(padL, padR), titleBarRect.width - padL - padR - textSize.x)
+        padL = padL max (padExtend * centerness)
+        padR = padR max (padExtend * centerness)
+    }
+
+    val layoutR = Rect(titleBarRect.min.x + padL, titleBarRect.min.y, titleBarRect.max.x - padR, titleBarRect.max.y)
+    val clipR = Rect(layoutR.min.x, layoutR.min.y, (layoutR.max.x + ImGui.style.itemInnerSpacing.x) min titleBarRect.max.x, layoutR.max.y)
+    if (flags has WindowFlag.UnsavedDocument) {
+        val markerPos = Vec2(clamp(layoutR.min.x + (layoutR.width - textSize.x) * ImGui.style.windowTitleAlign.x + textSize.x, layoutR.min.x, layoutR.max.x),
+                             (layoutR.min.y + layoutR.max.y) * 0.5f)
+        if (markerPos.x > layoutR.min.x) {
+            drawList.renderBullet(markerPos, Col.Text.u32)
+            clipR.max.x = clipR.max.x min (markerPos.x - (markerSizeX * 0.5f).i)
+        }
+    }
+    //if (g.IO.KeyShift) window->DrawList->AddRect(layout_r.Min, layout_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
+    //if (g.IO.KeyCtrl) window->DrawList->AddRect(clip_r.Min, clip_r.Max, IM_COL32(255, 128, 0, 255)); // [DEBUG]
+    ImGui.renderTextClipped(layoutR.min, layoutR.max, name, textSize, ImGui.style.windowTitleAlign, clipR)
 }
 
 fun renderDimmedBackgroundBehindWindow(window: Window, col: Int) {

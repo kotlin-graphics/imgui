@@ -8,15 +8,19 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.closePopupsOverWindow
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
+import imgui.ImGui.isAbove
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isPopupOpen
+import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.keepAliveID
+import imgui.ImGui.setActiveIdUsingAllKeyboardKeys
+import imgui.ImGui.setPos
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.BitArray
 import imgui.internal.classes.DebugLogFlag
+import imgui.internal.classes.Window
 import imgui.internal.classes.has
-import imgui.internal.floorSigned
 import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.InputEvent
 import imgui.static.findHoveredWindow
@@ -209,6 +213,23 @@ internal interface newFrame {
         // Update io.WantTextInput flag, this is to allow systems without a keyboard (e.g. mobile, hand-held) to show a software keyboard if possible
         io.wantTextInput = if (g.wantTextInputNextFrame != -1) g.wantTextInputNextFrame != 0 else false
     }
+
+    /** ~ StartMouseMovingWindow */
+    fun Window.startMouseMoving() {
+        // Set ActiveId even if the _NoMove flag is set. Without it, dragging away from a window with _NoMove would activate hover on other windows.
+        // We _also_ call this when clicking in a window empty space when io.ConfigWindowsMoveFromTitleBarOnly is set, but clear g.MovingWindow afterward.
+        // This is because we want ActiveId to be set even when the window is not permitted to move.
+        focusWindow(this)
+        ImGui.setActiveID(moveId, this)
+        g.navDisableHighlight = true
+        g.activeIdClickOffset = g.io.mouseClickedPos[0] - rootWindow!!.pos
+        g.activeIdNoClearOnFocusLoss = true
+        setActiveIdUsingAllKeyboardKeys()
+
+        val canMoveWindow = flags hasnt WindowFlag.NoMove && rootWindow!!.flags hasnt WindowFlag.NoMove
+        if (canMoveWindow) g.movingWindow = this
+    }
+
 
     /** Handle mouse moving window
      *  Note: moving window with the navigation keys (Square + d-pad / CTRL+TAB + Arrows) are processed in NavUpdateWindowing()

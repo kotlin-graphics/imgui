@@ -3,7 +3,9 @@ package imgui.internal.api
 import glm_.func.common.max
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.calcNextAutoFitSize
 import imgui.ImGui.popClipRect
+import imgui.ImGui.popupAllowedExtentRect
 import imgui.ImGui.pushClipRect
 import imgui.api.g
 import imgui.api.widgetsComboBox

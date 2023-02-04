@@ -26,6 +26,8 @@ import imgui.ImGui.markItemEdited
 import imgui.ImGui.mouseCursor
 import imgui.ImGui.navMoveRequestCancel
 import imgui.ImGui.pushOverrideID
+import imgui.ImGui.renderArrow
+import imgui.ImGui.renderBullet
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
@@ -39,6 +41,7 @@ import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.floor
 import imgui.internal.sections.*
+import imgui.static.DRAGDROP_HOLD_TO_OPEN_TIMER
 import kool.getValue
 import kool.setValue
 import unsigned.Ubyte
@@ -50,15 +53,9 @@ import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 import imgui.internal.sections.ButtonFlag as Bf
 
-@Suppress("UNCHECKED_CAST")
+//@Suppress("UNCHECKED_CAST")
 
 // Widgets
-
-        /** Time for drag-hold to activate items accepting the ImGuiButtonFlags_PressedOnDragDropHold button behavior. */
-val DRAGDROP_HOLD_TO_OPEN_TIMER = 0.7f
-
-/** Multiplier for the default value of io.MouseDragThreshold to make DragFloat/DragInt react faster to mouse drags. */
-val DRAG_MOUSE_THRESHOLD_FACTOR = 0.5f
 
 /** Widgets low-level behaviors */
 internal interface widgetsLowLevelBehaviors {
@@ -764,8 +761,7 @@ internal interface widgetsLowLevelBehaviors {
                     isOpen = g.nextItemData.openVal
                     storage[id] = isOpen
                     treeNodeSetOpen(id, isOpen)
-                }
-                else
+                } else
                     isOpen = storedValue != 0
             }
         } else

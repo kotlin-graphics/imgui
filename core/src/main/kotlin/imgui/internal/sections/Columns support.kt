@@ -98,10 +98,4 @@ class OldColumns {
     val splitter = DrawListSplitter()
 
     fun destroy() = splitter.clearFreeMemory(destroy = true)
-
-    /** ~GetColumnOffsetFromNorm    */
-    infix fun getOffsetFrom(offsetNorm: Float): Float = offsetNorm * (offMaxX - offMinX)
-
-    /** ~GetColumnNormFromOffset    */
-    fun getNormFrom(offset: Float): Float = offset / (offMaxX - offMinX)
 }

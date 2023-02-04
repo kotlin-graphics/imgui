@@ -4,6 +4,8 @@ import glm_.has
 import glm_.max
 import imgui.*
 import imgui.ImGui.calcTextSize
+import imgui.ImGui.fixColumnSortDirection
+import imgui.ImGui.getMaxColumnWidth
 import imgui.api.g
 import imgui.internal.hashStr
 import imgui.ImGui.openPopupEx

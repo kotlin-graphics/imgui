@@ -29,9 +29,9 @@ import imgui.ImGui.setFocusID
 import imgui.ImGui.style
 import imgui.ImGui.tempInputScalar
 import imgui.ImGui.textEx
-import imgui.internal.api.DRAG_MOUSE_THRESHOLD_FACTOR
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
+import imgui.static.DRAG_MOUSE_THRESHOLD_FACTOR
 import uno.kotlin.getValue
 import kotlin.reflect.KMutableProperty0
 

@@ -19,6 +19,8 @@ import imgui.ImGui.pushID
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.renderArrow
+import imgui.ImGui.renderCheckMark
 import imgui.ImGui.renderText
 import imgui.ImGui.selectable
 import imgui.ImGui.setNextWindowPos

@@ -51,6 +51,7 @@ import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushID
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.pushItemWidth
+import imgui.ImGui.renderArrowPointingAt
 import imgui.ImGui.renderColorRectWithAlphaCheckerboard
 import imgui.ImGui.renderFrameBorder
 import imgui.ImGui.renderNavHighlight
@@ -59,6 +60,7 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.setDragDropPayload
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.setNextWindowPos
+import imgui.ImGui.shadeVertsLinearColorGradientKeepAlpha
 import imgui.ImGui.spacing
 import imgui.ImGui.style
 import imgui.ImGui.text
@@ -803,12 +805,10 @@ interface widgetsColorEditorPicker {
 
         fun DrawList.renderArrowsForVerticalBar(pos: Vec2, halfSz: Vec2, barW: Float, alpha: Float) {
             val alpha8 = F32_TO_INT8_SAT(alpha)
-            // @formatter:off
             renderArrowPointingAt(Vec2(pos.x + halfSz.x + 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Right, COL32(0, 0, 0, alpha8))
             renderArrowPointingAt(Vec2(pos.x + halfSz.x, pos.y), halfSz, Dir.Right, COL32(255, 255, 255, alpha8))
             renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x - 1, pos.y), Vec2(halfSz.x + 2, halfSz.y + 1), Dir.Left, COL32(0, 0, 0, alpha8))
             renderArrowPointingAt(Vec2(pos.x + barW - halfSz.x, pos.y), halfSz, Dir.Left, COL32(255, 255, 255, alpha8))
-            // @formatter:on
         }
 
         /** ColorEdit supports RGB and HSV inputs. In case of RGB input resulting color may have undefined hue and/or saturation.

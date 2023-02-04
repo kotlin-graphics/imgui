@@ -9,6 +9,7 @@ import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
 import imgui.ImGui.getNavTweakPressedAmount
 import imgui.ImGui.io
+import imgui.ImGui.isDown
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.style
@@ -16,6 +17,8 @@ import imgui.api.g
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
+import imgui.static.DRAG_MOUSE_THRESHOLD_FACTOR
+import imgui.static.getMinimumStepAtDecimalPrecision
 import unsigned.Uint
 import unsigned.Ulong
 import kotlin.math.abs
@@ -2367,7 +2370,7 @@ internal interface templateFunctions {
     }
 
     fun checkboxFlagsT(label: String, flagsPtr: KMutableProperty0<Ulong>, flagsValue: Ulong): Boolean {
-        var flags by flagsPtr
+        val flags by flagsPtr
         var allOn = (flags.v and flagsValue.v) == flagsValue.v
         _b = allOn
         val anyOn = flags.v has flagsValue.v
@@ -2389,19 +2392,5 @@ internal interface templateFunctions {
                 else -> flags.v wo flagsValue.v
             }
         return pressed
-    }
-
-    companion object {
-
-        val minSteps = floatArrayOf(1f, 0.1f, 0.01f, 0.001f, 0.0001f, 0.00001f, 0.000001f, 0.0000001f, 0.00000001f, 0.000000001f)
-
-        fun getMinimumStepAtDecimalPrecision(decimalPrecision: Int): Float {
-            return when {
-                decimalPrecision < 0 -> Float.MIN_VALUE
-                else -> minSteps.getOrElse(decimalPrecision) {
-                    10f.pow(-decimalPrecision.f)
-                }
-            }
-        }
     }
 }

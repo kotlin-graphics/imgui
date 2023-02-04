@@ -13,6 +13,7 @@ import imgui.ImGui.focusTopMostWindowUnderOne
 import imgui.ImGui.focusWindow
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setNextWindowBgAlpha
@@ -34,7 +35,7 @@ import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
 /** Popups, Modals, Tooltips */
-internal interface PopupsModalsTooltips {
+internal interface popupsModalsTooltips {
 
     fun beginChildEx(name: String, id: ID, sizeArg: Vec2, border: Boolean, flags_: WindowFlags): Boolean {
 
@@ -262,6 +263,16 @@ internal interface PopupsModalsTooltips {
             Wf._Tooltip or Wf.NoMouseInputs or Wf.NoTitleBar or Wf.NoMove or Wf.NoResize or Wf.NoSavedSettings or Wf.AlwaysAutoResize
         begin(windowName, null, flags or extraWindowFlags)
     }
+
+    /** ~GetPopupAllowedExtentRect
+     *  Note that this is used for popups, which can overlap the non work-area of individual viewports. */
+    val Window.popupAllowedExtentRect: Rect
+        get() {
+            val rScreen = (ImGui.mainViewport as ViewportP).mainRect
+            val padding = g.style.displaySafeAreaPadding
+            rScreen expand Vec2(if (rScreen.width > padding.x * 2) -padding.x else 0f, if (rScreen.height > padding.y * 2) -padding.y else 0f)
+            return rScreen
+        }
 
     /** ~GetTopMostPopupModal */
     val topMostPopupModal: Window?

@@ -245,3 +245,7 @@ class TextFilter(defaultFilter: String = "") {
     }
 }
 
+fun String.memchr(startIdx: Int, c: Char): Int? {
+    val res = indexOf(c, startIdx)
+    return if (res >= 0) res else null
+}

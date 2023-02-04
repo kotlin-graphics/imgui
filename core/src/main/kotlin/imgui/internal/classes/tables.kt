@@ -227,9 +227,7 @@ class TableColumnSettings {
 
 /** This is designed to be stored in a single ImChunkStream (1 header followed by N ImGuiTableColumnSettings, etc.) */
 class TableSettings
-
-/** ~TableSettingsCreate */
-constructor(
+/** ~TableSettingsCreate */(
     /** Set to 0 to invalidate/delete the setting */
     var id: ID = 0,
 
@@ -257,66 +255,4 @@ constructor(
         columnSettings = Array(columnsCountMax) { TableColumnSettings() }
         wantApply = true
     }
-}
-
-
-//-----------------------------------------------------------------------------
-// [SECTION] Tables: Main code
-//-----------------------------------------------------------------------------
-
-// Configuration
-
-val TABLE_DRAW_CHANNEL_BG0 = 0
-val TABLE_DRAW_CHANNEL_BG2_FROZEN = 1
-
-/** When using ImGuiTableFlags_NoClip (this becomes the last visible channel) */
-val TABLE_DRAW_CHANNEL_NOCLIP = 2
-
-/** FIXME-TABLE: Currently hard-coded because of clipping assumptions with outer borders rendering. */
-val TABLE_BORDER_SIZE = 1f
-
-/** Extend outside inner borders. */
-val TABLE_RESIZE_SEPARATOR_HALF_THICKNESS = 4f
-
-/** Delay/timer before making the hover feedback (color+cursor) visible because tables/columns tends to be more cramped. */
-val TABLE_RESIZE_SEPARATOR_FEEDBACK_TIMER = 0.06f
-
-
-// Helper
-fun tableFixFlags(flags_: TableFlags, outerWindow: Window): TableFlags {
-
-    var flags = flags_
-
-    // Adjust flags: set default sizing policy
-    if (flags hasnt Tf._SizingMask)
-        flags = flags or when {
-            flags has Tf.ScrollX || outerWindow.flags has WindowFlag.AlwaysAutoResize -> Tf.SizingFixedFit
-            else -> Tf.SizingStretchSame
-        }
-
-    // Adjust flags: enable NoKeepColumnsVisible when using ImGuiTableFlags_SizingFixedSame
-    if (flags and Tf._SizingMask == Tf.SizingFixedSame.i)
-        flags = flags or Tf.NoKeepColumnsVisible
-
-    // Adjust flags: enforce borders when resizable
-    if (flags has Tf.Resizable)
-        flags = flags or Tf.BordersInnerV
-
-    // Adjust flags: disable NoHostExtendX/NoHostExtendY if we have any scrolling going on
-    if (flags has Tf.NoHostExtendY && flags has (Tf.ScrollX or Tf.ScrollY))
-        flags = flags wo (Tf.NoHostExtendX or Tf.NoHostExtendY)
-
-    // Adjust flags: NoBordersInBodyUntilResize takes priority over NoBordersInBody
-    if (flags has Tf.NoBordersInBodyUntilResize)
-        flags = flags wo Tf.NoBordersInBody
-
-    // Adjust flags: disable saved settings if there's nothing to save
-    if (flags hasnt (Tf.Resizable or Tf.Hideable or Tf.Reorderable or Tf.Sortable))
-        flags = flags or Tf.NoSavedSettings
-
-    // Inherit _NoSavedSettings from top-level window (child windows always have _NoSavedSettings set)
-    if (outerWindow.rootWindow!!.flags has WindowFlag.NoSavedSettings)
-        flags = flags or Tf.NoSavedSettings
-
-    return flags
 }

@@ -22,11 +22,11 @@ import imgui.ImGui.isItemActive
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
-import imgui.ImGui.keepAliveID
 import imgui.ImGui.logRenderedText
 import imgui.ImGui.logText
 import imgui.ImGui.popColumnsBackground
 import imgui.ImGui.pushColumnsBackground
+import imgui.ImGui.renderArrow
 import imgui.ImGui.renderFrame
 import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
@@ -36,6 +36,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.classes.Window
 import imgui.internal.sections.*
 import uno.kotlin.getValue
 import uno.kotlin.setValue
@@ -151,11 +152,6 @@ internal interface widgets {
             itemSize(textSize, 0f)
             itemAdd(bb, 0)
         }
-    }
-
-    fun String.memchr(startIdx: Int, c: Char): Int? {
-        val res = indexOf(c, startIdx)
-        return if (res >= 0) res else null
     }
 
     fun buttonEx(label: String, sizeArg: Vec2 = Vec2(), flags_: Int = 0): Boolean {
@@ -444,8 +440,51 @@ internal interface widgets {
         return pressed
     }
 
-    // GetWindowScrollbarRect -> Window class
-    // GetWindowScrollbarID -> Window class
+    /** Return scrollbar rectangle, must only be called for corresponding axis if window->ScrollbarX/Y is set.
+     *  ~GetWindowScrollbarRect     */
+    infix fun Window.getScrollbarRect(axis: Axis): Rect {
+        val outerRect = rect() //        val innerRect = innerRect
+        val borderSize = windowBorderSize
+        val scrollbarSize =
+            scrollbarSizes[axis xor 1] // (ScrollbarSizes.x = width of Y scrollbar; ScrollbarSizes.y = height of X scrollbar)
+        assert(scrollbarSize > 0f)
+        return when (axis) {
+            Axis.X -> Rect(innerRect.min.x,
+                           max(outerRect.min.y, outerRect.max.y - borderSize - scrollbarSize),
+                           innerRect.max.x,
+                           outerRect.max.y)
+            else -> Rect(max(outerRect.min.x, outerRect.max.x - borderSize - scrollbarSize),
+                         innerRect.min.y,
+                         outerRect.max.x,
+                         innerRect.max.y)
+        }
+    }
+
+    /** ~GetWindowScrollbarID */
+    infix fun Window.getScrollbarID(axis: Axis): ID = getID(if (axis == Axis.X) "#SCROLLX" else "#SCROLLY")
+
+    /** ~GetWindowResizeCornerID
+     *
+     *  0..3: corners (Lower-right, Lower-left, Unused, Unused) */
+    infix fun Window.getResizeCornerID(n: Int): ID {
+        assert(n in 0..3)
+        var id = this.id
+        id = hashStr("#RESIZE", 0, id)
+        id = hashData(n, id)
+        return id
+    }
+
+    /** ~GetWindowResizeBorderID
+     *
+     *  Borders (Left, Right, Up, Down) */
+    infix fun Window.getResizeBorderID(dir: Dir): ID {
+        assert(dir.i in 0..3)
+        val n = dir.i + 4
+        var id = this.id
+        id = hashStr("#RESIZE", 0, id)
+        id = hashData(n, id)
+        return id
+    }
 
     /** Horizontal/vertical separating line
      *  Separator, generally horizontal. inside a menu bar or in horizontal layout mode, this becomes a vertical separator. */

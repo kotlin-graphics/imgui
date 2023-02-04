@@ -268,9 +268,9 @@ object dsl {
             block()
     }
 
-    inline fun imageButton(userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(),
-                           framePadding: Int = -1, bgCol: Vec4 = Vec4(), tintCol: Vec4 = Vec4(1), block: () -> Unit) {
-        if (imageButton(userTextureId, size, uv0, uv1, framePadding, bgCol, tintCol))
+    inline fun imageButton(strId: String, userTextureId: TextureID, size: Vec2, uv0: Vec2 = Vec2(), uv1: Vec2 = Vec2(),
+                           bgCol: Vec4 = Vec4(), tintCol: Vec4 = Vec4(1), block: () -> Unit) {
+        if (imageButton(strId, userTextureId, size, uv0, uv1, bgCol, tintCol))
             block()
     }
 
@@ -336,37 +336,37 @@ object dsl {
     }
 
     inline fun treeNodeEx(strID: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
-        if(treeNodeEx(strID, flags)) {
+        if (treeNodeEx(strID, flags)) {
             block()
             treePop()
         }
     }
 
     inline fun treeNodeEx(strID: String, flags: TreeNodeFlags, fmt: String, vararg args: Any, block: () -> Unit) {
-        if(treeNodeEx(strID, flags, fmt, args)) {
+        if (treeNodeEx(strID, flags, fmt, args)) {
             block()
             treePop()
         }
     }
 
     inline fun treeNodeEx(ptrID: Any, flags: TreeNodeFlags, fmt: String, vararg args: Any, block: () -> Unit) {
-        if(treeNodeEx(ptrID, flags, fmt, args)) {
+        if (treeNodeEx(ptrID, flags, fmt, args)) {
             block()
             treePop()
         }
     }
 
     inline fun treeNodeEx(intPtr: Long, flags: TreeNodeFlags, fmt: String, vararg args: Any, block: () -> Unit) {
-        if(treeNodeEx(intPtr, flags, fmt, args)) {
+        if (treeNodeEx(intPtr, flags, fmt, args)) {
             block()
             treePop()
         }
     }
 
-//    inline fun treePushed(intPtr: Long?, block: () -> Unit) { TODO check me
-//        treePush(intPtr)
-//        try { block() } finally { treePop() }
-//    }
+    //    inline fun treePushed(intPtr: Long?, block: () -> Unit) { TODO check me
+    //        treePush(intPtr)
+    //        try { block() } finally { treePop() }
+    //    }
 
     inline fun collapsingHeader(label: String, flags: TreeNodeFlags = 0, block: () -> Unit) {
         if (collapsingHeader(label, flags))

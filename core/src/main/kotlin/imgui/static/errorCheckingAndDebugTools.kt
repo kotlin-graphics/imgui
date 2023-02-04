@@ -5,13 +5,13 @@ import imgui.ImGui.end
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isPressed
 import imgui.ImGui.setNextWindowBgAlpha
 import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textColored
 import imgui.api.g
 import imgui.dsl.tooltip
-import imgui.internal.api.inputs
 
 
 //-----------------------------------------------------------------------------

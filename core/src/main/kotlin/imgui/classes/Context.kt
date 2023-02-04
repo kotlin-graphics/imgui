@@ -132,11 +132,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     var hoveredIdAllowOverlap = false
 
-    /** Hovered widget will use mouse wheel. Blocks scrolling the underlying window. */
-    var hoveredIdUsingMouseWheel = false
-
-    var hoveredIdPreviousFrameUsingMouseWheel = false
-
     /** At least one widget passed the rect test, but has been discarded by disabled flag or popup inhibit.
      *  May be true even if HoveredId == 0. */
     var hoveredIdDisabled = false
@@ -197,14 +192,16 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var lastActiveIdTimer = 0f
 
 
-    // Input Ownership
-
+    // [EXPERIMENTAL] Key/Input Ownership
+    // - The idea is that instead of "eating" a given key, we can link to an owner.
+    // - Input query can then read input by specifying ImGuiKeyOwner_Any (== 0), ImGuiKeyOwner_None (== -1) or a custom ID.
+    val keysOwnerData = Array(Key.COUNT) { KeyOwnerData() }
 
     /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
     var activeIdUsingNavDirMask = 0
 
-    /** Active widget will want to read those key inputs. When we grow the ImGuiKey enum we'll need to either to order the enum to make useful keys come first, either redesign this into e.g. a small array. */
-    val activeIdUsingKeyInputMask = BitArray(Key.COUNT)
+    /** Active widget will want to read all keyboard keys inputs. (FIXME: This is a shortcut for not taking ownership of 100+ keys but perhaps best to not have the inconsistency) */
+    var activeIdUsingAllKeyboardKeys = false
 
 
     // Next window/item data
@@ -697,6 +694,8 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         prevCtx?.setCurrent() // Restore previous context if any, else keep new one.
     }
 
+    // Init
+
     fun initialize() {
         assert(!initialized && !g.settingsLoaded)
 
@@ -725,23 +724,6 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         //        #endif // #ifdef IMGUI_HAS_DOCK
 
         initialized = true
-    }
-
-    /** ~SetCurrentContext */
-    fun setCurrent() {
-        gImGui = this
-    }
-
-    /** Destroy current context
-     *  ~DestroyContext */
-    fun destroy() {
-        val prevCtx = ImGui.currentContext
-        //        if (ctx/this == NULL) //-V1051
-        //            ctx = GImGui;
-        setCurrent()
-        shutdown()
-        if (prevCtx !== this)
-            prevCtx?.setCurrent()
     }
 
     /** This function is merely here to free heap allocations.
@@ -812,6 +794,23 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         debugLogBuf.clear()
 
         initialized = false
+    }
+
+    /** ~SetCurrentContext */
+    fun setCurrent() {
+        gImGui = this
+    }
+
+    /** Destroy current context
+     *  ~DestroyContext */
+    fun destroy() {
+        val prevCtx = ImGui.currentContext
+        //        if (ctx/this == NULL) //-V1051
+        //            ctx = GImGui;
+        setCurrent()
+        shutdown()
+        if (prevCtx !== this)
+            prevCtx?.setCurrent()
     }
 }
 

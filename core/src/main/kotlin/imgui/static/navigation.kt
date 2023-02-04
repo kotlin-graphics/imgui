@@ -17,10 +17,13 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getKeyVector2d
 import imgui.ImGui.io
-import imgui.ImGui.isActiveIdUsingKey
 import imgui.ImGui.isActiveIdUsingNavDir
+import imgui.ImGui.isDown
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.isNavFocusable
+import imgui.ImGui.isPressed
+import imgui.ImGui.isReleased
 import imgui.ImGui.mainViewport
 import imgui.ImGui.navInitRequestApplyResult
 import imgui.ImGui.navInitWindow
@@ -31,11 +34,16 @@ import imgui.ImGui.navMoveRequestResolveWithLastItem
 import imgui.ImGui.navMoveRequestSubmit
 import imgui.ImGui.popStyleVar
 import imgui.ImGui.pushStyleVar
+import imgui.ImGui.rectAbsToRel
+import imgui.ImGui.rectRelToAbs
 import imgui.ImGui.selectable
 import imgui.ImGui.setNavID
 import imgui.ImGui.setNavWindow
 import imgui.ImGui.setNextWindowPos
 import imgui.ImGui.setNextWindowSizeConstraints
+import imgui.ImGui.setPos
+import imgui.ImGui.setScrollX
+import imgui.ImGui.setScrollY
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
@@ -997,6 +1005,10 @@ fun navSaveLastChildNavWindowIntoParent(navWindow: Window?) {
         parent.navLastChildNavWindow = navWindow
 }
 
+/** Restore the last focused child.
+ *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
+fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow?.takeIf { it.wasActive } ?: window
+
 fun navRestoreLayer(layer: NavLayer) {
     if (layer == NavLayer.Main) {
         val prevNavWindow = g.navWindow
@@ -1019,10 +1031,6 @@ fun navRestoreHighlightAfterMove() {
     g.navDisableHighlight = false
     g.navDisableMouseHover = true; g.navMousePosDirty = true
 }
-
-/** Restore the last focused child.
- *  Call when we are expected to land on the Main Layer (0) after FocusWindow()    */
-fun navRestoreLastChildNavWindow(window: Window) = window.navLastChildNavWindow?.takeIf { it.wasActive } ?: window
 
 fun findWindowFocusIndex(window: Window): Int {
     val order = window.focusOrder

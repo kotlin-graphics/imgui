@@ -27,7 +27,9 @@ import imgui.ImGui.endGroup
 import imgui.ImGui.focusWindow
 import imgui.ImGui.format
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getScrollbarID
 import imgui.ImGui.io
+import imgui.ImGui.isPressed
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
@@ -45,8 +47,8 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.setActiveID
-import imgui.ImGui.setActiveIdUsingKey
 import imgui.ImGui.setFocusID
+import imgui.ImGui.setScrollY
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.InputTextCallbackData
@@ -56,15 +58,15 @@ import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.LastItemData
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
+import imgui.static.inputTextCalcTextSizeW
+import imgui.static.inputTextFilterCharacter
+import imgui.static.inputTextReconcileUndoStateAfterUserCallback
 import imgui.stb.te.clamp
 import imgui.stb.te.click
 import imgui.stb.te.cut
 import imgui.stb.te.drag
 import imgui.stb.te.paste
 import uno.kotlin.NUL
-import uno.kotlin.getValue
-import uno.kotlin.isPrintable
-import uno.kotlin.setValue
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.reflect.KMutableProperty0
@@ -1048,216 +1050,4 @@ internal interface inputText {
 
     fun getInputTextState(id: ID): InputTextState? =
         g.inputTextState.takeIf { id != 0 && it.id == id } // Get input text state if active
-
-    companion object {
-        /** Return false to discard a character.    */
-        fun inputTextFilterCharacter(char: KMutableProperty0<Char>, flags: InputTextFlags, callback: InputTextCallback?,
-                                     userData: Any?, inputSource: InputSource): Boolean {
-
-            assert(inputSource == InputSource.Keyboard || inputSource == InputSource.Clipboard)
-            var c by char
-
-            // Filter non-printable (NB: isprint is unreliable! see #2467) [JVM we can rely on custom ::isPrintable]
-            var applyNamedFilters = true
-            if (c < 0x20 && !c.isPrintable) {
-                var pass = false
-                pass = pass or (c == '\n' && flags has Itf._Multiline) // Note that an Enter KEY will emit \r and be ignored (we poll for KEY in InputText() code)
-                pass = pass or (c == '\t' && flags has Itf.AllowTabInput)
-                if (!pass)
-                    return false
-                applyNamedFilters = false // Override named filters below so newline and tabs can still be inserted.
-            }
-
-            if (inputSource != InputSource.Clipboard) {
-                // We ignore Ascii representation of delete (emitted from Backspace on OSX, see #2578, #2817)
-                if (c.i == 127)
-                    return false
-
-                // Filter private Unicode range. GLFW on OSX seems to send private characters for special keys like arrow keys (FIXME)
-                if (c >= 0xE000 && c <= 0xF8FF)
-                    return false
-            }
-
-            // Filter Unicode ranges we are not handling in this build
-            if (c > UNICODE_CODEPOINT_MAX)
-                return false
-
-            // Generic named filters
-            if (applyNamedFilters && flags has (Itf.CharsDecimal or Itf.CharsHexadecimal or Itf.CharsUppercase or Itf.CharsNoBlank or Itf.CharsScientific)) {
-
-                // The libc allows overriding locale, with e.g. 'setlocale(LC_NUMERIC, "de_DE.UTF-8");' which affect the output/input of printf/scanf to use e.g. ',' instead of '.'.
-                // The standard mandate that programs starts in the "C" locale where the decimal point is '.'.
-                // We don't really intend to provide widespread support for it, but out of empathy for people stuck with using odd API, we support the bare minimum aka overriding the decimal point.
-                // Change the default decimal_point with:
-                //   ImGui::GetCurrentContext()->PlatformLocaleDecimalPoint = *localeconv()->decimal_point;
-                // Users of non-default decimal point (in particular ',') may be affected by word-selection logic (is_word_boundary_from_right/is_word_boundary_from_left) functions.
-                val cDecimalPoint = g.platformLocaleDecimalPoint
-
-                // Full-width -> half-width conversion for numeric fields (https://en.wikipedia.org/wiki/Halfwidth_and_Fullwidth_Forms_(Unicode_block)
-                // While this is mostly convenient, this has the side-effect for uninformed users accidentally inputting full-width characters that they may
-                // scratch their head as to why it works in numerical fields vs in generic text fields it would require support in the font.
-                if (flags has (Itf.CharsDecimal or Itf.CharsScientific or Itf.CharsHexadecimal))
-                    if (c >= 0xFF01 && c <= 0xFF5E)
-                        c = c - 0xFF01 + 0x21
-
-                // Allow 0-9 . - + * /
-                if (flags has Itf.CharsDecimal)
-                    if (c !in '0'..'9' && c != cDecimalPoint && c != '-' && c != '+' && c != '*' && c != '/')
-                        return false
-
-                // Allow 0-9 . - + * / e E
-                if (flags has Itf.CharsScientific)
-                    if (c !in '0'..'9' && c != cDecimalPoint && c != '-' && c != '+' && c != '*' && c != '/' && c != 'e' && c != 'E')
-                        return false
-
-                // Allow 0-9 a-F A-F
-                if (flags has Itf.CharsHexadecimal)
-                    if (c !in '0'..'9' && c !in 'a'..'f' && c !in 'A'..'F')
-                        return false
-
-                // Turn a-z into A-Z
-                if (flags has Itf.CharsUppercase && c in 'a'..'z')
-                    c = c + ('A' - 'a')
-
-                if (flags has Itf.CharsNoBlank && c.isBlankW)
-                    return false
-
-                char.set(c)
-            }
-
-            // Custom callback filter
-            if (flags has Itf.CallbackCharFilter) {
-                callback!! //callback is non-null from all calling functions
-                val itcd = InputTextCallbackData()
-                itcd.eventFlag = Itf.CallbackCharFilter.i
-                itcd.eventChar = c
-                itcd.flags = flags
-                itcd.userData = userData
-
-                if (callback(itcd))
-                    return false
-                if (itcd.eventChar == NUL)
-                    return false
-            }
-            return true
-        }
-
-        /** @return [JVM] [lineCount, textEnd] */
-        fun inputTextCalcTextLenAndLineCount(text: ByteArray): Pair<Int, Int> {
-            if (text.isEmpty()) return 1 to 0
-            var lineCount = 0
-            var s = 0
-            var c = text[s++]
-            while (c != 0.b) { // We are only matching for \n so we can ignore UTF-8 decoding
-                if (c == '\n'.b)
-                    lineCount++
-                c = text[s++]
-            }
-            s--
-            if (text[s] != '\n'.b && text[s] != '\r'.b)
-                lineCount++
-            return lineCount to s
-        }
-
-        fun inputTextCalcTextSizeW(
-            text: CharArray, textBegin: Int, textEnd: Int,
-            remaining: KMutableProperty0<Int>? = null, outOffset: Vec2? = null,
-            stopOnNewLine: Boolean = false,
-                                  ): Vec2 {
-
-            val font = g.font
-            val lineHeight = g.fontSize
-            val scale = lineHeight / font.fontSize
-
-            val textSize = Vec2()
-            var lineWidth = 0f
-
-            var s = textBegin
-            while (s < textEnd) {
-                val c = text[s++]
-                if (c == '\n') {
-                    textSize.x = glm.max(textSize.x, lineWidth)
-                    textSize.y += lineHeight
-                    lineWidth = 0f
-                    if (stopOnNewLine)
-                        break
-                    continue
-                }
-                if (c == '\r') continue
-                // renaming ::getCharAdvance continuously every build because of bug, https://youtrack.jetbrains.com/issue/KT-19612
-                val charWidth = font.getCharAdvance(c) * scale
-                lineWidth += charWidth
-            }
-
-            if (textSize.x < lineWidth)
-                textSize.x = lineWidth
-
-            // offset allow for the possibility of sitting after a trailing \n
-            outOffset?.let {
-                it.x = lineWidth
-                it.y = textSize.y + lineHeight
-            }
-
-            if (lineWidth > 0 || textSize.y == 0f)  // whereas size.y will ignore the trailing \n
-                textSize.y += lineHeight
-
-            remaining?.set(s)
-
-            return textSize
-        }
-
-        fun inputScalarDefaultCharsFilter(dataType: DataType, format: String): Itf {
-            if (dataType == DataType.Float || dataType == DataType.Double)
-                return Itf.CharsScientific
-            return when (val formatLastChar = if (format.isNotEmpty()) format.lastIndex else NUL) {
-                'x', 'X' -> Itf.CharsHexadecimal
-                else -> Itf.CharsDecimal
-            }
-        }
-
-        // Find the shortest single replacement we can make to get the new text from the old text.
-        // Important: needs to be run before TextW is rewritten with the new characters because calling STB_TEXTEDIT_GETCHAR() at the end.
-        // FIXME: Ideally we should transition toward (1) making InsertChars()/DeleteChars() update undo-stack (2) discourage (and keep reconcile) or obsolete (and remove reconcile) accessing buffer directly.
-        fun inputTextReconcileUndoStateAfterUserCallback(state: InputTextState, newBufA: ByteArray, newLengthA: Int) {
-            // Find the shortest single replacement we can make to get the new text
-            // from the old text.
-            val oldBuf = state.textW
-            val oldLength = state.curLenW
-            val newLength = textCountCharsFromUtf8(newBufA, newLengthA)
-            TODO()
-            //ImWchar* new_buf = (ImWchar*)(void*)g.TempBuffer.Data;
-            val newBuf = g.tempBuffer
-            //            textStrFromUtf8(newBuf, new_length + 1, new_buf_a, new_buf_a + new_length_a)
-
-            var where = 0
-            //            while (where < shorterLength) {
-            //                val (b, _) = textCharFromUtf8(newBuf, where)
-            //                if (oldBuf[where].code != b)
-            //                    break
-            //
-            //                where += 1
-            //            }
-
-            var oldLastDiff = oldLength - 1
-            var newLastDiff = newLength - 1
-            while (oldLastDiff >= where && newLastDiff >= 0) {
-                val (b, _) = textCharFromUtf8(newBuf, newLastDiff)
-                if (oldBuf[oldLastDiff].code != b)
-                    break
-
-                oldLastDiff -= 1
-                newLastDiff -= 1
-            }
-
-            val insertLen = newLastDiff - where + 1
-            val deleteLen = oldLastDiff - where + 1
-
-            if (insertLen > 0 || deleteLen > 0) {
-                val p = state.stb.undoState.createUndo(where, deleteLen, insertLen)
-                if (p != null)
-                    for (i in 0 until deleteLen)
-                        state.stb.undoState.undoChar[p + i] = state.getChar(where + i)
-            }
-        }
-    }
 }

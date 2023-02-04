@@ -17,7 +17,7 @@ const val IMGUI_VERSION_BUILD = "$IMGUI_VERSION.$IMGUI_BUILD"
 
 /** Integer encoded as XYYZZ for use in #if preprocessor conditionals.
 Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens) */
-const val IMGUI_VERSION_NUM = 18835
+const val IMGUI_VERSION_NUM = 18836
 
 
 // Helpers macros to generate 32-bits encoded colors
@@ -116,7 +116,7 @@ object ImGui :
     main,
     demoDebugInformations,
     styles,
-    windows,
+    imgui.api.windows,
     childWindows,
     windowsUtilities,
     contentRegion,
@@ -164,7 +164,9 @@ object ImGui :
     // Internal API
     // No guarantee of forward compatibility here.
     //-----------------------------------------------------------------------------
-    internal,
+    imgui.internal.api.windows,
+    windowsDisplayAndFocusOrder,
+    fontsDrawing,
     // init in Context class
     newFrame,
     genericContextHooks,
@@ -175,12 +177,12 @@ object ImGui :
     basicHelpersForWidgetCode,
     parameterStacks,
     imgui.internal.api.loggingCapture,
-    PopupsModalsTooltips,
+    popupsModalsTooltips,
     menus,
     combos,
-    navigation,
-    focusScope,
+    gamepadKeyboardNavigation,
     inputs,
+    focusScope,
     imgui.internal.api.dragAndDrop,
     disabling,
     internalColumnsAPI,
@@ -196,7 +198,7 @@ object ImGui :
     inputText,
     color,
     plot,
-    // shade functions in DrawList class
+    shadeFunctions,
     garbageCollection,
     debugLog,
     debugTools

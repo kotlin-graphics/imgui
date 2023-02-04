@@ -2,12 +2,17 @@ package imgui.api
 
 import glm_.max
 import imgui.*
+import imgui.ImGui.beginEx
+import imgui.ImGui.findTabByID
 import imgui.ImGui.popID
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.style
+import imgui.ImGui.tabItemEx
 import imgui.internal.classes.PtrOrIndex
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
+import imgui.static.calcTabID
+import imgui.static.layout
 import kotlin.reflect.KMutableProperty0
 
 /** Tab Bars, Tabs */

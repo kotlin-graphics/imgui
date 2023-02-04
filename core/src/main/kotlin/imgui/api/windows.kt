@@ -7,32 +7,37 @@ import glm_.f
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.bringToDisplayBehind
 import imgui.ImGui.debugLocateItemResolveWithLastItem
 import imgui.ImGui.endColumns
 import imgui.ImGui.errorCheckUsingSetCursorPosToExtendParentBoundaries
 import imgui.ImGui.findBestWindowPosForPopup
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
+import imgui.ImGui.gcAwakeTransientBuffers
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.logFinish
+import imgui.ImGui.markIniSettingsDirty
 import imgui.ImGui.navInitWindow
 import imgui.ImGui.popClipRect
 import imgui.ImGui.popFocusScope
 import imgui.ImGui.pushClipRect
 import imgui.ImGui.pushFocusScope
+import imgui.ImGui.setCollapsed
 import imgui.ImGui.setLastItemData
+import imgui.ImGui.setPos
+import imgui.ImGui.setSize
 import imgui.ImGui.style
 import imgui.ImGui.topMostPopupModal
+import imgui.ImGui.updateParentAndRootLinks
 import imgui.internal.classes.Rect
 import imgui.internal.classes.WindowStackData
 import imgui.internal.floor
 import imgui.internal.lengthSqr
 import imgui.internal.sections.*
-import imgui.static.createNewWindow
-import imgui.static.findBlockingModal
-import imgui.static.setCurrentWindow
-import imgui.static.updateWindowInFocusOrderList
+import imgui.static.*
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
@@ -434,11 +439,7 @@ interface windows {
                 if (io.configWindowsResizeFromEdges) 2 else 1 // Allow resize from lower-left if we have the mouse cursor feedback for it.
             val resizeGripDrawSize = floor(max(g.fontSize * 1.1f, window.windowRounding + 1f + g.fontSize * 0.2f))
             if (!window.collapsed) {
-                val (borderHeld_, ret) = window.updateManualResize(sizeAutoFit,
-                                                                   borderHeld,
-                                                                   resizeGripCount,
-                                                                   resizeGripCol,
-                                                                   visibilityRect)
+                val (borderHeld_, ret) = window.updateManualResize(sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol, visibilityRect)
                 if (ret) {
                     useCurrentSizeForScrollbarX = true
                     useCurrentSizeForScrollbarY = true

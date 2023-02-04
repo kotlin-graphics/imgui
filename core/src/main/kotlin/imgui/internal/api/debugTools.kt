@@ -6,6 +6,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginTooltip
+import imgui.ImGui.boundSettings
 import imgui.ImGui.bullet
 import imgui.ImGui.bulletText
 import imgui.ImGui.dragFloat
@@ -20,7 +21,9 @@ import imgui.ImGui.endTooltip
 import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getColorU32
+import imgui.ImGui.getColumnName
 import imgui.ImGui.getForegroundDrawList
+import imgui.ImGui.getOffsetFrom
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
 import imgui.ImGui.isItemHovered
@@ -40,6 +43,7 @@ import imgui.ImGui.pushID
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.queueReorder
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
@@ -617,7 +621,7 @@ internal interface debugTools {
                 foregroundDrawList.addRect(r.min, r.max, COL32(255, 255, 0, 255))
             }
         }
-        table.getBoundSettings()?.let(::debugNodeTableSettings)
+        table.boundSettings?.let(::debugNodeTableSettings)
         if (clearSettings)
             table.isResetAllRequest = true
         treePop()

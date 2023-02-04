@@ -2,7 +2,10 @@ package imgui.static
 
 import gli_.has
 import glm_.L
+import glm_.glm
 import glm_.i
+import glm_.max
+import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
 import imgui.ImGui.findOrCreateWindowSettings
@@ -12,16 +15,22 @@ import imgui.ImGui.io
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
+import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
+import imgui.internal.floor
+import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
+import imgui.internal.sections.hasnt
 import imgui.windowsIme.*
+import kool.rem
 import org.lwjgl.system.MemoryUtil
 import uno.glfw.HWND
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
+import java.util.ArrayList
 import imgui.WindowFlag as Wf
 
 
@@ -94,7 +103,13 @@ fun findHoveredWindow() {
     g.hoveredWindowUnderMovingWindow = hoveredWindow
 }
 
-// ApplyWindowSettings -> Window class
+/** ~ApplyWindowSettings */
+infix fun Window.applySettings(settings: WindowSettings) {
+    pos put floor(Vec2(settings.pos))
+    if (settings.size allGreaterThan 0f) sizeFull put floor(Vec2(settings.size))
+    size put sizeFull
+    collapsed = settings.collapsed
+}
 
 fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags: WindowFlags) {
 
@@ -151,9 +166,99 @@ fun createNewWindow(name: String, flags: WindowFlags) = Window(g, name).apply {
         g.windows += this
 }
 
-// CheckStacksSize, CalcNextScrollFromScrollTargetAndClamp and AddWindowToSortBuffer are Window class methods
+// Helper to snap on edges when aiming at an item very close to the edge,
+// So the difference between WindowPadding and ItemSpacing will be in the visible area after scrolling.
+// When we refactor the scrolling API this may be configurable with a flag?
+// Note that the effect for this won't be visible on X axis with default Style settings as WindowPadding.x == ItemSpacing.x by default.
+fun calcScrollEdgeSnap(target: Float, snapMin: Float, snapMax: Float, snapThreshold: Float, centerRatio: Float): Float = when {
+    target <= snapMin + snapThreshold -> imgui.internal.lerp(snapMin, target, centerRatio)
+    target >= snapMax - snapThreshold -> imgui.internal.lerp(target, snapMax, centerRatio)
+    else -> target
+}
 
-// AddDrawListToDrawData is a DrawList class method
+fun Window.calcNextScrollFromScrollTargetAndClamp(): Vec2 {
+    val scroll = Vec2(scroll)
+    if (scrollTarget.x < Float.MAX_VALUE) {
+        val decorationTotalWidth = scrollbarSizes.x
+        val centerXRatio = scrollTargetCenterRatio.x
+        var scrollTargetX = scrollTarget.x
+        if (scrollTargetEdgeSnapDist.x > 0f) {
+            val snapXMin = 0f
+            val snapXMax = scrollMax.x + sizeFull.x - decorationTotalWidth
+            scrollTargetX = calcScrollEdgeSnap(scrollTargetX, snapXMin, snapXMax, scrollTargetEdgeSnapDist.x, centerXRatio)
+        }
+        scroll.x = scrollTargetX - centerXRatio * (sizeFull.x - decorationTotalWidth)
+    }
+    if (scrollTarget.y < Float.MAX_VALUE) {
+        val decorationTotalHeight = titleBarHeight + menuBarHeight + scrollbarSizes.y
+        val centerYRatio = scrollTargetCenterRatio.y
+        var scrollTargetY = scrollTarget.y
+        if (scrollTargetEdgeSnapDist.y > 0f) {
+            val snapYMin = 0f
+            val snapYMax = scrollMax.y + sizeFull.y - decorationTotalHeight
+            scrollTargetY = calcScrollEdgeSnap(scrollTargetY, snapYMin, snapYMax, scrollTargetEdgeSnapDist.y, centerYRatio)
+        }
+        scroll.y = scrollTargetY - centerYRatio * (sizeFull.y - decorationTotalHeight)
+    }
+    scroll.x = floor(scroll.x max 0f)
+    scroll.y = floor(scroll.y max 0f)
+    if (!collapsed && !skipItems) {
+        scroll.x = glm.min(scroll.x, scrollMax.x)
+        scroll.y = glm.min(scroll.y, scrollMax.y)
+    }
+    return scroll
+}
+
+
+/** AddDrawListToDrawData */
+infix fun DrawList.addTo(outList: ArrayList<DrawList>) {
+
+    if (cmdBuffer.empty())
+        return
+    if (cmdBuffer.size == 1 && cmdBuffer[0].elemCount == 0 && cmdBuffer[0].userCallback == null)
+        return
+
+    /*  Draw list sanity check. Detect mismatch between PrimReserve() calls and incrementing _VtxCurrentIdx, _VtxWritePtr etc.
+        May trigger for you if you are using PrimXXX functions incorrectly.   */
+    assert(vtxBuffer.rem == 0 || _vtxWritePtr == vtxBuffer.rem)
+    assert(idxBuffer.rem == 0 || _idxWritePtr == idxBuffer.rem)
+    if (flags hasnt DrawListFlag.AllowVtxOffset)
+        assert(_vtxCurrentIdx == vtxBuffer.rem)
+
+    // JVM ImGui, this doesnt apply, we use Ints by default
+    /*  Check that drawList doesn't use more vertices than indexable
+        (default DrawIdx = unsigned short = 2 bytes = 64K vertices per DrawList = per window)
+        If this assert triggers because you are drawing lots of stuff manually:
+        - First, make sure you are coarse clipping yourself and not trying to draw many things outside visible bounds.
+          Be mindful that the ImDrawList API doesn't filter vertices. Use the Metrics/Debugger window to inspect draw list contents.
+        - If you want large meshes with more than 64K vertices, you can either:
+          (A) Handle the ImDrawCmd::VtxOffset value in your renderer backend, and set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset'.
+              Most example backends already support this from 1.71. Pre-1.71 backends won't.
+              Some graphics API such as GL ES 1/2 don't have a way to offset the starting vertex so it is not supported for them.
+          (B) Or handle 32-bits indices in your renderer backend, and uncomment '#define ImDrawIdx unsigned int' line in imconfig.h.
+              Most example backends already support this. For example, the OpenGL example code detect index size at compile-time:
+                glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
+              Your own engine or render API may use different parameters or function calls to specify index sizes.
+              2 and 4 bytes indices are generally supported by most graphics API.
+        - If for some reason neither of those solutions works for you, a workaround is to call BeginChild()/EndChild() before reaching
+          the 64K limit to split your draw commands in multiple draw lists.         */
+    outList += this
+    io.metricsRenderVertices += vtxBuffer.rem
+    io.metricsRenderIndices += idxBuffer.rem
+}
+
+// FIXME: Add a more explicit sort order in the window structure.
+private val childWindowComparer = compareBy<Window>({ it.flags has Wf._Popup }, { it.flags has Wf._Tooltip }, { it.beginOrderWithinParent })
+
+/** ~AddWindowToSortBuffer */
+infix fun Window.addToSortBuffer(sortedWindows: ArrayList<Window>) {
+    sortedWindows += this
+    if (active) {
+        val count = dc.childWindows.size
+        if (count > 1) dc.childWindows.sortWith(childWindowComparer)
+        dc.childWindows.filter { it.active }.forEach { it addToSortBuffer sortedWindows }
+    }
+}
 
 //-----------------------------------------------------------------------------
 // Settings

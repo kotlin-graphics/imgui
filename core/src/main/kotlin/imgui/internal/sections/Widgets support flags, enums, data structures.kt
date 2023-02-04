@@ -207,6 +207,12 @@ enum class ButtonFlag(val i: ButtonFlags) {
     /** don't report as hovered when nav focus is on this item */
     NoHoveredOnFocus(1 shl 19),
 
+    /** don't set key/input owner on the initial click (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
+    NoSetKeyOwner(1 shl 20),
+
+    /** don't test key/input owner when polling the key (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
+    NoTestKeyOwner(1 shl 21),
+
     MouseButtonMask_(MouseButtonLeft or MouseButtonRight or MouseButtonMiddle),
     MouseButtonShift_(16),
     MouseButtonDefault_(MouseButtonLeft.i),

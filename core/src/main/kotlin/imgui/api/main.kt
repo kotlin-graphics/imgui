@@ -13,6 +13,7 @@ import imgui.ImGui.clearDragDrop
 import imgui.ImGui.defaultFont
 import imgui.ImGui.end
 import imgui.ImGui.focusTopMostWindowUnderOne
+import imgui.ImGui.gcCompactTransientBuffers
 import imgui.ImGui.gcCompactTransientMiscBuffers
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.keepAliveID

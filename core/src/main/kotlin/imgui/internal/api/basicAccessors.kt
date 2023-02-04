@@ -3,6 +3,7 @@ package imgui.internal.api
 import imgui.DataType
 import imgui.ID
 import imgui.ImGui.debugHookIdInfo
+import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.setNavWindow
 import imgui.api.g
 import imgui.internal.classes.Window
