@@ -48,6 +48,7 @@ import imgui.ImGui.renderText
 import imgui.ImGui.scrollMaxY
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
+import imgui.ImGui.setOwner
 import imgui.ImGui.setScrollY
 import imgui.ImGui.style
 import imgui.api.g
@@ -58,9 +59,7 @@ import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.LastItemData
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
-import imgui.static.inputTextCalcTextSizeW
-import imgui.static.inputTextFilterCharacter
-import imgui.static.inputTextReconcileUndoStateAfterUserCallback
+import imgui.static.*
 import imgui.stb.te.clamp
 import imgui.stb.te.click
 import imgui.stb.te.cut
@@ -241,20 +240,24 @@ internal interface inputText {
             setFocusID(id, window)
             focusWindow(window)
 
+        }
+        if (g.activeId == id) {
             // Declare our inputs
+            if (userClicked)
+                Key.MouseLeft.setOwner(id)
             g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
             if (isMultiline || flags has Itf.CallbackHistory)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
-            setActiveIdUsingKey(Key.Escape)
-            setActiveIdUsingKey(Key._NavGamepadCancel)
-            setActiveIdUsingKey(Key.Home)
-            setActiveIdUsingKey(Key.End)
+            Key.Escape.setOwner(id)
+            Key._NavGamepadCancel.setOwner(id)
+            Key.Home.setOwner(id)
+            Key.End.setOwner(id)
             if (isMultiline) {
-                setActiveIdUsingKey(Key.PageUp)
-                setActiveIdUsingKey(Key.PageDown)
+                Key.PageUp.setOwner(id)
+                Key.PageDown.setOwner(id)
             }
             if (flags has (Itf.CallbackCompletion or Itf.AllowTabInput))  // Disable keyboard tabbing out as we will use the \t character.
-                setActiveIdUsingKey(Key.Tab)
+                Key.Tab.setOwner(id)
         }
 
         // We have an edge case if ActiveId was set through another widget (e.g. widget being swapped), clear id immediately (don't wait until the end of the function)

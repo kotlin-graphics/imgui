@@ -45,6 +45,7 @@ import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
 import imgui.ImGui.style
+import imgui.ImGui.testOwner
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.*
@@ -256,8 +257,8 @@ fun navUpdateWindowing() {
     // Start CTRL+TAB or Square+L/R window selection
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
-    val startWindowingWithGamepad = allowWindowing && navGamepadActive && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(false)
-    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed(false) // Note: enabled even without NavEnableKeyboard!
+    val startWindowingWithGamepad = allowWindowing && navGamepadActive && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(0, InputFlag.None.i)
+    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed(KeyOwner_None) // Note: enabled even without NavEnableKeyboard!
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootWindow; g.navWindowingTargetAnim = it.rootWindow
@@ -309,14 +310,15 @@ fun navUpdateWindowing() {
     // Keyboard: Press and Release ALT to toggle menu layer
     // - Testing that only Alt is tested prevents Alt+Shift or AltGR from toggling menu layer.
     // - AltGR is normally Alt+Ctrl but we can't reliably detect it (not all backends/systems/layout emit it as Alt+Ctrl). But even on keyboards without AltGR we don't want Alt+Ctrl to open menu anyway.
-    if (navKeyboardActive && Key.Mod_Alt.isPressed) {
+    if (navKeyboardActive && Key.Mod_Alt.isPressed(KeyOwner_None)) {
         g.navWindowingToggleLayer = true
         g.navInputSource = InputSource.Keyboard
     }
     if (g.navWindowingToggleLayer && g.navInputSource == InputSource.Keyboard) {
         // We cancel toggling nav layer when any text has been typed (generally while holding Alt). (See #370)
         // We cancel toggling nav layer when other modifiers are pressed. (See #4439)
-        if (io.inputQueueCharacters.isNotEmpty() || io.keyCtrl || io.keyShift || io.keySuper)
+        // We cancel toggling nav layer if an owner has claimed the key.
+        if (io.inputQueueCharacters.isNotEmpty() || io.keyCtrl || io.keyShift || io.keySuper || !Key.Mod_Alt.testOwner(KeyOwner_None))
             g.navWindowingToggleLayer = false
 
         // Apply layer toggle on release
@@ -446,15 +448,14 @@ fun navUpdateCancelRequest() {
 
     val navGamepadActive = g.io.configFlags has ConfigFlag.NavEnableGamepad && g.io.backendFlags has BackendFlag.HasGamepad
     val navKeyboardActive = g.io.configFlags has ConfigFlag.NavEnableKeyboard
-    if (!(navKeyboardActive && Key.Escape.isPressed(false)) && !(navGamepadActive && Key._NavGamepadCancel.isPressed(false)))
+    if (!(navKeyboardActive && Key.Escape.isPressed(KeyOwner_None)) && !(navGamepadActive && Key._NavGamepadCancel.isPressed(KeyOwner_None)))
         return
 
     IMGUI_DEBUG_LOG_NAV("[nav] NavUpdateCancelRequest")
     val navWindow = g.navWindow
-    if (g.activeId != 0) {
-        if (!isActiveIdUsingKey(Key.Escape) && !isActiveIdUsingKey(Key._NavGamepadCancel))
-            clearActiveID()
-    } else if (g.navLayer != NavLayer.Main) {
+    if (g.activeId != 0)
+        clearActiveID()
+    else if (g.navLayer != NavLayer.Main) {
         // Leave the "menu" layer
         navRestoreLayer(NavLayer.Main)
         navRestoreHighlightAfterMove()
@@ -497,13 +498,13 @@ fun navUpdateCreateMoveRequest() {
         g.navMoveScrollFlags = ScrollFlag.None.i
         if (window != null && g.navWindowingTarget == null && window.flags hasnt Wf.NoNavInputs) {
             val repeatMode = InputFlag.Repeat or InputFlag.RepeatRateNavMove
-            if (!isActiveIdUsingNavDir(Dir.Left) && ((navGamepadActive && Key.GamepadDpadLeft.isPressedEx(repeatMode)) || (navKeyboardActive && Key.LeftArrow.isPressedEx(repeatMode))))
+            if (!isActiveIdUsingNavDir(Dir.Left) && ((navGamepadActive && Key.GamepadDpadLeft.isPressed(KeyOwner_None, repeatMode)) || (navKeyboardActive && Key.LeftArrow.isPressed(KeyOwner_None, repeatMode))))
                 g.navMoveDir = Dir.Left
-            if (!isActiveIdUsingNavDir(Dir.Right) && ((navGamepadActive && Key.GamepadDpadRight.isPressedEx(repeatMode)) || (navKeyboardActive && Key.RightArrow.isPressedEx(repeatMode))))
+            if (!isActiveIdUsingNavDir(Dir.Right) && ((navGamepadActive && Key.GamepadDpadRight.isPressed(KeyOwner_None, repeatMode)) || (navKeyboardActive && Key.RightArrow.isPressed(KeyOwner_None, repeatMode))))
                 g.navMoveDir = Dir.Right
-            if (!isActiveIdUsingNavDir(Dir.Up) && ((navGamepadActive && Key.GamepadDpadUp.isPressedEx(repeatMode)) || (navKeyboardActive && Key.UpArrow.isPressedEx(repeatMode))))
+            if (!isActiveIdUsingNavDir(Dir.Up) && ((navGamepadActive && Key.GamepadDpadUp.isPressed(KeyOwner_None, repeatMode)) || (navKeyboardActive && Key.UpArrow.isPressed(KeyOwner_None, repeatMode))))
                 g.navMoveDir = Dir.Up
-            if (!isActiveIdUsingNavDir(Dir.Down) && ((navGamepadActive && Key.GamepadDpadDown.isPressedEx(repeatMode)) || (navKeyboardActive && Key.DownArrow.isPressedEx(repeatMode))))
+            if (!isActiveIdUsingNavDir(Dir.Down) && ((navGamepadActive && Key.GamepadDpadDown.isPressed(KeyOwner_None, repeatMode)) || (navKeyboardActive && Key.DownArrow.isPressed(KeyOwner_None, repeatMode))))
                 g.navMoveDir = Dir.Down
         }
         g.navMoveDir = g.navMoveDir
@@ -588,7 +589,7 @@ fun navUpdateCreateTabbingRequest() {
     if (window == null || g.navWindowingTarget != null || window.flags has Wf.NoNavInputs)
         return
 
-    val tabPressed = Key.Tab isPressed true && !isActiveIdUsingKey(Key.Tab) && !g.io.keyCtrl && !g.io.keyAlt
+    val tabPressed = Key.Tab.isPressed(KeyOwner_None, InputFlag.Repeat.i) && !g.io.keyCtrl && !g.io.keyAlt
     if (!tabPressed)
         return
 
@@ -614,10 +615,10 @@ fun navUpdatePageUpPageDown(): Float {
     if (window.flags has Wf.NoNavInputs || g.navWindowingTarget != null || g.navLayer != NavLayer.Main)
         return 0f
 
-    val pageUpHeld = Key.PageUp.isDown && !isActiveIdUsingKey(Key.PageUp)
-    val pageDownHeld = Key.PageDown.isDown && !isActiveIdUsingKey(Key.PageDown)
-    val homePressed = Key.Home.isPressed && !isActiveIdUsingKey(Key.Home)
-    val endPressed = Key.End.isPressed && !isActiveIdUsingKey(Key.End)
+    val pageUpHeld = Key.PageUp.isDown(KeyOwner_None)
+    val pageDownHeld = Key.PageDown isDown KeyOwner_None
+    val homePressed = Key.Home.isPressed(KeyOwner_None, InputFlag.Repeat.i)
+    val endPressed = Key.End.isPressed(KeyOwner_None, InputFlag.Repeat.i)
     if (pageUpHeld == pageDownHeld && homePressed == endPressed) // Proceed if either (not both) are pressed, otherwise early out
         return 0f
 
@@ -627,8 +628,8 @@ fun navUpdatePageUpPageDown(): Float {
     if (window.dc.navLayersActiveMask == 0x00 && window.dc.navHasScroll) {
         // Fallback manual-scroll when window has no navigable item
         when {
-            Key.PageUp isPressed true -> window.setScrollY(window.scroll.y - window.innerRect.height)
-            Key.PageDown isPressed true -> window.setScrollY(window.scroll.y + window.innerRect.height)
+            Key.PageUp.isPressed(KeyOwner_None, InputFlag.Repeat.i) -> window.setScrollY(window.scroll.y - window.innerRect.height)
+            Key.PageDown.isPressed(KeyOwner_None, InputFlag.Repeat.i) -> window.setScrollY(window.scroll.y + window.innerRect.height)
             homePressed -> window setScrollY 0f
             endPressed -> window setScrollY window.scrollMax.y
         }

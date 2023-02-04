@@ -13,11 +13,13 @@ import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.loadIniSettingsFromDisk
 import imgui.ImGui.mainViewport
 import imgui.ImGui.markIniSettingsDirty
+import imgui.ImGui.ownerData
 import imgui.ImGui.renderBullet
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
+import imgui.ImGui.testOwner
 import imgui.ImGui.toKey
 import imgui.ImGui.topMostAndVisiblePopupModal
 import imgui.api.g
@@ -77,6 +79,17 @@ fun updateKeyboardInputs() {
     for (keyData in io.keysData) {
         keyData.downDurationPrev = keyData.downDuration
         keyData.downDuration = if (keyData.down) (if (keyData.downDuration < 0f) 0f else keyData.downDuration + io.deltaTime) else -1f
+    }
+
+    // Update keys/input owner (named keys only): one entry per key
+    for (keyIdx in Key.BEGIN until Key.END) {
+        val key = Key of keyIdx
+        val keyData = key.data
+        val ownerData = key.ownerData
+        ownerData.ownerCurr = ownerData.ownerNext
+        if (!keyData.down) // Important: ownership is released on the frame after a release. Ensure a 'MouseDown -> CloseWindow -> MouseUp' chain doesn't lead to someone else seeing the MouseUp.
+            ownerData.ownerNext = KeyOwner_None
+        ownerData.lockThisFrame = ownerData.lockUntilRelease && keyData.down; ownerData.lockUntilRelease = ownerData.lockThisFrame  // Clear LockUntilRelease when key is not Down anymore
     }
 }
 
@@ -184,12 +197,8 @@ fun updateMouseWheel() {
         lockWheelingWindow(null)
     }
 
-    val hoveredIdUsingMouseWheel = g.hoveredIdPreviousFrame != 0 && g.hoveredIdPreviousFrameUsingMouseWheel
-    val activeIdUsingMouseWheelX = g.activeIdUsingKeyInputMask testBit Key.MouseWheelX.i
-    val activeIdUsingMouseWheelY = g.activeIdUsingKeyInputMask testBit Key.MouseWheelY.i
-
-    val wheel = Vec2(if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelX) g.io.mouseWheelH else 0f,
-                     if (!hoveredIdUsingMouseWheel && !activeIdUsingMouseWheelY) g.io.mouseWheel else 0f)
+    val wheel = Vec2(if (Key.MouseWheelX testOwner KeyOwner_None) g.io.mouseWheelH else 0f,
+                     if (Key.MouseWheelY testOwner KeyOwner_None) g.io.mouseWheel else 0f)
     if (wheel.x == 0f && wheel.y == 0f)
         return
 

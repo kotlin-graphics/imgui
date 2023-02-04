@@ -146,6 +146,8 @@ operator fun ItemStatusFlags.minus(flag: ItemStatusFlag): ItemStatusFlags = wo(f
 operator fun ItemStatusFlags.div(flag: ItemStatusFlag): ItemStatusFlags = or(flag)
 
 
+typealias ButtonFlags = Int
+
 enum class ButtonFlag(val i: ButtonFlags) {
 
     None(0),
@@ -234,8 +236,9 @@ infix fun ButtonFlags.xor(b: ButtonFlag): ButtonFlags = xor(b.i)
 infix fun ButtonFlags.has(b: ButtonFlag): Boolean = and(b.i) != 0
 infix fun ButtonFlags.hasnt(b: ButtonFlag): Boolean = and(b.i) == 0
 infix fun ButtonFlags.wo(b: ButtonFlag): ButtonFlags = and(b.i.inv())
+operator fun ButtonFlags.minus(flag: ButtonFlag): ButtonFlags = wo(flag)
+operator fun ButtonFlags.div(flag: ButtonFlag): ButtonFlags = or(flag)
 
-typealias ButtonFlags = Int
 
 
 typealias SeparatorFlags = Int

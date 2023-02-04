@@ -135,10 +135,8 @@ interface main {
         if (g.hoveredId != 0 && g.activeId != g.hoveredId)
             g.hoveredIdNotActiveTimer += io.deltaTime
         g.hoveredIdPreviousFrame = g.hoveredId
-        g.hoveredIdPreviousFrameUsingMouseWheel = g.hoveredIdUsingMouseWheel
         g.hoveredId = 0
         g.hoveredIdAllowOverlap = false
-        g.hoveredIdUsingMouseWheel = false
         g.hoveredIdDisabled = false
 
         // Clear ActiveID if the item is not alive anymore.
@@ -164,7 +162,7 @@ interface main {
             g.tempInputId = 0
         if (g.activeId == 0) {
             g.activeIdUsingNavDirMask = 0
-            g.activeIdUsingKeyInputMask.clearAllBits()
+            g.activeIdUsingAllKeyboardKeys = false
         }
 
         // Update hover delay for IsItemHovered() with delays and tooltips

@@ -43,10 +43,10 @@ fun TabBar.layout() {
             tabs[tabDstN] = tabs[tabSrcN]
 
         // We will need sorting if tabs have changed section (e.g. moved from one of Leading/Central/Trailing to another)
-        val currTabSectionN = TabBar.tabItemGetSectionIdx(tab)
+        val currTabSectionN = tabItemGetSectionIdx(tab)
         if (tabDstN > 0) {
             val prevTab = tabs[tabDstN - 1]
-            val prevTabSectionN = TabBar.tabItemGetSectionIdx(prevTab)
+            val prevTabSectionN = tabItemGetSectionIdx(prevTab)
             if (currTabSectionN == 0 && prevTabSectionN != 0)
                 needSortBySection = true
             if (prevTabSectionN == 2 && currTabSectionN != 2)
@@ -62,7 +62,7 @@ fun TabBar.layout() {
             tabs.pop()
 
     if (needSortBySection)
-        tabs.sortWith(TabBar.tabItemComparerBySection)
+        tabs.sortWith(tabItemComparerBySection)
 
     // Calculate spacing between sections
     sections[0].spacing =
@@ -120,7 +120,7 @@ fun TabBar.layout() {
         val hasCloseButtonOrUnsavedMarker = tab.flags hasnt TabItemFlag._NoCloseButton || tab.flags has TabItemFlag.UnsavedDocument
         tab.contentWidth = if (tab.requestedWidth >= 0f) tab.requestedWidth else ImGui.tabItemCalcSize(tab.name, hasCloseButtonOrUnsavedMarker).x
 
-        val sectionN = TabBar.tabItemGetSectionIdx(tab)
+        val sectionN = tabItemGetSectionIdx(tab)
         val section = sections[sectionN]
         section.width += tab.contentWidth + if (sectionN == currSectionN) g.style.itemInnerSpacing.x else 0f
         currSectionN = sectionN
@@ -172,7 +172,7 @@ fun TabBar.layout() {
                 continue
 
             shrinkedWidth = 1f max shrinkedWidth
-            val sectionN = TabBar.tabItemGetSectionIdx(tab)
+            val sectionN = tabItemGetSectionIdx(tab)
             sections[sectionN].width -= tab.width - shrinkedWidth
             tab.width = shrinkedWidth
         }

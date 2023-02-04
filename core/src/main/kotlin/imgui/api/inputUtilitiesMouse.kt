@@ -4,12 +4,17 @@ import glm_.i
 import glm_.vec2.Vec2
 import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.io
+import imgui.ImGui.isClicked
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.style
+import imgui.ImGui.testOwner
+import imgui.ImGui.toKey
 import imgui.MOUSE_INVALID
 import imgui.MouseButton
 import imgui.MouseCursor
 import imgui.internal.classes.Rect
+import imgui.internal.sections.InputFlag
+import imgui.internal.sections.KeyOwner_Any
 
 /** Inputs Utilities: Mouse
  *  - To refer to a mouse button, you may use named enums in your code e.g. ImGuiMouseButton_Left, ImGuiMouseButton_Right.
@@ -20,21 +25,11 @@ interface inputUtilitiesMouse {
     /** is mouse button held?   */
     fun isMouseDown(button: MouseButton): Boolean {
         assert(button.i in io.mouseDown.indices)
-        return io.mouseDown[button.i]
+        return io.mouseDown[button.i] && button.toKey() testOwner KeyOwner_Any // should be same as IsKeyDown(MouseButtonToKey(button), ImGuiKeyOwner_Any), but this allows legacy code hijacking the io.Mousedown[] array.
     }
 
     /** did mouse button clicked? (went from !Down to Down). Same as GetMouseClickedCount() == 1. */
-    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean {
-        assert(button != MouseButton.None)
-        if (!g.io.mouseDown[button.i]) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on input ownership)
-            return false
-        val t = io.mouseDownDuration[button.i]
-        if (t == 0f)
-            return true
-        if (repeat && t > io.keyRepeatDelay)
-            return calcTypematicRepeatAmount(t - io.deltaTime, t, io.keyRepeatDelay, io.keyRepeatRate * 0.5f) > 0
-        return false
-    }
+    fun isMouseClicked(button: MouseButton, repeat: Boolean = false): Boolean = button.isClicked(KeyOwner_Any, if (repeat) InputFlag.Repeat.i else InputFlag.None.i)
 
     fun isMouseReleased(button: Int): Boolean = isMouseReleased(MouseButton of button)
 
@@ -43,7 +38,7 @@ interface inputUtilitiesMouse {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
 
-        return io.mouseReleased[button.i]
+        return io.mouseReleased[button.i] && button.toKey() testOwner KeyOwner_Any // Should be same as IsKeyReleased(MouseButtonToKey(button), ImGuiKeyOwner_Any)
     }
 
 
@@ -52,7 +47,7 @@ interface inputUtilitiesMouse {
         if (button == MouseButton.None)
             return false // The None button is never clicked.
 
-        return io.mouseClickedCount[button.i] == 2
+        return io.mouseClickedCount[button.i] == 2 && button.toKey() testOwner KeyOwner_Any
     }
 
     /** return the number of successive mouse-clicks at the time where a click happen (otherwise 0). */

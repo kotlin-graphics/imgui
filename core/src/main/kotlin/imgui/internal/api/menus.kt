@@ -121,7 +121,9 @@ internal interface menus {
             beginDisabled()
         val offsets = window.dc.menuColumns
         val pressed: Boolean
-        val selectableFlags = SelectableFlag._NoHoldingActiveID or SelectableFlag._SelectOnClick or SelectableFlag.DontClosePopups
+
+        // We use ImGuiSelectableFlags_NoSetKeyOwner to allow down on one menu item, move, up on another.
+        val selectableFlags = SelectableFlag._NoHoldingActiveID or SelectableFlag._NoSetKeyOwner or SelectableFlag._SelectOnClick or SelectableFlag.DontClosePopups
         if (window.dc.layoutType == LayoutType.Horizontal) {
             // Menu inside an horizontal menu bar
             // Selectable extend their highlight by half ItemSpacing in each direction.
@@ -271,7 +273,8 @@ internal interface menus {
         if (!enabled)
             beginDisabled()
 
-        val selectableFlags = SelectableFlag._SelectOnRelease or SelectableFlag._SetNavIdOnHover
+        // We use ImGuiSelectableFlags_NoSetKeyOwner to allow down on one menu item, move, up on another.
+        val selectableFlags = SelectableFlag._SelectOnRelease or SelectableFlag._NoSetKeyOwner or SelectableFlag._SetNavIdOnHover
         val offsets = window.dc.menuColumns
         if (window.dc.layoutType == LayoutType.Horizontal) {
             // Mimic the exact layout spacing of BeginMenu() to allow MenuItem() inside a menu bar, which is a little misleading but may be useful

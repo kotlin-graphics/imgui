@@ -16,14 +16,15 @@ import imgui.ImGui.getMouseClickedCount
 import imgui.ImGui.getMouseDragDelta
 import imgui.ImGui.inputText
 import imgui.ImGui.io
+import imgui.ImGui.isDown
 import imgui.ImGui.isItemActive
-import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isMouseReleased
-import imgui.ImGui.mouseCursor
+import imgui.ImGui.isPressed
+import imgui.ImGui.isReleased
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.pushAllowKeyboardFocus
 import imgui.ImGui.sameLine

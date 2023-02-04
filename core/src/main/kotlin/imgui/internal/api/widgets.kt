@@ -32,6 +32,7 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
+import imgui.ImGui.startMouseMoving
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.internal.*

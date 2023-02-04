@@ -11,6 +11,7 @@ import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.isPowerOfTwo
 import imgui.internal.sections.*
+import imgui.static.calcNextScrollFromScrollTargetAndClamp
 
 // Scrolling
 internal interface scrolling {

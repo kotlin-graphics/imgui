@@ -16,8 +16,10 @@ import imgui.ImGui.focusWindow
 import imgui.ImGui.hoveredId
 import imgui.ImGui.indent
 import imgui.ImGui.io
+import imgui.ImGui.isClicked
+import imgui.ImGui.isDown
 import imgui.ImGui.isItemHovered
-import imgui.ImGui.isMouseClicked
+import imgui.ImGui.isReleased
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemHoverable
 import imgui.ImGui.itemSize
@@ -35,8 +37,11 @@ import imgui.ImGui.renderTextClipped
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.setItemAllowOverlap
+import imgui.ImGui.setOwner
 import imgui.ImGui.sliderBehaviorT
 import imgui.ImGui.style
+import imgui.ImGui.testOwner
+import imgui.ImGui.toKey
 import imgui.api.g
 import imgui.internal.classes.Rect
 import imgui.internal.floor
@@ -170,27 +175,31 @@ internal interface widgetsLowLevelBehaviors {
             hovered = false
 
         // Mouse handling
+        val testOwnerId = if (flags has Bf.NoTestKeyOwner) KeyOwner_Any else id
         if (hovered) {
 
             if (flags hasnt Bf.NoKeyModifiers || (!io.keyCtrl && !io.keyShift && !io.keyAlt)) {
 
                 // Poll buttons
                 val mouseButtonClicked = when {
-                    flags has Bf.MouseButtonLeft && io.mouseClicked[0] -> 0
-                    flags has Bf.MouseButtonRight && io.mouseClicked[1] -> 1
-                    flags has Bf.MouseButtonMiddle && io.mouseClicked[2] -> 2
-                    else -> -1
+                    flags has Bf.MouseButtonLeft && MouseButton.Left.isClicked(testOwnerId) -> MouseButton.Left
+                    flags has Bf.MouseButtonRight && MouseButton.Right.isClicked(testOwnerId) -> MouseButton.Right
+                    flags has Bf.MouseButtonMiddle && MouseButton.Middle.isClicked(testOwnerId) -> MouseButton.Middle
+                    else -> MouseButton.None
                 }
 
-                if (mouseButtonClicked != -1 && g.activeId != id) {
+                if (mouseButtonClicked != MouseButton.None && g.activeId != id) {
+
+                    if (flags hasnt Bf.NoSetKeyOwner)
+                        mouseButtonClicked.toKey().setOwner(id)
                     if (flags has (Bf.PressedOnClickRelease or Bf.PressedOnClickReleaseAnywhere)) {
                         setActiveID(id, window)
-                        g.activeIdMouseButton = mouseButtonClicked
+                        g.activeIdMouseButton = mouseButtonClicked.i
                         if (flags hasnt Bf.NoNavFocus)
                             setFocusID(id, window)
                         focusWindow(window)
                     }
-                    if (flags has Bf.PressedOnClick || (flags has Bf.PressedOnDoubleClick && io.mouseClickedCount[mouseButtonClicked] == 2)) {
+                    if (flags has Bf.PressedOnClick || (flags has Bf.PressedOnDoubleClick && io.mouseClickedCount[mouseButtonClicked.i] == 2)) {
                         pressed = true
                         if (flags has Bf.NoHoldingActiveId)
                             clearActiveID()
@@ -198,15 +207,15 @@ internal interface widgetsLowLevelBehaviors {
                             setActiveID(id, window) // Hold on ID
                         if (flags hasnt Bf.NoNavFocus)
                             setFocusID(id, window)
-                        g.activeIdMouseButton = mouseButtonClicked
+                        g.activeIdMouseButton = mouseButtonClicked.i
                         focusWindow(window)
                     }
                 }
                 if (flags has Bf.PressedOnRelease) {
                     val mouseButtonReleased = when {
-                        flags has Bf.MouseButtonLeft && io.mouseReleased[0] -> 0
-                        flags has Bf.MouseButtonRight && io.mouseReleased[1] -> 1
-                        flags has Bf.MouseButtonMiddle && io.mouseReleased[2] -> 2
+                        flags has Bf.MouseButtonLeft && MouseButton.Left.isReleased(testOwnerId) -> 0
+                        flags has Bf.MouseButtonRight && MouseButton.Right.isReleased(testOwnerId) -> 1
+                        flags has Bf.MouseButtonMiddle && MouseButton.Middle.isReleased(testOwnerId) -> 2
                         else -> -1
                     }
                     if (mouseButtonReleased != -1) {
@@ -223,7 +232,7 @@ internal interface widgetsLowLevelBehaviors {
                 Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing
                 finer RepeatDelay/RepeatRate settings.  */
                 if (g.activeId == id && flags has Bf.Repeat)
-                    if (io.mouseDownDuration[g.activeIdMouseButton] > 0f && isMouseClicked(MouseButton of g.activeIdMouseButton, true))
+                    if (io.mouseDownDuration[g.activeIdMouseButton] > 0f && (MouseButton of g.activeIdMouseButton).isClicked(testOwnerId, InputFlag.Repeat.i))
                         pressed = true
             }
 
@@ -263,18 +272,18 @@ internal interface widgetsLowLevelBehaviors {
                 if (g.activeIdIsJustActivated)
                     g.activeIdClickOffset = io.mousePos - bb.min
 
-                val mouseButton = g.activeIdMouseButton
-                assert(mouseButton >= 0 && mouseButton < MouseButton.COUNT)
-                if (io.mouseDown[mouseButton])
+                val mouseButton = MouseButton of g.activeIdMouseButton
+                if (mouseButton isDown testOwnerId)
                     held = true
                 else {
                     val releaseIn = hovered && flags has Bf.PressedOnClickRelease
                     val releaseAnywhere = flags has Bf.PressedOnClickReleaseAnywhere
                     if ((releaseIn || releaseAnywhere) && !g.dragDropActive) {
                         // Report as pressed when releasing the mouse (this is the most common path)
-                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && g.io.mouseReleased[mouseButton] && io.mouseClickedLastCount[mouseButton] == 2
-                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton] >= io.keyRepeatDelay // Repeat mode trumps <on release>
-                        if (!isDoubleClickRelease && !isRepeatingAlready)
+                        val isDoubleClickRelease = flags has Bf.PressedOnDoubleClick && g.io.mouseReleased[mouseButton.i] && io.mouseClickedLastCount[mouseButton.i] == 2
+                        val isRepeatingAlready = flags has Bf.Repeat && io.mouseDownDurationPrev[mouseButton.i] >= io.keyRepeatDelay // Repeat mode trumps <on release>
+                        val isButtonAvailOrOwned = mouseButton.toKey() testOwner testOwnerId
+                        if (!isDoubleClickRelease && !isRepeatingAlready && isButtonAvailOrOwned)
                             pressed = true
                     }
                     clearActiveID()

@@ -161,7 +161,7 @@ internal interface inputs {
     // - SetKeyOwner(..., None)              : clears owner
     // - SetKeyOwner(..., Any, !Lock)        : illegal (assert)
     // - SetKeyOwner(..., Any or None, Lock) : set lock
-    fun Key.setKeyOwner(ownerId: ID, flags: InputFlags = 0) {
+    fun Key.setOwner(ownerId: ID, flags: InputFlags = 0) {
 
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
 
@@ -190,7 +190,7 @@ internal interface inputs {
         if (flags hasnt InputFlag.CondMask_)
             flags /= InputFlag.CondDefault_
         if ((g.hoveredId == id && flags has InputFlag.CondHovered) || (g.activeId == id && flags has InputFlag.CondActive))
-            setKeyOwner(id, flags)
+            setOwner(id, flags)
     }
 
     // TestKeyOwner(..., ID)   : (owner == None || owner == ID)

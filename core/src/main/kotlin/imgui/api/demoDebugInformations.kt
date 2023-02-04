@@ -43,15 +43,19 @@ import imgui.ImGui.fontSize
 import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
+import imgui.ImGui.getInstanceData
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
 import imgui.ImGui.io
+import imgui.ImGui.isDown
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseHoveringRect
+import imgui.ImGui.isPressed
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
+import imgui.ImGui.ownerData
 import imgui.ImGui.popID
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushID
@@ -90,12 +94,14 @@ import imgui.classes.Style
 import imgui.demo.ExampleApp
 import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
+import imgui.dsl.listBox
 import imgui.dsl.treeNode
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.internal.api.debugTools.Companion.metricsHelpMarker
 import imgui.internal.classes.*
 import imgui.internal.formatString
+import imgui.internal.sections.KeyOwner_None
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.hasnt
 import imgui.internal.sections.testEngine_FindItemDebugLabel
@@ -387,7 +393,21 @@ interface demoDebugInformations {
             }
         }
 
-        // Misc Details
+        treeNode("Key Owners") {
+            textUnformatted("Key Owners:")
+            listBox("##owners", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
+                for (keyIdx in Key.BEGIN until Key.END) {
+                    val key = Key of keyIdx
+                    val ownerData = key.ownerData
+                    if (ownerData.ownerCurr == KeyOwner_None)
+                        continue
+                    text("$key: 0x%08X${if (ownerData.lockUntilRelease) " LockUntilRelease" else if (ownerData.lockThisFrame) " LockThisFrame" else ""}", ownerData.ownerCurr)
+                    debugLocateItemOnHover(ownerData.ownerCurr)
+                }
+            }
+            text("(ActiveIdUsing: AllKeyboardKeys: %d, NavDirMask: 0x%X)", g.activeIdUsingAllKeyboardKeys, g.activeIdUsingNavDirMask)
+        }
+
         if (treeNode("Internal state")) {
 
             // [JVM] redundant
@@ -408,11 +428,7 @@ interface demoDebugInformations {
                 debugLocateItemOnHover(g.activeId)
                 text("ActiveIdWindow: '${g.activeIdWindow?.name}'")
 
-
-                var activeIdUsingKeyInputCount = 0
-                for (n in Key.values().indices)
-                    activeIdUsingKeyInputCount += if (g.activeIdUsingKeyInputMask[n]) 1 else 0
-                text("ActiveIdUsing: NavDirMask: %X, KeyInputMask: $activeIdUsingKeyInputCount key(s)", g.activeIdUsingNavDirMask, g.activeIdUsingKeyInputMask)
+                text("ActiveIdUsing: AllKeyboardKeys: ${g.activeIdUsingAllKeyboardKeys} NavDirMask: %X", g.activeIdUsingNavDirMask)
                 text("HoveredId: 0x%08X (%.2f sec), AllowOverlap: ${g.hoveredIdAllowOverlap.i}", g.hoveredIdPreviousFrame, g.hoveredIdTimer) // Not displaying g.HoveredId as it is update mid-frame
                 text("HoverDelayId: 0x%08X, Timer: %.2f, ClearTimer: %.2f", g.hoverDelayId, g.hoverDelayTimer, g.hoverDelayClearTimer)
                 text("DragDrop: ${g.dragDropActive.i}, SourceId = 0x%08X, Payload \"${g.dragDropPayload.dataType}\" (${g.dragDropPayload.dataSize} bytes)", g.dragDropPayload.sourceId)

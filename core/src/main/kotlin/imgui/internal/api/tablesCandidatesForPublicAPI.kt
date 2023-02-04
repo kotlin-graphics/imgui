@@ -14,6 +14,7 @@ import imgui.ImGui.style
 import imgui.ImGui.tableGetColumnCount
 import imgui.ImGui.tableGetColumnFlags
 import imgui.ImGui.tableGetColumnName
+import imgui.ImGui.updateColumnsWeightFromWidth
 import imgui.internal.classes.TableColumnIdx
 import imgui.TableColumnFlag as Tcf
 import imgui.TableFlag as Tf

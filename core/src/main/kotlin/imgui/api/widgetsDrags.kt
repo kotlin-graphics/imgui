@@ -17,6 +17,7 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
 import imgui.ImGui.format
 import imgui.ImGui.io
+import imgui.ImGui.isClicked
 import imgui.ImGui.isMouseDragPastThreshold
 import imgui.ImGui.logSetNextTextDecoration
 import imgui.ImGui.popID
@@ -26,8 +27,10 @@ import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
+import imgui.ImGui.setOwner
 import imgui.ImGui.style
 import imgui.ImGui.tempInputScalar
+import imgui.ImGui.testOwner
 import imgui.ImGui.textEx
 import imgui.internal.classes.Rect
 import imgui.internal.sections.*
@@ -245,9 +248,11 @@ interface widgetsDrags {
 
             // Tabbing or CTRL-clicking on Drag turns it into an InputText
             val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
-            val clicked = hovered && ImGui.io.mouseClicked[0]
-            val doubleClicked = hovered && g.io.mouseClickedCount[0] == 2
+            val clicked = hovered && MouseButton.Left.isClicked(id)
+            val doubleClicked = hovered && g.io.mouseClickedCount[0] == 2 && Key.MouseLeft testOwner id
             val makeActive = inputRequestedByTabbing || clicked || doubleClicked || g.navActivateId == id || g.navActivateInputId == id
+            if (makeActive && (clicked || doubleClicked))
+                Key.MouseLeft.setOwner(id)
             if (makeActive && tempInputAllowed)
                     if (inputRequestedByTabbing || (clicked && ImGui.io.keyCtrl) || doubleClicked || g.navActivateInputId == id)
                         tempInputIsActive = true

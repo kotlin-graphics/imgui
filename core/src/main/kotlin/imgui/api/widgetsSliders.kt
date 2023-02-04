@@ -10,7 +10,9 @@ import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
 import imgui.ImGui.format
+import imgui.ImGui.isClicked
 import imgui.ImGui.logSetNextTextDecoration
+import imgui.ImGui.setOwner
 import imgui.ImGui.tempInputScalar
 import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
@@ -164,8 +166,10 @@ interface widgetsSliders {
 
             // Tabbing or CTRL-clicking on Slider turns it into an input box
             val inputRequestedByTabbing = tempInputAllowed && g.lastItemData.statusFlags has ItemStatusFlag.FocusedByTabbing
-            val clicked = hovered && ImGui.io.mouseClicked[0]
+            val clicked = hovered && MouseButton.Left.isClicked(id)
             val makeActive = inputRequestedByTabbing || clicked || g.navActivateId == id || g.navActivateInputId == id
+            if (makeActive && clicked)
+                Key.MouseLeft.setOwner(id)
             if (makeActive && tempInputAllowed)
                 if (inputRequestedByTabbing || (clicked && g.io.keyCtrl) || g.navActivateInputId == id)
                     tempInputIsActive = true
@@ -296,7 +300,10 @@ interface widgetsSliders {
         val format = format_ ?: if (dataType == DataType.Float || dataType == DataType.Double) "%f" else "%d"
 
         val hovered = ImGui.itemHoverable(frameBb, id)
-        if ((hovered && ImGui.io.mouseClicked[0]) || g.navActivateId == id || g.navActivateInputId == id) {
+        val clicked = hovered && MouseButton.Left.isClicked(id)
+        if (clicked || g.navActivateId == id || g.navActivateInputId == id) {
+            if (clicked)
+                Key.MouseLeft.setOwner(id)
             ImGui.setActiveID(id, window)
             ImGui.setFocusID(id, window)
             ImGui.focusWindow(window)
