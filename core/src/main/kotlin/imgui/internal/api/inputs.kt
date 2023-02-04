@@ -157,6 +157,8 @@ internal interface inputs {
         }
 
 
+    // ~SetKeyOwner
+    // _LockXXX flags are useful to lock keys away from code which is not input-owner aware.
     // When using _LockXXX flags, you can use ImGuiKeyOwner_Any to lock keys from everyone.
     // - SetKeyOwner(..., None)              : clears owner
     // - SetKeyOwner(..., Any, !Lock)        : illegal (assert)
@@ -166,14 +168,12 @@ internal interface inputs {
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
 
         val ownerData = ownerData
-        ownerData.ownerNext = ownerId
+        ownerData.ownerCurr = ownerId; ownerData.ownerNext = ownerId
 
         // We cannot lock by default as it would likely break lots of legacy code.
         // In the case of using LockUntilRelease while key is not down we still lock during the frame (no key_data->Down test)
         ownerData.lockUntilRelease = flags has InputFlag.LockUntilRelease
         ownerData.lockThisFrame = flags has InputFlag.LockThisFrame || ownerData.lockUntilRelease
-        if (ownerData.lockThisFrame)
-            ownerData.ownerCurr = ownerId
     }
 
     // This is more or less equivalent to:
@@ -210,17 +210,9 @@ internal interface inputs {
         if (ownerId == KeyOwner_Any)
             return !ownerData.lockThisFrame
 
-        // FIXME: For consistency with routing may be good to disable that, OR we could differentiate preemptive routing from setting owner on click.
-        // For now it is better to disable so we can actually get report of case where this may matter.
-        // -> Better to move in the SetKeyOwner() call, aka have a flag to set ->OwnerCurr in SetKeyOwner() ?
-        // May simply be inconsistent and unneeded to offer that feature:
-        //  - for typical keyboard/gamepad routing with multiple claims and ServeLast, we don't want to affect owner testing during the frame.
-        //  - for typical mouse routing overlap + hovered window generally prevents making it useful to alter owner testing during the frame.
-        //  - but effectively Locked flag can alter same-frame behavior.
-        //// We want OwnerNext to be handled immediately so SetKeyOwner(key, id1), TestKeyOwner(key, id2) == false
-        //if (owner_data->OwnerNext != ImGuiKeyOwner_None && owner_data->OwnerNext != owner)
-        //    return false;
-
+        // Note: SetKeyOwner() sets OwnerCurr. It is not strictly required for most mouse routing overlap (because of ActiveId/HoveredId
+        // are acting as filter before this has a chance to filter), but sane as soon as user tries to look into things.
+        // Setting OwnerCurr in SetKeyOwner() is more consistent than testing OwnerNext here: would be inconsistent with getter and other functions.
         if (ownerData.ownerCurr != ownerId) {
             if (ownerData.lockThisFrame)
                 return false
