@@ -2,6 +2,7 @@ package imgui.api
 
 import glm_.i
 import imgui.ImGui
+import imgui.ImGui.data
 import imgui.ImGui.isDown
 import imgui.ImGui.isPressed
 import imgui.ImGui.isReleased

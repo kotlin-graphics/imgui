@@ -141,6 +141,11 @@ interface itemWidgetsUtilities {
     val isAnyItemFocused: Boolean
         get() = g.navId != 0 && !g.navDisableHighlight
 
+    /** ~GetItemID
+     *  get ID of last item (~~ often same ImGui::GetID(label) beforehand)     */
+    val itemID: ID
+        get() = g.lastItemData.id
+
     /** get upper-left bounding rectangle of the last item (screen space)
      *  ~GetItemRectMin */
     val itemRectMin: Vec2

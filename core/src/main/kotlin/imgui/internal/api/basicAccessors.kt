@@ -14,11 +14,6 @@ import imgui.static.navUpdateAnyRequestFlag
 // Basic Accessors
 internal interface basicAccessors {
 
-    /** ~GetItemID
-     *  Get ID of last item (~~ often same ImGui::GetID(label) beforehand) */
-    val itemID: ID
-        get() = g.lastItemData.id
-
     /** ~GetItemStatusFlags */
     val itemStatusFlags: ItemStatusFlags
         get() = g.lastItemData.statusFlags
