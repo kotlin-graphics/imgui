@@ -126,19 +126,18 @@ enum class InputFlag(val i: InputFlags) {
     /** Access to key data will requires EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared when key is released or at end of frame is not down. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
     LockUntilRelease(1 shl 7),
 
-    // Routing policies for Shortcut(), SetShortcutRouting()
-    // - When a policy is set, Shortcut() will register itself with SetShortcutRouting(),
+    // Routing policies for Shortcut() + low-level SetShortcutRouting()
+    // - The general idea is that several callers register interest in a shortcut, and only one owner gets it.
+    // - When a policy (other than _RouteAlways) is set, Shortcut() will register itself with SetShortcutRouting(),
     //   allowing the system to decide where to route the input among other route-aware calls.
-    //   The general idea is that several callers register a shortcut, and only one gets it.
-    // - Routing is NOT registered by default, meaning that a simple Shortcut() call
-    //   will see all inputs, won't have any side-effect and won't interfere with other inputs.
-    // - Priorities (highest-to-lowest): GlobalHigh > Focused (when active item) > Global > Focused (when focused window) > GlobalLow.
+    // - Shortcut() uses ImGuiInputFlags_RouteFocused by default: meaning that a simple Shortcut() poll
+    //   will register a route and only succeed when parent window is in the focus stack and if no-one
+    //   with a higher priority is claiming the shortcut.
+    // - Using ImGuiInputFlags_RouteAlways is roughly equivalent to doing e.g. IsKeyPressed(key) + testing mods.
+    // - Priorities: GlobalHigh > Focused (when owner is active item) > Global > Focused (when focused window) > GlobalLow.
     // - Can select only 1 policy among all available.
 
-    /** Do not register route (provided for completeness but technically zero-value) */
-    RouteNone(0),
-
-    /** Register route if focused: Accept inputs if window is in focus stack. Deep-most focused window takes inputs. ActiveId takes inputs over deep-most focused window. */
+    /** (Default) Register focused route: Accept inputs if window is in focus stack. Deep-most focused window takes inputs. ActiveId takes inputs over deep-most focused window. */
     RouteFocused(1 shl 8),
 
     /** Register route globally (lowest priority: unless a focused window or active item registered the route) -> recommended Global priority. */
@@ -149,14 +148,20 @@ enum class InputFlag(val i: InputFlags) {
 
     /** Register route globally (highest priority: unlikely you need to use that: will interfere with every active items) */
     RouteGlobalHigh(1 shl 11),
+
+    /** _Always not part of this! */
     RouteMask_(RouteFocused or RouteGlobal or RouteGlobalLow or RouteGlobalHigh),
 
+    /** Do not register route, poll keys directly. */
+    RouteAlways(1 shl 12),
+
     /** Global routes will not be applied if underlying background/void is focused (== no Dear ImGui windows are focused). Useful for overlay applications. */
-    RouteUnlessBgFocused(1 shl 12),
+    RouteUnlessBgFocused(1 shl 13),
+    RouteExtraMask_(RouteAlways or RouteUnlessBgFocused),
 
     // [Internal] Mask of which function support which flags
     SupportedByIsKeyPressed(Repeat or RepeatRateMask_),
-    SupportedByShortcut(Repeat or RepeatRateMask_ or RouteMask_ or RouteUnlessBgFocused),
+    SupportedByShortcut(Repeat or RepeatRateMask_ or RouteMask_ or RouteExtraMask_),
     SupportedBySetKeyOwner(LockThisFrame or LockUntilRelease),
     SupportedBySetItemKeyOwner(SupportedBySetKeyOwner or CondMask_);
 

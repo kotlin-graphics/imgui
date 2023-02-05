@@ -323,12 +323,14 @@ internal interface inputs {
 
     // - Need to decide how to handle shortcut translations for Non-Mac <> Mac
     // - Ideas: https://github.com/ocornut/imgui/issues/456#issuecomment-264390864
-    fun shortcut(keyChord: KeyChord, ownerId: ID = 0, flags: InputFlags = 0): Boolean {
+    fun shortcut(keyChord: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0): Boolean {
 
-        // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter  with this, so IsKeyPressed() is fine with he 0/Any.
-        if (flags has (InputFlag.RouteMask_ or InputFlag.RouteUnlessBgFocused))
-            if (!setShortcutRouting(keyChord, ownerId, flags, g.currentWindow))
-                return false
+        var flags = flags_
+        // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.
+        if (flags hasnt InputFlag.RouteMask_)
+            flags /= InputFlag.RouteFocused
+        if (!setShortcutRouting(keyChord, ownerId, flags, g.currentWindow))
+            return false
 
         var key = Key of (keyChord wo Key.Mod_Mask_)
         val mods = Key of (keyChord and Key.Mod_Mask_)
@@ -362,14 +364,15 @@ internal interface inputs {
 
         var flags = flags_
         if (flags hasnt InputFlag.RouteMask_)
-            flags = InputFlag.RouteGlobalHigh.i // This is the default for SetShortcutRouting() but NOT Shortcut() which doesn't touch routing by default!
+            flags /= InputFlag.RouteGlobalHigh.i // IMPORTANT: This is the default for SetShortcutRouting() but NOT Shortcut()
         else
             assert((flags and InputFlag.RouteMask_).isPowerOfTwo) { "Check that only 1 routing flag is used" }
-        assert(ownerId != KeyOwner_None)
 
         if (flags has InputFlag.RouteUnlessBgFocused)
             if (g.navWindow == null)
                 return false
+        if (flags has InputFlag.RouteAlways)
+            return true
 
         // Current score encoding (lower is highest priority):
         //  -   0: ImGuiInputFlags_RouteGlobalHigh
