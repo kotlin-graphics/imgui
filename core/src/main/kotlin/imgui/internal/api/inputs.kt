@@ -19,12 +19,24 @@ import imgui.internal.sections.*
  *  FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions. */
 internal interface inputs {
 
+
+    /** ~IsNamedKey */
     val Key.isNamed: Boolean
         get() = i in Key.BEGIN until Key.END
+
+    /** ~IsNamedKeyOrModKey */
     val Key.isNamedOrMod: Boolean
         get() = isNamed || this == Key.Mod_Ctrl || this == Key.Mod_Shift || this == Key.Mod_Alt || this == Key.Mod_Super
 
     //    inline bool             IsLegacyKey(ImGuiKey key)                                   { return key >= ImGuiKey_LegacyNativeKey_BEGIN && key < ImGuiKey_LegacyNativeKey_END; }
+
+    /** ~IsKeyboardKey */
+    val Key.isKeyboardKey: Boolean
+        get() = i in Key.Keyboard_BEGIN until Key.Keyboard_END
+
+    /** ~IsMouseKey */
+    val Key.isMouse: Boolean
+        get() = i in Key.Mouse_BEGIN until Key.Mouse_END
 
     /** ~IsGamepadKey */
     val Key.isGamepad: Boolean

@@ -1295,8 +1295,10 @@ enum class Key(i: KeyChord? = null) {
         val Keyboard_END = GamepadStart.i
         val Gamepad_BEGIN = GamepadStart.i
         val Gamepad_END = MouseLeft.i
-        val Aliases_BEGIN = MouseLeft.i
-        val Aliases_END = ReservedForModCtrl.i
+        val Mouse_BEGIN = MouseLeft.i
+        val Mouse_END = ReservedForModCtrl.i
+        val Aliases_BEGIN = Mouse_BEGIN
+        val Aliases_END = Mouse_END
         val Mod_Shortcut = if (Platform.get() == Platform.MACOSX) Mod_Super else Mod_Ctrl
         infix fun of(i: Int) = values().first { it.i == i }
 
@@ -1311,28 +1313,6 @@ enum class Key(i: KeyChord? = null) {
         internal val _NavGamepadMenu = GamepadFaceLeft
         internal val _NavGamepadInput = GamepadFaceUp
     }
-
-    val isNamedOrMod: Boolean
-        get() = (i in BEGIN until END) || this == Mod_Ctrl || this == Mod_Shift || this == Mod_Alt || this == Mod_Super
-
-    /** ~IsGamepadKey */
-    val isGamepad: Boolean
-        get() = i in Gamepad_BEGIN until Gamepad_END
-
-    /** ~IsAliasKey */
-    val isAlias: Boolean
-        get() = i in Aliases_BEGIN until Aliases_END
-
-    /** ~GetKeyData */
-    val data: KeyData
-        get() {
-            var key = this
-            // Special storage location for mods
-            if (i has Mod_Mask_)
-                key = key.convertSingleModFlagToKey()
-
-            return g.io.keysData[key.index]
-        }
 
     infix fun and(b: Key): KeyChord = i and b.i
     infix fun and(b: KeyChord): KeyChord = i and b

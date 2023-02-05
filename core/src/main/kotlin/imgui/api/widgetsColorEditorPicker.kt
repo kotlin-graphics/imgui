@@ -239,8 +239,11 @@ interface widgetsColorEditorPicker {
                 }
         }
 
-        if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) { // TODO check first comparison
+        if (0 != labelDisplayEnd && flags hasnt Cef.NoLabel) {
+            // Position not necessarily next to last submitted button (e.g. if style.ColorButtonPosition == ImGuiDir_Left),
+            // but we need to use SameLine() to setup baseline correctly. Might want to refactor SameLine() to simplify this.
             sameLine(0f, style.itemInnerSpacing.x)
+            window.dc.cursorPos.x = pos.x + if (flags has Cef.NoInputs) wButton else wFull + style.itemInnerSpacing.x
             textEx(label, labelDisplayEnd)
         }
 
