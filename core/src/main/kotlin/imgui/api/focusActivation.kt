@@ -5,14 +5,12 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.isItemVisible
 import imgui.ImGui.navMoveRequestResolveWithLastItem
 import imgui.ImGui.navMoveRequestSubmit
+import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.scrollToRectEx
 import imgui.ImGui.setNavWindow
-import imgui.ImGui.setScrollHereY
-import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.ScrollFlag
-import imgui.internal.sections.or
 import imgui.static.navUpdateAnyRequestFlag
 
 

@@ -73,8 +73,9 @@ internal interface scrolling {
 
         var flags = flags_
 
-        val windowRect = Rect(window.innerRect.min - 1, window.innerRect.max + 1)
-        //GetForegroundDrawList(window)->AddRect(window_rect.Min, window_rect.Max, IM_COL32_WHITE); // [DEBUG]
+        val scrollRect = Rect(window.innerRect.min - 1, window.innerRect.max + 1)
+        //GetForegroundDrawList(window)->AddRect(item_rect.Min, item_rect.Max, IM_COL32(255,0,0,255), 0.0f, 0, 5.0f); // [DEBUG]
+        //GetForegroundDrawList(window)->AddRect(scroll_rect.Min, scroll_rect.Max, IM_COL32_WHITE); // [DEBUG]
 
         // Check that only one behavior is selected per axis
         assert(flags hasnt ScrollFlag.MaskX_ || (flags and ScrollFlag.MaskX_).isPowerOfTwo)
@@ -87,10 +88,10 @@ internal interface scrolling {
         if (flags hasnt ScrollFlag.MaskY_)
             flags /= if (window.appearing) ScrollFlag.AlwaysCenterY else ScrollFlag.KeepVisibleEdgeY
 
-        val fullyVisibleX = itemRect.min.x >= windowRect.min.x && itemRect.max.x <= windowRect.max.x
-        val fullyVisibleY = itemRect.min.y >= windowRect.min.y && itemRect.max.y <= windowRect.max.y
-        val canBeFullyVisibleX = (itemRect.width + g.style.itemSpacing.x * 2f) <= windowRect.width || window.autoFitFrames.x > 0 || window.flags has WindowFlag.AlwaysAutoResize
-        val canBeFullyVisibleY = (itemRect.height + g.style.itemSpacing.y * 2f) <= windowRect.height || window.autoFitFrames.y > 0 || window.flags has WindowFlag.AlwaysAutoResize
+        val fullyVisibleX = itemRect.min.x >= scrollRect.min.x && itemRect.max.x <= scrollRect.max.x
+        val fullyVisibleY = itemRect.min.y >= scrollRect.min.y && itemRect.max.y <= scrollRect.max.y
+        val canBeFullyVisibleX = (itemRect.width + g.style.itemSpacing.x * 2f) <= scrollRect.width || window.autoFitFrames.x > 0 || window.flags has WindowFlag.AlwaysAutoResize
+        val canBeFullyVisibleY = (itemRect.height + g.style.itemSpacing.y * 2f) <= scrollRect.height || window.autoFitFrames.y > 0 || window.flags has WindowFlag.AlwaysAutoResize
 
         if (flags has ScrollFlag.KeepVisibleEdgeX && !fullyVisibleX)
             if (canBeFullyVisibleX)
@@ -103,9 +104,9 @@ internal interface scrolling {
         }
 
         if (flags has ScrollFlag.KeepVisibleEdgeY && !fullyVisibleY) {
-            if (itemRect.min.y < windowRect.min.y || !canBeFullyVisibleY)
+            if (itemRect.min.y < scrollRect.min.y || !canBeFullyVisibleY)
                 window.setScrollFromPosY(itemRect.min.y - g.style.itemSpacing.y - window.pos.y, 0f)
-            else if (itemRect.max.y >= windowRect.max.y)
+            else if (itemRect.max.y >= scrollRect.max.y)
                 window.setScrollFromPosY(itemRect.max.y + g.style.itemSpacing.y - window.pos.y, 1f)
         } else if ((flags has ScrollFlag.KeepVisibleCenterY && !fullyVisibleY) || flags has ScrollFlag.AlwaysCenterY)
             if (canBeFullyVisibleY)
