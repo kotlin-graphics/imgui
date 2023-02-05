@@ -1210,12 +1210,11 @@ class DrawList(sharedData: DrawListSharedData?) {
      *  Note that this leaves the ImDrawList in a state unfit for further commands,
      *  as most code assume that CmdBuffer.Size > 0 && CmdBuffer.back().UserCallback == NULL */
     fun _popUnusedDrawCmd() {
-        if (cmdBuffer.isEmpty())
-            return
-        var currCmd = cmdBuffer.last()
-        while(currCmd.elemCount == 0 && currCmd.userCallback == null) {
+        while (cmdBuffer.isNotEmpty()) {
+            val currCmd = cmdBuffer.last()
+            if (currCmd.elemCount != 0 || currCmd.userCallback != null)
+                return // break;
             cmdBuffer.pop()
-            currCmd = cmdBuffer.last()
         }
     }
 
