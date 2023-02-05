@@ -474,13 +474,13 @@ internal interface inputs {
             idx = routingData.nextEntryIndex
         }
 
-        // Add
-        idx = rt.entries.size
+        // Add to linked-list
+        val routingDataIdx = rt.entries.size
         rt.entries += KeyRoutingData()
-        val routingData = rt.entries[idx]
+        val routingData = rt.entries[routingDataIdx]
         routingData.mods = mods.i
         routingData.nextEntryIndex = rt.index[key] // Setup linked list
-        rt.index[key] = idx
+        rt.index[key] = routingDataIdx
         return routingData
     }
 }

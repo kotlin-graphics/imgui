@@ -242,7 +242,8 @@ internal interface inputText {
 
         }
         if (g.activeId == id) {
-            // Declare our inputs
+
+            // Declare some inputs, the other are registered and polled via Shortcut() routing system.
             if (userClicked)
                 Key.MouseLeft.setOwner(id)
             g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
@@ -250,8 +251,6 @@ internal interface inputText {
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
             Key.Escape.setOwner(id)
             Key._NavGamepadCancel.setOwner(id)
-            Key.Home.setOwner(id)
-            Key.End.setOwner(id)
             if (isMultiline) {
                 Key.PageUp.setOwner(id)
                 Key.PageDown.setOwner(id)
@@ -421,22 +420,23 @@ internal interface inputText {
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
 
-            // Using Shortcut() with ImGuiInputFlags_RouteFocused flag to allow routing operations for other code (e.g. calling window trying to use CTRL+A and CTRL+B: formet would be handled by InputText)
+            // Using Shortcut() with ImGuiInputFlags_RouteFocused (default policy) to allow routing operations for other code (e.g. calling window trying to use CTRL+A and CTRL+B: formet would be handled by InputText)
             // Otherwise we could simply assume that we own the keys as we are active.
-            val shortcutFlags = InputFlag.RouteFocused or InputFlag.Repeat
-            val isCut = (shortcut(Key.Mod_Shortcut or Key.X, id, shortcutFlags) || shortcut(Key.Mod_Shift or Key.Delete, id, shortcutFlags)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
-            val isCopy = (shortcut(Key.Mod_Shortcut or Key.C, id, shortcutFlags wo InputFlag.Repeat) || shortcut(Key.Mod_Ctrl or Key.Insert, id, shortcutFlags wo InputFlag.Repeat)) && !isPassword && (!isMultiline || state.hasSelection)
-            val isPaste = (shortcut(Key.Mod_Shortcut or Key.V, id, shortcutFlags) || shortcut(Key.Mod_Shift or Key.Insert, id, shortcutFlags)) && !isReadOnly
-            val isUndo = (shortcut(Key.Mod_Shortcut or Key.Z, id, shortcutFlags)) && !isReadOnly && isUndoable
-            val isRedo = (shortcut(Key.Mod_Shortcut or Key.Y, id, shortcutFlags) || (isOsx && shortcut(Key.Mod_Shortcut or Key.Mod_Shift or Key.Z, id, shortcutFlags))) && !isReadOnly && isUndoable
-            val isSelectAll = shortcut(Key.Mod_Shortcut or Key.A, id, shortcutFlags wo InputFlag.Repeat)
+            val fRepeat = InputFlag.Repeat.i
+            val isCut = (shortcut(Key.Mod_Shortcut or Key.X, id, fRepeat) || shortcut(Key.Mod_Shift or Key.Delete, id, fRepeat)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
+            val isCopy = (shortcut(Key.Mod_Shortcut or Key.C, id, fRepeat) || shortcut(Key.Mod_Ctrl or Key.Insert, id, fRepeat)) && !isPassword && (!isMultiline || state.hasSelection)
+            val isPaste = (shortcut(Key.Mod_Shortcut or Key.V, id, fRepeat) || shortcut(Key.Mod_Shift or Key.Insert, id, fRepeat)) && !isReadOnly
+            val isUndo = (shortcut(Key.Mod_Shortcut or Key.Z, id, fRepeat)) && !isReadOnly && isUndoable
+            val isRedo = (shortcut(Key.Mod_Shortcut or Key.Y, id, fRepeat) || (isOsx && shortcut(Key.Mod_Shortcut or Key.Mod_Shift or Key.Z, id, fRepeat))) && !isReadOnly && isUndoable
+            val isSelectAll = shortcut(Key.Mod_Shortcut or Key.A, id, fRepeat)
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
             val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
             val isEnterPressed = Key.Enter.isPressed(true) || Key.KeypadEnter.isPressed(true)
             val isGamepadValidate = navGamepadActive && (Key._NavGamepadActivate.isPressed(false) || Key._NavGamepadInput.isPressed(false))
-            val isCancel = shortcut(Key.Escape.i, id, shortcutFlags) || (navGamepadActive && Key._NavGamepadCancel.isPressed(false))
+            val isCancel = shortcut(Key.Escape.i, id, fRepeat) || (navGamepadActive && shortcut(Key._NavGamepadCancel.i, id, fRepeat))
 
+            // FIXME: Should use more Shortcut() and reduce IsKeyPressed()+SetKeyOwner(), but requires modifiers combination to be taken account of.
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(
                     when {

@@ -62,6 +62,7 @@ typealias KeyRoutingIndex = Int
 // Routing table entry (sizeof() == 16 bytes)
 class KeyRoutingData {
     var nextEntryIndex: KeyRoutingIndex = -1
+    /** Technically we'd only need 4 bits but for simplify we store ImGuiMod_ values which need 16 bits. */
     var mods = 0
     var routingNextScore = 255               // Lower is better (0: perfect score)
     var routingCurr: ID = KeyOwner_None
