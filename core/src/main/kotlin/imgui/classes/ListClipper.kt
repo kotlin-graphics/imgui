@@ -2,6 +2,8 @@ package imgui.classes
 
 import glm_.*
 import imgui.Dir
+import imgui.ImGui.endRow
+import imgui.ImGui.rectRelToAbs
 import imgui.api.g
 import imgui.clamp
 import imgui.internal.floor
@@ -116,10 +118,10 @@ class ListClipper {
             IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): computed ItemsHeight: %.2f.", itemsHeight)
         if (ret)
             IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): display $displayStart to $displayEnd.")
-        else
+        else {
             IMGUI_DEBUG_LOG_CLIPPER("Clipper: Step(): End.")
-        if (!ret)
             end()
+        }
         return ret
     }
 
