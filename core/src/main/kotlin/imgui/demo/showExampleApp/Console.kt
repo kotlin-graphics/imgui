@@ -172,7 +172,10 @@ object Console {
                 }
                 if (copyToClipboard) logFinish()
 
-                if (scrollToBottom || (autoScroll && scrollY >= scrollMaxY)) setScrollHereY(1f)
+                // Keep up at the bottom of the scroll region if we were already at the bottom at the beginning of the frame.
+                // Using a scrollbar or mouse-wheel will take away from the bottom edge.
+                if (scrollToBottom || (autoScroll && scrollY >= scrollMaxY))
+                    setScrollHereY(1f)
                 scrollToBottom = false
 
                 popStyleVar()

@@ -158,6 +158,8 @@ object Log {
 
                 popStyleVar()
 
+                // Keep up at the bottom of the scroll region if we were already at the bottom at the beginning of the frame.
+                // Using a scrollbar or mouse-wheel will take away from the bottom edge.
                 if (autoScroll && scrollY >= scrollMaxY)
                     setScrollHereY(1f)
             }

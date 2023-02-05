@@ -3,12 +3,18 @@ package imgui.api
 import glm_.max
 import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
+import imgui.ImGui.setScrollFromPosX
+import imgui.ImGui.setScrollFromPosY
+import imgui.ImGui.setScrollX
+import imgui.ImGui.setScrollY
 import imgui.ImGui.style
 import imgui.internal.sections.NextWindowDataFlag
 import imgui.internal.sections.or
 import imgui.lerp
 
-/** Windows Scrolling */
+// Windows Scrolling
+// - Any change of Scroll will be applied at the beginning of next frame in the first call to Begin().
+// - You may instead use SetNextWindowScroll() prior to calling Begin() to avoid this delay, as an alternative to using SetScrollX()/SetScrollY().
 interface windowScrolling {
 
     /** Scrolling amount [0..GetScrollMaxX()] */

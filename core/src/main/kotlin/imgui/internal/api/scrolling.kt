@@ -16,12 +16,6 @@ import imgui.static.calcNextScrollFromScrollTargetAndClamp
 // Scrolling
 internal interface scrolling {
 
-    /** Use -1.0f on one axis to leave as-is */
-    fun setNextWindowScroll(scroll: Vec2) {
-        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasScroll
-        g.nextWindowData.scrollVal put scroll
-    }
-
     /** ~SetScrollX(ImGuiWindow* window, float new_scroll_x) */
     infix fun Window.setScrollX(scrollX: Float) {
         scrollTarget.x = scrollX

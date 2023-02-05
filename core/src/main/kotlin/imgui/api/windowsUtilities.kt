@@ -7,6 +7,10 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
+import imgui.ImGui.isChildOf
+import imgui.ImGui.setCollapsed
+import imgui.ImGui.setPos
+import imgui.ImGui.setSize
 import imgui.classes.DrawList
 import imgui.internal.classes.Window.Companion.getCombinedRootWindow
 import imgui.internal.floor
@@ -177,6 +181,13 @@ interface windowsUtilities {
         // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
         g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasFocus
     }
+
+    /** set next window scrolling value (use < 0.0f to not affect a given axis). */
+    fun setNextWindowScroll(scroll: Vec2) {
+        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasScroll
+        g.nextWindowData.scrollVal put scroll
+    }
+
 
     /** Set next window background color alpha. helper to easily override the Alpha component of ImGuiCol_WindowBg/ChildBg/PopupBg.
      *  You may also use ImGuiWindowFlags_NoBackground. */
