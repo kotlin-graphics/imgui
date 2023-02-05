@@ -421,7 +421,7 @@ internal interface inputText {
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
 
-            // Using Shortcut() with ImGuiInputFlags_FocusRouting flag to allow routing operations for other code (e.g. calling window trying to use CTRL+A and CTRL+B: formet would be handled by InputText)
+            // Using Shortcut() with ImGuiInputFlags_RouteFocused flag to allow routing operations for other code (e.g. calling window trying to use CTRL+A and CTRL+B: formet would be handled by InputText)
             // Otherwise we could simply assume that we own the keys as we are active.
             val shortcutFlags = InputFlag.RouteFocused or InputFlag.Repeat
             val isCut = (shortcut(Key.Mod_Shortcut or Key.X, id, shortcutFlags) || shortcut(Key.Mod_Shift or Key.Delete, id, shortcutFlags)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)

@@ -13,6 +13,7 @@ import imgui.api.g
 import imgui.classes.KeyData
 import imgui.internal.classes.Window
 import imgui.internal.sections.*
+import imgui.internal.isPowerOfTwo
 
 /** Inputs
  *  FIXME: Eventually we should aim to move e.g. IsActiveIdUsingKey() into IsKeyXXX functions. */
@@ -324,8 +325,9 @@ internal interface inputs {
     // - Ideas: https://github.com/ocornut/imgui/issues/456#issuecomment-264390864
     fun shortcut(keyChord: KeyChord, ownerId: ID = 0, flags: InputFlags = 0): Boolean {
 
-        if (flags has InputFlag.RouteFocused)
-            if (!setShortcutRouting(keyChord, ownerId, InputFlag.RouteFocused.i, g.currentWindow))
+        // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter  with this, so IsKeyPressed() is fine with he 0/Any.
+        if (flags has (InputFlag.RouteMask_ or InputFlag.RouteUnlessBgFocused))
+            if (!setShortcutRouting(keyChord, ownerId, flags, g.currentWindow))
                 return false
 
         var key = Key of (keyChord wo Key.Mod_Mask_)
@@ -356,33 +358,48 @@ internal interface inputs {
     //   As such, it could be called TrySetXXX or SubmitXXX, or the Submit and Test operations should be separate.)
     // - Using 'owner_id == ImGuiKeyOwner_Any/0': auto-assign an owner based on current focus scope (each window has its focus scope by default)
     // - Using 'owner_id == ImGuiKeyOwner_None': allows disabling/locking a shortcut.
-    fun setShortcutRouting(keyChord: KeyChord, ownerId: ID = 0, flags: InputFlags = 0, location_: Window? = null): Boolean {
+    fun setShortcutRouting(keyChord: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0, location_: Window? = null): Boolean {
 
+        var flags = flags_
+        if (flags hasnt InputFlag.RouteMask_)
+            flags = InputFlag.RouteGlobalHigh.i // This is the default for SetShortcutRouting() but NOT Shortcut() which doesn't touch routing by default!
+        else
+            assert((flags and InputFlag.RouteMask_).isPowerOfTwo) { "Check that only 1 routing flag is used" }
         assert(ownerId != KeyOwner_None)
 
-        // Calculate our score
+        if (flags has InputFlag.RouteUnlessBgFocused)
+            if (g.navWindow == null)
+                return false
+
+        // Current score encoding (lower is highest priority):
+        //  -   0: ImGuiInputFlags_RouteGlobalHigh
+        //  -   1: ImGuiInputFlags_RouteFocused (if item active)
+        //  -   2: ImGuiInputFlags_RouteGlobal
+        //  -  3+: ImGuiInputFlags_RouteFocused (if window in focus-stack)
+        //  - 254: ImGuiInputFlags_RouteGlobalLow
+        //  - 255: none
         var score = 255
-        var alwaysSetNextRoute = false
         if (flags has InputFlag.RouteFocused) {
 
             val location = location_ ?: g.currentWindow!!
             var focused = g.navWindow
 
             if (g.activeId != 0 && g.activeId == ownerId)
-            // ActiveID gets top priority (0)
+            // ActiveID gets top priority
             // (we don't check g.ActiveIdUsingAllKeys here. Routing is applied but if input ownership is tested later it may discard it)
-                score = 0
+                score = 1
             else if (focused != null && focused.rootWindow === location.rootWindow) { // Early out
 
                 // Score based on distance to focused window (lower is better)
                 // Assuming both windows are submitting a routing request,
-                // - When WindowA...... is focused -> WindowA scores 1 (best), WindowA/ChildB scores 255 (no match)
-                // - When Window/ChildB is focused -> WindowA scores 2,        WindowA/ChildB scores 1 (best)
+                // - When Window....... is focused -> Window scores 3 (best), Window/ChildB scores 255 (no match)
+                // - When Window/ChildB is focused -> Window scores 4,        Window/ChildB scores 3 (best)
                 // Assuming only WindowA is submitting a routing request,
-                // - When Window/ChildB is focused -> WindowA scores 2 (best), WindowA/ChildB doesn't have a scoe.
-                var nextScore = 1
+                // - When Window/ChildB is focused -> Window scores 4 (best), Window/ChildB doesn't have a score.
+                var nextScore = 3
                 while (focused != null) {
                     if (focused == location) {
+                        assert(nextScore < 255)
                         score = nextScore
                         break
                     }
@@ -390,20 +407,21 @@ internal interface inputs {
                     nextScore++
                 }
             }
-
-            if (score == 255)
-                return false
-        } else {
-            score = 0
-            alwaysSetNextRoute = true
-        }
+        } else
+            score = when {
+                flags has InputFlag.RouteGlobal -> 2
+                flags has InputFlag.RouteGlobalLow -> 254
+                else -> 0 // ImGuiInputFlags_RouteGlobalHigh is default, so call to SetShorcutRouting() without no flags are not conditional
+            }
+        if (score == 255)
+            return false
 
         // Submit routing for NEXT frame (assuming score is sufficient)
         // FIXME: Could expose a way to use a "serve last" policy for same score resolution (using <= instead of <).
         val routingData = getShortcutRoutingData(keyChord)
         val routingId = getRoutingIdFromOwnerId(ownerId) // FIXME: Location
         //const bool set_route = (flags & ImGuiInputFlags_ServeLast) ? (score <= routing_data->RoutingNextScore) : (score < routing_data->RoutingNextScore);
-        if (score < routingData.routingNextScore || alwaysSetNextRoute) {
+        if (score < routingData.routingNextScore) {
             routingData.routingNext = routingId
             routingData.routingNextScore = score
         }

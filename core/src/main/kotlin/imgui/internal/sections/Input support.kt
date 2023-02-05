@@ -126,17 +126,39 @@ enum class InputFlag(val i: InputFlags) {
     /** Access to key data will requires EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared when key is released or at end of frame is not down. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
     LockUntilRelease(1 shl 7),
 
-    // Flags for Shortcut(), SetShortcutRouting()
-    // When Focus Routing is enabled, function will call SetShortcutRouting(): Accept inputs if currently in focus stack. Deep-most focused window takes inputs. ActiveId takes inputs over deep-most focused window.
+    // Routing policies for Shortcut(), SetShortcutRouting()
+    // - When a policy is set, Shortcut() will register itself with SetShortcutRouting(),
+    //   allowing the system to decide where to route the input among other route-aware calls.
+    //   The general idea is that several callers register a shortcut, and only one gets it.
+    // - Routing is NOT registered by default, meaning that a simple Shortcut() call
+    //   will see all inputs, won't have any side-effect and won't interfere with other inputs.
+    // - Priorities (highest-to-lowest): GlobalHigh > Focused (when active item) > Global > Focused (when focused window) > GlobalLow.
+    // - Can select only 1 policy among all available.
 
-    /** Enable focus routing */
+    /** Do not register route (provided for completeness but technically zero-value) */
+    RouteNone(0),
+
+    /** Register route if focused: Accept inputs if window is in focus stack. Deep-most focused window takes inputs. ActiveId takes inputs over deep-most focused window. */
     RouteFocused(1 shl 8),
 
+    /** Register route globally (lowest priority: unless a focused window or active item registered the route) -> recommended Global priority. */
+    RouteGlobalLow(1 shl 9),
+
+    /** Register route globally (medium priority: unless an active item registered the route, e.g. CTRL+A registered by InputText). */
+    RouteGlobal(1 shl 10),
+
+    /** Register route globally (highest priority: unlikely you need to use that: will interfere with every active items) */
+    RouteGlobalHigh(1 shl 11),
+    RouteMask_(RouteFocused or RouteGlobal or RouteGlobalLow or RouteGlobalHigh),
+
+    /** Global routes will not be applied if underlying background/void is focused (== no Dear ImGui windows are focused). Useful for overlay applications. */
+    RouteUnlessBgFocused(1 shl 12),
+
     // [Internal] Mask of which function support which flags
-    SupportedByIsKeyPressed     (Repeat or RepeatRateMask_),
-    SupportedByShortcut         (Repeat or RepeatRateMask_ or RouteFocused),
-    SupportedBySetKeyOwner      (LockThisFrame or LockUntilRelease),
-    SupportedBySetItemKeyOwner  (SupportedBySetKeyOwner or CondMask_);
+    SupportedByIsKeyPressed(Repeat or RepeatRateMask_),
+    SupportedByShortcut(Repeat or RepeatRateMask_ or RouteMask_ or RouteUnlessBgFocused),
+    SupportedBySetKeyOwner(LockThisFrame or LockUntilRelease),
+    SupportedBySetItemKeyOwner(SupportedBySetKeyOwner or CondMask_);
 
     infix fun and(b: InputFlag): InputFlags = i and b.i
     infix fun and(b: InputFlags): InputFlags = i and b
