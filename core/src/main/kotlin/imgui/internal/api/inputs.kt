@@ -320,6 +320,7 @@ internal interface inputs {
     // - Routes are resolved during NewFrame(): if keyboard modifiers are matching current ones: SetKeyOwner() is called + route is granted for the frame.
     // - Route is granted to a single owner. When multiple requests are made we have policies to select the winning route.
     // - Multiple read sites may use a same owner and will all get the granted route.
+    // - For routing: when owner_id is 0 we use the current Focus Scope ID as a default owner in order to identify our location.
 
     // - Need to decide how to handle shortcut translations for Non-Mac <> Mac
     // - Ideas: https://github.com/ocornut/imgui/issues/456#issuecomment-264390864
@@ -329,7 +330,7 @@ internal interface inputs {
         // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.
         if (flags hasnt InputFlag.RouteMask_)
             flags /= InputFlag.RouteFocused
-        if (!setShortcutRouting(keyChord, ownerId, flags, g.currentWindow))
+        if (!setShortcutRouting(keyChord, ownerId, flags))
             return false
 
         var key = Key of (keyChord wo Key.Mod_Mask_)
@@ -350,8 +351,8 @@ internal interface inputs {
 
 
     // static sparse
-    // owner_id may be None/Any, but routing_id needs to be always be set, so we default to GetID("") aka current ID stack.
-    fun getRoutingIdFromOwnerId(ownerId: ID): ID = if (ownerId != KeyOwner_None && ownerId != KeyOwner_Any) ownerId else g.currentWindow!!.idStack.last()
+    // owner_id may be None/Any, but routing_id needs to be always be set, so we default to GetCurrentFocusScope().
+    fun getRoutingIdFromOwnerId(ownerId: ID): ID = if (ownerId != KeyOwner_None && ownerId != KeyOwner_Any) ownerId else g.currentFocusScopeId
 
     // Request a desired route for an input chord (key + mods).
     // Return true if the route is available this frame.
@@ -360,7 +361,7 @@ internal interface inputs {
     //   As such, it could be called TrySetXXX or SubmitXXX, or the Submit and Test operations should be separate.)
     // - Using 'owner_id == ImGuiKeyOwner_Any/0': auto-assign an owner based on current focus scope (each window has its focus scope by default)
     // - Using 'owner_id == ImGuiKeyOwner_None': allows disabling/locking a shortcut.
-    fun setShortcutRouting(keyChord: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0, location_: Window? = null): Boolean {
+    fun setShortcutRouting(keyChord: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0): Boolean {
 
         var flags = flags_
         if (flags hasnt InputFlag.RouteMask_)
@@ -384,7 +385,7 @@ internal interface inputs {
         var score = 255
         if (flags has InputFlag.RouteFocused) {
 
-            val location = location_ ?: g.currentWindow!!
+            val location = g.currentWindow!!
             var focused = g.navWindow
 
             if (g.activeId != 0 && g.activeId == ownerId)
@@ -422,7 +423,7 @@ internal interface inputs {
         // Submit routing for NEXT frame (assuming score is sufficient)
         // FIXME: Could expose a way to use a "serve last" policy for same score resolution (using <= instead of <).
         val routingData = getShortcutRoutingData(keyChord)
-        val routingId = getRoutingIdFromOwnerId(ownerId) // FIXME: Location
+        val routingId = getRoutingIdFromOwnerId(ownerId)
         //const bool set_route = (flags & ImGuiInputFlags_ServeLast) ? (score <= routing_data->RoutingNextScore) : (score < routing_data->RoutingNextScore);
         if (score < routingData.routingNextScore) {
             routingData.routingNext = routingId
