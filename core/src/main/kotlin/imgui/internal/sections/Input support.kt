@@ -1,9 +1,6 @@
 package imgui.internal.sections
 
-import imgui.ID
-import imgui.InputTextFlag
-import imgui.or
-import imgui.wo
+import imgui.*
 
 
 enum class InputSource {
@@ -60,6 +57,31 @@ const val KeyOwner_Any: ID = 0
 /** Require key to have no owner. */
 const val KeyOwner_None: ID = -1
 
+typealias KeyRoutingIndex = Int
+
+// Routing table entry (sizeof() == 16 bytes)
+class KeyRoutingData {
+    var nextEntryIndex: KeyRoutingIndex = -1
+    var mods = 0
+    var routingNextScore = 255               // Lower is better (0: perfect score)
+    var routingCurr: ID = KeyOwner_None
+    var routingNext: ID = KeyOwner_None
+}
+
+// Routing table maintain a desired owner for each possible key-chord (key + mods), and setup owner in NewFrame() when mods are matching.
+// Stored in main context (1 instance)
+class KeyRoutingTable {
+    val index = IntArray(Key.COUNT) { -1 } // Index of first entry in Entries[]
+    val entries = ArrayList<KeyRoutingData>()
+    val entriesNext = ArrayList<KeyRoutingData>() // Double-buffer to avoid reallocation (could use a shared buffer)
+
+    fun clear() {
+        index.fill(-1)
+        entries.clear()
+        entriesNext.clear()
+    }
+}
+
 /** This extend ImGuiKeyData but only for named keys (legacy keys don't support the new features)
  *  Stored in main context (1 per named key). In the future might be merged into ImGuiKeyData. */
 class KeyOwnerData {
@@ -102,7 +124,19 @@ enum class InputFlag(val i: InputFlags) {
     LockThisFrame(1 shl 6),
 
     /** Access to key data will requires EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared when key is released or at end of frame is not down. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
-    LockUntilRelease(1 shl 7);
+    LockUntilRelease(1 shl 7),
+
+    // Flags for Shortcut(), SetShortcutRouting()
+    // When Focus Routing is enabled, function will call SetShortcutRouting(): Accept inputs if currently in focus stack. Deep-most focused window takes inputs. ActiveId takes inputs over deep-most focused window.
+
+    /** Enable focus routing */
+    RouteFocused(1 shl 8),
+
+    // [Internal] Mask of which function support which flags
+    SupportedByIsKeyPressed     (Repeat or RepeatRateMask_),
+    SupportedByShortcut         (Repeat or RepeatRateMask_ or RouteFocused),
+    SupportedBySetKeyOwner      (LockThisFrame or LockUntilRelease),
+    SupportedBySetItemKeyOwner  (SupportedBySetKeyOwner or CondMask_);
 
     infix fun and(b: InputFlag): InputFlags = i and b.i
     infix fun and(b: InputFlags): InputFlags = i and b

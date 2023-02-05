@@ -2,7 +2,6 @@ package imgui.internal.api
 
 import gli_.has
 import glm_.b
-import glm_.compareTo
 import glm_.func.common.max
 import glm_.func.common.min
 import glm_.glm
@@ -50,6 +49,7 @@ import imgui.ImGui.setActiveID
 import imgui.ImGui.setFocusID
 import imgui.ImGui.setOwner
 import imgui.ImGui.setScrollY
+import imgui.ImGui.shortcut
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.InputTextCallbackData
@@ -417,27 +417,25 @@ internal interface inputText {
 
             val kMask = if (io.keyShift) K.SHIFT else 0
             val isOsx = io.configMacOSXBehaviors
-            // OS X style: Shortcuts using Cmd/Super instead of Ctrl
-            val isOsxShiftShortcut = isOsx && io.keyMods == Key.Mod_Super or Key.Mod_Shift
             val isWordmoveKeyDown = if (isOsx) io.keyAlt else io.keyCtrl // OS X style: Text editing cursor movement using Alt instead of Ctrl
             // OS X style: Line/Text Start and End using Cmd+Arrows instead of Home/End
             val isStartendKeyDown = isOsx && io.keySuper && !io.keyCtrl && !io.keyAlt
-            val isCtrlKeyOnly = io.keyMods == Key.Mod_Ctrl.i
-            val isShiftKeyOnly = io.keyMods == Key.Mod_Shift.i
-            val isShortcutKey = io.keyMods == if (io.configMacOSXBehaviors) Key.Mod_Super.i else Key.Mod_Ctrl.i
 
-            val isCut = ((isShortcutKey && Key.X.isPressed) || (isShiftKeyOnly && Key.Delete.isPressed)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
-            val isCopy = ((isShortcutKey && Key.C.isPressed(false)) || (isCtrlKeyOnly && Key.Insert.isPressed(false))) && !isPassword && (!isMultiline || state.hasSelection)
-            val isPaste = ((isShortcutKey && Key.V.isPressed) || (isShiftKeyOnly && Key.Insert.isPressed)) && !isReadOnly
-            val isUndo = ((isShortcutKey && Key.Z.isPressed) && !isReadOnly && isUndoable)
-            val isRedo = ((isShortcutKey && Key.Y.isPressed) || (isOsxShiftShortcut && Key.Z.isPressed)) && !isReadOnly && isUndoable
-            val isSelectAll = isShortcutKey && Key.A.isPressed(false)
+            // Using Shortcut() with ImGuiInputFlags_FocusRouting flag to allow routing operations for other code (e.g. calling window trying to use CTRL+A and CTRL+B: formet would be handled by InputText)
+            // Otherwise we could simply assume that we own the keys as we are active.
+            val shortcutFlags = InputFlag.RouteFocused or InputFlag.Repeat
+            val isCut = (shortcut(Key.Mod_Shortcut or Key.X, id, shortcutFlags) || shortcut(Key.Mod_Shift or Key.Delete, id, shortcutFlags)) && !isReadOnly && !isPassword && (!isMultiline || state.hasSelection)
+            val isCopy = (shortcut(Key.Mod_Shortcut or Key.C, id, shortcutFlags wo InputFlag.Repeat) || shortcut(Key.Mod_Ctrl or Key.Insert, id, shortcutFlags wo InputFlag.Repeat)) && !isPassword && (!isMultiline || state.hasSelection)
+            val isPaste = (shortcut(Key.Mod_Shortcut or Key.V, id, shortcutFlags) || shortcut(Key.Mod_Shift or Key.Insert, id, shortcutFlags)) && !isReadOnly
+            val isUndo = (shortcut(Key.Mod_Shortcut or Key.Z, id, shortcutFlags)) && !isReadOnly && isUndoable
+            val isRedo = (shortcut(Key.Mod_Shortcut or Key.Y, id, shortcutFlags) || (isOsx && shortcut(Key.Mod_Shortcut or Key.Mod_Shift or Key.Z, id, shortcutFlags))) && !isReadOnly && isUndoable
+            val isSelectAll = shortcut(Key.Mod_Shortcut or Key.A, id, shortcutFlags wo InputFlag.Repeat)
 
             // We allow validate/cancel with Nav source (gamepad) to makes it easier to undo an accidental NavInput press with no keyboard wired, but otherwise it isn't very useful.
             val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
             val isEnterPressed = Key.Enter.isPressed(true) || Key.KeypadEnter.isPressed(true)
             val isGamepadValidate = navGamepadActive && (Key._NavGamepadActivate.isPressed(false) || Key._NavGamepadInput.isPressed(false))
-            val isCancel = Key.Escape.isPressed(false) || (navGamepadActive && Key._NavGamepadCancel.isPressed(false))
+            val isCancel = shortcut(Key.Escape.i, id, shortcutFlags) || (navGamepadActive && Key._NavGamepadCancel.isPressed(false))
 
             when {
                 Key.LeftArrow.isPressed -> state.onKeyPressed(
@@ -573,8 +571,7 @@ internal interface inputText {
                     applyNewTextLength = 0
                     val emptyString = CharArray(0)
                     state.replace(emptyString, 0)
-                }
-                else if (buf.strcmp(state.initialTextA) != 0) {
+                } else if (buf.strcmp(state.initialTextA) != 0) {
                     // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
                     // Push records into the undo stack so we can CTRL+Z the revert operation itself
                     applyNewText = state.initialTextA

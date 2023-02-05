@@ -191,11 +191,13 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Store the last non-zero ActiveId timer since the beginning of activation, useful for animation. */
     var lastActiveIdTimer = 0f
 
-
-    // [EXPERIMENTAL] Key/Input Ownership
+    // [EXPERIMENTAL] Key/Input Ownership + Shortcut Routing system
     // - The idea is that instead of "eating" a given key, we can link to an owner.
     // - Input query can then read input by specifying ImGuiKeyOwner_Any (== 0), ImGuiKeyOwner_None (== -1) or a custom ID.
+    // - Routing is requested ahead of time for a given chord (Key + Mods) and granted in NewFrame().
     val keysOwnerData = Array(Key.COUNT) { KeyOwnerData() }
+
+    var keysRoutingTable = KeyRoutingTable()
 
     /** Active widget will want to read those nav move requests (e.g. can activate a button and move away from it) */
     var activeIdUsingNavDirMask = 0
@@ -761,6 +763,9 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         activeIdWindow = null
         activeIdPreviousFrameWindow = null
         movingWindow = null
+
+        keysRoutingTable.clear()
+
         settingsWindows.clear()
         colorStack.clear()
         styleVarStack.clear()

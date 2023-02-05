@@ -44,6 +44,7 @@ import imgui.ImGui.foregroundDrawList
 import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getID
 import imgui.ImGui.getInstanceData
+import imgui.ImGui.getKeyChordName
 import imgui.ImGui.indent
 import imgui.ImGui.inputText
 import imgui.ImGui.inputTextMultiline
@@ -393,7 +394,7 @@ interface demoDebugInformations {
             }
         }
 
-        treeNode("Key Owners") {
+        treeNode("Key Owners & Shortcut Routing") {
             textUnformatted("Key Owners:")
             listBox("##owners", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
                 for (keyIdx in Key.BEGIN until Key.END) {
@@ -403,6 +404,21 @@ interface demoDebugInformations {
                         continue
                     text("$key: 0x%08X${if (ownerData.lockUntilRelease) " LockUntilRelease" else if (ownerData.lockThisFrame) " LockThisFrame" else ""}", ownerData.ownerCurr)
                     debugLocateItemOnHover(ownerData.ownerCurr)
+                }
+            }
+            textUnformatted("Shortcut Routing:")
+            listBox("##routes", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
+                for (keyIdx in Key.BEGIN until Key.END) {
+                    val key = Key of keyIdx
+                    val rt = g.keysRoutingTable
+                    var idx = rt.index[key.i]
+                    while (idx != -1) {
+                        val routingData = rt.entries[idx]
+                        val keyChordName = getKeyChordName(key or routingData.mods)
+                        text("$keyChordName: 0x%08X", routingData.routingCurr)
+                        debugLocateItemOnHover(routingData.routingCurr)
+                        idx = routingData.nextEntryIndex
+                    }
                 }
             }
             text("(ActiveIdUsing: AllKeyboardKeys: %d, NavDirMask: 0x%X)", g.activeIdUsingAllKeyboardKeys, g.activeIdUsingNavDirMask)

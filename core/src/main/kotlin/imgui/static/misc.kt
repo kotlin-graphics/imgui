@@ -91,6 +91,8 @@ fun updateKeyboardInputs() {
             ownerData.ownerNext = KeyOwner_None
         ownerData.lockThisFrame = ownerData.lockUntilRelease && keyData.down; ownerData.lockUntilRelease = ownerData.lockThisFrame  // Clear LockUntilRelease when key is not Down anymore
     }
+
+    updateKeyRoutingTable(g.keysRoutingTable)
 }
 
 fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
@@ -99,6 +101,50 @@ fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
     keyData.down = v
     keyData.analogValue = analogValue
 }
+
+// Rewrite routing data buffers to strip old entries + sort by key to make queries not touch scattered data.
+//   Entries   D,A,B,B,A,C,B     --> A,A,B,B,B,C,D
+//   Index     A:1 B:2 C:5 D:0   --> A:0 B:2 C:5 D:6
+// See 'Metrics->Key Owners & Shortcut Routing' to visualize the result of that operation.
+fun updateKeyRoutingTable(rt: KeyRoutingTable) {
+    rt.entriesNext.clear()
+    for (keyIdx in Key.BEGIN until Key.END) {
+        val key = Key of keyIdx
+        val newRoutingStartIdx = rt.entriesNext.size
+        var oldRoutingIdx = rt.index[key]
+        while (oldRoutingIdx != -1) {
+            val routingEntry = rt.entries[oldRoutingIdx].apply {
+                routingCurr = routingNext // Update entry
+                routingNext = KeyOwner_None
+                routingNextScore = 255
+            }
+            if (routingEntry.routingCurr == KeyOwner_None) {
+                oldRoutingIdx = routingEntry.nextEntryIndex
+                continue
+            }
+            rt.entriesNext += routingEntry // Write alive ones into new buffer
+
+            // Apply routing to owner if there's no owner already (RoutingCurr == None at this point)
+            if (routingEntry.mods == g.io.keyMods) {
+                val ownerData = key.ownerData
+                if (ownerData.ownerCurr == KeyOwner_None)
+                    ownerData.ownerCurr = routingEntry.routingCurr
+            }
+            oldRoutingIdx = routingEntry.nextEntryIndex
+        }
+
+        // Rewrite linked-list
+        rt.index[key] = if (newRoutingStartIdx < rt.entriesNext.size) newRoutingStartIdx else -1
+        for (n in newRoutingStartIdx until rt.entriesNext.size)
+            rt.entriesNext[n].nextEntryIndex = if (n + 1 < rt.entriesNext.size) n + 1 else -1
+    }
+    val swap = ArrayList(rt.entries) // Swap new and old indexes
+    rt.entries.clear()
+    rt.entries += rt.entriesNext // Swap new and old indexes
+    rt.entriesNext.clear()
+    rt.entriesNext += swap
+}
+
 
 // [Internal] Do not use directly (should read io.KeyMods instead)
 val mergedModsFromBools: KeyChord
@@ -271,7 +317,7 @@ fun updateMouseWheel() {
  *  Return true when using auto-fit (double-click on resize grip)
  *  @return [JVM] borderHelf to Boolean   */
 fun Window.updateManualResize(sizeAutoFit: Vec2, borderHeld_: Int, resizeGripCount: Int,
-                       resizeGripCol: IntArray, visibilityRect: Rect): Pair<Int, Boolean> {
+                              resizeGripCol: IntArray, visibilityRect: Rect): Pair<Int, Boolean> {
 
     var borderHeld = borderHeld_
 

@@ -1279,7 +1279,7 @@ enum class Key(i: KeyChord? = null) {
     Mod_Mask_(0xF000);
 
     @JvmField
-    val i: KeyChord = i ?: if (ordinal == 0) 0 else ordinal
+    val i: KeyChord = i ?: ordinal
 
     val index: Int
         get() {
