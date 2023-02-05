@@ -5,9 +5,12 @@ import glm_.*
 import glm_.func.common.abs
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.data
 import imgui.ImGui.findBottomMostVisibleWindowWithinBeginStack
 import imgui.ImGui.getColorU32
 import imgui.ImGui.io
+import imgui.ImGui.isAlias
+import imgui.ImGui.isDown
 import imgui.ImGui.isMousePosValid
 import imgui.ImGui.isNavFocusable
 import imgui.ImGui.isWithinBeginStackOf
@@ -62,12 +65,21 @@ fun updateKeyboardInputs() {
 
     // Import legacy keys or verify they are not used
 
-    // Synchronize io.KeyMods with individual modifiers io.KeyXXX bools, update aliases
-    io.keyMods = mergedModsFromBools
+    // Update aliases
     for (n in 0 until MouseButton.COUNT)
         updateAliasKey((MouseButton of n).toKey(), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
     updateAliasKey(Key.MouseWheelX, io.mouseWheelH != 0f, io.mouseWheelH)
     updateAliasKey(Key.MouseWheelY, io.mouseWheel != 0f, io.mouseWheel)
+
+    // Synchronize io.KeyMods and io.KeyXXX values.
+    // - New backends (1.87+): send io.AddKeyEvent(ImGuiMod_XXX) ->                                      -> (here) deriving io.KeyMods + io.KeyXXX from key array.
+    // - Legacy backends:      set io.KeyXXX bools               -> (above) set key array from io.KeyXXX -> (here) deriving io.KeyMods + io.KeyXXX from key array.
+    // So with legacy backends the 4 values will do a unnecessary back-and-forth but it makes the code simpler and future facing.
+    io.keyMods = mergedModsFromKeys
+    io.keyCtrl = io.keyMods has Key.Mod_Ctrl
+    io.keyShift = io.keyMods has Key.Mod_Shift
+    io.keyAlt = io.keyMods has Key.Mod_Alt
+    io.keySuper = io.keyMods has Key.Mod_Super
 
     // Clear gamepad data if disabled
     if (io.backendFlags hasnt BackendFlag.HasGamepad)
@@ -147,15 +159,16 @@ fun updateKeyRoutingTable(rt: KeyRoutingTable) {
 }
 
 
-// [Internal] Do not use directly (should read io.KeyMods instead)
-val mergedModsFromBools: KeyChord
+// ~GetMergedModsFromBools
+// [Internal] Do not use directly
+val mergedModsFromKeys: KeyChord
     get() {
-        var keyChord: KeyChord = 0
-        if (g.io.keyCtrl) keyChord /= Key.Mod_Ctrl
-        if (g.io.keyShift) keyChord /= Key.Mod_Shift
-        if (g.io.keyAlt) keyChord /= Key.Mod_Alt
-        if (g.io.keySuper) keyChord /= Key.Mod_Super
-        return keyChord
+        var mods: KeyChord = 0
+        if (Key.Mod_Ctrl.isDown) mods /= Key.Mod_Ctrl
+        if (Key.Mod_Shift.isDown) mods /= Key.Mod_Shift
+        if (Key.Mod_Alt.isDown) mods /= Key.Mod_Alt
+        if (Key.Mod_Super.isDown) mods /= Key.Mod_Super
+        return mods
     }
 
 fun updateMouseInputs() {

@@ -25,7 +25,6 @@ import imgui.internal.classes.has
 import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.InputEvent
 import imgui.static.findHoveredWindow
-import imgui.static.mergedModsFromBools
 
 /** NewFrame */
 internal interface newFrame {
@@ -90,13 +89,7 @@ internal interface newFrame {
                     keyChanged = true
                     keyChangedMask setBit keyDataIndex
 
-                    if (key == Key.Mod_Ctrl || key == Key.Mod_Shift || key == Key.Mod_Alt || key == Key.Mod_Super) {
-                        if (key == Key.Mod_Ctrl) io.keyCtrl = keyData.down
-                        if (key == Key.Mod_Shift) io.keyShift = keyData.down
-                        if (key == Key.Mod_Alt) io.keyAlt = keyData.down
-                        if (key == Key.Mod_Super) io.keySuper = keyData.down
-                        io.keyMods = mergedModsFromBools
-                    }
+                    // Allow legacy code using io.KeysDown[GetKeyIndex()] with new backends
                 }
                 is InputEvent.Text -> {
                     // Trickling Rule: Stop processing queued events if keys/mouse have been interacted with

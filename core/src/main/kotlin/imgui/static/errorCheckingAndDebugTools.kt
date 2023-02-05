@@ -56,7 +56,7 @@ fun errorCheckEndFrameSanityChecks() {
     // send key release events mid-frame. This would normally trigger this assertion and lead to sheared inputs.
     // We silently accommodate for this case by ignoring the case where all io.KeyXXX modifiers were released (aka key_mod_flags == 0),
     // while still correctly asserting on mid-frame key press events.
-    val keyMods = mergedModsFromBools
+    val keyMods = mergedModsFromKeys
     assert(keyMods == 0 || g.io.keyMods == keyMods) { "Mismatching io.KeyCtrl/io.KeyShift/io.KeyAlt/io.KeySuper vs io.KeyMods" }
 
     // [EXPERIMENTAL] Recover from errors: You may call this yourself before EndFrame().
