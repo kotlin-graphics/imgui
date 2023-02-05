@@ -17,8 +17,10 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
+import imgui.ImGui.shortcut
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
+import imgui.Key
 import imgui.TabBarFlag
 import imgui.dsl.button
 import imgui.dsl.child
@@ -44,9 +46,12 @@ object Layout {
         if (begin("Example: Simple layout", pOpen, Wf.MenuBar.i)) {
             menuBar {
                 menu("File") {
-                    menuItem("Close") { open = false }
+                    menuItem("Close", "Ctrl+W") { open = false }
                 }
             }
+
+            if (shortcut(Key.Mod_Ctrl or Key.W))
+                open = false
 
             // Left
             child("left pane", Vec2(150, 0), true) {

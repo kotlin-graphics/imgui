@@ -22,6 +22,7 @@ import imgui.internal.floor
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
+import imgui.hasnt
 import imgui.internal.sections.hasnt
 import imgui.windowsIme.*
 import kool.rem

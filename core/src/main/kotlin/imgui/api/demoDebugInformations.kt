@@ -107,6 +107,7 @@ import imgui.internal.classes.*
 import imgui.internal.formatString
 import imgui.internal.sections.KeyOwner_None
 import imgui.internal.sections.NextWindowDataFlag
+import imgui.hasnt
 import imgui.internal.sections.hasnt
 import imgui.internal.sections.testEngine_FindItemDebugLabel
 import kool.BYTES

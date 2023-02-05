@@ -72,6 +72,7 @@ import imgui.internal.classes.Window
 import imgui.internal.sections.DrawFlag
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
+import imgui.has
 import imgui.internal.sections.has
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf

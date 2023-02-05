@@ -6,6 +6,8 @@ import imgui.*
 import imgui.ImGui.isMouseClicked
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
+import imgui.has
+import imgui.hasnt
 import imgui.internal.sections.has
 import imgui.internal.sections.hasnt
 import imgui.HoveredFlag as Hf

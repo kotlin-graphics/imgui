@@ -7,7 +7,7 @@ import imgui.ImGui.isDown
 import imgui.ImGui.isPressed
 import imgui.ImGui.isReleased
 import imgui.Key
-import imgui.internal.sections.InputFlag
+import imgui.InputFlag
 import imgui.internal.sections.KeyOwner_Any
 
 
@@ -16,7 +16,7 @@ import imgui.internal.sections.KeyOwner_Any
 // - before v1.87, we used ImGuiKey to carry native/user indices as defined by each backends. About use of those legacy ImGuiKey values:
 //  - without IMGUI_DISABLE_OBSOLETE_KEYIO (legacy support): you can still use your legacy native/user indices (< 512) according to how your backend/engine stored them in io.KeysDown[], but need to cast them to ImGuiKey.
 //  - with    IMGUI_DISABLE_OBSOLETE_KEYIO (this is the way forward): any use of ImGuiKey will assert with key < 512. GetKeyIndex() is pass-through and therefore deprecated (gone if IMGUI_DISABLE_OBSOLETE_KEYIO is defined).
-interface inputUtilitiesKeyboard {
+interface inputsUtilitiesKeyboardMouseGamepad {
 
     /** ~IsKeyDown
      *

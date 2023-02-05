@@ -34,6 +34,7 @@ import imgui.classes.Style
 import imgui.font.FontAtlas
 import imgui.internal.*
 import imgui.internal.classes.Rect
+import imgui.internal.classes.or
 import imgui.internal.sections.IMGUI_DEBUG_LOG_ACTIVEID
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.or

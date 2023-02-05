@@ -20,6 +20,7 @@ import imgui.ImGui.topMostPopupModal
 import imgui.internal.sections.IMGUI_DEBUG_LOG_POPUP
 import imgui.internal.sections.NavMoveFlag
 import imgui.internal.sections.NextWindowDataFlag
+import imgui.hasnt
 import imgui.internal.sections.hasnt
 import kotlin.reflect.KMutableProperty0
 import imgui.HoveredFlag as Hf

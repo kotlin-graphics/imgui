@@ -18,9 +18,10 @@ import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.internal.classes.Rect
 import imgui.internal.sections.NextItemDataFlag
-import imgui.internal.formatString
 import imgui.internal.formatStringToTempBuffer
+import imgui.internal.sections.div
 import imgui.internal.sections.or
+import imgui.or
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 
@@ -170,7 +171,7 @@ interface widgetsTrees {
     fun setNextItemOpen(isOpen: Boolean, cond: Cond = Cond.Always) {
         if (g.currentWindow!!.skipItems) return
         g.nextItemData.apply {
-            flags = flags or NextItemDataFlag.HasOpen
+            flags /= NextItemDataFlag.HasOpen
             openVal = isOpen
             openCond = cond.takeUnless { it == Cond.None } ?: Cond.Always
         }

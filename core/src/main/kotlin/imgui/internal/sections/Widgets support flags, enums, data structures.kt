@@ -468,6 +468,8 @@ infix fun NextWindowDataFlags.xor(b: NextWindowDataFlag): NextWindowDataFlags = 
 infix fun NextWindowDataFlags.has(b: NextWindowDataFlag): Boolean = and(b.i) != 0
 infix fun NextWindowDataFlags.hasnt(b: NextWindowDataFlag): Boolean = and(b.i) == 0
 infix fun NextWindowDataFlags.wo(b: NextWindowDataFlag): NextWindowDataFlags = and(b.i.inv())
+operator fun NextWindowDataFlags.minus(flag: NextWindowDataFlag): NextWindowDataFlags = wo(flag)
+operator fun NextWindowDataFlags.div(flag: NextWindowDataFlag): NextWindowDataFlags = or(flag)
 
 
 typealias NextItemDataFlags = Int
@@ -492,6 +494,9 @@ infix fun NextItemDataFlags.xor(b: NextItemDataFlag): NextItemDataFlags = xor(b.
 infix fun NextItemDataFlags.has(b: NextItemDataFlag): Boolean = and(b.i) != 0
 infix fun NextItemDataFlags.hasnt(b: NextItemDataFlag): Boolean = and(b.i) == 0
 infix fun NextItemDataFlags.wo(b: NextItemDataFlag): NextItemDataFlags = and(b.i.inv())
+operator fun NextItemDataFlags.minus(flag: NextItemDataFlag): NextItemDataFlags = wo(flag)
+operator fun NextItemDataFlags.div(flag: NextItemDataFlag): NextItemDataFlags = or(flag)
+
 
 
 /** Result of a gamepad/keyboard directional navigation move query result */

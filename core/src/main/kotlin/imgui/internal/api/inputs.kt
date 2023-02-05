@@ -189,7 +189,7 @@ internal interface inputs {
     fun Key.setOwner(ownerId: ID, flags: InputFlags = 0) {
 
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
-        assert(flags hasnt InputFlag.SupportedBySetKeyOwner) { "Passing flags not supported by this function !" }
+        assert(flags hasnt InputFlag._SupportedBySetKeyOwner) { "Passing flags not supported by this function !" }
 
         val ownerData = ownerData
         ownerData.ownerCurr = ownerId; ownerData.ownerNext = ownerId
@@ -214,7 +214,7 @@ internal interface inputs {
         if (flags hasnt InputFlag.CondMask_)
             flags /= InputFlag.CondDefault_
         if ((g.hoveredId == id && flags has InputFlag.CondHovered) || (g.activeId == id && flags has InputFlag.CondActive)) {
-            assert(flags hasnt InputFlag.SupportedBySetItemKeyOwner) { "Passing flags not supported by this function !" }
+            assert(flags hasnt InputFlag._SupportedBySetItemKeyOwner) { "Passing flags not supported by this function !" }
             setOwner(id, flags wo InputFlag.CondMask_)
         }
     }
@@ -281,7 +281,7 @@ internal interface inputs {
         val t = keyData.downDuration
         if (t < 0f)
             return false
-        assert(flags hasnt InputFlag.SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
+        assert(flags hasnt InputFlag._SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
 
         var pressed = t == 0f
         if (!pressed && flags hasnt InputFlag.Repeat) {
@@ -316,7 +316,7 @@ internal interface inputs {
         val t = g.io.mouseDownDuration[i]
         if (t < 0f)
             return false
-        assert(flags hasnt InputFlag.SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
+        assert(flags hasnt InputFlag._SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
 
         val repeat = flags has InputFlag.Repeat
         val pressed = t == 0f || (repeat && t > g.io.keyRepeatDelay && calcTypematicRepeatAmount(t - g.io.deltaTime, t, g.io.keyRepeatDelay, g.io.keyRepeatRate) > 0)
@@ -330,45 +330,6 @@ internal interface inputs {
     infix fun MouseButton.isReleased(ownerId: ID): Boolean {
         //        IM_ASSERT(button >= 0 && button < IM_ARRAYSIZE(g.IO.MouseDown));
         return g.io.mouseReleased[i] && toKey() testOwner ownerId // Should be same as IsKeyReleased(MouseButtonToKey(button), owner_id)
-    }
-
-    // [EXPERIMENTAL] Shortcut Routing
-    // - ImGuiKeyChord = a ImGuiKey optionally OR-red with ImGuiMod_Alt/ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Super.
-    //     ImGuiKey_C                 (accepted by functions taking ImGuiKey or ImGuiKeyChord)
-    //     ImGuiKey_C | ImGuiMod_Ctrl (accepted by functions taking ImGuiKeyChord)
-    //   ONLY ImGuiMod_XXX values are legal to 'OR' with an ImGuiKey. You CANNOT 'OR' two ImGuiKey values.
-    // - When using one of the routing flags (e.g. ImGuiInputFlags_RouteFocused): routes requested ahead of time given a chord (key + modifiers) and a routing policy.
-    // - Routes are resolved during NewFrame(): if keyboard modifiers are matching current ones: SetKeyOwner() is called + route is granted for the frame.
-    // - Route is granted to a single owner. When multiple requests are made we have policies to select the winning route.
-    // - Multiple read sites may use the same owner id and will all get the granted route.
-    // - For routing: when owner_id is 0 we use the current Focus Scope ID as a default owner in order to identify our location.
-
-    // - Need to decide how to handle shortcut translations for Non-Mac <> Mac
-    // - Ideas: https://github.com/ocornut/imgui/issues/456#issuecomment-264390864
-    fun shortcut(keyChord_: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0): Boolean {
-
-        var flags = flags_
-        // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.
-        if (flags hasnt InputFlag.RouteMask_)
-            flags /= InputFlag.RouteFocused
-        if (!setShortcutRouting(keyChord_, ownerId, flags))
-            return false
-
-        val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
-        val mods = Key of (keyChord and Key.Mod_Mask_)
-        if (g.io.keyMods != mods.i)
-            return false
-
-        // Special storage location for mods
-        var key = Key of (keyChord wo Key.Mod_Mask_)
-        if (key == Key.None)
-            key = mods.convertSingleModFlagToKey()
-
-        if (!key.isPressed(ownerId, flags and (InputFlag.Repeat or InputFlag.RepeatRateMask_)))
-            return false
-        assert(flags hasnt InputFlag.SupportedByShortcut) { "Passing flags not supported by this function !" }
-
-        return true
     }
 
 
@@ -435,10 +396,10 @@ internal interface inputs {
     fun setShortcutRouting(keyChord: KeyChord, ownerId: ID, flags_: InputFlags): Boolean {
 
         var flags = flags_
-        if (flags hasnt InputFlag.RouteMask_)
+        if (flags hasnt InputFlag._RouteMask_)
             flags /= InputFlag.RouteGlobalHigh // IMPORTANT: This is the default for SetShortcutRouting() but NOT Shortcut()
         else
-            assert((flags and InputFlag.RouteMask_).isPowerOfTwo) { "Check that only 1 routing flag is used" }
+            assert((flags and InputFlag._RouteMask_).isPowerOfTwo) { "Check that only 1 routing flag is used" }
 
         if (flags has InputFlag.RouteUnlessBgFocused)
             if (g.navWindow == null)

@@ -12,7 +12,7 @@ import imgui.MOUSE_INVALID
 import imgui.MouseButton
 import imgui.MouseCursor
 import imgui.internal.classes.Rect
-import imgui.internal.sections.InputFlag
+import imgui.InputFlag
 import imgui.internal.sections.KeyOwner_Any
 
 /** Inputs Utilities: Mouse specific

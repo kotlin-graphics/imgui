@@ -17,9 +17,11 @@ import imgui.internal.*
 import imgui.internal.classes.ColorMod
 import imgui.internal.classes.StyleMod
 import imgui.internal.sections.NextItemDataFlag
+import imgui.has
 import imgui.internal.sections.has
 import imgui.internal.sections.or
 import imgui.internal.sections.wo
+import imgui.wo
 import imgui.internal.sections.ItemFlag as If
 
 // Parameters stacks (shared)

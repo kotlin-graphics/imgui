@@ -23,6 +23,7 @@ import imgui.internal.sections.ButtonFlag
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.NavLayer
 import imgui.internal.sections.or
+import imgui.or
 import imgui.static.*
 import kool.BYTES
 import imgui.TableFlag as Tf

@@ -15,7 +15,7 @@ import imgui.classes.DrawList
 import imgui.internal.classes.Window.Companion.getCombinedRootWindow
 import imgui.internal.floor
 import imgui.internal.sections.NextWindowDataFlag
-import imgui.internal.sections.or
+import imgui.internal.sections.div
 import imgui.FocusedFlag as Ff
 import imgui.HoveredFlag as Hf
 
@@ -122,7 +122,7 @@ interface windowsUtilities {
         //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasPos
+            flags /= NextWindowDataFlag.HasPos
             posVal put pos
             posPivotVal put pivot
             posCond = cond
@@ -135,7 +135,7 @@ interface windowsUtilities {
         //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasSize
+            flags /= NextWindowDataFlag.HasSize
             sizeVal put size
             sizeCond = cond
         }
@@ -145,7 +145,7 @@ interface windowsUtilities {
      *  Sizes will be rounded down. Use callback to apply non-trivial programmatic constraints.   */
     fun setNextWindowSizeConstraints(sizeMin: Vec2, sizeMax: Vec2, customCallback: SizeCallback? = null, customCallbackUserData: Any? = null) {
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasSizeConstraint
+            flags /= NextWindowDataFlag.HasSizeConstraint
             sizeConstraintRect.min put sizeMin
             sizeConstraintRect.max put sizeMax
             sizeCallback = customCallback
@@ -160,7 +160,7 @@ interface windowsUtilities {
      *  SetNextWindowContentSize(ImVec2(100,100) + ImGuiWindowFlags_AlwaysAutoResize will always allow submitting a 100x100 item.*/
     fun setNextWindowContentSize(size: Vec2) {
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasContentSize
+            flags /= NextWindowDataFlag.HasContentSize
             contentSizeVal put floor(size)
         }
     }
@@ -170,7 +170,7 @@ interface windowsUtilities {
         //        JVM, useless
         //        assert(cond == Cond.None || cond.isPowerOfTwo) { "Make sure the user doesn't attempt to combine multiple condition flags." }
         with(g.nextWindowData) {
-            flags = flags or NextWindowDataFlag.HasCollapsed
+            flags /= NextWindowDataFlag.HasCollapsed
             collapsedVal = collapsed
             collapsedCond = cond
         }
@@ -179,12 +179,12 @@ interface windowsUtilities {
     /** Set next window to be focused / top-most. call before Begin() */
     fun setNextWindowFocus() {
         // Using a Cond member for consistency (may transition all of them to single flag set for fast Clear() op)
-        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasFocus
+        g.nextWindowData.flags /= NextWindowDataFlag.HasFocus
     }
 
     /** set next window scrolling value (use < 0.0f to not affect a given axis). */
     fun setNextWindowScroll(scroll: Vec2) {
-        g.nextWindowData.flags = g.nextWindowData.flags or NextWindowDataFlag.HasScroll
+        g.nextWindowData.flags /= NextWindowDataFlag.HasScroll
         g.nextWindowData.scrollVal put scroll
     }
 
@@ -193,7 +193,7 @@ interface windowsUtilities {
      *  You may also use ImGuiWindowFlags_NoBackground. */
     fun setNextWindowBgAlpha(alpha: Float) {
         g.nextWindowData.apply {
-            flags = flags or NextWindowDataFlag.HasBgAlpha
+            flags /= NextWindowDataFlag.HasBgAlpha
             bgAlphaVal = alpha
         }
     }

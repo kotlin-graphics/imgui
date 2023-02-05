@@ -8,6 +8,8 @@ import imgui.ImGui.currentWindow
 import imgui.ImGui.currentWindowRead
 import imgui.ImGui.endColumns
 import imgui.ImGui.getColumnOffset
+import imgui.ImGui.getNormFrom
+import imgui.ImGui.getOffsetFrom
 import imgui.ImGui.io
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushItemWidth
@@ -16,6 +18,8 @@ import imgui.ImGui.style
 import imgui.internal.*
 import imgui.internal.sections.OldColumns
 import imgui.internal.sections.OldColumnsFlags
+import imgui.has
+import imgui.hasnt
 import imgui.internal.sections.has
 import imgui.internal.sections.hasnt
 import kotlin.math.max
