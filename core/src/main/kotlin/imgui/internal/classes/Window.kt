@@ -1,29 +1,16 @@
 package imgui.internal.classes
 
-import gli_.has
 import gli_.hasnt
 import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2bool
 import glm_.vec2.Vec2i
 import imgui.*
-import imgui.ImGui.calcTextSize
-import imgui.ImGui.clearActiveID
-import imgui.ImGui.closeButton
-import imgui.ImGui.collapseButton
 import imgui.ImGui.debugHookIdInfo
-import imgui.ImGui.focusWindow
-import imgui.ImGui.getKeyVector2d
 import imgui.ImGui.io
 import imgui.ImGui.isWithinBeginStackOf
-import imgui.ImGui.itemAdd
 import imgui.ImGui.msg
-import imgui.ImGui.popID
 import imgui.ImGui.rectAbsToRel
-import imgui.ImGui.renderFrame
-import imgui.ImGui.renderTextClipped
-import imgui.ImGui.scrollbar
-import imgui.ImGui.setActiveID
 import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.Context
@@ -32,10 +19,7 @@ import imgui.classes.SizeCallbackData
 import imgui.internal.*
 import imgui.internal.sections.*
 import imgui.static.addTo
-import kool.cap
 import java.util.*
-import kotlin.math.abs
-import kotlin.reflect.KMutableProperty0
 import imgui.WindowFlag as Wf
 
 /** Storage for one window */

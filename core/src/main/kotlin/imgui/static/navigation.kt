@@ -15,7 +15,7 @@ import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.findWindowByName
 import imgui.ImGui.focusWindow
 import imgui.ImGui.getForegroundDrawList
-import imgui.ImGui.getKeyVector2d
+import imgui.ImGui.getKeyMagnitude2d
 import imgui.ImGui.io
 import imgui.ImGui.isActiveIdUsingNavDir
 import imgui.ImGui.isDown
@@ -202,7 +202,7 @@ fun navUpdate() {
         // *Normal* Manual scroll with LStick
         // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
         if (navGamepadActive) {
-            val scrollDir = getKeyVector2d(Key.GamepadLStickLeft, Key.GamepadLStickRight, Key.GamepadLStickUp, Key.GamepadLStickDown)
+            val scrollDir = getKeyMagnitude2d(Key.GamepadLStickLeft, Key.GamepadLStickRight, Key.GamepadLStickUp, Key.GamepadLStickDown)
             val tweakFactor = if (Key._NavGamepadTweakSlow.isDown) 1f / 10f else if (Key._NavGamepadTweakFast.isDown) 10f else 1f
             if (scrollDir.x != 0f && window.scrollbar.x)
                 window.setScrollX(floor(window.scroll.x + scrollDir.x * scrollSpeed * tweakFactor))
@@ -341,9 +341,9 @@ fun navUpdateWindowing() {
         if (it.flags hasnt Wf.NoMove) {
             var navMoveDir = Vec2()
             if (g.navInputSource == InputSource.Keyboard && !io.keyShift)
-                navMoveDir put getKeyVector2d(Key.LeftArrow, Key.RightArrow, Key.UpArrow, Key.DownArrow)
+                navMoveDir put getKeyMagnitude2d(Key.LeftArrow, Key.RightArrow, Key.UpArrow, Key.DownArrow)
             if (g.navInputSource == InputSource.Gamepad)
-                navMoveDir put getKeyVector2d(Key.GamepadLStickLeft, Key.GamepadLStickRight, Key.GamepadLStickUp, Key.GamepadLStickDown)
+                navMoveDir put getKeyMagnitude2d(Key.GamepadLStickLeft, Key.GamepadLStickRight, Key.GamepadLStickUp, Key.GamepadLStickDown)
             if (navMoveDir.x != 0f || navMoveDir.y != 0f) {
                 val NAV_MOVE_SPEED = 800f
                 val moveStep = NAV_MOVE_SPEED * io.deltaTime * min(io.displayFramebufferScale.x, io.displayFramebufferScale.y) // FIXME: Doesn't handle variable framerate very well

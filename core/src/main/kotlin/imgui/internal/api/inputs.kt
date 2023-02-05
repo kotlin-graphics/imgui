@@ -100,8 +100,8 @@ internal interface inputs {
     }
 
     /** Return 2D vector representing the combination of four cardinal direction, with analog value support (for e.g. ImGuiKey_GamepadLStick* values). */
-    fun getKeyVector2d(keyLeft: Key, keyRight: Key, keyUp: Key, keyDown: Key) = Vec2(keyRight.data.analogValue - keyLeft.data.analogValue,
-                                                                                     keyDown.data.analogValue - keyUp.data.analogValue)
+    fun getKeyMagnitude2d(keyLeft: Key, keyRight: Key, keyUp: Key, keyDown: Key) = Vec2(keyRight.data.analogValue - keyLeft.data.analogValue,
+                                                                                        keyDown.data.analogValue - keyUp.data.analogValue)
 
     fun getNavTweakPressedAmount(axis: Axis): Float {
 
