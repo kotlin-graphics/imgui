@@ -8,6 +8,7 @@ import imgui.ImGui.calcItemSize
 import imgui.ImGui.isClippedEx
 import imgui.ImGui.itemSize
 import imgui.ImGui.loadSettings
+import imgui.ImGui.msg
 import imgui.ImGui.pushOverrideID
 import imgui.ImGui.resetSettings
 import imgui.ImGui.setNextWindowContentSize
@@ -1072,13 +1073,13 @@ interface tablesInternal {
         if (flags has Tf.Resizable) {
             if (column != null) {
                 val canResize = column.flags hasnt TableColumnFlag.NoResize && column.isEnabled
-                if (ImGui.menuItem("Size column to fit###SizeOne", "", false, canResize))
+                if (ImGui.menuItem(LocKey.TableSizeOne.msg, "", false, canResize)) // "###SizeOne"
                     setColumnWidthAutoSingle(columnN)
             }
 
             val sizeAllDesc = when {
-                columnsEnabledFixedCount == columnsEnabledCount && flags and Tf._SizingMask != Tf.SizingFixedSame.i -> "Size all columns to fit###SizeAll"        // All fixed
-                else -> "Size all columns to default###SizeAll"    // All stretch or mixed
+                columnsEnabledFixedCount == columnsEnabledCount && flags and Tf._SizingMask != Tf.SizingFixedSame.i -> LocKey.TableSizeAllFit.msg // "###SizeAll" All fixed
+                else -> LocKey.TableSizeAllDefault.msg // "###SizeAll" All stretch or mixed
             }
             if (ImGui.menuItem(sizeAllDesc, ""))
                 setColumnWidthAutoAll()
@@ -1087,7 +1088,7 @@ interface tablesInternal {
 
         // Ordering
         if (flags has Tf.Reorderable) {
-            if (ImGui.menuItem("Reset order", "", false, !isDefaultDisplayOrder))
+            if (ImGui.menuItem(LocKey.TableResetOrder.msg, "", false, !isDefaultDisplayOrder))
                 isResetDisplayOrderRequest = true
             wantSeparator = true
         }

@@ -98,6 +98,30 @@ class MenuColumns {
 }
 
 //-----------------------------------------------------------------------------
+// [SECTION] Localization support
+//-----------------------------------------------------------------------------
+
+// This is experimental and not officially supported, it'll probably fall short of features, if/when it does we may backtrack.
+enum class LocKey {
+    TableSizeOne,
+    TableSizeAllFit,
+    TableSizeAllDefault,
+    TableResetOrder,
+    WindowingMainMenuBar,
+    WindowingPopup,
+    WindowingUntitled;
+
+    companion object {
+        val COUNT = values().size
+    }
+}
+
+class LocEntry {
+    lateinit var key: LocKey
+    lateinit var text: String
+}
+
+//-----------------------------------------------------------------------------
 // [SECTION] Metrics, Debug tools
 //-----------------------------------------------------------------------------
 

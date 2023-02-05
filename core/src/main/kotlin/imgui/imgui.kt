@@ -172,6 +172,7 @@ object ImGui :
     genericContextHooks,
     imgui.internal.api.viewports,
     settings,
+    localization,
     scrolling,
     basicAccessors,
     basicHelpersForWidgetCode,
