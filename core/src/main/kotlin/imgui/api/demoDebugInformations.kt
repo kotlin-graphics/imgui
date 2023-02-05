@@ -19,6 +19,7 @@ import imgui.ImGui.checkboxFlags
 import imgui.ImGui.clearIniSettings
 import imgui.ImGui.clipboardText
 import imgui.ImGui.combo
+import imgui.ImGui.data
 import imgui.ImGui.debugLocateItemOnHover
 import imgui.ImGui.debugNodeDrawList
 import imgui.ImGui.debugNodeInputTextState
@@ -29,6 +30,7 @@ import imgui.ImGui.debugNodeViewport
 import imgui.ImGui.debugNodeWindowSettings
 import imgui.ImGui.debugNodeWindowsList
 import imgui.ImGui.debugNodeWindowsListByBeginStackParent
+import imgui.ImGui.debugRenderKeyboardPreview
 import imgui.ImGui.debugStartItemPicker
 import imgui.ImGui.debugTextEncoding
 import imgui.ImGui.end
@@ -53,6 +55,7 @@ import imgui.ImGui.isDown
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.isPressed
+import imgui.ImGui.isReleased
 import imgui.ImGui.logFinish
 import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
@@ -394,34 +397,98 @@ interface demoDebugInformations {
             }
         }
 
-        treeNode("Key Owners & Shortcut Routing") {
-            textUnformatted("Key Owners:")
-            listBox("##owners", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
-                for (keyIdx in Key.BEGIN until Key.END) {
+        treeNode("Inputs") {
+            text("KEYBOARD/GAMEPAD/MOUSE KEYS")
+            // We iterate both legacy native range and named ImGuiKey ranges, which is a little odd but this allows displaying the data for old/new backends.
+            // User code should never have to go through such hoops: old code may use native keycodes, new code may use ImGuiKey codes.
+            indent {
+                //                #ifdef IMGUI_DISABLE_OBSOLETE_KEYIO
+                //                    struct funcs { static bool IsLegacyNativeDupe(ImGuiKey) { return false; } };
+                //                #else
+                //                struct funcs { static bool IsLegacyNativeDupe(ImGuiKey key) { return key < 512 && GetIO().KeyMap[key] != -1; } }; // Hide Native<>ImGuiKey duplicates when both exists in the array
+                //Text("Legacy raw:");      for (ImGuiKey key = ImGuiKey_KeysData_OFFSET; key < ImGuiKey_COUNT; key++) { if (io.KeysDown[key]) { SameLine(); Text("\"%s\" %d", GetKeyName(key), key); } }
+                //                #endif
+                text("Keys down:")
+                for (keyIdx in Key.BEGIN until Key.COUNT) {
                     val key = Key of keyIdx
-                    val ownerData = key.ownerData
-                    if (ownerData.ownerCurr == KeyOwner_None)
-                        continue
-                    text("$key: 0x%08X${if (ownerData.lockUntilRelease) " LockUntilRelease" else if (ownerData.lockThisFrame) " LockThisFrame" else ""}", ownerData.ownerCurr)
-                    debugLocateItemOnHover(ownerData.ownerCurr)
+                    if (!key.isDown) continue
+                    sameLine(); text('"' + key.name + '"'); sameLine(); text("(%.02f)", key.data.downDuration)
                 }
-            }
-            textUnformatted("Shortcut Routing:")
-            listBox("##routes", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
-                for (keyIdx in Key.BEGIN until Key.END) {
+                text("Keys pressed:")
+                for (keyIdx in Key.BEGIN until Key.COUNT) {
                     val key = Key of keyIdx
-                    val rt = g.keysRoutingTable
-                    var idx = rt.index[key.i]
-                    while (idx != -1) {
-                        val routingData = rt.entries[idx]
-                        val keyChordName = getKeyChordName(key or routingData.mods)
-                        text("$keyChordName: 0x%08X", routingData.routingCurr)
-                        debugLocateItemOnHover(routingData.routingCurr)
-                        idx = routingData.nextEntryIndex
+                    if (!key.isPressed) continue
+                    sameLine(); text('"' + key.name + '"')
+                }
+                text("Keys released:")
+                for (keyIdx in Key.BEGIN until Key.COUNT) {
+                    val key = Key of keyIdx
+                    if (!key.isReleased) continue
+                    sameLine(); text('"' + key.name + '"')
+                }
+                text("Keys mods: ${if (io.keyCtrl) "CTRL " else ""}${if (io.keyShift) "SHIFT " else ""}${if (io.keyAlt) "ALT " else ""}${if (io.keySuper) "SUPER " else ""}")
+                text("Chars queue:")
+                for (c in io.inputQueueCharacters) {
+                    sameLine(); text("'${if (c > ' ' && c <= 255) c else '?'}\' (0x%04X)", c)
+                } // FIXME: We should convert 'c' to UTF-8 here but the functions are not public.
+                debugRenderKeyboardPreview(ImGui.windowDrawList)
+            }
+
+            text("MOUSE STATE")
+            indent {
+                if (ImGui.isMousePosValid())
+                    text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
+                else
+                    text("Mouse pos: <INVALID>")
+                text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
+                val count = io.mouseDown.size
+                text("Mouse down:"); for (i in 0 until count) if (ImGui.isMouseDown(MouseButton of i)) {; sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i]); }
+                text("Mouse clicked:"); for (i in 0 until count) if (ImGui.isMouseClicked(MouseButton of i)) {; sameLine(); text("b$i (${io.mouseClickedCount[i]})"); }
+                text("Mouse released:"); for (i in 0 until count) if (ImGui.isMouseReleased(MouseButton of i)) {; sameLine(); text("b$i"); }
+                text("Mouse wheel: %.1f", io.mouseWheel)
+                text("Pen Pressure: %.1f", io.penPressure) // Note: currently unused
+            }
+
+            text("MOUSE WHEELING")
+            indent {
+                text("WheelingWindow: '${g.wheelingWindow?.name ?: "NULL"}'")
+                text("WheelingWindowReleaseTimer: %.2f", g.wheelingWindowReleaseTimer)
+                val axis = if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) "X" else if (g.wheelingAxisAvg.x < g.wheelingAxisAvg.y) "Y" else "<none>"
+                text("WheelingAxisAvg[] = { %.3f, %.3f }, Main Axis: %s", g.wheelingAxisAvg.x, g.wheelingAxisAvg.y)
+            }
+
+            text("KEY OWNERS")
+            indent {
+                listBox("##owners", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 6)) {
+                    for (keyIdx in Key.BEGIN until Key.END) {
+                        val key = Key of keyIdx
+                        val ownerData = key.ownerData
+                        if (ownerData.ownerCurr == KeyOwner_None)
+                            continue
+                        text("$key: 0x%08X${if (ownerData.lockUntilRelease) " LockUntilRelease" else if (ownerData.lockThisFrame) " LockThisFrame" else ""}", ownerData.ownerCurr)
+                        debugLocateItemOnHover(ownerData.ownerCurr)
                     }
                 }
             }
-            text("(ActiveIdUsing: AllKeyboardKeys: %d, NavDirMask: 0x%X)", g.activeIdUsingAllKeyboardKeys, g.activeIdUsingNavDirMask)
+
+            text("SHORTCUT ROUTING")
+            indent {
+                listBox("##routes", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
+                    for (keyIdx in Key.BEGIN until Key.END) {
+                        val key = Key of keyIdx
+                        val rt = g.keysRoutingTable
+                        var idx = rt.index[key.i]
+                        while (idx != -1) {
+                            val routingData = rt.entries[idx]
+                            val keyChordName = getKeyChordName(key or routingData.mods)
+                            text("$keyChordName: 0x%08X", routingData.routingCurr)
+                            debugLocateItemOnHover(routingData.routingCurr)
+                            idx = routingData.nextEntryIndex
+                        }
+                    }
+                }
+                text("(ActiveIdUsing: AllKeyboardKeys: %d, NavDirMask: 0x%X)", g.activeIdUsingAllKeyboardKeys, g.activeIdUsingNavDirMask)
+            }
         }
 
         if (treeNode("Internal state")) {
@@ -463,14 +530,6 @@ interface demoDebugInformations {
                 text("NavDisableHighlight: ${g.navDisableHighlight}, NavDisableMouseHover: ${g.navDisableMouseHover}")
                 text("NavFocusScopeId = 0x%08X", g.navFocusScopeId)
                 text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
-            }
-
-            text("MOUSE WHEELING")
-            indent {
-                text("WheelingWindow: '${g.wheelingWindow?.name ?: "NULL"}'")
-                text("WheelingWindowReleaseTimer: %.2f", g.wheelingWindowReleaseTimer)
-                val axis = if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) "X" else if (g.wheelingAxisAvg.x < g.wheelingAxisAvg.y) "Y" else "<none>"
-                text("WheelingAxisAvg[] = { %.3f, %.3f }, Main Axis: $axis", g.wheelingAxisAvg.x, g.wheelingAxisAvg.y)
             }
 
             treePop()

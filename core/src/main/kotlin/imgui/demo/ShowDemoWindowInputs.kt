@@ -9,6 +9,7 @@ import imgui.ImGui.bullet
 import imgui.ImGui.button
 import imgui.ImGui.checkboxFlags
 import imgui.ImGui.colorButton
+import imgui.ImGui.data
 import imgui.ImGui.dummy
 import imgui.ImGui.endDisabled
 import imgui.ImGui.foregroundDrawList
@@ -50,95 +51,31 @@ object ShowDemoWindowInputs {
 
     operator fun invoke() {
 
-        collapsingHeader("Inputs, Navigation & Focus") {
+        collapsingHeader("Inputs & Focus") {
 
-            // Display ImGuiIO output flags
+            // Display inputs submitted to ImGuiIO
             setNextItemOpen(true, Cond.Once)
-            treeNode("Output") {
-                text("io.WantCaptureMouse: ${io.wantCaptureMouse}")
-                text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose}")
-                text("io.WantCaptureKeyboard: ${io.wantCaptureKeyboard}")
-                text("io.WantTextInput: ${io.wantTextInput}")
-                text("io.WantMoveMouse: ${io.wantSetMousePos}")
-                text("io.NavActive: ${io.navActive}, io.NavVisible: ${io.navVisible}")
-            }
-
-            // Display Mouse state
-            treeNode("Mouse State") {
-                if (isMousePosValid()) text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
-                else text("Mouse pos: <INVALID>")
+            treeNode("Inputs") {
+                helpMarker("This is a simplified view. See more detailed input state:\n" +
+                                   "- in 'Tools->Metrics/Debugger->Inputs'.\n" +
+                                   "- in 'Tools->Debug Log->IO'.")
+                if (isMousePosValid())
+                    text("Mouse pos: (%g, %g)", io.mousePos.x, io.mousePos.y)
+                else
+                    text("Mouse pos: <INVALID>")
                 text("Mouse delta: (%g, %g)", io.mouseDelta.x, io.mouseDelta.y)
                 text("Mouse down:")
-                val indices = io.mouseDown.indices
-                for (i in indices)
-                    if (isMouseDown(MouseButton.of(i))) {
-                        sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i])
-                    }
-                text("Mouse clicked:")
-                for (i in indices)
-                    if (isMouseClicked(MouseButton of i)) {
-                        sameLine(); text("b$i (${getMouseClickedCount(MouseButton of i)})")
-                    }
-                text("Mouse released:")
-                for (i in indices)
-                    if (isMouseReleased(MouseButton of i)) {
-                        sameLine()
-                        text("b$i")
-                    }
+                for (i in io.mouseDown.indices) if (isMouseDown(MouseButton.of(i))) {; sameLine(); text("b$i (%.02f secs)", io.mouseDownDuration[i]); }
                 text("Mouse wheel: %.1f", io.mouseWheel)
-                text("Pen Pressure: %.1f", io.penPressure) // Note: currently unused
-            }
-
-            // Display mouse cursors
-            //            IMGUI_DEMO_MARKER("Inputs, Navigation & Focus/Mouse Cursors");
-            treeNode("Mouse Cursors") {
-
-                val current = ImGui.mouseCursor
-                text("Current mouse cursor = ${current.i}: $current")
-                beginDisabled(true)
-                checkboxFlags("io.BackendFlags: HasMouseCursors", io::backendFlags, BackendFlag.HasMouseCursors.i)
-                endDisabled()
-
-                text("Hover to see mouse cursors:")
-                sameLine(); helpMarker(
-                "Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
-                        "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
-                        "otherwise your backend needs to handle it.")
-                for (i in 0 until MouseCursor.COUNT) {
-                    val label = "Mouse cursor $i: ${MouseCursor of i}"
-                    bullet(); selectable(label, false)
-                    if (ImGui.isItemHovered())
-                        ImGui.mouseCursor = MouseCursor of i
-                }
-            }
-
-            // Display Keyboard/Mouse state
-            treeNode("Keyboard, Gamepad & Navigation State") {
 
                 // We iterate both legacy native range and named ImGuiKey ranges, which is a little odd but this allows displaying the data for old/new backends.
                 // User code should never have to go through such hoops: old code may use native keycodes, new code may use ImGuiKey codes.
-                TODO()
 
                 text("Keys down:")
-                for (i in io.keysData.indices) {
-                    val key = Key of (i + Key.BEGIN)
-                    if (key.isDown) {
-                        sameLine(); text("\"$key\" $i (%.02f)", io.keysData[i].downDuration)
-                    }
-                }
-                text("Keys pressed:")
-                for (i in io.keysData.indices) {
-                    val key = Key of (i + Key.BEGIN)
-                    if (key.isPressed) {
-                        sameLine(); text("\"$key\" $i")
-                    }
-                }
-                text("Keys released:")
-                for (i in io.keysData.indices) {
-                    val key = Key of (i + Key.BEGIN)
-                    if (key.isReleased) {
-                        sameLine(); text("\"$key\" $i")
-                    }
+                for (keyIdx in Key.BEGIN until Key.END) {
+                    val key = Key of keyIdx
+                    if (!key.isDown) continue
+                    sameLine(); text('"' + key.name + '"'); sameLine(); text("(%.02f)", key.data.downDuration)
                 }
                 val ctrl = if (io.keyCtrl) "CTRL " else ""
                 val shift = if (io.keyShift) "SHIFT " else ""
@@ -154,53 +91,20 @@ object ShowDemoWindowInputs {
                 }
             }
 
-            // Draw an arbitrary US keyboard layout to visualize translated keys
-            run {
-                val keySize = Vec2(35f)
-                val keyRounding = 3f
-                val keyfaceSize = Vec2(25f)
-                val keyfacePos = Vec2(5f, 3f)
-                val keyfaceRounding = 2f
-                val keylabelPos = Vec2(7f, 4f)
-                val keyStep = keySize - 1f
-                val keyrowOffset = 9f
-
-                val boardMin = ImGui.cursorScreenPos // [JVM] same instance
-                val boardMax = Vec2(boardMin.x + 3 * keyStep.x + 2 * keyrowOffset + 10f, boardMin.y + 3 * keyStep.y + 10f)
-                val startPos = Vec2(boardMin.x + 5f - keyStep.x, boardMin.y)
-
-                class KeyLayoutData(val row: Int, val col: Int, val label: String, val key: Key)
-
-                val keysToDisplay = listOf(
-                    KeyLayoutData(0, 0, "", Key.Tab), KeyLayoutData(0, 1, "Q", Key.Q), KeyLayoutData(0, 2, "W", Key.W), KeyLayoutData(0, 3, "E", Key.E), KeyLayoutData(0, 4, "R", Key.R),
-                    KeyLayoutData(1, 0, "", Key.CapsLock), KeyLayoutData(1, 1, "A", Key.A), KeyLayoutData(1, 2, "S", Key.S), KeyLayoutData(1, 3, "D", Key.D), KeyLayoutData(1, 4, "F", Key.F),
-                    KeyLayoutData(2, 0, "", Key.LeftShift), KeyLayoutData(2, 1, "Z", Key.Z), KeyLayoutData(2, 2, "X", Key.X), KeyLayoutData(2, 3, "C", Key.C), KeyLayoutData(2, 4, "V", Key.V))
-
-                // Elements rendered manually via ImDrawList API are not clipped automatically.
-                // While not strictly necessary, here IsItemVisible() is used to avoid rendering these shapes when they are out of view.
-                dummy(Vec2(boardMax.x - boardMin.x, boardMax.y - boardMin.y))
-                if (ImGui.isItemVisible) {
-                    val drawList = ImGui.windowDrawList
-                    drawList.pushClipRect(boardMin, boardMax, true)
-                    for (keyData in keysToDisplay) {
-                        val keyMin = Vec2(startPos.x + keyData.col * keyStep.x + keyData.row * keyrowOffset, startPos.y + keyData.row * keyStep.y)
-                        val keyMax = Vec2(keyMin.x + keySize.x, keyMin.y + keySize.y)
-                        drawList.addRectFilled(keyMin, keyMax, COL32(204, 204, 204, 255), keyRounding)
-                        drawList.addRect(keyMin, keyMax, COL32(24, 24, 24, 255), keyRounding)
-                        val faceMin = Vec2(keyMin.x + keyfacePos.x, keyMin.y + keyfacePos.y)
-                        val faceMax = Vec2(faceMin.x + keyfaceSize.x, faceMin.y + keyfaceSize.y)
-                        drawList.addRect(faceMin, faceMax, COL32(193, 193, 193, 255), keyfaceRounding, DrawFlag.None.i, 2f)
-                        drawList.addRectFilled(faceMin, faceMax, COL32(252, 252, 252, 255), keyfaceRounding)
-                        val labelMin = Vec2(keyMin.x + keylabelPos.x, keyMin.y + keylabelPos.y)
-                        drawList.addText(labelMin, COL32(64, 64, 64, 255), keyData.label)
-                        if (keyData.key.isDown)
-                            drawList.addRectFilled(keyMin, keyMax, COL32(255, 0, 0, 128), keyRounding)
-                    }
-                    drawList.popClipRect()
-                }
+            // Display ImGuiIO output flags
+            //            IMGUI_DEMO_MARKER("Inputs & Focus/Outputs");
+            setNextItemOpen(true, Cond.Once)
+            treeNode("Outputs") {
+                text("io.WantCaptureMouse: ${io.wantCaptureMouse.i}")
+                text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose.i}")
+                text("io.WantCaptureKeyboard: ${io.wantCaptureKeyboard.i}")
+                text("io.WantTextInput: ${io.wantTextInput.i}")
+                text("io.WantSetMousePos: ${io.wantSetMousePos.i}")
+                text("io.NavActive: ${io.navActive.i}, io.NavVisible: ${io.navVisible.i}")
             }
 
-            treeNode("Capture override") {
+            //            IMGUI_DEMO_MARKER("Inputs & Focus/IO Output: Capture override")
+            treeNode("IO Output: Capture override") {
                 helpMarker(
                     "The value of io.WantCaptureMouse and io.WantCaptureKeyboard are normally set by Dear ImGui " +
                             "to instruct your application of how to route inputs. Typically, when a value is true, it means " +
@@ -230,10 +134,36 @@ object ShowDemoWindowInputs {
 
             }
 
+            // Display mouse cursors
+            //            IMGUI_DEMO_MARKER("Inputs & Focus/Mouse Cursors");
+            treeNode("Mouse Cursors") {
+                //                const char* mouse_cursors_names[] = { "Arrow", "TextInput", "ResizeAll", "ResizeNS", "ResizeEW", "ResizeNESW", "ResizeNWSE", "Hand", "NotAllowed" };
+                //                IM_ASSERT(IM_ARRAYSIZE(mouse_cursors_names) == ImGuiMouseCursor_COUNT);
+
+                val current = ImGui.mouseCursor
+                text("Current mouse cursor = ${current.i}: $current")
+                beginDisabled(true)
+                checkboxFlags("io.BackendFlags: HasMouseCursors", io::backendFlags, BackendFlag.HasMouseCursors.i)
+                endDisabled()
+
+                text("Hover to see mouse cursors:")
+                sameLine(); helpMarker("Your application can render a different mouse cursor based on what ImGui::GetMouseCursor() returns. " +
+                                               "If software cursor rendering (io.MouseDrawCursor) is set ImGui will draw the right cursor for you, " +
+                                               "otherwise your backend needs to handle it.")
+                for (i in 0 until MouseCursor.COUNT) {
+                    val cursor = MouseCursor of i
+                    val label = "Mouse cursor $i: $cursor"
+                    bullet(); selectable(label, false)
+                    if (ImGui.isItemHovered())
+                        ImGui.mouseCursor = cursor
+                }
+            }
+
             Tabbing()
 
             `Focus from code`()
 
+//            IMGUI_DEMO_MARKER("Inputs & Focus/Dragging");
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
                 for (button in MouseButton.values())
@@ -264,6 +194,7 @@ object ShowDemoWindowInputs {
     object Tabbing {
         var buf = "hello".toByteArray(32)
         operator fun invoke() {
+            //            IMGUI_DEMO_MARKER("Inputs & Focus/Tabbing");
             treeNode("Tabbing") {
                 text("Use TAB/SHIFT+TAB to cycle through keyboard editable fields.")
                 inputText("1", buf)
@@ -282,6 +213,7 @@ object ShowDemoWindowInputs {
         var buf = "click on a button to set focus".toByteArray(128)
         val f3 = FloatArray(3)
         operator fun invoke() {
+//            IMGUI_DEMO_MARKER("Inputs & Focus/Focus from code");
             treeNode("Focus from code") {
                 val focus1 = button("Focus on 1"); sameLine()
                 val focus2 = button("Focus on 2"); sameLine()

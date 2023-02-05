@@ -26,6 +26,7 @@ import imgui.ImGui.getForegroundDrawList
 import imgui.ImGui.getOffsetFrom
 import imgui.ImGui.getStyleColorVec4
 import imgui.ImGui.io
+import imgui.ImGui.isDown
 import imgui.ImGui.isItemHovered
 import imgui.ImGui.isItemVisible
 import imgui.ImGui.isMouseHoveringRect
@@ -797,6 +798,50 @@ internal interface debugTools {
                     debugNodeDrawList(null, layer[drawListIdx], "DrawList")
             treePop()
         }
+    }
+
+    // Draw an arbitrary US keyboard layout to visualize translated keys
+    fun debugRenderKeyboardPreview(drawList: DrawList) {
+        val keySize = Vec2(35f)
+        val keyRounding = 3f
+        val keyFaceSize = Vec2(25f)
+        val keyFacePos = Vec2(5f, 3f)
+        val keyFaceRounding = 2f
+        val keyLabelPos = Vec2(7f, 4f)
+        val keyStep = Vec2(keySize.x - 1f, keySize.y - 1f)
+        val keyRowOffset = 9f
+
+        val boardMin = ImGui.cursorScreenPos
+        val boardMax = Vec2(boardMin.x + 3 * keyStep.x + 2 * keyRowOffset + 10f, boardMin.y + 3 * keyStep.y + 10f)
+        val startPos = Vec2(boardMin.x + 5f - keyStep.x, boardMin.y)
+
+        class KeyLayoutData(val row: Int, val col: Int, val label: String, val key: Key)
+        val keysToDisplay = arrayOf(
+                KeyLayoutData(0, 0, "", Key.Tab),      KeyLayoutData(0, 1, "Q", Key.Q), KeyLayoutData(0, 2, "W", Key.W), KeyLayoutData(0, 3, "E", Key.E), KeyLayoutData(0, 4, "R", Key.R),
+                KeyLayoutData(1, 0, "", Key.CapsLock), KeyLayoutData(1, 1, "A", Key.A), KeyLayoutData(1, 2, "S", Key.S), KeyLayoutData(1, 3, "D", Key.D), KeyLayoutData(1, 4, "F", Key.F),
+                KeyLayoutData(2, 0, "", Key.LeftShift),KeyLayoutData(2, 1, "Z", Key.Z), KeyLayoutData(2, 2, "X", Key.X), KeyLayoutData(2, 3, "C", Key.C), KeyLayoutData(2, 4, "V", Key.V))
+
+        // Elements rendered manually via ImDrawList API are not clipped automatically.
+        // While not strictly necessary, here IsItemVisible() is used to avoid rendering these shapes when they are out of view.
+        dummy(boardMax - boardMin)
+        if (!ImGui.isItemVisible)
+            return
+        drawList.pushClipRect(boardMin, boardMax, true)
+        for (keyData in keysToDisplay) {
+            val keyMin = Vec2(startPos.x + keyData.col * keyStep.x + keyData.row * keyRowOffset, startPos.y + keyData.row * keyStep.y)
+            val keyMax = keyMin + keySize
+            drawList.addRectFilled(keyMin, keyMax, COL32(204, 204, 204, 255), keyRounding)
+            drawList.addRect(keyMin, keyMax, COL32(24, 24, 24, 255), keyRounding)
+            val faceMin = Vec2(keyMin.x + keyFacePos.x, keyMin.y + keyFacePos.y)
+            val faceMax = Vec2(faceMin.x + keyFaceSize.x, faceMin.y + keyFaceSize.y)
+            drawList.addRect(faceMin, faceMax, COL32(193, 193, 193, 255), keyFaceRounding, DrawFlag.None.i, 2f)
+            drawList.addRectFilled(faceMin, faceMax, COL32(252, 252, 252, 255), keyFaceRounding)
+            val labelMin = Vec2(keyMin.x + keyLabelPos.x, keyMin.y + keyLabelPos.y)
+            drawList.addText(labelMin, COL32(64, 64, 64, 255), keyData.label)
+            if (keyData.key.isDown)
+                drawList.addRectFilled(keyMin, keyMax, COL32(255, 0, 0, 128), keyRounding)
+        }
+        drawList.popClipRect()
     }
 
     fun debugRenderViewportThumbnail(drawList: DrawList, viewport: ViewportP, bb: Rect) {
