@@ -175,6 +175,8 @@ internal interface debugTools {
         window.dc.isSetPos = false
         if (window.dc.cursorPos.x <= window.dc.cursorMaxPos.x && window.dc.cursorPos.y <= window.dc.cursorMaxPos.y)
             return
+        if (window.skipItems)
+            return
         error("Code uses SetCursorPos()/SetCursorScreenPos() to extend window/parent boundaries. Please submit an item e.g. Dummy() to validate extent.")
     }
 
