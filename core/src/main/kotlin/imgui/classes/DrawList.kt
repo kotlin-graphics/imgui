@@ -10,7 +10,6 @@ import glm_.vec2.Vec2
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.drawData
-import imgui.ImGui.io
 import imgui.ImGui.shadeVertsLinearUV
 import imgui.ImGui.style
 import imgui.api.g
@@ -1213,9 +1212,11 @@ class DrawList(sharedData: DrawListSharedData?) {
     fun _popUnusedDrawCmd() {
         if (cmdBuffer.isEmpty())
             return
-        val currCmd = cmdBuffer.last()
-        if (currCmd.elemCount == 0 && currCmd.userCallback == null)
+        var currCmd = cmdBuffer.last()
+        while(currCmd.elemCount == 0 && currCmd.userCallback == null) {
             cmdBuffer.pop()
+            currCmd = cmdBuffer.last()
+        }
     }
 
     /** Try to merge two last draw commands */
