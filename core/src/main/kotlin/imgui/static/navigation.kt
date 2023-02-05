@@ -44,6 +44,7 @@ import imgui.ImGui.setNextWindowSizeConstraints
 import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
+import imgui.ImGui.shortcut
 import imgui.ImGui.style
 import imgui.ImGui.testOwner
 import imgui.ImGui.topMostPopupModal
@@ -257,8 +258,10 @@ fun navUpdateWindowing() {
     // Start CTRL+TAB or Square+L/R window selection
     val navGamepadActive = io.configFlags has ConfigFlag.NavEnableGamepad && io.backendFlags has BackendFlag.HasGamepad
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
+    val keyboardNextWindow = allowWindowing && g.configNavWindowingKeyNext != 0 && shortcut(g.configNavWindowingKeyNext, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
+    val keyboardPrevWindow = allowWindowing && g.configNavWindowingKeyPrev != 0 && shortcut(g.configNavWindowingKeyPrev, KeyOwner_None, InputFlag.Repeat or InputFlag.RouteAlways)
     val startWindowingWithGamepad = allowWindowing && navGamepadActive && g.navWindowingTarget == null && Key._NavGamepadMenu.isPressed(0, InputFlag.None.i)
-    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && io.keyCtrl && Key.Tab.isPressed(KeyOwner_None) // Note: enabled even without NavEnableKeyboard!
+    val startWindowingWithKeyboard = allowWindowing && g.navWindowingTarget == null && (keyboardNextWindow || keyboardPrevWindow) // Note: enabled even without NavEnableKeyboard!
     if (startWindowingWithGamepad || startWindowingWithKeyboard)
         (g.navWindow ?: findWindowNavFocusable(g.windowsFocusOrder.lastIndex, -Int.MAX_VALUE, -1))?.let {
             g.navWindowingTarget = it.rootWindow; g.navWindowingTargetAnim = it.rootWindow
@@ -299,10 +302,12 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (g.navInputSource == InputSource.Keyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
+            val sharedMods = (if (g.configNavWindowingKeyNext != 0) g.configNavWindowingKeyNext else Key.Mod_Mask_.i) and if (g.configNavWindowingKeyPrev != 0) g.configNavWindowingKeyPrev else Key.Mod_Mask_.i and Key.Mod_Mask_
+            assert(sharedMods != 0) { "Next / Prev shortcut currently needs a shared modifier to \"hold\", otherwise Prev actions would keep cycling between two windows." }
             g.navWindowingHighlightAlpha = g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
-            if (Key.Tab isPressed true)
-                navUpdateWindowingHighlightWindow(if (io.keyShift) 1 else -1)
-            if (!io.keyCtrl)
+            if (keyboardNextWindow || keyboardPrevWindow)
+                navUpdateWindowingHighlightWindow(if (keyboardNextWindow) -1 else +1)
+            else if ((io.keyMods and sharedMods) != sharedMods)
                 applyFocusWindow = g.navWindowingTarget
         }
     }

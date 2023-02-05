@@ -393,6 +393,11 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     // Navigation: Windowing (CTRL+TAB for list, or Menu button + keys or directional pads to move/resize)
     //------------------------------------------------------------------
 
+    /** = ImGuiMod_Ctrl | ImGuiKey_Tab, for reconfiguration (see #4828) */
+    var configNavWindowingKeyNext: KeyChord = Key.Mod_Ctrl or Key.Tab
+    /** = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Tab */
+    var configNavWindowingKeyPrev: KeyChord = Key.Mod_Ctrl or Key.Mod_Shift or Key.Tab
+
     /** Target window when doing CTRL+Tab (or Pad Menu + FocusPrev/Next), this window is temporarily displayed top-most! */
     var navWindowingTarget: Window? = null
 
