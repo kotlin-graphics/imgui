@@ -2,9 +2,9 @@ package imgui.static
 
 import gli_.has
 import glm_.L
-import glm_.glm
 import glm_.i
 import glm_.max
+import glm_.min
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.createNewWindowSettings
@@ -178,33 +178,21 @@ fun calcScrollEdgeSnap(target: Float, snapMin: Float, snapMax: Float, snapThresh
 
 fun Window.calcNextScrollFromScrollTargetAndClamp(): Vec2 {
     val scroll = Vec2(scroll)
-    if (scrollTarget.x < Float.MAX_VALUE) {
-        val decorationTotalWidth = scrollbarSizes.x
-        val centerXRatio = scrollTargetCenterRatio.x
-        var scrollTargetX = scrollTarget.x
-        if (scrollTargetEdgeSnapDist.x > 0f) {
-            val snapXMin = 0f
-            val snapXMax = scrollMax.x + sizeFull.x - decorationTotalWidth
-            scrollTargetX = calcScrollEdgeSnap(scrollTargetX, snapXMin, snapXMax, scrollTargetEdgeSnapDist.x, centerXRatio)
+    val decorationSize = Vec2(scrollbarSizes.x, titleBarHeight + menuBarHeight + scrollbarSizes.y)
+    for (axis in 0..1) {
+        if (scrollTarget[axis] < Float.MAX_VALUE) {
+            val centerRatio = scrollTargetCenterRatio[axis]
+            var scrollTarget = scrollTarget[axis]
+            if (scrollTargetEdgeSnapDist[axis] > 0f) {
+                val snapMin = 0f
+                val snapMax = scrollMax[axis] + sizeFull[axis] - decorationSize[axis]
+                scrollTarget = calcScrollEdgeSnap(scrollTarget, snapMin, snapMax, scrollTargetEdgeSnapDist[axis], centerRatio)
+            }
+            scroll[axis] = scrollTarget - centerRatio * (sizeFull[axis] - decorationSize[axis])
         }
-        scroll.x = scrollTargetX - centerXRatio * (sizeFull.x - decorationTotalWidth)
-    }
-    if (scrollTarget.y < Float.MAX_VALUE) {
-        val decorationTotalHeight = titleBarHeight + menuBarHeight + scrollbarSizes.y
-        val centerYRatio = scrollTargetCenterRatio.y
-        var scrollTargetY = scrollTarget.y
-        if (scrollTargetEdgeSnapDist.y > 0f) {
-            val snapYMin = 0f
-            val snapYMax = scrollMax.y + sizeFull.y - decorationTotalHeight
-            scrollTargetY = calcScrollEdgeSnap(scrollTargetY, snapYMin, snapYMax, scrollTargetEdgeSnapDist.y, centerYRatio)
-        }
-        scroll.y = scrollTargetY - centerYRatio * (sizeFull.y - decorationTotalHeight)
-    }
-    scroll.x = floor(scroll.x max 0f)
-    scroll.y = floor(scroll.y max 0f)
-    if (!collapsed && !skipItems) {
-        scroll.x = glm.min(scroll.x, scrollMax.x)
-        scroll.y = glm.min(scroll.y, scrollMax.y)
+        scroll[axis] = floor(scroll[axis] max 0f)
+        if (!collapsed && !skipItems)
+        scroll[axis] = scroll[axis] min scrollMax[axis]
     }
     return scroll
 }
