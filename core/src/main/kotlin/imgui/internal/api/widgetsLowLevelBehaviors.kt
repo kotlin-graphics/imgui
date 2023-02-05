@@ -495,7 +495,7 @@ internal interface widgetsLowLevelBehaviors {
 
     /** Using 'hover_visibility_delay' allows us to hide the highlight and mouse cursor for a short time, which can be convenient to reduce visual noise. */
     fun splitterBehavior(bb: Rect, id: ID, axis: Axis, size1ptr: KMutableProperty0<Float>, size2ptr: KMutableProperty0<Float>,
-                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f): Boolean {
+                         minSize1: Float, minSize2: Float, hoverExtend: Float = 0f, hoverVisibilityDelay: Float = 0f, bgCol: Int = 0): Boolean {
 
         var size1 by size1ptr
         var size2 by size2ptr
@@ -535,8 +535,8 @@ internal interface widgetsLowLevelBehaviors {
                     assert(size1 + mouseDelta >= minSize1)
                 else if (mouseDelta > 0f)
                     assert(size2 - mouseDelta >= minSize2)
-                size1 = size1 + mouseDelta // cant += because of https://youtrack.jetbrains.com/issue/KT-14833
-                size2 = size2 - mouseDelta
+                size1 += mouseDelta
+                size2 -= mouseDelta
                 bbRender translate if (axis == Axis.X) Vec2(mouseDelta, 0f) else Vec2(0f, mouseDelta)
                 markItemEdited(id)
             }
@@ -545,12 +545,10 @@ internal interface widgetsLowLevelBehaviors {
             markItemEdited(id)
         }
 
-        // Render
-        val col = when {
-            held -> Col.SeparatorActive
-            hovered && g.hoveredIdTimer >= hoverVisibilityDelay -> Col.SeparatorHovered
-            else -> Col.Separator
-        }
+        // Render at new position
+        if (bgCol has COL32_A_MASK)
+            window.drawList.addRectFilled(bbRender.min, bbRender.max, bgCol, 0f)
+        val col = if (held) Col.SeparatorActive else if (hovered && g.hoveredIdTimer >= hoverVisibilityDelay) Col.SeparatorHovered else Col.Separator
         window.drawList.addRectFilled(bbRender.min, bbRender.max, col.u32, 0f)
 
         return held

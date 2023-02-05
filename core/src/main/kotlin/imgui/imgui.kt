@@ -194,6 +194,7 @@ object ImGui :
     tabBars,
     renderHelpers,
     widgets,
+    widgetsWindowDecorations,
     widgetsLowLevelBehaviors,
     templateFunctions,
     dataTypeHelpers,

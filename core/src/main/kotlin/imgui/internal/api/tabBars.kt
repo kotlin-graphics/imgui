@@ -18,6 +18,7 @@ import imgui.classes.DrawList
 import imgui.internal.classes.Rect
 import imgui.internal.classes.TabBar
 import imgui.internal.classes.TabItem
+import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.sections.*
 import imgui.static.calcTabID
@@ -201,7 +202,7 @@ internal interface tabBars {
         return true
     }
 
-    fun TabBar.tabItemEx(label: String, pOpen_: KMutableProperty0<Boolean>?, flags_: TabItemFlags): Boolean {
+    fun TabBar.tabItemEx(label: String, pOpen_: KMutableProperty0<Boolean>?, flags_: TabItemFlags, dockedWindow: Window?): Boolean {
 
         var pOpen = pOpen_
         var flags = flags_ // Layout whole tab bar if not already done
@@ -214,7 +215,7 @@ internal interface tabBars {
         val window = g.currentWindow!!
         if (window.skipItems) return false
 
-        val id = calcTabID(label)
+        val id = calcTabID(label, dockedWindow)
 
         // If the user called us with *p_open == false, we early out and don't render.
         // We make a call to ItemAdd() so that attempts to use a contextual popup menu with an implicit ID won't use an older ID.
@@ -258,9 +259,13 @@ internal interface tabBars {
         tab.lastFrameVisible = g.frameCount
         tab.flags = flags
 
-        // Append name with zero-terminator
-        tab.nameOffset = tabsNames.size
-        tabsNames += label
+        // Append name _WITH_ the zero-terminator
+        if (dockedWindow != null)
+            assert(dockedWindow == null) { "master branch only" }
+        else {
+            tab.nameOffset = tabsNames.size
+            tabsNames += label
+        }
 
         // Update selected tab
         if (!isTabButton) {
@@ -398,6 +403,12 @@ internal interface tabBars {
         assert(!isTabButton || !(selectedTabId == tab.id && isTabButton)) { "TabItemButton should not be selected" }
         return if (isTabButton) pressed else tabContentsVisible
     }
+
+    fun tabItemCalcSize(window: Window): Vec2 {
+        check(false) { "This function exists to facilitate merge with 'docking' branch." }
+        return Vec2()
+    }
+
     fun tabItemCalcSize(label: String, hasCloseButtonOrUnsavedMarker: Boolean): Vec2 {
 
         val labelSize = calcTextSize(label, hideTextAfterDoubleHash = true)

@@ -299,7 +299,8 @@ fun Window.renderOuterBorders() {
 /** ~RenderWindowDecorations
  *  Draw background and borders
  *  Draw and handle scrollbars */
-fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
+fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, handleBordersAndResizeGrips: Boolean,
+                             resizeGripCount: Int, resizeGripCol: IntArray, resizeGripDrawSize: Float) {
 
     // Ensure that ScrollBar doesn't read last frame's SkipItems
     assert(beginCount == 0)
@@ -353,20 +354,22 @@ fun Window.renderDecorations(titleBarRect: Rect, titleBarIsHighlight: Boolean, r
         if (scrollbar.y) ImGui.scrollbar(Axis.Y)
 
         // Render resize grips (after their input handling so we don't have a frame of latency)
-        if (flags hasnt WindowFlag.NoResize) repeat(resizeGripCount) { resizeGripN ->
-            val grip = Window.resizeGripDef[resizeGripN]
-            val corner = pos.lerp(pos + size, grip.cornerPosN)
-            with(drawList) {
-                pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, resizeGripDrawSize) else Vec2(resizeGripDrawSize, windowBorderSize)))
-                pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(resizeGripDrawSize, windowBorderSize) else Vec2(windowBorderSize, resizeGripDrawSize)))
-                pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize),
-                                   corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)),
-                              windowRounding, grip.angleMin12, grip.angleMax12)
-                pathFillConvex(resizeGripCol[resizeGripN])
+        if (handleBordersAndResizeGrips && flags hasnt WindowFlag.NoResize)
+            repeat(resizeGripCount) { resizeGripN ->
+                val grip = Window.resizeGripDef[resizeGripN]
+                val corner = pos.lerp(pos + size, grip.cornerPosN)
+                with(drawList) {
+                    pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(windowBorderSize, resizeGripDrawSize) else Vec2(resizeGripDrawSize, windowBorderSize)))
+                    pathLineTo(corner + grip.innerDir * (if (resizeGripN has 1) Vec2(resizeGripDrawSize, windowBorderSize) else Vec2(windowBorderSize, resizeGripDrawSize)))
+                    pathArcToFast(Vec2(corner.x + grip.innerDir.x * (windowRounding + windowBorderSize),
+                                       corner.y + grip.innerDir.y * (windowRounding + windowBorderSize)),
+                                  windowRounding, grip.angleMin12, grip.angleMax12)
+                    pathFillConvex(resizeGripCol[resizeGripN])
+                }
             }
-        }
 
         // Borders
+        if (handleBordersAndResizeGrips)
         renderOuterBorders()
     }
 }

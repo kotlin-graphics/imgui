@@ -15,7 +15,8 @@ import imgui.static.calcTabID
 import imgui.static.layout
 import kotlin.reflect.KMutableProperty0
 
-/** Tab Bars, Tabs */
+// Tab Bars, Tabs
+// - Note: Tabs are automatically created by the docking system (when in 'docking' branch). Use this to create tab bars/tabs yourself.
 interface tabBarsTabs {
 
     /** create and append into a TabBar */
@@ -76,7 +77,7 @@ interface tabBarsTabs {
         val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
         assert(flags hasnt TabItemFlag._Button) { "BeginTabItem() Can't be used with button flags, use TabItemButton() instead!" }
 
-        return tabBar.tabItemEx(label, pOpen, flags).also {
+        return tabBar.tabItemEx(label, pOpen, flags, null).also {
             if (it && flags hasnt TabItemFlag.NoPushId) {
                 val tab = tabBar.tabs[tabBar.lastTabItemIdx]
                 pushOverrideID(tab.id) // We already hashed 'label' so push into the ID stack directly instead of doing another hash through PushID(label)
@@ -105,7 +106,7 @@ interface tabBarsTabs {
             return false
 
         val tabBar = g.currentTabBar ?: error("Needs to be called between BeginTabBar() and EndTabBar()!")
-        return tabBar.tabItemEx(label, null, flags or TabItemFlag._Button or TabItemFlag.NoReorder)
+        return tabBar.tabItemEx(label, null, flags or TabItemFlag._Button or TabItemFlag.NoReorder, null)
     }
 
     /** notify TabBar or Docking system of a closed tab/window ahead (useful to reduce visual flicker on reorderable tab bars).
@@ -119,7 +120,7 @@ interface tabBarsTabs {
         val isWithinManualTabBar = g.currentTabBar?.flags?.hasnt(TabBarFlag._DockNode) == true
         if (isWithinManualTabBar) {
             val tabBar = g.currentTabBar!!
-            val tabId = tabBar calcTabID tabOrDockedWindowLabel
+            val tabId = tabBar.calcTabID(tabOrDockedWindowLabel, null)
             tabBar.findTabByID(tabId)?.let {
                 it.wantClose = true // Will be processed by next call to TabBarLayout()
             }

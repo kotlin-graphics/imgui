@@ -574,10 +574,12 @@ interface windows {
 
                 // Handle title bar, scrollbar, resize grips and resize borders
                 val windowToHighlight = g.navWindowingTarget ?: g.navWindow
-                val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight }
-                    ?: false)
-                window.renderDecorations(titleBarRect, titleBarIsHighlight, resizeGripCount, resizeGripCol, resizeGripDrawSize)
-                if (renderDecorationsInParent) window.drawList = window.drawListInst
+                val titleBarIsHighlight = wantFocus || (windowToHighlight?.let { window.rootWindowForTitleBarHighlight === it.rootWindowForTitleBarHighlight } == true)
+                val handleBordersAndResizeGrips = true // This exists to facilitate merge with 'docking' branch.
+                window.renderDecorations(titleBarRect, titleBarIsHighlight, handleBordersAndResizeGrips, resizeGripCount, resizeGripCol, resizeGripDrawSize)
+
+                if (renderDecorationsInParent)
+                    window.drawList = window.drawListInst
             }
 
             with(window) {
@@ -611,8 +613,8 @@ interface windows {
                 // - Mouse wheel scrolling + many other things
                 contentRegionRect.min.put(pos.x - scroll.x + windowPadding.x + decoOuterSizeX1,
                                           pos.y - scroll.y + windowPadding.y + decoOuterSizeY1)
-                contentRegionRect.max.put(contentRegionRect.min.x + if(contentSizeExplicit.x != 0f) contentSizeExplicit.x else size.x - windowPadding.x * 2f - (decoOuterSizeX1 + decoOuterSizeX2),
-                                          contentRegionRect.min.y + if(contentSizeExplicit.y != 0f) contentSizeExplicit.y else size.y - windowPadding.y * 2f - (decoOuterSizeY1 + decoOuterSizeY2))
+                contentRegionRect.max.put(contentRegionRect.min.x + if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else size.x - windowPadding.x * 2f - (decoOuterSizeX1 + decoOuterSizeX2),
+                                          contentRegionRect.min.y + if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else size.y - windowPadding.y * 2f - (decoOuterSizeY1 + decoOuterSizeY2))
 
                 // Setup drawing context
                 // (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold transient data only. Nowadays difference between window-> and window->DC-> is dubious.)

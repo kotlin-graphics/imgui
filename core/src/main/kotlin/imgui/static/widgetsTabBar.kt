@@ -8,10 +8,7 @@ import imgui.*
 import imgui.ImGui.findTabByID
 import imgui.ImGui.processReorder
 import imgui.api.g
-import imgui.internal.classes.ShrinkWidthItem
-import imgui.internal.classes.TabBar
-import imgui.internal.classes.TabBarSection
-import imgui.internal.classes.TabItem
+import imgui.internal.classes.*
 import imgui.internal.floor
 import imgui.internal.hashStr
 import imgui.internal.linearSweep
@@ -239,15 +236,19 @@ fun TabBar.layout() {
     window.dc.idealMaxPos.x = window.dc.idealMaxPos.x max (barRect.min.x + widthAllTabsIdeal)
 }
 
-/** Dockables uses Name/ID in the global namespace. Non-dockable items use the ID stack.
+/** Dockable windows uses Name/ID in the global namespace. Non-dockable items use the ID stack.
  *  ~ TabBarCalcTabID   */
-infix fun TabBar.calcTabID(label: String) = when {
-    flags has TabBarFlag._DockNode -> {
-        val id = hashStr(label)
-        ImGui.keepAliveID(id)
-        id
+fun TabBar.calcTabID(label: String, dockedWindow: Window?): ID {
+    assert(dockedWindow == null) { "master branch only" }
+//    IM_UNUSED(docked_window);
+    return when {
+        flags has TabBarFlag._DockNode -> {
+            val id = hashStr(label)
+            ImGui.keepAliveID(id)
+            id
+        }
+        else -> g.currentWindow!!.getID(label)
     }
-    else -> g.currentWindow!!.getID(label)
 }
 
 fun tabBarCalcMaxTabWidth() = g.fontSize * 20f
