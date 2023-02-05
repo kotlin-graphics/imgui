@@ -94,15 +94,16 @@ internal interface scrolling {
         val canBeFullyVisibleX = (itemRect.width + g.style.itemSpacing.x * 2f) <= scrollRect.width || window.autoFitFrames.x > 0 || window.flags has WindowFlag.AlwaysAutoResize
         val canBeFullyVisibleY = (itemRect.height + g.style.itemSpacing.y * 2f) <= scrollRect.height || window.autoFitFrames.y > 0 || window.flags has WindowFlag.AlwaysAutoResize
 
-        if (flags has ScrollFlag.KeepVisibleEdgeX && !fullyVisibleX)
+        if (flags has ScrollFlag.KeepVisibleEdgeX && !fullyVisibleX) {
+            if (itemRect.min.x < scrollRect.min.x || !canBeFullyVisibleX)
+                window.setScrollFromPosX(itemRect.min.x - g.style.itemSpacing.x - window.pos.x, 0f)
+            else if (itemRect.max.x >= scrollRect.max.x)
+                window.setScrollFromPosX(itemRect.max.x + g.style.itemSpacing.x - window.pos.x, 1f)
+        } else if ((flags has ScrollFlag.KeepVisibleCenterX && !fullyVisibleX) || flags has ScrollFlag.AlwaysCenterX)
             if (canBeFullyVisibleX)
-                window.setScrollFromPosX(floor((itemRect.min.x + itemRect.max.y) * 0.5f) - window.pos.x, 0.5f)
+                window.setScrollFromPosX(floor((itemRect.min.x + itemRect.max.x) * 0.5f) - window.pos.x, 0.5f)
             else
                 window.setScrollFromPosX(itemRect.min.x - window.pos.x, 0f)
-        else if ((flags has ScrollFlag.KeepVisibleCenterX && !fullyVisibleX) || flags has ScrollFlag.AlwaysCenterX) {
-            val targetX = if (canBeFullyVisibleX) floor((itemRect.min.x + itemRect.max.x - window.innerRect.width) * 0.5f) else itemRect.min.x
-            window.setScrollFromPosX(targetX - window.pos.x, 0f)
-        }
 
         if (flags has ScrollFlag.KeepVisibleEdgeY && !fullyVisibleY) {
             if (itemRect.min.y < scrollRect.min.y || !canBeFullyVisibleY)
