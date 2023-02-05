@@ -318,15 +318,16 @@ class Font {
         if (y + lineHeight < clipRect.y)
             while (y + lineHeight < clipRect.y && s < textEnd) {
                 val lineEnd = text.memchr(s, '\n')
+                val lineNext = if(lineEnd != -1) lineEnd + 1 else textEnd
                 if (wordWrapEnabled) {
                     // FIXME-OPT: This is not optimal as do first do a search for \n before calling CalcWordWrapPositionA().
                     // If the specs for CalcWordWrapPositionA() were reworked to optionally return on \n we could combine both.
                     // However it is still better than nothing performing the fast-forward!
-                    s = calcWordWrapPositionA(scale, text, s, lineEnd, wrapWidth)
+                    s = calcWordWrapPositionA(scale, text, s, lineNext, wrapWidth)
                     s = calcWordWrapNextLineStartA(text, s, textEnd)
                 }
                 else
-                    s = if (lineEnd == -1) lineEnd + 1 else textEnd
+                    s = lineNext
                 y += lineHeight
             }
 
