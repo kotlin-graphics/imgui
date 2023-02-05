@@ -11,7 +11,7 @@ import imgui.TableFlag as Tf
 import imgui.TableRowFlag as Trf
 
 
-/** FIXME-TABLE: more transient data could be stored in a per-stacked table structure: DrawSplitter, SortSpecs, incoming RowData */
+/** FIXME-TABLE: more transient data could be stored in a stacked ImGuiTableTempData: e.g. SortSpecs, incoming RowData */
 class Table {
 
     var id: ID = 0
@@ -286,6 +286,12 @@ class Table {
 
     /** Set if user didn't explicitly set a sizing policy in BeginTable() */
     var isDefaultSizingPolicy = false
+
+    /** Whether ANY instance of this table had a vertical scrollbar during the current frame. */
+    var hasScrollbarYCurr = false
+
+    /** Whether ANY instance of this table had a vertical scrollbar during the previous. */
+    var hasScrollbarYPrev = false
 
     var memoryCompacted = false
 

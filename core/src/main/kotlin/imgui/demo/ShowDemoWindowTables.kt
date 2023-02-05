@@ -435,24 +435,7 @@ object ShowDemoWindowTables {
         // Demonstrate creating multiple tables with the same ID
         if (openAction != -1)
             setNextItemOpen(openAction != 0)
-        treeNode("Synced instances") {
-            helpMarker("Multiple tables with the same identifier will share their settings, width, visibility, order etc.")
-            for (n in 0..2) {
-                val open = collapsingHeader("Synced Table $n", Tnf.DefaultOpen.i)
-                val flags = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.Borders or Tf.SizingFixedFit or Tf.NoSavedSettings
-                if (open && beginTable("Table", 3, flags)) {
-                    tableSetupColumn("One")
-                    tableSetupColumn("Two")
-                    tableSetupColumn("Three")
-                    tableHeadersRow()
-                    for (cell in 0..8) {
-                        tableNextColumn()
-                        text("this cell $cell")
-                    }
-                    endTable()
-                }
-            }
-        }
+        `Synced instances`()
 
         // Demonstrate using Sorting facilities
         // This is a simplified version of the "Advanced" example, where we mostly focus on the code necessary to handle sorting.
@@ -1343,6 +1326,34 @@ object ShowDemoWindowTables {
                             tableSetColumnIndex(column)
                             selectable("Cell $column,$row", columnSelected, column)
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    object `Synced instances` {
+
+        var flags = Tf.Resizable or Tf.Reorderable or Tf.Hideable or Tf.Borders or Tf.SizingFixedFit or Tf.NoSavedSettings
+        operator fun invoke() {
+            treeNode("Synced instances") {
+                helpMarker("Multiple tables with the same identifier will share their settings, width, visibility, order etc.")
+
+                checkboxFlags("ImGuiTableFlags_ScrollY", ::flags, Tf.ScrollY.i)
+                checkboxFlags("ImGuiTableFlags_SizingFixedFit", ::flags, Tf.SizingFixedFit.i)
+                for (n in 0..2) {
+                    val open = collapsingHeader("Synced Table $n", Tnf.DefaultOpen.i)
+                    if (open && beginTable("Table", 3, flags, Vec2(0f, textLineHeightWithSpacing * 5))) {
+                        tableSetupColumn("One")
+                        tableSetupColumn("Two")
+                        tableSetupColumn("Three")
+                        tableHeadersRow()
+                        val cellCount = if (n == 1) 27 else 9 // Make second table have a scrollbar to verify that additional decoration is not affecting column positions.
+                        repeat(cellCount) { cell ->
+                            tableNextColumn()
+                            text("this cell $cell")
+                        }
+                        endTable()
                     }
                 }
             }

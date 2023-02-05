@@ -129,6 +129,13 @@ interface tablesInternal {
             table.outerRect put inner.rect()
             table.innerRect put table.innerWindow!!.innerRect
             assert(inner.windowPadding.x == 0f && inner.windowPadding.y == 0f && inner.windowBorderSize == 0f) // TODO glm -> allEqual
+
+            // When using multiple instances, ensure they have the same amount of horizontal decorations (aka vertical scrollbar) so stretched columns can be aligned)
+            if (instanceNo == 0) {
+                table.hasScrollbarYPrev = table.hasScrollbarYCurr
+                table.hasScrollbarYCurr = false
+            }
+            table.hasScrollbarYCurr /= table.innerWindow!!.scrollMax.y > 0f
         } else {
             // For non-scrolling tables, WorkRect == OuterRect == InnerRect.
             // But at this point we do NOT have a correct value for .Max.y (unless a height has been explicitly passed in). It will only be updated in EndTable().
@@ -256,7 +263,7 @@ interface tablesInternal {
                 var column = table.columns[n]
                 if (oldColumnsToPreserve != null && n < oldColumnsCount) {
                     // FIXME: We don't attempt to preserve column order in this path.
-//                    *column = old_columns_to_preserve[n];
+                    //                    *column = old_columns_to_preserve[n];
                 } else {
                     val widthAuto = column.widthAuto
                     //                *column = ImGuiTableColumn()
@@ -272,8 +279,8 @@ interface tablesInternal {
                 column.isUserEnabledNextFrame = true
             }
         }
-//        if (old_columns_raw_data)
-//            IM_FREE(old_columns_raw_data);
+        //        if (old_columns_raw_data)
+        //            IM_FREE(old_columns_raw_data);
 
         // Load settings
         if (table.isSettingsRequestLoad)
@@ -634,7 +641,8 @@ interface tablesInternal {
         // [Part 4] Apply final widths based on requested widths
         //        val work_rect = table->WorkRect; [JVM] we use the same instance!
         val widthSpacings = outerPaddingX * 2f + (cellSpacingX1 + cellSpacingX2) * (columnsEnabledCount - 1)
-        val widthAvail = if (flags has Tf.ScrollX && innerWidth == 0f) innerClipRect.width else workRect.width
+        val widthRemoved = if (hasScrollbarYPrev && !innerWindow!!.scrollbar.y) g.style.scrollbarSize else 0f // To synchronize decoration width of synched tables with mismatching scrollbar state (#5920)
+        val widthAvail = 1f max if (flags has Tf.ScrollX && innerWidth == 0f) innerClipRect.width else workRect.width - widthRemoved
         val widthAvailForStretchedColumns = widthAvail - widthSpacings - sumWidthRequests
         var widthRemainingForStretchedColumns = widthAvailForStretchedColumns
         columnsGivenWidth = widthSpacings + (cellPaddingX * 2) * columnsEnabledCount
@@ -708,7 +716,7 @@ interface tablesInternal {
             val columnN = displayOrderToIndex[orderN]
             val column = columns[columnN]
 
-            column.navLayerCurrent = if(freezeRowsCount > 0) NavLayer.Menu else NavLayer.Main // Use Count NOT request so Header line changes layer when frozen
+            column.navLayerCurrent = if (freezeRowsCount > 0) NavLayer.Menu else NavLayer.Main // Use Count NOT request so Header line changes layer when frozen
 
             if (offsetXFrozen && freezeColumnsCount == visibleN) {
                 offsetX += workRect.min.x - outerRect.min.x
