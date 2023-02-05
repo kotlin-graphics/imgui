@@ -94,7 +94,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayShort) returns true. */
     var hoverDelayShort = 0.1f
 
-    //    void*         UserData;                 // = NULL               // Store your own data for retrieval by callbacks.
+    //    void*         UserData;                 // = NULL               // Store your own data.
 
     /** Font atlas: load, rasterize and pack one or more fonts into a single texture.    */
     val fonts = sharedFontAtlas ?: FontAtlas()

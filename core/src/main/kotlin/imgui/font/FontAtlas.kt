@@ -414,6 +414,9 @@ class FontAtlas {
     /** Marked as Locked by ImGui::NewFrame() so attempt to modify the atlas will assert. */
     var locked = false
 
+    /** Store your own atlas related user-data (if e.g. you have multiple font atlas). */
+    var userData: Any? = null
+
 
     // [Internal]
     // NB: Access texture data via GetTexData*() calls! Which will setup a default font for you.
