@@ -5,6 +5,7 @@ import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.addSettingsHandler
 import imgui.ImGui.callHooks
+import imgui.ImGui.localizeRegisterEntries
 import imgui.ImGui.saveIniSettingsToDisk
 import imgui.ImGui.tableSettingsAddSettingsHandler
 import imgui.api.g
@@ -719,7 +720,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     fun initialize() {
         assert(!initialized && !g.settingsLoaded)
 
-        // Add .ini handle for ImGuiWindow type
+        // Add .ini handle for ImGuiWindow and ImGuiTable types
         val iniHandler = SettingsHandler().apply {
             typeName = "Window"
             typeHash = hashStr("Window")
@@ -730,9 +731,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
             writeAllFn = ::windowSettingsHandler_WriteAll
         }
         addSettingsHandler(iniHandler)
-
-        // Add .ini handle for ImGuiTable type
         tableSettingsAddSettingsHandler()
+
+        // Setup default localization table
+        localizeRegisterEntries(gLocalizationEntriesEnUS)
 
         // Create default viewport
         val viewport = ViewportP()
@@ -834,6 +836,18 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
         shutdown()
         if (prevCtx !== this)
             prevCtx?.setCurrent()
+    }
+
+    companion object {
+        // IMPORTANT: ###xxx suffixes must be same in ALL languages
+        val gLocalizationEntriesEnUS = listOf(
+            LocEntry(LocKey.TableSizeOne, "Size column to fit###SizeOne"),
+            LocEntry(LocKey.TableSizeAllFit, "Size all columns to fit###SizeAll"),
+            LocEntry(LocKey.TableSizeAllDefault, "Size all columns to default###SizeAll"),
+            LocEntry(LocKey.TableResetOrder, "Reset order###ResetOrder"),
+            LocEntry(LocKey.WindowingMainMenuBar, "(Main menu bar)"),
+            LocEntry(LocKey.WindowingPopup, "(Popup)"),
+            LocEntry(LocKey.WindowingUntitled, "(Untitled)"))
     }
 }
 

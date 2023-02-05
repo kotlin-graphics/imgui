@@ -116,10 +116,7 @@ enum class LocKey {
     }
 }
 
-class LocEntry {
-    lateinit var key: LocKey
-    lateinit var text: String
-}
+class LocEntry(val key: LocKey, val text: String)
 
 //-----------------------------------------------------------------------------
 // [SECTION] Metrics, Debug tools

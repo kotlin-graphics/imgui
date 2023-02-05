@@ -8,7 +8,8 @@ import imgui.internal.classes.LocKey
 internal interface localization {
 
     fun localizeRegisterEntries(entries: List<LocEntry>) {
-
+        for (entry in entries)
+            g.localizationTable[entry.key] = entry.text
     }
 
     /** ~LocalizeGetMsg */

@@ -17,6 +17,7 @@ import imgui.ImGui.getKeyVector2d
 import imgui.ImGui.io
 import imgui.ImGui.isWithinBeginStackOf
 import imgui.ImGui.itemAdd
+import imgui.ImGui.msg
 import imgui.ImGui.popID
 import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.renderFrame
@@ -562,9 +563,9 @@ class Window(var context: Context,
      *  ~ getFallbackWindowNameForWindowingList */
     val fallbackWindowName: String
         get() = when {
-            flags has Wf._Popup -> "(Popup)"
-            flags has Wf.MenuBar && name == "##MainMenuBar" -> "(Main menu bar)"
-            else -> "(Untitled)"
+            flags has Wf._Popup -> LocKey.WindowingPopup.msg
+            flags has Wf.MenuBar && name == "##MainMenuBar" -> LocKey.WindowingMainMenuBar.msg
+            else -> LocKey.WindowingUntitled.msg
         }
 
     /** ~ IsWindowActiveAndVisible, this is static natively */
