@@ -1,15 +1,12 @@
 package imgui.api
 
 import glm_.max
-import glm_.vec2.Vec2
 import imgui.ImGui.currentWindow
 import imgui.ImGui.setScrollFromPosX
 import imgui.ImGui.setScrollFromPosY
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
 import imgui.ImGui.style
-import imgui.internal.sections.NextWindowDataFlag
-import imgui.internal.sections.or
 import imgui.lerp
 
 // Windows Scrolling
@@ -67,9 +64,7 @@ interface windowScrolling {
         window.scrollTargetEdgeSnapDist.y = 0f max (window.windowPadding.y - spacingY)
     }
 
-    fun setScrollFromPosX(localX: Float, centerXratio: Float) =
-        g.currentWindow!!.setScrollFromPosX(localX, centerXratio)
+    fun setScrollFromPosX(localX: Float, centerXratio: Float) = g.currentWindow!!.setScrollFromPosX(localX, centerXratio)
 
-    fun setScrollFromPosY(localY: Float, centerYratio: Float) =
-        g.currentWindow!!.setScrollFromPosY(localY, centerYratio)
+    fun setScrollFromPosY(localY: Float, centerYratio: Float) = g.currentWindow!!.setScrollFromPosY(localY, centerYratio)
 }

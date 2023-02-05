@@ -151,10 +151,10 @@ class TableColumn {
  *
  *  Per-instance data that needs preserving across frames (seemingly most others do not need to be preserved aside from debug needs, does that needs they could be moved to ImGuiTableTempData ?) */
 class TableInstanceData {
-    /** Outer height from last frame // FIXME: multi-instance issue (#3955) */
+    /** Outer height from last frame */
     var lastOuterHeight = 0f
 
-    /** Height of first row from last frame // FIXME: possible multi-instance issue? */
+    /** Height of first row from last frame */
     var lastFirstRowHeight = 0f
 }
 

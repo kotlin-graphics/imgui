@@ -307,6 +307,15 @@ interface windows {
 
             /* ---------- SIZE ---------- */
 
+            // Outer Decoration Sizes
+            // (we need to clear ScrollbarSize immediatly as CalcWindowAutoFitSize() needs it and can be called from other locations).
+            val scrollbarSizesFromLastFrame = Vec2(window.scrollbarSizes)
+            window.decoOuterSizeX1 = 0f
+            window.decoOuterSizeX2 = 0f
+            window.decoOuterSizeY1 = window.titleBarHeight + window.menuBarHeight
+            window.decoOuterSizeY2 = 0f
+            window.scrollbarSizes put 0f
+
             // Calculate auto-fit size, handle automatic resize
             val sizeAutoFit = window.calcAutoFitSize(window.contentSize)
             if (flags has Wf.AlwaysAutoResize && !window.collapsed) { // Using SetNextWindowSize() overrides ImGuiWindowFlags_AlwaysAutoResize, so it can be used on tooltips/popups, etc.
@@ -340,9 +349,6 @@ interface windows {
                 true -> window.titleBarRect().size
                 else -> window.sizeFull
             }
-
-            // Decoration size
-            val decorationUpHeight = window.titleBarHeight + window.menuBarHeight
 
             /* ---------- POSITION ---------- */
 
@@ -451,24 +457,25 @@ interface windows {
             // SCROLLBAR VISIBILITY
 
             // Update scrollbar visibility (based on the Size that was effective during last frame or the auto-resized Size).
-            if (!window.collapsed) { // When reading the current size we need to read it after size constraints have been applied.
-                // When we use InnerRect here we are intentionally reading last frame size, same for ScrollbarSizes values before we set them again.
-                val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - decorationUpHeight)
-                val availSizeFromLastFrame = window.innerRect.size + window.scrollbarSizes
-                val neededSizeFromLastFrame =
-                    if (windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
-                val sizeXforScrollbars =
-                    if (useCurrentSizeForScrollbarX) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
-                val sizeYforScrollbars =
-                    if (useCurrentSizeForScrollbarY) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y //bool scrollbar_y_from_last_frame = window->ScrollbarY; // FIXME: May want to use that in the ScrollbarX expression? How many pros vs cons?
-                window.scrollbar.y =
-                    flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
-                window.scrollbar.x =
-                    flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
+            if (!window.collapsed) {
+                // When reading the current size we need to read it after size constraints have been applied.
+                // Intentionally use previous frame values for InnerRect and ScrollbarSizes.
+                // And when we use window->DecorationUp here it doesn't have ScrollbarSizes.y applied yet.
+                val availSizeFromCurrentFrame = Vec2(window.sizeFull.x, window.sizeFull.y - (window.decoOuterSizeY1 + window.decoOuterSizeY2))
+                val availSizeFromLastFrame = window.innerRect.size + scrollbarSizesFromLastFrame
+                val neededSizeFromLastFrame = if (windowJustCreated) Vec2() else window.contentSize + window.windowPadding * 2f
+                val sizeXforScrollbars = if (useCurrentSizeForScrollbarX) availSizeFromCurrentFrame.x else availSizeFromLastFrame.x
+                val sizeYforScrollbars = if (useCurrentSizeForScrollbarY) availSizeFromCurrentFrame.y else availSizeFromLastFrame.y //bool scrollbar_y_from_last_frame = window->ScrollbarY; // FIXME: May want to use that in the ScrollbarX expression? How many pros vs cons?
+                window.scrollbar.y = flags has Wf.AlwaysVerticalScrollbar || (neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar)
+                window.scrollbar.x = flags has Wf.AlwaysHorizontalScrollbar || ((neededSizeFromLastFrame.x > sizeXforScrollbars - if (window.scrollbar.y) style.scrollbarSize else 0f) && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar)
                 if (window.scrollbar.x && !window.scrollbar.y) window.scrollbar.y =
                     neededSizeFromLastFrame.y > sizeYforScrollbars && flags hasnt Wf.NoScrollbar
                 window.scrollbarSizes.put(if (window.scrollbar.y) style.scrollbarSize else 0f,
                                           if (window.scrollbar.x) style.scrollbarSize else 0f)
+
+                // Amend the partially filled window->DecorationXXX values.
+                window.decoOuterSizeX2 += window.scrollbarSizes.x
+                window.decoOuterSizeY2 += window.scrollbarSizes.y
             }
 
             val titleBarRect: Rect
@@ -497,10 +504,10 @@ interface windows {
                 // - ScrollToRectEx()
                 // - NavUpdatePageUpPageDown()
                 // - Scrollbar()
-                innerRect.put(minX = pos.x,
-                              minY = pos.y + decorationUpHeight,
-                              maxX = pos.x + size.x - scrollbarSizes.x,
-                              maxY = pos.y + size.y - scrollbarSizes.y)
+                innerRect.put(minX = pos.x + decoOuterSizeX1,
+                              minY = pos.y + decoOuterSizeY1,
+                              maxX = pos.x + size.x - decoOuterSizeX2,
+                              maxY = pos.y + size.y - decoOuterSizeY2)
 
                 // Inner clipping rectangle.
                 // Will extend a little bit outside the normal work region.
@@ -583,12 +590,14 @@ interface windows {
                 // - BeginTabBar() for right-most edge
                 val allowScrollbarX = flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar
                 val allowScrollbarY = flags hasnt Wf.NoScrollbar
-                val workRectSizeX =
-                    if (contentSizeExplicit.x != 0f) contentSizeExplicit.x else max(if (allowScrollbarX) window.contentSize.x else 0f,
-                                                                                    size.x - windowPadding.x * 2f - scrollbarSizes.x)
-                val workRectSizeY =
-                    if (contentSizeExplicit.y != 0f) contentSizeExplicit.y else max(if (allowScrollbarY) window.contentSize.y else 0f,
-                                                                                    size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y)
+                val workRectSizeX = when {
+                    contentSizeExplicit.x != 0f -> contentSizeExplicit.x
+                    else -> max(if (allowScrollbarX) window.contentSize.x else 0f, size.x - windowPadding.x * 2f - (decoOuterSizeX1 + decoOuterSizeX2))
+                }
+                val workRectSizeY = when {
+                    contentSizeExplicit.y != 0f -> contentSizeExplicit.y
+                    else -> max(if (allowScrollbarY) window.contentSize.y else 0f, size.y - windowPadding.y * 2f - (decoOuterSizeY1 + decoOuterSizeY2))
+                }
                 workRect.min.put(floor(innerRect.min.x - scroll.x + max(windowPadding.x, windowBorderSize)),
                                  floor(innerRect.min.y - scroll.y + max(windowPadding.y, windowBorderSize)))
                 workRect.max.put(workRect.min.x + workRectSizeX, workRect.min.y + workRectSizeY)
@@ -599,26 +608,21 @@ interface windows {
                 // NB: WindowBorderSize is included in WindowPadding _and_ ScrollbarSizes so we need to cancel one out when we have both.
                 // Used by:
                 // - Mouse wheel scrolling + many other things
-                contentRegionRect.min.put( // need to split min max, because max relies on min
-                    x = pos.x - scroll.x + windowPadding.x, y = pos.y - scroll.y + windowPadding.y + decorationUpHeight)
-                contentRegionRect.max.put(x = contentRegionRect.min.x + when (contentSizeExplicit.x) {
-                    0f -> size.x - windowPadding.x * 2f - scrollbarSizes.x
-                    else -> contentSizeExplicit.x
-                }, y = contentRegionRect.min.y + when (contentSizeExplicit.y) {
-                    0f -> size.y - windowPadding.y * 2f - decorationUpHeight - scrollbarSizes.y
-                    else -> contentSizeExplicit.y
-                })
+                contentRegionRect.min.put(pos.x - scroll.x + windowPadding.x + decoOuterSizeX1,
+                                          pos.y - scroll.y + windowPadding.y + decoOuterSizeY1)
+                contentRegionRect.max.put(contentRegionRect.min.x + if(contentSizeExplicit.x != 0f) contentSizeExplicit.x else size.x - windowPadding.x * 2f - (decoOuterSizeX1 + decoOuterSizeX2),
+                                          contentRegionRect.min.y + if(contentSizeExplicit.y != 0f) contentSizeExplicit.y else size.y - windowPadding.y * 2f - (decoOuterSizeY1 + decoOuterSizeY2))
 
                 // Setup drawing context
                 // (NB: That term "drawing context / DC" lost its meaning a long time ago. Initially was meant to hold transient data only. Nowadays difference between window-> and window->DC-> is dubious.)
-                dc.indent = 0f + windowPadding.x - scroll.x
+                dc.indent = decoOuterSizeX1 + windowPadding.x - scroll.x
                 dc.groupOffset = 0f
                 dc.columnsOffset = 0f
 
                 // Record the loss of precision of CursorStartPos which can happen due to really large scrolling amount.
                 // This is used by clipper to compensate and fix the most common use case of large scroll area. Easy and cheap, next best thing compared to switching everything to double or ImU64.
-                val startPosHighpX = window.pos.x.d + window.windowPadding.x - window.scroll.x.d + window.dc.columnsOffset
-                val startPosHighpY = window.pos.y.d + window.windowPadding.y - window.scroll.y.d + decorationUpHeight
+                val startPosHighpX = window.pos.x.d + window.windowPadding.x - window.scroll.x.d + window.decoOuterSizeX1 + window.dc.columnsOffset
+                val startPosHighpY = window.pos.y.d + window.windowPadding.y - window.scroll.y.d + window.decoOuterSizeY1
                 window.dc.cursorStartPos = Vec2(startPosHighpX, startPosHighpY)
                 window.dc.cursorStartPosLossyness.put(startPosHighpX - window.dc.cursorStartPos.x, startPosHighpY - window.dc.cursorStartPos.y)
                 dc.cursorPos put dc.cursorStartPos

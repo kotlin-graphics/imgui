@@ -62,6 +62,14 @@ class Window(var context: Context,
     /** Window border size at the time of Begin().    */
     var windowBorderSize = 1f
 
+    /** Left/Up offsets. Sum of non-scrolling outer decorations (X1 generally == 0.0f. Y1 generally = TitleBarHeight + MenuBarHeight). Locked during Begin(). */
+    var decoOuterSizeX1 = 0f
+    var decoOuterSizeY1 = 0f
+
+    /** Right/Down offsets (X2 generally == ScrollbarSize.x, Y2 == ScrollbarSizes.y). */
+    var decoOuterSizeX2 = 0f
+    var decoOuterSizeY2 = 0f
+
     /** Size of buffer storing Name. May be larger than strlen(Name)! */
     var nameBufLen = name.toByteArray().size
 
@@ -415,9 +423,10 @@ class Window(var context: Context,
 
     /** ~CalcWindowAutoFitSize */
     fun calcAutoFitSize(sizeContents: Vec2): Vec2 {
-        val decorationUpHeight = titleBarHeight + menuBarHeight
+        val decorationWWithoutScrollbars = decoOuterSizeX1 + decoOuterSizeX2 - scrollbarSizes.x
+        val decorationHWithoutScrollbars = decoOuterSizeY1 + decoOuterSizeY2 - scrollbarSizes.y
         val sizePad = windowPadding * 2f
-        val sizeDesired = sizeContents + sizePad + Vec2(0f, decorationUpHeight)
+        val sizeDesired = sizeContents + sizePad + Vec2(decorationWWithoutScrollbars, decorationHWithoutScrollbars)
         return when {
             flags has Wf._Tooltip -> sizeDesired // Tooltip always resize
             else -> { // Maximum window size is determined by the viewport size or monitor size
@@ -434,10 +443,8 @@ class Window(var context: Context,
                 // we are growing the size on the other axis to compensate for expected scrollbar.
                 // FIXME: Might turn bigger than ViewportSize-WindowPadding.
                 val sizeAutoFitAfterConstraint = calcSizeAfterConstraint(sizeAutoFit)
-                val willHaveScrollbarX =
-                    (sizeAutoFitAfterConstraint.x - sizePad.x - 0f < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar) || flags has Wf.AlwaysHorizontalScrollbar
-                val willHaveScrollbarY =
-                    (sizeAutoFitAfterConstraint.y - sizePad.y - decorationUpHeight < sizeContents.y && flags hasnt Wf.NoScrollbar) || flags has Wf.AlwaysVerticalScrollbar
+                val willHaveScrollbarX = (sizeAutoFitAfterConstraint.x - sizePad.x - decorationWWithoutScrollbars < sizeContents.x && flags hasnt Wf.NoScrollbar && flags has Wf.HorizontalScrollbar) || flags has Wf.AlwaysHorizontalScrollbar
+                val willHaveScrollbarY = (sizeAutoFitAfterConstraint.y - sizePad.y - decorationHWithoutScrollbars < sizeContents.y && flags hasnt Wf.NoScrollbar) || flags has Wf.AlwaysVerticalScrollbar
                 if (willHaveScrollbarX) sizeAutoFit.y += style.scrollbarSize
                 if (willHaveScrollbarY) sizeAutoFit.x += style.scrollbarSize
                 sizeAutoFit
@@ -516,9 +523,9 @@ class Window(var context: Context,
 
         // Minimum size
         if (flags hasnt (Wf._ChildWindow or Wf.AlwaysAutoResize)) {
-            val decorationUpHeight = titleBarHeight + menuBarHeight
             newSize maxAssign style.windowMinSize // Reduce artifacts with very small windows
-            newSize.y = newSize.y max (decorationUpHeight + (0f max (style.windowRounding - 1f)))
+            val minimumHeight = titleBarHeight + menuBarHeight + 0f max (g.style.windowRounding - 1f)
+            newSize.y = newSize.y max minimumHeight // Reduce artifacts with very small windows
         }
         return newSize
     }

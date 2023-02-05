@@ -46,17 +46,15 @@ internal interface scrolling {
      *  ~SetScrollFromPosX(ImGuiWindow* window, float local_x, float center_x_ratio) */
     fun Window.setScrollFromPosX(localX: Float, centerXRatio: Float) {
         assert(centerXRatio in 0f..1f)
-        scrollTarget.x = floor(localX + scroll.x) // Convert local position to scroll offset
+        scrollTarget.x = floor(localX - decoOuterSizeX1 + scroll.x) // Convert local position to scroll offset
         scrollTargetCenterRatio.x = centerXRatio
         scrollTargetEdgeSnapDist.x = 0f
     }
 
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
-    fun Window.setScrollFromPosY(localY_: Float, centerYRatio: Float) {
+    fun Window.setScrollFromPosY(localY: Float, centerYRatio: Float) {
         assert(centerYRatio in 0f..1f)
-        val decorationUpHeight = titleBarHeight + menuBarHeight // FIXME: Would be nice to have a more standardized access to our scrollable/client rect;
-        val localY = localY_ - decorationUpHeight
-        scrollTarget.y = floor(localY + scroll.y) // Convert local position to scroll offset
+        scrollTarget.y = floor(localY - decoOuterSizeY1 + scroll.y) // Convert local position to scroll offset
         scrollTargetCenterRatio.y = centerYRatio
         scrollTargetEdgeSnapDist.y = 0f
     }
