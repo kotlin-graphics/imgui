@@ -271,5 +271,5 @@ interface dragAndDrop {
 
     /** ~GetDragDropPayload */
     val dragDropPayload: Payload?
-        get() = g.dragDropPayload.takeIf { g.dragDropActive }
+        get() = if(g.dragDropActive && g.dragDropPayload.dataFrameCount != -1) g.dragDropPayload else null
 }
