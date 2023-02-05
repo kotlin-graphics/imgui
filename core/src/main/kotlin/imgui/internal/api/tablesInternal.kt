@@ -707,7 +707,7 @@ interface tablesInternal {
             val columnN = displayOrderToIndex[orderN]
             val column = columns[columnN]
 
-            column.navLayerCurrent = if (freezeRowsCount > 0 || columnN < freezeColumnsCount) NavLayer.Menu else NavLayer.Main
+            column.navLayerCurrent = if(freezeRowsCount > 0) NavLayer.Menu else NavLayer.Main // Use Count NOT request so Header line changes layer when frozen
 
             if (offsetXFrozen && freezeColumnsCount == visibleN) {
                 offsetX += workRect.min.x - outerRect.min.x
@@ -1651,10 +1651,8 @@ interface tablesInternal {
         // We need to do that in TableEndRow() instead of TableBeginRow() so the list clipper can mark end of row and
         // get the new cursor position.
         if (unfreezeRowsRequest)
-            for (columnN in 0 until columnsCount) {
-                val column = columns[columnN]
-                column.navLayerCurrent = if (columnN < freezeColumnsCount) NavLayer.Menu else NavLayer.Main
-            }
+            for (columnN in 0 until columnsCount)
+                columns[columnN].navLayerCurrent = NavLayer.Main
         if (unfreezeRowsActual) {
 
             assert(!isUnfrozenRows)
