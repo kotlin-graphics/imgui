@@ -354,7 +354,6 @@ fun parseFormatPrecision(fmt: String, defaultPrecision: Int): Int {
 }
 
 
-
 // -----------------------------------------------------------------------------------------------------------------
 // Helpers: UTF-8 <> wchar
 // [SECTION] MISC HELPERS/UTILITIES (ImText* functions)
@@ -676,6 +675,7 @@ fun lerp(a: Int, b: Int, t: Float): Int = (a + (b - a) * t).i
 fun lerp(a: Long, b: Long, t: Float): Long = (a + (b - a) * t).L
 fun modPositive(a: Int, b: Int): Int = (a + b) % b
 
+// - Misc maths helpers
 // TODO -> glm
 fun Vec2.lerp(b: Vec2, t: Float): Vec2 = Vec2(x + (b.x - x) * t, y + (b.y - y) * t)
 fun Vec2.lerp(b: Vec2, t: Vec2): Vec2 = Vec2(x + (b.x - x) * t.x, y + (b.y - y) * t.y)
@@ -698,6 +698,8 @@ fun linearSweep(current: Float, target: Float, speed: Float) = when {
 }
 
 val Float.isAboveGuaranteedIntegerPrecision get() = f <= -16777216 || f >= 16777216
+
+fun exponentialMovingAverage(avg: Float, sample: Float, n: Int): Float = avg - avg / n + sample / n
 
 //-----------------------------------------------------------------------------
 // [SECTION] MISC HELPERS/UTILITIES (Geometry functions)

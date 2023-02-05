@@ -4,6 +4,8 @@ import gli_.has
 import glm_.*
 import glm_.func.common.abs
 import glm_.vec2.Vec2
+import gln.get
+import gln.set
 import imgui.*
 import imgui.ImGui.data
 import imgui.ImGui.findBottomMostVisibleWindowWithinBeginStack
@@ -248,11 +250,55 @@ fun lockWheelingWindow(window: Window?, wheelAmount: Float) {
     IMGUI_DEBUG_LOG_IO("LockWheelingWindow() \"${window?.name ?: "NULL"}\"")
     g.wheelingWindow = window
     g.wheelingWindowRefMousePos put io.mousePos
+    if (window == null) {
+        g.wheelingWindowStartFrame = -1
+        g.wheelingAxisAvg put 0f
+    }
+}
+
+fun findBestWheelingWindow(wheel: Vec2): Window? {
+    // For each axis, find window in the hierarchy that may want to use scrolling
+
+    val windows = Array<Window?>(2) { null }
+    for (axis in 0..1)
+        if (wheel[axis] != 0f) {
+            var window = g.hoveredWindow!!; windows[axis] = window
+            while (window.flags has WindowFlag._ChildWindow) {
+                // Bubble up into parent window if:
+                // - a child window doesn't allow any scrolling.
+                // - a child window has the ImGuiWindowFlags_NoScrollWithMouse flag.
+                //// - a child window doesn't need scrolling because it is already at the edge for the direction we are going in (FIXME-WIP)
+                val hasScrolling = window.scrollMax[axis] != 0f
+                val inputsDisabled = window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs
+                //const bool scrolling_past_limits = (wheel_v < 0.0f) ? (window->Scroll[axis] <= 0.0f) : (window->Scroll[axis] >= window->ScrollMax[axis]);
+                if (hasScrolling && !inputsDisabled) // && !scrolling_past_limits)
+                    break // select this window
+                window = window.parentWindow!!; windows[axis] = window
+            }
+        }
+    if (windows[0] == null && windows[1] == null)
+        return null
+
+    // If there's only one window or only one axis then there's no ambiguity
+    if (windows[0] === windows[1] || windows[0] == null || windows[1] == null)
+        return windows[1] ?: windows[0]
+
+    // If candidate are different windows we need to decide which one to prioritize
+    // - First frame: only find a winner if one axis is zero.
+    // - Subsequent frames: only find a winner when one is more than the other.
+    if (g.wheelingWindowStartFrame == -1)
+        g.wheelingWindowStartFrame = g.frameCount
+    if ((g.wheelingWindowStartFrame == g.frameCount && wheel.x != 0f && wheel.y != 0f) || g.wheelingAxisAvg.x == g.wheelingAxisAvg.y) {
+        g.wheelingWindowWheelRemainder put wheel
+        return null
+    }
+    return if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) windows[0] else windows[1]
 }
 
 fun updateMouseWheel() {
 
-    // Reset the locked window if we move the mouse or after the timer elapses
+    // Reset the locked window if we move the mouse or after the timer elapses.
+    // FIXME: Ideally we could refactor to have one timer for "changing window w/ same axis" and a shorter timer for "changing window or axis w/ other axis" (#3795)
     if (g.wheelingWindow != null) {
         g.wheelingWindowReleaseTimer -= io.deltaTime
         if (isMousePosValid() && (io.mousePos - g.wheelingWindowRefMousePos).lengthSqr > io.mouseDragThreshold * io.mouseDragThreshold)
@@ -262,8 +308,6 @@ fun updateMouseWheel() {
 
     val wheel = Vec2(if (Key.MouseWheelX testOwner KeyOwner_None) g.io.mouseWheelH else 0f,
                      if (Key.MouseWheelY testOwner KeyOwner_None) g.io.mouseWheel else 0f)
-    if (wheel.x == 0f && wheel.y == 0f)
-        return
 
     //IMGUI_DEBUG_LOG("MouseWheel X:%.3f Y:%.3f\n", wheel_x, wheel_y);
     val mouseWindow = g.wheelingWindow ?: g.hoveredWindow
@@ -298,33 +342,37 @@ fun updateMouseWheel() {
         wheel.y = 0f
     }
 
-    // Vertical Mouse Wheel scrolling
-    // Bubble up into parent window if:
-    // - a child window doesn't allow any scrolling.
-    // - a child window doesn't need scrolling because it is already at the edge for the direction we are going in.
-    // - a child window has the ImGuiWindowFlags_NoScrollWithMouse flag.
-    if (wheel.y != 0f) {
-        var window = mouseWindow
-        while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.y == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
-            window = window.parentWindow
-        if (window.flags hasnt WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs) {
-            lockWheelingWindow(mouseWindow, wheel.y)
-            val maxStep = window.innerRect.height * 0.67f
-            val scrollStep = floor((5 * window.calcFontSize()) min maxStep)
-            window.setScrollY(window.scroll.y - wheel.y * scrollStep)
-        }
-    }
+    // Maintain a rough average of moving magnitude on both axises
+    // FIXME: should by based on wall clock time rather than frame-counter
+    g.wheelingAxisAvg.x = exponentialMovingAverage(g.wheelingAxisAvg.x, wheel.x.abs, 30)
+    g.wheelingAxisAvg.y = exponentialMovingAverage(g.wheelingAxisAvg.y, wheel.y.abs, 30)
 
-    // Horizontal Mouse Wheel scrolling, or Vertical Mouse Wheel w/ Shift held
-    if (wheel.x != 0f) {
-        var window = mouseWindow
-        while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.x == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
-            window = window.parentWindow
+    // In the rare situation where FindBestWheelingWindow() had to defer first frame of wheeling due to ambiguous main axis, reinject it now.
+    wheel += g.wheelingWindowWheelRemainder
+    g.wheelingWindowWheelRemainder put 0f
+    if (wheel.x == 0f && wheel.y == 0f)
+        return
+
+    // Mouse wheel scrolling: find target and apply
+    // - don't renew lock if axis doesn't apply on the window.
+    // - select a main axis when both axises are being moved.
+    (g.wheelingWindow ?: findBestWheelingWindow(wheel))?.let { window ->
         if (window.flags hasnt WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs) {
-            lockWheelingWindow(mouseWindow, wheel.y)
-            val maxStep = window.innerRect.width * 0.67f
-            val scrollStep = floor((2 * window.calcFontSize()) min maxStep)
-            window.setScrollX(window.scroll.x - wheel.x * scrollStep)
+            val doScroll = arrayOf(wheel.x != 0f && window.scrollMax.x != 0f, wheel.y != 0f && window.scrollMax.y != 0f)
+            if (doScroll[Axis.X] && doScroll[Axis.Y])
+                doScroll[if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) Axis.Y else Axis.X] = false
+            if (doScroll[Axis.X]) {
+                lockWheelingWindow(window, wheel.x)
+                val maxStep = window.innerRect.width * 0.67f
+                val scrollStep = floor((2 * window.calcFontSize()) min maxStep)
+                window.setScrollX(window.scroll.x - wheel.x * scrollStep)
+            }
+            if (doScroll[Axis.Y]) {
+                lockWheelingWindow(window, wheel.y)
+                val maxStep = window.innerRect.height * 0.67f
+                val scrollStep = floor((5 * window.calcFontSize()) min maxStep)
+                window.setScrollY(window.scroll.y - wheel.y * scrollStep)
+            }
         }
     }
 }

@@ -465,6 +465,14 @@ interface demoDebugInformations {
                 text("NavWindowingTarget: '${g.navWindowingTarget?.name}'")
             }
 
+            text("MOUSE WHEELING")
+            indent {
+                text("WheelingWindow: '${g.wheelingWindow?.name ?: "NULL"}'")
+                text("WheelingWindowReleaseTimer: %.2f", g.wheelingWindowReleaseTimer)
+                val axis = if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) "X" else if (g.wheelingAxisAvg.x < g.wheelingAxisAvg.y) "Y" else "<none>"
+                text("WheelingAxisAvg[] = { %.3f, %.3f }, Main Axis: $axis", g.wheelingAxisAvg.x, g.wheelingAxisAvg.y)
+            }
+
             treePop()
         }
 

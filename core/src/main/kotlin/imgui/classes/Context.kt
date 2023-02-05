@@ -115,9 +115,15 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     /** Track the window we started mouse-wheeling on. Until a timer elapse or mouse has moved, generally keep scrolling the same window even if during the course of scrolling the mouse ends up hovering a child window. */
     var wheelingWindow: Window? = null
 
-    var wheelingWindowRefMousePos: Vec2 = Vec2()
+    val wheelingWindowRefMousePos: Vec2 = Vec2()
+
+    /** This may be set one frame before WheelingWindow is != NULL */
+    var wheelingWindowStartFrame = -1
 
     var wheelingWindowReleaseTimer = 0f
+
+    val wheelingWindowWheelRemainder = Vec2()
+    val wheelingAxisAvg = Vec2()
 
 
     // Item/widgets state and tracking information
@@ -395,6 +401,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     /** = ImGuiMod_Ctrl | ImGuiKey_Tab, for reconfiguration (see #4828) */
     var configNavWindowingKeyNext: KeyChord = Key.Mod_Ctrl or Key.Tab
+
     /** = ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_Tab */
     var configNavWindowingKeyPrev: KeyChord = Key.Mod_Ctrl or Key.Mod_Shift or Key.Tab
 
