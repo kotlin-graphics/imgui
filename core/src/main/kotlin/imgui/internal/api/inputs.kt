@@ -143,6 +143,7 @@ internal interface inputs {
     // - This is marked experimental because not all widgets are fully honoring the Set/Test idioms. We will need to move forward step by step.
     //   Please open a GitHub Issue to submit your usage scenario or if there's a use case you need solved.
 
+    /** ~GetKeyOwner */
     val Key.owner: ID
         get() {
             //            if (!IsNamedKeyOrModKey(key))
@@ -152,7 +153,7 @@ internal interface inputs {
             val ownerId = ownerData.ownerCurr
 
             if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId)
-                if (i in Key.BEGIN until Key.END || this == Key.Mod_Ctrl || this == Key.Mod_Shift || this == Key.Mod_Alt || this == Key.Mod_Super)
+                if (i in Key.BEGIN until Key.END)
                     return KeyOwner_None
 
             return ownerId
@@ -208,7 +209,7 @@ internal interface inputs {
             return true
 
         if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId)
-            if (i in Key.Keyboard_BEGIN until Key.Keyboard_END || this == Key.Mod_Ctrl || this == Key.Mod_Shift || this == Key.Mod_Alt || this == Key.Mod_Super)
+            if (i in Key.Keyboard_BEGIN until Key.Keyboard_END)
                 return false
 
         val ownerData = ownerData
