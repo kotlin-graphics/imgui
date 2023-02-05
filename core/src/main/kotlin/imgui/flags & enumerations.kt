@@ -1252,7 +1252,7 @@ enum class Key(i: KeyChord? = null) {
     GamepadRStickUp,       // [Analog]
     GamepadRStickDown,     // [Analog]
 
-    // Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
+    // Aliases: Mouse Buttons (auto-submitted from AddMouseButtonEvent() calls)
     // - This is mirroring the data also written to io.MouseDown[], io.MouseWheel, in a format allowing them to be accessed via standard key API.
     MouseLeft, MouseRight, MouseMiddle, MouseX1, MouseX2, MouseWheelX, MouseWheelY,
 
@@ -1276,7 +1276,10 @@ enum class Key(i: KeyChord? = null) {
 
     /** Cmd/Super/Windows */
     Mod_Super(1 shl 15),
-    Mod_Mask_(0xF000);
+
+    /** [Internal, read-only] Alias of ImGuiMod_Super (macOS) or ImGuiMod_Ctrl (otherwise), decided by io.ConfigMacOSXBehaviors. */
+    Mod_Shortcut(1 shl 11),
+    Mod_Mask_(0xF800); // 5-bits
 
     @JvmField
     val i: KeyChord = i ?: ordinal
@@ -1299,7 +1302,6 @@ enum class Key(i: KeyChord? = null) {
         val Mouse_END = ReservedForModCtrl.i
         val Aliases_BEGIN = Mouse_BEGIN
         val Aliases_END = Mouse_END
-        val Mod_Shortcut = if (Platform.get() == Platform.MACOSX) Mod_Super else Mod_Ctrl
         infix fun of(i: Int) = values().first { it.i == i }
 
 

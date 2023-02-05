@@ -201,6 +201,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
         assert(g.io === this) { "Can only add events to current context." }
         assert(key.isNamedOrMod) { "Backend needs to pass a valid ImGuiKey_ constant . 0..511 values are legacy native key codes which are not accepted by this API." }
         assert(!key.isAlias) { "Backend cannot submit ImGuiKey_MouseXXX values they are automatically inferred from AddMouseXXX() events ." }
+        assert(key != Key.Mod_Shortcut) { "We could easily support the translation here but it seems saner to not accept it(TestEngine perform a translation itself)" }
 
         // Verify that backend isn't mixing up using new io.AddKeyEvent() api and old io.KeysDown[] + io.KeyMap[] data.
         if (key.isGamepad)
@@ -459,7 +460,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // Other state maintained from data above + IO function calls
 
 
-    /** Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags, same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags). Read-only, updated by NewFrame() */
+    /** Key mods flags (any of ImGuiMod_Ctrl/ImGuiMod_Shift/ImGuiMod_Alt/ImGuiMod_Super flags, same as io.KeyCtrl/KeyShift/KeyAlt/KeySuper but merged into flags. DOES NOT CONTAINS ImGuiMod_Shortcut which is pretranslated). Read-only, updated by NewFrame() */
     var keyMods: KeyChord = 0
 
     /** Key state for all known keys. Use IsKeyXXX() functions to access this. */

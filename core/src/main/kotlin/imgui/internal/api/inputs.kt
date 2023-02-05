@@ -26,7 +26,7 @@ internal interface inputs {
 
     /** ~IsNamedKeyOrModKey */
     val Key.isNamedOrMod: Boolean
-        get() = isNamed || this == Key.Mod_Ctrl || this == Key.Mod_Shift || this == Key.Mod_Alt || this == Key.Mod_Super
+        get() = isNamed || this == Key.Mod_Ctrl || this == Key.Mod_Shift || this == Key.Mod_Alt || this == Key.Mod_Super || this == Key.Mod_Shortcut
 
     //    inline bool             IsLegacyKey(ImGuiKey key)                                   { return key >= ImGuiKey_LegacyNativeKey_BEGIN && key < ImGuiKey_LegacyNativeKey_END; }
 
@@ -46,11 +46,17 @@ internal interface inputs {
     val Key.isAlias: Boolean
         get() = i in Key.Aliases_BEGIN until Key.Aliases_END
 
+    fun convertShortcutMod(keyChord: KeyChord): KeyChord {
+        check(keyChord has Key.Mod_Shortcut)
+        return keyChord wo Key.Mod_Shortcut or if (g.io.configMacOSXBehaviors) Key.Mod_Super else Key.Mod_Ctrl
+    }
+
     fun Key.convertSingleModFlagToKey(): Key = when (this) {
         Key.Mod_Ctrl -> Key.ReservedForModCtrl
         Key.Mod_Shift -> Key.ReservedForModShift
         Key.Mod_Alt -> Key.ReservedForModAlt
         Key.Mod_Super -> Key.ReservedForModSuper
+        Key.Mod_Shortcut -> if (g.io.configMacOSXBehaviors) Key.ReservedForModSuper else Key.ReservedForModCtrl
         else -> this
     }
 
@@ -65,7 +71,9 @@ internal interface inputs {
             return g.io.keysData[key.index]
         }
 
-    fun getKeyChordName(keyChord: KeyChord): String {
+    // ImGuiMod_Shortcut is translated to either Ctrl or Super.
+    fun getKeyChordName(keyChord_: KeyChord): String {
+        val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
         var out = if (keyChord has Key.Mod_Ctrl) "Ctrl+" else ""
         out += if (keyChord has Key.Mod_Shift) "Shift+" else ""
         out += if (keyChord has Key.Mod_Alt) "Alt+" else ""
@@ -158,9 +166,9 @@ internal interface inputs {
     /** ~GetKeyOwner */
     val Key.owner: ID
         get() {
-            //            if (!IsNamedKeyOrModKey(key))
-            //                return ImGuiKeyOwner_None;
-
+            if (!isNamedOrMod)
+                return KeyOwner_None
+            //
             //            val ownerData = ownerData(key);
             val ownerId = ownerData.ownerCurr
 
@@ -337,21 +345,22 @@ internal interface inputs {
 
     // - Need to decide how to handle shortcut translations for Non-Mac <> Mac
     // - Ideas: https://github.com/ocornut/imgui/issues/456#issuecomment-264390864
-    fun shortcut(keyChord: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0): Boolean {
+    fun shortcut(keyChord_: KeyChord, ownerId: ID = 0, flags_: InputFlags = 0): Boolean {
 
         var flags = flags_
         // When using (owner_id == 0/Any): SetShortcutRouting() will use CurrentFocusScopeId and filter with this, so IsKeyPressed() is fine with he 0/Any.
         if (flags hasnt InputFlag.RouteMask_)
             flags /= InputFlag.RouteFocused
-        if (!setShortcutRouting(keyChord, ownerId, flags))
+        if (!setShortcutRouting(keyChord_, ownerId, flags))
             return false
 
-        var key = Key of (keyChord wo Key.Mod_Mask_)
+        val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
         val mods = Key of (keyChord and Key.Mod_Mask_)
         if (g.io.keyMods != mods.i)
             return false
 
         // Special storage location for mods
+        var key = Key of (keyChord wo Key.Mod_Mask_)
         if (key == Key.None)
             key = mods.convertSingleModFlagToKey()
 
@@ -459,11 +468,11 @@ internal interface inputs {
     // Note: this cannot be turned into GetShortcutRouting() because we do the owner_id->routing_id translation, name would be more misleading.
     fun testShortcutRouting(keyChord: KeyChord, ownerId: ID): Boolean {
         val routingId = getRoutingIdFromOwnerId(ownerId)
-        val routingData = getShortcutRoutingData(keyChord)
+        val routingData = getShortcutRoutingData(keyChord) // FIXME: Could avoid creating entry.
         return routingData.routingCurr == routingId
     }
 
-    fun getShortcutRoutingData(keyChord: KeyChord): KeyRoutingData {
+    fun getShortcutRoutingData(keyChord_: KeyChord): KeyRoutingData {
         // Majority of shortcuts will be Key + any number of Mods
         // We accept _Single_ mod with ImGuiKey_None.
         //  - Shortcut(ImGuiKey_S | ImGuiMod_Ctrl);                    // Legal
@@ -471,6 +480,7 @@ internal interface inputs {
         //  - Shortcut(ImGuiMod_Ctrl);                                 // Legal
         //  - Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift);                // Not legal
         val rt = g.keysRoutingTable
+        val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
         var key = Key of (keyChord wo Key.Mod_Mask_)
         val mods = Key of (keyChord and Key.Mod_Mask_)
         if (key == Key.None)
