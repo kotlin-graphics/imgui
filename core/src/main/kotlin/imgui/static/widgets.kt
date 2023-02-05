@@ -5,6 +5,7 @@ import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.api.g
+import imgui.classes.Context
 import imgui.classes.InputTextCallbackData
 import imgui.internal.classes.InputTextState
 import imgui.internal.classes.PtrOrIndex
@@ -147,12 +148,10 @@ fun inputTextCalcTextLenAndLineCount(text: ByteArray): Pair<Int, Int> {
     return lineCount to s
 }
 
-fun inputTextCalcTextSizeW(
-    text: CharArray, textBegin: Int, textEnd: Int,
-    remaining: KMutableProperty0<Int>? = null, outOffset: Vec2? = null,
-    stopOnNewLine: Boolean = false,
-                          ): Vec2 {
+fun inputTextCalcTextSizeW(ctx: Context, text: CharArray, textBegin: Int, textEnd: Int, remaining: KMutableProperty0<Int>? = null,
+                           outOffset: Vec2? = null, stopOnNewLine: Boolean = false): Vec2 {
 
+    val g = ctx
     val font = g.font
     val lineHeight = g.fontSize
     val scale = lineHeight / font.fontSize

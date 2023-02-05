@@ -3,19 +3,20 @@ package imgui.internal.classes
 import glm_.glm
 import glm_.max
 import imgui.*
-import imgui.api.g
-import imgui.internal.api.inputText.Companion.inputTextCalcTextSizeW
+import imgui.classes.Context
 import imgui.internal.isBlankW
 import imgui.internal.textCountUtf8BytesFromStr
+import imgui.static.inputTextCalcTextSizeW
 import imgui.stb.te
 import imgui.stb.te.key
 import imgui.stb.te.makeUndoReplace
-import org.lwjgl.system.Platform
 import uno.kotlin.NUL
 
 /** Internal state of the currently focused/edited text input box
  *  For a given item ID, access with ImGui::GetInputTextState() */
-class InputTextState {
+class InputTextState(
+    /** parent dear imgui context */
+    val ctx: Context) {
 
     /** widget id owning the text state */
     var id: ID = 0
@@ -132,7 +133,10 @@ class InputTextState {
     fun getChar(idx: Int): Char = textW[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float = when (val c = textW[lineStartIdx + charIdx]) {
         '\n' -> GETWIDTH_NEWLINE
-        else -> g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
+        else -> {
+            val g = ctx
+            g.font.getCharAdvance(c) * (g.fontSize / g.font.fontSize)
+        }
     }
 
     fun keyToText(key: Int): Int = if (key >= 0x200000) 0 else key
@@ -142,7 +146,7 @@ class InputTextState {
     private var textRemaining = 0
 
     fun layoutRow(r: te.Row, lineStartIdx: Int) {
-        val size = inputTextCalcTextSizeW(textW, lineStartIdx, curLenW, ::textRemaining, stopOnNewLine = true)
+        val size = inputTextCalcTextSizeW(ctx, textW, lineStartIdx, curLenW, ::textRemaining, stopOnNewLine = true)
         r.apply {
             x0 = 0f
             x1 = size.x
@@ -202,7 +206,10 @@ class InputTextState {
     }
 
     /** ~STB_TEXTEDIT_MOVEWORDRIGHT */
-    infix fun moveWordRight(idx: Int): Int = if (ImGui.io.configMacOSXBehaviors) moveWordRight_MAC(idx) else moveWordRight_WIN(idx)
+    infix fun moveWordRight(idx: Int): Int {
+        val g = ctx
+        return if (g.io.configMacOSXBehaviors) moveWordRight_MAC(idx) else moveWordRight_WIN(idx)
+    }
 
     fun deleteChars(pos: Int, n: Int) {
 

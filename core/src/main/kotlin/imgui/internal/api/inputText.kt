@@ -815,11 +815,11 @@ internal interface inputText {
 
                 // Calculate 2d position by finding the beginning of the line and measuring distance
                 var start = text beginOfLine searchesInputPtr[0]
-                cursorOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[0]).x
+                cursorOffset.x = inputTextCalcTextSizeW(g, text, start, searchesInputPtr[0]).x
                 cursorOffset.y = searchesResultLineNo[0] * g.fontSize
                 if (searchesResultLineNo[1] >= 0) {
                     start = text beginOfLine searchesInputPtr[1]
-                    selectStartOffset.x = inputTextCalcTextSizeW(text, start, searchesInputPtr[1]).x
+                    selectStartOffset.x = inputTextCalcTextSizeW(g, text, start, searchesInputPtr[1]).x
                     selectStartOffset.y = searchesResultLineNo[1] * g.fontSize
                 }
 
@@ -872,12 +872,14 @@ internal interface inputText {
                 while (p < textSelectedEnd) {
                     if (rectPos.y > clipRect.w + g.fontSize) break
                     if (rectPos.y < clipRect.y) {
+                        //p = (const ImWchar*)wmemchr((const wchar_t*)p, '\n', text_selected_end - p);  // FIXME-OPT: Could use this when wchar_t are 16-bit
+                        //p = p ? p + 1 : text_selected_end;
                         while (p < textSelectedEnd)
                             if (text[p++] == '\n')
                                 break
                     } else {
                         val rectSize = withInt {
-                            inputTextCalcTextSizeW(text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
+                            inputTextCalcTextSizeW(g, text, p, textSelectedEnd, it, stopOnNewLine = true).also { p = it() }
                         }
                         // So we can see selected empty lines
                         if (rectSize.x <= 0f) rectSize.x = floor(g.font.getCharAdvance(' ') * 0.5f)

@@ -525,7 +525,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
 
     val mouseLastValidPos = Vec2()
 
-    var inputTextState = InputTextState()
+    var inputTextState = InputTextState(this)
 
     var inputTextPasswordFont = Font()
 
