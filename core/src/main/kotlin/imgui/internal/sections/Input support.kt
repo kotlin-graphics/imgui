@@ -51,7 +51,7 @@ sealed class InputEvent {
 
 // Input function taking an 'ImGuiID owner_id' argument defaults to (ImGuiKeyOwner_Any == 0) aka don't test ownership, which matches legacy behavior.
 
-/** Accept key that have an owner, UNLESS a call to SetKeyOwner() explicitely used ImGuiInputFlags_LockThisFrame or ImGuiInputFlags_LockUntilRelease. */
+/** Accept key that have an owner, UNLESS a call to SetKeyOwner() explicitly used ImGuiInputFlags_LockThisFrame or ImGuiInputFlags_LockUntilRelease. */
 const val KeyOwner_Any: ID = 0
 
 /** Require key to have no owner. */
@@ -68,7 +68,7 @@ class KeyRoutingData {
     var routingNext: ID = KeyOwner_None
 }
 
-// Routing table maintain a desired owner for each possible key-chord (key + mods), and setup owner in NewFrame() when mods are matching.
+// Routing table: maintain a desired owner for each possible key-chord (key + mods), and setup owner in NewFrame() when mods are matching.
 // Stored in main context (1 instance)
 class KeyRoutingTable {
     val index = IntArray(Key.COUNT) { -1 } // Index of first entry in Entries[]
@@ -82,8 +82,8 @@ class KeyRoutingTable {
     }
 }
 
-/** This extend ImGuiKeyData but only for named keys (legacy keys don't support the new features)
- *  Stored in main context (1 per named key). In the future might be merged into ImGuiKeyData. */
+/** This extends ImGuiKeyData but only for named keys (legacy keys don't support the new features)
+ *  Stored in main context (1 per named key). In the future it might be merged into ImGuiKeyData. */
 class KeyOwnerData {
     var ownerCurr = KeyOwner_None
     var ownerNext = KeyOwner_None
@@ -120,10 +120,10 @@ enum class InputFlag(val i: InputFlags) {
 
     // Flags for SetKeyOwner(), SetItemKeyOwner()
 
-    /** Access to key data will requires EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared at end of frame. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
+    /** Access to key data will require EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared at end of frame. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
     LockThisFrame(1 shl 6),
 
-    /** Access to key data will requires EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared when key is released or at end of frame is not down. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
+    /** Access to key data will require EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared when the key is released or at end of each frame if key is released. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
     LockUntilRelease(1 shl 7),
 
     // Routing policies for Shortcut() + low-level SetShortcutRouting()
