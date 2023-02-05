@@ -2,6 +2,7 @@ package imgui.static
 
 import gli_.has
 import glm_.*
+import glm_.func.common.abs
 import glm_.vec2.Vec2
 import imgui.*
 import imgui.ImGui.findBottomMostVisibleWindowWithinBeginStack
@@ -224,8 +225,11 @@ fun updateMouseInputs() {
     }
 }
 
-fun lockWheelingWindow(window: Window?) {
-    g.wheelingWindowReleaseTimer = if (window != null) WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER else 0f
+fun lockWheelingWindow(window: Window?, wheelAmount: Float) {
+    g.wheelingWindowReleaseTimer = when {
+        window != null -> (g.wheelingWindowReleaseTimer + wheelAmount.abs * WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER) min WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER
+        else -> 0f
+    }
     if (g.wheelingWindow === window)
         return
     IMGUI_DEBUG_LOG_IO("LockWheelingWindow() \"${window?.name ?: "NULL"}\"")
@@ -240,7 +244,7 @@ fun updateMouseWheel() {
         g.wheelingWindowReleaseTimer -= io.deltaTime
         if (isMousePosValid() && (io.mousePos - g.wheelingWindowRefMousePos).lengthSqr > io.mouseDragThreshold * io.mouseDragThreshold)
             g.wheelingWindowReleaseTimer = 0f
-        lockWheelingWindow(null)
+        lockWheelingWindow(null, 0f)
     }
 
     val wheel = Vec2(if (Key.MouseWheelX testOwner KeyOwner_None) g.io.mouseWheelH else 0f,
@@ -256,7 +260,7 @@ fun updateMouseWheel() {
     // Zoom / Scale window
     // FIXME-OBSOLETE: This is an old feature, it still works but pretty much nobody is using it and may be best redesigned.
     if (wheel.y != 0f && io.keyCtrl && io.fontAllowUserScaling) {
-        lockWheelingWindow(mouseWindow)
+        lockWheelingWindow(mouseWindow, wheel.y)
         val window = mouseWindow
         val newFontScale = glm.clamp(window.fontWindowScale + io.mouseWheel * 0.1f, 0.5f, 2.5f)
         val scale = newFontScale / window.fontWindowScale
@@ -291,7 +295,7 @@ fun updateMouseWheel() {
         while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.y == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
             window = window.parentWindow
         if (window.flags hasnt WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs) {
-            lockWheelingWindow(mouseWindow)
+            lockWheelingWindow(mouseWindow, wheel.y)
             val maxStep = window.innerRect.height * 0.67f
             val scrollStep = floor((5 * window.calcFontSize()) min maxStep)
             window.setScrollY(window.scroll.y - wheel.y * scrollStep)
@@ -304,7 +308,7 @@ fun updateMouseWheel() {
         while (window!!.flags has WindowFlag._ChildWindow && (window.scrollMax.x == 0f || (window.flags has WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs)))
             window = window.parentWindow
         if (window.flags hasnt WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs) {
-            lockWheelingWindow(mouseWindow)
+            lockWheelingWindow(mouseWindow, wheel.y)
             val maxStep = window.innerRect.width * 0.67f
             val scrollStep = floor((2 * window.calcFontSize()) min maxStep)
             window.setScrollX(window.scroll.x - wheel.x * scrollStep)
