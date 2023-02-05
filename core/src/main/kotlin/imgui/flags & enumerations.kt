@@ -1924,7 +1924,7 @@ enum class MouseButton {
  *  User code may request backend to display given cursor by calling SetMouseCursor(),
  *  which is why we have some cursors that are marked unused here
  *
- *  A mouse cursor identifier */
+ *  A mouse cursor shape */
 enum class MouseCursor {
 
     None,
