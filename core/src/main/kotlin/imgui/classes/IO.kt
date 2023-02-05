@@ -4,6 +4,10 @@ import glm_.*
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import imgui.*
+import imgui.ImGui.data
+import imgui.ImGui.isAlias
+import imgui.ImGui.isGamepad
+import imgui.ImGui.isNamedOrMod
 import imgui.api.g
 import imgui.font.Font
 import imgui.font.FontAtlas

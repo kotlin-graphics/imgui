@@ -10,6 +10,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.currentWindow
+import imgui.ImGui.data
 import imgui.ImGui.dragBehaviorT
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.focusWindow
