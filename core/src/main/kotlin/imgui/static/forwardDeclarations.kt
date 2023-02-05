@@ -178,7 +178,7 @@ fun calcScrollEdgeSnap(target: Float, snapMin: Float, snapMax: Float, snapThresh
 
 fun Window.calcNextScrollFromScrollTargetAndClamp(): Vec2 {
     val scroll = Vec2(scroll)
-    val decorationSize = Vec2(decoOuterSizeX1 + decoOuterSizeX2, decoOuterSizeY1 + decoOuterSizeY2)
+    val decorationSize = Vec2(decoOuterSizeX1 + decoInnerSizeX1 + decoOuterSizeX2, decoOuterSizeY1 + decoInnerSizeY1 + decoOuterSizeY2)
     for (axis in 0..1) {
         if (scrollTarget[axis] < Float.MAX_VALUE) {
             val centerRatio = scrollTargetCenterRatio[axis]

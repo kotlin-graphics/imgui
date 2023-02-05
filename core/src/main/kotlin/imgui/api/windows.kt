@@ -545,6 +545,7 @@ interface windows {
             // Apply scrolling
             window.scroll = window.calcNextScrollFromScrollTargetAndClamp()
             window.scrollTarget put Float.MAX_VALUE
+            window.decoInnerSizeX1 = 0f; window.decoInnerSizeY1 = 0f
 
             /* ---------- DRAWING ---------- */
 

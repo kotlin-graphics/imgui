@@ -154,8 +154,11 @@ class TableInstanceData {
     /** Outer height from last frame */
     var lastOuterHeight = 0f
 
-    /** Height of first row from last frame */
+    /** Height of first row from last frame (FIXME: this is used as "header height" and may be reworked) */
     var lastFirstRowHeight = 0f
+
+    /** Height of frozen section from last frame */
+    var lastFrozenHeight = 0f
 }
 
 /** Temporary storage for one table (one per table in the stack), shared between tables.

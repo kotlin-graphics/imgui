@@ -865,10 +865,17 @@ interface tablesInternal {
             ImGui.endPopup()
         }
 
-        // [Part 12] Sanitize and build sort specs before we have a change to use them for display.
+        // [Part 13] Sanitize and build sort specs before we have a change to use them for display.
         // This path will only be exercised when sort specs are modified before header rows (e.g. init or visibility change)
         if (isSortSpecsDirty && flags has Tf.Sortable)
             sortSpecsBuild()
+
+        // [Part 14] Setup inner window decoration size (for scrolling / nav tracking to properly take account of frozen rows/columns)
+        if (freezeColumnsRequest > 0)
+            innerWindow!!.decoInnerSizeX1 = columns[displayOrderToIndex[freezeColumnsRequest - 1]].maxX - outerRect.min.x
+        if (freezeRowsRequest > 0)
+            innerWindow!!.decoInnerSizeY1 = tableInstance.lastFrozenHeight
+        tableInstance.lastFrozenHeight = 0f
 
         // Initial state
         innerWindow!!.let {
@@ -1649,11 +1656,13 @@ interface tablesInternal {
                 column.navLayerCurrent = if (columnN < freezeColumnsCount) NavLayer.Menu else NavLayer.Main
             }
         if (unfreezeRowsActual) {
+
             assert(!isUnfrozenRows)
+            val y0 = (rowPosY2 + 1) max window.innerClipRect.min.y
             isUnfrozenRows = true
+            getInstanceData(instanceCurrent).lastFrozenHeight = y0 - outerRect.min.y
 
             // BgClipRect starts as table->InnerClipRect, reduce it now and make BgClipRectForDrawCmd == BgClipRect
-            val y0 = (rowPosY2 + 1) max window.innerClipRect.min.y
             bgClipRect.min.y = y0 min window.innerClipRect.max.y
             bg2ClipRectForDrawCmd.min.y = bgClipRect.min.y
             bgClipRect.max.y = window.innerClipRect.max.y

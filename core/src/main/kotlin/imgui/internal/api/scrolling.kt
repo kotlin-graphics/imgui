@@ -1,6 +1,7 @@
 package imgui.internal.api
 
 import glm_.has
+import glm_.min
 import glm_.vec2.Vec2
 import imgui.ImGui
 import imgui.WindowFlag
@@ -46,7 +47,7 @@ internal interface scrolling {
      *  ~SetScrollFromPosX(ImGuiWindow* window, float local_x, float center_x_ratio) */
     fun Window.setScrollFromPosX(localX: Float, centerXRatio: Float) {
         assert(centerXRatio in 0f..1f)
-        scrollTarget.x = floor(localX - decoOuterSizeX1 + scroll.x) // Convert local position to scroll offset
+        scrollTarget.x = floor(localX - decoOuterSizeX1 - decoInnerSizeX1 + scroll.x) // Convert local position to scroll offset
         scrollTargetCenterRatio.x = centerXRatio
         scrollTargetEdgeSnapDist.x = 0f
     }
@@ -54,7 +55,7 @@ internal interface scrolling {
     /** adjust scrolling amount to make given position visible. Generally GetCursorStartPos() + offset to compute a valid position.   */
     fun Window.setScrollFromPosY(localY: Float, centerYRatio: Float) {
         assert(centerYRatio in 0f..1f)
-        scrollTarget.y = floor(localY - decoOuterSizeY1 + scroll.y) // Convert local position to scroll offset
+        scrollTarget.y = floor(localY - decoOuterSizeY1 - decoInnerSizeY1 + scroll.y) // Convert local position to scroll offset
         scrollTargetCenterRatio.y = centerYRatio
         scrollTargetEdgeSnapDist.y = 0f
     }
@@ -72,6 +73,8 @@ internal interface scrolling {
         var flags = flags_
 
         val scrollRect = Rect(window.innerRect.min - 1, window.innerRect.max + 1)
+        scrollRect.min.x = (scrollRect.min.x + window.decoInnerSizeX1) min scrollRect.max.x
+        scrollRect.min.y = (scrollRect.min.y + window.decoInnerSizeY1) min scrollRect.max.y
         //GetForegroundDrawList(window)->AddRect(item_rect.Min, item_rect.Max, IM_COL32(255,0,0,255), 0.0f, 0, 5.0f); // [DEBUG]
         //GetForegroundDrawList(window)->AddRect(scroll_rect.Min, scroll_rect.Max, IM_COL32_WHITE); // [DEBUG]
 

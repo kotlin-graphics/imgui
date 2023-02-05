@@ -934,8 +934,8 @@ interface demoDebugInformations {
                     TRT.ColumnsClipRect -> table.columns[n].clipRect
                     TRT.ColumnsContentHeadersUsed -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersUsed, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) } // Note: y1/y2 not always accurate
                     TRT.ColumnsContentHeadersIdeal -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXHeadersIdeal, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) }
-                    TRT.ColumnsContentFrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXFrozen, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight) }
-                    TRT.ColumnsContentUnfrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y + tableInstance.lastFirstRowHeight, c.contentMaxXUnfrozen, table.innerClipRect.max.y) }
+                    TRT.ColumnsContentFrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y, c.contentMaxXFrozen, table.innerClipRect.min.y + tableInstance.lastFrozenHeight) }
+                    TRT.ColumnsContentUnfrozen -> table.columns[n].let { c -> Rect(c.workMinX, table.innerClipRect.min.y + tableInstance.lastFrozenHeight, c.contentMaxXUnfrozen, table.innerClipRect.max.y) }
                 }
             }
 

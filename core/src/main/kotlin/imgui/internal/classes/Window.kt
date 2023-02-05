@@ -70,6 +70,10 @@ class Window(var context: Context,
     var decoOuterSizeX2 = 0f
     var decoOuterSizeY2 = 0f
 
+    /** Applied AFTER/OVER InnerRect. Specialized for Tables as they use specialized form of clipping and frozen rows/columns are inside InnerRect (and not part of regular decoration sizes). */
+    var decoInnerSizeX1 = 0f
+    var decoInnerSizeY1 = 0f
+
     /** Size of buffer storing Name. May be larger than strlen(Name)! */
     var nameBufLen = name.toByteArray().size
 
