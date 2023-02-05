@@ -190,9 +190,14 @@ class ImplGL3 : GLInterface {
         // Render command lists
         for (cmdList in drawData.cmdLists) {
 
-            // - On Intel windows drivers we got reports that regular glBufferData() led to accumulating leaks when using multi-viewports, so we started using orphaning + glBufferSubData(). (See https://github.com/ocornut/imgui/issues/4468)
-            // - On NVIDIA drivers we got reports that using orphaning + glBufferSubData() led to glitches when using multi-viewports.
-            // - OpenGL drivers are in a very sorry state in 2022, for now we are switching code path based on vendors.
+            // Upload vertex/index buffers
+            // - OpenGL drivers are in a very sorry state nowadays....
+            //   During 2021 we attempted to switch from glBufferData() to orphaning+glBufferSubData() following reports
+            //   of leaks on Intel GPU when using multi-viewports on Windows.
+            // - After this we kept hearing of various display corruptions issues. We started disabling on non-Intel GPU, but issues still got reported on Intel.
+            // - We are now back to using exclusively glBufferData(). So bd->UseBufferSubData IS ALWAYS FALSE in this code.
+            //   We are keeping the old code path for a while in case people finding new issues may want to test the bd->UseBufferSubData path.
+            // - See https://github.com/ocornut/imgui/issues/4468 and please report any corruption issues.
             val vtxBufferSize = cmdList.vtxBuffer.lim.L
             val idxBufferSize = cmdList.idxBuffer.lim.L * DrawIdx.BYTES
 
@@ -542,7 +547,7 @@ class ImplGL3 : GLInterface {
 
             var hasClipOrigin = false
             var useBufferSubData = run { // Query vendor to enable glBufferSubData kludge
-                Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false
+                Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false // #if !defined(IMGUI_IMPL_OPENGL_ES2)
             }
         }
 
