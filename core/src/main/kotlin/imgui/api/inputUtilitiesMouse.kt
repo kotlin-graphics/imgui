@@ -2,7 +2,6 @@ package imgui.api
 
 import glm_.i
 import glm_.vec2.Vec2
-import imgui.ImGui.calcTypematicRepeatAmount
 import imgui.ImGui.io
 import imgui.ImGui.isClicked
 import imgui.ImGui.isMouseDragPastThreshold
@@ -16,7 +15,7 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.InputFlag
 import imgui.internal.sections.KeyOwner_Any
 
-/** Inputs Utilities: Mouse
+/** Inputs Utilities: Mouse specific
  *  - To refer to a mouse button, you may use named enums in your code e.g. ImGuiMouseButton_Left, ImGuiMouseButton_Right.
  *  - You can also use regular integer: it is forever guaranteed that 0=Left, 1=Right, 2=Middle.
  *  - Dragging operations are only reported after mouse has moved a certain distance away from the initial clicking position (see 'lock_threshold' and 'io.MouseDraggingThreshold') */

@@ -209,7 +209,7 @@ enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flag
      *  manipulate the underlying buffer while focus is active) */
     CallbackEdit(1 shl 19),
 
-    /** Escape key clears content if not empty, and deactivate otherwise (constrast to default behavior of Escape to revert) */
+    /** Escape key clears content if not empty, and deactivate otherwise (contrast to default behavior of Escape to revert) */
     EscapeClearsAll(1 shl 20),
 
     // [Internal]
@@ -1171,9 +1171,10 @@ enum class SortDirection {
 
 typealias KeyChord = Int
 
-// A key identifier (ImGuiKey_XXX or ImGuiMod_XXX value)
-// All our named keys are >= 512. Keys value 0 to 511 are left unused as legacy native/opaque key values (< 1.87)
+// A key identifier (ImGuiKey_XXX or ImGuiMod_XXX value): can represent Keyboard, Mouse and Gamepad values.
+// All our named keys are >= 512. Keys value 0 to 511 are left unused as legacy native/opaque key values (< 1.87).
 // Since >= 1.89 we increased typing (went from int to enum), some legacy code may need a cast to ImGuiKey.
+// Read details about the 1.87 and 1.89 transition : https://github.com/ocornut/imgui/issues/4921
 
 /** A key identifier (ImGui-side enum) */
 enum class Key(i: KeyChord? = null) {
@@ -1277,7 +1278,7 @@ enum class Key(i: KeyChord? = null) {
     /** Cmd/Super/Windows */
     Mod_Super(1 shl 15),
 
-    /** [Internal, read-only] Alias of ImGuiMod_Super (macOS) or ImGuiMod_Ctrl (otherwise), decided by io.ConfigMacOSXBehaviors. */
+    /** Alias for Ctrl (non-macOS) OR Super (macOS). */
     Mod_Shortcut(1 shl 11),
     Mod_Mask_(0xF800); // 5-bits
 

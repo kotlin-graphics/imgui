@@ -95,16 +95,6 @@ object ShowDemoWindowInputs {
             //            IMGUI_DEMO_MARKER("Inputs & Focus/Outputs");
             setNextItemOpen(true, Cond.Once)
             treeNode("Outputs") {
-                text("io.WantCaptureMouse: ${io.wantCaptureMouse.i}")
-                text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose.i}")
-                text("io.WantCaptureKeyboard: ${io.wantCaptureKeyboard.i}")
-                text("io.WantTextInput: ${io.wantTextInput.i}")
-                text("io.WantSetMousePos: ${io.wantSetMousePos.i}")
-                text("io.NavActive: ${io.navActive.i}, io.NavVisible: ${io.navVisible.i}")
-            }
-
-            //            IMGUI_DEMO_MARKER("Inputs & Focus/IO Output: Capture override")
-            treeNode("IO Output: Capture override") {
                 helpMarker(
                     "The value of io.WantCaptureMouse and io.WantCaptureKeyboard are normally set by Dear ImGui " +
                             "to instruct your application of how to route inputs. Typically, when a value is true, it means " +
@@ -112,26 +102,30 @@ object ShowDemoWindowInputs {
                             "The most typical case is: when hovering a window, Dear ImGui set io.WantCaptureMouse to true, " +
                             "and underlying application should ignore mouse inputs (in practice there are many and more subtle " +
                             "rules leading to how those flags are set).")
-
                 text("io.WantCaptureMouse: ${io.wantCaptureMouse.i}")
                 text("io.WantCaptureMouseUnlessPopupClose: ${io.wantCaptureMouseUnlessPopupClose.i}")
                 text("io.WantCaptureKeyboard: ${io.wantCaptureKeyboard.i}")
+                text("io.WantTextInput: ${io.wantTextInput.i}")
+                text("io.WantSetMousePos: ${io.wantSetMousePos.i}")
+                text("io.NavActive: ${io.navActive.i}, io.NavVisible: ${io.navVisible.i}")
 
-                helpMarker(
-                    "Hovering the colored canvas will override io.WantCaptureXXX fields.\n" +
-                            "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
-                val captureOverrideDesc = listOf("None", "Set to false", "Set to true")
-                setNextItemWidth(ImGui.fontSize * 15)
-                sliderInt("SetNextFrameWantCaptureMouse()", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp.i)
-                setNextItemWidth(ImGui.fontSize * 15)
-                sliderInt("SetNextFrameWantCaptureKeyboard()", ::captureOverrideKeyboard, -1, +1, captureOverrideDesc[captureOverrideKeyboard + 1], SliderFlag.AlwaysClamp.i)
+                //                IMGUI_DEMO_MARKER("Inputs & Focus/Outputs/Capture override");
+                treeNode("WantCapture override") {
+                    helpMarker(
+                        "Hovering the colored canvas will override io.WantCaptureXXX fields.\n" +
+                                "Notice how normally (when set to none), the value of io.WantCaptureKeyboard would be false when hovering and true when clicking.")
+                    val captureOverrideDesc = listOf("None", "Set to false", "Set to true")
+                    setNextItemWidth(ImGui.fontSize * 15)
+                    sliderInt("SetNextFrameWantCaptureMouse() on hover", ::captureOverrideMouse, -1, +1, captureOverrideDesc[captureOverrideMouse + 1], SliderFlag.AlwaysClamp.i)
+                    setNextItemWidth(ImGui.fontSize * 15)
+                    sliderInt("SetNextFrameWantCaptureKeyboard() on hover", ::captureOverrideKeyboard, -1, +1, captureOverrideDesc[captureOverrideKeyboard + 1], SliderFlag.AlwaysClamp.i)
 
-                colorButton("##panel", Vec4(0.7f, 0.1f, 0.7f, 1f), ColorEditFlag.NoTooltip or ColorEditFlag.NoDragDrop, Vec2(256f, 192f)) // Dummy item
-                if (ImGui.isItemHovered() && captureOverrideMouse != -1)
-                    setNextFrameWantCaptureMouse(captureOverrideMouse == 1)
-                if (ImGui.isItemHovered() && captureOverrideKeyboard != -1)
-                    setNextFrameWantCaptureKeyboard(captureOverrideKeyboard == 1)
-
+                    colorButton("##panel", Vec4(0.7f, 0.1f, 0.7f, 1f), ColorEditFlag.NoTooltip or ColorEditFlag.NoDragDrop, Vec2(128f, 96f)) // Dummy item
+                    if (ImGui.isItemHovered() && captureOverrideMouse != -1)
+                        setNextFrameWantCaptureMouse(captureOverrideMouse == 1)
+                    if (ImGui.isItemHovered() && captureOverrideKeyboard != -1)
+                        setNextFrameWantCaptureKeyboard(captureOverrideKeyboard == 1)
+                }
             }
 
             // Display mouse cursors
@@ -163,7 +157,7 @@ object ShowDemoWindowInputs {
 
             `Focus from code`()
 
-//            IMGUI_DEMO_MARKER("Inputs & Focus/Dragging");
+            //            IMGUI_DEMO_MARKER("Inputs & Focus/Dragging");
             treeNode("Dragging") {
                 textWrapped("You can use getMouseDragDelta(0) to query for the dragged amount on any widget.")
                 for (button in MouseButton.values())
@@ -213,7 +207,7 @@ object ShowDemoWindowInputs {
         var buf = "click on a button to set focus".toByteArray(128)
         val f3 = FloatArray(3)
         operator fun invoke() {
-//            IMGUI_DEMO_MARKER("Inputs & Focus/Focus from code");
+            //            IMGUI_DEMO_MARKER("Inputs & Focus/Focus from code");
             treeNode("Focus from code") {
                 val focus1 = button("Focus on 1"); sameLine()
                 val focus2 = button("Focus on 2"); sameLine()

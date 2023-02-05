@@ -10,12 +10,11 @@ import imgui.internal.sections.InputFlag
 import imgui.internal.sections.KeyOwner_Any
 
 
-// Without IMGUI_DISABLE_OBSOLETE_KEYIO:
-//   - For 'ImGuiKey key' you can use your own indices/enums according to how your backend/engine stored them in io.KeysDown[].
-//   - We don't know the meaning of those value. You can use GetKeyIndex() to map a ImGuiKey_ value into the user index.
-// With: IMGUI_DISABLE_OBSOLETE_KEYIO:
-//   - `ImGuiKey key` will assert when key < 512 will be passed, previously reserved as user keys indices
-//   - GetKeyIndex() is pass-through and therefore deprecated (gone if IMGUI_DISABLE_OBSOLETE_KEYIO is defined)
+// Inputs Utilities: Keyboard/Mouse/Gamepad
+// - the ImGuiKey enum contains all possible keyboard, mouse and gamepad inputs (e.g. ImGuiKey_A, ImGuiKey_MouseLeft, ImGuiKey_GamepadDpadUp...).
+// - before v1.87, we used ImGuiKey to carry native/user indices as defined by each backends. About use of those legacy ImGuiKey values:
+//  - without IMGUI_DISABLE_OBSOLETE_KEYIO (legacy support): you can still use your legacy native/user indices (< 512) according to how your backend/engine stored them in io.KeysDown[], but need to cast them to ImGuiKey.
+//  - with    IMGUI_DISABLE_OBSOLETE_KEYIO (this is the way forward): any use of ImGuiKey will assert with key < 512. GetKeyIndex() is pass-through and therefore deprecated (gone if IMGUI_DISABLE_OBSOLETE_KEYIO is defined).
 interface inputUtilitiesKeyboard {
 
     /** ~IsKeyDown
