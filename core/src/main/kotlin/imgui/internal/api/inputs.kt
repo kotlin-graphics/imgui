@@ -152,7 +152,7 @@ internal interface inputs {
             //            val ownerData = ownerData(key);
             val ownerId = ownerData.ownerCurr
 
-            if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId)
+            if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId && ownerId != KeyOwner_Any)
                 if (i in Key.BEGIN until Key.END)
                     return KeyOwner_None
 
@@ -203,12 +203,12 @@ internal interface inputs {
     // TestKeyOwner(..., None) : (owner == None)
     // TestKeyOwner(..., Any)  : no owner test
     // All paths are also testing for key not being locked, for the rare cases that key have been locked with using ImGuiInputFlags_LockXXX flags.
-    infix fun Key.testOwner(ownerId: ID): Boolean {                       // Test that key is either not owned, either owned by 'owner_id'
+    infix fun Key.testOwner(ownerId: ID): Boolean { // Test that key is either not owned, either owned by 'owner_id'
 
         if (!isNamedOrMod)
             return true
 
-        if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId)
+        if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId && ownerId != KeyOwner_Any)
             if (i in Key.Keyboard_BEGIN until Key.Keyboard_END)
                 return false
 
