@@ -25,9 +25,9 @@ class ViewportP : Viewport() {
     /** Convenience background (0) and foreground (1) draw lists. We use them to draw software mouser cursor when io.MouseDrawCursor is set and to draw most debug overlays. */
     val drawLists = Array<DrawList?>(2) { null }
 
-    var drawDataP: DrawData? = null
+    val drawDataP = DrawData()
 
-    var drawDataBuilder: DrawDataBuilder? = null
+    val drawDataBuilder = DrawDataBuilder()
 
     /** Work Area: Offset from Pos to top-left corner of Work Area. Generally (0,0) or (0,+main_menu_bar_height). Work Area is Full Area but without menu-bars/status-bars (so WorkArea always fit inside Pos/Size!) */
     val workOffsetMin = Vec2()

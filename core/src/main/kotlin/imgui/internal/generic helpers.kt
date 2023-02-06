@@ -868,11 +868,11 @@ fun getDirQuadrantFromDelta(dx: Float, dy: Float) = when {
 //template<int BITCOUNT>
 class BitArray(val bitCount: Int) {
 
+    val storage = IntArray((bitCount + 31) ushr 5)
+
     init {
         clearAllBits()
     }
-
-    val storage = IntArray((bitCount + 31) ushr 5)
 
     fun clearAllBits() = storage.fill(0)
     fun setAllBits() = storage.fill(255)

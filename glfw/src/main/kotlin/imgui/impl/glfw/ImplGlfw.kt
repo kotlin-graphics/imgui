@@ -40,7 +40,7 @@ class ImplGlfw @JvmOverloads constructor(
     init {
 
         with(io) {
-            assert(io.backendPlatformUserData == NULL) { "Already initialized a platform backend!" }
+            assert(backendPlatformUserData == null) { "Already initialized a platform backend!" }
             //printf("GLFW_VERSION: %d.%d.%d (%d)", GLFW_VERSION_MAJOR, GLFW_VERSION_MINOR, GLFW_VERSION_REVISION, GLFW_VERSION_COMBINED);
 
             // Setup backend capabilities flags
