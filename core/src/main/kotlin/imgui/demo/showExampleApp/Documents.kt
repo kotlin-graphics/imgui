@@ -34,7 +34,6 @@ import imgui.ImGui.pushStyleColor
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
 import imgui.ImGui.setTabItemClosed
-import imgui.ImGui.shortcut
 import imgui.ImGui.text
 import imgui.ImGui.textLineHeightWithSpacing
 import imgui.ImGui.textWrapped
@@ -85,14 +84,11 @@ class MyDocument(
         pushStyleColor(Col.Text, color)
         textWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
         popStyleColor()
-        if (button("Modify (Ctrl+M)") || shortcut(Key.Mod_Shortcut or Key.M))
+        if (button("Modify", Vec2(100, 0)))
             dirty = true
         sameLine()
-        if (button("Save (Ctrl+S)") || shortcut(Key.Mod_Shortcut or Key.S))
+        if (button("Save (Ctrl+S)", Vec2(100, 0)))
             doSave()
-        sameLine()
-        if (button("Close (Ctrl+W)") || shortcut(Key.Mod_Shortcut or Key.W))
-            doQueueClose()
         colorEdit3("color", color)  // Useful to test drag and drop and hold-dragged-to-open-tab behavior.
         popID()
     }
@@ -102,9 +98,9 @@ class MyDocument(
         if (!beginPopupContextItem())
             return
 
-        if (menuItem("Save $name", "Ctrl+S", false, open))
+        if (menuItem("Save $name", "CTRL+S", false, open))
             doSave()
-        if (menuItem("Close", "Ctrl+W", false, open))
+        if (menuItem("Close", "CTRL+W", false, open))
             doQueueClose()
         endPopup()
     }
@@ -169,7 +165,7 @@ object Documents {
                 if (menuItem("Close All Documents", "", false, openCount > 0))
                     for (doc in documents)
                         doc.doQueueClose()
-                if (menuItem("Exit") && pOpen != null)
+                if (menuItem("Exit", "Ctrl+F4") && pOpen != null)
                     pOpen.set(false)
                 endMenu()
             }

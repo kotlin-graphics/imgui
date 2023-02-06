@@ -5,13 +5,15 @@ import glm_.f
 import glm_.i
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.ImGui.convertSingleModFlagToKey
 import imgui.ImGui.getPressedAmount
 import imgui.ImGui.io
 import imgui.ImGui.isDown
+import imgui.ImGui.isPressed
 import imgui.ImGui.navMoveRequestCancel
 import imgui.api.g
 import imgui.classes.KeyData
-import imgui.internal.classes.Window
+import imgui.internal.classes.*
 import imgui.internal.isPowerOfTwo
 import imgui.internal.sections.*
 
@@ -189,7 +191,7 @@ internal interface inputs {
     fun Key.setOwner(ownerId: ID, flags: InputFlags = 0) {
 
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
-        assert(flags hasnt InputFlag._SupportedBySetKeyOwner) { "Passing flags not supported by this function !" }
+        assert(flags hasnt InputFlag.SupportedBySetKeyOwner) { "Passing flags not supported by this function !" }
 
         val ownerData = ownerData
         ownerData.ownerCurr = ownerId; ownerData.ownerNext = ownerId
@@ -214,7 +216,7 @@ internal interface inputs {
         if (flags hasnt InputFlag.CondMask_)
             flags /= InputFlag.CondDefault_
         if ((g.hoveredId == id && flags has InputFlag.CondHovered) || (g.activeId == id && flags has InputFlag.CondActive)) {
-            assert(flags hasnt InputFlag._SupportedBySetItemKeyOwner) { "Passing flags not supported by this function !" }
+            assert(flags hasnt InputFlag.SupportedBySetItemKeyOwner) { "Passing flags not supported by this function !" }
             setOwner(id, flags wo InputFlag.CondMask_)
         }
     }
@@ -281,7 +283,7 @@ internal interface inputs {
         val t = keyData.downDuration
         if (t < 0f)
             return false
-        assert(flags hasnt InputFlag._SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
+        assert(flags hasnt InputFlag.SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
 
         var pressed = t == 0f
         if (!pressed && flags hasnt InputFlag.Repeat) {
@@ -316,7 +318,7 @@ internal interface inputs {
         val t = g.io.mouseDownDuration[i]
         if (t < 0f)
             return false
-        assert(flags hasnt InputFlag._SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
+        assert(flags hasnt InputFlag.SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
 
         val repeat = flags has InputFlag.Repeat
         val pressed = t == 0f || (repeat && t > g.io.keyRepeatDelay && calcTypematicRepeatAmount(t - g.io.deltaTime, t, g.io.keyRepeatDelay, g.io.keyRepeatRate) > 0)
@@ -384,87 +386,5 @@ internal interface inputs {
             flags has InputFlag.RouteGlobalLow -> 254
             else -> 0
         }
-    }
-
-    // Request a desired route for an input chord (key + mods).
-    // Return true if the route is available this frame.
-    // - Routes and key ownership are attributed at the beginning of next frame based on best score and mod state.
-    //   (Conceptually this does a "Submit for next frame" + "Test for current frame".
-    //   As such, it could be called TrySetXXX or SubmitXXX, or the Submit and Test operations should be separate.)
-    // - Using 'owner_id == ImGuiKeyOwner_Any/0': auto-assign an owner based on current focus scope (each window has its focus scope by default)
-    // - Using 'owner_id == ImGuiKeyOwner_None': allows disabling/locking a shortcut.
-    fun setShortcutRouting(keyChord: KeyChord, ownerId: ID, flags_: InputFlags): Boolean {
-
-        var flags = flags_
-        if (flags hasnt InputFlag._RouteMask_)
-            flags /= InputFlag.RouteGlobalHigh // IMPORTANT: This is the default for SetShortcutRouting() but NOT Shortcut()
-        else
-            assert((flags and InputFlag._RouteMask_).isPowerOfTwo) { "Check that only 1 routing flag is used" }
-
-        if (flags has InputFlag.RouteUnlessBgFocused)
-            if (g.navWindow == null)
-                return false
-        if (flags has InputFlag.RouteAlways)
-            return true
-
-        val score = calcRoutingScore(g.currentWindow!!, ownerId, flags)
-        if (score == 255)
-            return false
-
-        // Submit routing for NEXT frame (assuming score is sufficient)
-        // FIXME: Could expose a way to use a "serve last" policy for same score resolution (using <= instead of <).
-        val routingData = getShortcutRoutingData(keyChord)
-        val routingId = getRoutingIdFromOwnerId(ownerId)
-        //const bool set_route = (flags & ImGuiInputFlags_ServeLast) ? (score <= routing_data->RoutingNextScore) : (score < routing_data->RoutingNextScore);
-        if (score < routingData.routingNextScore) {
-            routingData.routingNext = routingId
-            routingData.routingNextScore = score
-        }
-
-        // Return routing state for CURRENT frame
-        return routingData.routingCurr == routingId
-    }
-
-    // Currently unused by core (but used by tests)
-    // Note: this cannot be turned into GetShortcutRouting() because we do the owner_id->routing_id translation, name would be more misleading.
-    fun testShortcutRouting(keyChord: KeyChord, ownerId: ID): Boolean {
-        val routingId = getRoutingIdFromOwnerId(ownerId)
-        val routingData = getShortcutRoutingData(keyChord) // FIXME: Could avoid creating entry.
-        return routingData.routingCurr == routingId
-    }
-
-    fun getShortcutRoutingData(keyChord_: KeyChord): KeyRoutingData {
-        // Majority of shortcuts will be Key + any number of Mods
-        // We accept _Single_ mod with ImGuiKey_None.
-        //  - Shortcut(ImGuiKey_S | ImGuiMod_Ctrl);                    // Legal
-        //  - Shortcut(ImGuiKey_S | ImGuiMod_Ctrl | ImGuiMod_Shift);   // Legal
-        //  - Shortcut(ImGuiMod_Ctrl);                                 // Legal
-        //  - Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift);                // Not legal
-        val rt = g.keysRoutingTable
-        val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
-        var key = Key of (keyChord wo Key.Mod_Mask_)
-        val mods = Key of (keyChord and Key.Mod_Mask_)
-        if (key == Key.None)
-            key = key.convertSingleModFlagToKey()
-        //        IM_ASSERT(IsNamedKey(key))
-
-        // Get (in the majority of case, the linked list will have one element so this should be 2 reads.
-        // Subsequent elements will be contiguous in memory as list is sorted/rebuilt in NewFrame).
-        var idx = rt.index[key]
-        while (idx != -1) {
-            val routingData = rt.entries[idx]
-            if (routingData.mods == mods.i)
-                return routingData
-            idx = routingData.nextEntryIndex
-        }
-
-        // Add to linked-list
-        val routingDataIdx = rt.entries.size
-        rt.entries += KeyRoutingData()
-        val routingData = rt.entries[routingDataIdx]
-        routingData.mods = mods.i
-        routingData.nextEntryIndex = rt.index[key] // Setup linked list
-        rt.index[key] = routingDataIdx
-        return routingData
     }
 }

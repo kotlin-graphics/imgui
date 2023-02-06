@@ -156,6 +156,102 @@ infix fun DebugLogFlags.has(b: DebugLogFlag): Boolean = and(b.i) != 0
 infix fun DebugLogFlags.hasnt(b: DebugLogFlag): Boolean = and(b.i) == 0
 infix fun DebugLogFlags.wo(b: DebugLogFlag): DebugLogFlags = and(b.i.inv())
 
+
+
+// (+ for upcoming advanced versions of IsKeyPressed()/IsMouseClicked()/SetKeyOwner()/SetItemKeyOwner() that are currently in imgui_internal.h)
+/** -> enum ImGuiInputFlags_         // Flags: for IsKeyPressed(), IsMouseClicked(), SetKeyOwner(), SetItemKeyOwner() etc. */
+typealias InputFlags = Int
+
+/** Flags for extended versions of IsKeyPressed(), IsMouseClicked(), Shortcut(), SetKeyOwner(), SetItemKeyOwner()
+ *  Don't mistake with ImGuiInputTextFlags! (for ImGui::InputText() function) */
+enum class InputFlag(val i: InputFlags) {
+    /** Flags for IsKeyPressed(), IsMouseClicked(), Shortcut() */
+    None(0),
+
+    /** Return true on successive repeats. Default for legacy IsKeyPressed(). NOT Default for legacy IsMouseClicked(). MUST BE == 1. */
+    Repeat(1 shl 0),
+
+    // Repeat rate
+    RepeatRateDefault(1 shl 1),   // Repeat rate: Regular (default)
+    RepeatRateNavMove(1 shl 2),   // Repeat rate: Fast
+    RepeatRateNavTweak(1 shl 3),   // Repeat rate: Faster
+    RepeatRateMask_(RepeatRateDefault or RepeatRateNavMove or RepeatRateNavTweak),
+
+
+    // Flags for SetItemKeyOwner()
+    CondHovered(1 shl 4),   // Only set if item is hovered (default to both)
+    CondActive(1 shl 5),   // Only set if item is active (default to both)
+    CondDefault_(CondHovered or CondActive),
+    CondMask_(CondHovered or CondActive),
+
+    // Flags for SetKeyOwner(), SetItemKeyOwner()
+
+    /** Access to key data will require EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared at end of frame. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
+    LockThisFrame(1 shl 6),
+
+    /** Access to key data will require EXPLICIT owner ID (ImGuiKeyOwner_Any/0 will NOT accepted for polling). Cleared when the key is released or at end of each frame if key is released. This is useful to make input-owner-aware code steal keys from non-input-owner-aware code. */
+    LockUntilRelease(1 shl 7),
+
+    // Routing policies for Shortcut() + low-level SetShortcutRouting()
+    // - The general idea is that several callers register interest in a shortcut, and only one owner gets it.
+    // - When a policy (other than _RouteAlways) is set, Shortcut() will register itself with SetShortcutRouting(),
+    //   allowing the system to decide where to route the input among other route-aware calls.
+    // - Shortcut() uses ImGuiInputFlags_RouteFocused by default: meaning that a simple Shortcut() poll
+    //   will register a route and only succeed when parent window is in the focus stack and if no-one
+    //   with a higher priority is claiming the shortcut.
+    // - Using ImGuiInputFlags_RouteAlways is roughly equivalent to doing e.g. IsKeyPressed(key) + testing mods.
+    // - Priorities: GlobalHigh > Focused (when owner is active item) > Global > Focused (when focused window) > GlobalLow.
+    // - Can select only 1 policy among all available.
+
+    /** (Default) Register focused route: Accept inputs if window is in focus stack. Deep-most focused window takes inputs. ActiveId takes inputs over deep-most focused window. */
+    RouteFocused(1 shl 8),
+
+    /** Register route globally (lowest priority: unless a focused window or active item registered the route) -> recommended Global priority. */
+    RouteGlobalLow(1 shl 9),
+
+    /** Register route globally (medium priority: unless an active item registered the route, e.g. CTRL+A registered by InputText). */
+    RouteGlobal(1 shl 10),
+
+    /** Register route globally (highest priority: unlikely you need to use that: will interfere with every active items) */
+    RouteGlobalHigh(1 shl 11),
+
+    /** _Always not part of this! */
+    RouteMask_(RouteFocused or RouteGlobal or RouteGlobalLow or RouteGlobalHigh),
+
+    /** Do not register route, poll keys directly. */
+    RouteAlways(1 shl 12),
+
+    /** Global routes will not be applied if underlying background/void is focused (== no Dear ImGui windows are focused). Useful for overlay applications. */
+    RouteUnlessBgFocused(1 shl 13),
+
+    // [Internal] Mask of which function support which flags
+    RouteExtraMask_(RouteAlways or RouteUnlessBgFocused),
+
+    // [Internal] Mask of which function support which flags
+    SupportedByIsKeyPressed(Repeat or RepeatRateMask_),
+    SupportedByShortcut(Repeat or RepeatRateMask_ or RouteMask_ or RouteExtraMask_),
+    SupportedBySetKeyOwner(LockThisFrame or LockUntilRelease),
+    SupportedBySetItemKeyOwner(SupportedBySetKeyOwner or CondMask_);
+
+    infix fun and(b: InputFlag): InputFlags = i and b.i
+    infix fun and(b: InputFlags): InputFlags = i and b
+    infix fun or(b: InputFlag): InputFlags = i or b.i
+    infix fun or(b: InputFlags): InputFlags = i or b
+    infix fun xor(b: InputFlag): InputFlags = i xor b.i
+    infix fun xor(b: InputFlags): InputFlags = i xor b
+    infix fun wo(b: InputFlags): InputFlags = and(b.inv())
+}
+
+infix fun InputFlags.and(b: InputFlag): InputFlags = and(b.i)
+infix fun InputFlags.or(b: InputFlag): InputFlags = or(b.i)
+infix fun InputFlags.xor(b: InputFlag): InputFlags = xor(b.i)
+infix fun InputFlags.has(b: InputFlag): Boolean = and(b.i) != 0
+infix fun InputFlags.hasnt(b: InputFlag): Boolean = and(b.i) == 0
+infix fun InputFlags.wo(b: InputFlag): InputFlags = and(b.i.inv())
+operator fun InputFlags.minus(flag: InputFlag): InputFlags = wo(flag)
+operator fun InputFlags.div(flag: InputFlag): InputFlags = or(flag)
+
+
 /** Storage for ShowMetricsWindow() and DebugNodeXXX() functions */
 class MetricsConfig {
     var showDebugLog = false

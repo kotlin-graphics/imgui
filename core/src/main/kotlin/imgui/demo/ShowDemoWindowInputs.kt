@@ -20,29 +20,21 @@ import imgui.ImGui.isItemActive
 import imgui.ImGui.isMouseDown
 import imgui.ImGui.isMouseDragging
 import imgui.ImGui.isMousePosValid
-import imgui.ImGui.isWindowFocused
-import imgui.ImGui.openPopup
 import imgui.ImGui.popAllowKeyboardFocus
 import imgui.ImGui.pushAllowKeyboardFocus
-import imgui.ImGui.radioButton
 import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
-import imgui.ImGui.separator
 import imgui.ImGui.setKeyboardFocusHere
 import imgui.ImGui.setNextFrameWantCaptureKeyboard
 import imgui.ImGui.setNextFrameWantCaptureMouse
 import imgui.ImGui.setNextItemOpen
 import imgui.ImGui.setNextItemWidth
-import imgui.ImGui.shortcut
 import imgui.ImGui.sliderFloat3
 import imgui.ImGui.sliderInt
-import imgui.ImGui.spacing
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
 import imgui.api.demoDebugInformations.Companion.helpMarker
-import imgui.dsl.child
 import imgui.dsl.collapsingHeader
-import imgui.dsl.popup
 import imgui.dsl.treeNode
 
 object ShowDemoWindowInputs {
@@ -129,8 +121,6 @@ object ShowDemoWindowInputs {
                 }
             }
 
-            `Shortcut Routing`()
-
             // Display mouse cursors
             //            IMGUI_DEMO_MARKER("Inputs & Focus/Mouse Cursors");
             treeNode("Mouse Cursors") {
@@ -187,78 +177,6 @@ object ShowDemoWindowInputs {
             }
         }
     }
-
-    object `Shortcut Routing` {
-
-        var repeatFlags = InputFlag.Repeat.i
-        var routingFlags = InputFlag.RouteFocused.i
-
-        operator fun invoke() {
-            // Demonstrate using Shortcut() and Routing Policies.
-            // The general flow is:
-            // - Code interested in a chord (e.g. "Ctrl+A") declares their intent.
-            // - Multiple locations may be interested in same chord! Routing helps find a winner.
-            // - Every frame, we resolve all claims and assign one owner if the modifiers are matching.
-            // - The lower-level function is 'bool SetShortcutRouting()', returns true when caller got the route.
-            // - Most of the times, SetShortcutRouting() is not called directly. User mostly calls Shortcut() with routing flags.
-            // - If you call Shortcut() WITHOUT any routing option, it uses ImGuiInputFlags_RouteFocused.
-            // TL;DR: Most uses will simply be:
-            // - Shortcut(ImGuiMod_Ctrl | ImGuiKey_A); // Use ImGuiInputFlags_RouteFocused policy.
-            treeNode("Shortcut Routing") {
-                val lineHeight = ImGui.textLineHeightWithSpacing
-                val keyChord = Key.Mod_Ctrl or Key.A
-                checkboxFlags("ImGuiInputFlags_Repeat", ::repeatFlags, InputFlag.Repeat.i)
-                radioButton("ImGuiInputFlags_RouteFocused (default)", ::routingFlags, InputFlag.RouteFocused.i)
-                radioButton("ImGuiInputFlags_RouteAlways", ::routingFlags, InputFlag.RouteAlways.i)
-                radioButton("ImGuiInputFlags_RouteGlobal", ::routingFlags, InputFlag.RouteGlobal.i)
-                radioButton("ImGuiInputFlags_RouteGlobalHigh", ::routingFlags, InputFlag.RouteGlobalHigh.i)
-                radioButton("ImGuiInputFlags_RouteGlobalLow", ::routingFlags, InputFlag.RouteGlobalLow.i)
-                val flags = repeatFlags or routingFlags // Merged flags
-
-                text("IsWindowFocused: ${isWindowFocused().i}, Shortcut: ${if (shortcut(keyChord, 0, flags)) "PRESSED" else "..."}")
-
-                child("WindowA", Vec2(-Float.MIN_VALUE, lineHeight * 18), true) {
-                    text("Press CTRL+A and see who receives it!")
-                    separator()
-
-                    // 1: Window polling for CTRL+A
-                    text("(in WindowA)")
-                    text("IsWindowFocused: ${isWindowFocused().i}, Shortcut: ${if (shortcut(keyChord, 0, flags)) "PRESSED" else "..."}")
-
-                    // 2: InputText also polling for CTRL+A: it always uses _RouteFocused internally (gets priority when active)
-                    val str = "Press CTRL+A"
-                    spacing()
-                    inputText("InputTextB", str, InputTextFlag.ReadOnly.i)
-                    val itemId = ImGui.itemID
-                    sameLine(); helpMarker("Internal widgets always use _RouteFocused")
-                    text("IsWindowFocused: ${isWindowFocused().i}, Shortcut: ${if (shortcut(keyChord, itemId, flags)) "PRESSED" else "..."}")
-
-                    // 3: Dummy child is not claiming the route: focusing them shouldn't steal route away from WindowA
-                    child("ChildD", Vec2(-Float.MIN_VALUE, lineHeight * 4), true) {
-                        text("(in ChildD: not using same Shortcut)")
-                        text("IsWindowFocused: ${isWindowFocused().i}")
-                    }
-
-                    // 4: Child window polling for CTRL+A. It is deeper than WindowA and gets priority when focused.
-                    child("ChildE", Vec2(-Float.MIN_VALUE, lineHeight * 4), true) {
-                        text("(in ChildE: using same Shortcut)")
-                        text("IsWindowFocused: ${isWindowFocused().i}, Shortcut: ${if (shortcut(keyChord, 0, flags)) "PRESSED" else "..."}")
-                    }
-
-                    // 5: In a popup
-                    if (button("Open Popup"))
-                        openPopup("PopupF")
-                    popup("PopupF") {
-                        text("(in PopupF)")
-                        text("IsWindowFocused: ${isWindowFocused().i}, Shortcut: ${if (shortcut(keyChord, 0, flags)) "PRESSED" else "..."}")
-                        inputText("InputTextG", str, InputTextFlag.ReadOnly.i)
-                        text("IsWindowFocused: ${isWindowFocused().i}, Shortcut: ${if (shortcut(keyChord, ImGui.itemID, flags)) "PRESSED" else "..."}")
-                    }
-                }
-            }
-        }
-    }
-
     object Tabbing {
         var buf = "hello".toByteArray(32)
         operator fun invoke() {

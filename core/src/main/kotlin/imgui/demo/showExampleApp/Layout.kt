@@ -4,12 +4,10 @@ import glm_.vec2.Vec2
 import imgui.Cond
 import imgui.ImGui.begin
 import imgui.ImGui.beginChild
-import imgui.ImGui.beginGroup
 import imgui.ImGui.beginTabBar
 import imgui.ImGui.beginTabItem
 import imgui.ImGui.end
 import imgui.ImGui.endChild
-import imgui.ImGui.endGroup
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.frameHeightWithSpacing
@@ -17,10 +15,8 @@ import imgui.ImGui.sameLine
 import imgui.ImGui.selectable
 import imgui.ImGui.separator
 import imgui.ImGui.setNextWindowSize
-import imgui.ImGui.shortcut
 import imgui.ImGui.text
 import imgui.ImGui.textWrapped
-import imgui.Key
 import imgui.TabBarFlag
 import imgui.dsl.button
 import imgui.dsl.child
@@ -49,9 +45,6 @@ object Layout {
                     menuItem("Close", "Ctrl+W") { open = false }
                 }
             }
-
-            if (shortcut(Key.Mod_Ctrl or Key.W))
-                open = false
 
             // Left
             child("left pane", Vec2(150, 0), true) {

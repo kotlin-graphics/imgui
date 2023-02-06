@@ -50,6 +50,7 @@ import imgui.ImGui.testOwner
 import imgui.ImGui.topMostPopupModal
 import imgui.api.g
 import imgui.internal.*
+import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.*

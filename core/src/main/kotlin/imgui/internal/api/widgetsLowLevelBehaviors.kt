@@ -44,6 +44,7 @@ import imgui.ImGui.style
 import imgui.ImGui.testOwner
 import imgui.ImGui.toKey
 import imgui.api.g
+import imgui.internal.classes.InputFlag
 import imgui.internal.classes.Rect
 import imgui.internal.floor
 import imgui.internal.sections.*

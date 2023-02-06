@@ -7,7 +7,7 @@ import imgui.ImGui.isDown
 import imgui.ImGui.isPressed
 import imgui.ImGui.isReleased
 import imgui.Key
-import imgui.InputFlag
+import imgui.internal.classes.InputFlag
 import imgui.internal.sections.KeyOwner_Any
 
 
