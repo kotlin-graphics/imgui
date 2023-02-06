@@ -9,12 +9,14 @@ import glm_.vec3.Vec3i
 import glm_.vec4.Vec4
 import glm_.vec4.Vec4i
 import imgui.*
+import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginGroup
 import imgui.ImGui.buttonEx
 import imgui.ImGui.calcItemWidth
 import imgui.ImGui.currentWindow
-import imgui.ImGui.dataTypeApplyOp
 import imgui.ImGui.dataTypeApplyFromText
+import imgui.ImGui.dataTypeApplyOp
+import imgui.ImGui.endDisabled
 import imgui.ImGui.endGroup
 import imgui.ImGui.findRenderedTextEnd
 import imgui.ImGui.format
@@ -22,18 +24,16 @@ import imgui.ImGui.frameHeight
 import imgui.ImGui.inputTextEx
 import imgui.ImGui.io
 import imgui.ImGui.markItemEdited
-import imgui.ImGui.endDisabled
 import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
-import imgui.ImGui.beginDisabled
 import imgui.ImGui.pushID
 import imgui.ImGui.pushMultiItemsWidths
 import imgui.ImGui.sameLine
 import imgui.ImGui.setNextItemWidth
 import imgui.ImGui.style
 import imgui.ImGui.textEx
-import imgui.internal.api.inputText.Companion.inputScalarDefaultCharsFilter
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
+import imgui.static.inputScalarDefaultCharsFilter
 import kool.getValue
 import kool.setValue
 import kotlin.reflect.KMutableProperty0
@@ -46,6 +46,15 @@ import imgui.internal.sections.ButtonFlag as Bf
  *  - If you want to use InputText() with std::string or any custom dynamic string type, see cpp/imgui_stdlib.h and comments in imgui_demo.cpp.
  *  - Most of the ImGuiInputTextFlags flags are only useful for InputText() and not for InputFloatX, InputIntX, InputDouble etc. */
 interface widgetsInputWithKeyboard {
+
+    /** String overload */
+    fun inputText(label: String, pString: KMutableProperty0<String>, flags: InputTextFlags = Itf.None.i,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+        val buf = pString.get().toByteArray()
+        return inputText(label, buf, flags, callback, userData).also {
+            pString.set(buf.cStr)
+        }
+    }
 
     /** String overload */
     fun inputText(label: String, buf: String, flags: InputTextFlags = Itf.None.i,

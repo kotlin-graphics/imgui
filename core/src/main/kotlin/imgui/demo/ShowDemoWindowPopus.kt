@@ -153,10 +153,14 @@ object ShowDemoWindowPopups {
     }
 
     object `Context Menus` {
+        var selected = -1
         var value = 0.5f
-        var name = "Label1".toByteArray(128)
+        // [JVM] this needs to by a ByteArray to hold a reference, since Strings are final by design
+        var name = "Label1"
         operator fun invoke() {
             treeNode("Context menus") {
+
+                helpMarker("\"Context\" functions are simple helpers to associate a Popup to a given Item or Window identifier.")
 
                 // BeginPopupContextItem() is a helper to provide common/simple popup behavior of essentially doing:
                 //     if (id == 0)
@@ -174,7 +178,10 @@ object ShowDemoWindowPopups {
                     val names = listOf("Label1", "Label2", "Label3", "Label4", "Label5")
                     for (n in 0..4) {
                         selectable(names[n])
+                        if (selectable(names[n], selected == n))
+                            selected = n
                         popupContextItem { // <-- use last item id as popup id
+                            selected = n
                             text("This a popup for \"${names[n]}\"!")
                             if (button("Close"))
                                 closeCurrentPopup()
@@ -189,10 +196,10 @@ object ShowDemoWindowPopups {
                 // Using an explicit identifier is also convenient if you want to activate the popups from different locations.
                 run {
                     helpMarker("Text() elements don't have stable identifiers so we need to provide one.")
-                    text("Value = %.3f (<-- right-click this text)", value)
+                    text("Value = %.3f <-- (1) right-click this text", value)
                     popupContextItem("my popup") {
-                        if (selectable("Set to zero")) value = 0f
-                        if (selectable("Set to PI")) value = glm.πf
+                        if (selectable("Set to zero")) value = 0.0f
+                        if (selectable("Set to PI")) value = 3.1415f
                         setNextItemWidth(-Float.MIN_VALUE)
                         dragFloat("##Value", ::value, 0.1f, 0f, 0f)
                     }
@@ -203,22 +210,24 @@ object ShowDemoWindowPopups {
                     text("(2) Or right-click this text")
                     openPopupOnItemClick("my popup", PopupFlag.MouseButtonRight.i)
 
-                    // Back to square one : manually open the same popup .
+                    // Back to square one: manually open the same popup.
                     if (button("(3) Or click this button"))
                         openPopup("my popup")
                 }
-                /// Example 3
+
+                // Example 3
                 // When using BeginPopupContextItem() with an implicit identifier (NULL == use last item ID),
                 // we need to make sure your item identifier is stable.
                 // In this example we showcase altering the item label while preserving its identifier, using the ### operator (see FAQ).
                 run {
                     helpMarker("Showcase using a popup ID linked to item ID, with the item having a changing label + stable ID using the ### operator.")
-                    val text = "Button: ${name.cStr}###Button" // ### operator override id ignoring the preceding label
-                    button(text)
+                    val buf = "Button: $name###Button" // ### operator override ID ignoring the preceding label
+                    button(buf)
                     popupContextItem {
-                        text("Edit name")
-                        inputText("##edit", name)
-                        if (button("Close")) closeCurrentPopup()
+                        text("Edit name:")
+                        inputText("##edit", ::name)
+                        if (button("Close"))
+                            closeCurrentPopup()
                     }
                     sameLine(); text("(<-- right-click here)")
                 }
