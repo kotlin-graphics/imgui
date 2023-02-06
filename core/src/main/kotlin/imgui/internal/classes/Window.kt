@@ -460,7 +460,7 @@ class Window(var context: Context,
     infix fun addToDrawData(layer: Int) {
         val viewport = g.viewports[0]
         io.metricsRenderWindows++
-        drawList addTo viewport.drawDataBuilder!!.layers[layer]
+        drawList addTo viewport.drawDataBuilder.layers[layer]
         dc.childWindows.filter { it.isActiveAndVisible }  // Clipped children may have been marked not active
                 .forEach { it addToDrawData layer }
     }

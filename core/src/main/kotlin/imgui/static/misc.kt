@@ -56,7 +56,11 @@ fun updateSettings() {
 }
 
 fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
-    assert(key.isAlias)
+    println(key.i)
+    println(key)
+    assert(key.isAlias) {
+        println()
+    }
     val keyData = key.data
     keyData.down = v
     keyData.analogValue = analogValue

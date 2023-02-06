@@ -86,7 +86,7 @@ class ViewportP : Viewport() {
 
     /** ~SetupViewportDrawData */
     infix fun setupDrawData(drawLists: ArrayList<DrawList>) {
-        drawDataP!!.apply {
+        drawDataP.apply {
             valid = true
             cmdLists.clear()
             if (drawLists.isNotEmpty())

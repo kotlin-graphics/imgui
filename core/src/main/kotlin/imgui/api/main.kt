@@ -120,7 +120,7 @@ interface main {
 
         // Mark rendering data as invalid to prevent user who may have a handle on it to use it.
         for (v in g.viewports)
-            v.drawDataP!!.clear()
+            v.drawDataP.clear()
 
         // Drag and drop keep the source ID alive so even if the source disappear our state is consistent
         if (g.dragDropActive && g.dragDropPayload.sourceId == g.activeId)
@@ -384,9 +384,9 @@ interface main {
 
         // Add background ImDrawList (for each active viewport)
         for (viewport in g.viewports) {
-            viewport.drawDataBuilder!!.clear()
+            viewport.drawDataBuilder.clear()
             if (viewport.drawLists[0] != null)
-                viewport.backgroundDrawList addTo viewport.drawDataBuilder!!.layers[0]
+                viewport.backgroundDrawList addTo viewport.drawDataBuilder.layers[0]
         }
 
         // Draw modal/window whitening backgrounds
@@ -413,14 +413,14 @@ interface main {
         io.metricsRenderVertices = 0
         io.metricsRenderIndices = 0
         for (viewport in g.viewports) {
-            viewport.drawDataBuilder!!.flattenIntoSingleLayer()
+            viewport.drawDataBuilder.flattenIntoSingleLayer()
 
             // Add foreground ImDrawList (for each active viewport)
             if (viewport.drawLists[1] != null)
-                viewport.foregroundDrawList addTo viewport.drawDataBuilder!!.layers[0]
+                viewport.foregroundDrawList addTo viewport.drawDataBuilder.layers[0]
 
-            viewport.setupDrawData(viewport.drawDataBuilder!!.layers[0])
-            val drawData = viewport.drawDataP!!
+            viewport.setupDrawData(viewport.drawDataBuilder.layers[0])
+            val drawData = viewport.drawDataP
             io.metricsRenderVertices += drawData.totalVtxCount
             io.metricsRenderIndices += drawData.totalIdxCount
         }
@@ -433,8 +433,8 @@ interface main {
         get() {
             val viewport = g.viewports[0]
             return when (Platform.get()) {
-                Platform.MACOSX -> viewport.drawDataP!!.clone()
-                else -> viewport.drawDataP!!
+                Platform.MACOSX -> viewport.drawDataP.clone()
+                else -> viewport.drawDataP
             }.takeIf { it.valid }
         }
 }

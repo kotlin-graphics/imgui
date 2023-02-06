@@ -794,7 +794,7 @@ internal interface debugTools {
                        if (flags has ViewportFlag.IsPlatformWindow) " IsPlatformWindow" else "",
                        if (flags has ViewportFlag.IsPlatformMonitor) " IsPlatformMonitor" else "",
                        if (flags has ViewportFlag.OwnedByApp) " OwnedByApp" else "")
-            for (layer in viewport.drawDataBuilder!!.layers)
+            for (layer in viewport.drawDataBuilder.layers)
                 for (drawListIdx in layer.indices)
                     debugNodeDrawList(null, layer[drawListIdx], "DrawList")
             treePop()

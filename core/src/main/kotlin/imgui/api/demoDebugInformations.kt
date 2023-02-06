@@ -303,12 +303,12 @@ interface demoDebugInformations {
         }
 
         // DrawLists
-        val drawlistCount = g.viewports.sumOf { it.drawDataBuilder!!.drawListCount }
+        val drawlistCount = g.viewports.sumOf { it.drawDataBuilder.drawListCount }
         treeNode("DrawLists", "Active DrawLists ($drawlistCount)") {
             checkbox("Show ImDrawCmd mesh when hovering", cfg::showDrawCmdMesh)
             checkbox("Show ImDrawCmd bounding boxes when hovering", cfg::showDrawCmdBoundingBoxes)
             for (viewport in g.viewports)
-                for (layer in viewport.drawDataBuilder!!.layers)
+                for (layer in viewport.drawDataBuilder.layers)
                     for (drawListIdx in layer.indices)
                         debugNodeDrawList(null, layer[drawListIdx], "DrawList")
         }
