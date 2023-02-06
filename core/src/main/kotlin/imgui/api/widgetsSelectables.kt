@@ -163,8 +163,6 @@ interface widgetsSelectables {
             g.lastItemData.statusFlags /= ItemStatusFlag.ToggledSelection
 
         // Render
-        if (held && flags has Sf._DrawHoveredWhenHeld)
-            hovered = true
         if (hovered || selected) {
             val col = if (held && hovered) Col.HeaderActive else if (hovered) Col.HeaderHovered else Col.Header
             renderFrame(bb.min, bb.max, col.u32, false, 0f)

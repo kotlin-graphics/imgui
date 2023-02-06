@@ -402,17 +402,14 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
     /** Span all avail width even if we declared less for layout purpose. FIXME: We may be able to remove this (added in 6251d379, 2bcafc86 for menus)  */
     _SpanAvailWidth(1 shl 24),
 
-    /** Always show active when held, even is not hovered. This concept could probably be renamed/formalized somehow. */
-    _DrawHoveredWhenHeld(1 shl 25),
-
     /** Set Nav/Focus ID on mouse hover (used by MenuItem) */
-    _SetNavIdOnHover(1 shl 26),
+    _SetNavIdOnHover(1 shl 25),
 
     /** Disable padding each side with ItemSpacing * 0.5f */
-    _NoPadWithHalfSpacing(1 shl 27),
+    _NoPadWithHalfSpacing(1 shl 26),
 
     /** Don't set key/input owner on the initial click (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
-    _NoSetKeyOwner(1 shl 28);
+    _NoSetKeyOwner(1 shl 27);
 
     infix fun and(b: SelectableFlag): SelectableFlags = i and b.i
     infix fun and(b: SelectableFlags): SelectableFlags = i and b
