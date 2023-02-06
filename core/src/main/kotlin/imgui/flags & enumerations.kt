@@ -1048,8 +1048,7 @@ enum class DragDropFlag(@JvmField val i: DragDropFlags) {
     // BeginDragDropSource() flags
     None(0),
 
-    /** By default), a successful call to beginDragDropSource opens a tooltip so you can display a preview or
-     *  description of the source contents. This flag disables this behavior. */
+    /** Disable preview tooltip. By default, a successful call to BeginDragDropSource opens a tooltip so you can display a preview or description of the source contents. This flag disables this behavior. */
     SourceNoPreviewTooltip(1 shl 0),
 
     /** By default, when dragging we clear data so that IsItemHovered() will return false,
