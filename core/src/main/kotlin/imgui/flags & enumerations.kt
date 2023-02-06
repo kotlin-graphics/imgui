@@ -1246,6 +1246,7 @@ enum class Key(i: KeyChord? = null) {
 
     // [Internal] Reserved for mod storage
     ReservedForModCtrl, ReservedForModShift, ReservedForModAlt, ReservedForModSuper,
+    Count,
 
     // Keyboard Modifiers (explicitly submitted by backend via AddKeyEvent() calls)
     // - This is mirroring the data also written to io.KeyCtrl, io.KeyShift, io.KeyAlt, io.KeySuper, in a format allowing
@@ -1285,7 +1286,7 @@ enum class Key(i: KeyChord? = null) {
     companion object {
         val COUNT = values().size
         val BEGIN = None.i
-        val END = F12.i
+        val END = Count.i
         val Keyboard_BEGIN = BEGIN
         val Keyboard_END = GamepadStart.i
         val Gamepad_BEGIN = GamepadStart.i
