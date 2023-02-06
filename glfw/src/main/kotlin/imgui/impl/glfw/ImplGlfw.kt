@@ -289,47 +289,34 @@ class ImplGlfw @JvmOverloads constructor(
             //            if (bd->PrevUserCallbackMousebutton != NULL && window == bd->Window)
             //            bd->PrevUserCallbackMousebutton(window, button, action, mods);
 
-            updateKeyModifiers(mods)
+            updateKeyModifiers()
             if (button >= 0 && button < MouseButton.COUNT)
                 io.addMouseButtonEvent(button, action == GLFW_PRESS)
         }
 
-        fun keyToModifier(key: Int): Int = when (key) {
-            GLFW_KEY_LEFT_CONTROL, GLFW_KEY_RIGHT_CONTROL -> GLFW_MOD_CONTROL
-            GLFW_KEY_LEFT_SHIFT, GLFW_KEY_RIGHT_SHIFT -> GLFW_MOD_SHIFT
-            GLFW_KEY_LEFT_ALT, GLFW_KEY_RIGHT_ALT -> GLFW_MOD_ALT
-            GLFW_KEY_LEFT_SUPER, GLFW_KEY_RIGHT_SUPER -> GLFW_MOD_SUPER
-            else -> 0
-        }
+        // X11 does not include current pressed/released modifier key in 'mods' flags submitted by GLFW
+        // See https://github.com/ocornut/imgui/issues/6034 and https://github.com/glfw/glfw/issues/1630
 
-        fun updateKeyModifiers(mods: Int) {
-            io.addKeyEvent(Key.Mod_Ctrl, mods has GLFW_MOD_CONTROL)
-            io.addKeyEvent(Key.Mod_Shift, mods has GLFW_MOD_SHIFT)
-            io.addKeyEvent(Key.Mod_Alt, mods has GLFW_MOD_ALT)
-            io.addKeyEvent(Key.Mod_Super, mods has GLFW_MOD_SUPER)
+        fun updateKeyModifiers() {
+            val wnd = data.window.handle.value
+            io.addKeyEvent(Key.Mod_Ctrl,  (glfwGetKey(wnd, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS))
+            io.addKeyEvent(Key.Mod_Shift, (glfwGetKey(wnd, GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SHIFT)   == GLFW_PRESS))
+            io.addKeyEvent(Key.Mod_Alt,   (glfwGetKey(wnd, GLFW_KEY_LEFT_ALT)     == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_ALT)     == GLFW_PRESS))
+            io.addKeyEvent(Key.Mod_Super, (glfwGetKey(wnd, GLFW_KEY_LEFT_SUPER)   == GLFW_PRESS) || (glfwGetKey(wnd, GLFW_KEY_RIGHT_SUPER)   == GLFW_PRESS))
         }
 
         val scrollCallback: ScrollCB = { offset: Vec2d ->
             io.addMouseWheelEvent(offset.x.f, offset.y.f)
         }
 
-        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, mods_: Int ->
-
-            var mods = mods_
+        val keyCallback: KeyCB = { keycode: Int, scancode: Int, action: Int, mods: Int ->
 
             //            if (bd->PrevUserCallbackKey != NULL && window == bd->Window)
             //            bd->PrevUserCallbackKey(window, keycode, scancode, action, mods);
 
             if (action == GLFW_PRESS || action == GLFW_RELEASE) {
 
-                // Workaround: X11 does not include current pressed/released modifier key in 'mods' flags. https://github.com/glfw/glfw/issues/1630
-                run {
-                    val keycodeToMod = keyToModifier(keycode)
-                    if (keycodeToMod != 0)
-                        mods = if (action == GLFW_PRESS) mods or keycodeToMod else mods wo keycodeToMod
-                }
-
-                updateKeyModifiers(mods)
+                updateKeyModifiers()
 
                 val imguiKey = keycode.imguiKey
                 io.addKeyEvent(imguiKey, action == GLFW_PRESS)
