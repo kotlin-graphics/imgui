@@ -117,7 +117,7 @@ fun updateWindowInFocusOrderList(window: Window, justCreated: Boolean, newFlags:
     val newIsExplicitChild = newFlags has Wf._ChildWindow && (newFlags hasnt Wf._Popup || newFlags has Wf._ChildMenu)
     val childFlagChanged = newIsExplicitChild != window.isExplicitChild
     if ((justCreated || childFlagChanged) && !newIsExplicitChild) {
-        assert(window in g.windowsFocusOrder)
+        assert(window !in g.windowsFocusOrder)
         g.windowsFocusOrder += window
         window.focusOrder = g.windowsFocusOrder.lastIndex
     } else if (!justCreated && childFlagChanged && newIsExplicitChild) {
