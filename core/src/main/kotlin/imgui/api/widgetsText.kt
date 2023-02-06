@@ -13,6 +13,7 @@ import imgui.ImGui.popStyleColor
 import imgui.ImGui.popTextWrapPos
 import imgui.ImGui.pushStyleColor
 import imgui.ImGui.pushTextWrapPos
+import imgui.ImGui.renderBullet
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.style

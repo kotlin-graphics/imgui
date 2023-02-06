@@ -54,6 +54,7 @@ import imgui.ImGui.style
 import imgui.api.g
 import imgui.classes.InputTextCallbackData
 import imgui.internal.*
+import imgui.internal.classes.InputFlag
 import imgui.internal.classes.InputTextState
 import imgui.internal.classes.InputTextState.K
 import imgui.internal.classes.LastItemData
