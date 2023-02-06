@@ -226,10 +226,10 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var debugLocateId: ID = 0
 
     /** Storage for SetNextItem** functions */
-    lateinit var nextItemData: NextItemData
+    var nextItemData = NextItemData()
 
     /** Storage for last submitted item (setup by ItemAdd) */
-    lateinit var lastItemData: LastItemData
+    var lastItemData = LastItemData()
 
     /** Storage for SetNextWindow** functions   */
     val nextWindowData = NextWindowData()
