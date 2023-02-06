@@ -1,11 +1,12 @@
 
-//pluginManagement {
-//    repositories {
-//        gradlePluginPortal()
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
 //        maven("https://raw.githubusercontent.com/kotlin-graphics/mary/master")
-//    }
-////    includeBuild("../build-logic")
-//}
+//        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
+    }
+//    includeBuild("../build-logic")
+}
 
 rootProject.name = "imgui"
 

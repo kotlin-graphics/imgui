@@ -46,14 +46,15 @@ interface inputsUtilitiesShortcutRouting {
             return false
 
         val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
-        val mods = Key of (keyChord and Key.Mod_Mask_)
-        if (g.io.keyMods != mods.i)
+        // [JVM] don't attempt finding a `Key` with mods, it might not exist and crash, keep it as an `Int`
+        val mods = keyChord and Key.Mod_Mask_
+        if (g.io.keyMods != mods)
             return false
 
         // Special storage location for mods
         var key = Key of (keyChord wo Key.Mod_Mask_)
         if (key == Key.None)
-            key = mods.convertSingleModFlagToKey()
+            key = (Key of mods).convertSingleModFlagToKey()
 
         if (!key.isPressed(ownerId, flags and (InputFlag.Repeat or InputFlag.RepeatRateMask_)))
             return false
@@ -119,7 +120,8 @@ interface inputsUtilitiesShortcutRouting {
         val rt = g.keysRoutingTable
         val keyChord = if (keyChord_ has Key.Mod_Shortcut) convertShortcutMod(keyChord_) else keyChord_
         var key = Key of (keyChord wo Key.Mod_Mask_)
-        val mods = Key of (keyChord and Key.Mod_Mask_)
+        // [JVM] don't attempt finding a `Key` with mods, it might not exist and crash, keep it as an `Int`
+        val mods = keyChord and Key.Mod_Mask_
         if (key == Key.None)
             key = key.convertSingleModFlagToKey()
         //        IM_ASSERT(IsNamedKey(key))
@@ -129,7 +131,7 @@ interface inputsUtilitiesShortcutRouting {
         var idx = rt.index[key]
         while (idx != -1) {
             val routingData = rt.entries[idx]
-            if (routingData.mods == mods.i)
+            if (routingData.mods == mods)
                 return routingData
             idx = routingData.nextEntryIndex
         }
@@ -138,7 +140,7 @@ interface inputsUtilitiesShortcutRouting {
         val routingDataIdx = rt.entries.size
         rt.entries += KeyRoutingData()
         val routingData = rt.entries[routingDataIdx]
-        routingData.mods = mods.i
+        routingData.mods = mods
         routingData.nextEntryIndex = rt.index[key] // Setup linked list
         rt.index[key] = routingDataIdx
         return routingData

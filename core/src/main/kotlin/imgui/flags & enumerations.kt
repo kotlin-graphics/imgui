@@ -1275,28 +1275,22 @@ enum class Key(i: KeyChord? = null) {
     Mod_Mask_(0xF800); // 5-bits
 
     @JvmField
-    val i: KeyChord = i ?: ordinal
+    val i: KeyChord = i ?: if (ordinal == 0) 0 else 511 + ordinal
 
     val index: Int
-        get() {
-            check(i in Key.BEGIN until Key.END) { "ImGuiKey and native_index was merged together and native_index is disabled by IMGUI_DISABLE_OBSOLETE_KEYIO. Please switch to ImGuiKey." }
-            return i
-        }
+        get() = ordinal - 1
 
     companion object {
         val COUNT = values().size
-        val BEGIN = None.i
-        val END = Count.i
-        val Keyboard_BEGIN = BEGIN
-        val Keyboard_END = GamepadStart.i
-        val Gamepad_BEGIN = GamepadStart.i
-        val Gamepad_END = MouseLeft.i
-        val Mouse_BEGIN = MouseLeft.i
-        val Mouse_END = ReservedForModCtrl.i
-        val Aliases_BEGIN = Mouse_BEGIN
-        val Aliases_END = Mouse_END
+        val BEGIN = None
+        val END = Count
+        val Named = values().drop(1).take(Count.ordinal - 1)
+        val Data = Named
+        val Keyboard = values().drop(1).take(GamepadStart.ordinal - 1)
+        val Gamepad = values().drop(GamepadStart.ordinal).take(GamepadRStickDown.ordinal - GamepadStart.ordinal + 1)
+        val Mouse = values().drop(MouseLeft.ordinal).take(MouseWheelY.ordinal - MouseLeft.ordinal + 1)
+        val Aliases = Mouse
         infix fun of(i: Int) = values().first { it.i == i }
-
 
         // [Internal] Named shortcuts for Navigation
         internal val _NavKeyboardTweakSlow = Mod_Ctrl
@@ -1333,11 +1327,11 @@ infix fun Long.shl(key: Key) = shl(key.i)
 
 // for IO.keyMap
 
-operator fun IntArray.set(index: Key, value: Int) {
-    this[index.i] = value
+operator fun IntArray.set(key: Key, value: Int) {
+    this[key.index] = value
 }
 
-operator fun IntArray.get(index: Key): Int = get(index.i)
+operator fun IntArray.get(key: Key): Int = get(key.index)
 
 
 /** Gamepad/Keyboard navigation
@@ -1890,7 +1884,7 @@ enum class MouseButton {
 
     companion object {
         val COUNT = 5
-        infix fun of(i: Int): MouseButton = values().find { it.i == i } ?: None
+        infix fun of(i: Int): MouseButton = values()[i]
     }
 }
 

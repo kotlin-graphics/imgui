@@ -24,7 +24,7 @@ internal interface inputs {
 
     /** ~IsNamedKey */
     val Key.isNamed: Boolean
-        get() = i in Key.BEGIN until Key.END
+        get() = this in Key.Named
 
     /** ~IsNamedKeyOrModKey */
     val Key.isNamedOrMod: Boolean
@@ -34,19 +34,19 @@ internal interface inputs {
 
     /** ~IsKeyboardKey */
     val Key.isKeyboardKey: Boolean
-        get() = i in Key.Keyboard_BEGIN until Key.Keyboard_END
+        get() = this in Key.Keyboard
 
     /** ~IsMouseKey */
     val Key.isMouse: Boolean
-        get() = i in Key.Mouse_BEGIN until Key.Mouse_END
+        get() = this in Key.Mouse
 
     /** ~IsGamepadKey */
     val Key.isGamepad: Boolean
-        get() = i in Key.Gamepad_BEGIN until Key.Gamepad_END
+        get() = this in Key.Gamepad
 
     /** ~IsAliasKey */
     val Key.isAlias: Boolean
-        get() = i in Key.Aliases_BEGIN until Key.Aliases_END
+        get() = this in Key.Aliases
 
     fun convertShortcutMod(keyChord: KeyChord): KeyChord {
         check(keyChord has Key.Mod_Shortcut)
@@ -83,9 +83,16 @@ internal interface inputs {
         return out + (Key of (keyChord wo Key.Mod_Mask_)).name
     }
 
+
+    fun mouseButtonToKey(button: Int): Key {
+        assert(button in 0 until MouseButton.COUNT)
+        return Key of (Key.MouseLeft.i + button)
+    }
+
+    /** ~MouseButtonToKey */
     fun MouseButton.toKey(): Key {
-        val mouseLeftIndex = Key.values().indexOf(Key.MouseLeft)
-        return Key.values()[mouseLeftIndex + i]
+        val res = Key.values().first { it.i == Key.MouseLeft.i + i }
+        return res
     }
 
     /** Return if a mouse click/drag went past the given threshold. Valid to call during the MouseReleased frame.
@@ -175,7 +182,7 @@ internal interface inputs {
             val ownerId = ownerData.ownerCurr
 
             if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId && ownerId != KeyOwner_Any)
-                if (i in Key.BEGIN until Key.END)
+                if (this in Key.Keyboard)
                     return KeyOwner_None
 
             return ownerId
@@ -221,6 +228,7 @@ internal interface inputs {
         }
     }
 
+    // ~TestKeyOwner
     // TestKeyOwner(..., ID)   : (owner == None || owner == ID)
     // TestKeyOwner(..., None) : (owner == None)
     // TestKeyOwner(..., Any)  : no owner test
@@ -231,7 +239,7 @@ internal interface inputs {
             return true
 
         if (g.activeIdUsingAllKeyboardKeys && ownerId != g.activeId && ownerId != KeyOwner_Any)
-            if (i in Key.Keyboard_BEGIN until Key.Keyboard_END)
+            if (this in Key.Keyboard)
                 return false
 
         val ownerData = ownerData

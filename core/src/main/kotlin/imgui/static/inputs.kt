@@ -11,6 +11,7 @@ import imgui.*
 import imgui.ImGui.data
 import imgui.ImGui.io
 import imgui.ImGui.isMousePosValid
+import imgui.ImGui.mouseButtonToKey
 import imgui.ImGui.ownerData
 import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
@@ -33,7 +34,7 @@ fun updateKeyboardInputs() {
 
     // Update aliases
     for (n in 0 until MouseButton.COUNT)
-        updateAliasKey((MouseButton of n).toKey(), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
+        updateAliasKey(mouseButtonToKey(n), io.mouseDown[n], if (io.mouseDown[n]) 1f else 0f)
     updateAliasKey(Key.MouseWheelX, io.mouseWheelH != 0f, io.mouseWheelH)
     updateAliasKey(Key.MouseWheelY, io.mouseWheel != 0f, io.mouseWheel)
 
@@ -49,9 +50,9 @@ fun updateKeyboardInputs() {
 
     // Clear gamepad data if disabled
     if (io.backendFlags hasnt BackendFlag.HasGamepad)
-        for (i in Key.Gamepad_BEGIN until Key.Gamepad_END) {
-            io.keysData[i].down = false
-            io.keysData[i].analogValue = 0f
+        for (key in Key.Gamepad) {
+            io.keysData[key.index].down = false
+            io.keysData[key.index].analogValue = 0f
         }
 
     // Update keys
@@ -61,8 +62,7 @@ fun updateKeyboardInputs() {
     }
 
     // Update keys/input owner (named keys only): one entry per key
-    for (keyIdx in Key.BEGIN until Key.END) {
-        val key = Key of keyIdx
+    for (key in Key.Named) {
         val keyData = key.data
         val ownerData = key.ownerData
         ownerData.ownerCurr = ownerData.ownerNext
@@ -229,10 +229,9 @@ fun updateMouseWheel() {
 // See 'Metrics->Key Owners & Shortcut Routing' to visualize the result of that operation.
 fun updateKeyRoutingTable(rt: KeyRoutingTable) {
     rt.entriesNext.clear()
-    for (keyIdx in Key.BEGIN until Key.END) {
-        val key = Key of keyIdx
+    for (key in Key.Named) {
         val newRoutingStartIdx = rt.entriesNext.size
-        var oldRoutingIdx = rt.index[key]
+        var oldRoutingIdx = rt.index[key.index]
         while (oldRoutingIdx != -1) {
             val routingEntry = rt.entries[oldRoutingIdx].apply {
                 routingCurr = routingNext // Update entry

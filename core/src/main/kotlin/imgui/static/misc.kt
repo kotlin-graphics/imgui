@@ -56,8 +56,6 @@ fun updateSettings() {
 }
 
 fun updateAliasKey(key: Key, v: Boolean, analogValue: Float) {
-    println(key.i)
-    println(key)
     assert(key.isAlias) {
         println()
     }

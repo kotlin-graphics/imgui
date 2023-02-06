@@ -410,20 +410,17 @@ interface demoDebugInformations {
                 //Text("Legacy raw:");      for (ImGuiKey key = ImGuiKey_KeysData_OFFSET; key < ImGuiKey_COUNT; key++) { if (io.KeysDown[key]) { SameLine(); Text("\"%s\" %d", GetKeyName(key), key); } }
                 //                #endif
                 text("Keys down:")
-                for (keyIdx in Key.BEGIN until Key.COUNT) {
-                    val key = Key of keyIdx
+                for (key in Key.Data) {
                     if (!key.isDown) continue
                     sameLine(); text('"' + key.name + '"'); sameLine(); text("(%.02f)", key.data.downDuration)
                 }
                 text("Keys pressed:")
-                for (keyIdx in Key.BEGIN until Key.COUNT) {
-                    val key = Key of keyIdx
+                for (key in Key.Data) {
                     if (!key.isPressed) continue
                     sameLine(); text('"' + key.name + '"')
                 }
                 text("Keys released:")
-                for (keyIdx in Key.BEGIN until Key.COUNT) {
-                    val key = Key of keyIdx
+                for (key in Key.Data) {
                     if (!key.isReleased) continue
                     sameLine(); text('"' + key.name + '"')
                 }
@@ -461,8 +458,7 @@ interface demoDebugInformations {
             text("KEY OWNERS")
             indent {
                 listBox("##owners", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 6)) {
-                    for (keyIdx in Key.BEGIN until Key.END) {
-                        val key = Key of keyIdx
+                    for (key in Key.Named) {
                         val ownerData = key.ownerData
                         if (ownerData.ownerCurr == KeyOwner_None)
                             continue
@@ -475,8 +471,7 @@ interface demoDebugInformations {
             text("SHORTCUT ROUTING")
             indent {
                 listBox("##routes", Vec2(-Float.MIN_VALUE, textLineHeightWithSpacing * 8)) {
-                    for (keyIdx in Key.BEGIN until Key.END) {
-                        val key = Key of keyIdx
+                    for (key in Key.Named) {
                         val rt = g.keysRoutingTable
                         var idx = rt.index[key.i]
                         while (idx != -1) {
