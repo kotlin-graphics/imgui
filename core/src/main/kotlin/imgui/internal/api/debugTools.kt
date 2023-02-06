@@ -654,6 +654,7 @@ internal interface debugTools {
         text("ID: 0x%08X, ActiveID: 0x%08X", state.id, g.activeId)
         debugLocateItemOnHover(state.id)
         text("CurLenW: ${state.curLenW}, CurLenA: ${state.curLenA}, Cursor: ${stbState.cursor}, Selection: ${stbState.selectStart}..${stbState.selectEnd}")
+        text("has_preferred_x: ${state.stb.hasPreferredX.i} (%.2f)", state.stb.preferredX)
         text("undo_point: ${undoState.undoPoint}, redo_point: ${undoState.redoPoint}, undo_char_point: ${undoState.undoCharPoint}, redo_char_point: ${undoState.redoCharPoint}")
         child("undopoints", Vec2(0f, ImGui.textLineHeight * 15), true) { // Visualize undo state
             pushStyleVar(StyleVar.ItemSpacing, Vec2())
