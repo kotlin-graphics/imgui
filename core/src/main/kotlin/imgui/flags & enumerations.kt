@@ -1884,7 +1884,7 @@ enum class MouseButton {
 
     companion object {
         val COUNT = 5
-        infix fun of(i: Int): MouseButton = values()[i]
+        infix fun of(i: Int): MouseButton = values()[1 + i]
     }
 }
 

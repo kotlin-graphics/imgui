@@ -445,12 +445,12 @@ interface windows {
                 if (io.configWindowsResizeFromEdges) 2 else 1 // Allow resize from lower-left if we have the mouse cursor feedback for it.
             val resizeGripDrawSize = floor(max(g.fontSize * 1.1f, window.windowRounding + 1f + g.fontSize * 0.2f))
             if (!window.collapsed) {
-                val (borderHeld_, ret) = window.updateManualResize(sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol, visibilityRect)
+                val (held, ret) = window.updateManualResize(sizeAutoFit, borderHeld, resizeGripCount, resizeGripCol, visibilityRect)
                 if (ret) {
                     useCurrentSizeForScrollbarX = true
                     useCurrentSizeForScrollbarY = true
                 }
-                borderHeld = borderHeld_
+                borderHeld = held
             }
             window.resizeBorderHeld = borderHeld
 
