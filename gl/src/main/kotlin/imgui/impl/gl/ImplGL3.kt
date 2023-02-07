@@ -546,9 +546,8 @@ class ImplGL3 : GLInterface {
             var indexBufferSize = 0L
 
             var hasClipOrigin = false
-            var useBufferSubData = run { // Query vendor to enable glBufferSubData kludge
-                Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false // #if !defined(IMGUI_IMPL_OPENGL_ES2)
-            }
+            // Query vendor to enable glBufferSubData kludge
+            var useBufferSubData =  Platform.get() == Platform.WINDOWS && glGetString(GL_VENDOR)?.startsWith("Intel") ?: false // #if !defined(IMGUI_IMPL_OPENGL_ES2)
         }
 
         // b7686a88e950f95250c1e88e301bef1ebca22523

@@ -1,7 +1,7 @@
 import magik.createGithubPublication
 import magik.github
 import org.lwjgl.lwjgl
-import org.lwjgl.lwjgl.Module.*
+import org.lwjgl.Lwjgl.Module.*
 
 plugins {
     id("org.lwjgl.plugin")

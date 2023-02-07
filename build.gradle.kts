@@ -2,7 +2,7 @@ import magik.github
 
 plugins {
     kotlin("jvm") version embeddedKotlinVersion
-    id("org.lwjgl.plugin") version "0.0.29"
+    id("org.lwjgl.plugin") version "0.0.30"
     id("elect86.magik") version "0.3.1"
     `maven-publish`
     id("com.github.johnrengelman.shadow") version "7.1.2"

@@ -65,7 +65,7 @@ object ShowDemoWindowInputs {
                 // User code should never have to go through such hoops: old code may use native keycodes, new code may use ImGuiKey codes.
 
                 text("Keys down:")
-                for (keyIdx in Key.BEGIN until Key.END) {
+                for (keyIdx in 0 until Key.Count.ordinal) {
                     val key = Key of keyIdx
                     if (!key.isDown) continue
                     sameLine(); text('"' + key.name + '"'); sameLine(); text("(%.02f)", key.data.downDuration)

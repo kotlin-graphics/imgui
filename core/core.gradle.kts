@@ -1,8 +1,8 @@
 import magik.createGithubPublication
 import magik.github
 import org.lwjgl.lwjgl
-import org.lwjgl.lwjgl.Module.jemalloc
-import org.lwjgl.lwjgl.Module.stb
+import org.lwjgl.Lwjgl.Module.jemalloc
+import org.lwjgl.Lwjgl.Module.stb
 
 plugins {
     id("org.lwjgl.plugin")

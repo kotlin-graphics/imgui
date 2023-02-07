@@ -72,7 +72,7 @@ private class ImGuiOpenGL3 {
                         forwardComp = true  // Required on Mac
                     }
                     else -> {   // GL 3.0 + GLSL 130
-                        ImplGL3.data.glslVersion = 130
+//                        ImplGL3.data.glslVersion = 130
                         context.version = "3.0"
                         //profile = core      // 3.2+ only
                         //forwardComp = true  // 3.0+ only
