@@ -25,3 +25,4 @@ fun String.getOrNul(index: Int): Char = getOrElse(index) { NUL }
 //operator fun Char.compareTo(int: Int) = toInt().compareTo(int)
 
 operator fun Boolean.div(other: Boolean) = or(other)
+operator fun Boolean.rem(other: Boolean) = and(other)

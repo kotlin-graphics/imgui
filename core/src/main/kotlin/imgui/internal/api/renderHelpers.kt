@@ -154,7 +154,7 @@ internal interface renderHelpers {
             // We can now claim the space between pos_max.x and ellipsis_max.x
             val textAvailWidth = ((max(posMax.x, ellipsisMaxX) - ellipsisTotalWidth) - posMin.x) max 1f
             var textSizeClippedX = font.calcTextSizeA(fontSize, textAvailWidth, 0f, text,
-                                                      textEnd = textEndFull, remaining = textEndEllipsis).x
+                    textEnd = textEndFull, remaining = textEndEllipsis).x
             if (0 == textEndEllipsis[0] && textEndEllipsis[0] < textEndFull) {
                 // Always display at least 1 character if there's no room for character + ellipsis
                 textEndEllipsis[0] = textCountUtf8BytesFromChar(text, textEndFull)
@@ -164,7 +164,7 @@ internal interface renderHelpers {
                 // Trim trailing space before ellipsis (FIXME: Supporting non-ascii blanks would be nice, for this we need a function to backtrack in UTF-8 text)
                 textEndEllipsis[0]--
                 textSizeClippedX -= font.calcTextSizeA(fontSize, Float.MAX_VALUE, 0f, text,
-                                                       textEndEllipsis[0], textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
+                        textEndEllipsis[0], textEndEllipsis[0] + 1).x // Ascii blanks are always 1 byte
             }
 
             // Render text, render ellipsis
@@ -281,7 +281,7 @@ internal interface renderHelpers {
             if (!fullyVisible)
                 window.drawList.pushClipRect(displayRect) // check order here down
             window.drawList.addRect(displayRect.min + (THICKNESS * 0.5f), displayRect.max - (THICKNESS * 0.5f),
-                                    Col.NavHighlight.u32, rounding, 0, THICKNESS)
+                    Col.NavHighlight.u32, rounding, 0, THICKNESS)
             if (!fullyVisible)
                 window.drawList.popClipRect()
         }
@@ -299,7 +299,7 @@ internal interface renderHelpers {
     fun findRenderedTextEnd(text: ByteArray, textBegin: Int = 0, textEnd: Int = text.size): Int {
         var textDisplayEnd = textBegin
         while (textDisplayEnd < textEnd && text[textDisplayEnd] != 0.b &&
-            (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
+                (text[textDisplayEnd + 0] != '#'.b || text[textDisplayEnd + 1] != '#'.b))
             textDisplayEnd++
         return textDisplayEnd
     }
@@ -317,10 +317,10 @@ internal interface renderHelpers {
                 val scale = baseScale
                 val texId = fontAtlas.texID
                 drawList.pushTextureID(texId)
-                drawList.addImage(texId, pos+Vec2(1, 0) * scale, pos+(Vec2(1, 0)+size) * scale, uv[2], uv[3], colShadow)
-                drawList.addImage(texId, pos+Vec2(2, 0) * scale, pos+(Vec2(2, 0)+size) * scale, uv[2], uv[3], colShadow)
-                drawList.addImage(texId, pos, pos+size * scale, uv[2], uv[3], colBorder)
-                drawList.addImage(texId, pos, pos+size * scale, uv[0], uv[1], colFill)
+                drawList.addImage(texId, pos + Vec2(1, 0) * scale, pos + (Vec2(1, 0) + size) * scale, uv[2], uv[3], colShadow)
+                drawList.addImage(texId, pos + Vec2(2, 0) * scale, pos + (Vec2(2, 0) + size) * scale, uv[2], uv[3], colShadow)
+                drawList.addImage(texId, pos, pos + size * scale, uv[2], uv[3], colBorder)
+                drawList.addImage(texId, pos, pos + size * scale, uv[0], uv[1], colFill)
                 drawList.popTextureID()
             }
         }
@@ -343,12 +343,14 @@ internal interface renderHelpers {
                 b = Vec2(-0.866f, -0.75f) * r
                 c = Vec2(+0.866f, -0.75f) * r
             }
+
             Dir.Left, Dir.Right -> {
                 if (dir == Dir.Left) r = -r
                 a = Vec2(+0.75f, +0.000f) * r
                 b = Vec2(-0.75f, +0.866f) * r
                 c = Vec2(-0.75f, -0.866f) * r
             }
+
             else -> throw Error()
         }
 
@@ -375,13 +377,13 @@ internal interface renderHelpers {
 
     /** Render an arrow. 'pos' is position of the arrow tip. halfSz.x is length from base to tip. halfSz.y is length on each side. */
     fun DrawList.renderArrowPointingAt(pos: Vec2, halfSz: Vec2, direction: Dir, col: Int) =
-        when (direction) {
-            Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
-            Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
-            Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
-            Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
-            else -> Unit
-        }
+            when (direction) {
+                Dir.Left -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y + halfSz.y), pos, col)
+                Dir.Right -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y - halfSz.y), pos, col)
+                Dir.Up -> addTriangleFilled(Vec2(pos.x + halfSz.x, pos.y + halfSz.y), Vec2(pos.x - halfSz.x, pos.y + halfSz.y), pos, col)
+                Dir.Down -> addTriangleFilled(Vec2(pos.x - halfSz.x, pos.y - halfSz.y), Vec2(pos.x + halfSz.x, pos.y - halfSz.y), pos, col)
+                else -> Unit
+            }
 
     /** FIXME: Cleanup and move code to ImDrawList. */
     fun DrawList.renderRectFilledRangeH(rect: Rect, col: Int, xStartNorm_: Float, xEndNorm_: Float, rounding_: Float) {
@@ -433,23 +435,23 @@ internal interface renderHelpers {
         pathFillConvex(col)
     }
 
-    fun DrawList.renderRectFilledWithHole(drawList: DrawList, outer: Rect, inner: Rect, col: Int, rounding: Float) {
+    fun DrawList.renderRectFilledWithHole(outer: Rect, inner: Rect, col: Int, rounding: Float) {
         val fillL = inner.min.x > outer.min.x
         val fillR = inner.max.x < outer.max.x
         val fillU = inner.min.y > outer.min.y
         val fillD = inner.max.y < outer.max.y
-        if (fillL) drawList.addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
-                                          DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomLeft)
-        if (fillR) drawList.addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
-                                          DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopRight) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
-        if (fillU) drawList.addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
-                                          DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersTopRight)
-        if (fillD) drawList.addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
-                                          DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersBottomLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
-        if (fillL && fillU) drawList.addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft.i)
-        if (fillR && fillU) drawList.addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight.i)
-        if (fillL && fillD) drawList.addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft.i)
-        if (fillR && fillD) drawList.addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomRight.i)
+        if (fillL) addRectFilled(Vec2(outer.min.x, inner.min.y), Vec2(inner.min.x, inner.max.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomLeft)
+        if (fillR) addRectFilled(Vec2(inner.max.x, inner.min.y), Vec2(outer.max.x, inner.max.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillU) DrawFlag.None else DrawFlag.RoundCornersTopRight) or if (fillD) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
+        if (fillU) addRectFilled(Vec2(inner.min.x, outer.min.y), Vec2(inner.max.x, inner.min.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersTopLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersTopRight)
+        if (fillD) addRectFilled(Vec2(inner.min.x, inner.max.y), Vec2(inner.max.x, outer.max.y), col, rounding,
+                DrawFlag.RoundCornersNone or (if (fillL) DrawFlag.None else DrawFlag.RoundCornersBottomLeft) or if (fillR) DrawFlag.None else DrawFlag.RoundCornersBottomRight)
+        if (fillL && fillU) addRectFilled(Vec2(outer.min.x, outer.min.y), Vec2(inner.min.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopLeft.i)
+        if (fillR && fillU) addRectFilled(Vec2(inner.max.x, outer.min.y), Vec2(outer.max.x, inner.min.y), col, rounding, DrawFlag.RoundCornersTopRight.i)
+        if (fillL && fillD) addRectFilled(Vec2(outer.min.x, inner.max.y), Vec2(inner.min.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomLeft.i)
+        if (fillR && fillD) addRectFilled(Vec2(inner.max.x, inner.max.y), Vec2(outer.max.x, outer.max.y), col, rounding, DrawFlag.RoundCornersBottomRight.i)
     }
 
     companion object {

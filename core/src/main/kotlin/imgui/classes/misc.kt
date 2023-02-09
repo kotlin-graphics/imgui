@@ -129,7 +129,7 @@ class TableColumnSortSpecs {
  *  Make sure to set 'SpecsDirty = false' after sorting, else you may wastefully sort your data every frame! */
 class TableSortSpecs {
     /** Pointer to sort spec array. */
-    var specs: TableColumnSortSpecs? = null
+    var specs = ArrayList<TableColumnSortSpecs>()
     fun specs(n: Int) = specsArray[specsPtr + n]
     lateinit var specsArray: Array<TableColumnSortSpecs>
     var specsPtr = 0

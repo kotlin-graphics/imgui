@@ -1462,12 +1462,12 @@ interface tablesInternal {
         }
 
         // Write output
-        val sortSpecs: TableColumnSortSpecs? = when (sortSpecsCount) {
-            0 -> null
-            1 -> sortSpecsSingle
-            else -> sortSpecsMulti.first()
+        val sortSpecs = when (sortSpecsCount) {
+            0 -> arrayListOf()
+            1 -> arrayListOf(sortSpecsSingle)
+            else -> sortSpecsMulti
         }
-        if (dirty && sortSpecs != null)
+        if (dirty && sortSpecs.isNotEmpty())
             for (columnN in 0 until columnsCount) {
                 val column = columns[columnN]
                 if (column.sortOrder == -1)
@@ -1870,7 +1870,7 @@ interface tablesInternal {
     fun Table.gcCompactTransientBuffers() {
         //IMGUI_DEBUG_PRINT("TableGcCompactTransientBuffers() id=0x%08X\n", table->ID);
         assert(!memoryCompacted)
-        sortSpecs.specs = null
+        sortSpecs.specs.clear()
         sortSpecsMulti.clear()
         isSortSpecsDirty = true // FIXME: shouldn't have to leak into user performing a sort
         columnsNames.clear()

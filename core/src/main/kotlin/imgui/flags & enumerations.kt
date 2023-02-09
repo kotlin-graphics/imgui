@@ -859,6 +859,9 @@ infix fun TableColumnFlags.xor(b: TableColumnFlag): TableColumnFlags = xor(b.i)
 infix fun TableColumnFlags.has(b: TableColumnFlag): Boolean = and(b.i) != 0
 infix fun TableColumnFlags.hasnt(b: TableColumnFlag): Boolean = and(b.i) == 0
 infix fun TableColumnFlags.wo(b: TableColumnFlag): TableColumnFlags = and(b.i.inv())
+operator fun TableColumnFlags.minus(flag: TableColumnFlag): TableColumnFlags = wo(flag)
+operator fun TableColumnFlags.div(flag: TableColumnFlag): TableColumnFlags = or(flag)
+
 
 
 typealias TableRowFlags = Int
