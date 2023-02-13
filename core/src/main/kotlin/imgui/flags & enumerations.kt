@@ -1484,6 +1484,8 @@ infix fun ConfigFlags.xor(b: ConfigFlag): ConfigFlags = xor(b.i)
 infix fun ConfigFlags.has(b: ConfigFlag): Boolean = and(b.i) != 0
 infix fun ConfigFlags.hasnt(b: ConfigFlag): Boolean = and(b.i) == 0
 infix fun ConfigFlags.wo(b: ConfigFlag): ConfigFlags = and(b.i.inv())
+operator fun ConfigFlags.minus(flag: ConfigFlag): ConfigFlags = wo(flag)
+operator fun ConfigFlags.div(flag: ConfigFlag): ConfigFlags = or(flag)
 
 
 typealias BackendFlags = Int

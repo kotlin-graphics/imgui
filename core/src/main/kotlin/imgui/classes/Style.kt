@@ -154,6 +154,20 @@ class Style {
 //    var locale: Locale = Locale("no", "NO")
 //    val locale = Locale.getDefault()
 
+    // [JVM]
+    fun copy() = Style().also {
+        it.alpha = alpha; it.disabledAlpha = disabledAlpha; it.windowPadding = windowPadding; it.windowRounding = windowRounding; it.windowBorderSize = windowBorderSize
+        it.windowMinSize = windowMinSize; it.windowTitleAlign = windowTitleAlign; it.windowMenuButtonPosition = windowMenuButtonPosition; it.childRounding = childRounding
+        it.childBorderSize = childBorderSize; it.popupRounding = popupRounding; it.popupBorderSize = popupBorderSize; it.framePadding = framePadding; it.frameRounding = frameRounding
+        it.frameBorderSize = frameBorderSize; it.itemSpacing = itemSpacing; it.itemInnerSpacing = itemInnerSpacing; it.cellPadding put cellPadding
+        it.touchExtraPadding = touchExtraPadding; it.indentSpacing = indentSpacing; it.columnsMinSpacing = columnsMinSpacing; it.scrollbarSize = scrollbarSize;
+        it.scrollbarRounding = scrollbarRounding; it.grabMinSize = grabMinSize; it.grabRounding = grabRounding; it.logSliderDeadzone = logSliderDeadzone; it.tabRounding = tabRounding
+        it.tabBorderSize = tabBorderSize; it.tabMinWidthForCloseButton = tabMinWidthForCloseButton; it.colorButtonPosition = colorButtonPosition; it.buttonTextAlign = buttonTextAlign
+        it.selectableTextAlign = selectableTextAlign; it.displayWindowPadding = displayWindowPadding; it.displaySafeAreaPadding = displaySafeAreaPadding
+        it.mouseCursorScale = mouseCursorScale; it.antiAliasedLines = antiAliasedLines; it.antiAliasedLinesUseTex = antiAliasedLinesUseTex; it.antiAliasedFill = antiAliasedFill
+        it.curveTessellationTol = curveTessellationTol; it.circleTessellationMaxError = circleTessellationMaxError; it.colors += colors; it.locale = locale
+    }
+
     init {
         styleColorsClassic(this)
     }

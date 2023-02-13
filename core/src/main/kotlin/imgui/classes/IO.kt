@@ -94,7 +94,8 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     /** Delay on hovering before IsItemHovered(ImGuiHoveredFlags_DelayShort) returns true. */
     var hoverDelayShort = 0.1f
 
-    //    void*         UserData;                 // = NULL               // Store your own data.
+    /** Store your own data. */
+    var userData: Any? = null
 
     /** Font atlas: load, rasterize and pack one or more fonts into a single texture.    */
     val fonts = sharedFontAtlas ?: FontAtlas()
@@ -174,6 +175,21 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     // Optional: Notify OS Input Method Editor of the screen position of your cursor for text input position (e.g. when using Japanese/Chinese IME in Windows)
     // (default to use native imm32 api on Windows)
     val setPlatformImeDataFn: ((viewport: Viewport, data: PlatformImeData) -> Unit)? = setPlatformImeDataFn_DefaultImpl.takeIf { Platform.get() == Platform.WINDOWS }
+
+    // [JVM] copy function for backup
+    fun copy() = IO().also {
+        it.configFlags = configFlags; it.backendFlags = it.backendFlags; it.displaySize = displaySize; it.deltaTime = deltaTime; it.iniSavingRate = iniSavingRate
+        it.iniFilename = iniFilename; it.logFilename = logFilename; it.mouseDoubleClickTime = mouseDoubleClickTime; it.mouseDoubleClickMaxDist = mouseDoubleClickMaxDist
+        it.mouseDragThreshold = mouseDragThreshold; it.keyRepeatDelay = keyRepeatDelay; it.keyRepeatRate = keyRepeatRate; it.hoverDelayNormal = hoverDelayNormal
+        it.hoverDelayShort = hoverDelayShort; /*it.fonts = fonts*/ it.fontGlobalScale = fontGlobalScale; it.fontAllowUserScaling = fontAllowUserScaling; it.fontDefault = fontDefault
+        it.displayFramebufferScale = displayFramebufferScale; it.mouseDrawCursor = mouseDrawCursor; it.configMacOSXBehaviors = configMacOSXBehaviors
+        it.configInputTrickleEventQueue = configInputTrickleEventQueue; it.configInputTextCursorBlink = configInputTextCursorBlink;
+        it.configInputTextEnterKeepActive = configInputTextEnterKeepActive; it.configDragClickToInputText = configDragClickToInputText
+        it.configWindowsResizeFromEdges = configWindowsResizeFromEdges; it.configWindowsMoveFromTitleBarOnly = configWindowsMoveFromTitleBarOnly
+        it.configMemoryCompactTimer = configMemoryCompactTimer; it.backendPlatformName = backendPlatformName; it.backendPlatformUserData = backendPlatformUserData
+        it.backendRendererUserData = backendRendererUserData; it.backendLanguageUserData = backendLanguageUserData; it.getClipboardTextFn = getClipboardTextFn
+        it.setClipboardTextFn = setClipboardTextFn; it.clipboardUserData = clipboardUserData /*it.setPlatformImeDataFn = setPlatformImeDataFn*/
+    }
 
     //------------------------------------------------------------------
     // Input - Call before calling NewFrame()
