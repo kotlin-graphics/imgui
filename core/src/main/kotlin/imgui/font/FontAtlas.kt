@@ -254,8 +254,8 @@ class FontAtlas {
         return Triple(texPixelsRGBA32!!, texSize, 4)
     }
 
-    val isBuilt: Boolean
-        get() = fonts.size > 0 && texReady // Bit ambiguous: used to detect when user didn't build texture but effectively we should check TexID != 0 except that would be backend dependent...
+    val isBuilt: Boolean // Bit ambiguous: used to detect when user didn't build texture but effectively we should check TexID != 0 except that would be backend dependent...
+        get() = fonts.size > 0 && texReady
 
     //-------------------------------------------
     // [BETA] Custom Rectangles/Glyphs API

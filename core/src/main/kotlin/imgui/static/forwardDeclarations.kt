@@ -339,27 +339,28 @@ val setClipboardTextFn_DefaultImpl: (userData: Any?, text: String) -> Unit = { _
 val setPlatformImeDataFn_DefaultImpl = { viewport: Viewport, data: PlatformImeData ->
     // Notify OS Input Method Editor of text input position
 
-    val hwnd: HWND = viewport.platformHandleRaw as HWND
-
-    //    ::ImmAssociateContextEx(hwnd, NULL, data->WantVisible ? IACE_DEFAULT : 0);
-    if (hwnd.L == MemoryUtil.NULL) {
-
-        val himc: HIMC = HIMC(imm.getContext(hwnd))
-        if (himc.L != MemoryUtil.NULL) {
-            val compositionForm = COMPOSITIONFORM().apply {
-                ptCurrentPos.x = data.inputPos.x.L
-                ptCurrentPos.y = data.inputPos.y.L
-                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
-            }
-            if (imm.setCompositionWindow(himc, compositionForm) == 0) System.err.println("imm::setCompositionWindow failed")
-            val candidateForm = CANDIDATEFORM().apply {
-                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
-                ptCurrentPos.x = data.inputPos.x.L
-                ptCurrentPos.y = data.inputPos.y.L
-            }
-            if (imm.setCandidateWindow(himc, candidateForm) == 0) System.err.println("imm::setCandidateWindow failed")
-            if (imm.releaseContext(hwnd, himc) == 0) System.err.println("imm::releaseContext failed")
-            compositionForm.free()
-        }
-    }
+    //TODO()
+//    val hwnd: HWND = viewport.platformHandleRaw as HWND
+//
+//    //    ::ImmAssociateContextEx(hwnd, NULL, data->WantVisible ? IACE_DEFAULT : 0);
+//    if (hwnd.L == MemoryUtil.NULL) {
+//
+//        val himc: HIMC = HIMC(imm.getContext(hwnd))
+//        if (himc.L != MemoryUtil.NULL) {
+//            val compositionForm = COMPOSITIONFORM().apply {
+//                ptCurrentPos.x = data.inputPos.x.L
+//                ptCurrentPos.y = data.inputPos.y.L
+//                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
+//            }
+//            if (imm.setCompositionWindow(himc, compositionForm) == 0) System.err.println("imm::setCompositionWindow failed")
+//            val candidateForm = CANDIDATEFORM().apply {
+//                dwStyle = DWORD(imm.CFS_FORCE_POSITION.L)
+//                ptCurrentPos.x = data.inputPos.x.L
+//                ptCurrentPos.y = data.inputPos.y.L
+//            }
+//            if (imm.setCandidateWindow(himc, candidateForm) == 0) System.err.println("imm::setCandidateWindow failed")
+//            if (imm.releaseContext(hwnd, himc) == 0) System.err.println("imm::releaseContext failed")
+//            compositionForm.free()
+//        }
+//    }
 }

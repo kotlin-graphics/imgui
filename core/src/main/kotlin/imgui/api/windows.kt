@@ -93,9 +93,11 @@ interface windows {
         val window = findWindowByName(name) ?: createNewWindow(name, flags).also { windowJustCreated = true }
 
         // Automatically disable manual moving/resizing when NoInputs is set
-        if ((flags and Wf.NoInputs) == Wf.NoInputs.i) flags = flags or Wf.NoMove or Wf.NoResize
+        if ((flags and Wf.NoInputs) == Wf.NoInputs.i)
+            flags = flags or Wf.NoMove or Wf.NoResize
 
-        if (flags has Wf._NavFlattened) assert(flags has Wf._ChildWindow)
+        if (flags has Wf._NavFlattened)
+            assert(flags has Wf._ChildWindow)
 
         val currentFrame = g.frameCount
         val firstBeginOfTheFrame = window.lastFrameActive != currentFrame
@@ -104,8 +106,7 @@ interface windows {
         // Update the Appearing flag
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1 // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         if (flags has Wf._Popup) {
-            val popupRef =
-                g.openPopupStack[g.beginPopupStack.size] // We recycle popups so treat window as activated if popup id changed
+            val popupRef = g.openPopupStack[g.beginPopupStack.size] // We recycle popups so treat window as activated if popup id changed
             windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
         }
@@ -175,15 +176,12 @@ interface windows {
                     FIXME: Look into removing the branch so everything can go through this same code path for consistency.  */
                 window.setWindowPosVal put g.nextWindowData.posVal
                 window.setWindowPosPivot put g.nextWindowData.posPivotVal
-                window.setWindowPosAllowFlags =
-                    window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
+                window.setWindowPosAllowFlags = window.setWindowPosAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv()
             } else window.setPos(g.nextWindowData.posVal, g.nextWindowData.posCond)
         }
         if (g.nextWindowData.flags has NextWindowDataFlag.HasSize) {
-            windowSizeXsetByApi =
-                window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
-            windowSizeYsetByApi =
-                window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
+            windowSizeXsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.x > 0f
+            windowSizeYsetByApi = window.setWindowSizeAllowFlags has g.nextWindowData.sizeCond && g.nextWindowData.sizeVal.y > 0f
             window.setSize(g.nextWindowData.sizeVal, g.nextWindowData.sizeCond)
         }
         if (g.nextWindowData.flags has NextWindowDataFlag.HasScroll) {
@@ -196,18 +194,22 @@ interface windows {
                 window.scrollTargetCenterRatio.y = 0f
             }
         }
-        if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize) window.contentSizeExplicit put g.nextWindowData.contentSizeVal
-        else if (firstBeginOfTheFrame) window.contentSizeExplicit put 0f
-        if (g.nextWindowData.flags has NextWindowDataFlag.HasCollapsed) window.setCollapsed(g.nextWindowData.collapsedVal,
-                                                                                            g.nextWindowData.collapsedCond)
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasContentSize)
+            window.contentSizeExplicit put g.nextWindowData.contentSizeVal
+        else if (firstBeginOfTheFrame)
+            window.contentSizeExplicit put 0f
+        if (g.nextWindowData.flags has NextWindowDataFlag.HasCollapsed)
+            window.setCollapsed(g.nextWindowData.collapsedVal, g.nextWindowData.collapsedCond)
         if (g.nextWindowData.flags has NextWindowDataFlag.HasFocus) focusWindow(window)
-        if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, false)
+        if (window.appearing)
+            window.setConditionAllowFlags(Cond.Appearing.i, false)
 
         // When reusing window again multiple times a frame, just append content (don't need to setup again)
-        if (firstBeginOfTheFrame) { // Initialize
+        if (firstBeginOfTheFrame) {
+
+            // Initialize
             val windowIsChildTooltip = flags has Wf._ChildWindow && flags has Wf._Tooltip // FIXME-WIP: Undocumented behavior of Child+Tooltip for pinned tooltip (#1345)
             val windowJustAppearingAfterHiddenForResize = window.hiddenFramesCannotSkipItems > 0
-
             window.active = true
             window.hasCloseButton = pOpen != null
             window.clipRect.put(-Float.MAX_VALUE, -Float.MAX_VALUE, +Float.MAX_VALUE, +Float.MAX_VALUE)

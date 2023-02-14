@@ -9,6 +9,7 @@ import imgui.ImGui.calcTextSize
 import imgui.ImGui.closeButton
 import imgui.ImGui.isMouseClicked
 import imgui.ImGui.popStyleVar
+import imgui.ImGui.pushOverrideID
 import imgui.ImGui.pushStyleVar
 import imgui.ImGui.renderBullet
 import imgui.ImGui.renderTextEllipsis
@@ -32,13 +33,16 @@ import kotlin.reflect.KMutableProperty0
 internal interface tabBars {
 
     /** ~ beginTabBarEx */
-    fun TabBar.beginEx(bb: Rect, flags__: TabBarFlags): Boolean {
+    fun TabBar.beginEx(bb: Rect, flags_: TabBarFlags): Boolean {
+
+        var flags = flags_
 
         val window = g.currentWindow!!
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
-        var flags_ = flags__
-        if (flags_ hasnt TabBarFlag._DockNode) window.idStack += id
+        if (flags hasnt TabBarFlag._DockNode)
+            pushOverrideID(id)
 
         // Add to stack
         g.currentTabBarStack += tabBarRef
@@ -53,15 +57,16 @@ internal interface tabBars {
         }
 
         // Ensure correct ordering when toggling ImGuiTabBarFlags_Reorderable flag, ensure tabs are ordered based on their submission order.
-        if (flags_ has TabBarFlag.Reorderable != flags has TabBarFlag.Reorderable || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
+        if (flags and TabBarFlag.Reorderable != this.flags and TabBarFlag.Reorderable || (tabsAddedNew && flags hasnt TabBarFlag.Reorderable))
             if (tabs.size > 1)
                 tabs.sortBy(TabItem::beginOrder)
         tabsAddedNew = false
 
         // Flags
-        if (flags_ hasnt TabBarFlag.FittingPolicyMask_) flags_ = flags_ or TabBarFlag.FittingPolicyDefault_
+        if (flags hasnt TabBarFlag.FittingPolicyMask_)
+            flags /= TabBarFlag.FittingPolicyDefault_
 
-        flags = flags_
+        this.flags = flags
         barRect = bb
         wantLayout = true // Layout will be done on the first call to ItemTab()
         prevFrameVisible = currFrameVisible
@@ -78,7 +83,7 @@ internal interface tabBars {
         window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
 
         // Draw separator
-        val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
+        val col = if (this.flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
         val y = barRect.max.y - 1f
         run {
             val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
@@ -213,7 +218,8 @@ internal interface tabBars {
         }
 
         val window = g.currentWindow!!
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val id = calcTabID(label, dockedWindow)
 
@@ -229,12 +235,15 @@ internal interface tabBars {
         assert((flags and (TabItemFlag.Leading or TabItemFlag.Trailing)) != (TabItemFlag.Leading or TabItemFlag.Trailing)) { "Can't use both Leading and Trailing" }
 
         // Store into ImGuiTabItemFlags_NoCloseButton, also honor ImGuiTabItemFlags_NoCloseButton passed by user (although not documented)
-        if (flags has TabItemFlag._NoCloseButton) pOpen = null
-        else if (pOpen == null) flags = flags or TabItemFlag._NoCloseButton
+        if (flags has TabItemFlag._NoCloseButton)
+            pOpen = null
+        else if (pOpen == null)
+            flags = flags or TabItemFlag._NoCloseButton
 
         // Acquire tab data
         var tabIsNew = false
         val tab = findTabByID(id) ?: TabItem().also {
+            tabs += it
             it.id = id
             tabsAddedNew = true; tabIsNew = true
         }
@@ -282,8 +291,9 @@ internal interface tabBars {
         if (tabContentsVisible) visibleTabWasSubmitted = true
 
         // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
-        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing) if (tabs.size == 1 && this.flags hasnt TabBarFlag.AutoSelectNewTabs) tabContentsVisible =
-            true
+        if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing)
+            if (tabs.size == 1 && this.flags hasnt TabBarFlag.AutoSelectNewTabs)
+                tabContentsVisible = true
 
         // Note that tab_is_new is not necessarily the same as tab_appearing! When a tab bar stops being submitted
         // and then gets submitted again, the tabs will have 'tab_appearing=true' but 'tab_is_new=false'.

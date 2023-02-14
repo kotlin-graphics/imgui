@@ -74,8 +74,7 @@ interface tablesInternal {
         if (++g.tablesTempDataStacked > g.tablesTempData.size)
             for (i in g.tablesTempData.size until g.tablesTempDataStacked)
                 g.tablesTempData += TableTempData()
-        val tempData = g.tablesTempData[g.tablesTempDataStacked]
-        table.tempData = tempData
+        val tempData = g.tablesTempData[g.tablesTempDataStacked - 1]; table.tempData = tempData
         tempData.tableIndex = tableIdx
         table.drawSplitter = table.tempData!!.drawSplitter
         table.drawSplitter.clear()

@@ -169,11 +169,9 @@ internal interface windows {
     }
 
     /** ~SetWindowCollapsed */
-    fun Window.setCollapsed(collapsed: Boolean,
-                     cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
+    fun Window.setCollapsed(collapsed: Boolean, cond: Cond = Cond.None) { // Test condition (NB: bit 0 is always true) and clear flags for next time
         if (cond != Cond.None && setWindowCollapsedAllowFlags hasnt cond) return
-        setWindowCollapsedAllowFlags =
-            setWindowCollapsedAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv() // Set
+        setWindowCollapsedAllowFlags = setWindowCollapsedAllowFlags and (Cond.Once or Cond.FirstUseEver or Cond.Appearing).inv() // Set
         this.collapsed = collapsed
     }
 
