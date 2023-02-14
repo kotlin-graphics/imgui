@@ -17,6 +17,7 @@ import uno.glfw.GlfwWindow
 import uno.glfw.VSync
 import uno.glfw.glfw
 import uno.glfw.windowHint.Profile.core
+import java.awt.Color
 
 //import org.lwjgl.util.remotery.Remotery
 //import org.lwjgl.util.remotery.RemoteryGL
@@ -54,6 +55,9 @@ private class ImGuiOpenGL3 {
 
     init {
         //Configuration.DEBUG_MEMORY_ALLOCATOR.set(true) // for native leaks
+//        println(Char(27))
+//        println(Char(27) + "[4;96mciao")
+//        println(Char(27) + "[0m")
 
         // Setup window
         glfw {
