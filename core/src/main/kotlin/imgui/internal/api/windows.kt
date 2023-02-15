@@ -195,15 +195,6 @@ internal interface windows {
     }
 
     companion object {
-
-        fun alphaBlendColor(colA: Int, colB: Int): Int {
-            val t = ((colB ushr COL32_A_SHIFT) and 0xFF) / 255f
-            val r = imgui.internal.lerp((colA ushr COL32_R_SHIFT) and 0xFF, (colB ushr COL32_R_SHIFT) and 0xFF, t)
-            val g = imgui.internal.lerp((colA ushr COL32_G_SHIFT) and 0xFF, (colB ushr COL32_G_SHIFT) and 0xFF, t)
-            val b = imgui.internal.lerp((colA ushr COL32_B_SHIFT) and 0xFF, (colB ushr COL32_B_SHIFT) and 0xFF, t)
-            return COL32(r, g, b, 0xFF)
-        }
-
         val shrinkWidthItemComparer: Comparator<ShrinkWidthItem> = compareBy(ShrinkWidthItem::width, ShrinkWidthItem::index)
     }
 }
