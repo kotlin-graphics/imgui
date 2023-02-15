@@ -130,8 +130,7 @@ interface tableSettings {
     /** Restore initial state of table (with or without saved settings)
      *  ~TableResetSettings */
     fun Table.resetSettings() {
-        isInitializing = true
-        isSettingsDirty = true
+        isInitializing = true; isSettingsDirty = true
         isResetAllRequest = false
         isSettingsRequestLoad = false                   // Don't reload from ini
         settingsLoadedFlags = TableFlag.None.i      // Mark as nothing loaded so our initialized data becomes authoritative
@@ -156,7 +155,7 @@ interface tableSettings {
             typeName = "Table"
             typeHash = hashStr("Table")
             clearAllFn = ::tableSettingsHandler_ClearAll
-            readOpenFn = { ctx, handler, name -> tableSettingsHandler_ReadOpen(ctx, handler, name) as Any }
+            readOpenFn = ::tableSettingsHandler_ReadOpen
             readLineFn = ::tableSettingsHandler_ReadLine
             applyAllFn = ::tableSettingsHandler_ApplyAll
             writeAllFn = ::tableSettingsHandler_WriteAll
@@ -191,7 +190,7 @@ fun tableSettingsHandler_ApplyAll(ctx: Context, handler: SettingsHandler) {
 
 fun tableSettingsHandler_ReadOpen(ctx: Context, handler: SettingsHandler, name: String): TableSettings? {
     try {
-        val id: ID = name.substring(2, 2 + 8 + 1).parseInt(radix = 16)
+        val id: ID = name.substring(2, 2 + 8).parseInt(radix = 16)
         val columnsCount = name.substringAfterLast(',').i
 
         val settings = tableSettingsFindByID(id)
