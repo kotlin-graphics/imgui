@@ -242,7 +242,7 @@ class TableSettings(
     var refScale = 0f
 
     /** Maximum number of columns this settings instance can store, we can recycle a settings instance with lower number of columns but not higher */
-    var columnsCountMax: TableColumnIdx = 0
+    var columnsCountMax: TableColumnIdx = columnsCount
 
     /** Set when loaded from .ini data (to enable merging/loading .ini data into an already running context) */
     var wantApply = false
@@ -256,10 +256,10 @@ class TableSettings(
 
     /** ~TableSettingsInit */
     fun init(id: ID, columnsCount: Int, columnsCountMax: Int) {
+        columnSettings = Array(columnsCountMax) { TableColumnSettings() }
         this.id = id
         this.columnsCount = columnsCount
         this.columnsCountMax = columnsCountMax
-        columnSettings = Array(columnsCountMax) { TableColumnSettings() }
         wantApply = true
     }
 }
