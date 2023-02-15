@@ -236,7 +236,7 @@ interface windows {
             // UPDATE CONTENTS SIZE, UPDATE HIDDEN STATUS
 
             // Update contents size from last frame for auto-fitting (or use explicit size)
-            window.calcContentSizes(window.contentSize, window.contentSize)
+            window.calcContentSizes(window.contentSize, window.contentSizeIdeal)
             if (window.hiddenFramesCanSkipItems > 0) window.hiddenFramesCanSkipItems--
             if (window.hiddenFramesCannotSkipItems > 0) window.hiddenFramesCannotSkipItems--
             if (window.hiddenFramesForRenderOnly > 0) window.hiddenFramesForRenderOnly--

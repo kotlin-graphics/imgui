@@ -543,7 +543,7 @@ class Window(var context: Context,
             preserveOldContentSizes = true
         if (preserveOldContentSizes) {
             contentSizeCurrent put this.contentSize
-            contentSizeIdeal put contentSizeIdeal
+            contentSizeIdeal put this.contentSizeIdeal
             return
         }
 
