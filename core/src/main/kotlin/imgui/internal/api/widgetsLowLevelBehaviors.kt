@@ -171,8 +171,7 @@ internal interface widgetsLowLevelBehaviors {
         if (flattenHoveredChildren)
             g.hoveredWindow = backupHoveredWindow
 
-        /*  AllowOverlap mode (rarely used) requires previous frame hoveredId to be null or to match. This allows using
-            patterns where a later submitted widget overlaps a previous one.         */
+        // AllowOverlap mode (rarely used) requires previous frame HoveredId to be null or to match. This allows using patterns where a later submitted widget overlaps a previous one.
         if (hovered && flags has Bf.AllowItemOverlap && g.hoveredIdPreviousFrame != id && g.hoveredIdPreviousFrame != 0)
             hovered = false
 
