@@ -228,7 +228,6 @@ interface tablesInternal {
         table.memoryCompacted = false
 
         // Setup memory buffer (clear data if columns count changed)
-        val storedSize = table.columns.size
         var oldColumnsToPreserve: ArrayList<TableColumn>? = null
         //        void* old_columns_raw_data = NULL
         val oldColumnsCount = table.columns.size

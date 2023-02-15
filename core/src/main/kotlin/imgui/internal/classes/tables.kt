@@ -3,6 +3,7 @@ package imgui.internal.classes
 import glm_.*
 import glm_.vec2.Vec2
 import imgui.*
+import imgui.api.g
 import imgui.classes.TableColumnSortSpecs
 import imgui.internal.*
 import imgui.internal.sections.NavLayer
@@ -177,7 +178,7 @@ class TableTempData {
     /** outer_size.x passed to BeginTable() */
     val userOuterSize = Vec2()
 
-    lateinit var drawSplitter: DrawListSplitter
+    var drawSplitter = DrawListSplitter()
 
     /** Backup of InnerWindow->WorkRect at the end of BeginTable() */
     val hostBackupWorkRect = Rect()
@@ -229,12 +230,10 @@ class TableColumnSettings {
 }
 
 /** This is designed to be stored in a single ImChunkStream (1 header followed by N ImGuiTableColumnSettings, etc.) */
-class TableSettings
-/** ~TableSettingsCreate */(
-    /** Set to 0 to invalidate/delete the setting */
-    var id: ID = 0,
-
-    var columnsCount: TableColumnIdx = 0) {
+class TableSettings(
+        /** Set to 0 to invalidate/delete the setting */
+        var id: ID = 0,
+        var columnsCount: TableColumnIdx = 0) {
 
     /** Indicate data we want to save using the Resizable/Reorderable/Sortable/Hideable flags (could be using its own flags..) */
     var saveFlags = Tf.None.i
@@ -249,6 +248,11 @@ class TableSettings
     var wantApply = false
 
     var columnSettings = Array(columnsCountMax) { TableColumnSettings() }
+
+    /** ~TableSettingsCreate */
+    init {
+        g.settingsTables += this
+    }
 
     /** ~TableSettingsInit */
     fun init(id: ID, columnsCount: Int, columnsCountMax: Int) {
