@@ -106,8 +106,7 @@ internal interface basicAccessors {
             g.hoveredId = value
             g.hoveredIdAllowOverlap = false
             if (value != 0 && g.hoveredIdPreviousFrame != value) {
-                g.hoveredIdTimer = 0f
-                g.hoveredIdNotActiveTimer = 0f
+                g.hoveredIdTimer = 0f; g.hoveredIdNotActiveTimer = 0f
             }
         }
 

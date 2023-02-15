@@ -196,7 +196,7 @@ internal interface basicHelpersForWidgetCode {
                 IM_DEBUG_BREAK()
         }
 
-        return g.navDisableMouseHover
+        return !g.navDisableMouseHover
     }
 
     // FIXME: This is inlined/duplicated in ItemAdd()

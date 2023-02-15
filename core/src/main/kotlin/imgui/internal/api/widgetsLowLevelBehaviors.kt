@@ -134,11 +134,11 @@ internal interface widgetsLowLevelBehaviors {
 
         // Default only reacts to left mouse button
         if (flags hasnt Bf.MouseButtonMask_)
-            flags = flags or Bf.MouseButtonDefault_
+            flags /= Bf.MouseButtonDefault_
 
         // Default behavior requires click + release inside bounding box
         if (flags hasnt Bf.PressedOnMask_)
-            flags = flags or Bf.PressedOnDefault_
+            flags /= Bf.PressedOnDefault_
 
         val backupHoveredWindow = g.hoveredWindow
         val hoveredWindow = g.hoveredWindow
