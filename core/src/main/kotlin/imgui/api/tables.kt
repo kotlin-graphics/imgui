@@ -280,10 +280,11 @@ interface tables {
         // Clear or restore current table, if any
         assert(g.currentWindow === outerWindow && g.currentTable === table)
         assert(g.tablesTempDataStacked > 0)
-        tempData = if (--g.tablesTempDataStacked >= 0) g.tablesTempData[g.tablesTempDataStacked - 1] else null
+        tempData = if (--g.tablesTempDataStacked > 0) g.tablesTempData[g.tablesTempDataStacked - 1] else null
         g.currentTable = tempData?.let { g.tables.getByIndex(it.tableIndex) }
         g.currentTable?.let {
             it.tempData = tempData
+            it.drawSplitter.clearFreeMemory()
             it.drawSplitter = tempData!!.drawSplitter
         }
         outerWindow.dc.currentTableIdx = g.currentTable?.let { g.tables.getIndex(it).i } ?: -1
