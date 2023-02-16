@@ -83,8 +83,7 @@ const val WINDOWS_RESIZE_FROM_EDGES_FEEDBACK_TIMER = 0.04f
 const val WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER = 0.7f
 
 // Test engine hooks (imgui-test)
-val IMGUI_ENABLE_TEST_ENGINE: Boolean
-    get() = g.testEngineHookItems
+var IMGUI_ENABLE_TEST_ENGINE = true
 
 @JvmField
 var IMGUI_DEBUG_TOOL_ITEM_PICKER_EX = false
