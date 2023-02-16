@@ -66,8 +66,8 @@ internal interface widgets {
             return
 
         // Accept null ranges
-        if (text.strlen() == textEnd)
-            text[0] = 0 // = text_end = "";
+        if (textEnd == 0) // ~text == text_end
+            text[0] = 0 // ~text_end = "";
 
         // Calculate length
 
