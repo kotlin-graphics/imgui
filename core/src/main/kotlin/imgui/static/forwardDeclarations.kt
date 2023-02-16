@@ -313,11 +313,11 @@ fun windowSettingsHandler_WriteAll(ctx: Context, handler: SettingsHandler, buf: 
     for (setting in g.settingsWindows)
     // all numeric fields to ints to have full c++ compatibility
         buf += """
-            |[${handler.typeName}][${setting.name}]
-            |Pos=${setting.pos.x.i},${setting.pos.y.i}
-            |Size=${setting.size.x.i},${setting.size.y.i}
-            |Collapsed=${setting.collapsed.i} 
-            |""".trimMargin()
+            [${handler.typeName}][${setting.name}]
+            Pos=${setting.pos.x.i},${setting.pos.y.i}
+            Size=${setting.size.x.i},${setting.size.y.i}
+            Collapsed=${setting.collapsed.i}
+            """.trimIndent() // [JVM] prefer trimIndent over trimMargin to preserve the last line
 }
 
 //-----------------------------------------------------------------------------
