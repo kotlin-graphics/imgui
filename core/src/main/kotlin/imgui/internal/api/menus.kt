@@ -136,9 +136,7 @@ internal interface menus {
             pressed = selectable("", menuIsOpen, selectableFlags, Vec2(w, 0f))
             renderText(textPos, label)
             popStyleVar()
-            /*  -1 spacing to compensate the spacing added when selectable() did a sameLine(). It would also work
-                to call sameLine() ourselves after the popStyleVar().   */
-            window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f))
+            window.dc.cursorPos.x += floor(style.itemSpacing.x * (-1f + 0.5f)) // -1 spacing to compensate the spacing added when Selectable() did a SameLine(). It would also work to call SameLine() ourselves after the PopStyleVar().
         } else {
             // Menu inside a regular/vertical menu
             // (In a typical menu window where all items are BeginMenu() or MenuItem() calls, extra_w will always be 0.0f.

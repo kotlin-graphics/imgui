@@ -63,7 +63,7 @@ interface cursorLayout {
             } else {
                 if (spacingW < 0f)
                     spacingW = g.style.itemSpacing.x
-                dc.cursorPos.x = dc.cursorPosPrevLine.x+spacingW
+                dc.cursorPos.x = dc.cursorPosPrevLine.x + spacingW
                 dc.cursorPos.y = dc.cursorPosPrevLine.y
             }
             dc.currLineSize.y = dc.prevLineSize.y

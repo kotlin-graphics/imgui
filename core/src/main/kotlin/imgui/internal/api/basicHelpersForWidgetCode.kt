@@ -45,7 +45,8 @@ internal interface basicHelpersForWidgetCode {
     fun itemSize(size: Vec2, textBaselineY: Float = -1f) {
 
         val window = currentWindow
-        if (window.skipItems) return
+        if (window.skipItems)
+            return
 
         // We increase the height in this function to accommodate for baseline offset.
         // In theory we should be offsetting the starting position (window->DC.CursorPos), that will be the topic of a larger refactor,
@@ -56,12 +57,11 @@ internal interface basicHelpersForWidgetCode {
         val lineHeight = window.dc.currLineSize.y max ( /*ImMax(*/window.dc.cursorPos.y - lineY1/*, 0.0f)*/ + size.y + offsetToMatchBaselineY)
 
         // Always align ourselves on pixel boundaries
+        //if (g.IO.KeyAlt) window->DrawList->AddRect(window->DC.CursorPos, window->DC.CursorPos + ImVec2(size.x, line_height), IM_COL32(255,0,0,200)); // [DEBUG]
         window.dc.apply {
-            //if (io.keyAlt) window.drawList.addRect(window.dc.cursorPos, window.dc.cursorPos + Vec2(size.x, lineHeight), COL32(255,0,0,200)); // [DEBUG]
-            cursorPosPrevLine.put(cursorPos.x + size.x,
-                                  lineY1)
+            cursorPosPrevLine.put(cursorPos.x + size.x, lineY1)
             cursorPos.put(floor(window.pos.x + indent + columnsOffset), // Next line
-                          floor(lineY1 + lineHeight + style.itemSpacing.y)) // Next line
+                    floor(lineY1 + lineHeight + style.itemSpacing.y)) // Next line
             cursorMaxPos.x = cursorMaxPos.x max cursorPosPrevLine.x
             cursorMaxPos.y = cursorMaxPos.y max (cursorPos.y - style.itemSpacing.y)
             //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]

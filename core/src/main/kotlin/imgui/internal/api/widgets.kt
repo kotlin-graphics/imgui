@@ -170,11 +170,12 @@ internal interface widgets {
 
         val bb = Rect(pos, pos + size)
         itemSize(size, style.framePadding.y)
-        if (!itemAdd(bb, id)) return false
+        if (!itemAdd(bb, id))
+            return false
 
         var flags = flags_
         if (g.lastItemData.inFlags has ItemFlag.ButtonRepeat)
-            flags = flags or ButtonFlag.Repeat
+            flags /= ButtonFlag.Repeat
 
         val (pressed, hovered, held) = buttonBehavior(bb, id, flags)
 

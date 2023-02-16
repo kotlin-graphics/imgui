@@ -111,7 +111,8 @@ interface windows {
             windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
         }
         window.appearing = windowJustActivatedByUser
-        if (window.appearing) window.setConditionAllowFlags(Cond.Appearing.i, true)
+        if (window.appearing)
+            window.setConditionAllowFlags(Cond.Appearing.i, true)
 
         // Update Flags, LastFrameActive, BeginOrderXXX fields
         if (firstBeginOfTheFrame) {
@@ -367,7 +368,8 @@ interface windows {
                 window.beginOrderWithinParent = parentWindow.dc.childWindows.size
                 parentWindow.dc.childWindows += window
 
-                if (flags hasnt Wf._Popup && !windowPosSetByApi && !windowIsChildTooltip) window.pos put parentWindow.dc.cursorPos
+                if (flags hasnt Wf._Popup && !windowPosSetByApi && !windowIsChildTooltip)
+                    window.pos put parentWindow.dc.cursorPos
             }
 
             val windowPosWithPivot = window.setWindowPosVal.x != Float.MAX_VALUE && window.hiddenFramesCannotSkipItems == 0

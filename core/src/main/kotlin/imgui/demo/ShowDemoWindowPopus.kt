@@ -102,7 +102,8 @@ object ShowDemoWindowPopups {
 
                 // Simple selection popup (if you want to show the current selection inside the Button itself,
                 // you may want to build a string using the "###" operator to preserve a constant ID with a variable label)
-                if (button("Select..")) openPopup("my_select_popup")
+                if (button("Select.."))
+                    openPopup("my_select_popup")
                 sameLine()
                 textEx(names.getOrElse(selectedFish) { "<None>" })
                 popup("my_select_popup") {
@@ -112,7 +113,8 @@ object ShowDemoWindowPopups {
                 }
 
                 // Showing a menu with toggles
-                if (button("Toggle..")) openPopup("my_toggle_popup")
+                if (button("Toggle.."))
+                    openPopup("my_toggle_popup")
                 popup("my_toggle_popup") {
                     names.forEachIndexed { i, n -> withBoolean(toggles, i) { b -> menuItem(n, "", b) } }
 
