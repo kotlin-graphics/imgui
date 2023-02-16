@@ -1,7 +1,5 @@
 package imgui.internal.api
 
-import glm_.L
-import glm_.f
 import glm_.func.common.max
 import glm_.i
 import glm_.vec2.Vec2
@@ -15,11 +13,7 @@ import imgui.ImGui.checkboxFlagsT
 import imgui.ImGui.currentWindow
 import imgui.ImGui.frameHeight
 import imgui.ImGui.getColorU32
-import imgui.ImGui.hoveredId
-import imgui.ImGui.io
 import imgui.ImGui.isClippedEx
-import imgui.ImGui.isItemActive
-import imgui.ImGui.isMouseDragging
 import imgui.ImGui.itemAdd
 import imgui.ImGui.itemSize
 import imgui.ImGui.logRenderedText
@@ -32,15 +26,11 @@ import imgui.ImGui.renderNavHighlight
 import imgui.ImGui.renderText
 import imgui.ImGui.renderTextClipped
 import imgui.ImGui.renderTextWrapped
-import imgui.ImGui.startMouseMoving
 import imgui.ImGui.style
 import imgui.api.g
-import imgui.internal.*
 import imgui.internal.classes.Rect
-import imgui.internal.classes.Window
+import imgui.internal.isPowerOfTwo
 import imgui.internal.sections.*
-import uno.kotlin.getValue
-import uno.kotlin.setValue
 import unsigned.Ulong
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
