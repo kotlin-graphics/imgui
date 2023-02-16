@@ -178,7 +178,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
 
     // [JVM] copy function for backup
     fun copy() = IO().also {
-        it.configFlags = configFlags; it.backendFlags = it.backendFlags; it.displaySize = displaySize; it.deltaTime = deltaTime; it.iniSavingRate = iniSavingRate
+        it.configFlags = configFlags; it.backendFlags = backendFlags; it.displaySize = displaySize; it.deltaTime = deltaTime; it.iniSavingRate = iniSavingRate
         it.iniFilename = iniFilename; it.logFilename = logFilename; it.mouseDoubleClickTime = mouseDoubleClickTime; it.mouseDoubleClickMaxDist = mouseDoubleClickMaxDist
         it.mouseDragThreshold = mouseDragThreshold; it.keyRepeatDelay = keyRepeatDelay; it.keyRepeatRate = keyRepeatRate; it.hoverDelayNormal = hoverDelayNormal
         it.hoverDelayShort = hoverDelayShort; it.fonts = fonts; it.fontGlobalScale = fontGlobalScale; it.fontAllowUserScaling = fontAllowUserScaling; it.fontDefault = fontDefault
