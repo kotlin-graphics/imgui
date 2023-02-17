@@ -12,6 +12,7 @@ import imgui.ImGui.popStyleVar
 import imgui.ImGui.beginDisabled
 import imgui.ImGui.beginPopupEx
 import imgui.ImGui.closePopupToLevel
+import imgui.ImGui.endDisabled
 import imgui.ImGui.isPopupOpen
 import imgui.ImGui.openPopup
 import imgui.ImGui.popItemFlag
@@ -311,7 +312,7 @@ internal interface menus {
         }
         IMGUI_TEST_ENGINE_ITEM_INFO(g.lastItemData.id, label, g.lastItemData.statusFlags or ItemStatusFlag.Checkable or if (selected) ItemStatusFlag.Checked else ItemStatusFlag.None)
         if (!enabled)
-            popStyleColor()
+            endDisabled()
         popID()
         if (menusetIsOpen)
             popItemFlag()

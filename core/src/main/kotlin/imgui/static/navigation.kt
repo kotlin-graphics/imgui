@@ -63,7 +63,6 @@ import imgui.internal.sections.ItemFlag as If
 fun navUpdate() {
 
     io.wantSetMousePos = false
-
     //if (g.NavScoringDebugCount > 0) IMGUI_DEBUG_LOG_NAV("[nav] NavScoringDebugCount %d for '%s' layer %d (Init:%d, Move:%d)\n", g.NavScoringDebugCount, g.NavWindow ? g.NavWindow->Name : "NULL", g.NavLayer, g.NavInitRequest || g.NavInitResultId != 0, g.NavMoveRequest);
 
     // Set input source based on which keys are last pressed (as some features differs when used with Gamepad vs Keyboard)
@@ -75,33 +74,11 @@ fun navUpdate() {
             if (key.isDown)
                 g.navInputSource = InputSource.Gamepad
     val navKeyboardActive = io.configFlags has ConfigFlag.NavEnableKeyboard
-    if (navKeyboardActive) {
-        fun navMapKey(key: Key, navInput: NavInput) {
-            if (key.isDown) {
-                io.navInputs[navInput] = 1f
+    val navKeyboardKeysToChangeSource = listOf(Key.Space, Key.Enter, Key.Escape, Key.RightArrow, Key.LeftArrow, Key.UpArrow, Key.DownArrow)
+    if (navKeyboardActive)
+        for (key in navKeyboardKeysToChangeSource)
+            if (key.isDown)
                 g.navInputSource = InputSource.Keyboard
-            }
-        }
-        navMapKey(Key.Space, NavInput.Activate)
-        navMapKey(Key.Enter, NavInput.Input)
-        navMapKey(Key.Escape, NavInput.Cancel)
-        navMapKey(Key.LeftArrow, NavInput._KeyLeft)
-        navMapKey(Key.RightArrow, NavInput._KeyRight)
-        navMapKey(Key.UpArrow, NavInput._KeyUp)
-        navMapKey(Key.DownArrow, NavInput._KeyDown)
-        if (io.keyCtrl)
-            io.navInputs[NavInput.TweakSlow] = 1f
-        if (io.keyShift)
-            io.navInputs[NavInput.TweakFast] = 1f
-
-    }
-    for (i in io.navInputsDownDuration.indices)
-        io.navInputsDownDurationPrev[i] = io.navInputsDownDuration[i]
-    for (i in io.navInputs.indices)
-        io.navInputsDownDuration[i] = when (io.navInputs[i] > 0f) {
-            true -> if (io.navInputsDownDuration[i] < 0f) 0f else io.navInputsDownDuration[i] + io.deltaTime
-            else -> -1f
-        }
 
     // Process navigation init request (select first/default focus)
     if (g.navInitResultId != 0)

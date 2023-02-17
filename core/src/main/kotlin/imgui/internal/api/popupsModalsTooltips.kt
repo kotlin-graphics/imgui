@@ -94,7 +94,9 @@ internal interface popupsModalsTooltips {
         val parentWindow = g.currentWindow!!
         val currentStackSize = g.beginPopupStack.size
 
-        if (popupFlags has PopupFlag.NoOpenOverExistingPopup) if (isPopupOpen(0, PopupFlag.AnyPopupId.i)) return
+        if (popupFlags has PopupFlag.NoOpenOverExistingPopup)
+            if (isPopupOpen(0, PopupFlag.AnyPopupId.i))
+                return
 
         // Tagged as new ref as Window will be set back to NULL if we write this into OpenPopupStack.
         val openPopupPos = navCalcPreferredRefPos()

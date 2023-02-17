@@ -61,7 +61,7 @@ internal interface basicHelpersForWidgetCode {
         window.dc.apply {
             cursorPosPrevLine.put(cursorPos.x + size.x, lineY1)
             cursorPos.put(floor(window.pos.x + indent + columnsOffset), // Next line
-                    floor(lineY1 + lineHeight + style.itemSpacing.y)) // Next line
+                          floor(lineY1 + lineHeight + style.itemSpacing.y)) // Next line
             cursorMaxPos.x = cursorMaxPos.x max cursorPosPrevLine.x
             cursorMaxPos.y = cursorMaxPos.y max (cursorPos.y - style.itemSpacing.y)
             //if (io.keyAlt) window.drawList.addCircle(window.dc.cursorMaxPos, 3f, COL32(255,0,0,255), 4); // [DEBUG]

@@ -1,5 +1,6 @@
 package imgui.internal.api
 
+import glm_.i
 import imgui.*
 import imgui.ImGui.clearActiveID
 import imgui.ImGui.rectRelToAbs
@@ -29,7 +30,7 @@ internal interface gamepadKeyboardNavigation {
         var initForNav = false
         if (window === window.rootWindow || window.flags has WindowFlag._Popup || window.navLastIds[0] == 0 || forceReinit)
             initForNav = true
-        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=$initForNav, window=\"${window.name}\", layer=${g.navLayer}")
+        IMGUI_DEBUG_LOG_NAV("[nav] NavInitRequest: from NavInitWindow(), init_for_nav=${initForNav.i}, window=\"${window.name}\", layer=${g.navLayer.ordinal}")
         if (initForNav) {
             setNavID(0, g.navLayer, window.navRootFocusScopeId, Rect())
             g.navInitRequest = true

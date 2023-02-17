@@ -122,7 +122,7 @@ interface popupsModals {
     /** call to mark popup as open (don't call every frame!). */
     fun openPopup(strId: String, popupFlags: PopupFlags = PopupFlag.None.i) {
         val id = g.currentWindow!!.getID(strId)
-        IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopup(\"$strId\" -> 0x%08X\n", id)
+        IMGUI_DEBUG_LOG_POPUP("[popup] OpenPopup(\"$strId\" -> 0x%08X)", id)
         openPopupEx(id, popupFlags)
     }
 
