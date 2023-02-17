@@ -128,7 +128,8 @@ interface widgetsTrees {
     fun collapsingHeader(label: String, flags: TreeNodeFlags = 0): Boolean {
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         return treeNodeBehavior(window.getID(label), flags or Tnf.CollapsingHeader, label)
     }

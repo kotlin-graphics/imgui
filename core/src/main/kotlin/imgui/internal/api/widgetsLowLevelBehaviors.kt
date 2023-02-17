@@ -560,7 +560,8 @@ internal interface widgetsLowLevelBehaviors {
     fun treeNodeBehavior(id: ID, flags: TreeNodeFlags, label: ByteArray, labelEnd_: Int = -1): Boolean {
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val displayFrame = flags has Tnf.Framed
         val padding = when {
