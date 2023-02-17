@@ -890,6 +890,7 @@ object ShowDemoWindowTables {
                                 text("Hello $column,$row")
                             }
                         }
+                    clipper.end()
                 }
             }
         }
@@ -1520,6 +1521,7 @@ object ShowDemoWindowTables {
                             text("${item.quantity}")
                             popID()
                         }
+                    clipper.end()
                 }
             }
         }
@@ -1781,6 +1783,7 @@ object ShowDemoWindowTables {
 
                             popID()
                         }
+                        clipper.end()
                     }
                     popButtonRepeat()
 

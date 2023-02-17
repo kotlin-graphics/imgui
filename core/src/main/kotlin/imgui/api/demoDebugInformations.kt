@@ -634,6 +634,7 @@ interface demoDebugInformations {
         endChild()
 
         end()
+        clipper.end()
     }
 
     /** create Stack Tool window. hover items with mouse to query information about the source of their unique ID.

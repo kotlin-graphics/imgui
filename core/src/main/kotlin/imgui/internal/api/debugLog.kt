@@ -14,10 +14,11 @@ import imgui.internal.sections.IMGUI_DEBUG_PRINTF
 internal interface debugLog {
 
     fun debugLog(fmt: String, vararg args: Any) {
-//        val oldSize = g.debugLogBuf.length
-        g.debugLogBuf.append("[%05d] ", g.frameCount)
-        g.debugLogBuf.appendLine(fmt.format(*args))
+        val oldSize = g.debugLogBuf.length
+        g.debugLogBuf.append("[%05d] ".format(g.frameCount))
+        g.debugLogBuf.append(fmt.format(*args))
         if (g.debugLogFlags has DebugLogFlag.OutputToTTY)
-            IMGUI_DEBUG_PRINTF(g.debugLogBuf.toString())
+            IMGUI_DEBUG_PRINTF(g.debugLogBuf.drop(oldSize).toString())
+//        g.DebugLogIndex.append(g.DebugLogBuf.c_str(), old_size, g.DebugLogBuf.size());
     }
 }

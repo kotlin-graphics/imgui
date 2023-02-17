@@ -178,7 +178,7 @@ class ListClipper {
         }
 
         // Step 0 or 1: Calculate the actual ranges of visible elements.
-        var alreadySubmitted = displayEnd
+        val alreadySubmitted = displayEnd
         if (calcClipping) {
             if (g.logEnabled)
             // If logging is active, do not perform any clipping
@@ -211,8 +211,8 @@ class ListClipper {
                 if (data.ranges[i].posToIndexConvert) {
                     val m1 = ((data.ranges[i].min.d - window.dc.cursorPos.y - data.lossynessOffset) / itemsHeight).i
                     val m2 = (((data.ranges[i].max.d - window.dc.cursorPos.y - data.lossynessOffset) / itemsHeight) + 0.999999f).i
-                    data.ranges[i].min = clamp(alreadySubmitted + m1 + floor((data.ranges[i].min - window.dc.cursorPos.y) / itemsHeight).i + data.ranges[i].posToIndexOffsetMin, alreadySubmitted, itemsCount - 1)
-                    data.ranges[i].max = clamp(alreadySubmitted + m2 + ceil((data.ranges[i].max - window.dc.cursorPos.y) / itemsHeight).i + 0 + data.ranges[i].posToIndexOffsetMax, data.ranges[i].min + 1, itemsCount)
+                    data.ranges[i].min = clamp(alreadySubmitted + m1 + data.ranges[i].posToIndexOffsetMin, alreadySubmitted, itemsCount - 1)
+                    data.ranges[i].max = clamp(alreadySubmitted + m2 + data.ranges[i].posToIndexOffsetMax, data.ranges[i].min + 1, itemsCount)
                     data.ranges[i].posToIndexConvert = false
                 }
             sortAndFuseRanges(data.ranges, data.stepNo)
@@ -233,7 +233,6 @@ class ListClipper {
         if (itemsCount < Int.MAX_VALUE)
             seekCursorForItem(this, itemsCount)
 
-        end()
         return false
     }
 

@@ -131,6 +131,7 @@ interface widgetsListBoxes {
         if (valueChanged)
             markItemEdited(g.lastItemData.id)
 
+        clipper.end()
         return valueChanged
     }
 

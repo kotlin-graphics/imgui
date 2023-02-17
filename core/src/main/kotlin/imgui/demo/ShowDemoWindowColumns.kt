@@ -80,6 +80,7 @@ object ShowDemoWindowColumns {
                             nextColumn()
                         }
                 columns(1)
+                clipper.end()
             }
         }
 

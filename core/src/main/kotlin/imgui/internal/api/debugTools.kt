@@ -345,17 +345,17 @@ internal interface debugTools {
             val clipper = ListClipper()
             clipper.begin(cmd.elemCount / 3) // Manually coarse clip our print out of individual vertices to save CPU, only items that may be visible.
             while (clipper.step()) {
-                var idx_i = cmd.idxOffset + clipper.displayStart * 3
+                var idxI = cmd.idxOffset + clipper.displayStart * 3
                 for (prim in clipper.display) {
                     val bufP = StringBuilder()
                     val triangle = Array(3) { Vec2() }
                     for (n in 0..2) {
-                        val v = vtxBuffer[vtxPointer + (idxBuffer?.get(idx_i) ?: idx_i)]
+                        val v = vtxBuffer[vtxPointer + (idxBuffer?.get(idxI) ?: idxI)]
                         triangle[n] put v.pos
                         val isFirst = if (n == 0) "Vert:" else "     "
                         bufP += "$isFirst %04d: pos (%8.2f,%8.2f), uv (%.6f,%.6f), col %08X\n"
-                                .format(idx_i, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
-                        idx_i++
+                                .format(idxI, v.pos.x, v.pos.y, v.uv.x, v.uv.y, v.col)
+                        idxI++
                     }
                     buf = bufP.toString()
                     selectable(buf, false)
@@ -368,6 +368,7 @@ internal interface debugTools {
                 }
             }
             treePop()
+            clipper.end()
         }
         treePop()
     }
