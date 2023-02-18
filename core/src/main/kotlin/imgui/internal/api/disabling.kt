@@ -33,7 +33,7 @@ internal interface disabling {
         val wasDisabled = g.currentItemFlags has ItemFlag.Disabled
         //popItemFlag()
         g.itemFlagsStack.pop()
-        g.currentItemFlags = ItemFlag.Disabled.i
+        g.currentItemFlags = g.itemFlagsStack.last()
         if (wasDisabled && g.currentItemFlags hasnt ItemFlag.Disabled)
             g.style.alpha = g.disabledAlphaBackup //PopStyleVar();
     }

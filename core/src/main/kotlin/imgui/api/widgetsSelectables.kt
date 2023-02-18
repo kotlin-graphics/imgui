@@ -54,7 +54,8 @@ interface widgetsSelectables {
 
         var selected = selected_
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         // Submit label or explicit size to ItemSize(), whereas ItemAdd() will submit a larger/spanning rectangle.
         val id = window.getID(label)
