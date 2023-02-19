@@ -126,15 +126,11 @@ internal interface windowsDisplayAndFocusOrder {
         val posWnd = window.displayIndex
         val posBeh = behindWindow.displayIndex
         if (posWnd < posBeh) {
-            TODO()
-            //            size_t copy_bytes =(posBeh - posWnd - 1) * sizeof(ImGuiWindow *)
-            //            memmove(& g . Windows . Data [posWnd], &g.Windows.Data[pos_wnd+1], copy_bytes)
-            //            g.Windows[posBeh - 1] = window
+            g.windows.removeAt(posWnd)
+            g.windows.add(posBeh - 1, window)
         } else {
-            TODO()
-            //            size_t copy_bytes =(posWnd - posBeh) * sizeof(ImGuiWindow *)
-            //            memmove(& g . Windows . Data [posBeh + 1], &g.Windows.Data[pos_beh], copy_bytes)
-            //            g.Windows[posBeh] = window
+            g.windows.remove(window)
+            g.windows.add(posBeh, window)
         }
     }
 

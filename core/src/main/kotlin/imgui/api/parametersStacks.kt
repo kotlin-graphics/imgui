@@ -97,8 +97,8 @@ interface parametersStacks {
                     style.windowBorderSize = value as Float
                 }
                 StyleVar.WindowMinSize -> {
-                    style.windowMinSize to it.ints
-                    style.windowMinSize put value as Vec2i
+                    style.windowMinSize to it.floats
+                    style.windowMinSize put value as Vec2
                 }
                 StyleVar.WindowTitleAlign -> {
                     style.windowTitleAlign to it.floats
@@ -194,7 +194,7 @@ interface parametersStacks {
                 StyleVar.WindowPadding -> style.windowPadding put backup.floats
                 StyleVar.WindowRounding -> style.windowRounding = backup.floats[0]
                 StyleVar.WindowBorderSize -> style.windowBorderSize = backup.floats[0]
-                StyleVar.WindowMinSize -> style.windowMinSize put backup.ints
+                StyleVar.WindowMinSize -> style.windowMinSize put backup.floats
                 StyleVar.WindowTitleAlign -> style.windowTitleAlign put backup.floats
                 StyleVar.ChildRounding -> style.childRounding = backup.floats[0]
                 StyleVar.ChildBorderSize -> style.childBorderSize = backup.floats[0]

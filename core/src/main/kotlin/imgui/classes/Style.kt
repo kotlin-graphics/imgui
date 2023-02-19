@@ -33,7 +33,7 @@ class Style {
     var windowBorderSize = 1f
 
     /** Minimum window size. This is a global setting. If you want to constrain individual windows, use SetNextWindowSizeConstraints(). */
-    var windowMinSize = Vec2i(32)
+    var windowMinSize = Vec2(32)
 
     /** Alignment for title bar text    */
     var windowTitleAlign = Vec2(0f, 0.5f)

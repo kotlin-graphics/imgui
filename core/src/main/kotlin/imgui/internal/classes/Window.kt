@@ -436,8 +436,7 @@ class Window(var context: Context,
             else -> { // Maximum window size is determined by the viewport size or monitor size
                 val isPopup = flags has Wf._Popup
                 val isMenu = flags has Wf._ChildMenu
-                val sizeMin =
-                    Vec2(style.windowMinSize) // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
+                val sizeMin = Vec2(style.windowMinSize) // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
                 if (isPopup || isMenu) sizeMin minAssign 4f
 
                 val availSize = ImGui.mainViewport.workSize

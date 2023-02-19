@@ -538,7 +538,7 @@ fun findBlockingModal(window: Window): Window? {
         val popupWindow = g.openPopupStack[i].window
         if (popupWindow == null || popupWindow.flags hasnt WindowFlag._Modal)
             continue
-        if (!popupWindow.active || popupWindow.wasActive) // Check WasActive, because this code may run before popup renders on current frame, also check Active to handle newly created windows.
+        if (!popupWindow.active && !popupWindow.wasActive) // Check WasActive, because this code may run before popup renders on current frame, also check Active to handle newly created windows.
             continue
         if (window isWithinBeginStackOf popupWindow)      // Window is rendered over last modal, no render order change needed.
             break
