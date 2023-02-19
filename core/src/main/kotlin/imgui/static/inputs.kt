@@ -26,6 +26,7 @@ import imgui.internal.lengthSqr
 import imgui.internal.sections.Axis
 import imgui.internal.sections.KeyOwner_None
 import imgui.internal.sections.KeyRoutingTable
+import imgui.internal.sections.get
 
 // Inputs
 fun updateKeyboardInputs() {
@@ -105,6 +106,7 @@ fun updateMouseInputs() {
                     mouseDownDuration[i] < 0f -> 0f
                     else -> mouseDownDuration[i] + deltaTime
                 }
+
                 else -> -1f
             }
             if (mouseClicked[i]) {
@@ -149,7 +151,8 @@ fun updateMouseWheel() {
         g.wheelingWindowReleaseTimer -= io.deltaTime
         if (isMousePosValid() && (io.mousePos - g.wheelingWindowRefMousePos).lengthSqr > io.mouseDragThreshold * io.mouseDragThreshold)
             g.wheelingWindowReleaseTimer = 0f
-        lockWheelingWindow(null, 0f)
+        if (g.wheelingWindowReleaseTimer <= 0f)
+            lockWheelingWindow(null, 0f)
     }
 
     val wheel = Vec2(if (Key.MouseWheelX testOwner KeyOwner_None) g.io.mouseWheelH else 0f,

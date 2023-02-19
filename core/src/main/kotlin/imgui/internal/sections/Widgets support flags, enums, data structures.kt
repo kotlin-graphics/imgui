@@ -240,7 +240,6 @@ operator fun ButtonFlags.minus(flag: ButtonFlag): ButtonFlags = wo(flag)
 operator fun ButtonFlags.div(flag: ButtonFlag): ButtonFlags = or(flag)
 
 
-
 typealias SeparatorFlags = Int
 
 enum class SeparatorFlag {
@@ -333,8 +332,11 @@ enum class LogType { None, TTY, File, Buffer, Clipboard }
 enum class Axis {
     None, X, Y;
 
-    infix fun xor(i: Int) = (ordinal - 1) xor i
+    val i = ordinal - 1
+    infix fun xor(i: Int) = this.i xor i
 }
+
+operator fun <T> Array<T>.get(index: Axis) = get(index.i)
 
 operator fun Vec2.get(axis: Axis): Float = when (axis) {
     Axis.X -> x
@@ -496,7 +498,6 @@ infix fun NextItemDataFlags.hasnt(b: NextItemDataFlag): Boolean = and(b.i) == 0
 infix fun NextItemDataFlags.wo(b: NextItemDataFlag): NextItemDataFlags = and(b.i.inv())
 operator fun NextItemDataFlags.minus(flag: NextItemDataFlag): NextItemDataFlags = wo(flag)
 operator fun NextItemDataFlags.div(flag: NextItemDataFlag): NextItemDataFlags = or(flag)
-
 
 
 /** Result of a gamepad/keyboard directional navigation move query result */
