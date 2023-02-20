@@ -31,13 +31,7 @@ internal interface windows {
 
     /** ~GetCurrentWindow */
     val currentWindow: Window
-        get() = g.currentWindow?.apply { writeAccessed = true } ?: throw Error("""
-                We should always have a CurrentWindow in the stack (there is an implicit \"Debug\" window)
-                If this ever crash because ::currentWindow is NULL it means that either
-                - ::newFrame() has never been called, which is illegal.
-                - You are calling ImGui functions after ::render() and before the next ::newFrame(), which is also illegal.
-                - You are calling ImGui functions after ::endFrame()/::render() and before the next ImGui::newFrame(), which is also illegal.
-                """.trimIndent())
+        get() = g.currentWindow!!.apply { writeAccessed = true }
 
     fun findWindowByID(id: ID): Window? = g.windowsById[id]
 

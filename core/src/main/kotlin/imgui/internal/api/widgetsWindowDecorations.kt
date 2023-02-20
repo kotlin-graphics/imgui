@@ -22,7 +22,7 @@ internal interface widgetsWindowDecorations {
     /* Button to close a window    */
     fun closeButton(id: ID, pos: Vec2): Boolean {
 
-        val window = ImGui.currentWindow
+        val window = g.currentWindow!!
 
         // Tweak 1: Shrink hit-testing area if button covers an abnormally large proportion of the visible region. That's in order to facilitate moving the window away. (#3825)
         // This may better be applied as a general hit-rect reduction mechanism for all widgets to ensure the area to move window is always accessible?

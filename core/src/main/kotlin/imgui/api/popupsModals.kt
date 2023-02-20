@@ -202,7 +202,7 @@ interface popupsModals {
      *
      *    open+begin popup when clicked on last item. Use str_id==NULL to associate the popup to previous item. If you want to use that on a non-interactive item such as Text() you need to pass in an explicit ID here. read comments in .cpp! */
     fun beginPopupContextItem(strId: String = "", popupFlags: PopupFlags = PopupFlag.MouseButtonRight.i): Boolean {
-        val window = currentWindow
+        val window = g.currentWindow!!
         if (window.skipItems)
             return false
         val id = if (strId.isNotEmpty()) window.getID(strId) else g.lastItemData.id // If user hasn't passed an id, we can use the lastItemID. Using lastItemID as a Popup id won't conflict!

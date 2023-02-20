@@ -220,17 +220,16 @@ internal interface popupsModalsTooltips {
     /** Attention! BeginPopup() adds default flags which BeginPopupEx()! */
     fun beginPopupEx(id: ID, flags_: WindowFlags): Boolean {
 
-        if (!isPopupOpen(id)) {
+        if (!isPopupOpen(id, PopupFlag.None.i)) {
             g.nextWindowData.clearFlags() // We behave like Begin() and need to consume those values
             return false
         }
 
-        var flags = flags_
         val name = when {
-            flags has Wf._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginMenuCount)    // Recycle windows based on depth
+            flags_ has Wf._ChildMenu -> "##Menu_%02d".format(style.locale, g.beginMenuCount)    // Recycle windows based on depth
             else -> "##Popup_%08x".format(style.locale, id)     // Not recycling, so we can close/open during the same frame
         }
-        flags = flags or Wf._Popup
+        val flags = flags_ or Wf._Popup
         val isOpen = begin(name, null, flags)
         if (!isOpen) // NB: Begin can return false when the popup is completely clipped (e.g. zero size display)
             endPopup()

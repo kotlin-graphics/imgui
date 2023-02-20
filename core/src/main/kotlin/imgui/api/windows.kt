@@ -551,7 +551,7 @@ interface windows {
             window.scrollTarget put Float.MAX_VALUE
             window.decoInnerSizeX1 = 0f; window.decoInnerSizeY1 = 0f
 
-            /* ---------- DRAWING ---------- */
+            // DRAWING
 
             // Setup draw list and outer clipping rectangle
             assert(window.drawList.cmdBuffer.size == 1 && window.drawList.cmdBuffer[0].elemCount == 0)
