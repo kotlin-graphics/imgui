@@ -198,7 +198,7 @@ internal interface inputs {
     fun Key.setOwner(ownerId: ID, flags: InputFlags = 0) {
 
         assert(isNamedOrMod && (ownerId != KeyOwner_Any || flags has (InputFlag.LockThisFrame or InputFlag.LockUntilRelease))) { "Can only use _Any with _LockXXX flags(to eat a key away without an ID to retrieve it)" }
-        assert(flags hasnt InputFlag.SupportedBySetKeyOwner) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedBySetKeyOwner) == 0) { "Passing flags not supported by this function !" }
 
         val ownerData = ownerData
         ownerData.ownerCurr = ownerId; ownerData.ownerNext = ownerId
@@ -223,7 +223,7 @@ internal interface inputs {
         if (flags hasnt InputFlag.CondMask_)
             flags /= InputFlag.CondDefault_
         if ((g.hoveredId == id && flags has InputFlag.CondHovered) || (g.activeId == id && flags has InputFlag.CondActive)) {
-            assert(flags hasnt InputFlag.SupportedBySetItemKeyOwner) { "Passing flags not supported by this function !" }
+            assert((flags wo InputFlag.SupportedBySetItemKeyOwner) == 0) { "Passing flags not supported by this function !" }
             setOwner(id, flags wo InputFlag.CondMask_)
         }
     }
@@ -291,7 +291,7 @@ internal interface inputs {
         val t = keyData.downDuration
         if (t < 0f)
             return false
-        assert(flags hasnt InputFlag.SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedByIsKeyPressed) == 0) { "Passing flags not supported by this function !" }
 
         var pressed = t == 0f
         if (!pressed && flags hasnt InputFlag.Repeat) {
@@ -326,7 +326,7 @@ internal interface inputs {
         val t = g.io.mouseDownDuration[i]
         if (t < 0f)
             return false
-        assert(flags hasnt InputFlag.SupportedByIsKeyPressed) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedByIsKeyPressed) == 0) { "Passing flags not supported by this function !" }
 
         val repeat = flags has InputFlag.Repeat
         val pressed = t == 0f || (repeat && t > g.io.keyRepeatDelay && calcTypematicRepeatAmount(t - g.io.deltaTime, t, g.io.keyRepeatDelay, g.io.keyRepeatRate) > 0)

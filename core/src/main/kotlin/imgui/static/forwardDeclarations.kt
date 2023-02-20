@@ -193,7 +193,7 @@ fun Window.calcNextScrollFromScrollTargetAndClamp(): Vec2 {
         }
         scroll[axis] = floor(scroll[axis] max 0f)
         if (!collapsed && !skipItems)
-        scroll[axis] = scroll[axis] min scrollMax[axis]
+            scroll[axis] = scroll[axis] min scrollMax[axis]
     }
     return scroll
 }

@@ -5,8 +5,6 @@ import glm_.glm
 import glm_.max
 import glm_.min
 import glm_.vec2.Vec2
-import gln.get
-import gln.set
 import imgui.*
 import imgui.ImGui.data
 import imgui.ImGui.io
@@ -17,16 +15,12 @@ import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
 import imgui.ImGui.testOwner
-import imgui.ImGui.toKey
 import imgui.api.g
 import imgui.internal.exponentialMovingAverage
 import imgui.internal.floor
 import imgui.internal.floorSigned
 import imgui.internal.lengthSqr
-import imgui.internal.sections.Axis
-import imgui.internal.sections.KeyOwner_None
-import imgui.internal.sections.KeyRoutingTable
-import imgui.internal.sections.get
+import imgui.internal.sections.*
 
 // Inputs
 fun updateKeyboardInputs() {
@@ -208,6 +202,7 @@ fun updateMouseWheel() {
     (g.wheelingWindow ?: findBestWheelingWindow(wheel))?.let { window ->
         if (window.flags hasnt WindowFlag.NoScrollWithMouse && window.flags hasnt WindowFlag.NoMouseInputs) {
             val doScroll = arrayOf(wheel.x != 0f && window.scrollMax.x != 0f, wheel.y != 0f && window.scrollMax.y != 0f)
+            // [JVM] critical to use Axis set/get operator which rely on `i` rather than others which instead rely on `ordinal`
             if (doScroll[Axis.X] && doScroll[Axis.Y])
                 doScroll[if (g.wheelingAxisAvg.x > g.wheelingAxisAvg.y) Axis.Y else Axis.X] = false
             if (doScroll[Axis.X]) {

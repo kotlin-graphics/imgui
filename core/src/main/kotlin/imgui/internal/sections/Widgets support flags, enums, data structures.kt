@@ -337,6 +337,7 @@ enum class Axis {
 }
 
 operator fun <T> Array<T>.get(index: Axis) = get(index.i)
+operator fun <T> Array<T>.set(index: Axis, value: T) = set(index.i, value)
 
 operator fun Vec2.get(axis: Axis): Float = when (axis) {
     Axis.X -> x

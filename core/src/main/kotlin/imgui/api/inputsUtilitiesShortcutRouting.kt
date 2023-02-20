@@ -58,7 +58,7 @@ interface inputsUtilitiesShortcutRouting {
 
         if (!key.isPressed(ownerId, flags and (InputFlag.Repeat or InputFlag.RepeatRateMask_)))
             return false
-        assert(flags hasnt InputFlag.SupportedByShortcut) { "Passing flags not supported by this function !" }
+        assert((flags wo InputFlag.SupportedByShortcut) == 0) { "Passing flags not supported by this function !" }
 
         return true
     }

@@ -280,7 +280,9 @@ fun navUpdateWindowing() {
     g.navWindowingTarget?.let {
         if (g.navInputSource == InputSource.Keyboard) {
             // Visuals only appears after a brief time after pressing TAB the first time, so that a fast CTRL+TAB doesn't add visual noise
-            val sharedMods = (if (g.configNavWindowingKeyNext != 0) g.configNavWindowingKeyNext else Key.Mod_Mask_.i) and if (g.configNavWindowingKeyPrev != 0) g.configNavWindowingKeyPrev else Key.Mod_Mask_.i and Key.Mod_Mask_
+            val a = if (g.configNavWindowingKeyNext != 0) g.configNavWindowingKeyNext else Key.Mod_Mask_.i
+            val b = if (g.configNavWindowingKeyPrev != 0) g.configNavWindowingKeyPrev else Key.Mod_Mask_.i
+            val sharedMods = a and b and Key.Mod_Mask_
             assert(sharedMods != 0) { "Next / Prev shortcut currently needs a shared modifier to \"hold\", otherwise Prev actions would keep cycling between two windows." }
             g.navWindowingHighlightAlpha = g.navWindowingHighlightAlpha max saturate((g.navWindowingTimer - NAV_WINDOWING_HIGHLIGHT_DELAY) / 0.05f) // 1.0f
             if (keyboardNextWindow || keyboardPrevWindow)
@@ -317,7 +319,7 @@ fun navUpdateWindowing() {
     // Move window
     g.navWindowingTarget?.let {
         if (it.flags hasnt Wf.NoMove) {
-            var navMoveDir = Vec2()
+            val navMoveDir = Vec2()
             if (g.navInputSource == InputSource.Keyboard && !io.keyShift)
                 navMoveDir put getKeyMagnitude2d(Key.LeftArrow, Key.RightArrow, Key.UpArrow, Key.DownArrow)
             if (g.navInputSource == InputSource.Gamepad)
