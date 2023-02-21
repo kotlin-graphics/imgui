@@ -1111,7 +1111,7 @@ val PAYLOAD_TYPE_COLOR_3F = "_COL3F"
 val PAYLOAD_TYPE_COLOR_4F = "_COL4F"
 
 /** A primary data type */
-enum class DataType(val name_: String) {
+enum class DataType(val imguiName: String) {
     Byte("S8"), Ubyte("U8"),
     Short("S16"), Ushort("U16"),
     Int("S32"), Uint("U32"),

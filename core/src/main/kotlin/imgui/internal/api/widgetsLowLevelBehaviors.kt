@@ -332,12 +332,12 @@ internal interface widgetsLowLevelBehaviors {
 
         return when (v) {
             is Byte -> {
-                _i = v.i
+                _i32 = v.i
                 val min = pMin ?: Byte.MIN_VALUE
                 val max = pMax ?: Byte.MAX_VALUE
-                dragBehaviorT(DataType.Int, ::_i, vSpeed, min.i, max.i, format, flags).also {
+                dragBehaviorT(DataType.Int, ::_i32, vSpeed, min.i, max.i, format, flags).also {
                     if (it)
-                        v = _i.b as N
+                        v = _i32.b as N
                 }
             }
             is Ubyte -> {
@@ -350,12 +350,12 @@ internal interface widgetsLowLevelBehaviors {
                 }
             }
             is Short -> {
-                _i = v.i
+                _i32 = v.i
                 val min = pMin ?: Short.MIN_VALUE
                 val max = pMax ?: Short.MAX_VALUE
-                dragBehaviorT(DataType.Int, ::_i, vSpeed, min.i, max.i, format, flags).also {
+                dragBehaviorT(DataType.Int, ::_i32, vSpeed, min.i, max.i, format, flags).also {
                     if (it)
-                        v = _i.s as N
+                        v = _i32.s as N
                 }
             }
             is Ushort -> {
@@ -439,10 +439,10 @@ internal interface widgetsLowLevelBehaviors {
 
         return when (dataType) {
             DataType.Byte -> {
-                _i = v.i
-                sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, flags, outGrabBb).also {
+                _i32 = v.i
+                sliderBehaviorT(bb, id, dataType, ::_i32, pMin.i, pMax.i, format, flags, outGrabBb).also {
                     if (it)
-                        v = _i.b as N
+                        v = _i32.b as N
                 }
             }
             DataType.Ubyte -> {
@@ -453,10 +453,10 @@ internal interface widgetsLowLevelBehaviors {
                 }
             }
             DataType.Short -> {
-                _i = v.i
-                sliderBehaviorT(bb, id, dataType, ::_i, pMin.i, pMax.i, format, flags, outGrabBb).also {
+                _i32 = v.i
+                sliderBehaviorT(bb, id, dataType, ::_i32, pMin.i, pMax.i, format, flags, outGrabBb).also {
                     if (it)
-                        v = _i.s as N
+                        v = _i32.s as N
                 }
             }
             DataType.Ushort -> {

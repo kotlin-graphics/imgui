@@ -185,7 +185,7 @@ interface widgetsSliders {
 
         if (tempInputIsActive) {
             // Only clamp CTRL+Click input when ImGuiSliderFlags_AlwaysClamp is set
-            val isClampInput = flags hasnt SliderFlag.AlwaysClamp
+            val isClampInput = flags has SliderFlag.AlwaysClamp
             return tempInputScalar(frameBb, id, label, dataType, pData, format, pMin.takeIf { isClampInput }, pMax.takeIf { isClampInput })
         }
 

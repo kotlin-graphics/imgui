@@ -312,7 +312,7 @@ internal interface newFrame {
             is InputEvent.MouseButton -> IMGUI_DEBUG_LOG_IO("$prefix: MouseButton ${e.button} ${if (e.down) "Down" else "Up"}")
             is InputEvent.MouseWheel -> IMGUI_DEBUG_LOG_IO("$prefix: MouseWheel (%.3f, %.3f)", e.wheelX, e.wheelY)
             is InputEvent.Key -> IMGUI_DEBUG_LOG_IO("$prefix: Key \"${e.key.name}\" ${if (e.down) "Down" else "Up"}")
-            is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("$prefix: Text: ${e.char} (U+%08X)", e.char)
+            is InputEvent.Text -> IMGUI_DEBUG_LOG_IO("$prefix: Text: ${e.char} (U+%08X)", e.char.code)
             is InputEvent.AppFocused -> IMGUI_DEBUG_LOG_IO("$prefix: AppFocused ${e.focused.i}")
         }
     }

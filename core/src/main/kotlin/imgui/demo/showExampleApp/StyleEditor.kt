@@ -21,7 +21,6 @@ import imgui.ImGui.dummy
 import imgui.ImGui.endTabBar
 import imgui.ImGui.endTabItem
 import imgui.ImGui.fontSize
-import imgui.ImGui.image
 import imgui.ImGui.io
 import imgui.ImGui.isMouseHoveringRect
 import imgui.ImGui.logFinish
@@ -29,10 +28,8 @@ import imgui.ImGui.logText
 import imgui.ImGui.logToClipboard
 import imgui.ImGui.logToTTY
 import imgui.ImGui.popFont
-import imgui.ImGui.popID
 import imgui.ImGui.popItemWidth
 import imgui.ImGui.pushFont
-import imgui.ImGui.pushID
 import imgui.ImGui.pushItemWidth
 import imgui.ImGui.sameLine
 import imgui.ImGui.separator
@@ -169,15 +166,15 @@ object StyleEditor {
                 text("Alignment")
                 sliderVec2("WindowTitleAlign", style.windowTitleAlign, 0f, 1f, "%.2f")
                 run {
-                    _i = style.windowMenuButtonPosition.i + 1
-                    if (combo("WindowMenuButtonPosition", ::_i,
+                    _i32 = style.windowMenuButtonPosition.i + 1
+                    if (combo("WindowMenuButtonPosition", ::_i32,
                               "None${NUL}Left${NUL}Right${NUL}")
-                    ) style.windowMenuButtonPosition = Dir.values().first { it.i == _i - 1 }
+                    ) style.windowMenuButtonPosition = Dir.values().first { it.i == _i32 - 1 }
                 }
                 run {
-                    _i = style.colorButtonPosition.i
-                    combo("ColorButtonPosition", ::_i, "Left\u0000Right\u0000")
-                    style.colorButtonPosition = Dir.values().first { it.i == _i }
+                    _i32 = style.colorButtonPosition.i
+                    combo("ColorButtonPosition", ::_i32, "Left\u0000Right\u0000")
+                    style.colorButtonPosition = Dir.values().first { it.i == _i32 }
                 }
                 sliderVec2("ButtonTextAlign", style.buttonTextAlign, 0f, 1f, "%.2f")
                 sameLine(); helpMarker("Alignment applies when a button is larger than its text content.")

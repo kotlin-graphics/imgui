@@ -206,6 +206,7 @@ internal interface inputText {
                 recycleState = false
 
             // Start edition
+            state.id = id
             if (state.textW.size < buf.size)
             // [JVM] we don't need the +1 for the termination char
                 state.textW = CharArray(buf.size)   // wchar count <= UTF-8 count. we use +1 to make sure that .Data is always pointing to at least an empty string.

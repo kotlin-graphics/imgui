@@ -1,7 +1,7 @@
 package imgui
 
 import uno.kotlin.NUL
-import unsigned.Uint
+import unsigned.*
 import kotlin.reflect.KMutableProperty0
 
 
@@ -98,7 +98,14 @@ val _ia = IntArray(4)
 
 // static referencable
 var _b = false
-var _i = 0
+var _i8 = 0.toByte()
+var _u8 = 0.toUbyte()
+var _i16 = 0.toShort()
+var _u16 = 0.toUshort()
+var _i32 = 0
+var _u32 = 0.toUint()
+var _i64 = 0L
+var _u64 = 0.toUlong()
 var _ui = Uint()
 var _L = 0L
 var _d = 0.0

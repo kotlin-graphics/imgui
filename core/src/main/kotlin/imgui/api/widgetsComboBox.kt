@@ -124,11 +124,11 @@ interface widgetsComboBox {
 
     /** Combo box helper allowing to pass all items in a single string literal holding multiple zero-terminated items "item1\0item2\0" */
     fun combo(label: String, currentItem: IntArray, itemsSeparatedByZeros: String, heightInItems: Int = -1): Boolean {
-        _i = currentItem[0]
+        _i32 = currentItem[0]
         val items = itemsSeparatedByZeros.split(NUL).filter { it.isNotEmpty() }
         // FIXME-OPT: Avoid computing this, or at least only when combo is open
-        val res = combo(label, ::_i, items, heightInItems)
-        currentItem[0] = _i
+        val res = combo(label, ::_i32, items, heightInItems)
+        currentItem[0] = _i32
         return res
     }
 
@@ -140,9 +140,9 @@ interface widgetsComboBox {
 
     /** Combo box function. */
     fun combo(label: String, currentItem: IntArray, items: List<String>, popupMaxHeightInItem: Int = -1): Boolean {
-        _i = currentItem[0]
-        val res = combo(label, ::_i, items, popupMaxHeightInItem)
-        currentItem[0] = _i
+        _i32 = currentItem[0]
+        val res = combo(label, ::_i32, items, popupMaxHeightInItem)
+        currentItem[0] = _i32
         return res
     }
 

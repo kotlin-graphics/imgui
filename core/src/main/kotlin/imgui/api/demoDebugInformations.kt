@@ -231,9 +231,9 @@ interface demoDebugInformations {
             checkbox("Show windows rectangles", ::showWindowsRects)
             sameLine()
             setNextItemWidth(fontSize * 12)
-            _i = showWindowsRectType.ordinal
-            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i, WRT.names, WRT.names.size)
-            showWindowsRectType = WRT.values()[_i]
+            _i32 = showWindowsRectType.ordinal
+            showWindowsRects = showWindowsRects || combo("##show_windows_rect_type", ::_i32, WRT.names, WRT.names.size)
+            showWindowsRectType = WRT.values()[_i32]
             if (showWindowsRects) g.navWindow?.let { nav ->
                 bulletText("'${nav.name}':")
                 indent {

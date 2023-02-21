@@ -196,7 +196,8 @@ fun inputTextCalcTextSizeW(ctx: Context, text: CharArray, textBegin: Int, textEn
 fun inputScalarDefaultCharsFilter(dataType: DataType, format: String): InputTextFlag {
     if (dataType == DataType.Float || dataType == DataType.Double)
         return InputTextFlag.CharsScientific
-    return when (val formatLastChar = if (format.isNotEmpty()) format.lastIndex else NUL) {
+    val formatLastChar = if (format.isNotEmpty()) format.lastIndex else NUL
+    return when (formatLastChar) {
         'x', 'X' -> InputTextFlag.CharsHexadecimal
         else -> InputTextFlag.CharsDecimal
     }

@@ -138,36 +138,36 @@ object ShowDemoWindowTables {
     }
 
     fun editTableColumnsFlags(flags: TableColumnFlags): TableColumnFlags {
-        _i = flags
-        checkboxFlags("_Disabled", ::_i, Tcf.Disabled.i); sameLine(); helpMarker("Master disable flag (also hide from context menu)")
-        checkboxFlags("_DefaultHide", ::_i, Tcf.DefaultHide.i)
-        checkboxFlags("_DefaultSort", ::_i, Tcf.DefaultSort.i)
-        if (checkboxFlags("_WidthStretch", ::_i, Tcf.WidthStretch.i))
-            _i = _i wo (Tcf.WidthMask_ xor Tcf.WidthStretch)
-        if (checkboxFlags("_WidthFixed", ::_i, Tcf.WidthFixed.i))
-            _i = _i wo (Tcf.WidthMask_ xor Tcf.WidthFixed)
-        checkboxFlags("_NoResize", ::_i, Tcf.NoResize.i)
-        checkboxFlags("_NoReorder", ::_i, Tcf.NoReorder.i)
-        checkboxFlags("_NoHide", ::_i, Tcf.NoHide.i)
-        checkboxFlags("_NoClip", ::_i, Tcf.NoClip.i)
-        checkboxFlags("_NoSort", ::_i, Tcf.NoSort.i)
-        checkboxFlags("_NoSortAscending", ::_i, Tcf.NoSortAscending.i)
-        checkboxFlags("_NoSortDescending", ::_i, Tcf.NoSortDescending.i)
-        checkboxFlags("_NoHeaderLabel", ::_i, Tcf.NoHeaderLabel.i)
-        checkboxFlags("_NoHeaderWidth", ::_i, Tcf.NoHeaderWidth.i)
-        checkboxFlags("_PreferSortAscending", ::_i, Tcf.PreferSortAscending.i)
-        checkboxFlags("_PreferSortDescending", ::_i, Tcf.PreferSortDescending.i)
-        checkboxFlags("_IndentEnable", ::_i, Tcf.IndentEnable.i); sameLine(); helpMarker("Default for column 0")
-        checkboxFlags("_IndentDisable", ::_i, Tcf.IndentDisable.i); sameLine(); helpMarker("Default for column >0")
-        return _i
+        _i32 = flags
+        checkboxFlags("_Disabled", ::_i32, Tcf.Disabled.i); sameLine(); helpMarker("Master disable flag (also hide from context menu)")
+        checkboxFlags("_DefaultHide", ::_i32, Tcf.DefaultHide.i)
+        checkboxFlags("_DefaultSort", ::_i32, Tcf.DefaultSort.i)
+        if (checkboxFlags("_WidthStretch", ::_i32, Tcf.WidthStretch.i))
+            _i32 = _i32 wo (Tcf.WidthMask_ xor Tcf.WidthStretch)
+        if (checkboxFlags("_WidthFixed", ::_i32, Tcf.WidthFixed.i))
+            _i32 = _i32 wo (Tcf.WidthMask_ xor Tcf.WidthFixed)
+        checkboxFlags("_NoResize", ::_i32, Tcf.NoResize.i)
+        checkboxFlags("_NoReorder", ::_i32, Tcf.NoReorder.i)
+        checkboxFlags("_NoHide", ::_i32, Tcf.NoHide.i)
+        checkboxFlags("_NoClip", ::_i32, Tcf.NoClip.i)
+        checkboxFlags("_NoSort", ::_i32, Tcf.NoSort.i)
+        checkboxFlags("_NoSortAscending", ::_i32, Tcf.NoSortAscending.i)
+        checkboxFlags("_NoSortDescending", ::_i32, Tcf.NoSortDescending.i)
+        checkboxFlags("_NoHeaderLabel", ::_i32, Tcf.NoHeaderLabel.i)
+        checkboxFlags("_NoHeaderWidth", ::_i32, Tcf.NoHeaderWidth.i)
+        checkboxFlags("_PreferSortAscending", ::_i32, Tcf.PreferSortAscending.i)
+        checkboxFlags("_PreferSortDescending", ::_i32, Tcf.PreferSortDescending.i)
+        checkboxFlags("_IndentEnable", ::_i32, Tcf.IndentEnable.i); sameLine(); helpMarker("Default for column 0")
+        checkboxFlags("_IndentDisable", ::_i32, Tcf.IndentDisable.i); sameLine(); helpMarker("Default for column >0")
+        return _i32
     }
 
     fun showTableColumnsStatusFlags(flags: TableColumnFlags) {
-        _i = flags
-        checkboxFlags("_IsEnabled", ::_i, Tcf.IsEnabled.i)
-        checkboxFlags("_IsVisible", ::_i, Tcf.IsVisible.i)
-        checkboxFlags("_IsSorted", ::_i, Tcf.IsSorted.i)
-        checkboxFlags("_IsHovered", ::_i, Tcf.IsHovered.i)
+        _i32 = flags
+        checkboxFlags("_IsEnabled", ::_i32, Tcf.IsEnabled.i)
+        checkboxFlags("_IsVisible", ::_i32, Tcf.IsVisible.i)
+        checkboxFlags("_IsSorted", ::_i32, Tcf.IsSorted.i)
+        checkboxFlags("_IsHovered", ::_i32, Tcf.IsHovered.i)
     }
 
     /* Stretch + ScrollX */
@@ -814,9 +814,9 @@ object ShowDemoWindowTables {
                             val f = intArrayOf(flags)
                             editTableSizingFlags(f, 0)
                             flags = f[0]
-                            _i = contentsType1.ordinal
-                            combo("Contents", ::_i, "Show width\u0000Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
-                            contentsType1 = ContentsType.values()[_i]
+                            _i32 = contentsType1.ordinal
+                            combo("Contents", ::_i32, "Show width\u0000Short Text\u0000Long Text\u0000Button\u0000Fill Button\u0000InputText\u0000")
+                            contentsType1 = ContentsType.values()[_i32]
                             if (contentsType1 == ContentsType.FillButton) {
                                 sameLine()
                                 helpMarker("Be mindful that using right-alignment (e.g. size.x = -FLT_MIN) creates a feedback loop where contents width can feed into auto-column width can feed into contents width.")

@@ -55,7 +55,7 @@ interface inputsUtilitiesKeyboardMouseGamepad {
     fun Key.getPressedAmount(repeatDelay: Float, repeatRate: Float): Int {
         if (!data.down) // In theory this should already be encoded as (DownDuration < 0.0f), but testing this facilitates eating mechanism (until we finish work on key ownership)
             return 0
-        val t = ImGui.io.keysData[i].downDuration
+        val t = ImGui.io.keysData[index].downDuration
         return ImGui.calcTypematicRepeatAmount(t - ImGui.io.deltaTime, t, repeatDelay, repeatRate)
     }
 
