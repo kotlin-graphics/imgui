@@ -84,6 +84,7 @@ interface main {
         g.time += io.deltaTime
         g.withinFrameScope = true
         g.frameCount += 1
+        println("      [%04d]".format(ImGui.frameCount))
         g.tooltipOverrideCount = 0
         g.windowsActiveCount = 0
         g.menusIdSubmittedThisFrame.clear()

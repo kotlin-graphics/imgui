@@ -250,11 +250,11 @@ interface widgetsInputWithKeyboard {
             pushID(i)
             if (i > 0)
                 sameLine(0f, style.itemInnerSpacing.x)
-            valueChanged = when (dataType) {
+            valueChanged /= when (dataType) {
                 DataType.Float -> withFloat(v as FloatArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
                 DataType.Int -> withInt(v as IntArray, i) { inputScalar("", dataType, it as KMutableProperty0<N>, step, stepFast, format, flags) }
                 else -> error("invalid")
-            } || valueChanged
+            }
             sameLine(0f, style.itemInnerSpacing.x)
             popID()
             popItemWidth()

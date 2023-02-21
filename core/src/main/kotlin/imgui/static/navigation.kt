@@ -492,7 +492,7 @@ fun navUpdateCreateMoveRequest() {
             if (!isActiveIdUsingNavDir(Dir.Down) && ((navGamepadActive && Key.GamepadDpadDown.isPressed(KeyOwner_None, repeatMode)) || (navKeyboardActive && Key.DownArrow.isPressed(KeyOwner_None, repeatMode))))
                 g.navMoveDir = Dir.Down
         }
-        g.navMoveDir = g.navMoveDir
+        g.navMoveClipDir = g.navMoveDir
         g.navScoringNoClipRect.put(+Float.MAX_VALUE, -Float.MIN_VALUE)
     }
 

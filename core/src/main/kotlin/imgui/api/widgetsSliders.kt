@@ -247,7 +247,7 @@ interface widgetsSliders {
             ImGui.pushID(i)
             if (i > 0)
                 ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
-            valueChanged = when (dataType) {
+            valueChanged /= when (dataType) {
                 DataType.Int -> withInt(pData as IntArray, i) {
                     sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, flags)
                 }
@@ -255,7 +255,7 @@ interface widgetsSliders {
                     sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, flags)
                 }
                 else -> error("invalid")
-            } || valueChanged
+            }
             ImGui.popID()
             ImGui.popItemWidth()
         }

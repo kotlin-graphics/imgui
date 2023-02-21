@@ -89,23 +89,24 @@ interface widgetsColorEditorPicker {
      *  Hint: 'float col[3]' function argument is same as 'float* col'.
      *  You can pass address of first element out of a contiguous set, e.g. &myvector.x */
     fun colorEdit3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-        colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
-                .also { col put _fa }
+            colorEdit4(label, col to _fa, flags or Cef.NoAlpha)
+                    .also { col put _fa }
 
     fun colorEdit3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean =
-        colorEdit4(label, col, flags or Cef.NoAlpha)
+            colorEdit4(label, col, flags or Cef.NoAlpha)
 
     /** Edit colors components (each component in 0.0f..1.0f range).
      *  See enum ImGuiColorEditFlags_ for available options. e.g. Only access 3 floats if ColorEditFlags.NoAlpha flag is set.
      *  With typical options: Left-click on color square to open color picker. Right-click to open option menu.
      *  CTRL-Click over input fields to edit them and TAB to go to next item.   */
     fun colorEdit4(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-        colorEdit4(label, col to _fa, flags).also { col put _fa }
+            colorEdit4(label, col to _fa, flags).also { col put _fa }
 
     fun colorEdit4(label: String, col: FloatArray, flags_: ColorEditFlags = 0): Boolean {
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val squareSz = frameHeight
         val wFull = calcItemWidth()
@@ -127,9 +128,12 @@ interface widgetsColorEditorPicker {
         if (flags hasnt Cef.NoOptions) colorEditOptionsPopup(col, flags)
 
         // Read stored options
-        if (flags hasnt Cef._DisplayMask) flags = flags or (g.colorEditOptions and Cef._DisplayMask)
-        if (flags hasnt Cef._DataTypeMask) flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
-        if (flags hasnt Cef._PickerMask) flags = flags or (g.colorEditOptions and Cef._PickerMask)
+        if (flags hasnt Cef._DisplayMask)
+            flags = flags or (g.colorEditOptions and Cef._DisplayMask)
+        if (flags hasnt Cef._DataTypeMask)
+            flags = flags or (g.colorEditOptions and Cef._DataTypeMask)
+        if (flags hasnt Cef._PickerMask)
+            flags = flags or (g.colorEditOptions and Cef._PickerMask)
         if (flags hasnt Cef._InputMask)
             flags = flags or (g.colorEditOptions and Cef._InputMask)
         flags = flags or (g.colorEditOptions wo (Cef._DisplayMask or Cef._DataTypeMask or Cef._PickerMask or Cef._InputMask))
@@ -153,7 +157,7 @@ interface widgetsColorEditorPicker {
         val i = IntArray(4) { F32_TO_INT8_UNBOUND(f[it]) }
 
         var valueChanged = false
-        val valueChangedAsFloat = false
+        var valueChangedAsFloat = false
 
         val pos = Vec2(window.dc.cursorPos)
         val inputsOffsetX = if (style.colorButtonPosition == Dir.Left) wButton else 0f
@@ -175,11 +179,11 @@ interface widgetsColorEditorPicker {
 
                 // Disable Hue edit when Saturation is zero
                 // FIXME: When ImGuiColorEditFlags_HDR flag is passed HS values snap in weird ways when SV values go below 0.
-                valueChanged = when {
-                    flags has Cef.Float -> // operands inverted to have dragScalar always executed, no matter valueChanged
-                        dragScalar(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n]) || valueChanged // ~ valueChangedAsFloat
-                    else -> dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n]) || valueChanged
-                }
+                if (flags has Cef.Float) {
+                    valueChanged /= dragScalar(ids[n], f, n, 1f / 255f, 0f, if (hdr) 0f else 1f, fmtTableFloat[fmtIdx][n])
+                    valueChangedAsFloat /= valueChanged
+                } else
+                    valueChanged /= dragInt(ids[n], i, n, 1f, 0, if (hdr) 0 else 255, fmtTableInt[fmtIdx][n])
                 if (flags hasnt Cef.NoOptions)
                     openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
             }
@@ -322,8 +326,8 @@ interface widgetsColorEditorPicker {
     }
 
     fun colorPicker3(label: String, col: Vec4, flags: ColorEditFlags = 0): Boolean =
-        colorPicker3(label, col to _fa, flags)
-                .also { col put _fa }
+            colorPicker3(label, col to _fa, flags)
+                    .also { col put _fa }
 
     fun colorPicker3(label: String, col: FloatArray, flags: ColorEditFlags = 0): Boolean {
         val col4 = floatArrayOf(*col, 1f)
@@ -339,8 +343,8 @@ interface widgetsColorEditorPicker {
      *  (if automatic height makes a vertical scrollbar appears, affecting automatic width..)
      *  FIXME: this is trying to be aware of style.Alpha but not fully correct. Also, the color wheel will have overlapping glitches with (style.Alpha < 1.0)   */
     fun colorPicker4(label: String, col: Vec4, flags: ColorEditFlags = 0, refCol: Vec4? = null): Boolean =
-        colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
-                .also { col put _fa; refCol?.put(_fa2) }
+            colorPicker4(label, col to _fa, flags, refCol?.to(_fa2))
+                    .also { col put _fa; refCol?.put(_fa2) }
 
     /** ColorPicker
      *  Note: only access 3 floats if ImGuiColorEditFlags_NoAlpha flag is set.
@@ -548,9 +552,9 @@ interface widgetsColorEditorPicker {
                     valueChanged = true
                 }
             if (flags has Cef.DisplayHSV || flags hasnt Cef._DisplayMask)
-                valueChanged = colorEdit4("##hsv", col, subFlags or Cef.DisplayHSV) || valueChanged
+                valueChanged /= colorEdit4("##hsv", col, subFlags or Cef.DisplayHSV)
             if (flags has Cef.DisplayHEX || flags hasnt Cef._DisplayMask)
-                valueChanged = colorEdit4("##hex", col, subFlags or Cef.DisplayHEX) || valueChanged
+                valueChanged /= colorEdit4("##hex", col, subFlags or Cef.DisplayHEX)
             popItemWidth()
         }
 
@@ -799,13 +803,13 @@ interface widgetsColorEditorPicker {
     companion object {
         val ids = arrayOf("##X", "##Y", "##Z", "##W")
         val fmtTableInt = arrayOf(
-            arrayOf("%3d", "%3d", "%3d", "%3d"),             // Short display
-            arrayOf("R:%3d", "G:%3d", "B:%3d", "A:%3d"),     // Long display for RGBA
-            arrayOf("H:%3d", "S:%3d", "V:%3d", "A:%3d"))     // Long display for HSVA
+                arrayOf("%3d", "%3d", "%3d", "%3d"),             // Short display
+                arrayOf("R:%3d", "G:%3d", "B:%3d", "A:%3d"),     // Long display for RGBA
+                arrayOf("H:%3d", "S:%3d", "V:%3d", "A:%3d"))     // Long display for HSVA
         val fmtTableFloat = arrayOf(
-            arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
-            arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
-            arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
+                arrayOf("%.3f", "%.3f", "%.3f", "%.3f"),            // Short display
+                arrayOf("R:%.3f", "G:%.3f", "B:%.3f", "A:%.3f"),    // Long display for RGBA
+                arrayOf("H:%.3f", "S:%.3f", "V:%.3f", "A:%.3f"))    // Long display for HSVA
 
         fun DrawList.renderArrowsForVerticalBar(pos: Vec2, halfSz: Vec2, barW: Float, alpha: Float) {
             val alpha8 = F32_TO_INT8_SAT(alpha)

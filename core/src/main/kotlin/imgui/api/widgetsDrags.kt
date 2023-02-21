@@ -116,7 +116,7 @@ interface widgetsDrags {
         val maxMax = if (vMin >= vMax) Float.MAX_VALUE else vMax
         val maxFlags = flags or if (maxMin == maxMax) SliderFlag._ReadOnly else SliderFlag.None
         val fmt = if (formatMax.isNotEmpty()) formatMax else format
-        valueChanged = dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags) || valueChanged
+        valueChanged /= dragScalar("##max", DataType.Float, vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags)
         ImGui.popItemWidth()
         ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
 
@@ -190,7 +190,7 @@ interface widgetsDrags {
         val maxMax = if (vMin >= vMax) Int.MAX_VALUE else vMax
         val maxFlags = flags or if (maxMin == maxMax) SliderFlag._ReadOnly else SliderFlag.None
         val fmt = if (formatMax.isNotEmpty()) formatMax else format
-        valueChanged = dragInt("##max", vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags) || valueChanged
+        valueChanged /= dragInt("##max", vCurrentMaxPtr, vSpeed, maxMin, maxMax, fmt, maxFlags)
         popItemWidth()
         sameLine(0f, style.itemInnerSpacing.x)
 
