@@ -600,7 +600,7 @@ fun navUpdatePageUpPageDown(): Float {
     if (window.flags has Wf.NoNavInputs || g.navWindowingTarget != null || g.navLayer != NavLayer.Main)
         return 0f
 
-    val pageUpHeld = Key.PageUp.isDown(KeyOwner_None)
+    val pageUpHeld = Key.PageUp isDown KeyOwner_None
     val pageDownHeld = Key.PageDown isDown KeyOwner_None
     val homePressed = Key.Home.isPressed(KeyOwner_None, InputFlag.Repeat.i)
     val endPressed = Key.End.isPressed(KeyOwner_None, InputFlag.Repeat.i)

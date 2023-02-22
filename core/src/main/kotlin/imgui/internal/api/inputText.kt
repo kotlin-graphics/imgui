@@ -251,8 +251,8 @@ internal interface inputText {
             g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Left) or (1 shl Dir.Right))
             if (isMultiline || flags has Itf.CallbackHistory)
                 g.activeIdUsingNavDirMask = g.activeIdUsingNavDirMask or ((1 shl Dir.Up) or (1 shl Dir.Down))
-            Key.Escape.setOwner(id)
-            Key._NavGamepadCancel.setOwner(id)
+            Key.Home.setOwner(id)
+            Key.End.setOwner(id)
             if (isMultiline) {
                 Key.PageUp.setOwner(id)
                 Key.PageDown.setOwner(id)
