@@ -893,7 +893,7 @@ fun navProcessItem() {
     if (g.navMoveScoringItems) {
 
         val isTabStop = itemFlags has If.Inputable && itemFlags hasnt (If.NoTabStop or If.Disabled)
-        val isTabbing = g.navMoveFlags hasnt NavMoveFlag.Tabbing
+        val isTabbing = g.navMoveFlags has NavMoveFlag.Tabbing
         if (isTabbing) {
             if (isTabStop || g.navMoveFlags has NavMoveFlag.FocusApi)
                 navProcessItemForTabbingRequest(id)
