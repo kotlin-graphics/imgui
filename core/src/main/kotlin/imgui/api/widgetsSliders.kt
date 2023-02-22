@@ -47,7 +47,7 @@ interface widgetsSliders {
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: FloatArray, ptr: Int, vMin: Float, vMax: Float,
                     format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, flags) }
+            withFloat(v, ptr) { sliderFloat(label, it, vMin, vMax, format, flags) }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -57,38 +57,38 @@ interface widgetsSliders {
      *  adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders */
     fun sliderFloat(label: String, v: KMutableProperty0<Float>, vMin: Float, vMax: Float,
                     format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalar(label, DataType.Float, v, vMin, vMax, format, flags)
+            sliderScalar(label, DataType.Float, v, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderFloat2(label: String, v: FloatArray, vMin: Float, vMax: Float,
                      format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Float, v, 2, vMin, vMax, format, flags)
+            sliderScalarN(label, DataType.Float, v, 2, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderVec2(label: String, v: Vec2, vMin: Float, vMax: Float,
                    format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Float, v to _fa, 2, vMin, vMax, format, flags)
-                .also { v put _fa }
+            sliderScalarN(label, DataType.Float, v to _fa, 2, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
+                    .also { v put _fa }
 
     fun sliderFloat3(label: String, v: FloatArray, vMin: Float, vMax: Float,
                      format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Float, v, 3, vMin, vMax, format, flags)
+            sliderScalarN(label, DataType.Float, v, 3, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderVec3(label: String, v: Vec3, vMin: Float, vMax: Float,
                    format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Float, v to _fa, 3, vMin, vMax, format, flags)
-                .also { v put _fa }
+            sliderScalarN(label, DataType.Float, v to _fa, 3, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
+                    .also { v put _fa }
 
     fun sliderFloat4(label: String, v: FloatArray, vMin: Float, vMax: Float,
                      format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Float, v, 4, vMin, vMax, format, flags)
+            sliderScalarN(label, DataType.Float, v, 4, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderVec4(label: String, v: Vec4, vMin: Float, vMax: Float,
                    format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Float, v to _fa, 4, vMin, vMax, format, flags)
-                .also { v put _fa }
+            sliderScalarN(label, DataType.Float, v to _fa, 4, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
+                    .also { v put _fa }
 
     fun sliderAngle(label: String, vRadPtr: KMutableProperty0<Float>, vDegreesMin: Float = -360f, vDegreesMax: Float = 360f,
                     format_: String = "%.0f deg", flags: SliderFlags = SliderFlag.None.i): Boolean {
-        val format = if (format_.isEmpty()) "%.0f deg" else format_
+        val format = format_.ifEmpty { "%.0f deg" }
         var vRad by vRadPtr
         vRad = vRad.deg
         return sliderFloat(label, vRadPtr, vDegreesMin, vDegreesMax, format, flags)
@@ -97,38 +97,38 @@ interface widgetsSliders {
 
     fun sliderInt(label: String, v: IntArray, ptr: Int, vMin: Int, vMax: Int,
                   format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format, flags) }
+            withInt(v, ptr) { sliderInt(label, it, vMin, vMax, format, flags) }
 
     fun sliderInt(label: String, v: KMutableProperty0<Int>, vMin: Int, vMax: Int,
                   format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalar(label, DataType.Int, v, vMin, vMax, format, flags)
+            sliderScalar(label, DataType.Int, v, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderInt2(label: String, v: IntArray, vMin: Int, vMax: Int,
                    format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Int, v, 2, vMin, vMax, format, flags)
+            sliderScalarN(label, DataType.Int, v, 2, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderVec2i(label: String, v: Vec2i, vMin: Int, vMax: Int,
                     format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Int, v to _ia, 2, vMin, vMax, format, flags)
-                .also { v put _ia }
+            sliderScalarN(label, DataType.Int, v to _ia, 2, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
+                    .also { v put _ia }
 
     fun sliderInt3(label: String, v: IntArray, vMin: Int, vMax: Int,
                    format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Int, v, 3, vMin, vMax, format, flags)
+            sliderScalarN(label, DataType.Int, v, 3, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderVec3i(label: String, v: Vec3i, vMin: Int, vMax: Int,
                     format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Int, v to _ia, 3, vMin, vMax, format, flags)
-                .also { v put _ia }
+            sliderScalarN(label, DataType.Int, v to _ia, 3, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
+                        .also { v put _ia }
 
     fun sliderInt4(label: String, v: IntArray, vMin: Int, vMax: Int,
                    format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Int, v, 4, vMin, vMax, format, flags)
+            sliderScalarN(label, DataType.Int, v, 4, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
 
     fun sliderVec4i(label: String, v: Vec4i, vMin: Int, vMax: Int,
                     format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean =
-        sliderScalarN(label, DataType.Int, v to _ia, 4, vMin, vMax, format, flags)
-                .also { v put _ia }
+            sliderScalarN(label, DataType.Int, v to _ia, 4, vMin.asMutableProperty, vMax.asMutableProperty, format, flags)
+                        .also { v put _ia }
 
     /** Adjust format to decorate the value with a prefix or a suffix.
      *  "%.3f"         1.234
@@ -140,7 +140,8 @@ interface widgetsSliders {
      *  Note: p_data, p_min and p_max are _pointers_ to a memory address holding the data. For a slider, they are all required.
      *  Read code of e.g. SliderFloat(), SliderInt() etc. or examples in 'Demo->Widgets->Data Types' to understand how to use this function directly. */
     fun <N> sliderScalar(label: String, dataType: DataType, pData: KMutableProperty0<N>,
-                         pMin: N? = null, pMax: N? = null, format_: String? = null, flags: SliderFlags = 0): Boolean
+                         pMin: KMutableProperty0<N>? = null, pMax: KMutableProperty0<N>? = null,
+                         format_: String? = null, flags: SliderFlags = 0): Boolean
             where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow
@@ -233,7 +234,8 @@ interface widgetsSliders {
 
     /** Add multiple sliders on 1 line for compact edition of multiple components */
     fun <N> sliderScalarN(label: String, dataType: DataType, pData: Any, components: Int,
-                          pMin: N? = null, pMax: N? = null, format: String? = null, flags: SliderFlags = 0): Boolean
+                          pMin: KMutableProperty0<N>? = null, pMax: KMutableProperty0<N>? = null,
+                          format: String? = null, flags: SliderFlags = 0): Boolean
             where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow
@@ -251,9 +253,11 @@ interface widgetsSliders {
                 DataType.Int -> withInt(pData as IntArray, i) {
                     sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, flags)
                 }
+
                 DataType.Float -> withFloat(pData as FloatArray, i) {
                     sliderScalar("", dataType, it as KMutableProperty0<N>, pMin, pMax, format, flags)
                 }
+
                 else -> error("invalid")
             }
             ImGui.popID()
@@ -273,16 +277,17 @@ interface widgetsSliders {
     fun <N> vSliderFloat(label: String, size: Vec2, v: KMutableProperty0<N>, vMin: Float, vMax: Float,
                          format: String = "%.3f", flags: SliderFlags = SliderFlag.None.i): Boolean
             where N : Number, N : Comparable<N> =
-        vSliderScalar(label, size, DataType.Float, v, vMin as N, vMax as N, format, flags)
+            vSliderScalar(label, size, DataType.Float, v, (vMin as N).asMutableProperty, (vMax as N).asMutableProperty, format, flags)
 
-    fun <N> vSliderInt(label: String, size: Vec2, v: KMutableProperty0<N>, vMin: N, vMax: N,
+    fun <N> vSliderInt(label: String, size: Vec2, v: KMutableProperty0<N>, vMin: Int, vMax: Int,
                        format: String = "%d", flags: SliderFlags = SliderFlag.None.i): Boolean
             where N : Number, N : Comparable<N> =
-        vSliderScalar(label, size, DataType.Int, v, vMin, vMax, format, flags)
+            vSliderScalar(label, size, DataType.Int, v, (vMin as N).asMutableProperty, (vMax as N).asMutableProperty, format, flags)
 
     /** Internal implementation */
     fun <N> vSliderScalar(label: String, size: Vec2, dataType: DataType, pData: KMutableProperty0<N>,
-                          pMin: N? = null, pMax: N? = null, format_: String? = null, flags: SliderFlags = 0): Boolean
+                          pMin: KMutableProperty0<N>? = null, pMax: KMutableProperty0<N>? = null,
+                          format_: String? = null, flags: SliderFlags = 0): Boolean
             where N : Number, N : Comparable<N> {
 
         val window = ImGui.currentWindow

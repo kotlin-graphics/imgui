@@ -11,7 +11,7 @@ import uno.kotlin.NUL
 import uno.kotlin.getValue
 import uno.kotlin.setValue
 import unsigned.*
-import unsigned.parseUnsignedLong as _
+import unsigned.parseUnsignedLong as avoid
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")
@@ -113,7 +113,7 @@ internal interface dataTypeHelpers {
                 .also { pData[0] = _i32 }
     }
 
-    fun dataTypeApplyFromText(buf_: String, dataType: DataType, pData: KMutableProperty0<*>, format: String): Boolean {
+    fun dataTypeApplyFromText(buf_: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String): Boolean {
 
         // ImCharIsBlankA
         var buf = buf_.replace(Regex("\\s+"), "")
@@ -126,6 +126,14 @@ internal interface dataTypeHelpers {
 
         if (buf.isEmpty())
             return false
+
+        // Sanitize format
+        // For float/double we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in, so force them into %f and %lf
+//        char format_sanitized[32];
+        val format = when(dataType) {
+            DataType.Float, DataType.Double -> "%f"
+            else -> format_ //= ImParseFormatSanitizeForScanning(format, format_sanitized, IM_ARRAYSIZE(format_sanitized));
+        }
 
         when (dataType) {
             DataType.Byte -> {
@@ -180,14 +188,7 @@ internal interface dataTypeHelpers {
 
             else -> error("")
         }
-        // Sanitize format
-        // For float/double we have to ignore format with precision (e.g. "%.2f") because sscanf doesn't take them in, so force them into %f and %lf
-//        char format_sanitized[32];
-//        if (dataType == DataType.Float || dataType == DataType.Double)
-//            format = ""
-//        else
-//        format = ImParseFormatSanitizeForScanning(format, format_sanitized, IM_ARRAYSIZE(format_sanitized));
-//
+
 //        // Small types need a 32-bit buffer to receive the result from scanf()
 //        int v32 = 0;
 //        if (sscanf(buf, format, type_info->Size >= 4 ? p_data : &v32) < 1)

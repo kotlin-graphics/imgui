@@ -440,36 +440,38 @@ internal interface inputText {
 
             // FIXME: Should use more Shortcut() and reduce IsKeyPressed()+SetKeyOwner(), but requires modifiers combination to be taken account of.
             when {
-                Key.LeftArrow.isPressed -> state.onKeyPressed(
-                    when {
-                        isStartendKeyDown -> K.LINESTART
-                        isWordmoveKeyDown -> K.WORDLEFT
-                        else -> K.LEFT
-                    } or kMask)
-                Key.RightArrow.isPressed -> state.onKeyPressed(
-                    when {
-                        isStartendKeyDown -> K.LINEEND
-                        isWordmoveKeyDown -> K.WORDRIGHT
-                        else -> K.RIGHT
-                    } or kMask)
-                Key.UpArrow.isPressed && isMultiline ->
-                    if (io.keyCtrl)
-                        drawWindow setScrollY glm.max(drawWindow.scroll.y - g.fontSize, 0f)
-                    else
-                        state.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
-                Key.DownArrow.isPressed && isMultiline ->
-                    if (io.keyCtrl)
-                        drawWindow setScrollY glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY)
-                    else
-                        state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
+                Key.LeftArrow.isPressed -> state.onKeyPressed(when {
+                                                                  isStartendKeyDown -> K.LINESTART
+                                                                  isWordmoveKeyDown -> K.WORDLEFT
+                                                                  else -> K.LEFT
+                                                              } or kMask)
+
+                Key.RightArrow.isPressed -> state.onKeyPressed(when {
+                                                                   isStartendKeyDown -> K.LINEEND
+                                                                   isWordmoveKeyDown -> K.WORDRIGHT
+                                                                   else -> K.RIGHT
+                                                               } or kMask)
+
+                Key.UpArrow.isPressed && isMultiline -> when {
+                    io.keyCtrl -> drawWindow setScrollY glm.max(drawWindow.scroll.y - g.fontSize, 0f)
+                    else -> state.onKeyPressed((if (isStartendKeyDown) K.TEXTSTART else K.UP) or kMask)
+                }
+
+                Key.DownArrow.isPressed && isMultiline -> when {
+                    io.keyCtrl -> drawWindow setScrollY glm.min(drawWindow.scroll.y + g.fontSize, scrollMaxY)
+                    else -> state.onKeyPressed((if (isStartendKeyDown) K.TEXTEND else K.DOWN) or kMask)
+                }
+
                 Key.PageUp.isPressed && isMultiline -> {
                     state.onKeyPressed(K.PGUP or kMask)
                     scrollY -= rowCountPerPage * g.fontSize
                 }
+
                 Key.PageDown.isPressed && isMultiline -> {
                     state.onKeyPressed(K.PGDOWN or kMask)
                     scrollY += rowCountPerPage * g.fontSize
                 }
+
                 Key.Home.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTSTART else K.LINESTART) or kMask)
                 Key.End.isPressed -> state.onKeyPressed((if (io.keyCtrl) K.TEXTEND else K.LINEEND) or kMask)
                 Key.Delete.isPressed && !isReadOnly && !isCut -> state.onKeyPressed(K.DELETE or kMask)
@@ -481,6 +483,7 @@ internal interface inputText {
                             state.onKeyPressed(K.LINESTART or K.SHIFT)
                     state.onKeyPressed(K.BACKSPACE or kMask)
                 }
+
                 isEnterPressed || isGamepadValidate -> {
                     // Determine if we turn Enter into a \n character
                     val ctrlEnterForNewLine = flags has Itf.CtrlEnterForNewLine
@@ -498,6 +501,7 @@ internal interface inputText {
                                 state.onKeyPressed(c().i)
                         }
                 }
+
                 isCancel ->
                     if (flags has Itf.EscapeClearsAll) {
                         if (state.curLenA > 0)
@@ -510,20 +514,23 @@ internal interface inputText {
                         clearActiveId = true; revertEdit = true
                         renderCursor = false; renderSelection = false
                     }
+
                 isUndo || isRedo -> {
                     state.onKeyPressed(if (isUndo) K.UNDO else K.REDO)
                     state.clearSelection()
                 }
+
                 isSelectAll -> {
                     state.selectAll()
                     state.cursorFollow = true
                 }
+
                 isCut || isCopy -> {
                     // Cut, Copy
                     io.setClipboardTextFn?.let {
                         val ib = if (state.hasSelection) min(state.stb.selectStart, state.stb.selectEnd) else 0
                         val ie =
-                            if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
+                                if (state.hasSelection) max(state.stb.selectStart, state.stb.selectEnd) else state.curLenW
                         clipboardText = String(state.textW, ib, ie - ib)
                     }
                     if (isCut) {
@@ -533,6 +540,7 @@ internal interface inputText {
                         state.cut()
                     }
                 }
+
                 isPaste -> {
 
                     val clipboard = clipboardText
@@ -620,14 +628,17 @@ internal interface inputText {
                             eventFlag = Itf.CallbackCompletion
                             eventKey = Key.Tab
                         }
+
                         flags has Itf.CallbackHistory && Key.UpArrow.isPressed -> {
                             eventFlag = Itf.CallbackHistory
                             eventKey = Key.UpArrow
                         }
+
                         flags has Itf.CallbackHistory && Key.DownArrow.isPressed -> {
                             eventFlag = Itf.CallbackHistory
                             eventKey = Key.DownArrow
                         }
+
                         flags has Itf.CallbackEdit && state.edited -> eventFlag = Itf.CallbackEdit
                         flags has Itf.CallbackAlways -> eventFlag = Itf.CallbackAlways
                     }
@@ -689,8 +700,7 @@ internal interface inputText {
                                     state.textW[newSize] = NUL
                             }
                             state.curLenW = textStrFromUtf8(state.textW, cbData.buf)
-                            state.curLenA =
-                                cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
+                            state.curLenA = cbData.bufTextLen  // Assume correct length and valid UTF-8 from user, saves us an extra strlen()
                             state.cursorAnimReset()
                         }
                     }
@@ -1004,12 +1014,9 @@ internal interface inputText {
      *  ImGuiSliderFlags_AlwaysClamp flag is set!
      *  This is intended: this way we allow CTRL+Click manual input to set a value out of bounds, for maximum flexibility.
      *  However this may not be ideal for all uses, as some user code may break on out of bound values. */
-    fun <N> tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>,
-                            format_: String, clampMin_: N? = null, clampMax_: N? = null): Boolean
+    fun <N> tempInputScalar(bb: Rect, id: ID, label: String, dataType: DataType, pData: KMutableProperty0<N>, format_: String,
+                            pClampMin: KMutableProperty0<N>? = null, pClampMax: KMutableProperty0<N>? = null): Boolean
             where N : Number, N : Comparable<N> {
-
-        var clampMin = clampMin_
-        var clampMax = clampMax_
 
         // On the first frame, g.TempInputTextId == 0, then on subsequent frames it becomes == id.
         // We clear ActiveID on the first frame to allow the InputText() taking it back.
@@ -1032,13 +1039,15 @@ internal interface inputText {
 
             // Apply new value (or operations) then clamp
             dataTypeApplyFromText(buf.cStr, dataType, pData, format)
-            if (clampMin != null && clampMax != null) {
-                if (clampMin > clampMax) {
-                    val t = clampMin
-                    clampMin = clampMax
-                    clampMax = t
+            if (pClampMin != null || pClampMax != null) {
+                if (pClampMin != null && pClampMax != null) {
+                    var clampMin by pClampMin
+                    var clampMax by pClampMax
+                    if (clampMin > clampMax) {
+                        val swap = clampMin; clampMin = clampMax; clampMax = swap
+                    }
                 }
-                dataTypeClamp(dataType, pData, clampMin, clampMax)
+                dataTypeClamp(dataType, pData, pClampMin?.get(), pClampMax?.get())
             }
 
             // Only mark as edited if new value is different
@@ -1052,6 +1061,5 @@ internal interface inputText {
 
     fun tempInputIsActive(id: ID): Boolean = g.activeId == id && g.tempInputId == id
 
-    fun getInputTextState(id: ID): InputTextState? =
-        g.inputTextState.takeIf { id != 0 && it.id == id } // Get input text state if active
+    fun getInputTextState(id: ID): InputTextState? = g.inputTextState.takeIf { id != 0 && it.id == id } // Get input text state if active
 }
