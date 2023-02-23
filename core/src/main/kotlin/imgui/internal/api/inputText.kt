@@ -394,15 +394,14 @@ internal interface inputText {
             // We ignore CTRL inputs, but need to allow ALT+CTRL as some keyboards (e.g. German) use AltGR (which _is_ Alt+Ctrl) to input certain characters.
             if (io.inputQueueCharacters.isNotEmpty()) {
                 if (!ignoreCharInputs && !isReadOnly && !inputRequestedByNav)
-                // Insert character if they pass filtering
-                    io.inputQueueCharacters.filter { it != NUL || it == '\t' } // Skip Tab, see above.
-                            .forEach {
-                                // TODO check
-                                withChar { c ->
-                                    if (inputTextFilterCharacter(c(it), flags, callback, callbackUserData, InputSource.Keyboard))
-                                        state.onKeyPressed(c().i)
-                                }
-                            }
+                    for (n in io.inputQueueCharacters.indices) {
+                        // Insert character if they pass filtering
+                        var c = io.inputQueueCharacters[n]
+                        if (c == NUL || c == '\t') // Skip Tab, see above.
+                            continue
+                        if (inputTextFilterCharacter(c mutableProperty { c = it }, flags, callback, callbackUserData, InputSource.Keyboard))
+                            state.onKeyPressed(c.i)
+                    }
                 // Consume characters
                 io.inputQueueCharacters.clear()
             }
@@ -755,9 +754,9 @@ internal interface inputText {
         val drawPos = if (isMultiline) Vec2(drawWindow.dc.cursorPos) else frameBb.min + style.framePadding
         val textSize = Vec2()
 
-        /*  Set upper limit of single-line InputTextEx() at 2 million characters strings. The current pathological worst case is a long line
-            without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
-            Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash. */
+        // Set upper limit of single-line InputTextEx() at 2 million characters strings. The current pathological worst case is a long line
+        // without any carriage return, which would makes ImFont::RenderText() reserve too many vertices and probably crash. Avoid it altogether.
+        // Note that we only use this limit on single-line InputText(), so a pathologically large line on a InputTextMultiline() would still crash.
         val bufDisplayMaxLength = 2 * 1024 * 1024
         var bufDisplay = if (bufDisplayFromState) state!!.textA else buf
         var bufDisplayEnd = -1 // We have specialized paths below for setting the length
@@ -1038,7 +1037,8 @@ internal interface inputText {
             val dataBackup = pData()
 
             // Apply new value (or operations) then clamp
-            dataTypeApplyFromText(buf.cStr, dataType, pData, format)
+            val radix = if (flags has Itf.CharsHexadecimal) 16 else 10
+            dataTypeApplyFromText(buf.cStr, dataType, pData, format, radix)
             if (pClampMin != null || pClampMax != null) {
                 if (pClampMin != null && pClampMax != null) {
                     var clampMin by pClampMin

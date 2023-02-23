@@ -50,7 +50,7 @@ interface loggingCapture {
 
         if (!g.logEnabled) return
 
-        logText("%s", "\n")
+        logText("\n")
 
         when (g.logType) {
             LogType.TTY -> TODO() //fflush(g.LogFile)

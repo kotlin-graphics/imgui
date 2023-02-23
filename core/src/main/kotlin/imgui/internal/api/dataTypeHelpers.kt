@@ -6,6 +6,7 @@ import imgui.ImGui.style
 import imgui._i32
 import imgui.api.*
 import imgui.internal.addClampOverflow
+import imgui.internal.parseFormatSanitizeForScanning
 import imgui.internal.subClampOverflow
 import uno.kotlin.NUL
 import uno.kotlin.getValue
@@ -113,7 +114,10 @@ internal interface dataTypeHelpers {
                 .also { pData[0] = _i32 }
     }
 
-    fun dataTypeApplyFromText(buf_: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String): Boolean {
+    // TODO Kotlin bug, fill issue, we have to provide manually this overload to avoid `java.lang.NoSuchMethodError`
+    fun dataTypeApplyFromText(buf: String, dataType: DataType, pData: KMutableProperty0<*>, format: String): Boolean =
+            dataTypeApplyFromText(buf, dataType, pData, format, 10)
+    fun dataTypeApplyFromText(buf_: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String, radix: Int): Boolean {
 
         // ImCharIsBlankA
         var buf = buf_.replace(Regex("\\s+"), "")
@@ -132,48 +136,48 @@ internal interface dataTypeHelpers {
 //        char format_sanitized[32];
         val format = when(dataType) {
             DataType.Float, DataType.Double -> "%f"
-            else -> format_ //= ImParseFormatSanitizeForScanning(format, format_sanitized, IM_ARRAYSIZE(format_sanitized));
+            else -> parseFormatSanitizeForScanning(format_)
         }
 
         when (dataType) {
             DataType.Byte -> {
                 var data by pData as KMutableProperty0<Byte>
-                data = format.format(buf.parseInt()).toByte()
+                data = format.format(buf.parseInt(radix)).toByte(radix)
             }
 
             DataType.Ubyte -> {
                 var data by pData as KMutableProperty0<Ubyte>
-                data = format.format(buf.parseInt()).toByte().toUbyte()
+                data = format.format(buf.parseInt(radix)).toByte(radix).toUbyte()
             }
 
             DataType.Short -> {
                 var data by pData as KMutableProperty0<Short>
-                data = format.format(buf.parseInt()).toShort()
+                data = format.format(buf.parseInt(radix)).toShort(radix)
             }
 
             DataType.Ushort -> {
                 var data by pData as KMutableProperty0<Ushort>
-                data = format.format(buf.parseInt()).toShort().toUshort()
+                data = format.format(buf.parseInt(radix)).toShort(radix).toUshort()
             }
 
             DataType.Int -> {
                 var data by pData as KMutableProperty0<Int>
-                data = format.format(buf.parseLong()).toInt()
+                data = format.format(buf.parseLong(radix)).toInt(radix)
             }
 
             DataType.Uint -> {
                 var data by pData as KMutableProperty0<Uint>
-                data = format.format(buf.parseLong()).toInt().toUint()
+                data = format.format(buf.parseLong(radix)).toInt(radix).toUint()
             }
 
             DataType.Long -> {
                 var data by pData as KMutableProperty0<Long>
-                data = format.format(buf.parseUnsignedLong()).toLong()
+                data = format.format(buf.parseUnsignedLong(radix)).toLong(radix)
             }
 
             DataType.Ulong -> {
                 var data by pData as KMutableProperty0<Ulong>
-                data = format.format(buf.parseUnsignedLong()).toLong().toUlong()
+                data = format.format(buf.parseUnsignedLong(radix)).toLong(radix).toUlong()
             }
 
             DataType.Float -> {
