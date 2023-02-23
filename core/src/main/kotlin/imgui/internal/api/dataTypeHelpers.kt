@@ -3,8 +3,10 @@ package imgui.internal.api
 import glm_.*
 import imgui.DataType
 import imgui.ImGui.style
+import imgui.InputTextFlag
 import imgui._i32
 import imgui.api.*
+import imgui.has
 import imgui.internal.addClampOverflow
 import imgui.internal.parseFormatSanitizeForScanning
 import imgui.internal.subClampOverflow
@@ -23,7 +25,7 @@ internal interface dataTypeHelpers {
     //    IMGUI_API const ImGuiDataTypeInfo*  DataTypeGetInfo(ImGuiDataType data_type);
 
     /** DataTypeFormatString */
-    fun KMutableProperty0<*>.format(dataType: DataType, format: String): String {
+    fun KMutableProperty0<*>.format(dataType: DataType, format_: String): String {
         val arg = when (val t = this()) {
             // we need to intervene since java printf cant handle %u
             is Ubyte -> t.i
@@ -32,7 +34,12 @@ internal interface dataTypeHelpers {
             is Ulong -> t.toBigInt()
             else -> t // normal scalar
         }
-        return format.format(style.locale, arg)
+        val format = when(dataType) {
+            DataType.Float, DataType.Double -> format_
+            // [JVM] we have to filter `.`, since `%.03d` causes `IllegalFormatPrecisionException`, but `%03d` doesn't
+            else -> format_.replace(".", "")
+        }
+        return format.format(arg)
     }
 
     fun <N : Number> dataTypeApplyOp(dataType: DataType, op: Char, value1: N, value2: N): N {
@@ -113,11 +120,7 @@ internal interface dataTypeHelpers {
         return dataTypeApplyFromText(buf, dataType, ::_i32, format)
                 .also { pData[0] = _i32 }
     }
-
-    // TODO Kotlin bug, fill issue, we have to provide manually this overload to avoid `java.lang.NoSuchMethodError`
-    fun dataTypeApplyFromText(buf: String, dataType: DataType, pData: KMutableProperty0<*>, format: String): Boolean =
-            dataTypeApplyFromText(buf, dataType, pData, format, 10)
-    fun dataTypeApplyFromText(buf_: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String, radix: Int): Boolean {
+    fun dataTypeApplyFromText(buf_: String, dataType: DataType, pData: KMutableProperty0<*>, format_: String): Boolean {
 
         // ImCharIsBlankA
         var buf = buf_.replace(Regex("\\s+"), "")
@@ -138,6 +141,8 @@ internal interface dataTypeHelpers {
             DataType.Float, DataType.Double -> "%f"
             else -> parseFormatSanitizeForScanning(format_)
         }
+
+        val radix = if (format.last().lowercaseChar() == 'x') 16 else 10
 
         when (dataType) {
             DataType.Byte -> {

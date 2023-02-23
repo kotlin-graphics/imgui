@@ -1037,8 +1037,7 @@ internal interface inputText {
             val dataBackup = pData()
 
             // Apply new value (or operations) then clamp
-            val radix = if (flags has Itf.CharsHexadecimal) 16 else 10
-            dataTypeApplyFromText(buf.cStr, dataType, pData, format, radix)
+            dataTypeApplyFromText(buf.cStr, dataType, pData, format)
             if (pClampMin != null || pClampMax != null) {
                 if (pClampMin != null && pClampMax != null) {
                     var clampMin by pClampMin

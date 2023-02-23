@@ -212,13 +212,7 @@ interface widgetsSliders {
         }
 
         // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
-        val value = format.format(ImGui.style.locale, when (val data = pData()) {
-            is Ubyte -> data.v
-            is Ushort -> data.v
-            is Uint -> data.v
-            is Ulong -> data.v
-            else -> data
-        })
+        val value = pData.format(dataType, format)
         if (g.logEnabled)
             logSetNextTextDecoration("{", "}");
         ImGui.renderTextClipped(frameBb.min, frameBb.max, value, null, Vec2(0.5f))

@@ -202,7 +202,7 @@ interface widgetsInputWithKeyboard {
             // Step buttons
             val backupFramePadding = Vec2(style.framePadding)
             style.framePadding.x = style.framePadding.y
-            var buttonFlags = Bf.Repeat or Bf.DontClosePopups
+            val buttonFlags = Bf.Repeat or Bf.DontClosePopups
             if (flags has Itf.ReadOnly)
                 beginDisabled()
             sameLine(0f, style.itemInnerSpacing.x)
