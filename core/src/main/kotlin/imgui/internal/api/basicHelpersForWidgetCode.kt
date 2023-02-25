@@ -296,7 +296,8 @@ internal interface basicHelpersForWidgetCode {
                 items[ptr].width = (items[ptr].width - widthExcess) max 1f
             return
         }
-        items.subList(ptr, ptr + count).sortWith(shrinkWidthItemComparer)
+        assert(count == items.size)
+        items./*subList(ptr, ptr + count).*/sortWith(shrinkWidthItemComparer)
         var countSameWidth = 1
         while (widthExcess > 0f && countSameWidth < count) {
             while (countSameWidth < count && items[ptr].width <= items[countSameWidth].width)
@@ -326,8 +327,8 @@ internal interface basicHelpersForWidgetCode {
             while (n < count && widthExcess > 0f) {
                 if (items[n].width + 1f <= items[n].initialWidth) {
                     val widthToAdd = (items[n].initialWidth - items[n].width) min 1f
-                    items[n].width += widthExcess
-                    widthExcess -= widthExcess
+                    items[n].width += widthToAdd
+                    widthExcess -= widthToAdd
                 }
                 n++
             }

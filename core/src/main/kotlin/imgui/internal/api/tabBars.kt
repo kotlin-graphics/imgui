@@ -67,7 +67,7 @@ internal interface tabBars {
             flags /= TabBarFlag.FittingPolicyDefault_
 
         this.flags = flags
-        barRect = bb
+        barRect put bb
         wantLayout = true // Layout will be done on the first call to ItemTab()
         prevFrameVisible = currFrameVisible
         currFrameVisible = g.frameCount
@@ -83,7 +83,7 @@ internal interface tabBars {
         window.dc.cursorPos.put(barRect.min.x, barRect.max.y + itemSpacingY)
 
         // Draw separator
-        val col = if (this.flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
+        val col = if (flags has TabBarFlag._IsFocused) Col.TabActive else Col.TabUnfocusedActive
         val y = barRect.max.y - 1f
         run {
             val separatorMinX = barRect.min.x - floor(window.windowPadding.x * 0.5f)
@@ -333,9 +333,9 @@ internal interface tabBars {
         }
 
         // Click to Select a tab
-        var buttonFlags =
-            (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
-        if (g.dragDropActive) buttonFlags = buttonFlags or ButtonFlag.PressedOnDragDropHold
+        var buttonFlags = (if (isTabButton) ButtonFlag.PressedOnClickRelease else ButtonFlag.PressedOnClick) or ButtonFlag.AllowItemOverlap
+        if (g.dragDropActive)
+            buttonFlags /= ButtonFlag.PressedOnDragDropHold
         val (pressed, hovered, held) = ImGui.buttonBehavior(bb, id, buttonFlags)
         if (pressed && !isTabButton) nextSelectedTabId = id
 
@@ -382,11 +382,12 @@ internal interface tabBars {
 
         // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
         val hoveredUnblocked = ImGui.isItemHovered(HoveredFlag.AllowWhenBlockedByPopup)
-        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || ImGui.isMouseReleased(MouseButton.Right))) if (!isTabButton) nextSelectedTabId =
-            id
+        if (hoveredUnblocked && (isMouseClicked(MouseButton.Right) || ImGui.isMouseReleased(MouseButton.Right)))
+            if (!isTabButton)
+                nextSelectedTabId = id
 
-        if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton) flags =
-            flags or TabItemFlag.NoCloseWithMiddleMouseButton
+        if (this.flags has TabBarFlag.NoCloseWithMiddleMouseButton)
+            flags /= TabItemFlag.NoCloseWithMiddleMouseButton
 
         // Render tab label, process close button
         val closeButtonId = if (pOpen?.get() == true) ImGui.getIDWithSeed("#CLOSE", -1, id) else 0

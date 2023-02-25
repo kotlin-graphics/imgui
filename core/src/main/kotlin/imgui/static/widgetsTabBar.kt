@@ -62,10 +62,8 @@ fun TabBar.layout() {
         tabs.sortWith(tabItemComparerBySection)
 
     // Calculate spacing between sections
-    sections[0].spacing =
-        if (sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
-    sections[1].spacing =
-        if (sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
+    sections[0].spacing = if (sections[0].tabCount > 0 && sections[1].tabCount + sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
+    sections[1].spacing = if (sections[1].tabCount > 0 && sections[2].tabCount > 0) g.style.itemInnerSpacing.x else 0f
 
     // Setup next selected tab
     var scrollToTabID: ID = 0
@@ -92,9 +90,9 @@ fun TabBar.layout() {
     // Leading/Trailing tabs will be shrink only if central one aren't visible anymore, so layout the shrink data as: leading, trailing, central
     // (whereas our tabs are stored as: leading, central, trailing)
     val shrinkBufferIndexes = intArrayOf(0, sections[0].tabCount + sections[2].tabCount, sections[0].tabCount)
-    g.shrinkWidthBuffer.clear() // [JVM] it will automatically resized in the following for loop
-    for (i in tabs.indices)
-        g.shrinkWidthBuffer += ShrinkWidthItem()
+    // [JVM] each item will be set in the following for loop
+    for (i in g.shrinkWidthBuffer.size until tabs.size) g.shrinkWidthBuffer += ShrinkWidthItem()
+    for (i in tabs.size until g.shrinkWidthBuffer.size) g.shrinkWidthBuffer.removeLast()
 
     // Compute ideal tabs widths + store them into shrink buffer
     var mostRecentlySelectedTab: TabItem? = null

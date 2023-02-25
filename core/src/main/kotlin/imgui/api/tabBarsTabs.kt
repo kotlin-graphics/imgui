@@ -27,7 +27,7 @@ interface tabBarsTabs {
 
         val id = window.getID(strId)
         val tabBar = g.tabBars.getOrAddByKey(id)
-        val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.innerClipRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
+        val tabBarBb = Rect(window.dc.cursorPos.x, window.dc.cursorPos.y, window.workRect.max.x, window.dc.cursorPos.y + g.fontSize + style.framePadding.y * 2)
         tabBar.id = id
         return tabBar.beginEx(tabBarBb, flags or TabBarFlag._IsFocused)
     }
@@ -62,8 +62,8 @@ interface tabBarsTabs {
     }
 
     /** create a Tab. Returns true if the Tab is selected. */
-    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemFlags = 0) =
-            withBoolean(pOpen, index) { beginTabItem(label, it, flags) }
+    fun beginTabItem(label: String, pOpen: BooleanArray, index: Int, flags: TabItemFlags = 0): Boolean =
+            beginTabItem(label, pOpen mutablePropertyAt index, flags)
 
     /** create a Tab. Returns true if the Tab is selected. */
     fun beginTabItem(label: String, pOpen: KMutableProperty0<Boolean>? = null, flags: TabItemFlags = 0): Boolean {

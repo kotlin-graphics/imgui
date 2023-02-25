@@ -594,6 +594,8 @@ infix fun TabItemFlags.xor(b: TabItemFlag): TabItemFlags = xor(b.i)
 infix fun TabItemFlags.has(b: TabItemFlag): Boolean = and(b.i) != 0
 infix fun TabItemFlags.hasnt(b: TabItemFlag): Boolean = and(b.i) == 0
 infix fun TabItemFlags.wo(b: TabItemFlag): TabItemFlags = and(b.i.inv())
+operator fun TabItemFlags.minus(flag: TabItemFlag): TabItemFlags = wo(flag)
+operator fun TabItemFlags.div(flag: TabItemFlag): TabItemFlags = or(flag)
 
 
 typealias TableFlags = Int

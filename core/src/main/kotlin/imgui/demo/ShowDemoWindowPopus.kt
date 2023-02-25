@@ -116,7 +116,7 @@ object ShowDemoWindowPopups {
                 if (button("Toggle.."))
                     openPopup("my_toggle_popup")
                 popup("my_toggle_popup") {
-                    names.forEachIndexed { i, n -> withBoolean(toggles, i) { b -> menuItem(n, "", b) } }
+                    names.forEachIndexed { i, n -> menuItem(n, "", toggles mutablePropertyAt i) }
 
                     menu("Sub-menu") { menuItem("Click me") }
 
@@ -126,7 +126,7 @@ object ShowDemoWindowPopups {
 
                     if (button("Stacked Popup")) openPopup("another popup")
                     popup("another popup") {
-                        names.forEachIndexed { i, n -> withBoolean(toggles, i) { b -> menuItem(n, "", b) } }
+                        names.forEachIndexed { i, n -> menuItem(n, "", toggles mutablePropertyAt i) }
                         menu("Sub-menu") {
                             menuItem("Click me")
                             button("Stacked Popup") { openPopup("another popup") }
@@ -291,7 +291,7 @@ object ShowDemoWindowPopups {
                     // Also demonstrate passing a bool* to BeginPopupModal(), this will create a regular close button which
                     // will close the popup. Note that the visibility state of popups is owned by imgui, so the input value
                     // of the bool actually doesn't matter here.
-                    val unusedOpen = booleanArrayOf(true)
+                    val unusedOpen = true.asMutableProperty
                     if (beginPopupModal("Stacked 2", unusedOpen)) {
                         text("Hello from Stacked The Second!")
                         button("Close") { closeCurrentPopup() }

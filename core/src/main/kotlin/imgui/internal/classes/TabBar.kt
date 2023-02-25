@@ -1,21 +1,9 @@
 package imgui.internal.classes
 
-import glm_.max
-import glm_.min
 import glm_.vec2.Vec2
-import glm_.vec4.Vec4
-import imgui.*
-import imgui.ImGui.arrowButtonEx
-import imgui.ImGui.beginCombo
-import imgui.ImGui.endCombo
-import imgui.ImGui.findTabByID
-import imgui.ImGui.io
-import imgui.ImGui.popStyleColor
-import imgui.ImGui.pushStyleColor
-import imgui.ImGui.selectable
-import imgui.ImGui.style
-import imgui.api.g
-import imgui.internal.sections.*
+import imgui.ID
+import imgui.TabBarFlag
+import imgui.TabBarFlags
 
 class TabBarSection {
     /** Number of tabs in this section. */
@@ -48,7 +36,7 @@ class TabBar {
     var visibleTabId: ID = 0
     var currFrameVisible = -1
     var prevFrameVisible = -1
-    var barRect = Rect()
+    val barRect = Rect()
 
     var currTabsContentsHeight = 0f
 

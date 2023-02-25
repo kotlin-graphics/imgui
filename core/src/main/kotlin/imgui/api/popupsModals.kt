@@ -55,13 +55,6 @@ interface popupsModals {
      *
      *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
      *  Note that popup visibility status is owned by Dear ImGui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
-    fun beginPopupModal(name: String, pOpen: BooleanArray, flags_: WindowFlags = 0): Boolean =
-            withBoolean(pOpen) { beginPopupModal(name, it, flags_) }
-
-    /** modal dialog (block interactions behind the modal window, can't close the modal window by clicking outside)
-     *
-     *  If 'p_open' is specified for a modal popup window, the popup will have a regular close button which will close the popup.
-     *  Note that popup visibility status is owned by Dear ImGui (and manipulated with e.g. OpenPopup) so the actual value of *p_open is meaningless here.   */
     fun beginPopupModal(name: String, pOpen: KMutableProperty0<Boolean>? = null, flags_: WindowFlags = 0): Boolean {
 
         val window = g.currentWindow!!

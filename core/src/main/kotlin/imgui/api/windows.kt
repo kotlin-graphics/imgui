@@ -60,10 +60,8 @@ interface windows {
 
     fun begin(name: String, pOpen: BooleanArray, flags: WindowFlags): Boolean = begin(name, pOpen, 0, flags)
 
-    fun begin(name: String, pOpen: BooleanArray?, index: Int, flags: WindowFlags): Boolean = when (pOpen) {
-        null -> begin(name, null, flags)
-        else -> withBoolean(pOpen, index) { begin(name, it, flags) }
-    }
+    fun begin(name: String, pOpen: BooleanArray?, index: Int, flags: WindowFlags): Boolean =
+        begin(name, pOpen?.mutablePropertyAt(index), flags)
 
     /**  Push a new Dear ImGui window to add widgets to:
     - A default window called "Debug" is automatically stacked at the beginning of every frame so you can use
@@ -107,8 +105,8 @@ interface windows {
         var windowJustActivatedByUser = window.lastFrameActive < currentFrame - 1 // Not using !WasActive because the implicit "Debug" window would always toggle off->on
         if (flags has Wf._Popup) {
             val popupRef = g.openPopupStack[g.beginPopupStack.size] // We recycle popups so treat window as activated if popup id changed
-            windowJustActivatedByUser = windowJustActivatedByUser || window.popupId != popupRef.popupId
-            windowJustActivatedByUser = windowJustActivatedByUser || window !== popupRef.window
+            windowJustActivatedByUser /= window.popupId != popupRef.popupId
+            windowJustActivatedByUser /= window !== popupRef.window
         }
         window.appearing = windowJustActivatedByUser
         if (window.appearing)
@@ -308,7 +306,7 @@ interface windows {
             } else window.collapsed = false
             window.wantCollapseToggle = false
 
-            /* ---------- SIZE ---------- */
+            // SIZE ====================================================================================================
 
             // Outer Decoration Sizes
             // (we need to clear ScrollbarSize immediatly as CalcWindowAutoFitSize() needs it and can be called from other locations).
@@ -320,7 +318,7 @@ interface windows {
             window.scrollbarSizes put 0f
 
             // Calculate auto-fit size, handle automatic resize
-            val sizeAutoFit = window.calcAutoFitSize(window.contentSize)
+            val sizeAutoFit = window.calcAutoFitSize(window.contentSizeIdeal)
             if (flags has Wf.AlwaysAutoResize && !window.collapsed) { // Using SetNextWindowSize() overrides ImGuiWindowFlags_AlwaysAutoResize, so it can be used on tooltips/popups, etc.
                 if (!windowSizeXsetByApi) {
                     window.sizeFull.x = sizeAutoFit.x
@@ -353,7 +351,7 @@ interface windows {
                 else -> window.sizeFull
             }
 
-            /* ---------- POSITION ---------- */
+            // POSITION ================================================================================================
 
             // Popup latch its initial position, will position itself when it appears next frame
             if (windowJustActivatedByUser) {

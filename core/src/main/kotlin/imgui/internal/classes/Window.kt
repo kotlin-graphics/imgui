@@ -40,7 +40,7 @@ class Window(var context: Context,
     var pos = Vec2()
 
     /** Current size (==SizeFull or collapsed title bar size)   */
-    var size = Vec2()
+    val size = Vec2()
 
     /** Size when non collapsed */
     var sizeFull = Vec2()
@@ -223,7 +223,7 @@ class Window(var context: Context,
 
     /** Initially covers the whole scrolling region. Reduced by containers e.g columns/tables when active.
      * Shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward). */
-    var workRect = Rect()
+    val workRect = Rect()
 
     /** Backup of WorkRect before entering a container such as columns/tables. Used by e.g. SpanAllColumns functions
      *  to easily access. Stacked containers are responsible for maintaining this. // FIXME-WORKRECT: Could be a stack? */
@@ -437,7 +437,8 @@ class Window(var context: Context,
                 val isPopup = flags has Wf._Popup
                 val isMenu = flags has Wf._ChildMenu
                 val sizeMin = Vec2(style.windowMinSize) // Popups and menus bypass style.WindowMinSize by default, but we give then a non-zero minimum size to facilitate understanding problematic cases (e.g. empty popups)
-                if (isPopup || isMenu) sizeMin minAssign 4f
+                if (isPopup || isMenu)
+                    sizeMin minAssign 4f
 
                 val availSize = ImGui.mainViewport.workSize
                 val sizeAutoFit = glm.clamp(sizeDesired, sizeMin, glm.max(sizeMin, availSize - style.displaySafeAreaPadding * 2f))

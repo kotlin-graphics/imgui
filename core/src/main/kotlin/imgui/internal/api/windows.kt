@@ -189,6 +189,9 @@ internal interface windows {
     }
 
     companion object {
-        val shrinkWidthItemComparer: Comparator<ShrinkWidthItem> = compareBy(ShrinkWidthItem::width, ShrinkWidthItem::index)
+        val shrinkWidthItemComparer: Comparator<ShrinkWidthItem> = Comparator { a, b ->
+            val d = (b.width - a.width).toInt()
+            if (d != 0) d else b.index - a.index
+        }
     }
 }
