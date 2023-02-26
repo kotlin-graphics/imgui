@@ -82,10 +82,10 @@ fun TabBar.layout() {
 
     // Tab List Popup
     val tabListPopupButton = flags has TabBarFlag.TabListPopupButton
-    if (tabListPopupButton) tabListPopupButton()?.let { tabToSelect -> // NB: Will alter BarRect.Min.x!
-        selectedTabId = tabToSelect.id
-        scrollToTabID = tabToSelect.id
-    }
+    if (tabListPopupButton)
+        tabListPopupButton()?.let { tabToSelect -> // NB: Will alter BarRect.Min.x!
+            scrollToTabID = tabToSelect.id; selectedTabId = scrollToTabID
+        }
 
     // Leading/Trailing tabs will be shrink only if central one aren't visible anymore, so layout the shrink data as: leading, trailing, central
     // (whereas our tabs are stored as: leading, central, trailing)
@@ -104,7 +104,8 @@ fun TabBar.layout() {
 
         if ((mostRecentlySelectedTab == null || mostRecentlySelectedTab.lastFrameSelected < tab.lastFrameSelected) && tab.flags hasnt TabItemFlag._Button)
             mostRecentlySelectedTab = tab
-        if (tab.id == selectedTabId) foundSelectedTabID = true
+        if (tab.id == selectedTabId)
+            foundSelectedTabID = true
 
         if (scrollToTabID == 0 && g.navJustMovedToId == tab.id)
             scrollToTabID = tab.id
@@ -139,7 +140,7 @@ fun TabBar.layout() {
     if ((widthAllTabsIdeal > barRect.width && tabs.size > 1) && flags hasnt TabBarFlag.NoTabListScrollingButtons && flags has TabBarFlag.FittingPolicyScroll)
         scrollingButtons()?.let { scrollAndSelectTab ->
             scrollToTabID = scrollAndSelectTab.id
-            if (scrollAndSelectTab.flags == 0)
+            if (scrollAndSelectTab.flags hasnt TabItemFlag._Button)
                 selectedTabId = scrollToTabID
         }
 
@@ -215,10 +216,10 @@ fun TabBar.layout() {
         scrollingSpeed = scrollingSpeed max (abs(scrollingTarget - scrollingAnim) / 0.3f)
         val teleport = prevFrameVisible + 1 < g.frameCount || scrollingTargetDistToVisibility > 10f * g.fontSize
         scrollingAnim = if (teleport) scrollingTarget else linearSweep(
-            scrollingAnim,
-            scrollingTarget,
-            ImGui.io.deltaTime * scrollingSpeed
-                                                                      )
+                scrollingAnim,
+                scrollingTarget,
+                ImGui.io.deltaTime * scrollingSpeed
+        )
     } else scrollingSpeed = 0f
 
     scrollingRectMinX = barRect.min.x + sections[0].width + sections[0].spacing
@@ -245,6 +246,7 @@ fun TabBar.calcTabID(label: String, dockedWindow: Window?): ID {
             ImGui.keepAliveID(id)
             id
         }
+
         else -> g.currentWindow!!.getID(label)
     }
 }
@@ -263,8 +265,7 @@ fun TabBar.scrollToTab(tabId: ID, sections: Array<TabBarSection>) {
     if (tab.flags has TabItemFlag._SectionMask_)
         return
 
-    val margin =
-        g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
+    val margin = g.fontSize * 1f // When to scroll to make Tab N+1 visible always make a bit of N visible to suggest more scrolling area (since we don't have a scrollbar)
     val order = tab.order
 
     // Scrolling happens only in the central section (leading/trailing sections are not scrolling)
@@ -273,8 +274,7 @@ fun TabBar.scrollToTab(tabId: ID, sections: Array<TabBarSection>) {
 
     // We make all tabs positions all relative Sections[0].Width to make code simpler
     val tabX1 = tab.offset - sections[0].width + if (order > sections[0].tabCount - 1) -margin else 0f
-    val tabX2 =
-        tab.offset - sections[0].width + tab.width + if (order + 1 < tabs.size - sections[2].tabCount) margin else 1f
+    val tabX2 = tab.offset - sections[0].width + tab.width + if (order + 1 < tabs.size - sections[2].tabCount) margin else 1f
     scrollingTargetDistToVisibility = 0f
     if (scrollingTarget > tabX1 || (tabX2 - tabX1 >= scrollableWidth)) {
         // Scroll to the left
@@ -310,16 +310,11 @@ fun TabBar.scrollingButtons(): TabItem? {
     ImGui.io.keyRepeatRate = 0.2f
     val x = barRect.min.x max (barRect.max.x - scrollingButtonsWidth)
     window.dc.cursorPos.put(x, barRect.min.y)
-    if (ImGui.arrowButtonEx("##<", Dir.Left, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat)) selectDir =
-        -1
+    if (ImGui.arrowButtonEx("##<", Dir.Left, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat))
+        selectDir = -1
     window.dc.cursorPos.put(x + arrowButtonSize.x, barRect.min.y)
-    if (ImGui.arrowButtonEx(
-            "##>",
-            Dir.Right,
-            arrowButtonSize,
-            ButtonFlag.PressedOnClick or ButtonFlag.Repeat
-                           )
-    ) selectDir = +1
+    if (ImGui.arrowButtonEx("##>", Dir.Right, arrowButtonSize, ButtonFlag.PressedOnClick or ButtonFlag.Repeat))
+        selectDir = +1
     ImGui.popStyleColor(2)
     ImGui.io.keyRepeatRate = backupRepeatRate
     ImGui.io.keyRepeatDelay = backupRepeatDelay
@@ -355,7 +350,7 @@ fun TabBar.tabListPopupButton(): TabItem? {
     val window = g.currentWindow!!
 
     // We use g.Style.FramePadding.y to match the square ArrowButton size
-    val tabListPopupButtonWidth = g.fontSize + ImGui.style.framePadding.y * 2f
+    val tabListPopupButtonWidth = g.fontSize + ImGui.style.framePadding.y
     val backupCursorPos = Vec2(window.dc.cursorPos)
     window.dc.cursorPos.put(barRect.min.x - ImGui.style.framePadding.y, barRect.min.y)
     barRect.min.x += tabListPopupButtonWidth
@@ -370,9 +365,11 @@ fun TabBar.tabListPopupButton(): TabItem? {
     var tabToSelect: TabItem? = null
     if (open) {
         for (tab in tabs) {
-            if (tab.flags has TabItemFlag._Button) continue
+            if (tab.flags has TabItemFlag._Button)
+                continue
 
-            if (ImGui.selectable(tab.name, selectedTabId == id)) tabToSelect = tab
+            if (ImGui.selectable(tab.name, selectedTabId == id))
+                tabToSelect = tab
         }
         ImGui.endCombo()
     }

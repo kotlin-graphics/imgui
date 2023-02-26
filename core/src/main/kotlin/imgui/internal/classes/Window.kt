@@ -219,7 +219,7 @@ class Window(var context: Context,
     var innerRect = Rect() // Clear so the InnerRect.GetSize() code in Begin() doesn't lead to overflow even if the result isn't used.
 
     /**  == InnerRect shrunk by WindowPadding*0.5f on each side, clipped within viewport or parent clip rect. */
-    var innerClipRect = Rect()
+    val innerClipRect = Rect()
 
     /** Initially covers the whole scrolling region. Reduced by containers e.g columns/tables when active.
      * Shrunk by WindowPadding*1.0f on each side. This is meant to replace ContentRegionRect over time (from 1.71+ onward). */

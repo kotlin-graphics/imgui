@@ -179,11 +179,13 @@ internal interface tabBars {
     /** ~TabBarProcessReorder */
     fun TabBar.processReorder(): Boolean {
         val tab1 = findTabByID(reorderRequestTabId)
-        if (tab1 == null || tab1.flags has TabItemFlag.NoReorder) return false
+        if (tab1 == null || tab1.flags has TabItemFlag.NoReorder)
+            return false
 
         //IM_ASSERT(tab_bar->Flags & ImGuiTabBarFlags_Reorderable); // <- this may happen when using debug tools
         val tab2Order = tab1.order + reorderRequestOffset
-        if (tab2Order < 0 || tab2Order >= tabs.size) return false
+        if (tab2Order < 0 || tab2Order >= tabs.size)
+            return false
 
         // Reordered tabs must share the same section
         // (Note: TabBarQueueReorderFromMousePos() also has a similar test but since we allow direct calls to TabBarQueueReorder() we do it here too)
@@ -193,17 +195,16 @@ internal interface tabBars {
         if (tab1.flags and TabItemFlag._SectionMask_ != tab2.flags and TabItemFlag._SectionMask_)
             return false
 
-        TODO()
-        //        ImGuiTabItem item_tmp = *tab1;
-        //        ImGuiTabItem* src_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1 + 1 : tab2;
-        //        ImGuiTabItem* dst_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1 : tab2 + 1;
-        //        const int move_count = (tab_bar->ReorderRequestOffset > 0) ? tab_bar->ReorderRequestOffset : -tab_bar->ReorderRequestOffset;
-        //        memmove(dst_tab, src_tab, move_count * sizeof(ImGuiTabItem));
-        val itemTmp = tabs[reorderRequestTabId]
-        tabs[reorderRequestTabId] = tabs[tab2Order]
-        tabs[tab2Order] = itemTmp
+//        ImGuiTabItem item_tmp = * tab1;
+//        ImGuiTabItem * src_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1+1 : tab2;
+//        ImGuiTabItem * dst_tab = (tab_bar->ReorderRequestOffset > 0) ? tab1 : tab2+1;
+//        const int move_count = (tab_bar->ReorderRequestOffset > 0) ? tab_bar->ReorderRequestOffset :-tab_bar->ReorderRequestOffset;
+//        memmove(dst_tab, src_tab, move_count * sizeof(ImGuiTabItem));
+        tabs.remove(tab1)
+        tabs.add(tab2Order, tab1)
 
-        if (flags has TabBarFlag._SaveSettings) ImGui.markIniSettingsDirty()
+        if (flags has TabBarFlag._SaveSettings)
+            ImGui.markIniSettingsDirty()
         return true
     }
 
@@ -288,7 +289,8 @@ internal interface tabBars {
         // Lock visibility
         // (Note: tab_contents_visible != tab_selected... because CTRL+TAB operations may preview some tabs without selecting them!)
         var tabContentsVisible = visibleTabId == id
-        if (tabContentsVisible) visibleTabWasSubmitted = true
+        if (tabContentsVisible)
+            visibleTabWasSubmitted = true
 
         // On the very first frame of a tab bar we let first tab contents be visible to minimize appearing glitches
         if (!tabContentsVisible && selectedTabId == 0 && tabBarAppearing)
@@ -304,7 +306,8 @@ internal interface tabBars {
             return tabContentsVisible
         }
 
-        if (selectedTabId == id) tab.lastFrameSelected = g.frameCount
+        if (selectedTabId == id)
+            tab.lastFrameSelected = g.frameCount
 
         // Backup current layout position
         val backupMainCursorPos = Vec2(window.dc.cursorPos)
@@ -371,6 +374,7 @@ internal interface tabBars {
                     tabBarFocused -> Col.TabActive
                     else -> Col.TabUnfocusedActive
                 }
+
                 else -> when {
                     tabBarFocused -> Col.Tab
                     else -> Col.TabUnfocused
