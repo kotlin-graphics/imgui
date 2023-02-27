@@ -49,7 +49,9 @@ internal interface widgets {
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textEx(text: ByteArray, textEnd: Int = text.strlen(), flags: TextFlags = TextFlag.None.i) {
+    fun textEx(text_: ByteArray, textEnd: Int = text_.strlen(), flags: TextFlags = TextFlag.None.i) {
+
+        var text = text_
 
         val window = currentWindow
         if (window.skipItems)
@@ -57,7 +59,8 @@ internal interface widgets {
 
         // Accept null ranges
         if (textEnd == 0) // ~text == text_end
-            text[0] = 0 // ~text_end = "";
+            if(text.isNotEmpty())
+                text[0] = 0 // ~text_end = "";
 
         // Calculate length
 
