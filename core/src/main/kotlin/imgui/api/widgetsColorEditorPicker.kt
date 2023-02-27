@@ -193,16 +193,17 @@ interface widgetsColorEditorPicker {
             val buf = when {
                 alpha -> "#%02X%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255), glm.clamp(i[3], 0, 255))
                 else -> "#%02X%02X%02X".format(style.locale, glm.clamp(i[0], 0, 255), glm.clamp(i[1], 0, 255), glm.clamp(i[2], 0, 255))
-            }
+            }.toByteArray(64)
             setNextItemWidth(wInputs)
-            if (inputText("##Text", buf.toByteArray(64), Itf.CharsHexadecimal or Itf.CharsUppercase)) {
+            if (inputText("##Text", buf, Itf.CharsHexadecimal or Itf.CharsUppercase)) {
                 valueChanged = true
                 var p = 0
-                while (buf[p] == '#' || buf[p].isBlankA)
+                val str = buf.cStr
+                while (str[p] == '#' || str[p].isBlankA)
                     p++
                 i[0] = 0; i[1] = 0; i[2] = 0
                 i[3] = 0xFF // alpha default to 255 is not parsed by scanf (e.g. inputting #FFFFFF omitting alpha)
-                buf.substring(p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
+                str.substring(p).scanHex(i, if (alpha) 4 else 3, 2)   // Treat at unsigned (%X is unsigned)
             }
             if (flags hasnt Cef.NoOptions)
                 openPopupOnItemClick("context", PopupFlag.MouseButtonRight.i)
@@ -238,7 +239,7 @@ interface widgetsColorEditorPicker {
                     val pickerFlags = (flagsUntouched and pickerFlagsToForward) or Cef._DisplayMask or Cef._DisplayMask or Cef.NoLabel or Cef.AlphaPreviewHalf
                     setNextItemWidth(squareSz * 12f)   // Use 256 + bar sizes?
                     val p = g.colorPickerRef to FloatArray(4)
-                    valueChanged = colorPicker4("##picker", col, pickerFlags, p) or valueChanged
+                    valueChanged /= colorPicker4("##picker", col, pickerFlags, p)
                     g.colorPickerRef put p
                     endPopup()
                 }
@@ -310,7 +311,9 @@ interface widgetsColorEditorPicker {
         var c = 0
         for (i in 0 until count) {
             val end = glm.min((i + 1) * precision, length)
-            ints[i] = if (c > end) 0 else with(substring(c, end)) { if (isEmpty()) 0 else toInt(16) }
+            if (c >= end)
+                break
+            ints[i] = substring(c, end).toInt(16)
             c += precision
         }
     }
@@ -355,7 +358,8 @@ interface widgetsColorEditorPicker {
     fun colorPicker4(label: String, col: FloatArray, flags_: ColorEditFlags = 0, refCol: FloatArray? = null): Boolean {
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val drawList = window.drawList
 

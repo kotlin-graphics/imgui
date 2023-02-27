@@ -335,11 +335,11 @@ interface widgetsDrags {
                 ImGui.sameLine(0f, ImGui.style.itemInnerSpacing.x)
             when (dataType) {
                 DataType.Int -> withInt(v as IntArray, i) {
-                    valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, flags) or valueChanged
+                    valueChanged /= dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, flags)
                 }
 
                 DataType.Float -> withFloat(v as FloatArray, i) {
-                    valueChanged = dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, flags) or valueChanged
+                    valueChanged /= dragScalar("", dataType, it as KMutableProperty0<N>, vSpeed, vMin, vMax, format, flags)
                 }
 
                 else -> error("invalid")
