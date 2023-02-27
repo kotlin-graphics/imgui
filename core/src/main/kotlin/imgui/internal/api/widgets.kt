@@ -49,9 +49,7 @@ internal interface widgets {
     /** Raw text without formatting. Roughly equivalent to text("%s", text) but:
      *  A) doesn't require null terminated string if 'textEnd' is specified
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textEx(text_: ByteArray, textEnd: Int = text_.strlen(), flags: TextFlags = TextFlag.None.i) {
-
-        var text = text_
+    fun textEx(text: ByteArray, textEnd: Int = text.strlen(), flags: TextFlags = TextFlag.None.i) {
 
         val window = currentWindow
         if (window.skipItems)
