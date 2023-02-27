@@ -711,7 +711,8 @@ interface widgetsColorEditorPicker {
     fun colorButton(descId: String, col: Vec4, flags_: ColorEditFlags = 0, sizeArg: Vec2 = Vec2()): Boolean {
 
         val window = currentWindow
-        if (window.skipItems) return false
+        if (window.skipItems)
+            return false
 
         val id = window.getID(descId)
         val defaultSize = frameHeight

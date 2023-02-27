@@ -95,7 +95,7 @@ interface widgetsComboBox {
         // Custom preview
         if (flags has Cf._CustomPreview) {
             g.comboPreviewData.previewRect.put(bb.min.x, bb.min.y, valueX2, bb.max.y)
-            assert(previewValue == null || previewValue[0] == NUL)
+            assert(previewValue == null || previewValue.getOrNul(0) == NUL)
             previewValue = null
         }
 

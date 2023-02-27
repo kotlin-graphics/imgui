@@ -1887,11 +1887,12 @@ infix fun SliderFlags.wo(b: SliderFlag): SliderFlags = and(b.i.inv())
 /** Identify a mouse button.
  *  Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for convenience. */
 enum class MouseButton {
-    None, Left, Right, Middle;
+    None, Left, Right, Middle, _unused0, _unused1;
 
     val i = ordinal - 1 // starts at -1
 
     companion object {
+        val imguiValues = values().drop(1)
         val COUNT = 5
         infix fun of(i: Int): MouseButton = values()[1 + i]
     }

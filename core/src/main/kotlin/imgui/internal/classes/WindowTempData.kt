@@ -19,7 +19,7 @@ class WindowTempData {
     var cursorPos = Vec2()
 
     /** Current emitting position, in absolute coordinates. */
-    var cursorPosPrevLine = Vec2()
+    val cursorPosPrevLine = Vec2()
 
     /** Initial position after Begin(), generally ~ window position + WindowPadding. */
     var cursorStartPos = Vec2()

@@ -118,7 +118,7 @@ internal interface combos {
         popClipRect()
         window.dc.cursorPos put previewData.backupCursorPos
         window.dc.cursorMaxPos = window.dc.cursorMaxPos max previewData.backupCursorMaxPos
-        window.dc.cursorPosPrevLine = previewData.backupCursorPosPrevLine
+        window.dc.cursorPosPrevLine put previewData.backupCursorPosPrevLine
         window.dc.prevLineTextBaseOffset = previewData.backupPrevLineTextBaseOffset
         window.dc.layoutType = previewData.backupLayout
         window.dc.isSameLine = false

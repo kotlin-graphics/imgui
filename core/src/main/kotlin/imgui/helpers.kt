@@ -151,6 +151,7 @@ val CharArray.strlen: Int
         return i
     }
 
+/** ~ColorConvertU32ToFloat4 */
 val Int.vec4: Vec4
     get() {
         val s = 1f / 255f
