@@ -76,8 +76,7 @@ fun updateMouseInputs() {
 
         // Round mouse position to avoid spreading non-rounded position (e.g. UpdateManualResize doesn't support them well)
         if (isMousePosValid(mousePos)) {
-            g.mouseLastValidPos put floorSigned(mousePos)
-            mousePos = Vec2(g.mouseLastValidPos)
+            mousePos put floorSigned(mousePos); g.mouseLastValidPos put mousePos
         }
 
         // If mouse just appeared or disappeared (usually denoted by -FLT_MAX component) we cancel out movement in MouseDelta

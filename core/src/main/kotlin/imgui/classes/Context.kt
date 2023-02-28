@@ -229,7 +229,7 @@ class Context(sharedFontAtlas: FontAtlas? = null) {
     var nextItemData = NextItemData()
 
     /** Storage for last submitted item (setup by ItemAdd) */
-    var lastItemData = LastItemData()
+    val lastItemData = LastItemData()
 
     /** Storage for SetNextWindow** functions   */
     val nextWindowData = NextWindowData()

@@ -198,7 +198,7 @@ fun navUpdate() {
     // Update mouse position if requested
     // (This will take into account the possibility that a Scroll was queued in the window to offset our absolute mouse position before scroll has been applied)
     if (setMousePos && io.configFlags has ConfigFlag.NavEnableSetMousePos && io.backendFlags has BackendFlag.HasSetMousePos) {
-        io.mousePos = navCalcPreferredRefPos(); io.mousePosPrev put io.mousePos
+        io.mousePos put navCalcPreferredRefPos(); io.mousePosPrev put io.mousePos
         io.wantSetMousePos = true
         //IMGUI_DEBUG_LOG_IO("SetMousePos: (%.1f,%.1f)\n", io.MousePos.x, io.MousePos.y);
     }

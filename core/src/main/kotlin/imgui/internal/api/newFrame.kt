@@ -125,7 +125,8 @@ internal interface newFrame {
         if (eventN == g.inputEventsQueue.size)
             g.inputEventsQueue.clear()
         else
-            g.inputEventsQueue.drop(eventN)
+            for (i in 0 until eventN)
+                g.inputEventsQueue.removeFirst()
 
         // Clear buttons state when focus is lost
         // - this is useful so e.g. releasing Alt after focus loss on Alt-Tab doesn't trigger the Alt menu toggle.
