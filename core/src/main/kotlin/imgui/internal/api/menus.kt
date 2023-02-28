@@ -240,7 +240,7 @@ internal interface menus {
             if (menuIsOpen) {
                 // Restore LastItemData so IsItemXXXX functions can work after BeginMenu()/EndMenu()
                 // (This fixes using IsItemClicked() and IsItemHovered(), but IsItemHovered() also relies on its support for ImGuiItemFlags_NoWindowHoverableCheck)
-                g.lastItemData = lastItemInParent
+                g.lastItemData put lastItemInParent
                 if (g.hoveredWindow === window)
                     g.lastItemData.statusFlags /= ItemStatusFlag.HoveredWindow
             }

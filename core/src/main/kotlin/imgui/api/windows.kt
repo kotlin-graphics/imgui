@@ -138,7 +138,7 @@ interface windows {
         g.currentWindow = window
         val windowStackData = WindowStackData()
         windowStackData.window = window
-        windowStackData.parentLastItemDataBackup = g.lastItemData
+        windowStackData.parentLastItemDataBackup put g.lastItemData
         windowStackData.stackSizesOnBegin.setToCurrentState()
         g.currentWindowStack += windowStackData
         if (flags has Wf._ChildMenu)
@@ -784,7 +784,7 @@ interface windows {
             errorCheckUsingSetCursorPosToExtendParentBoundaries()
 
         // Pop from window stack
-        g.lastItemData = g.currentWindowStack.last().parentLastItemDataBackup
+        g.lastItemData put g.currentWindowStack.last().parentLastItemDataBackup
         if (window.flags has Wf._ChildMenu)
             g.beginMenuCount--
         if (window.flags has Wf._Popup)

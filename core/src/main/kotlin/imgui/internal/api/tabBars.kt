@@ -511,7 +511,7 @@ internal interface tabBars {
             if (closeButton(closeButtonId, buttonPos))
                 closeButtonPressed = true
             popStyleVar()
-            g.lastItemData = lastItemBackup
+            g.lastItemData put lastItemBackup
 
             // Close with middle mouse button
             if (flags hasnt TabItemFlag.NoCloseWithMiddleMouseButton && isMouseClicked(MouseButton.Middle))

@@ -30,8 +30,7 @@ interface widgetsText {
     /** raw text without formatting. Roughly equivalent to Text("%s", text) but:
      *  A) doesn't require null terminated string if 'text_end' is specified,
      *  B) it's faster, no memory copy is done, no buffer size limits, recommended for long chunks of text. */
-    fun textUnformatted(text: String, textEnd: Int = -1) =
-        textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText)
+    fun textUnformatted(text: String, textEnd: Int = -1) = textEx(text, textEnd, TextFlag.NoWidthForLargeClippedText)
 
     /** formatted text */
     fun text(fmt: String, vararg args: Any) {
@@ -49,29 +48,24 @@ interface widgetsText {
      *      PopStyleColor();   */
     fun textColored(col: Vec4, fmt: String, vararg args: Any) {
         pushStyleColor(Col.Text, col)
-        text(fmt, *args)
-        popStyleColor()
-    }
-
-    fun textColoredV(col: Vec4, fmt: String, vararg args: Any) = dsl.withStyleColor(Col.Text, col) {
         if (fmt == "%s")
-            TODO()
-        //            textEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+            textEx(args[0] as String, -1, TextFlag.NoWidthForLargeClippedText) // Skip formatting
         else
             text(fmt, *args)
+        popStyleColor()
     }
 
     /** shortcut for:
      *      pushStyleColor(Col.Text, style.colors[Col.TextDisabled])
      *      text(fmt, ...)
      *      popStyleColor() */
-    fun textDisabled(fmt: String, vararg args: Any) = dsl.withStyleColor(Col.Text, style.colors[Col.TextDisabled]) {
-        if (fmt == "%s")
-            TODO()
-        //            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
-        else
-            text(fmt, *args)
-    }
+    fun textDisabled(fmt: String, vararg args: Any) =
+            dsl.withStyleColor(Col.Text, style.colors[Col.TextDisabled]) {
+                if (fmt == "%s")
+                    textEx(args[0] as String, -1, TextFlag.NoWidthForLargeClippedText) // Skip formatting
+                else
+                    text(fmt, *args)
+            }
 
     /** shortcut for PushTextWrapPos(0.0f); Text(fmt, ...); PopTextWrapPos();. Note that this won't work on an
      *  auto-resizing window if there's no other widgets to extend the window width, yoy may need to set a size using
@@ -81,8 +75,7 @@ interface widgetsText {
         if (needBackup)
             pushTextWrapPos(0f)
         if (fmt == "%s")
-            TODO()
-        //            TextEx(va_arg(args, const char*), NULL, ImGuiTextFlags_NoWidthForLargeClippedText); // Skip formatting
+            textEx(args[0] as String, -1, TextFlag.NoWidthForLargeClippedText) // Skip formatting
         else
             text(fmt, *args)
         if (needBackup)

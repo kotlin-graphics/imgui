@@ -334,6 +334,10 @@ enum class Axis {
 
     val i = ordinal - 1
     infix fun xor(i: Int) = this.i xor i
+
+    companion object {
+        infix fun of(int: Int) = values().first { it.i == int }
+    }
 }
 
 operator fun <T> Array<T>.get(index: Axis) = get(index.i)

@@ -341,12 +341,21 @@ class LastItemData {
     val rect = Rect() // Full rectangle
     val navRect = Rect() // Navigation scoring rectangle (not displayed)
     val displayRect = Rect() // Display rectangle (only if ImGuiItemStatusFlags_HasDisplayRect is set)
+
+    infix fun put(data: LastItemData) {
+        id = data.id
+        inFlags = data.inFlags
+        statusFlags = data.statusFlags
+        rect put data.rect
+        navRect put data.navRect
+        displayRect put data.displayRect
+    }
 }
 
 /** Data saved for each window pushed into the stack */
 class WindowStackData {
     lateinit var window: Window
-    lateinit var parentLastItemDataBackup: LastItemData
+    val parentLastItemDataBackup = LastItemData()
 
     /** Store size of various stacks for asserting */
     val stackSizesOnBegin = StackSizes()

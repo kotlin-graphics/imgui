@@ -163,7 +163,7 @@ interface widgetsTrees {
             val closeButtonId = getIDWithSeed("#CLOSE", -1, id)
             if (closeButton(closeButtonId, Vec2(buttonX, buttonY)))
                 visible.set(false)
-            g.lastItemData = lastItemBackup
+            g.lastItemData put lastItemBackup
         }
         return isOpen
     }

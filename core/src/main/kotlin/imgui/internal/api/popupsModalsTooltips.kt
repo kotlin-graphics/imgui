@@ -49,7 +49,8 @@ internal interface popupsModalsTooltips {
         val autoFitAxes = (if (size.x == 0f) 1 shl Axis.X else 0x00) or (if (size.y == 0f) 1 shl Axis.Y else 0x00)
         if (size.x <= 0f)   // Arbitrary minimum child size (0.0f causing too many issues)
             size.x = glm.max(contentAvail.x + size.x, 4f)
-        if (size.y <= 0f) size.y = glm.max(contentAvail.y + size.y, 4f)
+        if (size.y <= 0f)
+            size.y = glm.max(contentAvail.y + size.y, 4f)
         setNextWindowSize(size)
 
         // Build up name. If you need to append to a same child from multiple location in the ID stack, use BeginChild(ImGuiID id) with a stable value.
@@ -124,7 +125,7 @@ internal interface popupsModalsTooltips {
     fun closePopupToLevel(remaining: Int, restoreFocusToWindowUnderPopup: Boolean) {
 
         IMGUI_DEBUG_LOG_POPUP("[popup] ClosePopupToLevel($remaining), restore_focus_to_window_under_popup=${restoreFocusToWindowUnderPopup.i}")
-        assert(remaining >= 0 && remaining < g.openPopupStack.size)
+        assert(remaining in g.openPopupStack.indices)
 
         // Trim open popup stack
         val popupWindow = g.openPopupStack[remaining].window

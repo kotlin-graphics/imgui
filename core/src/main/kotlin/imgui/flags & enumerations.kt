@@ -1125,6 +1125,10 @@ enum class DataType(val imguiName: String) {
 
     @JvmField
     val i = ordinal
+
+    companion object {
+        val imguiValues = values().dropLast(4)
+    }
 }
 
 /** A cardinal direction */

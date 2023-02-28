@@ -165,7 +165,7 @@ interface widgetsMenus {
             if (g.navMoveDir == Dir.Left && navMoveRequestButNoResultYet()) {
                 val navWindow = g.navWindow
                 if (navWindow != null && navWindow.rootWindowForNav === window && parentWindow.dc.layoutType == Lt.Vertical) {
-                    closePopupToLevel(g.beginPopupStack.size, true)
+                    closePopupToLevel(g.beginPopupStack.lastIndex, true)
                     navMoveRequestCancel()
                 }
             }
