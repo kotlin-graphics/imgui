@@ -1493,83 +1493,84 @@ object ShowDemoWindowWidgets {
         var f64_v = 90000.01234567890123456789
         var dragClamp = false
         var inputsStep = true
+
+        // DragScalar/InputScalar/SliderScalar functions allow various data types
+        // - signed/unsigned
+        // - 8/16/32/64-bits
+        // - integer/float/double
+        // To avoid polluting the public API with all possible combinations, we use the ImGuiDataType enum
+        // to pass the type, and passing all arguments by pointer.
+        // This is the reason the test code below creates local variables to hold "zero" "one" etc. for each type.
+        // In practice, if you frequently use a given type that is not covered by the normal API entry points,
+        // you can wrap it yourself inside a 1 line function which can take typed argument as value instead of void*,
+        // and then pass their address to the generic function. For example:
+        //   bool MySliderU64(const char *label, u64* value, u64 min = 0, u64 max = 0, const char* format = "%lld")
+        //   {
+        //      return SliderScalar(label, ImGuiDataType_U64, value, &min, &max, format);
+        //   }
+
+        // Setup limits (as helper variables so we can take their address, as explained above)
+        // Note: SliderScalar() functions have a maximum usable range of half the natural type maximum, hence the /2.
+
+        // @formatter:off
+        var s8_zero: Byte = 0.b
+        var s8_one: Byte = 1.b
+        var s8_fifty: Byte = 50.b
+        var s8_min: Byte = (-128).b
+        var s8_max: Byte = 127.b
+        var u8_zero: Ubyte = Ubyte(0)
+        var u8_one: Ubyte = Ubyte(1)
+        var u8_fifty: Ubyte = Ubyte(50)
+        var u8_min: Ubyte = Ubyte(0)
+        var u8_max: Ubyte = Ubyte(255)
+        var s16_zero: Short = 0.s
+        var s16_one: Short = 1.s
+        var s16_fifty: Short = 50.s
+        var s16_min: Short = (-32768).s
+        var s16_max: Short = 32767.s
+        var u16_zero: Ushort = Ushort(0)
+        var u16_one = Ushort(1)
+        var u16_fifty: Ushort = Ushort(50)
+        var u16_min: Ushort = Ushort(0)
+        var u16_max: Ushort = Ushort(65535)
+        var s32_zero: Int = 0
+        var s32_one: Int = 1
+        var s32_fifty: Int = 50
+        var s32_min: Int = Int.MIN_VALUE / 2
+        var s32_max: Int = Int.MAX_VALUE / 2
+        var s32_hi_a = Int.MAX_VALUE / 2 - 100
+        var s32_hi_b = Int.MAX_VALUE / 2
+        var u32_zero: Uint = Uint(0)
+        var u32_one: Uint = Uint(1)
+        var u32_fifty: Uint = Uint(50)
+        var u32_min: Uint = Uint(0)
+        var u32_max: Uint = Uint.MAX / 2
+        var u32_hi_a = Uint.MAX / 2 - 100
+        var u32_hi_b: Uint = Uint.MAX / 2
+        var s64_zero: Long = 0L
+        var s64_one: Long = 1L
+        var s64_fifty: Long = 50L
+        var s64_min: Long = Long.MIN_VALUE / 2
+        var s64_max: Long = Long.MAX_VALUE / 2
+        var s64_hi_a: Long = Long.MAX_VALUE / 2 - 100
+        var s64_hi_b: Long = Long.MAX_VALUE / 2
+        var u64_zero: Ulong = Ulong(0)
+        var u64_one: Ulong = Ulong(1)
+        var u64_fifty: Ulong = Ulong(50)
+        var u64_min: Ulong = Ulong(0)
+        var u64_max: Ulong = Ulong.MAX / 2
+        var u64_hi_a: Ulong = Ulong.MAX / 2 - 100
+        var u64_hi_b: Ulong = Ulong.MAX / 2
+        var f32_zero: Float = 0f
+        var f32_one: Float = 1f
+        var f32_lo_a: Float = -10_000_000_000f
+        var f32_hi_a: Float = +10_000_000_000f
+        var f64_zero: Double = 0.0
+        var f64_one: Double = 1.0
+        var f64_lo_a: Double = -1_000_000_000_000_000.0
+        var f64_hi_a: Double = +1_000_000_000_000_000.0
         operator fun invoke() {
             treeNode("Data Types") {
-                // DragScalar/InputScalar/SliderScalar functions allow various data types
-                // - signed/unsigned
-                // - 8/16/32/64-bits
-                // - integer/float/double
-                // To avoid polluting the public API with all possible combinations, we use the ImGuiDataType enum
-                // to pass the type, and passing all arguments by pointer.
-                // This is the reason the test code below creates local variables to hold "zero" "one" etc. for each type.
-                // In practice, if you frequently use a given type that is not covered by the normal API entry points,
-                // you can wrap it yourself inside a 1 line function which can take typed argument as value instead of void*,
-                // and then pass their address to the generic function. For example:
-                //   bool MySliderU64(const char *label, u64* value, u64 min = 0, u64 max = 0, const char* format = "%lld")
-                //   {
-                //      return SliderScalar(label, ImGuiDataType_U64, value, &min, &max, format);
-                //   }
-
-                // Setup limits (as helper variables so we can take their address, as explained above)
-                // Note: SliderScalar() functions have a maximum usable range of half the natural type maximum, hence the /2.
-
-                // @formatter:off
-                val s8_zero: Byte = 0.b
-                val s8_one: Byte = 1.b
-                val s8_fifty: Byte = 50.b
-                val s8_min: Byte = (-128).b
-                val s8_max: Byte = 127.b
-                val u8_zero: Ubyte = Ubyte(0)
-                val u8_one: Ubyte = Ubyte(1)
-                val u8_fifty: Ubyte = Ubyte(50)
-                val u8_min: Ubyte = Ubyte(0)
-                val u8_max: Ubyte = Ubyte(255)
-                val s16_zero: Short = 0.s
-                val s16_one: Short = 1.s
-                val s16_fifty: Short = 50.s
-                val s16_min: Short = (-32768).s
-                val s16_max: Short = 32767.s
-                val u16_zero: Ushort = Ushort(0)
-                val u16_one = Ushort(1)
-                val u16_fifty: Ushort = Ushort(50)
-                val u16_min: Ushort = Ushort(0)
-                val u16_max: Ushort = Ushort(65535)
-                val s32_zero: Int = 0
-                val s32_one: Int = 1
-                val s32_fifty: Int = 50
-                val s32_min: Int = Int.MIN_VALUE / 2
-                val s32_max: Int = Int.MAX_VALUE / 2
-                val s32_hi_a = Int.MAX_VALUE / 2 - 100
-                val s32_hi_b = Int.MAX_VALUE / 2
-                val u32_zero: Uint = Uint(0)
-                val u32_one: Uint = Uint(1)
-                val u32_fifty: Uint = Uint(50)
-                val u32_min: Uint = Uint(0)
-                val u32_max: Uint = Uint.MAX / 2
-                val u32_hi_a = Uint.MAX / 2 - 100
-                val u32_hi_b: Uint = Uint.MAX / 2
-                val s64_zero: Long = 0L
-                val s64_one: Long = 1L
-                val s64_fifty: Long = 50L
-                val s64_min: Long = Long.MIN_VALUE / 2
-                val s64_max: Long = Long.MAX_VALUE / 2
-                val s64_hi_a: Long = Long.MAX_VALUE / 2 - 100
-                val s64_hi_b: Long = Long.MAX_VALUE / 2
-                val u64_zero: Ulong = Ulong(0)
-                val u64_one: Ulong = Ulong(1)
-                val u64_fifty: Ulong = Ulong(50)
-                val u64_min: Ulong = Ulong(0)
-                val u64_max: Ulong = Ulong.MAX / 2
-                val u64_hi_a: Ulong = Ulong.MAX / 2 - 100
-                val u64_hi_b: Ulong = Ulong.MAX / 2
-                val f32_zero: Float = 0f
-                val f32_one: Float = 1f
-                val f32_lo_a: Float = -10_000_000_000f
-                val f32_hi_a: Float = +10_000_000_000f
-                val f64_zero: Double = 0.0
-                val f64_one: Double = 1.0
-                val f64_lo_a: Double = -1_000_000_000_000_000.0
-                val f64_hi_a: Double = +1_000_000_000_000_000.0
 
                 val dragSpeed = 0.2f
                 text("Drags:")
@@ -1577,52 +1578,52 @@ object ShowDemoWindowWidgets {
                 sameLine(); helpMarker(
                 """As with every widget in dear imgui, we never modify values unless there is a user interaction.
                 You can override the clamping limits by using CTRL+Click to input a value.""".trimIndent())
-                dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, s8_zero.takeIf { dragClamp }, s8_fifty.takeIf { dragClamp })
-                dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, u8_zero.takeIf { dragClamp }, u8_fifty.takeIf { dragClamp }, "%d ms")
-                dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, s16_zero.takeIf { dragClamp }, s16_fifty.takeIf { dragClamp })
-                dragScalar("drag u16", DataType.Ushort, ::u16_v, dragSpeed, u16_zero.takeIf { dragClamp }, u16_fifty.takeIf { dragClamp }, "%d ms")
-                dragScalar("drag s32", DataType.Int, ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp })
-                dragScalar("drag s32 hex", DataType.Int, ::s32_v, dragSpeed, s32_zero.takeIf { dragClamp }, s32_fifty.takeIf { dragClamp }, "0x%08X")
-                dragScalar("drag u32", DataType.Uint, ::u32_v, dragSpeed, u32_zero.takeIf { dragClamp }, u32_fifty.takeIf { dragClamp }, "%d ms")
-                dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, s64_zero.takeIf { dragClamp }, s64_fifty.takeIf { dragClamp })
-                dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, u64_zero.takeIf { dragClamp }, u64_fifty.takeIf { dragClamp })
-                dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f")
-                dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, f32_zero, f32_one, "%f", SliderFlag.Logarithmic.i)
-                dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, f64_zero, null, "%.10f grams")
-                dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, f64_zero, f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic.i)
+                dragScalar("drag s8", DataType.Byte, ::s8_v, dragSpeed, ::s8_zero.takeIf { dragClamp }, ::s8_fifty.takeIf { dragClamp })
+                dragScalar("drag u8", DataType.Ubyte, ::u8_v, dragSpeed, ::u8_zero.takeIf { dragClamp }, ::u8_fifty.takeIf { dragClamp }, "%d ms")
+                dragScalar("drag s16", DataType.Short, ::s16_v, dragSpeed, ::s16_zero.takeIf { dragClamp }, ::s16_fifty.takeIf { dragClamp })
+                dragScalar("drag u16", DataType.Ushort, ::u16_v, dragSpeed, ::u16_zero.takeIf { dragClamp }, ::u16_fifty.takeIf { dragClamp }, "%d ms")
+                dragScalar("drag s32", DataType.Int, ::s32_v, dragSpeed, ::s32_zero.takeIf { dragClamp }, ::s32_fifty.takeIf { dragClamp })
+                dragScalar("drag s32 hex", DataType.Int, ::s32_v, dragSpeed, ::s32_zero.takeIf { dragClamp }, ::s32_fifty.takeIf { dragClamp }, "0x%08X")
+                dragScalar("drag u32", DataType.Uint, ::u32_v, dragSpeed, ::u32_zero.takeIf { dragClamp }, ::u32_fifty.takeIf { dragClamp }, "%d ms")
+                dragScalar("drag s64", DataType.Long, ::s64_v, dragSpeed, ::s64_zero.takeIf { dragClamp }, ::s64_fifty.takeIf { dragClamp })
+                dragScalar("drag u64", DataType.Ulong, ::u64_v, dragSpeed, ::u64_zero.takeIf { dragClamp }, ::u64_fifty.takeIf { dragClamp })
+                dragScalar("drag float", DataType.Float, ::f32_v, 0.005f, ::f32_zero, ::f32_one, "%f")
+                dragScalar("drag float log", DataType.Float, ::f32_v, 0.005f, ::f32_zero, ::f32_one, "%f", SliderFlag.Logarithmic.i)
+                dragScalar("drag double", DataType.Double, ::f64_v, 0.0005f, ::f64_zero, null, "%.10f grams")
+                dragScalar("drag double log", DataType.Double, ::f64_v, 0.0005f, ::f64_zero, ::f64_one, "0 < %.10f < 1", SliderFlag.Logarithmic.i)
 
                 text("Sliders")
-                sliderScalar("slider s8 full", DataType.Byte, ::s8_v, s8_min, s8_max, "%d")
-                sliderScalar("slider u8 full", DataType.Ubyte, ::u8_v, u8_min, u8_max, "%d")
-                sliderScalar("slider s16 full", DataType.Short, ::s16_v, s16_min, s16_max, "%d")
-                sliderScalar("slider u16 full", DataType.Ushort, ::u16_v, u16_min, u16_max, "%d")
-                sliderScalar("slider s32 low", DataType.Int, ::s32_v, s32_zero, s32_fifty, "%d")
-                sliderScalar("slider s32 high", DataType.Int, ::s32_v, s32_hi_a, s32_hi_b, "%d")
-                sliderScalar("slider s32 full", DataType.Int, ::s32_v, s32_min, s32_max, "%d")
-                sliderScalar("slider s32 hex", DataType.Int, ::s32_v, s32_zero, s32_fifty, "0x%04X")
-                sliderScalar("slider u32 low", DataType.Uint, ::u32_v, u32_zero, u32_fifty, "%d")
-                sliderScalar("slider u32 high", DataType.Uint, ::u32_v, u32_hi_a, u32_hi_b, "%d")
-                sliderScalar("slider u32 full", DataType.Uint, ::u32_v, u32_min, u32_max, "%d")
-                sliderScalar("slider s64 low", DataType.Long, ::s64_v, s64_zero, s64_fifty, "%d")
-                sliderScalar("slider s64 high", DataType.Long, ::s64_v, s64_hi_a, s64_hi_b, "%d")
-                sliderScalar("slider s64 full", DataType.Long, ::s64_v, s64_min, s64_max, "%d")
-                sliderScalar("slider u64 low", DataType.Ulong, ::u64_v, u64_zero, u64_fifty, "%d ms")
-                sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, u64_hi_a, u64_hi_b, "%d ms")
-                sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, u64_min, u64_max, "%d ms")
-                sliderScalar("slider float low", DataType.Float, ::f32_v, f32_zero, f32_one)
-                sliderScalar("slider float low log", DataType.Float, ::f32_v, f32_zero, f32_one, "%.10f", SliderFlag.Logarithmic.i)
-                sliderScalar("slider float high", DataType.Float, ::f32_v, f32_lo_a, f32_hi_a, "%e")
-                sliderScalar("slider double low", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f grams")
-                sliderScalar("slider double low log", DataType.Double, ::f64_v, f64_zero, f64_one, "%.10f", SliderFlag.Logarithmic.i)
-                sliderScalar("slider double high", DataType.Double, ::f64_v, f64_lo_a, f64_hi_a, "%e grams")
+                sliderScalar("slider s8 full", DataType.Byte, ::s8_v, ::s8_min, ::s8_max, "%d")
+                sliderScalar("slider u8 full", DataType.Ubyte, ::u8_v, ::u8_min, ::u8_max, "%d")
+                sliderScalar("slider s16 full", DataType.Short, ::s16_v, ::s16_min, ::s16_max, "%d")
+                sliderScalar("slider u16 full", DataType.Ushort, ::u16_v, ::u16_min, ::u16_max, "%d")
+                sliderScalar("slider s32 low", DataType.Int, ::s32_v, ::s32_zero, ::s32_fifty, "%d")
+                sliderScalar("slider s32 high", DataType.Int, ::s32_v, ::s32_hi_a, ::s32_hi_b, "%d")
+                sliderScalar("slider s32 full", DataType.Int, ::s32_v, ::s32_min, ::s32_max, "%d")
+                sliderScalar("slider s32 hex", DataType.Int, ::s32_v, ::s32_zero, ::s32_fifty, "0x%04X")
+                sliderScalar("slider u32 low", DataType.Uint, ::u32_v, ::u32_zero, ::u32_fifty, "%d")
+                sliderScalar("slider u32 high", DataType.Uint, ::u32_v, ::u32_hi_a, ::u32_hi_b, "%d")
+                sliderScalar("slider u32 full", DataType.Uint, ::u32_v, ::u32_min, ::u32_max, "%d")
+                sliderScalar("slider s64 low", DataType.Long, ::s64_v, ::s64_zero, ::s64_fifty, "%d")
+                sliderScalar("slider s64 high", DataType.Long, ::s64_v, ::s64_hi_a, ::s64_hi_b, "%d")
+                sliderScalar("slider s64 full", DataType.Long, ::s64_v, ::s64_min, ::s64_max, "%d")
+                sliderScalar("slider u64 low", DataType.Ulong, ::u64_v, ::u64_zero, ::u64_fifty, "%d ms")
+                sliderScalar("slider u64 high", DataType.Ulong, ::u64_v, ::u64_hi_a, ::u64_hi_b, "%d ms")
+                sliderScalar("slider u64 full", DataType.Ulong, ::u64_v, ::u64_min, ::u64_max, "%d ms")
+                sliderScalar("slider float low", DataType.Float, ::f32_v, ::f32_zero, ::f32_one)
+                sliderScalar("slider float low log", DataType.Float, ::f32_v, ::f32_zero, ::f32_one, "%.10f", SliderFlag.Logarithmic.i)
+                sliderScalar("slider float high", DataType.Float, ::f32_v, ::f32_lo_a, ::f32_hi_a, "%e")
+                sliderScalar("slider double low", DataType.Double, ::f64_v, ::f64_zero, ::f64_one, "%.10f grams")
+                sliderScalar("slider double low log", DataType.Double, ::f64_v, ::f64_zero, ::f64_one, "%.10f", SliderFlag.Logarithmic.i)
+                sliderScalar("slider double high", DataType.Double, ::f64_v, ::f64_lo_a, ::f64_hi_a, "%e grams")
 
                 text("Sliders (reverse)")
-                sliderScalar("slider s8 reverse", DataType.Byte, ::s8_v, s8_max, s8_min, "%d")
-                sliderScalar("slider u8 reverse", DataType.Ubyte, ::u8_v, u8_max, u8_min, "%d") // [JVM] %u -> %d
-                sliderScalar("slider s32 reverse", DataType.Int, ::s32_v, s32_fifty, s32_zero, "%d")
-                sliderScalar("slider u32 reverse", DataType.Uint, ::u32_v, u32_fifty, u32_zero, "%s") // [JVM] %u -> %d
-                sliderScalar("slider s64 reverse", DataType.Long, ::s64_v, s64_fifty, s64_zero, "%d") // [JVM] %I64d -> %d
-                sliderScalar("slider u64 reverse", DataType.Ulong, ::u64_v, u64_fifty, u64_zero, "%d ms") // [JVM] %I64u -> %d
+                sliderScalar("slider s8 reverse", DataType.Byte, ::s8_v, ::s8_max, ::s8_min, "%d")
+                sliderScalar("slider u8 reverse", DataType.Ubyte, ::u8_v, ::u8_max, ::u8_min, "%d") // [JVM] %u -> %d
+                sliderScalar("slider s32 reverse", DataType.Int, ::s32_v, ::s32_fifty, ::s32_zero, "%d")
+                sliderScalar("slider u32 reverse", DataType.Uint, ::u32_v, ::u32_fifty, ::u32_zero, "%s") // [JVM] %u -> %d
+                sliderScalar("slider s64 reverse", DataType.Long, ::s64_v, ::s64_fifty, ::s64_zero, "%d") // [JVM] %I64d -> %d
+                sliderScalar("slider u64 reverse", DataType.Ulong, ::u64_v, ::u64_fifty, ::u64_zero, "%d ms") // [JVM] %I64u -> %d
 
                 text("Inputs")
                 checkbox("Show step buttons", ::inputsStep)
