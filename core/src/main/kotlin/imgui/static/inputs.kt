@@ -14,6 +14,7 @@ import imgui.ImGui.ownerData
 import imgui.ImGui.setPos
 import imgui.ImGui.setScrollX
 import imgui.ImGui.setScrollY
+import imgui.ImGui.setSize
 import imgui.ImGui.testOwner
 import imgui.api.g
 import imgui.internal.exponentialMovingAverage
@@ -168,7 +169,7 @@ fun updateMouseWheel() {
         if (window === window.rootWindow) {
             val offset = window.size * (1f - scale) * (io.mousePos - window.pos) / window.size
             window.setPos(window.pos + offset)
-            window.size = floor(window.size * scale)
+            window.setSize( floor(window.size * scale))
             window.sizeFull = floor(window.sizeFull * scale)
         }
         return
