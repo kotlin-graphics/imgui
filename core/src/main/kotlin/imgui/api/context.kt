@@ -26,5 +26,6 @@ val g: Context
 
 /** ~GetCurrentContext/SetCurrentContext */
 lateinit var gImGui: Context
+val gImGuiNullable: Context? get() = if(::gImGui.isInitialized) gImGui else null
 
 
