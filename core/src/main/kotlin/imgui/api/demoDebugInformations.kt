@@ -155,7 +155,6 @@ interface demoDebugInformations {
     fun showDemoWindow(open: KMutableProperty0<Boolean>) {
         // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
         // Most functions would normally just crash if the context is missing.
-        assert(gImGui != null) { "Missing dear imgui context. Refer to examples app!" }
         ExampleApp(open)
     }
 
@@ -998,7 +997,7 @@ interface demoDebugInformations {
             if (tool.stackLevel < tool.results.size)                                  // Only start using fallback below when all queries are done, so during queries we don't flickering ??? markers.
                 return 0.also { buf[0] = 0 }
             if (IMGUI_ENABLE_TEST_ENGINE)
-                testEngine_FindItemDebugLabel(gImGui!!, info.id)?.let { label ->     // Source: ImGuiTestEngine's ItemInfo()
+                testEngine_FindItemDebugLabel(gImGui, info.id)?.let { label ->     // Source: ImGuiTestEngine's ItemInfo()
                     formatString(buf, if (formatForUi) "??? \"%s\"" else "%s", label)
                 }
             return formatString(buf, "???")

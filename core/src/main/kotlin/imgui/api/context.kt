@@ -22,9 +22,9 @@ import imgui.classes.Context
  *     - Future development aim to make this context pointer explicit to all calls. Also read https://github.com/ocornut/imgui/issues/586
  *     - If you need a finite number of contexts, you may compile and use multiple instances of the ImGui code from different namespace.    */
 val g: Context
-    get() = gImGui!!
+    get() = gImGui
 
 /** ~GetCurrentContext/SetCurrentContext */
-var gImGui: Context? = null
+lateinit var gImGui: Context
 
 

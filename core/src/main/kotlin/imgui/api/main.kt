@@ -55,18 +55,13 @@ interface main {
 
     /** access the IO structure (mouse/keyboard/gamepad inputs, time, various configuration options/flags) */
     val io: IO
-        get() = gImGui?.io
-            ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
+        get() = gImGui.io
 
     /** access the Style structure (colors, sizes). Always use PushStyleCol(), PushStyleVar() to modify style mid-frame! */
     val style: Style
-        get() = gImGui?.style
-            ?: throw Error("No current context. Did you call ::Context() or Context::setCurrent()?")
+        get() = gImGui.style
 
     fun newFrame() {
-
-        assert(gImGui != null) { "No current context. Did you call ImGui::CreateContext() and ImGui::SetCurrentContext()?" }
-
         // Remove pending delete hooks before frame start.
         // This deferred removal avoid issues of removal while iterating the hook vector
         for (n in g.hooks.indices.reversed())
