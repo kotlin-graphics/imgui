@@ -1,7 +1,6 @@
 package imgui.static
 
 import gli_.has
-import glm_.L
 import glm_.i
 import glm_.max
 import glm_.min
@@ -22,16 +21,10 @@ import imgui.internal.floor
 import imgui.internal.sections.DrawListFlag
 import imgui.internal.sections.SettingsHandler
 import imgui.internal.sections.WindowSettings
-import imgui.hasnt
-import imgui.internal.sections.hasnt
-import imgui.windowsIme.*
 import kool.rem
-import org.lwjgl.system.MemoryUtil
-import uno.glfw.HWND
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
-import java.util.ArrayList
 import imgui.WindowFlag as Wf
 
 

@@ -3,15 +3,14 @@ package imgui.internal.api
 import glm_.has
 import glm_.min
 import glm_.vec2.Vec2
-import imgui.ImGui
-import imgui.WindowFlag
+import imgui.*
 import imgui.api.g
-import imgui.has
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.floor
 import imgui.internal.isPowerOfTwo
-import imgui.internal.sections.*
+import imgui.internal.sections.ScrollFlag
+import imgui.internal.sections.ScrollFlags
 import imgui.static.calcNextScrollFromScrollTargetAndClamp
 
 // Scrolling

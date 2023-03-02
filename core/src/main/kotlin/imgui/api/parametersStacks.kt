@@ -3,7 +3,6 @@ package imgui.api
 import glm_.f
 import glm_.max
 import glm_.vec2.Vec2
-import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
 import imgui.*
 import imgui.ImGui.contentRegionMaxAbs
@@ -13,15 +12,10 @@ import imgui.ImGui.popItemFlag
 import imgui.ImGui.pushItemFlag
 import imgui.ImGui.style
 import imgui.font.Font
-import imgui.internal.*
 import imgui.internal.classes.ColorMod
 import imgui.internal.classes.StyleMod
+import imgui.internal.floor
 import imgui.internal.sections.NextItemDataFlag
-import imgui.has
-import imgui.internal.sections.has
-import imgui.internal.sections.or
-import imgui.internal.sections.wo
-import imgui.wo
 import imgui.internal.sections.ItemFlag as If
 
 // Parameters stacks (shared)

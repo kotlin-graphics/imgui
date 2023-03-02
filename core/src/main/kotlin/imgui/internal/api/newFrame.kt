@@ -21,7 +21,6 @@ import imgui.api.g
 import imgui.internal.BitArray
 import imgui.internal.classes.DebugLogFlag
 import imgui.internal.classes.Window
-import imgui.internal.classes.has
 import imgui.internal.sections.IMGUI_DEBUG_LOG_IO
 import imgui.internal.sections.InputEvent
 import imgui.static.findHoveredWindow

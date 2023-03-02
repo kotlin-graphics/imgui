@@ -66,14 +66,13 @@ import imgui.ImGui.style
 import imgui.ImGui.text
 import imgui.ImGui.textEx
 import imgui.classes.DrawList
+import imgui.has
 import imgui.internal.*
 import imgui.internal.classes.Rect
 import imgui.internal.classes.Window
 import imgui.internal.sections.DrawFlag
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
-import imgui.has
-import imgui.internal.sections.has
 import imgui.ColorEditFlag as Cef
 import imgui.InputTextFlag as Itf
 

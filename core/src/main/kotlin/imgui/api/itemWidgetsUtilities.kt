@@ -2,14 +2,14 @@ package imgui.api
 
 import glm_.hasnt
 import glm_.vec2.Vec2
-import imgui.*
+import imgui.ID
 import imgui.ImGui.isMouseClicked
-import imgui.internal.sections.ItemFlag
-import imgui.internal.sections.ItemStatusFlag
+import imgui.MouseButton
 import imgui.has
 import imgui.hasnt
-import imgui.internal.sections.has
-import imgui.internal.sections.hasnt
+import imgui.internal.sections.ItemFlag
+import imgui.internal.sections.ItemStatusFlag
+import imgui.or
 import imgui.HoveredFlag as Hf
 
 // Item/Widgets Utilities and Query Functions

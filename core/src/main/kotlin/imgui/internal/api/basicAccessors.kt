@@ -6,10 +6,10 @@ import imgui.ImGui.debugHookIdInfo
 import imgui.ImGui.rectAbsToRel
 import imgui.ImGui.setNavWindow
 import imgui.api.g
+import imgui.div
 import imgui.internal.classes.Window
 import imgui.internal.hashStr
 import imgui.internal.sections.*
-import imgui.static.navUpdateAnyRequestFlag
 
 // Basic Accessors
 internal interface basicAccessors {
