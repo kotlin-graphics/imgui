@@ -444,7 +444,7 @@ class IO(sharedFontAtlas: FontAtlas? = null) {
     //------------------------------------------------------------------
 
     /** Mouse position, in pixels. Set to ImVec2(-FLT_MAX, -FLT_MAX) if mouse is unavailable (on another screen, etc.) */
-    var mousePos = Vec2(-Float.MAX_VALUE)
+    val mousePos = Vec2(-Float.MAX_VALUE)
 
     /** Mouse buttons: 0=left, 1=right, 2=middle + extras (ImGuiMouseButton_COUNT == 5). Dear ImGui mostly uses left
      *  and right buttons. Other buttons allow us to track if the mouse is being used by your application + available

@@ -1,7 +1,6 @@
 package imgui.internal
 
 import glm_.*
-import glm_.vec1.Vec1i
 import glm_.vec2.Vec2
 import glm_.vec2.Vec2i
 import glm_.vec4.Vec4
@@ -12,6 +11,7 @@ import kool.rem
 import uno.kotlin.NUL
 import unsigned.toBigInt
 import unsigned.toUInt
+import unsigned.ushr
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -482,22 +482,22 @@ private val shifte = intArrayOf(0, 6, 4, 2, 0)
  *  @return [JVM] [char: Int, bytes: Int]
  *
  *  ~ImTextCharFromUtf8 */
-fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = text.strlen()): Pair<Int, Int> {
+fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = -1): Pair<Int, Int> {
 
     var end = textEnd
 
-    val len = lengths[text[begin].i ushr 3]
+    val len = lengths[(text[begin] ushr 3).i]
     var wanted = len + (len == 0).i
 
     if (textEnd == -1)
-        end = len + if (len == 0) 1 else 0 // Max length, nulls will be taken into account.
+        end = begin + wanted // Max length, nulls will be taken into account.
 
     // Copy at most 'len' bytes, stop copying at 0 or past in_text_end.
     val s = ByteArray(4)
     s[0] = if (begin + 0 < end) text[begin + 0] else 0
-    s[1] = if (s[0] != 0.b && begin + 1 < end) text[begin + 1] else 0
-    s[2] = if (s[1] != 0.b && begin + 2 < end) text[begin + 2] else 0
-    s[3] = if (s[2] != 0.b && begin + 3 < end) text[begin + 3] else 0
+    s[1] = if (begin + 1 < end) text[begin + 1] else 0
+    s[2] = if (begin + 2 < end) text[begin + 2] else 0
+    s[3] = if (begin + 3 < end) text[begin + 3] else 0
 
     // Assume a four-byte character and load four bytes. Unused bits are shifted out.
     var outChar = (s[0].i and masks[len]) shl 18
@@ -528,19 +528,20 @@ fun textCharFromUtf8(text: ByteArray, begin: Int = 0, textEnd: Int = text.strlen
 }
 
 /** return input UTF-8 bytes count */
-fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = text.size, textRemaining: Vec1i? = null): Int {
-    var b = 0
-    var t = 0
-    while (b < buf.lastIndex && t < textEnd && text[t] != 0.b) {
-        val (c, bytes) = textCharFromUtf8(text, t, textEnd)
-        t += bytes
-        if (c == 0)
+fun textStrFromUtf8(buf: CharArray, text: ByteArray, textEnd: Int = -1, textRemaining: KMutableProperty0<Int>? = null): Int {
+    var pBuf = 0
+    var pText = 0
+    while (pBuf < buf.size && (textEnd == -1 || pText < textEnd) && pText < text.size && text[pText] != 0.b) {
+        val (code, bytes) = textCharFromUtf8(text, pText, textEnd)
+        pText += bytes
+        if (code == 0)
             break
-        buf[b++] = c.c
+        buf[pBuf++] = code.c
     }
-    if (b < buf.size) buf[b] = NUL
-    textRemaining?.put(t)
-    return b
+    if (pBuf < buf.size)
+        buf[pBuf] = NUL
+    textRemaining?.set(pText)
+    return pBuf
 }
 
 /** ~ImTextStrFromUtf8 */

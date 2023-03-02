@@ -94,7 +94,7 @@ internal interface inputText {
         if (window.skipItems)
             return false
 
-        assert(buf.isNotEmpty())
+//        assert(buf.isNotEmpty())
         assert(!(flags has Itf.CallbackHistory && flags has Itf._Multiline)) { "Can't use both together (they both use up/down keys)" }
         assert(!(flags has Itf.CallbackCompletion && flags has Itf.AllowTabInput)) { "Can't use both together (they both use tab key)" }
 
@@ -122,7 +122,7 @@ internal interface inputText {
 
         var drawWindow = window
         val innerSize = Vec2(frameSize)
-        val bufEnd = Vec1i()
+        var bufEnd = 0
         val itemStatusFlags: ItemStatusFlags
         lateinit var itemDataBackup: LastItemData
         if (isMultiline) {
@@ -213,8 +213,8 @@ internal interface inputText {
             else if (state.textW.size > buf.size)
                 state.textW[buf.size] = NUL
             state.textAIsValid = false // TextA is not valid yet (we will display buf until then)
-            state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd)
-            state.curLenA = bufEnd[0] // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
+            state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEnd.mutableProperty { bufEnd = it })
+            state.curLenA = bufEnd // We can't get the result from ImStrncpy() above because it is not UTF-8 aware. Here we'll cut off malformed UTF-8.
 
             if (recycleState)
             // Recycle existing cursor/selection/undo stack but clamp position
@@ -282,8 +282,8 @@ internal interface inputText {
                 state.textW = CharArray(buf.size)
             else if (state.textW.size > buf.size)
                 state.textW[buf.size] = NUL
-            state.curLenW = textStrFromUtf8(state.textW, buf, textRemaining = bufEnd(0))
-            state.curLenA = bufEnd.x
+            state.curLenW = textStrFromUtf8(state.textW, buf, -1, bufEnd.mutableProperty { bufEnd = it })
+            state.curLenA = bufEnd
             state.cursorClamp()
             renderSelection = renderSelection && state.hasSelection
         }
@@ -340,7 +340,7 @@ internal interface inputText {
                     // Double-click: Select word
                     // We always use the "Mac" word advance for double-click select vs CTRL+Right which use the platform dependent variant:
                     // FIXME: There are likely many ways to improve this behavior, but there's no "right" behavior (depends on use-case, software, OS)
-                    val isBol = state.stb.cursor == 0 || state.getChar(state.stb.cursor - 1) == '\n'
+                    val isBol = state.stb.cursor == 0 || state getChar state.stb.cursor - 1 == '\n'
                     if (state.hasSelection || !isBol)
                         state.onKeyPressed(K.WORDLEFT)
                     //state->OnKeyPressed(STB_TEXTEDIT_K_WORDRIGHT | STB_TEXTEDIT_K_SHIFT);
@@ -351,7 +351,7 @@ internal interface inputText {
                     state.clamp()
                 } else {
                     // Triple-click: Select line
-                    val isEol = state.getChar(state.stb.cursor) == '\n'
+                    val isEol = state getChar state.stb.cursor == '\n'
                     state.onKeyPressed(K.LINESTART)
                     state.onKeyPressed(K.LINEEND or K.SHIFT)
                     state.onKeyPressed(K.RIGHT or K.SHIFT)

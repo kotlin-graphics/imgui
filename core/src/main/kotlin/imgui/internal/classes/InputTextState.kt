@@ -130,7 +130,7 @@ class InputTextState(
 
     val stringLen: Int get() = curLenW
 
-    fun getChar(idx: Int): Char = textW[idx]
+    infix fun getChar(idx: Int): Char = textW[idx]
     fun getWidth(lineStartIdx: Int, charIdx: Int): Float = when (val c = textW[lineStartIdx + charIdx]) {
         '\n' -> GETWIDTH_NEWLINE
         else -> {

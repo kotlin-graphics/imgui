@@ -175,7 +175,7 @@ class DrawList(sharedData: DrawListSharedData?) {
      * (== upper-left + size)   */
     fun addRect(pMin: Vec2, pMax: Vec2, col: Int, rounding: Float = 0f, flags: DrawFlags = 0, thickness: Float = 1f) {
         if (col hasnt COL32_A_MASK) return
-        if (flags has DrawListFlag.AntiAliasedLines)
+        if (this.flags has DrawListFlag.AntiAliasedLines)
             pathRect(pMin + 0.5f, pMax - 0.5f, rounding, flags)
         else    // Better looking lower-right corner and rounded non-AA shapes.
             pathRect(pMin + 0.5f, pMax - 0.49f, rounding, flags)
@@ -369,7 +369,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         val count = if (closed) pointsCount else points.lastIndex // The number of line segments we need to draw
         val thickLine = thickness > _fringeScale
 
-        if (flags has DrawListFlag.AntiAliasedLines) {
+        if (this.flags has DrawListFlag.AntiAliasedLines) {
             // Anti-aliased stroke
             val AA_SIZE = _fringeScale
             val colTrans = col wo COL32_A_MASK
@@ -383,7 +383,7 @@ class DrawList(sharedData: DrawListSharedData?) {
             // - For now, only draw integer-width lines using textures to avoid issues with the way scaling occurs,
             //      could be improved.
             // - If AA_SIZE is not 1.0f we cannot use the texture path.
-            val useTexture = flags has DrawListFlag.AntiAliasedLinesUseTex && integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f && AA_SIZE == 1f
+            val useTexture = this.flags has DrawListFlag.AntiAliasedLinesUseTex && integerThickness < DRAWLIST_TEX_LINES_WIDTH_MAX && fractionalThickness <= 0.00001f && AA_SIZE == 1f
 
             ASSERT_PARANOID(!useTexture || _data.font!!.containerAtlas.flags hasnt FontAtlas.Flag.NoBakedLines.i) { "We should never hit this, because NewFrame() doesn't set ImDrawListFlags_AntiAliasedLinesUseTex unless ImFontAtlasFlags_NoBakedLines is off" }
 

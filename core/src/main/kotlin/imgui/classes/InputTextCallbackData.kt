@@ -104,12 +104,10 @@ class InputTextCallbackData {
             assert(editState.id != 0 && g.activeId == editState.id)
             assert(buf === editState.textA)
             val newBufSize = bufTextLen + glm.clamp(newTextLen * 4, 32, max(256, newTextLen))
-            val new = ByteArray(newBufSize)
-            System.arraycopy(editState.textA, 0, new, 0, editState.textA.size)
-            editState.textA = new
-            buf = editState.textA
-            editState.bufCapacityA = newBufSize
-            bufSize = newBufSize
+            assert(editState.textA.size >= newBufSize)
+//            edit_state->TextA.reserve(new_buf_size + 1);
+            editState.textA.cStr.toByteArray(buf)
+            bufSize = newBufSize; editState.bufCapacityA = newBufSize
         }
 
         if (bufTextLen != pos)

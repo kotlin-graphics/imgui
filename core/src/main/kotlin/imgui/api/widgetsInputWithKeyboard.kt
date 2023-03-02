@@ -61,6 +61,15 @@ interface widgetsInputWithKeyboard {
                   callback: InputTextCallback? = null, userData: Any? = null): Boolean =
         inputText(label, buf.toByteArray(), flags, callback, userData)
 
+    fun inputText(label: String, buf: StringBuilder, flags: InputTextFlags = Itf.None.i,
+                  callback: InputTextCallback? = null, userData: Any? = null): Boolean {
+        val array = buf.toString().toByteArray()
+        return inputText(label, array, flags, callback, userData).also {
+            buf.clear()
+//            buf.append(array.)
+        }
+    }
+
     fun inputText(label: String, buf: ByteArray, flags: InputTextFlags = Itf.None.i,
                   callback: InputTextCallback? = null, userData: Any? = null): Boolean {
         assert(flags hasnt Itf._Multiline) { "call InputTextMultiline()" }

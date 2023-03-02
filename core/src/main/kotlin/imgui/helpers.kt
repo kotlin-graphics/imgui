@@ -189,6 +189,13 @@ fun ByteArray.strlen(begin: Int = 0): Int {
         else len++
     return len
 }
+fun List<Char>.strlen(begin: Int = 0): Int {
+    var len = 0
+    for (i in begin until size)
+        if (get(i) == NUL) break
+        else len++
+    return len
+}
 
 fun String.toByteArray(size: Int): ByteArray = toByteArray().copyInto(ByteArray(size))
 fun String.toUtf8(size: Int) = ByteArray(size).also { textStrToUtf8(it, toCharArray()) }

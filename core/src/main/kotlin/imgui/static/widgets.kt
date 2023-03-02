@@ -13,8 +13,9 @@ import imgui.internal.classes.TabBar
 import imgui.internal.classes.TabItem
 import imgui.internal.isBlankW
 import imgui.internal.sections.InputSource
-import imgui.internal.textCharFromUtf8
 import imgui.internal.textCountCharsFromUtf8
+import imgui.internal.textStrFromUtf8
+import imgui.stb.te
 import uno.kotlin.NUL
 import uno.kotlin.getValue
 import uno.kotlin.isPrintable
@@ -212,40 +213,32 @@ fun inputTextReconcileUndoStateAfterUserCallback(state: InputTextState, newBufA:
     val oldBuf = state.textW
     val oldLength = state.curLenW
     val newLength = textCountCharsFromUtf8(newBufA, newLengthA)
-    TODO()
-    //ImWchar* new_buf = (ImWchar*)(void*)g.TempBuffer.Data;
-    val newBuf = g.tempBuffer
-    //            textStrFromUtf8(newBuf, new_length + 1, new_buf_a, new_buf_a + new_length_a)
+    val newBuf = CharArray(newLength)
+    textStrFromUtf8(newBuf, newBufA, newLengthA)
 
-    var where = 0
-    //            while (where < shorterLength) {
-    //                val (b, _) = textCharFromUtf8(newBuf, where)
-    //                if (oldBuf[where].code != b)
-    //                    break
-    //
-    //                where += 1
-    //            }
+    val shorterLength = oldLength min newLength
+    var firstDiff = 0
+    while (firstDiff < shorterLength)
+        if (oldBuf[firstDiff] != newBuf[firstDiff++])
+            break
+    if (firstDiff == oldLength && firstDiff == newLength)
+        return
 
     var oldLastDiff = oldLength - 1
     var newLastDiff = newLength - 1
-    while (oldLastDiff >= where && newLastDiff >= 0) {
-        val (b, _) = textCharFromUtf8(newBuf, newLastDiff)
-        if (oldBuf[oldLastDiff].code != b)
+    while (oldLastDiff >= firstDiff && newLastDiff >= firstDiff) {
+        if (oldBuf[oldLastDiff] != newBuf[newLastDiff])
             break
-
-        oldLastDiff -= 1
-        newLastDiff -= 1
+        oldLastDiff--; newLastDiff--
     }
 
-    val insertLen = newLastDiff - where + 1
-    val deleteLen = oldLastDiff - where + 1
-
-    if (insertLen > 0 || deleteLen > 0) {
-        val p = state.stb.undoState.createUndo(where, deleteLen, insertLen)
-        if (p != null)
+    val insertLen = newLastDiff - firstDiff + 1
+    val deleteLen = oldLastDiff - firstDiff + 1
+    if (insertLen > 0 || deleteLen > 0)
+        state.stb.undoState.createUndo(firstDiff, deleteLen, insertLen)?.let { p ->
             for (i in 0 until deleteLen)
-                state.stb.undoState.undoChar[p + i] = state.getChar(where + i)
-    }
+                state.stb.undoState.undoChar[p + i] = state getChar (firstDiff + i)
+        }
 }
 
 
