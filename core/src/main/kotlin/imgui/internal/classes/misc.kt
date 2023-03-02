@@ -124,39 +124,22 @@ class LocEntry(val key: LocKey, val text: String)
 
 typealias DebugLogFlags = Int
 
-enum class DebugLogFlag(i: DebugLogFlags? = null) {
-    // Event types
-    None,
-    EventActiveId,
-    EventFocus,
-    EventPopup,
-    EventNav,
-    EventClipper,
-    EventIO,
-    EventMask_(EventActiveId or EventFocus or EventPopup or EventNav or EventClipper or EventIO),
+enum class DebugLogFlag(i: DebugLogFlags? = null) : Flag<DebugLogFlag> {
+  // Event types
+  None,
+  EventActiveId,
+  EventFocus,
+  EventPopup,
+  EventNav,
+  EventClipper,
+  EventIO,
+  EventMask_(EventActiveId or EventFocus or EventPopup or EventNav or EventClipper or EventIO),
 
-    /** Also send output to TTY */
+  /** Also send output to TTY */
     OutputToTTY(1 shl 10);
 
-    val i: DebugLogFlags = i ?: if (ordinal == 0) 0 else 1 shl (ordinal - 1)
-
-    infix fun and(b: DebugLogFlag): DebugLogFlags = i and b.i
-    infix fun and(b: DebugLogFlags): DebugLogFlags = i and b
-    infix fun or(b: DebugLogFlag): DebugLogFlags = i or b.i
-    infix fun or(b: DebugLogFlags): DebugLogFlags = i or b
-    infix fun xor(b: DebugLogFlag): DebugLogFlags = i xor b.i
-    infix fun xor(b: DebugLogFlags): DebugLogFlags = i xor b
-    infix fun wo(b: DebugLogFlags): DebugLogFlags = and(b.inv())
+  override val i: DebugLogFlags = i ?: if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }
-
-infix fun DebugLogFlags.and(b: DebugLogFlag): DebugLogFlags = and(b.i)
-infix fun DebugLogFlags.or(b: DebugLogFlag): DebugLogFlags = or(b.i)
-infix fun DebugLogFlags.xor(b: DebugLogFlag): DebugLogFlags = xor(b.i)
-infix fun DebugLogFlags.has(b: DebugLogFlag): Boolean = and(b.i) != 0
-infix fun DebugLogFlags.hasnt(b: DebugLogFlag): Boolean = and(b.i) == 0
-infix fun DebugLogFlags.wo(b: DebugLogFlag): DebugLogFlags = and(b.i.inv())
-
-
 
 // (+ for upcoming advanced versions of IsKeyPressed()/IsMouseClicked()/SetKeyOwner()/SetItemKeyOwner() that are currently in imgui_internal.h)
 /** -> enum ImGuiInputFlags_         // Flags: for IsKeyPressed(), IsMouseClicked(), SetKeyOwner(), SetItemKeyOwner() etc. */
@@ -164,17 +147,17 @@ typealias InputFlags = Int
 
 /** Flags for extended versions of IsKeyPressed(), IsMouseClicked(), Shortcut(), SetKeyOwner(), SetItemKeyOwner()
  *  Don't mistake with ImGuiInputTextFlags! (for ImGui::InputText() function) */
-enum class InputFlag(val i: InputFlags) {
-    /** Flags for IsKeyPressed(), IsMouseClicked(), Shortcut() */
-    None(0),
+enum class InputFlag(override val i: InputFlags) : Flag<InputFlag> {
+  /** Flags for IsKeyPressed(), IsMouseClicked(), Shortcut() */
+  None(0),
 
-    /** Return true on successive repeats. Default for legacy IsKeyPressed(). NOT Default for legacy IsMouseClicked(). MUST BE == 1. */
-    Repeat(1 shl 0),
+  /** Return true on successive repeats. Default for legacy IsKeyPressed(). NOT Default for legacy IsMouseClicked(). MUST BE == 1. */
+  Repeat(1 shl 0),
 
-    // Repeat rate
-    RepeatRateDefault(1 shl 1),   // Repeat rate: Regular (default)
-    RepeatRateNavMove(1 shl 2),   // Repeat rate: Fast
-    RepeatRateNavTweak(1 shl 3),   // Repeat rate: Faster
+  // Repeat rate
+  RepeatRateDefault(1 shl 1),   // Repeat rate: Regular (default)
+  RepeatRateNavMove(1 shl 2),   // Repeat rate: Fast
+  RepeatRateNavTweak(1 shl 3),   // Repeat rate: Faster
     RepeatRateMask_(RepeatRateDefault or RepeatRateNavMove or RepeatRateNavTweak),
 
 
@@ -230,27 +213,9 @@ enum class InputFlag(val i: InputFlags) {
     // [Internal] Mask of which function support which flags
     SupportedByIsKeyPressed(Repeat or RepeatRateMask_),
     SupportedByShortcut(Repeat or RepeatRateMask_ or RouteMask_ or RouteExtraMask_),
-    SupportedBySetKeyOwner(LockThisFrame or LockUntilRelease),
-    SupportedBySetItemKeyOwner(SupportedBySetKeyOwner or CondMask_);
-
-    infix fun and(b: InputFlag): InputFlags = i and b.i
-    infix fun and(b: InputFlags): InputFlags = i and b
-    infix fun or(b: InputFlag): InputFlags = i or b.i
-    infix fun or(b: InputFlags): InputFlags = i or b
-    infix fun xor(b: InputFlag): InputFlags = i xor b.i
-    infix fun xor(b: InputFlags): InputFlags = i xor b
-    infix fun wo(b: InputFlags): InputFlags = and(b.inv())
+  SupportedBySetKeyOwner(LockThisFrame or LockUntilRelease),
+  SupportedBySetItemKeyOwner(SupportedBySetKeyOwner or CondMask_)
 }
-
-infix fun InputFlags.and(b: InputFlag): InputFlags = and(b.i)
-infix fun InputFlags.or(b: InputFlag): InputFlags = or(b.i)
-infix fun InputFlags.xor(b: InputFlag): InputFlags = xor(b.i)
-infix fun InputFlags.has(b: InputFlag): Boolean = and(b.i) != 0
-infix fun InputFlags.hasnt(b: InputFlag): Boolean = and(b.i) == 0
-infix fun InputFlags.wo(b: InputFlag): InputFlags = and(b.i.inv())
-operator fun InputFlags.minus(flag: InputFlag): InputFlags = wo(flag)
-operator fun InputFlags.div(flag: InputFlag): InputFlags = or(flag)
-
 
 /** Storage for ShowMetricsWindow() and DebugNodeXXX() functions */
 class MetricsConfig {
@@ -549,12 +514,13 @@ class TabItem {
 /** Helper: ImPool<>
  *  Basic keyed storage for contiguous instances, slow/amortized insertion, O(1) indexable, O(Log N) queries by ID over a dense/hot buffer,
  *  Honor constructor/destructor. Add/remove invalidate all pointers. Indexes have the same lifetime as the associated object. */
-inline class PoolIdx(val i: Int) {
-    operator fun inc() = PoolIdx(i + 1)
-    operator fun dec() = PoolIdx(i - 1)
-    operator fun compareTo(other: PoolIdx): Int = i.compareTo(other.i)
-    operator fun compareTo(other: Int): Int = i.compareTo(other.i)
-    operator fun minus(int: Int) = PoolIdx(i - int)
+@JvmInline
+value class PoolIdx(val i: Int) {
+  operator fun inc() = PoolIdx(i + 1)
+  operator fun dec() = PoolIdx(i - 1)
+  operator fun compareTo(other: PoolIdx): Int = i.compareTo(other.i)
+  operator fun compareTo(other: Int): Int = i.compareTo(other.i)
+  operator fun minus(int: Int) = PoolIdx(i - int)
 }
 
 class TabBarPool {

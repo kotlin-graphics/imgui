@@ -1,7 +1,10 @@
 package imgui.internal.api
 
 import imgui.api.g
-import imgui.internal.sections.*
+import imgui.div
+import imgui.has
+import imgui.hasnt
+import imgui.internal.sections.ItemFlag
 
 // Disabling [BETA API]
 // - Disable all user interactions and dim items visuals (applying style.DisabledAlpha over current colors)

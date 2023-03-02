@@ -11,34 +11,18 @@ import imgui.internal.sections.ViewportP
 typealias ViewportFlags = Int
 
 /** Flags stored in ImGuiViewport::Flags, giving indications to the platform backends. */
-enum class ViewportFlag(val i: ViewportFlags) {
-    None(0),
+enum class ViewportFlag(override val i: ViewportFlags) : Flag<ViewportFlag> {
+  None(0),
 
-    /** Represent a Platform Window */
-    IsPlatformWindow(1 shl 0),
+  /** Represent a Platform Window */
+  IsPlatformWindow(1 shl 0),
 
-    /** Represent a Platform Monitor (unused yet) */
-    IsPlatformMonitor(1 shl 1),
+  /** Represent a Platform Monitor (unused yet) */
+  IsPlatformMonitor(1 shl 1),
 
-    /** Platform Window: is created/managed by the application (rather than a dear imgui backend) */
-    OwnedByApp(1 shl 2);
-
-    infix fun and(b: ViewportFlag): ViewportFlags = i and b.i
-    infix fun and(b: ViewportFlags): ViewportFlags = i and b
-    infix fun or(b: ViewportFlag): ViewportFlags = i or b.i
-    infix fun or(b: ViewportFlags): ViewportFlags = i or b
-    infix fun xor(b: ViewportFlag): ViewportFlags = i xor b.i
-    infix fun xor(b: ViewportFlags): ViewportFlags = i xor b
-    infix fun wo(b: ViewportFlag): ViewportFlags = and(b.i.inv())
-    infix fun wo(b: ViewportFlags): ViewportFlags = and(b.inv())
+  /** Platform Window: is created/managed by the application (rather than a dear imgui backend) */
+  OwnedByApp(1 shl 2)
 }
-
-infix fun ViewportFlags.and(b: ViewportFlag): ViewportFlags = and(b.i)
-infix fun ViewportFlags.or(b: ViewportFlag): ViewportFlags = or(b.i)
-infix fun ViewportFlags.xor(b: ViewportFlag): ViewportFlags = xor(b.i)
-infix fun ViewportFlags.has(b: ViewportFlag): Boolean = and(b.i) != 0
-infix fun ViewportFlags.hasnt(b: ViewportFlag): Boolean = and(b.i) == 0
-infix fun ViewportFlags.wo(b: ViewportFlag): ViewportFlags = and(b.i.inv())
 
 // - Currently represents the Platform Window created by the application which is hosting our Dear ImGui windows.
 // - In 'docking' branch with multi-viewport enabled, we extend this concept to have multiple active viewports.

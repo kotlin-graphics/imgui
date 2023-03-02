@@ -9,22 +9,47 @@ import imgui.ImGui.getColorU32
 //-----------------------------------------------------------------------------
 
 
+interface Flag<Self : Flag<Self>> {
+  val i: Int
+
+  infix fun and(b: Self): Int = i and b.i
+  infix fun and(b: Int): Int = i and b
+  infix fun or(b: Self): Int = i or b.i
+  infix fun or(b: Int): Int = i or b
+  infix fun xor(b: Self): Int = i xor b.i
+  infix fun xor(b: Int): Int = i xor b
+  infix fun wo(b: Self): Int = and(b.i.inv())
+  infix fun wo(b: Int): Int = and(b.inv())
+  infix fun has(b: Self): Boolean = and(b.i) != 0
+  infix fun hasnt(b: Self): Boolean = and(b.i) == 0
+}
+
+infix fun Int.and(b: Flag<*>): Int = and(b.i)
+infix fun Int.or(b: Flag<*>): Int = or(b.i)
+infix fun Int.xor(b: Flag<*>): Int = xor(b.i)
+infix fun Int.has(b: Flag<*>): Boolean = and(b.i) != 0
+infix fun Int.hasnt(b: Flag<*>): Boolean = and(b.i) == 0
+infix fun Int.wo(b: Flag<*>): Int = and(b.i.inv())
+operator fun Int.minus(flag: Flag<*>): Int = wo(flag)
+operator fun Int.div(flag: Flag<*>): Int = or(flag)
+
+
 /** Flags for ImGui::Begin()
  *  (Those are per-window flags. There are shared flags in ImGuiIO: io.ConfigWindowsResizeFromEdges and io.ConfigWindowsMoveFromTitleBarOnly) */
 typealias WindowFlags = Int
 
 /** Flags: for Begin(), BeginChild()    */
-enum class WindowFlag(@JvmField val i: WindowFlags) {
+enum class WindowFlag(override val i: WindowFlags) : Flag<WindowFlag> {
 
-    None(0),
+  None(0),
 
-    /** Disable title-bar   */
-    NoTitleBar(1 shl 0),
+  /** Disable title-bar   */
+  NoTitleBar(1 shl 0),
 
-    /** Disable user resizing with the lower-right grip */
-    NoResize(1 shl 1),
+  /** Disable user resizing with the lower-right grip */
+  NoResize(1 shl 1),
 
-    /** Disable user moving the window  */
+  /** Disable user moving the window  */
     NoMove(1 shl 2),
 
     /** Disable scrollbars (window can still scroll with mouse or programmatically)  */
@@ -104,43 +129,25 @@ enum class WindowFlag(@JvmField val i: WindowFlags) {
     /** Don't use! For internal use by BeginPopupModal()    */
     _Modal(1 shl 27),
 
-    /** Don't use! For internal use by BeginMenu()  */
-    _ChildMenu(1 shl 28);
-
-    infix fun and(b: WindowFlag): WindowFlags = i and b.i
-    infix fun and(b: WindowFlags): WindowFlags = i and b
-    infix fun or(b: WindowFlag): WindowFlags = i or b.i
-    infix fun or(b: WindowFlags): WindowFlags = i or b
-    infix fun xor(b: WindowFlag): WindowFlags = i xor b.i
-    infix fun xor(b: WindowFlags): WindowFlags = i xor b
-    infix fun wo(b: WindowFlag): WindowFlags = and(b.i.inv())
-    infix fun wo(b: WindowFlags): WindowFlags = and(b.inv())
+  /** Don't use! For internal use by BeginMenu()  */
+  _ChildMenu(1 shl 28)
 }
-
-infix fun WindowFlags.and(b: WindowFlag): WindowFlags = and(b.i)
-infix fun WindowFlags.or(b: WindowFlag): WindowFlags = or(b.i)
-infix fun WindowFlags.xor(b: WindowFlag): WindowFlags = xor(b.i)
-infix fun WindowFlags.has(b: WindowFlag): Boolean = and(b.i) != 0
-infix fun WindowFlags.hasnt(b: WindowFlag): Boolean = and(b.i) == 0
-infix fun WindowFlags.wo(b: WindowFlag): WindowFlags = and(b.i.inv())
-operator fun WindowFlags.minus(flag: WindowFlag): WindowFlags = wo(flag)
-operator fun WindowFlags.div(flag: WindowFlag): WindowFlags = or(flag)
 
 /** Flags for ImGui::InputText(), InputTextMultiline()
  *  (Those are per-item flags. There are shared flags in ImGuiIO: io.ConfigInputTextCursorBlink and io.ConfigInputTextEnterKeepActive) */
 typealias InputTextFlags = Int
 
-enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flags the others enum
+enum class InputTextFlag(override val i: InputTextFlags) : Flag<InputTextFlag> {
 
-    None(0),
+  None(0),
 
-    /** Allow 0123456789 . + - * /      */
-    CharsDecimal(1 shl 0),
+  /** Allow 0123456789 . + - * /      */
+  CharsDecimal(1 shl 0),
 
-    /** Allow 0123456789ABCDEFabcdef    */
-    CharsHexadecimal(1 shl 1),
+  /** Allow 0123456789ABCDEFabcdef    */
+  CharsHexadecimal(1 shl 1),
 
-    /** Turn a..z into A..Z */
+  /** Turn a..z into A..Z */
     CharsUppercase(1 shl 2),
 
     /** Filter out spaces), tabs    */
@@ -211,43 +218,25 @@ enum class InputTextFlag(@JvmField val i: InputTextFlags) { // TODO Int -> *flag
     /** For internal use by functions using InputText() before reformatting data */
     _NoMarkEdited(1 shl 27),
 
-    /** For internal use by TempInputText(), will skip calling ItemAdd(). Require bounding-box to strictly match. */
-    _MergedItem(1 shl 28);
-
-    infix fun and(b: InputTextFlag): InputTextFlags = i and b.i
-    infix fun and(b: InputTextFlags): InputTextFlags = i and b
-    infix fun or(b: InputTextFlag): InputTextFlags = i or b.i
-    infix fun or(b: InputTextFlags): InputTextFlags = i or b
-    infix fun xor(b: InputTextFlag): InputTextFlags = i xor b.i
-    infix fun xor(b: InputTextFlags): InputTextFlags = i xor b
-    infix fun wo(b: InputTextFlag): InputTextFlags = and(b.i.inv())
-    infix fun wo(b: InputTextFlags): InputTextFlags = and(b.inv())
+  /** For internal use by TempInputText(), will skip calling ItemAdd(). Require bounding-box to strictly match. */
+  _MergedItem(1 shl 28)
 }
-
-infix fun InputTextFlags.and(b: InputTextFlag): InputTextFlags = and(b.i)
-infix fun InputTextFlags.or(b: InputTextFlag): InputTextFlags = or(b.i)
-infix fun InputTextFlags.xor(b: InputTextFlag): InputTextFlags = xor(b.i)
-infix fun InputTextFlags.has(b: InputTextFlag): Boolean = and(b.i) != 0
-infix fun InputTextFlags.hasnt(b: InputTextFlag): Boolean = and(b.i) == 0
-infix fun InputTextFlags.wo(b: InputTextFlag): InputTextFlags = and(b.i.inv())
-operator fun InputTextFlags.minus(flag: InputTextFlag): InputTextFlags = wo(flag)
-operator fun InputTextFlags.div(flag: InputTextFlag): InputTextFlags = or(flag)
 
 
 typealias TreeNodeFlags = Int
 
 /** Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()   */
-enum class TreeNodeFlag(@JvmField val i: TreeNodeFlags) {
+enum class TreeNodeFlag(override val i: TreeNodeFlags) : Flag<TreeNodeFlag> {
 
-    None(0),
+  None(0),
 
-    /** Draw as selected    */
-    Selected(1 shl 0),
+  /** Draw as selected    */
+  Selected(1 shl 0),
 
-    /** Draw frame with background (e.g. for CollapsingHeader)  */
-    Framed(1 shl 1),
+  /** Draw frame with background (e.g. for CollapsingHeader)  */
+  Framed(1 shl 1),
 
-    /** Hit testing to allow subsequent widgets to overlap this one */
+  /** Hit testing to allow subsequent widgets to overlap this one */
     AllowItemOverlap(1 shl 2),
 
     /** Don't do a TreePush() when open (e.g. for CollapsingHeader) ( no extra indent nor pushing on ID stack   */
@@ -289,24 +278,8 @@ enum class TreeNodeFlag(@JvmField val i: TreeNodeFlags) {
 
     // [Internal]
 
-    _ClipLabelForTrailingButton(1 shl 20);
-
-    infix fun and(b: TreeNodeFlag): TreeNodeFlags = i and b.i
-    infix fun and(b: TreeNodeFlags): TreeNodeFlags = i and b
-    infix fun or(b: TreeNodeFlag): TreeNodeFlags = i or b.i
-    infix fun or(b: TreeNodeFlags): TreeNodeFlags = i or b
-    infix fun xor(b: TreeNodeFlag): TreeNodeFlags = i xor b.i
-    infix fun xor(b: TreeNodeFlags): TreeNodeFlags = i xor b
-    infix fun wo(b: TreeNodeFlags): TreeNodeFlags = and(b.inv())
+  _ClipLabelForTrailingButton(1 shl 20)
 }
-
-infix fun TreeNodeFlags.and(b: TreeNodeFlag): TreeNodeFlags = and(b.i)
-infix fun TreeNodeFlags.or(b: TreeNodeFlag): TreeNodeFlags = or(b.i)
-infix fun TreeNodeFlags.xor(b: TreeNodeFlag): TreeNodeFlags = xor(b.i)
-infix fun TreeNodeFlags.has(b: TreeNodeFlag): Boolean = and(b.i) != 0
-infix fun TreeNodeFlags.hasnt(b: TreeNodeFlag): Boolean = and(b.i) == 0
-infix fun TreeNodeFlags.wo(b: TreeNodeFlag): TreeNodeFlags = and(b.i.inv())
-
 
 typealias PopupFlags = Int
 
@@ -318,17 +291,17 @@ typealias PopupFlags = Int
  *    IMPORTANT: because the default parameter is 1 (==ImGuiPopupFlags_MouseButtonRight), if you rely on the default parameter
  *    and want to use another flag, you need to pass in the ImGuiPopupFlags_MouseButtonRight flag explicitly.
  *  - Multiple buttons currently cannot be combined/or-ed in those functions (we could allow it later). */
-enum class PopupFlag(@JvmField val i: PopupFlags) {
+enum class PopupFlag(override val i: PopupFlags) : Flag<PopupFlag> {
 
-    None(0),
+  None(0),
 
-    /** For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left) */
-    MouseButtonLeft(0),
+  /** For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left) */
+  MouseButtonLeft(0),
 
-    /** For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right) */
-    MouseButtonRight(1),
+  /** For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right) */
+  MouseButtonRight(1),
 
-    /** For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle) */
+  /** For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle) */
     MouseButtonMiddle(2),
     MouseButtonMask_(0x1F),
     MouseButtonDefault_(1),
@@ -345,38 +318,23 @@ enum class PopupFlag(@JvmField val i: PopupFlags) {
     /** For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level) */
     AnyPopupLevel(1 shl 8),
     AnyPopup(AnyPopupId or AnyPopupLevel);
-
-    infix fun and(b: PopupFlag): PopupFlags = i and b.i
-    infix fun and(b: PopupFlags): PopupFlags = i and b
-    infix fun or(b: PopupFlag): PopupFlags = i or b.i
-    infix fun or(b: PopupFlags): PopupFlags = i or b
-    infix fun xor(b: PopupFlag): PopupFlags = i xor b.i
-    infix fun xor(b: PopupFlags): PopupFlags = i xor b
-    infix fun wo(b: PopupFlags): PopupFlags = and(b.inv())
 }
-
-infix fun PopupFlags.and(b: PopupFlag): PopupFlags = and(b.i)
-infix fun PopupFlags.or(b: PopupFlag): PopupFlags = or(b.i)
-infix fun PopupFlags.xor(b: PopupFlag): PopupFlags = xor(b.i)
-infix fun PopupFlags.has(b: PopupFlag): Boolean = and(b.i) != 0
-infix fun PopupFlags.hasnt(b: PopupFlag): Boolean = and(b.i) == 0
-infix fun PopupFlags.wo(b: PopupFlag): PopupFlags = and(b.i.inv())
 
 
 typealias SelectableFlags = Int
 
 /** Flags for ImGui::Selectable()   */
-enum class SelectableFlag(@JvmField val i: SelectableFlags) {
+enum class SelectableFlag(override val i: SelectableFlags) : Flag<SelectableFlag> {
 
-    None(0),
+  None(0),
 
-    /** Clicking this doesn't close parent popup window   */
-    DontClosePopups(1 shl 0),
+  /** Clicking this doesn't close parent popup window   */
+  DontClosePopups(1 shl 0),
 
-    /** Selectable frame can span all columns (text will still fit in current column)   */
-    SpanAllColumns(1 shl 1),
+  /** Selectable frame can span all columns (text will still fit in current column)   */
+  SpanAllColumns(1 shl 1),
 
-    /** Generate press events on double clicks too  */
+  /** Generate press events on double clicks too  */
     AllowDoubleClick(1 shl 2),
 
     /** Cannot be selected, display grayed out text */
@@ -410,38 +368,22 @@ enum class SelectableFlag(@JvmField val i: SelectableFlags) {
 
     /** Don't set key/input owner on the initial click (note: mouse buttons are keys! often, the key in question will be ImGuiKey_MouseLeft!) */
     _NoSetKeyOwner(1 shl 27);
-
-    infix fun and(b: SelectableFlag): SelectableFlags = i and b.i
-    infix fun and(b: SelectableFlags): SelectableFlags = i and b
-    infix fun or(b: SelectableFlag): SelectableFlags = i or b.i
-    infix fun or(b: SelectableFlags): SelectableFlags = i or b
-    infix fun xor(b: SelectableFlag): SelectableFlags = i xor b.i
-    infix fun xor(b: SelectableFlags): SelectableFlags = i xor b
-    infix fun wo(b: SelectableFlags): SelectableFlags = and(b.inv())
 }
-
-infix fun SelectableFlags.and(b: SelectableFlag): SelectableFlags = and(b.i)
-infix fun SelectableFlags.or(b: SelectableFlag): SelectableFlags = or(b.i)
-infix fun SelectableFlags.xor(b: SelectableFlag): SelectableFlags = xor(b.i)
-infix fun SelectableFlags.has(b: SelectableFlag): Boolean = and(b.i) != 0
-infix fun SelectableFlags.hasnt(b: SelectableFlag): Boolean = and(b.i) == 0
-infix fun SelectableFlags.wo(b: SelectableFlag): SelectableFlags = and(b.i.inv())
-
 
 typealias ComboFlags = Int
 
 /** Flags: for BeginCombo() */
-enum class ComboFlag(@JvmField val i: ComboFlags) {
-    None(0),
+enum class ComboFlag(override val i: ComboFlags) : Flag<ComboFlag> {
+  None(0),
 
-    /** Align the popup toward the left by default */
-    PopupAlignLeft(1 shl 0),
+  /** Align the popup toward the left by default */
+  PopupAlignLeft(1 shl 0),
 
-    /** Max ~4 items visible */
-    HeightSmall(1 shl 1),
+  /** Max ~4 items visible */
+  HeightSmall(1 shl 1),
 
-    /** Max ~8 items visible (default) */
-    HeightRegular(1 shl 2),
+  /** Max ~8 items visible (default) */
+  HeightRegular(1 shl 2),
 
     /** Max ~20 items visible */
     HeightLarge(1 shl 3),
@@ -458,40 +400,25 @@ enum class ComboFlag(@JvmField val i: ComboFlags) {
 
     // private
 
-    /** enable BeginComboPreview() */
-    _CustomPreview(1 shl 20);
-
-    infix fun and(b: ComboFlag): ComboFlags = i and b.i
-    infix fun and(b: ComboFlags): ComboFlags = i and b
-    infix fun or(b: ComboFlag): ComboFlags = i or b.i
-    infix fun or(b: ComboFlags): ComboFlags = i or b
-    infix fun xor(b: ComboFlag): ComboFlags = i xor b.i
-    infix fun xor(b: ComboFlags): ComboFlags = i xor b
-    infix fun wo(b: ComboFlags): ComboFlags = and(b.inv())
+  /** enable BeginComboPreview() */
+  _CustomPreview(1 shl 20)
 }
-
-infix fun ComboFlags.and(b: ComboFlag): ComboFlags = and(b.i)
-infix fun ComboFlags.or(b: ComboFlag): ComboFlags = or(b.i)
-infix fun ComboFlags.xor(b: ComboFlag): ComboFlags = xor(b.i)
-infix fun ComboFlags.has(b: ComboFlag): Boolean = and(b.i) != 0
-infix fun ComboFlags.hasnt(b: ComboFlag): Boolean = and(b.i) == 0
-infix fun ComboFlags.wo(b: ComboFlag): ComboFlags = and(b.i.inv())
 
 
 typealias TabBarFlags = Int
 
 /** Flags for ImGui::BeginTabBar() */
-enum class TabBarFlag(@JvmField val i: TabBarFlags) {
-    None(0),
+enum class TabBarFlag(override val i: TabBarFlags) : Flag<TabBarFlag> {
+  None(0),
 
-    /** Allow manually dragging tabs to re-order them + New tabs are appended at the end of list */
-    Reorderable(1 shl 0),
+  /** Allow manually dragging tabs to re-order them + New tabs are appended at the end of list */
+  Reorderable(1 shl 0),
 
-    /** Automatically select new tabs when they appear */
-    AutoSelectNewTabs(1 shl 1),
+  /** Automatically select new tabs when they appear */
+  AutoSelectNewTabs(1 shl 1),
 
-    /** Disable buttons to open the tab list popup */
-    TabListPopupButton(1 shl 2),
+  /** Disable buttons to open the tab list popup */
+  TabListPopupButton(1 shl 2),
 
     /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button.
      *  You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
@@ -519,40 +446,22 @@ enum class TabBarFlag(@JvmField val i: TabBarFlags) {
 
     /** FIXME: Settings are handled by the docking system, this only request the tab bar to mark settings dirty when reordering tabs, */
     _SaveSettings(1 shl 22);
-
-    infix fun and(b: TabBarFlag): TabBarFlags = i and b.i
-    infix fun and(b: TabBarFlags): TabBarFlags = i and b
-    infix fun or(b: TabBarFlag): TabBarFlags = i or b.i
-    infix fun or(b: TabBarFlags): TabBarFlags = i or b
-    infix fun xor(b: TabBarFlag): TabBarFlags = i xor b.i
-    infix fun xor(b: TabBarFlags): TabBarFlags = i xor b
-    infix fun wo(b: TabBarFlags): TabBarFlags = and(b.inv())
 }
-
-infix fun TabBarFlags.and(b: TabBarFlag): TabBarFlags = and(b.i)
-infix fun TabBarFlags.or(b: TabBarFlag): TabBarFlags = or(b.i)
-infix fun TabBarFlags.xor(b: TabBarFlag): TabBarFlags = xor(b.i)
-infix fun TabBarFlags.has(b: TabBarFlag): Boolean = and(b.i) != 0
-infix fun TabBarFlags.hasnt(b: TabBarFlag): Boolean = and(b.i) == 0
-infix fun TabBarFlags.wo(b: TabBarFlag): TabBarFlags = and(b.i.inv())
-operator fun TabBarFlags.minus(flag: TabBarFlag): TabBarFlags = wo(flag)
-operator fun TabBarFlags.div(flag: TabBarFlag): TabBarFlags = or(flag)
-
 
 typealias TabItemFlags = Int
 
 /** Flags for ImGui::BeginTabItem() */
-enum class TabItemFlag(@JvmField val i: TabItemFlags) {
-    None(0),
+enum class TabItemFlag(override val i: TabItemFlags) : Flag<TabItemFlag> {
+  None(0),
 
-    /** Display a dot next to the title + tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar. */
-    UnsavedDocument(1 shl 0),
+  /** Display a dot next to the title + tab is selected when clicking the X + closure is not assumed (will wait for user to stop submitting the tab). Otherwise closure is assumed when pressing the X, so if you keep submitting the tab may reappear at end of tab bar. */
+  UnsavedDocument(1 shl 0),
 
-    /** Trigger flag to programmatically make the tab selected when calling BeginTabItem() */
-    SetSelected(1 shl 1),
+  /** Trigger flag to programmatically make the tab selected when calling BeginTabItem() */
+  SetSelected(1 shl 1),
 
-    /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
-    NoCloseWithMiddleMouseButton(1 shl 2),
+  /** Disable behavior of closing tabs (that are submitted with p_open != NULL) with middle mouse button. You can still repro this behavior on user's side with if (IsItemHovered() && IsMouseClicked(2)) *p_open = false. */
+  NoCloseWithMiddleMouseButton(1 shl 2),
 
     /** Don't call PushID(tab->ID)/PopID() on BeginTabItem()/EndTabItem() */
     NoPushId(1 shl 3),
@@ -576,26 +485,9 @@ enum class TabItemFlag(@JvmField val i: TabItemFlags) {
     /** Track whether p_open was set or not (we'll need this info on the next frame to recompute ContentWidth during layout) */
     _NoCloseButton(1 shl 20),
 
-    /** Used by TabItemButton, change the tab item behavior to mimic a button */
-    _Button(1 shl 21);
-
-    infix fun and(b: TabItemFlag): TabItemFlags = i and b.i
-    infix fun and(b: TabItemFlags): TabItemFlags = i and b
-    infix fun or(b: TabItemFlag): TabItemFlags = i or b.i
-    infix fun or(b: TabItemFlags): TabItemFlags = i or b
-    infix fun xor(b: TabItemFlag): TabItemFlags = i xor b.i
-    infix fun xor(b: TabItemFlags): TabItemFlags = i xor b
-    infix fun wo(b: TabItemFlags): TabItemFlags = and(b.inv())
+  /** Used by TabItemButton, change the tab item behavior to mimic a button */
+  _Button(1 shl 21)
 }
-
-infix fun TabItemFlags.and(b: TabItemFlag): TabItemFlags = and(b.i)
-infix fun TabItemFlags.or(b: TabItemFlag): TabItemFlags = or(b.i)
-infix fun TabItemFlags.xor(b: TabItemFlag): TabItemFlags = xor(b.i)
-infix fun TabItemFlags.has(b: TabItemFlag): Boolean = and(b.i) != 0
-infix fun TabItemFlags.hasnt(b: TabItemFlag): Boolean = and(b.i) == 0
-infix fun TabItemFlags.wo(b: TabItemFlag): TabItemFlags = and(b.i.inv())
-operator fun TabItemFlags.minus(flag: TabItemFlag): TabItemFlags = wo(flag)
-operator fun TabItemFlags.div(flag: TabItemFlag): TabItemFlags = or(flag)
 
 
 typealias TableFlags = Int
@@ -622,17 +514,17 @@ typealias TableFlags = Int
 //    - Using Stretch columns OFTEN DOES NOT MAKE SENSE if ScrollX is on, UNLESS you have specified a value for 'inner_width' in BeginTable().
 //      If you specify a value for 'inner_width' then effectively the scrolling space is known and Stretch or mixed Fixed/Stretch columns become meaningful again.
 // - Read on documentation at the top of imgui_tables.cpp for details.
-enum class TableFlag(@JvmField val i: TableFlags) {
+enum class TableFlag(override val i: TableFlags) : Flag<TableFlag> {
 
-    // Features
+  // Features
 
-    None(0),
+  None(0),
 
-    /** Enable resizing columns. */
-    Resizable(1 shl 0),
+  /** Enable resizing columns. */
+  Resizable(1 shl 0),
 
-    /** Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
-    Reorderable(1 shl 1),
+  /** Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers) */
+  Reorderable(1 shl 1),
 
     /** Enable hiding/disabling columns in context menu. */
     Hideable(1 shl 2),
@@ -742,40 +634,24 @@ enum class TableFlag(@JvmField val i: TableFlags) {
     /** Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0). */
     SortTristate(1 shl 27),
 
-    /** [Internal] Combinations and masks */
-    _SizingMask(SizingFixedFit or SizingFixedSame or SizingStretchProp or SizingStretchSame);
-
-    infix fun and(b: TableFlag): TableFlags = i and b.i
-    infix fun and(b: TableFlags): TableFlags = i and b
-    infix fun or(b: TableFlag): TableFlags = i or b.i
-    infix fun or(b: TableFlags): TableFlags = i or b
-    infix fun xor(b: TableFlag): TableFlags = i xor b.i
-    infix fun xor(b: TableFlags): TableFlags = i xor b
-    infix fun wo(b: TableFlags): TableFlags = and(b.inv())
+  /** [Internal] Combinations and masks */
+  _SizingMask(SizingFixedFit or SizingFixedSame or SizingStretchProp or SizingStretchSame)
 }
-
-infix fun TableFlags.and(b: TableFlag): TableFlags = and(b.i)
-infix fun TableFlags.or(b: TableFlag): TableFlags = or(b.i)
-infix fun TableFlags.xor(b: TableFlag): TableFlags = xor(b.i)
-infix fun TableFlags.has(b: TableFlag): Boolean = and(b.i) != 0
-infix fun TableFlags.hasnt(b: TableFlag): Boolean = and(b.i) == 0
-infix fun TableFlags.wo(b: TableFlag): TableFlags = and(b.i.inv())
-
 
 typealias TableColumnFlags = Int
 
 // Flags for ImGui::TableSetupColumn()
-enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
+enum class TableColumnFlag(override val i: TableColumnFlags) : Flag<TableColumnFlag> {
 
-    // Input configuration flags
+  // Input configuration flags
 
-    None(0),
+  None(0),
 
-    /** Overriding/master disable flag: hide column, won't show in context menu (unlike calling TableSetColumnEnabled() which manipulates the user accessible state) */
-    Disabled(1 shl 0),
+  /** Overriding/master disable flag: hide column, won't show in context menu (unlike calling TableSetColumnEnabled() which manipulates the user accessible state) */
+  Disabled(1 shl 0),
 
-    /** Default as a hidden/disabled column. */
-    DefaultHide(1 shl 1),
+  /** Default as a hidden/disabled column. */
+  DefaultHide(1 shl 1),
 
     /** Default as a sorting column. */
     DefaultSort(1 shl 2),
@@ -845,54 +721,19 @@ enum class TableColumnFlag(@JvmField val i: TableColumnFlags) {
     IndentMask_(IndentEnable or IndentDisable),
     StatusMask_(IsEnabled or IsVisible or IsSorted or IsHovered),
 
-    /** [Internal] Disable user resizing this column directly (it may however we resized indirectly from its left edge) */
-    NoDirectResize_(1 shl 30);
-
-    infix fun and(b: TableColumnFlag): TableColumnFlags = i and b.i
-    infix fun and(b: TableColumnFlags): TableColumnFlags = i and b
-    infix fun or(b: TableColumnFlag): TableColumnFlags = i or b.i
-    infix fun or(b: TableColumnFlags): TableColumnFlags = i or b
-    infix fun xor(b: TableColumnFlag): TableColumnFlags = i xor b.i
-    infix fun xor(b: TableColumnFlags): TableColumnFlags = i xor b
-    infix fun wo(b: TableColumnFlags): TableColumnFlags = and(b.inv())
+  /** [Internal] Disable user resizing this column directly (it may however we resized indirectly from its left edge) */
+  NoDirectResize_(1 shl 30)
 }
-
-infix fun TableColumnFlags.and(b: TableColumnFlag): TableColumnFlags = and(b.i)
-infix fun TableColumnFlags.or(b: TableColumnFlag): TableColumnFlags = or(b.i)
-infix fun TableColumnFlags.xor(b: TableColumnFlag): TableColumnFlags = xor(b.i)
-infix fun TableColumnFlags.has(b: TableColumnFlag): Boolean = and(b.i) != 0
-infix fun TableColumnFlags.hasnt(b: TableColumnFlag): Boolean = and(b.i) == 0
-infix fun TableColumnFlags.wo(b: TableColumnFlag): TableColumnFlags = and(b.i.inv())
-operator fun TableColumnFlags.minus(flag: TableColumnFlag): TableColumnFlags = wo(flag)
-operator fun TableColumnFlags.div(flag: TableColumnFlag): TableColumnFlags = or(flag)
-
-
 
 typealias TableRowFlags = Int
 
 // Flags for ImGui::TableNextRow()
-enum class TableRowFlag(@JvmField val i: Int) {
-    None(0),
+enum class TableRowFlag(override val i: Int) : Flag<TableRowFlag> {
+  None(0),
 
-    /** Identify header row (set default background color + width of its contents accounted differently for auto column width) */
-    Headers(1 shl 0);
-
-    infix fun and(b: TableRowFlag): TableRowFlags = i and b.i
-    infix fun and(b: TableRowFlags): TableRowFlags = i and b
-    infix fun or(b: TableRowFlag): TableRowFlags = i or b.i
-    infix fun or(b: TableRowFlags): TableRowFlags = i or b
-    infix fun xor(b: TableRowFlag): TableRowFlags = i xor b.i
-    infix fun xor(b: TableRowFlags): TableRowFlags = i xor b
-    infix fun wo(b: TableRowFlags): TableRowFlags = and(b.inv())
+  /** Identify header row (set default background color + width of its contents accounted differently for auto column width) */
+  Headers(1 shl 0)
 }
-
-infix fun TableRowFlags.and(b: TableRowFlag): TableRowFlags = and(b.i)
-infix fun TableRowFlags.or(b: TableRowFlag): TableRowFlags = or(b.i)
-infix fun TableRowFlags.xor(b: TableRowFlag): TableRowFlags = xor(b.i)
-infix fun TableRowFlags.has(b: TableRowFlag): Boolean = and(b.i) != 0
-infix fun TableRowFlags.hasnt(b: TableRowFlag): Boolean = and(b.i) == 0
-infix fun TableRowFlags.wo(b: TableRowFlag): TableRowFlags = and(b.i.inv())
-
 
 typealias TableBgTargets = Int
 
@@ -905,95 +746,63 @@ typealias TableBgTargets = Int
 // When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color automatically set for odd/even rows.
 // If you set the color of RowBg0 target, your color will override the existing RowBg0 color.
 // If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
-enum class TableBgTarget(@JvmField val i: TableBgTargets) {
-    None(0),
+enum class TableBgTarget(override val i: TableBgTargets) : Flag<TableBgTarget> {
+  None(0),
 
-    /** Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used) */
-    RowBg0(1),
+  /** Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used) */
+  RowBg0(1),
 
-    /** Set row background color 1 (generally used for selection marking) */
-    RowBg1(2),
+  /** Set row background color 1 (generally used for selection marking) */
+  RowBg1(2),
 
-    /** Set cell background color (top-most color) */
-    CellBg(3);
-
-    infix fun and(b: TableBgTarget): TableBgTargets = i and b.i
-    infix fun and(b: TableBgTargets): TableBgTargets = i and b
-    infix fun or(b: TableBgTarget): TableBgTargets = i or b.i
-    infix fun or(b: TableBgTargets): TableBgTargets = i or b
-    infix fun xor(b: TableBgTarget): TableBgTargets = i xor b.i
-    infix fun xor(b: TableBgTargets): TableBgTargets = i xor b
-    infix fun wo(b: TableBgTargets): TableBgTargets = and(b.inv())
+  /** Set cell background color (top-most color) */
+  CellBg(3);
 
     companion object {
         infix fun of(i: Int) = values().first { it.i == i }
     }
 }
 
-infix fun TableBgTargets.and(b: TableBgTarget): TableBgTargets = and(b.i)
-infix fun TableBgTargets.or(b: TableBgTarget): TableBgTargets = or(b.i)
-infix fun TableBgTargets.xor(b: TableBgTarget): TableBgTargets = xor(b.i)
-infix fun TableBgTargets.has(b: TableBgTarget): Boolean = and(b.i) != 0
-infix fun TableBgTargets.hasnt(b: TableBgTarget): Boolean = and(b.i) == 0
-infix fun TableBgTargets.wo(b: TableBgTarget): TableBgTargets = and(b.i.inv())
-
-
 typealias FocusedFlags = Int
 
 /** Flags for ImGui::IsWindowFocused() */
-enum class FocusedFlag(@JvmField val i: FocusedFlags) {
-    None(0),
+enum class FocusedFlag(override val i: FocusedFlags) : Flag<FocusedFlag> {
+  None(0),
 
-    /** Return true if any children of the window is focused */
-    ChildWindows(1 shl 0),
+  /** Return true if any children of the window is focused */
+  ChildWindows(1 shl 0),
 
-    /** Test from root window (top most parent of the current hierarchy) */
-    RootWindow(1 shl 1),
+  /** Test from root window (top most parent of the current hierarchy) */
+  RootWindow(1 shl 1),
 
-    /** Return true if any window is focused.
-     *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
+  /** Return true if any window is focused.
+   *  Important: If you are trying to tell how to dispatch your low-level inputs, do NOT use this. Use 'io.WantCaptureMouse' instead! Please read the FAQ! */
     AnyWindow(1 shl 2),
 
     /** Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
     NoPopupHierarchy(1 shl 3),
 
-    //ImGuiFocusedFlags_DockHierarchy               = 1 << 4,   // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
-    RootAndChildWindows(RootWindow or ChildWindows);
-
-    infix fun and(b: FocusedFlag): FocusedFlags = i and b.i
-    infix fun and(b: FocusedFlags): FocusedFlags = i and b
-    infix fun or(b: FocusedFlag): FocusedFlags = i or b.i
-    infix fun or(b: FocusedFlags): FocusedFlags = i or b
-    infix fun xor(b: FocusedFlag): FocusedFlags = i xor b.i
-    infix fun xor(b: FocusedFlags): FocusedFlags = i xor b
-    infix fun wo(b: FocusedFlags): FocusedFlags = and(b.inv())
+  //ImGuiFocusedFlags_DockHierarchy               = 1 << 4,   // Consider docking hierarchy (treat dockspace host as parent of docked window) (when used with _ChildWindows or _RootWindow)
+  RootAndChildWindows(RootWindow or ChildWindows)
 }
-
-infix fun FocusedFlags.and(b: FocusedFlag): FocusedFlags = and(b.i)
-infix fun FocusedFlags.or(b: FocusedFlag): FocusedFlags = or(b.i)
-infix fun FocusedFlags.xor(b: FocusedFlag): FocusedFlags = xor(b.i)
-infix fun FocusedFlags.has(b: FocusedFlag): Boolean = and(b.i) != 0
-infix fun FocusedFlags.hasnt(b: FocusedFlag): Boolean = and(b.i) == 0
-infix fun FocusedFlags.wo(b: FocusedFlag): FocusedFlags = and(b.i.inv())
-
 
 typealias HoveredFlags = Int
 
 /** Flags: for IsItemHovered(), IsWindowHovered() etc.
  *  Note: if you are trying to check whether your mouse should be dispatched to Dear ImGui or to your app, you should use 'io.WantCaptureMouse' instead! Please read the FAQ!
  *  Note: windows with the ImGuiWindowFlags_NoInputs flag are ignored by IsWindowHovered() calls.*/
-enum class HoveredFlag(@JvmField val i: HoveredFlags) {
-    /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
-     *  popup or modal blocking inputs under them.  */
-    None(0),
+enum class HoveredFlag(override val i: HoveredFlags) : Flag<HoveredFlag> {
+  /** Return true if directly over the item/window, not obstructed by another window, not obstructed by an active
+   *  popup or modal blocking inputs under them.  */
+  None(0),
 
-    /** isWindowHovered() only: Return true if any children of the window is hovered */
-    ChildWindows(1 shl 0),
+  /** isWindowHovered() only: Return true if any children of the window is hovered */
+  ChildWindows(1 shl 0),
 
-    /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
-    RootWindow(1 shl 1),
+  /** isWindowHovered() only: Test from root window (top most parent of the current hierarchy) */
+  RootWindow(1 shl 1),
 
-    /** IsWindowHovered() only: Return true if any window is hovered    */
+  /** IsWindowHovered() only: Return true if any window is hovered    */
     AnyWindow(1 shl 2),
 
     /** IsWindowHovered() only: Do not consider popup hierarchy (do not treat popup emitter as parent of popup) (when used with _ChildWindows or _RootWindow) */
@@ -1025,40 +834,24 @@ enum class HoveredFlag(@JvmField val i: HoveredFlags) {
     /** Return true after io.HoverDelayShort elapsed (~0.10 sec) */
     DelayShort(1 shl 12),
 
-    /** Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
-    NoSharedDelay(1 shl 13);
-
-    infix fun and(b: HoveredFlag): HoveredFlags = i and b.i
-    infix fun and(b: HoveredFlags): HoveredFlags = i and b
-    infix fun or(b: HoveredFlag): HoveredFlags = i or b.i
-    infix fun or(b: HoveredFlags): HoveredFlags = i or b
-    infix fun xor(b: HoveredFlag): HoveredFlags = i xor b.i
-    infix fun xor(b: HoveredFlags): HoveredFlags = i xor b
-    infix fun wo(b: HoveredFlags): HoveredFlags = and(b.inv())
+  /** Disable shared delay system where moving from one item to the next keeps the previous timer for a short time (standard for tooltips with long delays) */
+  NoSharedDelay(1 shl 13)
 }
-
-infix fun HoveredFlags.and(b: HoveredFlag): HoveredFlags = and(b.i)
-infix fun HoveredFlags.or(b: HoveredFlag): HoveredFlags = or(b.i)
-infix fun HoveredFlags.xor(b: HoveredFlag): HoveredFlags = xor(b.i)
-infix fun HoveredFlags.has(b: HoveredFlag): Boolean = and(b.i) != 0
-infix fun HoveredFlags.hasnt(b: HoveredFlag): Boolean = and(b.i) == 0
-infix fun HoveredFlags.wo(b: HoveredFlag): HoveredFlags = and(b.i.inv())
-
 
 typealias DragDropFlags = Int
 
 /** Flags for beginDragDropSource(), acceptDragDropPayload() */
-enum class DragDropFlag(@JvmField val i: DragDropFlags) {
-    // BeginDragDropSource() flags
-    None(0),
+enum class DragDropFlag(override val i: DragDropFlags) : Flag<DragDropFlag> {
+  // BeginDragDropSource() flags
+  None(0),
 
-    /** Disable preview tooltip. By default, a successful call to BeginDragDropSource opens a tooltip so you can display a preview or description of the source contents. This flag disables this behavior. */
-    SourceNoPreviewTooltip(1 shl 0),
+  /** Disable preview tooltip. By default, a successful call to BeginDragDropSource opens a tooltip so you can display a preview or description of the source contents. This flag disables this behavior. */
+  SourceNoPreviewTooltip(1 shl 0),
 
-    /** By default, when dragging we clear data so that IsItemHovered() will return false,
-     *  to avoid subsequent user code submitting tooltips.
-     *  This flag disables this behavior so you can still call IsItemHovered() on the source item. */
-    SourceNoDisableHover(1 shl 1),
+  /** By default, when dragging we clear data so that IsItemHovered() will return false,
+   *  to avoid subsequent user code submitting tooltips.
+   *  This flag disables this behavior so you can still call IsItemHovered() on the source item. */
+  SourceNoDisableHover(1 shl 1),
 
     /** Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging
      *  a source item. */
@@ -1086,24 +879,9 @@ enum class DragDropFlag(@JvmField val i: DragDropFlags) {
     /** Request hiding the BeginDragDropSource tooltip from the BeginDragDropTarget site. */
     AcceptNoPreviewTooltip(1 shl 12),
 
-    /** For peeking ahead and inspecting the payload before delivery. */
-    AcceptPeekOnly(AcceptBeforeDelivery or AcceptNoDrawDefaultRect);
-
-    infix fun and(b: DragDropFlag): DragDropFlags = i and b.i
-    infix fun and(b: DragDropFlags): DragDropFlags = i and b
-    infix fun or(b: DragDropFlag): DragDropFlags = i or b.i
-    infix fun or(b: DragDropFlags): DragDropFlags = i or b
-    infix fun xor(b: DragDropFlag): DragDropFlags = i xor b.i
-    infix fun xor(b: DragDropFlags): DragDropFlags = i xor b
-    infix fun wo(b: DragDropFlags): DragDropFlags = and(b.inv())
+  /** For peeking ahead and inspecting the payload before delivery. */
+  AcceptPeekOnly(AcceptBeforeDelivery or AcceptNoDrawDefaultRect)
 }
-
-infix fun DragDropFlags.and(b: DragDropFlag): DragDropFlags = and(b.i)
-infix fun DragDropFlags.or(b: DragDropFlag): DragDropFlags = or(b.i)
-infix fun DragDropFlags.xor(b: DragDropFlag): DragDropFlags = xor(b.i)
-infix fun DragDropFlags.has(b: DragDropFlag): Boolean = and(b.i) != 0
-infix fun DragDropFlags.hasnt(b: DragDropFlag): Boolean = and(b.i) == 0
-infix fun DragDropFlags.wo(b: DragDropFlag): DragDropFlags = and(b.i.inv())
 
 // Standard Drag and Drop payload types. Types starting with '_' are defined by Dear ImGui.
 /** float[3]: Standard type for colors, without alpha. User code may use this type. */
@@ -1175,17 +953,17 @@ typealias KeyChord = Int
 // Read details about the 1.87 and 1.89 transition : https://github.com/ocornut/imgui/issues/4921
 
 /** A key identifier (ImGui-side enum) */
-enum class Key(i: KeyChord? = null) {
-    // Keyboard
-    None, Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace, Space, Enter, Escape,
-    LeftCtrl, LeftShift, LeftAlt, LeftSuper,
-    RightCtrl, RightShift, RightAlt, RightSuper,
-    Menu,
-    `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`,
-    A, B, C, D, E, F, G, H, I, J,
-    K, L, M, N, O, P, Q, R, S, T,
-    U, V, W, X, Y, Z,
-    F1, F2, F3, F4, F5, F6,
+enum class Key(i: KeyChord? = null) : Flag<Key> {
+  // Keyboard
+  None, Tab, LeftArrow, RightArrow, UpArrow, DownArrow, PageUp, PageDown, Home, End, Insert, Delete, Backspace, Space, Enter, Escape,
+  LeftCtrl, LeftShift, LeftAlt, LeftSuper,
+  RightCtrl, RightShift, RightAlt, RightSuper,
+  Menu,
+  `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`,
+  A, B, C, D, E, F, G, H, I, J,
+  K, L, M, N, O, P, Q, R, S, T,
+  U, V, W, X, Y, Z,
+  F1, F2, F3, F4, F5, F6,
     F7, F8, F9, F10, F11, F12,
 
     /** ' */
@@ -1285,8 +1063,7 @@ enum class Key(i: KeyChord? = null) {
     Mod_Shortcut(1 shl 11),
     Mod_Mask_(0xF800); // 5-bits
 
-    @JvmField
-    val i: KeyChord = i ?: if (ordinal == 0) 0 else 511 + ordinal
+  override val i: KeyChord = i ?: if (ordinal == 0) 0 else 511 + ordinal
 
     val index: Int
         get() = ordinal - 1
@@ -1313,26 +1090,7 @@ enum class Key(i: KeyChord? = null) {
         internal val _NavGamepadMenu = GamepadFaceLeft
         internal val _NavGamepadInput = GamepadFaceUp
     }
-
-    infix fun and(b: Key): KeyChord = i and b.i
-    infix fun and(b: KeyChord): KeyChord = i and b
-    infix fun or(b: Key): KeyChord = i or b.i
-    infix fun or(b: KeyChord): KeyChord = i or b
-    infix fun xor(b: Key): KeyChord = i xor b.i
-    infix fun xor(b: KeyChord): KeyChord = i xor b
-    infix fun has(b: Key): Boolean = and(b.i) != 0
-    infix fun hasnt(b: Key): Boolean = and(b.i) == 0
-    infix fun wo(b: KeyChord): KeyChord = and(b.inv())
 }
-
-infix fun KeyChord.and(b: Key): KeyChord = and(b.i)
-infix fun KeyChord.or(b: Key): KeyChord = or(b.i)
-infix fun KeyChord.xor(b: Key): KeyChord = xor(b.i)
-infix fun KeyChord.has(b: Key): Boolean = and(b.i) != 0
-infix fun KeyChord.hasnt(b: Key): Boolean = and(b.i) == 0
-infix fun KeyChord.wo(b: Key): KeyChord = and(b.i.inv())
-operator fun KeyChord.minus(flag: Key): KeyChord = wo(flag)
-operator fun KeyChord.div(flag: Key): KeyChord = or(flag)
 
 infix fun Long.shl(key: Key) = shl(key.i)
 
@@ -1437,17 +1195,17 @@ typealias ConfigFlags = Int
 /** Configuration flags stored in io.configFlags
  *
  *  Flags: for io.ConfigFlags   */
-enum class ConfigFlag(@JvmField val i: ConfigFlags) {
-    None(0),
+enum class ConfigFlag(override val i: ConfigFlags) : Flag<ConfigFlag> {
+  None(0),
 
-    /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.AddKeyEvent() calls. */
-    NavEnableKeyboard(1 shl 0),
+  /** Master keyboard navigation enable flag. NewFrame() will automatically fill io.NavInputs[] based on io.AddKeyEvent() calls. */
+  NavEnableKeyboard(1 shl 0),
 
-    /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].
-     *  Backend also needs to set ImGuiBackendFlags_HasGamepad. */
-    NavEnableGamepad(1 shl 1),
+  /** Master gamepad navigation enable flag. This is mostly to instruct your imgui backend to fill io.NavInputs[].
+   *  Backend also needs to set ImGuiBackendFlags_HasGamepad. */
+  NavEnableGamepad(1 shl 1),
 
-    /** Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward.
+  /** Instruct navigation to move the mouse cursor. May be useful on TV/console systems where moving a virtual mouse is awkward.
      *  Will update io.MousePos and set io.wantSetMousePos=true. If enabled you MUST honor io.wantSetMousePos requests in your backend,
      *  otherwise ImGui will react as if the mouse is jumping around back and forth. */
     NavEnableSetMousePos(1 shl 2),
@@ -1474,26 +1232,9 @@ enum class ConfigFlag(@JvmField val i: ConfigFlags) {
     /** Application is SRGB-aware. */
     IsSRGB(1 shl 20),
 
-    /** Application is using a touch screen instead of a mouse. */
-    IsTouchScreen(1 shl 21);
-
-    infix fun and(b: ConfigFlag): ConfigFlags = i and b.i
-    infix fun and(b: ConfigFlags): ConfigFlags = i and b
-    infix fun or(b: ConfigFlag): ConfigFlags = i or b.i
-    infix fun or(b: ConfigFlags): ConfigFlags = i or b
-    infix fun xor(b: ConfigFlag): ConfigFlags = i xor b.i
-    infix fun xor(b: ConfigFlags): ConfigFlags = i xor b
-    infix fun wo(b: ConfigFlags): ConfigFlags = and(b.inv())
+  /** Application is using a touch screen instead of a mouse. */
+  IsTouchScreen(1 shl 21)
 }
-
-infix fun ConfigFlags.and(b: ConfigFlag): ConfigFlags = and(b.i)
-infix fun ConfigFlags.or(b: ConfigFlag): ConfigFlags = or(b.i)
-infix fun ConfigFlags.xor(b: ConfigFlag): ConfigFlags = xor(b.i)
-infix fun ConfigFlags.has(b: ConfigFlag): Boolean = and(b.i) != 0
-infix fun ConfigFlags.hasnt(b: ConfigFlag): Boolean = and(b.i) == 0
-infix fun ConfigFlags.wo(b: ConfigFlag): ConfigFlags = and(b.i.inv())
-operator fun ConfigFlags.minus(flag: ConfigFlag): ConfigFlags = wo(flag)
-operator fun ConfigFlags.div(flag: ConfigFlag): ConfigFlags = or(flag)
 
 
 typealias BackendFlags = Int
@@ -1501,38 +1242,21 @@ typealias BackendFlags = Int
 /** Backend capabilities flags stored in io.BackendFlag. Set by imgui_impl_xxx or custom backend.
  *
  *  Flags: for io.BackendFlags  */
-enum class BackendFlag(@JvmField val i: BackendFlags) {
-    None(0),
+enum class BackendFlag(override val i: BackendFlags) : Flag<BackendFlag> {
+  None(0),
 
-    /** Backend Platform supports gamepad and currently has one connected. */
-    HasGamepad(1 shl 0),
+  /** Backend Platform supports gamepad and currently has one connected. */
+  HasGamepad(1 shl 0),
 
-    /** Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
-    HasMouseCursors(1 shl 1),
+  /** Backend Platform supports honoring GetMouseCursor() value to change the OS cursor shape. */
+  HasMouseCursors(1 shl 1),
 
-    /** Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
-    HasSetMousePos(1 shl 2),
+  /** Backend Platform supports io.WantSetMousePos requests to reposition the OS mouse position (only used if ImGuiConfigFlags_NavEnableSetMousePos is set). */
+  HasSetMousePos(1 shl 2),
 
     /** Backend Platform supports ImDrawCmd::VtxOffset. This enables output of large meshes (64K+ vertices) while still using 16-bit indices. */
     RendererHasVtxOffset(1 shl 3);
-
-    infix fun and(b: BackendFlag): BackendFlags = i and b.i
-    infix fun and(b: BackendFlags): BackendFlags = i and b
-    infix fun or(b: BackendFlag): BackendFlags = i or b.i
-    infix fun or(b: BackendFlags): BackendFlags = i or b
-    infix fun xor(b: BackendFlag): BackendFlags = i xor b.i
-    infix fun xor(b: BackendFlags): BackendFlags = i xor b
-    infix fun wo(b: BackendFlags): BackendFlags = and(b.inv())
 }
-
-infix fun BackendFlags.and(b: BackendFlag): BackendFlags = and(b.i)
-infix fun BackendFlags.or(b: BackendFlag): BackendFlags = or(b.i)
-infix fun BackendFlags.xor(b: BackendFlag): BackendFlags = xor(b.i)
-infix fun BackendFlags.has(b: BackendFlag): Boolean = and(b.i) != 0
-infix fun BackendFlags.hasnt(b: BackendFlag): Boolean = and(b.i) == 0
-infix fun BackendFlags.wo(b: BackendFlag): BackendFlags = and(b.i.inv())
-operator fun BackendFlags.minus(flag: BackendFlag): BackendFlags = wo(flag)
-operator fun BackendFlags.div(flag: BackendFlag): BackendFlags = or(flag)
 
 /** Enumeration for PushStyleColor() / PopStyleColor()  */
 /** A color identifier for styling */
@@ -1738,17 +1462,17 @@ typealias ColorEditFlags = Int
 /** Flags for ColorEdit3() / ColorEdit4() / ColorPicker3() / ColorPicker4() / ColorButton()
  *
  *  Flags: for ColorEdit4(), ColorPicker4() etc.    */
-enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
+enum class ColorEditFlag(override val i: ColorEditFlags) : Flag<ColorEditFlag> {
 
-    None(0),
+  None(0),
 
-    /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */
-    NoAlpha(1 shl 1),
+  /** ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer). */
+  NoAlpha(1 shl 1),
 
-    /** ColorEdit: disable picker when clicking on color square.  */
-    NoPicker(1 shl 2),
+  /** ColorEdit: disable picker when clicking on color square.  */
+  NoPicker(1 shl 2),
 
-    /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
+  /** ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.   */
     NoOptions(1 shl 3),
 
     /** ColorEdit, ColorPicker: disable color square preview next to the inputs. (e.g. to show only the inputs)   */
@@ -1822,24 +1546,9 @@ enum class ColorEditFlag(@JvmField val i: ColorEditFlags) {
     // [Internal] Masks
     _DisplayMask(DisplayRGB or DisplayHSV or DisplayHEX),
     _DataTypeMask(Uint8 or Float),
-    _PickerMask(PickerHueWheel or PickerHueBar),
-    _InputMask(InputRGB or InputHSV);
-
-    infix fun and(b: ColorEditFlag): ColorEditFlags = i and b.i
-    infix fun and(b: ColorEditFlags): ColorEditFlags = i and b
-    infix fun or(b: ColorEditFlag): ColorEditFlags = i or b.i
-    infix fun or(b: ColorEditFlags): ColorEditFlags = i or b
-    infix fun xor(b: ColorEditFlag): ColorEditFlags = i xor b.i
-    infix fun xor(b: ColorEditFlags): ColorEditFlags = i xor b
-    infix fun wo(b: ColorEditFlags): ColorEditFlags = and(b.inv())
+  _PickerMask(PickerHueWheel or PickerHueBar),
+  _InputMask(InputRGB or InputHSV)
 }
-
-infix fun ColorEditFlags.and(b: ColorEditFlag): ColorEditFlags = and(b.i)
-infix fun ColorEditFlags.or(b: ColorEditFlag): ColorEditFlags = or(b.i)
-infix fun ColorEditFlags.xor(b: ColorEditFlag): ColorEditFlags = xor(b.i)
-infix fun ColorEditFlags.has(b: ColorEditFlag): Boolean = and(b.i) != 0
-infix fun ColorEditFlags.hasnt(b: ColorEditFlag): Boolean = and(b.i) == 0
-infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
 
 
 /** Flags for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
@@ -1847,17 +1556,17 @@ infix fun ColorEditFlags.wo(b: ColorEditFlag): ColorEditFlags = and(b.i.inv())
  *  (Those are per-item flags. There are shared flags in ImGuiIO: io.ConfigDragClickToInputText) */
 typealias SliderFlags = Int
 
-enum class SliderFlag(val i: SliderFlags) {
-    None(0),
+enum class SliderFlag(override val i: SliderFlags) : Flag<SliderFlag> {
+  None(0),
 
-    /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
-    AlwaysClamp(1 shl 4),
+  /** Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds. */
+  AlwaysClamp(1 shl 4),
 
-    /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
-    Logarithmic(1 shl 5),
+  /** Make the widget logarithmic (linear otherwise). Consider using ImGuiDragFlags_NoRoundToFormat with this if using a format-string with small amount of digits. */
+  Logarithmic(1 shl 5),
 
-    /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
-    NoRoundToFormat(1 shl 6),
+  /** Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits) */
+  NoRoundToFormat(1 shl 6),
 
     /** Disable CTRL+Click or Enter key allowing to input text directly into the widget */
     NoInput(1 shl 7),
@@ -1869,24 +1578,8 @@ enum class SliderFlag(val i: SliderFlags) {
     /** [Private] Should this widget be orientated vertically? */
     _Vertical(1 shl 20),
 
-    _ReadOnly(1 shl 21);
-
-    infix fun and(b: SliderFlag): SliderFlags = i and b.i
-    infix fun and(b: SliderFlags): SliderFlags = i and b
-    infix fun or(b: SliderFlag): SliderFlags = i or b.i
-    infix fun or(b: SliderFlags): SliderFlags = i or b
-    infix fun xor(b: SliderFlag): SliderFlags = i xor b.i
-    infix fun xor(b: SliderFlags): SliderFlags = i xor b
-    infix fun wo(b: SliderFlags): SliderFlags = and(b.inv())
+  _ReadOnly(1 shl 21)
 }
-
-infix fun SliderFlags.and(b: SliderFlag): SliderFlags = and(b.i)
-infix fun SliderFlags.or(b: SliderFlag): SliderFlags = or(b.i)
-infix fun SliderFlags.xor(b: SliderFlag): SliderFlags = xor(b.i)
-infix fun SliderFlags.has(b: SliderFlag): Boolean = and(b.i) != 0
-infix fun SliderFlags.hasnt(b: SliderFlag): Boolean = and(b.i) == 0
-infix fun SliderFlags.wo(b: SliderFlag): SliderFlags = and(b.i.inv())
-
 
 /** Identify a mouse button.
  *  Those values are guaranteed to be stable and we frequently use 0/1 directly. Named enums provided for convenience. */
@@ -1954,37 +1647,22 @@ typealias CondFlags = Int
  *  All the functions above treat 0 as a shortcut to Cond.Always.
  *
  *  Enum: A condition for many Set*() functions */
-enum class Cond(@JvmField val i: CondFlags) {
+enum class Cond(override val i: CondFlags) : Flag<Cond> {
 
-    /** No condition (always set the variable), same as _Always */
-    None(0),
+  /** No condition (always set the variable), same as _Always */
+  None(0),
 
-    /** No condition (always set the variable), same as _None */
-    Always(1 shl 0),
+  /** No condition (always set the variable), same as _None */
+  Always(1 shl 0),
 
-    /** Set the variable once per runtime session (only the first call will succeed)    */
-    Once(1 shl 1),
+  /** Set the variable once per runtime session (only the first call will succeed)    */
+  Once(1 shl 1),
 
-    /** Set the variable if the object/window has no persistently saved data (no entry in .ini file)    */
+  /** Set the variable if the object/window has no persistently saved data (no entry in .ini file)    */
     FirstUseEver(1 shl 2),
 
     /** Set the variable if the object/window is appearing after being hidden/inactive (or the first time) */
     Appearing(1 shl 3);
 
     //    val isPowerOfTwo = i.isPowerOfTwo // JVM, kind of useless since it's used on cpp to avoid Cond masks
-
-    infix fun and(b: Cond): CondFlags = i and b.i
-    infix fun and(b: CondFlags): CondFlags = i and b
-    infix fun or(b: Cond): CondFlags = i or b.i
-    infix fun or(b: CondFlags): CondFlags = i or b
-    infix fun xor(b: Cond): CondFlags = i xor b.i
-    infix fun xor(b: CondFlags): CondFlags = i xor b
-    infix fun wo(b: CondFlags): CondFlags = and(b.inv())
 }
-
-infix fun CondFlags.and(b: Cond): CondFlags = and(b.i)
-infix fun CondFlags.or(b: Cond): CondFlags = or(b.i)
-infix fun CondFlags.xor(b: Cond): CondFlags = xor(b.i)
-infix fun CondFlags.has(b: Cond): Boolean = and(b.i) != 0
-infix fun CondFlags.hasnt(b: Cond): Boolean = and(b.i) == 0
-infix fun CondFlags.wo(b: Cond): CondFlags = and(b.i.inv())

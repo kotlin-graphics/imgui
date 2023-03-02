@@ -92,7 +92,6 @@ import imgui.ImGui.treeNode
 import imgui.ImGui.treeNodeToLabelSpacing
 import imgui.ImGui.treePop
 import imgui.ImGui.unindent
-import imgui.WindowFlag
 import imgui.classes.ListClipper
 import imgui.classes.Style
 import imgui.demo.ExampleApp
@@ -100,6 +99,7 @@ import imgui.demo.showExampleApp.StyleEditor
 import imgui.dsl.indent
 import imgui.dsl.listBox
 import imgui.dsl.treeNode
+import imgui.hasnt
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
 import imgui.internal.api.debugTools.Companion.metricsHelpMarker
@@ -107,8 +107,6 @@ import imgui.internal.classes.*
 import imgui.internal.formatString
 import imgui.internal.sections.KeyOwner_None
 import imgui.internal.sections.NextWindowDataFlag
-import imgui.hasnt
-import imgui.internal.sections.hasnt
 import imgui.internal.sections.testEngine_FindItemDebugLabel
 import kool.BYTES
 import kotlin.reflect.KMutableProperty0
@@ -602,7 +600,7 @@ interface demoDebugInformations {
         sameLine()
         if (smallButton("Copy"))
             clipboardText = g.debugLogBuf.toString()
-        beginChild("##log", Vec2(), true, WindowFlag.AlwaysVerticalScrollbar or WindowFlag.AlwaysHorizontalScrollbar)
+        beginChild("##log", Vec2(), true, Wf.AlwaysVerticalScrollbar or Wf.AlwaysHorizontalScrollbar)
 
         val clipper = ListClipper()
         clipper.begin(g.debugLogIndex.size)

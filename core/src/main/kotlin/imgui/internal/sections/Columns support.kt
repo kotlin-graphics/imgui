@@ -1,5 +1,6 @@
 package imgui.internal.sections
 
+import imgui.Flag
 import imgui.ID
 import imgui.internal.DrawListSplitter
 import imgui.internal.classes.Rect
@@ -13,7 +14,7 @@ import imgui.internal.classes.Rect
 typealias OldColumnsFlags = Int
 
 /** Flags: for Columns(), BeginColumns() */
-enum class OldColumnsFlag {
+enum class OldColumnsFlag : Flag<OldColumnsFlag> {
 
     None,
 
@@ -33,24 +34,8 @@ enum class OldColumnsFlag {
      *  width at all_. Will eventually remove.  */
     GrowParentContentsSize;
 
-    val i: OldColumnsFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
-
-    infix fun and(b: OldColumnsFlag): OldColumnsFlags = i and b.i
-    infix fun and(b: OldColumnsFlags): OldColumnsFlags = i and b
-    infix fun or(b: OldColumnsFlag): OldColumnsFlags = i or b.i
-    infix fun or(b: OldColumnsFlags): OldColumnsFlags = i or b
-    infix fun xor(b: OldColumnsFlag): OldColumnsFlags = i xor b.i
-    infix fun xor(b: OldColumnsFlags): OldColumnsFlags = i xor b
-    infix fun wo(b: OldColumnsFlags): OldColumnsFlags = and(b.inv())
+    override val i: OldColumnsFlags = if (ordinal == 0) 0 else 1 shl (ordinal - 1)
 }
-
-infix fun OldColumnsFlags.and(b: OldColumnsFlag): OldColumnsFlags = and(b.i)
-infix fun OldColumnsFlags.or(b: OldColumnsFlag): OldColumnsFlags = or(b.i)
-infix fun OldColumnsFlags.xor(b: OldColumnsFlag): OldColumnsFlags = xor(b.i)
-infix fun OldColumnsFlags.has(b: OldColumnsFlag): Boolean = and(b.i) != 0
-infix fun OldColumnsFlags.hasnt(b: OldColumnsFlag): Boolean = and(b.i) == 0
-infix fun OldColumnsFlags.wo(b: OldColumnsFlag): OldColumnsFlags = and(b.i.inv())
-
 
 /** Storage data for a single column for legacy Columns() api */
 class OldColumnData {

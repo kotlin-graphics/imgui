@@ -6,10 +6,12 @@ import imgui.ImGui.endRow
 import imgui.ImGui.rectRelToAbs
 import imgui.api.g
 import imgui.clamp
-import imgui.internal.floor
+import imgui.has
 import imgui.internal.isAboveGuaranteedIntegerPrecision
-import imgui.internal.sections.*
-import kotlin.math.ceil
+import imgui.internal.sections.IMGUI_DEBUG_LOG_CLIPPER
+import imgui.internal.sections.ListClipperData
+import imgui.internal.sections.ListClipperRange
+import imgui.internal.sections.NavMoveFlag
 
 /** Helper: Manually clip large list of items.
  *  If you have lots evenly spaced items and you have random access to the list, you can perform coarse

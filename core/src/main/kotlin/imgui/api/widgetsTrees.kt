@@ -17,11 +17,8 @@ import imgui.ImGui.style
 import imgui.ImGui.treeNodeBehavior
 import imgui.ImGui.unindent
 import imgui.internal.classes.Rect
-import imgui.internal.sections.NextItemDataFlag
 import imgui.internal.formatStringToTempBuffer
-import imgui.internal.sections.div
-import imgui.internal.sections.or
-import imgui.or
+import imgui.internal.sections.NextItemDataFlag
 import kotlin.reflect.KMutableProperty0
 import imgui.TreeNodeFlag as Tnf
 

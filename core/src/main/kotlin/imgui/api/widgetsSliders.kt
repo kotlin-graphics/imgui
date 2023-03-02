@@ -18,14 +18,8 @@ import imgui.internal.classes.Rect
 import imgui.internal.sections.IMGUI_TEST_ENGINE_ITEM_INFO
 import imgui.internal.sections.ItemFlag
 import imgui.internal.sections.ItemStatusFlag
-import imgui.has
-import imgui.internal.sections.has
 import kool.getValue
 import kool.setValue
-import unsigned.Ubyte
-import unsigned.Uint
-import unsigned.Ulong
-import unsigned.Ushort
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")

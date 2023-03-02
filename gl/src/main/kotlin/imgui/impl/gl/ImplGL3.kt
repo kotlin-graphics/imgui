@@ -18,7 +18,6 @@ import gln.vertexArray.glVertexAttribPointer
 import imgui.BackendFlag
 import imgui.DEBUG
 import imgui.ImGui.io
-import imgui.impl.glfw.ImplGlfw
 import imgui.internal.DrawData
 import imgui.internal.DrawIdx
 import imgui.internal.DrawVert
@@ -84,9 +83,6 @@ class ImplGL3 : GLInterface {
     }
 
     override fun newFrame() {
-
-        assert(ImplGlfw.Companion.data != null) { "Did you call ImGui_ImplGlfw_InitForXXX()?" }
-
         if (data.shaderHandle.isInvalid)
             createDeviceObjects()
     }

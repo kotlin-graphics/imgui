@@ -1,8 +1,8 @@
 package imgui.internal.api
 
 import imgui.api.g
+import imgui.has
 import imgui.internal.classes.DebugLogFlag
-import imgui.internal.classes.has
 import imgui.internal.sections.IMGUI_DEBUG_PRINTF
 
 // Debug Log
