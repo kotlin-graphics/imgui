@@ -923,7 +923,7 @@ object tt {
     STBTT_DEF stbtt_uint8 *stbtt_FindSVGDoc(const stbtt_fontinfo *info, int gl)
     {
         int i
-        stbtt_uint8 * data = info->data
+                stbtt_uint8 * data = info->data
         stbtt_uint8 * svg_doc_list = data + stbtt__get_svg((stbtt_fontinfo *) info)
 
         int numEntries = ttUSHORT (svg_doc_list)
@@ -1298,7 +1298,7 @@ object tt {
     static int stbtt__get_svg(stbtt_fontinfo *info)
     {
         stbtt_uint32 t
-        if (info->svg < 0) {
+                if (info->svg < 0) {
         t = stbtt__find_table(info->data, info->fontstart, "SVG ")
         if (t) {
             stbtt_uint32 offset = ttULONG (info->data+t+2)
@@ -2983,7 +2983,7 @@ object tt {
                         var yCrossing = yTop + dy * (x1 + 1 - x0)
 
                         // compute intersection with y axis at x2
-                        val yFinal = yTop + dy * (x2 - x0)
+                        var yFinal = yTop + dy * (x2 - x0)
 
                         //           x1    x_top                            x2    x_bottom
                         //     y_top  +------|-----+------------+------------+--------|---+------------+
@@ -3017,8 +3017,11 @@ object tt {
 
                         // check if final y_crossing is blown up; no test case for this
                         if (yFinal > yBottom) {
+                            var denom = (x2 - (x1 + 1))
                             yFinal = yBottom
-                            dy = (yFinal - yCrossing) / (x2 - (x1 + 1)) // if denom=0, y_final = y_crossing, so y_final <= y_bottom
+                            if (denom != 0) { // [DEAR IMGUI] Avoid div by zero (https://github.com/nothings/stb/issues/1316)
+                                dy = (yFinal - yCrossing) / denom // if denom=0, y_final = y_crossing, so y_final <= y_bottom
+                            }
                         }
 
                         // in second pixel, area covered by line segment found in first pixel
@@ -3903,6 +3906,7 @@ object tt {
                         if (glyph == 0)
                             missingGlyph = j
                     }
+
                     spc.skipMissing -> returnValue = 0
                     r.wasPacked != 0 && r.w == 0 && r.h == 0 && missingGlyph >= 0 -> range.chardataForRange[j] = range.chardataForRange[missingGlyph]
                     else -> returnValue = false // if any fail, report failure
