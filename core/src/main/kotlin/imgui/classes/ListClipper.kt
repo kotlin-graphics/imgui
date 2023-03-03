@@ -156,7 +156,7 @@ class ListClipper {
             startPosY = window.dc.cursorPos.y
             if (itemsHeight <= 0f) {
                 // Submit the first item (or range) so we can measure its height (generally the first range is 0..1)
-                data.ranges += ListClipperRange.fromIndices(data.itemsFrozen, data.itemsFrozen + 1)
+                data.ranges.add(0, ListClipperRange.fromIndices(data.itemsFrozen, data.itemsFrozen + 1))
                 displayStart = data.ranges[0].min max data.itemsFrozen
                 displayEnd = data.ranges[0].max min itemsCount
                 data.stepNo = 1

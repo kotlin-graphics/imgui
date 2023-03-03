@@ -479,7 +479,7 @@ fun renderDimmedBackgroundBehindWindow(window: Window, col: Int) {
         val cmd = drawList.cmdBuffer.last()
         assert(cmd.elemCount == 6)
         drawList.cmdBuffer.pop()
-        drawList.cmdBuffer += cmd
+        drawList.cmdBuffer.add(0, cmd)
         drawList.popClipRect()
         drawList.addDrawCmd() // We need to create a command as CmdBuffer.back().IdxOffset won't be correct if we append to same command.
     }

@@ -189,7 +189,7 @@ class DrawList(sharedData: DrawListSharedData?) {
         if (col hasnt COL32_A_MASK) return
         if (rounding < 0.5f || (flags and DrawFlag.RoundCornersMask_) == DrawFlag.RoundCornersNone.i) {
             primReserve(6, 4)
-            primRect(pMin, pMax, col)
+            primRect(Vec2(pMin), pMax, col) // [JVM] `pMin` safety first
         } else {
             pathRect(pMin, pMax, rounding, flags)
             pathFillConvex(col)
